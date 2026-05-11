@@ -16,6 +16,7 @@
 - **Forbidden zones** (from manifest; hard deny): [list or “per manifest”]
 - **Recursive discovery:** allowed only under listed roots unless Teacher states otherwise.
 - **Context requests:** any file outside effective TMVC MUST be requested in `WORKER_LOG.md` before access (path, reason). Verifier MUST approve or reject each request in the log before work continues.
+- **Worker log file:** repo-root **`WORKER_LOG.md`**. Optional: `git config core.hooksPath .githooks` creates an empty log on feature-branch checkout when missing ([`.githooks/post-checkout`](../../.githooks/post-checkout)).
 
 ## 3. Deterministic gate
 

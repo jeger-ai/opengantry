@@ -36,6 +36,7 @@ If you do **not** review the **mission** (work order from [`.gitagent/teacher/MI
 Copy at least:
 
 - `.gitagent/` (entire tree)
+- `.githooks/` (optional: creates an empty repo-root `WORKER_LOG.md` when you check out a feature branch; see below)
 - `AGENTS.md` (or merge its bullets into your existing agent instructions)
 - Optionally `.cursor/rules/opengantry-gxt-substrate.mdc` if you use Cursor (or translate the same rules into your IDE's rule system)
 
@@ -45,6 +46,14 @@ Add to your **`.gitignore`** (if not already present):
 # OpenGantry local forensic bulk (optional)
 .gitagent/history/
 ```
+
+**Optional — empty `WORKER_LOG.md` on branch checkout:** after copying, point Git at the vendored hooks once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Then `git switch -c your-feature` (or `git checkout -b …`): on branch checkouts **other than** `main` or `master`, if `WORKER_LOG.md` is missing at the repo root, [`.githooks/post-checkout`](.githooks/post-checkout) copies [`.gitagent/teacher/WORKER_LOG.template.md`](.gitagent/teacher/WORKER_LOG.template.md) into place. It **never overwrites** an existing file. Adjust the `main|master` list in the hook if your default branch differs.
 
 ### 2. Customize for your project
 
@@ -68,7 +77,7 @@ The gate is whatever command **fails closed** for your repo (lint, typecheck, in
 
 - **[`AGENTS.md`](AGENTS.md)** tells agents to read **RULES** + **MANIFEST** before acting.
 - **[`.cursor/rules/opengantry-gxt-substrate.mdc`](.cursor/rules/opengantry-gxt-substrate.mdc)** does the same for Cursor with `alwaysApply: true`.
-- For **enforcement** (commit message shape, manifest sync), add your own **pre-commit hook** or **CI job**—this repo documents the contract; it does not ship a validator binary yet.
+- **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)** to validate [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) on every push and PR. Extend it with commit-message lint (`[MSN-XXXX]`) or other gates as you tighten policy.
 
 ### 4. Run the loop (human + models)
 

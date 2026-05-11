@@ -16,6 +16,8 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 5. **Local history** — Put bulky traces under **`.gitagent/history/`** (git-ignored). Optionally generate a local **`MISSION_LOG.md`** from `git log` when you need a readable rollup; do not commit large trace dumps to mainline.
 
+6. **Branch `WORKER_LOG.md`** — With `git config core.hooksPath .githooks`, switching to a feature branch (not `main`/`master`) creates an empty repo-root **`WORKER_LOG.md`** from [`teacher/WORKER_LOG.template.md`](teacher/WORKER_LOG.template.md) if the file is absent. See [`.githooks/post-checkout`](../.githooks/post-checkout).
+
 ## Files (quick map)
 
 | Path | Role |
@@ -25,6 +27,8 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 | [`teacher/RULES.md`](teacher/RULES.md) | Law: SOD, trace rules, TMVC, Rule 4.4 manifest sync, tiers |
 | [`teacher/MISSION.template.md`](teacher/MISSION.template.md) | Work order: DoD + trace table + TMVC roots |
 | [`teacher/commit-template.md`](teacher/commit-template.md) | Greppable commit receipt with `[MSN-XXXX]` |
+| [`teacher/WORKER_LOG.template.md`](teacher/WORKER_LOG.template.md) | Empty scaffold for repo-root `WORKER_LOG.md` (used by `.githooks/post-checkout`) |
+| [`../.githooks/post-checkout`](../.githooks/post-checkout) | Hook: on feature-branch checkout, create `WORKER_LOG.md` if missing |
 
 ## Workflow (at a glance)
 
@@ -52,3 +56,5 @@ If you change what a skill is or add/remove a skill entry, **update `MANIFEST.js
 ## For automated agents (Cursor / CI)
 
 Repo root [**`AGENTS.md`**](../AGENTS.md) and [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) require reading **RULES** + **MANIFEST** before acting.
+
+Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** (Foreman `MANIFEST.json` checks).

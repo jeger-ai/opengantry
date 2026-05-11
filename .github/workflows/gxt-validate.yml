@@ -1,0 +1,35 @@
+# Validates OpenGantry substrate shipped in this repo (Foreman manifest).
+# Extend with commit-message checks ([MSN-XXXX]), lint, tests, etc.
+
+name: GXT validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate .gitagent/foreman/MANIFEST.json
+        run: |
+          set -euo pipefail
+          M=.gitagent/foreman/MANIFEST.json
+          test -f "$M"
+          jq -e . "$M" >/dev/null
+          jq -e '.schema_version | type == "string" and length > 0' "$M" >/dev/null
+          jq -e '.skills | type == "object" and (. | length > 0)' "$M" >/dev/null
+          jq -e '.path_risks | type == "object"' "$M" >/dev/null
+          jq -e '.risk_keywords | type == "array"' "$M" >/dev/null
+          while IFS= read -r k; do
+            jq -e --arg k "$k" '.skills[$k] | has("trust_threshold") and has("tmvc_roots") and has("forbidden_zones")' "$M" >/dev/null
+            jq -e --arg k "$k" '.skills[$k].tmvc_roots | type == "array"' "$M" >/dev/null
+            jq -e --arg k "$k" '.skills[$k].forbidden_zones | type == "array"' "$M" >/dev/null
+          done < <(jq -r '.skills | keys[]' "$M")
+          echo "MANIFEST OK"

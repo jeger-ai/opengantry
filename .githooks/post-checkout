@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# post-checkout: create empty WORKER_LOG.md on branch checkouts (feature branches only).
+# Git passes: $1 = previous HEAD, $2 = new HEAD, $3 = 1 if branch checkout, 0 if file checkout.
+set -euo pipefail
+
+[[ "${3:-0}" == "1" ]] || exit 0
+
+cd "$(git rev-parse --show-toplevel)"
+
+# Detached HEAD — skip
+branch="$(git symbolic-ref -q --short HEAD 2>/dev/null)" || exit 0
+
+# Default branches — skip (edit if your primary branch differs)
+case "$branch" in
+  main|master) exit 0 ;;
+esac
+
+log_file="WORKER_LOG.md"
+[[ -f "$log_file" ]] && exit 0
+
+template=".gitagent/teacher/WORKER_LOG.template.md"
+if [[ -f "$template" ]]; then
+  cp "$template" "$log_file"
+else
+  printf '%s\n\n' '# WORKER_LOG' >"$log_file"
+fi
