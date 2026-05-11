@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.5.0",
+  "skills": {
+    "ui-ralph": {
+      "desc": "UI components and styles within declared roots.",
+      "trust_threshold": "Tier-1",
+      "tmvc_roots": ["src/components/", "src/styles/"],
+      "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
+    },
+    "logic-ralph": {
+      "desc": "Application logic and utilities within declared roots.",
+      "trust_threshold": "Tier-2",
+      "tmvc_roots": ["src/lib/", "src/utils/"],
+      "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
+    },
+    "substrate-ralph": {
+      "desc": "Reserved for high-risk substrate work; requires Teacher mission.",
+      "trust_threshold": "Tier-3",
+      "tmvc_roots": [],
+      "forbidden_zones": []
+    }
+  },
+  "path_risks": {
+    ".gitagent/": "Tier-3",
+    "src/core/": "Tier-3",
+    "src/auth/": "Tier-3",
+    "src/db/schema/": "Tier-3"
+  },
+  "risk_keywords": ["refactor", "migrate", "delete", "security", "schema"]
+}

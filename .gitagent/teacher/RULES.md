@@ -1,0 +1,41 @@
+# OpenGantry Rules (v0.5.0 — Forensic Truth)
+
+Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
+
+## 1. Governance & risk tiers
+
+- **Tier 1 (SAFE)**: Routine work; deterministic gate required; single-provider automated verifier permitted when trace mapping is satisfied.
+- **Tier 2 (LOGIC)**: Deterministic gate required; single-provider verifier output is **ADVISORY_ONLY**; a human MUST audit trace references before merge.
+- **Tier 3 (SUBSTRATE)**: Multi-provider verification **SHOULD** be used when available; if only one provider exists, a **mandatory full human audit** of trace-mapped evidence and gate logs is required before merge.
+
+## 2. Segregation of duties (SOD)
+
+- The agent that executes the gate command (Executor) MUST NOT be the same agent that declares the gate **PASS** (Verifier).
+- Mission law (work order) is Teacher-owned; workers MUST NOT modify mission law during execution without Teacher re-legislation.
+
+## 3. Trace-mapped verification (anti-lie)
+
+- For every claimed verifier **PASS**, the Verifier MUST provide a **Trace Reference**: a verbatim substring copied from `WORKER_LOG.md` and an anchor (**line number** or **timestamp**) that ties the quote to the execution trace.
+- Verifiers MUST NOT use source-code quotations as the sole or primary evidence for PASS; code may supplement only after a valid trace reference exists.
+- If the quoted substring does **not** appear in `WORKER_LOG.md`, or no valid trace reference is provided for a claimed PASS → **Evidence Tampering** → the mission MUST auto-fail (no merge).
+
+## 4. Dynamic TMVC (roots + context requests)
+
+- TMVC is anchored by **tmvc_roots** from [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) unless the Teacher narrows scope further in the mission.
+- Workers MAY discover and edit files only under declared **tmvc_roots** (recursive within each root) unless the mission explicitly allows expansion steps.
+- Any access **outside** the effective TMVC boundary MUST be preceded by a **Context Request** recorded in `WORKER_LOG.md` (path, reason, proposed files). The Verifier MUST accept or reject before such access proceeds.
+- Expansion into any **forbidden_zones** path (per manifest) MUST NOT proceed; escalate to Teacher or fail closed per mission.
+
+## 5. Rule 4.4 — Teacher-driven manifest sync
+
+- Any change that adds, removes, or renames a skill entry or materially edits per-skill fields in `MANIFEST.json` MUST include those manifest edits in the **same commit set** as the skill definition change.
+- The Verifier MUST fail the mission if manifest state does not match the repository’s skill reality.
+
+## 6. Git-native mission index
+
+- Every mission-related commit message MUST start with **`[MSN-XXXX]`** (four digits, e.g. `MSN-0007`) so history is greppable: `git log --grep='MSN-0007'`.
+- No tracked synthetic mission-history index file is required in the repository; git history is the index.
+
+## 7. Local history (no bloat)
+
+- Bulky traces live under `.gitagent/history/` (git-ignored). Optional local `MISSION_LOG.md` may be generated from `git log` when needed; it MUST NOT be required in-repo for v0.5.0.
