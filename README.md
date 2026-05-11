@@ -77,7 +77,17 @@ The gate is whatever command **fails closed** for your repo (lint, typecheck, in
 
 - **[`AGENTS.md`](AGENTS.md)** tells agents to read **RULES** + **MANIFEST** before acting.
 - **[`.cursor/rules/opengantry-gxt-substrate.mdc`](.cursor/rules/opengantry-gxt-substrate.mdc)** does the same for Cursor with `alwaysApply: true`.
-- **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)** to validate [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) on every push and PR. Extend it with commit-message lint (`[MSN-XXXX]`) or other gates as you tighten policy.
+- **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)**:
+  - **Manifest:** validates [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) on every **push** and **pull_request** (via [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) `manifest`).
+  - **MSN (PR only, path-scoped):** on **pull_request** only, any **non-merge** commit in the PR range that touches `.gitagent/`, repo-root `WORKER_LOG.md`, `.githooks/`, or [`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml) must have a subject starting with **`[MSN-NNNN]`** (four digits). Other paths (e.g. root `README.md` only) do not trigger this check.
+- **Local:** run [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) before push (requires `jq` and `git`):
+
+```bash
+./scripts/validate-gxt.sh manifest
+./scripts/validate-gxt.sh msn origin/main HEAD   # after: git fetch origin
+# or both:
+./scripts/validate-gxt.sh all origin/main HEAD
+```
 
 ### 4. Run the loop (human + models)
 

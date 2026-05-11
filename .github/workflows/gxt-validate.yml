@@ -1,5 +1,12 @@
-# Validates OpenGantry substrate shipped in this repo (Foreman manifest).
-# Extend with commit-message checks ([MSN-XXXX]), lint, tests, etc.
+# Validates OpenGantry substrate: Foreman MANIFEST + path-scoped [MSN-NNNN] on PRs.
+#
+# MSN policy (pull_request only): commits that touch any of the following must have a
+# subject starting with [MSN-NNNN] (four digits):
+#   - .gitagent/ (any path under)
+#   - WORKER_LOG.md (repo root)
+#   - .githooks/ (any path under)
+#   - .github/workflows/gxt-validate.yml
+# Logic is implemented in scripts/validate-gxt.sh — keep workflow and script in sync.
 
 name: GXT validate
 
@@ -17,19 +24,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate .gitagent/foreman/MANIFEST.json
-        run: |
-          set -euo pipefail
-          M=.gitagent/foreman/MANIFEST.json
-          test -f "$M"
-          jq -e . "$M" >/dev/null
-          jq -e '.schema_version | type == "string" and length > 0' "$M" >/dev/null
-          jq -e '.skills | type == "object" and (. | length > 0)' "$M" >/dev/null
-          jq -e '.path_risks | type == "object"' "$M" >/dev/null
-          jq -e '.risk_keywords | type == "array"' "$M" >/dev/null
-          while IFS= read -r k; do
-            jq -e --arg k "$k" '.skills[$k] | has("trust_threshold") and has("tmvc_roots") and has("forbidden_zones")' "$M" >/dev/null
-            jq -e --arg k "$k" '.skills[$k].tmvc_roots | type == "array"' "$M" >/dev/null
-            jq -e --arg k "$k" '.skills[$k].forbidden_zones | type == "array"' "$M" >/dev/null
-          done < <(jq -r '.skills | keys[]' "$M")
-          echo "MANIFEST OK"
+      - name: Validate Foreman MANIFEST.json
+        run: ./scripts/validate-gxt.sh manifest
+
+  msn_commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Path-scoped MSN commit subjects
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./scripts/validate-gxt.sh msn "$BASE_SHA" "$HEAD_SHA"

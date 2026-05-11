@@ -57,4 +57,4 @@ If you change what a skill is or add/remove a skill entry, **update `MANIFEST.js
 
 Repo root [**`AGENTS.md`**](../AGENTS.md) and [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) require reading **RULES** + **MANIFEST** before acting.
 
-Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** (Foreman `MANIFEST.json` checks).
+Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `manifest` on push/PR; **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local mirror: **[`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh)** (`manifest` | `msn <base> <head>` | `all …`).
