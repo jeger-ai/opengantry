@@ -13,10 +13,10 @@
     "test": "npm run build && node --test dist/cli/tests/gapman.test.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^24.0.0",
     "typescript": "^5.7.2"
   },
   "dependencies": {

@@ -77,7 +77,7 @@ The gate is whatever command **fails closed** for your repo (lint, typecheck, in
 
 ### gapman CLI (MVP)
 
-After `npm ci` and `npm run build`, the `gapman` binary resolves to `dist/cli/index.js` (see [`package.json`](package.json)).
+Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, the `gapman` binary resolves to `dist/cli/index.js` (see [`package.json`](package.json)).
 
 | Command | Purpose |
 |--------|---------|
