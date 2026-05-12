@@ -248,7 +248,8 @@ export function assertTeacherMissionProof(
   if (!stamp) {
     const latest = rows[0]!;
     throw new Error(
-      `${CLI_NAME} verify: git-proof: NO_TEACHER_MSN_COMMIT — The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${ENV_TEACHER_EMAILS}).`,
+      `${CLI_NAME} verify: git-proof: NO_TEACHER_MSN_COMMIT — The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${ENV_TEACHER_EMAILS}). ` +
+        `Add that exact email (see \`git log -1 --format=%ae ${latest.hash}\`) to ${ENV_TEACHER_EMAILS}, comma-separated if several; matching is case-insensitive.`,
     );
   }
 
