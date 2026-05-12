@@ -1,0 +1,263 @@
+import fs from "node:fs";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import YAML from "yaml";
+import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
+
+/** Missions verified by `gapman verify` must live under this repo-relative prefix. */
+export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
+
+const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS";
+
+const DEFAULT_MSN_SCAN_DEPTH = 200;
+
+function pickMsnFromYamlRecord(o: Record<string, unknown>): string | null {
+  const a = o.msn_id;
+  const b = o.msnId;
+  for (const v of [a, b]) {
+    if (typeof v === "string" && MSN_ID_PATTERN.test(v)) return v;
+  }
+  return null;
+}
+
+/** Parse first YAML frontmatter block (`---` … `---`) when present. */
+function tryParseYamlFrontmatter(body: string): Record<string, unknown> | null {
+  const lines = body.split("\n");
+  if (lines[0]?.trim() !== "---") return null;
+  let end = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i]?.trim() === "---") {
+      end = i;
+      break;
+    }
+  }
+  if (end < 1) return null;
+  const block = lines.slice(1, end).join("\n");
+  if (!block.trim()) return null;
+  try {
+    const doc = YAML.parse(block) as unknown;
+    if (typeof doc !== "object" || doc === null) return null;
+    return doc as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Authoritative MSN for git-proof: `msn_id` / `msnId` in YAML or YAML frontmatter,
+ * line-start `[MSN-NNNN]`, or template `# Mission:` line.
+ */
+export function extractMsnIdFromMissionFile(missionAbsolutePath: string): string | null {
+  let body: string;
+  try {
+    body = fs.readFileSync(missionAbsolutePath, "utf8");
+  } catch {
+    return null;
+  }
+  const ext = path.extname(missionAbsolutePath).toLowerCase();
+
+  if (ext === ".yaml" || ext === ".yml") {
+    try {
+      const doc = YAML.parse(body) as unknown;
+      if (typeof doc === "object" && doc !== null) {
+        const fromRoot = pickMsnFromYamlRecord(doc as Record<string, unknown>);
+        if (fromRoot) return fromRoot;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  const fm = tryParseYamlFrontmatter(body);
+  if (fm) {
+    const fromFm = pickMsnFromYamlRecord(fm);
+    if (fromFm) return fromFm;
+  }
+
+  const bracket = body.match(/^\[(MSN-\d{4})\]/m);
+  if (bracket?.[1] && MSN_ID_PATTERN.test(bracket[1])) return bracket[1];
+
+  const missionHeading = body.match(/# Mission:\s*\[?(MSN-\d{4})\]?/i);
+  if (missionHeading?.[1]) return missionHeading[1];
+
+  return null;
+}
+
+function gitSpawn(root: string, args: string[]): { ok: boolean; stdout: string; stderr: string } {
+  const r = spawnSync("git", ["-C", root, ...args], {
+    encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  const stdout = typeof r.stdout === "string" ? r.stdout : "";
+  const stderr = typeof r.stderr === "string" ? r.stderr : "";
+  return { ok: r.status === 0, stdout, stderr };
+}
+
+/** Comma-separated author emails allowed to legislate missions (case-insensitive). */
+export function parseTeacherEmailsFromEnv(): string[] {
+  const raw = process.env[ENV_TEACHER_EMAILS];
+  if (!raw?.trim()) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 0);
+}
+
+export function missionPathRepoRelative(root: string, missionAbsolutePath: string): string {
+  const absMission = path.resolve(missionAbsolutePath);
+  const absRoot = path.resolve(root);
+  const rel = path.relative(absRoot, absMission);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) {
+    throw new Error(
+      `${CLI_NAME} verify: mission file is outside repository root (${missionAbsolutePath})`,
+    );
+  }
+  return rel.split(path.sep).join("/");
+}
+
+export function assertMissionUnderMissionsDir(repoRelMissionPath: string): void {
+  const norm = repoRelMissionPath.replace(/\\/g, "/");
+  if (!norm.startsWith(REL_MISSIONS_PREFIX)) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: MISSION_OUTSIDE_MISSIONS_DIR — mission must live under ${REL_MISSIONS_PREFIX} (got "${norm}")`,
+    );
+  }
+}
+
+export interface MsnCommitRow {
+  hash: string;
+  subject: string;
+  authorEmail: string;
+}
+
+/**
+ * True iff the commit **subject line** (`git log` %s) begins with `[msnId]` as legislation.
+ * Does not inspect the commit body — avoids matching `[MSN-…]` that appears only in the body.
+ */
+export function commitSubjectHasMsnPrefix(subject: string, msnId: string): boolean {
+  if (!MSN_ID_PATTERN.test(msnId)) return false;
+  const prefix = `[${msnId}]`;
+  const s = subject.trimStart();
+  return s.startsWith(prefix);
+}
+
+/**
+ * Newest-first commits among the last `scanDepth` history entries whose **subject** (%s) starts
+ * with `[msnId]`. Uses plain `git log` (no `--grep`) so matches cannot come from the body alone.
+ */
+export function listMsnSubjectCommits(
+  root: string,
+  msnId: string,
+  scanDepth: number = DEFAULT_MSN_SCAN_DEPTH,
+): MsnCommitRow[] {
+  const depth = Number.isFinite(scanDepth) && scanDepth > 0 ? Math.floor(scanDepth) : DEFAULT_MSN_SCAN_DEPTH;
+  const { ok, stdout, stderr } = gitSpawn(root, [
+    "log",
+    "-z",
+    "--format=%H%x1f%s%x1f%aE",
+    "-n",
+    String(depth),
+  ]);
+  if (!ok) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: git log failed: ${stderr.trim() || stdout.trim() || "unknown"}`,
+    );
+  }
+  if (!stdout.trim()) return [];
+  const chunks = stdout.split("\0").filter((c) => c.length > 0);
+  const rows: MsnCommitRow[] = [];
+  for (const chunk of chunks) {
+    const parts = chunk.split("\x1f");
+    if (parts.length < 3) continue;
+    const [hash, subject, authorEmail] = parts;
+    if (!hash || !subject || !authorEmail) continue;
+    if (!commitSubjectHasMsnPrefix(subject, msnId)) continue;
+    rows.push({ hash, subject, authorEmail });
+  }
+  return rows;
+}
+
+function normalizeChangedPath(p: string): string {
+  return p.trim().split(path.sep).join("/");
+}
+
+/** Paths changed in commit `hash` (repo-relative forward slashes). */
+export function listCommitChangedPaths(root: string, hash: string): string[] {
+  const { ok, stdout, stderr } = gitSpawn(root, ["show", "--name-only", "--pretty=format:", hash]);
+  if (!ok) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: git show failed for ${hash}: ${stderr.trim() || "unknown"}`,
+    );
+  }
+  return stdout
+    .split("\n")
+    .map((l) => normalizeChangedPath(l))
+    .filter((l) => l.length > 0);
+}
+
+function isTeacherEmail(authorEmail: string, teacherEmails: string[]): boolean {
+  return teacherEmails.includes(authorEmail.trim().toLowerCase());
+}
+
+function commitTouchesMission(changed: string[], repoRelMission: string): boolean {
+  const normMission = repoRelMission.replace(/\\/g, "/");
+  return changed.some((p) => p.replace(/\\/g, "/") === normMission);
+}
+
+export interface TeacherMissionProofOptions {
+  /** Max commits to scan in `git log` (default 200). */
+  scanDepth?: number;
+}
+
+/**
+ * Forensic gate (v0.6.2): MSN is read from the mission file; the most recent
+ * Teacher-authored commit whose subject starts with `[MSN-XXXX]` must modify
+ * that mission path. Returns the resolved MSN id.
+ */
+export function assertTeacherMissionProof(
+  root: string,
+  missionAbsolutePath: string,
+  options?: TeacherMissionProofOptions,
+): string {
+  const msnId = extractMsnIdFromMissionFile(missionAbsolutePath);
+  if (!msnId || !MSN_ID_PATTERN.test(msnId)) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: MISSION_MISSING_MSN — The mission file is missing a valid [MSN-XXXX] identifier (YAML/frontmatter msn_id or msnId, line-start [MSN-NNNN], or # Mission: line).`,
+    );
+  }
+
+  const teacherEmails = parseTeacherEmailsFromEnv();
+  if (teacherEmails.length === 0) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: TEACHER_IDENTITY_UNCONFIGURED — Set GAPMAN_TEACHER_EMAILS in your environment to define who can legislate.`,
+    );
+  }
+
+  const repoRelMission = missionPathRepoRelative(root, missionAbsolutePath);
+  assertMissionUnderMissionsDir(repoRelMission);
+
+  const scanDepth = options?.scanDepth;
+  const rows = listMsnSubjectCommits(root, msnId, scanDepth);
+  if (rows.length === 0) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: NO_MSN_COMMITS — No commits found starting with [${msnId}]. Did you commit the mission?`,
+    );
+  }
+
+  const stamp = rows.find((r) => isTeacherEmail(r.authorEmail, teacherEmails));
+  if (!stamp) {
+    const latest = rows[0]!;
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: NO_TEACHER_MSN_COMMIT — The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${ENV_TEACHER_EMAILS}).`,
+    );
+  }
+
+  const changed = listCommitChangedPaths(root, stamp.hash);
+  if (!commitTouchesMission(changed, repoRelMission)) {
+    throw new Error(
+      `${CLI_NAME} verify: git-proof: MISSION_FILE_NOT_MODIFIED_BY_TEACHER — The Teacher's commit for [${msnId}] did not include this mission file (${repoRelMission}).`,
+    );
+  }
+
+  return msnId;
+}

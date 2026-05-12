@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import {
-  REL_MISSION_SCHEMA,
-} from "./constants.js";
+import { REL_MISSION_SCHEMA, MSN_ID_PATTERN } from "./constants.js";
+import { extractMsnIdFromMissionFile } from "./git-proof.js";
 import type { GateSpec, ParsedMission, TraceRow, YamlMission } from "./types.js";
 
 const TRACE_SECTION_MARKER = "## 4. Verification trace";
@@ -20,7 +19,9 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
   const msnMatch = body.match(/# Mission:\s*\[?(MSN-\d{4})\]?/i);
   const skillMatch = body.match(/\*\*Skill key:\*\*\s*\[?[^\]]*?`?([a-z0-9-]+)`?/i);
   const commandMatch = body.match(/\*\*Command:\*\*\s*`([^`]+)`/);
-  const criteriaMatch = body.match(/\*\*Success criteria:\*\*\s*\[?([^\]\n]+)\]?/);
+  const criteriaMatch =
+    body.match(/\*\*Success criteria:\*\*\s*\[?([^\]\n]+)\]?/) ??
+    body.match(/\*\*Success:\*\*\s*\[?([^\]\n]+)\]?/i);
 
   const gateCommand = commandMatch?.[1]?.trim() ?? null;
   const successRaw = criteriaMatch?.[1]?.trim() ?? null;
@@ -40,6 +41,18 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
   };
 }
 
+/** Markdown pipe-table separator: every non-empty cell is only dashes (optional colons for alignment). */
+export function isMarkdownTableSeparatorRow(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|")) return false;
+  const cells = trimmed
+    .split("|")
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0);
+  if (cells.length < 2) return false;
+  return cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
 function parseTraceTable(body: string): TraceRow[] {
   const rows: TraceRow[] = [];
   const sectionStart = body.indexOf(TRACE_SECTION_MARKER);
@@ -53,7 +66,7 @@ function parseTraceTable(body: string): TraceRow[] {
       continue;
     }
     if (!insideTable) continue;
-    if (line.trim().startsWith("|") && line.includes("---")) continue;
+    if (isMarkdownTableSeparatorRow(line)) continue;
 
     if (!line.trim().startsWith("|")) {
       if (rows.length > 0) break;
@@ -90,8 +103,14 @@ function assertYamlMissionShape(data: unknown, filePath: string): asserts data i
     throw new Error(`gapman mission: ${filePath}: root must be an object`);
   }
   const o = data as Record<string, unknown>;
-  if (typeof o.msn_id !== "string" || !/^MSN-[0-9]{4}$/.test(o.msn_id)) {
-    throw new Error(`gapman mission: ${filePath}: msn_id must match MSN-NNNN`);
+  const msnRaw =
+    typeof o.msn_id === "string" && MSN_ID_PATTERN.test(o.msn_id)
+      ? o.msn_id
+      : typeof o.msnId === "string" && MSN_ID_PATTERN.test(o.msnId)
+        ? o.msnId
+        : null;
+  if (!msnRaw) {
+    throw new Error(`gapman mission: ${filePath}: msn_id or msnId must match MSN-NNNN`);
   }
   if (typeof o.skill_key !== "string" || o.skill_key.length === 0) {
     throw new Error(`gapman mission: ${filePath}: skill_key required`);
@@ -140,7 +159,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     status: r.status,
   }));
   return {
-    msnId: data.msn_id,
+    msnId: (data.msn_id ?? data.msnId)!,
     skillKey: data.skill_key,
     gate: {
       command: data.gate_command,
@@ -162,10 +181,15 @@ export function parseMissionFile(root: string, filePath: string): ParsedMission 
   const absolute = path.isAbsolute(filePath) ? filePath : path.join(root, filePath);
   const body = fs.readFileSync(absolute, "utf8");
   const ext = path.extname(absolute).toLowerCase();
-  if (ext === ".yaml" || ext === ".yml") {
-    return validateYamlMission(root, absolute, body);
+  const mission =
+    ext === ".yaml" || ext === ".yml"
+      ? validateYamlMission(root, absolute, body)
+      : parseMarkdownMission(absolute, body);
+  const proofMsn = extractMsnIdFromMissionFile(absolute);
+  if (proofMsn) {
+    return { ...mission, msnId: proofMsn };
   }
-  return parseMarkdownMission(absolute, body);
+  return mission;
 }
 
 export function assertMissionGatePresent(mission: ParsedMission): void {
