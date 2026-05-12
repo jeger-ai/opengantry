@@ -1,97 +1,99 @@
 import type { Manifest, TriageResult } from "./types.js";
 
-function norm(s: string): string {
-  return s.toLowerCase();
+function normalizeIntent(text: string): string {
+  return text.toLowerCase();
 }
 
-/** Normalize path prefix for risk check: ensure trailing slash for directory-style keys */
-function pathUnderRisk(intentNorm: string, riskPath: string): boolean {
-  const p = riskPath.endsWith("/") ? riskPath.slice(0, -1) : riskPath;
-  const needle = norm(p);
-  if (intentNorm.includes(needle)) return true;
-  if (intentNorm.includes(needle + "/")) return true;
-  return false;
+function intentReferencesPathRisk(intentNorm: string, riskPath: string): boolean {
+  const trimmed = riskPath.endsWith("/") ? riskPath.slice(0, -1) : riskPath;
+  const needle = normalizeIntent(trimmed);
+  return intentNorm.includes(needle) || intentNorm.includes(`${needle}/`);
 }
 
-function hardGateEscalation(intent: string, manifest: Manifest): { escalate: boolean; reason: string } {
-  const i = norm(intent);
-  for (const [rp] of Object.entries(manifest.path_risks)) {
-    if (pathUnderRisk(i, rp)) {
-      return { escalate: true, reason: `Intent references path under path_risks: ${rp}` };
+function shouldEscalateForRisk(intent: string, manifest: Manifest): { escalate: boolean; reason: string } {
+  const intentNorm = normalizeIntent(intent);
+  for (const riskPath of Object.keys(manifest.path_risks)) {
+    if (intentReferencesPathRisk(intentNorm, riskPath)) {
+      return { escalate: true, reason: `Intent references path under path_risks: ${riskPath}` };
     }
   }
   for (const kw of manifest.risk_keywords) {
-    if (i.includes(norm(kw))) {
+    if (intentNorm.includes(normalizeIntent(kw))) {
       return { escalate: true, reason: `Intent contains risk_keyword: ${kw}` };
     }
   }
   return { escalate: false, reason: "" };
 }
 
-function skillMentioned(intentNorm: string, skillKey: string): boolean {
-  const k = norm(skillKey);
-  if (intentNorm.includes(k)) return true;
-  const parts = skillKey.split("-");
-  if (parts.length >= 2 && intentNorm.includes(norm(parts[0]!))) return true;
+function skillMentionedInIntent(intentNorm: string, skillKey: string): boolean {
+  const fullKey = normalizeIntent(skillKey);
+  if (intentNorm.includes(fullKey)) return true;
+  const firstSegment = skillKey.split("-")[0];
+  if (firstSegment && intentNorm.includes(normalizeIntent(firstSegment))) return true;
   return false;
 }
 
-/**
- * Foreman-style triage (manifest-only), aligned with .gitagent/foreman/SOUL.md
- */
-export function triageIntent(intent: string, manifest: Manifest): TriageResult {
-  const hg = hardGateEscalation(intent, manifest);
-  if (hg.escalate) {
-    return {
-      action: "LEGISLATIVE_ESCALATION",
-      skill_key: "NONE",
-      risk_tier: "Tier-3",
-      tmvc_roots: [],
-      forbidden_zones: [],
-      reason: hg.reason,
-    };
-  }
-
-  const i = norm(intent);
-  const matches: string[] = [];
-  for (const key of Object.keys(manifest.skills)) {
-    if (skillMentioned(i, key)) matches.push(key);
-  }
-
-  if (matches.length === 1) {
-    const skill_key = matches[0]!;
-    const sk = manifest.skills[skill_key]!;
-    return {
-      action: "DIRECT_EXECUTION",
-      skill_key,
-      risk_tier: String(sk.trust_threshold),
-      tmvc_roots: [...sk.tmvc_roots],
-      forbidden_zones: [...sk.forbidden_zones],
-      reason: `Single confident skill match: ${skill_key}`,
-    };
-  }
-
-  if (matches.length === 0) {
-    return {
-      action: "LEGISLATIVE_ESCALATION",
-      skill_key: "NONE",
-      risk_tier: "Tier-3",
-      tmvc_roots: [],
-      forbidden_zones: [],
-      reason: "No confident skill_key match in intent (ambiguous or missing)",
-    };
-  }
-
+function legislativeEscalation(reason: string): TriageResult {
   return {
     action: "LEGISLATIVE_ESCALATION",
     skill_key: "NONE",
     risk_tier: "Tier-3",
     tmvc_roots: [],
     forbidden_zones: [],
-    reason: `Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`,
+    reason,
   };
 }
 
-export function formatTriageJson(r: TriageResult): string {
-  return JSON.stringify(r, null, 2);
+function directExecution(skillKey: string, manifest: Manifest): TriageResult {
+  const skill = manifest.skills[skillKey]!;
+  return {
+    action: "DIRECT_EXECUTION",
+    skill_key: skillKey,
+    risk_tier: String(skill.trust_threshold),
+    tmvc_roots: [...skill.tmvc_roots],
+    forbidden_zones: [...skill.forbidden_zones],
+    reason: `Single confident skill match: ${skillKey}`,
+  };
+}
+
+function matchingSkillKeys(intentNorm: string, manifest: Manifest): string[] {
+  const keys = Object.keys(manifest.skills);
+  return keys.filter((key) => skillMentionedInIntent(intentNorm, key));
+}
+
+/**
+ * Foreman-style triage (manifest-only), aligned with .gitagent/foreman/SOUL.md
+ */
+export function triageIntent(intent: string, manifest: Manifest): TriageResult {
+  const risk = shouldEscalateForRisk(intent, manifest);
+  if (risk.escalate) {
+    return legislativeEscalation(risk.reason);
+  }
+
+  const intentNorm = normalizeIntent(intent);
+  const matches = matchingSkillKeys(intentNorm, manifest);
+
+  if (matches.length === 1) {
+    return directExecution(matches[0]!, manifest);
+  }
+  if (matches.length === 0) {
+    return legislativeEscalation("No confident skill_key match in intent (ambiguous or missing)");
+  }
+  return legislativeEscalation(`Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`);
+}
+
+export function formatTriageJson(result: TriageResult): string {
+  return JSON.stringify(result, null, 2);
+}
+
+export function formatTriageHuman(result: TriageResult): string {
+  const lines = [
+    `Action: ${result.action}`,
+    `Skill_key: ${result.skill_key}`,
+    `Risk_tier: ${result.risk_tier}`,
+    `tmvc_roots: ${JSON.stringify(result.tmvc_roots)}`,
+    `forbidden_zones: ${JSON.stringify(result.forbidden_zones)}`,
+    `Reason: ${result.reason}`,
+  ];
+  return lines.join("\n");
 }

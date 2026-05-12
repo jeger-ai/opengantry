@@ -44,3 +44,17 @@ export interface ParsedMission {
   traceRows: TraceRow[];
   rawPath: string;
 }
+
+/** Structured mission on disk (YAML), validated by gapman */
+export interface YamlMission {
+  msn_id: string;
+  skill_key: string;
+  gate_command: string;
+  gate_success_substring?: string | null;
+  trace_rows?: Array<{
+    dod_id: string;
+    trace_quote: string;
+    anchor: string;
+    status: string;
+  }>;
+}

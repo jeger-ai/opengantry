@@ -6,7 +6,7 @@ import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { loadManifest } from "../lib/manifest.js";
 import { checkSkillManifestSync } from "../lib/skill-sync.js";
-import { triageIntent } from "../lib/triage-logic.js";
+import { formatTriageHuman, triageIntent } from "../lib/triage-logic.js";
 import { verifyTraceRows } from "../lib/trace.js";
 import { runVerify } from "../commands/verify.js";
 
@@ -15,6 +15,14 @@ test("triage: risk_keyword triggers escalation", () => {
   const m = loadManifest(root);
   const r = triageIntent("refactor ui-ralph", m);
   assert.equal(r.action, "LEGISLATIVE_ESCALATION");
+});
+
+test("formatTriageHuman includes action line", () => {
+  const root = getRepoRoot();
+  const m = loadManifest(root);
+  const r = triageIntent("logic-ralph only", m);
+  const text = formatTriageHuman(r);
+  assert.match(text, /^Action: DIRECT_EXECUTION/m);
 });
 
 test("triage: single skill direct execution", () => {

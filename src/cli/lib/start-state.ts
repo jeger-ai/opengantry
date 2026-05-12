@@ -2,6 +2,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { REL_HISTORY_DIR, REL_MANIFEST } from "./constants.js";
 import type { Manifest } from "./types.js";
 
 export interface StartStateSnapshot {
@@ -13,73 +14,93 @@ export interface StartStateSnapshot {
   tmvc_file_hashes: Record<string, string>;
 }
 
-function sha256(buf: Buffer | string): string {
-  return crypto.createHash("sha256").update(buf).digest("hex");
+function sha256(data: Buffer | string): string {
+  return crypto.createHash("sha256").update(data).digest("hex");
 }
 
-function listFilesUnder(root: string, relRoots: string[]): string[] {
-  const out = new Set<string>();
-  for (const r of relRoots) {
-    const base = path.join(root, r);
-    if (!fs.existsSync(base)) continue;
-    const st = fs.statSync(base);
-    if (st.isFile()) {
-      out.add(path.relative(root, base).replaceAll("\\", "/"));
+function collectRelativeFilePaths(repoRoot: string, relativeRoots: string[]): string[] {
+  const paths = new Set<string>();
+
+  for (const relRoot of relativeRoots) {
+    const absolute = path.join(repoRoot, relRoot);
+    if (!fs.existsSync(absolute)) continue;
+
+    const stat = fs.statSync(absolute);
+    if (stat.isFile()) {
+      paths.add(path.relative(repoRoot, absolute).replaceAll("\\", "/"));
       continue;
     }
+
     const walk = (dir: string) => {
-      for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-        const p = path.join(dir, ent.name);
-        if (ent.isDirectory()) walk(p);
-        else if (ent.isFile()) out.add(path.relative(root, p).replaceAll("\\", "/"));
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const child = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(child);
+        else if (entry.isFile()) paths.add(path.relative(repoRoot, child).replaceAll("\\", "/"));
       }
     };
-    walk(base);
+    walk(absolute);
   }
-  return [...out].sort();
+
+  return [...paths].sort();
 }
 
-export function captureStartState(root: string, manifest: Manifest, skillKey: string | null): StartStateSnapshot {
-  const head_sha = execSync("git rev-parse HEAD", { cwd: root, encoding: "utf8" }).trim();
-  let branch = "unknown";
-  try {
-    branch = execSync("git rev-parse --abbrev-ref HEAD", { cwd: root, encoding: "utf8" }).trim();
-  } catch {
-    /* detached */
-  }
-  const dirty =
-    execSync("git status --porcelain", { cwd: root, encoding: "utf8" }).trim().length > 0;
-  const manifestPath = path.join(root, ".gitagent/foreman/MANIFEST.json");
-  const manifestBuf = fs.readFileSync(manifestPath);
-  const tmvcRoots =
-    skillKey && manifest.skills[skillKey]
-      ? manifest.skills[skillKey]!.tmvc_roots
-      : ([] as string[]);
-  const files = listFilesUnder(root, tmvcRoots);
-  const tmvc_file_hashes: Record<string, string> = {};
-  for (const rel of files) {
-    const fp = path.join(root, rel);
+function hashFilesByRelativePath(repoRoot: string, relativePaths: string[]): Record<string, string> {
+  const hashes: Record<string, string> = {};
+  for (const rel of relativePaths) {
+    const absolute = path.join(repoRoot, rel);
     try {
-      tmvc_file_hashes[rel] = sha256(fs.readFileSync(fp));
+      hashes[rel] = sha256(fs.readFileSync(absolute));
     } catch {
-      /* skip unreadable */
+      /* unreadable — skip */
     }
   }
+  return hashes;
+}
+
+function readCurrentBranch(repoRoot: string): string {
+  try {
+    return execSync("git rev-parse --abbrev-ref HEAD", { cwd: repoRoot, encoding: "utf8" }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+function isWorkingTreeDirty(repoRoot: string): boolean {
+  return execSync("git status --porcelain", { cwd: repoRoot, encoding: "utf8" }).trim().length > 0;
+}
+
+function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[] {
+  if (!skillKey) return [];
+  const skill = manifest.skills[skillKey];
+  return skill ? [...skill.tmvc_roots] : [];
+}
+
+export function captureStartState(
+  repoRoot: string,
+  manifest: Manifest,
+  skillKey: string | null,
+): StartStateSnapshot {
+  const headSha = execSync("git rev-parse HEAD", { cwd: repoRoot, encoding: "utf8" }).trim();
+  const manifestPath = path.join(repoRoot, REL_MANIFEST);
+  const manifestBytes = fs.readFileSync(manifestPath);
+  const roots = tmvcRootsForSkill(manifest, skillKey);
+  const trackedFiles = collectRelativeFilePaths(repoRoot, roots);
+
   return {
     captured_at: new Date().toISOString(),
-    head_sha,
-    branch,
-    dirty,
-    manifest_sha256: sha256(manifestBuf),
-    tmvc_file_hashes,
+    head_sha: headSha,
+    branch: readCurrentBranch(repoRoot),
+    dirty: isWorkingTreeDirty(repoRoot),
+    manifest_sha256: sha256(manifestBytes),
+    tmvc_file_hashes: hashFilesByRelativePath(repoRoot, trackedFiles),
   };
 }
 
-export function writeSnapshot(root: string, snapshot: StartStateSnapshot, msnId: string): string {
-  const hist = path.join(root, ".gitagent/history");
-  fs.mkdirSync(hist, { recursive: true });
-  const safe = msnId.replace(/[^\w.-]+/g, "_");
-  const out = path.join(hist, `start-state.${safe}.json`);
-  fs.writeFileSync(out, JSON.stringify(snapshot, null, 2), "utf8");
-  return out;
+export function writeSnapshot(repoRoot: string, snapshot: StartStateSnapshot, msnId: string): string {
+  const historyDir = path.join(repoRoot, REL_HISTORY_DIR);
+  fs.mkdirSync(historyDir, { recursive: true });
+  const safeName = msnId.replace(/[^\w.-]+/g, "_");
+  const outFile = path.join(historyDir, `start-state.${safeName}.json`);
+  fs.writeFileSync(outFile, JSON.stringify(snapshot, null, 2), "utf8");
+  return outFile;
 }

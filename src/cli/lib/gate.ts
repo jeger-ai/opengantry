@@ -1,6 +1,8 @@
 import { spawnSync } from "node:child_process";
 import type { GateSpec } from "./types.js";
 
+const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
+
 export interface GateRunResult {
   exitCode: number | null;
   stdout: string;
@@ -8,23 +10,25 @@ export interface GateRunResult {
   combined: string;
 }
 
-export function runGate(cwd: string, spec: GateSpec): GateRunResult {
-  const shell = process.platform === "win32" ? true : "/bin/sh";
+function shellForPlatform(): boolean | string {
+  return process.platform === "win32" ? true : "/bin/sh";
+}
+
+export function runGate(workingDirectory: string, spec: GateSpec): GateRunResult {
   const proc = spawnSync(spec.command, {
-    cwd,
-    shell,
+    cwd: workingDirectory,
+    shell: shellForPlatform(),
     encoding: "utf8",
-    maxBuffer: 20 * 1024 * 1024,
-    env: { ...process.env },
+    maxBuffer: MAX_IO_BUFFER_BYTES,
+    env: process.env,
   });
   const stdout = proc.stdout ?? "";
   const stderr = proc.stderr ?? "";
-  const combined = `${stdout}\n${stderr}`;
   return {
     exitCode: proc.status,
     stdout,
     stderr,
-    combined,
+    combined: `${stdout}\n${stderr}`,
   };
 }
 

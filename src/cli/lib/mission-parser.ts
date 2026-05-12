@@ -1,94 +1,88 @@
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import type { GateSpec, ParsedMission, TraceRow } from "./types.js";
+import {
+  REL_MISSION_SCHEMA,
+} from "./constants.js";
+import type { GateSpec, ParsedMission, TraceRow, YamlMission } from "./types.js";
+
+const TRACE_SECTION_MARKER = "## 4. Verification trace";
+
+function gateFromMarkdown(successCriteria: string | null): string | null {
+  if (!successCriteria?.trim()) return null;
+  const lower = successCriteria.toLowerCase();
+  if (lower.includes("exit code")) return null;
+  return successCriteria.trim();
+}
 
 /** Parse MISSION.template-style markdown */
 export function parseMarkdownMission(filePath: string, body: string): ParsedMission {
-  const msn = body.match(/# Mission:\s*\[?(MSN-\d{4})\]?/i);
-  const skill = body.match(/\*\*Skill key:\*\*\s*\[?[^\]]*?`?([a-z0-9-]+)`?/i);
-  let gateCommand: string | null = null;
-  let successCriteria: string | null = null;
-  const gateBlock = body.match(/\*\*Command:\*\*\s*`([^`]+)`/);
-  if (gateBlock) gateCommand = gateBlock[1]!.trim();
-  const sc = body.match(/\*\*Success criteria:\*\*\s*\[?([^\]\n]+)\]?/);
-  if (sc) successCriteria = sc[1]!.trim();
+  const msnMatch = body.match(/# Mission:\s*\[?(MSN-\d{4})\]?/i);
+  const skillMatch = body.match(/\*\*Skill key:\*\*\s*\[?[^\]]*?`?([a-z0-9-]+)`?/i);
+  const commandMatch = body.match(/\*\*Command:\*\*\s*`([^`]+)`/);
+  const criteriaMatch = body.match(/\*\*Success criteria:\*\*\s*\[?([^\]\n]+)\]?/);
 
-  const traceRows = parseTraceTable(body);
+  const gateCommand = commandMatch?.[1]?.trim() ?? null;
+  const successRaw = criteriaMatch?.[1]?.trim() ?? null;
 
   return {
-    msnId: msn?.[1] ?? null,
-    skillKey: skill?.[1] ?? null,
+    msnId: msnMatch?.[1] ?? null,
+    skillKey: skillMatch?.[1] ?? null,
     gate:
       gateCommand !== null
         ? {
             command: gateCommand,
-            successSubstring:
-              successCriteria &&
-              !successCriteria.toLowerCase().includes("exit code") &&
-              successCriteria.length > 0
-                ? successCriteria
-                : null,
+            successSubstring: gateFromMarkdown(successRaw),
           }
         : null,
-    traceRows,
+    traceRows: parseTraceTable(body),
     rawPath: filePath,
   };
 }
 
 function parseTraceTable(body: string): TraceRow[] {
   const rows: TraceRow[] = [];
-  const sectionIdx = body.indexOf("## 4. Verification trace");
-  const slice = sectionIdx >= 0 ? body.slice(sectionIdx) : body;
-  const lines = slice.split("\n");
-  let inTable = false;
+  const sectionStart = body.indexOf(TRACE_SECTION_MARKER);
+  const relevant = sectionStart >= 0 ? body.slice(sectionStart) : body;
+  const lines = relevant.split("\n");
+  let insideTable = false;
+
   for (const line of lines) {
     if (line.includes("| DoD # |")) {
-      inTable = true;
+      insideTable = true;
       continue;
     }
-    if (!inTable) continue;
+    if (!insideTable) continue;
     if (line.trim().startsWith("|") && line.includes("---")) continue;
+
     if (!line.trim().startsWith("|")) {
       if (rows.length > 0) break;
       continue;
     }
+
     const cells = line
       .split("|")
       .map((c) => c.trim())
       .filter((c) => c.length > 0);
     if (cells.length < 4) continue;
-    const dodId = cells[0]!;
-    if (dodId === "DoD #" || dodId.match(/^#+$/)) continue;
-    const traceQuote = cells[1]!;
-    const anchor = cells[2]!;
-    const status = cells[3]!;
+
+    const [dodId, traceQuote, anchor, status] = cells;
+    if (!dodId || !traceQuote || !anchor || !status) continue;
+    if (dodId === "DoD #" || /^#+$/.test(dodId)) continue;
     if (!traceQuote.trim()) continue;
-    if (!status.match(/PASS|FAIL/i)) continue;
+    if (!/PASS|FAIL/i.test(status)) continue;
+
     rows.push({ dodId, traceQuote, anchor, status });
   }
   return rows;
 }
 
-export interface YamlMission {
-  msn_id: string;
-  skill_key: string;
-  gate_command: string;
-  gate_success_substring?: string | null;
-  trace_rows?: Array<{
-    dod_id: string;
-    trace_quote: string;
-    anchor: string;
-    status: string;
-  }>;
-}
-
-export function loadMissionSchema(root: string): object {
-  const p = path.join(root, ".gitagent/teacher/MISSION.schema.yaml");
-  if (!fs.existsSync(p)) throw new Error(`gapman: missing MISSION schema at ${p}`);
-  const doc = YAML.parse(fs.readFileSync(p, "utf8")) as Record<string, unknown>;
-  const { $schema: _s, ...rest } = doc;
-  return rest;
+export function ensureMissionSchemaFileExists(root: string): void {
+  const schemaPath = path.join(root, REL_MISSION_SCHEMA);
+  if (!fs.existsSync(schemaPath)) {
+    throw new Error(`gapman: missing MISSION schema at ${REL_MISSION_SCHEMA}`);
+  }
+  YAML.parse(fs.readFileSync(schemaPath, "utf8"));
 }
 
 function assertYamlMissionShape(data: unknown, filePath: string): asserts data is YamlMission {
@@ -117,58 +111,65 @@ function assertYamlMissionShape(data: unknown, filePath: string): asserts data i
       throw new Error(`gapman mission: ${filePath}: trace_rows must be an array`);
     }
     for (const row of o.trace_rows) {
-      if (typeof row !== "object" || row === null) {
-        throw new Error(`gapman mission: ${filePath}: trace_rows item must be object`);
-      }
-      const r = row as Record<string, unknown>;
-      for (const k of ["dod_id", "trace_quote", "anchor", "status"] as const) {
-        if (typeof r[k] !== "string") {
-          throw new Error(`gapman mission: ${filePath}: trace_rows.${k} must be string`);
-        }
-      }
-      if (!/^(PASS|FAIL|pass|fail)$/.test(String(r.status))) {
-        throw new Error(`gapman mission: ${filePath}: trace_rows.status must be PASS or FAIL`);
-      }
+      assertYamlTraceRow(row, filePath);
     }
   }
 }
 
-export function validateYamlMission(root: string, filePath: string, body: string): ParsedMission {
-  loadMissionSchema(root);
-  const data = YAML.parse(body) as unknown;
-  assertYamlMissionShape(data, filePath);
-  const m = data as YamlMission;
-  const traceRows: TraceRow[] = (m.trace_rows ?? []).map((r) => ({
+function assertYamlTraceRow(row: unknown, filePath: string): void {
+  if (typeof row !== "object" || row === null) {
+    throw new Error(`gapman mission: ${filePath}: trace_rows item must be object`);
+  }
+  const r = row as Record<string, unknown>;
+  const keys = ["dod_id", "trace_quote", "anchor", "status"] as const;
+  for (const k of keys) {
+    if (typeof r[k] !== "string") {
+      throw new Error(`gapman mission: ${filePath}: trace_rows.${k} must be string`);
+    }
+  }
+  if (!/^(PASS|FAIL|pass|fail)$/.test(String(r.status))) {
+    throw new Error(`gapman mission: ${filePath}: trace_rows.status must be PASS or FAIL`);
+  }
+}
+
+function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMission {
+  const traceRows: TraceRow[] = (data.trace_rows ?? []).map((r) => ({
     dodId: r.dod_id,
     traceQuote: r.trace_quote,
     anchor: r.anchor,
     status: r.status,
   }));
-  const gate: GateSpec = {
-    command: m.gate_command,
-    successSubstring: m.gate_success_substring ?? null,
-  };
   return {
-    msnId: m.msn_id,
-    skillKey: m.skill_key,
-    gate,
+    msnId: data.msn_id,
+    skillKey: data.skill_key,
+    gate: {
+      command: data.gate_command,
+      successSubstring: data.gate_success_substring ?? null,
+    },
     traceRows,
-    rawPath: filePath,
+    rawPath: absPath,
   };
+}
+
+export function validateYamlMission(root: string, filePath: string, body: string): ParsedMission {
+  ensureMissionSchemaFileExists(root);
+  const data = YAML.parse(body) as unknown;
+  assertYamlMissionShape(data, filePath);
+  return parsedMissionFromYaml(filePath, data);
 }
 
 export function parseMissionFile(root: string, filePath: string): ParsedMission {
-  const abs = path.isAbsolute(filePath) ? filePath : path.join(root, filePath);
-  const body = fs.readFileSync(abs, "utf8");
-  const ext = path.extname(abs).toLowerCase();
+  const absolute = path.isAbsolute(filePath) ? filePath : path.join(root, filePath);
+  const body = fs.readFileSync(absolute, "utf8");
+  const ext = path.extname(absolute).toLowerCase();
   if (ext === ".yaml" || ext === ".yml") {
-    return validateYamlMission(root, abs, body);
+    return validateYamlMission(root, absolute, body);
   }
-  return parseMarkdownMission(abs, body);
+  return parseMarkdownMission(absolute, body);
 }
 
-export function assertMissionGatePresent(m: ParsedMission): void {
-  if (!m.gate?.command) {
-    throw new Error(`gapman mission: no deterministic gate (Command) found in ${m.rawPath}`);
+export function assertMissionGatePresent(mission: ParsedMission): void {
+  if (!mission.gate?.command?.trim()) {
+    throw new Error(`gapman mission: no deterministic gate (Command) found in ${mission.rawPath}`);
   }
 }

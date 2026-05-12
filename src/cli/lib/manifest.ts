@@ -1,17 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
+import { REL_MANIFEST } from "./constants.js";
 import type { Manifest } from "./types.js";
 
-const MANIFEST_REL = ".gitagent/foreman/MANIFEST.json";
-
 export function manifestPath(root: string): string {
-  return path.join(root, MANIFEST_REL);
+  return path.join(root, REL_MANIFEST);
 }
 
 export function loadManifest(root: string): Manifest {
   const p = manifestPath(root);
   if (!fs.existsSync(p)) {
-    throw new Error(`gapman: missing ${MANIFEST_REL}`);
+    throw new Error(`gapman: missing ${REL_MANIFEST}`);
   }
   const raw = JSON.parse(fs.readFileSync(p, "utf8")) as unknown;
   validateManifestShape(raw);
