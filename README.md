@@ -63,6 +63,7 @@ Then `git switch -c your-feature` (or `git checkout -b …`): on branch checkout
   Set `path_risks`, `risk_keywords`, and each skill's `tmvc_roots`, `forbidden_zones`, and `trust_threshold` to match **your** directories and risk appetite.
 - Align **[`.gitagent/teacher/RULES.md`](.gitagent/teacher/RULES.md)** with your review policy (tiers, who counts as "human audit", merge gates).
 - Point **deterministic gates** in missions at **your** stack (`npm test`, `pytest`, `cargo test`, etc.).
+- Store mission files you intend to **`gapman verify`** under **`.gitagent/missions/`** and set **`GAPMAN_TEACHER_EMAILS`** so the Teacher’s legislation commits are recognized (see [gapman](#gapman-cli-mvp)).
 
 **Concrete gate example** (paste into a mission file; adjust paths and commands):
 
@@ -70,10 +71,10 @@ Then `git switch -c your-feature` (or `git checkout -b …`): on branch checkout
 ## 3. Deterministic Gate
 
 **Command:** `npm test -- src/components/Button.test.tsx`
-**Success:** process exits `0` and Jest output contains `Tests:       1 passed`
+**Success criteria:** process exits `0` and Jest output contains `Tests:       1 passed`
 ```
 
-The gate is whatever command **fails closed** for your repo (lint, typecheck, integration suite). One explicit command beats a vague "run tests somewhere."
+The gate is whatever command **fails closed** for your repo (lint, typecheck, integration suite). One explicit command beats a vague "run tests somewhere." Markdown missions must use the exact label **`**Success criteria:**`** (or the legacy alias `**Success:**`) so `gapman verify` can apply optional output substring checks.
 
 ### gapman CLI (MVP)
 
@@ -83,10 +84,12 @@ Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, 
 |--------|---------|
 | `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
 | `gapman status` | Human-readable report of the same checks. |
-| `gapman triage "<intent>"` | Foreman-style routing from `path_risks` + `risk_keywords` + skill keys ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output. `--emit-mission --msn MSN-0007` writes `ACTIVE_MISSION.md` from the template on **DIRECT_EXECUTION** only. |
+| `gapman triage "<intent>"` | Foreman-style routing ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output (may include non-binding `adr_hints` from [`.gitagent/out-of-scope/`](.gitagent/out-of-scope/README.md)). `--emit-mission --msn MSN-0007` writes `.gitagent/missions/ACTIVE_MISSION.md` by default on **DIRECT_EXECUTION** only; `--out <path>` overrides (repo-relative or absolute; use under `.gitagent/missions/` if you will **`gapman verify`**). |
 | `gapman mission validate --file <path>` | Validate a mission `.md` or `.yaml` (YAML checked against [`.gitagent/teacher/MISSION.schema.yaml`](.gitagent/teacher/MISSION.schema.yaml)). |
 | `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill’s `tmvc_roots`). |
-| `gapman verify --mission <path>` | Run the mission gate shell command, optional success substring match, then **hard-fail** if any **PASS** trace row’s quote/anchor is missing from `WORKER_LOG.md` (override with `--worker-log`). |
+| `gapman verify --mission <path>` | **Git-proof** (v0.6.2): mission must be under `.gitagent/missions/`; among the last 200 commits, the newest `[MSN-XXXX]` commit authored by a Teacher email in `GAPMAN_TEACHER_EMAILS` must touch that mission file. Then run the mission gate, optional success substring match, then **hard-fail** if any **PASS** trace row’s quote/anchor is missing from `WORKER_LOG.md` (override with `--worker-log`). |
+
+Set **`GAPMAN_TEACHER_EMAILS`** to a comma-separated list of Git **author emails** allowed to legislate missions (must match the committing Teacher’s `user.email` / `GIT_AUTHOR_EMAIL`).
 
 Structured YAML example: [`.gitagent/teacher/MISSION.example.yaml`](.gitagent/teacher/MISSION.example.yaml).
 

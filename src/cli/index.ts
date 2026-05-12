@@ -8,7 +8,7 @@ import { runVerify } from "./commands/verify.js";
 import { CLI_NAME } from "./lib/constants.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
-const VERSION = "0.5.0";
+const VERSION = "0.6.2";
 
 function buildProgram(): Command {
   const program = new Command();
@@ -33,9 +33,12 @@ function buildProgram(): Command {
     .description("Foreman-style triage from manifest (SOUL-aligned)")
     .argument("[intent...]", "User intent text")
     .option("--json", "Print JSON only")
-    .option("--emit-mission", "Write ACTIVE_MISSION.md from template (DIRECT_EXECUTION only)")
+    .option(
+      "--emit-mission",
+      "Write .gitagent/missions/ACTIVE_MISSION.md from template (DIRECT_EXECUTION only)",
+    )
     .option("--msn <id>", "Mission id for --emit-mission", "MSN-0000")
-    .option("--out <file>", "Output path for emitted mission")
+    .option("--out <file>", "Mission output path for --emit-mission (default .gitagent/missions/ACTIVE_MISSION.md; use under .gitagent/missions/ for gapman verify)")
     .action(async function (this: Command, intentParts: string[]) {
       const opts = this.opts<{
         json?: boolean;
@@ -80,7 +83,9 @@ function buildProgram(): Command {
 
   program
     .command("verify")
-    .description("Run deterministic gate + hard-stop trace mapping vs WORKER_LOG.md")
+    .description(
+      "Git-proof (Teacher + MSN) + deterministic gate + hard-stop trace mapping vs WORKER_LOG.md",
+    )
     .requiredOption("--mission <path>", "Mission file (.md or .yaml)")
     .option("--worker-log <path>", "Override WORKER_LOG.md path")
     .option("--cwd <dir>", "Working directory for gate command")

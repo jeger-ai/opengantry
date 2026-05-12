@@ -1,10 +1,10 @@
-# OpenGantry `.gitagent/` (v0.5.0 — Forensic Truth)
+# OpenGantry `.gitagent/` (v0.6.2 — Forensic Truth)
 
 This directory holds the **GXT substrate**: Foreman routing map, Teacher law, work-order template, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
 
 Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until `gapman` gains the remaining automation (history/receipt polish, etc.). The repo root **`gapman`** MVP CLI already covers `check`, `triage`, `mission`, and `verify` — see [README § gapman](../README.md#gapman-cli-mvp).
 
-## Forensic Truth (what v0.5.0 means)
+## Forensic Truth (what v0.6.2 adds on v0.5.0)
 
 1. **Trace mapping** — A verifier **PASS** is not a vibe. Each PASS **MUST** cite a verbatim quote from **`WORKER_LOG.md`** plus a **line number or timestamp** from that file. If the quote is missing or not found in the log → **Evidence Tampering** → fail (see [`.gitagent/teacher/RULES.md`](teacher/RULES.md)). *This ensures execution integrity by decoupling what was intended from what actually occurred.*
 
@@ -12,7 +12,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 3. **Dynamic TMVC** — Scope is **`tmvc_roots`** (recursive entry points), not necessarily every file listed. Anything **outside** the effective boundary needs a **Context Request** logged in `WORKER_LOG.md` before access. A **`forbidden_zone`** is not a soft limit: touching it without an approved, lawful path is a **security violation** — the loop **halts** (no merge, no “creative” bypass). The Verifier rejects the run; escalate to Teacher if policy needs to change.
 
-4. **Git-native mission index** — No synthetic mission index in git. Use **`[MSN-XXXX]`** at the start of commit subjects and grep history with tools you already have, e.g. `git log --grep='MSN-0042'`.
+4. **Git-native mission index** — No synthetic mission index in git. Use **`[MSN-XXXX]`** at the start of commit subjects and grep history with tools you already have, e.g. `git log --grep='MSN-0042'`. **`gapman verify`** additionally requires a **Teacher stamp**: among the last **200** commits, the newest `[MSN-XXXX]` commit whose author is in **`GAPMAN_TEACHER_EMAILS`** (see [README § gapman](../README.md#gapman-cli-mvp)) must modify the mission file under **`.gitagent/missions/`**. **`gapman triage`** may emit non-binding **`adr_hints`** when ACTIVE ADR `match_terms` overlap intent; Teacher still resolves ADRs during legislation.
 
 5. **Local history** — Put bulky traces under **`.gitagent/history/`** (git-ignored). Optionally generate a local **`MISSION_LOG.md`** from `git log` when you need a readable rollup; do not commit large trace dumps to mainline.
 
@@ -30,7 +30,8 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 | [`teacher/MISSION.example.yaml`](teacher/MISSION.example.yaml) | Example structured mission |
 | [`teacher/commit-template.md`](teacher/commit-template.md) | Greppable commit receipt with `[MSN-XXXX]` |
 | [`teacher/WORKER_LOG.template.md`](teacher/WORKER_LOG.template.md) | Empty scaffold for repo-root `WORKER_LOG.md` (used by `.githooks/post-checkout`) |
-| [`../.githooks/post-checkout`](../.githooks/post-checkout) | Hook: on feature-branch checkout, create `WORKER_LOG.md` if missing |
+| [`missions/README.md`](missions/README.md) | Canonical mission file location for `gapman verify` git-proof |
+| [`out-of-scope/README.md`](out-of-scope/README.md) | ADR-style decisions — **Teacher context only**; Foreman does not read |
 
 ## Workflow (at a glance)
 

@@ -16,6 +16,13 @@ export interface Manifest {
 
 export type TriageAction = "DIRECT_EXECUTION" | "LEGISLATIVE_ESCALATION";
 
+/** Non-binding ADR hint from `.gitagent/out-of-scope/` (Foreman does not route on this). */
+export interface AdrHint {
+  id: string;
+  title?: string;
+  note: string;
+}
+
 export interface TriageResult {
   action: TriageAction;
   skill_key: string | "NONE";
@@ -23,6 +30,8 @@ export interface TriageResult {
   tmvc_roots: string[];
   forbidden_zones: string[];
   reason: string;
+  /** Optional; never changes `action` — Teacher resolves ADRs during legislation. */
+  adr_hints?: AdrHint[];
 }
 
 export interface GateSpec {
@@ -47,7 +56,8 @@ export interface ParsedMission {
 
 /** Structured mission on disk (YAML), validated by gapman */
 export interface YamlMission {
-  msn_id: string;
+  msn_id?: string;
+  msnId?: string;
   skill_key: string;
   gate_command: string;
   gate_success_substring?: string | null;

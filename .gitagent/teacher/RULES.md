@@ -1,4 +1,4 @@
-# OpenGantry Rules (v0.5.0 — Forensic Truth)
+# OpenGantry Rules (v0.6.2 — Forensic Truth)
 
 Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
@@ -36,6 +36,14 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - Every mission-related commit message MUST start with **`[MSN-XXXX]`** (four digits, e.g. `MSN-0007`) so history is greppable: `git log --grep='MSN-0007'`.
 - No tracked synthetic mission-history index file is required in the repository; git history is the index.
 
+## 6.1 Teacher legislation proof (`gapman verify` v0.6.2)
+
+- Missions verified by **`gapman verify`** MUST live under **`.gitagent/missions/`** (repo-relative).
+- Before the deterministic gate runs, **`gapman verify`** requires **native Git evidence** that the Teacher legislated this mission for its MSN:
+  - Among the last **200** commits (configurable later), the **newest** commit whose subject begins with **`[MSN-XXXX]`** (matching the mission’s MSN) and whose **author email** is listed in **`GAPMAN_TEACHER_EMAILS`** (comma-separated allowlist) is the **Teacher stamp**.
+  - That stamp commit MUST **modify** the mission file passed to `--mission`.
+- Architectural ADRs under [`.gitagent/out-of-scope/`](../out-of-scope/) are the record of prior decisions. **Teacher** MUST review relevant ADRs when authoring or amending missions. **`gapman triage`** MAY emit non-binding `adr_hints` when ADR `match_terms` overlap intent; those hints do **not** change Foreman routing (still manifest-only binary).
+
 ## 7. Local history (no bloat)
 
-- Bulky traces live under `.gitagent/history/` (git-ignored). Optional local `MISSION_LOG.md` may be generated from `git log` when needed; it MUST NOT be required in-repo for v0.5.0.
+- Bulky traces live under `.gitagent/history/` (git-ignored). Optional local `MISSION_LOG.md` may be generated from `git log` when needed; it MUST NOT be required in-repo for v0.6.2.

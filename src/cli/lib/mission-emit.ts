@@ -28,6 +28,7 @@ export function emitActiveMissionFromTemplate(
   body = body.replace(SKILL_LINE_TEMPLATE_PATTERN, `- **Skill key:** \`${options.skillKey}\``);
 
   const outputPath = resolveMissionOutputPath(repoRoot, options.outPath);
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, body, "utf8");
   return outputPath;
 }

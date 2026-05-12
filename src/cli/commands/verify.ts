@@ -1,5 +1,6 @@
 import path from "node:path";
 import { CLI_NAME } from "../lib/constants.js";
+import { assertTeacherMissionProof } from "../lib/git-proof.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { gatePassed, runGate } from "../lib/gate.js";
 import { assertMissionGatePresent, parseMissionFile } from "../lib/mission-parser.js";
@@ -16,6 +17,16 @@ export function runVerify(options: VerifyOptions): void {
   const { root } = loadWorkspace();
   const mission = parseMissionFile(root, options.mission);
   assertMissionGatePresent(mission);
+  let proofMsnId: string;
+  try {
+    proofMsnId = assertTeacherMissionProof(root, mission.rawPath);
+  } catch (e) {
+    logError(e instanceof Error ? e.message : String(e));
+    setExitCode(1);
+    return;
+  }
+  logInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${proofMsnId})`);
+
   const gate = mission.gate!;
 
   const workDir = options.cwd ? path.resolve(root, options.cwd) : root;

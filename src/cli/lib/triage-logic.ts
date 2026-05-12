@@ -1,4 +1,6 @@
 import type { Manifest, TriageResult } from "./types.js";
+import { collectOutOfScopeAdrHints } from "./out-of-scope-hint.js";
+import { getRepoRoot } from "./git.js";
 
 function normalizeIntent(text: string): string {
   return text.toLowerCase();
@@ -33,6 +35,12 @@ function skillMentionedInIntent(intentNorm: string, skillKey: string): boolean {
   return false;
 }
 
+function withAdrHints(root: string, intent: string, result: TriageResult): TriageResult {
+  const hints = collectOutOfScopeAdrHints(root, normalizeIntent(intent));
+  if (hints.length === 0) return result;
+  return { ...result, adr_hints: hints };
+}
+
 function legislativeEscalation(reason: string): TriageResult {
   return {
     action: "LEGISLATIVE_ESCALATION",
@@ -62,24 +70,35 @@ function matchingSkillKeys(intentNorm: string, manifest: Manifest): string[] {
 }
 
 /**
- * Foreman-style triage (manifest-only), aligned with .gitagent/foreman/SOUL.md
+ * Foreman-style triage (manifest-only routing), aligned with .gitagent/foreman/SOUL.md.
+ * May attach non-binding `adr_hints` from `.gitagent/out-of-scope/` when ADR `match_terms`
+ * overlap intent; routing remains binary.
  */
 export function triageIntent(intent: string, manifest: Manifest): TriageResult {
+  const root = getRepoRoot();
   const risk = shouldEscalateForRisk(intent, manifest);
   if (risk.escalate) {
-    return legislativeEscalation(risk.reason);
+    return withAdrHints(root, intent, legislativeEscalation(risk.reason));
   }
 
   const intentNorm = normalizeIntent(intent);
   const matches = matchingSkillKeys(intentNorm, manifest);
 
   if (matches.length === 1) {
-    return directExecution(matches[0]!, manifest);
+    return withAdrHints(root, intent, directExecution(matches[0]!, manifest));
   }
   if (matches.length === 0) {
-    return legislativeEscalation("No confident skill_key match in intent (ambiguous or missing)");
+    return withAdrHints(
+      root,
+      intent,
+      legislativeEscalation("No confident skill_key match in intent (ambiguous or missing)"),
+    );
   }
-  return legislativeEscalation(`Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`);
+  return withAdrHints(
+    root,
+    intent,
+    legislativeEscalation(`Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`),
+  );
 }
 
 export function formatTriageJson(result: TriageResult): string {
@@ -95,5 +114,12 @@ export function formatTriageHuman(result: TriageResult): string {
     `forbidden_zones: ${JSON.stringify(result.forbidden_zones)}`,
     `Reason: ${result.reason}`,
   ];
+  if (result.adr_hints?.length) {
+    lines.push("ADR_hints (non-binding; Teacher confirms):");
+    for (const h of result.adr_hints) {
+      const title = h.title ? ` — ${h.title}` : "";
+      lines.push(`  - ${h.id}${title}: ${h.note}`);
+    }
+  }
   return lines.join("\n");
 }

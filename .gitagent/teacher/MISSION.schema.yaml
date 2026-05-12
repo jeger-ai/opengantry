@@ -6,11 +6,17 @@ title: OpenGantryMission
 type: object
 additionalProperties: false
 required:
-  - msn_id
   - skill_key
   - gate_command
+allOf:
+  - anyOf:
+      - required: [msn_id]
+      - required: [msnId]
 properties:
   msn_id:
+    type: string
+    pattern: "^MSN-[0-9]{4}$"
+  msnId:
     type: string
     pattern: "^MSN-[0-9]{4}$"
   skill_key:
