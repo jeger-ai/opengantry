@@ -4,7 +4,7 @@
 
 This repository is both the **specimen** and the **template**. You do not need to depend on OpenGantry as a package; you **copy the substrate** into your own repo and adapt it.
 
-**Protocol maturity:** substrate is labeled **v0.5.0** (pre-1.0): useful for real teams, honest about what is still manual until tooling like `gapman` exists. The sections **Human handbrake**, **Staying in sync**, and **Concrete gate example** below are **v0.5.1 README** guidance for adopters (the on-disk `schema_version` in `MANIFEST.json` may still read `0.5.0` until you bump it).
+**Protocol maturity:** substrate is labeled **v0.5.0** (pre-1.0): useful for real teams, honest about what is still evolving. This repo ships an MVP **`gapman`** Node CLI (see below) plus the legacy `validate-gxt.sh` script. The sections **Human handbrake**, **Staying in sync**, and **Concrete gate example** below are **v0.5.1 README** guidance for adopters (the on-disk `schema_version` in `MANIFEST.json` may still read `0.5.0` until you bump it).
 
 ## What you get
 
@@ -14,6 +14,7 @@ This repository is both the **specimen** and the **template**. You do not need t
 | **Routing map** (skills, roots, forbidden zones, path risks) | [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) |
 | **Foreman** (cheap, manifest-only triage) | [`.gitagent/foreman/SOUL.md`](.gitagent/foreman/SOUL.md) |
 | **Work order + commit receipt** | [`.gitagent/teacher/MISSION.template.md`](.gitagent/teacher/MISSION.template.md), [`.gitagent/teacher/commit-template.md`](.gitagent/teacher/commit-template.md) |
+| **gapman CLI (MVP)** | `npm ci && npm run build` then `npx gapman` or `node dist/cli/index.js` — see [gapman](#gapman-cli-mvp) |
 | **Full orientation + workflow diagram** | [`.gitagent/README.md`](.gitagent/README.md) |
 
 Core behaviors in plain language:
@@ -36,6 +37,7 @@ If you do **not** review the **mission** (work order from [`.gitagent/teacher/MI
 Copy at least:
 
 - `.gitagent/` (entire tree)
+- `skills/` (optional in minimal vendoring, but **required in this repo** for Rule 4.4: one `skills/<skill-key>.md` per manifest skill — enforced by `gapman check`)
 - `.githooks/` (optional: creates an empty repo-root `WORKER_LOG.md` when you check out a feature branch; see below)
 - `AGENTS.md` (or merge its bullets into your existing agent instructions)
 - Optionally `.cursor/rules/opengantry-gxt-substrate.mdc` if you use Cursor (or translate the same rules into your IDE's rule system)
@@ -73,16 +75,34 @@ Then `git switch -c your-feature` (or `git checkout -b …`): on branch checkout
 
 The gate is whatever command **fails closed** for your repo (lint, typecheck, integration suite). One explicit command beats a vague "run tests somewhere."
 
+### gapman CLI (MVP)
+
+After `npm ci` and `npm run build`, the `gapman` binary resolves to `dist/cli/index.js` (see [`package.json`](package.json)).
+
+| Command | Purpose |
+|--------|---------|
+| `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
+| `gapman status` | Human-readable report of the same checks. |
+| `gapman triage "<intent>"` | Foreman-style routing from `path_risks` + `risk_keywords` + skill keys ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output. `--emit-mission --msn MSN-0007` writes `ACTIVE_MISSION.md` from the template on **DIRECT_EXECUTION** only. |
+| `gapman mission validate --file <path>` | Validate a mission `.md` or `.yaml` (YAML checked against [`.gitagent/teacher/MISSION.schema.yaml`](.gitagent/teacher/MISSION.schema.yaml)). |
+| `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill’s `tmvc_roots`). |
+| `gapman verify --mission <path>` | Run the mission gate shell command, optional success substring match, then **hard-fail** if any **PASS** trace row’s quote/anchor is missing from `WORKER_LOG.md` (override with `--worker-log`). |
+
+Structured YAML example: [`.gitagent/teacher/MISSION.example.yaml`](.gitagent/teacher/MISSION.example.yaml).
+
 ### 3. Wire agents (and optionally CI)
 
 - **[`AGENTS.md`](AGENTS.md)** tells agents to read **RULES** + **MANIFEST** before acting.
 - **[`.cursor/rules/opengantry-gxt-substrate.mdc`](.cursor/rules/opengantry-gxt-substrate.mdc)** does the same for Cursor with `alwaysApply: true`.
 - **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)**:
-  - **Manifest:** validates [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) on every **push** and **pull_request** (via [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) `manifest`).
+  - **gapman:** `npm ci` / `npm run build`, then `gapman check` (MANIFEST + `skills/` Rule 4.4) and unit tests.
+  - **Manifest (jq parity):** validates [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) via [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) `manifest`.
   - **MSN (PR only, path-scoped):** on **pull_request** only, any **non-merge** commit in the PR range that touches `.gitagent/`, repo-root `WORKER_LOG.md`, `.githooks/`, or [`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml) must have a subject starting with **`[MSN-NNNN]`** (four digits). Other paths (e.g. root `README.md` only) do not trigger this check.
-- **Local:** run [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) before push (requires `jq` and `git`):
+- **Local:** run [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) and gapman before push:
 
 ```bash
+npm ci && npm run build
+node dist/cli/index.js check
 ./scripts/validate-gxt.sh manifest
 ./scripts/validate-gxt.sh msn origin/main HEAD   # after: git fetch origin
 # or both:
@@ -95,9 +115,9 @@ High level: **Foreman** routes → **Teacher** authors a mission when needed →
 
 Details and the workflow diagram: **[`.gitagent/README.md`](.gitagent/README.md)**.
 
-## Staying in sync (no package manager yet)
+## Staying in sync (no npm package for the substrate kit)
 
-There is **no** `npm install opengantry`—so you own **merge discipline** when upstream `RULES` / templates improve.
+There is **no** `npm install opengantry` as a published package—**this canonical repo** uses root `package.json` only for the **`gapman`** CLI and its tests. When you **vendor** OpenGantry into another app, copy `.gitagent/` (and optionally the `gapman` sources); you are not required to adopt Node in the host repo.
 
 **Option A — `git subtree` (good if you vendored `.gitagent/` with subtree in the first place)**
 

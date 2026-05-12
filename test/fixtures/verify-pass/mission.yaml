@@ -1,0 +1,9 @@
+msn_id: MSN-0999
+skill_key: logic-ralph
+gate_command: "echo DONE"
+gate_success_substring: "DONE"
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "evidence A"
+    anchor: "1"
+    status: PASS

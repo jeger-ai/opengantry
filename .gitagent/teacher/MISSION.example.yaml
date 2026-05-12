@@ -1,0 +1,11 @@
+# YAML mission file (validated by `gapman mission validate` against MISSION.schema.yaml)
+# Example — copy and edit for a real run.
+msn_id: MSN-0000
+skill_key: logic-ralph
+gate_command: "echo ok"
+gate_success_substring: "ok"
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "worker completed step A"
+    anchor: "1"
+    status: PASS

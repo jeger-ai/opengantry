@@ -1,0 +1,44 @@
+# MISSION.schema — JSON Schema (YAML encoding) for structured missions
+# Consumed by gapman (Ajv). Version label for docs only.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://opengantry.local/schemas/mission.v1_1.json
+title: OpenGantryMission
+type: object
+additionalProperties: false
+required:
+  - msn_id
+  - skill_key
+  - gate_command
+properties:
+  msn_id:
+    type: string
+    pattern: "^MSN-[0-9]{4}$"
+  skill_key:
+    type: string
+    minLength: 1
+  gate_command:
+    type: string
+    minLength: 1
+  gate_success_substring:
+    type: ["string", "null"]
+  trace_rows:
+    type: array
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - dod_id
+        - trace_quote
+        - anchor
+        - status
+      properties:
+        dod_id:
+          type: string
+        trace_quote:
+          type: string
+        anchor:
+          type: string
+        status:
+          type: string
+          pattern: "^(PASS|FAIL|pass|fail)$"
