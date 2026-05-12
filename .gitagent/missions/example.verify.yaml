@@ -1,0 +1,15 @@
+# Example mission for `gapman mission validate` / `gapman verify`.
+# Copy, pick a fresh MSN-NNNN, align `trace_rows` with repo-root WORKER_LOG.md, then commit
+# under this directory with subject `[MSN-NNNN] …` from a Teacher email in GAPMAN_TEACHER_EMAILS.
+#
+# WORKER_LOG.md must contain each PASS row’s `trace_quote` verbatim; `anchor` is either a
+# 1-based line number in that file or a free-form substring that appears on the same line as the quote.
+msn_id: MSN-0012
+skill_key: logic-ralph
+gate_command: "echo DONE"
+gate_success_substring: "DONE"
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "example trace line for gapman verify"
+    anchor: "1"
+    status: PASS
