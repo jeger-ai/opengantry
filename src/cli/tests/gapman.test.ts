@@ -18,6 +18,44 @@ import { formatTriageHuman, triageIntent } from "../lib/triage-logic.js";
 import { verifyTraceRows } from "../lib/trace.js";
 import { runVerify } from "../commands/verify.js";
 
+/**
+ * ## Full `gapman verify` example (mirrors `runVerify: passes with Teacher git-proof in mini repo`)
+ *
+ * **Layout**
+ * - `.gitagent/foreman/MANIFEST.json` — must include the mission’s `skill_key` (and any fields `mission validate` needs).
+ * - `.gitagent/teacher/MISSION.schema.yaml` — copy from the OpenGantry repo under test (`writeMiniGapmanRepo`).
+ * - `.gitagent/missions/<file>.yaml` — mission path must stay under `missions/` for git-proof.
+ * - Repo-root `WORKER_LOG.md` — each **PASS** row: `trace_quote` appears verbatim in the file; if `anchor` is all digits, that 1-based line must contain the quote.
+ *
+ * **Mission YAML** (same shape as {@link writeMiniGapmanRepo}; MSN and quotes must match git + log):
+ *
+ * ```yaml
+ * msn_id: MSN-0999
+ * skill_key: ui-ralph
+ * gate_command: "echo DONE"
+ * gate_success_substring: "DONE"
+ * trace_rows:
+ *   - dod_id: "1"
+ *     trace_quote: "evidence A"
+ *     anchor: "1"
+ *     status: PASS
+ * ```
+ *
+ * **WORKER_LOG.md** (line 1 must include the quote when `anchor` is `"1"`):
+ *
+ * ```text
+ * evidence A
+ * ```
+ *
+ * **Git proof** — `git init`, set `user.email` to an address listed in `GAPMAN_TEACHER_EMAILS`, then commit all of the above with a **subject** starting with `[MSN-0999]` (same id as `msn_id`). Body text does not count toward the subject-line stamp.
+ *
+ * **Environment** — `GAPMAN_TEACHER_EMAILS=<that user.email>` (comma-separated allowlist; case-insensitive).
+ *
+ * **Run** — repo root: `runVerify({ mission: ".gitagent/missions/m.yaml", workerLog: "WORKER_LOG.md" })`, or CLI: `node dist/cli/index.js verify --mission .gitagent/missions/m.yaml`.
+ *
+ * The tracked mission `.gitagent/missions/example.verify.yaml` is the same contract with `MSN-0012` and trace line `example trace line for gapman verify` on line 1 of `WORKER_LOG.md`.
+ */
+
 test("triage: risk_keyword triggers escalation", () => {
   const root = getRepoRoot();
   const m = loadManifest(root);
