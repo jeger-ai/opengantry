@@ -1,8 +1,8 @@
-# OpenGantry `.gitagent/` (v0.6.2 — Forensic Truth)
+# OpenGantry `.gitagent/` (v0.7.0 — Execution-ready Forensic substrate)
 
 This directory holds the **GXT substrate**: Foreman routing map, Teacher law, work-order template, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
 
-Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until `gapman` gains the remaining automation (history/receipt polish, etc.). The repo root **`gapman`** MVP CLI already covers `check`, `triage`, `mission`, and `verify` — see [README § gapman](../README.md#gapman-cli-mvp).
+Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until `gapman` gains the remaining automation (history/receipt polish, etc.). The repo root **`gapman`** CLI covers `check`, `triage`, `runtime env`, **`legislate`**, `mission`, and `verify` — see [README § gapman](../README.md#gapman-cli-mvp).
 
 ## Forensic Truth (what v0.6.2 adds on v0.5.0)
 
@@ -18,6 +18,8 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 6. **Branch `WORKER_LOG.md`** — With `git config core.hooksPath .githooks`, switching to a feature branch (not `main`/`master`) creates an empty repo-root **`WORKER_LOG.md`** from [`teacher/WORKER_LOG.template.md`](teacher/WORKER_LOG.template.md) if the file is absent. See [`.githooks/post-checkout`](../.githooks/post-checkout).
 
+7. **Worker Runtime (v0.7.0)** — **`gapman runtime env --mission …`** emits the standard env contract ([`teacher/RUNTIME.md`](teacher/RUNTIME.md)) so external agents inherit `GXT_TMVC_ROOTS`, forbidden zones, and `GXT_WORKER_LOG` without hand-configuring each IDE.
+
 ## Files (quick map)
 
 | Path | Role |
@@ -25,6 +27,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 | [`foreman/MANIFEST.json`](foreman/MANIFEST.json) | Map: `schema_version`, skills, `trust_threshold`, `tmvc_roots`, `forbidden_zones`, path risks |
 | [`foreman/SOUL.md`](foreman/SOUL.md) | Foreman: manifest-only binary router |
 | [`teacher/RULES.md`](teacher/RULES.md) | Law: SOD, trace rules, TMVC, Rule 4.4 manifest sync, tiers |
+| [`teacher/RUNTIME.md`](teacher/RUNTIME.md) | Worker Runtime Contract: env vars emitted by **`gapman runtime env`** |
 | [`teacher/MISSION.template.md`](teacher/MISSION.template.md) | Work order: DoD + trace table + TMVC roots |
 | [`teacher/MISSION.schema.yaml`](teacher/MISSION.schema.yaml) | Structured mission schema (YAML) for `gapman mission validate` |
 | [`teacher/MISSION.example.yaml`](teacher/MISSION.example.yaml) | Example structured mission |
@@ -60,4 +63,4 @@ If you change what a skill is or add/remove a skill entry, **update `MANIFEST.js
 
 Repo root [**`AGENTS.md`**](../AGENTS.md) and [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) require reading **RULES** + **MANIFEST** before acting.
 
-Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `gapman check` + unit tests after `npm ci`/`npm run build`; **`manifest`** via [`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh) `manifest` (jq parity); **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local: **`node dist/cli/index.js check`** plus **`./scripts/validate-gxt.sh`** (`manifest` | `msn <base> <head>` | `all …`).
+Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `gapman check` + unit tests after `npm ci`/`npm run build`; **`manifest`** via [`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh) `manifest` (jq parity); **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local: **`node dist/cli/index.js check`** plus **`./scripts/validate-gxt.sh`** (`manifest` | `msn <base> <head>` | `all …`). Workers can preload scope with **`node dist/cli/index.js runtime env --mission … --json`**.

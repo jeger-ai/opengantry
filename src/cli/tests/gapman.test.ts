@@ -16,7 +16,11 @@ import { loadManifest } from "../lib/manifest.js";
 import { checkSkillManifestSync } from "../lib/skill-sync.js";
 import { formatTriageHuman, triageIntent } from "../lib/triage-logic.js";
 import { verifyTraceRows } from "../lib/trace.js";
+import { runLegislate } from "../commands/legislate.js";
 import { runVerify } from "../commands/verify.js";
+import { allocateNextMsnId } from "../lib/next-msn.js";
+import { resolveRuntimeEnv } from "../lib/runtime-env.js";
+import { loadWorkspace } from "../lib/workspace.js";
 
 /**
  * ## Full `gapman verify` example (mirrors `runVerify: passes with Teacher git-proof in mini repo`)
@@ -406,4 +410,134 @@ test("runVerify: passes with Teacher git-proof in mini repo", () => {
       process.chdir(prevCwd);
     }
   });
+});
+
+test("allocateNextMsnId: empty missions dir yields MSN-0000", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-empty-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  assert.equal(allocateNextMsnId(dest), "MSN-0000");
+});
+
+test("allocateNextMsnId: MSN-0888 in mission yields MSN-0889", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-inc-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "missions", "prior.yaml"),
+    `msn_id: MSN-0888
+skill_key: ui-ralph
+gate_command: "echo OK"
+gate_success_substring: "OK"
+trace_rows: []
+`,
+    "utf8",
+  );
+  assert.equal(allocateNextMsnId(dest), "MSN-0889");
+});
+
+test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () => {
+  const w = loadWorkspace();
+  const r = resolveRuntimeEnv(w, ".gitagent/missions/example.verify.yaml");
+  assert.equal(r.skill_key, "logic-ralph");
+  assert.equal(r.msn_id, "MSN-0012");
+  assert.match(r.worker_log, /WORKER_LOG\.md$/);
+  assert.ok(
+    r.tmvc_roots_joined.includes(`${path.sep}src${path.sep}lib`),
+    "absolute TMVC roots",
+  );
+  assert.ok(r.forbidden_zones_joined.length > 0, "non-empty forbidden_zones_joined string");
+});
+
+test("runtime env: rejects unknown manifest skill_key", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-unknown-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "teacher", "MISSION.schema.yaml"),
+    path.join(dest, ".gitagent", "teacher", "MISSION.schema.yaml"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  const missionYaml = `msn_id: MSN-0990
+skill_key: not-a-manifest-skill
+gate_command: "echo OK"
+gate_success_substring: "OK"
+trace_rows: []
+`;
+  fs.writeFileSync(path.join(dest, ".gitagent", "missions", "m.yaml"), missionYaml, "utf8");
+  const manifest = loadManifest(dest);
+  assert.throws(
+    () => resolveRuntimeEnv({ root: dest, manifest }, ".gitagent/missions/m.yaml"),
+    /manifest has no skill/,
+  );
+});
+
+test("legislate: writes next YAML mission under .gitagent/missions/", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "missions", "prior.yaml"),
+    `msn_id: MSN-0988
+skill_key: ui-ralph
+gate_command: "echo OK"
+gate_success_substring: "OK"
+trace_rows: []
+`,
+    "utf8",
+  );
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    runLegislate({
+      intent: "Add button hover state ui-ralph",
+      skillKey: "ui-ralph",
+    });
+    assert.equal(process.exitCode, undefined);
+    const files = fs.readdirSync(path.join(dest, ".gitagent", "missions"));
+    assert.ok(files.some((f) => f.startsWith("MSN-0989.") && f.endsWith(".yaml")));
+    const created = fs
+      .readdirSync(path.join(dest, ".gitagent", "missions"))
+      .find((f) => f.startsWith("MSN-0989.") && f.endsWith(".yaml"))!;
+    const body = fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
+    assert.ok(body.includes("msn_id: MSN-0989") || body.includes("MSN-0989"));
+    assert.ok(body.includes("skill_key: ui-ralph"));
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+});
+
+test("legislate: triage escalation exits 2 without --skill-key", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-ex-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    runLegislate({ intent: "refactor all security-critical paths everywhere" });
+    assert.equal(process.exitCode, 2);
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
 });

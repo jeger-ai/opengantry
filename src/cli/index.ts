@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { runCheck } from "./commands/check.js";
+import { runLegislate } from "./commands/legislate.js";
 import { runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
+import { runRuntimeEnv } from "./commands/runtime.js";
 import { runStatus } from "./commands/status.js";
 import { readStdinIfEmpty, runTriage } from "./commands/triage.js";
 import { runVerify } from "./commands/verify.js";
 import { CLI_NAME } from "./lib/constants.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
-const VERSION = "0.6.2";
+const VERSION = "0.7.0";
 
 function buildProgram(): Command {
   const program = new Command();
@@ -79,6 +81,48 @@ function buildProgram(): Command {
     .option("--msn <id>", "Override MSN id from file")
     .action((opts: { file: string; msn?: string }) => {
       runMissionSnapshot(opts.file, opts.msn);
+    });
+
+  const runtime = program
+    .command("runtime")
+    .description("Worker Runtime Contract bootstrap (`.gitagent/teacher/RUNTIME.md`)");
+
+  runtime
+    .command("env")
+    .description("Print exportable env for workers (skill TMVC roots, WORKER_LOG path)")
+    .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
+    .option("--json", "Emit JSON payload instead of shell exports")
+    .option("--format <mode>", "`shell` (default POSIX exports) or `text` KEY=value lines", "shell")
+    .action((opts: { mission: string; json?: boolean; format?: string }) => {
+      const { mission } = opts;
+      if (opts.json === true) {
+        runRuntimeEnv({ mission, json: true });
+        return;
+      }
+      const format = opts.format === "text" ? "text" : "shell";
+      runRuntimeEnv({ mission, format });
+    });
+
+  program
+    .command("legislate")
+    .description("Scaffold YAML mission under .gitagent/missions/ with next MSN (Teacher still commits)")
+    .argument("[intent...]", "One-line Teacher intent summary")
+    .option("--skill-key <key>", "Override Foreman-derived skill_key when triage escalates")
+    .option("--out <file>", "Output path (.gitagent/missions/…); defaults to MSN.slug.yaml")
+    .action(async function (this: Command, intentParts: string[]) {
+      const opts = this.opts<{ skillKey?: string; out?: string }>();
+      let text = intentParts.join(" ").trim();
+      text = await readStdinIfEmpty(text);
+      if (!text) {
+        logError("legislate: provide intent text or pipe stdin");
+        setExitCode(2);
+        return;
+      }
+      runLegislate({
+        intent: text,
+        skillKey: opts.skillKey,
+        out: opts.out,
+      });
     });
 
   program
