@@ -256,7 +256,9 @@ export function assertTeacherMissionProof(
   const changed = listCommitChangedPaths(root, stamp.hash);
   if (!commitTouchesMission(changed, repoRelMission)) {
     throw new Error(
-      `${CLI_NAME} verify: git-proof: MISSION_FILE_NOT_MODIFIED_BY_TEACHER — The Teacher's commit for [${msnId}] did not include this mission file (${repoRelMission}).`,
+      `${CLI_NAME} verify: git-proof: MISSION_FILE_NOT_MODIFIED_BY_TEACHER — The Teacher stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
+        `The stamp is the newest (scanning backward) commit authored by ${ENV_TEACHER_EMAILS} whose subject begins with [${msnId}]. ` +
+        `Either add a newer Teacher commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose only qualifying commits touch this file.`,
     );
   }
 

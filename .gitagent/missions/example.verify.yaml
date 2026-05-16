@@ -4,6 +4,8 @@
 #
 # WORKER_LOG.md must contain each PASS row’s `trace_quote` verbatim; `anchor` is either a
 # 1-based line number in that file or a free-form substring that appears on the same line as the quote.
+#
+# gapman verify git-proof: newest Teacher `[MSN-0012]` commit must modify this YAML (not README/tests alone).
 msn_id: MSN-0012
 skill_key: logic-ralph
 gate_command: "echo DONE"
