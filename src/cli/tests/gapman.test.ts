@@ -20,6 +20,7 @@ import { runLegislate } from "../commands/legislate.js";
 import { runVerify } from "../commands/verify.js";
 import { allocateNextMsnId } from "../lib/next-msn.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
+import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 /**
@@ -540,4 +541,86 @@ test("legislate: triage escalation exits 2 without --skill-key", () => {
     process.chdir(prevCwd);
     process.exitCode = undefined;
   }
+});
+
+function writeRuntimeExecRepo(
+  dest: string,
+  ogRoot: string,
+  forbiddenZones: string[],
+): void {
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "teacher", "MISSION.schema.yaml"),
+    path.join(dest, ".gitagent", "teacher", "MISSION.schema.yaml"),
+  );
+  const manifest = {
+    schema_version: "0.5.0",
+    skills: {
+      "ui-ralph": {
+        trust_threshold: "Tier-1",
+        tmvc_roots: ["src/components/"],
+        forbidden_zones: forbiddenZones,
+      },
+    },
+    path_risks: {},
+    risk_keywords: [],
+  };
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    JSON.stringify(manifest),
+    "utf8",
+  );
+  const missionYaml = `msn_id: MSN-0910
+skill_key: ui-ralph
+gate_command: "echo OK"
+gate_success_substring: "OK"
+trace_rows: []
+`;
+  fs.writeFileSync(path.join(dest, ".gitagent", "missions", "runtime.yaml"), missionYaml, "utf8");
+}
+
+test("runtime exec: captures stream telemetry and succeeds", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-exec-ok-"));
+  writeRuntimeExecRepo(dest, ogRoot, []);
+  const manifest = loadManifest(dest);
+  const result = await runRuntimeExec(
+    { root: dest, manifest },
+    {
+      mission: ".gitagent/missions/runtime.yaml",
+      workerCommand: ["node", "-e", "process.stdout.write('OUT'); process.stderr.write('ERR');"],
+      streamOutput: false,
+    },
+  );
+  assert.equal(result.status, "success");
+  assert.equal(result.exitCode, 0);
+  assert.equal(fs.existsSync(path.join(dest, "WORKER_LOG.md")), true);
+  const body = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+  assert.match(body, /"type":"flight_start"/);
+  assert.match(body, /"type":"stream"/);
+  assert.match(body, /"type":"flight_end"/);
+});
+
+test("runtime exec: forbidden-zone write returns violation code", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-exec-fz-"));
+  fs.mkdirSync(path.join(dest, "forbidden"), { recursive: true });
+  writeRuntimeExecRepo(dest, ogRoot, ["forbidden/"]);
+  const manifest = loadManifest(dest);
+  const js = "require('node:fs').writeFileSync('forbidden/pwn.txt','x')";
+  const result = await runRuntimeExec(
+    { root: dest, manifest },
+    {
+      mission: ".gitagent/missions/runtime.yaml",
+      workerCommand: ["node", "-e", js],
+      streamOutput: false,
+    },
+  );
+  assert.equal(result.status, "forbidden_zone_violation");
+  assert.equal(result.exitCode, 3);
+  assert.ok(result.violations.some((v) => v.path === "forbidden/pwn.txt"));
+  const body = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+  assert.match(body, /"type":"forbidden_scan"/);
 });

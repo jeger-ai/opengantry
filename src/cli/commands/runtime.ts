@@ -1,5 +1,6 @@
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface RuntimeEnvCliOptions {
@@ -7,6 +8,17 @@ export interface RuntimeEnvCliOptions {
   json?: boolean;
   /** `shell`: POSIX `export VAR='...'` lines; `text`: labeled lines */
   format?: "shell" | "text";
+}
+
+export interface RuntimeExecCliOptions {
+  mission: string;
+  workerCommand: string[];
+  cwd?: string;
+  workerLog?: string;
+  append?: boolean;
+  timeoutMs?: number;
+  streamOutput?: boolean;
+  json?: boolean;
 }
 
 function escapeShellSingleQuotes(value: string): string {
@@ -44,6 +56,52 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
     } else {
       logError(e instanceof Error ? e.message : String(e));
     }
+    setExitCode(2);
+  }
+}
+
+export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Promise<void> {
+  if (options.workerCommand.length === 0) {
+    logError("runtime exec: missing worker command. Use -- <worker-command...>");
+    setExitCode(2);
+    return;
+  }
+  try {
+    const workspace = loadWorkspace();
+    const result = await runRuntimeExec(workspace, {
+      mission: options.mission,
+      workerCommand: options.workerCommand,
+      cwd: options.cwd,
+      workerLog: options.workerLog,
+      append: options.append,
+      timeoutMs: options.timeoutMs,
+      streamOutput: options.streamOutput,
+    });
+    if (options.json) {
+      logInfo(
+        JSON.stringify(
+          {
+            status: result.status,
+            exit_code: result.exitCode,
+            worker_exit_code: result.workerExitCode,
+            worker_signal: result.workerSignal,
+            violation_count: result.violations.length,
+            violations: result.violations,
+            worker_log: result.workerLogPath,
+            flight_id: result.flightId,
+          },
+          null,
+          2,
+        ),
+      );
+    } else {
+      logInfo(`runtime exec: ${result.status}`);
+      logInfo(`  worker_log: ${result.workerLogPath}`);
+      logInfo(`  violations: ${String(result.violations.length)}`);
+    }
+    if (result.exitCode !== 0) setExitCode(result.exitCode);
+  } catch (e) {
+    logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);
   }
 }
