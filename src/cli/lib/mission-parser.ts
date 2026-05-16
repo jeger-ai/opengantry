@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { REL_MISSION_SCHEMA, MSN_ID_PATTERN } from "./constants.js";
-import { extractMsnIdFromMissionFile } from "./git-proof.js";
+import { extractMsnIdFromMissionBody } from "./mission-msn.js";
 import type { GateSpec, ParsedMission, TraceRow, YamlMission } from "./types.js";
 
 const TRACE_SECTION_MARKER = "## 4. Verification trace";
@@ -185,7 +185,7 @@ export function parseMissionFile(root: string, filePath: string): ParsedMission 
     ext === ".yaml" || ext === ".yml"
       ? validateYamlMission(root, absolute, body)
       : parseMarkdownMission(absolute, body);
-  const proofMsn = extractMsnIdFromMissionFile(absolute);
+  const proofMsn = extractMsnIdFromMissionBody(body, ext);
   if (proofMsn) {
     return { ...mission, msnId: proofMsn };
   }

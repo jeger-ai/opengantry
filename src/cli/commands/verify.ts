@@ -19,7 +19,9 @@ export function runVerify(options: VerifyOptions): void {
   assertMissionGatePresent(mission);
   let proofMsnId: string;
   try {
-    proofMsnId = assertTeacherMissionProof(root, mission.rawPath);
+    proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
+      msnId: mission.msnId ?? undefined,
+    });
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
     setExitCode(1);

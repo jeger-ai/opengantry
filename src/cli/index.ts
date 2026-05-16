@@ -8,12 +8,67 @@ import { runStatus } from "./commands/status.js";
 import { readStdinIfEmpty, runTriage } from "./commands/triage.js";
 import { runVerify } from "./commands/verify.js";
 import { CLI_NAME } from "./lib/constants.js";
+import { parseOptionalTimeoutMs } from "./lib/cli-timeout.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 const VERSION = "0.7.0";
 
+function attachRuntimeExec(cmd: Command): void {
+  cmd
+    .command("exec")
+    .description("Run worker command with mission env + telemetry capture")
+    .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
+    .option("--cwd <dir>", "Working directory for worker command")
+    .option("--worker-log <path>", "Override WORKER_LOG.md path")
+    .option("--append", "Append to WORKER_LOG.md instead of overwrite")
+    .option("--timeout-ms <n>", "Kill worker after N milliseconds")
+    .option("--no-stream", "Do not mirror worker output to this terminal")
+    .option("--json", "Emit final result as JSON")
+    .allowUnknownOption(true)
+    .passThroughOptions()
+    .argument("<workerCommand...>", "Worker command to execute after --")
+    .action(
+      async (
+        workerCommand: string[],
+        opts: {
+          mission: string;
+          cwd?: string;
+          workerLog?: string;
+          append?: boolean;
+          timeoutMs?: string;
+          stream?: boolean;
+          json?: boolean;
+        },
+      ) => {
+        const workerArgs =
+          workerCommand.length > 0 && workerCommand[0] === "--"
+            ? workerCommand.slice(1)
+            : workerCommand;
+
+        const to = parseOptionalTimeoutMs(opts.timeoutMs);
+        if (!to.ok) {
+          logError(to.message);
+          setExitCode(2);
+          return;
+        }
+
+        await runRuntimeExecCommand({
+          mission: opts.mission,
+          workerCommand: workerArgs,
+          cwd: opts.cwd,
+          workerLog: opts.workerLog,
+          append: opts.append,
+          timeoutMs: to.ms,
+          streamOutput: opts.stream,
+          json: opts.json,
+        });
+      },
+    );
+}
+
 function buildProgram(): Command {
   const program = new Command();
+  program.enablePositionalOptions(true);
   program.name(CLI_NAME).description("OpenGantry GXT CLI (MVP)").version(VERSION);
 
   program
@@ -103,85 +158,7 @@ function buildProgram(): Command {
       runRuntimeEnv({ mission, format });
     });
 
-  runtime
-    .command("exec")
-    .description("Run worker command with mission env + telemetry capture")
-    .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
-    .option("--cwd <dir>", "Working directory for worker command")
-    .option("--worker-log <path>", "Override WORKER_LOG.md path")
-    .option("--append", "Append to WORKER_LOG.md instead of overwrite")
-    .option("--timeout-ms <n>", "Kill worker after N milliseconds")
-    .option("--no-stream", "Do not mirror worker output to this terminal")
-    .option("--json", "Emit final result as JSON")
-    .allowUnknownOption(true)
-    .passThroughOptions()
-    .argument("<workerCommand...>", "Worker command to execute after --")
-    .action(async (workerCommand: string[], opts: {
-      mission: string;
-      cwd?: string;
-      workerLog?: string;
-      append?: boolean;
-      timeoutMs?: string;
-      stream?: boolean;
-      json?: boolean;
-    }) => {
-      const workerArgs =
-        workerCommand.length > 0 && workerCommand[0] === "--"
-          ? workerCommand.slice(1)
-          : workerCommand;
-      const timeoutRaw = opts.timeoutMs;
-      const timeout = timeoutRaw !== undefined ? Number.parseInt(timeoutRaw, 10) : undefined;
-      await runRuntimeExecCommand({
-        mission: opts.mission,
-        workerCommand: workerArgs,
-        cwd: opts.cwd,
-        workerLog: opts.workerLog,
-        append: opts.append,
-        timeoutMs: Number.isFinite(timeout) ? timeout : undefined,
-        streamOutput: opts.stream,
-        json: opts.json,
-      });
-    });
-
-  program
-    .command("run")
-    .description("Alias for `runtime exec`")
-    .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
-    .option("--cwd <dir>", "Working directory for worker command")
-    .option("--worker-log <path>", "Override WORKER_LOG.md path")
-    .option("--append", "Append to WORKER_LOG.md instead of overwrite")
-    .option("--timeout-ms <n>", "Kill worker after N milliseconds")
-    .option("--no-stream", "Do not mirror worker output to this terminal")
-    .option("--json", "Emit final result as JSON")
-    .allowUnknownOption(true)
-    .passThroughOptions()
-    .argument("<workerCommand...>", "Worker command to execute after --")
-    .action(async (workerCommand: string[], opts: {
-      mission: string;
-      cwd?: string;
-      workerLog?: string;
-      append?: boolean;
-      timeoutMs?: string;
-      stream?: boolean;
-      json?: boolean;
-    }) => {
-      const workerArgs =
-        workerCommand.length > 0 && workerCommand[0] === "--"
-          ? workerCommand.slice(1)
-          : workerCommand;
-      const timeoutRaw = opts.timeoutMs;
-      const timeout = timeoutRaw !== undefined ? Number.parseInt(timeoutRaw, 10) : undefined;
-      await runRuntimeExecCommand({
-        mission: opts.mission,
-        workerCommand: workerArgs,
-        cwd: opts.cwd,
-        workerLog: opts.workerLog,
-        append: opts.append,
-        timeoutMs: Number.isFinite(timeout) ? timeout : undefined,
-        streamOutput: opts.stream,
-        json: opts.json,
-      });
-    });
+  attachRuntimeExec(runtime);
 
   program
     .command("legislate")
@@ -225,7 +202,7 @@ function buildProgram(): Command {
 }
 
 function handleFatal(error: unknown): void {
-  console.error(error);
+  logError(error instanceof Error ? error.stack ?? error.message : String(error));
   setExitCode(1);
 }
 

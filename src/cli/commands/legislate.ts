@@ -59,7 +59,7 @@ export function runLegislate(options: LegislateOptions): void {
 
   let skill_key = options.skillKey?.trim();
   if (!skill_key) {
-    const triage = triageIntent(options.intent, manifest);
+    const triage = triageIntent(root, options.intent, manifest);
     if (triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE") {
       logError(
         `legislate: triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Teacher assigns scope.`,

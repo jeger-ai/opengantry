@@ -1,8 +1,7 @@
-import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import YAML from "yaml";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
+import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 
 /** Missions verified by `gapman verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
@@ -10,78 +9,6 @@ export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
 const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS";
 
 const DEFAULT_MSN_SCAN_DEPTH = 200;
-
-function pickMsnFromYamlRecord(o: Record<string, unknown>): string | null {
-  const a = o.msn_id;
-  const b = o.msnId;
-  for (const v of [a, b]) {
-    if (typeof v === "string" && MSN_ID_PATTERN.test(v)) return v;
-  }
-  return null;
-}
-
-/** Parse first YAML frontmatter block (`---` … `---`) when present. */
-function tryParseYamlFrontmatter(body: string): Record<string, unknown> | null {
-  const lines = body.split("\n");
-  if (lines[0]?.trim() !== "---") return null;
-  let end = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i]?.trim() === "---") {
-      end = i;
-      break;
-    }
-  }
-  if (end < 1) return null;
-  const block = lines.slice(1, end).join("\n");
-  if (!block.trim()) return null;
-  try {
-    const doc = YAML.parse(block) as unknown;
-    if (typeof doc !== "object" || doc === null) return null;
-    return doc as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Authoritative MSN for git-proof: `msn_id` / `msnId` in YAML or YAML frontmatter,
- * line-start `[MSN-NNNN]`, or template `# Mission:` line.
- */
-export function extractMsnIdFromMissionFile(missionAbsolutePath: string): string | null {
-  let body: string;
-  try {
-    body = fs.readFileSync(missionAbsolutePath, "utf8");
-  } catch {
-    return null;
-  }
-  const ext = path.extname(missionAbsolutePath).toLowerCase();
-
-  if (ext === ".yaml" || ext === ".yml") {
-    try {
-      const doc = YAML.parse(body) as unknown;
-      if (typeof doc === "object" && doc !== null) {
-        const fromRoot = pickMsnFromYamlRecord(doc as Record<string, unknown>);
-        if (fromRoot) return fromRoot;
-      }
-    } catch {
-      /* fall through */
-    }
-  }
-
-  const fm = tryParseYamlFrontmatter(body);
-  if (fm) {
-    const fromFm = pickMsnFromYamlRecord(fm);
-    if (fromFm) return fromFm;
-  }
-
-  const bracket = body.match(/^\[(MSN-\d{4})\]/m);
-  if (bracket?.[1] && MSN_ID_PATTERN.test(bracket[1])) return bracket[1];
-
-  const missionHeading = body.match(/# Mission:\s*\[?(MSN-\d{4})\]?/i);
-  if (missionHeading?.[1]) return missionHeading[1];
-
-  return null;
-}
 
 function gitSpawn(root: string, args: string[]): { ok: boolean; stdout: string; stderr: string } {
   const r = spawnSync("git", ["-C", root, ...args], {
@@ -207,6 +134,8 @@ function commitTouchesMission(changed: string[], repoRelMission: string): boolea
 export interface TeacherMissionProofOptions {
   /** Max commits to scan in `git log` (default 200). */
   scanDepth?: number;
+  /** When set, must match parser-resolved mission MSN (avoids re-resolving identity from disk). */
+  msnId?: string;
 }
 
 /**
@@ -219,7 +148,10 @@ export function assertTeacherMissionProof(
   missionAbsolutePath: string,
   options?: TeacherMissionProofOptions,
 ): string {
-  const msnId = extractMsnIdFromMissionFile(missionAbsolutePath);
+  const msnId =
+    options?.msnId && MSN_ID_PATTERN.test(options.msnId)
+      ? options.msnId
+      : extractMsnIdFromMissionPath(missionAbsolutePath);
   if (!msnId || !MSN_ID_PATTERN.test(msnId)) {
     throw new Error(
       `${CLI_NAME} verify: git-proof: MISSION_MISSING_MSN — The mission file is missing a valid [MSN-XXXX] identifier (YAML/frontmatter msn_id or msnId, line-start [MSN-NNNN], or # Mission: line).`,

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { MSN_ID_PATTERN } from "./constants.js";
-import { extractMsnIdFromMissionFile } from "./git-proof.js";
+import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 
 const REL_MISSIONS_DIR = ".gitagent/missions";
 
@@ -37,7 +37,7 @@ export function allocateNextMsnId(repoRoot: string): string {
 
     const abs = path.join(dir, ent.name);
     try {
-      const idFromFile = extractMsnIdFromMissionFile(abs);
+      const idFromFile = extractMsnIdFromMissionPath(abs);
       if (idFromFile && MSN_ID_PATTERN.test(idFromFile)) {
         const num = parseInt(idFromFile.slice(4), 10);
         if (!Number.isNaN(num)) maxRef.n = Math.max(maxRef.n, num);

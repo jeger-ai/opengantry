@@ -14,7 +14,7 @@ export interface TriageRunOptions {
 
 export function runTriage(options: TriageRunOptions): void {
   const { root, manifest } = loadWorkspace();
-  const result = triageIntent(options.text, manifest);
+  const result = triageIntent(root, options.text, manifest);
 
   if (options.json) {
     logInfo(formatTriageJson(result));

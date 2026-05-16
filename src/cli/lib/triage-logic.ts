@@ -1,6 +1,5 @@
 import type { Manifest, TriageResult } from "./types.js";
 import { collectOutOfScopeAdrHints } from "./out-of-scope-hint.js";
-import { getRepoRoot } from "./git.js";
 
 function normalizeIntent(text: string): string {
   return text.toLowerCase();
@@ -74,28 +73,27 @@ function matchingSkillKeys(intentNorm: string, manifest: Manifest): string[] {
  * May attach non-binding `adr_hints` from `.gitagent/out-of-scope/` when ADR `match_terms`
  * overlap intent; routing remains binary.
  */
-export function triageIntent(intent: string, manifest: Manifest): TriageResult {
-  const root = getRepoRoot();
+export function triageIntent(repoRoot: string, intent: string, manifest: Manifest): TriageResult {
   const risk = shouldEscalateForRisk(intent, manifest);
   if (risk.escalate) {
-    return withAdrHints(root, intent, legislativeEscalation(risk.reason));
+    return withAdrHints(repoRoot, intent, legislativeEscalation(risk.reason));
   }
 
   const intentNorm = normalizeIntent(intent);
   const matches = matchingSkillKeys(intentNorm, manifest);
 
   if (matches.length === 1) {
-    return withAdrHints(root, intent, directExecution(matches[0]!, manifest));
+    return withAdrHints(repoRoot, intent, directExecution(matches[0]!, manifest));
   }
   if (matches.length === 0) {
     return withAdrHints(
-      root,
+      repoRoot,
       intent,
       legislativeEscalation("No confident skill_key match in intent (ambiguous or missing)"),
     );
   }
   return withAdrHints(
-    root,
+    repoRoot,
     intent,
     legislativeEscalation(`Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`),
   );
