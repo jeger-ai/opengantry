@@ -1,3 +1,7 @@
+import fs from "node:fs";
+import type { AgentErrorPayload } from "../lib/agent-error.js";
+import { agentErrorAbsolutePath } from "../lib/agent-error.js";
+import { hintForbiddenZone, hintRuntimeHumanSummary, logFixHint } from "../lib/fix-hints.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
@@ -68,6 +72,7 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
   }
   try {
     const workspace = loadWorkspace();
+    const resolved = resolveRuntimeEnv(workspace, options.mission);
     const result = await runRuntimeExec(workspace, {
       mission: options.mission,
       workerCommand: options.workerCommand,
@@ -77,6 +82,15 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
       timeoutMs: options.timeoutMs,
       streamOutput: options.streamOutput,
     });
+
+    let agentError: AgentErrorPayload | null = null;
+    if (result.exitCode !== 0) {
+      const errPath = agentErrorAbsolutePath(resolved.repo_root);
+      if (fs.existsSync(errPath)) {
+        agentError = JSON.parse(fs.readFileSync(errPath, "utf8")) as AgentErrorPayload;
+      }
+    }
+
     if (options.json) {
       logInfo(
         JSON.stringify(
@@ -89,6 +103,8 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
             violations: result.violations,
             worker_log: result.workerLogPath,
             flight_id: result.flightId,
+            agent_error_path: agentError?.error_file ?? "",
+            agent_error: agentError,
           },
           null,
           2,
@@ -98,6 +114,13 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
       logInfo(`runtime exec: ${result.status}`);
       logInfo(`  worker_log: ${result.workerLogPath}`);
       logInfo(`  violations: ${String(result.violations.length)}`);
+      if (agentError) {
+        logInfo(hintRuntimeHumanSummary(agentError.summary, agentError.error_file));
+        if (result.violations[0]) {
+          logFixHint(hintForbiddenZone(result.violations[0]!.path, options.mission));
+        }
+        logError(JSON.stringify(agentError));
+      }
     }
     if (result.exitCode !== 0) setExitCode(result.exitCode);
   } catch (e) {

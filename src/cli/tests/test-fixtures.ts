@@ -1,6 +1,7 @@
 /**
  * Shared temp-repo helpers for deterministic tests (avoid live checkout manifest coupling).
  */
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
@@ -63,6 +64,14 @@ trace_rows:
 }
 
 /** Standard verify fixture: MSN-0999, `missions/m.yaml`, ui-ralph manifest. Returns mission path posix. */
+export function writeSkillsForManifest(dest: string, skillKeys: string[]): void {
+  const dir = path.join(dest, "skills");
+  fs.mkdirSync(dir, { recursive: true });
+  for (const key of skillKeys) {
+    fs.writeFileSync(path.join(dir, `${key}.md`), `# ${key}\n`, "utf8");
+  }
+}
+
 export function writeMiniGapmanRepo(dest: string, ogRoot: string): string {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
   writeManifest(dest, {
@@ -72,6 +81,7 @@ export function writeMiniGapmanRepo(dest: string, ogRoot: string): string {
       forbidden_zones: [],
     },
   });
+  writeSkillsForManifest(dest, ["ui-ralph"]);
   writeMiniGapmanMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "m.yaml");
   return ".gitagent/missions/m.yaml";
 }
@@ -118,4 +128,35 @@ export function gitCommit(dest: string, subject: string, email?: string): void {
   if (email) execSync(`git config user.email "${email}"`, { cwd: dest, stdio: "pipe" });
   execSync("git add -A", { cwd: dest, stdio: "pipe" });
   execSync(`git commit -m "${subject.replace(/"/g, '\\"')}"`, { cwd: dest, stdio: "pipe" });
+}
+
+export function writeBypassAnchor(dest: string, secret: string): void {
+  const hash = crypto.createHash("sha256").update(secret, "utf8").digest("hex");
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "BYPASS.sha256"), `${hash}\n`, "utf8");
+}
+
+export function writeRuntimeExecRepo(
+  dest: string,
+  ogRoot: string,
+  forbiddenZones: string[],
+): void {
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  writeManifest(dest, {
+    "ui-ralph": {
+      trust_threshold: "Tier-1",
+      tmvc_roots: ["src/components/"],
+      forbidden_zones: forbiddenZones,
+    },
+  });
+  const missionYaml = `msn_id: MSN-0910
+skill_key: ui-ralph
+gate_command: "echo OK"
+gate_success_substring: "OK"
+trace_rows: []
+`;
+  fs.writeFileSync(path.join(dest, ".gitagent", "missions", "runtime.yaml"), missionYaml, "utf8");
 }

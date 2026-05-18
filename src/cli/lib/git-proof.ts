@@ -1,6 +1,6 @@
-import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
+import { gitRun } from "./git-repo.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 
 /** Missions verified by `gapman verify` must live under this repo-relative prefix. */
@@ -9,16 +9,6 @@ export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
 const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS";
 
 const DEFAULT_MSN_SCAN_DEPTH = 200;
-
-function gitSpawn(root: string, args: string[]): { ok: boolean; stdout: string; stderr: string } {
-  const r = spawnSync("git", ["-C", root, ...args], {
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-  });
-  const stdout = typeof r.stdout === "string" ? r.stdout : "";
-  const stderr = typeof r.stderr === "string" ? r.stderr : "";
-  return { ok: r.status === 0, stdout, stderr };
-}
 
 /** Comma-separated author emails allowed to legislate missions (case-insensitive). */
 export function parseTeacherEmailsFromEnv(): string[] {
@@ -78,7 +68,7 @@ export function listMsnSubjectCommits(
   scanDepth: number = DEFAULT_MSN_SCAN_DEPTH,
 ): MsnCommitRow[] {
   const depth = Number.isFinite(scanDepth) && scanDepth > 0 ? Math.floor(scanDepth) : DEFAULT_MSN_SCAN_DEPTH;
-  const { ok, stdout, stderr } = gitSpawn(root, [
+  const { ok, stdout, stderr } = gitRun(root, [
     "log",
     "-z",
     "--format=%H%x1f%s%x1f%aE",
@@ -110,7 +100,7 @@ function normalizeChangedPath(p: string): string {
 
 /** Paths changed in commit `hash` (repo-relative forward slashes). */
 export function listCommitChangedPaths(root: string, hash: string): string[] {
-  const { ok, stdout, stderr } = gitSpawn(root, ["show", "--name-only", "--pretty=format:", hash]);
+  const { ok, stdout, stderr } = gitRun(root, ["show", "--name-only", "--pretty=format:", hash]);
   if (!ok) {
     throw new Error(
       `${CLI_NAME} verify: git-proof: git show failed for ${hash}: ${stderr.trim() || "unknown"}`,

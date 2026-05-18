@@ -10,6 +10,27 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 cd "$ROOT"
 
 MANIFEST_REL=".gitagent/foreman/MANIFEST.json"
+BYPASS_SHA256_REL=".gitagent/foreman/BYPASS.sha256"
+GXT_BYPASS_NOTES_REF="refs/notes/gxt-bypass"
+
+# Returns 0 if commit has a valid gxt-bypass git note (JSON v1 + reason >= 10 chars).
+commit_has_gxt_bypass_note() {
+  local commit="$1"
+  local note
+  note="$(git notes --ref="$GXT_BYPASS_NOTES_REF" show "$commit" 2>/dev/null)" || return 1
+  printf '%s' "$note" | jq -e '.v == 1 and (.reason | type == "string") and (.reason | length >= 10)' >/dev/null 2>&1
+}
+
+# Returns 0 when GXT_BYPASS_SECRET matches BYPASS.sha256 anchor (never commit the secret).
+is_bypass_secret_authorized() {
+  local anchor secret secret_hash
+  [[ -n "${GXT_BYPASS_SECRET:-}" ]] || return 1
+  [[ -f "$BYPASS_SHA256_REL" ]] || return 1
+  anchor="$(grep -E '^[a-fA-F0-9]{64}$' "$BYPASS_SHA256_REL" | head -1 | tr '[:upper:]' '[:lower:]')"
+  [[ -n "$anchor" ]] || return 1
+  secret_hash="$(printf '%s' "$GXT_BYPASS_SECRET" | sha256sum | awk '{print $1}' | tr '[:upper:]' '[:lower:]')"
+  [[ "$anchor" == "$secret_hash" ]]
+}
 
 # Returns 0 if this path should trigger [MSN-XXXX] subject enforcement.
 is_gxt_path() {
@@ -62,13 +83,18 @@ cmd_msn() {
     fi
 
     subject="$(git log -1 --format=%s "$commit")"
-    if [[ ! "$subject" =~ ^\[MSN-[0-9]{4}\] ]]; then
-      echo "MSN check FAILED: commit $commit touches GXT paths but subject does not start with [MSN-NNNN]" >&2
-      echo "  subject: $subject" >&2
-      echo "  touched paths (sample):" >&2
-      git diff-tree --no-commit-id --name-only -r "$commit" | head -20 >&2
-      exit 1
+    if [[ "$subject" =~ ^\[MSN-[0-9]{4}\] ]]; then
+      continue
     fi
+    if commit_has_gxt_bypass_note "$commit"; then
+      continue
+    fi
+    echo "MSN check FAILED: commit $commit touches GXT paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note" >&2
+    echo "  subject: $subject" >&2
+    echo "  hint: run gapman verify --break-glass --reason \"...\" with GXT_BYPASS_SECRET, push refs/notes/gxt-bypass" >&2
+    echo "  touched paths (sample):" >&2
+    git diff-tree --no-commit-id --name-only -r "$commit" | head -20 >&2
+    exit 1
   done < <(git rev-list --no-merges "${base_sha}..${head_sha}")
 
   echo "MSN commit subjects OK (path-scoped)"
@@ -78,9 +104,8 @@ usage() {
   cat <<'EOF' >&2
 Usage:
   validate-gxt.sh [manifest]          Validate Foreman MANIFEST.json (default)
-  validate-gxt.sh msn <base> <head>   Require [MSN-NNNN] prefix on commits in
-                                      range that touch .gitagent/, WORKER_LOG.md,
-                                      .githooks/, or .github/workflows/gxt-validate.yml
+  validate-gxt.sh msn <base> <head>   Require [MSN-NNNN] or gxt-bypass git note on commits
+                                      in range that touch GXT paths (see is_gxt_path)
   validate-gxt.sh all [base head]     Run manifest, then msn if base and head given
 Example:
   ./scripts/validate-gxt.sh msn origin/main HEAD

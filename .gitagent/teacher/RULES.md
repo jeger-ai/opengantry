@@ -44,6 +44,13 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
   - That stamp commit MUST **modify** the mission file passed to `--mission`.
 - Architectural ADRs under [`.gitagent/out-of-scope/`](../out-of-scope/) are the record of prior decisions. **Teacher** MUST review relevant ADRs when authoring or amending missions. **`gapman triage`** MAY emit non-binding `adr_hints` when ADR `match_terms` overlap intent; those hints do **not** change Foreman routing (still manifest-only binary).
 
+## 6.2 Break-glass (`gapman verify` v0.8.0)
+
+- Emergency bypass MUST NOT rely on forgeable commit-subject strings alone. Authorization requires **`GXT_BYPASS_SECRET`** matching the SHA-256 anchor in [`.gitagent/foreman/BYPASS.sha256`](../foreman/BYPASS.sha256) (never commit the plaintext secret).
+- **`gapman verify --break-glass --reason "<text>"`** skips git-proof, gate, and trace when authorized; it MUST write a forensic record as a **`refs/notes/gxt-bypass`** git note (or `--audit-commit` when notes cannot be pushed).
+- PR CI accepts GXT-touched commits that either have a normal **`[MSN-XXXX]`** subject or a valid **gxt-bypass** note on that commit. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
+- Break-glass does **not** disable **`gapman runtime exec`** forbidden-zone enforcement. Teacher MUST review bypass usage post-incident.
+
 ## 7. Local history (no bloat)
 
 - Bulky traces live under `.gitagent/history/` (git-ignored). Optional local `MISSION_LOG.md` may be generated from `git log` when needed; it MUST NOT be required in-repo for v0.6.2.

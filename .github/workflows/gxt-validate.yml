@@ -42,7 +42,29 @@ jobs:
         run: ./scripts/validate-gxt.sh manifest
 
       - name: gapman unit tests
-        run: node --test dist/cli/tests/gapman.test.js
+        run: node --test dist/cli/tests/*.test.js
+
+  code_quality:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Changed-code quality gates (complexity + import layers)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./scripts/check-changed-code.sh "$BASE_SHA" "$HEAD_SHA"
 
   msn_commits:
     if: github.event_name == 'pull_request'
@@ -51,6 +73,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Fetch gxt-bypass git notes
+        run: git fetch origin 'refs/notes/*:refs/notes/*' || true
 
       - name: Path-scoped MSN commit subjects
         env:

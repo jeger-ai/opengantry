@@ -14,15 +14,18 @@ export interface InitAsset {
  */
 export const INIT_ASSETS: readonly InitAsset[] = [
   { targetPath: ".gitagent/foreman/MANIFEST.json", mode: "scaffold_only" },
+  { targetPath: ".gitagent/foreman/BYPASS.sha256", mode: "scaffold_only" },
   { targetPath: ".gitagent/teacher/RULES.md", mode: "scaffold_only" },
   { targetPath: ".gitagent/missions/README.md", mode: "scaffold_only" },
   { targetPath: "skills/ui-ralph.md", mode: "scaffold_only" },
   { targetPath: "skills/logic-ralph.md", mode: "scaffold_only" },
+  { targetPath: "skills/gapman-ralph.md", mode: "scaffold_only" },
   { targetPath: "skills/substrate-ralph.md", mode: "scaffold_only" },
   { targetPath: "AGENTS.md", mode: "scaffold_only" },
   { targetPath: ".github/workflows/gxt-validate.yml", mode: "managed_strict" },
   { targetPath: "scripts/validate-gxt.sh", mode: "managed_strict", executable: true },
   { targetPath: ".githooks/post-checkout", mode: "managed_strict", executable: true },
+  { targetPath: ".githooks/pre-push", mode: "managed_strict", executable: true },
   { targetPath: ".cursor/rules/opengantry-gxt-substrate.mdc", mode: "managed_strict" },
   { targetPath: ".gitagent/teacher/MISSION.schema.yaml", mode: "managed_strict" },
   { targetPath: ".gitagent/teacher/WORKER_LOG.template.md", mode: "managed_strict" },

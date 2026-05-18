@@ -6,7 +6,7 @@ Store mission files here (Markdown or YAML) so **`gapman verify`** can enforce *
 
 **CLI stub (v0.7.0):** run `gapman legislate "<intent>" --msn MSN-0007 [--skill-key …]` to emit starter YAML here with an explicit mission id. Duplicate `msn_id` values fail closed by default; pass `--allow-duplicate` only for intentional migration flows. Teacher still adjusts gate/trace rows and **`git commit`** subject `[MSN-NNNN]` from an identity in **`GAPMAN_TEACHER_EMAILS`**.
 
-**Full manual verify** (same contract as unit test `runVerify: passes with Teacher git-proof in mini repo` in `src/cli/tests/gapman.test.ts`):
+**Full manual verify** (same contract as unit test `runVerify: passes with Teacher git-proof in mini repo` in `src/cli/tests/verify.test.ts`):
 
 1. **WORKER_LOG.md** at repo root: for each **PASS** row, put `trace_quote` verbatim in the file; if `anchor` is a number, that **1-based line** must contain the quote. For [example.verify.yaml](example.verify.yaml), line **1** must contain exactly: `example trace line for gapman verify`.
 2. **`GAPMAN_TEACHER_EMAILS`** — export a comma-separated allowlist of Git **author emails** who may legislate (case-insensitive). `gapman verify` selects the **newest** Teacher commit whose **subject** begins with `[msn_id]`; that commit **must modify this mission path** (`git-proof` fails with `MISSION_FILE_NOT_MODIFIED_BY_TEACHER` if a newer **`[msn_id]`** Teacher commit omits that YAML).

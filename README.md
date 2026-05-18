@@ -85,16 +85,20 @@ The gate is whatever command **fails closed** for your repo (lint, typecheck, in
 
 Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, the `gapman` binary resolves to `dist/cli/index.js` (see [`package.json`](package.json)).
 
+**Developing OpenGantry:** dogfood the full stack — [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) (missions, hooks, verify, `npm run validate`). Layer rules: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Adopters: [`docs/ADOPTION.md`](docs/ADOPTION.md).
+
 | Command | Purpose |
 |--------|---------|
 | `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
 | `gapman status` | Human-readable report of the same checks. |
+| `gapman doctor` | **[v0.8.1]** Active readiness check (manifest, Teacher email, bypass secret match, hooks). Warnings exit 0. |
 | `gapman runtime env --mission <path>` | **[v0.7.0]** Worker Runtime Contract: emit `GXT_REPO_ROOT`, `GXT_MISSION_FILE`, `GXT_MSN_ID`, `GXT_SKILL_KEY`, `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, `GXT_WORKER_LOG`. Default: POSIX `export …` lines; `--json` for scripts. [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). |
 | `gapman legislate "<intent>" --msn MSN-0007` | **[v0.7.0]** Emit stub YAML mission under `.gitagent/missions/` with explicit MSN (`--skill-key` when triage would escalate). Duplicate `msn_id` fails closed unless you pass `--allow-duplicate` for intentional migrations. Teacher still **`git commit`**-legislates under `GAPMAN_TEACHER_EMAILS`. |
 | `gapman triage "<intent>"` | Foreman-style routing ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output (may include non-binding `adr_hints` from [`.gitagent/out-of-scope/`](.gitagent/out-of-scope/README.md)). `--emit-mission --msn MSN-0007` writes `.gitagent/missions/ACTIVE_MISSION.md` by default on **DIRECT_EXECUTION** only; `--out <path>` overrides (repo-relative or absolute; use under `.gitagent/missions/` if you will **`gapman verify`**). |
 | `gapman mission validate --file <path>` | Validate a mission `.md` or `.yaml` (YAML checked against [`.gitagent/teacher/MISSION.schema.yaml`](.gitagent/teacher/MISSION.schema.yaml)). |
 | `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill’s `tmvc_roots`). |
-| `gapman verify --mission <path>` | **Git-proof** (v0.6.2): mission must be under `.gitagent/missions/`; among the last 200 commits, the newest `[MSN-XXXX]` commit authored by a Teacher email in `GAPMAN_TEACHER_EMAILS` must touch that mission file. Then run the mission gate, optional success substring match, then **hard-fail** if any **PASS** trace row’s quote/anchor is missing from `WORKER_LOG.md` (override with `--worker-log`). |
+| `gapman verify --mission <path>` | **Git-proof** + gate + trace. **Auto line-drift resolution** by default; **`--strict-trace`** to disable. **`--break-glass --reason "…"`** when `GXT_BYPASS_SECRET` matches `BYPASS.sha256`. Failures include **Fix:** hints. |
+| `gapman metrics [--json] [--ref main]` | **[v0.8.1]** Git-native rollup (stream-parsed). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |
 
 Set **`GAPMAN_TEACHER_EMAILS`** to a comma-separated list of Git **author emails** allowed to legislate missions (must match the committing Teacher’s `user.email` / `GIT_AUTHOR_EMAIL`).
 

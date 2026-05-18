@@ -1,7 +1,7 @@
 {
   "name": "opengantry",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.1",
   "description": "OpenGantry GXT substrate + gapman CLI",
   "type": "module",
   "bin": {
@@ -17,14 +17,20 @@
   "scripts": {
     "build": "tsc",
     "gapman": "node dist/cli/index.js",
-    "test": "npm run build && node --test dist/cli/tests/gapman.test.js"
+    "lint": "eslint src/cli/**/*.ts",
+    "check:changed": "./scripts/check-changed-code.sh",
+    "validate": "./scripts/dev-validate.sh",
+    "test": "npm run build && node --test dist/cli/tests/*.test.js"
   },
   "engines": {
     "node": ">=24"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
     "@types/node": "^24.0.0",
-    "typescript": "^5.7.2"
+    "eslint": "^9.28.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.33.0"
   },
   "dependencies": {
     "commander": "^12.1.0",

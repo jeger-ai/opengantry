@@ -1,4 +1,6 @@
+import fs from "node:fs";
 import path from "node:path";
+import { agentErrorAbsolutePath } from "./agent-error.js";
 import { parseMissionFile } from "./mission-parser.js";
 import type { Workspace } from "./workspace.js";
 import { defaultWorkerLogPath } from "./trace.js";
@@ -74,6 +76,11 @@ export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: st
   };
 }
 
+function lastErrorFileForRepo(repoRoot: string): string {
+  const abs = agentErrorAbsolutePath(repoRoot);
+  return fs.existsSync(abs) ? abs : "";
+}
+
 export function resolvedRuntimeEnvToJsonPayload(r: ResolvedRuntimeEnv): Record<string, string> {
   return {
     GXT_REPO_ROOT: r.repo_root,
@@ -83,5 +90,6 @@ export function resolvedRuntimeEnvToJsonPayload(r: ResolvedRuntimeEnv): Record<s
     GXT_TMVC_ROOTS: r.tmvc_roots_joined,
     GXT_FORBIDDEN_ZONES: r.forbidden_zones_joined,
     GXT_WORKER_LOG: r.worker_log,
+    GXT_LAST_ERROR_FILE: lastErrorFileForRepo(r.repo_root),
   };
 }

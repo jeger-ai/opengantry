@@ -1,0 +1,4 @@
+{
+  "grandfathered_files": [],
+  "note": "Paths listed here skip file line-count budgets until refactored. ESLint complexity still applies to changed files."
+}

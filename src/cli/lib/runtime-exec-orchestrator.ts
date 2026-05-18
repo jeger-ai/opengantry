@@ -1,10 +1,19 @@
 import crypto from "node:crypto";
 import path from "node:path";
-import { buildForbiddenBaseline, detectForbiddenViolations, type ForbiddenViolation } from "./forbidden-scan.js";
+import { writeAgentErrorPayload } from "./agent-error.js";
+import { buildForbiddenBaseline, detectForbiddenViolations } from "./forbidden-scan.js";
 import { createTelemetryWriter } from "./telemetry-log.js";
-import { hashProcessChunk, spawnWithStreamCapture } from "./runtime-exec-process.js";
 import { resolvedRuntimeEnvToJsonPayload, resolveRuntimeEnv } from "./runtime-env.js";
+import { captureWorkerProcess } from "./runtime-exec-worker.js";
+import {
+  buildRuntimeExecResult,
+  emptyWorkerCommandResult,
+  runtimeErrorResult,
+  type RuntimeExecResult,
+} from "./runtime-exec-result.js";
 import type { Workspace } from "./workspace.js";
+
+export type { RuntimeExecResult } from "./runtime-exec-result.js";
 
 export interface RuntimeExecOptions {
   mission: string;
@@ -14,21 +23,6 @@ export interface RuntimeExecOptions {
   append?: boolean;
   timeoutMs?: number;
   streamOutput?: boolean;
-}
-
-export interface RuntimeExecResult {
-  status:
-    | "success"
-    | "worker_failed"
-    | "forbidden_zone_violation"
-    | "runtime_error"
-    | "timeout";
-  exitCode: number;
-  workerExitCode: number | null;
-  workerSignal: NodeJS.Signals | null;
-  violations: ForbiddenViolation[];
-  workerLogPath: string;
-  flightId: string;
 }
 
 function randomFlightId(): string {
@@ -47,22 +41,37 @@ function chooseWorkingDirectory(repoRoot: string, cwd?: string): string {
   return path.resolve(repoRoot, cwd);
 }
 
-export async function runRuntimeExec(
+function logFlightEnd(
+  writer: ReturnType<typeof createTelemetryWriter>,
+  result: RuntimeExecResult,
+  violationCount: number,
+): void {
+  writer.logEvent({
+    type: "flight_end",
+    status: result.status,
+    exit_code: result.exitCode,
+    worker_exit_code: result.workerExitCode,
+    worker_signal: result.workerSignal,
+    violation_count: violationCount,
+  });
+  writer.close();
+}
+
+function beginRuntimeFlight(
   workspace: Workspace,
   options: RuntimeExecOptions,
-): Promise<RuntimeExecResult> {
-  if (options.workerCommand.length === 0) {
-    return {
-      status: "runtime_error",
-      exitCode: 2,
-      workerExitCode: null,
-      workerSignal: null,
-      violations: [],
-      workerLogPath: "",
-      flightId: "",
-    };
-  }
-
+): {
+  resolved: ReturnType<typeof resolveRuntimeEnv>;
+  envPayload: Record<string, string>;
+  repoRoot: string;
+  forbiddenZones: string[];
+  workerLogPath: string;
+  cwd: string;
+  flightId: string;
+  streamOutput: boolean;
+  baseline: ReturnType<typeof buildForbiddenBaseline>;
+  writer: ReturnType<typeof createTelemetryWriter>;
+} {
   const resolved = resolveRuntimeEnv(workspace, options.mission);
   const envPayload = resolvedRuntimeEnvToJsonPayload(resolved);
   const repoRoot = resolved.repo_root;
@@ -74,7 +83,6 @@ export async function runRuntimeExec(
   const flightId = randomFlightId();
   const streamOutput = options.streamOutput !== false;
   const baseline = buildForbiddenBaseline(repoRoot, forbiddenZones);
-
   const writer = createTelemetryWriter(
     workerLogPath,
     {
@@ -86,7 +94,6 @@ export async function runRuntimeExec(
     },
     options.append === true,
   );
-
   writer.logEvent({
     type: "flight_start",
     repo_root: repoRoot,
@@ -95,61 +102,57 @@ export async function runRuntimeExec(
     worker_command: options.workerCommand,
     forbidden_zones: forbiddenZones,
   });
+  return {
+    resolved,
+    envPayload,
+    repoRoot,
+    forbiddenZones,
+    workerLogPath,
+    cwd,
+    flightId,
+    streamOutput,
+    baseline,
+    writer,
+  };
+}
+
+export async function runRuntimeExec(
+  workspace: Workspace,
+  options: RuntimeExecOptions,
+): Promise<RuntimeExecResult> {
+  if (options.workerCommand.length === 0) {
+    return emptyWorkerCommandResult();
+  }
+
+  const {
+    resolved,
+    envPayload,
+    repoRoot,
+    forbiddenZones,
+    workerLogPath,
+    cwd,
+    flightId,
+    streamOutput,
+    baseline,
+    writer,
+  } = beginRuntimeFlight(workspace, options);
 
   const timeoutMs = options.timeoutMs;
+  const [cmd, ...argv] = options.workerCommand;
 
   try {
-    const [cmd, ...argv] = options.workerCommand;
-    const exit = await spawnWithStreamCapture({
+    const exit = await captureWorkerProcess({
       command: cmd!,
       argv,
       cwd,
       env: { ...process.env, ...envPayload, GXT_WORKER_LOG: workerLogPath },
       streamOutput,
       timeoutMs,
-      onSpawn: (pid) => {
-        writer.logEvent({
-          type: "proc_spawn",
-          pid,
-          cwd,
-          command: cmd,
-          argv,
-        });
-      },
-      onStdout: (chunk, seq) => {
-        writer.logEvent({
-          type: "stream",
-          stream: "stdout",
-          seq,
-          chunk_b64: chunk.toString("base64"),
-          chunk_sha256: hashProcessChunk(chunk),
-          bytes: chunk.byteLength,
-        });
-      },
-      onStderr: (chunk, seq) => {
-        writer.logEvent({
-          type: "stream",
-          stream: "stderr",
-          seq,
-          chunk_b64: chunk.toString("base64"),
-          chunk_sha256: hashProcessChunk(chunk),
-          bytes: chunk.byteLength,
-        });
-      },
-      onRuntimeError: (message, errno) => {
-        writer.logEvent({
-          type: "runtime_error",
-          message,
-          errno,
-        });
-      },
+      writer,
     });
 
     if (exit.timedOut) {
-      writer.logEvent({
-        type: "timeout_kill",
-        timeout_ms: timeoutMs ?? null,
-      });
+      writer.logEvent({ type: "timeout_kill", timeout_ms: timeoutMs ?? null });
     }
 
     writer.logEvent({
@@ -166,81 +169,28 @@ export async function runRuntimeExec(
       violation_count: violations.length,
     });
 
-    let result: RuntimeExecResult;
-    if (violations.length > 0) {
-      result = {
-        status: "forbidden_zone_violation",
-        exitCode: 3,
-        workerExitCode: exit.code,
-        workerSignal: exit.signal,
-        violations,
-        workerLogPath,
-        flightId,
-      };
-    } else if (exit.timedOut) {
-      result = {
-        status: "timeout",
-        exitCode: 124,
-        workerExitCode: exit.code,
-        workerSignal: exit.signal,
-        violations,
-        workerLogPath,
-        flightId,
-      };
-    } else if (exit.code !== 0) {
-      result = {
-        status: "worker_failed",
-        exitCode: 1,
-        workerExitCode: exit.code,
-        workerSignal: exit.signal,
-        violations,
-        workerLogPath,
-        flightId,
-      };
-    } else {
-      result = {
-        status: "success",
-        exitCode: 0,
-        workerExitCode: exit.code,
-        workerSignal: exit.signal,
-        violations,
-        workerLogPath,
-        flightId,
-      };
-    }
-
-    writer.logEvent({
-      type: "flight_end",
-      status: result.status,
-      exit_code: result.exitCode,
-      worker_exit_code: result.workerExitCode,
-      worker_signal: result.workerSignal,
-      violation_count: violations.length,
+    const result = buildRuntimeExecResult({
+      violations,
+      timedOut: exit.timedOut,
+      exitCode: exit.code,
+      exitSignal: exit.signal,
+      workerLogPath,
+      flightId,
     });
-    writer.close();
+
+    logFlightEnd(writer, result, violations.length);
+    if (result.exitCode !== 0) {
+      writeAgentErrorPayload(repoRoot, resolved, result);
+    }
     return result;
   } catch (e) {
     writer.logEvent({
       type: "runtime_error",
       message: e instanceof Error ? e.message : String(e),
     });
-    writer.logEvent({
-      type: "flight_end",
-      status: "runtime_error",
-      exit_code: 2,
-      worker_exit_code: null,
-      worker_signal: null,
-      violation_count: 0,
-    });
-    writer.close();
-    return {
-      status: "runtime_error",
-      exitCode: 2,
-      workerExitCode: null,
-      workerSignal: null,
-      violations: [],
-      workerLogPath,
-      flightId,
-    };
+    const errorResult = runtimeErrorResult(workerLogPath, flightId);
+    logFlightEnd(writer, errorResult, 0);
+    writeAgentErrorPayload(repoRoot, resolved, errorResult);
+    return errorResult;
   }
 }
