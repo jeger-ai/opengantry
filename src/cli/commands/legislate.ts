@@ -5,15 +5,18 @@ import {
   formatRepoRelative,
   logError,
   logInfo,
+  logWarn,
   setExitCode,
 } from "../lib/cli-io.js";
-import { allocateNextMsnId } from "../lib/next-msn.js";
+import { isValidMsnId } from "../lib/msn.js";
+import { extractMsnIdFromMissionPath } from "../lib/mission-msn.js";
 import { triageIntent } from "../lib/triage-logic.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import YAML from "yaml";
 
 export interface LegislateOptions {
   intent: string;
+  msn?: string;
   skillKey?: string;
   out?: string;
 }
@@ -56,6 +59,12 @@ function buildYamlMissionBody(opts: {
 
 export function runLegislate(options: LegislateOptions): void {
   const { root, manifest } = loadWorkspace();
+  const msnId = (options.msn ?? "").trim();
+  if (!isValidMsnId(msnId)) {
+    logError('legislate: --msn must match "MSN-0007" exactly');
+    setExitCode(2);
+    return;
+  }
 
   let skill_key = options.skillKey?.trim();
   if (!skill_key) {
@@ -72,15 +81,6 @@ export function runLegislate(options: LegislateOptions): void {
 
   if (!manifest.skills[skill_key]) {
     logError(`legislate: unknown skill_key "${skill_key}" (manifest skills: ${Object.keys(manifest.skills).join(", ")})`);
-    setExitCode(2);
-    return;
-  }
-
-  let msnId: string;
-  try {
-    msnId = allocateNextMsnId(root);
-  } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);
     return;
   }
@@ -110,6 +110,28 @@ export function runLegislate(options: LegislateOptions): void {
     logError(`legislate: output already exists ${absolute}`);
     setExitCode(2);
     return;
+  }
+
+  const existingMissionDupes: string[] = [];
+  const missionsDir = path.join(root, ".gitagent", "missions");
+  if (fs.existsSync(missionsDir)) {
+    for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!ent.isFile()) continue;
+      const abs = path.join(missionsDir, ent.name);
+      try {
+        const existing = extractMsnIdFromMissionPath(abs);
+        if (existing === msnId) {
+          existingMissionDupes.push(formatRepoRelative(root, abs));
+        }
+      } catch {
+        // ignore malformed mission files during advisory scan
+      }
+    }
+  }
+  if (existingMissionDupes.length > 0) {
+    logWarn(
+      `legislate: msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}`,
+    );
   }
 
   const body = buildYamlMissionBody({

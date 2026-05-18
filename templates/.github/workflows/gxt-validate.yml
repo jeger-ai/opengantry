@@ -1,0 +1,59 @@
+# Validates OpenGantry substrate: Foreman MANIFEST + path-scoped [MSN-NNNN] on PRs.
+#
+# MSN policy (pull_request only): commits that touch any of the following must have a
+# subject starting with [MSN-NNNN] (four digits):
+#   - .gitagent/ (any path under)
+#   - WORKER_LOG.md (repo root)
+#   - .githooks/ (any path under)
+#   - .github/workflows/gxt-validate.yml
+# Logic is implemented in scripts/validate-gxt.sh — keep workflow and script in sync.
+
+name: GXT validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Build gapman
+        run: npm run build
+
+      - name: gapman check (MANIFEST + Rule 4.4 skills sync)
+        run: node dist/cli/index.js check
+
+      - name: Validate Foreman MANIFEST.json (jq parity)
+        run: ./scripts/validate-gxt.sh manifest
+
+      - name: gapman unit tests
+        run: node --test dist/cli/tests/gapman.test.js
+
+  msn_commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Path-scoped MSN commit subjects
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./scripts/validate-gxt.sh msn "$BASE_SHA" "$HEAD_SHA"

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { runCheck } from "./commands/check.js";
+import { runInit } from "./commands/init.js";
 import { runLegislate } from "./commands/legislate.js";
 import { runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
@@ -86,6 +87,14 @@ function buildProgram(): Command {
     });
 
   program
+    .command("init")
+    .description("Bootstrap OpenGantry substrate assets into current git repository")
+    .option("--force", "Overwrite managed runtime assets when conflicts exist")
+    .action((opts: { force?: boolean }) => {
+      runInit({ force: opts.force });
+    });
+
+  program
     .command("triage")
     .description("Foreman-style triage from manifest (SOUL-aligned)")
     .argument("[intent...]", "User intent text")
@@ -162,12 +171,13 @@ function buildProgram(): Command {
 
   program
     .command("legislate")
-    .description("Scaffold YAML mission under .gitagent/missions/ with next MSN (Teacher still commits)")
+    .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Teacher still commits)")
     .argument("[intent...]", "One-line Teacher intent summary")
+    .requiredOption("--msn <id>", "Explicit mission id (must match MSN-0007)")
     .option("--skill-key <key>", "Override Foreman-derived skill_key when triage escalates")
     .option("--out <file>", "Output path (.gitagent/missions/…); defaults to MSN.slug.yaml")
     .action(async function (this: Command, intentParts: string[]) {
-      const opts = this.opts<{ skillKey?: string; out?: string }>();
+      const opts = this.opts<{ msn: string; skillKey?: string; out?: string }>();
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
       if (!text) {
@@ -177,6 +187,7 @@ function buildProgram(): Command {
       }
       runLegislate({
         intent: text,
+        msn: opts.msn,
         skillKey: opts.skillKey,
         out: opts.out,
       });

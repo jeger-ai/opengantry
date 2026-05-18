@@ -7,6 +7,13 @@
   "bin": {
     "gapman": "./dist/cli/index.js"
   },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "scripts": {
     "build": "tsc",
     "gapman": "node dist/cli/index.js",
