@@ -18,7 +18,7 @@ test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "prior.yaml"),
     `msn_id: MSN-0988
-skill_key: ui-ralph
+skill_key: ui
 gate_command: "echo OK"
 gate_success_substring: "OK"
 trace_rows: []
@@ -32,9 +32,9 @@ trace_rows: []
   try {
     process.exitCode = undefined;
     runLegislate({
-      intent: "Add button hover state ui-ralph",
+      intent: "Add button hover state ui",
       msn: "MSN-0989",
-      skillKey: "ui-ralph",
+      skillKey: "ui",
     });
     assert.equal(process.exitCode, undefined);
     const files = fs.readdirSync(path.join(dest, ".gitagent", "missions"));
@@ -44,7 +44,7 @@ trace_rows: []
       .find((f) => f.startsWith("MSN-0989.") && f.endsWith(".yaml"))!;
     const body = fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
     assert.ok(body.includes("msn_id: MSN-0989") || body.includes("MSN-0989"));
-    assert.ok(body.includes("skill_key: ui-ralph"));
+    assert.ok(body.includes("skill_key: ui"));
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -91,7 +91,7 @@ test("legislate: rejects missing msn", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({ intent: "ui-ralph adjust spacing", skillKey: "ui-ralph" });
+    runLegislate({ intent: "ui adjust spacing", skillKey: "ui" });
     assert.equal(process.exitCode, 2);
   } finally {
     process.chdir(prevCwd);
@@ -116,9 +116,9 @@ test("legislate: rejects malformed msn", () => {
   try {
     process.exitCode = undefined;
     runLegislate({
-      intent: "ui-ralph adjust spacing",
+      intent: "ui adjust spacing",
       msn: "msn-0043",
-      skillKey: "ui-ralph",
+      skillKey: "ui",
     });
     assert.equal(process.exitCode, 2);
   } finally {
@@ -140,7 +140,7 @@ test("legislate: duplicate msn fails closed by default", () => {
   fs.mkdirSync(missionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(missionsDir, "existing.yaml"),
-    "msn_id: MSN-0999\nskill_key: ui-ralph\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0999\nskill_key: ui\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -150,9 +150,9 @@ test("legislate: duplicate msn fails closed by default", () => {
   try {
     process.exitCode = undefined;
     runLegislate({
-      intent: "ui-ralph adjust spacing",
+      intent: "ui adjust spacing",
       msn: "MSN-0999",
-      skillKey: "ui-ralph",
+      skillKey: "ui",
     });
     assert.equal(process.exitCode, 2);
   } finally {
@@ -174,7 +174,7 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   fs.mkdirSync(missionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(missionsDir, "existing.yaml"),
-    "msn_id: MSN-0999\nskill_key: ui-ralph\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0999\nskill_key: ui\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -184,9 +184,9 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   try {
     process.exitCode = undefined;
     runLegislate({
-      intent: "ui-ralph add hover state",
+      intent: "ui add hover state",
       msn: "MSN-0999",
-      skillKey: "ui-ralph",
+      skillKey: "ui",
       allowDuplicate: true,
     });
     assert.equal(process.exitCode, undefined);

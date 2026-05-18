@@ -26,15 +26,15 @@ gapman doctor
 
 | Change | Skill (typical) | TMVC |
 |--------|-----------------|------|
-| `src/cli/**` (gapman) | `gapman-ralph` | `src/cli/` |
-| App logic (if present) | `logic-ralph` | `src/lib/`, `src/utils/` |
-| UI (if present) | `ui-ralph` | `src/components/`, `src/styles/` |
+| `src/cli/**` (gapman) | `gapman` | `src/cli/` |
+| App logic (if present) | `logic` | `src/lib/`, `src/utils/` |
+| UI (if present) | `ui` | `src/components/`, `src/styles/` |
 | `.gitagent/`, hooks, workflows | Teacher + mission | Tier-3 — legislate first |
 
 ## Mission loop (required for substantive work)
 
 1. **Triage** — `gapman triage "<intent>"` (escalation → Teacher legislates).
-2. **Legislate** — `gapman legislate "<intent>" --msn MSN-NNNN --skill-key gapman-ralph` (or `substrate-ralph` for substrate-only).
+2. **Legislate** — `gapman legislate "<intent>" --msn MSN-NNNN --skill-key gapman` (or `substrate` for substrate-only).
 3. **Teacher commit** — subject **`[MSN-NNNN] …`**, author email in `GAPMAN_TEACHER_EMAILS`, mission file under `.gitagent/missions/` included in the commit.
 4. **Worker scope** — `eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"` before agent/shell work.
 5. **Trace** — append PASS quotes to repo-root `WORKER_LOG.md` (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).

@@ -125,7 +125,7 @@ Inspect `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, and `GXT_WORKER_LOG`; write for
 **Legislate a stub mission (Teacher edits + commits — then wire `runtime env` to that file path):**
 
 ```bash
-node dist/cli/index.js legislate "Fix login spinner on checkout — ui-ralph" --msn MSN-0007 --skill-key ui-ralph
+node dist/cli/index.js legislate "Fix login spinner on checkout — ui" --msn MSN-0007 --skill-key ui
 # Teacher: tune gate/trace rows; then:
 # eval "$(node dist/cli/index.js runtime env --mission .gitagent/missions/MSN-XXXX.<slug>.yaml)"
 ```

@@ -1,7 +1,7 @@
 # YAML mission file (validated by `gapman mission validate` against MISSION.schema.yaml)
 # Example — copy and edit for a real run. Use `msn_id` or `msnId` (same MSN-NNNN pattern).
 msn_id: MSN-0000
-skill_key: logic-ralph
+skill_key: logic
 gate_command: "echo ok"
 gate_success_substring: "ok"
 trace_rows:

@@ -22,7 +22,7 @@ Follow **[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)** end-to-end:
 - `npm run validate` before push/PR
 - `core.hooksPath=.githooks` (pre-push verify / check / changed-code gates)
 
-**Skill routing:** `gapman-ralph` for `src/cli/`; substrate paths need Teacher legislation.
+**Skill routing:** `gapman` for `src/cli/`; substrate paths need Teacher legislation.
 
 ## Cursor wiring (this repo)
 

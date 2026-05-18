@@ -153,7 +153,7 @@ test("git-proof: MISSION_OUTSIDE_MISSIONS_DIR", () => {
   const manifest = {
     schema_version: "0.5.0",
     skills: {
-      "ui-ralph": {
+      "ui": {
         trust_threshold: "Tier-1",
         tmvc_roots: [],
         forbidden_zones: [],
@@ -168,7 +168,7 @@ test("git-proof: MISSION_OUTSIDE_MISSIONS_DIR", () => {
     "utf8",
   );
   const missionYaml = `msn_id: MSN-0999
-skill_key: ui-ralph
+skill_key: ui
 gate_command: echo DONE
 gate_success_substring: DONE
 trace_rows: []

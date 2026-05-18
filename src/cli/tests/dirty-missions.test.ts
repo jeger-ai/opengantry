@@ -38,7 +38,7 @@ test("listDirtyMissionPaths: excludes deleted mission files", () => {
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, missionRel),
-    "msn_id: MSN-0002\nskill_key: ui-ralph\ngate_command: echo ok\ntrace_rows: []\n",
+    "msn_id: MSN-0002\nskill_key: ui\ngate_command: echo ok\ntrace_rows: []\n",
     "utf8",
   );
   gitCommit(dest, "add mission", TEACHER_EMAIL);

@@ -1,25 +1,25 @@
 {
   "schema_version": "0.5.0",
   "skills": {
-    "ui-ralph": {
+    "ui": {
       "desc": "UI components and styles within declared roots.",
       "trust_threshold": "Tier-1",
       "tmvc_roots": ["src/components/", "src/styles/"],
       "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
     },
-    "logic-ralph": {
+    "logic": {
       "desc": "Application logic and utilities within declared roots.",
       "trust_threshold": "Tier-2",
       "tmvc_roots": ["src/lib/", "src/utils/"],
       "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
     },
-    "gapman-ralph": {
+    "gapman": {
       "desc": "gapman CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
       "trust_threshold": "Tier-2",
       "tmvc_roots": ["src/cli/"],
       "forbidden_zones": [".gitagent/foreman/", ".gitagent/teacher/RULES.md"]
     },
-    "substrate-ralph": {
+    "substrate": {
       "desc": "Reserved for high-risk substrate work; requires Teacher mission.",
       "trust_threshold": "Tier-3",
       "tmvc_roots": [],

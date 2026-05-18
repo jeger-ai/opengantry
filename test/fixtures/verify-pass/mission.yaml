@@ -1,5 +1,5 @@
 msn_id: MSN-0999
-skill_key: logic-ralph
+skill_key: logic
 gate_command: "echo DONE"
 gate_success_substring: "DONE"
 trace_rows:

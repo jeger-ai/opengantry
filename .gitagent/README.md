@@ -42,7 +42,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 flowchart TD
   intent[UserIntent] --> foreman[ForemanTriage]
   foreman --> match[ManifestRiskTierAndRoots]
-  match -->|"direct_execution"| worker[RalphWorker]
+  match -->|"direct_execution"| worker[Worker]
   match -->|"legislative_escalation"| teacher[TeacherLegislation]
   teacher --> mission[MissionWorkOrder]
   mission --> worker

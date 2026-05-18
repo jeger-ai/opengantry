@@ -7,7 +7,7 @@
 #
 # gapman verify git-proof: newest Teacher `[MSN-0012]` commit must modify this YAML (not README/tests alone).
 msn_id: MSN-0012
-skill_key: logic-ralph
+skill_key: logic
 gate_command: "echo DONE"
 gate_success_substring: "DONE"
 trace_rows:

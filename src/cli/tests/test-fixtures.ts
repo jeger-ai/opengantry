@@ -49,7 +49,7 @@ export function writeMiniGapmanMission(
   const rel = `.gitagent/missions/${filename}`;
   const safeQuote = traceQuote.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const missionYaml = `msn_id: ${msnId}
-skill_key: ui-ralph
+skill_key: ui
 gate_command: ${gateCommand}
 gate_success_substring: "${gateSubstring}"
 trace_rows:
@@ -63,7 +63,7 @@ trace_rows:
   return rel;
 }
 
-/** Standard verify fixture: MSN-0999, `missions/m.yaml`, ui-ralph manifest. Returns mission path posix. */
+/** Standard verify fixture: MSN-0999, `missions/m.yaml`, ui manifest. Returns mission path posix. */
 export function writeSkillsForManifest(dest: string, skillKeys: string[]): void {
   const dir = path.join(dest, "skills");
   fs.mkdirSync(dir, { recursive: true });
@@ -75,13 +75,13 @@ export function writeSkillsForManifest(dest: string, skillKeys: string[]): void 
 export function writeMiniGapmanRepo(dest: string, ogRoot: string): string {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
   writeManifest(dest, {
-    "ui-ralph": {
+    "ui": {
       trust_threshold: "Tier-1",
       tmvc_roots: [],
       forbidden_zones: [],
     },
   });
-  writeSkillsForManifest(dest, ["ui-ralph"]);
+  writeSkillsForManifest(dest, ["ui"]);
   writeMiniGapmanMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "m.yaml");
   return ".gitagent/missions/m.yaml";
 }
@@ -146,14 +146,14 @@ export function writeRuntimeExecRepo(
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
   writeManifest(dest, {
-    "ui-ralph": {
+    "ui": {
       trust_threshold: "Tier-1",
       tmvc_roots: ["src/components/"],
       forbidden_zones: forbiddenZones,
     },
   });
   const missionYaml = `msn_id: MSN-0910
-skill_key: ui-ralph
+skill_key: ui
 gate_command: "echo OK"
 gate_success_substring: "OK"
 trace_rows: []

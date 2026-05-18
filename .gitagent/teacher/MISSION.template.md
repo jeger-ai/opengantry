@@ -11,7 +11,7 @@
 
 ## 2. Scope — TMVC roots (dynamic)
 
-- **Skill key:** [e.g. `ui-ralph` | `logic-ralph`]
+- **Skill key:** [e.g. `ui` | `logic`]
 - **TMVC roots** (from manifest; Teacher may narrow, not widen): [list roots]
 - **Forbidden zones** (from manifest; hard deny): [list or “per manifest”]
 - **Recursive discovery:** allowed only under listed roots unless Teacher states otherwise.

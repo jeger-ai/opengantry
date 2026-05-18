@@ -15,12 +15,12 @@ OpenGantry development **MUST** use the full GXT stack — same as adopters. See
 |------|---------|
 | Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `export GAPMAN_TEACHER_EMAILS="$(git config user.email)"` |
 | Readiness | `gapman doctor` |
-| Scope work | `gapman triage "<intent>"` → `gapman legislate … --msn MSN-NNNN --skill-key gapman-ralph` (CLI) or `substrate-ralph` (substrate) |
+| Scope work | `gapman triage "<intent>"` → `gapman legislate … --msn MSN-NNNN --skill-key gapman` (CLI) or `substrate` (substrate) |
 | Worker env | `eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"` |
 | Finish | Trace in `WORKER_LOG.md` · `gapman verify --mission …` |
 | Pre-PR | `npm run validate` |
 
-- **`src/cli/`** → skill **`gapman-ralph`** (TMVC `src/cli/`).
+- **`src/cli/`** → skill **`gapman`** (TMVC `src/cli/`).
 - **`.gitagent/`**, hooks, workflows** → Tier-3; Teacher mission + `[MSN-…]` commits required.
 - Do **not** bypass hooks or skip verify for “internal” convenience.
 

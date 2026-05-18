@@ -1,7 +1,7 @@
 # OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: your intent
 msn_id: MSN-0013
-skill_key: ui-ralph
+skill_key: ui
 gate_command: echo OK
 gate_success_substring: OK
 trace_rows:

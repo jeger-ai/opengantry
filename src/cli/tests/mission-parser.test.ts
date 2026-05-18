@@ -67,7 +67,7 @@ test("parseMissionFile: YAML mission with msnId only", () => {
     path.join(dest, ".gitagent", "teacher", "MISSION.schema.yaml"),
   );
   const missionYaml = `msnId: MSN-0555
-skill_key: ui-ralph
+skill_key: ui
 gate_command: "echo OK"
 gate_success_substring: "OK"
 trace_rows: []

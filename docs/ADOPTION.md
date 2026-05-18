@@ -8,7 +8,7 @@ This runbook documents the OpenGantry specimen flow for adopters testing `gapman
 gapman init
 export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
 gapman doctor
-gapman legislate "<intent>" --msn MSN-0001 --skill-key ui-ralph
+gapman legislate "<intent>" --msn MSN-0001 --skill-key ui
 # Teacher: git commit -m "[MSN-0001] legislate …" including the mission file
 gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
 ```

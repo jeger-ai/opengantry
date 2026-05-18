@@ -16,7 +16,7 @@ test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () 
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-env-fix"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
   writeManifest(dest, {
-    "logic-ralph": {
+    "logic": {
       trust_threshold: "Tier-2",
       tmvc_roots: ["src/lib/", "src/utils/"],
       forbidden_zones: [".gitagent/foreman/"],
@@ -24,7 +24,7 @@ test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () 
   });
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   const missionYaml = `msn_id: MSN-0701
-skill_key: logic-ralph
+skill_key: logic
 gate_command: echo OK
 gate_success_substring: OK
 trace_rows: []
@@ -32,7 +32,7 @@ trace_rows: []
   fs.writeFileSync(path.join(dest, ".gitagent", "missions", "x.yaml"), missionYaml, "utf8");
   const manifest = loadManifest(dest);
   const r = resolveRuntimeEnv({ root: dest, manifest }, ".gitagent/missions/x.yaml");
-  assert.equal(r.skill_key, "logic-ralph");
+  assert.equal(r.skill_key, "logic");
   assert.equal(r.msn_id, "MSN-0701");
   assert.match(r.worker_log, /WORKER_LOG\.md$/);
   assert.ok(r.tmvc_roots_joined.includes(`${path.sep}src${path.sep}lib`));
