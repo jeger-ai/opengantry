@@ -64,10 +64,15 @@ test("verifyTraceRows: numeric anchor out of range", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-range-"));
   const p = path.join(dir, "WORKER_LOG.md");
   fs.writeFileSync(p, "one line only\n", "utf8");
-  const result = verifyTraceRows(p, [
-    { dodId: "1", traceQuote: "one line only", anchor: "9", status: "PASS" },
-  ]);
-  assert.ok(result.failures.length > 0);
+  const row = { dodId: "1", traceQuote: "one line only", anchor: "9", status: "PASS" };
+  const strict = verifyTraceRows(p, [row], { strictTrace: true });
+  assert.ok(strict.failures.length > 0);
+  assert.match(strict.failures[0]!.reason, /out of range/);
+  const auto = verifyTraceRows(p, [row]);
+  assert.equal(auto.failures.length, 0);
+  assert.equal(auto.warnings.length, 1);
+  assert.equal(auto.warnings[0]!.foundLine, 1);
+  assert.equal(auto.warnings[0]!.autoResolved, true);
 });
 
 

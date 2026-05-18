@@ -27,6 +27,7 @@ fi
 mapfile -t missions < <(
   git diff --name-only "${base}..HEAD" -- .gitagent/missions/ \
     | grep -E '\.(ya?ml|md)$' \
+    | grep -viE '(^|/)README\.md$' \
     | sort
 )
 

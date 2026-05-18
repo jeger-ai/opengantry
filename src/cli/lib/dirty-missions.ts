@@ -3,10 +3,17 @@ import { gitRunOk } from "./git-repo.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
 
-function isMissionFile(rel: string): boolean {
+/** Docs under missions/ are not gapman verify targets (no gate/trace contract). */
+const NON_VERIFIABLE_BASENAMES = new Set(["README.md"]);
+
+/** True for YAML/Markdown mission work orders under `.gitagent/missions/` (excludes README). */
+export function isVerifiableMissionPath(rel: string): boolean {
   const norm = rel.trim().replace(/\\/g, "/");
   if (!norm.startsWith(MISSIONS_PREFIX)) return false;
-  return /\.(ya?ml|md)$/i.test(norm);
+  if (!/\.(ya?ml|md)$/i.test(norm)) return false;
+  const base = norm.slice(MISSIONS_PREFIX.length).split("/").pop() ?? "";
+  if (NON_VERIFIABLE_BASENAMES.has(base)) return false;
+  return true;
 }
 
 /** Resolve merge-base for branch-scoped mission diff (pre-push). */
@@ -41,7 +48,7 @@ export function listDirtyMissionPaths(repoRoot: string, baseRef?: string): strin
   const paths = r.stdout
     .split("\n")
     .map((p) => p.trim().replace(/\\/g, "/"))
-    .filter((p) => isMissionFile(p));
+    .filter((p) => isVerifiableMissionPath(p));
 
   return [...new Set(paths)].sort();
 }

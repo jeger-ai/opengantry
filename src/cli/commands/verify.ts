@@ -57,7 +57,11 @@ export function runVerify(options: VerifyOptions): void {
       logInfo(`${CLI_NAME} verify: BREAK-GLASS — all gates skipped (audited on ${commitSha})`);
       logInfo(`  reason: ${reason}`);
       if (mission.msnId) logInfo(`  msn_id: ${mission.msnId}`);
-      logFixHint("git push origin refs/notes/gxt-bypass");
+      if (options.auditCommit === true) {
+        logFixHint("git push origin HEAD  # audit empty commit (no gxt-bypass note)");
+      } else {
+        logFixHint("git push origin refs/notes/gxt-bypass");
+      }
       return;
     } catch (e) {
       logError(e instanceof Error ? e.message : String(e));
