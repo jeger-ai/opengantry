@@ -12,4 +12,11 @@ Before planning, editing code, or running substantive commands in this repositor
 
 Treat these as the **law + routing contract** for agent work. For orientation and workflow, see **`.gitagent/README.md`**.
 
+## Cursor wiring
+
+- **Rules:** this file (`alwaysApply: true`) + root `AGENTS.md`.
+- **Hooks:** `.cursor/hooks.json` (installed by `gapman init`) — shell guard for GXT law/manifest paths.
+- **Terminal bootstrap:** `source scripts/gxt-cursor-env.sh .gitagent/missions/<file>.yaml` (or `export GAPMAN_MISSION=…` first).
+- **Full matrix:** `docs/INTEGRATIONS.md`.
+
 If the user clearly scopes work to something that cannot affect OpenGantry (e.g. a typo in unrelated docs), still skim **RULES** and **MANIFEST** when the change could touch skills, missions, routing, or manifest sync.

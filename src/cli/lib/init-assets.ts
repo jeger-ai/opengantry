@@ -27,6 +27,9 @@ export const INIT_ASSETS: readonly InitAsset[] = [
   { targetPath: ".githooks/post-checkout", mode: "managed_strict", executable: true },
   { targetPath: ".githooks/pre-push", mode: "managed_strict", executable: true },
   { targetPath: ".cursor/rules/opengantry-gxt-substrate.mdc", mode: "managed_strict" },
+  { targetPath: ".cursor/hooks.json", mode: "managed_strict" },
+  { targetPath: ".cursor/hooks/gxt-before-shell.sh", mode: "managed_strict", executable: true },
+  { targetPath: "scripts/gxt-cursor-env.sh", mode: "managed_strict", executable: true },
   { targetPath: ".gitagent/teacher/MISSION.schema.yaml", mode: "managed_strict" },
   { targetPath: ".gitagent/teacher/WORKER_LOG.template.md", mode: "managed_strict" },
 ] as const;

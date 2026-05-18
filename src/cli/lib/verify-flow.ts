@@ -7,7 +7,6 @@ import {
 } from "./break-glass.js";
 import {
   hintGate,
-  hintTeacherEmails,
   hintTraceAmbiguous,
   hintTraceMissing,
   hintTraceStrictTrace,
@@ -15,6 +14,7 @@ import {
 } from "./fix-hints.js";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import { logError, logInfo, setExitCode } from "./cli-io.js";
+import { reportUserFacingError } from "./user-error.js";
 import { gatePassed, runGate } from "./gate.js";
 import type { ParsedMission } from "./types.js";
 import { isLineDriftFailure } from "./worker-log-line-map.js";
@@ -61,9 +61,7 @@ export function runVerifyGitProof(root: string, mission: ParsedMission): string 
     logInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${proofMsnId})`);
     return proofMsnId;
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
-    logFixHint(hintTeacherEmails(root));
-    setExitCode(1);
+    reportUserFacingError(e);
     return null;
   }
 }

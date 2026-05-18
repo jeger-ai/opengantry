@@ -25,7 +25,7 @@ if [[ -z "$base" ]]; then
 fi
 
 mapfile -t missions < <(
-  git diff --name-only "${base}..HEAD" -- .gitagent/missions/ \
+  git diff --name-only --diff-filter=ACMRT "${base}..HEAD" -- .gitagent/missions/ \
     | grep -E '\.(ya?ml|md)$' \
     | grep -viE '(^|/)README\.md$' \
     | sort
@@ -33,6 +33,7 @@ mapfile -t missions < <(
 
 for mission in "${missions[@]}"; do
   [[ -n "$mission" ]] || continue
+  [[ -f "$mission" ]] || continue
   echo "pre-push: gapman verify --mission ${mission}" >&2
   "${GAPMAN[@]}" verify --mission "$mission" || exit 1
 done

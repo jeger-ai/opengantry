@@ -1,4 +1,5 @@
 import { assertMissionGatePresent, parseMissionFile } from "../lib/mission-parser.js";
+import { reportUserFacingError } from "../lib/user-error.js";
 import {
   runVerifyBreakGlass,
   runVerifyGate,
@@ -11,9 +12,16 @@ import { loadWorkspace } from "../lib/workspace.js";
 export type { VerifyOptions } from "../lib/verify-types.js";
 
 export function runVerify(options: VerifyOptions): void {
+  try {
+    runVerifyInner(options);
+  } catch (e) {
+    reportUserFacingError(e);
+  }
+}
+
+function runVerifyInner(options: VerifyOptions): void {
   const { root } = loadWorkspace();
   const mission = parseMissionFile(root, options.mission);
-  assertMissionGatePresent(mission);
   const missionArg = options.mission;
 
   if (options.breakGlass === true) {
@@ -21,6 +29,7 @@ export function runVerify(options: VerifyOptions): void {
     return;
   }
 
+  assertMissionGatePresent(mission);
   if (runVerifyGitProof(root, mission) === null) return;
   if (!runVerifyGate(root, mission, missionArg, options)) return;
   runVerifyTrace(root, mission, missionArg, options);

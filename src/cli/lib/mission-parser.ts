@@ -1,9 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
+import { CLI_NAME } from "./constants.js";
+import { hintMissionNoGate } from "./fix-hints.js";
 import { extractMsnIdFromMissionBody } from "./mission-msn.js";
 import { parseMarkdownMission } from "./mission-markdown.js";
 import { validateYamlMission } from "./mission-yaml.js";
 import type { ParsedMission } from "./types.js";
+import { GapmanUserError } from "./user-error.js";
 
 export { parseMarkdownMission, isMarkdownTableSeparatorRow } from "./mission-markdown.js";
 export { validateYamlMission, ensureMissionSchemaFileExists } from "./mission-yaml.js";
@@ -25,6 +28,10 @@ export function parseMissionFile(root: string, filePath: string): ParsedMission 
 
 export function assertMissionGatePresent(mission: ParsedMission): void {
   if (!mission.gate?.command?.trim()) {
-    throw new Error(`gapman mission: no deterministic gate (Command) found in ${mission.rawPath}`);
+    throw new GapmanUserError(
+      "MISSION_NO_GATE",
+      `${CLI_NAME} verify: MISSION_NO_GATE — no deterministic gate (Command) found in ${mission.rawPath}`,
+      hintMissionNoGate(mission.rawPath),
+    );
   }
 }

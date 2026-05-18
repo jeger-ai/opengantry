@@ -13,6 +13,8 @@ gapman legislate "<intent>" --msn MSN-0001 --skill-key ui-ralph
 gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
 ```
 
+Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md) (one universal `gapman runtime exec` wrapper + context injection paths).
+
 `gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md` (no `--fuzzy-trace` required). Use `--strict-trace` only when you need exact line numbers.
 
 ## Release posture

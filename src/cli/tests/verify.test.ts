@@ -13,7 +13,7 @@ import {
   writeBypassAnchor,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
+import { captureConsole, TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
 
 test("runVerify: passes with Teacher git-proof in mini repo", () => {
   const ogRoot = getRepoRoot();
@@ -101,6 +101,86 @@ test("runVerify: break-glass without secret exits 2", () => {
     if (prevSecret === undefined) delete process.env[ENV_BYPASS_SECRET];
     else process.env[ENV_BYPASS_SECRET] = prevSecret;
   }
+});
+
+
+test("runVerify: break-glass skips gate requirement on gate-less mission", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-bypass-nogate-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  const secret = "emergency-bypass-no-gate";
+  writeBypassAnchor(dest, secret);
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  const missionRel = ".gitagent/missions/no-gate.md";
+  fs.writeFileSync(
+    path.join(dest, missionRel),
+    `# Mission: MSN-0999
+
+## 3. Deterministic gate
+
+**Success criteria:** 1
+`,
+    "utf8",
+  );
+  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  const prevCwd = process.cwd();
+  const prevSecret = process.env[ENV_BYPASS_SECRET];
+  process.env[ENV_BYPASS_SECRET] = secret;
+  try {
+    process.chdir(dest);
+    process.exitCode = undefined;
+    runVerify({
+      mission: missionRel,
+      workerLog: "WORKER_LOG.md",
+      breakGlass: true,
+      breakGlassReason: "production outage requires hotfix",
+    });
+    assert.equal(process.exitCode, undefined);
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+    if (prevSecret === undefined) delete process.env[ENV_BYPASS_SECRET];
+    else process.env[ENV_BYPASS_SECRET] = prevSecret;
+  }
+});
+
+
+test("runVerify: missing gate prints Fix hint without stack", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-nogate-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  const missionRel = ".gitagent/missions/no-gate.md";
+  fs.writeFileSync(
+    path.join(dest, missionRel),
+    `# Mission: MSN-0999
+
+## 3. Deterministic gate
+
+**Success criteria:** 1
+`,
+    "utf8",
+  );
+  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  const prevCwd = process.cwd();
+  withTeacherEnv(() => {
+    process.chdir(dest);
+    try {
+      process.exitCode = undefined;
+      const { output } = captureConsole(() => {
+        runVerify({ mission: missionRel, workerLog: "WORKER_LOG.md" });
+      });
+      const combined = output.stdout + output.stderr;
+      assert.equal(process.exitCode, 1);
+      assert.match(combined, /MISSION_NO_GATE/);
+      assert.match(combined, /Fix:/);
+      assert.match(combined, /example\.verify\.yaml/);
+      assert.doesNotMatch(combined, /at assertMissionGatePresent/);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
 });
 
 

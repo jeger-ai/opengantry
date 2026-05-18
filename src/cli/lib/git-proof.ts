@@ -1,6 +1,7 @@
 import path from "node:path";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { gitRun } from "./git-repo.js";
+import { throwGitProofError } from "./git-proof-errors.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 
 /** Missions verified by `gapman verify` must live under this repo-relative prefix. */
@@ -35,8 +36,10 @@ export function missionPathRepoRelative(root: string, missionAbsolutePath: strin
 export function assertMissionUnderMissionsDir(repoRelMissionPath: string): void {
   const norm = repoRelMissionPath.replace(/\\/g, "/");
   if (!norm.startsWith(REL_MISSIONS_PREFIX)) {
-    throw new Error(
-      `${CLI_NAME} verify: git-proof: MISSION_OUTSIDE_MISSIONS_DIR — mission must live under ${REL_MISSIONS_PREFIX} (got "${norm}")`,
+    throwGitProofError(
+      "MISSION_OUTSIDE_MISSIONS_DIR",
+      `mission must live under ${REL_MISSIONS_PREFIX} (got "${norm}")`,
+      { repoRelMission: norm },
     );
   }
 }
@@ -142,16 +145,21 @@ export function assertTeacherMissionProof(
     options?.msnId && MSN_ID_PATTERN.test(options.msnId)
       ? options.msnId
       : extractMsnIdFromMissionPath(missionAbsolutePath);
+  const missionPath = missionAbsolutePath;
   if (!msnId || !MSN_ID_PATTERN.test(msnId)) {
-    throw new Error(
-      `${CLI_NAME} verify: git-proof: MISSION_MISSING_MSN — The mission file is missing a valid [MSN-XXXX] identifier (YAML/frontmatter msn_id or msnId, line-start [MSN-NNNN], or # Mission: line).`,
+    throwGitProofError(
+      "MISSION_MISSING_MSN",
+      "The mission file is missing a valid [MSN-XXXX] identifier (YAML/frontmatter msn_id or msnId, line-start [MSN-NNNN], or # Mission: line).",
+      { root, missionPath },
     );
   }
 
   const teacherEmails = parseTeacherEmailsFromEnv();
   if (teacherEmails.length === 0) {
-    throw new Error(
-      `${CLI_NAME} verify: git-proof: TEACHER_IDENTITY_UNCONFIGURED — Set GAPMAN_TEACHER_EMAILS in your environment to define who can legislate.`,
+    throwGitProofError(
+      "TEACHER_IDENTITY_UNCONFIGURED",
+      "Set GAPMAN_TEACHER_EMAILS in your environment to define who can legislate.",
+      { root, missionPath, msnId },
     );
   }
 
@@ -161,26 +169,39 @@ export function assertTeacherMissionProof(
   const scanDepth = options?.scanDepth;
   const rows = listMsnSubjectCommits(root, msnId, scanDepth);
   if (rows.length === 0) {
-    throw new Error(
-      `${CLI_NAME} verify: git-proof: NO_MSN_COMMITS — No commits found starting with [${msnId}]. Did you commit the mission?`,
+    throwGitProofError(
+      "NO_MSN_COMMITS",
+      `No commits found starting with [${msnId}]. Did you commit the mission?`,
+      { root, missionPath, msnId, repoRelMission },
     );
   }
 
   const stamp = rows.find((r) => isTeacherEmail(r.authorEmail, teacherEmails));
   if (!stamp) {
     const latest = rows[0]!;
-    throw new Error(
-      `${CLI_NAME} verify: git-proof: NO_TEACHER_MSN_COMMIT — The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${ENV_TEACHER_EMAILS}). ` +
+    throwGitProofError(
+      "NO_TEACHER_MSN_COMMIT",
+      `The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${ENV_TEACHER_EMAILS}). ` +
         `Add that exact email (see \`git log -1 --format=%ae ${latest.hash}\`) to ${ENV_TEACHER_EMAILS}, comma-separated if several; matching is case-insensitive.`,
+      { root, missionPath, msnId, latestAuthorEmail: latest.authorEmail },
     );
   }
 
   const changed = listCommitChangedPaths(root, stamp.hash);
   if (!commitTouchesMission(changed, repoRelMission)) {
-    throw new Error(
-      `${CLI_NAME} verify: git-proof: MISSION_FILE_NOT_MODIFIED_BY_TEACHER — The Teacher stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
+    throwGitProofError(
+      "MISSION_FILE_NOT_MODIFIED_BY_TEACHER",
+      `The Teacher stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
         `The stamp is the newest (scanning backward) commit authored by ${ENV_TEACHER_EMAILS} whose subject begins with [${msnId}]. ` +
         `Either add a newer Teacher commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose only qualifying commits touch this file.`,
+      {
+        root,
+        missionPath,
+        msnId,
+        repoRelMission,
+        stampHash: stamp.hash,
+        stampSubject: stamp.subject.trim(),
+      },
     );
   }
 

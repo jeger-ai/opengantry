@@ -134,6 +134,7 @@ Details and variable semantics: [.gitagent/teacher/RUNTIME.md](.gitagent/teacher
 
 ### 3. Wire agents (and optionally CI)
 
+- **[`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md)** — universal `gapman runtime exec` wrapper + per-tool context injection (Cursor, Claude Code, OpenCode, Junie, Antigravity, Cline, Aider). Cursor: rules + hooks + `scripts/gxt-cursor-env.sh` via `gapman init`.
 - **[`AGENTS.md`](AGENTS.md)** tells agents to read **RULES** + **MANIFEST** before acting.
 - **[`.cursor/rules/opengantry-gxt-substrate.mdc`](.cursor/rules/opengantry-gxt-substrate.mdc)** does the same for Cursor with `alwaysApply: true`.
 - **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)**:

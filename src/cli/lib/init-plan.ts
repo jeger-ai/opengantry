@@ -96,6 +96,9 @@ export function logInitNextSteps(): void {
   logInfo("5) Teacher commit must start with [MSN-0001] and modify that mission file");
   logInfo("6) run gapman runtime env --mission <path> then gapman verify --mission <path>");
   logInfo(
-    "7) this repo has .gitagent/missions/example.verify.yaml; greenfield repos can start from .gitagent/missions/README.md",
+    "7) Cursor: source scripts/gxt-cursor-env.sh .gitagent/missions/<file>.yaml (hooks + rules from gapman init)",
+  );
+  logInfo(
+    "8) this repo has .gitagent/missions/example.verify.yaml; greenfield repos can start from .gitagent/missions/README.md",
   );
 }

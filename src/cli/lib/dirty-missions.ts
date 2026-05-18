@@ -42,7 +42,14 @@ export function listDirtyMissionPaths(repoRoot: string, baseRef?: string): strin
   const base = baseRef?.trim() || resolveMergeBase(repoRoot);
   if (!base) return [];
 
-  const r = gitRunOk(repoRoot, ["diff", "--name-only", `${base}..HEAD`, "--", MISSIONS_PREFIX]);
+  const r = gitRunOk(repoRoot, [
+    "diff",
+    "--name-only",
+    "--diff-filter=ACMRT",
+    `${base}..HEAD`,
+    "--",
+    MISSIONS_PREFIX,
+  ]);
   if (!r.ok) return [];
 
   const paths = r.stdout

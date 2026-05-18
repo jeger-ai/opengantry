@@ -9,6 +9,7 @@ import {
   assertTeacherMissionProof,
   missionPathRepoRelative,
 } from "../lib/git-proof.js";
+import { GapmanUserError } from "../lib/user-error.js";
 import { writeMiniGapmanRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";
 import { TEACHER_EMAIL, OTHER_EMAIL, withTeacherEnv } from "./test-shared.js";
@@ -30,7 +31,15 @@ test("git-proof: MISSION_MISSING_MSN", () => {
     `## 3. Deterministic gate\n\n**Command:** \`echo 1\`\n**Success criteria:** 1\n`,
     "utf8",
   );
-  assert.throws(() => assertTeacherMissionProof(dest, missionAbs), /MISSION_MISSING_MSN/);
+  assert.throws(
+    () => assertTeacherMissionProof(dest, missionAbs),
+    (e: unknown) => {
+      assert.ok(e instanceof GapmanUserError);
+      assert.match(String(e.message), /MISSION_MISSING_MSN/);
+      assert.ok(e.hint?.includes("example.verify.yaml"));
+      return true;
+    },
+  );
 });
 
 

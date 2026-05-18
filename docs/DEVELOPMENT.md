@@ -64,3 +64,8 @@ Runs build, `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doct
 ## CI parity
 
 Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml): `gapman check`, tests, `validate-gxt.sh`, and **changed-code quality** on PR diffs. Local `npm run validate` should match before you open a PR.
+
+## Troubleshooting verify / hooks
+
+- Run the CLI from the repo root: `npm run gapman -- verify --mission .gitagent/missions/<file>.yaml` (after `npm run build`). Policy failures print a one-line error plus **`Fix:`** remediation hints — not stack traces.
+- Set `GAPMAN_DEBUG=1` only when you need a stack trace for an unexpected error.
