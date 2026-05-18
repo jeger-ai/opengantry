@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CLI_NAME } from "../lib/constants.js";
-import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
 import { INIT_ASSETS } from "../lib/init-assets.js";
 
@@ -113,15 +113,18 @@ export function runInit(options: InitOptions = {}): void {
     logInfo(`${CLI_NAME} init: ${unchanged.length} files already up to date`);
   }
 
-  const examples = [
-    ".gitagent/foreman/MANIFEST.json",
-    ".gitagent/teacher/RULES.md",
-    ".github/workflows/gxt-validate.yml",
-  ];
-  for (const rel of examples) {
-    const abs = path.join(repoRoot, rel.split("/").join(path.sep));
-    if (fs.existsSync(abs)) {
-      logInfo(`- ${formatRepoRelative(repoRoot, abs)}`);
-    }
-  }
+  logInfo("next steps:");
+  logInfo(
+    "1) edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run `gapman check`",
+  );
+  logInfo("2) optional: git config core.hooksPath .githooks");
+  logInfo("3) export GAPMAN_TEACHER_EMAILS=<your-git-email>");
+  logInfo(
+    '4) legislate only after manifest skill keys exist: gapman legislate "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
+  );
+  logInfo("5) Teacher commit must start with [MSN-0001] and modify that mission file");
+  logInfo("6) run gapman runtime env --mission <path> then gapman verify --mission <path>");
+  logInfo(
+    "7) this repo has .gitagent/missions/example.verify.yaml; greenfield repos can start from .gitagent/missions/README.md",
+  );
 }

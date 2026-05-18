@@ -21,7 +21,6 @@ import { parseOptionalTimeoutMs } from "../lib/cli-timeout.js";
 import { runInit } from "../commands/init.js";
 import { runLegislate } from "../commands/legislate.js";
 import { runVerify } from "../commands/verify.js";
-import { allocateNextMsnId } from "../lib/next-msn.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { hashProcessChunk } from "../lib/runtime-exec-process.js";
@@ -383,28 +382,6 @@ test("runVerify: passes with Teacher git-proof in mini repo", () => {
   });
 });
 
-test("allocateNextMsnId: empty missions dir yields MSN-0000", () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-empty-"));
-  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
-  assert.equal(allocateNextMsnId(dest), "MSN-0000");
-});
-
-test("allocateNextMsnId: MSN-0888 in mission yields MSN-0889", () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-inc-"));
-  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
-  fs.writeFileSync(
-    path.join(dest, ".gitagent", "missions", "prior.yaml"),
-    `msn_id: MSN-0888
-skill_key: ui-ralph
-gate_command: "echo OK"
-gate_success_substring: "OK"
-trace_rows: []
-`,
-    "utf8",
-  );
-  assert.equal(allocateNextMsnId(dest), "MSN-0889");
-});
-
 test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-env-fix"));
@@ -579,6 +556,75 @@ test("legislate: rejects malformed msn", () => {
   }
 });
 
+test("legislate: duplicate msn fails closed by default", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-dupe-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  const missionsDir = path.join(dest, ".gitagent", "missions");
+  fs.mkdirSync(missionsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(missionsDir, "existing.yaml"),
+    "msn_id: MSN-0999\nskill_key: ui-ralph\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "utf8",
+  );
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    runLegislate({
+      intent: "ui-ralph adjust spacing",
+      msn: "MSN-0999",
+      skillKey: "ui-ralph",
+    });
+    assert.equal(process.exitCode, 2);
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+});
+
+test("legislate: --allow-duplicate permits duplicate msn", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-dupe-allow-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  const missionsDir = path.join(dest, ".gitagent", "missions");
+  fs.mkdirSync(missionsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(missionsDir, "existing.yaml"),
+    "msn_id: MSN-0999\nskill_key: ui-ralph\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "utf8",
+  );
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    runLegislate({
+      intent: "ui-ralph add hover state",
+      msn: "MSN-0999",
+      skillKey: "ui-ralph",
+      allowDuplicate: true,
+    });
+    assert.equal(process.exitCode, undefined);
+    const files = fs.readdirSync(missionsDir);
+    assert.ok(files.some((f) => f !== "existing.yaml" && f.startsWith("MSN-0999.") && f.endsWith(".yaml")));
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+});
+
 test("init: preserves mutable files and fails on managed conflicts", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-init-conflict-"));
@@ -632,6 +678,7 @@ test("init --force: overwrites only managed files", () => {
       /OpenGantry local \+ CI validation/,
     );
     assert.match(fs.readFileSync(path.join(dest, "scripts", "neighbor.sh"), "utf8"), /keep/);
+    assert.equal(fs.existsSync(path.join(dest, ".gitagent", "missions", "README.md")), true);
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -669,6 +716,7 @@ test("distribution: packed gapman init works outside workspace", () => {
     const run = spawnSync(process.execPath, [cli, "init"], { cwd: targetRepo, encoding: "utf8" });
     assert.equal(run.status, 0, (run.stderr || "") + (run.stdout || ""));
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "foreman", "MANIFEST.json")), true);
+    assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "missions", "README.md")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, ".github", "workflows", "gxt-validate.yml")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "validate-gxt.sh")), true);
   } finally {

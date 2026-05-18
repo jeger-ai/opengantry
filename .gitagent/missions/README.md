@@ -4,7 +4,7 @@ Store mission files here (Markdown or YAML) so **`gapman verify`** can enforce *
 
 **Example (YAML):** [example.verify.yaml](example.verify.yaml) — copy it, set a real `msn_id`, gate, and `trace_rows` to match your `WORKER_LOG.md`, then legislate with a commit whose **subject** starts with `[MSN-NNNN]` (same id) from a Teacher allowlist email. A minimal schema-only sample also lives at [`.gitagent/teacher/MISSION.example.yaml`](../teacher/MISSION.example.yaml) (not under `missions/`, so it is not git-proof–verified by default).
 
-**CLI stub (v0.7.0):** run `gapman legislate "<intent>" [--skill-key …]` to allocate the next MSN and emit starter YAML here; Teacher still adjusts gate/trace rows and **`git commit`** subject `[MSN-NNNN]` from an identity in **`GAPMAN_TEACHER_EMAILS`**.
+**CLI stub (v0.7.0):** run `gapman legislate "<intent>" --msn MSN-0007 [--skill-key …]` to emit starter YAML here with an explicit mission id. Duplicate `msn_id` values fail closed by default; pass `--allow-duplicate` only for intentional migration flows. Teacher still adjusts gate/trace rows and **`git commit`** subject `[MSN-NNNN]` from an identity in **`GAPMAN_TEACHER_EMAILS`**.
 
 **Full manual verify** (same contract as unit test `runVerify: passes with Teacher git-proof in mini repo` in `src/cli/tests/gapman.test.ts`):
 

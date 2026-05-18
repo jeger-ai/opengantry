@@ -19,6 +19,7 @@ export interface LegislateOptions {
   msn?: string;
   skillKey?: string;
   out?: string;
+  allowDuplicate?: boolean;
 }
 
 /** Slug for filename: alphanumeric + hyphen, capped length */
@@ -129,9 +130,17 @@ export function runLegislate(options: LegislateOptions): void {
     }
   }
   if (existingMissionDupes.length > 0) {
-    logWarn(
-      `legislate: msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}`,
-    );
+    if (options.allowDuplicate === true) {
+      logWarn(
+        `legislate: allowing duplicate msn ${msnId} for migration flow; existing mission file(s): ${existingMissionDupes.join(", ")}`,
+      );
+    } else {
+      logError(
+        `legislate: duplicate msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}. Re-run with --allow-duplicate only for intentional branch migrations.`,
+      );
+      setExitCode(2);
+      return;
+    }
   }
 
   const body = buildYamlMissionBody({

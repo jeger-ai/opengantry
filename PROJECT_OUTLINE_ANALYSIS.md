@@ -74,9 +74,10 @@ The CLI surface forms a complete operational loop.
 ### `gapman legislate`
 
 - Scaffolds a mission YAML under `.gitagent/missions/`.
-- Allocates the next `MSN-NNNN` by scanning mission files.
+- Requires an explicit `--msn MSN-NNNN` input (no local auto-allocation).
 - Derives or validates the `skill_key`.
 - Enforces mission file placement under `.gitagent/missions/`.
+- Fails closed when the same `msn_id` already exists under `.gitagent/missions/` (unless explicitly overridden for migrations).
 - Provides operational instructions for Teacher-authored Git proof requirements.
 
 ### `gapman mission validate` / `snapshot`

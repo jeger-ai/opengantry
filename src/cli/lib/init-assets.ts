@@ -15,6 +15,7 @@ export interface InitAsset {
 export const INIT_ASSETS: readonly InitAsset[] = [
   { targetPath: ".gitagent/foreman/MANIFEST.json", mode: "scaffold_only" },
   { targetPath: ".gitagent/teacher/RULES.md", mode: "scaffold_only" },
+  { targetPath: ".gitagent/missions/README.md", mode: "scaffold_only" },
   { targetPath: "skills/ui-ralph.md", mode: "scaffold_only" },
   { targetPath: "skills/logic-ralph.md", mode: "scaffold_only" },
   { targetPath: "skills/substrate-ralph.md", mode: "scaffold_only" },

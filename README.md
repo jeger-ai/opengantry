@@ -6,6 +6,10 @@ This repository is both the **specimen** and the **template**. You do not need t
 
 **Protocol maturity:** substrate is labeled **v0.5.0** (pre-1.0): useful for real teams, honest about what is still evolving. **gapman v0.7.0** adds **`runtime env`** (Worker Runtime Contract) and **`legislate`** mission scaffolding — see [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). The sections **Human handbrake**, **Staying in sync**, and **Concrete gate example** below are **v0.5.1 README** guidance for adopters (the on-disk `schema_version` in `MANIFEST.json` may still read `0.5.0` until you bump it).
 
+## v0.7.0 specimen release
+
+`v0.7.0` is a GitHub specimen release of the governance substrate and `gapman` CLI. This repository remains `private: true` for package publishing; validate distribution layout with `npm pack` and run the adopter flow locally. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the current runbook and smoke checklist.
+
 ## What you get
 
 | Idea | Where it lives |
@@ -86,7 +90,7 @@ Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, 
 | `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
 | `gapman status` | Human-readable report of the same checks. |
 | `gapman runtime env --mission <path>` | **[v0.7.0]** Worker Runtime Contract: emit `GXT_REPO_ROOT`, `GXT_MISSION_FILE`, `GXT_MSN_ID`, `GXT_SKILL_KEY`, `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, `GXT_WORKER_LOG`. Default: POSIX `export …` lines; `--json` for scripts. [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). |
-| `gapman legislate "<intent>"` | **[v0.7.0]** Emit next MSN + stub YAML mission under `.gitagent/missions/` (`--skill-key` when triage would escalate). Teacher still **`git commit`**-legislates under `GAPMAN_TEACHER_EMAILS`. |
+| `gapman legislate "<intent>" --msn MSN-0007` | **[v0.7.0]** Emit stub YAML mission under `.gitagent/missions/` with explicit MSN (`--skill-key` when triage would escalate). Duplicate `msn_id` fails closed unless you pass `--allow-duplicate` for intentional migrations. Teacher still **`git commit`**-legislates under `GAPMAN_TEACHER_EMAILS`. |
 | `gapman triage "<intent>"` | Foreman-style routing ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output (may include non-binding `adr_hints` from [`.gitagent/out-of-scope/`](.gitagent/out-of-scope/README.md)). `--emit-mission --msn MSN-0007` writes `.gitagent/missions/ACTIVE_MISSION.md` by default on **DIRECT_EXECUTION** only; `--out <path>` overrides (repo-relative or absolute; use under `.gitagent/missions/` if you will **`gapman verify`**). |
 | `gapman mission validate --file <path>` | Validate a mission `.md` or `.yaml` (YAML checked against [`.gitagent/teacher/MISSION.schema.yaml`](.gitagent/teacher/MISSION.schema.yaml)). |
 | `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill’s `tmvc_roots`). |
@@ -117,7 +121,7 @@ Inspect `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, and `GXT_WORKER_LOG`; write for
 **Legislate a stub mission (Teacher edits + commits — then wire `runtime env` to that file path):**
 
 ```bash
-node dist/cli/index.js legislate "Fix login spinner on checkout — ui-ralph" --skill-key ui-ralph
+node dist/cli/index.js legislate "Fix login spinner on checkout — ui-ralph" --msn MSN-0007 --skill-key ui-ralph
 # Teacher: tune gate/trace rows; then:
 # eval "$(node dist/cli/index.js runtime env --mission .gitagent/missions/MSN-XXXX.<slug>.yaml)"
 ```
@@ -192,9 +196,14 @@ Always **review the diff** before commit; never bulk-overwrite a customized `MAN
 
 GXT deliberately trades “always-on improvisation” for a **narrow, inspectable envelope**: Foreman chooses a skill footprint, Teachers legislate commits, Workers stay inside TMVC (or Context Request → accept/reject), and Verifiers bind PASS claims to log quotes.
 
-### `gapman init` (roadmap, not shipped yet)
+### `gapman init` (shipped in v0.7.0)
 
-Planned **`gapman init`** will bootstrap a virgin Git repo into a coherent substrate: scaffold `.gitagent/` (minimal `RULES`/Foreman stubs), **`MANIFEST.json`**, `skills/` placeholders, **`WORKER_LOG` template hints**, documented **`GAPMAN_TEACHER_EMAILS`** setup, optional `.cursor` rule pointers—so forks need copy-paste surgery, not guesswork.
+`gapman init` bootstraps a target git repository from packaged templates with two lifecycles:
+
+- `scaffold_only` files (for example `MANIFEST.json`, `RULES.md`, `skills/*.md`) are created when missing and preserved when customized.
+- `managed_strict` runtime assets (workflow, validate script, hooks, schema/rules pointers) fail on drift unless you pass `--force`.
+
+After `init`, customize your manifest and skills first, then legislate. See [`docs/ADOPTION.md`](docs/ADOPTION.md) for the exact ordered runbook.
 
 ## Relationship to this repository
 
