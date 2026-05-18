@@ -4,7 +4,6 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
-import { commitSubjectHasMsnPrefix } from "../lib/git-proof.js";
 import { isMarkdownTableSeparatorRow, parseMarkdownMission, parseMissionFile } from "../lib/mission-parser.js";
 import { extractMsnIdFromMissionFile } from "../lib/mission-msn.js";
 

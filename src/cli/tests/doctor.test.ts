@@ -6,13 +6,7 @@ import os from "node:os";
 import { runDoctor } from "../commands/doctor.js";
 import { getRepoRoot } from "../lib/git.js";
 import { ENV_BYPASS_SECRET } from "../lib/break-glass.js";
-import {
-  writeManifest,
-  writeSkillsForManifest,
-  writeMiniGapmanRepo,
-  writeBypassAnchor,
-  gitInitCommit,
-} from "./test-fixtures.js";
+import { writeMiniGapmanRepo, writeBypassAnchor, gitInitCommit } from "./test-fixtures.js";
 import { TEACHER_EMAIL } from "./test-shared.js";
 
 test("runDoctor: warn on missing teacher email exits 0", () => {

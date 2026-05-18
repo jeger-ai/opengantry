@@ -24,21 +24,6 @@ test("verifyTraceRows: anchor line must contain quote", () => {
   assert.ok(bad.failures.length > 0);
 });
 
-const TEACHER_EMAIL = "teacher-mini-repo@opengantry.test";
-const OTHER_EMAIL = "other@opengantry.test";
-
-function withTeacherEnv<T>(fn: () => T): T {
-  const prev = process.env.GAPMAN_TEACHER_EMAILS;
-  process.env.GAPMAN_TEACHER_EMAILS = TEACHER_EMAIL;
-  try {
-    return fn();
-  } finally {
-    if (prev === undefined) delete process.env.GAPMAN_TEACHER_EMAILS;
-    else process.env.GAPMAN_TEACHER_EMAILS = prev;
-  }
-}
-
-
 test("gatePassed: exit code and substring rules", () => {
   assert.equal(
     gatePassed({ exitCode: 1, stdout: "", stderr: "", combined: "" }, null),

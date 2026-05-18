@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
-import { ENV_BYPASS_SECRET, commitHasValidBypassNote, writeBypassGitNote } from "../lib/break-glass.js";
+import { writeBypassGitNote } from "../lib/break-glass.js";
 import { gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { TEACHER_EMAIL } from "./test-shared.js";
 

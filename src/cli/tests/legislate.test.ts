@@ -6,9 +6,6 @@ import os from "node:os";
 import { runLegislate } from "../commands/legislate.js";
 import { getRepoRoot } from "../lib/git.js";
 import { execSync } from "node:child_process";
-import { writeManifest, writeSkillsForManifest, copyMissionSchema, gitInitCommit } from "./test-fixtures.js";
-import { TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
-
 test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-"));

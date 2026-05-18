@@ -9,13 +9,7 @@ import {
   assertTeacherMissionProof,
   missionPathRepoRelative,
 } from "../lib/git-proof.js";
-import {
-  writeMiniGapmanRepo,
-  writeMiniGapmanMission,
-  gitInitCommit,
-  gitInitCommitWithBody,
-  gitCommit,
-} from "./test-fixtures.js";
+import { writeMiniGapmanRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";
 import { TEACHER_EMAIL, OTHER_EMAIL, withTeacherEnv } from "./test-shared.js";
 

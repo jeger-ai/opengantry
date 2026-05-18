@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { execSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
@@ -11,8 +11,6 @@ import { hashProcessChunk } from "../lib/runtime-exec-process.js";
 import { agentErrorAbsolutePath } from "../lib/agent-error.js";
 import { copyMissionSchema, writeManifest, writeRuntimeExecRepo } from "./test-fixtures.js";
 import { loadManifest } from "../lib/manifest.js";
-import { TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
-
 test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-env-fix"));

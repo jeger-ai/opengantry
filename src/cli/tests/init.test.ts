@@ -8,7 +8,6 @@ import { getRepoRoot } from "../lib/git.js";
 import { loadManifest } from "../lib/manifest.js";
 import { checkSkillManifestSync } from "../lib/skill-sync.js";
 import { runInit } from "../commands/init.js";
-import { writeManifest, writeSkillsForManifest, gitInitCommit } from "./test-fixtures.js";
 
 test("skill sync: manifest keys match skills/*.md", () => {
   const root = getRepoRoot();
@@ -19,7 +18,6 @@ test("skill sync: manifest keys match skills/*.md", () => {
 
 
 test("init: preserves mutable files and fails on managed conflicts", () => {
-  const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-init-conflict-"));
   execSync("git init", { cwd: dest, stdio: "pipe" });
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
