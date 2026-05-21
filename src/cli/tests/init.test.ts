@@ -17,7 +17,7 @@ test("skill sync: manifest keys match skills/*.md", () => {
 });
 
 
-test("init: preserves mutable files and fails on managed conflicts", () => {
+test("init: preserves mutable files and fails on managed conflicts", async () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-init-conflict-"));
   execSync("git init", { cwd: dest, stdio: "pipe" });
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
@@ -29,7 +29,7 @@ test("init: preserves mutable files and fails on managed conflicts", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runInit();
+    await runInit();
     assert.equal(process.exitCode, 2);
     assert.match(
       fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
@@ -45,7 +45,7 @@ test("init: preserves mutable files and fails on managed conflicts", () => {
   }
 });
 
-test("init --force: overwrites only managed files", () => {
+test("init --force: overwrites only managed files", async () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-init-force-"));
   execSync("git init", { cwd: dest, stdio: "pipe" });
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
@@ -58,7 +58,7 @@ test("init --force: overwrites only managed files", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runInit({ force: true });
+    await runInit({ force: true });
     assert.equal(process.exitCode, undefined);
     assert.match(
       fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
@@ -107,6 +107,11 @@ test("distribution: packed gapman init works outside workspace", () => {
     const run = spawnSync(process.execPath, [cli, "init"], { cwd: targetRepo, encoding: "utf8" });
     assert.equal(run.status, 0, (run.stderr || "") + (run.stdout || ""));
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "foreman", "MANIFEST.json")), true);
+    assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.json")), true);
+    const pointer = JSON.parse(
+      fs.readFileSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.json"), "utf8"),
+    ) as { kind?: string };
+    assert.equal(pointer.kind, "unset");
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "missions", "README.md")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, ".github", "workflows", "gxt-validate.yml")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "validate-gxt.sh")), true);

@@ -30,6 +30,28 @@ test("runDoctor: warn on missing teacher email exits 0", () => {
   }
 });
 
+test("runDoctor: invalid architecture pointer exits 1", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-arch-fail-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] init", TEACHER_EMAIL);
+  fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
+  fs.writeFileSync(path.join(dest, ".gitagent", "ARCHITECTURE.pointer.json"), "{ not json", "utf8");
+  const prevCwd = process.cwd();
+  const prevTeachers = process.env.GAPMAN_TEACHER_EMAILS;
+  process.env.GAPMAN_TEACHER_EMAILS = TEACHER_EMAIL;
+  try {
+    process.chdir(dest);
+    process.exitCode = undefined;
+    runDoctor();
+    assert.equal(process.exitCode, 1);
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+    if (prevTeachers === undefined) delete process.env.GAPMAN_TEACHER_EMAILS;
+    else process.env.GAPMAN_TEACHER_EMAILS = prevTeachers;
+  }
+});
 
 test("runDoctor: active bypass secret match", () => {
   const ogRoot = getRepoRoot();
@@ -53,4 +75,3 @@ test("runDoctor: active bypass secret match", () => {
     else process.env[ENV_BYPASS_SECRET] = prev;
   }
 });
-

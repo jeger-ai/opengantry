@@ -23,13 +23,22 @@ Follow **[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)** end-to-end:
 - `core.hooksPath=.githooks` (pre-push verify / check / changed-code gates)
 
 **Skill routing:** `gapman` for `src/cli/`; substrate paths need Teacher legislation.
+## Mission Architect (IDE chat)
+
+When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **[`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md)**.
+
+- **Do NOT** trigger for questions, explanations, or code discovery.
+- Handoff: one copy-paste `gapman legislate …` command only (no raw YAML blocks).
 
 ## Cursor wiring (this repo)
 
 - **Rules:** this file (`alwaysApply: true`) + root [`AGENTS.md`](../AGENTS.md).
-- **Hooks:** [`.cursor/hooks.json`](../.cursor/hooks.json) — deterministic shell guard for GXT law/manifest paths.
-- **Terminal bootstrap:** `source scripts/gxt-cursor-env.sh .gitagent/missions/<file>.yaml` before substantive worker edits (sets `GXT_*` env).
+- **Hooks:** [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` loads pinned mission + `GXT_*` env; `beforeShellExecution` guards law/manifest shell writes.
+- **Pin mission:** `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml` (gitignored pointer; required for sessionStart auto-scope).
+- **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission) before substantive shell work.
 - **Orchestrated runs:** `gapman runtime exec --mission <path> -- <command>` when invoking external agent CLIs.
-- **Adopter matrix:** [`docs/INTEGRATIONS.md`](../docs/INTEGRATIONS.md).
+- **Contributor loop:** [`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md#cursor-session-this-repo).
+- **Code architecture:** [`.gitagent/ARCHITECTURE.pointer.json`](../.gitagent/ARCHITECTURE.pointer.json) — if `kind=unset` or stub, read [ARCHITECTURE-DISCOVERY.md](../.gitagent/teacher/ARCHITECTURE-DISCOVERY.md) and ask user before coding.
+- **Human IDE setup:** [`docs/INTEGRATIONS.md`](../docs/INTEGRATIONS.md) (adopters only; not agent context).
 
 If the user clearly scopes work to something that cannot affect OpenGantry (e.g. a typo in unrelated docs), still skim **RULES** and **MANIFEST** when the change could touch skills, missions, routing, or manifest sync.

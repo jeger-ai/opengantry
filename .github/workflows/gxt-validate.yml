@@ -44,6 +44,9 @@ jobs:
       - name: gapman unit tests
         run: node --test dist/cli/tests/*.test.js
 
+      - name: gapman doctor (readiness)
+        run: node dist/cli/index.js doctor
+
   code_quality:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

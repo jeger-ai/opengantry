@@ -13,6 +13,19 @@ export function logError(message: string): void {
   console.error(`${CLI_NAME}: ${message}`);
 }
 
+/** Red stderr for existing managed-asset conflicts (respects NO_COLOR). */
+export function logManagedAssetConflicts(conflicts: string[]): void {
+  const useColor = process.env.NO_COLOR === undefined;
+  const red = useColor ? "\x1b[31m" : "";
+  const reset = useColor ? "\x1b[0m" : "";
+  console.error(
+    `${red}${CLI_NAME}: warning: managed files already exist and differ from templates:${reset}`,
+  );
+  for (const rel of conflicts) {
+    console.error(`${red}  - ${rel}${reset}`);
+  }
+}
+
 /** Relative path for user-facing messages */
 export function formatRepoRelative(repoRoot: string, absolutePath: string): string {
   return path.relative(repoRoot, absolutePath);

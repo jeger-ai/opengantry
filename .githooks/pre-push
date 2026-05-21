@@ -34,8 +34,8 @@ mapfile -t missions < <(
 for mission in "${missions[@]}"; do
   [[ -n "$mission" ]] || continue
   [[ -f "$mission" ]] || continue
-  echo "pre-push: gapman verify --mission ${mission}" >&2
-  "${GAPMAN[@]}" verify --mission "$mission" || exit 1
+  echo "pre-push: gapman verify --mission ${mission} (--pre-push)" >&2
+  "${GAPMAN[@]}" verify --mission "$mission" --pre-push || exit 1
 done
 
 if git diff --name-only "${base}..HEAD" | grep -qE '^\.gitagent/foreman/MANIFEST\.json$|^skills/'; then

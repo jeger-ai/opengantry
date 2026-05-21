@@ -1,10 +1,12 @@
 # Missions (work orders)
 
-Store mission files here (Markdown or YAML) so **`gapman verify`** can enforce **git-proof**: among the last **200** commits, the newest `[MSN-XXXX]` commit authored by a Teacher email (see `GAPMAN_TEACHER_EMAILS` in the root [README](../../README.md#gapman-cli-mvp)) must modify the mission file being verified.
+Store mission files here (Markdown or YAML) so **`gapman verify`** can enforce **git-proof**: among the last **200** commits, the newest `[MSN-XXXX]` commit authored by a Teacher email (see `GAPMAN_TEACHER_EMAILS` in the root [README](../../README.md#gapman-cli)) must modify the mission file being verified.
 
 **Example (YAML):** [example.verify.yaml](example.verify.yaml) — copy it, set a real `msn_id`, gate, and `trace_rows` to match your `WORKER_LOG.md`, then legislate with a commit whose **subject** starts with `[MSN-NNNN]` (same id) from a Teacher allowlist email. A minimal schema-only sample also lives at [`.gitagent/teacher/MISSION.example.yaml`](../teacher/MISSION.example.yaml) (not under `missions/`, so it is not git-proof–verified by default).
 
-**CLI stub (v0.7.0):** run `gapman legislate "<intent>" --msn MSN-0007 [--skill-key …]` to emit starter YAML here with an explicit mission id. Duplicate `msn_id` values fail closed by default; pass `--allow-duplicate` only for intentional migration flows. Teacher still adjusts gate/trace rows and **`git commit`** subject `[MSN-NNNN]` from an identity in **`GAPMAN_TEACHER_EMAILS`**.
+**CLI stub (default):** run `gapman legislate "<intent>" --msn MSN-0007 [--skill-key …] [--gate-command …]` to emit starter **YAML** here with explicit mission id and `status: PENDING` trace rows. Duplicate `msn_id` values fail closed by default; pass `--allow-duplicate` only for intentional migration flows. Teacher still adjusts gate/trace rows and **`git commit`** subject `[MSN-NNNN]` from an identity in **`GAPMAN_TEACHER_EMAILS`**. Markdown missions are also accepted by `gapman verify`; YAML is the `legislate` default.
+
+**Remote handoff:** After Teacher legislation, `git push` runs `gapman verify --mission … --pre-push`. Missions with placeholder `trace_rows` (from `gapman legislate`) pass after **git-proof only** so remote agents can pick up the work frame. Full `gapman verify` (gate + trace) is required before merge or claiming execution complete. Missions without a Teacher `[MSN-NNNN]` stamp still fail pre-push.
 
 **Full manual verify** (same contract as unit test `runVerify: passes with Teacher git-proof in mini repo` in `src/cli/tests/verify.test.ts`):
 

@@ -5,21 +5,44 @@ This runbook documents the OpenGantry specimen flow for adopters testing `gapman
 ## 60-second loop
 
 ```bash
-gapman init
+gapman init          # interactive wizard on TTY; auto-default in CI (no hang)
 export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
-gapman doctor
-gapman legislate "<intent>" --msn MSN-0001 --skill-key ui
+gapman doctor        # detects wired agent files + stale paths from compat manifest
+# IDE chat: Mission Architect → one copy-paste legislate command (see .gitagent/teacher/MISSION-ARCHITECT.md)
+gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"
 # Teacher: git commit -m "[MSN-0001] legislate …" including the mission file
+eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
+# Headless / CI: gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- <agent-command>
 gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
 ```
 
-Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md) (one universal `gapman runtime exec` wrapper + context injection paths).
+`gapman init` composes full per-tool recipes into `docs/INTEGRATIONS.md` (or your chosen path) for selected IDEs. Non-interactive: `gapman init --yes` or `gapman init --ides cursor,claude-code --no-ci`.
 
-`gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md` (no `--fuzzy-trace` required). Use `--strict-trace` only when you need exact line numbers.
+Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md) — enforcement boundary, remote handoff, and per-tool closed-loop recipes.
+
+`gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md` (no `--fuzzy-trace` required). Use `--strict-trace` only when you need exact line numbers. Pre-push uses `gapman verify --pre-push` so Teacher-stamped **legislative stubs** can push for remote agent handoff.
+
+## Enforcement boundary
+
+**IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gapman verify`, and hooks.**
+
+| Tier | Mechanism | What is actually enforced |
+|------|-----------|---------------------------|
+| **Process-boundary** | `gapman runtime exec` | Forbidden-zone scan + subprocess TMVC envelope |
+| **Deterministic hook** | Cursor `beforeShellExecution`, pre-push verify | Shell writes to law/manifest paths; mission git-proof |
+| **Advisory** | IDE rules, `AGENTS.md`, sessionStart context | LLM compliance only — not a kernel/file sandbox |
+
+Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
 ## Release posture
 
-- `v0.8.1` adds `gapman doctor`, auto fuzzy trace, context-aware **Fix:** hints, scoped **pre-push** verify, and stream-parsed **metrics**.
+| Release | Highlights |
+|---------|------------|
+| **v0.7.0** | `gapman runtime env`, `gapman legislate` (YAML mission scaffolding) |
+| **v0.8.0** | Context-aware **Fix:** hints, auto fuzzy trace (line-drift resolution), scoped **pre-push** verify for legislative stubs |
+| **v0.8.1** | `gapman init` wizard, `gapman doctor`, `gapman metrics`, `gapman arch pointer` / `arch cred`, integration compat manifest, `gapman runtime exec` orchestration |
+
+- Substrate law remains `MANIFEST.json` `schema_version` **0.5.0**; CLI is **0.8.1**.
 - Package publishing remains disabled (`package.json` is `private: true`).
 
 ## Hooks (fast, scoped)
@@ -29,7 +52,7 @@ git config core.hooksPath .githooks
 ```
 
 - **post-checkout:** creates `WORKER_LOG.md` on feature branches when missing.
-- **pre-push:** runs `gapman verify` only for mission files changed on this branch vs merge-base. No dirty missions → instant no-op.
+- **pre-push:** runs `gapman verify --pre-push` only for mission files changed on this branch vs merge-base. Legislative stubs pass after git-proof; full verify required before merge.
 
 ## Break-glass (emergency only)
 

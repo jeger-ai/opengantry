@@ -1,3 +1,4 @@
 # OpenGantry local forensic paths (merged by gapman init)
 .gitagent/history/
+.gitagent/history/credentials/
 .gitagent/history/.ignored-last-error.json

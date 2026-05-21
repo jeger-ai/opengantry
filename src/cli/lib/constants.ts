@@ -1,5 +1,13 @@
 /** Repo-relative paths used across gapman */
 export const REL_MANIFEST = ".gitagent/foreman/MANIFEST.json" as const;
+/** Agent discovery for code layout (file, directory, or external). */
+export const REL_ARCHITECTURE_POINTER = ".gitagent/ARCHITECTURE.pointer.json" as const;
+/** Agent instructions when architecture access requires authentication. */
+export const REL_ARCHITECTURE_ACCESS_SKILL = ".gitagent/teacher/ARCHITECTURE-ACCESS.md" as const;
+/** Agent instructions when architecture is unset, stub, or uncertain — ask before implementing. */
+export const REL_ARCHITECTURE_DISCOVERY_SKILL = ".gitagent/teacher/ARCHITECTURE-DISCOVERY.md" as const;
+/** Git-ignored credential slots for architecture sources (see gapman arch cred). */
+export const REL_ARCHITECTURE_CREDENTIALS_DIR = ".gitagent/history/credentials" as const;
 export const REL_MISSION_SCHEMA = ".gitagent/teacher/MISSION.schema.yaml" as const;
 export const REL_MISSION_TEMPLATE = ".gitagent/teacher/MISSION.template.md" as const;
 export const REL_HISTORY_DIR = ".gitagent/history" as const;

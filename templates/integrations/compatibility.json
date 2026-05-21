@@ -1,0 +1,92 @@
+{
+  "schema_version": "1",
+  "opengantry_version": "0.8.1",
+  "integrations": {
+    "cursor": {
+      "display_name": "Cursor",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://cursor.com/docs/agent/hooks",
+      "recipe_file": "cursor.md",
+      "canonical_paths": [
+        ".cursor/rules/opengantry-gxt-substrate.mdc",
+        ".cursor/hooks.json"
+      ],
+      "deprecated_paths": [".cursorrules"],
+      "hooks_schema_version": 1,
+      "cli_probe": ["cursor", "--version"]
+    },
+    "claude-code": {
+      "display_name": "Claude Code",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://docs.anthropic.com/en/docs/claude-code",
+      "recipe_file": "claude-code.md",
+      "canonical_paths": ["CLAUDE.md"],
+      "deprecated_paths": [],
+      "cli_probe": ["claude", "--version"]
+    },
+    "codex-cli": {
+      "display_name": "OpenAI Codex CLI",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://developers.openai.com/codex/config-basic",
+      "disambiguation": "OpenAI Codex API (2021-2023) is NOT this product",
+      "recipe_file": "codex-cli.md",
+      "canonical_paths": ["AGENTS.md", ".codex/config.toml"],
+      "deprecated_paths": [],
+      "cli_probe": ["codex", "--version"]
+    },
+    "opencode": {
+      "display_name": "OpenCode",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://opencode.ai/docs",
+      "recipe_file": "opencode.md",
+      "canonical_paths": ["opencode.json"],
+      "deprecated_paths": [],
+      "cli_probe": ["opencode", "--version"]
+    },
+    "junie": {
+      "display_name": "JetBrains Junie",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://www.jetbrains.com/junie/",
+      "recipe_file": "junie.md",
+      "canonical_paths": [".junie/guidelines.md"],
+      "deprecated_paths": [],
+      "cli_probe": null
+    },
+    "antigravity": {
+      "display_name": "Google Antigravity",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://antigravity.google/",
+      "recipe_file": "antigravity.md",
+      "canonical_paths": [".agent/rules/gxt.md"],
+      "deprecated_paths": [],
+      "cli_probe": null
+    },
+    "cline": {
+      "display_name": "Cline",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://docs.cline.bot/",
+      "recipe_file": "cline.md",
+      "canonical_paths": [".clinerules/gxt.md"],
+      "deprecated_paths": [".cursorrules"],
+      "cli_probe": null
+    },
+    "aider": {
+      "display_name": "Aider",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://aider.chat/docs/",
+      "recipe_file": "aider.md",
+      "canonical_paths": [".aider.conf.yml"],
+      "deprecated_paths": [],
+      "cli_probe": ["aider", "--version"]
+    },
+    "openhands": {
+      "display_name": "OpenHands",
+      "verified_date": "2026-05-19",
+      "docs_url": "https://docs.all-hands.dev/",
+      "recipe_file": "openhands.md",
+      "canonical_paths": [".openhands/microagents/gxt.md"],
+      "deprecated_paths": [],
+      "cli_probe": null
+    }
+  }
+}

@@ -1,6 +1,11 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/gxt-session-start.sh"
+      }
+    ],
     "beforeShellExecution": [
       {
         "command": ".cursor/hooks/gxt-before-shell.sh"

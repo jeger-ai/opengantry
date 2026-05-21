@@ -198,3 +198,65 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   }
 });
 
+test("legislate: emits PENDING stub trace row", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-pending-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    runLegislate({ intent: "ui tweak padding", msn: "MSN-0777", skillKey: "ui" });
+    const created = fs
+      .readdirSync(path.join(dest, ".gitagent", "missions"))
+      .find((f) => f.startsWith("MSN-0777.") && f.endsWith(".yaml"))!;
+    const body = fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
+    assert.match(body, /status: PENDING/);
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+});
+
+test("legislate: --gate-command preserves spaces in complex command", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-gate-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+
+  const gateCmd = "npm run test:ui -- --watchAll=false";
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    runLegislate({
+      intent: "ui timeline card padding",
+      msn: "MSN-0778",
+      skillKey: "ui",
+      gateCommand: gateCmd,
+      gateSuccessSubstring: "Tests:",
+    });
+    const created = fs
+      .readdirSync(path.join(dest, ".gitagent", "missions"))
+      .find((f) => f.startsWith("MSN-0778.") && f.endsWith(".yaml"))!;
+    const body = fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
+    assert.ok(body.includes(gateCmd));
+    assert.ok(body.includes("Tests:"));
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+});
+

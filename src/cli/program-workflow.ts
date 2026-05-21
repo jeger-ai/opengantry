@@ -14,8 +14,23 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--skill-key <key>", "Override Foreman-derived skill_key when triage escalates")
     .option("--allow-duplicate", "Allow duplicate msn_id only for intentional branch migrations")
     .option("--out <file>", "Output path (.gitagent/missions/…); defaults to MSN.slug.yaml")
+    .option(
+      "--gate-command <cmd>",
+      "Deterministic gate command (quote the full shell string if it contains spaces)",
+    )
+    .option(
+      "--gate-success-substring <text>",
+      "Optional substring required in combined gate stdout/stderr",
+    )
     .action(async function (this: Command, intentParts: string[]) {
-      const opts = this.opts<{ msn: string; skillKey?: string; out?: string; allowDuplicate?: boolean }>();
+      const opts = this.opts<{
+        msn: string;
+        skillKey?: string;
+        out?: string;
+        allowDuplicate?: boolean;
+        gateCommand?: string;
+        gateSuccessSubstring?: string;
+      }>();
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
       if (!text) {
@@ -29,6 +44,8 @@ export function registerWorkflowCommands(program: Command): void {
         skillKey: opts.skillKey,
         out: opts.out,
         allowDuplicate: opts.allowDuplicate,
+        gateCommand: opts.gateCommand,
+        gateSuccessSubstring: opts.gateSuccessSubstring,
       });
     });
 
@@ -42,6 +59,7 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--cwd <dir>", "Working directory for gate command")
     .option("--fuzzy-trace", "Force content-based anchor matching for all numeric anchors")
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
+    .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
     .option("--break-glass", "Skip all verify gates when GXT_BYPASS_SECRET is authorized")
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
     .option("--commit <sha>", "Git commit to attach break-glass note (default HEAD)")
@@ -53,6 +71,7 @@ export function registerWorkflowCommands(program: Command): void {
         cwd?: string;
         fuzzyTrace?: boolean;
         strictTrace?: boolean;
+        prePush?: boolean;
         breakGlass?: boolean;
         reason?: string;
         commit?: string;
@@ -64,6 +83,7 @@ export function registerWorkflowCommands(program: Command): void {
           cwd: opts.cwd,
           fuzzyTrace: opts.fuzzyTrace,
           strictTrace: opts.strictTrace,
+          prePush: opts.prePush,
           breakGlass: opts.breakGlass,
           breakGlassReason: opts.reason,
           breakGlassCommit: opts.commit,

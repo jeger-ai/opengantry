@@ -1,0 +1,13 @@
+{
+  "schema_version": "0.1.0",
+  "kind": "external",
+  "location": "https://wiki.example.com/display/ARCH",
+  "read_hint": "Fetch the ARCH space home page, then linked layer pages.",
+  "access": {
+    "required": true,
+    "tool": "confluence",
+    "credential_slot": "architecture/confluence",
+    "auth_hint": "Atlassian personal access token; API base URL is the location host.",
+    "detect": ["atlassian", "CONFLUENCE_", "mcp:atlassian"]
+  }
+}

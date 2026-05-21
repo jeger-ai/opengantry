@@ -1,33 +1,53 @@
 # Agent Integrations (GXT wrapper)
 
-OpenGantry is **tool-agnostic**. Any agent that can run shell commands can participate in the GXT loop. You do not configure vendor-specific safety rails — **`gapman runtime exec`** enforces `tmvc_roots` and `forbidden_zones` at the process boundary.
+OpenGantry is **tool-agnostic**. Any agent that can run shell commands can participate in the GXT loop.
 
 **Audience:** adopters wiring agents into their own repos. For contributing to OpenGantry itself, see [`docs/DEVELOPMENT.md`](DEVELOPMENT.md).
 
 ## Universal rule
 
-1. Teacher legislates a mission under `.gitagent/missions/`.
-2. Wrap every worker invocation with mission-scoped runtime env.
+1. Teacher legislates a mission under `.gitagent/missions/` (IDE chat: [`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md) — one copy-paste `gapman legislate` command).
+2. Bootstrap mission-scoped runtime env before worker execution.
 3. Append trace evidence to `WORKER_LOG.md`.
-4. Finish with `gapman verify --mission <path>`.
+4. Finish with `gapman verify --mission <path>` (full verify before merge / claiming done).
 
 ```bash
-# Preferred: env injection + enforced boundary
+# Process-boundary wrap (subprocess workers — strongest TMVC trap)
 gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- <your-agent-command>
 
-# Shell session preload (IDE terminals, manual runs)
-eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
-# then run your agent in the same shell
+# IDE terminal / manual shell (any tool)
+source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
 
 # Orchestrator / CI JSON bootstrap
 gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml --json
 ```
 
-On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation — do not rely on exit code alone. See [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
+On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. See [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
+
+## Enforcement boundary (where the cage is ironclad)
+
+| Tier | Mechanism | What it actually traps |
+|------|-----------|------------------------|
+| **Process-boundary** | `gapman runtime exec` | TMVC roots + forbidden zones for subprocess workers |
+| **Deterministic hook** | Tool hooks (today: Cursor `beforeShellExecution` on law/manifest paths) | Shell writes to `.gitagent/foreman/`, `.gitagent/teacher/RULES.md` |
+| **Advisory** | Rules / `AGENTS.md` / tool memory | IDE Agent Write/Edit — LLM compliance, not kernel enforcement |
+
+**IDE agent file edits are not TMVC-trapped unless the tool runs inside `runtime exec`.** Docs here optimize context injection and workflow — not generic “be careful” advice.
+
+## Remote handoff (Teacher push → remote agent)
+
+Enterprise async pattern:
+
+1. **Teacher (local):** `gapman legislate … --msn MSN-NNNN` → tune mission → `git commit -m "[MSN-NNNN] legislate …"` (must modify mission file).
+2. **Teacher push:** pre-push runs `gapman verify --mission … --pre-push` — **legislative stubs** pass after git-proof only (placeholder `trace_rows` or empty).
+3. **Remote worker:** `source scripts/gxt-runtime-env.sh <mission>` → execute → append gate output to `WORKER_LOG.md`.
+4. **Verifier (before merge):** full `gapman verify --mission <path>` (gate + trace).
+
+Unlegislated mission files (no Teacher `[MSN-NNNN]` stamp) still **fail** pre-push.
 
 ## Canonical context files
 
-Point every tool at the same GXT law, not duplicate prose:
+Point every tool at the same GXT law — do not duplicate prose:
 
 | File | Role |
 |------|------|
@@ -35,87 +55,136 @@ Point every tool at the same GXT law, not duplicate prose:
 | [`.gitagent/teacher/RULES.md`](../.gitagent/teacher/RULES.md) | Governance law |
 | [`.gitagent/foreman/MANIFEST.json`](../.gitagent/foreman/MANIFEST.json) | Routing map (TMVC roots, forbidden zones) |
 
-`gapman init` scaffolds `AGENTS.md` and `.cursor/rules/opengantry-gxt-substrate.mdc`. For other tools, add a thin pointer file that `@`-includes or links to the three paths above.
+`gapman init` scaffolds `AGENTS.md`, `.gitagent/ARCHITECTURE.pointer.json` (agent discovery for code layout), `docs/ARCHITECTURE.md` (default file target), selected IDE pointer files, runtime scripts, and composes **`docs/INTEGRATIONS.md`** (human adopter IDE setup — not LLM context) from shipped recipe fragments.
+
+## Shared session variables
+
+| Variable | Purpose |
+|----------|---------|
+| `GAPMAN_TEACHER_EMAILS` | Comma-separated Git author emails allowed to legislate (git-proof) |
+| `GAPMAN_MISSION` | Optional mission path for `gxt-runtime-env.sh` when no arg passed |
+| `GXT_*` | Emitted by `gapman runtime env` — TMVC roots, forbidden zones, worker log path |
+
+Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with a stderr notice.
+
+## Closed-loop checklist (all tools)
+
+1. `gapman init` + `export GAPMAN_TEACHER_EMAILS="$(git config user.email)"` + `gapman doctor`
+2. `gapman legislate "<intent>" --msn MSN-NNNN --skill-key <key>` → Teacher `[MSN-NNNN]` commit
+3. Bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`
+4. Worker executes; append PASS quotes to `WORKER_LOG.md`
+5. `gapman verify --mission .gitagent/missions/<file>.yaml`
+6. `git push` (pre-push uses `--pre-push` handoff semantics)
 
 ## Compatibility matrix
 
-| Tool | Context injection path | Wrap invocation |
-|------|------------------------|-----------------|
-| **Cursor** | `.cursor/rules/opengantry-gxt-substrate.mdc` + `.cursor/hooks.json` | `gapman runtime exec --mission <path> -- cursor agent "<task>"` |
-| **Claude Code** | `CLAUDE.md` or `.claude/CLAUDE.md` → link `AGENTS.md`, RULES, MANIFEST | `gapman runtime exec --mission <path> -- claude "<task>"` |
-| **OpenCode** | `AGENTS.md` (native); optional `opencode.json` `instructions` | `gapman runtime exec --mission <path> -- opencode run "<task>"` |
-| **JetBrains Junie** | `.junie/AGENTS.md` or `.junie/guidelines.md` | Run agent in terminal after `eval "$(gapman runtime env --mission <path>)"` |
-| **Antigravity** | `AGENTS.md` + optional `.agent/rules/gxt.md` (`always_on`) | `gapman runtime exec --mission <path> -- <agent-command>` |
-| **Cline** | `.clinerules/gxt.md` (or symlink `AGENTS.md`) | VS Code terminal: `eval "$(gapman runtime env --mission <path>)"` then use Cline |
-| **Aider** | `.aider.conf.yml` `read:` list | `gapman runtime exec --mission <path> -- aider --message "<task>"` |
+| Tool | Context injection | Wrap / bootstrap |
+|------|-------------------|------------------|
+| **Cursor** | `.cursor/rules/opengantry-gxt-substrate.mdc` + `.cursor/hooks.json` (`sessionStart` + shell guard) | `scripts/gxt-pin-mission.sh <mission>` · `source scripts/gxt-runtime-env.sh` · `gapman runtime exec … -- cursor agent "<task>"` |
+| **Claude Code** | `CLAUDE.md` or `.claude/CLAUDE.md` → link canonical files | `gapman runtime exec … -- claude "<task>"` |
+| **OpenAI Codex CLI** | Root `AGENTS.md` (native); optional `.codex/config.toml` | `source scripts/gxt-runtime-env.sh <mission>` · `gapman runtime exec … -- codex exec "<task>"` |
+| **OpenCode** | `AGENTS.md` (native); optional `opencode.json` `instructions` | `gapman runtime exec … -- opencode run "<task>"` |
+| **JetBrains Junie** | `.junie/AGENTS.md` or `.junie/guidelines.md` | Terminal: `source scripts/gxt-runtime-env.sh <mission>` |
+| **Google Antigravity** | `AGENTS.md` + `.agent/rules/gxt.md` (`always_on`) | `gapman runtime exec … -- <agent-command>` |
+| **Cline** | `.clinerules/gxt.md` + root `AGENTS.md` | Terminal: `source scripts/gxt-runtime-env.sh <mission>` |
+| **Aider** | `.aider.conf.yml` `read:` list | `gapman runtime exec … -- aider --message "<task>"` |
+| **OpenHands** | `.openhands/microagents/gxt.md` + root `AGENTS.md` | Terminal: `source scripts/gxt-runtime-env.sh <mission>` |
 
-Vendor CLIs change; the **wrap line** does not.
+**Related tools (not duplicate matrix rows):**
 
-## Per-tool context recipes
+- [Gemini Code Assist](https://developers.google.com/gemini-code-assist/docs/overview) — VS Code/JetBrains **plugin**; use the same three canonical files; distinct from the Antigravity agent-first IDE.
+- **OpenAI Codex API** (2021–2023) — deprecated code-completion API; **not** [OpenAI Codex CLI](https://github.com/openai/codex) (2025+ terminal/IDE agent documented above).
+
+Vendor CLIs change; the **wrap line** and **context files** do not.
+
+---
+
+## Per-tool closed loop
 
 ### Cursor
 
-`gapman init` scaffolds:
-
-- [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) — mandates reading RULES + MANIFEST (`alwaysApply: true`).
-- [`.cursor/hooks.json`](../.cursor/hooks.json) — `beforeShellExecution` guard for direct shell edits to GXT law/manifest paths.
-- [`scripts/gxt-cursor-env.sh`](../scripts/gxt-cursor-env.sh) — load mission scope into a Cursor terminal session.
-
-**Cursor terminal (interactive agent in IDE):**
+- **Context injection:** [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) (`alwaysApply: true`); [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` mission scope + `beforeShellExecution` law/manifest guard.
+- **Mission Architect:** When the user asks to **write/edit code** with no pinned mission, follow [`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md) — fast-path trivial work; output one `gapman legislate …` command (not raw YAML). Do **not** trigger for read-only questions.
+- **Session bootstrap:**
 
 ```bash
-source scripts/gxt-cursor-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
-# GXT_TMVC_ROOTS, GXT_FORBIDDEN_ZONES, GXT_WORKER_LOG are now set
+scripts/gxt-pin-mission.sh .gitagent/missions/MSN-0001.<slug>.yaml   # once per feature
+source scripts/gxt-runtime-env.sh   # integrated terminal (uses pinned mission)
 ```
 
-**Headless / CI (Cursor CLI or SDK):**
+- **Enforcement:** Advisory for Agent edits; `sessionStart` injects TMVC context; deterministic hook for shell law/manifest writes; use `runtime exec` for headless CLI/SDK runs.
+- **Gotcha:** Enable hooks in Cursor Settings; restart if they do not load (**Output → Hooks**). Pin a mission before starting Agent work — unpinned sessions get a legislate reminder only.
+
+Headless:
 
 ```bash
 gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- cursor agent "<task>"
 ```
 
-Optional: `export GAPMAN_MISSION=.gitagent/missions/<file>.yaml` so `gxt-cursor-env.sh` resolves without an argument.
-
 ### Claude Code
 
-Minimal `CLAUDE.md`:
+- **Context injection:** Minimal `CLAUDE.md` pointing at `AGENTS.md`, `RULES.md`, `MANIFEST.json` (keep under ~200 lines).
+- **Session bootstrap:**
 
-```markdown
-Before any work, read AGENTS.md, .gitagent/teacher/RULES.md, and .gitagent/foreman/MANIFEST.json.
-Bootstrap scope: eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"
-Write trace quotes to WORKER_LOG.md; finish with gapman verify --mission <same-path>.
+```bash
+source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
+gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- claude "<task>"
 ```
+
+- **Enforcement:** Advisory in interactive session; process-boundary when wrapped with `runtime exec`.
+- **Gotcha:** Link canonical files — do not copy full RULES into `CLAUDE.md`.
+
+### OpenAI Codex CLI
+
+- **Context injection:** Root [`AGENTS.md`](../AGENTS.md) (loaded automatically after `gapman init`). Optional [`.codex/config.toml`](https://developers.openai.com/codex/config-basic) for project defaults (sandbox, approval policy). Do not duplicate RULES/MANIFEST — link via `AGENTS.md`.
+- **Session bootstrap:**
+
+```bash
+source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
+# interactive: codex
+# headless / CI:
+gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- codex exec "<task>"
+```
+
+- **Enforcement:** Advisory in interactive TUI/IDE extension; **process-boundary** when wrapped with `runtime exec` (same tier as Claude Code / Aider). Codex's own sandbox is separate from GXT TMVC.
+- **Gotcha:** Codex sandbox/approval settings (`sandbox_mode`, `approval_policy`) govern Codex — not GXT forbidden zones. Use `runtime exec` when you need manifest-enforced boundaries.
 
 ### OpenCode
 
-OpenCode reads repo-root `AGENTS.md` by default. After `gapman init`, no extra wiring is required. To add instruction files in `opencode.json`:
+- **Context injection:** Repo-root `AGENTS.md` (native after `gapman init`); optional:
 
 ```json
 { "instructions": ["AGENTS.md", ".gitagent/teacher/RULES.md"] }
 ```
 
+- **Session bootstrap:** `source scripts/gxt-runtime-env.sh <mission>` then OpenCode in same terminal.
+- **Enforcement:** Advisory; `opencode.json` permissions are separate from GXT TMVC.
+- **Gotcha:** OpenCode prefers `AGENTS.md` over `CLAUDE.md` when both exist.
+
 ### JetBrains Junie
 
-Create `.junie/AGENTS.md` with the same bullets as root `AGENTS.md`. Junie loads it automatically; use IDE terminal + `runtime env` for mission scope.
+- **Context injection:** `.junie/AGENTS.md` (same bullets as root `AGENTS.md`).
+- **Session bootstrap:** IDE terminal → `source scripts/gxt-runtime-env.sh <mission>`.
+- **Enforcement:** Advisory (guidelines); no process trap for in-IDE edits.
+- **Gotcha:** Use `.junie/AGENTS.md`, not generic AI Assistant project rules, for Junie-specific loading.
 
-### Antigravity
+### Google Antigravity
 
-Add `.agent/rules/gxt.md` with `always_on` activation, pointing at the three canonical files. `AGENTS.md` at repo root is picked up natively.
+- **Context injection:** Root `AGENTS.md`; optional `.agent/rules/gxt.md` with `always_on` pointing at canonical files.
+- **Session bootstrap:** `source scripts/gxt-runtime-env.sh <mission>` or `gapman runtime exec … -- <command>`.
+- **Enforcement:** Advisory for Editor/Manager views; process-boundary for wrapped CLI runs.
+- **Gotcha:** Rules load order includes `GEMINI.md` → `AGENTS.md` → `.agent/rules/` — keep GXT pointers in `AGENTS.md`.
 
 ### Cline
 
-Add `.clinerules/gxt.md`:
-
-```markdown
-Read AGENTS.md, .gitagent/teacher/RULES.md, and .gitagent/foreman/MANIFEST.json before editing.
-Mission scope comes from gapman runtime env — never guess TMVC roots.
-```
-
-Cline also recognizes root `AGENTS.md` in the Rules panel.
+- **Context injection:** `.clinerules/gxt.md`; root `AGENTS.md` appears in Rules panel.
+- **Session bootstrap:** VS Code terminal → `source scripts/gxt-runtime-env.sh <mission>`.
+- **Enforcement:** Advisory; toggle rules in Cline panel without deleting files.
+- **Gotcha:** Cline also reads `.cursorrules` legacy paths — prefer `.clinerules/gxt.md` for GXT-specific policy.
 
 ### Aider
 
-`.aider.conf.yml`:
+- **Context injection:** `.aider.conf.yml`:
 
 ```yaml
 read:
@@ -124,12 +193,33 @@ read:
   - .gitagent/foreman/MANIFEST.json
 ```
 
-Run inside the wrapper so forbidden-zone enforcement applies to file writes.
-
-## Finish loop
+- **Session bootstrap:**
 
 ```bash
-gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
+gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- aider --message "<task>"
 ```
+
+- **Enforcement:** **Process-boundary** when wrapped — strongest TMVC trap among common IDE-adjacent tools.
+- **Gotcha:** Run from repo root; `read:` paths resolve from CWD.
+
+### OpenHands
+
+- **Context injection:** `.openhands/microagents/gxt.md` pointing at canonical GXT files.
+- **Session bootstrap:** `source scripts/gxt-runtime-env.sh <mission>` then run OpenHands against the repo.
+- **Enforcement:** Advisory for in-IDE edits; process-boundary when wrapped with `runtime exec`.
+- **Gotcha:** Keep microagent prose minimal — link `AGENTS.md`, do not duplicate RULES.
+
+---
+
+## Troubleshooting
+
+| Symptom | Meaning | Fix |
+|---------|---------|-----|
+| `NO_MSN_COMMITS` on push | Mission changed but **never Teacher-stamped** | `git commit -m "[MSN-NNNN] …"` modifying the mission file; set `GAPMAN_TEACHER_EMAILS` |
+| Pre-push OK, full verify fails trace | Legislative handoff succeeded; execution incomplete | Remote worker fills `WORKER_LOG.md`; align `trace_rows`; re-run full verify |
+| `TEACHER_IDENTITY_UNCONFIGURED` | Missing Teacher allowlist | `export GAPMAN_TEACHER_EMAILS="$(git config user.email)"` |
+| Full verify fails after execution | Corrupt trace or gate failure | Fix quotes in `WORKER_LOG.md` or gate command output |
+
+Mission git-proof details: [`.gitagent/missions/README.md`](../.gitagent/missions/README.md).
 
 Adopter bootstrap: [`docs/ADOPTION.md`](ADOPTION.md). Runtime contract: [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).

@@ -11,12 +11,20 @@ Before planning, editing code, or running substantive commands in this repositor
 2. Read **`.gitagent/foreman/MANIFEST.json`** — Foreman map (`schema_version`, per-skill `trust_threshold`, `tmvc_roots`, `forbidden_zones`, `path_risks`, `risk_keywords`).
 
 Treat these as the **law + routing contract** for agent work. For orientation and workflow, see **`.gitagent/README.md`**.
+## Mission Architect (IDE chat)
+
+When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **`.gitagent/teacher/MISSION-ARCHITECT.md`**.
+
+- **Do NOT** trigger for questions, explanations, or code discovery.
+- Handoff: one copy-paste `gapman legislate …` command only (no raw YAML blocks).
 
 ## Cursor wiring
 
 - **Rules:** this file (`alwaysApply: true`) + root `AGENTS.md`.
-- **Hooks:** `.cursor/hooks.json` (installed by `gapman init`) — shell guard for GXT law/manifest paths.
-- **Terminal bootstrap:** `source scripts/gxt-cursor-env.sh .gitagent/missions/<file>.yaml` (or `export GAPMAN_MISSION=…` first).
-- **Full matrix:** `docs/INTEGRATIONS.md`.
+- **Hooks:** `.cursor/hooks.json` (installed by `gapman init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths.
+- **Pin mission:** `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml` before Agent work.
+- **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission or explicit path).
+- **Code architecture:** `.gitagent/ARCHITECTURE.pointer.json` — if `kind=unset` or stub, read `.gitagent/teacher/ARCHITECTURE-DISCOVERY.md` and ask user before coding.
+- **Human IDE setup:** `docs/INTEGRATIONS.md` (adopter reference — not agent context).
 
 If the user clearly scopes work to something that cannot affect OpenGantry (e.g. a typo in unrelated docs), still skim **RULES** and **MANIFEST** when the change could touch skills, missions, routing, or manifest sync.

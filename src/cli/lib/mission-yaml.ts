@@ -60,8 +60,8 @@ function assertYamlTraceRow(row: unknown, filePath: string): void {
       throw new Error(`gapman mission: ${filePath}: trace_rows.${k} must be string`);
     }
   }
-  if (!/^(PASS|FAIL|pass|fail)$/.test(String(r.status))) {
-    throw new Error(`gapman mission: ${filePath}: trace_rows.status must be PASS or FAIL`);
+  if (!/^(PASS|FAIL|PENDING|pass|fail|pending)$/.test(String(r.status))) {
+    throw new Error(`gapman mission: ${filePath}: trace_rows.status must be PASS, FAIL, or PENDING`);
   }
 }
 

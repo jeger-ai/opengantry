@@ -1,20 +1,46 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CLI_NAME } from "../lib/constants.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { CLI_NAME, REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
+import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
-import { INIT_ASSETS } from "../lib/init-assets.js";
+import { loadIntegrationCompat } from "../lib/integration-compat.js";
+import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
+import {
+  composeArchitecturePointer,
+  serializeArchitecturePointer,
+} from "../lib/init-compose-arch-pointer.js";
+import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose-doc.js";
+import {
+  defaultInitProfile,
+  mergeInitProfile,
+  profileFromCliFlags,
+  shouldRunInteractiveWizard,
+  validateIntegrationsDocPath,
+  type InitProfile,
+} from "../lib/init-profile.js";
 import {
   applyInitWrites,
   logInitNextSteps,
   logInitSummary,
   planInitAssets,
+  type PlannedWrite,
 } from "../lib/init-plan.js";
 
 export interface InitOptions {
   force?: boolean;
+  yes?: boolean;
+  dryRun?: boolean;
   cwd?: string;
+  ides?: string;
+  docsPath?: string;
+  skills?: string;
+  hooks?: boolean;
+  noHooks?: boolean;
+  ci?: boolean;
+  noCi?: boolean;
+  archSource?: string;
+  archLocation?: string;
 }
 
 function resolveTemplateRoot(): string {
@@ -45,7 +71,40 @@ function mergeGitignoreFromTemplate(repoRoot: string, templatesRoot: string): vo
   logInfo(`${CLI_NAME} init: appended ${missing.length} line(s) to .gitignore`);
 }
 
-export function runInit(options: InitOptions = {}): void {
+function planArchitecturePointerWrite(profile: InitProfile, repoRoot: string): PlannedWrite | null {
+  const targetAbs = path.join(repoRoot, REL_ARCHITECTURE_POINTER.split("/").join(path.sep));
+  if (fs.existsSync(targetAbs)) return null;
+  const body = serializeArchitecturePointer(composeArchitecturePointer(profile));
+  return { absoluteTarget: targetAbs, body, executable: false };
+}
+
+function planIntegrationsDocWrite(
+  profile: InitProfile,
+  templatesRoot: string,
+  repoRoot: string,
+  compat: ReturnType<typeof loadIntegrationCompat>,
+): PlannedWrite | null {
+  const rel = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
+  const targetAbs = path.join(repoRoot, rel.split("/").join(path.sep));
+  if (fs.existsSync(targetAbs)) return null;
+  const body = composeIntegrationsDoc(profile, templatesRoot, compat);
+  return { absoluteTarget: targetAbs, body, executable: false };
+}
+
+async function resolveProfile(
+  options: InitOptions,
+  repoRoot: string,
+  templatesRoot: string,
+): Promise<InitProfile | null> {
+  const partial = profileFromCliFlags(options);
+  if (shouldRunInteractiveWizard({ yes: options.yes, partial })) {
+    const { runInitInteractiveWizard } = await import("../lib/init-interactive.js");
+    return runInitInteractiveWizard(repoRoot, templatesRoot, partial);
+  }
+  return mergeInitProfile(defaultInitProfile(), partial);
+}
+
+export async function runInit(options: InitOptions = {}): Promise<void> {
   let repoRoot: string;
   try {
     repoRoot = getRepoRoot(options.cwd);
@@ -64,21 +123,97 @@ export function runInit(options: InitOptions = {}): void {
     return;
   }
 
-  const plan = planInitAssets([...INIT_ASSETS], templatesRoot, repoRoot, options.force === true);
+  let compat;
+  try {
+    compat = loadIntegrationCompat(templatesRoot);
+    recipeFilesExist(templatesRoot, compat);
+  } catch (e) {
+    logError(e instanceof Error ? e.message : String(e));
+    setExitCode(2);
+    return;
+  }
+
+  const profile = await resolveProfile(options, repoRoot, templatesRoot);
+  if (!profile) {
+    setExitCode(1);
+    return;
+  }
+
+  try {
+    profile.integrationsDocPath = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
+  } catch (e) {
+    logError(e instanceof Error ? e.message : String(e));
+    setExitCode(2);
+    return;
+  }
+
+  for (const id of profile.ides) {
+    if (!compat.integrations[id as keyof typeof compat.integrations]) {
+      logError(`init: unknown IDE key: ${id}`);
+      setExitCode(2);
+      return;
+    }
+  }
+
+  const assets = resolveAssetsFromProfile(profile, compat);
+  let force = options.force === true;
+  let plan = planInitAssets(assets, templatesRoot, repoRoot, force);
   if (!plan.ok) {
     setExitCode(2);
     return;
   }
   if (plan.conflicts.length > 0) {
-    logError("init: managed asset conflicts detected:");
-    for (const rel of plan.conflicts) logError(`  - ${rel}`);
-    logError("re-run with --force to overwrite managed assets");
-    setExitCode(2);
+    logManagedAssetConflicts(plan.conflicts);
+
+    const { canPromptInitOverwrite, promptOverwriteManagedAssets } = await import(
+      "../lib/init-interactive.js"
+    );
+    if (canPromptInitOverwrite(options)) {
+      const overwrite = await promptOverwriteManagedAssets(plan.conflicts);
+      if (overwrite !== true) {
+        setExitCode(overwrite === null ? 1 : 2);
+        return;
+      }
+      force = true;
+      plan = planInitAssets(assets, templatesRoot, repoRoot, force);
+      if (!plan.ok) {
+        setExitCode(2);
+        return;
+      }
+    } else {
+      logError("pass --force to overwrite without prompting");
+      setExitCode(2);
+      return;
+    }
+  }
+
+  const docWrite = planIntegrationsDocWrite(profile, templatesRoot, repoRoot, compat);
+  const pointerWrite = planArchitecturePointerWrite(profile, repoRoot);
+  const composedWrites = [docWrite, pointerWrite].filter((w): w is PlannedWrite => w != null);
+  const allWrites = [...plan.writes, ...composedWrites];
+
+  if (options.dryRun) {
+    logInfo(`${CLI_NAME} init: dry-run — would write ${allWrites.length} file(s)`);
+    for (const w of allWrites) {
+      logInfo(`  - ${path.relative(repoRoot, w.absoluteTarget)}`);
+    }
+    if (docWrite) {
+      logInfo(`${CLI_NAME} init: composed ${profile.integrationsDocPath} (${docWrite.body.length} bytes)`);
+    }
+    if (pointerWrite) {
+      logInfo(`${CLI_NAME} init: composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
+    }
     return;
   }
 
-  applyInitWrites(plan.writes);
+  applyInitWrites(allWrites);
+  if (docWrite) {
+    logInfo(`${CLI_NAME} init: wrote composed ${profile.integrationsDocPath}`);
+  }
+  if (pointerWrite) {
+    logInfo(`${CLI_NAME} init: wrote composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
+  }
   logInitSummary(plan.writes, plan.skippedUserMutable, plan.unchanged);
-  logInitNextSteps();
+  logInitNextSteps(profile);
   mergeGitignoreFromTemplate(repoRoot, templatesRoot);
 }

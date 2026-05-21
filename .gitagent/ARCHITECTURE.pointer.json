@@ -1,0 +1,6 @@
+{
+  "schema_version": "0.1.0",
+  "kind": "file",
+  "location": "docs/ARCHITECTURE.md",
+  "read_hint": "Single markdown file: gapman CLI layer layout, import rules, and complexity budgets under src/cli/. Read fully before editing application code."
+}

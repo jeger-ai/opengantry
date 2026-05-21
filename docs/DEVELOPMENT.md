@@ -36,9 +36,55 @@ gapman doctor
 1. **Triage** — `gapman triage "<intent>"` (escalation → Teacher legislates).
 2. **Legislate** — `gapman legislate "<intent>" --msn MSN-NNNN --skill-key gapman` (or `substrate` for substrate-only).
 3. **Teacher commit** — subject **`[MSN-NNNN] …`**, author email in `GAPMAN_TEACHER_EMAILS`, mission file under `.gitagent/missions/` included in the commit.
-4. **Worker scope** — `eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"` before agent/shell work.
+4. **Worker scope** — `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml` (or `eval "$(gapman runtime env --mission …)"`) before agent/shell work.
 5. **Trace** — append PASS quotes to repo-root `WORKER_LOG.md` (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
 6. **Verify** — `gapman verify --mission .gitagent/missions/<file>.yaml`.
+
+## Cursor session (this repo)
+
+OpenGantry dogfoods GXT in Cursor. Other agents: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
+
+### One-time Cursor enablement
+
+1. **Hooks on** — Cursor **Settings → Hooks** (project hooks from `.cursor/hooks.json` must be enabled).
+2. **Repo setup** (same as above):
+
+```bash
+npm ci && npm run build
+git config core.hooksPath .githooks
+export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
+gapman doctor
+```
+
+Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
+
+### Per-feature closed loop
+
+```bash
+gapman triage "<intent>"
+gapman legislate "<intent>" --msn MSN-NNNN --skill-key gapman   # or substrate
+# Teacher: git commit -m "[MSN-NNNN] legislate …" including mission file
+
+scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml
+# New Agent chat → sessionStart injects GXT_TMVC_* + mission context automatically
+
+source scripts/gxt-runtime-env.sh   # integrated terminal (same pinned mission)
+# … Cursor Agent work in src/cli/ or legislated scope …
+# Append gate evidence to WORKER_LOG.md
+
+gapman verify --mission .gitagent/missions/MSN-NNNN.<slug>.yaml
+npm run validate
+git push   # pre-push: gapman verify --pre-push on branch-changed missions
+```
+
+| Layer | Mechanism | OpenGantry repo |
+|-------|-----------|-----------------|
+| Context | `.cursor/rules/` + `AGENTS.md` + `sessionStart` hook | RULES + MANIFEST + pinned mission |
+| Shell guard | `beforeShellExecution` | Blocks casual writes to foreman / RULES |
+| Terminal env | `gxt-runtime-env.sh` / `gxt-pin-mission.sh` | Sets `GXT_*` for integrated terminal |
+| Process trap | `gapman runtime exec` | Headless Cursor CLI / CI only |
+
+IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; use `runtime exec` when you need manifest-enforced subprocess boundaries. See INTEGRATIONS **Enforcement boundary**.
 
 ## Before push / PR
 
@@ -50,7 +96,7 @@ Runs build, `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doct
 
 **Hooks (automatic when `core.hooksPath=.githooks`):**
 
-- **pre-push** — `gapman verify` for branch-changed missions; `gapman check` if manifest/skills changed; changed-code gate for touched `src/cli/**/*.ts`.
+- **pre-push** — `gapman verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gapman check` if manifest/skills changed; changed-code gate for touched `src/cli/**/*.ts`.
 - **post-checkout** — scaffold `WORKER_LOG.md` on feature branches when missing.
 
 ## Definition of done (OpenGantry repo)
@@ -59,11 +105,12 @@ Runs build, `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doct
 - [ ] `WORKER_LOG.md` trace lines match mission PASS rows (or `gapman verify` on your mission passes)
 - [ ] `npm run validate` passes
 - [ ] Rule 4.4: manifest skill keys ↔ `skills/*.md` in the same change set when skills change
-- [ ] [docs/ARCHITECTURE.md](ARCHITECTURE.md) layer rules respected for `src/cli` edits
+- [ ] `.gitagent/ARCHITECTURE.pointer.json` resolved and layer rules respected for `src/cli` edits
+- [ ] When changing agent integration surfaces: bump `templates/integrations/compatibility.json` `verified_date` + recipe fragments in the same PR
 
 ## CI parity
 
-Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml): `gapman check`, tests, `validate-gxt.sh`, and **changed-code quality** on PR diffs. Local `npm run validate` should match before you open a PR.
+Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml): `gapman check`, `gapman doctor`, tests, `validate-gxt.sh`, **changed-code quality** on PR diffs, and path-scoped MSN commit subjects. Local `npm run validate` is the full superset (includes changed-code + MSN vs `origin/main`) — run it before you open a PR.
 
 ## Troubleshooting verify / hooks
 

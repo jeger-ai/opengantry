@@ -1,6 +1,6 @@
 # gapman CLI architecture
 
-Layered layout for [`src/cli/`](../src/cli/). Dependencies flow **downward only** (higher layers may import lower; never the reverse).
+Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.gitagent/ARCHITECTURE.pointer.json`](../.gitagent/ARCHITECTURE.pointer.json) (`kind: file`). Dependencies flow **downward only** (higher layers may import lower; never the reverse).
 
 ## Layers
 

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "../lib/constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/mission-legislative-stub.js";
 import {
   formatRepoRelative,
   logError,
@@ -20,6 +21,8 @@ export interface LegislateOptions {
   skillKey?: string;
   out?: string;
   allowDuplicate?: boolean;
+  gateCommand?: string;
+  gateSuccessSubstring?: string;
 }
 
 /** Slug for filename: alphanumeric + hyphen, capped length */
@@ -37,21 +40,25 @@ function buildYamlMissionBody(opts: {
   msn_id: string;
   skill_key: string;
   intent: string;
+  gate_command: string;
+  gate_success_substring: string | null;
 }): string {
-  const doc = {
+  const doc: Record<string, unknown> = {
     msn_id: opts.msn_id,
     skill_key: opts.skill_key,
-    gate_command: "echo OK",
-    gate_success_substring: "OK",
+    gate_command: opts.gate_command,
     trace_rows: [
       {
         dod_id: "1",
-        trace_quote: "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION",
+        trace_quote: LEGISLATE_TRACE_PLACEHOLDER,
         anchor: "1",
-        status: "PASS",
+        status: "PENDING",
       },
     ],
   };
+  if (opts.gate_success_substring !== null) {
+    doc.gate_success_substring = opts.gate_success_substring;
+  }
   const header =
     `# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).\n` +
     `# Legislated intent: ${opts.intent.trim().replace(/\n/g, " ")}\n`;
@@ -143,10 +150,20 @@ export function runLegislate(options: LegislateOptions): void {
     }
   }
 
+  const gateCommand = options.gateCommand?.trim() || "echo OK";
+  const gateSuccessSubstring =
+    options.gateSuccessSubstring !== undefined
+      ? options.gateSuccessSubstring.trim() || null
+      : gateCommand === "echo OK"
+        ? "OK"
+        : null;
+
   const body = buildYamlMissionBody({
     msn_id: msnId,
     skill_key,
     intent: options.intent,
+    gate_command: gateCommand,
+    gate_success_substring: gateSuccessSubstring,
   });
 
   fs.mkdirSync(path.dirname(absolute), { recursive: true });

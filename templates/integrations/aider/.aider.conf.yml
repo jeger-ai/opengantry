@@ -1,0 +1,4 @@
+read:
+  - AGENTS.md
+  - .gitagent/teacher/RULES.md
+  - .gitagent/foreman/MANIFEST.json

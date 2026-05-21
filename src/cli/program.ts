@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { CLI_NAME } from "./lib/constants.js";
 import { registerCoreCommands } from "./program-core.js";
+import { registerArchCommands } from "./program-arch.js";
 import { registerMissionCommands } from "./program-mission.js";
 import { registerWorkflowCommands } from "./program-workflow.js";
 
@@ -12,6 +13,7 @@ export function buildProgram(): Command {
   program.name(CLI_NAME).description("OpenGantry GXT CLI (MVP)").version(CLI_VERSION);
 
   registerCoreCommands(program);
+  registerArchCommands(program);
   registerMissionCommands(program);
   registerWorkflowCommands(program);
 

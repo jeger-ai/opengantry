@@ -47,4 +47,4 @@ properties:
           type: string
         status:
           type: string
-          pattern: "^(PASS|FAIL|pass|fail)$"
+          pattern: "^(PASS|FAIL|PENDING|pass|fail|pending)$"

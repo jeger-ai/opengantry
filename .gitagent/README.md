@@ -1,8 +1,8 @@
-# OpenGantry `.gitagent/` (v0.7.0 — Execution-ready Forensic substrate)
+# OpenGantry `.gitagent/` (v0.8.1 — Execution-ready Forensic substrate)
 
-This directory holds the **GXT substrate**: Foreman routing map, Teacher law, work-order template, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
+This directory holds the **GXT substrate**: Foreman routing map, Teacher law, work-order schema, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
 
-Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until `gapman` gains the remaining automation (history/receipt polish, etc.). The repo root **`gapman`** CLI covers `check`, `triage`, `runtime env`, **`legislate`**, `mission`, and `verify` — see [README § gapman](../README.md#gapman-cli-mvp).
+Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gapman` v0.8.1** CLI covers `init`, `check`, `doctor`, `triage`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, `metrics`, and `verify` — see [README § gapman](../README.md#gapman-cli).
 
 ## Forensic Truth (what v0.6.2 adds on v0.5.0)
 
@@ -18,19 +18,25 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 6. **Branch `WORKER_LOG.md`** — With `git config core.hooksPath .githooks`, switching to a feature branch (not `main`/`master`) creates an empty repo-root **`WORKER_LOG.md`** from [`teacher/WORKER_LOG.template.md`](teacher/WORKER_LOG.template.md) if the file is absent. See [`.githooks/post-checkout`](../.githooks/post-checkout).
 
-7. **Worker Runtime (v0.7.0)** — **`gapman runtime env --mission …`** emits the standard env contract ([`teacher/RUNTIME.md`](teacher/RUNTIME.md)) so external agents inherit `GXT_TMVC_ROOTS`, forbidden zones, and `GXT_WORKER_LOG` without hand-configuring each IDE.
+7. **Worker Runtime (v0.7.0+)** — **`gapman runtime env --mission …`** emits the standard env contract ([`teacher/RUNTIME.md`](teacher/RUNTIME.md)) so external agents inherit `GXT_TMVC_ROOTS`, forbidden zones, and `GXT_WORKER_LOG` without hand-configuring each IDE. **`gapman runtime exec`** adds process-boundary forbidden-zone scanning (strongest TMVC trap). IDE Agent Write/Edit remains **advisory** unless wrapped in `runtime exec` — see [`docs/INTEGRATIONS.md`](../docs/INTEGRATIONS.md).
+
+8. **Bootstrap + architecture (v0.8.1)** — **`gapman init`** installs this tree from packaged templates. **[`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json)** tells agents where code layout docs live; **`gapman arch cred`** stores git-ignored tokens for protected external sources. Primary mission format from **`gapman legislate`** is **YAML** under [`missions/`](missions/); Markdown missions remain supported for verify.
 
 ## Files (quick map)
 
 | Path | Role |
 |------|------|
 | [`foreman/MANIFEST.json`](foreman/MANIFEST.json) | Map: `schema_version`, skills, `trust_threshold`, `tmvc_roots`, `forbidden_zones`, path risks |
+| [`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json) | Agent discovery for code layout (`kind`, `location`, `read_hint`, optional `access`) |
+| [`teacher/ARCHITECTURE-DISCOVERY.md`](teacher/ARCHITECTURE-DISCOVERY.md) | When architecture is **unset** or stub — ask user; never invent layout |
+| [`teacher/ARCHITECTURE-ACCESS.md`](teacher/ARCHITECTURE-ACCESS.md) | Authenticated external architecture sources |
 | [`foreman/SOUL.md`](foreman/SOUL.md) | Foreman: manifest-only binary router |
 | [`teacher/RULES.md`](teacher/RULES.md) | Law: SOD, trace rules, TMVC, Rule 4.4 manifest sync, tiers |
 | [`teacher/RUNTIME.md`](teacher/RUNTIME.md) | Worker Runtime Contract: env vars emitted by **`gapman runtime env`** |
-| [`teacher/MISSION.template.md`](teacher/MISSION.template.md) | Work order: DoD + trace table + TMVC roots |
+| [`teacher/MISSION.example.yaml`](teacher/MISSION.example.yaml) | Primary structured mission example (YAML; `legislate` default) |
+| [`teacher/MISSION-ARCHITECT.md`](teacher/MISSION-ARCHITECT.md) | IDE chat Teacher-Assistant: fast-path + legislate-only handoff |
 | [`teacher/MISSION.schema.yaml`](teacher/MISSION.schema.yaml) | Structured mission schema (YAML) for `gapman mission validate` |
-| [`teacher/MISSION.example.yaml`](teacher/MISSION.example.yaml) | Example structured mission |
+| [`teacher/MISSION.template.md`](teacher/MISSION.template.md) | Human-readable Markdown reference (verify accepts md+yaml) |
 | [`teacher/commit-template.md`](teacher/commit-template.md) | Greppable commit receipt with `[MSN-XXXX]` |
 | [`teacher/WORKER_LOG.template.md`](teacher/WORKER_LOG.template.md) | Empty scaffold for repo-root `WORKER_LOG.md` (used by `.githooks/post-checkout`) |
 | [`missions/README.md`](missions/README.md) | Canonical mission file location for `gapman verify` git-proof |
@@ -65,4 +71,4 @@ Repo root [**`AGENTS.md`**](../AGENTS.md) and [`.cursor/rules/opengantry-gxt-sub
 
 **Developing this repository:** follow **[`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md)** — missions, hooks, `gapman verify`, and **`npm run validate`** (full local stack).
 
-Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `gapman check` + unit tests after `npm ci`/`npm run build`; **`manifest`** via [`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh) `manifest` (jq parity); **changed-code quality** on PRs; **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local parity: **`npm run validate`** or **`./scripts/dev-validate.sh`**. Workers can preload scope with **`gapman runtime env --mission … --json`**.
+Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `gapman check`, `gapman doctor`, and unit tests after `npm ci`/`npm run build`; **`manifest`** via [`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh) `manifest` (jq parity); **changed-code quality** on PRs; **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local superset: **`npm run validate`** or **`./scripts/dev-validate.sh`**. Workers can preload scope with **`gapman runtime env --mission … --json`**.

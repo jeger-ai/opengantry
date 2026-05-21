@@ -38,8 +38,12 @@ function readHooksPath(repoRoot: string): string | null {
   return v.length > 0 ? v : null;
 }
 
-function pickNextStep(current: string | null, candidate: string): string | null {
+export function pickNextStep(current: string | null, candidate: string): string | null {
   return current ?? candidate;
+}
+
+export function doctorLinesHasFail(lines: DoctorLine[]): boolean {
+  return lines.some((line) => line.level === "fail");
 }
 
 export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckResult {

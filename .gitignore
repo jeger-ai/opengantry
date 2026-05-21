@@ -1,5 +1,6 @@
 # OpenGantry v0.5.0 — local forensic bulk (not tracked)
 .gitagent/history/
+.gitagent/missions/.active-mission
 
 # gapman / Node build
 node_modules/
