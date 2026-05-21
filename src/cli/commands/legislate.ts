@@ -65,34 +65,39 @@ function buildYamlMissionBody(opts: {
   return `${header}${YAML.stringify(doc)}`;
 }
 
-export function runLegislate(options: LegislateOptions): void {
-  const { root, manifest } = loadWorkspace();
-  const msnId = (options.msn ?? "").trim();
-  if (!isValidMsnId(msnId)) {
-    logError('legislate: --msn must match "MSN-0007" exactly');
-    setExitCode(2);
-    return;
-  }
-
-  let skill_key = options.skillKey?.trim();
-  if (!skill_key) {
-    const triage = triageIntent(root, options.intent, manifest);
-    if (triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE") {
+function resolveLegislateSkillKey(
+  options: LegislateOptions,
+  root: string,
+  manifest: ReturnType<typeof loadWorkspace>["manifest"],
+): string | null {
+  const skill_key = options.skillKey?.trim();
+  if (skill_key) {
+    if (!manifest.skills[skill_key]) {
       logError(
-        `legislate: triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Teacher assigns scope.`,
+        `legislate: unknown skill_key "${skill_key}" (manifest skills: ${Object.keys(manifest.skills).join(", ")})`,
       );
       setExitCode(2);
-      return;
+      return null;
     }
-    skill_key = triage.skill_key;
+    return skill_key;
   }
 
-  if (!manifest.skills[skill_key]) {
-    logError(`legislate: unknown skill_key "${skill_key}" (manifest skills: ${Object.keys(manifest.skills).join(", ")})`);
+  const triage = triageIntent(root, options.intent, manifest);
+  if (triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE") {
+    logError(
+      `legislate: triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Teacher assigns scope.`,
+    );
     setExitCode(2);
-    return;
+    return null;
   }
+  return triage.skill_key;
+}
 
+function resolveLegislateOutputPath(
+  root: string,
+  options: LegislateOptions,
+  msnId: string,
+): string | null {
   const slug = intentSlug(options.intent, 48);
   const defaultFilename = `.gitagent/missions/${msnId}.${slug}.yaml`;
   const outRel = options.out?.trim() || defaultFilename;
@@ -104,52 +109,65 @@ export function runLegislate(options: LegislateOptions): void {
   if (!normRel || normRel.startsWith("..")) {
     logError(`legislate: output path outside repository (${absolute})`);
     setExitCode(2);
-    return;
+    return null;
   }
   if (!normRel.startsWith(".gitagent/missions/")) {
     logError(
       `legislate: mission path must stay under .gitagent/missions/ for gapman verify (got ${normRel})`,
     );
     setExitCode(2);
-    return;
+    return null;
   }
-
   if (fs.existsSync(absolute)) {
     logError(`legislate: output already exists ${absolute}`);
     setExitCode(2);
-    return;
+    return null;
   }
+  return absolute;
+}
 
-  const existingMissionDupes: string[] = [];
+function findDuplicateMsnMissionPaths(root: string, msnId: string): string[] {
+  const dupes: string[] = [];
   const missionsDir = path.join(root, ".gitagent", "missions");
-  if (fs.existsSync(missionsDir)) {
-    for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
-      if (!ent.isFile()) continue;
-      const abs = path.join(missionsDir, ent.name);
-      try {
-        const existing = extractMsnIdFromMissionPath(abs);
-        if (existing === msnId) {
-          existingMissionDupes.push(formatRepoRelative(root, abs));
-        }
-      } catch {
-        // ignore malformed mission files during advisory scan
-      }
-    }
-  }
-  if (existingMissionDupes.length > 0) {
-    if (options.allowDuplicate === true) {
-      logWarn(
-        `legislate: allowing duplicate msn ${msnId} for migration flow; existing mission file(s): ${existingMissionDupes.join(", ")}`,
-      );
-    } else {
-      logError(
-        `legislate: duplicate msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}. Re-run with --allow-duplicate only for intentional branch migrations.`,
-      );
-      setExitCode(2);
-      return;
-    }
-  }
+  if (!fs.existsSync(missionsDir)) return dupes;
 
+  for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
+    if (!ent.isFile()) continue;
+    const abs = path.join(missionsDir, ent.name);
+    try {
+      if (extractMsnIdFromMissionPath(abs) === msnId) {
+        dupes.push(formatRepoRelative(root, abs));
+      }
+    } catch {
+      // ignore malformed mission files during advisory scan
+    }
+  }
+  return dupes;
+}
+
+function assertLegislateDuplicatePolicy(
+  options: LegislateOptions,
+  msnId: string,
+  existingMissionDupes: string[],
+): boolean {
+  if (existingMissionDupes.length === 0) return true;
+  if (options.allowDuplicate === true) {
+    logWarn(
+      `legislate: allowing duplicate msn ${msnId} for migration flow; existing mission file(s): ${existingMissionDupes.join(", ")}`,
+    );
+    return true;
+  }
+  logError(
+    `legislate: duplicate msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}. Re-run with --allow-duplicate only for intentional branch migrations.`,
+  );
+  setExitCode(2);
+  return false;
+}
+
+function resolveLegislateGateOptions(options: LegislateOptions): {
+  gateCommand: string;
+  gateSuccessSubstring: string | null;
+} {
   const gateCommand = options.gateCommand?.trim() || "echo OK";
   const gateSuccessSubstring =
     options.gateSuccessSubstring !== undefined
@@ -157,7 +175,28 @@ export function runLegislate(options: LegislateOptions): void {
       : gateCommand === "echo OK"
         ? "OK"
         : null;
+  return { gateCommand, gateSuccessSubstring };
+}
 
+export function runLegislate(options: LegislateOptions): void {
+  const { root, manifest } = loadWorkspace();
+  const msnId = (options.msn ?? "").trim();
+  if (!isValidMsnId(msnId)) {
+    logError('legislate: --msn must match "MSN-0007" exactly');
+    setExitCode(2);
+    return;
+  }
+
+  const skill_key = resolveLegislateSkillKey(options, root, manifest);
+  if (!skill_key) return;
+
+  const absolute = resolveLegislateOutputPath(root, options, msnId);
+  if (!absolute) return;
+
+  const existingMissionDupes = findDuplicateMsnMissionPaths(root, msnId);
+  if (!assertLegislateDuplicatePolicy(options, msnId, existingMissionDupes)) return;
+
+  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions(options);
   const body = buildYamlMissionBody({
     msn_id: msnId,
     skill_key,

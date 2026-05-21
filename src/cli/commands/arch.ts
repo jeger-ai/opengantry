@@ -9,7 +9,6 @@ import {
   parseCredentialValuesFromStdin,
   readStdinCredentialPayload,
   removeArchitectureCredential,
-  parseArchitectureCredentialKind,
   validateCredentialSlot,
   writeArchitectureCredential,
   type ArchitectureCredentialKind,

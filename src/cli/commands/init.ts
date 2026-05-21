@@ -104,14 +104,20 @@ async function resolveProfile(
   return mergeInitProfile(defaultInitProfile(), partial);
 }
 
-export async function runInit(options: InitOptions = {}): Promise<void> {
+type InitWorkspace = {
+  repoRoot: string;
+  templatesRoot: string;
+  compat: ReturnType<typeof loadIntegrationCompat>;
+};
+
+function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
   let repoRoot: string;
   try {
     repoRoot = getRepoRoot(options.cwd);
   } catch (e) {
     logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
     setExitCode(2);
-    return;
+    return null;
   }
 
   let templatesRoot: string;
@@ -120,89 +126,127 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);
-    return;
+    return null;
   }
 
-  let compat;
   try {
-    compat = loadIntegrationCompat(templatesRoot);
+    const compat = loadIntegrationCompat(templatesRoot);
     recipeFilesExist(templatesRoot, compat);
+    return { repoRoot, templatesRoot, compat };
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);
-    return;
+    return null;
   }
+}
 
-  const profile = await resolveProfile(options, repoRoot, templatesRoot);
-  if (!profile) {
-    setExitCode(1);
-    return;
-  }
-
+function validateInitProfile(
+  profile: InitProfile,
+  repoRoot: string,
+  compat: InitWorkspace["compat"],
+): boolean {
   try {
     profile.integrationsDocPath = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);
-    return;
+    return false;
   }
 
   for (const id of profile.ides) {
     if (!compat.integrations[id as keyof typeof compat.integrations]) {
       logError(`init: unknown IDE key: ${id}`);
       setExitCode(2);
-      return;
+      return false;
     }
   }
+  return true;
+}
 
-  const assets = resolveAssetsFromProfile(profile, compat);
+async function resolveInitAssetPlan(
+  options: InitOptions,
+  assets: ReturnType<typeof resolveAssetsFromProfile>,
+  templatesRoot: string,
+  repoRoot: string,
+) {
   let force = options.force === true;
   let plan = planInitAssets(assets, templatesRoot, repoRoot, force);
   if (!plan.ok) {
     setExitCode(2);
+    return null;
+  }
+  if (plan.conflicts.length === 0) {
+    return { plan, force };
+  }
+
+  logManagedAssetConflicts(plan.conflicts);
+  const { canPromptInitOverwrite, promptOverwriteManagedAssets } = await import(
+    "../lib/init-interactive.js"
+  );
+  if (!canPromptInitOverwrite(options)) {
+    logError("pass --force to overwrite without prompting");
+    setExitCode(2);
+    return null;
+  }
+
+  const overwrite = await promptOverwriteManagedAssets(plan.conflicts);
+  if (overwrite !== true) {
+    setExitCode(overwrite === null ? 1 : 2);
+    return null;
+  }
+
+  force = true;
+  plan = planInitAssets(assets, templatesRoot, repoRoot, force);
+  if (!plan.ok) {
+    setExitCode(2);
+    return null;
+  }
+  return { plan, force };
+}
+
+function logInitDryRun(
+  repoRoot: string,
+  profile: InitProfile,
+  allWrites: PlannedWrite[],
+  docWrite: PlannedWrite | null,
+  pointerWrite: PlannedWrite | null,
+): void {
+  logInfo(`${CLI_NAME} init: dry-run — would write ${allWrites.length} file(s)`);
+  for (const w of allWrites) {
+    logInfo(`  - ${path.relative(repoRoot, w.absoluteTarget)}`);
+  }
+  if (docWrite) {
+    logInfo(`${CLI_NAME} init: composed ${profile.integrationsDocPath} (${docWrite.body.length} bytes)`);
+  }
+  if (pointerWrite) {
+    logInfo(`${CLI_NAME} init: composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
+  }
+}
+
+export async function runInit(options: InitOptions = {}): Promise<void> {
+  const workspace = loadInitWorkspace(options);
+  if (!workspace) return;
+
+  const { repoRoot, templatesRoot, compat } = workspace;
+  const profile = await resolveProfile(options, repoRoot, templatesRoot);
+  if (!profile) {
+    setExitCode(1);
     return;
   }
-  if (plan.conflicts.length > 0) {
-    logManagedAssetConflicts(plan.conflicts);
+  if (!validateInitProfile(profile, repoRoot, compat)) return;
 
-    const { canPromptInitOverwrite, promptOverwriteManagedAssets } = await import(
-      "../lib/init-interactive.js"
-    );
-    if (canPromptInitOverwrite(options)) {
-      const overwrite = await promptOverwriteManagedAssets(plan.conflicts);
-      if (overwrite !== true) {
-        setExitCode(overwrite === null ? 1 : 2);
-        return;
-      }
-      force = true;
-      plan = planInitAssets(assets, templatesRoot, repoRoot, force);
-      if (!plan.ok) {
-        setExitCode(2);
-        return;
-      }
-    } else {
-      logError("pass --force to overwrite without prompting");
-      setExitCode(2);
-      return;
-    }
-  }
+  const assets = resolveAssetsFromProfile(profile, compat);
+  const assetPlan = await resolveInitAssetPlan(options, assets, templatesRoot, repoRoot);
+  if (!assetPlan) return;
 
+  const { plan } = assetPlan;
   const docWrite = planIntegrationsDocWrite(profile, templatesRoot, repoRoot, compat);
   const pointerWrite = planArchitecturePointerWrite(profile, repoRoot);
   const composedWrites = [docWrite, pointerWrite].filter((w): w is PlannedWrite => w != null);
   const allWrites = [...plan.writes, ...composedWrites];
 
   if (options.dryRun) {
-    logInfo(`${CLI_NAME} init: dry-run — would write ${allWrites.length} file(s)`);
-    for (const w of allWrites) {
-      logInfo(`  - ${path.relative(repoRoot, w.absoluteTarget)}`);
-    }
-    if (docWrite) {
-      logInfo(`${CLI_NAME} init: composed ${profile.integrationsDocPath} (${docWrite.body.length} bytes)`);
-    }
-    if (pointerWrite) {
-      logInfo(`${CLI_NAME} init: composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
-    }
+    logInitDryRun(repoRoot, profile, allWrites, docWrite, pointerWrite);
     return;
   }
 
