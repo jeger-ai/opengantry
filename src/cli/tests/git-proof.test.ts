@@ -54,6 +54,8 @@ test("git-proof: TEACHER_IDENTITY_UNCONFIGURED", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
   writeMiniGapmanRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate", TEACHER_EMAIL);
+  execSync("git config --unset user.email", { cwd: dest, stdio: "pipe" });
+  execSync("git config --unset user.name", { cwd: dest, stdio: "pipe" });
   const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
   const prev = process.env.GAPMAN_TEACHER_EMAILS;
   delete process.env.GAPMAN_TEACHER_EMAILS;

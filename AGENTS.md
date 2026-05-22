@@ -9,11 +9,19 @@ Treat these as the **law + routing contract** for agent work. Before editing app
 
 ## Mission Architect (IDE chat)
 
+**Activation macro:**
+
+- If a user prompt starts with `/gantry`, treat that as an explicit Mission Architect activation request. Do not use `/plan` — Cursor reserves it for native Plan Mode.
+- On activation, follow [`.gitagent/teacher/MISSION-ARCHITECT.md`](.gitagent/teacher/MISSION-ARCHITECT.md) and complete the legislate handoff flow.
+
+**Implicit interception:**
+
 When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **[`.gitagent/teacher/MISSION-ARCHITECT.md`](.gitagent/teacher/MISSION-ARCHITECT.md)** and follow it.
 
 - **Do NOT** trigger for questions, explanations, or code discovery — answer normally.
 - **Fast-path** trivial single-file work; **full interview** for heavy/risky scope.
-- Handoff is **one** copy-paste `gapman legislate …` command — never raw YAML blocks.
+- **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
+- **CLI fallback:** one copy-paste `gapman legislate …` command — never raw YAML blocks.
 
 ## Developing this repo (mandatory dogfood)
 
@@ -21,9 +29,9 @@ OpenGantry development **MUST** use the full GXT stack — same as adopters. See
 
 | Step | Command |
 |------|---------|
-| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `export GAPMAN_TEACHER_EMAILS="$(git config user.email)"` |
+| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `gapman teacher set "$(git config user.email)"` |
 | Readiness | `gapman doctor` |
-| Scope work | `gapman triage "<intent>"` → `gapman legislate … --msn MSN-NNNN --skill-key gapman` (CLI) or `substrate` (substrate) |
+| Scope work | Mission Architect / MCP tools or `gapman legislate … --msn MSN-NNNN --skill-key gapman` |
 | Worker env | `eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"` |
 | Finish | Trace in `WORKER_LOG.md` · `gapman verify --mission …` |
 | Pre-PR | `npm run validate` |

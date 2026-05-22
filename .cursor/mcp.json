@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "opengantry-gxt": {
+      "command": "gapman",
+      "args": ["mcp", "serve"]
+    }
+  }
+}

@@ -14,7 +14,7 @@ if MISSION="$(scripts/gxt-resolve-mission.sh 2>/dev/null)"; then
 else
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol, or run gapman legislate.",
+      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gapman legislate.",
     }));
   '
   exit 0
@@ -59,6 +59,7 @@ process.stdout.write(JSON.stringify({
     `- Trace sink: ${payload.GXT_WORKER_LOG || "WORKER_LOG.md"}`,
     "",
     "Worker loop: edit within TMVC → append PASS quotes to WORKER_LOG.md → gapman verify --mission … → npm run validate",
+    "MCP tools: gxt_draft_legislation, gxt_execute_legislation, gxt_check_signature, gxt_pin_mission, gxt_runtime_env, gxt_verify (see .cursor/mcp.json).",
     "IDE Agent edits are advisory TMVC; shell substrate writes are hook-guarded. Full loop: docs/DEVELOPMENT.md",
   ].join("\n"),
 }));

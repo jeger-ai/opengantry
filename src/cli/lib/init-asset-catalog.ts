@@ -29,6 +29,11 @@ export interface InitAssetSpec extends InitAsset {
 const CORE_ASSETS: InitAssetSpec[] = [
   { targetPath: ".gitagent/foreman/MANIFEST.json", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/foreman/BYPASS.sha256", mode: "scaffold_only", tags: ["core"] },
+  {
+    targetPath: ".gitagent/foreman/SUBSTRATE.version.json",
+    mode: "scaffold_only",
+    tags: ["core"],
+  },
   { targetPath: ".gitagent/teacher/RULES.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/missions/README.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: "AGENTS.md", mode: "scaffold_only", tags: ["core"] },
@@ -87,6 +92,7 @@ const CURSOR_ASSETS: InitAssetSpec[] = [
     executable: true,
     tags: ["cursor"],
   },
+  { targetPath: ".cursor/mcp.json", mode: "managed_strict", tags: ["cursor"] },
 ];
 
 const IDE_PACK_ASSETS: InitAssetSpec[] = [

@@ -42,6 +42,9 @@ echo "dev-validate: Foreman MANIFEST (jq parity)"
 echo "dev-validate: unit tests"
 node --test dist/cli/tests/*.test.js
 
+echo "dev-validate: MCP dogfood flow"
+./scripts/validate-mcp-dogfood.sh
+
 echo "dev-validate: gapman doctor"
 "${GAPMAN[@]}" doctor
 

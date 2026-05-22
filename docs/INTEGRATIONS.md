@@ -80,7 +80,7 @@ Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with
 
 | Tool | Context injection | Wrap / bootstrap |
 |------|-------------------|------------------|
-| **Cursor** | `.cursor/rules/opengantry-gxt-substrate.mdc` + `.cursor/hooks.json` (`sessionStart` + shell guard) | `scripts/gxt-pin-mission.sh <mission>` · `source scripts/gxt-runtime-env.sh` · `gapman runtime exec … -- cursor agent "<task>"` |
+| **Cursor** | `.cursor/rules/opengantry-gxt-substrate.mdc` + `.cursor/hooks.json` + `.cursor/mcp.json` (`gxt_*` tools) | `scripts/gxt-pin-mission.sh <mission>` · `source scripts/gxt-runtime-env.sh` · `gapman runtime exec … -- cursor agent "<task>"` |
 | **Claude Code** | `CLAUDE.md` or `.claude/CLAUDE.md` → link canonical files | `gapman runtime exec … -- claude "<task>"` |
 | **OpenAI Codex CLI** | Root `AGENTS.md` (native); optional `.codex/config.toml` | `source scripts/gxt-runtime-env.sh <mission>` · `gapman runtime exec … -- codex exec "<task>"` |
 | **OpenCode** | `AGENTS.md` (native); optional `opencode.json` `instructions` | `gapman runtime exec … -- opencode run "<task>"` |
@@ -103,8 +103,11 @@ Vendor CLIs change; the **wrap line** and **context files** do not.
 
 ### Cursor
 
-- **Context injection:** [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) (`alwaysApply: true`); [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` mission scope + `beforeShellExecution` law/manifest guard.
-- **Mission Architect:** When the user asks to **write/edit code** with no pinned mission, follow [`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md) — fast-path trivial work; output one `gapman legislate …` command (not raw YAML). Do **not** trigger for read-only questions.
+- **Context injection:** [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) (`alwaysApply: true`); [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` mission scope + `beforeShellExecution` fallback guard.
+- **MCP bridge:** [`.cursor/mcp.json`](../.cursor/mcp.json) — `gapman mcp serve` exposes `gxt_*` tools for zero-copy-paste legislation.
+- **Mission Architect:** `/gantry` macro (do not use `/plan` — Cursor native Plan Mode); implicit activation when user asks to **write/edit code** with no pinned mission. Follow [`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md).
+- **Two-step legislation (Yolo-safe):** `gxt_draft_legislation` → human chat approval (semantic yes/no) → `gxt_execute_legislation` → Teacher `git commit` → `gxt_check_signature` → `gxt_pin_mission`.
+- **Host tool policy:** Cursor may require approval per tool call or auto-run all tools (“Yolo mode”). MCP draft/execute is the primary governance gate — not host settings alone.
 - **Session bootstrap:**
 
 ```bash
@@ -112,8 +115,10 @@ scripts/gxt-pin-mission.sh .gitagent/missions/MSN-0001.<slug>.yaml   # once per 
 source scripts/gxt-runtime-env.sh   # integrated terminal (uses pinned mission)
 ```
 
-- **Enforcement:** Advisory for Agent edits; `sessionStart` injects TMVC context; deterministic hook for shell law/manifest writes; use `runtime exec` for headless CLI/SDK runs.
-- **Gotcha:** Enable hooks in Cursor Settings; restart if they do not load (**Output → Hooks**). Pin a mission before starting Agent work — unpinned sessions get a legislate reminder only.
+- **Enforcement:** Advisory for Agent edits; MCP two-step gate for legislation; shell hook fallback for raw `gapman legislate` / law/manifest writes; use `runtime exec` for headless CLI/SDK runs.
+- **Gotcha:** Enable hooks **and** MCP in Cursor Settings; restart if they do not load (**Output → Hooks**). Pin a mission before starting Agent work — unpinned sessions get a legislate reminder only.
+
+**Substrate lifecycle:** After `npm install gapman@latest`, run `gapman upgrade` → review `.gitagent/.upgrade-tmp/` → Teacher-commit the upgrade mission YAML → `gapman upgrade --apply --mission …`. MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply`.
 
 Headless:
 

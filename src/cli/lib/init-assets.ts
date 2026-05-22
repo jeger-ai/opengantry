@@ -15,6 +15,7 @@ export interface InitAsset {
 export const INIT_ASSETS: readonly InitAsset[] = [
   { targetPath: ".gitagent/foreman/MANIFEST.json", mode: "scaffold_only" },
   { targetPath: ".gitagent/foreman/BYPASS.sha256", mode: "scaffold_only" },
+  { targetPath: ".gitagent/foreman/SUBSTRATE.version.json", mode: "scaffold_only" },
   { targetPath: ".gitagent/teacher/RULES.md", mode: "scaffold_only" },
   { targetPath: ".gitagent/missions/README.md", mode: "scaffold_only" },
   { targetPath: "skills/ui.md", mode: "scaffold_only" },
@@ -38,6 +39,7 @@ export const INIT_ASSETS: readonly InitAsset[] = [
   { targetPath: "scripts/gxt-resolve-mission.sh", mode: "managed_strict", executable: true },
   { targetPath: "scripts/gxt-pin-mission.sh", mode: "managed_strict", executable: true },
   { targetPath: "scripts/gxt-cursor-env.sh", mode: "managed_strict", executable: true },
+  { targetPath: ".cursor/mcp.json", mode: "managed_strict" },
   { targetPath: ".gitagent/teacher/MISSION.schema.yaml", mode: "managed_strict" },
   { targetPath: ".gitagent/teacher/WORKER_LOG.template.md", mode: "managed_strict" },
 ] as const;

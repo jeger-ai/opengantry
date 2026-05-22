@@ -9,7 +9,7 @@ import { ENV_BYPASS_SECRET } from "../lib/break-glass.js";
 import { writeMiniGapmanRepo, writeBypassAnchor, gitInitCommit } from "./test-fixtures.js";
 import { TEACHER_EMAIL } from "./test-shared.js";
 
-test("runDoctor: warn on missing teacher email exits 0", () => {
+test("runDoctor: implicit git user.email satisfies teacher check", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-warn-"));
   writeMiniGapmanRepo(dest, ogRoot);

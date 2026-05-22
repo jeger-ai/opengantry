@@ -1,0 +1,23 @@
+# OpenGantry substrate upgrade mission (Teacher: review staged diff under .gitagent/.upgrade-tmp/).
+# Upgrade 0.0.0 → 0.8.1. Commit this file only; staging dir is gitignored.
+msn_id: MSN-9000
+skill_key: substrate
+gate_command: gapman doctor
+gate_success_substring: null
+upgrade_payload:
+  from_version: 0.0.0
+  to_version: 0.8.1
+  staged_root: .gitagent/.upgrade-tmp
+  planned_writes:
+    - .cursor/rules/opengantry-gxt-substrate.mdc
+    - .cursor/hooks/gxt-before-shell.sh
+  skipped_scaffold_only: []
+  staged_hashes:
+    .cursor/rules/opengantry-gxt-substrate.mdc: f8a8f18bf2f6e9bfb14f70a5510cb38e29a050b332d3b695347640302742a92b
+    .cursor/hooks/gxt-before-shell.sh: 82ba22076d3858da9a518125f143bde685f36c203e150116d503b771c2e61e7c
+  created_at: 2026-05-22T20:04:44.151Z
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING

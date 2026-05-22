@@ -4,6 +4,8 @@ import { registerCoreCommands } from "./program-core.js";
 import { registerArchCommands } from "./program-arch.js";
 import { registerMissionCommands } from "./program-mission.js";
 import { registerWorkflowCommands } from "./program-workflow.js";
+import { registerMcpCommands } from "./program-mcp.js";
+import { registerTeacherCommands } from "./program-teacher.js";
 
 export const CLI_VERSION = "0.8.1";
 
@@ -16,6 +18,8 @@ export function buildProgram(): Command {
   registerArchCommands(program);
   registerMissionCommands(program);
   registerWorkflowCommands(program);
+  registerMcpCommands(program);
+  registerTeacherCommands(program);
 
   return program;
 }

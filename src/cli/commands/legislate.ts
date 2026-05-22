@@ -209,6 +209,6 @@ export function runLegislate(options: LegislateOptions): void {
   fs.writeFileSync(absolute, body, "utf8");
   logInfo(`${CLI_NAME} legislate: wrote ${formatRepoRelative(root, absolute)}`);
   logInfo(
-    `Teacher: git commit modifying this mission with subject starting [${msnId}] from an email in GAPMAN_TEACHER_EMAILS.`,
+    `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gapman teacher show).`,
   );
 }

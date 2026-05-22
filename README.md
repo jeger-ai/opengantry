@@ -64,7 +64,8 @@ From a built OpenGantry tree (or after copying the `gapman` CLI + `templates/` i
 ```bash
 npm ci && npm run build   # in the OpenGantry repo, or use a globally linked gapman
 gapman init               # interactive wizard on TTY; auto-default in CI (no hang)
-export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
+export GAPMAN_TEACHER_EMAILS="$(git config user.email)"   # CI fallback only; prefer gapman teacher set
+gapman teacher set "$(git config user.email)"             # repo-local (recommended)
 gapman doctor
 git config core.hooksPath .githooks
 ```
@@ -91,7 +92,7 @@ After `init`, customize your manifest and skills, then legislate. See [`docs/ADO
   Set `path_risks`, `risk_keywords`, and each skill's `tmvc_roots`, `forbidden_zones`, and `trust_threshold` to match **your** directories and risk appetite.
 - Align **[`.gitagent/teacher/RULES.md`](.gitagent/teacher/RULES.md)** with your review policy (tiers, who counts as "human audit", merge gates).
 - Point **deterministic gates** in missions at **your** stack (`npm test`, `pytest`, `cargo test`, etc.).
-- Store mission files you intend to **`gapman verify`** under **`.gitagent/missions/`** and set **`GAPMAN_TEACHER_EMAILS`** so the Teacher's legislation commits are recognized (see [gapman](#gapman-cli)).
+- Store mission files you intend to **`gapman verify`** under **`.gitagent/missions/`** and configure **Teacher allowlist** per repo (`gapman teacher set`, `.gitagent/foreman/TEACHER.allowlist.local`, or `git config gapman.teacherEmails`).
 
 **Concrete gate example** (YAML fields in a mission file; adjust paths and commands):
 
@@ -111,21 +112,31 @@ Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, 
 | Command | Purpose |
 |--------|---------|
 | `gapman init` | Bootstrap substrate + IDE packs + hooks + CI from packaged templates. Interactive wizard or `--yes` default profile. |
+| `gapman upgrade` | Plan substrate updates from the installed package (stages to `.gitagent/.upgrade-tmp/`, drafts upgrade mission YAML). `gapman upgrade --apply --mission …` after Teacher `[MSN-…]` commit. |
 | `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
 | `gapman status` | Human-readable report of the same checks. |
 | `gapman doctor` | Active readiness check (manifest, Teacher email, bypass secret match, hooks, architecture pointer, integration staleness). Warnings exit 0. |
 | `gapman triage "<intent>"` | Foreman-style routing ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output (may include non-binding `adr_hints` from [`.gitagent/out-of-scope/`](.gitagent/out-of-scope/README.md)). `--emit-mission --msn MSN-0007` writes `.gitagent/missions/ACTIVE_MISSION.md` by default on **DIRECT_EXECUTION** only. |
-| `gapman legislate "<intent>" --msn MSN-0007` | Emit stub **YAML** mission under `.gitagent/missions/` with explicit MSN (`--skill-key` when triage would escalate; `--gate-command` / `--gate-success-substring` for one-click handoff). Teacher still **`git commit`**-legislates under `GAPMAN_TEACHER_EMAILS`. |
+| `gapman teacher show\|set` | Repo-local Teacher git-proof allowlist (`.gitagent/foreman/TEACHER.allowlist.local`; avoids global `GAPMAN_TEACHER_EMAILS` leaking across projects). |
+| `gapman legislate "<intent>" --msn MSN-0007` | Emit stub **YAML** mission under `.gitagent/missions/` with explicit MSN (`--skill-key` when triage would escalate; `--gate-command` / `--gate-success-substring` for one-click handoff). Teacher still **`git commit`**-legislates from an allowlisted email. |
 | `gapman mission validate --file <path>` | Validate a mission `.md` or `.yaml` (YAML checked against [`.gitagent/teacher/MISSION.schema.yaml`](.gitagent/teacher/MISSION.schema.yaml)). |
 | `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill's `tmvc_roots`). |
 | `gapman runtime env --mission <path>` | Worker Runtime Contract: emit `GXT_REPO_ROOT`, `GXT_MISSION_FILE`, `GXT_MSN_ID`, `GXT_SKILL_KEY`, `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, `GXT_WORKER_LOG`. Default: POSIX `export …` lines; `--json` for scripts. [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). |
 | `gapman runtime exec --mission <path> -- <cmd…>` | Run worker command with mission env, telemetry capture, and forbidden-zone scan (strongest TMVC trap). |
+| `gapman mcp serve` | Stdio MCP server exposing `gxt_*` tools (draft/execute legislation, pin, runtime env, verify, exec). Configure via `.cursor/mcp.json`. |
 | `gapman verify --mission <path>` | **Git-proof** + gate + trace. **`--pre-push`** for hook handoff (legislative stubs stop after git-proof). **Auto line-drift resolution** by default; **`--strict-trace`** to disable. **`--break-glass --reason "…"`** when `GXT_BYPASS_SECRET` matches `BYPASS.sha256`. Failures include **Fix:** hints. |
 | `gapman arch pointer` | Print architecture pointer summary for agents (`.gitagent/ARCHITECTURE.pointer.json`). |
 | `gapman arch cred status\|set\|unset` | Git-ignored credential slots for authenticated external architecture sources (secrets via stdin only). |
 | `gapman metrics [--json] [--ref main]` | Git-native governance rollup (stream-parsed). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |
 
-Set **`GAPMAN_TEACHER_EMAILS`** to a comma-separated list of Git **author emails** allowed to legislate missions (must match the committing Teacher's `user.email` / `GIT_AUTHOR_EMAIL`).
+**Teacher identity (git-proof):** per repository, in precedence order:
+
+1. `.gitagent/foreman/TEACHER.allowlist` (+ optional gitignored `.local` merge)
+2. `git config gapman.teacherEmails "a@x.com,b@y.com"`
+3. `GAPMAN_TEACHER_EMAILS` env (CI escape hatch only)
+4. implicit `git config user.email` when nothing else is set
+
+Use **`gapman teacher set "$(git config user.email)"`** after clone — do not rely on a global shell export when you work across multiple projects.
 
 ### Worker Runtime quickstart
 

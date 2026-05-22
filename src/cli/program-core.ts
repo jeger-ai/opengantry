@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { runCheck } from "./commands/check.js";
 import { runInit } from "./commands/init.js";
+import { runUpgrade } from "./commands/upgrade.js";
 import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { readStdinIfEmpty, runTriage } from "./commands/triage.js";
@@ -71,6 +72,30 @@ export function registerCoreCommands(program: Command): void {
         noCi: opts.noCi,
         archSource: opts.archSource,
         archLocation: opts.archLocation,
+      });
+    });
+
+  program
+    .command("upgrade")
+    .description("Plan or apply substrate upgrades from the installed gapman package (Tier-3)")
+    .option("--apply", "Apply a Teacher-signed upgrade mission after hash verification")
+    .option("--dry-run", "Print upgrade plan without writing staging dir or mission YAML")
+    .option("--json", "Emit structured JSON")
+    .option("--msn <id>", "Mission id for upgrade plan (default: next MSN in 9000-9099 band)")
+    .option("--mission <path>", "Signed upgrade mission YAML (required for --apply unless pinned)")
+    .action((opts: {
+      apply?: boolean;
+      dryRun?: boolean;
+      json?: boolean;
+      msn?: string;
+      mission?: string;
+    }) => {
+      runUpgrade({
+        apply: opts.apply,
+        dryRun: opts.dryRun,
+        json: opts.json,
+        msn: opts.msn,
+        mission: opts.mission,
       });
     });
 

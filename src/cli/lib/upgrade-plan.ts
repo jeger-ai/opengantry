@@ -1,0 +1,300 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import YAML from "yaml";
+import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
+import { logInfo, logWarn } from "./cli-io.js";
+import { resolveTemplateRootFromModule, loadIntegrationCompat } from "./integration-compat.js";
+import { resolveAssetsFromProfile } from "./init-asset-catalog.js";
+import { planInitAssets, type PlannedWrite } from "./init-plan.js";
+import { upgradeEligibleAssets } from "./upgrade-eligible-assets.js";
+import { inferInitProfileFromRepo } from "./upgrade-profile.js";
+import {
+  alreadyCurrentMessage,
+  compareSemver,
+  legacyVersionWarning,
+  readInstalledSubstrateVersion,
+} from "./substrate-version.js";
+import { isValidMsnId } from "./msn.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "./mission-legislative-stub.js";
+
+export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
+export const UPGRADE_MSN_BAND_MIN = 9000;
+export const UPGRADE_MSN_BAND_MAX = 9099;
+
+export interface UpgradePayload {
+  from_version: string;
+  to_version: string;
+  staged_root: ".gitagent/.upgrade-tmp";
+  planned_writes: string[];
+  skipped_scaffold_only: string[];
+  staged_hashes: Record<string, string>;
+  created_at: string;
+}
+
+export interface UpgradePlanResult {
+  status: "planned" | "already_current" | "downgrade_blocked" | "no_changes";
+  from_version: string;
+  to_version: string;
+  installed_source?: string;
+  message?: string;
+  mission_path?: string;
+  mission_rel?: string;
+  suggested_human_action?: string;
+  planned_writes?: string[];
+  skipped_scaffold_only?: string[];
+  unchanged?: string[];
+  legacy_warning?: string | null;
+}
+
+function sha256Buffer(buf: Buffer): string {
+  return crypto.createHash("sha256").update(buf).digest("hex");
+}
+
+function semverSlug(version: string): string {
+  return version.replace(/[^a-zA-Z0-9._-]+/g, "-");
+}
+
+export function pickNextUpgradeMsn(repoRoot: string): string {
+  const missionsDir = path.join(repoRoot, ".gitagent/missions");
+  const used = new Set<string>();
+  if (fs.existsSync(missionsDir)) {
+    for (const name of fs.readdirSync(missionsDir)) {
+      const m = name.match(/^(MSN-\d{4})/);
+      if (m) used.add(m[1]!);
+    }
+  }
+  for (let n = UPGRADE_MSN_BAND_MIN; n <= UPGRADE_MSN_BAND_MAX; n++) {
+    const id = `MSN-${String(n).padStart(4, "0")}`;
+    if (!used.has(id)) return id;
+  }
+  throw new Error(`${CLI_NAME} upgrade: no MSN available in upgrade band ${UPGRADE_MSN_BAND_MIN}-${UPGRADE_MSN_BAND_MAX}`);
+}
+
+export function resolveUpgradeMsn(repoRoot: string, explicit?: string): string {
+  const msn = explicit?.trim();
+  if (msn) {
+    if (!isValidMsnId(msn)) {
+      throw new Error(`${CLI_NAME} upgrade: invalid --msn (expected MSN-NNNN)`);
+    }
+    return msn;
+  }
+  return pickNextUpgradeMsn(repoRoot);
+}
+
+function stagePathForTarget(repoRoot: string, targetRel: string): string {
+  return path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep), targetRel.split("/").join(path.sep));
+}
+
+function writeStagedFiles(repoRoot: string, writes: PlannedWrite[]): Record<string, string> {
+  const stagedHashes: Record<string, string> = {};
+  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  if (fs.existsSync(tmpRoot)) {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
+  for (const w of writes) {
+    const rel = path.relative(repoRoot, w.absoluteTarget).split(path.sep).join("/");
+    const stageAbs = stagePathForTarget(repoRoot, rel);
+    fs.mkdirSync(path.dirname(stageAbs), { recursive: true });
+    fs.writeFileSync(stageAbs, w.body, "utf8");
+    if (w.executable) fs.chmodSync(stageAbs, 0o755);
+    stagedHashes[rel] = sha256Buffer(Buffer.from(w.body, "utf8"));
+  }
+  return stagedHashes;
+}
+
+export function buildUpgradeMissionYaml(opts: {
+  msnId: string;
+  fromVersion: string;
+  toVersion: string;
+  payload: UpgradePayload;
+}): string {
+  const doc: Record<string, unknown> = {
+    msn_id: opts.msnId,
+    skill_key: "substrate",
+    gate_command: "gapman doctor",
+    gate_success_substring: null,
+    upgrade_payload: opts.payload,
+    trace_rows: [
+      {
+        dod_id: "1",
+        trace_quote: LEGISLATE_TRACE_PLACEHOLDER,
+        anchor: "1",
+        status: "PENDING",
+      },
+    ],
+  };
+  const header =
+    `# OpenGantry substrate upgrade mission (Teacher: review staged diff under ${REL_UPGRADE_TMP}/).\n` +
+    `# Upgrade ${opts.fromVersion} → ${opts.toVersion}. Commit this file only; staging dir is gitignored.\n`;
+  return `${header}${YAML.stringify(doc)}`;
+}
+
+export function parseUpgradePayloadFromMissionBody(body: string): UpgradePayload {
+  const data = YAML.parse(body) as Record<string, unknown>;
+  const payload = data.upgrade_payload;
+  if (typeof payload !== "object" || payload === null) {
+    throw new Error(`${CLI_NAME} upgrade: mission missing upgrade_payload`);
+  }
+  const p = payload as Record<string, unknown>;
+  const required = ["from_version", "to_version", "staged_hashes", "planned_writes"] as const;
+  for (const key of required) {
+    if (p[key] === undefined) {
+      throw new Error(`${CLI_NAME} upgrade: upgrade_payload missing ${key}`);
+    }
+  }
+  if (typeof p.from_version !== "string" || typeof p.to_version !== "string") {
+    throw new Error(`${CLI_NAME} upgrade: upgrade_payload version fields must be strings`);
+  }
+  if (typeof p.staged_hashes !== "object" || p.staged_hashes === null || Array.isArray(p.staged_hashes)) {
+    throw new Error(`${CLI_NAME} upgrade: upgrade_payload.staged_hashes must be an object`);
+  }
+  if (!Array.isArray(p.planned_writes)) {
+    throw new Error(`${CLI_NAME} upgrade: upgrade_payload.planned_writes must be an array`);
+  }
+  const stagedHashes: Record<string, string> = {};
+  for (const [k, v] of Object.entries(p.staged_hashes as Record<string, unknown>)) {
+    if (typeof v !== "string") {
+      throw new Error(`${CLI_NAME} upgrade: staged_hashes.${k} must be a string`);
+    }
+    stagedHashes[k] = v;
+  }
+  return {
+    from_version: p.from_version,
+    to_version: p.to_version,
+    staged_root: ".gitagent/.upgrade-tmp",
+    planned_writes: p.planned_writes.map(String),
+    skipped_scaffold_only: Array.isArray(p.skipped_scaffold_only)
+      ? p.skipped_scaffold_only.map(String)
+      : [],
+    staged_hashes: stagedHashes,
+    created_at: typeof p.created_at === "string" ? p.created_at : new Date().toISOString(),
+  };
+}
+
+export interface RunUpgradePlanOptions {
+  repoRoot: string;
+  templatesRoot?: string;
+  msn?: string;
+  dryRun?: boolean;
+  json?: boolean;
+}
+
+export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResult {
+  const repoRoot = path.resolve(options.repoRoot);
+  const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
+  const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
+  const installed = readInstalledSubstrateVersion(repoRoot);
+  const legacyWarning = legacyVersionWarning(installed.source);
+
+  if (compareSemver(bundled, installed.version) < 0) {
+    return {
+      status: "downgrade_blocked",
+      from_version: installed.version,
+      to_version: bundled,
+      message: `${CLI_NAME} upgrade: bundled version ${bundled} is older than installed ${installed.version} — downgrade blocked`,
+    };
+  }
+
+  if (compareSemver(installed.version, bundled) >= 0) {
+    return {
+      status: "already_current",
+      from_version: installed.version,
+      to_version: bundled,
+      installed_source: installed.source,
+      message: alreadyCurrentMessage(installed.version, bundled),
+      legacy_warning: legacyWarning,
+    };
+  }
+
+  const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);
+  const catalogAssets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot));
+  const assets = upgradeEligibleAssets(catalogAssets);
+  const plan = planInitAssets(assets, templatesRoot, repoRoot, true);
+  if (!plan.ok) {
+    throw new Error(`${CLI_NAME} upgrade: asset planning failed`);
+  }
+
+  if (plan.writes.length === 0) {
+    return {
+      status: "no_changes",
+      from_version: installed.version,
+      to_version: bundled,
+      message: `${CLI_NAME} upgrade: no managed_strict asset changes detected`,
+      unchanged: plan.unchanged,
+      skipped_scaffold_only: plan.skippedUserMutable,
+      legacy_warning: legacyWarning,
+    };
+  }
+
+  const msnId = resolveUpgradeMsn(repoRoot, options.msn);
+  if (!MSN_ID_PATTERN.test(msnId)) {
+    throw new Error(`${CLI_NAME} upgrade: invalid MSN ${msnId}`);
+  }
+
+  const plannedWrites = plan.writes.map((w) =>
+    path.relative(repoRoot, w.absoluteTarget).split(path.sep).join("/"),
+  );
+
+  const payload: UpgradePayload = {
+    from_version: installed.version,
+    to_version: bundled,
+    staged_root: ".gitagent/.upgrade-tmp",
+    planned_writes: plannedWrites,
+    skipped_scaffold_only: plan.skippedUserMutable,
+    staged_hashes: {},
+    created_at: new Date().toISOString(),
+  };
+
+  let missionRel = `.gitagent/missions/${msnId}.upgrade-v${semverSlug(bundled)}.yaml`;
+  const missionAbs = path.join(repoRoot, missionRel.split("/").join(path.sep));
+  const suggestedHumanAction = `git add ${missionRel}\ngit commit -m "[${msnId}] approve substrate upgrade to v${bundled}"`;
+
+  if (options.dryRun) {
+    if (!options.json) {
+      logInfo(`${CLI_NAME} upgrade: dry-run — would stage ${plan.writes.length} file(s) under ${REL_UPGRADE_TMP}/`);
+      for (const rel of plannedWrites) logInfo(`  - ${rel}`);
+      if (legacyWarning) logWarn(legacyWarning);
+      logInfo(`Would write mission: ${missionRel}`);
+      logInfo(`Suggested Teacher action:\n${suggestedHumanAction}`);
+    }
+    return {
+      status: "planned",
+      from_version: installed.version,
+      to_version: bundled,
+      mission_rel: missionRel,
+      suggested_human_action: suggestedHumanAction,
+      planned_writes: plannedWrites,
+      skipped_scaffold_only: plan.skippedUserMutable,
+      unchanged: plan.unchanged,
+      legacy_warning: legacyWarning,
+    };
+  }
+
+  payload.staged_hashes = writeStagedFiles(repoRoot, plan.writes);
+  const missionBody = buildUpgradeMissionYaml({ msnId, fromVersion: installed.version, toVersion: bundled, payload });
+  fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
+  fs.writeFileSync(missionAbs, missionBody, "utf8");
+
+  if (!options.json) {
+    logInfo(`${CLI_NAME} upgrade: staged ${plan.writes.length} file(s) under ${REL_UPGRADE_TMP}/`);
+    for (const rel of plannedWrites) logInfo(`  - ${rel}`);
+    if (legacyWarning) logWarn(legacyWarning);
+    logInfo(`Wrote upgrade mission: ${missionRel}`);
+    logInfo(`Review staged diff, then:\n${suggestedHumanAction}`);
+    logInfo(`After Teacher commit: gapman upgrade --apply --mission ${missionRel}`);
+  }
+
+  return {
+    status: "planned",
+    from_version: installed.version,
+    to_version: bundled,
+    mission_path: missionAbs,
+    mission_rel: missionRel,
+    suggested_human_action: suggestedHumanAction,
+    planned_writes: plannedWrites,
+    skipped_scaffold_only: plan.skippedUserMutable,
+    unchanged: plan.unchanged,
+    legacy_warning: legacyWarning,
+  };
+}

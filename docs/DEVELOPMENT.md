@@ -8,7 +8,7 @@ This repository **is** the GXT specimen. Contributors and agents MUST follow the
 npm ci
 npm run build
 git config core.hooksPath .githooks
-export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
+gapman teacher set "$(git config user.email)"
 ```
 
 Confirm readiness:
@@ -35,7 +35,7 @@ gapman doctor
 
 1. **Triage** — `gapman triage "<intent>"` (escalation → Teacher legislates).
 2. **Legislate** — `gapman legislate "<intent>" --msn MSN-NNNN --skill-key gapman` (or `substrate` for substrate-only).
-3. **Teacher commit** — subject **`[MSN-NNNN] …`**, author email in `GAPMAN_TEACHER_EMAILS`, mission file under `.gitagent/missions/` included in the commit.
+3. **Teacher commit** — subject **`[MSN-NNNN] …`**, author email in repo Teacher allowlist, mission file under `.gitagent/missions/` included in the commit.
 4. **Worker scope** — `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml` (or `eval "$(gapman runtime env --mission …)"`) before agent/shell work.
 5. **Trace** — append PASS quotes to repo-root `WORKER_LOG.md` (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
 6. **Verify** — `gapman verify --mission .gitagent/missions/<file>.yaml`.
@@ -47,18 +47,27 @@ OpenGantry dogfoods GXT in Cursor. Other agents: [`docs/INTEGRATIONS.md`](INTEGR
 ### One-time Cursor enablement
 
 1. **Hooks on** — Cursor **Settings → Hooks** (project hooks from `.cursor/hooks.json` must be enabled).
-2. **Repo setup** (same as above):
+2. **MCP on** — Cursor **Settings → MCP** (project server from `.cursor/mcp.json` → `gapman mcp serve`).
+3. **Repo setup** (same as above):
 
 ```bash
 npm ci && npm run build
 git config core.hooksPath .githooks
-export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
+gapman teacher set "$(git config user.email)"
 gapman doctor
 ```
 
 Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 
 ### Per-feature closed loop
+
+**Cursor MCP (preferred):**
+
+1. Agent: `gxt_draft_legislation` → present draft → human approves in chat → `gxt_execute_legislation`.
+2. Teacher: run returned `suggested_human_action` (`git commit …`).
+3. Agent: `gxt_check_signature` → `gxt_pin_mission` → worker edits → `gxt_verify`.
+
+**CLI fallback:**
 
 ```bash
 gapman triage "<intent>"
@@ -77,10 +86,29 @@ npm run validate
 git push   # pre-push: gapman verify --pre-push on branch-changed missions
 ```
 
+Validate MCP flow locally: `./scripts/validate-mcp-dogfood.sh`
+
+### Substrate upgrade loop (adopters + dogfood)
+
+Tier-3 lifecycle updates use the installed `gapman` package only (no remote fetch):
+
+```bash
+npm install gapman@latest          # when a newer release exists
+gapman upgrade                     # stage managed_strict assets + draft MSN-900x mission YAML
+# Review .gitagent/.upgrade-tmp/ diff; commit mission YAML only (tmp is gitignored)
+git add .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
+git commit -m "[MSN-9001] approve substrate upgrade to vX.Y.Z"
+gapman upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
+gapman doctor
+```
+
+MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply` (same gates as CLI).
+
 | Layer | Mechanism | OpenGantry repo |
 |-------|-----------|-----------------|
 | Context | `.cursor/rules/` + `AGENTS.md` + `sessionStart` hook | RULES + MANIFEST + pinned mission |
-| Shell guard | `beforeShellExecution` | Blocks casual writes to foreman / RULES |
+| Legislation | MCP `gxt_draft_legislation` / `gxt_execute_legislation` | Two-step chat approval before file write |
+| Shell guard | `beforeShellExecution` (fallback) | Blocks casual writes to foreman / RULES; asks on raw `gapman legislate` |
 | Terminal env | `gxt-runtime-env.sh` / `gxt-pin-mission.sh` | Sets `GXT_*` for integrated terminal |
 | Process trap | `gapman runtime exec` | Headless Cursor CLI / CI only |
 

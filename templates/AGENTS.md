@@ -9,8 +9,16 @@ Treat these as the **law + routing contract** for agent work. Before editing app
 
 ## Mission Architect (IDE chat)
 
+**Activation macro:**
+
+- If a user prompt starts with `/gantry`, treat that as an explicit Mission Architect activation request. Do not use `/plan` — Cursor reserves it for native Plan Mode.
+- On activation, follow **`.gitagent/teacher/MISSION-ARCHITECT.md`** and complete the legislate handoff flow.
+
+**Implicit interception:**
+
 When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **`.gitagent/teacher/MISSION-ARCHITECT.md`** and follow it.
 
 - **Do NOT** trigger for questions, explanations, or code discovery — answer normally.
 - **Fast-path** trivial single-file work; **full interview** for heavy/risky scope.
-- Handoff is **one** copy-paste `gapman legislate …` command — never raw YAML blocks.
+- **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
+- **CLI fallback:** one copy-paste `gapman legislate …` command — never raw YAML blocks.

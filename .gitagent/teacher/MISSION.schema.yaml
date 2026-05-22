@@ -27,6 +27,36 @@ properties:
     minLength: 1
   gate_success_substring:
     type: ["string", "null"]
+  upgrade_payload:
+    type: object
+    additionalProperties: false
+    required:
+      - from_version
+      - to_version
+      - staged_hashes
+      - planned_writes
+    properties:
+      from_version:
+        type: string
+      to_version:
+        type: string
+      staged_root:
+        type: string
+        const: ".gitagent/.upgrade-tmp"
+      planned_writes:
+        type: array
+        items:
+          type: string
+      skipped_scaffold_only:
+        type: array
+        items:
+          type: string
+      staged_hashes:
+        type: object
+        additionalProperties:
+          type: string
+      created_at:
+        type: string
   trace_rows:
     type: array
     default: []

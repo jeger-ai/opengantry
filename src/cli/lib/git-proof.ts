@@ -3,23 +3,18 @@ import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { gitRun } from "./git-repo.js";
 import { throwGitProofError } from "./git-proof-errors.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
+import {
+  ENV_TEACHER_EMAILS,
+  parseTeacherEmailsFromEnv,
+  resolveTeacherEmails,
+} from "./teacher-identity.js";
 
 /** Missions verified by `gapman verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
 
-const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS";
+export { ENV_TEACHER_EMAILS, parseTeacherEmailsFromEnv } from "./teacher-identity.js";
 
 const DEFAULT_MSN_SCAN_DEPTH = 200;
-
-/** Comma-separated author emails allowed to legislate missions (case-insensitive). */
-export function parseTeacherEmailsFromEnv(): string[] {
-  const raw = process.env[ENV_TEACHER_EMAILS];
-  if (!raw?.trim()) return [];
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter((s) => s.length > 0);
-}
 
 export function missionPathRepoRelative(root: string, missionAbsolutePath: string): string {
   const absMission = path.resolve(missionAbsolutePath);
@@ -154,11 +149,12 @@ export function assertTeacherMissionProof(
     );
   }
 
-  const teacherEmails = parseTeacherEmailsFromEnv();
+  const teacherIdentity = resolveTeacherEmails(root);
+  const teacherEmails = teacherIdentity.emails;
   if (teacherEmails.length === 0) {
     throwGitProofError(
       "TEACHER_IDENTITY_UNCONFIGURED",
-      "Set GAPMAN_TEACHER_EMAILS in your environment to define who can legislate.",
+      "No Teacher allowlist configured for this repository.",
       { root, missionPath, msnId },
     );
   }
@@ -181,8 +177,8 @@ export function assertTeacherMissionProof(
     const latest = rows[0]!;
     throwGitProofError(
       "NO_TEACHER_MSN_COMMIT",
-      `The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${ENV_TEACHER_EMAILS}). ` +
-        `Add that exact email (see \`git log -1 --format=%ae ${latest.hash}\`) to ${ENV_TEACHER_EMAILS}, comma-separated if several; matching is case-insensitive.`,
+      `The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${teacherIdentity.detail}). ` +
+        `Add that email to .gitagent/foreman/TEACHER.allowlist.local, git config gapman.teacherEmails, or run gapman teacher set.`,
       { root, missionPath, msnId, latestAuthorEmail: latest.authorEmail },
     );
   }
@@ -192,7 +188,7 @@ export function assertTeacherMissionProof(
     throwGitProofError(
       "MISSION_FILE_NOT_MODIFIED_BY_TEACHER",
       `The Teacher stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
-        `The stamp is the newest (scanning backward) commit authored by ${ENV_TEACHER_EMAILS} whose subject begins with [${msnId}]. ` +
+        `The stamp is the newest (scanning backward) commit authored by a Teacher allowlist email (${teacherIdentity.detail}) whose subject begins with [${msnId}]. ` +
         `Either add a newer Teacher commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose only qualifying commits touch this file.`,
       {
         root,

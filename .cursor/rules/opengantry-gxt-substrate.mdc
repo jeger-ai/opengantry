@@ -5,6 +5,16 @@ alwaysApply: true
 
 # OpenGantry substrate (mandatory read)
 
+## Activation Macro
+
+Whenever the user starts a prompt with `/gantry`:
+
+1. Immediately switch to Mission Architect behavior.
+2. Run the protocol in `.gitagent/teacher/MISSION-ARCHITECT.md`.
+3. Hand off via MCP tools (`gxt_draft_legislation` → chat approval → `gxt_execute_legislation`) or CLI `gapman legislate` fallback.
+
+Do not use `/plan` — Cursor reserves it for native Plan Mode.
+
 Before planning, editing code, or running substantive commands in this repository:
 
 1. Read **`.gitagent/teacher/RULES.md`** — governance (SOD, trace mapping, risk tiers, dynamic TMVC, Rule 4.4).
@@ -23,17 +33,20 @@ Follow **[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)** end-to-end:
 - `core.hooksPath=.githooks` (pre-push verify / check / changed-code gates)
 
 **Skill routing:** `gapman` for `src/cli/`; substrate paths need Teacher legislation.
+
 ## Mission Architect (IDE chat)
 
-When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **[`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md)**.
+**Implicit interception:** When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **[`.gitagent/teacher/MISSION-ARCHITECT.md`](../.gitagent/teacher/MISSION-ARCHITECT.md)**.
 
 - **Do NOT** trigger for questions, explanations, or code discovery.
-- Handoff: one copy-paste `gapman legislate …` command only (no raw YAML blocks).
+- **MCP handoff:** two-step draft/execute with semantic chat approval before any mission file write.
+- **CLI fallback:** one copy-paste `gapman legislate …` command only (no raw YAML blocks).
 
 ## Cursor wiring (this repo)
 
 - **Rules:** this file (`alwaysApply: true`) + root [`AGENTS.md`](../AGENTS.md).
-- **Hooks:** [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` loads pinned mission + `GXT_*` env; `beforeShellExecution` guards law/manifest shell writes.
+- **MCP:** [`.cursor/mcp.json`](../.cursor/mcp.json) — `gxt_*` tools via `gapman mcp serve`.
+- **Hooks:** [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` loads pinned mission + `GXT_*` env; `beforeShellExecution` guards law/manifest shell writes (fallback for non-MCP paths).
 - **Pin mission:** `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml` (gitignored pointer; required for sessionStart auto-scope).
 - **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission) before substantive shell work.
 - **Orchestrated runs:** `gapman runtime exec --mission <path> -- <command>` when invoking external agent CLIs.

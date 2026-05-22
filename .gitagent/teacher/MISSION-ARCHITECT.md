@@ -4,10 +4,10 @@ IDE chat protocol for drafting missions **before** worker execution. No CLI chat
 
 ## When to activate
 
-**Activate only when all are true:**
+**Activate when any of these are true:**
 
-1. The user **explicitly** asks to write, edit, refactor, add, fix, or implement code (or equivalent action intent).
-2. No pinned/legislated mission covers the work (`.gitagent/missions/.active-mission` absent or stale).
+1. User prompt **starts with** `/gantry` (explicit macro — planning-only prompts included). Do not use `/plan`; Cursor reserves it for native Plan Mode.
+2. User **explicitly** asks to write, edit, refactor, add, fix, or implement code (or equivalent action intent) **and** no pinned/legislated mission covers the work (`.gitagent/missions/.active-mission` absent or stale).
 
 **Do NOT activate for:**
 
@@ -35,7 +35,7 @@ Before proposing legislation, read (do not lecture the user):
 Use when the change is trivial, low-risk, and clearly confined (e.g. single existing file, cosmetic tweak, obvious skill from manifest).
 
 1. Infer `skill_key`, `gate_command`, and MSN (ask for MSN only if unknown).
-2. Present **one** copy-paste `gapman legislate` command.
+2. Present legislation handoff (MCP tools preferred in Cursor — see below).
 3. Ask for **single yes/no** confirmation — no 3-phase interview.
 
 ### Full 3-phase interview (heavy work)
@@ -50,9 +50,24 @@ Use for new features, multi-file scope, forbidden-zone proximity, path_risks/ris
 
 ## Handoff (legislate only)
 
-**Forbidden:** multi-line YAML mission blocks, “save this file manually” instructions.
+**Forbidden:** multi-line YAML mission blocks, “save this file manually” instructions, agent-authored Teacher git commits.
 
-**Required:** one bash command the user copies into their terminal:
+### Cursor MCP (preferred — zero copy/paste)
+
+When the OpenGantry MCP server is configured (`.cursor/mcp.json`):
+
+1. Call **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`.
+2. Present the returned `chat_message_to_user` to the human.
+3. Wait for clear approval intent in chat (`yes`, `approve`, `looks good`, `do it`) or rejection (`no`, `deny`, `stop`). If ambiguous, ask one short clarification.
+4. On approval only, call **`gxt_execute_legislation`** with the `draft_token`.
+5. Render the returned `suggested_human_action` in a fenced shell block for the Teacher commit.
+6. After the human commits, call **`gxt_check_signature`**. On `signature_valid`, proceed to **`gxt_pin_mission`** then worker phase.
+
+This two-step draft/execute gate prevents silent legislation even when Cursor runs tools in auto-run (“Yolo”) mode.
+
+### CLI fallback (terminal)
+
+One bash command the user copies into their terminal:
 
 ```bash
 gapman legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
@@ -68,12 +83,12 @@ gapman legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
 
 ## Teacher loop (human)
 
-1. Paste and run the `gapman legislate` command.
+1. Approve draft (MCP) or paste and run `gapman legislate` (CLI).
 2. Optionally review/edit the generated YAML.
 3. `git commit -m "[MSN-NNNN] legislate …"` including the mission file (Teacher email in `GAPMAN_TEACHER_EMAILS`).
-4. `scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml`
+4. `scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml` (or `gxt_pin_mission` MCP tool).
 5. Worker phase begins.
 
 ## Worker phase (after pin)
 
-Edit within TMVC → append PASS quotes to `WORKER_LOG.md` → `gapman verify --mission …` → pin stays until mission complete.
+Edit within TMVC → append PASS quotes to `WORKER_LOG.md` → `gapman verify --mission …` (or `gxt_verify` MCP tool) → pin stays until mission complete.

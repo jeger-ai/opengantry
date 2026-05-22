@@ -97,7 +97,7 @@ export function logInitNextSteps(profile?: InitProfile): void {
   if (profile?.gitHooks !== false) {
     logInfo("2) optional: git config core.hooksPath .githooks");
   }
-  logInfo("3) export GAPMAN_TEACHER_EMAILS=<your-git-email>");
+  logInfo("3) gapman teacher show  # or gapman teacher set <email> for git-proof allowlist");
   logInfo(
     '4) legislate only after manifest skill keys exist: gapman legislate "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
   );

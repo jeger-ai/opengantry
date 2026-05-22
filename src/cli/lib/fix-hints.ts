@@ -1,4 +1,5 @@
 import { logInfo } from "./cli-io.js";
+import { teacherIdentitySetupHint } from "./teacher-identity.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
 
@@ -60,15 +61,15 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
       const msn = ctx.msnId ?? "MSN-NNNN";
       return [
         `git add ${mission} && git commit -m "[${msn}] legislate mission"`,
-        `export GAPMAN_TEACHER_EMAILS="$(git config user.email)"`,
+        `gapman teacher set "$(git config user.email)"`,
         verifyCmd,
       ].join("; ");
     }
     case "NO_TEACHER_MSN_COMMIT": {
       const email = ctx.latestAuthorEmail ?? "$(git log -1 --format=%ae)";
       return [
-        `export GAPMAN_TEACHER_EMAILS="${email}"`,
-        "comma-separate multiple Teacher emails if needed",
+        `gapman teacher set "${email}"`,
+        "add each Teacher email allowed to legislate in this repo",
         verifyCmd,
       ].join("; ");
     }
@@ -90,10 +91,7 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
 }
 
 export function hintTeacherEmails(repoRoot: string): string {
-  return [
-    'export GAPMAN_TEACHER_EMAILS="$(git log -1 --format=%ae)"',
-    `gapman verify --mission <mission>  # from ${repoRoot}`,
-  ].join("\n       ");
+  return teacherIdentitySetupHint(repoRoot);
 }
 
 export function hintGate(command: string, missionPath: string): string {

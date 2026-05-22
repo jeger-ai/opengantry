@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "./break-glass.js";
 import { REL_AGENT_ERROR_FILE, REL_MANIFEST } from "./constants.js";
 import { agentErrorAbsolutePath } from "./agent-error.js";
-import { parseTeacherEmailsFromEnv } from "./git-proof.js";
+import { resolveTeacherEmails } from "./teacher-identity.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
 import type { Manifest } from "./types.js";
 
@@ -60,12 +60,22 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     nextStep = pickNextStep(nextStep, "gapman check");
   }
 
-  const teachers = parseTeacherEmailsFromEnv();
-  if (teachers.length > 0) {
-    lines.push({ level: "ok", message: `GAPMAN_TEACHER_EMAILS: ${teachers.join(", ")}` });
+  const teacherIdentity = resolveTeacherEmails(root);
+  if (teacherIdentity.emails.length > 0) {
+    lines.push({
+      level: "ok",
+      message: `Teacher allowlist (${teacherIdentity.source}): ${teacherIdentity.emails.join(", ")}`,
+    });
+    if (teacherIdentity.source === "env") {
+      lines.push({
+        level: "warn",
+        message:
+          "Teacher identity from GAPMAN_TEACHER_EMAILS env — prefer repo-local .gitagent/foreman/TEACHER.allowlist.local when working across projects",
+      });
+    }
   } else {
-    lines.push({ level: "warn", message: "GAPMAN_TEACHER_EMAILS unset — verify git-proof will fail" });
-    nextStep = pickNextStep(nextStep, 'export GAPMAN_TEACHER_EMAILS="$(git log -1 --format=%ae)"');
+    lines.push({ level: "warn", message: "Teacher allowlist unset — verify git-proof will fail" });
+    nextStep = pickNextStep(nextStep, 'gapman teacher set "$(git config user.email)"');
   }
 
   const bypassState = readBypassAnchorState(root);
@@ -101,7 +111,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const exampleMission = ".gitagent/missions/example.verify.yaml";
   if (fs.existsSync(path.join(root, exampleMission))) {
     lines.push({ level: "ok", message: `example mission: ${exampleMission}` });
-    if (teachers.length > 0) {
+    if (teacherIdentity.emails.length > 0) {
       nextStep = pickNextStep(nextStep, `gapman verify --mission ${exampleMission}`);
     }
   } else {
