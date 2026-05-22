@@ -3,11 +3,7 @@ import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { gitRun } from "./git-repo.js";
 import { throwGitProofError } from "./git-proof-errors.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
-import {
-  ENV_TEACHER_EMAILS,
-  parseTeacherEmailsFromEnv,
-  resolveTeacherEmails,
-} from "./teacher-identity.js";
+import { resolveTeacherEmails } from "./teacher-identity.js";
 
 /** Missions verified by `gapman verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;

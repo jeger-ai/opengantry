@@ -136,7 +136,7 @@ export function ensureTeacherAllowlistOnInit(repoRoot: string): boolean {
   return true;
 }
 
-export function teacherIdentitySetupHint(repoRoot: string): string {
+export function teacherIdentitySetupHint(_repoRoot: string): string {
   return [
     `echo "$(git config user.email)" >> ${REL_TEACHER_ALLOWLIST_LOCAL}`,
     `or: git config gapman.teacherEmails "$(git config user.email)"`,

@@ -46,20 +46,11 @@ export function doctorLinesHasFail(lines: DoctorLine[]): boolean {
   return lines.some((line) => line.level === "fail");
 }
 
-export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckResult {
-  const lines: DoctorLine[] = [{ level: "ok", message: `repo: ${root}` }];
-  let hasFail = false;
-  let nextStep: string | null = null;
-
-  const skillSync = checkSkillManifestSync(root, manifest);
-  if (skillSync.ok) {
-    lines.push({ level: "ok", message: "manifest + skills/ Rule 4.4 sync" });
-  } else {
-    for (const err of skillSync.errors) lines.push({ level: "fail", message: err });
-    hasFail = true;
-    nextStep = pickNextStep(nextStep, "gapman check");
-  }
-
+function appendTeacherAllowlistChecks(
+  root: string,
+  lines: DoctorLine[],
+  nextStep: string | null,
+): string | null {
   const teacherIdentity = resolveTeacherEmails(root);
   if (teacherIdentity.emails.length > 0) {
     lines.push({
@@ -77,7 +68,10 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     lines.push({ level: "warn", message: "Teacher allowlist unset — verify git-proof will fail" });
     nextStep = pickNextStep(nextStep, 'gapman teacher set "$(git config user.email)"');
   }
+  return nextStep;
+}
 
+function appendBypassChecks(root: string, lines: DoctorLine[]): void {
   const bypassState = readBypassAnchorState(root);
   if (bypassState === "configured") {
     lines.push({ level: "ok", message: "BYPASS.sha256 anchor present" });
@@ -98,7 +92,13 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   } else {
     lines.push({ level: "warn", message: `${REL_BYPASS_SHA256} missing` });
   }
+}
 
+function appendHooksAndExampleMissionChecks(
+  root: string,
+  lines: DoctorLine[],
+  nextStep: string | null,
+): string | null {
   const hooks = readHooksPath(root);
   if (hooks === ".githooks") {
     lines.push({ level: "ok", message: "core.hooksPath=.githooks" });
@@ -109,6 +109,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   }
 
   const exampleMission = ".gitagent/missions/example.verify.yaml";
+  const teacherIdentity = resolveTeacherEmails(root);
   if (fs.existsSync(path.join(root, exampleMission))) {
     lines.push({ level: "ok", message: `example mission: ${exampleMission}` });
     if (teacherIdentity.emails.length > 0) {
@@ -118,18 +119,40 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     lines.push({ level: "warn", message: "no example.verify.yaml — legislate a mission first" });
     nextStep = pickNextStep(nextStep, 'gapman legislate "<intent>" --msn MSN-0001 --skill-key <key>');
   }
+  return nextStep;
+}
 
+function appendAgentErrorCheck(root: string, lines: DoctorLine[]): void {
   const errPath = agentErrorAbsolutePath(root);
-  if (fs.existsSync(errPath)) {
-    try {
-      const payload = JSON.parse(fs.readFileSync(errPath, "utf8")) as { summary?: string };
-      const summary = typeof payload.summary === "string" ? payload.summary : "(no summary)";
-      lines.push({ level: "warn", message: `last agent error: ${summary}` });
-      lines.push({ level: "warn", message: `  file: ${REL_AGENT_ERROR_FILE}` });
-    } catch {
-      lines.push({ level: "warn", message: `stale ${REL_AGENT_ERROR_FILE} (unreadable)` });
-    }
+  if (!fs.existsSync(errPath)) return;
+  try {
+    const payload = JSON.parse(fs.readFileSync(errPath, "utf8")) as { summary?: string };
+    const summary = typeof payload.summary === "string" ? payload.summary : "(no summary)";
+    lines.push({ level: "warn", message: `last agent error: ${summary}` });
+    lines.push({ level: "warn", message: `  file: ${REL_AGENT_ERROR_FILE}` });
+  } catch {
+    lines.push({ level: "warn", message: `stale ${REL_AGENT_ERROR_FILE} (unreadable)` });
   }
+}
+
+export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckResult {
+  const lines: DoctorLine[] = [{ level: "ok", message: `repo: ${root}` }];
+  let hasFail = false;
+  let nextStep: string | null = null;
+
+  const skillSync = checkSkillManifestSync(root, manifest);
+  if (skillSync.ok) {
+    lines.push({ level: "ok", message: "manifest + skills/ Rule 4.4 sync" });
+  } else {
+    for (const err of skillSync.errors) lines.push({ level: "fail", message: err });
+    hasFail = true;
+    nextStep = pickNextStep(nextStep, "gapman check");
+  }
+
+  nextStep = appendTeacherAllowlistChecks(root, lines, nextStep);
+  appendBypassChecks(root, lines);
+  nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
+  appendAgentErrorCheck(root, lines);
 
   if (!fs.existsSync(path.join(root, REL_MANIFEST))) {
     lines.push({ level: "fail", message: `${REL_MANIFEST} missing` });

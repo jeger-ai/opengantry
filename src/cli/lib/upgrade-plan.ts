@@ -180,13 +180,11 @@ export interface RunUpgradePlanOptions {
   json?: boolean;
 }
 
-export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResult {
-  const repoRoot = path.resolve(options.repoRoot);
-  const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
-  const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
-  const installed = readInstalledSubstrateVersion(repoRoot);
-  const legacyWarning = legacyVersionWarning(installed.source);
-
+function resolveUpgradeVersionGate(
+  installed: ReturnType<typeof readInstalledSubstrateVersion>,
+  bundled: string,
+  legacyWarning: string | null,
+): UpgradePlanResult | null {
   if (compareSemver(bundled, installed.version) < 0) {
     return {
       status: "downgrade_blocked",
@@ -206,6 +204,39 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
       legacy_warning: legacyWarning,
     };
   }
+
+  return null;
+}
+
+function logUpgradePlanSummary(
+  options: RunUpgradePlanOptions,
+  opts: {
+    plannedWrites: string[];
+    legacyWarning: string | null;
+    missionRel: string;
+    suggestedHumanAction: string;
+  },
+): void {
+  if (options.json) return;
+  logInfo(`${CLI_NAME} upgrade: ${options.dryRun ? "dry-run — would stage" : "staged"} ${opts.plannedWrites.length} file(s) under ${REL_UPGRADE_TMP}/`);
+  for (const rel of opts.plannedWrites) logInfo(`  - ${rel}`);
+  if (opts.legacyWarning) logWarn(opts.legacyWarning);
+  logInfo(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
+  logInfo(`${options.dryRun ? "Suggested Teacher action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
+  if (!options.dryRun) {
+    logInfo(`After Teacher commit: gapman upgrade --apply --mission ${opts.missionRel}`);
+  }
+}
+
+export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResult {
+  const repoRoot = path.resolve(options.repoRoot);
+  const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
+  const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
+  const installed = readInstalledSubstrateVersion(repoRoot);
+  const legacyWarning = legacyVersionWarning(installed.source);
+
+  const versionGate = resolveUpgradeVersionGate(installed, bundled, legacyWarning);
+  if (versionGate) return versionGate;
 
   const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);
   const catalogAssets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot));
@@ -246,50 +277,14 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
     created_at: new Date().toISOString(),
   };
 
-  let missionRel = `.gitagent/missions/${msnId}.upgrade-v${semverSlug(bundled)}.yaml`;
+  const missionRel = `.gitagent/missions/${msnId}.upgrade-v${semverSlug(bundled)}.yaml`;
   const missionAbs = path.join(repoRoot, missionRel.split("/").join(path.sep));
   const suggestedHumanAction = `git add ${missionRel}\ngit commit -m "[${msnId}] approve substrate upgrade to v${bundled}"`;
 
-  if (options.dryRun) {
-    if (!options.json) {
-      logInfo(`${CLI_NAME} upgrade: dry-run — would stage ${plan.writes.length} file(s) under ${REL_UPGRADE_TMP}/`);
-      for (const rel of plannedWrites) logInfo(`  - ${rel}`);
-      if (legacyWarning) logWarn(legacyWarning);
-      logInfo(`Would write mission: ${missionRel}`);
-      logInfo(`Suggested Teacher action:\n${suggestedHumanAction}`);
-    }
-    return {
-      status: "planned",
-      from_version: installed.version,
-      to_version: bundled,
-      mission_rel: missionRel,
-      suggested_human_action: suggestedHumanAction,
-      planned_writes: plannedWrites,
-      skipped_scaffold_only: plan.skippedUserMutable,
-      unchanged: plan.unchanged,
-      legacy_warning: legacyWarning,
-    };
-  }
-
-  payload.staged_hashes = writeStagedFiles(repoRoot, plan.writes);
-  const missionBody = buildUpgradeMissionYaml({ msnId, fromVersion: installed.version, toVersion: bundled, payload });
-  fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
-  fs.writeFileSync(missionAbs, missionBody, "utf8");
-
-  if (!options.json) {
-    logInfo(`${CLI_NAME} upgrade: staged ${plan.writes.length} file(s) under ${REL_UPGRADE_TMP}/`);
-    for (const rel of plannedWrites) logInfo(`  - ${rel}`);
-    if (legacyWarning) logWarn(legacyWarning);
-    logInfo(`Wrote upgrade mission: ${missionRel}`);
-    logInfo(`Review staged diff, then:\n${suggestedHumanAction}`);
-    logInfo(`After Teacher commit: gapman upgrade --apply --mission ${missionRel}`);
-  }
-
-  return {
+  const shared: UpgradePlanResult = {
     status: "planned",
     from_version: installed.version,
     to_version: bundled,
-    mission_path: missionAbs,
     mission_rel: missionRel,
     suggested_human_action: suggestedHumanAction,
     planned_writes: plannedWrites,
@@ -297,4 +292,23 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
     unchanged: plan.unchanged,
     legacy_warning: legacyWarning,
   };
+
+  if (options.dryRun) {
+    logUpgradePlanSummary(options, { plannedWrites, legacyWarning, missionRel, suggestedHumanAction });
+    return shared;
+  }
+
+  payload.staged_hashes = writeStagedFiles(repoRoot, plan.writes);
+  const missionBody = buildUpgradeMissionYaml({ msnId, fromVersion: installed.version, toVersion: bundled, payload });
+  fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
+  fs.writeFileSync(missionAbs, missionBody, "utf8");
+
+  logUpgradePlanSummary(options, {
+    plannedWrites,
+    legacyWarning,
+    missionRel,
+    suggestedHumanAction,
+  });
+
+  return { ...shared, mission_path: missionAbs };
 }
