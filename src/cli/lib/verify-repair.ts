@@ -17,6 +17,19 @@ function failureFromResult(result: VerifyPhaseResult): VerifyPhaseFailure | null
   return result.ok ? null : result;
 }
 
+function buildVerifyRemediation(
+  root: string,
+  mission: ParsedMission,
+  failure: VerifyPhaseFailure,
+  missionArg: string,
+  options: VerifyOptions,
+) {
+  return hintsForVerifyPhase(failure.phase, {
+    ...verifyFailureToHintContext(failure, missionArg, options, root),
+    msnId: mission.msnId ?? undefined,
+  });
+}
+
 function printNonInteractiveFix(
   root: string,
   mission: ParsedMission,
@@ -24,10 +37,7 @@ function printNonInteractiveFix(
   missionArg: string,
   options: VerifyOptions,
 ): void {
-  const remediation = hintsForVerifyPhase(failure.phase, {
-    ...verifyFailureToHintContext(failure, missionArg, options, root),
-    msnId: mission.msnId ?? undefined,
-  });
+  const remediation = buildVerifyRemediation(root, mission, failure, missionArg, options);
   logError(`[${remediation.error_code}] ${failure.message}`);
   for (const hint of remediation.fix_hints) logFixHint(hint);
   emitAudienceNextSteps(remediation.next_actions, options);
@@ -41,10 +51,7 @@ async function runInteractiveFixMenu(
   options: VerifyOptions,
 ): Promise<void> {
   const p = await import("@clack/prompts");
-  const remediation = hintsForVerifyPhase(failure.phase, {
-    ...verifyFailureToHintContext(failure, missionArg, options, root),
-    msnId: mission.msnId ?? undefined,
-  });
+  const remediation = buildVerifyRemediation(root, mission, failure, missionArg, options);
 
   logError(`[${remediation.error_code}] verify failed at phase: ${failure.phase}`);
 
@@ -61,14 +68,16 @@ async function runInteractiveFixMenu(
   });
 
   if (p.isCancel(selected) || selected === "quit") {
-    setExitCode(1);
+    emitAudienceNextSteps(remediation.next_actions, options);
+    setExitCode(failure.exitCode);
     return;
   }
 
   const idx = Number.parseInt(String(selected), 10);
   const hint = remediation.fix_hints[idx];
   if (hint) logFixHint(hint);
-  setExitCode(1);
+  emitAudienceNextSteps(remediation.next_actions, options);
+  setExitCode(failure.exitCode);
 }
 
 export async function runVerifyWithFix(

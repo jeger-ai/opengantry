@@ -30,19 +30,27 @@ export function handleStartOrchestration(input: StartOrchestrationInput): Record
   if (!result.ok) {
     return {
       status: "failed",
+      triage: result.triage,
       triage_action: result.triage_action,
       skill_key: result.skill_key,
+      msn_id: result.msn_id,
+      mission_file_path: result.mission_file_path,
       next_steps: result.next_steps,
+      next_actions: result.next_steps,
+      exit_code: result.exit_code,
     };
   }
 
   const payload: Record<string, unknown> = {
     status: "ok",
+    triage: result.triage,
+    triage_action: result.triage_action,
     msn_id: result.msn_id,
     mission_file_path: result.mission_file_path,
     skill_key: result.skill_key,
     next_steps: result.next_steps,
     next_actions: result.next_steps,
+    exit_code: result.exit_code,
   };
 
   if (input.pin_if_needed === true && result.mission_file_path) {

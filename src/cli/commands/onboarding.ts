@@ -1,4 +1,10 @@
 import { CLI_NAME } from "../lib/constants.js";
+import {
+  ONBOARDING_ADOPTION_DOC,
+  onboardingRuntimeEnvHint,
+  onboardingStatusHint,
+  onboardingVerifyHint,
+} from "../lib/onboarding-flow.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
@@ -44,13 +50,14 @@ export async function runOnboarding(): Promise<void> {
     return;
   }
 
+  let missionPath = EXAMPLE_MISSION;
   const useExample = fs.existsSync(path.join(root, EXAMPLE_MISSION));
   if (useExample) {
     p.log.step("Step 3 — Example mission available");
     logInfo(`  Use existing ${EXAMPLE_MISSION} after Teacher stamps it.`);
-    logInfo(`  gapman verify --mission ${EXAMPLE_MISSION}`);
+    logInfo(`  ${onboardingVerifyHint(EXAMPLE_MISSION)}`);
   } else {
-    p.log.step("Step 3 — Scaffold mission");
+    p.log.step("Step 3 — Scaffold mission (gapman start)");
     const result = runStartOrchestration({
       intent: intent.trim(),
       writeMission: true,
@@ -61,25 +68,33 @@ export async function runOnboarding(): Promise<void> {
       p.outro("Onboarding incomplete");
       return;
     }
+    missionPath = result.mission_file_path ?? missionPath;
     for (const step of result.next_steps) logInfo(`  ${step}`);
   }
 
   p.log.step("Step 4 — Worker runtime");
-  logInfo('  eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"');
+  logInfo(`  ${onboardingRuntimeEnvHint(missionPath)}`);
 
   p.log.step("Step 5 — Verify with guided repair");
-  logInfo("  gapman verify --mission <path> --fix");
+  logInfo(`  ${onboardingVerifyHint(missionPath)}`);
+
+  p.log.step("Step 6 — Unified status dashboard");
+  logInfo(`  ${onboardingStatusHint()}`);
 
   if (useExample) {
     const runNow = await p.confirm({
-      message: "Run verify on example mission now?",
+      message: "Run verify on example mission now (non-interactive repair hints)?",
       initialValue: true,
     });
     if (!p.isCancel(runNow) && runNow) {
       process.exitCode = undefined;
-      await runVerify({ mission: EXAMPLE_MISSION, fix: true, fixNonInteractive: true });
+      await runVerify({
+        mission: EXAMPLE_MISSION,
+        fix: true,
+        fixNonInteractive: true,
+      });
     }
   }
 
-  p.outro("Onboarding complete — see docs/ADOPTION.md for the full loop");
+  p.outro(`Onboarding complete — see ${ONBOARDING_ADOPTION_DOC} for the full loop`);
 }

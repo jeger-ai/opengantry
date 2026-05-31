@@ -466,3 +466,48 @@ test("runVerify: --fix --non-interactive git-proof hint uses mission MSN", async
     }
   });
 });
+
+test("runVerify: --fix --non-interactive --audience worker filters next actions", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-audience-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "missions", "pending.yaml"),
+    `msn_id: MSN-0014
+skill_key: ui
+gate_command: echo OK
+gate_success_substring: OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: ${LEGISLATE_TRACE_PLACEHOLDER}
+    anchor: "1"
+    status: PENDING
+`,
+    "utf8",
+  );
+  gitInitCommit(dest, "[MSN-0014] legislate mission", TEACHER_EMAIL);
+  const prevCwd = process.cwd();
+  await withTeacherEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      process.exitCode = undefined;
+      const { output } = await captureConsoleAsync(async () => {
+        await runVerify({
+          mission: ".gitagent/missions/pending.yaml",
+          fix: true,
+          fixNonInteractive: true,
+          audience: "worker",
+        });
+      });
+      const combined = output.stdout + output.stderr;
+      assert.equal(process.exitCode, 1);
+      assert.match(combined, /Worker next steps:/);
+      assert.match(combined, /runtime env --mission/);
+      assert.doesNotMatch(combined, /Teacher: git commit/);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
+});

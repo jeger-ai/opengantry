@@ -235,7 +235,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   };
 }
 
-function formatStartJson(result: StartResult): string {
+export function formatStartJson(result: StartResult): string {
   return JSON.stringify(
     {
       status: result.ok ? "ok" : "failed",
@@ -245,6 +245,7 @@ function formatStartJson(result: StartResult): string {
       msn_id: result.msn_id,
       mission_file_path: result.mission_file_path,
       next_steps: result.next_steps,
+      exit_code: result.exit_code,
     },
     null,
     2,

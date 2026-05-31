@@ -15,9 +15,44 @@ export interface StatusReport {
   doctor_lines: DoctorLine[];
   pinned_mission: string | null;
   verify_readiness: "ready" | "needs_teacher" | "needs_mission" | "blocked";
+  /** Human-readable blockers preventing verify readiness. */
+  blockers: string[];
+  /** Rollup label for dashboards and MCP consumers. */
+  readiness_summary: string;
   last_error_file: string | null;
   next_step: string | null;
   exit_code: number;
+}
+
+function collectBlockers(
+  skillSync: ReturnType<typeof checkSkillManifestSync>,
+  doctor: ReturnType<typeof runDoctorChecks>,
+  verifyReadiness: StatusReport["verify_readiness"],
+): string[] {
+  const blockers: string[] = [];
+  for (const e of skillSync.errors) blockers.push(e);
+  for (const line of doctor.lines) {
+    if (line.level === "fail") blockers.push(line.message);
+  }
+  if (verifyReadiness === "needs_teacher") {
+    blockers.push("Teacher allowlist unset — gapman verify git-proof will fail");
+  }
+  if (verifyReadiness === "needs_mission") {
+    blockers.push("No pinned mission — legislate or pin before worker execution");
+  }
+  return blockers;
+}
+
+function readinessSummary(
+  verifyReadiness: StatusReport["verify_readiness"],
+  blockers: string[],
+): string {
+  if (blockers.length > 0) {
+    return verifyReadiness === "blocked"
+      ? `blocked (${blockers.length} issue${blockers.length === 1 ? "" : "s"})`
+      : `${verifyReadiness} (${blockers.length} issue${blockers.length === 1 ? "" : "s"})`;
+  }
+  return verifyReadiness;
 }
 
 function assessVerifyReadiness(
@@ -65,6 +100,8 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
   }
 
   const hasFail = !skillSync.ok || doctor.hasFail;
+  const blockers = collectBlockers(skillSync, doctor, verifyReadiness);
+  const summary = readinessSummary(verifyReadiness, blockers);
 
   return {
     repo: root,
@@ -75,6 +112,8 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
     doctor_lines: doctor.lines,
     pinned_mission: pinnedMission,
     verify_readiness: verifyReadiness,
+    blockers,
+    readiness_summary: summary,
     last_error_file: lastErrorFile,
     next_step: nextStep,
     exit_code: hasFail ? 1 : 0,

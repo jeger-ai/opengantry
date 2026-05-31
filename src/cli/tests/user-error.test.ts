@@ -11,6 +11,12 @@ test("GapmanUserError: isGapmanUserError type guard", () => {
   const err = new GapmanUserError("TEST", "test message", "do this");
   assert.equal(isGapmanUserError(err), true);
   assert.equal(isGapmanUserError(new Error("x")), false);
+  assert.equal(err.gxtCode, "GXT_VERIFY_FAILED");
+});
+
+test("GapmanUserError: git-proof codes expose stable GXT code", () => {
+  const err = new GapmanUserError("NO_MSN_COMMITS", "missing stamp", "commit first");
+  assert.equal(err.gxtCode, "GXT_MISSION_UNSTAMPED");
 });
 
 test("reportUserFacingError: GapmanUserError prints Fix hint without stack", () => {

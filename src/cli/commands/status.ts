@@ -29,6 +29,11 @@ export function runStatus(options: StatusOptions = {}): void {
   logInfo(`skills/*.md: ${report.skills_md.join(", ") || "(none)"}`);
   logInfo(`pinned mission: ${report.pinned_mission ?? "(none)"}`);
   logInfo(`verify readiness: ${report.verify_readiness}`);
+  logInfo(`readiness summary: ${report.readiness_summary}`);
+  if (report.blockers.length > 0) {
+    logWarn(`blockers (${report.blockers.length}):`);
+    for (const blocker of report.blockers) logWarn(`  - ${blocker}`);
+  }
   if (report.last_error_file) {
     logWarn(`last runtime error file: ${report.last_error_file}`);
   }

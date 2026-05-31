@@ -31,7 +31,19 @@ const GAPMAN_USER_ERROR_TO_GXT: Record<string, GxtErrorCode> = {
   MISSION_NOT_FOUND: GXT_ERROR.VERIFY_FAILED,
   UPGRADE_MISSION_REQUIRED: GXT_ERROR.VERIFY_FAILED,
   UPGRADE_INVALID_MISSION: GXT_ERROR.VERIFY_FAILED,
+  FORBIDDEN_ZONE_VIOLATION: GXT_ERROR.FORBIDDEN_ZONE,
+  RUNTIME_EXEC_FAILED: GXT_ERROR.RUNTIME_EXEC_FAILED,
+  RUNTIME_ENV_FAILED: GXT_ERROR.VERIFY_FAILED,
 };
+
+/** Map runtime exec / MCP error codes to stable GXT codes. */
+export function mapRuntimeErrorCodeToGxt(code: string): GxtErrorCode {
+  if (code === "FORBIDDEN_ZONE_VIOLATION" || code === "forbidden_zone_violation") {
+    return GXT_ERROR.FORBIDDEN_ZONE;
+  }
+  if (code === "RUNTIME_EXEC_FAILED") return GXT_ERROR.RUNTIME_EXEC_FAILED;
+  return GAPMAN_USER_ERROR_TO_GXT[code] ?? GXT_ERROR.VERIFY_FAILED;
+}
 
 export function mapGitProofCodeToGxt(code: string): GxtErrorCode {
   return GIT_PROOF_TO_GXT[code] ?? GXT_ERROR.MISSION_UNSTAMPED;
