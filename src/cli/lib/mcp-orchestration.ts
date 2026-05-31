@@ -24,7 +24,7 @@ export function handleStartOrchestration(input: StartOrchestrationInput): Record
     gateCommand: input.gate_command,
     gateSuccessSubstring: input.gate_success_substring,
     writeMission: input.write_mission !== false,
-    json: false,
+    silent: true,
   });
 
   if (!result.ok) {

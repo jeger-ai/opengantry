@@ -6,7 +6,8 @@ import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { isValidMsnId } from "./msn.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
-import { formatTriageHuman, formatTriageJson, triageIntent } from "./triage-logic.js";
+import { formatTriageHuman, triageIntent } from "./triage-logic.js";
+import type { TriageResult } from "./types.js";
 import { audienceSectionTitle, filterNextStepsForAudience, type OutputAudience } from "./audience-output.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -19,17 +20,24 @@ export interface StartOptions {
   writeMission?: boolean;
   allowDuplicate?: boolean;
   json?: boolean;
+  /** When true, suppress stdout info/warn (MCP and --json callers). */
+  silent?: boolean;
   audience?: OutputAudience;
 }
 
 export interface StartResult {
   ok: boolean;
+  triage: TriageResult;
   triage_action: string;
   skill_key: string;
   msn_id: string | null;
   mission_file_path: string | null;
   next_steps: string[];
   exit_code: number;
+}
+
+function suppressStartOutput(options: StartOptions): boolean {
+  return options.silent === true || options.json === true;
 }
 
 function suggestNextMsn(root: string): string {
@@ -77,14 +85,11 @@ function buildNextSteps(missionRel: string | null, msnId: string | null): string
 
 function logStartTriage(
   options: StartOptions,
-  triage: ReturnType<typeof triageIntent>,
+  triage: TriageResult,
   escalated: boolean,
   skillOverride: string | undefined,
 ): void {
-  if (options.json) {
-    logInfo(formatTriageJson(triage));
-    return;
-  }
+  if (suppressStartOutput(options)) return;
   if (!escalated) {
     logInfo(formatTriageHuman(triage));
     return;
@@ -98,15 +103,18 @@ function logStartTriage(
 
 function startEscalationFailure(
   options: StartOptions,
-  triage: ReturnType<typeof triageIntent>,
+  triage: TriageResult,
   msnId: string,
   manifestKeys: string[],
 ): StartResult {
-  logError(
-    `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
-  );
+  if (!suppressStartOutput(options)) {
+    logError(
+      `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
+    );
+  }
   return {
     ok: false,
+    triage,
     triage_action: triage.action,
     skill_key: triage.skill_key,
     msn_id: null,
@@ -123,10 +131,13 @@ function scaffoldStartMission(
   options: StartOptions,
   msnId: string,
   resolvedSkillKey: string,
-  triage: ReturnType<typeof triageIntent>,
+  triage: TriageResult,
 ): StartResult | { missionRel: string } {
+  const quiet = suppressStartOutput(options);
   if (options.writeMission === false) {
-    logWarn(`${CLI_NAME} start: --no-write — run legislate manually with --msn ${msnId}`);
+    if (!quiet) {
+      logWarn(`${CLI_NAME} start: --no-write — run legislate manually with --msn ${msnId}`);
+    }
     return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
   }
 
@@ -138,17 +149,21 @@ function scaffoldStartMission(
     gateCommand: options.gateCommand,
     gateSuccessSubstring: options.gateSuccessSubstring,
     allowDuplicate: options.allowDuplicate,
+    silent: quiet,
   });
   process.exitCode = prevExit;
 
   if (result.ok) {
-    logInfo(`${CLI_NAME} start: mission scaffold at ${result.missionRel}`);
+    if (!quiet) {
+      logInfo(`${CLI_NAME} start: mission scaffold at ${result.missionRel}`);
+    }
     return { missionRel: result.missionRel };
   }
 
   const freshMsn = suggestNextMsn(root);
   return {
     ok: false,
+    triage,
     triage_action: triage.action,
     skill_key: resolvedSkillKey,
     msn_id: msnId,
@@ -174,15 +189,18 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   if (escalated && !skillOverride) {
     return startEscalationFailure(options, triage, msnId, manifestKeys);
   }
-  if (escalated && skillOverride) {
+  if (escalated && skillOverride && !suppressStartOutput(options)) {
     logWarn(`${CLI_NAME} start: triage escalated; using --skill-key ${skillOverride}`);
   }
 
   const resolvedSkillKey = skillOverride || triage.skill_key;
   if (!isValidMsnId(msnId)) {
-    logError(`${CLI_NAME} start: --msn must match MSN-0007`);
+    if (!suppressStartOutput(options)) {
+      logError(`${CLI_NAME} start: --msn must match MSN-0007`);
+    }
     return {
       ok: false,
+      triage,
       triage_action: triage.action,
       skill_key: triage.skill_key,
       msn_id: null,
@@ -199,7 +217,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const filtered = filterNextStepsForAudience(options.audience, nextSteps);
   const section = audienceSectionTitle(options.audience);
 
-  if (!options.json) {
+  if (!suppressStartOutput(options)) {
     logInfo("next steps:");
     if (section) logInfo(`${section}:`);
     for (const step of filtered) logInfo(`  ${step}`);
@@ -207,6 +225,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
 
   return {
     ok: true,
+    triage,
     triage_action: triage.action,
     skill_key: resolvedSkillKey,
     msn_id: msnId,
@@ -216,23 +235,31 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   };
 }
 
+function formatStartJson(result: StartResult): string {
+  return JSON.stringify(
+    {
+      status: result.ok ? "ok" : "failed",
+      triage: result.triage,
+      triage_action: result.triage_action,
+      skill_key: result.skill_key,
+      msn_id: result.msn_id,
+      mission_file_path: result.mission_file_path,
+      next_steps: result.next_steps,
+    },
+    null,
+    2,
+  );
+}
+
 export function runStart(options: StartOptions): void {
-  const result = runStartOrchestration(options);
-  if (options.json && result.ok) {
-    logInfo(
-      JSON.stringify(
-        {
-          status: "ok",
-          triage_action: result.triage_action,
-          skill_key: result.skill_key,
-          msn_id: result.msn_id,
-          mission_file_path: result.mission_file_path,
-          next_steps: result.next_steps,
-        },
-        null,
-        2,
-      ),
-    );
+  const orchestrationOpts: StartOptions = options.json
+    ? { ...options, silent: true }
+    : options;
+  const result = runStartOrchestration(orchestrationOpts);
+  if (options.json) {
+    logInfo(formatStartJson(result));
+    if (result.exit_code !== 0) setExitCode(result.exit_code);
+    return;
   }
   if (result.exit_code !== 0) setExitCode(result.exit_code);
 }

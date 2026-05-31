@@ -23,6 +23,8 @@ export interface LegislateOptions {
   allowDuplicate?: boolean;
   gateCommand?: string;
   gateSuccessSubstring?: string;
+  /** When true, skip stdout info messages (MCP / structured JSON callers). */
+  silent?: boolean;
 }
 
 export type LegislateResult =
@@ -207,9 +209,11 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
   fs.mkdirSync(path.dirname(absolute), { recursive: true });
   fs.writeFileSync(absolute, body, "utf8");
   const missionRel = formatRepoRelative(root, absolute);
-  logInfo(`${CLI_NAME} legislate: wrote ${missionRel}`);
-  logInfo(
-    `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gapman teacher show).`,
-  );
+  if (!options.silent) {
+    logInfo(`${CLI_NAME} legislate: wrote ${missionRel}`);
+    logInfo(
+      `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gapman teacher show).`,
+    );
+  }
   return { ok: true, missionAbs: absolute, missionRel };
 }

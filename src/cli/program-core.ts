@@ -165,7 +165,7 @@ export function registerCoreCommands(program: Command): void {
         skillKey?: string;
         gateCommand?: string;
         gateSuccessSubstring?: string;
-        noWrite?: boolean;
+        write?: boolean;
         allowDuplicate?: boolean;
         json?: boolean;
         audience?: string;
@@ -183,7 +183,7 @@ export function registerCoreCommands(program: Command): void {
         skillKey: opts.skillKey,
         gateCommand: opts.gateCommand,
         gateSuccessSubstring: opts.gateSuccessSubstring,
-        writeMission: opts.noWrite !== true,
+        writeMission: opts.write !== false,
         allowDuplicate: opts.allowDuplicate,
         json: opts.json,
         audience: parseAudience(opts.audience),
