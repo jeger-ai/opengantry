@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v0.9.0 UX orchestration: Implement gapman start orchestration, interactive verify repair mode, unified status dashboard, error taxonomy, and first-run onboarding tutorial.
+msn_id: MSN-0015
+skill_key: gapman
+gate_command: npm run validate
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate OK
