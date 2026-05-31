@@ -4,7 +4,8 @@ import {
   filterNextStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
-import { buildStatusReport } from "../lib/status-report.js";
+import { buildStatusReport, type StatusReport } from "../lib/status-report.js";
+import type { SkillSyncResult } from "../lib/skill-sync.js";
 import { loadWorkspaceWithSkillSync } from "../lib/workspace.js";
 
 export interface StatusOptions {
@@ -13,16 +14,7 @@ export interface StatusOptions {
   audience?: OutputAudience;
 }
 
-export function runStatus(options: StatusOptions = {}): void {
-  const { root, manifest, skillSync } = loadWorkspaceWithSkillSync();
-  const report = buildStatusReport(root, manifest);
-
-  if (options.json) {
-    logInfo(JSON.stringify(report, null, 2));
-    if (report.exit_code !== 0) setExitCode(report.exit_code);
-    return;
-  }
-
+function logStatusSummary(report: StatusReport): void {
   logInfo(`repo: ${report.repo}`);
   logInfo(`schema_version: ${report.schema_version}`);
   logInfo(`manifest skills: ${report.manifest_skills.join(", ") || "(none)"}`);
@@ -37,28 +29,54 @@ export function runStatus(options: StatusOptions = {}): void {
   if (report.last_error_file) {
     logWarn(`last runtime error file: ${report.last_error_file}`);
   }
+}
 
-  if (options.verbose) {
+function logStatusChecks(
+  report: StatusReport,
+  skillSync: SkillSyncResult,
+  verbose: boolean,
+): void {
+  if (verbose) {
     for (const line of report.doctor_lines) {
       logInfo(`${line.level}: ${line.message}`);
     }
-  } else {
-    for (const w of skillSync.warnings) logWarn(w);
-    for (const e of skillSync.errors) logError(`status: ${e}`);
+    return;
   }
+  for (const w of skillSync.warnings) logWarn(w);
+  for (const e of skillSync.errors) logError(`status: ${e}`);
+}
 
-  const section = audienceSectionTitle(options.audience);
+function logStatusNextSteps(report: StatusReport, audience: OutputAudience | undefined): void {
+  const section = audienceSectionTitle(audience);
   const nextSteps = filterNextStepsForAudience(
-    options.audience,
+    audience,
     report.next_step ? [report.next_step] : [],
   );
   if (section && nextSteps.length > 0) {
     logInfo(`${section}:`);
     for (const step of nextSteps) logInfo(`  ${step}`);
-  } else if (report.next_step) {
-    logInfo(`Next: ${report.next_step}`);
+    return;
   }
+  if (report.next_step) logInfo(`Next: ${report.next_step}`);
+}
 
+function finishStatusRun(report: StatusReport): void {
   logInfo(report.skill_sync_ok && report.exit_code === 0 ? "status: OK" : "status: FAILED");
   if (report.exit_code !== 0) setExitCode(report.exit_code);
+}
+
+export function runStatus(options: StatusOptions = {}): void {
+  const { root, manifest, skillSync } = loadWorkspaceWithSkillSync();
+  const report = buildStatusReport(root, manifest);
+
+  if (options.json) {
+    logInfo(JSON.stringify(report, null, 2));
+    if (report.exit_code !== 0) setExitCode(report.exit_code);
+    return;
+  }
+
+  logStatusSummary(report);
+  logStatusChecks(report, skillSync, options.verbose === true);
+  logStatusNextSteps(report, options.audience);
+  finishStatusRun(report);
 }
