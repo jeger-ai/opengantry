@@ -8,17 +8,6 @@ export function resolveMissionFilePath(repoRoot: string, missionFilePath: string
     : path.join(repoRoot, missionFilePath.replace(/\\/g, path.sep));
 }
 
-export function findMissionPathByMsn(repoRoot: string, msnId: string): string | null {
-  const missionsDir = path.join(repoRoot, ".gitagent", "missions");
-  if (!fs.existsSync(missionsDir)) return null;
-  const match = fs
-    .readdirSync(missionsDir)
-    .filter((f) => f.startsWith(`${msnId}.`) && f.endsWith(".yaml"))
-    .sort()
-    .at(-1);
-  return match ? path.join(missionsDir, match) : null;
-}
-
 export function pinMissionFile(repoRoot: string, missionAbs: string): string {
   const rel = formatRepoRelative(repoRoot, missionAbs);
   const pinPath = path.join(repoRoot, ".gitagent", "missions", ".active-mission");

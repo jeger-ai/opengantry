@@ -62,10 +62,18 @@ for f in "${CHANGED[@]}"; do
   fi
 done
 
-# ESLint complexity on changed files only
-npx eslint --no-error-on-unmatched-pattern "${CHANGED[@]}"
+# ESLint complexity on changed files that still exist
+EXISTING=()
+for f in "${CHANGED[@]}"; do
+  [[ -f "$f" ]] && EXISTING+=("$f")
+done
+if [[ "${#EXISTING[@]}" -gt 0 ]]; then
+  npx eslint --no-error-on-unmatched-pattern "${EXISTING[@]}"
+fi
 
 # Import layer rules
-node scripts/check-import-layers.mjs "${CHANGED[@]}"
+if [[ "${#EXISTING[@]}" -gt 0 ]]; then
+  node scripts/check-import-layers.mjs "${EXISTING[@]}"
+fi
 
 echo "check-changed-code OK"

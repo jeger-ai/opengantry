@@ -13,7 +13,6 @@ import {
   REL_UPGRADE_TMP,
   type UpgradePayload,
 } from "./upgrade-plan.js";
-import { upgradeTmpAbs } from "./upgrade-paths.js";
 import { resolveMissionFilePath } from "./mission-path.js";
 import { GapmanUserError } from "./user-error.js";
 
@@ -29,7 +28,7 @@ function sha256File(absPath: string): string {
 }
 
 function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
-  const tmpRoot = upgradeTmpAbs(repoRoot);
+  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
   if (!fs.existsSync(tmpRoot)) {
     throw new GapmanUserError(
       "UPGRADE_STAGING_MISSING",
@@ -128,7 +127,7 @@ export function runUpgradeApply(options: RunUpgradeApplyOptions): UpgradeApplyRe
 
   verifyStagedHashes(repoRoot, payload);
 
-  const tmpRoot = upgradeTmpAbs(repoRoot);
+  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
   const writes: PlannedWrite[] = [];
   for (const relPath of payload.planned_writes) {
     const stageAbs = path.join(tmpRoot, relPath.split("/").join(path.sep));

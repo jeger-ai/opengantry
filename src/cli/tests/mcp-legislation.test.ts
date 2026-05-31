@@ -109,3 +109,34 @@ test("mcp legislation: check_signature valid after teacher commit", () => {
     process.chdir(prevCwd);
   }
 });
+
+test("mcp legislation: execute restores process.exitCode after failure", () => {
+  const dest = scaffoldRepo();
+  const prevCwd = process.cwd();
+  const prevExitCode = process.exitCode;
+  process.chdir(dest);
+  try {
+    const draft = handleDraftLegislation({
+      title: "Exit code leak guard",
+      msn_id: "MSN-0204",
+      skill_key: "ui",
+      gate_command: "echo OK",
+      gate_success_substring: "OK",
+    });
+    if (draft.status !== "awaiting_human_approval") {
+      assert.fail("expected draft");
+      return;
+    }
+
+    const collidingMission = path.join(dest, ".gitagent", "missions", "MSN-0204.exit-code-leak-guard.yaml");
+    fs.writeFileSync(collidingMission, "msn_id: MSN-0204\nskill_key: ui\ngate_command: echo OK\ntrace_rows: []\n", "utf8");
+
+    process.exitCode = 0;
+    const executed = handleExecuteLegislation(draft.draft_token);
+    assert.equal(executed.status, "error");
+    assert.equal(process.exitCode, 0);
+  } finally {
+    process.exitCode = prevExitCode;
+    process.chdir(prevCwd);
+  }
+});

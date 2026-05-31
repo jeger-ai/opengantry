@@ -18,7 +18,6 @@ import {
 } from "./substrate-version.js";
 import { isValidMsnId } from "./msn.js";
 import { buildLegislativeTraceRows } from "./mission-yaml.js";
-import { upgradeStageAbs, upgradeTmpAbs } from "./upgrade-paths.js";
 
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
 export const UPGRADE_MSN_BAND_MIN = 9000;
@@ -84,8 +83,12 @@ export function resolveUpgradeMsn(repoRoot: string, explicit?: string): string {
   return pickNextUpgradeMsn(repoRoot);
 }
 
+function upgradeTmpAbs(repoRoot: string): string {
+  return path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+}
+
 function stagePathForTarget(repoRoot: string, targetRel: string): string {
-  return upgradeStageAbs(repoRoot, targetRel);
+  return path.join(upgradeTmpAbs(repoRoot), targetRel.split("/").join(path.sep));
 }
 
 function writeStagedFiles(repoRoot: string, writes: PlannedWrite[]): Record<string, string> {
