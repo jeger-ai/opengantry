@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { CLI_NAME } from "./lib/constants.js";
+import { CLI_NAME, CLI_VERSION } from "./lib/constants.js";
 import { registerCoreCommands } from "./program-core.js";
 import { registerArchCommands } from "./program-arch.js";
 import { registerMissionCommands } from "./program-mission.js";
@@ -7,7 +7,7 @@ import { registerWorkflowCommands } from "./program-workflow.js";
 import { registerMcpCommands } from "./program-mcp.js";
 import { registerTeacherCommands } from "./program-teacher.js";
 
-export const CLI_VERSION = "0.8.1";
+export { CLI_VERSION } from "./lib/constants.js";
 
 export function buildProgram(): Command {
   const program = new Command();

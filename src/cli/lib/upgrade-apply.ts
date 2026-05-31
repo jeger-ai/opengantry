@@ -13,6 +13,8 @@ import {
   REL_UPGRADE_TMP,
   type UpgradePayload,
 } from "./upgrade-plan.js";
+import { upgradeTmpAbs } from "./upgrade-paths.js";
+import { resolveMissionFilePath } from "./mission-path.js";
 import { GapmanUserError } from "./user-error.js";
 
 export interface UpgradeApplyResult {
@@ -27,7 +29,7 @@ function sha256File(absPath: string): string {
 }
 
 function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
-  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  const tmpRoot = upgradeTmpAbs(repoRoot);
   if (!fs.existsSync(tmpRoot)) {
     throw new GapmanUserError(
       "UPGRADE_STAGING_MISSING",
@@ -66,7 +68,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
 
 function resolveMissionPath(repoRoot: string, explicit?: string): string {
   if (explicit?.trim()) {
-    const abs = path.isAbsolute(explicit) ? explicit : path.join(repoRoot, explicit.trim());
+    const abs = resolveMissionFilePath(repoRoot, explicit.trim());
     if (!fs.existsSync(abs)) {
       throw new GapmanUserError(
         "MISSION_NOT_FOUND",
@@ -80,7 +82,7 @@ function resolveMissionPath(repoRoot: string, explicit?: string): string {
   if (fs.existsSync(pinPath)) {
     const pinned = fs.readFileSync(pinPath, "utf8").trim();
     if (pinned.length > 0) {
-      const abs = path.isAbsolute(pinned) ? pinned : path.join(repoRoot, pinned);
+      const abs = resolveMissionFilePath(repoRoot, pinned);
       if (fs.existsSync(abs)) return abs;
     }
   }
@@ -126,7 +128,7 @@ export function runUpgradeApply(options: RunUpgradeApplyOptions): UpgradeApplyRe
 
   verifyStagedHashes(repoRoot, payload);
 
-  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  const tmpRoot = upgradeTmpAbs(repoRoot);
   const writes: PlannedWrite[] = [];
   for (const relPath of payload.planned_writes) {
     const stageAbs = path.join(tmpRoot, relPath.split("/").join(path.sep));

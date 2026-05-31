@@ -2,8 +2,9 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
+import { CLI_NAME } from "./constants.js";
 import { logInfo, logWarn } from "./cli-io.js";
+import { mergeGitignoreFromTemplate } from "./gitignore-gxt.js";
 import { resolveTemplateRootFromModule, loadIntegrationCompat } from "./integration-compat.js";
 import { resolveAssetsFromProfile } from "./init-asset-catalog.js";
 import { planInitAssets, type PlannedWrite } from "./init-plan.js";
@@ -16,7 +17,8 @@ import {
   readInstalledSubstrateVersion,
 } from "./substrate-version.js";
 import { isValidMsnId } from "./msn.js";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "./mission-legislative-stub.js";
+import { buildLegislativeTraceRows } from "./mission-yaml.js";
+import { upgradeStageAbs, upgradeTmpAbs } from "./upgrade-paths.js";
 
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
 export const UPGRADE_MSN_BAND_MIN = 9000;
@@ -25,7 +27,7 @@ export const UPGRADE_MSN_BAND_MAX = 9099;
 export interface UpgradePayload {
   from_version: string;
   to_version: string;
-  staged_root: ".gitagent/.upgrade-tmp";
+  staged_root: typeof REL_UPGRADE_TMP;
   planned_writes: string[];
   skipped_scaffold_only: string[];
   staged_hashes: Record<string, string>;
@@ -83,12 +85,12 @@ export function resolveUpgradeMsn(repoRoot: string, explicit?: string): string {
 }
 
 function stagePathForTarget(repoRoot: string, targetRel: string): string {
-  return path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep), targetRel.split("/").join(path.sep));
+  return upgradeStageAbs(repoRoot, targetRel);
 }
 
 function writeStagedFiles(repoRoot: string, writes: PlannedWrite[]): Record<string, string> {
   const stagedHashes: Record<string, string> = {};
-  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  const tmpRoot = upgradeTmpAbs(repoRoot);
   if (fs.existsSync(tmpRoot)) {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
@@ -115,14 +117,7 @@ export function buildUpgradeMissionYaml(opts: {
     gate_command: "gapman doctor",
     gate_success_substring: null,
     upgrade_payload: opts.payload,
-    trace_rows: [
-      {
-        dod_id: "1",
-        trace_quote: LEGISLATE_TRACE_PLACEHOLDER,
-        anchor: "1",
-        status: "PENDING",
-      },
-    ],
+    trace_rows: buildLegislativeTraceRows(),
   };
   const header =
     `# OpenGantry substrate upgrade mission (Teacher: review staged diff under ${REL_UPGRADE_TMP}/).\n` +
@@ -162,7 +157,7 @@ export function parseUpgradePayloadFromMissionBody(body: string): UpgradePayload
   return {
     from_version: p.from_version,
     to_version: p.to_version,
-    staged_root: ".gitagent/.upgrade-tmp",
+    staged_root: REL_UPGRADE_TMP,
     planned_writes: p.planned_writes.map(String),
     skipped_scaffold_only: Array.isArray(p.skipped_scaffold_only)
       ? p.skipped_scaffold_only.map(String)
@@ -231,7 +226,8 @@ function logUpgradePlanSummary(
 export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResult {
   const repoRoot = path.resolve(options.repoRoot);
   const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
-  const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
+  const compat = loadIntegrationCompat(templatesRoot);
+  const bundled = compat.opengantry_version;
   const installed = readInstalledSubstrateVersion(repoRoot);
   const legacyWarning = legacyVersionWarning(installed.source);
 
@@ -239,7 +235,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   if (versionGate) return versionGate;
 
   const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);
-  const catalogAssets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot));
+  const catalogAssets = resolveAssetsFromProfile(profile, compat);
   const assets = upgradeEligibleAssets(catalogAssets);
   const plan = planInitAssets(assets, templatesRoot, repoRoot, true);
   if (!plan.ok) {
@@ -259,9 +255,6 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   }
 
   const msnId = resolveUpgradeMsn(repoRoot, options.msn);
-  if (!MSN_ID_PATTERN.test(msnId)) {
-    throw new Error(`${CLI_NAME} upgrade: invalid MSN ${msnId}`);
-  }
 
   const plannedWrites = plan.writes.map((w) =>
     path.relative(repoRoot, w.absoluteTarget).split(path.sep).join("/"),
@@ -270,7 +263,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   const payload: UpgradePayload = {
     from_version: installed.version,
     to_version: bundled,
-    staged_root: ".gitagent/.upgrade-tmp",
+    staged_root: REL_UPGRADE_TMP,
     planned_writes: plannedWrites,
     skipped_scaffold_only: plan.skippedUserMutable,
     staged_hashes: {},
@@ -299,6 +292,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   }
 
   payload.staged_hashes = writeStagedFiles(repoRoot, plan.writes);
+  mergeGitignoreFromTemplate(repoRoot, templatesRoot);
   const missionBody = buildUpgradeMissionYaml({ msnId, fromVersion: installed.version, toVersion: bundled, payload });
   fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
   fs.writeFileSync(missionAbs, missionBody, "utf8");

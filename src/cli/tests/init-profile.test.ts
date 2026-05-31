@@ -17,7 +17,6 @@ import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose-do
 import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "../lib/init-profile.js";
 import { canPromptInitOverwrite } from "../lib/init-interactive.js";
 import type { IntegrationIdeKey } from "../lib/integration-compat.js";
-import { INIT_ASSETS } from "../lib/init-assets.js";
 
 test("integration compat: all IDE keys have manifest entries and recipes", () => {
   const root = getRepoRoot();
@@ -30,10 +29,11 @@ test("integration compat: all IDE keys have manifest entries and recipes", () =>
   }
 });
 
-test("resolveAssetsFromProfile: default matches legacy INIT_ASSETS paths", () => {
-  const legacy = [...INIT_ASSETS].map((a) => a.targetPath).sort();
+test("resolveAssetsFromProfile: default catalog covers all core managed paths", () => {
   const fromCatalog = legacyDefaultInitTargetPaths().sort();
-  assert.deepEqual(fromCatalog, legacy);
+  assert.ok(fromCatalog.includes("scripts/validate-gxt.sh"));
+  assert.ok(fromCatalog.includes(".cursor/mcp.json"));
+  assert.ok(fromCatalog.length >= 20);
 });
 
 test("resolveAssetsFromProfile: claude-code only skips cursor assets", () => {

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "../lib/constants.js";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/mission-legislative-stub.js";
+import { buildLegislativeTraceRows } from "../lib/mission-yaml.js";
 import {
   formatRepoRelative,
   logError,
@@ -25,6 +25,10 @@ export interface LegislateOptions {
   gateSuccessSubstring?: string;
 }
 
+export type LegislateResult =
+  | { ok: true; missionAbs: string; missionRel: string }
+  | { ok: false; exitCode: 2 };
+
 /** Slug for filename: alphanumeric + hyphen, capped length */
 function intentSlug(intent: string, maxLen: number): string {
   const s = intent
@@ -47,14 +51,7 @@ function buildYamlMissionBody(opts: {
     msn_id: opts.msn_id,
     skill_key: opts.skill_key,
     gate_command: opts.gate_command,
-    trace_rows: [
-      {
-        dod_id: "1",
-        trace_quote: LEGISLATE_TRACE_PLACEHOLDER,
-        anchor: "1",
-        status: "PENDING",
-      },
-    ],
+    trace_rows: buildLegislativeTraceRows(),
   };
   if (opts.gate_success_substring !== null) {
     doc.gate_success_substring = opts.gate_success_substring;
@@ -178,23 +175,25 @@ function resolveLegislateGateOptions(options: LegislateOptions): {
   return { gateCommand, gateSuccessSubstring };
 }
 
-export function runLegislate(options: LegislateOptions): void {
+export function runLegislate(options: LegislateOptions): LegislateResult {
   const { root, manifest } = loadWorkspace();
   const msnId = (options.msn ?? "").trim();
   if (!isValidMsnId(msnId)) {
     logError('legislate: --msn must match "MSN-0007" exactly');
     setExitCode(2);
-    return;
+    return { ok: false, exitCode: 2 };
   }
 
   const skill_key = resolveLegislateSkillKey(options, root, manifest);
-  if (!skill_key) return;
+  if (!skill_key) return { ok: false, exitCode: 2 };
 
   const absolute = resolveLegislateOutputPath(root, options, msnId);
-  if (!absolute) return;
+  if (!absolute) return { ok: false, exitCode: 2 };
 
   const existingMissionDupes = findDuplicateMsnMissionPaths(root, msnId);
-  if (!assertLegislateDuplicatePolicy(options, msnId, existingMissionDupes)) return;
+  if (!assertLegislateDuplicatePolicy(options, msnId, existingMissionDupes)) {
+    return { ok: false, exitCode: 2 };
+  }
 
   const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions(options);
   const body = buildYamlMissionBody({
@@ -207,8 +206,10 @@ export function runLegislate(options: LegislateOptions): void {
 
   fs.mkdirSync(path.dirname(absolute), { recursive: true });
   fs.writeFileSync(absolute, body, "utf8");
-  logInfo(`${CLI_NAME} legislate: wrote ${formatRepoRelative(root, absolute)}`);
+  const missionRel = formatRepoRelative(root, absolute);
+  logInfo(`${CLI_NAME} legislate: wrote ${missionRel}`);
   logInfo(
     `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gapman teacher show).`,
   );
+  return { ok: true, missionAbs: absolute, missionRel };
 }

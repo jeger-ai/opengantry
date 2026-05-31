@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Cursor beforeShellExecution — lightweight GXT substrate guard (deterministic fallback).
+# Primary legislation gate is MCP two-step draft/execute; this hook covers non-MCP shell paths.
 set -euo pipefail
 
 input="$(cat)"
@@ -42,6 +43,7 @@ if [ -z "$command" ]; then
   exit 0
 fi
 
+# Block casual shell writes to GXT law/manifest — Teacher legislation required.
 if printf '%s' "$command" | grep -qE '\.gitagent/foreman/|\.gitagent/teacher/RULES\.md'; then
   ask \
     "Shell command touches GXT law or manifest. Confirm this is under an active Teacher mission." \
@@ -49,6 +51,7 @@ if printf '%s' "$command" | grep -qE '\.gitagent/foreman/|\.gitagent/teacher/RUL
   exit 0
 fi
 
+# Fallback guard when agents bypass MCP and run legislate via raw shell.
 if printf '%s' "$command" | grep -qE '(^|[[:space:]/])gapman[[:space:]]+legislate\b'; then
   ask \
     "Shell command runs gapman legislate directly. Confirm you intend to write mission law outside the MCP draft/execute gate." \

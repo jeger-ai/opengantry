@@ -1,10 +1,14 @@
-import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
 import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
-import { loadIntegrationCompat } from "../lib/integration-compat.js";
+import {
+  isIntegrationIdeKey,
+  loadIntegrationCompat,
+  resolveTemplateRootFromModule,
+  type IntegrationCompatManifest,
+} from "../lib/integration-compat.js";
 import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
 import {
   composeArchitecturePointer,
@@ -46,13 +50,6 @@ export interface InitOptions {
   archLocation?: string;
 }
 
-function resolveTemplateRoot(): string {
-  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  const root = path.resolve(moduleDir, "../../../templates");
-  if (fs.existsSync(root)) return root;
-  throw new Error(`${CLI_NAME} init: missing templates directory at ${root}`);
-}
-
 function planArchitecturePointerWrite(profile: InitProfile, repoRoot: string): PlannedWrite | null {
   const targetAbs = path.join(repoRoot, REL_ARCHITECTURE_POINTER.split("/").join(path.sep));
   if (fs.existsSync(targetAbs)) return null;
@@ -64,7 +61,7 @@ function planIntegrationsDocWrite(
   profile: InitProfile,
   templatesRoot: string,
   repoRoot: string,
-  compat: ReturnType<typeof loadIntegrationCompat>,
+  compat: IntegrationCompatManifest,
 ): PlannedWrite | null {
   const rel = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
   const targetAbs = path.join(repoRoot, rel.split("/").join(path.sep));
@@ -89,7 +86,7 @@ async function resolveProfile(
 type InitWorkspace = {
   repoRoot: string;
   templatesRoot: string;
-  compat: ReturnType<typeof loadIntegrationCompat>;
+  compat: IntegrationCompatManifest;
 };
 
 function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
@@ -104,7 +101,7 @@ function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
 
   let templatesRoot: string;
   try {
-    templatesRoot = resolveTemplateRoot();
+    templatesRoot = resolveTemplateRootFromModule();
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);
@@ -125,7 +122,7 @@ function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
 function validateInitProfile(
   profile: InitProfile,
   repoRoot: string,
-  compat: InitWorkspace["compat"],
+  compat: IntegrationCompatManifest,
 ): boolean {
   try {
     profile.integrationsDocPath = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
@@ -136,7 +133,7 @@ function validateInitProfile(
   }
 
   for (const id of profile.ides) {
-    if (!compat.integrations[id as keyof typeof compat.integrations]) {
+    if (!isIntegrationIdeKey(id) || !compat.integrations[id]) {
       logError(`init: unknown IDE key: ${id}`);
       setExitCode(2);
       return false;

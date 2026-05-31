@@ -1,6 +1,3 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import fs from "node:fs";
 import { CLI_NAME } from "../lib/constants.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
@@ -18,17 +15,6 @@ export interface UpgradeOptions {
   cwd?: string;
 }
 
-function resolveTemplateRoot(): string {
-  try {
-    return resolveTemplateRootFromModule();
-  } catch {
-    const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-    const root = path.resolve(moduleDir, "../../../templates");
-    if (fs.existsSync(root)) return root;
-    throw new Error(`${CLI_NAME} upgrade: missing templates directory`);
-  }
-}
-
 export function runUpgrade(options: UpgradeOptions = {}): void {
   let repoRoot: string;
   try {
@@ -41,7 +27,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
 
   let templatesRoot: string;
   try {
-    templatesRoot = resolveTemplateRoot();
+    templatesRoot = resolveTemplateRootFromModule();
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
     setExitCode(2);

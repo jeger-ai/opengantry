@@ -42,6 +42,17 @@ is_gxt_path() {
   return 1
 }
 
+cmd_upgrade_tmp() {
+  local tracked
+  tracked="$(git ls-files '.gitagent/.upgrade-tmp' 2>/dev/null || true)"
+  if [[ -n "$tracked" ]]; then
+    echo "upgrade-tmp check FAILED: tracked files under .gitagent/.upgrade-tmp/ (must be gitignored staging only)" >&2
+    printf '%s\n' "$tracked" >&2
+    exit 1
+  fi
+  echo "upgrade-tmp OK (no tracked staging files)"
+}
+
 cmd_manifest() {
   local M="$MANIFEST_REL"
   test -f "$M"
@@ -106,7 +117,8 @@ Usage:
   validate-gxt.sh [manifest]          Validate Foreman MANIFEST.json (default)
   validate-gxt.sh msn <base> <head>   Require [MSN-NNNN] or gxt-bypass git note on commits
                                       in range that touch GXT paths (see is_gxt_path)
-  validate-gxt.sh all [base head]     Run manifest, then msn if base and head given
+  validate-gxt.sh upgrade-tmp         Fail if .gitagent/.upgrade-tmp/ contains tracked files
+  validate-gxt.sh all [base head]     Run manifest, upgrade-tmp, then msn if base and head given
 Example:
   ./scripts/validate-gxt.sh msn origin/main HEAD
 EOF
@@ -119,6 +131,9 @@ main() {
     manifest)
       cmd_manifest
       ;;
+    upgrade-tmp)
+      cmd_upgrade_tmp
+      ;;
     msn)
       if [[ $# -ne 2 ]]; then
         usage
@@ -128,6 +143,7 @@ main() {
       ;;
     all)
       cmd_manifest
+      cmd_upgrade_tmp
       if [[ $# -ge 2 ]]; then
         cmd_msn "$1" "$2"
       else

@@ -34,6 +34,10 @@ export interface IntegrationCompatManifest {
   integrations: Record<IntegrationIdeKey, IntegrationCompatEntry>;
 }
 
+export function isIntegrationIdeKey(key: string): key is IntegrationIdeKey {
+  return (INTEGRATION_IDE_KEYS as readonly string[]).includes(key);
+}
+
 export function resolveTemplateRootFromModule(): string {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   const root = path.resolve(moduleDir, "../../../templates");

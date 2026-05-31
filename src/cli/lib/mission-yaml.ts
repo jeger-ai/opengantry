@@ -2,7 +2,27 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { REL_MISSION_SCHEMA, MSN_ID_PATTERN } from "./constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "./mission-legislative-stub.js";
 import type { ParsedMission, TraceRow, YamlMission } from "./types.js";
+
+export interface MissionTraceRowStub {
+  dod_id: string;
+  trace_quote: string;
+  anchor: string;
+  status: string;
+}
+
+/** Shared legislative trace stub row for mission YAML scaffolds. */
+export function buildLegislativeTraceRows(): MissionTraceRowStub[] {
+  return [
+    {
+      dod_id: "1",
+      trace_quote: LEGISLATE_TRACE_PLACEHOLDER,
+      anchor: "1",
+      status: "PENDING",
+    },
+  ];
+}
 
 export function ensureMissionSchemaFileExists(root: string): void {
   const schemaPath = path.join(root, REL_MISSION_SCHEMA);

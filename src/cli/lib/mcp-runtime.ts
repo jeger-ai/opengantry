@@ -1,9 +1,11 @@
 import path from "node:path";
-import { assertTeacherMissionProof } from "./git-proof.js";
+import { writeAgentErrorPayload } from "./agent-error.js";
 import { gatePassed, runGate } from "./gate.js";
+import { assertTeacherMissionProof } from "./git-proof.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
 import { isLegislativeStub } from "./mission-legislative-stub.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
+import { runRuntimeExec } from "./runtime-exec.js";
 import { defaultWorkerLogPath, verifyTraceRows } from "./trace.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -153,8 +155,6 @@ export type RuntimeExecMcpInput = {
 };
 
 export async function handleRuntimeExec(input: RuntimeExecMcpInput): Promise<Record<string, unknown>> {
-  const { runRuntimeExec } = await import("./runtime-exec.js");
-  const { writeAgentErrorPayload } = await import("./agent-error.js");
   try {
     const workspace = loadWorkspace();
     const resolved = resolveRuntimeEnv(workspace, input.mission);
