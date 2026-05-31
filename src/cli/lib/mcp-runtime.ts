@@ -1,13 +1,55 @@
 import path from "node:path";
 import { writeAgentErrorPayload } from "./agent-error.js";
-import { gatePassed, runGate } from "./gate.js";
-import { assertTeacherMissionProof } from "./git-proof.js";
+import { hintsForVerifyPhase } from "./fix-hints.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
-import { isLegislativeStub } from "./mission-legislative-stub.js";
+import {
+  evaluateVerifyPhases,
+  type VerifyPhaseFailure,
+  type VerifyPhaseSuccess,
+} from "./verify-engine.js";
+import { verifyFailureToHintContext } from "./verify-flow.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
 import { runRuntimeExec } from "./runtime-exec.js";
-import { defaultWorkerLogPath, verifyTraceRows } from "./trace.js";
 import { loadWorkspace } from "./workspace.js";
+
+function enrichVerifyFailure(
+  failure: VerifyPhaseFailure,
+  missionRel: string,
+  missionFilePath: string,
+  msnId?: string,
+  root?: string,
+): Record<string, unknown> {
+  const remediation = hintsForVerifyPhase(failure.phase, {
+    ...verifyFailureToHintContext(failure, missionRel, { mission: missionFilePath }, root),
+    msnId,
+  });
+  return {
+    error_code: remediation.error_code,
+    fix_hints: remediation.fix_hints,
+    next_actions: remediation.next_actions,
+  };
+}
+
+function successPayload(
+  root: string,
+  mission: ReturnType<typeof parseMissionFile>,
+  result: VerifyPhaseSuccess,
+): Record<string, unknown> {
+  if (result.outcome === "pre_push_stub") {
+    return {
+      status: "passed",
+      phase: "pre_push_stub",
+      message: "Legislative stub OK (git-proof passed).",
+      msn_id: result.proofMsnId,
+    };
+  }
+  return {
+    status: "passed",
+    phase: "full",
+    msn_id: mission.msnId,
+    mission_file_path: path.relative(root, mission.rawPath).split(path.sep).join("/"),
+  };
+}
 
 export function handleRuntimeEnv(missionFilePath: string): Record<string, unknown> {
   try {
@@ -35,59 +77,31 @@ export function handleVerify(missionFilePath: string, prePush = false): Record<s
     const mission = parseMissionFile(root, missionFilePath);
     assertMissionGatePresent(mission);
 
-    const proof = runVerifyGitProofSilent(root, mission);
-    if (!proof.ok) {
-      return {
-        status: "failed",
-        phase: "git_proof",
-        message: proof.message,
-      };
+    const missionRel = path.relative(root, mission.rawPath).split(path.sep).join("/");
+    const msnId = mission.msnId ?? undefined;
+
+    const result = evaluateVerifyPhases(root, mission, { mission: missionFilePath, prePush });
+
+    if (result.ok) {
+      return successPayload(root, mission, result);
     }
 
-    if (prePush && isLegislativeStub(mission)) {
-      return {
-        status: "passed",
-        phase: "pre_push_stub",
-        message: "Legislative stub OK (git-proof passed).",
-      };
-    }
-
-    const gateOk = runVerifyGateSilent(root, mission);
-    if (!gateOk.ok) {
-      return {
-        status: "failed",
-        phase: "gate",
-        message: gateOk.message,
-        stdout: gateOk.stdout,
-        stderr: gateOk.stderr,
-      };
-    }
-
-    const hasPending = mission.traceRows.some((row) => row.status.toUpperCase().includes("PENDING"));
-    if (hasPending) {
-      return {
-        status: "failed",
-        phase: "trace_pending",
-        message: "Trace rows still PENDING — append WORKER_LOG evidence before full verify.",
-      };
-    }
-
-    const traceOk = runVerifyTraceSilent(root, mission);
-    if (!traceOk.ok) {
-      return {
-        status: "failed",
-        phase: "trace",
-        message: traceOk.message,
-        failures: traceOk.failures,
-      };
-    }
-
-    return {
-      status: "passed",
-      phase: "full",
-      msn_id: mission.msnId,
-      mission_file_path: path.relative(root, mission.rawPath).split(path.sep).join("/"),
+    const base: Record<string, unknown> = {
+      status: "failed",
+      phase: result.phase,
+      message: result.message,
+      ...enrichVerifyFailure(result, missionRel, missionFilePath, msnId, root),
     };
+
+    if (result.phase === "gate") {
+      base.stdout = result.gateStdout;
+      base.stderr = result.gateStderr;
+    }
+    if (result.phase === "trace" && result.traceReason) {
+      base.failures = [`DoD trace: ${result.traceReason}`];
+    }
+
+    return base;
   } catch (e) {
     return {
       status: "error",
@@ -98,53 +112,6 @@ export function handleVerify(missionFilePath: string, prePush = false): Record<s
       },
     };
   }
-}
-
-function runVerifyGitProofSilent(
-  root: string,
-  mission: ReturnType<typeof parseMissionFile>,
-): { ok: true; msnId: string } | { ok: false; message: string } {
-  try {
-    const msnId = assertTeacherMissionProof(root, mission.rawPath, {
-      msnId: mission.msnId ?? undefined,
-    });
-    return { ok: true, msnId };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : String(e) };
-  }
-}
-
-function runVerifyGateSilent(
-  root: string,
-  mission: ReturnType<typeof parseMissionFile>,
-): { ok: true } | { ok: false; message: string; stdout?: string; stderr?: string } {
-  const gate = mission.gate!;
-  const gateResult = runGate(root, gate);
-  if (!gatePassed(gateResult, gate.successSubstring)) {
-    return {
-      ok: false,
-      message: "GATE FAILED",
-      stdout: gateResult.stdout,
-      stderr: gateResult.stderr,
-    };
-  }
-  return { ok: true };
-}
-
-function runVerifyTraceSilent(
-  root: string,
-  mission: ReturnType<typeof parseMissionFile>,
-): { ok: true } | { ok: false; message: string; failures?: string[] } {
-  const workerLog = defaultWorkerLogPath(root);
-  const result = verifyTraceRows(workerLog, mission.traceRows, {});
-  if (result.failures.length > 0) {
-    return {
-      ok: false,
-      message: "TRACE MAPPING FAILED",
-      failures: result.failures.map((f) => `DoD ${f.row.dodId}: ${f.reason}`),
-    };
-  }
-  return { ok: true };
 }
 
 export type RuntimeExecMcpInput = {

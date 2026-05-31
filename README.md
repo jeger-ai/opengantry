@@ -1,20 +1,28 @@
 # OpenGantry
 
-**OpenGantry** is a **reference implementation** of the **GXT (Git-native eXecution and Trace) protocol**: a small, version-controlled **substrate** for running AI-assisted engineering with explicit law, routing, and audit trails—without a proprietary runtime.
+**Insurance for autonomous code** — OpenGantry is a Git-native governance substrate that helps teams **prevent destructive AI edits in sensitive paths**, **preserve greppable audit evidence**, and **pass reviews with deterministic gates**—without a proprietary runtime.
 
-This repository is both the **specimen** and the **template**. You do not need to depend on OpenGantry as a published package; run **`gapman init`** in your repo (or vendor the substrate manually) and adapt it.
+Under the hood it implements the **GXT (Git-native eXecution and Trace) protocol**: explicit law, routing, and forensic trace mapped to `WORKER_LOG.md`. This repository is both the **specimen** and the **template**. Run **`gapman init`** in your repo (or vendor the substrate manually) and adapt it.
 
-**Protocol maturity:** substrate law is labeled **v0.5.0** (pre-1.0): useful for real teams, honest about what is still evolving. **`gapman` v0.8.1** is the current CLI — bootstrap, readiness checks, architecture pointers, and orchestrated worker runs on top of the v0.7.0 Worker Runtime Contract (`runtime env`, `legislate`). See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+## Why teams adopt this
 
-## v0.8.1 specimen release
+| Outcome | How OpenGantry delivers it |
+|---------|---------------------------|
+| **Stop high-risk AI drift** | TMVC roots + forbidden zones; strongest enforcement via `gapman runtime exec` |
+| **Audit-ready evidence** | Missions greppable as `[MSN-XXXX]` commits; verifier PASS tied to log quotes |
+| **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, MCP `fix_hints` |
+| **Lower onboarding friction** | `gapman start "<intent>"`, `gapman onboarding`, `gapman status --json` |
 
-`v0.8.1` is the current GitHub specimen of the governance substrate and `gapman` CLI. This repository remains `private: true` for package publishing; validate distribution layout with `npm pack` and run the adopter flow locally. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook and smoke checklist.
+**Protocol maturity:** substrate law is labeled **v0.5.0** (pre-1.0). **`gapman` v0.9.0** adds goal-first orchestration, guided verify repair, status dashboard, and role-tailored output. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+
+## v0.9.0 specimen release
+
+`v0.9.0` extends the governance substrate and `gapman` CLI with UX-focused ergonomics while preserving strict enforcement boundaries. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
-| **v0.7.0** | `gapman runtime env`, `gapman legislate` (YAML mission scaffolding) |
-| **v0.8.0** | Context-aware **Fix:** hints, auto fuzzy trace (line-drift resolution), scoped **pre-push** verify for legislative stubs |
-| **v0.8.1** | `gapman init` interactive wizard, `gapman doctor`, `gapman metrics`, `gapman arch pointer` / `arch cred`, integration compat manifest, `gapman runtime exec` orchestration |
+| **v0.8.1** | `gapman init` wizard, `gapman doctor`, `gapman metrics`, `gapman runtime exec` |
+| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes, MCP remediation fields |
 
 ## What you get
 
@@ -114,8 +122,10 @@ Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, 
 | `gapman init` | Bootstrap substrate + IDE packs + hooks + CI from packaged templates. Interactive wizard or `--yes` default profile. |
 | `gapman upgrade` | Plan substrate updates from the installed package (stages to `.gitagent/.upgrade-tmp/`, drafts upgrade mission YAML). `gapman upgrade --apply --mission …` after Teacher `[MSN-…]` commit. |
 | `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
-| `gapman status` | Human-readable report of the same checks. |
-| `gapman doctor` | Active readiness check (manifest, Teacher email, bypass secret match, hooks, architecture pointer, integration staleness). Warnings exit 0. |
+| `gapman status` | GXT readiness dashboard (`--json`, `--verbose`, `--audience worker\|teacher\|verifier\|platform`). |
+| `gapman start "<intent>"` | Goal-first orchestration: triage → legislate stub → runtime next steps (`--msn`, `--skill-key`, `--json`). |
+| `gapman onboarding` | Interactive walkthrough of the strict mission loop (no relaxed checks). |
+| `gapman doctor` | Active readiness check (manifest, Teacher email, bypass secret match, hooks, architecture pointer, integration staleness). Warnings exit 0. `--audience` tailors next steps. |
 | `gapman triage "<intent>"` | Foreman-style routing ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output (may include non-binding `adr_hints` from [`.gitagent/out-of-scope/`](.gitagent/out-of-scope/README.md)). `--emit-mission --msn MSN-0007` writes `.gitagent/missions/ACTIVE_MISSION.md` by default on **DIRECT_EXECUTION** only. |
 | `gapman teacher show\|set` | Repo-local Teacher git-proof allowlist (`.gitagent/foreman/TEACHER.allowlist.local`; avoids global `GAPMAN_TEACHER_EMAILS` leaking across projects). |
 | `gapman legislate "<intent>" --msn MSN-0007` | Emit stub **YAML** mission under `.gitagent/missions/` with explicit MSN (`--skill-key` when triage would escalate; `--gate-command` / `--gate-success-substring` for one-click handoff). Teacher still **`git commit`**-legislates from an allowlisted email. |
@@ -123,8 +133,8 @@ Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, 
 | `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill's `tmvc_roots`). |
 | `gapman runtime env --mission <path>` | Worker Runtime Contract: emit `GXT_REPO_ROOT`, `GXT_MISSION_FILE`, `GXT_MSN_ID`, `GXT_SKILL_KEY`, `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, `GXT_WORKER_LOG`. Default: POSIX `export …` lines; `--json` for scripts. [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). |
 | `gapman runtime exec --mission <path> -- <cmd…>` | Run worker command with mission env, telemetry capture, and forbidden-zone scan (strongest TMVC trap). |
-| `gapman mcp serve` | Stdio MCP server exposing `gxt_*` tools (draft/execute legislation, pin, runtime env, verify, exec). Configure via `.cursor/mcp.json`. |
-| `gapman verify --mission <path>` | **Git-proof** + gate + trace. **`--pre-push`** for hook handoff (legislative stubs stop after git-proof). **Auto line-drift resolution** by default; **`--strict-trace`** to disable. **`--break-glass --reason "…"`** when `GXT_BYPASS_SECRET` matches `BYPASS.sha256`. Failures include **Fix:** hints. |
+| `gapman mcp serve` | Stdio MCP server exposing `gxt_*` tools (legislation, pin, runtime env, verify with `fix_hints`, `gxt_start_orchestration`, exec). Configure via `.cursor/mcp.json`. |
+| `gapman verify --mission <path>` | **Git-proof** + gate + trace. **`--fix`** guided repair; **`--non-interactive`** structured hints. **`--pre-push`** for hook handoff. Failures emit **`GXT_*`** codes + **Fix:** hints. |
 | `gapman arch pointer` | Print architecture pointer summary for agents (`.gitagent/ARCHITECTURE.pointer.json`). |
 | `gapman arch cred status\|set\|unset` | Git-ignored credential slots for authenticated external architecture sources (secrets via stdin only). |
 | `gapman metrics [--json] [--ref main]` | Git-native governance rollup (stream-parsed). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |

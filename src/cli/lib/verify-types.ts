@@ -1,3 +1,5 @@
+import type { OutputAudience } from "./audience-output.js";
+
 export interface VerifyOptions {
   mission: string;
   workerLog?: string;
@@ -10,4 +12,10 @@ export interface VerifyOptions {
   breakGlassReason?: string;
   breakGlassCommit?: string;
   auditCommit?: boolean;
+  /** Interactive remediation menu on failure. */
+  fix?: boolean;
+  /** Print structured fix hints without prompts (used with --fix). */
+  fixNonInteractive?: boolean;
+  /** Tailor remediation next steps by role. */
+  audience?: OutputAudience;
 }

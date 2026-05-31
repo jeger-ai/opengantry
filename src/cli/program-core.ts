@@ -4,7 +4,10 @@ import { runInit } from "./commands/init.js";
 import { runUpgrade } from "./commands/upgrade.js";
 import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
+import { runOnboarding } from "./commands/onboarding.js";
+import { runStart } from "./commands/start.js";
 import { readStdinIfEmpty, runTriage } from "./commands/triage.js";
+import { parseAudience } from "./lib/audience-output.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 export function registerCoreCommands(program: Command): void {
@@ -17,17 +20,25 @@ export function registerCoreCommands(program: Command): void {
 
   program
     .command("status")
-    .description("Human-readable manifest + skills sync report")
-    .action(() => {
-      runStatus();
+    .description("Manifest sync + GXT readiness dashboard")
+    .option("--json", "Emit structured report")
+    .option("--verbose", "Include all doctor check lines")
+    .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
+    .action((opts: { json?: boolean; verbose?: boolean; audience?: string }) => {
+      runStatus({
+        json: opts.json,
+        verbose: opts.verbose,
+        audience: parseAudience(opts.audience),
+      });
     });
 
   program
     .command("doctor")
     .description("Active GXT readiness check (warnings do not fail exit)")
     .option("--json", "Emit structured report")
-    .action((opts: { json?: boolean }) => {
-      runDoctor({ json: opts.json });
+    .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
+    .action((opts: { json?: boolean; audience?: string }) => {
+      runDoctor({ json: opts.json, audience: parseAudience(opts.audience) });
     });
 
   program
@@ -134,5 +145,55 @@ export function registerCoreCommands(program: Command): void {
         msn: opts.msn,
         out: opts.out,
       });
+    });
+
+  program
+    .command("start")
+    .description("Goal-first orchestration: triage → legislate stub → runtime next steps")
+    .argument("[intent...]", "What you want to build")
+    .option("--msn <id>", "Mission id (auto-suggested when omitted)")
+    .option("--skill-key <key>", "Override Foreman skill_key")
+    .option("--gate-command <cmd>", "Deterministic gate command")
+    .option("--gate-success-substring <text>", "Gate success substring")
+    .option("--no-write", "Skip writing mission file (preview only)")
+    .option("--allow-duplicate", "Allow duplicate msn_id (branch migration only)")
+    .option("--json", "Emit structured JSON on success")
+    .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
+    .action(async function (this: Command, intentParts: string[]) {
+      const opts = this.opts<{
+        msn?: string;
+        skillKey?: string;
+        gateCommand?: string;
+        gateSuccessSubstring?: string;
+        noWrite?: boolean;
+        allowDuplicate?: boolean;
+        json?: boolean;
+        audience?: string;
+      }>();
+      let text = intentParts.join(" ").trim();
+      text = await readStdinIfEmpty(text);
+      if (!text) {
+        logError("start: provide intent text or pipe stdin");
+        setExitCode(2);
+        return;
+      }
+      runStart({
+        intent: text,
+        msn: opts.msn,
+        skillKey: opts.skillKey,
+        gateCommand: opts.gateCommand,
+        gateSuccessSubstring: opts.gateSuccessSubstring,
+        writeMission: opts.noWrite !== true,
+        allowDuplicate: opts.allowDuplicate,
+        json: opts.json,
+        audience: parseAudience(opts.audience),
+      });
+    });
+
+  program
+    .command("onboarding")
+    .description("Interactive walkthrough of the strict GXT mission loop")
+    .action(async () => {
+      await runOnboarding();
     });
 }

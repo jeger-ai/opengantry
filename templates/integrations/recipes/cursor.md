@@ -2,7 +2,8 @@
 
 - **Context injection:** `.cursor/rules/opengantry-gxt-substrate.mdc` (`alwaysApply: true`); `.cursor/hooks.json` — `sessionStart` mission scope + `beforeShellExecution` fallback guard; `.cursor/mcp.json` — `gapman mcp serve`.
 - **Mission Architect:** `/gantry` macro (do not use `/plan` — Cursor native Plan Mode); implicit activation when user asks to **write/edit code** with no pinned mission. Follow `.gitagent/teacher/MISSION-ARCHITECT.md`.
-- **MCP legislation:** `gxt_draft_legislation` → semantic chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
+- **MCP legislation:** `gxt_draft_legislation` → semantic chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`. Or **`gxt_start_orchestration`** for goal-first CLI parity.
+- **Verify remediation:** `gxt_verify` returns `error_code`, `fix_hints`, `next_actions` on failure; CLI equivalent: `gapman verify --mission … --fix`.
 - **Session bootstrap:**
 
 ```bash

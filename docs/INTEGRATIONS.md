@@ -22,7 +22,18 @@ source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
 gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml --json
 ```
 
-On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. See [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
+On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. **`gxt_verify`** returns structured `error_code`, `fix_hints`, and `next_actions` for IDE agents. See [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
+
+## MCP tools (Cursor and other MCP clients)
+
+| Tool | Purpose |
+|------|---------|
+| `gxt_draft_legislation` / `gxt_execute_legislation` | Two-step mission legislation with chat approval |
+| `gxt_check_signature` / `gxt_pin_mission` | Teacher stamp check + pin active mission |
+| `gxt_start_orchestration` | Goal-first flow: triage → legislate stub → optional pin/runtime env |
+| `gxt_runtime_env` / `gxt_runtime_exec` | Worker bootstrap + process-boundary enforcement |
+| `gxt_verify` | Structured verify phases with `fix_hints` on failure |
+| `gxt_resolve_mission` / `gxt_last_error` | Mission resolution + last runtime exec error |
 
 ## Enforcement boundary (where the cage is ironclad)
 

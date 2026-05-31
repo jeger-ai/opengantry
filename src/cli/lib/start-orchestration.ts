@@ -1,0 +1,206 @@
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { runLegislate, type LegislateOptions } from "../commands/legislate.js";
+import { CLI_NAME } from "./constants.js";
+import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
+import { isValidMsnId } from "./msn.js";
+import { extractMsnIdFromMissionPath } from "./mission-msn.js";
+import { formatTriageHuman, formatTriageJson, triageIntent } from "./triage-logic.js";
+import { audienceSectionTitle, filterNextStepsForAudience, type OutputAudience } from "./audience-output.js";
+import { loadWorkspace } from "./workspace.js";
+
+export interface StartOptions {
+  intent: string;
+  msn?: string;
+  skillKey?: string;
+  gateCommand?: string;
+  gateSuccessSubstring?: string;
+  writeMission?: boolean;
+  allowDuplicate?: boolean;
+  json?: boolean;
+  audience?: OutputAudience;
+}
+
+export interface StartResult {
+  ok: boolean;
+  triage_action: string;
+  skill_key: string;
+  msn_id: string | null;
+  mission_file_path: string | null;
+  next_steps: string[];
+  exit_code: number;
+}
+
+function suggestNextMsn(root: string): string {
+  let max = 0;
+  const missionsDir = path.join(root, ".gitagent", "missions");
+  if (fs.existsSync(missionsDir)) {
+    for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!ent.isFile()) continue;
+      try {
+        const id = extractMsnIdFromMissionPath(path.join(missionsDir, ent.name));
+        if (!id) continue;
+        const num = Number.parseInt(id.replace("MSN-", ""), 10);
+        if (num > max && num < 9000) max = num;
+      } catch {
+        // ignore malformed
+      }
+    }
+  }
+  const git = spawnSync("git", ["-C", root, "log", "--grep=MSN-", "-100", "--format=%s"], {
+    encoding: "utf8",
+  });
+  if (git.status === 0 && typeof git.stdout === "string") {
+    for (const line of git.stdout.split("\n")) {
+      const m = /\[MSN-(\d{4})\]/.exec(line);
+      if (m) {
+        const num = Number.parseInt(m[1]!, 10);
+        if (num > max && num < 9000) max = num;
+      }
+    }
+  }
+  return `MSN-${String(max + 1).padStart(4, "0")}`;
+}
+
+function buildNextSteps(missionRel: string | null, msnId: string | null): string[] {
+  const mission = missionRel ?? ".gitagent/missions/<file>.yaml";
+  const msn = msnId ?? "MSN-NNNN";
+  return [
+    `Teacher: git add ${mission} && git commit -m "[${msn}] legislate mission"`,
+    `eval "$(gapman runtime env --mission ${mission})"`,
+    "Append gate evidence to WORKER_LOG.md",
+    `gapman verify --mission ${mission}`,
+    `scripts/gxt-pin-mission.sh ${mission}`,
+  ];
+}
+
+export function runStartOrchestration(options: StartOptions): StartResult {
+  const { root, manifest } = loadWorkspace();
+  const triage = triageIntent(root, options.intent, manifest);
+  const msnId = options.msn?.trim() || suggestNextMsn(root);
+  const skillOverride = options.skillKey?.trim();
+  const escalated = triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
+  const manifestKeys = Object.keys(manifest.skills);
+
+  if (options.json) {
+    logInfo(formatTriageJson(triage));
+  } else if (!escalated) {
+    logInfo(formatTriageHuman(triage));
+  } else if (skillOverride) {
+    logInfo(`Triage: ${triage.reason} (overridden by --skill-key ${skillOverride})`);
+  } else {
+    logInfo(formatTriageHuman(triage));
+  }
+
+  if (escalated) {
+    if (!skillOverride) {
+      logError(
+        `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
+      );
+      return {
+        ok: false,
+        triage_action: triage.action,
+        skill_key: triage.skill_key,
+        msn_id: null,
+        mission_file_path: null,
+        next_steps: [
+          `gapman start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+        ],
+        exit_code: 2,
+      };
+    }
+    logWarn(`${CLI_NAME} start: triage escalated; using --skill-key ${skillOverride}`);
+  }
+
+  const resolvedSkillKey = skillOverride || triage.skill_key;
+
+  if (!isValidMsnId(msnId)) {
+    logError(`${CLI_NAME} start: --msn must match MSN-0007`);
+    return {
+      ok: false,
+      triage_action: triage.action,
+      skill_key: triage.skill_key,
+      msn_id: null,
+      mission_file_path: null,
+      next_steps: [],
+      exit_code: 2,
+    };
+  }
+
+  let missionRel: string | null = null;
+  if (options.writeMission !== false) {
+    const legislateOpts: LegislateOptions = {
+      intent: options.intent,
+      msn: msnId,
+      skillKey: resolvedSkillKey,
+      gateCommand: options.gateCommand,
+      gateSuccessSubstring: options.gateSuccessSubstring,
+      allowDuplicate: options.allowDuplicate,
+    };
+    const prevExit = process.exitCode;
+    const result = runLegislate(legislateOpts);
+    process.exitCode = prevExit;
+    if (!result.ok) {
+      const freshMsn = suggestNextMsn(root);
+      return {
+        ok: false,
+        triage_action: triage.action,
+        skill_key: resolvedSkillKey,
+        msn_id: msnId,
+        mission_file_path: null,
+        next_steps: [
+          `try a fresh MSN: gapman start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
+          `or gapman legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
+        ],
+        exit_code: 2,
+      };
+    }
+    missionRel = result.missionRel;
+    logInfo(`${CLI_NAME} start: mission scaffold at ${missionRel}`);
+  } else {
+    logWarn(`${CLI_NAME} start: --no-write — run legislate manually with --msn ${msnId}`);
+    missionRel = `.gitagent/missions/${msnId}.<slug>.yaml`;
+  }
+
+  const nextSteps = buildNextSteps(missionRel, msnId);
+  const filtered = filterNextStepsForAudience(options.audience, nextSteps);
+  const section = audienceSectionTitle(options.audience);
+
+  if (!options.json) {
+    logInfo("next steps:");
+    if (section) logInfo(`${section}:`);
+    for (const step of filtered) logInfo(`  ${step}`);
+  }
+
+  return {
+    ok: true,
+    triage_action: triage.action,
+    skill_key: resolvedSkillKey,
+    msn_id: msnId,
+    mission_file_path: missionRel,
+    next_steps: filtered,
+    exit_code: 0,
+  };
+}
+
+export function runStart(options: StartOptions): void {
+  const result = runStartOrchestration(options);
+  if (options.json && result.ok) {
+    logInfo(
+      JSON.stringify(
+        {
+          status: "ok",
+          triage_action: result.triage_action,
+          skill_key: result.skill_key,
+          msn_id: result.msn_id,
+          mission_file_path: result.mission_file_path,
+          next_steps: result.next_steps,
+        },
+        null,
+        2,
+      ),
+    );
+  }
+  if (result.exit_code !== 0) setExitCode(result.exit_code);
+}

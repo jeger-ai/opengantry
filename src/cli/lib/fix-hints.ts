@@ -1,5 +1,8 @@
 import { logInfo } from "./cli-io.js";
+import { GXT_ERROR, mapGitProofCodeToGxt, type GxtErrorCode } from "./gxt-error-codes.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "./mission-legislative-stub.js";
 import { teacherIdentitySetupHint } from "./teacher-identity.js";
+import type { TraceFailureKind } from "./trace-failure-kind.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
 
@@ -102,12 +105,45 @@ export function hintTraceStrictTrace(missionPath: string): string {
   return `remove --strict-trace to allow auto line-drift resolution: gapman verify --mission ${missionPath}`;
 }
 
-export function hintTraceAmbiguous(workerLogPath: string, missionPath: string): string {
+export function hintTraceAmbiguous(
+  workerLogPath: string,
+  missionPath: string,
+  traceQuote?: string,
+): string {
+  if (traceQuote !== undefined && traceQuote.trim().length <= 12) {
+    return `trace_quote "${traceQuote.trim()}" matches multiple lines in ${workerLogPath} — append a unique mission-specific line (e.g. "- DoD 1: MSN-… gate passed") and set trace_quote to that full verbatim line in ${missionPath}`;
+  }
   return `disambiguate quotes in ${workerLogPath} or re-run: gapman runtime exec --mission ${missionPath} -- <worker>`;
 }
 
 export function hintTraceMissing(workerLogPath: string): string {
   return `append verbatim trace_quote to ${workerLogPath} from worker flight evidence`;
+}
+
+/** Mission still has legislate stub placeholder in trace_quote (status may already be PASS). */
+export function hintTraceQuoteStillPlaceholder(
+  missionPath: string,
+  workerLogPath: string,
+): string {
+  return `edit ${missionPath}: replace trace_quote placeholder with a verbatim substring from ${workerLogPath} (not the other way around)`;
+}
+
+/** Worker loop after Teacher legislation — trace rows still PENDING. */
+export function hintTracePendingSteps(
+  workerLogPath: string,
+  missionPath: string,
+  gateCommand?: string,
+): string[] {
+  const verifyCmd = `gapman verify --mission ${missionPath}`;
+  const steps = [
+    `eval "$(gapman runtime env --mission ${missionPath})" then execute worker within TMVC`,
+    gateCommand
+      ? `run gate (${gateCommand}); append a unique mission-specific line to ${workerLogPath} (not bare gate output if "OK" appears elsewhere)`
+      : `append a unique mission-specific evidence line to ${workerLogPath}`,
+    `edit ${missionPath}: set trace row status PASS and trace_quote to verbatim substring from ${workerLogPath}`,
+    verifyCmd,
+  ];
+  return steps;
 }
 
 export function hintForbiddenZone(firstPath: string, missionPath: string): string {
@@ -116,4 +152,109 @@ export function hintForbiddenZone(firstPath: string, missionPath: string): strin
 
 export function hintRuntimeHumanSummary(summary: string, errorFile: string): string {
   return `${summary} See ${errorFile} (GXT_LAST_ERROR_FILE).`;
+}
+
+export type VerifyPhase = "git_proof" | "gate" | "trace" | "trace_pending";
+
+export interface VerifyHintContext {
+  root?: string;
+  missionPath: string;
+  msnId?: string;
+  workerLogPath?: string;
+  gateCommand?: string;
+  gitProofMessage?: string;
+  strictTrace?: boolean;
+  /** Typed trace failure — preferred over traceFailureReason for control flow. */
+  traceKind?: TraceFailureKind;
+  /** When set and still the legislate placeholder, emit targeted hint. */
+  traceQuote?: string;
+  /** Legacy string reason — use traceKind when available. */
+  traceFailureReason?: string;
+}
+
+export function hintsForVerifyPhase(phase: VerifyPhase, ctx: VerifyHintContext): {
+  error_code: GxtErrorCode;
+  fix_hints: string[];
+  next_actions: string[];
+} {
+  const mission = ctx.missionPath;
+  const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
+  const verifyCmd = `gapman verify --mission ${mission}`;
+
+  if (phase === "git_proof") {
+    const code = parseGitProofCode(ctx.gitProofMessage ?? "");
+    const gitCtx = {
+      root: ctx.root,
+      missionPath: mission,
+      msnId: ctx.msnId ?? parseMsnIdFromGitProofMessage(ctx.gitProofMessage ?? ""),
+      repoRelMission: mission,
+    };
+    const hint = code ? hintGitProof(code, gitCtx) : verifyCmd;
+    const nextActions =
+      code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
+        ? [hint.split("; ")[0]!, "gapman teacher set \"$(git config user.email)\"", verifyCmd]
+        : ["gapman teacher set \"$(git config user.email)\"", verifyCmd];
+    return {
+      error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
+      fix_hints: [hint],
+      next_actions: nextActions,
+    };
+  }
+
+  if (phase === "gate") {
+    const gate = ctx.gateCommand ?? "<gate>";
+    return {
+      error_code: GXT_ERROR.GATE_FAILED,
+      fix_hints: [hintGate(gate, mission)],
+      next_actions: [`re-run gate: ${gate}`, verifyCmd],
+    };
+  }
+
+  if (phase === "trace_pending") {
+    const steps = hintTracePendingSteps(workerLog, mission, ctx.gateCommand);
+    return {
+      error_code: GXT_ERROR.TRACE_PENDING,
+      fix_hints: steps.slice(0, 3),
+      next_actions: steps,
+    };
+  }
+
+  const traceKind = ctx.traceKind ?? inferTraceKindFromReason(ctx.traceFailureReason ?? "", ctx.traceQuote);
+  const hints: string[] = [];
+  switch (traceKind) {
+    case "ambiguous":
+      hints.push(hintTraceAmbiguous(workerLog, mission, ctx.traceQuote));
+      break;
+    case "placeholder_quote":
+      hints.push(hintTraceQuoteStillPlaceholder(mission, workerLog));
+      break;
+    case "strict_line_drift":
+      hints.push(hintTraceStrictTrace(mission));
+      break;
+    case "quote_missing":
+    case "worker_log_missing":
+    case "empty_quote":
+    case "anchor_mismatch":
+    case "other":
+      hints.push(hintTraceMissing(workerLog));
+      break;
+  }
+
+  const errorCode =
+    traceKind === "ambiguous" ? GXT_ERROR.TRACE_AMBIGUOUS : GXT_ERROR.TRACE_MISSING;
+
+  return {
+    error_code: errorCode,
+    fix_hints: hints,
+    next_actions: [verifyCmd, `gapman verify --mission ${mission} --fix`],
+  };
+}
+
+function inferTraceKindFromReason(reason: string, traceQuote?: string): TraceFailureKind {
+  if (reason.includes("Ambiguous")) return "ambiguous";
+  if (reason.includes("not found verbatim") || reason.includes("WORKER_LOG missing")) {
+    if (traceQuote?.trim() === LEGISLATE_TRACE_PLACEHOLDER) return "placeholder_quote";
+    return "quote_missing";
+  }
+  return "other";
 }

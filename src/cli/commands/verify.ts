@@ -1,59 +1,40 @@
 import { assertMissionGatePresent, parseMissionFile } from "../lib/mission-parser.js";
-import { isLegislativeStub } from "../lib/mission-legislative-stub.js";
-import { CLI_NAME } from "../lib/constants.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { reportUserFacingError } from "../lib/user-error.js";
-import {
-  runVerifyBreakGlass,
-  runVerifyGate,
-  runVerifyGitProof,
-  runVerifyTrace,
-} from "../lib/verify-flow.js";
+import { runVerifyBreakGlass, runVerifyPhasesFromEngine } from "../lib/verify-flow.js";
+import { runVerifyWithFix } from "../lib/verify-repair.js";
 import type { VerifyOptions } from "../lib/verify-types.js";
+import { evaluateVerifyPhases } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
+import { reportUserFacingError } from "../lib/user-error.js";
 
 export type { VerifyOptions } from "../lib/verify-types.js";
 
-export function runVerify(options: VerifyOptions): void {
+export async function runVerify(options: VerifyOptions): Promise<void> {
   try {
-    runVerifyInner(options);
+    const { root } = loadWorkspace();
+    const mission = parseMissionFile(root, options.mission);
+    const missionArg = options.mission;
+
+    if (options.breakGlass === true) {
+      runVerifyBreakGlass(root, mission, options);
+      return;
+    }
+
+    assertMissionGatePresent(mission);
+
+    if (options.fix === true) {
+      await runVerifyWithFix(root, mission, missionArg, options);
+      return;
+    }
+
+    runVerifyPhasesFromEngine(root, mission, missionArg, options);
   } catch (e) {
     reportUserFacingError(e);
   }
 }
 
-function runVerifyInner(options: VerifyOptions): void {
+/** Exposed for tests that need silent phase evaluation without fix wrapper. */
+export function evaluateVerifyForMission(options: VerifyOptions) {
   const { root } = loadWorkspace();
   const mission = parseMissionFile(root, options.mission);
-  const missionArg = options.mission;
-
-  if (options.breakGlass === true) {
-    runVerifyBreakGlass(root, mission, options);
-    return;
-  }
-
-  assertMissionGatePresent(mission);
-  if (runVerifyGitProof(root, mission) === null) return;
-
-  if (options.prePush === true && isLegislativeStub(mission)) {
-    logInfo(
-      `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,
-    );
-    return;
-  }
-
-  if (!runVerifyGate(root, mission, missionArg, options)) return;
-
-  const hasPendingRows = mission.traceRows.some((row) =>
-    row.status.toUpperCase().includes("PENDING"),
-  );
-  if (hasPendingRows) {
-    logError(
-      `${CLI_NAME} verify: trace rows still PENDING — worker must execute, append WORKER_LOG evidence, and set PASS before full verify`,
-    );
-    setExitCode(1);
-    return;
-  }
-
-  runVerifyTrace(root, mission, missionArg, options);
+  return evaluateVerifyPhases(root, mission, options);
 }

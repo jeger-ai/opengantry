@@ -19,6 +19,7 @@ export interface DoctorCheckResult {
   lines: DoctorLine[];
   hasFail: boolean;
   nextStep: string | null;
+  teacherAllowlistUnset: boolean;
 }
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
@@ -50,7 +51,7 @@ function appendTeacherAllowlistChecks(
   root: string,
   lines: DoctorLine[],
   nextStep: string | null,
-): string | null {
+): { nextStep: string | null; teacherAllowlistUnset: boolean } {
   const teacherIdentity = resolveTeacherEmails(root);
   if (teacherIdentity.emails.length > 0) {
     lines.push({
@@ -64,11 +65,11 @@ function appendTeacherAllowlistChecks(
           "Teacher identity from GAPMAN_TEACHER_EMAILS env — prefer repo-local .gitagent/foreman/TEACHER.allowlist.local when working across projects",
       });
     }
-  } else {
-    lines.push({ level: "warn", message: "Teacher allowlist unset — verify git-proof will fail" });
-    nextStep = pickNextStep(nextStep, 'gapman teacher set "$(git config user.email)"');
+    return { nextStep, teacherAllowlistUnset: false };
   }
-  return nextStep;
+  lines.push({ level: "warn", message: "Teacher allowlist unset — verify git-proof will fail" });
+  nextStep = pickNextStep(nextStep, 'gapman teacher set "$(git config user.email)"');
+  return { nextStep, teacherAllowlistUnset: true };
 }
 
 function appendBypassChecks(root: string, lines: DoctorLine[]): void {
@@ -139,6 +140,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const lines: DoctorLine[] = [{ level: "ok", message: `repo: ${root}` }];
   let hasFail = false;
   let nextStep: string | null = null;
+  let teacherAllowlistUnset = false;
 
   const skillSync = checkSkillManifestSync(root, manifest);
   if (skillSync.ok) {
@@ -149,7 +151,9 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     nextStep = pickNextStep(nextStep, "gapman check");
   }
 
-  nextStep = appendTeacherAllowlistChecks(root, lines, nextStep);
+  const teacherResult = appendTeacherAllowlistChecks(root, lines, nextStep);
+  nextStep = teacherResult.nextStep;
+  teacherAllowlistUnset = teacherResult.teacherAllowlistUnset;
   appendBypassChecks(root, lines);
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);
@@ -160,5 +164,5 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     nextStep = pickNextStep(nextStep, "gapman init");
   }
 
-  return { lines, hasFail, nextStep };
+  return { lines, hasFail, nextStep, teacherAllowlistUnset };
 }

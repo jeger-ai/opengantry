@@ -1,4 +1,4 @@
-# Adoption Runbook (v0.8.1 specimen)
+# Adoption Runbook (v0.9.0 specimen)
 
 This runbook documents the OpenGantry specimen flow for adopters testing `gapman` locally.
 
@@ -6,14 +6,21 @@ This runbook documents the OpenGantry specimen flow for adopters testing `gapman
 
 ```bash
 gapman init          # interactive wizard on TTY; auto-default in CI (no hang)
-export GAPMAN_TEACHER_EMAILS="$(git config user.email)"
+gapman teacher set "$(git config user.email)"
 gapman doctor        # detects wired agent files + stale paths from compat manifest
-# IDE chat: Mission Architect → one copy-paste legislate command (see .gitagent/teacher/MISSION-ARCHITECT.md)
-gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"
+gapman start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
 # Teacher: git commit -m "[MSN-0001] legislate …" including the mission file
 eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
-# Headless / CI: gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- <agent-command>
-gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
+gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --fix
+gapman status --json --verbose
+```
+
+First time? Run **`gapman onboarding`** for a guided walkthrough (strict checks unchanged).
+
+Legacy step-by-step (equivalent):
+
+```bash
+gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"
 ```
 
 `gapman init` composes full per-tool recipes into `docs/INTEGRATIONS.md` (or your chosen path) for selected IDEs. Non-interactive: `gapman init --yes` or `gapman init --ides cursor,claude-code --no-ci`.
@@ -41,8 +48,9 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 | **v0.7.0** | `gapman runtime env`, `gapman legislate` (YAML mission scaffolding) |
 | **v0.8.0** | Context-aware **Fix:** hints, auto fuzzy trace (line-drift resolution), scoped **pre-push** verify for legislative stubs |
 | **v0.8.1** | `gapman init` wizard, `gapman doctor`, `gapman metrics`, `gapman arch pointer` / `arch cred`, integration compat manifest, `gapman runtime exec` orchestration |
+| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes, MCP `fix_hints` / `gxt_start_orchestration` |
 
-- Substrate law remains `MANIFEST.json` `schema_version` **0.5.0**; CLI is **0.8.1**.
+- Substrate law remains `MANIFEST.json` `schema_version` **0.5.0**; CLI is **0.9.0**.
 - Package publishing remains disabled (`package.json` is `private: true`).
 
 ## Hooks (fast, scoped)

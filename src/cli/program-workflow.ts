@@ -3,6 +3,7 @@ import { runLegislate } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
 import { readStdinIfEmpty } from "./commands/triage.js";
+import { parseAudience } from "./lib/audience-output.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 export function registerWorkflowCommands(program: Command): void {
@@ -65,8 +66,11 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
     .option("--commit <sha>", "Git commit to attach break-glass note (default HEAD)")
     .option("--audit-commit", "Write break-glass audit as empty commit instead of git note")
+    .option("--fix", "Interactive remediation menu on verify failure")
+    .option("--non-interactive", "With --fix: print structured hints without prompts")
+    .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
     .action(
-      (opts: {
+      async (opts: {
         mission: string;
         workerLog?: string;
         cwd?: string;
@@ -77,8 +81,11 @@ export function registerWorkflowCommands(program: Command): void {
         reason?: string;
         commit?: string;
         auditCommit?: boolean;
+        fix?: boolean;
+        nonInteractive?: boolean;
+        audience?: string;
       }) => {
-        runVerify({
+        await runVerify({
           mission: opts.mission,
           workerLog: opts.workerLog,
           cwd: opts.cwd,
@@ -89,6 +96,9 @@ export function registerWorkflowCommands(program: Command): void {
           breakGlassReason: opts.reason,
           breakGlassCommit: opts.commit,
           auditCommit: opts.auditCommit,
+          fix: opts.fix,
+          fixNonInteractive: opts.nonInteractive,
+          audience: parseAudience(opts.audience),
         });
       },
     );

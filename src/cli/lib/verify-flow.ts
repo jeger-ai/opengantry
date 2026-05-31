@@ -9,17 +9,22 @@ import {
   hintGate,
   hintTraceAmbiguous,
   hintTraceMissing,
+  hintTraceQuoteStillPlaceholder,
   hintTraceStrictTrace,
   logFixHint,
 } from "./fix-hints.js";
+import { GXT_ERROR } from "./gxt-error-codes.js";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import { logError, logInfo, setExitCode } from "./cli-io.js";
 import { reportUserFacingError } from "./user-error.js";
-import { gatePassed, runGate } from "./gate.js";
 import type { ParsedMission } from "./types.js";
-import { isLineDriftFailure } from "./worker-log-line-map.js";
-import { defaultWorkerLogPath, verifyTraceRows } from "./trace.js";
+import {
+  evaluateVerifyPhases,
+  type VerifyPhaseFailure,
+  type VerifyPhaseSuccess,
+} from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-types.js";
+import { filterNextStepsForAudience, audienceSectionTitle } from "./audience-output.js";
 
 export function runVerifyBreakGlass(
   root: string,
@@ -53,6 +58,7 @@ export function runVerifyBreakGlass(
   }
 }
 
+/** @deprecated Prefer evaluateVerifyPhases — kept for callers that only need git-proof logging. */
 export function runVerifyGitProof(root: string, mission: ParsedMission): string | null {
   try {
     const proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
@@ -66,68 +72,160 @@ export function runVerifyGitProof(root: string, mission: ParsedMission): string 
   }
 }
 
+export function emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {
+  logInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${result.proofMsnId})`);
+  if (result.outcome === "pre_push_stub") {
+    logInfo(
+      `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,
+    );
+    return;
+  }
+  logInfo(`${CLI_NAME} verify: gate passed`);
+  for (const warning of result.traceWarnings) {
+    const tag = warning.autoResolved ? "auto-resolved" : "drift";
+    logInfo(
+      `  trace: line ${tag} DoD ${warning.row.dodId} — declared ${String(warning.declaredLine)}, found ${String(warning.foundLine)}`,
+    );
+  }
+  logInfo(`${CLI_NAME} verify: trace mapping OK (${result.workerLogPath})`);
+}
+
+function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string, options: VerifyOptions): void {
+  switch (failure.phase) {
+    case "git_proof":
+      reportUserFacingError(new Error(failure.message));
+      return;
+    case "gate":
+      logError(`[${GXT_ERROR.GATE_FAILED}] verify: GATE FAILED`);
+      if (failure.gateStdout !== undefined) logError("--- stdout ---\n" + failure.gateStdout);
+      if (failure.gateStderr !== undefined) logError("--- stderr ---\n" + failure.gateStderr);
+      if (failure.gateExitCode !== undefined) logError(`exit code: ${String(failure.gateExitCode)}`);
+      logFixHint(hintGate(failure.gateCommand ?? "<gate>", missionArg));
+      setExitCode(failure.exitCode);
+      return;
+    case "trace_pending":
+      logError(
+        `[${GXT_ERROR.TRACE_PENDING}] ${CLI_NAME} verify: legislative stub complete (git-proof OK) — worker must execute, append ${failure.workerLogPath}, set trace row PASS, then re-verify`,
+      );
+      setExitCode(failure.exitCode);
+      return;
+    case "trace": {
+      const errorCode =
+        failure.traceKind === "ambiguous" ? GXT_ERROR.TRACE_AMBIGUOUS : GXT_ERROR.TRACE_MISSING;
+      logError(`[${errorCode}] verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)`);
+      logError(`  DoD trace failure: ${failure.traceReason ?? failure.message}`);
+      switch (failure.traceKind) {
+        case "ambiguous":
+          logFixHint(
+            hintTraceAmbiguous(failure.workerLogPath, missionArg, failure.traceQuote),
+          );
+          break;
+        case "placeholder_quote":
+          logFixHint(hintTraceQuoteStillPlaceholder(missionArg, failure.workerLogPath));
+          break;
+        case "strict_line_drift":
+          logFixHint(hintTraceStrictTrace(missionArg));
+          break;
+        case "quote_missing":
+        case "worker_log_missing":
+        case "empty_quote":
+        case "anchor_mismatch":
+        case "other":
+        default:
+          logFixHint(hintTraceMissing(failure.workerLogPath));
+          break;
+      }
+      setExitCode(failure.exitCode);
+    }
+  }
+}
+
+export function emitVerifyPhaseResult(
+  result: VerifyPhaseSuccess | VerifyPhaseFailure,
+  missionArg: string,
+  options: VerifyOptions,
+): boolean {
+  if (!result.ok) {
+    emitVerifyFailure(result, missionArg, options);
+    return false;
+  }
+  emitVerifySuccess(result, missionArg);
+  return true;
+}
+
+/** Run full verify (after gate present) using shared phase engine. Returns true on success. */
+export function runVerifyPhasesFromEngine(
+  root: string,
+  mission: ParsedMission,
+  missionArg: string,
+  options: VerifyOptions,
+): boolean {
+  const result = evaluateVerifyPhases(root, mission, options);
+  return emitVerifyPhaseResult(result, missionArg, options);
+}
+
+/** @deprecated Prefer runVerifyPhasesFromEngine gate phase. */
 export function runVerifyGate(
   root: string,
   mission: ParsedMission,
   missionArg: string,
   options: VerifyOptions,
 ): boolean {
-  const gate = mission.gate!;
-  const workDir = options.cwd ? path.resolve(root, options.cwd) : root;
-  const gateResult = runGate(workDir, gate);
-  if (!gatePassed(gateResult, gate.successSubstring)) {
-    logError("verify: GATE FAILED");
-    logError("--- stdout ---\n" + gateResult.stdout);
-    logError("--- stderr ---\n" + gateResult.stderr);
-    logError(`exit code: ${String(gateResult.exitCode)}`);
-    logFixHint(hintGate(gate.command, missionArg));
-    setExitCode(1);
+  const result = evaluateVerifyPhases(root, mission, options);
+  if (!result.ok && result.phase === "gate") {
+    emitVerifyFailure(result, missionArg, options);
+    return false;
+  }
+  if (!result.ok) {
+    emitVerifyFailure(result, missionArg, options);
     return false;
   }
   logInfo(`${CLI_NAME} verify: gate passed`);
   return true;
 }
 
+/** @deprecated Prefer runVerifyPhasesFromEngine trace phase. */
 export function runVerifyTrace(
   root: string,
   mission: ParsedMission,
   missionArg: string,
   options: VerifyOptions,
 ): boolean {
-  const workerLogPath = options.workerLog
-    ? path.resolve(root, options.workerLog)
-    : defaultWorkerLogPath(root);
-
-  const traceResult = verifyTraceRows(workerLogPath, mission.traceRows, {
-    fuzzyNumericAnchor: options.fuzzyTrace === true,
-    strictTrace: options.strictTrace === true,
-  });
-
-  if (traceResult.failures.length > 0) {
-    logError("verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)");
-    for (const failure of traceResult.failures) {
-      logError(`  DoD ${failure.row.dodId}: ${failure.reason}`);
-      if (failure.reason.includes("Ambiguous")) {
-        logFixHint(hintTraceAmbiguous(workerLogPath, missionArg));
-      } else if (
-        failure.reason.includes("not found verbatim") ||
-        failure.reason.includes("WORKER_LOG missing")
-      ) {
-        logFixHint(hintTraceMissing(workerLogPath));
-      } else if (options.strictTrace && isLineDriftFailure(failure.reason)) {
-        logFixHint(hintTraceStrictTrace(missionArg));
-      }
-    }
-    setExitCode(1);
+  const result = evaluateVerifyPhases(root, mission, options);
+  if (!result.ok) {
+    emitVerifyFailure(result, missionArg, options);
     return false;
   }
-
-  for (const warning of traceResult.warnings) {
-    const tag = warning.autoResolved ? "auto-resolved" : "drift";
-    logInfo(
-      `  trace: line ${tag} DoD ${warning.row.dodId} — declared ${String(warning.declaredLine)}, found ${String(warning.foundLine)}`,
-    );
-  }
-  logInfo(`${CLI_NAME} verify: trace mapping OK (${workerLogPath})`);
+  emitVerifySuccess(result, missionArg);
   return true;
+}
+
+export function verifyFailureToHintContext(
+  failure: VerifyPhaseFailure,
+  missionArg: string,
+  options: VerifyOptions,
+  root?: string,
+) {
+  return {
+    root,
+    missionPath: missionArg,
+    workerLogPath: failure.workerLogPath,
+    gateCommand: failure.gateCommand,
+    gitProofMessage: failure.gitProofMessage,
+    traceKind: failure.traceKind,
+    traceQuote: failure.traceQuote,
+    strictTrace: options.strictTrace,
+  };
+}
+
+export function emitAudienceNextSteps(steps: string[], options: VerifyOptions): void {
+  const filtered = filterNextStepsForAudience(options.audience, steps);
+  const section = audienceSectionTitle(options.audience);
+  if (section && filtered.length > 0) {
+    logInfo(`${section}:`);
+    for (const step of filtered) logInfo(`  ${step}`);
+  } else {
+    logInfo("next actions:");
+    for (const action of filtered) logInfo(`  ${action}`);
+  }
 }

@@ -1,0 +1,51 @@
+/** Stable machine-readable error codes for CLI JSON and MCP payloads. */
+export const GXT_ERROR = {
+  MISSION_UNSTAMPED: "GXT_MISSION_UNSTAMPED",
+  GATE_FAILED: "GXT_GATE_FAILED",
+  TRACE_MISSING: "GXT_TRACE_MISSING",
+  TRACE_AMBIGUOUS: "GXT_TRACE_AMBIGUOUS",
+  TRACE_PENDING: "GXT_TRACE_PENDING",
+  FORBIDDEN_ZONE: "GXT_FORBIDDEN_ZONE",
+  RUNTIME_EXEC_FAILED: "GXT_RUNTIME_EXEC_FAILED",
+  VERIFY_FAILED: "GXT_VERIFY_FAILED",
+} as const;
+
+export type GxtErrorCode = (typeof GXT_ERROR)[keyof typeof GXT_ERROR];
+
+const GIT_PROOF_TO_GXT: Record<string, GxtErrorCode> = {
+  MISSION_MISSING_MSN: GXT_ERROR.MISSION_UNSTAMPED,
+  TEACHER_IDENTITY_UNCONFIGURED: GXT_ERROR.MISSION_UNSTAMPED,
+  NO_MSN_COMMITS: GXT_ERROR.MISSION_UNSTAMPED,
+  NO_TEACHER_MSN_COMMIT: GXT_ERROR.MISSION_UNSTAMPED,
+  MISSION_FILE_NOT_MODIFIED_BY_TEACHER: GXT_ERROR.MISSION_UNSTAMPED,
+  MISSION_OUTSIDE_MISSIONS_DIR: GXT_ERROR.MISSION_UNSTAMPED,
+  MISSION_NO_GATE: GXT_ERROR.MISSION_UNSTAMPED,
+};
+
+/** Explicit mapping for non-git-proof GapmanUserError codes. */
+const GAPMAN_USER_ERROR_TO_GXT: Record<string, GxtErrorCode> = {
+  UPGRADE_STAGING_MISSING: GXT_ERROR.VERIFY_FAILED,
+  UPGRADE_EMPTY_MANIFEST: GXT_ERROR.VERIFY_FAILED,
+  UPGRADE_STAGING_DRIFT: GXT_ERROR.VERIFY_FAILED,
+  UPGRADE_HASH_MISMATCH: GXT_ERROR.VERIFY_FAILED,
+  MISSION_NOT_FOUND: GXT_ERROR.VERIFY_FAILED,
+  UPGRADE_MISSION_REQUIRED: GXT_ERROR.VERIFY_FAILED,
+  UPGRADE_INVALID_MISSION: GXT_ERROR.VERIFY_FAILED,
+};
+
+export function mapGitProofCodeToGxt(code: string): GxtErrorCode {
+  return GIT_PROOF_TO_GXT[code] ?? GXT_ERROR.MISSION_UNSTAMPED;
+}
+
+export function gxtCodeFromGapmanUserError(code: string): GxtErrorCode {
+  if (code.startsWith("GXT_")) return code as GxtErrorCode;
+  if (code in GIT_PROOF_TO_GXT) return mapGitProofCodeToGxt(code);
+  const mapped = GAPMAN_USER_ERROR_TO_GXT[code];
+  if (mapped) return mapped;
+  return GXT_ERROR.VERIFY_FAILED;
+}
+
+/** @internal Test helper — returns undefined when code would fall through to VERIFY_FAILED unexpectedly. */
+export function isKnownGapmanUserErrorCode(code: string): boolean {
+  return code.startsWith("GXT_") || code in GIT_PROOF_TO_GXT || code in GAPMAN_USER_ERROR_TO_GXT;
+}

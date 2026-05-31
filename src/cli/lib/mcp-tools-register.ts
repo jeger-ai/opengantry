@@ -9,6 +9,7 @@ import {
   handleResolveMission,
 } from "./mcp-legislation.js";
 import { handleRuntimeEnv, handleRuntimeExec, handleVerify } from "./mcp-runtime.js";
+import { handleStartOrchestration } from "./mcp-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
@@ -113,6 +114,22 @@ function registerRuntimeTools(server: McpServer): void {
     "Read machine-oriented remediation from GXT_LAST_ERROR_FILE.",
     {},
     async () => jsonText(handleLastError()),
+  );
+
+  server.tool(
+    "gxt_start_orchestration",
+    "Goal-first flow: triage → legislate stub → optional pin/runtime env hints.",
+    {
+      intent: z.string().describe("What the developer wants to build"),
+      msn_id: z.string().optional().describe("Mission id (auto-suggested when omitted)"),
+      skill_key: z.string().optional().describe("Override manifest skill_key"),
+      gate_command: z.string().optional().describe("Deterministic gate command"),
+      gate_success_substring: z.string().optional().describe("Gate success substring"),
+      pin_if_needed: z.boolean().optional().describe("Pin mission after scaffold"),
+      emit_runtime_env: z.boolean().optional().describe("Include gxt_runtime_env payload"),
+      write_mission: z.boolean().optional().describe("Write mission YAML (default true)"),
+    },
+    async (args) => jsonText(handleStartOrchestration(args)),
   );
 }
 
