@@ -199,3 +199,17 @@ export function assertTeacherMissionProof(
 
   return msnId;
 }
+
+/** Non-throwing git-proof check for onboarding/tutorial flows. */
+export function teacherMissionStamped(
+  root: string,
+  missionAbsolutePath: string,
+  options?: TeacherMissionProofOptions,
+): boolean {
+  try {
+    assertTeacherMissionProof(root, missionAbsolutePath, options);
+    return true;
+  } catch {
+    return false;
+  }
+}

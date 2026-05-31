@@ -10,7 +10,7 @@ export const TUTORIAL_INTENT =
 export function tutorialTeacherStampBlock(missionPath: string, msnId: string): string {
   return [
     `git add ${missionPath}`,
-    `git commit -m "[${msnId}] legislate tutorial mission"`,
+    `git commit -m "[${msnId}] legislate mission"`,
     "gapman teacher set \"$(git config user.email)\"  # if not already configured",
   ].join("\n  ");
 }

@@ -25,4 +25,5 @@ test("init tutorial: MSN-9001 band and Teacher stamp block", () => {
   assert.equal(TUTORIAL_MSN_ID, "MSN-9001");
   assert.match(tutorialTeacherStampBlock(mission, TUTORIAL_MSN_ID), /git add/);
   assert.match(tutorialTeacherStampBlock(mission, TUTORIAL_MSN_ID), /\[MSN-9001\]/);
+  assert.match(tutorialTeacherStampBlock(mission, TUTORIAL_MSN_ID), /legislate mission/);
 });
