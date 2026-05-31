@@ -43,19 +43,16 @@ export function resolveWorkerLogPath(root: string, options: VerifyOptions): stri
   return options.workerLog ? path.resolve(root, options.workerLog) : defaultWorkerLogPath(root);
 }
 
-/** Single source of truth for verify phase evaluation (no logging or exit codes). */
-export function evaluateVerifyPhases(
+function evaluateGitProof(
   root: string,
   mission: ParsedMission,
-  options: VerifyOptions,
-): VerifyPhaseResult {
-  const workerLogPath = resolveWorkerLogPath(root, options);
-
-  let proofMsnId: string;
+  workerLogPath: string,
+): VerifyPhaseResult | { proofMsnId: string } {
   try {
-    proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
+    const proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
       msnId: mission.msnId ?? undefined,
     });
+    return { proofMsnId };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return {
@@ -67,34 +64,35 @@ export function evaluateVerifyPhases(
       gitProofMessage: message,
     };
   }
+}
 
-  if (options.prePush === true && isLegislativeStub(mission)) {
-    return {
-      ok: true,
-      outcome: "pre_push_stub",
-      proofMsnId,
-      workerLogPath,
-      traceWarnings: [],
-    };
-  }
-
+function evaluateGatePhase(
+  root: string,
+  mission: ParsedMission,
+  options: VerifyOptions,
+  workerLogPath: string,
+): VerifyPhaseFailure | null {
   const gate = mission.gate!;
-  const workDir = resolveGateWorkDir(root, options);
-  const gateResult = runGate(workDir, gate);
-  if (!gatePassed(gateResult, gate.successSubstring)) {
-    return {
-      ok: false,
-      phase: "gate",
-      message: "GATE FAILED",
-      exitCode: 1,
-      workerLogPath,
-      gateCommand: gate.command,
-      gateStdout: gateResult.stdout,
-      gateStderr: gateResult.stderr,
-      gateExitCode: gateResult.exitCode ?? undefined,
-    };
-  }
+  const gateResult = runGate(resolveGateWorkDir(root, options), gate);
+  if (gatePassed(gateResult, gate.successSubstring)) return null;
+  return {
+    ok: false,
+    phase: "gate",
+    message: "GATE FAILED",
+    exitCode: 1,
+    workerLogPath,
+    gateCommand: gate.command,
+    gateStdout: gateResult.stdout,
+    gateStderr: gateResult.stderr,
+    gateExitCode: gateResult.exitCode ?? undefined,
+  };
+}
 
+function evaluateTracePhase(
+  mission: ParsedMission,
+  options: VerifyOptions,
+  workerLogPath: string,
+): VerifyPhaseFailure | { warnings: TraceVerifyWarning[] } {
   const hasPending = mission.traceRows.some((row) => row.status.toUpperCase().includes("PENDING"));
   if (hasPending) {
     return {
@@ -115,28 +113,48 @@ export function evaluateVerifyPhases(
 
   if (traceResult.failures.length > 0) {
     const first = traceResult.failures[0]!;
-    const traceKind = classifyTraceFailure(
-      first.reason,
-      first.row.traceQuote,
-      options.strictTrace === true,
-    );
     return {
       ok: false,
       phase: "trace",
       message: first.reason,
       exitCode: 1,
       workerLogPath,
-      traceKind,
+      traceKind: classifyTraceFailure(first.reason, first.row.traceQuote, options.strictTrace === true),
       traceQuote: first.row.traceQuote,
       traceReason: first.reason,
     };
   }
+
+  return { warnings: traceResult.warnings };
+}
+
+/** Single source of truth for verify phase evaluation (no logging or exit codes). */
+export function evaluateVerifyPhases(
+  root: string,
+  mission: ParsedMission,
+  options: VerifyOptions,
+): VerifyPhaseResult {
+  const workerLogPath = resolveWorkerLogPath(root, options);
+
+  const proof = evaluateGitProof(root, mission, workerLogPath);
+  if ("ok" in proof) return proof;
+  const { proofMsnId } = proof;
+
+  if (options.prePush === true && isLegislativeStub(mission)) {
+    return { ok: true, outcome: "pre_push_stub", proofMsnId, workerLogPath, traceWarnings: [] };
+  }
+
+  const gateFailure = evaluateGatePhase(root, mission, options, workerLogPath);
+  if (gateFailure) return gateFailure;
+
+  const trace = evaluateTracePhase(mission, options, workerLogPath);
+  if ("ok" in trace) return trace;
 
   return {
     ok: true,
     outcome: "full",
     proofMsnId,
     workerLogPath,
-    traceWarnings: traceResult.warnings,
+    traceWarnings: trace.warnings,
   };
 }

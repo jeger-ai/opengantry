@@ -79,7 +79,7 @@ export async function runVerifyWithFix(
 ): Promise<void> {
   const result = evaluateVerifyPhases(root, mission, options);
   if (result.ok) {
-    emitVerifyPhaseResult(result, missionArg, options);
+    emitVerifyPhaseResult(result, missionArg);
     return;
   }
 

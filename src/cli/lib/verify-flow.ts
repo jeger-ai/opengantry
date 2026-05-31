@@ -90,7 +90,7 @@ export function emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: strin
   logInfo(`${CLI_NAME} verify: trace mapping OK (${result.workerLogPath})`);
 }
 
-function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string, options: VerifyOptions): void {
+function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string): void {
   switch (failure.phase) {
     case "git_proof":
       reportUserFacingError(new Error(failure.message));
@@ -143,10 +143,9 @@ function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string, opti
 export function emitVerifyPhaseResult(
   result: VerifyPhaseSuccess | VerifyPhaseFailure,
   missionArg: string,
-  options: VerifyOptions,
 ): boolean {
   if (!result.ok) {
-    emitVerifyFailure(result, missionArg, options);
+    emitVerifyFailure(result, missionArg);
     return false;
   }
   emitVerifySuccess(result, missionArg);
@@ -161,7 +160,7 @@ export function runVerifyPhasesFromEngine(
   options: VerifyOptions,
 ): boolean {
   const result = evaluateVerifyPhases(root, mission, options);
-  return emitVerifyPhaseResult(result, missionArg, options);
+  return emitVerifyPhaseResult(result, missionArg);
 }
 
 /** @deprecated Prefer runVerifyPhasesFromEngine gate phase. */
@@ -173,11 +172,11 @@ export function runVerifyGate(
 ): boolean {
   const result = evaluateVerifyPhases(root, mission, options);
   if (!result.ok && result.phase === "gate") {
-    emitVerifyFailure(result, missionArg, options);
+    emitVerifyFailure(result, missionArg);
     return false;
   }
   if (!result.ok) {
-    emitVerifyFailure(result, missionArg, options);
+    emitVerifyFailure(result, missionArg);
     return false;
   }
   logInfo(`${CLI_NAME} verify: gate passed`);
@@ -193,7 +192,7 @@ export function runVerifyTrace(
 ): boolean {
   const result = evaluateVerifyPhases(root, mission, options);
   if (!result.ok) {
-    emitVerifyFailure(result, missionArg, options);
+    emitVerifyFailure(result, missionArg);
     return false;
   }
   emitVerifySuccess(result, missionArg);

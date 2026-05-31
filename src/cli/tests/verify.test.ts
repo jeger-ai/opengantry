@@ -14,7 +14,7 @@ import {
   writeBypassAnchor,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { captureConsole, captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
 
 test("runVerify: passes with Teacher git-proof in mini repo", async () => {
   const ogRoot = getRepoRoot();

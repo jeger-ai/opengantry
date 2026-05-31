@@ -1,4 +1,4 @@
-import { logError, logInfo, setExitCode } from "./cli-io.js";
+import { logError, setExitCode } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
 import { gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
 

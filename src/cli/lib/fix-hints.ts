@@ -177,77 +177,114 @@ export function hintsForVerifyPhase(phase: VerifyPhase, ctx: VerifyHintContext):
   fix_hints: string[];
   next_actions: string[];
 } {
+  switch (phase) {
+    case "git_proof":
+      return hintsForGitProofPhase(ctx);
+    case "gate":
+      return hintsForGatePhase(ctx);
+    case "trace_pending":
+      return hintsForTracePendingPhase(ctx);
+    case "trace":
+      return hintsForTracePhase(ctx);
+  }
+}
+
+function hintsForGitProofPhase(ctx: VerifyHintContext): {
+  error_code: GxtErrorCode;
+  fix_hints: string[];
+  next_actions: string[];
+} {
+  const mission = ctx.missionPath;
+  const verifyCmd = `gapman verify --mission ${mission}`;
+  const code = parseGitProofCode(ctx.gitProofMessage ?? "");
+  const gitCtx = {
+    root: ctx.root,
+    missionPath: mission,
+    msnId: ctx.msnId ?? parseMsnIdFromGitProofMessage(ctx.gitProofMessage ?? ""),
+    repoRelMission: mission,
+  };
+  const hint = code ? hintGitProof(code, gitCtx) : verifyCmd;
+  const nextActions =
+    code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
+      ? [hint.split("; ")[0]!, "gapman teacher set \"$(git config user.email)\"", verifyCmd]
+      : ["gapman teacher set \"$(git config user.email)\"", verifyCmd];
+  return {
+    error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
+    fix_hints: [hint],
+    next_actions: nextActions,
+  };
+}
+
+function hintsForGatePhase(ctx: VerifyHintContext): {
+  error_code: GxtErrorCode;
+  fix_hints: string[];
+  next_actions: string[];
+} {
+  const mission = ctx.missionPath;
+  const verifyCmd = `gapman verify --mission ${mission}`;
+  const gate = ctx.gateCommand ?? "<gate>";
+  return {
+    error_code: GXT_ERROR.GATE_FAILED,
+    fix_hints: [hintGate(gate, mission)],
+    next_actions: [`re-run gate: ${gate}`, verifyCmd],
+  };
+}
+
+function hintsForTracePendingPhase(ctx: VerifyHintContext): {
+  error_code: GxtErrorCode;
+  fix_hints: string[];
+  next_actions: string[];
+} {
+  const mission = ctx.missionPath;
+  const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
+  const steps = hintTracePendingSteps(workerLog, mission, ctx.gateCommand);
+  return {
+    error_code: GXT_ERROR.TRACE_PENDING,
+    fix_hints: steps.slice(0, 3),
+    next_actions: steps,
+  };
+}
+
+function hintsForTracePhase(ctx: VerifyHintContext): {
+  error_code: GxtErrorCode;
+  fix_hints: string[];
+  next_actions: string[];
+} {
   const mission = ctx.missionPath;
   const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
   const verifyCmd = `gapman verify --mission ${mission}`;
-
-  if (phase === "git_proof") {
-    const code = parseGitProofCode(ctx.gitProofMessage ?? "");
-    const gitCtx = {
-      root: ctx.root,
-      missionPath: mission,
-      msnId: ctx.msnId ?? parseMsnIdFromGitProofMessage(ctx.gitProofMessage ?? ""),
-      repoRelMission: mission,
-    };
-    const hint = code ? hintGitProof(code, gitCtx) : verifyCmd;
-    const nextActions =
-      code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
-        ? [hint.split("; ")[0]!, "gapman teacher set \"$(git config user.email)\"", verifyCmd]
-        : ["gapman teacher set \"$(git config user.email)\"", verifyCmd];
-    return {
-      error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
-      fix_hints: [hint],
-      next_actions: nextActions,
-    };
-  }
-
-  if (phase === "gate") {
-    const gate = ctx.gateCommand ?? "<gate>";
-    return {
-      error_code: GXT_ERROR.GATE_FAILED,
-      fix_hints: [hintGate(gate, mission)],
-      next_actions: [`re-run gate: ${gate}`, verifyCmd],
-    };
-  }
-
-  if (phase === "trace_pending") {
-    const steps = hintTracePendingSteps(workerLog, mission, ctx.gateCommand);
-    return {
-      error_code: GXT_ERROR.TRACE_PENDING,
-      fix_hints: steps.slice(0, 3),
-      next_actions: steps,
-    };
-  }
-
-  const traceKind = ctx.traceKind ?? inferTraceKindFromReason(ctx.traceFailureReason ?? "", ctx.traceQuote);
-  const hints: string[] = [];
-  switch (traceKind) {
-    case "ambiguous":
-      hints.push(hintTraceAmbiguous(workerLog, mission, ctx.traceQuote));
-      break;
-    case "placeholder_quote":
-      hints.push(hintTraceQuoteStillPlaceholder(mission, workerLog));
-      break;
-    case "strict_line_drift":
-      hints.push(hintTraceStrictTrace(mission));
-      break;
-    case "quote_missing":
-    case "worker_log_missing":
-    case "empty_quote":
-    case "anchor_mismatch":
-    case "other":
-      hints.push(hintTraceMissing(workerLog));
-      break;
-  }
-
+  const traceKind =
+    ctx.traceKind ?? inferTraceKindFromReason(ctx.traceFailureReason ?? "", ctx.traceQuote);
+  const hints: string[] = [hintForTraceKind(traceKind, workerLog, mission, ctx.traceQuote)];
   const errorCode =
     traceKind === "ambiguous" ? GXT_ERROR.TRACE_AMBIGUOUS : GXT_ERROR.TRACE_MISSING;
-
   return {
     error_code: errorCode,
     fix_hints: hints,
     next_actions: [verifyCmd, `gapman verify --mission ${mission} --fix`],
   };
+}
+
+function hintForTraceKind(
+  traceKind: TraceFailureKind,
+  workerLog: string,
+  mission: string,
+  traceQuote?: string,
+): string {
+  switch (traceKind) {
+    case "ambiguous":
+      return hintTraceAmbiguous(workerLog, mission, traceQuote);
+    case "placeholder_quote":
+      return hintTraceQuoteStillPlaceholder(mission, workerLog);
+    case "strict_line_drift":
+      return hintTraceStrictTrace(mission);
+    case "quote_missing":
+    case "worker_log_missing":
+    case "empty_quote":
+    case "anchor_mismatch":
+    case "other":
+      return hintTraceMissing(workerLog);
+  }
 }
 
 function inferTraceKindFromReason(reason: string, traceQuote?: string): TraceFailureKind {

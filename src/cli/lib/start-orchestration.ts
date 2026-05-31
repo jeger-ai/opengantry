@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { runLegislate, type LegislateOptions } from "../commands/legislate.js";
+import { runLegislate } from "../commands/legislate.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { isValidMsnId } from "./msn.js";
@@ -75,6 +75,92 @@ function buildNextSteps(missionRel: string | null, msnId: string | null): string
   ];
 }
 
+function logStartTriage(
+  options: StartOptions,
+  triage: ReturnType<typeof triageIntent>,
+  escalated: boolean,
+  skillOverride: string | undefined,
+): void {
+  if (options.json) {
+    logInfo(formatTriageJson(triage));
+    return;
+  }
+  if (!escalated) {
+    logInfo(formatTriageHuman(triage));
+    return;
+  }
+  if (skillOverride) {
+    logInfo(`Triage: ${triage.reason} (overridden by --skill-key ${skillOverride})`);
+    return;
+  }
+  logInfo(formatTriageHuman(triage));
+}
+
+function startEscalationFailure(
+  options: StartOptions,
+  triage: ReturnType<typeof triageIntent>,
+  msnId: string,
+  manifestKeys: string[],
+): StartResult {
+  logError(
+    `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
+  );
+  return {
+    ok: false,
+    triage_action: triage.action,
+    skill_key: triage.skill_key,
+    msn_id: null,
+    mission_file_path: null,
+    next_steps: [
+      `gapman start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+    ],
+    exit_code: 2,
+  };
+}
+
+function scaffoldStartMission(
+  root: string,
+  options: StartOptions,
+  msnId: string,
+  resolvedSkillKey: string,
+  triage: ReturnType<typeof triageIntent>,
+): StartResult | { missionRel: string } {
+  if (options.writeMission === false) {
+    logWarn(`${CLI_NAME} start: --no-write — run legislate manually with --msn ${msnId}`);
+    return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
+  }
+
+  const prevExit = process.exitCode;
+  const result = runLegislate({
+    intent: options.intent,
+    msn: msnId,
+    skillKey: resolvedSkillKey,
+    gateCommand: options.gateCommand,
+    gateSuccessSubstring: options.gateSuccessSubstring,
+    allowDuplicate: options.allowDuplicate,
+  });
+  process.exitCode = prevExit;
+
+  if (result.ok) {
+    logInfo(`${CLI_NAME} start: mission scaffold at ${result.missionRel}`);
+    return { missionRel: result.missionRel };
+  }
+
+  const freshMsn = suggestNextMsn(root);
+  return {
+    ok: false,
+    triage_action: triage.action,
+    skill_key: resolvedSkillKey,
+    msn_id: msnId,
+    mission_file_path: null,
+    next_steps: [
+      `try a fresh MSN: gapman start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
+      `or gapman legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
+    ],
+    exit_code: 2,
+  };
+}
+
 export function runStartOrchestration(options: StartOptions): StartResult {
   const { root, manifest } = loadWorkspace();
   const triage = triageIntent(root, options.intent, manifest);
@@ -83,38 +169,16 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const escalated = triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
   const manifestKeys = Object.keys(manifest.skills);
 
-  if (options.json) {
-    logInfo(formatTriageJson(triage));
-  } else if (!escalated) {
-    logInfo(formatTriageHuman(triage));
-  } else if (skillOverride) {
-    logInfo(`Triage: ${triage.reason} (overridden by --skill-key ${skillOverride})`);
-  } else {
-    logInfo(formatTriageHuman(triage));
-  }
+  logStartTriage(options, triage, escalated, skillOverride);
 
-  if (escalated) {
-    if (!skillOverride) {
-      logError(
-        `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
-      );
-      return {
-        ok: false,
-        triage_action: triage.action,
-        skill_key: triage.skill_key,
-        msn_id: null,
-        mission_file_path: null,
-        next_steps: [
-          `gapman start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
-        ],
-        exit_code: 2,
-      };
-    }
+  if (escalated && !skillOverride) {
+    return startEscalationFailure(options, triage, msnId, manifestKeys);
+  }
+  if (escalated && skillOverride) {
     logWarn(`${CLI_NAME} start: triage escalated; using --skill-key ${skillOverride}`);
   }
 
   const resolvedSkillKey = skillOverride || triage.skill_key;
-
   if (!isValidMsnId(msnId)) {
     logError(`${CLI_NAME} start: --msn must match MSN-0007`);
     return {
@@ -128,42 +192,10 @@ export function runStartOrchestration(options: StartOptions): StartResult {
     };
   }
 
-  let missionRel: string | null = null;
-  if (options.writeMission !== false) {
-    const legislateOpts: LegislateOptions = {
-      intent: options.intent,
-      msn: msnId,
-      skillKey: resolvedSkillKey,
-      gateCommand: options.gateCommand,
-      gateSuccessSubstring: options.gateSuccessSubstring,
-      allowDuplicate: options.allowDuplicate,
-    };
-    const prevExit = process.exitCode;
-    const result = runLegislate(legislateOpts);
-    process.exitCode = prevExit;
-    if (!result.ok) {
-      const freshMsn = suggestNextMsn(root);
-      return {
-        ok: false,
-        triage_action: triage.action,
-        skill_key: resolvedSkillKey,
-        msn_id: msnId,
-        mission_file_path: null,
-        next_steps: [
-          `try a fresh MSN: gapman start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
-          `or gapman legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
-        ],
-        exit_code: 2,
-      };
-    }
-    missionRel = result.missionRel;
-    logInfo(`${CLI_NAME} start: mission scaffold at ${missionRel}`);
-  } else {
-    logWarn(`${CLI_NAME} start: --no-write — run legislate manually with --msn ${msnId}`);
-    missionRel = `.gitagent/missions/${msnId}.<slug>.yaml`;
-  }
+  const scaffold = scaffoldStartMission(root, options, msnId, resolvedSkillKey, triage);
+  if ("ok" in scaffold) return scaffold;
 
-  const nextSteps = buildNextSteps(missionRel, msnId);
+  const nextSteps = buildNextSteps(scaffold.missionRel, msnId);
   const filtered = filterNextStepsForAudience(options.audience, nextSteps);
   const section = audienceSectionTitle(options.audience);
 
@@ -178,7 +210,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
     triage_action: triage.action,
     skill_key: resolvedSkillKey,
     msn_id: msnId,
-    mission_file_path: missionRel,
+    mission_file_path: scaffold.missionRel,
     next_steps: filtered,
     exit_code: 0,
   };
