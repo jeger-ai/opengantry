@@ -8,3 +8,5 @@ trace_rows:
     trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
     anchor: "1"
     status: PENDING
+
+# Teacher stamp: tutorial legislation
