@@ -16,6 +16,8 @@ import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
 import { runVerify } from "../commands/verify.js";
 
+type ClackPrompts = typeof import("@clack/prompts");
+
 function findExistingTutorialMission(repoRoot: string): string | null {
   const missionsDir = path.join(repoRoot, ".gitagent", "missions");
   if (!fs.existsSync(missionsDir)) return null;
@@ -41,7 +43,7 @@ function missionAbsolute(repoRoot: string, missionRel: string): string {
 }
 
 async function confirmTeacherStamp(
-  p: typeof import("@clack/prompts"),
+  p: ClackPrompts,
   repoRoot: string,
   missionPath: string,
 ): Promise<boolean> {
@@ -52,9 +54,7 @@ async function confirmTeacherStamp(
         "I've run the git commands above (gapman will check git history before continuing)",
       initialValue: false,
     });
-    if (p.isCancel(ready) || !ready) {
-      return false;
-    }
+    if (p.isCancel(ready) || !ready) return false;
 
     if (teacherMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID })) {
       p.log.success("Teacher stamp OK — [MSN-9001] commit touches this mission file");
@@ -68,9 +68,7 @@ async function confirmTeacherStamp(
       message: "Run the commands above in another terminal, then check again?",
       initialValue: true,
     });
-    if (p.isCancel(retry) || !retry) {
-      return false;
-    }
+    if (p.isCancel(retry) || !retry) return false;
   }
 }
 
@@ -79,9 +77,90 @@ function verifyExitOk(): boolean {
   return code === undefined || code === 0;
 }
 
+async function scaffoldTutorialMission(
+  p: ClackPrompts,
+  repoRoot: string,
+  skillKey: string,
+): Promise<string | null> {
+  p.log.step("Step 2 — Scaffold tutorial mission (gapman start)");
+  const existing = findExistingTutorialMission(repoRoot);
+  if (existing) {
+    p.log.message(`Using existing tutorial mission: ${existing}`);
+    return existing;
+  }
+
+  const start = runStartOrchestration({
+    intent: TUTORIAL_INTENT,
+    msn: TUTORIAL_MSN_ID,
+    skillKey,
+    gateCommand: "gapman check",
+    writeMission: true,
+    silent: true,
+    audience: "teacher",
+  });
+  if (!start.ok || !start.mission_file_path) {
+    logError("Tutorial start failed — run gapman onboarding or pass --skill-key");
+    setExitCode(start.exit_code);
+    p.outro("Tutorial incomplete");
+    return null;
+  }
+  p.log.success(`Mission scaffold: ${start.mission_file_path}`);
+  return start.mission_file_path;
+}
+
+async function runTutorialVerifyStep(
+  p: ClackPrompts,
+  missionPath: string,
+): Promise<{ verifyOk: boolean; ranVerify: boolean }> {
+  p.log.step("Step 5 — Verify");
+  logInfo(`  ${onboardingVerifyHint(missionPath)}`);
+  const runVerifyNow = await p.confirm({
+    message: "Run gapman verify now (git-proof, gate, trace — expect errors until trace is complete)?",
+    initialValue: true,
+  });
+  if (p.isCancel(runVerifyNow) || !runVerifyNow) {
+    return { verifyOk: true, ranVerify: false };
+  }
+
+  process.exitCode = undefined;
+  await runVerify({
+    mission: missionPath,
+    fix: true,
+    fixNonInteractive: true,
+    audience: "teacher",
+  });
+  const verifyOk = verifyExitOk();
+  if (!verifyOk) {
+    p.log.warn("Verify did not pass yet — expected until gate runs and trace rows cite WORKER_LOG.md");
+  }
+  return { verifyOk, ranVerify: true };
+}
+
+function emitTutorialOutro(
+  p: ClackPrompts,
+  missionPath: string,
+  verifyOk: boolean,
+  ranVerify: boolean,
+): void {
+  if (!verifyOk) {
+    setExitCode(typeof process.exitCode === "number" ? process.exitCode : 1);
+    p.outro(
+      `Tutorial incomplete — finish stamp/trace, then: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
+    );
+    return;
+  }
+  if (!ranVerify) {
+    p.outro(
+      `Tutorial paused before verify — run: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
+    );
+    return;
+  }
+  p.outro(`Tutorial complete — full loop: ${ONBOARDING_ADOPTION_DOC}`);
+}
+
 export async function runInitTutorial(): Promise<void> {
   const p = await import("@clack/prompts");
-  const { root: repoRoot } = loadWorkspace();
+  const { root: repoRoot, manifest } = loadWorkspace();
   const manifestPath = path.join(repoRoot, ".gitagent", "foreman", "MANIFEST.json");
   if (!fs.existsSync(manifestPath)) {
     logError("init --tutorial: substrate missing — init must complete before tutorial");
@@ -90,7 +169,6 @@ export async function runInitTutorial(): Promise<void> {
   }
 
   p.intro(`${CLI_NAME} init --tutorial — first mission loop (~3 min)`);
-
   const confirm = await p.confirm({
     message: "Walk through scaffold → Teacher stamp → trace → verify (strict checks)?",
     initialValue: true,
@@ -100,39 +178,18 @@ export async function runInitTutorial(): Promise<void> {
     return;
   }
 
-  const { manifest } = loadWorkspace();
-  const skillKey = pickTutorialSkillKey(Object.keys(manifest.skills));
-
   p.log.step("Step 1 — Teacher allowlist");
   logInfo('  gapman teacher set "$(git config user.email)"');
 
-  p.log.step("Step 2 — Scaffold tutorial mission (gapman start)");
-  let missionPath = findExistingTutorialMission(repoRoot);
-  if (missionPath) {
-    p.log.message(`Using existing tutorial mission: ${missionPath}`);
-  } else {
-    const start = runStartOrchestration({
-      intent: TUTORIAL_INTENT,
-      msn: TUTORIAL_MSN_ID,
-      skillKey,
-      gateCommand: "gapman check",
-      writeMission: true,
-      silent: true,
-      audience: "teacher",
-    });
-    if (!start.ok || !start.mission_file_path) {
-      logError("Tutorial start failed — run gapman onboarding or pass --skill-key");
-      setExitCode(start.exit_code);
-      p.outro("Tutorial incomplete");
-      return;
-    }
-    missionPath = start.mission_file_path;
-    p.log.success(`Mission scaffold: ${missionPath}`);
-  }
+  const missionPath = await scaffoldTutorialMission(
+    p,
+    repoRoot,
+    pickTutorialSkillKey(Object.keys(manifest.skills)),
+  );
+  if (!missionPath) return;
 
   p.log.step("Step 3 — Teacher stamp (manual, required)");
-  const stamped = await confirmTeacherStamp(p, repoRoot, missionPath);
-  if (!stamped) {
+  if (!(await confirmTeacherStamp(p, repoRoot, missionPath))) {
     p.note(
       "Verify will fail until git-proof passes. Re-run: gapman verify --mission " + missionPath,
       "Paused",
@@ -147,45 +204,8 @@ export async function runInitTutorial(): Promise<void> {
     "  Append a unique gate evidence line to WORKER_LOG.md, then set mission trace_row PASS + trace_quote",
   );
 
-  p.log.step("Step 5 — Verify");
-  logInfo(`  ${onboardingVerifyHint(missionPath)}`);
-  const runVerifyNow = await p.confirm({
-    message: "Run gapman verify now (git-proof, gate, trace — expect errors until trace is complete)?",
-    initialValue: true,
-  });
-
-  let verifyOk = true;
-  if (!p.isCancel(runVerifyNow) && runVerifyNow) {
-    process.exitCode = undefined;
-    await runVerify({
-      mission: missionPath,
-      fix: true,
-      fixNonInteractive: true,
-      audience: "teacher",
-    });
-    verifyOk = verifyExitOk();
-    if (!verifyOk) {
-      p.log.warn("Verify did not pass yet — expected until gate runs and trace rows cite WORKER_LOG.md");
-    }
-  }
-
+  const { verifyOk, ranVerify } = await runTutorialVerifyStep(p, missionPath);
   p.log.step("Step 6 — Status dashboard");
   logInfo(`  ${onboardingStatusHint()}`);
-
-  if (!verifyOk) {
-    setExitCode(typeof process.exitCode === "number" ? process.exitCode : 1);
-    p.outro(
-      `Tutorial incomplete — finish stamp/trace, then: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
-    );
-    return;
-  }
-
-  if (p.isCancel(runVerifyNow) || !runVerifyNow) {
-    p.outro(
-      `Tutorial paused before verify — run: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
-    );
-    return;
-  }
-
-  p.outro(`Tutorial complete — full loop: ${ONBOARDING_ADOPTION_DOC}`);
+  emitTutorialOutro(p, missionPath, verifyOk, ranVerify);
 }
