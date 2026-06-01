@@ -3,7 +3,7 @@ import { runLegislate } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
 import { readStdinIfEmpty } from "./commands/triage.js";
-import { parseAudience } from "./lib/audience-output.js";
+import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 export function registerWorkflowCommands(program: Command): void {
@@ -98,7 +98,7 @@ export function registerWorkflowCommands(program: Command): void {
           auditCommit: opts.auditCommit,
           fix: opts.fix,
           fixNonInteractive: opts.nonInteractive,
-          audience: parseAudience(opts.audience),
+          audience: getOutputAudience(),
         });
       },
     );

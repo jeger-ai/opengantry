@@ -6,3 +6,10 @@
 # gapman / Node build
 node_modules/
 dist/
+
+# OpenGantry (gapman init)
+.gitagent/foreman/TEACHER.allowlist.local
+.gitagent/history/credentials/
+.gitagent/history/.ignored-last-error.json
+.gitagent/history/.draft-token-replay.json
+.gitagent/foreman/DRAFT_TOKEN.key

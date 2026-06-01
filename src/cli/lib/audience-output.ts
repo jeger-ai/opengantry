@@ -1,13 +1,51 @@
 /** Tailor command output verbosity by role. */
 export type OutputAudience = "worker" | "teacher" | "verifier" | "platform";
 
+const VALID_AUDIENCES: readonly OutputAudience[] = [
+  "worker",
+  "teacher",
+  "verifier",
+  "platform",
+];
+
 export function parseAudience(raw: string | undefined): OutputAudience | undefined {
   if (!raw) return undefined;
   const v = raw.trim().toLowerCase();
-  if (v === "worker" || v === "teacher" || v === "verifier" || v === "platform") {
-    return v;
+  if (VALID_AUDIENCES.includes(v as OutputAudience)) {
+    return v as OutputAudience;
   }
   return undefined;
+}
+
+export interface ResolvedAudience {
+  audience?: OutputAudience;
+  /** Set when CLI --audience was provided but not a known role. */
+  invalidCli?: string;
+}
+
+/** CLI flag wins over env; invalid CLI value is reported via invalidCli. */
+export function resolveAudience(
+  cliRaw?: string,
+  envRaw?: string,
+): ResolvedAudience {
+  const cli = cliRaw?.trim();
+  if (cli) {
+    const parsed = parseAudience(cli);
+    if (!parsed) return { invalidCli: cli };
+    return { audience: parsed };
+  }
+  return { audience: parseAudience(envRaw) };
+}
+
+export function formatAudienceNextStep(step: string, audience: OutputAudience | undefined): string {
+  if (!audience || audience === "platform") return step;
+  if (audience === "worker") {
+    return step.startsWith("Constraint:") ? step : `Constraint: ${step}`;
+  }
+  if (audience === "teacher") {
+    return /^(Teacher:|git )/i.test(step) ? step : `Teacher: ${step}`;
+  }
+  return step;
 }
 
 export interface AudienceNextStep {
@@ -43,7 +81,7 @@ export function filterNextStepsForAudience(
 ): string[] {
   if (!audience) return steps;
   if (steps.length > 0) {
-    const filtered = steps.filter((step) => stepMatchesAudience(step, audience));
+    const filtered = [...new Set(steps.filter((step) => stepMatchesAudience(step, audience)))];
     if (filtered.length > 0) return filtered;
   }
   const roleDefaults = DEFAULT_NEXT_STEPS.filter((s) => s.audience === audience).map((s) => s.step);

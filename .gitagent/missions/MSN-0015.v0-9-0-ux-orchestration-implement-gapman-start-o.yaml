@@ -9,4 +9,8 @@ trace_rows:
     trace_quote: "dev-validate OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "13"
     status: PASS
+  - dod_id: "2"
+    trace_quote: "dev-validate OK — v1.0: init --tutorial, global --audience, README/ADOPTION product framing"
+    anchor: "17"
+    status: PASS
 gate_success_substring: dev-validate OK

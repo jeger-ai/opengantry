@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import { CLI_NAME, REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
+import { CLI_NAME, REL_ARCHITECTURE_POINTER, REL_MANIFEST } from "../lib/constants.js";
 import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
 import {
@@ -38,6 +38,7 @@ export interface InitOptions {
   force?: boolean;
   yes?: boolean;
   dryRun?: boolean;
+  tutorial?: boolean;
   cwd?: string;
   ides?: string;
   docsPath?: string;
@@ -202,11 +203,28 @@ function logInitDryRun(
   }
 }
 
+function substrateAlreadyPresent(repoRoot: string): boolean {
+  return fs.existsSync(path.join(repoRoot, REL_MANIFEST.split("/").join(path.sep)));
+}
+
 export async function runInit(options: InitOptions = {}): Promise<void> {
   const workspace = loadInitWorkspace(options);
   if (!workspace) return;
 
   const { repoRoot, templatesRoot, compat } = workspace;
+
+  if (
+    options.tutorial === true &&
+    !options.dryRun &&
+    !options.force &&
+    substrateAlreadyPresent(repoRoot)
+  ) {
+    logInfo(`${CLI_NAME} init: substrate already present — tutorial only (skip re-scaffold)`);
+    const { runInitTutorial } = await import("../lib/init-tutorial.js");
+    await runInitTutorial();
+    mergeGitignoreFromTemplate(repoRoot, templatesRoot);
+    return;
+  }
   const profile = await resolveProfile(options, repoRoot, templatesRoot);
   if (!profile) {
     setExitCode(1);
@@ -239,6 +257,11 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     logInfo(`${CLI_NAME} init: wrote composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
   }
   logInitSummary(plan.writes, plan.skippedUserMutable, plan.unchanged);
-  logInitNextSteps(profile);
+  if (options.tutorial) {
+    const { runInitTutorial } = await import("../lib/init-tutorial.js");
+    await runInitTutorial();
+  } else {
+    logInitNextSteps(profile);
+  }
   mergeGitignoreFromTemplate(repoRoot, templatesRoot);
 }

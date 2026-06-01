@@ -8,7 +8,13 @@ import { isValidMsnId } from "./msn.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 import { formatTriageHuman, triageIntent } from "./triage-logic.js";
 import type { TriageResult } from "./types.js";
-import { audienceSectionTitle, filterNextStepsForAudience, type OutputAudience } from "./audience-output.js";
+import {
+  audienceSectionTitle,
+  filterNextStepsForAudience,
+  formatAudienceNextStep,
+  type OutputAudience,
+} from "./audience-output.js";
+import { getOutputAudience } from "./output-context.js";
 import { loadWorkspace } from "./workspace.js";
 
 export interface StartOptions {
@@ -95,7 +101,6 @@ function logStartTriage(
     return;
   }
   if (skillOverride) {
-    logInfo(`Triage: ${triage.reason} (overridden by --skill-key ${skillOverride})`);
     return;
   }
   logInfo(formatTriageHuman(triage));
@@ -213,9 +218,12 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const scaffold = scaffoldStartMission(root, options, msnId, resolvedSkillKey, triage);
   if ("ok" in scaffold) return scaffold;
 
+  const audience = options.audience ?? getOutputAudience();
   const nextSteps = buildNextSteps(scaffold.missionRel, msnId);
-  const filtered = filterNextStepsForAudience(options.audience, nextSteps);
-  const section = audienceSectionTitle(options.audience);
+  const filtered = filterNextStepsForAudience(audience, nextSteps).map((step) =>
+    formatAudienceNextStep(step, audience),
+  );
+  const section = audienceSectionTitle(audience);
 
   if (!suppressStartOutput(options)) {
     logInfo("next steps:");

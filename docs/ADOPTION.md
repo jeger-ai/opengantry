@@ -1,43 +1,81 @@
-# Adoption Runbook (v0.9.0 specimen)
+# Adoption Runbook (v1.0.0)
 
 This runbook documents the OpenGantry specimen flow for adopters testing `gapman` locally.
 
-## 60-second loop
+## First run (onboarding)
 
 ```bash
-gapman init          # interactive wizard on TTY; auto-default in CI (no hang)
+gapman init --tutorial   # guided loop after scaffold (~3 min)
+# or:
+gapman init
+gapman onboarding      # same strict checks as production
 gapman teacher set "$(git config user.email)"
-gapman doctor        # detects wired agent files + stale paths from compat manifest
+gapman doctor
+```
+
+## Standard change loop (review → run → audit)
+
+```bash
+# 1. Human reviews mission BEFORE worker (Teacher commit required)
 gapman start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
-# Teacher: git commit -m "[MSN-0001] legislate …" including the mission file
+# Teacher: review YAML scope/gates, then:
+git add .gitagent/missions/MSN-0001.<slug>.yaml
+git commit -m "[MSN-0001] legislate mission"
+
+# 2. Worker runs inside approved scope
 eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
+
+# 3. Audit evidence: verify + grep
 gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --fix
+git log --grep='MSN-0001' --oneline
 gapman status --json --verbose
 ```
 
-First time? Run **`gapman onboarding`** for a guided walkthrough (strict checks unchanged).
+Legacy equivalent: `gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"`.
 
-Legacy step-by-step (equivalent):
+`gapman init` composes per-tool recipes into `docs/INTEGRATIONS.md`. Non-interactive: `gapman init --yes` or `gapman init --ides cursor,claude-code --no-ci`.
+
+Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
+
+## Prevent unreviewed edits
+
+- **Teacher-approved mission commit:** among recent commits, the newest `[MSN-XXXX]` from an allowlisted Teacher email must **modify** the mission file passed to `--mission`.
+- **Pre-push handoff:** `gapman verify --pre-push` lets legislative stubs push for remote agent handoff; **full verify** (gate + trace) is still required before merge.
+- **IDE writes are advisory:** rules and `AGENTS.md` guide agents; hooks + `gapman runtime exec` enforce hard boundaries.
+
+## Audit evidence cheatsheet
 
 ```bash
-gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"
+git log --grep='MSN-' --oneline
+# Mission file: .gitagent/missions/<MSN>.<slug>.yaml
+# Worker trace: repo-root WORKER_LOG.md (verifier cites verbatim quotes)
+gapman verify --mission .gitagent/missions/<file>.yaml
 ```
 
-`gapman init` composes full per-tool recipes into `docs/INTEGRATIONS.md` (or your chosen path) for selected IDEs. Non-interactive: `gapman init --yes` or `gapman init --ides cursor,claude-code --no-ci`.
+PR CI (this specimen): commits touching `.gitagent/`, `WORKER_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects.
 
-Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md) — enforcement boundary, remote handoff, and per-tool closed-loop recipes.
+## Role-based CLI output (v1.0)
 
-`gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md` (no `--fuzzy-trace` required). Use `--strict-trace` only when you need exact line numbers. Pre-push uses `gapman verify --pre-push` so Teacher-stamped **legislative stubs** can push for remote agent handoff.
+```bash
+gapman --audience worker start "…"      # constraint-forward next steps
+gapman --audience teacher verify …      # copyable git / mission hints
+gapman --audience verifier verify …     # silence unless [GXT_*] errors (CI)
+export GXT_AUDIENCE=verifier            # same as global --audience
+```
+
+## Verify troubleshooting
+
+`gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gapman verify --pre-push` for legislative stub handoff.
 
 ## Enforcement boundary
 
 **IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gapman verify`, and hooks.**
 
-| Tier | Mechanism | What is actually enforced |
-|------|-----------|---------------------------|
+| Tier | Mechanism | Enterprise control |
+|------|-----------|-------------------|
 | **Process-boundary** | `gapman runtime exec` | Forbidden-zone scan + subprocess TMVC envelope |
-| **Deterministic hook** | Cursor `beforeShellExecution`, pre-push verify | Shell writes to law/manifest paths; mission git-proof |
-| **Advisory** | IDE rules, `AGENTS.md`, sessionStart context | LLM compliance only — not a kernel/file sandbox |
+| **Deterministic hook** | Cursor `beforeShellExecution`, pre-push verify | Governance path writes require mission + verify |
+| **Advisory** | IDE rules, `AGENTS.md`, sessionStart context | IDE suggestions alone do not count as approval |
 
 Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
@@ -45,12 +83,10 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
 | Release | Highlights |
 |---------|------------|
-| **v0.7.0** | `gapman runtime env`, `gapman legislate` (YAML mission scaffolding) |
-| **v0.8.0** | Context-aware **Fix:** hints, auto fuzzy trace (line-drift resolution), scoped **pre-push** verify for legislative stubs |
-| **v0.8.1** | `gapman init` wizard, `gapman doctor`, `gapman metrics`, `gapman arch pointer` / `arch cred`, integration compat manifest, `gapman runtime exec` orchestration |
-| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes, MCP `fix_hints` / `gxt_start_orchestration` |
+| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
+| **v1.0.0** | `gapman init --tutorial`, global `--audience`, adoption-first docs |
 
-- Substrate law remains `MANIFEST.json` `schema_version` **0.5.0**; CLI is **0.9.0**.
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **1.0.0**.
 - Package publishing remains disabled (`package.json` is `private: true`).
 
 ## Hooks (fast, scoped)
@@ -60,23 +96,23 @@ git config core.hooksPath .githooks
 ```
 
 - **post-checkout:** creates `WORKER_LOG.md` on feature branches when missing.
-- **pre-push:** runs `gapman verify --pre-push` only for mission files changed on this branch vs merge-base. Legislative stubs pass after git-proof; full verify required before merge.
+- **pre-push:** `gapman verify --pre-push` for mission files changed on branch — ensures Teacher review before remote handoff; full gate+trace still required to merge.
 
 ## Break-glass (emergency only)
 
-Requires `GXT_BYPASS_SECRET` matching a single SHA-256 line in `.gitagent/foreman/BYPASS.sha256` (never commit the plaintext secret).
+Emergency bypass for verify when production is down — **not** a substitute for mission review. Authorization requires `GXT_BYPASS_SECRET` matching `.gitagent/foreman/BYPASS.sha256` (never commit the plaintext secret). Audit trail: `refs/notes/gxt-bypass` or `--audit-commit`.
+
+### Technical setup
 
 ```bash
-# Install anchor (one 64-char hex line only):
 printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/foreman/BYPASS.sha256
-
 export GXT_BYPASS_SECRET='your-team-secret'
 gapman verify --break-glass --reason "Production auth down: hotfix session cookie" \
   --mission .gitagent/missions/MSN-0001.<slug>.yaml
 git push origin refs/notes/gxt-bypass
 ```
 
-`gapman doctor` actively tests whether `GXT_BYPASS_SECRET` matches the anchor when the variable is set.
+`gapman doctor` tests whether `GXT_BYPASS_SECRET` matches the anchor when set.
 
 ## Agent errors (machine vs human)
 
@@ -101,7 +137,7 @@ PRs run `./scripts/check-changed-code.sh <base> <head>` (also `npm run check:cha
 - Import layer rules (`lib` must not import `commands`, etc.)
 - File line budgets for non-grandfathered paths (see [docs/ARCHITECTURE.md](ARCHITECTURE.md))
 
-**If CI fails:** read the ESLint rule name, fix the function or extract a module, then re-run:
+**If CI fails:**
 
 ```bash
 npm run lint -- path/to/changed.ts

@@ -2,6 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo } from "./cli-io.js";
+import {
+  audienceSectionTitle,
+  filterNextStepsForAudience,
+  formatAudienceNextStep,
+} from "./audience-output.js";
+import { getOutputAudience } from "./output-context.js";
 import type { InitAsset } from "./init-assets.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
 import type { InitProfile } from "./init-profile.js";
@@ -89,26 +95,33 @@ export function logInitSummary(
   }
 }
 
+const INIT_NEXT_STEPS: string[] = [
+  "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gapman check",
+  "git config core.hooksPath .githooks",
+  'gapman teacher set "$(git config user.email)"',
+  'gapman start "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
+  'Teacher: git commit -m "[MSN-0001] legislate mission" including mission file',
+  "eval \"$(gapman runtime env --mission .gitagent/missions/<file>.yaml)\"",
+  "gapman verify --mission .gitagent/missions/<file>.yaml",
+  "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml",
+  "scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml",
+  "gapman onboarding  # guided walkthrough (strict checks)",
+];
+
 export function logInitNextSteps(profile?: InitProfile): void {
-  logInfo("next steps:");
-  logInfo(
-    "1) edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run `gapman check`",
-  );
-  if (profile?.gitHooks !== false) {
-    logInfo("2) optional: git config core.hooksPath .githooks");
-  }
-  logInfo("3) gapman teacher show  # or gapman teacher set <email> for git-proof allowlist");
-  logInfo(
-    '4) legislate only after manifest skill keys exist: gapman legislate "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
-  );
-  logInfo("5) Teacher commit must start with [MSN-0001] and modify that mission file");
-  logInfo("6) run gapman runtime env --mission <path> then gapman verify --mission <path>");
-  logInfo("7) bootstrap terminal: source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml");
-  if (profile?.ides.includes("cursor")) {
-    logInfo("8) Cursor: scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml — enable hooks in Settings");
-  }
+  const steps = [...INIT_NEXT_STEPS];
   if (profile?.integrationsDocPath) {
-    logInfo(`9) human IDE setup reference: ${profile.integrationsDocPath}`);
+    steps.push(`human IDE setup: ${profile.integrationsDocPath}`);
   }
-  logInfo("10) architecture: if pointer kind=unset, agents read ARCHITECTURE-DISCOVERY.md and ask before coding");
+  if (profile?.gitHooks === false) {
+    const hookIdx = steps.indexOf("git config core.hooksPath .githooks");
+    if (hookIdx >= 0) steps.splice(hookIdx, 1);
+  }
+  const audience = getOutputAudience();
+  const filtered = filterNextStepsForAudience(audience, steps).map((step) =>
+    formatAudienceNextStep(step, audience),
+  );
+  const section = audienceSectionTitle(audience) ?? "next steps";
+  logInfo(`${section}:`);
+  for (const step of filtered) logInfo(`  ${step}`);
 }

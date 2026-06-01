@@ -7,7 +7,7 @@ import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
 import { runStart } from "./commands/start.js";
 import { readStdinIfEmpty, runTriage } from "./commands/triage.js";
-import { parseAudience } from "./lib/audience-output.js";
+import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 export function registerCoreCommands(program: Command): void {
@@ -28,7 +28,7 @@ export function registerCoreCommands(program: Command): void {
       runStatus({
         json: opts.json,
         verbose: opts.verbose,
-        audience: parseAudience(opts.audience),
+        audience: getOutputAudience(),
       });
     });
 
@@ -38,7 +38,7 @@ export function registerCoreCommands(program: Command): void {
     .option("--json", "Emit structured report")
     .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
     .action((opts: { json?: boolean; audience?: string }) => {
-      runDoctor({ json: opts.json, audience: parseAudience(opts.audience) });
+      runDoctor({ json: opts.json, audience: getOutputAudience() });
     });
 
   program
@@ -56,10 +56,15 @@ export function registerCoreCommands(program: Command): void {
     .option("--no-ci", "Skip CI workflow")
     .option("--arch-source <kind>", "Architecture source: unset | file | directory | external")
     .option("--arch-location <path>", "Architecture file path, folder, or external URL")
+    .option(
+      "--tutorial",
+      "After init, run guided first mission loop (Teacher stamp + verify walkthrough)",
+    )
     .action(async (opts: {
       force?: boolean;
       yes?: boolean;
       dryRun?: boolean;
+      tutorial?: boolean;
       ides?: string;
       docsPath?: string;
       skills?: string;
@@ -74,6 +79,7 @@ export function registerCoreCommands(program: Command): void {
         force: opts.force,
         yes: opts.yes,
         dryRun: opts.dryRun,
+        tutorial: opts.tutorial,
         ides: opts.ides,
         docsPath: opts.docsPath,
         skills: opts.skills,
@@ -186,7 +192,7 @@ export function registerCoreCommands(program: Command): void {
         writeMission: opts.write !== false,
         allowDuplicate: opts.allowDuplicate,
         json: opts.json,
-        audience: parseAudience(opts.audience),
+        audience: getOutputAudience(),
       });
     });
 

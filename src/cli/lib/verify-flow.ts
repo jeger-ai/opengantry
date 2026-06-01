@@ -24,7 +24,12 @@ import {
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-types.js";
-import { filterNextStepsForAudience, audienceSectionTitle } from "./audience-output.js";
+import {
+  filterNextStepsForAudience,
+  audienceSectionTitle,
+  formatAudienceNextStep,
+} from "./audience-output.js";
+import { getOutputAudience } from "./output-context.js";
 
 export function runVerifyBreakGlass(
   root: string,
@@ -218,8 +223,11 @@ export function verifyFailureToHintContext(
 }
 
 export function emitAudienceNextSteps(steps: string[], options: VerifyOptions): void {
-  const filtered = filterNextStepsForAudience(options.audience, steps);
-  const section = audienceSectionTitle(options.audience);
+  const audience = options.audience ?? getOutputAudience();
+  const filtered = filterNextStepsForAudience(audience, steps).map((step) =>
+    formatAudienceNextStep(step, audience),
+  );
+  const section = audienceSectionTitle(audience);
   if (section && filtered.length > 0) {
     logInfo(`${section}:`);
     for (const step of filtered) logInfo(`  ${step}`);
