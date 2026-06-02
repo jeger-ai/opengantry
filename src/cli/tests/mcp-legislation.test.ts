@@ -22,6 +22,7 @@ function scaffoldRepo(): string {
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
+  execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync("git add .", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
   return dest;

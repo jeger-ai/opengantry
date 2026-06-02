@@ -22,6 +22,7 @@ test("draft-token: stateless sign/verify roundtrip", () => {
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
+  execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync("git add .", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
 
@@ -51,6 +52,8 @@ test("draft-token: replay rejected on second consume", () => {
     path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
+  execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
+  execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync("git add .", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
 
