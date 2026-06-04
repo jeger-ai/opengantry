@@ -1,13 +1,14 @@
-import fs from "node:fs";
-import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { runLegislate } from "../commands/legislate.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { isValidMsnId } from "./msn.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
+import { isTriageEscalated } from "./legislate-skill.js";
 import { formatTriageHuman, triageIntent } from "./triage-logic.js";
 import type { TriageResult } from "./types.js";
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 import {
   audienceSectionTitle,
   filterNextStepsForAudience,
@@ -146,7 +147,6 @@ function scaffoldStartMission(
     return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
   }
 
-  const prevExit = process.exitCode;
   const result = runLegislate({
     intent: options.intent,
     msn: msnId,
@@ -156,7 +156,6 @@ function scaffoldStartMission(
     allowDuplicate: options.allowDuplicate,
     silent: quiet,
   });
-  process.exitCode = prevExit;
 
   if (result.ok) {
     if (!quiet) {
@@ -186,7 +185,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const triage = triageIntent(root, options.intent, manifest);
   const msnId = options.msn?.trim() || suggestNextMsn(root);
   const skillOverride = options.skillKey?.trim();
-  const escalated = triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
+  const escalated = isTriageEscalated(triage);
   const manifestKeys = Object.keys(manifest.skills);
 
   logStartTriage(options, triage, escalated, skillOverride);

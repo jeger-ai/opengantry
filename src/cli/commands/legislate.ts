@@ -7,11 +7,10 @@ import {
   logError,
   logInfo,
   logWarn,
-  setExitCode,
 } from "../lib/cli-io.js";
 import { isValidMsnId } from "../lib/msn.js";
 import { extractMsnIdFromMissionPath } from "../lib/mission-msn.js";
-import { triageIntent } from "../lib/triage-logic.js";
+import { resolveSkillKeyForLegislation } from "../lib/legislate-skill.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import YAML from "yaml";
 
@@ -69,27 +68,17 @@ function resolveLegislateSkillKey(
   root: string,
   manifest: ReturnType<typeof loadWorkspace>["manifest"],
 ): string | null {
-  const skill_key = options.skillKey?.trim();
-  if (skill_key) {
-    if (!manifest.skills[skill_key]) {
-      logError(
-        `legislate: unknown skill_key "${skill_key}" (manifest skills: ${Object.keys(manifest.skills).join(", ")})`,
-      );
-      setExitCode(2);
-      return null;
-    }
-    return skill_key;
-  }
-
-  const triage = triageIntent(root, options.intent, manifest);
-  if (triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE") {
-    logError(
-      `legislate: triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Teacher assigns scope.`,
-    );
-    setExitCode(2);
+  const resolved = resolveSkillKeyForLegislation({
+    root,
+    manifest,
+    intent: options.intent,
+    skillKey: options.skillKey,
+  });
+  if (!resolved.ok) {
+    logError(`legislate: ${resolved.reason}`);
     return null;
   }
-  return triage.skill_key;
+  return resolved.skillKey;
 }
 
 function resolveLegislateOutputPath(
@@ -107,19 +96,16 @@ function resolveLegislateOutputPath(
   const normRel = path.relative(root, path.resolve(absolute)).split(path.sep).join("/");
   if (!normRel || normRel.startsWith("..")) {
     logError(`legislate: output path outside repository (${absolute})`);
-    setExitCode(2);
     return null;
   }
   if (!normRel.startsWith(".gitagent/missions/")) {
     logError(
       `legislate: mission path must stay under .gitagent/missions/ for gapman verify (got ${normRel})`,
     );
-    setExitCode(2);
     return null;
   }
   if (fs.existsSync(absolute)) {
     logError(`legislate: output already exists ${absolute}`);
-    setExitCode(2);
     return null;
   }
   return absolute;
@@ -159,7 +145,6 @@ function assertLegislateDuplicatePolicy(
   logError(
     `legislate: duplicate msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}. Re-run with --allow-duplicate only for intentional branch migrations.`,
   );
-  setExitCode(2);
   return false;
 }
 
@@ -182,7 +167,6 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
   const msnId = (options.msn ?? "").trim();
   if (!isValidMsnId(msnId)) {
     logError('legislate: --msn must match "MSN-0007" exactly');
-    setExitCode(2);
     return { ok: false, exitCode: 2 };
   }
 

@@ -1,0 +1,10 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Mission A pure CLI refactors: split architecture-pointer, purify runLegislate exit semantics, extract legislate-skill, MCP handler result types — zero behavioral change
+msn_id: MSN-0021
+skill_key: gapman
+gate_command: npm run validate
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING

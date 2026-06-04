@@ -61,6 +61,23 @@ export interface CheckSignatureResult {
   next_tools?: string[];
 }
 
+export type PinMissionResult =
+  | { status: "pinned"; mission_file_path: string; message: string }
+  | { status: "error"; error: McpErrorBody };
+
+export type ResolveMissionResult =
+  | { status: "resolved"; mission_file_path: string }
+  | {
+      status: "unpinned";
+      mission_file_path: null;
+      message: string;
+    };
+
+export type LastErrorResult =
+  | { status: "empty"; message: string }
+  | { status: "found"; payload: Record<string, unknown> }
+  | { status: "error"; message: string };
+
 function mcpError(code: string, message: string, retryable: boolean): { status: "error"; error: McpErrorBody } {
   return { status: "error", error: { code, message, retryable } };
 }
@@ -161,13 +178,7 @@ export function handleExecuteLegislation(
     gateSuccessSubstring: payload.gate_success_substring,
   };
 
-  const prevExitCode = process.exitCode;
-  let result: ReturnType<typeof runLegislate>;
-  try {
-    result = runLegislate(legislateOpts);
-  } finally {
-    process.exitCode = prevExitCode;
-  }
+  const result = runLegislate(legislateOpts);
   if (!result.ok) {
     return mcpError("LEGISLATE_FAILED", "gapman legislate failed; check skill_key, msn, or output path", true);
   }
@@ -222,7 +233,7 @@ export function handleCheckSignature(
   }
 }
 
-export function handlePinMission(missionFilePath: string): Record<string, unknown> {
+export function handlePinMission(missionFilePath: string): PinMissionResult | { status: "error"; error: McpErrorBody } {
   const { root } = loadWorkspace();
   const missionAbs = resolveMissionFilePath(root, missionFilePath);
 
@@ -238,7 +249,7 @@ export function handlePinMission(missionFilePath: string): Record<string, unknow
   };
 }
 
-export function handleResolveMission(explicit?: string): Record<string, unknown> {
+export function handleResolveMission(explicit?: string): ResolveMissionResult {
   const { root } = loadWorkspace();
 
   const candidates: string[] = [];
@@ -266,7 +277,7 @@ export function handleResolveMission(explicit?: string): Record<string, unknown>
   };
 }
 
-export function handleLastError(): Record<string, unknown> {
+export function handleLastError(): LastErrorResult {
   const { root } = loadWorkspace();
   const errPath = path.join(root, ".gitagent", "history", ".ignored-last-error.json");
   if (!fs.existsSync(errPath)) {
