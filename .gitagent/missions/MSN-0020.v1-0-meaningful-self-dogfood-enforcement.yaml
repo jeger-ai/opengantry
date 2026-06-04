@@ -2,8 +2,8 @@
 # Legislated intent: v1.0 meaningful self-dogfood: MANIFEST-driven MSN paths (Node), PR mission verify, TEACHER.allowlist, verify-pr-missions, MSN-9001 PASS.
 msn_id: MSN-0020
 skill_key: gapman
-gate_command: npm run validate
-gate_success_substring: dev-validate OK
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0020: Node gxt-manifest-lib.mjs drives MSN-enforced paths from MANIFEST tmvc_roots (no jq on hook path)"

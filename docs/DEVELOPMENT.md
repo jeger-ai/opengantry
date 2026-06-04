@@ -128,7 +128,7 @@ IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; 
 npm run validate
 ```
 
-Runs build, `gapman check`, `validate-gxt.sh manifest` (Node—no `jq`), unit tests, `gapman doctor`, MCP dogfood, changed-file ESLint/layers, MSN subject check vs `origin/main`, and **`verify-pr-missions.sh`** (full `gapman verify` on branch-changed missions).
+Runs **`dev-validate-core.sh`** (build, `gapman check`, `validate-gxt.sh manifest` via Node—no `jq`, tests, doctor, MCP dogfood, changed-code, MSN vs `origin/main`) then **`verify-pr-missions.sh`** (full `gapman verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
 
 **Hooks (automatic when `core.hooksPath=.githooks`):**
 
