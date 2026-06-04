@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
 import { runDoctorChecks, type DoctorLine } from "./doctor-checks.js";
-import { resolveMissionFromCandidates } from "./mission-path.js";
+import { resolvePinnedMission } from "./mission-resolution.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
 import type { Manifest } from "./types.js";
 
@@ -74,14 +74,7 @@ function assessVerifyReadiness(
 export function buildStatusReport(root: string, manifest: Manifest): StatusReport {
   const skillSync = checkSkillManifestSync(root, manifest);
   const doctor = runDoctorChecks(root, manifest);
-  const pinFile = path.join(root, ".gitagent", "missions", ".active-mission");
-  const candidates: string[] = [];
-  if (process.env.GXT_MISSION_FILE?.trim()) candidates.push(process.env.GXT_MISSION_FILE.trim());
-  if (fs.existsSync(pinFile)) {
-    const line = fs.readFileSync(pinFile, "utf8").trim();
-    if (line) candidates.push(line);
-  }
-  const pinnedMission = resolveMissionFromCandidates(root, candidates);
+  const pinnedMission = resolvePinnedMission(root, { profile: "status" });
 
   const lastErrorAbs = path.join(root, REL_AGENT_ERROR_FILE);
   const lastErrorFile = fs.existsSync(lastErrorAbs) ? REL_AGENT_ERROR_FILE : null;

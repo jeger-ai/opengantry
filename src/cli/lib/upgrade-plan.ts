@@ -16,12 +16,12 @@ import {
   legacyVersionWarning,
   readInstalledSubstrateVersion,
 } from "./substrate-version.js";
+import { allocateMsn } from "./msn-allocate.js";
 import { isValidMsnId } from "./msn.js";
 import { buildLegislativeTraceRows } from "./mission-yaml.js";
 
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
-export const UPGRADE_MSN_BAND_MIN = 9000;
-export const UPGRADE_MSN_BAND_MAX = 9099;
+export { UPGRADE_MSN_BAND_MIN, UPGRADE_MSN_BAND_MAX } from "./msn-allocate.js";
 
 export interface UpgradePayload {
   from_version: string;
@@ -57,19 +57,7 @@ function semverSlug(version: string): string {
 }
 
 export function pickNextUpgradeMsn(repoRoot: string): string {
-  const missionsDir = path.join(repoRoot, ".gitagent/missions");
-  const used = new Set<string>();
-  if (fs.existsSync(missionsDir)) {
-    for (const name of fs.readdirSync(missionsDir)) {
-      const m = name.match(/^(MSN-\d{4})/);
-      if (m) used.add(m[1]!);
-    }
-  }
-  for (let n = UPGRADE_MSN_BAND_MIN; n <= UPGRADE_MSN_BAND_MAX; n++) {
-    const id = `MSN-${String(n).padStart(4, "0")}`;
-    if (!used.has(id)) return id;
-  }
-  throw new Error(`${CLI_NAME} upgrade: no MSN available in upgrade band ${UPGRADE_MSN_BAND_MIN}-${UPGRADE_MSN_BAND_MAX}`);
+  return allocateMsn(repoRoot, { band: "upgrade" });
 }
 
 export function resolveUpgradeMsn(repoRoot: string, explicit?: string): string {

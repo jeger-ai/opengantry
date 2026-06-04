@@ -13,7 +13,7 @@ import {
   REL_UPGRADE_TMP,
   type UpgradePayload,
 } from "./upgrade-plan.js";
-import { resolveMissionFilePath } from "./mission-path.js";
+import { resolveMissionPathRequired } from "./mission-resolution.js";
 import { GapmanUserError } from "./user-error.js";
 
 export interface UpgradeApplyResult {
@@ -65,33 +65,6 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   }
 }
 
-function resolveMissionPath(repoRoot: string, explicit?: string): string {
-  if (explicit?.trim()) {
-    const abs = resolveMissionFilePath(repoRoot, explicit.trim());
-    if (!fs.existsSync(abs)) {
-      throw new GapmanUserError(
-        "MISSION_NOT_FOUND",
-        `${CLI_NAME} upgrade --apply: mission not found at ${explicit}`,
-      );
-    }
-    return abs;
-  }
-
-  const pinPath = path.join(repoRoot, ".gitagent/missions/.active-mission");
-  if (fs.existsSync(pinPath)) {
-    const pinned = fs.readFileSync(pinPath, "utf8").trim();
-    if (pinned.length > 0) {
-      const abs = resolveMissionFilePath(repoRoot, pinned);
-      if (fs.existsSync(abs)) return abs;
-    }
-  }
-
-  throw new GapmanUserError(
-    "UPGRADE_MISSION_REQUIRED",
-    `${CLI_NAME} upgrade --apply: pass --mission <path> to the signed upgrade mission YAML`,
-    "Example: gapman upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-v0.8.1.yaml",
-  );
-}
 
 export interface RunUpgradeApplyOptions {
   repoRoot: string;
@@ -103,7 +76,7 @@ export interface RunUpgradeApplyOptions {
 export function runUpgradeApply(options: RunUpgradeApplyOptions): UpgradeApplyResult {
   const repoRoot = path.resolve(options.repoRoot);
   const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
-  const missionAbs = resolveMissionPath(repoRoot, options.mission);
+  const missionAbs = resolveMissionPathRequired(repoRoot, { explicit: options.mission });
   const missionBody = fs.readFileSync(missionAbs, "utf8");
 
   let payload: UpgradePayload;

@@ -5,16 +5,7 @@ import {
   runBreakGlassAudit,
   validateBreakGlassReason,
 } from "./break-glass.js";
-import {
-  hintGate,
-  hintTraceAmbiguous,
-  hintTraceMissing,
-  hintTraceQuoteStillPlaceholder,
-  hintTraceStrictTrace,
-  logFixHint,
-} from "./fix-hints.js";
-import { GXT_ERROR } from "./gxt-error-codes.js";
-import { assertTeacherMissionProof } from "./git-proof.js";
+import { logFixHint } from "./fix-hints.js";
 import { logError, logInfo, setExitCode } from "./cli-io.js";
 import { reportUserFacingError } from "./user-error.js";
 import type { ParsedMission } from "./types.js";
@@ -24,6 +15,10 @@ import {
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-types.js";
+import {
+  emitVerifyFailureFromPresentation,
+  verifyFailurePresentationForFailure,
+} from "./verify-failure-presentation.js";
 import {
   filterNextStepsForAudience,
   audienceSectionTitle,
@@ -63,20 +58,6 @@ export function runVerifyBreakGlass(
   }
 }
 
-/** @deprecated Prefer evaluateVerifyPhases — kept for callers that only need git-proof logging. */
-export function runVerifyGitProof(root: string, mission: ParsedMission): string | null {
-  try {
-    const proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
-      msnId: mission.msnId ?? undefined,
-    });
-    logInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${proofMsnId})`);
-    return proofMsnId;
-  } catch (e) {
-    reportUserFacingError(e);
-    return null;
-  }
-}
-
 export function emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {
   logInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${result.proofMsnId})`);
   if (result.outcome === "pre_push_stub") {
@@ -95,62 +76,24 @@ export function emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: strin
   logInfo(`${CLI_NAME} verify: trace mapping OK (${result.workerLogPath})`);
 }
 
-function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string): void {
-  switch (failure.phase) {
-    case "git_proof":
-      reportUserFacingError(new Error(failure.message));
-      return;
-    case "gate":
-      logError(`[${GXT_ERROR.GATE_FAILED}] verify: GATE FAILED`);
-      if (failure.gateStdout !== undefined) logError("--- stdout ---\n" + failure.gateStdout);
-      if (failure.gateStderr !== undefined) logError("--- stderr ---\n" + failure.gateStderr);
-      if (failure.gateExitCode !== undefined) logError(`exit code: ${String(failure.gateExitCode)}`);
-      logFixHint(hintGate(failure.gateCommand ?? "<gate>", missionArg));
-      setExitCode(failure.exitCode);
-      return;
-    case "trace_pending":
-      logError(
-        `[${GXT_ERROR.TRACE_PENDING}] ${CLI_NAME} verify: legislative stub complete (git-proof OK) — worker must execute, append ${failure.workerLogPath}, set trace row PASS, then re-verify`,
-      );
-      setExitCode(failure.exitCode);
-      return;
-    case "trace": {
-      const errorCode =
-        failure.traceKind === "ambiguous" ? GXT_ERROR.TRACE_AMBIGUOUS : GXT_ERROR.TRACE_MISSING;
-      logError(`[${errorCode}] verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)`);
-      logError(`  DoD trace failure: ${failure.traceReason ?? failure.message}`);
-      switch (failure.traceKind) {
-        case "ambiguous":
-          logFixHint(
-            hintTraceAmbiguous(failure.workerLogPath, missionArg, failure.traceQuote),
-          );
-          break;
-        case "placeholder_quote":
-          logFixHint(hintTraceQuoteStillPlaceholder(missionArg, failure.workerLogPath));
-          break;
-        case "strict_line_drift":
-          logFixHint(hintTraceStrictTrace(missionArg));
-          break;
-        case "quote_missing":
-        case "worker_log_missing":
-        case "empty_quote":
-        case "anchor_mismatch":
-        case "other":
-        default:
-          logFixHint(hintTraceMissing(failure.workerLogPath));
-          break;
-      }
-      setExitCode(failure.exitCode);
-    }
+function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string, options: VerifyOptions, root?: string, msnId?: string): void {
+  if (failure.phase === "git_proof") {
+    reportUserFacingError(new Error(failure.message));
+    return;
   }
+  const presentation = verifyFailurePresentationForFailure(failure, missionArg, options, root, msnId);
+  emitVerifyFailureFromPresentation(presentation);
 }
 
 export function emitVerifyPhaseResult(
   result: VerifyPhaseSuccess | VerifyPhaseFailure,
   missionArg: string,
+  options: VerifyOptions = { mission: missionArg },
+  root?: string,
+  msnId?: string,
 ): boolean {
   if (!result.ok) {
-    emitVerifyFailure(result, missionArg);
+    emitVerifyFailure(result, missionArg, options, root, msnId);
     return false;
   }
   emitVerifySuccess(result, missionArg);
@@ -165,43 +108,7 @@ export function runVerifyPhasesFromEngine(
   options: VerifyOptions,
 ): boolean {
   const result = evaluateVerifyPhases(root, mission, options);
-  return emitVerifyPhaseResult(result, missionArg);
-}
-
-/** @deprecated Prefer runVerifyPhasesFromEngine gate phase. */
-export function runVerifyGate(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
-): boolean {
-  const result = evaluateVerifyPhases(root, mission, options);
-  if (!result.ok && result.phase === "gate") {
-    emitVerifyFailure(result, missionArg);
-    return false;
-  }
-  if (!result.ok) {
-    emitVerifyFailure(result, missionArg);
-    return false;
-  }
-  logInfo(`${CLI_NAME} verify: gate passed`);
-  return true;
-}
-
-/** @deprecated Prefer runVerifyPhasesFromEngine trace phase. */
-export function runVerifyTrace(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
-): boolean {
-  const result = evaluateVerifyPhases(root, mission, options);
-  if (!result.ok) {
-    emitVerifyFailure(result, missionArg);
-    return false;
-  }
-  emitVerifySuccess(result, missionArg);
-  return true;
+  return emitVerifyPhaseResult(result, missionArg, options, root, mission.msnId ?? undefined);
 }
 
 export function verifyFailureToHintContext(
@@ -218,6 +125,7 @@ export function verifyFailureToHintContext(
     gitProofMessage: failure.gitProofMessage,
     traceKind: failure.traceKind,
     traceQuote: failure.traceQuote,
+    traceFailureReason: failure.traceReason,
     strictTrace: options.strictTrace,
   };
 }

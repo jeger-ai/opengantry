@@ -1,14 +1,13 @@
 import path from "node:path";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { writeAgentErrorPayload } from "./agent-error.js";
-import { hintsForVerifyPhase } from "./fix-hints.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
-import { verifyFailureToHintContext } from "./verify-flow.js";
+import { verifyFailurePresentation } from "./verify-failure-presentation.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
 import { runRuntimeExec } from "./runtime-exec.js";
 import { loadWorkspace } from "./workspace.js";
@@ -24,7 +23,7 @@ export type RuntimeEnvMcpResult =
   | { status: "error"; error: McpRuntimeErrorBody };
 
 export type VerifyMcpResult =
-  | { status: "passed"; phase: "pre_push_stub"; message: string; msn_id: string | undefined }
+  | { status: "passed"; phase: "pre_push_stub"; message: string; msn_id: string }
   | {
       status: "passed";
       phase: "full";
@@ -61,14 +60,17 @@ function enrichVerifyFailure(
   msnId?: string,
   root?: string,
 ): { error_code: GxtErrorCode; fix_hints: string[]; next_actions: string[] } {
-  const remediation = hintsForVerifyPhase(failure.phase, {
-    ...verifyFailureToHintContext(failure, missionRel, { mission: missionFilePath }, root),
+  const presentation = verifyFailurePresentation({
+    failure,
+    missionArg: missionRel,
+    options: {},
+    root,
     msnId,
   });
   return {
-    error_code: remediation.error_code,
-    fix_hints: remediation.fix_hints,
-    next_actions: remediation.next_actions,
+    error_code: presentation.error_code,
+    fix_hints: presentation.fix_hints,
+    next_actions: presentation.next_actions,
   };
 }
 

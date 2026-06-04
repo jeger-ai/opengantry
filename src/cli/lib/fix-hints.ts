@@ -1,6 +1,5 @@
 import { logInfo } from "./cli-io.js";
 import { GXT_ERROR, mapGitProofCodeToGxt, type GxtErrorCode } from "./gxt-error-codes.js";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "./mission-legislative-stub.js";
 import { teacherIdentitySetupHint } from "./teacher-identity.js";
 import type { TraceFailureKind } from "./trace-failure-kind.js";
 
@@ -253,8 +252,7 @@ function hintsForTracePhase(ctx: VerifyHintContext): {
   const mission = ctx.missionPath;
   const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
   const verifyCmd = `gapman verify --mission ${mission}`;
-  const traceKind =
-    ctx.traceKind ?? inferTraceKindFromReason(ctx.traceFailureReason ?? "", ctx.traceQuote);
+  const traceKind = ctx.traceKind ?? "other";
   const hints: string[] = [hintForTraceKind(traceKind, workerLog, mission, ctx.traceQuote)];
   const errorCode =
     traceKind === "ambiguous" ? GXT_ERROR.TRACE_AMBIGUOUS : GXT_ERROR.TRACE_MISSING;
@@ -265,7 +263,7 @@ function hintsForTracePhase(ctx: VerifyHintContext): {
   };
 }
 
-function hintForTraceKind(
+export function hintForTraceKind(
   traceKind: TraceFailureKind,
   workerLog: string,
   mission: string,
@@ -285,13 +283,4 @@ function hintForTraceKind(
     case "other":
       return hintTraceMissing(workerLog);
   }
-}
-
-function inferTraceKindFromReason(reason: string, traceQuote?: string): TraceFailureKind {
-  if (reason.includes("Ambiguous")) return "ambiguous";
-  if (reason.includes("not found verbatim") || reason.includes("WORKER_LOG missing")) {
-    if (traceQuote?.trim() === LEGISLATE_TRACE_PLACEHOLDER) return "placeholder_quote";
-    return "quote_missing";
-  }
-  return "other";
 }
