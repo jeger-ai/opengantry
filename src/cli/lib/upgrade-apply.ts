@@ -3,18 +3,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { logInfo } from "./cli-io.js";
+import { promoteFileAtomic } from "./atomic-fs.js";
 import { assertTeacherMissionProof } from "./git-proof.js";
-import { applyInitWrites, type PlannedWrite } from "./init-plan.js";
-import { resolveTemplateRootFromModule } from "./integration-compat.js";
 import { mergeGitignoreFromTemplate } from "./gitignore-gxt.js";
+import { resolveTemplateRootFromModule } from "./integration-compat.js";
+import { resolveMissionPathRequired } from "./mission-resolution.js";
 import { writeSubstrateVersionFile } from "./substrate-version.js";
 import {
   parseUpgradePayloadFromMissionBody,
   REL_UPGRADE_TMP,
   type UpgradePayload,
 } from "./upgrade-plan.js";
-import { resolveMissionPathRequired } from "./mission-resolution.js";
 import { GapmanUserError } from "./user-error.js";
+
+export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 
 export interface UpgradeApplyResult {
   status: "applied" | "blocked";
@@ -65,6 +67,41 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   }
 }
 
+function cleanupApplyTmp(applyTmpRoot: string): void {
+  if (fs.existsSync(applyTmpRoot)) {
+    fs.rmSync(applyTmpRoot, { recursive: true, force: true });
+  }
+}
+
+async function stageWritesForApply(
+  repoRoot: string,
+  payload: UpgradePayload,
+): Promise<{ applyTmpRoot: string; promotions: Array<{ staged: string; target: string }> }> {
+  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  const applyTmpRoot = path.join(repoRoot, REL_UPGRADE_APPLY_TMP.split("/").join(path.sep));
+  cleanupApplyTmp(applyTmpRoot);
+  fs.mkdirSync(applyTmpRoot, { recursive: true });
+
+  const promotions: Array<{ staged: string; target: string }> = [];
+  for (const relPath of payload.planned_writes) {
+    const sourceAbs = path.join(tmpRoot, relPath.split("/").join(path.sep));
+    const stagedAbs = path.join(applyTmpRoot, relPath.split("/").join(path.sep));
+    const prodAbs = path.join(repoRoot, relPath.split("/").join(path.sep));
+    fs.mkdirSync(path.dirname(stagedAbs), { recursive: true });
+    fs.copyFileSync(sourceAbs, stagedAbs);
+    promotions.push({ staged: stagedAbs, target: prodAbs });
+  }
+  return { applyTmpRoot, promotions };
+}
+
+async function promoteStagedWrites(
+  promotions: Array<{ staged: string; target: string }>,
+): Promise<void> {
+  for (const { staged, target } of promotions) {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    await promoteFileAtomic(staged, target);
+  }
+}
 
 export interface RunUpgradeApplyOptions {
   repoRoot: string;
@@ -73,7 +110,7 @@ export interface RunUpgradeApplyOptions {
   json?: boolean;
 }
 
-export function runUpgradeApply(options: RunUpgradeApplyOptions): UpgradeApplyResult {
+export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<UpgradeApplyResult> {
   const repoRoot = path.resolve(options.repoRoot);
   const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
   const missionAbs = resolveMissionPathRequired(repoRoot, { explicit: options.mission });
@@ -101,20 +138,23 @@ export function runUpgradeApply(options: RunUpgradeApplyOptions): UpgradeApplyRe
   verifyStagedHashes(repoRoot, payload);
 
   const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
-  const writes: PlannedWrite[] = [];
-  for (const relPath of payload.planned_writes) {
-    const stageAbs = path.join(tmpRoot, relPath.split("/").join(path.sep));
-    const prodAbs = path.join(repoRoot, relPath.split("/").join(path.sep));
-    const body = fs.readFileSync(stageAbs, "utf8");
-    const executable = fs.statSync(stageAbs).mode & 0o111 ? true : undefined;
-    writes.push({ absoluteTarget: prodAbs, body, executable: executable === true });
+  let applyTmpRoot = "";
+  try {
+    const staged = await stageWritesForApply(repoRoot, payload);
+    applyTmpRoot = staged.applyTmpRoot;
+    await promoteStagedWrites(staged.promotions);
+
+    mergeGitignoreFromTemplate(repoRoot, templatesRoot);
+    writeSubstrateVersionFile(repoRoot, payload.to_version, "gapman upgrade --apply");
+  } catch (e) {
+    cleanupApplyTmp(applyTmpRoot);
+    throw e;
+  } finally {
+    cleanupApplyTmp(applyTmpRoot);
+    if (fs.existsSync(tmpRoot)) {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
   }
-
-  applyInitWrites(writes);
-  mergeGitignoreFromTemplate(repoRoot, templatesRoot);
-  writeSubstrateVersionFile(repoRoot, payload.to_version, "gapman upgrade --apply");
-
-  fs.rmSync(tmpRoot, { recursive: true, force: true });
 
   const appliedPaths = payload.planned_writes;
   const message = [

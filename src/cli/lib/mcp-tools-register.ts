@@ -150,7 +150,7 @@ function registerUpgradeTools(server: McpServer): void {
     {
       mission_file_path: z.string().optional().describe("Signed upgrade mission YAML path"),
     },
-    async (args) => jsonText(handleUpgradeApply(args.mission_file_path)),
+    async (args) => jsonText(await handleUpgradeApply(args.mission_file_path)),
   );
 }
 

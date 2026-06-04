@@ -4,10 +4,8 @@ import {
   filterNextStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
-import { runDoctorChecks, doctorLinesHasFail, type DoctorLine } from "../lib/doctor-checks.js";
-import { runIntegrationDoctorChecks } from "../lib/doctor-integration-checks.js";
-import { runArchitecturePointerDoctorChecks } from "../lib/architecture-pointer.js";
-import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
+import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor-checks.js";
+import { collectDoctorReport } from "../lib/doctor-orchestration.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface DoctorReport {
@@ -45,18 +43,14 @@ function emitDoctor(
 export function runDoctor(options: { json?: boolean; audience?: OutputAudience } = {}): void {
   try {
     const { root, manifest } = loadWorkspace();
-    const result = runDoctorChecks(root, manifest);
-    let lines = [...result.lines, ...runArchitecturePointerDoctorChecks(root)];
-    try {
-      const templatesRoot = resolveTemplateRootFromModule();
-      lines = [...lines, ...runIntegrationDoctorChecks(root, templatesRoot)];
-    } catch {
-      lines = [
-        ...lines,
-        { level: "warn", message: "integration compat checks skipped (templates not found)" },
-      ];
-    }
-    emitDoctor(lines, result.nextStep, doctorLinesHasFail(lines), options.json, options.audience);
+    const report = collectDoctorReport(root, manifest);
+    emitDoctor(
+      report.lines,
+      report.nextStep,
+      doctorLinesHasFail(report.lines),
+      options.json,
+      options.audience,
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     emitDoctor([{ level: "fail", message: msg }], null, true, options.json, options.audience);
