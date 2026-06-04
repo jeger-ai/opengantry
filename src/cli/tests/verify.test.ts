@@ -511,3 +511,37 @@ trace_rows:
     }
   });
 });
+
+test("runVerify: git-proof uses Teacher commit author from history, not CI runner identity", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-ci-runner-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "foreman", "TEACHER.allowlist"),
+    `${TEACHER_EMAIL}\n`,
+    "utf8",
+  );
+  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  const prevCwd = process.cwd();
+  const prevName = process.env.GIT_AUTHOR_NAME;
+  const prevEmail = process.env.GIT_AUTHOR_EMAIL;
+  const prevConfigEmail = execSync("git config user.email || true", { cwd: dest, encoding: "utf8" }).trim();
+  try {
+    execSync('git config user.email "github-actions[bot]@users.noreply.github.com"', { cwd: dest });
+    process.env.GIT_AUTHOR_NAME = "github-actions[bot]";
+    process.env.GIT_AUTHOR_EMAIL = "github-actions[bot]@users.noreply.github.com";
+    process.chdir(dest);
+    process.exitCode = undefined;
+    await runVerify({ mission: ".gitagent/missions/m.yaml", workerLog: "WORKER_LOG.md" });
+    assert.equal(process.exitCode, undefined, "verify must pass when Teacher stamp is in history");
+  } finally {
+    process.chdir(prevCwd);
+    if (prevConfigEmail) {
+      execSync(`git config user.email "${prevConfigEmail}"`, { cwd: dest });
+    }
+    process.env.GIT_AUTHOR_NAME = prevName;
+    process.env.GIT_AUTHOR_EMAIL = prevEmail;
+    process.exitCode = undefined;
+  }
+});

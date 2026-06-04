@@ -129,7 +129,7 @@ source scripts/gxt-runtime-env.sh   # integrated terminal (uses pinned mission)
 - **Enforcement:** Advisory for Agent edits; MCP two-step gate for legislation; shell hook fallback for raw `gapman legislate` / law/manifest writes; use `runtime exec` for headless CLI/SDK runs.
 - **Gotcha:** Enable hooks **and** MCP in Cursor Settings; restart if they do not load (**Output → Hooks**). Pin a mission before starting Agent work — unpinned sessions get a legislate reminder only.
 
-**Substrate lifecycle:** After `npm install gapman@latest`, run `gapman upgrade` → review `.gitagent/.upgrade-tmp/` → Teacher-commit the upgrade mission YAML → `gapman upgrade --apply --mission …`. MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply`.
+**Substrate lifecycle:** After `npm install @jeger-ai/opengantry@latest`, run `gapman upgrade` → review `.gitagent/.upgrade-tmp/` → Teacher-commit the upgrade mission YAML → `gapman upgrade --apply --mission …`. MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply`.
 
 Headless:
 

@@ -47,7 +47,7 @@ test("readInstalledSubstrateVersion: legacy default 0.0.0", () => {
 
 test("alreadyCurrentMessage: includes npm install guidance", () => {
   const msg = alreadyCurrentMessage("0.8.1", "0.8.1");
-  assert.match(msg, /npm install gapman@latest/);
+  assert.match(msg, /npm install @jeger-ai\/opengantry@latest/);
   assert.match(msg, /gapman upgrade/);
 });
 

@@ -44,6 +44,12 @@ const CORE_ASSETS: InitAssetSpec[] = [
   { targetPath: ".gitagent/teacher/MISSION.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/teacher/WORKER_LOG.template.md", mode: "managed_strict", tags: ["core"] },
   { targetPath: "scripts/validate-gxt.sh", mode: "managed_strict", executable: true, tags: ["core"] },
+  {
+    targetPath: "scripts/gxt-manifest-lib.mjs",
+    mode: "managed_strict",
+    executable: true,
+    tags: ["core"],
+  },
 ];
 
 const SKILL_ASSETS: InitAssetSpec[] = [
@@ -196,6 +202,6 @@ export function legacyDefaultInitTargetPaths(): string[] {
       ciWorkflow: true,
       architectureSource: "unset",
     },
-    { schema_version: "1", opengantry_version: "0.8.1", integrations: {} as never },
+    { schema_version: "1", opengantry_version: "1.0.0", integrations: {} as never },
   ).map((a) => a.targetPath);
 }

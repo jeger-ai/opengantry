@@ -4,6 +4,13 @@ This runbook documents the OpenGantry specimen flow for adopters testing `gapman
 
 ## First run (onboarding)
 
+Install **gapman** (Node.js 24+):
+
+```bash
+npm install -g @jeger-ai/opengantry
+# or: npx @jeger-ai/opengantry <cmd>
+```
+
 ```bash
 gapman init --tutorial   # guided loop after scaffold (~3 min)
 # or:

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { NPM_PACKAGE_NAME } from "./constants.js";
 import { loadIntegrationCompat } from "./integration-compat.js";
 
 export const REL_SUBSTRATE_VERSION = ".gitagent/foreman/SUBSTRATE.version.json" as const;
@@ -100,7 +101,7 @@ export function alreadyCurrentMessage(installed: string, bundled: string): strin
   return [
     `Substrate is up to date (installed ${installed}, bundled ${bundled}).`,
     "To upgrade to a newer OpenGantry release, first update the package manager dependency",
-    "(e.g. npm install gapman@latest) and re-run: gapman upgrade",
+    `(e.g. npm install ${NPM_PACKAGE_NAME}@latest) and re-run: gapman upgrade`,
   ].join("\n");
 }
 

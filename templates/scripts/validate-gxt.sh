@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # OpenGantry local + CI validation. Keep path-prefix rules in sync with
 # .github/workflows/gxt-validate.yml (msn_commits job).
+# MSN-enforced paths: fixed substrate + MANIFEST tmvc_roots (Node; no jq).
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
@@ -12,13 +13,35 @@ cd "$ROOT"
 MANIFEST_REL=".gitagent/foreman/MANIFEST.json"
 BYPASS_SHA256_REL=".gitagent/foreman/BYPASS.sha256"
 GXT_BYPASS_NOTES_REF="refs/notes/gxt-bypass"
+GXT_MANIFEST_LIB="scripts/gxt-manifest-lib.mjs"
+
+# Cached MSN-enforced path prefixes (fixed substrate + MANIFEST tmvc_roots).
+MSN_PREFIXES=()
+
+load_msn_prefixes() {
+  if [[ ${#MSN_PREFIXES[@]} -gt 0 ]]; then
+    return 0
+  fi
+  if [[ ! -f "$GXT_MANIFEST_LIB" ]]; then
+    echo "validate-gxt: missing $GXT_MANIFEST_LIB" >&2
+    exit 1
+  fi
+  mapfile -t MSN_PREFIXES < <(node "$GXT_MANIFEST_LIB" prefixes "$ROOT") || {
+    echo "validate-gxt: failed to load MSN-enforced prefixes from MANIFEST (Node required)" >&2
+    exit 1
+  }
+  if [[ ${#MSN_PREFIXES[@]} -eq 0 ]]; then
+    echo "validate-gxt: no MSN-enforced prefixes" >&2
+    exit 1
+  fi
+}
 
 # Returns 0 if commit has a valid gxt-bypass git note (JSON v1 + reason >= 10 chars).
 commit_has_gxt_bypass_note() {
   local commit="$1"
   local note
   note="$(git notes --ref="$GXT_BYPASS_NOTES_REF" show "$commit" 2>/dev/null)" || return 1
-  printf '%s' "$note" | jq -e '.v == 1 and (.reason | type == "string") and (.reason | length >= 10)' >/dev/null 2>&1
+  printf '%s' "$note" | node "$GXT_MANIFEST_LIB" validate-bypass-note >/dev/null 2>&1
 }
 
 # Returns 0 when GXT_BYPASS_SECRET matches BYPASS.sha256 anchor (never commit the secret).
@@ -33,12 +56,22 @@ is_bypass_secret_authorized() {
 }
 
 # Returns 0 if this path should trigger [MSN-XXXX] subject enforcement.
-is_gxt_path() {
+is_msn_enforced_path() {
   local p="$1"
-  [[ "$p" == .gitagent/* || "$p" == .gitagent ]] && return 0
-  [[ "$p" == "WORKER_LOG.md" ]] && return 0
-  [[ "$p" == .githooks/* || "$p" == .githooks ]] && return 0
-  [[ "$p" == ".github/workflows/gxt-validate.yml" ]] && return 0
+  local prefix
+  load_msn_prefixes
+  for prefix in "${MSN_PREFIXES[@]}"; do
+    [[ -z "$prefix" ]] && continue
+    if [[ "$p" == "$prefix" ]]; then
+      return 0
+    fi
+    if [[ "$prefix" == */ ]] && [[ "$p" == "$prefix"* ]]; then
+      return 0
+    fi
+    if [[ "$prefix" != */ ]] && [[ "$p" == "$prefix"/* ]]; then
+      return 0
+    fi
+  done
   return 1
 }
 
@@ -54,20 +87,7 @@ cmd_upgrade_tmp() {
 }
 
 cmd_manifest() {
-  local M="$MANIFEST_REL"
-  test -f "$M"
-  jq -e . "$M" >/dev/null
-  jq -e '.schema_version | type == "string" and length > 0' "$M" >/dev/null
-  jq -e '.skills | type == "object" and (. | length > 0)' "$M" >/dev/null
-  jq -e '.path_risks | type == "object"' "$M" >/dev/null
-  jq -e '.risk_keywords | type == "array"' "$M" >/dev/null
-  local k
-  while IFS= read -r k; do
-    jq -e --arg k "$k" '.skills[$k] | has("trust_threshold") and has("tmvc_roots") and has("forbidden_zones")' "$M" >/dev/null
-    jq -e --arg k "$k" '.skills[$k].tmvc_roots | type == "array"' "$M" >/dev/null
-    jq -e --arg k "$k" '.skills[$k].forbidden_zones | type == "array"' "$M" >/dev/null
-  done < <(jq -r '.skills | keys[]' "$M")
-  echo "MANIFEST OK"
+  node "$GXT_MANIFEST_LIB" validate-manifest "$ROOT"
 }
 
 cmd_msn() {
@@ -83,7 +103,7 @@ cmd_msn() {
     touched=0
     while IFS= read -r f; do
       [[ -n "$f" ]] || continue
-      if is_gxt_path "$f"; then
+      if is_msn_enforced_path "$f"; then
         touched=1
         break
       fi
@@ -100,7 +120,7 @@ cmd_msn() {
     if commit_has_gxt_bypass_note "$commit"; then
       continue
     fi
-    echo "MSN check FAILED: commit $commit touches GXT paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note" >&2
+    echo "MSN check FAILED: commit $commit touches MSN-enforced paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note" >&2
     echo "  subject: $subject" >&2
     echo "  hint: run gapman verify --break-glass --reason \"...\" with GXT_BYPASS_SECRET, push refs/notes/gxt-bypass" >&2
     echo "  touched paths (sample):" >&2
@@ -108,7 +128,7 @@ cmd_msn() {
     exit 1
   done < <(git rev-list --no-merges "${base_sha}..${head_sha}")
 
-  echo "MSN commit subjects OK (path-scoped)"
+  echo "MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots)"
 }
 
 usage() {
@@ -116,7 +136,7 @@ usage() {
 Usage:
   validate-gxt.sh [manifest]          Validate Foreman MANIFEST.json (default)
   validate-gxt.sh msn <base> <head>   Require [MSN-NNNN] or gxt-bypass git note on commits
-                                      in range that touch GXT paths (see is_gxt_path)
+                                      in range that touch MSN-enforced paths
   validate-gxt.sh upgrade-tmp         Fail if .gitagent/.upgrade-tmp/ contains tracked files
   validate-gxt.sh all [base head]     Run manifest, upgrade-tmp, then msn if base and head given
 Example:

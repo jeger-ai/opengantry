@@ -24,4 +24,4 @@ export const DEFAULT_ACTIVE_MISSION = ".gitagent/missions/ACTIVE_MISSION.md" as 
 export const MSN_ID_PATTERN = /^MSN-\d{4}$/;
 
 export const CLI_NAME = "gapman";
-export const CLI_VERSION = "1.0.0";
+export { CLI_VERSION, NPM_PACKAGE_NAME } from "./version.gen.js";

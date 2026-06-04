@@ -1,0 +1,23 @@
+# OpenGantry v1.0 meaningful self-dogfood — enforcement cage for specimen development.
+# Legislated intent: v1.0 meaningful self-dogfood: MANIFEST-driven MSN paths (Node), PR mission verify, TEACHER.allowlist, verify-pr-missions, MSN-9001 PASS.
+msn_id: MSN-0020
+skill_key: gapman
+gate_command: npm run validate
+gate_success_substring: dev-validate OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0020: Node gxt-manifest-lib.mjs drives MSN-enforced paths from MANIFEST tmvc_roots (no jq on hook path)"
+    anchor: "19"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0020: verify-pr-missions.sh enforces triple-dot PR diff and full gapman verify on changed missions"
+    anchor: "20"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0020: gxt-validate mission_verify job uses pull_request head SHA and TEACHER.allowlist git-proof"
+    anchor: "21"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0020: MSN-9001 tutorial mission verify PASS on canonical specimen"
+    anchor: "22"
+    status: PASS

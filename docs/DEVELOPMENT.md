@@ -22,6 +22,14 @@ gapman doctor
 1. [`.gitagent/teacher/RULES.md`](../.gitagent/teacher/RULES.md) — SOD, trace, TMVC, Rule 4.4, break-glass.
 2. [`.gitagent/foreman/MANIFEST.json`](../.gitagent/foreman/MANIFEST.json) — skills, roots, forbidden zones.
 
+### Specimen routing (this repository only)
+
+**jeger-ai/opengantry** dogfoods through the **`gapman`** skill and TMVC `src/cli/`. The `ui` and `logic` skills in the specimen MANIFEST point at directories that do not exist here—they exist so adopters have a template after `gapman init`. Do not route specimen work through `ui`/`logic`.
+
+MSN-enforced paths for commits and PR guards come from **fixed substrate paths** plus **every `tmvc_roots` entry in MANIFEST** (see `scripts/gxt-manifest-lib.mjs`)—not hardcoded `src/cli/` in shell.
+
+**Teacher allowlist:** committed [`.gitagent/foreman/TEACHER.allowlist`](../.gitagent/foreman/TEACHER.allowlist) (team emails for CI git-proof). Personal overrides: `.gitagent/foreman/TEACHER.allowlist.local` (gitignored). Run `gapman teacher show` to confirm.
+
 **Where work belongs**
 
 | Change | Skill (typical) | TMVC |
@@ -93,7 +101,7 @@ Validate MCP flow locally: `./scripts/validate-mcp-dogfood.sh`
 Tier-3 lifecycle updates use the installed `gapman` package only (no remote fetch):
 
 ```bash
-npm install gapman@latest          # when a newer release exists
+npm install @jeger-ai/opengantry@latest   # when a newer release exists
 gapman upgrade                     # stage managed_strict assets + draft MSN-900x mission YAML
 # Review .gitagent/.upgrade-tmp/ diff; commit mission YAML only (tmp is gitignored)
 git add .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
@@ -120,7 +128,7 @@ IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; 
 npm run validate
 ```
 
-Runs build, `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doctor`, changed-file ESLint/layers, and MSN subject check vs `origin/main`.
+Runs build, `gapman check`, `validate-gxt.sh manifest` (Node—no `jq`), unit tests, `gapman doctor`, MCP dogfood, changed-file ESLint/layers, MSN subject check vs `origin/main`, and **`verify-pr-missions.sh`** (full `gapman verify` on branch-changed missions).
 
 **Hooks (automatic when `core.hooksPath=.githooks`):**
 
@@ -138,7 +146,18 @@ Runs build, `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doct
 
 ## CI parity
 
-Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml): `gapman check`, `gapman doctor`, tests, `validate-gxt.sh`, **changed-code quality** on PR diffs, and path-scoped MSN commit subjects. Local `npm run validate` is the full superset (includes changed-code + MSN vs `origin/main`) — run it before you open a PR.
+Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml):
+
+| Job | What it enforces |
+|-----|------------------|
+| `manifest` | `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doctor` |
+| `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
+| `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); checkout **PR head SHA** |
+| `mission_verify` | Full `gapman verify` on each mission file in `${base}...${head}` triple-dot diff; fails if protected paths change without a mission file |
+
+Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` + MSN vs `origin/main`). Run it before you open a PR.
+
+Adopters may copy [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) into their CI; it is **not** shipped via `gapman init` in v1.0 (specimen-first).
 
 ## Troubleshooting verify / hooks
 

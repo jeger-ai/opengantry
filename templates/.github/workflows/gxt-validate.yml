@@ -1,12 +1,10 @@
 # Validates OpenGantry substrate: Foreman MANIFEST + path-scoped [MSN-NNNN] on PRs.
 #
-# MSN policy (pull_request only): commits that touch any of the following must have a
-# subject starting with [MSN-NNNN] (four digits):
-#   - .gitagent/ (any path under)
-#   - WORKER_LOG.md (repo root)
-#   - .githooks/ (any path under)
-#   - .github/workflows/gxt-validate.yml
-# Logic is implemented in scripts/validate-gxt.sh — keep workflow and script in sync.
+# MSN policy (pull_request only): commits touching MSN-enforced paths must have
+# subject [MSN-NNNN] (four digits) or a valid gxt-bypass git note.
+# Paths = fixed substrate (.gitagent/, WORKER_LOG.md, .githooks/, gxt-validate.yml)
+#       + all MANIFEST skills[].tmvc_roots (Node via scripts/gxt-manifest-lib.mjs).
+# Logic: scripts/validate-gxt.sh — keep workflow header and script in sync.
 
 name: GXT validate
 
@@ -22,9 +20,9 @@ jobs:
   manifest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
@@ -38,7 +36,7 @@ jobs:
       - name: gapman check (MANIFEST + Rule 4.4 skills sync)
         run: node dist/cli/index.js check
 
-      - name: Validate Foreman MANIFEST.json (jq parity)
+      - name: Validate Foreman MANIFEST.json (Node parity)
         run: ./scripts/validate-gxt.sh manifest
 
       - name: gapman unit tests
@@ -51,11 +49,12 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
@@ -69,13 +68,30 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: ./scripts/check-changed-code.sh "$BASE_SHA" "$HEAD_SHA"
 
+  npm_pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: npm pack check
+        run: ./scripts/npm-pack-check.sh
+
   msn_commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Fetch gxt-bypass git notes
         run: git fetch origin 'refs/notes/*:refs/notes/*' || true
@@ -85,3 +101,29 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: ./scripts/validate-gxt.sh msn "$BASE_SHA" "$HEAD_SHA"
+
+  mission_verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Build gapman
+        run: npm run build
+
+      - name: Full verify on PR-changed missions
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./scripts/verify-pr-missions.sh

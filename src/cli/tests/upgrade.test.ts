@@ -60,7 +60,7 @@ test("runUpgradePlan: already current includes npm guidance", () => {
   writeSubstrateVersionFile(dest, bundled, "test");
   const result = runUpgradePlan({ repoRoot: dest, templatesRoot, json: true });
   assert.equal(result.status, "already_current");
-  assert.match(result.message ?? "", /npm install gapman@latest/);
+  assert.match(result.message ?? "", /npm install @jeger-ai\/opengantry@latest/);
 });
 
 test("runUpgradePlan: downgrade blocked", () => {

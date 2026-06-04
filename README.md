@@ -10,6 +10,23 @@
 
 **Protocol (implementers):** under the hood, **GXT (Git-native eXecution and Trace)** binds law, Foreman routing, deterministic gates, and trace mapping to `WORKER_LOG.md`. This repository is both the **specimen** and the **template**. Run **`gapman init`** (or **`gapman init --tutorial`**) in your repo and adapt it.
 
+## Install
+
+Requires **Node.js 24+**.
+
+```bash
+npm install -g @jeger-ai/opengantry
+gapman init --tutorial
+```
+
+Or without a global install:
+
+```bash
+npx @jeger-ai/opengantry init --tutorial
+```
+
+Developing this repository from source: `npm ci && npm run build` — see [gapman CLI](#gapman-cli) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+
 ## Why teams adopt this
 
 | Outcome | How OpenGantry delivers it |
@@ -41,7 +58,7 @@
 | **Bootstrap** (zero-friction substrate install) | `gapman init` + packaged [`templates/`](templates/) |
 | **Architecture pointer** (where agents find code layout) | [`.gitagent/ARCHITECTURE.pointer.json`](.gitagent/ARCHITECTURE.pointer.json), [ARCHITECTURE-DISCOVERY.md](.gitagent/teacher/ARCHITECTURE-DISCOVERY.md) |
 | **Work order + commit receipt** | YAML via `gapman legislate` + [`.gitagent/teacher/MISSION.example.yaml`](.gitagent/teacher/MISSION.example.yaml); Markdown reference: [`.gitagent/teacher/MISSION.template.md`](.gitagent/teacher/MISSION.template.md), [`.gitagent/teacher/commit-template.md`](.gitagent/teacher/commit-template.md) |
-| **gapman CLI** | `npm ci && npm run build` then `npx gapman` or `node dist/cli/index.js` — see [gapman](#gapman-cli) |
+| **gapman CLI** | `npm install -g @jeger-ai/opengantry` or `npx @jeger-ai/opengantry` — see [gapman](#gapman-cli) |
 | **Full orientation + workflow diagram** | [`.gitagent/README.md`](.gitagent/README.md) |
 
 Core behaviors in plain language:
@@ -129,7 +146,7 @@ The gate is whatever command **fails closed** for your repo (lint, typecheck, in
 
 ### gapman CLI
 
-Requires **Node.js 24+** (Active LTS line). After `npm ci` and `npm run build`, the `gapman` binary resolves to `dist/cli/index.js` (see [`package.json`](package.json)).
+Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry`** on npm; the `gapman` binary is registered via `package.json` `bin` (see [`package.json`](package.json)). From source: `npm ci && npm run build` → `dist/cli/index.js`.
 
 **Developing OpenGantry:** dogfood the full stack — [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) (missions, hooks, verify, `npm run validate`). Layer rules: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Adopters: [`docs/ADOPTION.md`](docs/ADOPTION.md).
 
@@ -252,9 +269,21 @@ Add to your **`.gitignore`** (if not already present):
 
 **Empty `WORKER_LOG.md` on branch checkout:** after copying, point Git at the vendored hooks once per clone (`git config core.hooksPath .githooks`). On branch checkouts **other than** `main` or `master`, if `WORKER_LOG.md` is missing at the repo root, [`.githooks/post-checkout`](.githooks/post-checkout) copies [`.gitagent/teacher/WORKER_LOG.template.md`](.gitagent/teacher/WORKER_LOG.template.md) into place. It **never overwrites** an existing file.
 
-## Staying in sync (no npm package for the substrate kit)
+## Staying in sync
 
-There is **no** `npm install opengantry` as a published package—**this canonical repo** uses root `package.json` only for the **`gapman`** CLI and its tests. When you **vendor** OpenGantry into another app, copy `.gitagent/` (and optionally the `gapman` sources); you are not required to adopt Node in the host repo.
+**Primary path (npm):** install or update the CLI package, then apply bundled substrate changes in your repo:
+
+```bash
+npm install @jeger-ai/opengantry@latest
+gapman upgrade
+# Review .gitagent/.upgrade-tmp/; Teacher-commit the upgrade mission YAML
+gapman upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
+gapman doctor
+```
+
+See [`docs/ADOPTION.md`](docs/ADOPTION.md) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#substrate-upgrade-loop-adopters--dogfood).
+
+**Alternative — vendor `.gitagent/` without npm** (no Node required in the host repo):
 
 **Option A — `git subtree` (good if you vendored `.gitagent/` with subtree in the first place)**
 
@@ -298,6 +327,10 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 ## Relationship to this repository
 
 **jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v1.0.0** CLI). Fork it, run `gapman init` in your repo, vendor the `.gitagent/` folder, or cherry-pick files—there is no published runtime "install" step.
+
+## Security
+
+Supported versions and how to report vulnerabilities: [`SECURITY.md`](SECURITY.md).
 
 ## License
 

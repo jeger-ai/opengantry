@@ -36,7 +36,7 @@ npm run build
 echo "dev-validate: gapman check (Rule 4.4)"
 "${GAPMAN[@]}" check
 
-echo "dev-validate: Foreman MANIFEST (jq parity)"
+echo "dev-validate: Foreman MANIFEST (Node parity)"
 ./scripts/validate-gxt.sh manifest
 
 echo "dev-validate: upgrade-tmp staging guard"
@@ -57,6 +57,8 @@ echo "dev-validate: changed-code quality (${BASE_REF}..${HEAD_REF})"
 if git rev-parse --verify "${BASE_REF}^{commit}" >/dev/null 2>&1; then
   echo "dev-validate: path-scoped MSN subjects (${BASE_REF}..${HEAD_REF})"
   ./scripts/validate-gxt.sh msn "${BASE_REF}" "${HEAD_REF}"
+  echo "dev-validate: PR mission verify (${BASE_REF}...${HEAD_REF})"
+  ./scripts/verify-pr-missions.sh "${BASE_REF}" "${HEAD_REF}"
 fi
 
-echo "dev-validate OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+echo "dev-validate OK — stack: check, manifest, tests, doctor, changed-code, MSN, mission-verify"

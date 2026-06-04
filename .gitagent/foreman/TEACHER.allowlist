@@ -1,0 +1,3 @@
+# Team Teacher identities for gapman verify git-proof (one email per line).
+# Personal overrides: .gitagent/foreman/TEACHER.allowlist.local (gitignored)
+jeger@commitly.com

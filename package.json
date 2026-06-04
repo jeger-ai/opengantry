@@ -8,19 +8,34 @@
   },
   "files": [
     "dist",
+    "!dist/cli/tests",
     "templates",
     "README.md",
     "LICENSE",
     "NOTICE"
   ],
   "scripts": {
-    "build": "tsc",
+    "gen:version": "node scripts/gen-version.mjs",
+    "build": "npm run gen:version && tsc",
     "gapman": "node dist/cli/index.js",
     "lint": "eslint src/cli/**/*.ts",
     "check:changed": "./scripts/check-changed-code.sh",
     "validate": "./scripts/dev-validate.sh",
+    "prepublishOnly": "npm run build && npm test",
+    "pack:check": "./scripts/npm-pack-check.sh",
     "test": "npm run build && node --test dist/cli/tests/*.test.js"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "gxt",
+    "gapman",
+    "ai-agents",
+    "governance",
+    "devtools"
+  ],
   "engines": {
     "node": ">=24"
   },
@@ -37,11 +52,6 @@
     "commander": "^12.1.0",
     "yaml": "^2.6.1",
     "zod": "^3.25.76"
-  },
-  "main": "eslint.config.js",
-  "directories": {
-    "doc": "docs",
-    "test": "test"
   },
   "repository": {
     "type": "git",

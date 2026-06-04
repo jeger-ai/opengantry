@@ -6,6 +6,7 @@
 # gapman / Node build
 node_modules/
 dist/
+src/cli/lib/version.gen.ts
 
 # OpenGantry (gapman init)
 .gitagent/foreman/TEACHER.allowlist.local
