@@ -15,3 +15,18 @@ example trace line for gapman verify
 ## MSN-0015 — v1.0 enterprise onboarding and contextual output
 
 - DoD 2: dev-validate OK — v1.0: init --tutorial, global --audience, README/ADOPTION product framing
+
+## MSN-9001 — Specimen tutorial loop
+
+- DoD 1 MSN-9001: gapman check OK — specimen tutorial loop verified on canonical repo
+
+## MSN-9000 — Substrate upgrade archival
+
+- MSN-9000: substrate upgrade mission superseded by OpenGantry 1.0.0 — archival only
+
+## MSN-0020 — v1.0 meaningful self-dogfood enforcement
+
+- DoD 1 MSN-0020: Node gxt-manifest-lib.mjs drives MSN-enforced paths from MANIFEST tmvc_roots (no jq on hook path)
+- DoD 2 MSN-0020: verify-pr-missions.sh enforces triple-dot PR diff and full gapman verify on changed missions
+- DoD 3 MSN-0020: gxt-validate mission_verify job uses pull_request head SHA and TEACHER.allowlist git-proof
+- DoD 4 MSN-0020: MSN-9001 tutorial mission verify PASS on canonical specimen
