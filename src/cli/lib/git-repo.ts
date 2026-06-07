@@ -39,3 +39,15 @@ export function gitHead(repoRoot: string): string | null {
   const r = gitRunOk(repoRoot, ["rev-parse", "HEAD"]);
   return r.ok && r.stdout.trim() ? r.stdout.trim() : null;
 }
+
+export function gitLogSubjects(repoRoot: string, grep: string, limit: number): string[] {
+  const r = gitRunOk(repoRoot, ["log", `--grep=${grep}`, `-${limit}`, "--format=%s"]);
+  if (!r.ok || !r.stdout.trim()) return [];
+  return r.stdout.split("\n").filter(Boolean);
+}
+
+export function gitConfigGet(repoRoot: string, key: string): string | null {
+  const r = gitRunOk(repoRoot, ["config", "--get", key]);
+  if (!r.ok || !r.stdout.trim()) return null;
+  return r.stdout.trim();
+}

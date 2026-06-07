@@ -35,22 +35,23 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   }
 
   if (options.apply) {
-    try {
-      const result = runUpgradeApply({
-        repoRoot,
-        mission: options.mission,
-        templatesRoot,
-        json: options.json,
+    void runUpgradeApply({
+      repoRoot,
+      mission: options.mission,
+      templatesRoot,
+      json: options.json,
+    })
+      .then((result) => {
+        if (options.json) {
+          console.log(JSON.stringify(result, null, 2));
+        }
+        if (result.status === "blocked") {
+          setExitCode(2);
+        }
+      })
+      .catch((e) => {
+        handleUpgradeError(e, options.json);
       });
-      if (options.json) {
-        console.log(JSON.stringify(result, null, 2));
-      }
-      if (result.status === "blocked") {
-        setExitCode(2);
-      }
-    } catch (e) {
-      handleUpgradeError(e, options.json);
-    }
     return;
   }
 

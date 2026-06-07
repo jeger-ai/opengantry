@@ -8,8 +8,8 @@ import { assertTeacherMissionProof } from "./git-proof.js";
 import {
   pinMissionFile,
   resolveMissionFilePath,
-  resolveMissionFromCandidates,
 } from "./mission-path.js";
+import { resolvePinnedMission } from "./mission-resolution.js";
 import { GapmanUserError } from "./user-error.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -251,21 +251,11 @@ export function handlePinMission(missionFilePath: string): PinMissionResult | { 
 
 export function handleResolveMission(explicit?: string): ResolveMissionResult {
   const { root } = loadWorkspace();
+  const resolved = resolvePinnedMission(root, {
+    explicit,
+    profile: "full",
+  });
 
-  const candidates: string[] = [];
-  if (explicit?.trim()) candidates.push(explicit.trim());
-  if (process.env.GAPMAN_MISSION?.trim()) candidates.push(process.env.GAPMAN_MISSION.trim());
-  if (process.env.GXT_MISSION_FILE?.trim()) candidates.push(process.env.GXT_MISSION_FILE.trim());
-
-  const pinFile = path.join(root, ".gitagent", "missions", ".active-mission");
-  if (fs.existsSync(pinFile)) {
-    const line = fs.readFileSync(pinFile, "utf8").trim();
-    if (line) candidates.push(line);
-  }
-  candidates.push(".gitagent/missions/ACTIVE_MISSION.md");
-  candidates.push(".gitagent/missions/ACTIVE_MISSION.yaml");
-
-  const resolved = resolveMissionFromCandidates(root, candidates);
   if (resolved) {
     return { status: "resolved", mission_file_path: resolved };
   }

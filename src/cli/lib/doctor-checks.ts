@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "./break-glass.js";
 import { REL_AGENT_ERROR_FILE, REL_MANIFEST } from "./constants.js";
 import { agentErrorAbsolutePath } from "./agent-error.js";
+import { gitConfigGet } from "./git-repo.js";
 import { resolveTeacherEmails } from "./teacher-identity.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
 import type { Manifest } from "./types.js";
@@ -31,12 +31,7 @@ function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" |
 }
 
 function readHooksPath(repoRoot: string): string | null {
-  const r = spawnSync("git", ["-C", repoRoot, "config", "--get", "core.hooksPath"], {
-    encoding: "utf8",
-  });
-  if (r.status !== 0) return null;
-  const v = typeof r.stdout === "string" ? r.stdout.trim() : "";
-  return v.length > 0 ? v : null;
+  return gitConfigGet(repoRoot, "core.hooksPath");
 }
 
 export function pickNextStep(current: string | null, candidate: string): string | null {

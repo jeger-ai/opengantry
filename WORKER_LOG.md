@@ -28,6 +28,14 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0021: dev-validate-core OK — arch-pointer split, legislate exit purity, legislate-skill, MCP typed results (172 tests)
 
+## MSN-0022 — CLI resolution unification (MSN allocator, mission-path resolution)
+
+- DoD 1 MSN-0022: dev-validate-core OK — msn-allocate, mission-resolution, verify-failure-presentation wired (183 tests)
+
+## MSN-0023 — Doctor/status parity and atomic upgrade apply
+
+- DoD 1 MSN-0023: dev-validate-core OK — doctor-orchestration shared by doctor/status, promoteFileAtomic upgrade apply (185 tests)
+
 ## MSN-0020 — v1.0 meaningful self-dogfood enforcement
 
 - DoD 1 MSN-0020: Node gxt-manifest-lib.mjs drives MSN-enforced paths from MANIFEST tmvc_roots (no jq on hook path)

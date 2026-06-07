@@ -13,7 +13,7 @@ import { upgradeEligibleAssets } from "../lib/upgrade-eligible-assets.js";
 import { resolveAssetsFromProfile, legacyDefaultInitTargetPaths } from "../lib/init-asset-catalog.js";
 import { defaultInitProfile } from "../lib/init-profile.js";
 import { copyMissionSchema, gitInitCommit } from "./test-fixtures.js";
-import { withTeacherEnv } from "./test-shared.js";
+import { withTeacherEnvAsync } from "./test-shared.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
 import { TEACHER_EMAIL } from "./test-shared.js";
 
@@ -87,7 +87,7 @@ test("runUpgradeApply: blocked without Teacher proof", async () => {
   const dest = await seedUpgradeRepo();
   gitInitCommit(dest, "init", TEACHER_EMAIL);
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9002", json: true });
-  const result = runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, json: true });
+  const result = await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, json: true });
   assert.equal(result.status, "blocked");
 });
 
@@ -104,8 +104,8 @@ test("runUpgradeApply: succeeds with Teacher proof and updates SUBSTRATE", async
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9003", json: true });
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9003");
   let result: Awaited<ReturnType<typeof runUpgradeApply>>;
-  withTeacherEnv(() => {
-    result = runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
+  await withTeacherEnvAsync(async () => {
+    result = await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
   });
   assert.equal(result!.status, "applied");
   const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
@@ -124,8 +124,8 @@ test("runUpgradeApply: legacy repo creates SUBSTRATE.version.json on apply", asy
   fs.unlinkSync(path.join(dest, ".gitagent/foreman/SUBSTRATE.version.json"));
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9004", json: true });
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9004");
-  withTeacherEnv(() => {
-    runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
+  await withTeacherEnvAsync(async () => {
+    await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
   });
   assert.ok(fs.existsSync(path.join(dest, ".gitagent/foreman/SUBSTRATE.version.json")));
 });
@@ -136,10 +136,10 @@ test("runUpgradeApply: hash mismatch fails closed", async () => {
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9005", json: true });
   fs.writeFileSync(path.join(dest, ".gitagent/.upgrade-tmp/.cursor/hooks.json"), '{"tampered":true}\n', "utf8");
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9005");
-  assert.throws(
-    () =>
-      withTeacherEnv(() => {
-        runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
+  await assert.rejects(
+    async () =>
+      withTeacherEnvAsync(async () => {
+        await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
       }),
     (e: unknown) => e instanceof Error && e.message.includes("hash mismatch"),
   );
