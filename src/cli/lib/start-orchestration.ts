@@ -1,11 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { runLegislate } from "../commands/legislate.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
+import { allocateMsn } from "./msn-allocate.js";
 import { isValidMsnId } from "./msn.js";
-import { extractMsnIdFromMissionPath } from "./mission-msn.js";
+import { isTriageEscalated } from "./legislate-skill.js";
 import { formatTriageHuman, triageIntent } from "./triage-logic.js";
 import type { TriageResult } from "./types.js";
 import {
@@ -47,34 +45,7 @@ function suppressStartOutput(options: StartOptions): boolean {
 }
 
 function suggestNextMsn(root: string): string {
-  let max = 0;
-  const missionsDir = path.join(root, ".gitagent", "missions");
-  if (fs.existsSync(missionsDir)) {
-    for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
-      if (!ent.isFile()) continue;
-      try {
-        const id = extractMsnIdFromMissionPath(path.join(missionsDir, ent.name));
-        if (!id) continue;
-        const num = Number.parseInt(id.replace("MSN-", ""), 10);
-        if (num > max && num < 9000) max = num;
-      } catch {
-        // ignore malformed
-      }
-    }
-  }
-  const git = spawnSync("git", ["-C", root, "log", "--grep=MSN-", "-100", "--format=%s"], {
-    encoding: "utf8",
-  });
-  if (git.status === 0 && typeof git.stdout === "string") {
-    for (const line of git.stdout.split("\n")) {
-      const m = /\[MSN-(\d{4})\]/.exec(line);
-      if (m) {
-        const num = Number.parseInt(m[1]!, 10);
-        if (num > max && num < 9000) max = num;
-      }
-    }
-  }
-  return `MSN-${String(max + 1).padStart(4, "0")}`;
+  return allocateMsn(root, { band: "work" });
 }
 
 function buildNextSteps(missionRel: string | null, msnId: string | null): string[] {
@@ -146,7 +117,6 @@ function scaffoldStartMission(
     return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
   }
 
-  const prevExit = process.exitCode;
   const result = runLegislate({
     intent: options.intent,
     msn: msnId,
@@ -156,7 +126,6 @@ function scaffoldStartMission(
     allowDuplicate: options.allowDuplicate,
     silent: quiet,
   });
-  process.exitCode = prevExit;
 
   if (result.ok) {
     if (!quiet) {
@@ -186,7 +155,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const triage = triageIntent(root, options.intent, manifest);
   const msnId = options.msn?.trim() || suggestNextMsn(root);
   const skillOverride = options.skillKey?.trim();
-  const escalated = triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
+  const escalated = isTriageEscalated(triage);
   const manifestKeys = Object.keys(manifest.skills);
 
   logStartTriage(options, triage, escalated, skillOverride);

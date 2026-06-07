@@ -22,14 +22,14 @@ export function handleUpgradePlan(input: UpgradePlanMcpInput = {}): Record<strin
   }
 }
 
-export function handleUpgradeApply(missionFilePath?: string): Record<string, unknown> {
+export async function handleUpgradeApply(missionFilePath?: string): Promise<Record<string, unknown>> {
   const repoRoot = getRepoRoot();
   try {
-    return { ...runUpgradeApply({
+    return { ...(await runUpgradeApply({
       repoRoot,
       mission: missionFilePath,
       json: true,
-    }) };
+    })) };
   } catch (e) {
     return mcpErrorBody(e);
   }

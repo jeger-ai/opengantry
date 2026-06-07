@@ -31,11 +31,12 @@ trace_rows: []
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({
+    const result = runLegislate({
       intent: "Add button hover state ui",
       msn: "MSN-0989",
       skillKey: "ui",
     });
+    assert.equal(result.ok, true);
     assert.equal(process.exitCode, undefined);
     const files = fs.readdirSync(path.join(dest, ".gitagent", "missions"));
     assert.ok(files.some((f) => f.startsWith("MSN-0989.") && f.endsWith(".yaml")));
@@ -67,8 +68,10 @@ test("legislate: triage escalation exits 2 without --skill-key", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({ intent: "refactor all security-critical paths everywhere", msn: "MSN-4444" });
-    assert.equal(process.exitCode, 2);
+    const result = runLegislate({ intent: "refactor all security-critical paths everywhere", msn: "MSN-4444" });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.exitCode, 2);
+    assert.equal(process.exitCode, undefined);
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -91,8 +94,10 @@ test("legislate: rejects missing msn", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({ intent: "ui adjust spacing", skillKey: "ui" });
-    assert.equal(process.exitCode, 2);
+    const result = runLegislate({ intent: "ui adjust spacing", skillKey: "ui" });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.exitCode, 2);
+    assert.equal(process.exitCode, undefined);
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -115,12 +120,14 @@ test("legislate: rejects malformed msn", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({
+    const result = runLegislate({
       intent: "ui adjust spacing",
       msn: "msn-0043",
       skillKey: "ui",
     });
-    assert.equal(process.exitCode, 2);
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.exitCode, 2);
+    assert.equal(process.exitCode, undefined);
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -149,12 +156,14 @@ test("legislate: duplicate msn fails closed by default", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({
+    const result = runLegislate({
       intent: "ui adjust spacing",
       msn: "MSN-0999",
       skillKey: "ui",
     });
-    assert.equal(process.exitCode, 2);
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.exitCode, 2);
+    assert.equal(process.exitCode, undefined);
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -183,12 +192,13 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({
+    const result = runLegislate({
       intent: "ui add hover state",
       msn: "MSN-0999",
       skillKey: "ui",
       allowDuplicate: true,
     });
+    assert.equal(result.ok, true);
     assert.equal(process.exitCode, undefined);
     const files = fs.readdirSync(missionsDir);
     assert.ok(files.some((f) => f !== "existing.yaml" && f.startsWith("MSN-0999.") && f.endsWith(".yaml")));

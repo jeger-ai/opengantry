@@ -8,8 +8,8 @@ import { assertTeacherMissionProof } from "./git-proof.js";
 import {
   pinMissionFile,
   resolveMissionFilePath,
-  resolveMissionFromCandidates,
 } from "./mission-path.js";
+import { resolvePinnedMission } from "./mission-resolution.js";
 import { GapmanUserError } from "./user-error.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -60,6 +60,23 @@ export interface CheckSignatureResult {
   message: string;
   next_tools?: string[];
 }
+
+export type PinMissionResult =
+  | { status: "pinned"; mission_file_path: string; message: string }
+  | { status: "error"; error: McpErrorBody };
+
+export type ResolveMissionResult =
+  | { status: "resolved"; mission_file_path: string }
+  | {
+      status: "unpinned";
+      mission_file_path: null;
+      message: string;
+    };
+
+export type LastErrorResult =
+  | { status: "empty"; message: string }
+  | { status: "found"; payload: Record<string, unknown> }
+  | { status: "error"; message: string };
 
 function mcpError(code: string, message: string, retryable: boolean): { status: "error"; error: McpErrorBody } {
   return { status: "error", error: { code, message, retryable } };
@@ -161,13 +178,7 @@ export function handleExecuteLegislation(
     gateSuccessSubstring: payload.gate_success_substring,
   };
 
-  const prevExitCode = process.exitCode;
-  let result: ReturnType<typeof runLegislate>;
-  try {
-    result = runLegislate(legislateOpts);
-  } finally {
-    process.exitCode = prevExitCode;
-  }
+  const result = runLegislate(legislateOpts);
   if (!result.ok) {
     return mcpError("LEGISLATE_FAILED", "gapman legislate failed; check skill_key, msn, or output path", true);
   }
@@ -222,7 +233,7 @@ export function handleCheckSignature(
   }
 }
 
-export function handlePinMission(missionFilePath: string): Record<string, unknown> {
+export function handlePinMission(missionFilePath: string): PinMissionResult | { status: "error"; error: McpErrorBody } {
   const { root } = loadWorkspace();
   const missionAbs = resolveMissionFilePath(root, missionFilePath);
 
@@ -238,23 +249,13 @@ export function handlePinMission(missionFilePath: string): Record<string, unknow
   };
 }
 
-export function handleResolveMission(explicit?: string): Record<string, unknown> {
+export function handleResolveMission(explicit?: string): ResolveMissionResult {
   const { root } = loadWorkspace();
+  const resolved = resolvePinnedMission(root, {
+    explicit,
+    profile: "full",
+  });
 
-  const candidates: string[] = [];
-  if (explicit?.trim()) candidates.push(explicit.trim());
-  if (process.env.GAPMAN_MISSION?.trim()) candidates.push(process.env.GAPMAN_MISSION.trim());
-  if (process.env.GXT_MISSION_FILE?.trim()) candidates.push(process.env.GXT_MISSION_FILE.trim());
-
-  const pinFile = path.join(root, ".gitagent", "missions", ".active-mission");
-  if (fs.existsSync(pinFile)) {
-    const line = fs.readFileSync(pinFile, "utf8").trim();
-    if (line) candidates.push(line);
-  }
-  candidates.push(".gitagent/missions/ACTIVE_MISSION.md");
-  candidates.push(".gitagent/missions/ACTIVE_MISSION.yaml");
-
-  const resolved = resolveMissionFromCandidates(root, candidates);
   if (resolved) {
     return { status: "resolved", mission_file_path: resolved };
   }
@@ -266,7 +267,7 @@ export function handleResolveMission(explicit?: string): Record<string, unknown>
   };
 }
 
-export function handleLastError(): Record<string, unknown> {
+export function handleLastError(): LastErrorResult {
   const { root } = loadWorkspace();
   const errPath = path.join(root, ".gitagent", "history", ".ignored-last-error.json");
   if (!fs.existsSync(errPath)) {

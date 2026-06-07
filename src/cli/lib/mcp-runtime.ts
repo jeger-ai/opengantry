@@ -1,16 +1,57 @@
 import path from "node:path";
+import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { writeAgentErrorPayload } from "./agent-error.js";
-import { hintsForVerifyPhase } from "./fix-hints.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
-import { verifyFailureToHintContext } from "./verify-flow.js";
+import { verifyFailurePresentation } from "./verify-failure-presentation.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
 import { runRuntimeExec } from "./runtime-exec.js";
 import { loadWorkspace } from "./workspace.js";
+
+export interface McpRuntimeErrorBody {
+  code: string;
+  message: string;
+  retryable: boolean;
+}
+
+export type RuntimeEnvMcpResult =
+  | { status: "ok"; env: Record<string, string> }
+  | { status: "error"; error: McpRuntimeErrorBody };
+
+export type VerifyMcpResult =
+  | { status: "passed"; phase: "pre_push_stub"; message: string; msn_id: string }
+  | {
+      status: "passed";
+      phase: "full";
+      msn_id: string | undefined;
+      mission_file_path: string;
+    }
+  | {
+      status: "failed";
+      phase: string;
+      message: string;
+      error_code: GxtErrorCode;
+      fix_hints: string[];
+      next_actions: string[];
+      stdout?: string;
+      stderr?: string;
+      failures?: string[];
+    }
+  | { status: "error"; error: McpRuntimeErrorBody };
+
+export type RuntimeExecMcpResult =
+  | { status: "success"; exit_code: number; flight_id: string }
+  | {
+      status: string;
+      exit_code: number;
+      violations: unknown;
+      agent_error: unknown;
+    }
+  | { status: "error"; error: McpRuntimeErrorBody };
 
 function enrichVerifyFailure(
   failure: VerifyPhaseFailure,
@@ -18,15 +59,18 @@ function enrichVerifyFailure(
   missionFilePath: string,
   msnId?: string,
   root?: string,
-): Record<string, unknown> {
-  const remediation = hintsForVerifyPhase(failure.phase, {
-    ...verifyFailureToHintContext(failure, missionRel, { mission: missionFilePath }, root),
+): { error_code: GxtErrorCode; fix_hints: string[]; next_actions: string[] } {
+  const presentation = verifyFailurePresentation({
+    failure,
+    missionArg: missionRel,
+    options: {},
+    root,
     msnId,
   });
   return {
-    error_code: remediation.error_code,
-    fix_hints: remediation.fix_hints,
-    next_actions: remediation.next_actions,
+    error_code: presentation.error_code,
+    fix_hints: presentation.fix_hints,
+    next_actions: presentation.next_actions,
   };
 }
 
@@ -34,24 +78,24 @@ function successPayload(
   root: string,
   mission: ReturnType<typeof parseMissionFile>,
   result: VerifyPhaseSuccess,
-): Record<string, unknown> {
+): VerifyMcpResult {
   if (result.outcome === "pre_push_stub") {
     return {
       status: "passed",
       phase: "pre_push_stub",
       message: "Legislative stub OK (git-proof passed).",
-      msn_id: result.proofMsnId,
+      msn_id: result.proofMsnId ?? undefined,
     };
   }
   return {
     status: "passed",
     phase: "full",
-    msn_id: mission.msnId,
+    msn_id: mission.msnId ?? undefined,
     mission_file_path: path.relative(root, mission.rawPath).split(path.sep).join("/"),
   };
 }
 
-export function handleRuntimeEnv(missionFilePath: string): Record<string, unknown> {
+export function handleRuntimeEnv(missionFilePath: string): RuntimeEnvMcpResult {
   try {
     const workspace = loadWorkspace();
     const resolved = resolveRuntimeEnv(workspace, missionFilePath);
@@ -71,7 +115,7 @@ export function handleRuntimeEnv(missionFilePath: string): Record<string, unknow
   }
 }
 
-export function handleVerify(missionFilePath: string, prePush = false): Record<string, unknown> {
+export function handleVerify(missionFilePath: string, prePush = false): VerifyMcpResult {
   try {
     const { root } = loadWorkspace();
     const mission = parseMissionFile(root, missionFilePath);
@@ -86,22 +130,22 @@ export function handleVerify(missionFilePath: string, prePush = false): Record<s
       return successPayload(root, mission, result);
     }
 
-    const base: Record<string, unknown> = {
+    const enriched = enrichVerifyFailure(result, missionRel, missionFilePath, msnId, root);
+    const failed: VerifyMcpResult = {
       status: "failed",
       phase: result.phase,
       message: result.message,
-      ...enrichVerifyFailure(result, missionRel, missionFilePath, msnId, root),
+      ...enriched,
     };
 
     if (result.phase === "gate") {
-      base.stdout = result.gateStdout;
-      base.stderr = result.gateStderr;
+      return { ...failed, stdout: result.gateStdout, stderr: result.gateStderr };
     }
     if (result.phase === "trace" && result.traceReason) {
-      base.failures = [`DoD trace: ${result.traceReason}`];
+      return { ...failed, failures: [`DoD trace: ${result.traceReason}`] };
     }
 
-    return base;
+    return failed;
   } catch (e) {
     return {
       status: "error",
@@ -121,7 +165,7 @@ export type RuntimeExecMcpInput = {
   timeout_ms?: number;
 };
 
-export async function handleRuntimeExec(input: RuntimeExecMcpInput): Promise<Record<string, unknown>> {
+export async function handleRuntimeExec(input: RuntimeExecMcpInput): Promise<RuntimeExecMcpResult> {
   try {
     const workspace = loadWorkspace();
     const resolved = resolveRuntimeEnv(workspace, input.mission);

@@ -1,0 +1,12 @@
+# CI gate: ./scripts/dev-validate-core.sh (non-recursive; MSN-0020 pattern)
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Mission A pure CLI refactors: split architecture-pointer, purify runLegislate exit semantics, extract legislate-skill, MCP handler result types — zero behavioral change
+msn_id: MSN-0021
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0021: dev-validate-core OK — arch-pointer split, legislate exit purity, legislate-skill, MCP typed results (172 tests)"
+    anchor: "29"
+    status: PASS

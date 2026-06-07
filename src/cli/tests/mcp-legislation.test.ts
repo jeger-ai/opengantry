@@ -111,7 +111,7 @@ test("mcp legislation: check_signature valid after teacher commit", () => {
   }
 });
 
-test("mcp legislation: execute restores process.exitCode after failure", () => {
+test("mcp legislation: execute does not mutate process.exitCode on failure", () => {
   const dest = scaffoldRepo();
   const prevCwd = process.cwd();
   const prevExitCode = process.exitCode;
