@@ -34,6 +34,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Lower onboarding friction** | `gapman init --tutorial`, `gapman onboarding`, `gapman start "<intent>"`, `gapman status --json` |
 | **No unreviewed agent scope** | Teacher reviews mission YAML **before** `runtime env` / worker execution; TMVC roots + forbidden zones enforce paths |
 | **Audit-ready evidence** | `[MSN-XXXX]` commit subjects; verifier PASS requires a verbatim quote from `WORKER_LOG.md` |
+| **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
 **Protocol maturity:** substrate law **v0.5.0**; **`gapman` v1.0.0** — enterprise onboarding, contextual output, first-run tutorial. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).

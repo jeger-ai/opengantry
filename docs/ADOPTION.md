@@ -44,6 +44,10 @@ Legacy equivalent: `gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --
 
 Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
+## Regulated teams (ISO 27001 / ISO 42001)
+
+If auditors ask how AI-assisted coding fits your ISMS or AI management system, see [`docs/COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) for control-to-artifact mapping (SOD, change authorization, trace evidence, enforcement tiers). OpenGantry does not grant certification — it produces the operational records assessors typically request.
+
 ## Prevent unreviewed edits
 
 - **Teacher-approved mission commit:** among recent commits, the newest `[MSN-XXXX]` from an allowlisted Teacher email must **modify** the mission file passed to `--mission`.
