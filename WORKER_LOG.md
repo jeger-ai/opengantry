@@ -24,6 +24,10 @@ example trace line for gapman verify
 
 - MSN-9000: substrate upgrade mission superseded by OpenGantry 1.0.0 — archival only
 
+## MSN-0021 — Pure CLI refactors (arch-pointer split, legislate exit purity)
+
+- DoD 1 MSN-0021: dev-validate-core OK — arch-pointer split, legislate exit purity, legislate-skill, MCP typed results (172 tests)
+
 ## MSN-0020 — v1.0 meaningful self-dogfood enforcement
 
 - DoD 1 MSN-0020: Node gxt-manifest-lib.mjs drives MSN-enforced paths from MANIFEST tmvc_roots (no jq on hook path)
