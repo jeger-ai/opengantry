@@ -1,0 +1,23 @@
+# v1.1 mission isolation — stacked-PR defense (base branch lock + mission purity).
+# Legislated intent: v1.1 mission isolation: PR base lock, verify-pr-missions purity, init ship verify-pr-missions.
+msn_id: MSN-0024
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0024: verify-pr-missions.sh enforces mission purity (single MSN per PR commit range)"
+    anchor: "46"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0024: gxt-validate pr_governance job enforces integration-branch-only PR targets"
+    anchor: "47"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0024: gapman init ships scripts/verify-pr-missions.sh via CI asset catalog"
+    anchor: "48"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0024: verify-pr-missions.test.ts covers contamination and MSN mismatch cases"
+    anchor: "49"
+    status: PASS

@@ -70,6 +70,12 @@ const CI_ASSETS: InitAssetSpec[] = [
     mode: "managed_strict",
     tags: ["ci"],
   },
+  {
+    targetPath: "scripts/verify-pr-missions.sh",
+    mode: "managed_strict",
+    executable: true,
+    tags: ["ci"],
+  },
 ];
 
 const RUNTIME_ASSETS: InitAssetSpec[] = [

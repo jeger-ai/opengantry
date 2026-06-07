@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "OpenGantry GXT substrate + gapman CLI",
   "type": "module",
   "bin": {

@@ -150,14 +150,15 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 
 | Job | What it enforces |
 |-----|------------------|
+| `pr_governance` | PRs must target the integration branch (`main` here; repo default branch in init template) — blocks stacked mission PRs |
 | `manifest` | `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doctor` |
 | `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
 | `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); checkout **PR head SHA** |
-| `mission_verify` | Full `gapman verify` on each mission file in `${base}...${head}` triple-dot diff; fails if protected paths change without a mission file |
+| `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gapman verify` on each mission file in `${base}...${head}` triple-dot diff; fails if protected paths change without a mission file |
 
 Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` + MSN vs `origin/main`). Run it before you open a PR.
 
-Adopters may copy [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) into their CI; it is **not** shipped via `gapman init` in v1.0 (specimen-first).
+`gapman init` ships [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) when CI is enabled (v1.1+). Existing v1.0 installs: run `gapman upgrade apply` or re-init managed CI assets.
 
 ## Troubleshooting verify / hooks
 

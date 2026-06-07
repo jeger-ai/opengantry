@@ -96,8 +96,11 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 |---------|------------|
 | **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 | **v1.0.0** | `gapman init --tutorial`, global `--audience`, adoption-first docs |
+| **v1.1.0** | Mission isolation: PR base lock, mission purity in `verify-pr-missions.sh`, script shipped via init |
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **1.0.0**.
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **1.1.0**.
+- **PR policy (v1.1+):** one mission per PR; target your repo **default branch** only. Stacked PRs (e.g. MSN-B onto MSN-A branch) fail CI `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
+- **Upgrade from v1.0:** `gapman upgrade apply` (or `gapman init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, and updated workflow.
 - Package publishing remains disabled (`package.json` is `private: true`).
 
 ## Hooks (fast, scoped)
