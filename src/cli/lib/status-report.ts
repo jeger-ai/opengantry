@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
-import { runDoctorChecks, type DoctorLine } from "./doctor-checks.js";
+import { collectDoctorReport } from "./doctor-orchestration.js";
+import type { DoctorLine } from "./doctor-checks.js";
 import { resolvePinnedMission } from "./mission-resolution.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
 import type { Manifest } from "./types.js";
@@ -26,12 +27,12 @@ export interface StatusReport {
 
 function collectBlockers(
   skillSync: ReturnType<typeof checkSkillManifestSync>,
-  doctor: ReturnType<typeof runDoctorChecks>,
+  doctorLines: DoctorLine[],
   verifyReadiness: StatusReport["verify_readiness"],
 ): string[] {
   const blockers: string[] = [];
   for (const e of skillSync.errors) blockers.push(e);
-  for (const line of doctor.lines) {
+  for (const line of doctorLines) {
     if (line.level === "fail") blockers.push(line.message);
   }
   if (verifyReadiness === "needs_teacher") {
@@ -73,7 +74,7 @@ function assessVerifyReadiness(
 
 export function buildStatusReport(root: string, manifest: Manifest): StatusReport {
   const skillSync = checkSkillManifestSync(root, manifest);
-  const doctor = runDoctorChecks(root, manifest);
+  const doctorReport = collectDoctorReport(root, manifest);
   const pinnedMission = resolvePinnedMission(root, { profile: "status" });
 
   const lastErrorAbs = path.join(root, REL_AGENT_ERROR_FILE);
@@ -81,19 +82,19 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
 
   const verifyReadiness = assessVerifyReadiness(
     root,
-    doctor.lines,
+    doctorReport.lines,
     pinnedMission,
-    doctor.teacherAllowlistUnset,
+    doctorReport.teacherAllowlistUnset,
   );
-  let nextStep = doctor.nextStep;
+  let nextStep = doctorReport.nextStep;
   if (pinnedMission) {
     nextStep = `gapman verify --mission ${pinnedMission}`;
   } else if (verifyReadiness === "needs_mission") {
     nextStep = nextStep ?? 'gapman start "<intent>" --msn MSN-0001 --skill-key <key>';
   }
 
-  const hasFail = !skillSync.ok || doctor.hasFail;
-  const blockers = collectBlockers(skillSync, doctor, verifyReadiness);
+  const hasFail = !skillSync.ok || doctorReport.hasFail;
+  const blockers = collectBlockers(skillSync, doctorReport.lines, verifyReadiness);
   const summary = readinessSummary(verifyReadiness, blockers);
 
   return {
@@ -102,7 +103,7 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
     skill_sync_ok: skillSync.ok,
     manifest_skills: skillSync.manifestKeys,
     skills_md: skillSync.diskFiles,
-    doctor_lines: doctor.lines,
+    doctor_lines: doctorReport.lines,
     pinned_mission: pinnedMission,
     verify_readiness: verifyReadiness,
     blockers,
