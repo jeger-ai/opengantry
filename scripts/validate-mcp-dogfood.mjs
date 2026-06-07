@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   handleDraftLegislation,
   handleExecuteLegislation,
@@ -31,7 +31,17 @@ if (executed.status !== "pending_signature") throw new Error("execute failed");
 const missing = handleCheckSignature(executed.mission_file_path);
 if (missing.status !== "signature_missing") throw new Error("expected missing signature");
 
-execSync(executed.suggested_human_action, { cwd: dest, shell: "/bin/bash" });
+const addResult = spawnSync("git", ["add", "--", executed.mission_file_path], {
+  cwd: dest,
+  stdio: "inherit",
+});
+if (addResult.status !== 0) throw new Error("git add failed");
+
+const commitResult = spawnSync("git", ["commit", "-m", executed.commit_message], {
+  cwd: dest,
+  stdio: "inherit",
+});
+if (commitResult.status !== 0) throw new Error("git commit failed");
 
 const valid = handleCheckSignature(executed.mission_file_path);
 if (valid.status !== "signature_valid") throw new Error("expected valid signature");
