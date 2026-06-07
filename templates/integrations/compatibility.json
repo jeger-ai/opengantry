@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "opengantry_version": "1.0.0",
+  "opengantry_version": "1.1.0",
   "integrations": {
     "cursor": {
       "display_name": "Cursor",

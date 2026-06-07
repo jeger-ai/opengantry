@@ -229,10 +229,12 @@ Details and variable semantics: [.gitagent/teacher/RUNTIME.md](.gitagent/teacher
 - **[`AGENTS.md`](AGENTS.md)** tells agents to read **RULES** + **MANIFEST** before acting.
 - **[`.cursor/rules/opengantry-gxt-substrate.mdc`](.cursor/rules/opengantry-gxt-substrate.mdc)** does the same for Cursor with `alwaysApply: true`.
 - **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)**:
+  - **PR governance (PR only):** mission PRs must target **`main`** (repo default branch in init template) — prevents stacked mission merges.
   - **gapman:** `npm ci` / `npm run build`, then `gapman check`, `gapman doctor`, and unit tests.
   - **Manifest (jq parity):** validates [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) via [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) `manifest`.
   - **Changed-code quality (PR only):** ESLint complexity, import layers, line budgets on touched `src/cli/**/*.ts`.
   - **MSN (PR only, path-scoped):** on **pull_request** only, any **non-merge** commit in the PR range that touches `.gitagent/`, repo-root `WORKER_LOG.md`, `.githooks/`, or [`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml) must have a subject starting with **`[MSN-NNNN]`** (four digits). Other paths (e.g. root `README.md` only) do not trigger this check.
+  - **Mission purity (PR only):** [`scripts/verify-pr-missions.sh`](scripts/verify-pr-missions.sh) requires exactly one `[MSN-NNNN]` in `${base}..${head}` commit subjects before full `gapman verify` on changed missions.
 - **Local (full stack):** [`scripts/dev-validate.sh`](scripts/dev-validate.sh) / `npm run validate` — superset of CI (includes changed-code + MSN vs `origin/main`).
 
 ```bash

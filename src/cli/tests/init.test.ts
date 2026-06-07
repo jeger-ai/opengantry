@@ -116,6 +116,7 @@ test("distribution: packed gapman init works outside workspace", () => {
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "missions", "README.md")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, ".github", "workflows", "gxt-validate.yml")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "validate-gxt.sh")), true);
+    assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "verify-pr-missions.sh")), true);
   } finally {
     if (fs.existsSync(tarAbs)) fs.rmSync(tarAbs, { force: true });
     fs.rmSync(extractDir, { recursive: true, force: true });
