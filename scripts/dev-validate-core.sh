@@ -19,17 +19,17 @@ if ! git rev-parse --verify "${HEAD_REF}^{commit}" >/dev/null 2>&1; then
   HEAD_REF="HEAD"
 fi
 
-if command -v gapman >/dev/null 2>&1; then
-  GAPMAN=(gapman)
-elif [[ -f dist/cli/index.js ]]; then
-  GAPMAN=(node dist/cli/index.js)
-else
-  echo "dev-validate-core: build gapman first (npm run build)" >&2
-  exit 1
-fi
-
 echo "dev-validate-core: build"
 npm run build
+
+if [[ -f dist/cli/index.js ]]; then
+  GAPMAN=(node dist/cli/index.js)
+elif command -v gapman >/dev/null 2>&1; then
+  GAPMAN=(gapman)
+else
+  echo "dev-validate-core: gapman unavailable after build (missing dist/cli/index.js)" >&2
+  exit 1
+fi
 
 echo "dev-validate-core: gapman check (Rule 4.4)"
 "${GAPMAN[@]}" check
