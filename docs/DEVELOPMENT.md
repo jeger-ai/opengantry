@@ -152,7 +152,7 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 
 | Job | What it enforces |
 |-----|------------------|
-| `pr_governance` | PRs must target the integration branch (`main` here; repo default branch in init template) — blocks stacked mission PRs |
+| `pr_governance` | PRs must target the integration branch (`main` here; `default_branch` in init template; override via repo variable `GXT_INTEGRATION_BRANCH`) — blocks stacked mission PRs |
 | `manifest` | `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doctor` |
 | `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
 | `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); checkout **PR head SHA** |

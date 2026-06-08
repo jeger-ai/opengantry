@@ -22,7 +22,7 @@ Harden the cage immediately after v1.0 launch. Most items shipped in MSN-0024 an
 | **Trace stale evidence** (`git blame` + `git diff` TMVC drift, `GXT_TRACE_STALE`) | **Done** | MSN-0025; `src/cli/lib/trace-evidence.ts`; `docs/ADOPTION.md` § Stale trace evidence |
 | **Mission purity PR lock** (one `[MSN-XXXX]` per PR commit range) | **Done** | MSN-0024; `scripts/verify-pr-missions.sh`; CI `mission_verify` job |
 | **Template CI script deployment** (`verify-pr-missions.sh` in init catalog) | **Done** | `src/cli/lib/init-asset-catalog.ts` → `CI_ASSETS` |
-| **CI target lock** (mission PRs → default branch, not hardcoded `main`) | **Open** | [#6](https://github.com/jeger-ai/opengantry/issues/6) |
+| **CI target lock** (mission PRs → default branch, not hardcoded `main`) | **Done** | MSN-0026; `vars.GXT_INTEGRATION_BRANCH` override; template parity restored ([#6](https://github.com/jeger-ai/opengantry/issues/6)) |
 | **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Open** | [#7](https://github.com/jeger-ai/opengantry/issues/7) |
 | **`gapman verify --json`** (structured output for CI/orchestrators) | **Open** | [#18](https://github.com/jeger-ai/opengantry/issues/18) |
 | **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Open** | [#19](https://github.com/jeger-ai/opengantry/issues/19) — complements #7 |

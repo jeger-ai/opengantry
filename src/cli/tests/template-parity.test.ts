@@ -6,11 +6,7 @@ import { getRepoRoot } from "../lib/git.js";
 import { allUpgradeEligibleFromCatalog } from "../lib/upgrade-eligible-assets.js";
 import { templatePathForAsset } from "../lib/init-asset-catalog.js";
 
-const DOGFOOD_PARITY_EXEMPT = new Set([
-  ".cursor/rules/opengantry-gxt-substrate.mdc",
-  // Dogfood workflow hardcodes main; init template uses github.event.repository.default_branch.
-  ".github/workflows/gxt-validate.yml",
-]);
+const DOGFOOD_PARITY_EXEMPT = new Set([".cursor/rules/opengantry-gxt-substrate.mdc"]);
 
 test("template parity: managed_strict root assets match templates/", () => {
   const repoRoot = getRepoRoot();

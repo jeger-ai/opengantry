@@ -1,6 +1,7 @@
 # Validates OpenGantry substrate: Foreman MANIFEST + path-scoped [MSN-NNNN] on PRs.
 #
-# PR governance (pull_request only): mission PRs must target main (blast-radius isolation).
+# PR governance (pull_request only): mission PRs must target the repo default branch
+# (override: repository variable GXT_INTEGRATION_BRANCH when integration branch differs).
 # MSN policy (pull_request only): commits touching MSN-enforced paths must have
 # subject [MSN-NNNN] (four digits) or a valid gxt-bypass git note.
 # Mission purity: scripts/verify-pr-missions.sh — one [MSN-NNNN] per PR commit range.
@@ -26,7 +27,7 @@ jobs:
       - name: Enforce base branch isolation
         run: |
           base="${{ github.event.pull_request.base.ref }}"
-          expected="main"
+          expected="${{ vars.GXT_INTEGRATION_BRANCH || github.event.repository.default_branch }}"
           if [ "$base" != "$expected" ]; then
             echo "::error::Governance Violation: Mission PR targets '$base' instead of '$expected'. Stacking missions violates blast-radius isolation. Re-target the PR to '$expected'."
             exit 1

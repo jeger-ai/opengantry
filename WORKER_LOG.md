@@ -56,3 +56,10 @@ example trace line for gapman verify
 - DoD 2 MSN-0025: GXT_TRACE_STALE plus --skip-stale-evidence on gapman verify and gxt_verify MCP
 - DoD 3 MSN-0025: trace-evidence.test.ts covers drift, uncommitted-line skip, and skip flag
 - DoD 4 MSN-0025: ADOPTION, COMPLIANCE-ISO, and RULES document stale-evidence and rebase invalidation
+
+## MSN-0026 — v1.1 CI target lock (default_branch + GXT_INTEGRATION_BRANCH)
+
+- DoD 1 MSN-0026: template parity test passes without gxt-validate.yml exemption (dogfood workflow byte-identical to templates/)
+- DoD 2 MSN-0026: pr_governance uses vars.GXT_INTEGRATION_BRANCH or github.event.repository.default_branch
+- DoD 3 MSN-0026: ADOPTION documents GXT_INTEGRATION_BRANCH override and default_branch pr_governance behavior
+- DoD 4 MSN-0026: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

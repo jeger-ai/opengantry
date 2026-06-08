@@ -210,7 +210,7 @@ On feature branch checkout: seed `WORKER_LOG.md` from template if missing (never
 
 | Job | Runs |
 |-----|------|
-| `pr_governance` (PR only) | PR base must be `main` (no stacked mission branches) |
+| `pr_governance` (PR only) | PR base must be repo default branch (`vars.GXT_INTEGRATION_BRANCH` override; no stacked mission branches) |
 | `manifest` | build, `gapman check`, `validate-gxt.sh manifest`, unit tests, **doctor** |
 | `code_quality` (PR only) | changed-code script |
 | `msn_commits` (PR only) | path-scoped `[MSN-NNNN]` subject check via `validate-gxt.sh msn` |

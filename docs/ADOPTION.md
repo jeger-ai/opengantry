@@ -111,7 +111,8 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 | **v1.1.0** | Mission isolation: PR base lock, mission purity in `verify-pr-missions.sh`, script shipped via init |
 
 - Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **1.1.0**.
-- **PR policy (v1.1+):** one mission per PR; target your repo **default branch** only. Stacked PRs (e.g. MSN-B onto MSN-A branch) fail CI `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
+- **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
+- **Local validate base ref:** `npm run validate` / `./scripts/dev-validate.sh` default to `origin/main`; pass your integration ref explicitly when it differs (e.g. `./scripts/dev-validate.sh origin/develop`).
 - **Upgrade from v1.0:** `gapman upgrade apply` (or `gapman init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, and updated workflow.
 - Package publishing remains disabled (`package.json` is `private: true`).
 

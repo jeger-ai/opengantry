@@ -229,7 +229,7 @@ Details and variable semantics: [.gitagent/teacher/RUNTIME.md](.gitagent/teacher
 - **[`AGENTS.md`](AGENTS.md)** tells agents to read **RULES** + **MANIFEST** before acting.
 - **[`.cursor/rules/opengantry-gxt-substrate.mdc`](.cursor/rules/opengantry-gxt-substrate.mdc)** does the same for Cursor with `alwaysApply: true`.
 - **CI:** this repo includes **[`.github/workflows/gxt-validate.yml`](.github/workflows/gxt-validate.yml)**:
-  - **PR governance (PR only):** mission PRs must target **`main`** (repo default branch in init template) — prevents stacked mission merges.
+  - **PR governance (PR only):** mission PRs must target the **default branch** (`main` in this repo; `github.event.repository.default_branch` in init template, overridable via `GXT_INTEGRATION_BRANCH`) — prevents stacked mission merges.
   - **gapman:** `npm ci` / `npm run build`, then `gapman check`, `gapman doctor`, and unit tests.
   - **Manifest (jq parity):** validates [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) via [`scripts/validate-gxt.sh`](scripts/validate-gxt.sh) `manifest`.
   - **Changed-code quality (PR only):** ESLint complexity, import layers, line budgets on touched `src/cli/**/*.ts`.
