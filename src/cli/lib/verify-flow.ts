@@ -25,6 +25,7 @@ import {
   formatAudienceNextStep,
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
+import { loadWorkspace } from "./workspace.js";
 
 export function runVerifyBreakGlass(
   root: string,
@@ -73,6 +74,11 @@ export function emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: strin
       `  trace: line ${tag} DoD ${warning.row.dodId} — declared ${String(warning.declaredLine)}, found ${String(warning.foundLine)}`,
     );
   }
+  if (result.traceEvidenceSkippedUncommitted !== undefined) {
+    logInfo(
+      `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted WORKER_LOG line(s) skipped stale check`,
+    );
+  }
   logInfo(`${CLI_NAME} verify: trace mapping OK (${result.workerLogPath})`);
 }
 
@@ -107,7 +113,8 @@ export function runVerifyPhasesFromEngine(
   missionArg: string,
   options: VerifyOptions,
 ): boolean {
-  const result = evaluateVerifyPhases(root, mission, options);
+  const { manifest } = loadWorkspace();
+  const result = evaluateVerifyPhases(root, mission, options, manifest);
   return emitVerifyPhaseResult(result, missionArg, options, root, mission.msnId ?? undefined);
 }
 

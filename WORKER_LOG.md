@@ -49,3 +49,10 @@ example trace line for gapman verify
 - DoD 2 MSN-0024: gxt-validate pr_governance job enforces integration-branch-only PR targets
 - DoD 3 MSN-0024: gapman init ships scripts/verify-pr-missions.sh via CI asset catalog
 - DoD 4 MSN-0024: verify-pr-missions.test.ts covers contamination and MSN mismatch cases
+
+## MSN-0025 — v1.1 trace stale-evidence (git blame + git diff)
+
+- DoD 1 MSN-0025: trace-evidence.ts binds PASS quotes via git blame and git diff TMVC drift in verify
+- DoD 2 MSN-0025: GXT_TRACE_STALE plus --skip-stale-evidence on gapman verify and gxt_verify MCP
+- DoD 3 MSN-0025: trace-evidence.test.ts covers drift, uncommitted-line skip, and skip flag
+- DoD 4 MSN-0025: ADOPTION, COMPLIANCE-ISO, and RULES document stale-evidence and rebase invalidation

@@ -18,4 +18,6 @@ export interface VerifyOptions {
   fixNonInteractive?: boolean;
   /** Tailor remediation next steps by role. */
   audience?: OutputAudience;
+  /** Skip TMVC stale-evidence binding (committed PASS quote lines only). */
+  skipStaleEvidence?: boolean;
 }

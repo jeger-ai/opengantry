@@ -115,16 +115,20 @@ export function handleRuntimeEnv(missionFilePath: string): RuntimeEnvMcpResult {
   }
 }
 
-export function handleVerify(missionFilePath: string, prePush = false): VerifyMcpResult {
+export function handleVerify(missionFilePath: string, prePush = false, skipStaleEvidence = false): VerifyMcpResult {
   try {
-    const { root } = loadWorkspace();
+    const { root, manifest } = loadWorkspace();
     const mission = parseMissionFile(root, missionFilePath);
     assertMissionGatePresent(mission);
 
     const missionRel = path.relative(root, mission.rawPath).split(path.sep).join("/");
     const msnId = mission.msnId ?? undefined;
 
-    const result = evaluateVerifyPhases(root, mission, { mission: missionFilePath, prePush });
+    const result = evaluateVerifyPhases(root, mission, {
+      mission: missionFilePath,
+      prePush,
+      skipStaleEvidence,
+    }, manifest);
 
     if (result.ok) {
       return successPayload(root, mission, result);
