@@ -330,7 +330,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v1.1.0** CLI). Fork it, run `gapman init` in your repo, vendor the `.gitagent/` folder, or cherry-pick files—there is no published runtime "install" step.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v1.1.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gapman init` in your project.
 
 ## Security
 
