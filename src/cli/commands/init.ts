@@ -30,7 +30,10 @@ import {
   planInitAssets,
   type PlannedWrite,
 } from "../lib/init-plan.js";
-import { mergeGitignoreFromTemplate } from "../lib/gitignore-gxt.js";
+import {
+  mergeGitignoreFromTemplate,
+  mergePrettierignoreFromTemplate,
+} from "../lib/file-merge-gxt.js";
 import { ensureSubstrateVersionOnInit } from "../lib/substrate-version.js";
 import { ensureTeacherAllowlistOnInit } from "../lib/teacher-identity.js";
 
@@ -223,6 +226,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     const { runInitTutorial } = await import("../lib/init-tutorial.js");
     await runInitTutorial();
     mergeGitignoreFromTemplate(repoRoot, templatesRoot);
+    mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
     return;
   }
   const profile = await resolveProfile(options, repoRoot, templatesRoot);
@@ -264,4 +268,5 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     logInitNextSteps(profile);
   }
   mergeGitignoreFromTemplate(repoRoot, templatesRoot);
+  mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
 }

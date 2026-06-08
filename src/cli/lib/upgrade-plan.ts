@@ -4,7 +4,10 @@ import path from "node:path";
 import YAML from "yaml";
 import { CLI_NAME } from "./constants.js";
 import { logInfo, logWarn } from "./cli-io.js";
-import { mergeGitignoreFromTemplate } from "./gitignore-gxt.js";
+import {
+  mergeGitignoreFromTemplate,
+  mergePrettierignoreFromTemplate,
+} from "./file-merge-gxt.js";
 import { resolveTemplateRootFromModule, loadIntegrationCompat } from "./integration-compat.js";
 import { resolveAssetsFromProfile } from "./init-asset-catalog.js";
 import { planInitAssets, type PlannedWrite } from "./init-plan.js";
@@ -284,6 +287,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
 
   payload.staged_hashes = writeStagedFiles(repoRoot, plan.writes);
   mergeGitignoreFromTemplate(repoRoot, templatesRoot);
+  mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
   const missionBody = buildUpgradeMissionYaml({ msnId, fromVersion: installed.version, toVersion: bundled, payload });
   fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
   fs.writeFileSync(missionAbs, missionBody, "utf8");

@@ -9,13 +9,13 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-08 (MSN-0026 shipped; v1.1 cage 4/8 done)
+**Last synced:** 2026-06-08 (MSN-0027 shipped; v1.1 cage 6/8 done)
 
 ---
 
 ## v1.1 — Governance hardening (immediate roadmap)
 
-Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission purity), **MSN-0025** (stale trace evidence), **MSN-0026** (CI target lock / [#6](https://github.com/jeger-ai/opengantry/issues/6) closed).
+Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission purity), **MSN-0025** (stale trace evidence), **MSN-0026** (CI target lock), **MSN-0027** (formatter guard / [#7](https://github.com/jeger-ai/opengantry/issues/7) + [#19](https://github.com/jeger-ai/opengantry/issues/19)).
 
 | Item | Status | Evidence / issue |
 |------|--------|------------------|
@@ -23,22 +23,22 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 | **Mission purity PR lock** (one `[MSN-XXXX]` per PR commit range) | **Done** | MSN-0024; `scripts/verify-pr-missions.sh`; CI `mission_verify` job |
 | **Template CI script deployment** (`verify-pr-missions.sh` in init catalog) | **Done** | `src/cli/lib/init-asset-catalog.ts` → `CI_ASSETS` |
 | **CI target lock** (mission PRs → default branch, not hardcoded `main`) | **Done** | MSN-0026; `vars.GXT_INTEGRATION_BRANCH` override; template parity restored ([#6](https://github.com/jeger-ai/opengantry/issues/6)) |
-| **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Open** | [#7](https://github.com/jeger-ai/opengantry/issues/7) |
+| **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Done** | MSN-0027; `docs/ADOPTION.md` § Formatter guard; `src/cli/lib/file-merge-gxt.ts` ([#7](https://github.com/jeger-ai/opengantry/issues/7)) |
 | **`gapman verify --json`** (structured output for CI/orchestrators) | **Open** | [#18](https://github.com/jeger-ai/opengantry/issues/18) |
-| **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Open** | [#19](https://github.com/jeger-ai/opengantry/issues/19) — complements #7 |
+| **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
 | **Doctor detects substrate version drift** | **Open** | [#20](https://github.com/jeger-ai/opengantry/issues/20) |
 | **Doc/substrate version string sync** | **Open** | [#21](https://github.com/jeger-ai/opengantry/issues/21) |
 
-### v1.1 shipped acceptance (MSN-0024 – MSN-0026)
+### v1.1 shipped acceptance (MSN-0024 – MSN-0027)
 
 - **Mission purity:** one `[MSN-XXXX]` per PR; `verify-pr-missions.sh` in init catalog and CI `mission_verify`.
 - **Stale trace evidence:** `git blame` + TMVC `git diff` binding; `GXT_TRACE_STALE`; `--skip-stale-evidence` escape hatch.
 - **CI target lock:** dogfood + init template `gxt-validate.yml` compare PR base to `vars.GXT_INTEGRATION_BRANCH || github.event.repository.default_branch`; template parity restored (no workflow exemption).
+- **Formatter guard:** `docs/ADOPTION.md` mandates `WORKER_LOG.md` in `.prettierignore` (or equivalent); init tutorial copy; rebase invalidation cross-linked.
+- **Init prettierignore:** `gapman init` / `gapman upgrade apply` merge `WORKER_LOG.md` via `file-merge-gxt.ts` (exact line idempotency).
 
 ### v1.1 remaining acceptance
 
-- **Formatter guard ([#7](https://github.com/jeger-ai/opengantry/issues/7)):** `docs/ADOPTION.md` (and init tutorial copy) explicitly list `WORKER_LOG.md` in `.prettierignore` / equivalent; note upstream merge invalidation for stale traces (partially documented today).
-- **Init prettierignore ([#19](https://github.com/jeger-ai/opengantry/issues/19)):** `gapman init` merges `WORKER_LOG.md` into `.prettierignore` by default.
 - **Verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)):** stable success/failure JSON with `error_code`, phase, and `fix_hints`.
 - **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** `gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.
 - **Doc version sync ([#21](https://github.com/jeger-ai/opengantry/issues/21)):** README / `.gitagent/README` semver strings match `package.json`.
@@ -101,15 +101,14 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 
 ## Sprint guidance
 
-**Current focus:** finish **v1.1 remaining** (#7 + #19 → #18 → #20 → #21) before tactical debt.
+**Current focus:** finish **v1.1 remaining** (#18 → #20 → #21) before tactical debt.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
-| **Next mission** | [#7](https://github.com/jeger-ai/opengantry/issues/7) + [#19](https://github.com/jeger-ai/opengantry/issues/19) | WORKER_LOG formatter guard — docs + init scaffold (paired; suggested MSN-0027) |
-| Then | [#18](https://github.com/jeger-ai/opengantry/issues/18) | `gapman verify --json` (MCP already structured) |
+| **Next mission** | [#18](https://github.com/jeger-ai/opengantry/issues/18) | `gapman verify --json` (MCP already structured) |
 | Then | [#20](https://github.com/jeger-ai/opengantry/issues/20), [#21](https://github.com/jeger-ai/opengantry/issues/21) | Substrate drift + doc semver sync — closes v1.1 |
 
-Rationale: MSN-0026 closed the PR base perimeter ([#6](https://github.com/jeger-ai/opengantry/issues/6) done). Formatter guard protects MSN-0025 trace line stability; verify JSON and drift detection are low-effort hygiene before tactical debt.
+Rationale: MSN-0027 shipped formatter guard ([#7](https://github.com/jeger-ai/opengantry/issues/7) + [#19](https://github.com/jeger-ai/opengantry/issues/19)). Verify JSON and drift detection are the last v1.1 hygiene items before tactical debt.
 
 **Suggested order after v1.1:**
 

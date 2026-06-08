@@ -203,6 +203,9 @@ export async function runInitTutorial(): Promise<void> {
   logInfo(
     "  Append a unique gate evidence line to WORKER_LOG.md, then set mission trace_row PASS + trace_quote",
   );
+  logInfo(
+    "  Init merged WORKER_LOG.md into .prettierignore — keep formatters off the trace log so line anchors stay stable",
+  );
 
   const { verifyOk, ranVerify } = await runTutorialVerifyStep(p, missionPath);
   p.log.step("Step 6 — Status dashboard");

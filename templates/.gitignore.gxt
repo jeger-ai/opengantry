@@ -1,4 +1,3 @@
-# OpenGantry local forensic paths (merged by gapman init)
 .gitagent/.upgrade-tmp/
 .gitagent/foreman/TEACHER.allowlist.local
 .gitagent/history/

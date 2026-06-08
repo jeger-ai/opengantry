@@ -5,7 +5,10 @@ import { CLI_NAME } from "./constants.js";
 import { logInfo } from "./cli-io.js";
 import { promoteFileAtomic } from "./atomic-fs.js";
 import { assertTeacherMissionProof } from "./git-proof.js";
-import { mergeGitignoreFromTemplate } from "./gitignore-gxt.js";
+import {
+  mergeGitignoreFromTemplate,
+  mergePrettierignoreFromTemplate,
+} from "./file-merge-gxt.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
 import { resolveMissionPathRequired } from "./mission-resolution.js";
 import { writeSubstrateVersionFile } from "./substrate-version.js";
@@ -145,6 +148,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     await promoteStagedWrites(staged.promotions);
 
     mergeGitignoreFromTemplate(repoRoot, templatesRoot);
+    mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
     writeSubstrateVersionFile(repoRoot, payload.to_version, "gapman upgrade --apply");
   } catch (e) {
     cleanupApplyTmp(applyTmpRoot);

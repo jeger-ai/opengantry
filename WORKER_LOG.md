@@ -63,3 +63,10 @@ example trace line for gapman verify
 - DoD 2 MSN-0026: pr_governance uses vars.GXT_INTEGRATION_BRANCH or github.event.repository.default_branch
 - DoD 3 MSN-0026: ADOPTION documents GXT_INTEGRATION_BRANCH override and default_branch pr_governance behavior
 - DoD 4 MSN-0026: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0027 — v1.1 WORKER_LOG formatter guard (.prettierignore)
+
+- DoD 1 MSN-0027: file-merge-gxt.ts exact-line idempotency; init merges WORKER_LOG.md into .prettierignore
+- DoD 2 MSN-0027: ADOPTION.md mandates WORKER_LOG.md in .prettierignore with formatter-equivalent note
+- DoD 3 MSN-0027: init-tutorial Step 4 mentions .prettierignore scaffold for stable trace lines
+- DoD 4 MSN-0027: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

@@ -88,6 +88,8 @@ After gate + trace quote mapping, full verify binds each **committed** PASS quot
 
 Re-run the gate, append a fresh unique trace line to `WORKER_LOG.md`, update mission `trace_quote`, commit, and verify again. After interactive rebase/squash, historical attestation may be invalidated — expect to refresh traces.
 
+**Formatter guard (recommended):** Add `WORKER_LOG.md` to `.prettierignore` (Prettier) or an equivalent ignore for your formatter (Biome `files.ignore`, ESLint ignore, editor format-on-save exclude). Numeric anchors and v1.1+ stale-evidence `git blame` bind to **committed line numbers**; auto-formatting the log causes avoidable drift (`verify` can fuzzy-resolve, but prevention is cheaper). `gapman init` and `gapman upgrade apply` merge this entry automatically; existing repos should add it once manually or re-run upgrade.
+
 Migration escape hatch: `gapman verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
 
 ## Enforcement boundary
