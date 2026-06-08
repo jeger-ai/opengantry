@@ -108,7 +108,7 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 |---------|------------|
 | **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 | **v1.0.0** | `gapman init --tutorial`, global `--audience`, adoption-first docs |
-| **v1.1.0** | Mission isolation: PR base lock, mission purity in `verify-pr-missions.sh`, script shipped via init |
+| **v1.1.0** | Mission isolation (MSN-0024–0026): integration-branch PR base lock (`default_branch` + `GXT_INTEGRATION_BRANCH`), mission purity in `verify-pr-missions.sh`, stale trace evidence, script shipped via init |
 
 - Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **1.1.0**.
 - **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.

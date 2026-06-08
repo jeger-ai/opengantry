@@ -290,13 +290,14 @@ sequenceDiagram
 
 ## Documentation misalignments (implementation vs docs)
 
-Findings from comparing code to narrative docs. **Last refreshed:** 2026-06-08 (post **v1.1.0** / MSN-0025 merge).
+Findings from comparing code to narrative docs. **Last refreshed:** 2026-06-08 (post **MSN-0026** — CI target lock shipped; [#6](https://github.com/jeger-ai/opengantry/issues/6) closed).
 
 | Topic | Code reality | Was | Status after sync |
 |-------|--------------|-----|-------------------|
 | **CLI version** | `1.1.0` in `package.json` | README / analysis cited **0.8.1** | **Open** — verify README footer vs `package.json` on next doc pass |
 | **Stale trace evidence** | v1.1+ git blame + TMVC diff in verify; `GXT_TRACE_STALE`; `--skip-stale-evidence` | Not in outline | **Resolved** — documented in RULES, ADOPTION, this outline |
 | **Mission isolation CI** | `pr_governance`, `verify-pr-missions.sh`, `mission_verify` job | Outline listed only `msn_commits` | **Resolved** — this outline + ADOPTION v1.1 section |
+| **CI target lock** | `pr_governance` uses `vars.GXT_INTEGRATION_BRANCH \|\| default_branch`; dogfood workflow byte-identical to init template (MSN-0026) | Hardcoded `main`; template parity exempt | **Resolved** — MSN-0026; template parity test no longer exempts `gxt-validate.yml` |
 | **CLI version (historical)** | — | README broadcast **gapman v0.7.0** | **Resolved** — README updated through v0.8.x sync |
 | **Command inventory** | Full surface includes `init`, `doctor`, `arch *`, `runtime exec`, `metrics` | README table omitted key v0.8.x commands | **Resolved** — README command table is complete |
 | **Specimen MANIFEST paths** | `ui`/`logic` TMVC roots point at hypothetical app dirs | Easy to misread as this repo's layout | **Open** — specimen `MANIFEST.json` unchanged; docs now init-first; adopters must customize post-`init` |
@@ -322,7 +323,7 @@ Findings from comparing code to narrative docs. **Last refreshed:** 2026-06-08 (
 - Layered CLI architecture with import-layer CI enforcement (`check-import-layers.mjs`).
 - Legislative stub + `--pre-push` models realistic remote-agent handoff.
 - v1.1+ stale-evidence binds committed trace lines to TMVC via git (forensic drift detection without Node-side hashing).
-- v1.1 mission isolation: one MSN per PR, main-only targets, full verify on changed missions in CI.
+- v1.1 mission isolation: one MSN per PR, integration-branch-only targets (`default_branch` + `GXT_INTEGRATION_BRANCH` override), full verify on changed missions in CI (MSN-0024–0026).
 
 **Deliberate simplifications**
 

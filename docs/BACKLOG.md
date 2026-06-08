@@ -9,13 +9,13 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-08 (v1.1.0 + tooling expansion #18–#38)
+**Last synced:** 2026-06-08 (MSN-0026 shipped; v1.1 cage 4/8 done)
 
 ---
 
 ## v1.1 — Governance hardening (immediate roadmap)
 
-Harden the cage immediately after v1.0 launch. Most items shipped in MSN-0024 and MSN-0025.
+Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission purity), **MSN-0025** (stale trace evidence), **MSN-0026** (CI target lock / [#6](https://github.com/jeger-ai/opengantry/issues/6) closed).
 
 | Item | Status | Evidence / issue |
 |------|--------|------------------|
@@ -29,13 +29,19 @@ Harden the cage immediately after v1.0 launch. Most items shipped in MSN-0024 an
 | **Doctor detects substrate version drift** | **Open** | [#20](https://github.com/jeger-ai/opengantry/issues/20) |
 | **Doc/substrate version string sync** | **Open** | [#21](https://github.com/jeger-ai/opengantry/issues/21) |
 
+### v1.1 shipped acceptance (MSN-0024 – MSN-0026)
+
+- **Mission purity:** one `[MSN-XXXX]` per PR; `verify-pr-missions.sh` in init catalog and CI `mission_verify`.
+- **Stale trace evidence:** `git blame` + TMVC `git diff` binding; `GXT_TRACE_STALE`; `--skip-stale-evidence` escape hatch.
+- **CI target lock:** dogfood + init template `gxt-validate.yml` compare PR base to `vars.GXT_INTEGRATION_BRANCH || github.event.repository.default_branch`; template parity restored (no workflow exemption).
+
 ### v1.1 remaining acceptance
 
-- **CI target lock:** `templates/.github/workflows/gxt-validate.yml` and specimen workflow compare PR base to `github.event.repository.default_branch` (or documented override env).
-- **Formatter guard:** `docs/ADOPTION.md` (and init tutorial copy) explicitly list `WORKER_LOG.md` in `.prettierignore` / equivalent; note upstream merge invalidation for stale traces (partially documented today).
-- **Verify JSON:** stable success/failure JSON with `error_code`, phase, and `fix_hints`.
-- **Init prettierignore:** `gapman init` merges `WORKER_LOG.md` into `.prettierignore` by default.
-- **Substrate drift:** `gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.
+- **Formatter guard ([#7](https://github.com/jeger-ai/opengantry/issues/7)):** `docs/ADOPTION.md` (and init tutorial copy) explicitly list `WORKER_LOG.md` in `.prettierignore` / equivalent; note upstream merge invalidation for stale traces (partially documented today).
+- **Init prettierignore ([#19](https://github.com/jeger-ai/opengantry/issues/19)):** `gapman init` merges `WORKER_LOG.md` into `.prettierignore` by default.
+- **Verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)):** stable success/failure JSON with `error_code`, phase, and `fix_hints`.
+- **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** `gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.
+- **Doc version sync ([#21](https://github.com/jeger-ai/opengantry/issues/21)):** README / `.gitagent/README` semver strings match `package.json`.
 
 ---
 
@@ -95,15 +101,21 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 
 ## Sprint guidance
 
-**Recommended next sprint:** finish **v1.1 remaining** (#6, #7, #18–#21) before tactical debt.
+**Current focus:** finish **v1.1 remaining** (#7 + #19 → #18 → #20 → #21) before tactical debt.
 
-Rationale: the cage is nearly closed — default-branch CI, formatter guard, verify JSON, and substrate drift detection are low-effort, high-leverage fixes. Tactical debt is real but does not widen the enforcement perimeter.
+| Priority | Issues | Notes |
+|----------|--------|-------|
+| **Next mission** | [#7](https://github.com/jeger-ai/opengantry/issues/7) + [#19](https://github.com/jeger-ai/opengantry/issues/19) | WORKER_LOG formatter guard — docs + init scaffold (paired; suggested MSN-0027) |
+| Then | [#18](https://github.com/jeger-ai/opengantry/issues/18) | `gapman verify --json` (MCP already structured) |
+| Then | [#20](https://github.com/jeger-ai/opengantry/issues/20), [#21](https://github.com/jeger-ai/opengantry/issues/21) | Substrate drift + doc semver sync — closes v1.1 |
+
+Rationale: MSN-0026 closed the PR base perimeter ([#6](https://github.com/jeger-ai/opengantry/issues/6) done). Formatter guard protects MSN-0025 trace line stability; verify JSON and drift detection are low-effort hygiene before tactical debt.
 
 **Suggested order after v1.1:**
 
 1. **Tactical maintainability** — #13 or #31 (MANIFEST), #8–#9 (MCP + catalog), #22–#23 (trace dedup + mission validate)
 2. **Tactical ergonomics** — #10–#12, #27–#28 (tests, registrar, verify/triage helpers)
-3. **Adoption** — #19–#20, #30–#33 (init/doctor/onboarding polish)
+3. **Adoption** — #30–#33 (session hooks, upgrade preview, onboarding gates)
 4. **v1.2+** — #14–#17, #34–#38 (ADR + mission first)
 
 ---
