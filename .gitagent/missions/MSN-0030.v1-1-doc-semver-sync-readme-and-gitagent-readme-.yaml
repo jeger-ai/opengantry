@@ -1,0 +1,23 @@
+# v1.1 doc semver sync — README and .gitagent/README headline gapman v1.1.0 (#21).
+# Legislated intent: v1.1 doc semver sync: README and .gitagent/README headline gapman v1.1.0
+msn_id: MSN-0030
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0030: README protocol maturity and footer headline gapman v1.1.0 matching package.json"
+    anchor: "92"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0030: .gitagent/README title and CLI references updated to v1.1.0; schema_version 0.5.0 unchanged"
+    anchor: "93"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0030: README release table adds v1.1.0 row; PROJECT_OUTLINE_ANALYSIS CLI version row resolved"
+    anchor: "94"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0030: BACKLOG #21 marked done; v1.1 complete in sprint guidance"
+    anchor: "95"
+    status: PASS

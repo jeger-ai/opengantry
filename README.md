@@ -37,7 +37,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v1.0.0** — enterprise onboarding, contextual output, first-run tutorial. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v1.1.0** — governance hardening (stale evidence, mission purity, verify `--json`, doctor substrate drift). See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## v1.0 adoption release
 
@@ -47,6 +47,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 |---------|------------|
 | **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 | **v1.0.0** | `gapman init --tutorial`, global `--audience` / `GXT_AUDIENCE`, adoption-first README + runbook |
+| **v1.1.0** | Stale trace evidence, mission purity PR lock, CI target lock, `verify --json`, doctor substrate drift warn |
 
 ## What you get
 
@@ -329,7 +330,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v1.0.0** CLI). Fork it, run `gapman init` in your repo, vendor the `.gitagent/` folder, or cherry-pick files—there is no published runtime "install" step.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v1.1.0** CLI). Fork it, run `gapman init` in your repo, vendor the `.gitagent/` folder, or cherry-pick files—there is no published runtime "install" step.
 
 ## Security
 

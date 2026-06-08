@@ -294,7 +294,7 @@ Findings from comparing code to narrative docs. **Last refreshed:** 2026-06-08 (
 
 | Topic | Code reality | Was | Status after sync |
 |-------|--------------|-----|-------------------|
-| **CLI version** | `1.1.0` in `package.json` | README / analysis cited **0.8.1** | **Open** — verify README footer vs `package.json` on next doc pass |
+| **CLI version** | `1.1.0` in `package.json` | README / analysis cited **0.8.1** | **Resolved** — MSN-0030 synced README and `.gitagent/README` to v1.1.0 |
 | **Stale trace evidence** | v1.1+ git blame + TMVC diff in verify; `GXT_TRACE_STALE`; `--skip-stale-evidence` | Not in outline | **Resolved** — documented in RULES, ADOPTION, this outline |
 | **Mission isolation CI** | `pr_governance`, `verify-pr-missions.sh`, `mission_verify` job | Outline listed only `msn_commits` | **Resolved** — this outline + ADOPTION v1.1 section |
 | **CI target lock** | `pr_governance` uses `vars.GXT_INTEGRATION_BRANCH \|\| default_branch`; dogfood workflow byte-identical to init template (MSN-0026) | Hardcoded `main`; template parity exempt | **Resolved** — MSN-0026; template parity test no longer exempts `gxt-validate.yml` |

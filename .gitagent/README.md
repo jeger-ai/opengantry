@@ -1,8 +1,8 @@
-# OpenGantry `.gitagent/` (v0.8.1 — Execution-ready Forensic substrate)
+# OpenGantry `.gitagent/` (v1.1.0 — Execution-ready Forensic substrate)
 
 This directory holds the **GXT substrate**: Foreman routing map, Teacher law, work-order schema, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
 
-Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gapman` v0.8.1** CLI covers `init`, `check`, `doctor`, `triage`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, `metrics`, and `verify` — see [README § gapman](../README.md#gapman-cli).
+Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gapman` v1.1.0** CLI covers `init`, `check`, `doctor`, `triage`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, `metrics`, and `verify` — see [README § gapman](../README.md#gapman-cli).
 
 ## Forensic Truth (what v0.6.2 adds on v0.5.0)
 
@@ -20,7 +20,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 7. **Worker Runtime (v0.7.0+)** — **`gapman runtime env --mission …`** emits the standard env contract ([`teacher/RUNTIME.md`](teacher/RUNTIME.md)) so external agents inherit `GXT_TMVC_ROOTS`, forbidden zones, and `GXT_WORKER_LOG` without hand-configuring each IDE. **`gapman runtime exec`** adds process-boundary forbidden-zone scanning (strongest TMVC trap). IDE Agent Write/Edit remains **advisory** unless wrapped in `runtime exec` — see [`docs/INTEGRATIONS.md`](../docs/INTEGRATIONS.md).
 
-8. **Bootstrap + architecture (v0.8.1)** — **`gapman init`** installs this tree from packaged templates. **[`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json)** tells agents where code layout docs live; **`gapman arch cred`** stores git-ignored tokens for protected external sources. Primary mission format from **`gapman legislate`** is **YAML** under [`missions/`](missions/); Markdown missions remain supported for verify.
+8. **Bootstrap + architecture (v1.1.0)** — **`gapman init`** installs this tree from packaged templates. **[`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json)** tells agents where code layout docs live; **`gapman arch cred`** stores git-ignored tokens for protected external sources. Primary mission format from **`gapman legislate`** is **YAML** under [`missions/`](missions/); Markdown missions remain supported for verify.
 
 ## Files (quick map)
 

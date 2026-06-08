@@ -85,3 +85,11 @@ example trace line for gapman verify
 - DoD 2 MSN-0029: warn-only DoctorLine entries; installed greater than bundled warns without failing exit code
 - DoD 3 MSN-0029: doctor-substrate-drift.test.ts covers behind, match, ahead, legacy, and doctor --json exit_code 0
 - DoD 4 MSN-0029: ADOPTION.md documents substrate drift warn; BACKLOG #20 marked done
+
+## MSN-0030 — v1.1 doc semver sync (README + .gitagent/README)
+
+- Context Request ACCEPTED: `README.md`, `.gitagent/README.md`, `PROJECT_OUTLINE_ANALYSIS.md`, `SECURITY.md`, `docs/BACKLOG.md` — narrative doc sync for #21 (Teacher mission MSN-0030).
+- DoD 1 MSN-0030: README protocol maturity and footer headline gapman v1.1.0 matching package.json
+- DoD 2 MSN-0030: .gitagent/README title and CLI references updated to v1.1.0; schema_version 0.5.0 unchanged
+- DoD 3 MSN-0030: README release table adds v1.1.0 row; PROJECT_OUTLINE_ANALYSIS CLI version row resolved
+- DoD 4 MSN-0030: BACKLOG #21 marked done; v1.1 complete in sprint guidance
