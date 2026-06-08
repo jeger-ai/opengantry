@@ -93,6 +93,17 @@ Re-run the gate, append a fresh unique trace line to `WORKER_LOG.md`, update mis
 
 Migration escape hatch: `gapman verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
 
+### MCP verify envelope (v1.1+)
+
+`gxt_verify` / `handleVerify` returns a flat **`VerifyResultPayload`** — same shape as `gapman verify --json`:
+
+- Success: `{ "status": "passed", "phase": "full" | "pre_push_stub" | "break_glass", "exit_code": 0, … }`
+- Failure: `{ "status": "failed", "phase": "<phase>", "error_code": "GXT_*", "fix_hints": [], "next_actions": [], "exit_code": N, … }`
+
+Init and parse failures use **`status: "failed"`, `phase: "init"`** — not legacy `{ "status": "error" }`. Other MCP tools (`gxt_runtime_env`, `gxt_runtime_exec`) still use `{ "status": "error" }` until a future unification.
+
+`gapman verify --json` and `--fix` are mutually exclusive; combining them returns **`GXT_INVALID_ARGUMENT`** (`exit_code: 2`).
+
 ## Enforcement boundary
 
 **IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gapman verify`, and hooks.**

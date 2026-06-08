@@ -1,4 +1,9 @@
 import path from "node:path";
+import {
+  assertBypassSecretAuthorized,
+  runBreakGlassAudit,
+  validateBreakGlassReason,
+} from "./break-glass.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
@@ -75,17 +80,49 @@ function successPayload(
       msn_id: result.proofMsnId,
     };
   }
+  const traceWarnings = traceWarningsJson(result);
   return {
     status: "passed",
     phase: "full",
     exit_code: 0,
     msn_id: mission.msnId ?? undefined,
     mission_file_path: missionRelPath(root, mission),
-    ...(traceWarningsJson(result) ? { trace_warnings: traceWarningsJson(result) } : {}),
+    ...(traceWarnings ? { trace_warnings: traceWarnings } : {}),
     ...(result.traceEvidenceSkippedUncommitted !== undefined
       ? { trace_evidence_skipped_uncommitted: result.traceEvidenceSkippedUncommitted }
       : {}),
   };
+}
+
+/** Break-glass audit → structured pass/fail payload (no logging). */
+export function buildBreakGlassPayload(
+  root: string,
+  mission: ParsedMission,
+  options: VerifyOptions,
+): VerifyResultPayload {
+  try {
+    const reason = validateBreakGlassReason(options.breakGlassReason);
+    assertBypassSecretAuthorized(root);
+    const missionRel = missionRelPath(root, mission);
+    const commitSha = runBreakGlassAudit(root, {
+      reason,
+      msnId: mission.msnId,
+      missionFile: missionRel,
+      commit: options.breakGlassCommit,
+      auditCommit: options.auditCommit === true,
+    });
+    return {
+      status: "passed",
+      phase: "break_glass",
+      exit_code: 0,
+      msn_id: mission.msnId ?? undefined,
+      mission_file_path: missionRel,
+      message: reason,
+      audit_commit: commitSha,
+    };
+  } catch (e) {
+    return initFailurePayload(e);
+  }
 }
 
 function failureFromPhase(
@@ -181,5 +218,3 @@ export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): Ver
   }
 }
 
-/** @deprecated Use VerifyResultPayload — alias for MCP consumers. */
-export type VerifyMcpResult = VerifyResultPayload;

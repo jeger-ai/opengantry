@@ -93,3 +93,11 @@ example trace line for gapman verify
 - DoD 2 MSN-0030: .gitagent/README title and CLI references updated to v1.1.0; schema_version 0.5.0 unchanged
 - DoD 3 MSN-0030: README release table adds v1.1.0 row; PROJECT_OUTLINE_ANALYSIS CLI version row resolved
 - DoD 4 MSN-0030: BACKLOG #21 marked done; v1.1 complete in sprint guidance
+
+## MSN-0031 — v1.1 thermo-nuclear review remediation
+
+- DoD 1 MSN-0031: gitDiffNameOnlySinceCommit returns GitDiffSinceCommitResult; stale evidence fails closed on git diff error
+- DoD 2 MSN-0031: unified runVerify orchestration with buildBreakGlassPayload and GXT_INVALID_ARGUMENT for --json --fix collision
+- DoD 3 MSN-0031: verifyTraceRows returns resolvedLines; trace quote dedup removes second WORKER_LOG parse
+- DoD 4 MSN-0031: ADOPTION MCP verify envelope documented; BACKLOG #22 marked done
+- DoD 5 MSN-0031: traceWarningsJson dedup; VerifyMcpResult alias removed; 219 tests pass

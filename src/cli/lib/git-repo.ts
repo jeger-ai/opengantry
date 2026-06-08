@@ -52,19 +52,24 @@ export function gitConfigGet(repoRoot: string, key: string): string | null {
   return r.stdout.trim();
 }
 
-/** Paths under tmvcRoots that differ between ref and the working tree; empty = fresh. */
+export type GitDiffSinceCommitResult =
+  | { ok: true; paths: string[] }
+  | { ok: false; stderr: string };
+
+/** Paths under tmvcRoots that differ between ref and the working tree; empty paths = fresh. */
 export function gitDiffNameOnlySinceCommit(
   repoRoot: string,
   commit: string,
   tmvcRoots: readonly string[],
-): string[] {
+): GitDiffSinceCommitResult {
   const roots = tmvcRoots.map((r) => r.trim()).filter((r) => r.length > 0);
-  if (roots.length === 0) return [];
+  if (roots.length === 0) return { ok: true, paths: [] };
 
   const r = gitRun(repoRoot, ["diff", "--name-only", commit, "--", ...roots]);
-  if (!r.ok) return [];
-  return r.stdout
+  if (!r.ok) return { ok: false, stderr: r.stderr.trim() || "git diff failed" };
+  const paths = r.stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
+  return { ok: true, paths };
 }
