@@ -13,10 +13,10 @@ This document describes what the project **actually does today**, reconstructed 
 | Fact | Evidence |
 |------|----------|
 | **Not an application server** | No HTTP server, no database layer, no frontend app in `src/`. |
-| **Single shipped codebase** | All TypeScript lives under `src/cli/` (~90 files). Built to `dist/cli/index.js`; exposed as `gapman` via `package.json` `bin`. |
+| **Single shipped codebase** | All TypeScript lives under `src/cli/` (~150 `.ts` files). Built to `dist/cli/index.js`; exposed as `gapman` via `package.json` `bin`. |
 | **Dual role: dogfood specimen + bootstrap kit** | This repo runs GXT on itself (`.gitagent/`, hooks, missions) while also shipping `templates/` for `gapman init` to copy into other repos. |
-| **Node 24+ CLI tool** | `engines.node >= 24`; dependencies: `commander`, `yaml`, `@clack/prompts`. |
-| **Version on disk** | `package.json` / CLI: **0.8.1**; manifest `schema_version`: **0.5.0**. |
+| **Node 24+ CLI tool** | `engines.node >= 24`; dependencies: `commander`, `yaml`, `@clack/prompts`, `@modelcontextprotocol/sdk`, `zod`. |
+| **Version on disk** | `package.json` / CLI: **1.1.0**; manifest `schema_version`: **0.5.0**; git tag **v1.0.0** marks first adoption release. |
 
 In plain terms: **OpenGantry is a Git-native governance substrate and a TypeScript CLI (`gapman`) that enforces, bootstraps, and instruments AI-assisted engineering workflows.**
 
@@ -24,7 +24,7 @@ In plain terms: **OpenGantry is a Git-native governance substrate and a TypeScri
 
 ## The `gapman` CLI — complete command surface (from code)
 
-Commands are registered in `program-core.ts`, `program-arch.ts`, `program-mission.ts`, and `program-workflow.ts`.
+Commands are registered in `program-core.ts`, `program-arch.ts`, `program-mission.ts`, `program-workflow.ts`, `program-teacher.ts`, and `program-mcp.ts`.
 
 ### Core / bootstrap
 
@@ -35,6 +35,10 @@ Commands are registered in `program-core.ts`, `program-arch.ts`, `program-missio
 | **`gapman doctor`** | Readiness probe: manifest/skills sync, `GAPMAN_TEACHER_EMAILS`, bypass anchor state, `core.hooksPath`, example mission presence, architecture pointer health, integration file staleness vs `templates/integrations/compatibility.json`. Warnings exit 0; hard fails exit 1. |
 | **`gapman init`** | Copies packaged assets from `templates/` into the target git repo. Supports interactive wizard (`@clack/prompts`), `--yes` default profile, `--dry-run`, IDE selection, skills preset (`minimal` \| `specimen`), hooks/CI toggles, architecture pointer composition. Asset modes: `scaffold_only` (create-if-missing) vs `managed_strict` (prompt/force overwrite). Also merges `.gitignore.gxt` lines and composes `docs/INTEGRATIONS.md` + `.gitagent/ARCHITECTURE.pointer.json`. |
 | **`gapman triage "<intent>"`** | Manifest-only routing (`triage-logic.ts`): escalate on `path_risks` / `risk_keywords` match, or ambiguous/zero skill matches; else `DIRECT_EXECUTION` with one skill. Optional non-binding `adr_hints` from `.gitagent/out-of-scope/`. Can `--emit-mission` (markdown) on direct execution only. |
+| **`gapman start "<intent>"`** | Orchestrated triage → legislate handoff for new work (MSN allocation, skill resolution). |
+| **`gapman upgrade`** | Substrate upgrade planning/apply against packaged templates. |
+| **`gapman onboarding`** | Tutorial / first-run hints for adopters. |
+| **`gapman teacher show\|set`** | Repo-local Teacher email allowlist used by git-proof. |
 
 ### Architecture discovery (v0.8.x)
 
@@ -59,8 +63,18 @@ Pointer kinds: `unset` \| `file` \| `directory` \| `external`. Stub detection us
 
 | Command | What it actually does |
 |---------|----------------------|
-| **`gapman verify --mission <path>`** | Multi-stage gate (see below). Supports `--pre-push` (legislative stubs stop after git-proof), `--strict-trace` / `--fuzzy-trace`, `--break-glass` with `GXT_BYPASS_SECRET` + audit note/commit. |
+| **`gapman verify --mission <path>`** | Multi-stage gate (see below). Supports `--pre-push` (legislative stubs stop after git-proof), `--strict-trace` / `--fuzzy-trace`, **`--skip-stale-evidence`** (v1.1+ migration escape hatch), `--fix` / `--non-interactive`, `--audience`, `--break-glass` with `GXT_BYPASS_SECRET` + audit note/commit. |
 | **`gapman metrics [--json] [--ref HEAD]`** | Git-native rollup from streamed `git log`: mission IDs, bypass note count, legislative vs worker-trace commit heuristics, turnaround stats. No local event ledger. |
+
+### MCP bridge (`gapman mcp serve`)
+
+| Tool surface | What it actually does |
+|--------------|----------------------|
+| **`gxt_verify`** | Same phase engine as CLI verify; supports `skip_stale_evidence`. |
+| **`gxt_draft_legislation` / `gxt_execute_legislation`** | Two-step Mission Architect handoff (draft → chat approval → write mission YAML). |
+| **`gxt_runtime_env`**, **`gxt_check_signature`**, **`gxt_pin_mission`** | Runtime env, Teacher stamp check, mission pin for IDE hooks. |
+
+Wired in `.cursor/mcp.json` for Cursor adopters; logic lives in `mcp-runtime.ts`, `mcp-legislation.ts`, `mcp-tools-register.ts`.
 
 ---
 
@@ -78,6 +92,11 @@ flowchart TD
   F -->|yes| G[pass after git-proof]
   F -->|no| H[run gate_command]
   H --> I[trace mapping vs WORKER_LOG.md]
+  I --> J{stale evidence v1.1+}
+  J -->|committed PASS lines| K[git blame line + git diff TMVC since attestation]
+  J -->|uncommitted line / --skip-stale-evidence| L[skip stale binding]
+  K --> M[pass or GXT_TRACE_STALE]
+  L --> M
 ```
 
 ### 1. Git proof (`git-proof.ts`)
@@ -98,12 +117,22 @@ flowchart TD
 - `anchor` validated against line number or co-located token.
 - **Default:** auto line-drift resolution when quotes match but line numbers shifted (`--strict-trace` disables).
 
-### 4. Legislative stubs (`mission-legislative-stub.ts`)
+### 4. Stale trace evidence (`trace-evidence.ts`, v1.1+)
+
+After trace mapping succeeds, full verify binds **committed** PASS quote lines to TMVC freshness:
+
+1. Resolve quote line (numeric anchor, fuzzy drift warnings, or freeform anchor + quote).
+2. `git blame --porcelain` on that `WORKER_LOG.md` line → attestation commit.
+3. `git diff --name-only <attestationCommit> -- <skill tmvc_roots…>` vs working tree — any path → **`Trace STALE`** (`GXT_TRACE_STALE`).
+
+**Skips (by design):** uncommitted quote lines (blame all-zeros — trace and code co-evolve until commit); empty `tmvc_roots`; `--skip-stale-evidence`. Uncommitted skips are logged on success.
+
+### 5. Legislative stubs (`mission-legislative-stub.ts`)
 
 - Missions from `legislate` ship with placeholder trace quote `REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION`.
 - `verify --pre-push` passes these after git-proof only — enabling remote agent handoff before worker execution.
 
-### 5. Break-glass (`break-glass.ts`)
+### 6. Break-glass (`break-glass.ts`)
 
 - `GXT_BYPASS_SECRET` must SHA-256-match a line in `.gitagent/foreman/BYPASS.sha256`.
 - Writes git note (or empty audit commit) with reason; skips gate and trace.
@@ -112,7 +141,7 @@ flowchart TD
 
 ## Triage / routing (actually implemented)
 
-` t triageIntent()` is **heuristic string matching**, not ML:
+`triageIntent()` is **heuristic string matching**, not ML:
 
 1. Lowercase intent text.
 2. **Escalate** if intent mentions any `path_risks` key or `risk_keywords` entry.
@@ -133,13 +162,13 @@ Skill boundaries come entirely from `MANIFEST.json` per skill: `tmvc_roots`, `fo
 | **Skills** | `skills/ui.md`, `logic.md` (minimal); + `gapman.md`, `substrate.md` (specimen) |
 | **Hooks** | `.githooks/post-checkout`, `pre-push` |
 | **CI** | `.github/workflows/gxt-validate.yml` |
-| **Runtime scripts** | `gxt-runtime-env.sh`, `gxt-resolve-mission.sh`, `gxt-pin-mission.sh`, `gxt-cursor-env.sh` |
+| **Runtime scripts** | `gxt-runtime-env.sh`, `gxt-resolve-mission.sh`, `gxt-pin-mission.sh`, `gxt-cursor-env.sh`, **`verify-pr-missions.sh`** (v1.1+) |
 | **Cursor** | rules mdc, `hooks.json`, session-start + before-shell guards |
 | **IDE packs** | Claude, Codex, OpenCode, Junie, Antigravity, Cline, Aider, OpenHands pointer files |
 
 Init composes:
 
-- **`docs/INTEGRATIONS.md`** (or custom path) from recipe templates + `compatibility.json` (9 integrations, version 0.8.1).
+- **`docs/INTEGRATIONS.md`** (or custom path) from recipe templates + `compatibility.json` (9 integrations; version tracked in compat manifest).
 - **`.gitagent/ARCHITECTURE.pointer.json`** from wizard flags (`--arch-source`, `--arch-location`).
 
 ---
@@ -181,13 +210,25 @@ On feature branch checkout: seed `WORKER_LOG.md` from template if missing (never
 
 | Job | Runs |
 |-----|------|
-| `manifest` | build, `gapman check`, `validate-gxt.sh manifest`, unit tests |
+| `pr_governance` (PR only) | PR base must be `main` (no stacked mission branches) |
+| `manifest` | build, `gapman check`, `validate-gxt.sh manifest`, unit tests, **doctor** |
 | `code_quality` (PR only) | changed-code script |
 | `msn_commits` (PR only) | path-scoped `[MSN-NNNN]` subject check via `validate-gxt.sh msn` |
+| `mission_verify` (PR only) | **`verify-pr-missions.sh`**: one MSN per PR range + full `gapman verify` on changed missions |
+| `npm_pack` | `npm pack` smoke check |
+
+### `verify-pr-missions.sh` (v1.1+)
+
+PR-only mission isolation enforced in CI and local `dev-validate.sh`:
+
+1. Extract unique `[MSN-NNNN]` tags from `${base}..${head}` commit subjects — **fail if >1** (mission contamination).
+2. Triple-dot diff for changed files; if MSN-enforced paths changed, require a mission file under `.gitagent/missions/`.
+3. Changed mission filenames must match the PR's MSN tag.
+4. Run full **`gapman verify --mission … --audience verifier`** on each changed mission.
 
 ### Local dogfood (`scripts/dev-validate.sh`)
 
-Build + check + manifest + tests + **doctor** + changed-code + MSN — stricter than CI (doctor not in workflow).
+`dev-validate-core.sh` (build, check, manifest, tests, doctor, changed-code, MSN vs base) then **`verify-pr-missions.sh`** when base ref resolves — mirrors PR `mission_verify` locally.
 
 ---
 
@@ -226,7 +267,7 @@ sequenceDiagram
   W->>W: runtime env / exec within TMVC
   W->>W: append evidence to WORKER_LOG.md
   W->>V: gapman verify --mission …
-  V->>G: git-proof + gate + trace
+  V->>G: git-proof + gate + trace + stale evidence (v1.1+)
   W->>G: push → pre-push verify → PR checks
 ```
 
@@ -236,24 +277,27 @@ sequenceDiagram
 
 - **Not a multi-skill application codebase.** The specimen `MANIFEST.json` lists `ui` → `src/components/`, `logic` → `src/lib/` + `src/utils/`, but **those directories do not exist** in this repo. Real dogfood work routes through the `gapman` skill → `src/cli/`.
 - **Not a hosted governance service.** All state is local files + git history + optional git notes.
-- **Not cryptographic attestation.** Trace mapping verifies verbatim quotes in a worker-controlled log — process control, not tamper-proof proof.
-- **Not published npm package today.** `private: true`; distribution is copy/subtree/vendor + local build.
+- **Not cryptographic attestation.** Trace mapping verifies verbatim quotes in a worker-controlled log; v1.1+ stale-evidence adds git blame + TMVC diff binding for committed lines — still process control, not tamper-proof proof.
+- **Not necessarily installed from npm.** Package is configured for public publish (`@jeger-ai/opengantry`); distribution today is primarily git clone / vendor + local `npm run build`.
 
 ---
 
 ## Test coverage signal
 
-~18 test modules under `src/cli/tests/` covering: triage, legislate, verify, git-proof, trace/gate, runtime exec, init, doctor, metrics, break-glass, architecture pointer/credentials, mission parsing, legislative stubs, dirty missions, validate-gxt shell parity.
+**39 test modules** under `src/cli/tests/` (~**197** cases) covering: triage, legislate, verify, verify-engine, verify-pr-missions, **trace-evidence (stale binding)**, git-proof, trace/gate, runtime exec, MCP legislation/runtime, init, doctor, metrics, break-glass, architecture pointer/credentials, mission parsing, legislative stubs, dirty missions, validate-gxt shell parity.
 
 ---
 
 ## Documentation misalignments (implementation vs docs)
 
-Findings from comparing code to narrative docs at analysis time, with **status after v0.8.1 narrative sync** (2026-05-19):
+Findings from comparing code to narrative docs. **Last refreshed:** 2026-06-08 (post **v1.1.0** / MSN-0025 merge).
 
 | Topic | Code reality | Was | Status after sync |
 |-------|--------------|-----|-------------------|
-| **CLI version** | `0.8.1` in `package.json`, `program.ts`, `compatibility.json` | README broadcast **gapman v0.7.0** | **Resolved** — README, `.gitagent/README.md`, relationship footer now say **v0.8.1** |
+| **CLI version** | `1.1.0` in `package.json` | README / analysis cited **0.8.1** | **Open** — verify README footer vs `package.json` on next doc pass |
+| **Stale trace evidence** | v1.1+ git blame + TMVC diff in verify; `GXT_TRACE_STALE`; `--skip-stale-evidence` | Not in outline | **Resolved** — documented in RULES, ADOPTION, this outline |
+| **Mission isolation CI** | `pr_governance`, `verify-pr-missions.sh`, `mission_verify` job | Outline listed only `msn_commits` | **Resolved** — this outline + ADOPTION v1.1 section |
+| **CLI version (historical)** | — | README broadcast **gapman v0.7.0** | **Resolved** — README updated through v0.8.x sync |
 | **Command inventory** | Full surface includes `init`, `doctor`, `arch *`, `runtime exec`, `metrics` | README table omitted key v0.8.x commands | **Resolved** — README command table is complete |
 | **Specimen MANIFEST paths** | `ui`/`logic` TMVC roots point at hypothetical app dirs | Easy to misread as this repo's layout | **Open** — specimen `MANIFEST.json` unchanged; docs now init-first; adopters must customize post-`init` |
 | **Mission format emphasis** | `legislate` emits **YAML**; verify accepts md+yaml | README centered Markdown templates | **Resolved** — YAML primary; `MISSION.template.md` demoted to reference |
@@ -264,7 +308,7 @@ Findings from comparing code to narrative docs at analysis time, with **status a
 | **Forbidden zone enforcement** | `runtime exec` scans filesystem; IDE rules advisory | TMVC read as uniformly enforced | **Resolved** — Enforcement boundary callout in README + ADOPTION; INTEGRATIONS unchanged |
 | **Metrics semantics** | `legislative_commits` / `worker_trace_commits` are heuristics | Easy to over-interpret | **Open** — ADOPTION caveat retained; no change needed |
 
-**Remaining narrative debt:** specimen `MANIFEST.json` still lists hypothetical app paths (`src/lib/`, `src/components/`) — intentional for adopters, not this repo's actual `src/cli/` layout.
+**Remaining narrative debt:** specimen `MANIFEST.json` still lists hypothetical app paths (`src/lib/`, `src/components/`) — intentional for adopters, not this repo's actual `src/cli/` layout. `trace-evidence.ts` still duplicates quote-line resolution from `trace.ts` (known refactor target from code review).
 
 ---
 
@@ -277,6 +321,8 @@ Findings from comparing code to narrative docs at analysis time, with **status a
 - Bootstrap path (`init`) makes the substrate portable without assuming this repo's layout.
 - Layered CLI architecture with import-layer CI enforcement (`check-import-layers.mjs`).
 - Legislative stub + `--pre-push` models realistic remote-agent handoff.
+- v1.1+ stale-evidence binds committed trace lines to TMVC via git (forensic drift detection without Node-side hashing).
+- v1.1 mission isolation: one MSN per PR, main-only targets, full verify on changed missions in CI.
 
 **Deliberate simplifications**
 
@@ -302,7 +348,8 @@ Findings from comparing code to narrative docs at analysis time, with **status a
 3. **Legislates** scoped missions with Teacher git accountability (`legislate`, git-proof).
 4. **Bootstraps agent runtime** with explicit TMVC/forbidden boundaries (`runtime env`, Cursor hooks, pin scripts).
 5. **Optionally orchestrates** worker commands with telemetry (`runtime exec`).
-6. **Refuses unverified success claims** unless gate output and `WORKER_LOG.md` quotes align (`verify`).
-7. **Enforces** policy at push/PR time via hooks, CI, and MSN-scoped commit subjects.
+6. **Refuses unverified success claims** unless gate output and `WORKER_LOG.md` quotes align (`verify`), and (v1.1+) committed PASS lines are not stale vs TMVC attestation.
+7. **Enforces** policy at push/PR time via hooks, CI, MSN-scoped commit subjects, and PR mission purity + full verify.
+8. **Exposes** the same verify/legislate/runtime flows to IDE agents via MCP (`gapman mcp serve`).
 
 It is **not** an application under test — it is the **control plane** for how applications (or, in this repo, the CLI itself) get changed under AI-assisted workflows.
