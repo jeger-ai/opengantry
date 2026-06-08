@@ -2,8 +2,12 @@ import path from "node:path";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import { gatePassed, runGate } from "./gate.js";
 import { isLegislativeStub } from "./mission-legislative-stub.js";
-import type { ParsedMission } from "./types.js";
+import type { Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, type TraceFailureKind } from "./trace-failure-kind.js";
+import {
+  resolvePassQuoteLines,
+  verifyTraceEvidenceFreshness,
+} from "./trace-evidence.js";
 import { defaultWorkerLogPath, verifyTraceRows, type TraceVerifyWarning } from "./trace.js";
 import type { VerifyOptions } from "./verify-types.js";
 
@@ -23,6 +27,8 @@ export interface VerifyPhaseFailure {
   traceKind?: TraceFailureKind;
   traceQuote?: string;
   traceReason?: string;
+  attestationCommit?: string;
+  stalePaths?: string[];
 }
 
 export interface VerifyPhaseSuccess {
@@ -31,6 +37,7 @@ export interface VerifyPhaseSuccess {
   proofMsnId: string;
   workerLogPath: string;
   traceWarnings: TraceVerifyWarning[];
+  traceEvidenceSkippedUncommitted?: number;
 }
 
 export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
@@ -89,10 +96,12 @@ function evaluateGatePhase(
 }
 
 function evaluateTracePhase(
+  root: string,
+  manifest: Manifest,
   mission: ParsedMission,
   options: VerifyOptions,
   workerLogPath: string,
-): VerifyPhaseFailure | { warnings: TraceVerifyWarning[] } {
+): VerifyPhaseFailure | { warnings: TraceVerifyWarning[]; skippedUncommitted: number } {
   const hasPending = mission.traceRows.some((row) => row.status.toUpperCase().includes("PENDING"));
   if (hasPending) {
     return {
@@ -125,7 +134,38 @@ function evaluateTracePhase(
     };
   }
 
-  return { warnings: traceResult.warnings };
+  const resolvedLineByDodId = new Map<string, number>();
+  for (const warning of traceResult.warnings) {
+    resolvedLineByDodId.set(warning.row.dodId, warning.foundLine);
+  }
+
+  const { resolved } = resolvePassQuoteLines(workerLogPath, mission.traceRows, resolvedLineByDodId);
+  const evidence = verifyTraceEvidenceFreshness(
+    root,
+    manifest,
+    mission.skillKey,
+    workerLogPath,
+    resolved,
+    { skipStaleEvidence: options.skipStaleEvidence === true },
+  );
+
+  if (evidence.failures.length > 0) {
+    const first = evidence.failures[0]!;
+    return {
+      ok: false,
+      phase: "trace",
+      message: first.reason,
+      exitCode: 1,
+      workerLogPath,
+      traceKind: "stale_evidence",
+      traceQuote: first.row.traceQuote,
+      traceReason: first.reason,
+      attestationCommit: first.attestationCommit,
+      stalePaths: first.stalePaths,
+    };
+  }
+
+  return { warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
 }
 
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
@@ -133,6 +173,7 @@ export function evaluateVerifyPhases(
   root: string,
   mission: ParsedMission,
   options: VerifyOptions,
+  manifest: Manifest,
 ): VerifyPhaseResult {
   const workerLogPath = resolveWorkerLogPath(root, options);
 
@@ -147,7 +188,7 @@ export function evaluateVerifyPhases(
   const gateFailure = evaluateGatePhase(root, mission, options, workerLogPath);
   if (gateFailure) return gateFailure;
 
-  const trace = evaluateTracePhase(mission, options, workerLogPath);
+  const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
   if ("ok" in trace) return trace;
 
   return {
@@ -156,5 +197,7 @@ export function evaluateVerifyPhases(
     proofMsnId,
     workerLogPath,
     traceWarnings: trace.warnings,
+    traceEvidenceSkippedUncommitted:
+      trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
   };
 }

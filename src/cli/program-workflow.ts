@@ -61,6 +61,7 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--cwd <dir>", "Working directory for gate command")
     .option("--fuzzy-trace", "Force content-based anchor matching for all numeric anchors")
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
+    .option("--skip-stale-evidence", "Skip TMVC stale-evidence binding for committed PASS trace lines")
     .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
     .option("--break-glass", "Skip all verify gates when GXT_BYPASS_SECRET is authorized")
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
@@ -76,6 +77,7 @@ export function registerWorkflowCommands(program: Command): void {
         cwd?: string;
         fuzzyTrace?: boolean;
         strictTrace?: boolean;
+        skipStaleEvidence?: boolean;
         prePush?: boolean;
         breakGlass?: boolean;
         reason?: string;
@@ -91,6 +93,7 @@ export function registerWorkflowCommands(program: Command): void {
           cwd: opts.cwd,
           fuzzyTrace: opts.fuzzyTrace,
           strictTrace: opts.strictTrace,
+          skipStaleEvidence: opts.skipStaleEvidence,
           prePush: opts.prePush,
           breakGlass: opts.breakGlass,
           breakGlassReason: opts.reason,

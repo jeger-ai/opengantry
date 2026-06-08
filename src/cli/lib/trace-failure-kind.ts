@@ -10,6 +10,7 @@ export type TraceFailureKind =
   | "strict_line_drift"
   | "empty_quote"
   | "anchor_mismatch"
+  | "stale_evidence"
   | "other";
 
 export function classifyTraceFailure(
@@ -31,5 +32,6 @@ export function classifyTraceFailure(
   ) {
     return "anchor_mismatch";
   }
+  if (reason.startsWith("Trace STALE")) return "stale_evidence";
   return "other";
 }

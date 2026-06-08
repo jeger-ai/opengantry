@@ -18,6 +18,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - For every claimed verifier **PASS**, the Verifier MUST provide a **Trace Reference**: a verbatim substring copied from `WORKER_LOG.md` and an anchor (**line number** or **timestamp**) that ties the quote to the execution trace.
 - Verifiers MUST NOT use source-code quotations as the sole or primary evidence for PASS; code may supplement only after a valid trace reference exists.
 - If the quoted substring does **not** appear in `WORKER_LOG.md`, or no valid trace reference is provided for a claimed PASS → **Evidence Tampering** → the mission MUST auto-fail (no merge).
+- **`gapman verify` stale-evidence (v1.1+):** for committed PASS quote lines, verify binds the line's attestation commit (`git blame` on `WORKER_LOG.md`) to the mission skill's full `tmvc_roots` via `git diff --name-only`; TMVC drift after attestation → **STALE** (`GXT_TRACE_STALE`). Uncommitted quote lines skip stale check until committed.
 
 ## 4. Dynamic TMVC (roots + context requests)
 
