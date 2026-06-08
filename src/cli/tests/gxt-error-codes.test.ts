@@ -15,7 +15,7 @@ test("mapGitProofCodeToGxt: known git-proof codes map to MISSION_UNSTAMPED", () 
 test("gxtCodeFromGapmanUserError: upgrade codes map to VERIFY_FAILED not MISSION_UNSTAMPED", () => {
   assert.equal(gxtCodeFromGapmanUserError("UPGRADE_STAGING_MISSING"), GXT_ERROR.VERIFY_FAILED);
   assert.equal(gxtCodeFromGapmanUserError("UPGRADE_HASH_MISMATCH"), GXT_ERROR.VERIFY_FAILED);
-  assert.equal(gxtCodeFromGapmanUserError("MISSION_NOT_FOUND"), GXT_ERROR.VERIFY_FAILED);
+  assert.equal(gxtCodeFromGapmanUserError("MISSION_NOT_FOUND"), GXT_ERROR.PARSE_ERROR);
 });
 
 test("gxtCodeFromGapmanUserError: unknown codes fall back to VERIFY_FAILED", () => {

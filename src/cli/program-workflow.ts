@@ -69,6 +69,7 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--audit-commit", "Write break-glass audit as empty commit instead of git note")
     .option("--fix", "Interactive remediation menu on verify failure")
     .option("--non-interactive", "With --fix: print structured hints without prompts")
+    .option("--json", "Emit structured JSON result (with --fix: non-interactive hints only)")
     .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
     .action(
       async (opts: {
@@ -85,6 +86,7 @@ export function registerWorkflowCommands(program: Command): void {
         auditCommit?: boolean;
         fix?: boolean;
         nonInteractive?: boolean;
+        json?: boolean;
         audience?: string;
       }) => {
         await runVerify({
@@ -101,6 +103,7 @@ export function registerWorkflowCommands(program: Command): void {
           auditCommit: opts.auditCommit,
           fix: opts.fix,
           fixNonInteractive: opts.nonInteractive,
+          json: opts.json,
           audience: getOutputAudience(),
         });
       },

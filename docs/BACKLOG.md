@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-08 (MSN-0027 shipped; v1.1 cage 6/8 done)
+**Last synced:** 2026-06-08 (MSN-0028 shipped; v1.1 cage 7/8 done)
 
 ---
 
@@ -24,7 +24,7 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 | **Template CI script deployment** (`verify-pr-missions.sh` in init catalog) | **Done** | `src/cli/lib/init-asset-catalog.ts` → `CI_ASSETS` |
 | **CI target lock** (mission PRs → default branch, not hardcoded `main`) | **Done** | MSN-0026; `vars.GXT_INTEGRATION_BRANCH` override; template parity restored ([#6](https://github.com/jeger-ai/opengantry/issues/6)) |
 | **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Done** | MSN-0027; `docs/ADOPTION.md` § Formatter guard; `src/cli/lib/file-merge-gxt.ts` ([#7](https://github.com/jeger-ai/opengantry/issues/7)) |
-| **`gapman verify --json`** (structured output for CI/orchestrators) | **Open** | [#18](https://github.com/jeger-ai/opengantry/issues/18) |
+| **`gapman verify --json`** (structured output for CI/orchestrators) | **Done** | MSN-0028; `src/cli/lib/verify-result-payload.ts`; flat `error_code` envelope ([#18](https://github.com/jeger-ai/opengantry/issues/18)) |
 | **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
 | **Doctor detects substrate version drift** | **Open** | [#20](https://github.com/jeger-ai/opengantry/issues/20) |
 | **Doc/substrate version string sync** | **Open** | [#21](https://github.com/jeger-ai/opengantry/issues/21) |
@@ -39,7 +39,7 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 
 ### v1.1 remaining acceptance
 
-- **Verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)):** stable success/failure JSON with `error_code`, phase, and `fix_hints`.
+- **Verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)):** ~~stable success/failure JSON with `error_code`, phase, and `fix_hints`.~~ Shipped MSN-0028.
 - **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** `gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.
 - **Doc version sync ([#21](https://github.com/jeger-ai/opengantry/issues/21)):** README / `.gitagent/README` semver strings match `package.json`.
 
@@ -101,14 +101,14 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 
 ## Sprint guidance
 
-**Current focus:** finish **v1.1 remaining** (#18 → #20 → #21) before tactical debt.
+**Current focus:** finish **v1.1 remaining** (#20 → #21) before tactical debt.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
-| **Next mission** | [#18](https://github.com/jeger-ai/opengantry/issues/18) | `gapman verify --json` (MCP already structured) |
-| Then | [#20](https://github.com/jeger-ai/opengantry/issues/20), [#21](https://github.com/jeger-ai/opengantry/issues/21) | Substrate drift + doc semver sync — closes v1.1 |
+| **Next mission** | [#20](https://github.com/jeger-ai/opengantry/issues/20), [#21](https://github.com/jeger-ai/opengantry/issues/21) | Substrate drift + doc semver sync — closes v1.1 |
+| Done | [#18](https://github.com/jeger-ai/opengantry/issues/18) | MSN-0028: `gapman verify --json` + MCP parity |
 
-Rationale: MSN-0027 shipped formatter guard ([#7](https://github.com/jeger-ai/opengantry/issues/7) + [#19](https://github.com/jeger-ai/opengantry/issues/19)). Verify JSON and drift detection are the last v1.1 hygiene items before tactical debt.
+Rationale: MSN-0028 shipped verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)). Doctor substrate drift and doc semver sync are the last v1.1 hygiene items before tactical debt.
 
 **Suggested order after v1.1:**
 

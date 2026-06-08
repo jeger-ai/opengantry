@@ -20,4 +20,6 @@ export interface VerifyOptions {
   audience?: OutputAudience;
   /** Skip TMVC stale-evidence binding (committed PASS quote lines only). */
   skipStaleEvidence?: boolean;
+  /** Emit a single structured JSON document on stdout (no human logs). */
+  json?: boolean;
 }

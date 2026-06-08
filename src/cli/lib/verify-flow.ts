@@ -26,6 +26,7 @@ import {
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
 import { loadWorkspace } from "./workspace.js";
+import type { VerifyResultPayload } from "./verify-result-payload.js";
 
 export function runVerifyBreakGlass(
   root: string,
@@ -135,6 +136,11 @@ export function verifyFailureToHintContext(
     traceFailureReason: failure.traceReason,
     strictTrace: options.strictTrace,
   };
+}
+
+export function emitVerifyJson(payload: VerifyResultPayload): void {
+  logInfo(JSON.stringify(payload, null, 2));
+  if (payload.exit_code !== 0) setExitCode(payload.exit_code);
 }
 
 export function emitAudienceNextSteps(steps: string[], options: VerifyOptions): void {

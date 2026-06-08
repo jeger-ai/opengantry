@@ -1,0 +1,23 @@
+# v1.1 verify JSON — structured gapman verify --json with MCP parity (#18).
+# Legislated intent: v1.1 verify JSON: structured gapman verify --json with MCP parity
+msn_id: MSN-0028
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0028: buildVerifyResultPayload shared by CLI --json and MCP handleVerify"
+    anchor: "75"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0028: flat failure envelope with top-level error_code and exit_code (no nested .error.code)"
+    anchor: "76"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0028: verify-json.test.ts covers pass, gate, trace, git_proof, init, and stdout purity"
+    anchor: "77"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0028: README and ADOPTION document gapman verify --json; BACKLOG #18 marked done"
+    anchor: "78"
+    status: PASS

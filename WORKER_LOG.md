@@ -70,3 +70,10 @@ example trace line for gapman verify
 - DoD 2 MSN-0027: ADOPTION.md mandates WORKER_LOG.md in .prettierignore with formatter-equivalent note
 - DoD 3 MSN-0027: init-tutorial Step 4 mentions .prettierignore scaffold for stable trace lines
 - DoD 4 MSN-0027: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0028 — v1.1 verify JSON (gapman verify --json + MCP parity)
+
+- DoD 1 MSN-0028: buildVerifyResultPayload shared by CLI --json and MCP handleVerify
+- DoD 2 MSN-0028: flat failure envelope with top-level error_code and exit_code (no nested .error.code)
+- DoD 3 MSN-0028: verify-json.test.ts covers pass, gate, trace, git_proof, init, and stdout purity
+- DoD 4 MSN-0028: README and ADOPTION document gapman verify --json; BACKLOG #18 marked done

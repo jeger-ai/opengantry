@@ -34,6 +34,7 @@ eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
 
 # 3. Audit evidence: verify + grep
 gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --fix
+gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --json | jq -r '.error_code // "passed"'
 git log --grep='MSN-0001' --oneline
 gapman status --json --verbose
 ```
