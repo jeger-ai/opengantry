@@ -144,6 +144,8 @@ git push origin refs/notes/gxt-bypass
 
 `gapman doctor` tests whether `GXT_BYPASS_SECRET` matches the anchor when set.
 
+**Substrate version drift (v1.1+):** `gapman doctor` compares on-disk `.gitagent/foreman/SUBSTRATE.version.json` to the `opengantry_version` bundled with your installed gapman (same source as `gapman upgrade`). When behind, doctor emits a **warn** (exit 0) and suggests `gapman upgrade` after updating the npm package. Warnings do not fail gates that only check exit code.
+
 ## Agent errors (machine vs human)
 
 On `runtime exec` failure, a one-line human summary goes to stdout; full JSON goes to stderr and `.gitagent/history/.ignored-last-error.json`. Orchestrators read `GXT_LAST_ERROR_FILE` from `gapman runtime env`.

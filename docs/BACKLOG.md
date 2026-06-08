@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-08 (MSN-0028 shipped; v1.1 cage 7/8 done)
+**Last synced:** 2026-06-08 (MSN-0029 shipped; v1.1 cage 8/9 done — doc sync #21 remains)
 
 ---
 
@@ -26,7 +26,7 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 | **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Done** | MSN-0027; `docs/ADOPTION.md` § Formatter guard; `src/cli/lib/file-merge-gxt.ts` ([#7](https://github.com/jeger-ai/opengantry/issues/7)) |
 | **`gapman verify --json`** (structured output for CI/orchestrators) | **Done** | MSN-0028; `src/cli/lib/verify-result-payload.ts`; flat `error_code` envelope ([#18](https://github.com/jeger-ai/opengantry/issues/18)) |
 | **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
-| **Doctor detects substrate version drift** | **Open** | [#20](https://github.com/jeger-ai/opengantry/issues/20) |
+| **Doctor detects substrate version drift** | **Done** | MSN-0029; `src/cli/lib/doctor-substrate-drift.ts`; `docs/ADOPTION.md` § substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)) |
 | **Doc/substrate version string sync** | **Open** | [#21](https://github.com/jeger-ai/opengantry/issues/21) |
 
 ### v1.1 shipped acceptance (MSN-0024 – MSN-0027)
@@ -40,7 +40,7 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 ### v1.1 remaining acceptance
 
 - **Verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)):** ~~stable success/failure JSON with `error_code`, phase, and `fix_hints`.~~ Shipped MSN-0028.
-- **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** `gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.
+- **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** ~~`gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.~~ Shipped MSN-0029.
 - **Doc version sync ([#21](https://github.com/jeger-ai/opengantry/issues/21)):** README / `.gitagent/README` semver strings match `package.json`.
 
 ---
@@ -101,14 +101,14 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 
 ## Sprint guidance
 
-**Current focus:** finish **v1.1 remaining** (#20 → #21) before tactical debt.
+**Current focus:** finish **v1.1 remaining** (#21 doc sync) before tactical debt.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
-| **Next mission** | [#20](https://github.com/jeger-ai/opengantry/issues/20), [#21](https://github.com/jeger-ai/opengantry/issues/21) | Substrate drift + doc semver sync — closes v1.1 |
-| Done | [#18](https://github.com/jeger-ai/opengantry/issues/18) | MSN-0028: `gapman verify --json` + MCP parity |
+| **Next mission** | [#21](https://github.com/jeger-ai/opengantry/issues/21) | Doc semver sync — closes v1.1 |
+| Done | [#18](https://github.com/jeger-ai/opengantry/issues/18), [#20](https://github.com/jeger-ai/opengantry/issues/20) | MSN-0028 verify JSON; MSN-0029 doctor substrate drift |
 
-Rationale: MSN-0028 shipped verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)). Doctor substrate drift and doc semver sync are the last v1.1 hygiene items before tactical debt.
+Rationale: MSN-0029 shipped doctor substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)). Doc semver sync ([#21](https://github.com/jeger-ai/opengantry/issues/21)) is the last v1.1 hygiene item before tactical debt.
 
 **Suggested order after v1.1:**
 

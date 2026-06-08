@@ -77,3 +77,11 @@ example trace line for gapman verify
 - DoD 2 MSN-0028: flat failure envelope with top-level error_code and exit_code (no nested .error.code)
 - DoD 3 MSN-0028: verify-json.test.ts covers pass, gate, trace, git_proof, init, and stdout purity
 - DoD 4 MSN-0028: README and ADOPTION document gapman verify --json; BACKLOG #18 marked done
+
+## MSN-0029 — v1.1 doctor substrate drift (SUBSTRATE.version.json vs bundled compat)
+
+- Context Request ACCEPTED: `docs/ADOPTION.md`, `docs/BACKLOG.md` — adoption/backlog docs for #20 acceptance (Teacher mission MSN-0029).
+- DoD 1 MSN-0029: runSubstrateDriftDoctorChecks compares readInstalledSubstrateVersion to loadIntegrationCompat bundled opengantry_version
+- DoD 2 MSN-0029: warn-only DoctorLine entries; installed greater than bundled warns without failing exit code
+- DoD 3 MSN-0029: doctor-substrate-drift.test.ts covers behind, match, ahead, legacy, and doctor --json exit_code 0
+- DoD 4 MSN-0029: ADOPTION.md documents substrate drift warn; BACKLOG #20 marked done
