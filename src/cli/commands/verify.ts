@@ -34,7 +34,7 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
 
 /** Exposed for tests that need silent phase evaluation without fix wrapper. */
 export function evaluateVerifyForMission(options: VerifyOptions) {
-  const { root } = loadWorkspace();
+  const { root, manifest } = loadWorkspace();
   const mission = parseMissionFile(root, options.mission);
-  return evaluateVerifyPhases(root, mission, options);
+  return evaluateVerifyPhases(root, mission, options, manifest);
 }

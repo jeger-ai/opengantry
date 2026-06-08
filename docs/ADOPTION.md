@@ -78,6 +78,18 @@ export GXT_AUDIENCE=verifier            # same as global --audience
 
 `gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gapman verify --pre-push` for legislative stub handoff.
 
+### Stale trace evidence (v1.1+)
+
+After gate + trace quote mapping, full verify binds each **committed** PASS quote line in `WORKER_LOG.md` to the mission skill's full `tmvc_roots`:
+
+1. Resolve the quote line (numeric anchor, fuzzy drift, or freeform anchor + quote).
+2. `git blame --porcelain` on that line → attestation commit (skip when blame is all-zeros — uncommitted line; trace and code co-evolve in the working tree).
+3. `git diff --name-only <attestationCommit> -- <tmvc_roots…>` vs working tree — any path listed → **`Trace STALE`** (`GXT_TRACE_STALE`).
+
+Re-run the gate, append a fresh unique trace line to `WORKER_LOG.md`, update mission `trace_quote`, commit, and verify again. After interactive rebase/squash, historical attestation may be invalidated — expect to refresh traces.
+
+Migration escape hatch: `gapman verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
+
 ## Enforcement boundary
 
 **IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gapman verify`, and hooks.**

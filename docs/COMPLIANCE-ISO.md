@@ -111,7 +111,7 @@ ISO 42001 focuses on governing **AI system behavior and risk**, not only securin
 | Framework & focus | Typical audit requirement | OpenGantry operational proof | Adoption note |
 |-------------------|---------------------------|------------------------------|---------------|
 | **ISO 27001 — Change control** | Managed, approved changes to IT systems | Teacher git-proof + mission YAML before merge; verify gate + trace | Full strength when verify gates merge and Teacher workflow is mandatory |
-| **ISO 27001 — Audit logs** | Record of who/what changed systems | `WORKER_LOG.md` + greppable `[MSN-XXXX]` commits + mission file history | Quote-matching is forensic process control, not immutable crypto logs |
+| **ISO 27001 — Audit logs** | Record of who/what changed systems | `WORKER_LOG.md` + greppable `[MSN-XXXX]` commits + mission file history; v1.1+ stale-evidence binds committed trace lines to TMVC via `git blame` + `git diff` | Quote-matching is forensic process control, not immutable crypto logs |
 | **ISO 27001 — Least privilege** | Limit actor capabilities | TMVC roots, forbidden zones; hard enforcement via `runtime exec` | IDE Write/Edit alone is advisory — document your enforcement tier |
 | **ISO 42001 — AI boundaries** | Documented, verified operational limits | Mission files + manifest routing before execution | Scope must be legislated and pinned, not implied in chat |
 | **ISO 42001 — Accountability** | Clear ownership of AI-driven outcomes | Teacher author email on legislation commit owns authorized scope | Teacher owns **authorized scope**, not every line the model wrote — human review + verify still required |

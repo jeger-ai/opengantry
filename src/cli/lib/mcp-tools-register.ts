@@ -76,8 +76,9 @@ function registerRuntimeTools(server: McpServer): void {
     {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
+      skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
     },
-    async (args) => jsonText(handleVerify(args.mission_file_path, args.pre_push === true)),
+    async (args) => jsonText(handleVerify(args.mission_file_path, args.pre_push === true, args.skip_stale_evidence === true)),
   );
 
   server.tool(

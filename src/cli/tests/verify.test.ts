@@ -545,3 +545,4 @@ test("runVerify: git-proof uses Teacher commit author from history, not CI runne
     process.exitCode = undefined;
   }
 });
+

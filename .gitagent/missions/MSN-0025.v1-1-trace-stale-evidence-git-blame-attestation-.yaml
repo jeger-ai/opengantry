@@ -1,11 +1,23 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# v1.1 trace stale-evidence — git blame attestation + git diff TMVC drift in gapman verify.
 # Legislated intent: v1.1 trace stale-evidence: git blame attestation + git diff TMVC drift in gapman verify
 msn_id: MSN-0025
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "DoD 1 MSN-0025: trace-evidence.ts binds PASS quotes via git blame and git diff TMVC drift in verify"
+    anchor: "55"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0025: GXT_TRACE_STALE plus --skip-stale-evidence on gapman verify and gxt_verify MCP"
+    anchor: "56"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0025: trace-evidence.test.ts covers drift, uncommitted-line skip, and skip flag"
+    anchor: "57"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0025: ADOPTION, COMPLIANCE-ISO, and RULES document stale-evidence and rebase invalidation"
+    anchor: "58"
+    status: PASS

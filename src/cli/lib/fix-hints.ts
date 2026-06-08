@@ -119,6 +119,14 @@ export function hintTraceMissing(workerLogPath: string): string {
   return `append verbatim trace_quote to ${workerLogPath} from worker flight evidence`;
 }
 
+export function hintTraceStaleEvidence(workerLogPath: string, missionPath: string): string {
+  return [
+    `TMVC drift since WORKER_LOG trace attestation — re-run gate (${missionPath})`,
+    `append a fresh unique trace line to ${workerLogPath} and set mission trace_quote to that verbatim line`,
+    "after interactive rebase/squash, re-run gate + verify (historical attestation may be invalidated)",
+  ].join("; ");
+}
+
 /** Mission still has legislate stub placeholder in trace_quote (status may already be PASS). */
 export function hintTraceQuoteStillPlaceholder(
   missionPath: string,
@@ -255,7 +263,11 @@ function hintsForTracePhase(ctx: VerifyHintContext): {
   const traceKind = ctx.traceKind ?? "other";
   const hints: string[] = [hintForTraceKind(traceKind, workerLog, mission, ctx.traceQuote)];
   const errorCode =
-    traceKind === "ambiguous" ? GXT_ERROR.TRACE_AMBIGUOUS : GXT_ERROR.TRACE_MISSING;
+    traceKind === "ambiguous"
+      ? GXT_ERROR.TRACE_AMBIGUOUS
+      : traceKind === "stale_evidence"
+        ? GXT_ERROR.TRACE_STALE
+        : GXT_ERROR.TRACE_MISSING;
   return {
     error_code: errorCode,
     fix_hints: hints,
@@ -276,6 +288,8 @@ export function hintForTraceKind(
       return hintTraceQuoteStillPlaceholder(mission, workerLog);
     case "strict_line_drift":
       return hintTraceStrictTrace(mission);
+    case "stale_evidence":
+      return hintTraceStaleEvidence(workerLog, mission);
     case "quote_missing":
     case "worker_log_missing":
     case "empty_quote":

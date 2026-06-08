@@ -12,6 +12,7 @@ import {
   verifyFailureToHintContext,
 } from "./verify-flow.js";
 import type { VerifyOptions } from "./verify-types.js";
+import { loadWorkspace } from "./workspace.js";
 
 function failureFromResult(result: VerifyPhaseResult): VerifyPhaseFailure | null {
   return result.ok ? null : result;
@@ -86,7 +87,8 @@ export async function runVerifyWithFix(
   missionArg: string,
   options: VerifyOptions,
 ): Promise<void> {
-  const result = evaluateVerifyPhases(root, mission, options);
+  const { manifest } = loadWorkspace();
+  const result = evaluateVerifyPhases(root, mission, options, manifest);
   if (result.ok) {
     emitVerifyPhaseResult(result, missionArg, options, root, mission.msnId ?? undefined);
     return;

@@ -51,3 +51,20 @@ export function gitConfigGet(repoRoot: string, key: string): string | null {
   if (!r.ok || !r.stdout.trim()) return null;
   return r.stdout.trim();
 }
+
+/** Paths under tmvcRoots that differ between ref and the working tree; empty = fresh. */
+export function gitDiffNameOnlySinceCommit(
+  repoRoot: string,
+  commit: string,
+  tmvcRoots: readonly string[],
+): string[] {
+  const roots = tmvcRoots.map((r) => r.trim()).filter((r) => r.length > 0);
+  if (roots.length === 0) return [];
+
+  const r = gitRun(repoRoot, ["diff", "--name-only", commit, "--", ...roots]);
+  if (!r.ok) return [];
+  return r.stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
