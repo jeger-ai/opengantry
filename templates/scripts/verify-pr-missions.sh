@@ -55,10 +55,10 @@ if [[ ${#UNIQUE_MSNS[@]} -gt 1 ]]; then
   exit 1
 fi
 
-if command -v gapman >/dev/null 2>&1; then
-  GAPMAN=(gapman)
-elif [[ -f dist/cli/index.js ]]; then
+if [[ -f dist/cli/index.js ]]; then
   GAPMAN=(node dist/cli/index.js)
+elif command -v gapman >/dev/null 2>&1; then
+  GAPMAN=(gapman)
 else
   echo "verify-pr-missions: build gapman first (npm run build)" >&2
   exit 1
