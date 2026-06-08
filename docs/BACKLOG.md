@@ -57,7 +57,7 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | **Init tutorial dependency inversion** | Open | [#11](https://github.com/jeger-ai/opengantry/issues/11) |
 | **Program registrar cleanup** | Open | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
 | **Specimen MANIFEST routing** | Open | [#13](https://github.com/jeger-ai/opengantry/issues/13) |
-| **Deduplicate trace quote-line resolution** | Open | [#22](https://github.com/jeger-ai/opengantry/issues/22) |
+| **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `verifyTraceRows` returns `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
 | **`gapman mission validate` (JSON Schema)** | Open | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
 | **Configurable git-proof scan depth** | Open | [#24](https://github.com/jeger-ai/opengantry/issues/24) |
 | **Pre-commit TMVC path guard hook** | Open | [#25](https://github.com/jeger-ai/opengantry/issues/25) |

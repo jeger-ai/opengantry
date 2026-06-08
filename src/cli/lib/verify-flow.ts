@@ -8,7 +8,7 @@ import {
 import { logFixHint } from "./fix-hints.js";
 import { logError, logInfo, setExitCode } from "./cli-io.js";
 import { reportUserFacingError } from "./user-error.js";
-import type { ParsedMission } from "./types.js";
+import type { Manifest, ParsedMission } from "./types.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
@@ -25,7 +25,6 @@ import {
   formatAudienceNextStep,
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
-import { loadWorkspace } from "./workspace.js";
 import type { VerifyResultPayload } from "./verify-result-payload.js";
 
 export function runVerifyBreakGlass(
@@ -113,8 +112,8 @@ export function runVerifyPhasesFromEngine(
   mission: ParsedMission,
   missionArg: string,
   options: VerifyOptions,
+  manifest: Manifest,
 ): boolean {
-  const { manifest } = loadWorkspace();
   const result = evaluateVerifyPhases(root, mission, options, manifest);
   return emitVerifyPhaseResult(result, missionArg, options, root, mission.msnId ?? undefined);
 }

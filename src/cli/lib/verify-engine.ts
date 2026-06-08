@@ -4,10 +4,7 @@ import { gatePassed, runGate } from "./gate.js";
 import { isLegislativeStub } from "./mission-legislative-stub.js";
 import type { Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, type TraceFailureKind } from "./trace-failure-kind.js";
-import {
-  resolvePassQuoteLines,
-  verifyTraceEvidenceFreshness,
-} from "./trace-evidence.js";
+import { verifyTraceEvidenceFreshness } from "./trace-evidence.js";
 import { defaultWorkerLogPath, verifyTraceRows, type TraceVerifyWarning } from "./trace.js";
 import type { VerifyOptions } from "./verify-types.js";
 
@@ -134,18 +131,12 @@ function evaluateTracePhase(
     };
   }
 
-  const resolvedLineByDodId = new Map<string, number>();
-  for (const warning of traceResult.warnings) {
-    resolvedLineByDodId.set(warning.row.dodId, warning.foundLine);
-  }
-
-  const { resolved } = resolvePassQuoteLines(workerLogPath, mission.traceRows, resolvedLineByDodId);
   const evidence = verifyTraceEvidenceFreshness(
     root,
     manifest,
     mission.skillKey,
     workerLogPath,
-    resolved,
+    traceResult.resolvedLines,
     { skipStaleEvidence: options.skipStaleEvidence === true },
   );
 

@@ -178,7 +178,7 @@ Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry
 | `gapman mission snapshot --file <path>` | Write start-state JSON under `.gitagent/history/` (git HEAD, branch, dirty flag, manifest hash, hashes of files under the mission skill's `tmvc_roots`). |
 | `gapman runtime env --mission <path>` | Worker Runtime Contract: emit `GXT_REPO_ROOT`, `GXT_MISSION_FILE`, `GXT_MSN_ID`, `GXT_SKILL_KEY`, `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, `GXT_WORKER_LOG`. Default: POSIX `export …` lines; `--json` for scripts. [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). |
 | `gapman runtime exec --mission <path> -- <cmd…>` | Run worker command with mission env, telemetry capture, and forbidden-zone scan (strongest TMVC trap). |
-| `gapman mcp serve` | Stdio MCP server exposing `gxt_*` tools (legislation, pin, runtime env, verify with `fix_hints`, `gxt_start_orchestration`, exec). Configure via `.cursor/mcp.json`. |
+| `gapman mcp serve` | Stdio MCP server exposing `gxt_*` tools (legislation, pin, runtime env, verify with `fix_hints`, `gxt_start_orchestration`, exec). `gxt_verify` uses the flat `--json` envelope — see [ADOPTION.md § MCP verify envelope](docs/ADOPTION.md). Configure via `.cursor/mcp.json`. |
 | `gapman verify --mission <path>` | Teacher-approved mission commit + gate + trace. **`--json`** structured output (`status`, `phase`, `error_code`, `fix_hints`). **`--fix`** guided repair. CI: `--audience verifier` (errors only). Failures emit **`GXT_*`** codes. |
 | `gapman arch pointer` | Print architecture pointer summary for agents (`.gitagent/ARCHITECTURE.pointer.json`). |
 | `gapman arch cred status\|set\|unset` | Git-ignored credential slots for authenticated external architecture sources (secrets via stdin only). |

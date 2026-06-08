@@ -167,6 +167,36 @@ test("runVerify --json gate failure matches handleVerify field subset", async ()
   });
 });
 
+test("runVerify --json --fix: rejects with GXT_INVALID_ARGUMENT", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-fix-collision-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  const prevCwd = process.cwd();
+  await withTeacherEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      process.exitCode = undefined;
+      const { output } = await captureConsoleAsync(async () => {
+        await runVerify({
+          mission: ".gitagent/missions/m.yaml",
+          workerLog: "WORKER_LOG.md",
+          json: true,
+          fix: true,
+        });
+      });
+      const payload = parseStdoutJson(output.stdout);
+      assert.equal(payload.status, "failed");
+      assert.equal(payload.phase, "init");
+      assert.equal(payload.error_code, GXT_ERROR.INVALID_ARGUMENT);
+      assert.equal(payload.exit_code, 2);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
+});
+
 test("handleVerify: missing mission uses flat init failure envelope", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-mcp-verify-init-"));

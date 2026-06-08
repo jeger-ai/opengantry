@@ -1,20 +1,13 @@
 import path from "node:path";
 import { WORKER_LOG_FILENAME } from "./constants.js";
-import { gitDiffNameOnlySinceCommit, gitRun } from "./git-repo.js";
+import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git-repo.js";
 import type { Manifest } from "./types.js";
 import type { TraceRow } from "./types.js";
-import {
-  buildWorkerLogLineMapForQuotes,
-  quoteLineNumbers,
-  type WorkerLogLineMap,
-} from "./worker-log-line-map.js";
+import type { ResolvedQuoteLine } from "./trace.js";
+
+export type { ResolvedQuoteLine } from "./trace.js";
 
 export const UNCOMMITTED_BLAME_COMMIT = "0000000000000000000000000000000000000000";
-
-export interface ResolvedQuoteLine {
-  row: TraceRow;
-  lineNumber: number;
-}
 
 export interface TraceEvidenceFailure {
   row: TraceRow;
@@ -26,10 +19,6 @@ export interface TraceEvidenceFailure {
 
 export interface TraceEvidenceOptions {
   skipStaleEvidence?: boolean;
-}
-
-function isPassStatus(status: string): boolean {
-  return status.toUpperCase().includes("PASS");
 }
 
 function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[] {
@@ -85,31 +74,6 @@ export function readBlamePorcelainByLine(repoRoot: string, workerLogRelPath: str
   return parseBlamePorcelainByLine(r.stdout);
 }
 
-export function resolveQuoteLineNumber(
-  map: WorkerLogLineMap,
-  row: TraceRow,
-  resolvedLineByDodId: ReadonlyMap<string, number>,
-): number | null {
-  const override = resolvedLineByDodId.get(row.dodId);
-  if (override !== undefined) return override;
-
-  const anchor = row.anchor.trim();
-  if (/^\d+$/.test(anchor)) {
-    const declared = parseInt(anchor, 10);
-    const line = map.lines[declared - 1];
-    if (line !== undefined && line.includes(row.traceQuote)) return declared;
-    const matches = quoteLineNumbers(map, row.traceQuote);
-    if (matches.length === 1) return matches[0]!;
-    return null;
-  }
-
-  for (let i = 0; i < map.lines.length; i++) {
-    const line = map.lines[i]!;
-    if (line.includes(anchor) && line.includes(row.traceQuote)) return i + 1;
-  }
-  return null;
-}
-
 function formatStaleReason(
   row: TraceRow,
   quoteLine: number,
@@ -145,7 +109,7 @@ export function verifyTraceEvidenceFreshness(
 
   const workerLogRel = workerLogRelPath(workerLogPath, repoRoot);
   const blameByLine = readBlamePorcelainByLine(repoRoot, workerLogRel);
-  const diffCache = new Map<string, string[]>();
+  const diffCache = new Map<string, GitDiffSinceCommitResult>();
   const failures: TraceEvidenceFailure[] = [];
   let skippedUncommitted = 0;
 
@@ -167,41 +131,33 @@ export function verifyTraceEvidenceFreshness(
       continue;
     }
 
-    let stalePaths = diffCache.get(attestationCommit);
-    if (stalePaths === undefined) {
-      stalePaths = gitDiffNameOnlySinceCommit(repoRoot, attestationCommit, tmvcRoots);
-      diffCache.set(attestationCommit, stalePaths);
+    let diffResult = diffCache.get(attestationCommit);
+    if (diffResult === undefined) {
+      diffResult = gitDiffNameOnlySinceCommit(repoRoot, attestationCommit, tmvcRoots);
+      diffCache.set(attestationCommit, diffResult);
     }
 
-    if (stalePaths.length > 0) {
+    if (!diffResult.ok) {
       failures.push({
         row,
         attestationCommit,
         quoteLine: lineNumber,
-        stalePaths,
-        reason: formatStaleReason(row, lineNumber, attestationCommit, stalePaths),
+        stalePaths: [],
+        reason: `Trace STALE for DoD ${row.dodId}: cannot evaluate TMVC drift since attestation (git diff failed)`,
+      });
+      continue;
+    }
+
+    if (diffResult.paths.length > 0) {
+      failures.push({
+        row,
+        attestationCommit,
+        quoteLine: lineNumber,
+        stalePaths: diffResult.paths,
+        reason: formatStaleReason(row, lineNumber, attestationCommit, diffResult.paths),
       });
     }
   }
 
   return { failures, skippedUncommitted };
-}
-
-/** Build resolved quote lines for PASS rows after trace quote mapping succeeded. */
-export function resolvePassQuoteLines(
-  workerLogPath: string,
-  rows: TraceRow[],
-  resolvedLineByDodId: ReadonlyMap<string, number> = new Map(),
-): { resolved: ResolvedQuoteLine[]; map: WorkerLogLineMap | null } {
-  const passRows = rows.filter((r) => isPassStatus(r.status));
-  const quotes = passRows.map((r) => r.traceQuote);
-  const map = buildWorkerLogLineMapForQuotes(workerLogPath, quotes);
-  if (!map) return { resolved: [], map: null };
-
-  const resolved: ResolvedQuoteLine[] = [];
-  for (const row of passRows) {
-    const lineNumber = resolveQuoteLineNumber(map, row, resolvedLineByDodId);
-    if (lineNumber !== null) resolved.push({ row, lineNumber });
-  }
-  return { resolved, map };
 }
