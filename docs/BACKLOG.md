@@ -4,8 +4,8 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 
 | Where | Purpose |
 |-------|---------|
-| **[GitHub Issues (filtered)](https://github.com/jeger-ai/opengantry/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog)** | Open backlog items by label until Project board is wired |
-| **GitHub Project → OpenGantry Roadmap** | Sprint board — create once per [setup below](#github-project-setup-maintainers) |
+| **[OpenGantry Roadmap (Project #2)](https://github.com/orgs/jeger-ai/projects/2)** | Sprint board — prioritization, columns, assignees |
+| **[GitHub Issues (filtered)](https://github.com/jeger-ai/opengantry/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog)** | Issue list by `backlog/*` label |
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
@@ -108,22 +108,24 @@ Rationale: the cage is nearly closed — default-branch CI, formatter guard, ver
 
 ---
 
-## GitHub Project setup (maintainers)
+## GitHub Project (maintainers)
 
-One-time (requires browser OAuth for `project` scope):
+**Board:** [OpenGantry Roadmap — Project #2](https://github.com/orgs/jeger-ai/projects/2) (org: `jeger-ai`).
+
+Issues **#6–#38** are on the board. Suggested columns: **v1.1** | **Tactical** | **Adoption** | **v1.2+** | **Done** (group by `backlog/*` label or Status).
+
+Add a new backlog issue to the project:
 
 ```bash
-gh auth refresh -s project,read:project
-gh project create --owner jeger-ai --title "OpenGantry Roadmap"
+gh project item-add 2 --owner jeger-ai \
+  --url "https://github.com/jeger-ai/opengantry/issues/<NUMBER>"
 ```
 
-Then in the GitHub UI: **Project → Add items → filter by label** `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, or `backlog/v1.2`. Suggested columns: **v1.1** | **Tactical** | **Adoption** | **v1.2+** | **Done**.
-
-CLI bulk-add (after project exists):
+Recreate from labels (if board is reset):
 
 ```bash
 for n in $(seq 6 38); do
-  gh project item-add <PROJECT_NUMBER> --owner jeger-ai \
+  gh project item-add 2 --owner jeger-ai \
     --url "https://github.com/jeger-ai/opengantry/issues/$n"
 done
 ```
