@@ -8,7 +8,7 @@ Security fixes are provided **only for the latest release in the 1.x line** (cur
 
 | Component | Supported | Unsupported |
 |-----------|-----------|-------------|
-| **gapman CLI** (`@jeger-ai/opengantry`, `package.json` version) | **1.0.x** (latest patch) | **0.9.x** and earlier |
+| **gapman CLI** (`@jeger-ai/opengantry`, `package.json` version) | **1.x** (latest patch) | **0.9.x** and earlier |
 | **Bundled substrate** (`opengantry_version` in `.gitagent/foreman/SUBSTRATE.version.json`, matching the gapman you installed) | Same as the **supported gapman** you run | Substrate older than the version bundled in your installed gapman (upgrade the package, then `gapman upgrade`) |
 | **GXT law schema** (`MANIFEST.json` → `schema_version`) | **0.5.0** (current) | Earlier schema versions (migrate via supported gapman + `gapman upgrade`) |
 | **Node.js runtime** (see `package.json` `engines`) | **24.x** and newer within `>=24` | Node 22 and below |
