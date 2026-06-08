@@ -1,0 +1,23 @@
+# v1.1 doctor substrate drift — compare SUBSTRATE.version.json to bundled compat, warn-only DoctorLine (#20).
+# Legislated intent: v1.1 doctor substrate drift: compare SUBSTRATE.version.json to bundled compat, warn-only DoctorLine
+msn_id: MSN-0029
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0029: runSubstrateDriftDoctorChecks compares readInstalledSubstrateVersion to loadIntegrationCompat bundled opengantry_version"
+    anchor: "84"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0029: warn-only DoctorLine entries; installed greater than bundled warns without failing exit code"
+    anchor: "85"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0029: doctor-substrate-drift.test.ts covers behind, match, ahead, legacy, and doctor --json exit_code 0"
+    anchor: "86"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0029: ADOPTION.md documents substrate drift warn; BACKLOG #20 marked done"
+    anchor: "87"
+    status: PASS

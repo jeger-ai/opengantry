@@ -1,5 +1,6 @@
-import { runDoctorChecks, doctorLinesHasFail, type DoctorLine } from "./doctor-checks.js";
+import { runDoctorChecks, doctorLinesHasFail, pickNextStep, type DoctorLine } from "./doctor-checks.js";
 import { runIntegrationDoctorChecks } from "./doctor-integration-checks.js";
+import { runSubstrateDriftDoctorChecks } from "./doctor-substrate-drift.js";
 import { runArchitecturePointerDoctorChecks } from "./architecture-pointer.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
 import type { Manifest } from "./types.js";
@@ -18,9 +19,15 @@ export function collectDoctorReport(
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
   let lines = [...result.lines, ...runArchitecturePointerDoctorChecks(root)];
+  let nextStep = result.nextStep;
   try {
     const tpl = templatesRoot ?? resolveTemplateRootFromModule();
     lines = [...lines, ...runIntegrationDoctorChecks(root, tpl)];
+    const drift = runSubstrateDriftDoctorChecks(root, tpl);
+    lines = [...lines, ...drift.lines];
+    if (drift.nextStep) {
+      nextStep = pickNextStep(nextStep, drift.nextStep);
+    }
   } catch {
     lines = [
       ...lines,
@@ -30,7 +37,7 @@ export function collectDoctorReport(
   return {
     lines,
     hasFail: doctorLinesHasFail(lines) || result.hasFail,
-    nextStep: result.nextStep,
+    nextStep,
     teacherAllowlistUnset: result.teacherAllowlistUnset,
   };
 }
