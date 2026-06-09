@@ -1,6 +1,6 @@
 import { logError, setExitCode } from "./cli-io.js";
 import { hintsForVerifyPhase, logFixHint } from "./fix-hints.js";
-import type { ParsedMission } from "./types.js";
+import type { Manifest, ParsedMission } from "./types.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
@@ -12,8 +12,6 @@ import {
   verifyFailureToHintContext,
 } from "./verify-flow.js";
 import type { VerifyOptions } from "./verify-types.js";
-import { loadWorkspace } from "./workspace.js";
-
 function failureFromResult(result: VerifyPhaseResult): VerifyPhaseFailure | null {
   return result.ok ? null : result;
 }
@@ -86,8 +84,8 @@ export async function runVerifyWithFix(
   mission: ParsedMission,
   missionArg: string,
   options: VerifyOptions,
+  manifest: Manifest,
 ): Promise<void> {
-  const { manifest } = loadWorkspace();
   const result = evaluateVerifyPhases(root, mission, options, manifest);
   if (result.ok) {
     emitVerifyPhaseResult(result, missionArg, options, root, mission.msnId ?? undefined);

@@ -7,10 +7,10 @@ import { execFileSync, execSync } from "node:child_process";
 import { gitDiffNameOnlySinceCommit } from "../lib/git-repo.js";
 import {
   parseBlamePorcelainByLine,
-  resolvePassQuoteLines,
   UNCOMMITTED_BLAME_COMMIT,
   verifyTraceEvidenceFreshness,
 } from "../lib/trace-evidence.js";
+import { verifyTraceRows } from "../lib/trace.js";
 import { copyMissionSchema, gitInitCommit, writeManifest, writeSkillsForManifest } from "./test-fixtures.js";
 
 const TEACHER = "teacher@example.com";
@@ -88,7 +88,7 @@ test("verifyTraceEvidenceFreshness: committed quote with no TMVC drift passes", 
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "evidence fresh", anchor: "1", status: "PASS" };
-  const { resolved } = resolvePassQuoteLines(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
@@ -97,7 +97,19 @@ test("verifyTraceEvidenceFreshness: committed quote with no TMVC drift passes", 
     resolved,
   );
   assert.equal(result.failures.length, 0);
-  assert.equal(gitDiffNameOnlySinceCommit(dest, head, ["src/app/"]).length, 0);
+  const diff = gitDiffNameOnlySinceCommit(dest, head, ["src/app/"]);
+  assert.equal(diff.ok, true);
+  if (diff.ok) assert.equal(diff.paths.length, 0);
+});
+
+test("gitDiffNameOnlySinceCommit: bogus commit returns ok false", () => {
+  const ogRoot = process.cwd();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-diff-bogus-"));
+  writeMiniRepoWithTmvc(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] init", TEACHER);
+  const bogusCommit = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+  const diff = gitDiffNameOnlySinceCommit(dest, bogusCommit, ["src/app/"]);
+  assert.equal(diff.ok, false);
 });
 
 test("verifyTraceEvidenceFreshness: TMVC edit after attestation is STALE", () => {
@@ -112,7 +124,7 @@ test("verifyTraceEvidenceFreshness: TMVC edit after attestation is STALE", () =>
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "stale test quote", anchor: "1", status: "PASS" };
-  const { resolved } = resolvePassQuoteLines(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
@@ -136,7 +148,7 @@ test("verifyTraceEvidenceFreshness: uncommitted quote line skips stale check", (
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "uncommitted quote", anchor: "1", status: "PASS" };
-  const { resolved } = resolvePassQuoteLines(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
@@ -160,7 +172,7 @@ test("verifyTraceEvidenceFreshness: skipStaleEvidence bypasses drift", () => {
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "skip flag quote", anchor: "1", status: "PASS" };
-  const { resolved } = resolvePassQuoteLines(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
@@ -186,7 +198,7 @@ test("verifyTraceEvidenceFreshness: empty tmvc_roots passes", () => {
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "quote", anchor: "1", status: "PASS" };
-  const { resolved } = resolvePassQuoteLines(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,

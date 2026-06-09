@@ -1,13 +1,13 @@
 import { writeAgentErrorPayload } from "./agent-error.js";
 import {
   buildVerifyResultPayloadFromOptions,
-  type VerifyMcpResult,
+  type VerifyResultPayload,
 } from "./verify-result-payload.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
 import { runRuntimeExec } from "./runtime-exec.js";
 import { loadWorkspace } from "./workspace.js";
 
-export type { VerifyMcpResult, VerifyResultPayload } from "./verify-result-payload.js";
+export type { VerifyResultPayload } from "./verify-result-payload.js";
 
 export interface McpRuntimeErrorBody {
   code: string;
@@ -53,7 +53,7 @@ export function handleVerify(
   missionFilePath: string,
   prePush = false,
   skipStaleEvidence = false,
-): VerifyMcpResult {
+): VerifyResultPayload {
   return buildVerifyResultPayloadFromOptions({
     mission: missionFilePath,
     prePush,

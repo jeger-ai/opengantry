@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-08 (MSN-0030 shipped; **v1.1 complete**)
+**Last synced:** 2026-06-08 (MSN-0031 in PR; **v1.1.0 npm publish** after merge + tag)
 
 ---
 
@@ -28,6 +28,7 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 | **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
 | **Doctor detects substrate version drift** | **Done** | MSN-0029; `src/cli/lib/doctor-substrate-drift.ts`; `docs/ADOPTION.md` § substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)) |
 | **Doc/substrate version string sync** | **Done** | MSN-0030; README + `.gitagent/README` v1.1.0 ([#21](https://github.com/jeger-ai/opengantry/issues/21)) |
+| **Thermo-nuclear review remediation** | **In PR** | MSN-0031; fail-closed stale evidence, verify orchestration, trace dedup ([#22](https://github.com/jeger-ai/opengantry/issues/22) done in branch) |
 
 ### v1.1 shipped acceptance (MSN-0024 – MSN-0027)
 
@@ -57,7 +58,7 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | **Init tutorial dependency inversion** | Open | [#11](https://github.com/jeger-ai/opengantry/issues/11) |
 | **Program registrar cleanup** | Open | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
 | **Specimen MANIFEST routing** | Open | [#13](https://github.com/jeger-ai/opengantry/issues/13) |
-| **Deduplicate trace quote-line resolution** | Open | [#22](https://github.com/jeger-ai/opengantry/issues/22) |
+| **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `verifyTraceRows` returns `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
 | **`gapman mission validate` (JSON Schema)** | Open | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
 | **Configurable git-proof scan depth** | Open | [#24](https://github.com/jeger-ai/opengantry/issues/24) |
 | **Pre-commit TMVC path guard hook** | Open | [#25](https://github.com/jeger-ai/opengantry/issues/25) |
@@ -101,7 +102,7 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 
 ## Sprint guidance
 
-**Current focus:** **v1.1 complete** — tactical debt (#8–#13, #22–#29) next.
+**Current focus:** **Merge MSN-0031 → tag `v1.1.0` → npm publish**; then tactical debt (#8–#13, #23–#29).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
