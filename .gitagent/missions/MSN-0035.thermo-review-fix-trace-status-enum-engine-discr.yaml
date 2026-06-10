@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: thermo review fix — trace status enum, engine discriminant, N1 canonical helper sweep
+# Teacher attested trace rows: 2026-06-10 (implementation landed in 3cdad7d; this commit satisfies git-proof)
 msn_id: MSN-0035
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
