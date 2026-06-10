@@ -107,3 +107,12 @@ example trace line for gapman verify
 - Context Request ACCEPTED: `scripts/check-import-layers.mjs` — CI gate script outside TMVC `src/cli/` but required for import-layer enforcement (#42).
 - DoD 1 MSN-0032: # pass 4 — check-import-layers.test.js (relative + absolute lib→command violations fail; clean lib passes)
 - DoD 1 MSN-0032 (re-attest): check-import-layers.test.js 4/4 pass after MSN-0031 TMVC merge; relative + absolute lib→command violations fail; clean lib passes
+
+## MSN-0033 — v1.1.1 maintainability hardening
+
+- Context Request ACCEPTED: `README.md`, `.gitagent/README.md`, `docs/BACKLOG.md`, `package.json`, `scripts/check-import-layers.mjs` — release doc sync and test fixture layer classification (#42–#48, #10, #11).
+- DoD 1 MSN-0033: legislate-core extraction; zero lib→command imports; init-tutorial typed verify via executeVerifyMission
+- DoD 2 MSN-0033: runVerifyCore + break-glass-flow; VerifyRemediation typed table; trace-status enum; engine discriminated unions
+- DoD 3 MSN-0033: CommandReporter + structured AudienceTaggedStep; filterTaggedStepsForAudience at source
+- DoD 4 MSN-0033: buildMissionYamlScaffold shared; mcp-legislation split; verify test modules split; toPosixRel/errorMessage helpers
+- DoD 5 MSN-0033: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (223 tests)

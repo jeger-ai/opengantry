@@ -1,5 +1,6 @@
 import path from "node:path";
 import { WORKER_LOG_FILENAME } from "./constants.js";
+import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git-repo.js";
 import type { Manifest } from "./types.js";
 import type { TraceRow } from "./types.js";
@@ -29,7 +30,7 @@ function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[
 
 function workerLogRelPath(workerLogPath: string, repoRoot: string): string {
   const abs = path.resolve(workerLogPath);
-  const rel = path.relative(repoRoot, abs).split(path.sep).join("/");
+  const rel = toPosixRel(repoRoot, abs);
   return rel.length > 0 && !rel.startsWith("..") ? rel : WORKER_LOG_FILENAME;
 }
 

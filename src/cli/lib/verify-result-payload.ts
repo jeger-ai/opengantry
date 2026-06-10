@@ -1,9 +1,4 @@
-import path from "node:path";
-import {
-  assertBypassSecretAuthorized,
-  runBreakGlassAudit,
-  validateBreakGlassReason,
-} from "./break-glass.js";
+import { runBreakGlassAuditFlow } from "./break-glass-flow.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
@@ -16,6 +11,7 @@ import {
 } from "./verify-engine.js";
 import { verifyFailurePresentation } from "./verify-failure-presentation.js";
 import type { VerifyOptions } from "./verify-types.js";
+import { toPosixRel, errorMessage } from "./cli-io.js";
 import { loadWorkspace } from "./workspace.js";
 
 export interface VerifyTraceWarningJson {
@@ -53,7 +49,7 @@ export interface VerifyFailedPayload {
 export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
 
 function missionRelPath(root: string, mission: ParsedMission): string {
-  return path.relative(root, mission.rawPath).split(path.sep).join("/");
+  return toPosixRel(root, mission.rawPath);
 }
 
 function traceWarningsJson(result: VerifyPhaseSuccess): VerifyTraceWarningJson[] | undefined {
@@ -100,29 +96,19 @@ export function buildBreakGlassPayload(
   mission: ParsedMission,
   options: VerifyOptions,
 ): VerifyResultPayload {
-  try {
-    const reason = validateBreakGlassReason(options.breakGlassReason);
-    assertBypassSecretAuthorized(root);
-    const missionRel = missionRelPath(root, mission);
-    const commitSha = runBreakGlassAudit(root, {
-      reason,
-      msnId: mission.msnId,
-      missionFile: missionRel,
-      commit: options.breakGlassCommit,
-      auditCommit: options.auditCommit === true,
-    });
-    return {
-      status: "passed",
-      phase: "break_glass",
-      exit_code: 0,
-      msn_id: mission.msnId ?? undefined,
-      mission_file_path: missionRel,
-      message: reason,
-      audit_commit: commitSha,
-    };
-  } catch (e) {
-    return initFailurePayload(e);
+  const outcome = runBreakGlassAuditFlow(root, mission, options);
+  if (outcome.kind === "fail") {
+    return initFailurePayload(outcome.error);
   }
+  return {
+    status: "passed",
+    phase: "break_glass",
+    exit_code: 0,
+    msn_id: outcome.msnId,
+    mission_file_path: outcome.missionRel,
+    message: outcome.reason,
+    audit_commit: outcome.commitSha,
+  };
 }
 
 function failureFromPhase(
@@ -176,7 +162,7 @@ export function initFailurePayload(e: unknown): VerifyFailedPayload {
       exit_code: e.exitCode,
     };
   }
-  const message = e instanceof Error ? e.message : String(e);
+  const message = errorMessage(e);
   return {
     status: "failed",
     phase: "init",
@@ -217,4 +203,3 @@ export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): Ver
     return initFailurePayload(e);
   }
 }
-

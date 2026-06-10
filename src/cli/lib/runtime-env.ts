@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { toPosixRel } from "./cli-io.js";
 import { agentErrorAbsolutePath } from "./agent-error.js";
 import { parseMissionFile } from "./mission-parser.js";
 import type { Workspace } from "./workspace.js";
@@ -23,11 +24,11 @@ export interface ResolvedRuntimeEnv {
 }
 
 function toRepoRelativePosix(repoRoot: string, absolutePath: string): string {
-  const rel = path.relative(repoRoot, path.resolve(absolutePath));
+  const rel = toPosixRel(repoRoot, path.resolve(absolutePath));
   if (rel.startsWith("..") || path.isAbsolute(rel)) {
     throw new Error(`gapman runtime: mission path outside repository`);
   }
-  return rel.split(path.sep).join("/");
+  return rel;
 }
 
 function resolvePaths(repoRoot: string, rootsOrZones: readonly string[]): string[] {

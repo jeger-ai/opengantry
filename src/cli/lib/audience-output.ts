@@ -72,7 +72,22 @@ function stepMatchesAudience(step: string, audience: OutputAudience): boolean {
       return /gapman verify/i.test(step);
     case "platform":
       return /hooksPath|gapman doctor|gapman init/i.test(step);
+    default: {
+      const _exhaustive: never = audience;
+      return _exhaustive;
+    }
   }
+}
+
+export function filterTaggedStepsForAudience(
+  audience: OutputAudience | undefined,
+  tagged: AudienceNextStep[],
+): string[] {
+  if (!audience) return tagged.map((t) => t.step);
+  const filtered = [...new Set(tagged.filter((t) => t.audience === audience).map((t) => t.step))];
+  if (filtered.length > 0) return filtered;
+  const roleDefaults = DEFAULT_NEXT_STEPS.filter((s) => s.audience === audience).map((s) => s.step);
+  return roleDefaults.length > 0 ? roleDefaults : tagged.map((t) => t.step);
 }
 
 export function filterNextStepsForAudience(

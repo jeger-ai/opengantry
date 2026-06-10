@@ -1,15 +1,16 @@
 import type { ParsedMission, TraceRow } from "./types.js";
+import { isPassStatus, isPendingStatus } from "./trace-status.js";
 
 /** Default trace quote emitted by `gapman legislate` before worker execution. */
 export const LEGISLATE_TRACE_PLACEHOLDER =
   "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION" as const;
 
 function isPassRow(row: TraceRow): boolean {
-  return row.status.toUpperCase().includes("PASS");
+  return isPassStatus(row.status);
 }
 
 function isPendingRow(row: TraceRow): boolean {
-  return row.status.toUpperCase().includes("PENDING");
+  return isPendingStatus(row.status);
 }
 
 function isPlaceholderQuote(quote: string): boolean {

@@ -1,12 +1,7 @@
-import path from "node:path";
 import { CLI_NAME } from "./constants.js";
-import {
-  assertBypassSecretAuthorized,
-  runBreakGlassAudit,
-  validateBreakGlassReason,
-} from "./break-glass.js";
+import { runBreakGlassAuditFlow } from "./break-glass-flow.js";
 import { logFixHint } from "./fix-hints.js";
-import { logError, logInfo, setExitCode } from "./cli-io.js";
+import { errorMessage, logError, logInfo, setExitCode } from "./cli-io.js";
 import { reportUserFacingError } from "./user-error.js";
 import type { Manifest, ParsedMission } from "./types.js";
 import {
@@ -17,14 +12,9 @@ import {
 import type { VerifyOptions } from "./verify-types.js";
 import {
   emitVerifyFailureFromPresentation,
-  verifyFailurePresentationForFailure,
+  verifyFailurePresentation,
 } from "./verify-failure-presentation.js";
-import {
-  filterNextStepsForAudience,
-  audienceSectionTitle,
-  formatAudienceNextStep,
-} from "./audience-output.js";
-import { getOutputAudience } from "./output-context.js";
+import { CommandReporter } from "./command-reporter.js";
 import type { VerifyResultPayload } from "./verify-result-payload.js";
 
 export function runVerifyBreakGlass(
@@ -32,31 +22,21 @@ export function runVerifyBreakGlass(
   mission: ParsedMission,
   options: VerifyOptions,
 ): boolean {
-  try {
-    const reason = validateBreakGlassReason(options.breakGlassReason);
-    assertBypassSecretAuthorized(root);
-    const missionRel = path.relative(root, path.resolve(mission.rawPath)).split(path.sep).join("/");
-    const commitSha = runBreakGlassAudit(root, {
-      reason,
-      msnId: mission.msnId,
-      missionFile: missionRel,
-      commit: options.breakGlassCommit,
-      auditCommit: options.auditCommit === true,
-    });
-    logInfo(`${CLI_NAME} verify: BREAK-GLASS — all gates skipped (audited on ${commitSha})`);
-    logInfo(`  reason: ${reason}`);
-    if (mission.msnId) logInfo(`  msn_id: ${mission.msnId}`);
-    if (options.auditCommit === true) {
-      logFixHint("git push origin HEAD  # audit empty commit (no gxt-bypass note)");
-    } else {
-      logFixHint("git push origin refs/notes/gxt-bypass");
-    }
-    return true;
-  } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+  const outcome = runBreakGlassAuditFlow(root, mission, options);
+  if (outcome.kind === "fail") {
+    logError(errorMessage(outcome.error));
     setExitCode(2);
     return false;
   }
+  logInfo(`${CLI_NAME} verify: BREAK-GLASS — all gates skipped (audited on ${outcome.commitSha})`);
+  logInfo(`  reason: ${outcome.reason}`);
+  if (outcome.msnId) logInfo(`  msn_id: ${outcome.msnId}`);
+  if (outcome.auditCommit) {
+    logFixHint("git push origin HEAD  # audit empty commit (no gxt-bypass note)");
+  } else {
+    logFixHint("git push origin refs/notes/gxt-bypass");
+  }
+  return true;
 }
 
 export function emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {
@@ -87,7 +67,13 @@ function emitVerifyFailure(failure: VerifyPhaseFailure, missionArg: string, opti
     reportUserFacingError(new Error(failure.message));
     return;
   }
-  const presentation = verifyFailurePresentationForFailure(failure, missionArg, options, root, msnId);
+  const presentation = verifyFailurePresentation({
+    failure,
+    missionArg,
+    options,
+    root,
+    msnId,
+  });
   emitVerifyFailureFromPresentation(presentation);
 }
 
@@ -142,17 +128,11 @@ export function emitVerifyJson(payload: VerifyResultPayload): void {
   if (payload.exit_code !== 0) setExitCode(payload.exit_code);
 }
 
-export function emitAudienceNextSteps(steps: string[], options: VerifyOptions): void {
-  const audience = options.audience ?? getOutputAudience();
-  const filtered = filterNextStepsForAudience(audience, steps).map((step) =>
-    formatAudienceNextStep(step, audience),
-  );
-  const section = audienceSectionTitle(audience);
-  if (section && filtered.length > 0) {
-    logInfo(`${section}:`);
-    for (const step of filtered) logInfo(`  ${step}`);
-  } else {
-    logInfo("next actions:");
-    for (const action of filtered) logInfo(`  ${action}`);
-  }
+export function emitAudienceNextSteps(
+  steps: string[],
+  options: VerifyOptions,
+  tagged?: import("./verify-remediation.js").AudienceTaggedStep[],
+): void {
+  const reporter = CommandReporter.forVerify(options);
+  reporter.emitNextSteps(steps, tagged);
 }

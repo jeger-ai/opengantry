@@ -8,7 +8,7 @@ import {
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
-import { runVerify } from "./verify.js";
+import { executeVerifyMission } from "../lib/verify-run.js";
 
 const EXAMPLE_MISSION = ".gitagent/missions/example.verify.yaml";
 
@@ -87,12 +87,14 @@ export async function runOnboarding(): Promise<void> {
       initialValue: true,
     });
     if (!p.isCancel(runNow) && runNow) {
-      process.exitCode = undefined;
-      await runVerify({
+      const result = await executeVerifyMission({
         mission: EXAMPLE_MISSION,
         fix: true,
         fixNonInteractive: true,
       });
+      if (!result.ok) {
+        setExitCode(result.exitCode);
+      }
     }
   }
 

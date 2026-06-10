@@ -1,15 +1,11 @@
-import { assertMissionGatePresent, parseMissionFile } from "../lib/mission-parser.js";
-import { emitVerifyJson, runVerifyBreakGlass, runVerifyPhasesFromEngine } from "../lib/verify-flow.js";
-import { runVerifyWithFix } from "../lib/verify-repair.js";
+import { parseMissionFile } from "../lib/mission-parser.js";
+import { initFailurePayload } from "../lib/verify-result-payload.js";
+import { emitVerifyJson } from "../lib/verify-flow.js";
 import type { VerifyOptions } from "../lib/verify-types.js";
-import {
-  buildBreakGlassPayload,
-  buildVerifyResultPayload,
-  initFailurePayload,
-} from "../lib/verify-result-payload.js";
 import { evaluateVerifyPhases } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GapmanUserError, reportUserFacingError } from "../lib/user-error.js";
+import { runVerifyCore } from "../lib/verify-run.js";
 
 export type { VerifyOptions } from "../lib/verify-types.js";
 
@@ -37,37 +33,7 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
   }
 
   try {
-    const { root, manifest } = loadWorkspace();
-    const mission = parseMissionFile(root, options.mission);
-    const missionArg = options.mission;
-
-    if (options.breakGlass === true) {
-      if (options.json) {
-        emitVerifyJson(buildBreakGlassPayload(root, mission, options));
-      } else {
-        runVerifyBreakGlass(root, mission, options);
-      }
-      return;
-    }
-
-    if (options.json) {
-      try {
-        assertMissionGatePresent(mission);
-        emitVerifyJson(buildVerifyResultPayload(root, manifest, mission, missionArg, options));
-      } catch (e) {
-        emitVerifyJson(initFailurePayload(e));
-      }
-      return;
-    }
-
-    assertMissionGatePresent(mission);
-
-    if (options.fix === true) {
-      await runVerifyWithFix(root, mission, missionArg, options, manifest);
-      return;
-    }
-
-    runVerifyPhasesFromEngine(root, mission, missionArg, options, manifest);
+    await runVerifyCore(options);
   } catch (e) {
     if (options.json) {
       emitVerifyJson(initFailurePayload(e));

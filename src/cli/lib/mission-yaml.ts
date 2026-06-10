@@ -12,6 +12,16 @@ export interface MissionTraceRowStub {
   status: string;
 }
 
+export interface MissionYamlEmitOptions {
+  header: string;
+  doc: Record<string, unknown>;
+}
+
+/** Shared mission YAML emitter for legislate and upgrade scaffolds. */
+export function buildMissionYamlScaffold(opts: MissionYamlEmitOptions): string {
+  return `${opts.header}${YAML.stringify(opts.doc)}`;
+}
+
 /** Shared legislative trace stub row for mission YAML scaffolds. */
 export function buildLegislativeTraceRows(): MissionTraceRowStub[] {
   return [

@@ -14,7 +14,7 @@ import {
 } from "./onboarding-flow.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
-import { runVerify } from "../commands/verify.js";
+import { executeVerifyMission } from "./verify-run.js";
 
 type ClackPrompts = typeof import("@clack/prompts");
 
@@ -72,11 +72,6 @@ async function confirmTeacherStamp(
   }
 }
 
-function verifyExitOk(): boolean {
-  const code = process.exitCode;
-  return code === undefined || code === 0;
-}
-
 async function scaffoldTutorialMission(
   p: ClackPrompts,
   repoRoot: string,
@@ -111,7 +106,7 @@ async function scaffoldTutorialMission(
 async function runTutorialVerifyStep(
   p: ClackPrompts,
   missionPath: string,
-): Promise<{ verifyOk: boolean; ranVerify: boolean }> {
+): Promise<{ verifyOk: boolean; ranVerify: boolean; verifyExitCode?: number }> {
   p.log.step("Step 5 — Verify");
   logInfo(`  ${onboardingVerifyHint(missionPath)}`);
   const runVerifyNow = await p.confirm({
@@ -122,18 +117,17 @@ async function runTutorialVerifyStep(
     return { verifyOk: true, ranVerify: false };
   }
 
-  process.exitCode = undefined;
-  await runVerify({
+  const verifyResult = await executeVerifyMission({
     mission: missionPath,
     fix: true,
     fixNonInteractive: true,
     audience: "teacher",
   });
-  const verifyOk = verifyExitOk();
+  const verifyOk = verifyResult.ok;
   if (!verifyOk) {
     p.log.warn("Verify did not pass yet — expected until gate runs and trace rows cite WORKER_LOG.md");
   }
-  return { verifyOk, ranVerify: true };
+  return { verifyOk, ranVerify: true, verifyExitCode: verifyResult.exitCode };
 }
 
 function emitTutorialOutro(
@@ -141,9 +135,10 @@ function emitTutorialOutro(
   missionPath: string,
   verifyOk: boolean,
   ranVerify: boolean,
+  verifyExitCode?: number,
 ): void {
   if (!verifyOk) {
-    setExitCode(typeof process.exitCode === "number" ? process.exitCode : 1);
+    setExitCode(verifyExitCode ?? 1);
     p.outro(
       `Tutorial incomplete — finish stamp/trace, then: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
     );
@@ -207,8 +202,8 @@ export async function runInitTutorial(): Promise<void> {
     "  Init merged WORKER_LOG.md into .prettierignore — keep formatters off the trace log so line anchors stay stable",
   );
 
-  const { verifyOk, ranVerify } = await runTutorialVerifyStep(p, missionPath);
+  const { verifyOk, ranVerify, verifyExitCode } = await runTutorialVerifyStep(p, missionPath);
   p.log.step("Step 6 — Status dashboard");
   logInfo(`  ${onboardingStatusHint()}`);
-  emitTutorialOutro(p, missionPath, verifyOk, ranVerify);
+  emitTutorialOutro(p, missionPath, verifyOk, ranVerify, verifyExitCode);
 }

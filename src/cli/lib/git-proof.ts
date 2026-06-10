@@ -1,5 +1,6 @@
 import path from "node:path";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
+import { toPosixRel } from "./cli-io.js";
 import { gitRun } from "./git-repo.js";
 import { throwGitProofError } from "./git-proof-errors.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
@@ -21,7 +22,7 @@ export function missionPathRepoRelative(root: string, missionAbsolutePath: strin
       `${CLI_NAME} verify: mission file is outside repository root (${missionAbsolutePath})`,
     );
   }
-  return rel.split(path.sep).join("/");
+  return toPosixRel(absRoot, absMission);
 }
 
 export function assertMissionUnderMissionsDir(repoRelMissionPath: string): void {

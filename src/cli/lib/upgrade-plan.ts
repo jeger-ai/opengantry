@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { CLI_NAME } from "./constants.js";
-import { logInfo, logWarn } from "./cli-io.js";
+import { logInfo, logWarn, toPosixRel } from "./cli-io.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -21,7 +21,7 @@ import {
 } from "./substrate-version.js";
 import { allocateMsn } from "./msn-allocate.js";
 import { isValidMsnId } from "./msn.js";
-import { buildLegislativeTraceRows } from "./mission-yaml.js";
+import { buildLegislativeTraceRows, buildMissionYamlScaffold } from "./mission-yaml.js";
 
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
 export { UPGRADE_MSN_BAND_MIN, UPGRADE_MSN_BAND_MAX } from "./msn-allocate.js";
@@ -89,7 +89,7 @@ function writeStagedFiles(repoRoot: string, writes: PlannedWrite[]): Record<stri
     fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   for (const w of writes) {
-    const rel = path.relative(repoRoot, w.absoluteTarget).split(path.sep).join("/");
+    const rel = toPosixRel(repoRoot, w.absoluteTarget);
     const stageAbs = stagePathForTarget(repoRoot, rel);
     fs.mkdirSync(path.dirname(stageAbs), { recursive: true });
     fs.writeFileSync(stageAbs, w.body, "utf8");
@@ -113,10 +113,12 @@ export function buildUpgradeMissionYaml(opts: {
     upgrade_payload: opts.payload,
     trace_rows: buildLegislativeTraceRows(),
   };
-  const header =
-    `# OpenGantry substrate upgrade mission (Teacher: review staged diff under ${REL_UPGRADE_TMP}/).\n` +
-    `# Upgrade ${opts.fromVersion} → ${opts.toVersion}. Commit this file only; staging dir is gitignored.\n`;
-  return `${header}${YAML.stringify(doc)}`;
+  return buildMissionYamlScaffold({
+    header:
+      `# OpenGantry substrate upgrade mission (Teacher: review staged diff under ${REL_UPGRADE_TMP}/).\n` +
+      `# Upgrade ${opts.fromVersion} → ${opts.toVersion}. Commit this file only; staging dir is gitignored.\n`,
+    doc,
+  });
 }
 
 export function parseUpgradePayloadFromMissionBody(body: string): UpgradePayload {
@@ -251,7 +253,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   const msnId = resolveUpgradeMsn(repoRoot, options.msn);
 
   const plannedWrites = plan.writes.map((w) =>
-    path.relative(repoRoot, w.absoluteTarget).split(path.sep).join("/"),
+    toPosixRel(repoRoot, w.absoluteTarget),
   );
 
   const payload: UpgradePayload = {

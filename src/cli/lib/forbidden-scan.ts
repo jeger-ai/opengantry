@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { toPosixRel } from "./cli-io.js";
 
 export interface ForbiddenFileState {
   repoRelPath: string;
@@ -23,8 +24,7 @@ export interface ForbiddenViolation {
 const MAX_HASH_BYTES = 10 * 1024 * 1024;
 
 function toRepoRelativePosix(repoRoot: string, absolutePath: string): string {
-  const rel = path.relative(repoRoot, absolutePath);
-  return rel.split(path.sep).join("/");
+  return toPosixRel(repoRoot, absolutePath);
 }
 
 function hashBuffer(data: Buffer): string {

@@ -31,9 +31,23 @@ export function logManagedAssetConflicts(conflicts: string[]): void {
   }
 }
 
-/** Relative path for user-facing messages */
+/** POSIX repo-relative path (stable across platforms). */
+export function toPosixRel(repoRoot: string, absolutePath: string): string {
+  return path.relative(repoRoot, absolutePath).split(path.sep).join("/");
+}
+
+/** Convert a POSIX repo-relative path to native separators. */
+export function fromPosix(posixPath: string): string {
+  return posixPath.split("/").join(path.sep);
+}
+
+/** Relative path for user-facing messages (POSIX-normalized). */
 export function formatRepoRelative(repoRoot: string, absolutePath: string): string {
-  return path.relative(repoRoot, absolutePath);
+  return toPosixRel(repoRoot, absolutePath);
+}
+
+export function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
 }
 
 export function setExitCode(code: number): void {

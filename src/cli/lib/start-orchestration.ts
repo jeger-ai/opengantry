@@ -1,4 +1,4 @@
-import { runLegislate } from "../commands/legislate.js";
+import { runLegislate } from "./legislate-core.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { allocateMsn } from "./msn-allocate.js";

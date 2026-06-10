@@ -1,0 +1,27 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v1.1.1 maintainability hardening — legislate-core, verify core, CommandReporter, YAML/MCP splits
+msn_id: MSN-0033
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0033: legislate-core extraction; zero lib→command imports; init-tutorial typed verify via executeVerifyMission"
+    anchor: "MSN-0033"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0033: runVerifyCore + break-glass-flow; VerifyRemediation typed table; trace-status enum; engine discriminated unions"
+    anchor: "MSN-0033"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0033: CommandReporter + structured AudienceTaggedStep; filterTaggedStepsForAudience at source"
+    anchor: "MSN-0033"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0033: buildMissionYamlScaffold shared; mcp-legislation split; verify test modules split; toPosixRel/errorMessage helpers"
+    anchor: "MSN-0033"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0033: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (223 tests)"
+    anchor: "MSN-0033"
+    status: PASS

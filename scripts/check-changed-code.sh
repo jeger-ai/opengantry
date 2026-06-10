@@ -71,9 +71,14 @@ if [[ "${#EXISTING[@]}" -gt 0 ]]; then
   npx eslint --no-error-on-unmatched-pattern "${EXISTING[@]}"
 fi
 
-# Import layer rules
-if [[ "${#EXISTING[@]}" -gt 0 ]]; then
-  node scripts/check-import-layers.mjs "${EXISTING[@]}"
+# Import layer rules (skip intentional test fixtures that deliberately violate layers)
+LAYER_FILES=()
+for f in "${EXISTING[@]}"; do
+  [[ "$f" == *"/tests/fixtures/"* ]] && continue
+  LAYER_FILES+=("$f")
+done
+if [[ "${#LAYER_FILES[@]}" -gt 0 ]]; then
+  node scripts/check-import-layers.mjs "${LAYER_FILES[@]}"
 fi
 
 echo "check-changed-code OK"

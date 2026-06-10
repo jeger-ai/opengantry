@@ -1,12 +1,12 @@
 import { CLI_NAME } from "./constants.js";
-import { type GxtErrorCode } from "./gxt-error-codes.js";
 import {
-  hintsForVerifyPhase,
   logFixHint,
 } from "./fix-hints.js";
 import { logError, setExitCode } from "./cli-io.js";
+import type { GxtErrorCode } from "./gxt-error-codes.js";
 import type { VerifyPhaseFailure } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-types.js";
+import { buildVerifyRemediation } from "./verify-remediation.js";
 
 export interface VerifyFailurePresentationInput {
   failure: VerifyPhaseFailure;
@@ -27,11 +27,14 @@ export interface VerifyFailurePresentation {
   trace?: { failures?: string[] };
 }
 
-export function verifyFailurePresentation(
-  input: VerifyFailurePresentationInput,
-): VerifyFailurePresentation {
-  const { failure, missionArg, root, msnId } = input;
-  const hintCtx = {
+function failureHintContext(
+  failure: VerifyPhaseFailure,
+  missionArg: string,
+  options: Pick<VerifyOptions, "strictTrace">,
+  root?: string,
+  msnId?: string,
+) {
+  return {
     root,
     missionPath: missionArg,
     msnId,
@@ -41,10 +44,18 @@ export function verifyFailurePresentation(
     traceKind: failure.traceKind,
     traceQuote: failure.traceQuote,
     traceFailureReason: failure.traceReason,
-    strictTrace: input.options.strictTrace,
+    strictTrace: options.strictTrace,
   };
+}
 
-  const remediation = hintsForVerifyPhase(failure.phase, hintCtx);
+export function verifyFailurePresentation(
+  input: VerifyFailurePresentationInput,
+): VerifyFailurePresentation {
+  const { failure, missionArg, root, msnId, options } = input;
+  const remediation = buildVerifyRemediation(
+    failure.phase,
+    failureHintContext(failure, missionArg, options, root, msnId),
+  );
   const base = {
     error_code: remediation.error_code,
     fix_hints: remediation.fix_hints,
@@ -89,12 +100,10 @@ export function verifyFailurePresentation(
           ? { failures: [`DoD trace: ${failure.traceReason}`] }
           : undefined,
       };
-    default:
-      return {
-        ...base,
-        headline: failure.message,
-        detail_lines: [],
-      };
+    default: {
+      const _exhaustive: never = failure.phase;
+      return _exhaustive;
+    }
   }
 }
 
@@ -109,20 +118,4 @@ export function emitVerifyFailureFromPresentation(presentation: VerifyFailurePre
     logFixHint(hint);
   }
   setExitCode(presentation.exit_code);
-}
-
-export function verifyFailurePresentationForFailure(
-  failure: VerifyPhaseFailure,
-  missionArg: string,
-  options: VerifyOptions,
-  root?: string,
-  msnId?: string,
-): VerifyFailurePresentation {
-  return verifyFailurePresentation({
-    failure,
-    missionArg,
-    options,
-    root,
-    msnId,
-  });
 }

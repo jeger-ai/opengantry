@@ -2,11 +2,13 @@ import path from "node:path";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import { gatePassed, runGate } from "./gate.js";
 import { isLegislativeStub } from "./mission-legislative-stub.js";
-import type { Manifest, ParsedMission } from "./types.js";
+import type { GateSpec, Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, type TraceFailureKind } from "./trace-failure-kind.js";
+import { isPendingStatus } from "./trace-status.js";
 import { verifyTraceEvidenceFreshness } from "./trace-evidence.js";
 import { defaultWorkerLogPath, verifyTraceRows, type TraceVerifyWarning } from "./trace.js";
 import type { VerifyOptions } from "./verify-types.js";
+import { errorMessage } from "./cli-io.js";
 
 export type VerifyFailurePhase = "git_proof" | "gate" | "trace_pending" | "trace";
 
@@ -39,6 +41,29 @@ export interface VerifyPhaseSuccess {
 
 export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
 
+interface GitProofOk {
+  kind: "ok";
+  proofMsnId: string;
+}
+
+type GitProofOutcome = GitProofOk | VerifyPhaseFailure;
+
+interface TracePhaseOk {
+  kind: "ok";
+  warnings: TraceVerifyWarning[];
+  skippedUncommitted: number;
+}
+
+type TracePhaseOutcome = TracePhaseOk | VerifyPhaseFailure;
+
+function isGitProofOk(proof: GitProofOutcome): proof is GitProofOk {
+  return "kind" in proof && proof.kind === "ok";
+}
+
+function isTracePhaseOk(trace: TracePhaseOutcome): trace is TracePhaseOk {
+  return "kind" in trace && trace.kind === "ok";
+}
+
 export function resolveGateWorkDir(root: string, options: VerifyOptions): string {
   return options.cwd ? path.resolve(root, options.cwd) : root;
 }
@@ -51,14 +76,14 @@ function evaluateGitProof(
   root: string,
   mission: ParsedMission,
   workerLogPath: string,
-): VerifyPhaseResult | { proofMsnId: string } {
+): GitProofOutcome {
   try {
     const proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
       msnId: mission.msnId ?? undefined,
     });
-    return { proofMsnId };
+    return { kind: "ok", proofMsnId };
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+    const message = errorMessage(e);
     return {
       ok: false,
       phase: "git_proof",
@@ -72,11 +97,10 @@ function evaluateGitProof(
 
 function evaluateGatePhase(
   root: string,
-  mission: ParsedMission,
+  gate: GateSpec,
   options: VerifyOptions,
   workerLogPath: string,
 ): VerifyPhaseFailure | null {
-  const gate = mission.gate!;
   const gateResult = runGate(resolveGateWorkDir(root, options), gate);
   if (gatePassed(gateResult, gate.successSubstring)) return null;
   return {
@@ -98,8 +122,8 @@ function evaluateTracePhase(
   mission: ParsedMission,
   options: VerifyOptions,
   workerLogPath: string,
-): VerifyPhaseFailure | { warnings: TraceVerifyWarning[]; skippedUncommitted: number } {
-  const hasPending = mission.traceRows.some((row) => row.status.toUpperCase().includes("PENDING"));
+): TracePhaseOutcome {
+  const hasPending = mission.traceRows.some((row) => isPendingStatus(row.status));
   if (hasPending) {
     return {
       ok: false,
@@ -156,7 +180,7 @@ function evaluateTracePhase(
     };
   }
 
-  return { warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
+  return { kind: "ok", warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
 }
 
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
@@ -169,18 +193,29 @@ export function evaluateVerifyPhases(
   const workerLogPath = resolveWorkerLogPath(root, options);
 
   const proof = evaluateGitProof(root, mission, workerLogPath);
-  if ("ok" in proof) return proof;
+  if (!isGitProofOk(proof)) return proof;
   const { proofMsnId } = proof;
 
   if (options.prePush === true && isLegislativeStub(mission)) {
     return { ok: true, outcome: "pre_push_stub", proofMsnId, workerLogPath, traceWarnings: [] };
   }
 
-  const gateFailure = evaluateGatePhase(root, mission, options, workerLogPath);
+  const gate = mission.gate;
+  if (!gate) {
+    return {
+      ok: false,
+      phase: "gate",
+      message: "Mission has no gate_command",
+      exitCode: 1,
+      workerLogPath,
+    };
+  }
+
+  const gateFailure = evaluateGatePhase(root, gate, options, workerLogPath);
   if (gateFailure) return gateFailure;
 
   const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
-  if ("ok" in trace) return trace;
+  if (!isTracePhaseOk(trace)) return trace;
 
   return {
     ok: true,

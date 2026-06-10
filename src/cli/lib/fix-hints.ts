@@ -1,7 +1,11 @@
 import { logInfo } from "./cli-io.js";
-import { GXT_ERROR, mapGitProofCodeToGxt, type GxtErrorCode } from "./gxt-error-codes.js";
+import { GXT_ERROR, mapGitProofCodeToGxt } from "./gxt-error-codes.js";
 import { teacherIdentitySetupHint } from "./teacher-identity.js";
 import type { TraceFailureKind } from "./trace-failure-kind.js";
+import type { VerifyFailurePhase } from "./verify-engine.js";
+import type { AudienceTaggedStep } from "./verify-remediation.js";
+import type { VerifyRemediation } from "./verify-remediation.js";
+import type { OutputAudience } from "./audience-output.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
 
@@ -161,7 +165,7 @@ export function hintRuntimeHumanSummary(summary: string, errorFile: string): str
   return `${summary} See ${errorFile} (GXT_LAST_ERROR_FILE).`;
 }
 
-export type VerifyPhase = "git_proof" | "gate" | "trace" | "trace_pending";
+export type VerifyPhase = VerifyFailurePhase;
 
 export interface VerifyHintContext {
   root?: string;
@@ -179,11 +183,7 @@ export interface VerifyHintContext {
   traceFailureReason?: string;
 }
 
-export function hintsForVerifyPhase(phase: VerifyPhase, ctx: VerifyHintContext): {
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-} {
+export function hintsForVerifyPhase(phase: VerifyPhase, ctx: VerifyHintContext): VerifyRemediation {
   switch (phase) {
     case "git_proof":
       return hintsForGitProofPhase(ctx);
@@ -193,14 +193,18 @@ export function hintsForVerifyPhase(phase: VerifyPhase, ctx: VerifyHintContext):
       return hintsForTracePendingPhase(ctx);
     case "trace":
       return hintsForTracePhase(ctx);
+    default: {
+      const _exhaustive: never = phase;
+      return _exhaustive;
+    }
   }
 }
 
-function hintsForGitProofPhase(ctx: VerifyHintContext): {
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-} {
+function tagStep(audience: OutputAudience, step: string): AudienceTaggedStep {
+  return { audience, step };
+}
+
+function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const verifyCmd = `gapman verify --mission ${mission}`;
   const code = parseGitProofCode(ctx.gitProofMessage ?? "");
@@ -215,18 +219,22 @@ function hintsForGitProofPhase(ctx: VerifyHintContext): {
     code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
       ? [hint.split("; ")[0]!, "gapman teacher set \"$(git config user.email)\"", verifyCmd]
       : ["gapman teacher set \"$(git config user.email)\"", verifyCmd];
+  const tagged_steps: AudienceTaggedStep[] = [
+    tagStep("teacher", 'gapman teacher set "$(git config user.email)"'),
+    tagStep("verifier", verifyCmd),
+  ];
+  if (code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER") {
+    tagged_steps.unshift(tagStep("teacher", nextActions[0]!));
+  }
   return {
     error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
     fix_hints: [hint],
     next_actions: nextActions,
+    tagged_steps,
   };
 }
 
-function hintsForGatePhase(ctx: VerifyHintContext): {
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-} {
+function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const verifyCmd = `gapman verify --mission ${mission}`;
   const gate = ctx.gateCommand ?? "<gate>";
@@ -234,14 +242,14 @@ function hintsForGatePhase(ctx: VerifyHintContext): {
     error_code: GXT_ERROR.GATE_FAILED,
     fix_hints: [hintGate(gate, mission)],
     next_actions: [`re-run gate: ${gate}`, verifyCmd],
+    tagged_steps: [
+      tagStep("worker", `re-run gate: ${gate}`),
+      tagStep("verifier", verifyCmd),
+    ],
   };
 }
 
-function hintsForTracePendingPhase(ctx: VerifyHintContext): {
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-} {
+function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
   const steps = hintTracePendingSteps(workerLog, mission, ctx.gateCommand);
@@ -249,14 +257,20 @@ function hintsForTracePendingPhase(ctx: VerifyHintContext): {
     error_code: GXT_ERROR.TRACE_PENDING,
     fix_hints: steps.slice(0, 3),
     next_actions: steps,
+    tagged_steps: [
+      tagStep("worker", steps[0]!),
+      tagStep("worker", steps[1]!),
+      tagStep("worker", steps[2]!),
+      tagStep("verifier", steps[3] ?? verifyCmd(mission)),
+    ],
   };
 }
 
-function hintsForTracePhase(ctx: VerifyHintContext): {
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-} {
+function verifyCmd(mission: string): string {
+  return `gapman verify --mission ${mission}`;
+}
+
+function hintsForTracePhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
   const verifyCmd = `gapman verify --mission ${mission}`;
@@ -272,6 +286,10 @@ function hintsForTracePhase(ctx: VerifyHintContext): {
     error_code: errorCode,
     fix_hints: hints,
     next_actions: [verifyCmd, `gapman verify --mission ${mission} --fix`],
+    tagged_steps: [
+      tagStep("verifier", verifyCmd),
+      tagStep("verifier", `gapman verify --mission ${mission} --fix`),
+    ],
   };
 }
 

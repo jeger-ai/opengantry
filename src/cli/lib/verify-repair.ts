@@ -1,10 +1,9 @@
 import { logError, setExitCode } from "./cli-io.js";
-import { hintsForVerifyPhase, logFixHint } from "./fix-hints.js";
+import { logFixHint } from "./fix-hints.js";
 import type { Manifest, ParsedMission } from "./types.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
-  type VerifyPhaseResult,
 } from "./verify-engine.js";
 import {
   emitAudienceNextSteps,
@@ -12,22 +11,7 @@ import {
   verifyFailureToHintContext,
 } from "./verify-flow.js";
 import type { VerifyOptions } from "./verify-types.js";
-function failureFromResult(result: VerifyPhaseResult): VerifyPhaseFailure | null {
-  return result.ok ? null : result;
-}
-
-function buildVerifyRemediation(
-  root: string,
-  mission: ParsedMission,
-  failure: VerifyPhaseFailure,
-  missionArg: string,
-  options: VerifyOptions,
-) {
-  return hintsForVerifyPhase(failure.phase, {
-    ...verifyFailureToHintContext(failure, missionArg, options, root),
-    msnId: mission.msnId ?? undefined,
-  });
-}
+import { buildVerifyRemediation } from "./verify-remediation.js";
 
 function printNonInteractiveFix(
   root: string,
@@ -36,10 +20,13 @@ function printNonInteractiveFix(
   missionArg: string,
   options: VerifyOptions,
 ): void {
-  const remediation = buildVerifyRemediation(root, mission, failure, missionArg, options);
+  const remediation = buildVerifyRemediation(failure.phase, {
+    ...verifyFailureToHintContext(failure, missionArg, options, root),
+    msnId: mission.msnId ?? undefined,
+  });
   logError(`[${remediation.error_code}] ${failure.message}`);
   for (const hint of remediation.fix_hints) logFixHint(hint);
-  emitAudienceNextSteps(remediation.next_actions, options);
+  emitAudienceNextSteps(remediation.next_actions, options, remediation.tagged_steps);
 }
 
 async function runInteractiveFixMenu(
@@ -50,7 +37,10 @@ async function runInteractiveFixMenu(
   options: VerifyOptions,
 ): Promise<void> {
   const p = await import("@clack/prompts");
-  const remediation = buildVerifyRemediation(root, mission, failure, missionArg, options);
+  const remediation = buildVerifyRemediation(failure.phase, {
+    ...verifyFailureToHintContext(failure, missionArg, options, root),
+    msnId: mission.msnId ?? undefined,
+  });
 
   logError(`[${remediation.error_code}] verify failed at phase: ${failure.phase}`);
 
@@ -67,7 +57,7 @@ async function runInteractiveFixMenu(
   });
 
   if (p.isCancel(selected) || selected === "quit") {
-    emitAudienceNextSteps(remediation.next_actions, options);
+    emitAudienceNextSteps(remediation.next_actions, options, remediation.tagged_steps);
     setExitCode(failure.exitCode);
     return;
   }
@@ -75,7 +65,7 @@ async function runInteractiveFixMenu(
   const idx = Number.parseInt(String(selected), 10);
   const hint = remediation.fix_hints[idx];
   if (hint) logFixHint(hint);
-  emitAudienceNextSteps(remediation.next_actions, options);
+  emitAudienceNextSteps(remediation.next_actions, options, remediation.tagged_steps);
   setExitCode(failure.exitCode);
 }
 
@@ -92,13 +82,11 @@ export async function runVerifyWithFix(
     return;
   }
 
-  const failure = failureFromResult(result)!;
-
   if (options.fixNonInteractive) {
-    printNonInteractiveFix(root, mission, failure, missionArg, options);
-    setExitCode(failure.exitCode);
+    printNonInteractiveFix(root, mission, result, missionArg, options);
+    setExitCode(result.exitCode);
     return;
   }
 
-  await runInteractiveFixMenu(root, mission, failure, missionArg, options);
+  await runInteractiveFixMenu(root, mission, result, missionArg, options);
 }

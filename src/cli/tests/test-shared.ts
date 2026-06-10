@@ -6,8 +6,7 @@ export interface CapturedConsole {
   stderr: string;
 }
 
-/** Capture console.log / console.error for a synchronous callback. */
-export function captureConsole<T>(fn: () => T): { result: T; output: CapturedConsole } {
+function withCapturedConsole<T>(fn: () => T): { result: T; output: CapturedConsole } {
   const stdoutChunks: string[] = [];
   const stderrChunks: string[] = [];
   const origLog = console.log;
@@ -31,6 +30,11 @@ export function captureConsole<T>(fn: () => T): { result: T; output: CapturedCon
     console.log = origLog;
     console.error = origError;
   }
+}
+
+/** Capture console.log / console.error for a synchronous callback. */
+export function captureConsole<T>(fn: () => T): { result: T; output: CapturedConsole } {
+  return withCapturedConsole(fn);
 }
 
 /** Capture console.log / console.error for an async callback. */
