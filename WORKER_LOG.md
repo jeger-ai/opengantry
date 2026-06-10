@@ -106,3 +106,4 @@ example trace line for gapman verify
 
 - Context Request ACCEPTED: `scripts/check-import-layers.mjs` — CI gate script outside TMVC `src/cli/` but required for import-layer enforcement (#42).
 - DoD 1 MSN-0032: # pass 4 — check-import-layers.test.js (relative + absolute lib→command violations fail; clean lib passes)
+- DoD 1 MSN-0032 (re-attest): check-import-layers.test.js 4/4 pass after MSN-0031 TMVC merge; relative + absolute lib→command violations fail; clean lib passes
