@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-10 (thermo-nuclear review #2 findings recorded below; MSN-0031 merged → PR [#41](https://github.com/jeger-ai/opengantry/pull/41); **v1.1.0 npm publish** after tag; **v1.1.1** remainder tracked below)
+**Last synced:** 2026-06-10 (thermo-nuclear review #2 findings recorded below; MSN-0031 merged → PR [#41](https://github.com/jeger-ai/opengantry/pull/41); **v1.1.0 npm publish** after tag; **v1.1.1** remainder tracked below; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) added to strategic horizon)
 
 ---
 
@@ -182,6 +182,28 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 | **Teacher stamp hardening (GPG/sigstore)** | Open | [#37](https://github.com/jeger-ai/opengantry/issues/37) |
 | **WORKER_LOG integrity checks in doctor** | Open | [#38](https://github.com/jeger-ai/opengantry/issues/38) |
 
+### v2.0 — Adaptive perimeter (passive cage → self-configuring platform)
+
+Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual-YAML setup tax and add semantic verification on top of deterministic gates. Both items are Tier-3 substrate and **require an ADR + Teacher mission** before any implementation.
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Self-learning auto-discovery engine** — `gapman init` static-analysis pass (module boundaries, dependency graph, stack detection) synthesizes baseline `TARGET_ARCHITECTURE.yaml` + MANIFEST draft. Anti-trap: emits an **Architecture Proposal** (conventions + flagged anomalies) requiring one-time human confirmation before entering the cryptographic baseline — never codifies legacy spaghetti as law. Automated front-end to `ARCHITECTURE-DISCOVERY.md`; feeds [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#61](https://github.com/jeger-ai/opengantry/issues/61) |
+| **AI performance judge against docs** — judge ingests `PERFORMANCE.md` / specs / ADRs and audits mission diffs for structural performance violations (pooling, blocking I/O in async paths, dropped memoization). Anti-trap: judges **strategies only, never empirical metrics**; runtime thresholds come from a deterministic benchmark gate; verdicts are ADVISORY_ONLY and cannot flip gate PASS/FAIL. Extends [#16](https://github.com/jeger-ai/opengantry/issues/16) | Open | [#62](https://github.com/jeger-ai/opengantry/issues/62) |
+| **`gapman blueprint` — interactive documentation scaffolding** — closes the governance cold-start hole (no docs = no semantic cage). Forensic discovery pass (reuses #61 scanner) → evidence-anchored terminal interview (every question cites file:line findings) → emits synchronized `ARCHITECTURE.md` (human spec) + `TARGET_ARCHITECTURE.yaml` (machine spec) with shared rule IDs; `gapman doctor` flags MD/YAML drift. Anti-trap: **context-anchored guidance only** — no rule without an on-disk evidence anchor, no generic best-practices fluff. Enforcement split: YAML is the sole deterministic-engine input; MD aligns humans + feeds #62 judge as advisory corpus. Depends on [#61](https://github.com/jeger-ai/opengantry/issues/61); feeds [#62](https://github.com/jeger-ai/opengantry/issues/62), [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#63](https://github.com/jeger-ai/opengantry/issues/63) |
+
+**v2.0 paradigm shift (target):**
+
+| Dimension | v1.1 (current) | v2.0 (proposed) |
+|-----------|----------------|-----------------|
+| Setup cost | High — manual YAML compilation | Near-zero — automated repo scanning + one-time proposal confirmation |
+| Boundary type | Rigid — file paths, exact strings | Semantic — architectural intent + logic rules (deterministic core retained) |
+| Verification scope | Structural integrity, ticket completion | + rule adherence and performance sanity (advisory judge over deterministic gates) |
+
+**PoC decision (recorded):** the discovery scanner core is a **deterministic offline TypeScript AST / dependency-graph parser** (reproducible, byte-identical re-runs, no LLM in the trust path). A localized LLM pass may optionally annotate naming conventions and directory intent in the proposal, but its output stays advisory until human confirmation.
+
+**Enforcement-split decision (recorded, #63):** generated `ARCHITECTURE.md` is **never** a strict semantic input to the deterministic verification engine — `TARGET_ARCHITECTURE.yaml` is the sole enforcement source. The MD exists to align humans and serves as the advisory corpus for the #62 AI judge. Drift between the two is caught deterministically: blueprint stamps both artifacts with shared rule IDs + a provenance checksum, and `gapman doctor` flags divergence.
+
 ---
 
 ## Sprint guidance
@@ -202,6 +224,7 @@ Rationale: thermo-nuclear review found enforceable-architecture gaps and verify/
 2. **Tactical ergonomics** — #12, #27–#28 (registrar, verify/triage helpers)
 3. **Adoption** — #30–#33 (session hooks, upgrade preview, onboarding gates)
 4. **v1.2+** — #14–#17, #34–#38 (ADR + mission first)
+5. **v2.0 adaptive perimeter** — [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) (ADR + Teacher mission first; #61 PoC may start once v1.1.1 ships; #63 builds on the #61 scanner core)
 
 ---
 
@@ -209,7 +232,7 @@ Rationale: thermo-nuclear review found enforceable-architecture gaps and verify/
 
 **Board:** [OpenGantry Roadmap — Project #2](https://github.com/orgs/jeger-ai/projects/2) (org: `jeger-ai`).
 
-Issues **#6–#58** are on the board. Suggested columns: **v1.1.1** | **v1.1** | **Tactical** | **Adoption** | **v1.2+** | **Done** (group by `backlog/*` label or Status).
+Issues **#6–#58** and **#61–#63** are on the board. Suggested columns: **v1.1.1** | **v1.1** | **Tactical** | **Adoption** | **v1.2+** | **Done** (group by `backlog/*` label or Status).
 
 Add a new backlog issue to the project:
 

@@ -5,7 +5,7 @@ skill_key: gapman
 gate_command: npm run build && node --test dist/cli/tests/check-import-layers.test.js
 trace_rows:
   - dod_id: "1"
-    trace_quote: "# pass 4 — check-import-layers.test.js (relative + absolute lib→command violations fail; clean lib passes)"
+    trace_quote: "DoD 1 MSN-0032 (re-attest): check-import-layers.test.js 4/4 pass after MSN-0031 TMVC merge; relative + absolute lib→command violations fail; clean lib passes"
     anchor: "MSN-0032"
     status: PASS
 gate_success_substring: pass
