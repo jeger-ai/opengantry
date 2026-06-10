@@ -1,5 +1,5 @@
 import { collectGitMetrics, formatGitMetricsHuman } from "../lib/git-metrics.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface MetricsOptions {
@@ -18,7 +18,7 @@ export function runMetrics(options: MetricsOptions): void {
     }
     logInfo(formatGitMetricsHuman(report));
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
   }
 }

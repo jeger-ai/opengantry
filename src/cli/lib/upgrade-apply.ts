@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
-import { logInfo } from "./cli-io.js";
+import { errorMessage, fromPosix, logInfo } from "./cli-io.js";
 import { promoteFileAtomic } from "./atomic-fs.js";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import {
@@ -33,7 +33,7 @@ function sha256File(absPath: string): string {
 }
 
 function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
-  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  const tmpRoot = path.join(repoRoot, fromPosix(REL_UPGRADE_TMP));
   if (!fs.existsSync(tmpRoot)) {
     throw new GapmanUserError(
       "UPGRADE_STAGING_MISSING",
@@ -51,7 +51,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   }
 
   for (const [relPath, expectedHash] of entries) {
-    const stageAbs = path.join(tmpRoot, relPath.split("/").join(path.sep));
+    const stageAbs = path.join(tmpRoot, fromPosix(relPath));
     if (!fs.existsSync(stageAbs)) {
       throw new GapmanUserError(
         "UPGRADE_STAGING_DRIFT",
@@ -80,16 +80,16 @@ async function stageWritesForApply(
   repoRoot: string,
   payload: UpgradePayload,
 ): Promise<{ applyTmpRoot: string; promotions: Array<{ staged: string; target: string }> }> {
-  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
-  const applyTmpRoot = path.join(repoRoot, REL_UPGRADE_APPLY_TMP.split("/").join(path.sep));
+  const tmpRoot = path.join(repoRoot, fromPosix(REL_UPGRADE_TMP));
+  const applyTmpRoot = path.join(repoRoot, fromPosix(REL_UPGRADE_APPLY_TMP));
   cleanupApplyTmp(applyTmpRoot);
   fs.mkdirSync(applyTmpRoot, { recursive: true });
 
   const promotions: Array<{ staged: string; target: string }> = [];
   for (const relPath of payload.planned_writes) {
-    const sourceAbs = path.join(tmpRoot, relPath.split("/").join(path.sep));
-    const stagedAbs = path.join(applyTmpRoot, relPath.split("/").join(path.sep));
-    const prodAbs = path.join(repoRoot, relPath.split("/").join(path.sep));
+    const sourceAbs = path.join(tmpRoot, fromPosix(relPath));
+    const stagedAbs = path.join(applyTmpRoot, fromPosix(relPath));
+    const prodAbs = path.join(repoRoot, fromPosix(relPath));
     fs.mkdirSync(path.dirname(stagedAbs), { recursive: true });
     fs.copyFileSync(sourceAbs, stagedAbs);
     promotions.push({ staged: stagedAbs, target: prodAbs });
@@ -125,7 +125,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   } catch (e) {
     throw new GapmanUserError(
       "UPGRADE_INVALID_MISSION",
-      e instanceof Error ? e.message : String(e),
+      errorMessage(e),
     );
   }
 
@@ -134,13 +134,13 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   } catch (e) {
     return {
       status: "blocked",
-      message: e instanceof Error ? e.message : String(e),
+      message: errorMessage(e),
     };
   }
 
   verifyStagedHashes(repoRoot, payload);
 
-  const tmpRoot = path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  const tmpRoot = path.join(repoRoot, fromPosix(REL_UPGRADE_TMP));
   let applyTmpRoot = "";
   try {
     const staged = await stageWritesForApply(repoRoot, payload);

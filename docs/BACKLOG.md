@@ -9,7 +9,23 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-10 (MSN-0033 — **v1.1.1 maintainability hardening** shipped; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+**Last synced:** 2026-06-10 (MSN-0034 — **v1.1.2 verify pipeline close-out** in progress; MSN-0033 shipped **1.1.1**; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+
+---
+
+## v1.1.2 — Verify pipeline close-out (shipped)
+
+Thermo review follow-up to MSN-0033: single evaluate → sink presenters, full `CommandReporter` adoption, remediation collapse, typed exit at command boundary.
+
+| # | Item | Priority | Status | Issue |
+|---|------|----------|--------|-------|
+| 1 | **Unified verify pipeline** — one `evaluateVerifyPhases` per run; `verify-present.ts` sink presenters; no `process.exitCode` in `runVerifyCore` | Blocker | **Done** (MSN-0034) | [#44](https://github.com/jeger-ai/opengantry/issues/44) |
+| 2 | **CommandReporter full adoption** — human/json/audience via reporter | Major | **Done** (MSN-0034) | [#45](https://github.com/jeger-ai/opengantry/issues/45) |
+| 3 | **Remediation collapse** — `verify-remediation.ts` owns phase table; delete wrappers | Major | **Done** (MSN-0034) | [#46](https://github.com/jeger-ai/opengantry/issues/46) |
+| 4 | **N5 hint-context + wrapper cleanup** | Medium | **Done** (MSN-0034) | [#53](https://github.com/jeger-ai/opengantry/issues/53) |
+| 5 | **N3 trace status at parse boundary** | Medium | **Done** (MSN-0035) | [#51](https://github.com/jeger-ai/opengantry/issues/51) |
+| 6 | **N4 engine discriminant consistency** | Medium | **Done** (MSN-0035) | [#52](https://github.com/jeger-ai/opengantry/issues/52) |
+| 7 | **N1 canonical helper sweep** | High | **Done** (MSN-0035) | [#49](https://github.com/jeger-ai/opengantry/issues/49) |
 
 ---
 
@@ -62,14 +78,14 @@ Full-codebase re-audit. **Verdict: B−.** Confirms v1.1.1 blockers are still th
 
 | # | Item | Severity | Status | Issue |
 |---|------|----------|--------|-------|
-| N1 | **Canonical path/error helpers** — `path.relative(...).split(path.sep).join("/")` at 10+ sites, inverse `split("/").join(path.sep)` 39× / 19 files, `e instanceof Error ? e.message : String(e)` 28× / 17 files; `formatRepoRelative` (`cli-io.ts:35-37`) returns native separators so callers bypass it. Add `toPosixRel` / `fromPosix` / `errorMessage`, sweep ~70 call sites | High | **Open** | [#49](https://github.com/jeger-ai/opengantry/issues/49) |
+| N1 | **Canonical path/error helpers** — `errorMessage` sweep across `src/cli/`; `fromPosix`/`repoAbsPath` adopted in upgrade, teacher, substrate, architecture paths | High | **Closed** (MSN-0035) | [#49](https://github.com/jeger-ai/opengantry/issues/49) |
 | N2 | **`loadWorkspace()` re-loaded mid-flow** — 3× per `verify --fix` run (`commands/verify.ts:79`, `verify-flow.ts:117`, `verify-repair.ts:90`), each shelling `git rev-parse` + re-parsing manifest. Load once at command entry, thread down | Medium | **Closed** (stale — `runVerifyCore` loads once; MSN-0033) | [#50](https://github.com/jeger-ai/opengantry/issues/50) |
-| N3 | **Stringly-typed `TraceRow.status`** — `types.ts:46` checked via `toUpperCase().includes("PASS")` at 3 sites; parse to enum once at mission boundary | Medium | **Open** | [#51](https://github.com/jeger-ai/opengantry/issues/51) |
-| N4 | **Ad-hoc contracts in `verify-engine.ts`** — `evaluateGitProof` returns union discriminated by `"ok" in proof` (`:53-74,180-182`); `mission.gate!` non-null assertion (`:82`). Use proper discriminated union + non-null engine input type | Medium | **Open** | [#52](https://github.com/jeger-ai/opengantry/issues/52) |
-| N5 | **Exhaustiveness rule violated + wrapper churn** — `verify-failure-presentation.ts:92-97` uses `default:` instead of mandated `never` check; identity wrappers `failureFromResult` (`verify-repair.ts:17-19`) and `verifyFailurePresentationForFailure` (`:114-128`) | Medium | **Open** | [#53](https://github.com/jeger-ai/opengantry/issues/53) |
+| N3 | **Stringly-typed `TraceRow.status`** — parse to `NormalizedTraceStatus` at mission boundary | Medium | **Closed** (MSN-0035) | [#51](https://github.com/jeger-ai/opengantry/issues/51) |
+| N4 | **Ad-hoc contracts in `verify-engine.ts`** — consistent `kind: "ok" \| "fail"` discriminant on internal phase outcomes | Medium | **Closed** (MSN-0035) | [#52](https://github.com/jeger-ai/opengantry/issues/52) |
+| N5 | **Exhaustiveness rule violated + wrapper churn** — identity wrappers `executeVerifyMission`, `buildVerifyRemediation`, duplicate hint contexts | Medium | **Closed** (MSN-0034) | [#53](https://github.com/jeger-ai/opengantry/issues/53) |
 | N6 | **Micro-module fragmentation in `src/cli/lib/`** — 95 modules avg ~97 lines, ~25 under 50 (`msn.ts` 5 lines, `runtime-exec.ts` 8-line re-export, `init-assets.ts` 9 lines self-deprecated, `git-proof-errors.ts` 15); mission concept spans 9 modules. Consolidate satellites; delete deprecated aliases `extractMsnIdFromMissionFile`, `VerifyMcpResult` | Medium | **Open** | [#54](https://github.com/jeger-ai/opengantry/issues/54) |
 | N7 | **Commander option-bag copy-through** — `program-core.ts:63-93` (init), `program-workflow.ts:74-109` (verify) re-copy options field-by-field (~30 lines each, drifts on new options). Type `.action()` param as the options interface | Medium | **Open** | [#55](https://github.com/jeger-ai/opengantry/issues/55) · [#12](https://github.com/jeger-ai/opengantry/issues/12) |
-| N8 | **Undocumented inline dynamic imports** — `commands/init.ts:84,166,226,265`, `verify-repair.ts:54`, `init-tutorial.ts:162` lack the lazy-load justification `program-mcp.ts:10` has. Justify or centralize in `loadPrompts()` | Low | **Open** | [#56](https://github.com/jeger-ai/opengantry/issues/56) |
+| N8 | **Undocumented inline dynamic imports** — `commands/init.ts:84,166,226,265`, `init-tutorial.ts:162` lack lazy-load justification; `loadPrompts()` added in MSN-0034 | Low | **Partial** (MSN-0034 verify path) | [#56](https://github.com/jeger-ai/opengantry/issues/56) |
 | N9 | **Start orchestration branching** — `start-orchestration.ts:63-78` four branches expressing one condition; three hand-built `StartResult` failure literals (`:91-102,138-150,175-184`). Simplify + failure factory | Low | **Open** | [#57](https://github.com/jeger-ai/opengantry/issues/57) |
 | N10 | **Document intentionally non-templated scripts** — `check-changed-code.sh`, `check-import-layers.mjs`, `dev-validate*.sh` exist only in `scripts/`; zero drift today, note which are deliberately not in the init catalog | Low | **Open** | [#58](https://github.com/jeger-ai/opengantry/issues/58) |
 
@@ -206,18 +222,19 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** **Tag `v1.1.1` → npm publish** (MSN-0033). Tactical debt ([#8](https://github.com/jeger-ai/opengantry/issues/8)–[#13](https://github.com/jeger-ai/opengantry/issues/13), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#58](https://github.com/jeger-ai/opengantry/issues/58)) is next.
+**Current focus:** **Tag `v1.1.2` → npm publish** (MSN-0034–MSN-0035). Tactical debt ([#8](https://github.com/jeger-ai/opengantry/issues/8)–[#13](https://github.com/jeger-ai/opengantry/issues/13), [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58)) is next.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
-| **Now** | Tag/publish **v1.1.1** | MSN-0033 complete |
-| **Next** | [#8](https://github.com/jeger-ai/opengantry/issues/8)–[#13](https://github.com/jeger-ai/opengantry/issues/13), [#23](https://github.com/jeger-ai/opengantry/issues/23)–[#29](https://github.com/jeger-ai/opengantry/issues/29), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#58](https://github.com/jeger-ai/opengantry/issues/58) | Tactical debt post-1.1.1 |
+| **Now** | Tag/publish **v1.1.2** | MSN-0034–MSN-0035 complete |
+| **Next** | [#8](https://github.com/jeger-ai/opengantry/issues/8)–[#13](https://github.com/jeger-ai/opengantry/issues/13), [#23](https://github.com/jeger-ai/opengantry/issues/23)–[#29](https://github.com/jeger-ai/opengantry/issues/29), [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58) | Tactical debt post-thermo close-out |
+| Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
 | Done (v1.1.1) | [#10](https://github.com/jeger-ai/opengantry/issues/10)–[#11](https://github.com/jeger-ai/opengantry/issues/11), [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#50](https://github.com/jeger-ai/opengantry/issues/50) | MSN-0032–MSN-0033 |
 | Done (v1.1) | [#18](https://github.com/jeger-ai/opengantry/issues/18)–[#22](https://github.com/jeger-ai/opengantry/issues/22) | MSN-0028–MSN-0031 |
 
-Rationale: thermo-nuclear review found enforceable-architecture gaps and verify/output duplication. Fix those in 1.1.1 before tactical (#8–#9, #12–#13, #22–#29), adoption (#30–#33), or v1.2+ (#14–#17, #34–#38).
+Rationale: thermo-nuclear review verify-stack findings closed in 1.1.2; tactical (#8–#9, #12–#13, #22–#29), adoption (#30–#33), or v1.2+ (#14–#17, #34–#38) are next.
 
-**Suggested order after v1.1.1:**
+**Suggested order after v1.1.2:**
 
 1. **Tactical maintainability** — #13 or #31 (MANIFEST), #8–#9 (MCP + catalog), #23 (mission validate)
 2. **Tactical ergonomics** — #12, #27–#28 (registrar, verify/triage helpers)

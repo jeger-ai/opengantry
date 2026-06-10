@@ -1,5 +1,5 @@
 import { CLI_NAME } from "../lib/constants.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
@@ -29,7 +29,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   try {
     templatesRoot = resolveTemplateRootFromModule();
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return;
   }
@@ -96,6 +96,6 @@ function handleUpgradeError(e: unknown, json?: boolean): void {
     setExitCode(2);
     return;
   }
-  logError(e instanceof Error ? e.message : String(e));
+  logError(errorMessage(e));
   setExitCode(2);
 }

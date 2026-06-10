@@ -1,3 +1,5 @@
+import type { NormalizedTraceStatus } from "./trace-status.js";
+
 export type TrustThreshold = "Tier-1" | "Tier-2" | "Tier-3" | string;
 
 export interface SkillEntry {
@@ -43,7 +45,7 @@ export interface TraceRow {
   dodId: string;
   traceQuote: string;
   anchor: string;
-  status: string;
+  status: NormalizedTraceStatus;
 }
 
 export interface ParsedMission {

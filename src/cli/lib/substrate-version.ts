@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fromPosix } from "./cli-io.js";
 import { NPM_PACKAGE_NAME } from "./constants.js";
 import { loadIntegrationCompat } from "./integration-compat.js";
 
@@ -54,7 +55,7 @@ export function readRepoCompatVersion(repoRoot: string): string | null {
 }
 
 export function readInstalledSubstrateVersion(repoRoot: string): InstalledSubstrateVersion {
-  const substratePath = path.join(repoRoot, REL_SUBSTRATE_VERSION.split("/").join(path.sep));
+  const substratePath = path.join(repoRoot, fromPosix(REL_SUBSTRATE_VERSION));
   if (fs.existsSync(substratePath)) {
     try {
       const raw = JSON.parse(fs.readFileSync(substratePath, "utf8")) as SubstrateVersionFile;
@@ -92,7 +93,7 @@ export function writeSubstrateVersionFile(
   version: string,
   installedBy: string,
 ): void {
-  const abs = path.join(repoRoot, REL_SUBSTRATE_VERSION.split("/").join(path.sep));
+  const abs = path.join(repoRoot, fromPosix(REL_SUBSTRATE_VERSION));
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.writeFileSync(abs, serializeSubstrateVersionFile(version, installedBy), "utf8");
 }
@@ -106,7 +107,7 @@ export function alreadyCurrentMessage(installed: string, bundled: string): strin
 }
 
 export function ensureSubstrateVersionOnInit(repoRoot: string, templatesRoot: string): void {
-  const substrateAbs = path.join(repoRoot, REL_SUBSTRATE_VERSION.split("/").join(path.sep));
+  const substrateAbs = path.join(repoRoot, fromPosix(REL_SUBSTRATE_VERSION));
   if (fs.existsSync(substrateAbs)) return;
   const version = loadIntegrationCompat(templatesRoot).opengantry_version;
   writeSubstrateVersionFile(repoRoot, version, "gapman init");

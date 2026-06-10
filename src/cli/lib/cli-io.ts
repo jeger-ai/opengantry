@@ -50,6 +50,11 @@ export function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/** Absolute path under repo root from a POSIX repo-relative segment. */
+export function repoAbsPath(repoRoot: string, posixRel: string): string {
+  return path.join(repoRoot, fromPosix(posixRel));
+}
+
 export function setExitCode(code: number): void {
   process.exitCode = code;
 }

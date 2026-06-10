@@ -1,4 +1,4 @@
-import { logInfo, setExitCode } from "../lib/cli-io.js";
+import { logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import {
   audienceSectionTitle,
   filterNextStepsForAudience,
@@ -52,7 +52,7 @@ export function runDoctor(options: { json?: boolean; audience?: OutputAudience }
       options.audience,
     );
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
+    const msg = errorMessage(e);
     emitDoctor([{ level: "fail", message: msg }], null, true, options.json, options.audience);
   }
 }

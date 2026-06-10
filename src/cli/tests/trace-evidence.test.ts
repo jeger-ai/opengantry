@@ -87,7 +87,7 @@ test("verifyTraceEvidenceFreshness: committed quote with no TMVC drift passes", 
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const row = { dodId: "1", traceQuote: "evidence fresh", anchor: "1", status: "PASS" };
+  const row = { dodId: "1", traceQuote: "evidence fresh", anchor: "1", status: "PASS" as const };
   const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
@@ -123,7 +123,7 @@ test("verifyTraceEvidenceFreshness: TMVC edit after attestation is STALE", () =>
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const row = { dodId: "1", traceQuote: "stale test quote", anchor: "1", status: "PASS" };
+  const row = { dodId: "1", traceQuote: "stale test quote", anchor: "1", status: "PASS" as const };
   const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
@@ -147,7 +147,7 @@ test("verifyTraceEvidenceFreshness: uncommitted quote line skips stale check", (
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const row = { dodId: "1", traceQuote: "uncommitted quote", anchor: "1", status: "PASS" };
+  const row = { dodId: "1", traceQuote: "uncommitted quote", anchor: "1", status: "PASS" as const };
   const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
@@ -171,7 +171,7 @@ test("verifyTraceEvidenceFreshness: skipStaleEvidence bypasses drift", () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const row = { dodId: "1", traceQuote: "skip flag quote", anchor: "1", status: "PASS" };
+  const row = { dodId: "1", traceQuote: "skip flag quote", anchor: "1", status: "PASS" as const };
   const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
@@ -197,7 +197,7 @@ test("verifyTraceEvidenceFreshness: empty tmvc_roots passes", () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const row = { dodId: "1", traceQuote: "quote", anchor: "1", status: "PASS" };
+  const row = { dodId: "1", traceQuote: "quote", anchor: "1", status: "PASS" as const };
   const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,

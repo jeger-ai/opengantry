@@ -1,3 +1,4 @@
+import { normalizeTraceStatus } from "./trace-status.js";
 import type { ParsedMission, TraceRow } from "./types.js";
 
 const TRACE_SECTION_MARKER = "## 4. Verification trace";
@@ -80,7 +81,7 @@ function parseTraceTable(body: string): TraceRow[] {
     if (!traceQuote.trim()) continue;
     if (!/PASS|FAIL/i.test(status)) continue;
 
-    rows.push({ dodId, traceQuote, anchor, status });
+    rows.push({ dodId, traceQuote, anchor, status: normalizeTraceStatus(status) });
   }
   return rows;
 }

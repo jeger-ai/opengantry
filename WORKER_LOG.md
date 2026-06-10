@@ -116,3 +116,18 @@ example trace line for gapman verify
 - DoD 3 MSN-0033: CommandReporter + structured AudienceTaggedStep; filterTaggedStepsForAudience at source
 - DoD 4 MSN-0033: buildMissionYamlScaffold shared; mcp-legislation split; verify test modules split; toPosixRel/errorMessage helpers
 - DoD 5 MSN-0033: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (223 tests)
+
+## MSN-0034 — v1.1.2 verify pipeline close-out
+
+- DoD 1 MSN-0034: single evaluateVerifyPhases per runVerifyCore; verify-present.ts sink presenters; no process.exitCode in runVerifyCore
+- DoD 2 MSN-0034: CommandReporter owns human/json/audience verify output
+- DoD 3 MSN-0034: verify-remediation owns phase table; deleted executeVerifyMission, buildVerifyRemediation, verify-flow, verify-repair
+- DoD 4 MSN-0034: buildVerifyHintContext unified; human failures emit audience next-steps
+- DoD 5 MSN-0034: dev-validate-core OK — 225 tests
+
+## MSN-0035 — trace status enum, engine discriminant, N1 sweep
+
+- DoD 1 MSN-0035: TraceRow.status is NormalizedTraceStatus; parsed at mission-yaml and mission-markdown boundaries
+- DoD 2 MSN-0035: GitProofOutcome and TracePhaseOutcome use consistent kind discriminant in verify-engine.ts
+- DoD 3 MSN-0035: errorMessage sweep across src/cli; fromPosix/repoAbsPath in upgrade, teacher, substrate, architecture paths
+- DoD 4 MSN-0035: dev-validate-core OK — full test suite green

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { CLI_NAME } from "./constants.js";
-import { logInfo, logWarn, toPosixRel } from "./cli-io.js";
+import { fromPosix, logInfo, logWarn, toPosixRel } from "./cli-io.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -75,11 +75,11 @@ export function resolveUpgradeMsn(repoRoot: string, explicit?: string): string {
 }
 
 function upgradeTmpAbs(repoRoot: string): string {
-  return path.join(repoRoot, REL_UPGRADE_TMP.split("/").join(path.sep));
+  return path.join(repoRoot, fromPosix(REL_UPGRADE_TMP));
 }
 
 function stagePathForTarget(repoRoot: string, targetRel: string): string {
-  return path.join(upgradeTmpAbs(repoRoot), targetRel.split("/").join(path.sep));
+  return path.join(upgradeTmpAbs(repoRoot), fromPosix(targetRel));
 }
 
 function writeStagedFiles(repoRoot: string, writes: PlannedWrite[]): Record<string, string> {
@@ -267,7 +267,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   };
 
   const missionRel = `.gitagent/missions/${msnId}.upgrade-v${semverSlug(bundled)}.yaml`;
-  const missionAbs = path.join(repoRoot, missionRel.split("/").join(path.sep));
+  const missionAbs = path.join(repoRoot, fromPosix(missionRel));
   const suggestedHumanAction = `git add ${missionRel}\ngit commit -m "[${msnId}] approve substrate upgrade to v${bundled}"`;
 
   const shared: UpgradePlanResult = {

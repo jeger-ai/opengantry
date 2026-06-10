@@ -2,21 +2,21 @@
 export type NormalizedTraceStatus = "PASS" | "FAIL" | "PENDING";
 
 export function normalizeTraceStatus(status: string): NormalizedTraceStatus {
-  const upper = status.toUpperCase();
-  if (upper.includes("PASS")) return "PASS";
-  if (upper.includes("PENDING")) return "PENDING";
-  if (upper.includes("FAIL")) return "FAIL";
+  const upper = status.trim().toUpperCase();
+  if (upper === "PASS") return "PASS";
+  if (upper === "FAIL") return "FAIL";
+  if (upper === "PENDING") return "PENDING";
   return "PENDING";
 }
 
-export function isPassStatus(status: string): boolean {
-  return normalizeTraceStatus(status) === "PASS";
+export function isPassStatus(status: NormalizedTraceStatus): boolean {
+  return status === "PASS";
 }
 
-export function isPendingStatus(status: string): boolean {
-  return normalizeTraceStatus(status) === "PENDING";
+export function isPendingStatus(status: NormalizedTraceStatus): boolean {
+  return status === "PENDING";
 }
 
-export function isFailStatus(status: string): boolean {
-  return normalizeTraceStatus(status) === "FAIL";
+export function isFailStatus(status: NormalizedTraceStatus): boolean {
+  return status === "FAIL";
 }

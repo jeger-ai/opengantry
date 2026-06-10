@@ -1,0 +1,27 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: thermo review fix — verify pipeline unification, CommandReporter adoption, remediation collapse v1.1.2
+msn_id: MSN-0034
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0034: single evaluateVerifyPhases per runVerifyCore; verify-present.ts sink presenters; no process.exitCode in runVerifyCore"
+    anchor: "MSN-0034"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0034: CommandReporter owns human/json/audience verify output"
+    anchor: "MSN-0034"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0034: verify-remediation owns phase table; deleted executeVerifyMission, buildVerifyRemediation, verify-flow, verify-repair"
+    anchor: "MSN-0034"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0034: buildVerifyHintContext unified; human failures emit audience next-steps"
+    anchor: "MSN-0034"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0034: dev-validate-core OK — 225 tests"
+    anchor: "MSN-0034"
+    status: PASS

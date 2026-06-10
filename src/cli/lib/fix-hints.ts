@@ -1,11 +1,6 @@
 import { logInfo } from "./cli-io.js";
-import { GXT_ERROR, mapGitProofCodeToGxt } from "./gxt-error-codes.js";
 import { teacherIdentitySetupHint } from "./teacher-identity.js";
 import type { TraceFailureKind } from "./trace-failure-kind.js";
-import type { VerifyFailurePhase } from "./verify-engine.js";
-import type { AudienceTaggedStep } from "./verify-remediation.js";
-import type { VerifyRemediation } from "./verify-remediation.js";
-import type { OutputAudience } from "./audience-output.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
 
@@ -131,7 +126,6 @@ export function hintTraceStaleEvidence(workerLogPath: string, missionPath: strin
   ].join("; ");
 }
 
-/** Mission still has legislate stub placeholder in trace_quote (status may already be PASS). */
 export function hintTraceQuoteStillPlaceholder(
   missionPath: string,
   workerLogPath: string,
@@ -139,14 +133,13 @@ export function hintTraceQuoteStillPlaceholder(
   return `edit ${missionPath}: replace trace_quote placeholder with a verbatim substring from ${workerLogPath} (not the other way around)`;
 }
 
-/** Worker loop after Teacher legislation — trace rows still PENDING. */
 export function hintTracePendingSteps(
   workerLogPath: string,
   missionPath: string,
   gateCommand?: string,
 ): string[] {
   const verifyCmd = `gapman verify --mission ${missionPath}`;
-  const steps = [
+  return [
     `eval "$(gapman runtime env --mission ${missionPath})" then execute worker within TMVC`,
     gateCommand
       ? `run gate (${gateCommand}); append a unique mission-specific line to ${workerLogPath} (not bare gate output if "OK" appears elsewhere)`
@@ -154,7 +147,6 @@ export function hintTracePendingSteps(
     `edit ${missionPath}: set trace row status PASS and trace_quote to verbatim substring from ${workerLogPath}`,
     verifyCmd,
   ];
-  return steps;
 }
 
 export function hintForbiddenZone(firstPath: string, missionPath: string): string {
@@ -163,134 +155,6 @@ export function hintForbiddenZone(firstPath: string, missionPath: string): strin
 
 export function hintRuntimeHumanSummary(summary: string, errorFile: string): string {
   return `${summary} See ${errorFile} (GXT_LAST_ERROR_FILE).`;
-}
-
-export type VerifyPhase = VerifyFailurePhase;
-
-export interface VerifyHintContext {
-  root?: string;
-  missionPath: string;
-  msnId?: string;
-  workerLogPath?: string;
-  gateCommand?: string;
-  gitProofMessage?: string;
-  strictTrace?: boolean;
-  /** Typed trace failure — preferred over traceFailureReason for control flow. */
-  traceKind?: TraceFailureKind;
-  /** When set and still the legislate placeholder, emit targeted hint. */
-  traceQuote?: string;
-  /** Legacy string reason — use traceKind when available. */
-  traceFailureReason?: string;
-}
-
-export function hintsForVerifyPhase(phase: VerifyPhase, ctx: VerifyHintContext): VerifyRemediation {
-  switch (phase) {
-    case "git_proof":
-      return hintsForGitProofPhase(ctx);
-    case "gate":
-      return hintsForGatePhase(ctx);
-    case "trace_pending":
-      return hintsForTracePendingPhase(ctx);
-    case "trace":
-      return hintsForTracePhase(ctx);
-    default: {
-      const _exhaustive: never = phase;
-      return _exhaustive;
-    }
-  }
-}
-
-function tagStep(audience: OutputAudience, step: string): AudienceTaggedStep {
-  return { audience, step };
-}
-
-function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const verifyCmd = `gapman verify --mission ${mission}`;
-  const code = parseGitProofCode(ctx.gitProofMessage ?? "");
-  const gitCtx = {
-    root: ctx.root,
-    missionPath: mission,
-    msnId: ctx.msnId ?? parseMsnIdFromGitProofMessage(ctx.gitProofMessage ?? ""),
-    repoRelMission: mission,
-  };
-  const hint = code ? hintGitProof(code, gitCtx) : verifyCmd;
-  const nextActions =
-    code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
-      ? [hint.split("; ")[0]!, "gapman teacher set \"$(git config user.email)\"", verifyCmd]
-      : ["gapman teacher set \"$(git config user.email)\"", verifyCmd];
-  const tagged_steps: AudienceTaggedStep[] = [
-    tagStep("teacher", 'gapman teacher set "$(git config user.email)"'),
-    tagStep("verifier", verifyCmd),
-  ];
-  if (code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER") {
-    tagged_steps.unshift(tagStep("teacher", nextActions[0]!));
-  }
-  return {
-    error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
-    fix_hints: [hint],
-    next_actions: nextActions,
-    tagged_steps,
-  };
-}
-
-function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const verifyCmd = `gapman verify --mission ${mission}`;
-  const gate = ctx.gateCommand ?? "<gate>";
-  return {
-    error_code: GXT_ERROR.GATE_FAILED,
-    fix_hints: [hintGate(gate, mission)],
-    next_actions: [`re-run gate: ${gate}`, verifyCmd],
-    tagged_steps: [
-      tagStep("worker", `re-run gate: ${gate}`),
-      tagStep("verifier", verifyCmd),
-    ],
-  };
-}
-
-function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
-  const steps = hintTracePendingSteps(workerLog, mission, ctx.gateCommand);
-  return {
-    error_code: GXT_ERROR.TRACE_PENDING,
-    fix_hints: steps.slice(0, 3),
-    next_actions: steps,
-    tagged_steps: [
-      tagStep("worker", steps[0]!),
-      tagStep("worker", steps[1]!),
-      tagStep("worker", steps[2]!),
-      tagStep("verifier", steps[3] ?? verifyCmd(mission)),
-    ],
-  };
-}
-
-function verifyCmd(mission: string): string {
-  return `gapman verify --mission ${mission}`;
-}
-
-function hintsForTracePhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
-  const verifyCmd = `gapman verify --mission ${mission}`;
-  const traceKind = ctx.traceKind ?? "other";
-  const hints: string[] = [hintForTraceKind(traceKind, workerLog, mission, ctx.traceQuote)];
-  const errorCode =
-    traceKind === "ambiguous"
-      ? GXT_ERROR.TRACE_AMBIGUOUS
-      : traceKind === "stale_evidence"
-        ? GXT_ERROR.TRACE_STALE
-        : GXT_ERROR.TRACE_MISSING;
-  return {
-    error_code: errorCode,
-    fix_hints: hints,
-    next_actions: [verifyCmd, `gapman verify --mission ${mission} --fix`],
-    tagged_steps: [
-      tagStep("verifier", verifyCmd),
-      tagStep("verifier", `gapman verify --mission ${mission} --fix`),
-    ],
-  };
 }
 
 export function hintForTraceKind(

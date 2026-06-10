@@ -3,7 +3,7 @@ import type { AgentErrorPayload } from "../lib/agent-error.js";
 import { agentErrorAbsolutePath } from "../lib/agent-error.js";
 import { hintForbiddenZone, hintRuntimeHumanSummary, logFixHint } from "../lib/fix-hints.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
@@ -58,7 +58,7 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
         `runtime env: mission file not found: ${options.mission} (ENOENT). Use an existing mission path — e.g. .gitagent/missions/example.verify.yaml — or run gapman legislate first, then pass that YAML path.`,
       );
     } else {
-      logError(e instanceof Error ? e.message : String(e));
+      logError(errorMessage(e));
     }
     setExitCode(2);
   }
@@ -124,7 +124,7 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
     }
     if (result.exitCode !== 0) setExitCode(result.exitCode);
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
   }
 }

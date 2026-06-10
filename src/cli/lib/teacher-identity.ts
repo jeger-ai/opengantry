@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fromPosix } from "./cli-io.js";
 import { gitRunOk } from "./git-repo.js";
 
 export const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS" as const;
@@ -32,7 +33,7 @@ function normalizeEmailList(raw: string): string[] {
 }
 
 function readAllowlistFile(repoRoot: string, relPath: string): string[] {
-  const abs = path.join(repoRoot, relPath.split("/").join(path.sep));
+  const abs = path.join(repoRoot, fromPosix(relPath));
   if (!fs.existsSync(abs)) return [];
   return normalizeEmailList(fs.readFileSync(abs, "utf8"));
 }
@@ -119,14 +120,14 @@ export function serializeTeacherAllowlist(emails: string[]): string {
 }
 
 export function writeTeacherAllowlistLocal(repoRoot: string, emails: string[]): void {
-  const abs = path.join(repoRoot, REL_TEACHER_ALLOWLIST_LOCAL.split("/").join(path.sep));
+  const abs = path.join(repoRoot, fromPosix(REL_TEACHER_ALLOWLIST_LOCAL));
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.writeFileSync(abs, serializeTeacherAllowlist(emails), "utf8");
 }
 
 /** Create gitignored local allowlist from repo git user.email when missing. */
 export function ensureTeacherAllowlistOnInit(repoRoot: string): boolean {
-  const abs = path.join(repoRoot, REL_TEACHER_ALLOWLIST_LOCAL.split("/").join(path.sep));
+  const abs = path.join(repoRoot, fromPosix(REL_TEACHER_ALLOWLIST_LOCAL));
   if (fs.existsSync(abs)) return false;
   const team = readAllowlistFile(repoRoot, REL_TEACHER_ALLOWLIST);
   if (team.length > 0) return false;

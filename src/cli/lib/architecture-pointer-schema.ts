@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fromPosix } from "./cli-io.js";
 import { REL_ARCHITECTURE_POINTER } from "./constants.js";
 import {
   ARCHITECTURE_POINTER_SCHEMA_VERSION,
@@ -12,7 +13,7 @@ import {
 const VALID_KINDS = new Set<ArchitectureDocKind>(["file", "directory", "external", "unset"]);
 
 export function architecturePointerPath(repoRoot: string): string {
-  return path.join(repoRoot, REL_ARCHITECTURE_POINTER.split("/").join(path.sep));
+  return path.join(repoRoot, fromPosix(REL_ARCHITECTURE_POINTER));
 }
 
 function validateDiscovery(raw: unknown): ArchitectureDiscovery {

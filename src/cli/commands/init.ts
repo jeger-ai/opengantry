@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER, REL_MANIFEST } from "../lib/constants.js";
-import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, logManagedAssetConflicts, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { getRepoRoot } from "../lib/git.js";
 import {
   isIntegrationIdeKey,
@@ -107,7 +107,7 @@ function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
   try {
     templatesRoot = resolveTemplateRootFromModule();
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return null;
   }
@@ -117,7 +117,7 @@ function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
     recipeFilesExist(templatesRoot, compat);
     return { repoRoot, templatesRoot, compat };
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return null;
   }
@@ -131,7 +131,7 @@ function validateInitProfile(
   try {
     profile.integrationsDocPath = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return false;
   }

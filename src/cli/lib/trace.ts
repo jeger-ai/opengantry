@@ -1,6 +1,6 @@
 import path from "node:path";
 import { WORKER_LOG_FILENAME } from "./constants.js";
-import { isPassStatus } from "./trace-status.js";
+import { isPassStatus, normalizeTraceStatus } from "./trace-status.js";
 import type { TraceRow } from "./types.js";
 import {
   buildWorkerLogLineMapForQuotes,
@@ -41,7 +41,7 @@ export interface TraceVerifyResult {
 }
 
 export function isPassTraceRow(status: string): boolean {
-  return isPassStatus(status);
+  return isPassStatus(normalizeTraceStatus(status));
 }
 
 export function resolveQuoteLineNumber(

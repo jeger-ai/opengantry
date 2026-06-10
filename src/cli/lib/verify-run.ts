@@ -1,15 +1,15 @@
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
+import { evaluateVerifyPhases } from "./verify-engine.js";
 import {
-  emitVerifyJson,
-  runVerifyBreakGlass,
-  runVerifyPhasesFromEngine,
-} from "./verify-flow.js";
-import { runVerifyWithFix } from "./verify-repair.js";
-import {
-  buildBreakGlassPayload,
-  buildVerifyResultPayload,
-  initFailurePayload,
-} from "./verify-result-payload.js";
+  presentBreakGlassHuman,
+  presentBreakGlassJson,
+  presentFix,
+  presentHuman,
+  presentHumanInitFailure,
+  presentJsonFromResult,
+  presentJsonInitFailure,
+  resolveVerifySink,
+} from "./verify-present.js";
 import type { VerifyOptions } from "./verify-types.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -18,66 +18,49 @@ export interface VerifyRunResult {
   exitCode: number;
 }
 
-export type VerifySinkMode = "human" | "json" | "fix" | "break_glass";
-
 /**
- * Unified verify orchestration: load workspace once, branch by sink mode.
- * Human/json/fix/break-glass share one entry path.
+ * Unified verify orchestration: load workspace once, evaluate once, present by sink.
  */
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
   const { root, manifest } = loadWorkspace();
   const mission = parseMissionFile(root, options.mission);
   const missionArg = options.mission;
+  const sink = resolveVerifySink(options);
 
-  if (options.breakGlass === true) {
-    if (options.json) {
-      const payload = buildBreakGlassPayload(root, mission, options);
-      emitVerifyJson(payload);
-      return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
+  switch (sink) {
+    case "break_glass_json":
+      return presentBreakGlassJson(root, mission, options);
+    case "break_glass_human":
+      return presentBreakGlassHuman(root, mission, options);
+    case "json": {
+      try {
+        assertMissionGatePresent(mission);
+        const result = evaluateVerifyPhases(root, mission, options, manifest);
+        return presentJsonFromResult(root, mission, missionArg, options, manifest, result);
+      } catch (e) {
+        return presentJsonInitFailure(options, e);
+      }
     }
-    const ok = runVerifyBreakGlass(root, mission, options);
-    return { ok, exitCode: ok ? 0 : 2 };
-  }
-
-  if (options.json) {
-    try {
-      assertMissionGatePresent(mission);
-      const payload = buildVerifyResultPayload(root, manifest, mission, missionArg, options);
-      emitVerifyJson(payload);
-      return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
-    } catch (e) {
-      const payload = initFailurePayload(e);
-      emitVerifyJson(payload);
-      return { ok: false, exitCode: payload.exit_code };
+    case "fix_interactive":
+    case "fix_noninteractive":
+    case "human": {
+      try {
+        assertMissionGatePresent(mission);
+      } catch (e) {
+        return presentHumanInitFailure(options, e);
+      }
+      const result = evaluateVerifyPhases(root, mission, options, manifest);
+      if (sink === "fix_interactive") {
+        return presentFix(root, mission, missionArg, options, result, false);
+      }
+      if (sink === "fix_noninteractive") {
+        return presentFix(root, mission, missionArg, options, result, true);
+      }
+      return presentHuman(root, mission, missionArg, options, result);
+    }
+    default: {
+      const _exhaustive: never = sink;
+      return _exhaustive;
     }
   }
-
-  assertMissionGatePresent(mission);
-
-  if (options.fix === true) {
-    const savedExit = process.exitCode;
-    process.exitCode = undefined;
-    await runVerifyWithFix(root, mission, missionArg, options, manifest);
-    const exitCode = typeof process.exitCode === "number" ? process.exitCode : 0;
-    if (exitCode === 0) {
-      process.exitCode = savedExit;
-    }
-    return { ok: exitCode === 0, exitCode };
-  }
-
-  const savedExit = process.exitCode;
-  process.exitCode = undefined;
-  const ok = runVerifyPhasesFromEngine(root, mission, missionArg, options, manifest);
-  const exitCode = ok ? 0 : typeof process.exitCode === "number" ? process.exitCode : 1;
-  if (ok) {
-    process.exitCode = savedExit;
-  }
-  return { ok, exitCode };
-}
-
-/**
- * Lib-level verify execution with typed result (no process.exitCode side channel for callers).
- */
-export async function executeVerifyMission(options: VerifyOptions): Promise<VerifyRunResult> {
-  return runVerifyCore(options);
 }

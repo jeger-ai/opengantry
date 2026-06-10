@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import path from "node:path";
+import { errorMessage } from "./cli-io.js";
 import { writeAgentErrorPayload } from "./agent-error.js";
 import { buildForbiddenBaseline, detectForbiddenViolations } from "./forbidden-scan.js";
 import { createTelemetryWriter } from "./telemetry-log.js";
@@ -186,7 +187,7 @@ export async function runRuntimeExec(
   } catch (e) {
     writer.logEvent({
       type: "runtime_error",
-      message: e instanceof Error ? e.message : String(e),
+      message: errorMessage(e),
     });
     const errorResult = runtimeErrorResult(workerLogPath, flightId);
     logFlightEnd(writer, errorResult, 0);

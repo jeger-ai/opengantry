@@ -13,12 +13,12 @@ test("verifyTraceRows: anchor line must contain quote", () => {
   const p = path.join(dir, "WORKER_LOG.md");
   fs.writeFileSync(p, log, "utf8");
   const ok = verifyTraceRows(p, [
-    { dodId: "1", traceQuote: "evidence here", anchor: "2", status: "PASS" },
+    { dodId: "1", traceQuote: "evidence here", anchor: "2", status: "PASS" as const },
   ]);
   assert.equal(ok.failures.length, 0);
   const bad = verifyTraceRows(
     p,
-    [{ dodId: "1", traceQuote: "evidence here", anchor: "1", status: "PASS" }],
+    [{ dodId: "1", traceQuote: "evidence here", anchor: "1", status: "PASS" as const }],
     { strictTrace: true },
   );
   assert.ok(bad.failures.length > 0);
@@ -38,7 +38,7 @@ test("gatePassed: exit code and substring rules", () => {
 test("verifyTraceRows: missing WORKER_LOG", () => {
   const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-miss-")), "nope.md");
   const result = verifyTraceRows(p, [
-    { dodId: "1", traceQuote: "x", anchor: "1", status: "PASS" },
+    { dodId: "1", traceQuote: "x", anchor: "1", status: "PASS" as const },
   ]);
   assert.equal(result.failures.length, 1);
   assert.match(result.failures[0]!.reason, /WORKER_LOG missing/);
@@ -49,7 +49,7 @@ test("verifyTraceRows: numeric anchor out of range", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-range-"));
   const p = path.join(dir, "WORKER_LOG.md");
   fs.writeFileSync(p, "one line only\n", "utf8");
-  const row = { dodId: "1", traceQuote: "one line only", anchor: "9", status: "PASS" };
+  const row = { dodId: "1", traceQuote: "one line only", anchor: "9", status: "PASS" as const };
   const strict = verifyTraceRows(p, [row], { strictTrace: true });
   assert.ok(strict.failures.length > 0);
   assert.match(strict.failures[0]!.reason, /out of range/);
@@ -66,7 +66,7 @@ test("verifyTraceRows: freeform anchor same line as quote", () => {
   const p = path.join(dir, "WORKER_LOG.md");
   fs.writeFileSync(p, "prefix | evidence | suffix\n", "utf8");
   const result = verifyTraceRows(p, [
-    { dodId: "1", traceQuote: "evidence", anchor: "|", status: "PASS" },
+    { dodId: "1", traceQuote: "evidence", anchor: "|", status: "PASS" as const },
   ]);
   assert.equal(result.failures.length, 0);
 });
@@ -89,7 +89,7 @@ test("verifyTraceRows: auto-fuzzy resolves line drift by default", () => {
     dodId: "1",
     traceQuote: "example trace line for gapman verify",
     anchor: "1",
-    status: "PASS",
+    status: "PASS" as const,
   };
   const strictOnly = verifyTraceRows(p, [row], { strictTrace: true });
   assert.ok(strictOnly.failures.length > 0);

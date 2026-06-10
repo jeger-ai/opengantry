@@ -1,5 +1,5 @@
 import { getRepoRoot } from "../lib/git.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import {
   loadArchitecturePointer,
   summarizeArchitecturePointer,
@@ -44,7 +44,7 @@ export function runArchPointer(options: ArchOptions = {}): void {
     const pointer = loadArchitecturePointer(repoRoot);
     logInfo(summarizeArchitecturePointer(pointer));
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
   }
 }
@@ -55,7 +55,7 @@ export async function runArchCredSet(options: ArchCredSetOptions): Promise<void>
     repoRoot = getRepoRoot(options.cwd);
     validateCredentialSlot(options.slot);
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return;
   }
@@ -64,7 +64,7 @@ export async function runArchCredSet(options: ArchCredSetOptions): Promise<void>
   try {
     stdin = await readStdinCredentialPayload();
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return;
   }
@@ -74,7 +74,7 @@ export async function runArchCredSet(options: ArchCredSetOptions): Promise<void>
     writeArchitectureCredential(repoRoot, options.slot, options.kind, values);
     logInfo(`gapman arch cred: stored slot=${options.slot} kind=${options.kind}`);
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
   }
 }
@@ -85,7 +85,7 @@ export function runArchCredUnset(options: ArchCredUnsetOptions): void {
     repoRoot = getRepoRoot(options.cwd);
     validateCredentialSlot(options.slot);
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return;
   }
@@ -103,7 +103,7 @@ export function runArchCredStatus(options: ArchCredStatusOptions = {}): void {
     repoRoot = getRepoRoot(options.cwd);
     if (options.slot) validateCredentialSlot(options.slot);
   } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
+    logError(errorMessage(e));
     setExitCode(2);
     return;
   }

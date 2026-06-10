@@ -1,0 +1,23 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: thermo review fix — trace status enum, engine discriminant, N1 canonical helper sweep
+msn_id: MSN-0035
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0035: TraceRow.status is NormalizedTraceStatus; parsed at mission-yaml and mission-markdown boundaries"
+    anchor: "MSN-0035"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0035: GitProofOutcome and TracePhaseOutcome use consistent kind discriminant in verify-engine.ts"
+    anchor: "MSN-0035"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0035: errorMessage sweep across src/cli; fromPosix/repoAbsPath in upgrade, teacher, substrate, architecture paths"
+    anchor: "MSN-0035"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0035: dev-validate-core OK — full test suite green"
+    anchor: "MSN-0035"
+    status: PASS

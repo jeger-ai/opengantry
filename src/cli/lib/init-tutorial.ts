@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME } from "./constants.js";
-import { logError, logInfo, setExitCode } from "./cli-io.js";
+import { fromPosix, logError, logInfo, setExitCode } from "./cli-io.js";
 import { teacherMissionStamped } from "./git-proof.js";
 import {
   ONBOARDING_ADOPTION_DOC,
@@ -14,7 +14,7 @@ import {
 } from "./onboarding-flow.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
-import { executeVerifyMission } from "./verify-run.js";
+import { runVerifyCore } from "./verify-run.js";
 
 type ClackPrompts = typeof import("@clack/prompts");
 
@@ -39,7 +39,7 @@ function pickTutorialSkillKey(skillKeys: string[]): string {
 }
 
 function missionAbsolute(repoRoot: string, missionRel: string): string {
-  return path.join(repoRoot, missionRel.split("/").join(path.sep));
+  return path.join(repoRoot, fromPosix(missionRel));
 }
 
 async function confirmTeacherStamp(
@@ -117,7 +117,7 @@ async function runTutorialVerifyStep(
     return { verifyOk: true, ranVerify: false };
   }
 
-  const verifyResult = await executeVerifyMission({
+  const verifyResult = await runVerifyCore({
     mission: missionPath,
     fix: true,
     fixNonInteractive: true,

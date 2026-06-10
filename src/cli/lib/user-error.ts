@@ -1,4 +1,4 @@
-import { logError, setExitCode } from "./cli-io.js";
+import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
 import { gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
 
@@ -69,6 +69,6 @@ export function userFacingErrorToJson(e: unknown): UserFacingErrorJson {
       exit_code: e.exitCode,
     };
   }
-  const message = e instanceof Error ? e.message : String(e);
+  const message = errorMessage(e);
   return { error_code: "GXT_VERIFY_FAILED", message, exit_code: 1 };
 }

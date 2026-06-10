@@ -41,27 +41,34 @@ export interface VerifyPhaseSuccess {
 
 export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
 
-interface GitProofOk {
-  kind: "ok";
-  proofMsnId: string;
+type GitProofOutcome =
+  | { kind: "ok"; proofMsnId: string }
+  | { kind: "fail"; failure: VerifyPhaseFailure };
+
+type TracePhaseOutcome =
+  | { kind: "ok"; warnings: TraceVerifyWarning[]; skippedUncommitted: number }
+  | { kind: "fail"; failure: VerifyPhaseFailure };
+
+function gitProofFailure(
+  workerLogPath: string,
+  message: string,
+): VerifyPhaseFailure {
+  return {
+    ok: false,
+    phase: "git_proof",
+    message,
+    exitCode: 1,
+    workerLogPath,
+    gitProofMessage: message,
+  };
 }
 
-type GitProofOutcome = GitProofOk | VerifyPhaseFailure;
-
-interface TracePhaseOk {
-  kind: "ok";
-  warnings: TraceVerifyWarning[];
-  skippedUncommitted: number;
-}
-
-type TracePhaseOutcome = TracePhaseOk | VerifyPhaseFailure;
-
-function isGitProofOk(proof: GitProofOutcome): proof is GitProofOk {
-  return "kind" in proof && proof.kind === "ok";
-}
-
-function isTracePhaseOk(trace: TracePhaseOutcome): trace is TracePhaseOk {
-  return "kind" in trace && trace.kind === "ok";
+function tracePhaseFailure(
+  phase: "trace_pending" | "trace",
+  workerLogPath: string,
+  fields: Omit<VerifyPhaseFailure, "ok" | "phase" | "workerLogPath">,
+): VerifyPhaseFailure {
+  return { ok: false, phase, workerLogPath, ...fields };
 }
 
 export function resolveGateWorkDir(root: string, options: VerifyOptions): string {
@@ -83,15 +90,7 @@ function evaluateGitProof(
     });
     return { kind: "ok", proofMsnId };
   } catch (e) {
-    const message = errorMessage(e);
-    return {
-      ok: false,
-      phase: "git_proof",
-      message,
-      exitCode: 1,
-      workerLogPath,
-      gitProofMessage: message,
-    };
+    return { kind: "fail", failure: gitProofFailure(workerLogPath, errorMessage(e)) };
   }
 }
 
@@ -126,13 +125,13 @@ function evaluateTracePhase(
   const hasPending = mission.traceRows.some((row) => isPendingStatus(row.status));
   if (hasPending) {
     return {
-      ok: false,
-      phase: "trace_pending",
-      message:
-        "Trace rows still PENDING — worker must execute, update mission trace row, then verify",
-      exitCode: 1,
-      workerLogPath,
-      gateCommand: mission.gate?.command,
+      kind: "fail",
+      failure: tracePhaseFailure("trace_pending", workerLogPath, {
+        message:
+          "Trace rows still PENDING — worker must execute, update mission trace row, then verify",
+        exitCode: 1,
+        gateCommand: mission.gate?.command,
+      }),
     };
   }
 
@@ -144,14 +143,14 @@ function evaluateTracePhase(
   if (traceResult.failures.length > 0) {
     const first = traceResult.failures[0]!;
     return {
-      ok: false,
-      phase: "trace",
-      message: first.reason,
-      exitCode: 1,
-      workerLogPath,
-      traceKind: classifyTraceFailure(first.reason, first.row.traceQuote, options.strictTrace === true),
-      traceQuote: first.row.traceQuote,
-      traceReason: first.reason,
+      kind: "fail",
+      failure: tracePhaseFailure("trace", workerLogPath, {
+        message: first.reason,
+        exitCode: 1,
+        traceKind: classifyTraceFailure(first.reason, first.row.traceQuote, options.strictTrace === true),
+        traceQuote: first.row.traceQuote,
+        traceReason: first.reason,
+      }),
     };
   }
 
@@ -167,16 +166,16 @@ function evaluateTracePhase(
   if (evidence.failures.length > 0) {
     const first = evidence.failures[0]!;
     return {
-      ok: false,
-      phase: "trace",
-      message: first.reason,
-      exitCode: 1,
-      workerLogPath,
-      traceKind: "stale_evidence",
-      traceQuote: first.row.traceQuote,
-      traceReason: first.reason,
-      attestationCommit: first.attestationCommit,
-      stalePaths: first.stalePaths,
+      kind: "fail",
+      failure: tracePhaseFailure("trace", workerLogPath, {
+        message: first.reason,
+        exitCode: 1,
+        traceKind: "stale_evidence",
+        traceQuote: first.row.traceQuote,
+        traceReason: first.reason,
+        attestationCommit: first.attestationCommit,
+        stalePaths: first.stalePaths,
+      }),
     };
   }
 
@@ -193,7 +192,7 @@ export function evaluateVerifyPhases(
   const workerLogPath = resolveWorkerLogPath(root, options);
 
   const proof = evaluateGitProof(root, mission, workerLogPath);
-  if (!isGitProofOk(proof)) return proof;
+  if (proof.kind === "fail") return proof.failure;
   const { proofMsnId } = proof;
 
   if (options.prePush === true && isLegislativeStub(mission)) {
@@ -215,7 +214,7 @@ export function evaluateVerifyPhases(
   if (gateFailure) return gateFailure;
 
   const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
-  if (!isTracePhaseOk(trace)) return trace;
+  if (trace.kind === "fail") return trace.failure;
 
   return {
     ok: true,

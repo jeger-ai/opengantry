@@ -7,6 +7,7 @@ import { isGapmanUserError } from "./user-error.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
+  type VerifyPhaseResult,
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
 import { verifyFailurePresentation } from "./verify-failure-presentation.js";
@@ -174,6 +175,23 @@ export function initFailurePayload(e: unknown): VerifyFailedPayload {
   };
 }
 
+/** Map a pre-computed phase result → structured payload (no logging or re-evaluation). */
+export function buildVerifyResultPayloadFromPhaseResult(
+  root: string,
+  mission: ParsedMission,
+  missionArg: string,
+  options: VerifyOptions,
+  _manifest: Manifest,
+  result: VerifyPhaseResult,
+): VerifyResultPayload {
+  const missionRel = missionRelPath(root, mission);
+  const msnId = mission.msnId ?? undefined;
+  if (result.ok) {
+    return successPayload(root, mission, result);
+  }
+  return failureFromPhase(result, missionRel, options, root, msnId);
+}
+
 /** Phase evaluation → structured payload (no logging or process exit). */
 export function buildVerifyResultPayload(
   root: string,
@@ -182,14 +200,15 @@ export function buildVerifyResultPayload(
   missionArg: string,
   options: VerifyOptions,
 ): VerifyResultPayload {
-  const missionRel = missionRelPath(root, mission);
-  const msnId = mission.msnId ?? undefined;
   const result = evaluateVerifyPhases(root, mission, options, manifest);
-
-  if (result.ok) {
-    return successPayload(root, mission, result);
-  }
-  return failureFromPhase(result, missionRel, options, root, msnId);
+  return buildVerifyResultPayloadFromPhaseResult(
+    root,
+    mission,
+    missionArg,
+    options,
+    manifest,
+    result,
+  );
 }
 
 /** Load workspace, parse mission, assert gate — flat init failures on error. */

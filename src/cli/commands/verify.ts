@@ -1,6 +1,7 @@
+import { setExitCode } from "../lib/cli-io.js";
 import { parseMissionFile } from "../lib/mission-parser.js";
 import { initFailurePayload } from "../lib/verify-result-payload.js";
-import { emitVerifyJson } from "../lib/verify-flow.js";
+import { emitVerifyJson } from "../lib/verify-present.js";
 import type { VerifyOptions } from "../lib/verify-types.js";
 import { evaluateVerifyPhases } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -25,7 +26,9 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
     assertVerifyOptionsCompatible(options);
   } catch (e) {
     if (options.json) {
-      emitVerifyJson(initFailurePayload(e));
+      const payload = initFailurePayload(e);
+      emitVerifyJson(payload, options);
+      setExitCode(payload.exit_code);
       return;
     }
     reportUserFacingError(e);
@@ -33,10 +36,15 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
   }
 
   try {
-    await runVerifyCore(options);
+    const result = await runVerifyCore(options);
+    if (!result.ok) {
+      setExitCode(result.exitCode);
+    }
   } catch (e) {
     if (options.json) {
-      emitVerifyJson(initFailurePayload(e));
+      const payload = initFailurePayload(e);
+      emitVerifyJson(payload, options);
+      setExitCode(payload.exit_code);
       return;
     }
     reportUserFacingError(e);

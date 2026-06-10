@@ -1,4 +1,5 @@
 import { writeAgentErrorPayload } from "./agent-error.js";
+import { errorMessage } from "./cli-io.js";
 import {
   buildVerifyResultPayloadFromOptions,
   type VerifyResultPayload,
@@ -42,7 +43,7 @@ export function handleRuntimeEnv(missionFilePath: string): RuntimeEnvMcpResult {
       status: "error",
       error: {
         code: "RUNTIME_ENV_FAILED",
-        message: e instanceof Error ? e.message : String(e),
+        message: errorMessage(e),
         retryable: true,
       },
     };
@@ -100,7 +101,7 @@ export async function handleRuntimeExec(input: RuntimeExecMcpInput): Promise<Run
       status: "error",
       error: {
         code: "RUNTIME_EXEC_FAILED",
-        message: e instanceof Error ? e.message : String(e),
+        message: errorMessage(e),
         retryable: true,
       },
     };

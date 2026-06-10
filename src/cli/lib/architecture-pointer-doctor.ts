@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { errorMessage, fromPosix } from "./cli-io.js";
 import { REL_ARCHITECTURE_POINTER } from "./constants.js";
 import {
   loadArchitectureCredential,
@@ -21,7 +22,7 @@ function doctorCheckArchitectureAccess(repoRoot: string, pointer: ArchitecturePo
   if (!pointer.access?.required) return lines;
 
   const skillRel = resolveArchitectureAccessSkill(pointer);
-  const skillAbs = path.join(repoRoot, skillRel.split("/").join(path.sep));
+  const skillAbs = path.join(repoRoot, fromPosix(skillRel));
   if (!fs.existsSync(skillAbs)) {
     lines.push({ level: "warn", message: `architecture access skill missing: ${skillRel}` });
   } else {
@@ -58,7 +59,7 @@ function doctorCheckArchitectureTarget(repoRoot: string, pointer: ArchitecturePo
     return lines;
   }
 
-  const targetAbs = path.resolve(repoRoot, pointer.location.split("/").join(path.sep));
+  const targetAbs = path.resolve(repoRoot, fromPosix(pointer.location));
   const rootResolved = path.resolve(repoRoot);
   if (targetAbs !== rootResolved && !targetAbs.startsWith(`${rootResolved}${path.sep}`)) {
     lines.push({ level: "fail", message: "architecture pointer location escapes repo root" });
@@ -102,7 +103,7 @@ export function runArchitecturePointerDoctorChecks(repoRoot: string): DoctorLine
   } catch (e) {
     lines.push({
       level: "fail",
-      message: e instanceof Error ? e.message : String(e),
+      message: errorMessage(e),
     });
     return lines;
   }

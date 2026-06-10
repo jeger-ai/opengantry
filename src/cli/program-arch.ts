@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { logError, setExitCode } from "./lib/cli-io.js";
+import { logError, setExitCode, errorMessage } from "./lib/cli-io.js";
 import { parseArchitectureCredentialKind, type ArchitectureCredentialKind } from "./lib/architecture-credential.js";
 import {
   runArchCredSet,
@@ -38,7 +38,7 @@ export function registerArchCommands(program: Command): void {
       try {
         kind = parseArchitectureCredentialKind(opts.kind);
       } catch (e) {
-        logError(e instanceof Error ? e.message : String(e));
+        logError(errorMessage(e));
         setExitCode(2);
         return;
       }

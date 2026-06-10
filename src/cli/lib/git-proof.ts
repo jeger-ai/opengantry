@@ -90,7 +90,7 @@ export function listMsnSubjectCommits(
 }
 
 function normalizeChangedPath(p: string): string {
-  return p.trim().split(path.sep).join("/");
+  return p.trim().replaceAll(path.sep, "/");
 }
 
 /** Paths changed in commit `hash` (repo-relative forward slashes). */

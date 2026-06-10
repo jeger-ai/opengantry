@@ -1,3 +1,4 @@
+import { errorMessage } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
 import { runUpgradeApply } from "./upgrade-apply.js";
 import { runUpgradePlan } from "./upgrade-plan.js";
@@ -39,5 +40,5 @@ function mcpErrorBody(e: unknown): Record<string, unknown> {
   if (e instanceof GapmanUserError) {
     return { error: e.code, message: e.message, hint: e.hint };
   }
-  return { error: "UPGRADE_ERROR", message: e instanceof Error ? e.message : String(e) };
+  return { error: "UPGRADE_ERROR", message: errorMessage(e) };
 }

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
 import { gitRun } from "./git-repo.js";
 
@@ -73,7 +74,7 @@ export function computeRepoFingerprint(root: string): string {
 }
 
 function draftTokenKeyPath(root: string): string {
-  return path.join(root, DRAFT_TOKEN_KEY_REL.split("/").join(path.sep));
+  return path.join(root, fromPosix(DRAFT_TOKEN_KEY_REL));
 }
 
 function ensureDraftTokenKey(root: string): Buffer {
@@ -99,7 +100,7 @@ function signPayload(payload: DraftLegislationPayload, key: Buffer): string {
 }
 
 function replayLedgerPath(root: string): string {
-  return path.join(root, DRAFT_TOKEN_REPLAY_REL.split("/").join(path.sep));
+  return path.join(root, fromPosix(DRAFT_TOKEN_REPLAY_REL));
 }
 
 function readReplaySet(root: string): Set<string> {

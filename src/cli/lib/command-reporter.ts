@@ -1,4 +1,4 @@
-import { logInfo } from "./cli-io.js";
+import { logError, logInfo } from "./cli-io.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
@@ -6,6 +6,11 @@ import {
   type OutputAudience,
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
+import { CLI_NAME } from "./constants.js";
+import { logFixHint } from "./fix-hints.js";
+import type { VerifyPhaseSuccess } from "./verify-engine.js";
+import type { VerifyFailurePresentation } from "./verify-failure-presentation.js";
+import type { VerifyResultPayload } from "./verify-result-payload.js";
 import type { AudienceTaggedStep } from "./verify-remediation.js";
 
 export type CommandReporterChannel = "human" | "json" | "silent";
@@ -43,9 +48,56 @@ export class CommandReporter {
     logInfo(message);
   }
 
-  emitJson(payload: unknown): void {
+  emitError(message: string): void {
+    if (this.channel === "silent" || this.channel === "json") return;
+    logError(message);
+  }
+
+  emitFixHint(hint: string): void {
+    if (this.channel === "silent" || this.channel === "json") return;
+    logFixHint(hint);
+  }
+
+  emitJsonPayload(payload: VerifyResultPayload): void {
     if (this.channel === "silent") return;
     logInfo(JSON.stringify(payload, null, 2));
+  }
+
+  emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {
+    if (this.channel === "silent" || this.channel === "json") return;
+    this.emitInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${result.proofMsnId})`);
+    if (result.outcome === "pre_push_stub") {
+      this.emitInfo(
+        `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,
+      );
+      return;
+    }
+    this.emitInfo(`${CLI_NAME} verify: gate passed`);
+    for (const warning of result.traceWarnings) {
+      const tag = warning.autoResolved ? "auto-resolved" : "drift";
+      this.emitInfo(
+        `  trace: line ${tag} DoD ${warning.row.dodId} — declared ${String(warning.declaredLine)}, found ${String(warning.foundLine)}`,
+      );
+    }
+    if (result.traceEvidenceSkippedUncommitted !== undefined) {
+      this.emitInfo(
+        `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted WORKER_LOG line(s) skipped stale check`,
+      );
+    }
+    this.emitInfo(`${CLI_NAME} verify: trace mapping OK (${result.workerLogPath})`);
+  }
+
+  emitFailurePresentation(presentation: VerifyFailurePresentation): void {
+    if (this.channel === "silent" || this.channel === "json") return;
+    this.emitError(`[${presentation.error_code}] ${presentation.headline}`);
+    for (const line of presentation.detail_lines) {
+      if (line.startsWith("---")) this.emitError(line);
+      else this.emitError(`  ${line}`);
+    }
+    for (const hint of presentation.fix_hints) {
+      this.emitFixHint(hint);
+    }
+    this.emitNextSteps(presentation.next_actions, presentation.tagged_steps);
   }
 
   emitNextSteps(steps: string[], tagged?: AudienceTaggedStep[]): void {

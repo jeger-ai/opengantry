@@ -3,6 +3,7 @@ import path from "node:path";
 import YAML from "yaml";
 import { REL_MISSION_SCHEMA, MSN_ID_PATTERN } from "./constants.js";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "./mission-legislative-stub.js";
+import { normalizeTraceStatus } from "./trace-status.js";
 import type { ParsedMission, TraceRow, YamlMission } from "./types.js";
 
 export interface MissionTraceRowStub {
@@ -100,7 +101,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     dodId: r.dod_id,
     traceQuote: r.trace_quote,
     anchor: r.anchor,
-    status: r.status,
+    status: normalizeTraceStatus(r.status),
   }));
   return {
     msnId: (data.msn_id ?? data.msnId)!,

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { errorMessage } from "./cli-io.js";
 import { spawnSync } from "node:child_process";
 import {
   INTEGRATION_IDE_KEYS,
@@ -51,7 +52,7 @@ export function runIntegrationDoctorChecks(
   } catch (e) {
     lines.push({
       level: "warn",
-      message: `integration compat manifest unavailable: ${e instanceof Error ? e.message : String(e)}`,
+      message: `integration compat manifest unavailable: ${errorMessage(e)}`,
     });
     return lines;
   }
