@@ -93,3 +93,8 @@ example trace line for gapman verify
 - DoD 2 MSN-0030: .gitagent/README title and CLI references updated to v1.1.0; schema_version 0.5.0 unchanged
 - DoD 3 MSN-0030: README release table adds v1.1.0 row; PROJECT_OUTLINE_ANALYSIS CLI version row resolved
 - DoD 4 MSN-0030: BACKLOG #21 marked done; v1.1 complete in sprint guidance
+
+## MSN-0032 — Fix import-layer CI path normalization (#42)
+
+- Context Request ACCEPTED: `scripts/check-import-layers.mjs` — CI gate script outside TMVC `src/cli/` but required for import-layer enforcement (#42).
+- DoD 1 MSN-0032: # pass 4 — check-import-layers.test.js (relative + absolute lib→command violations fail; clean lib passes)

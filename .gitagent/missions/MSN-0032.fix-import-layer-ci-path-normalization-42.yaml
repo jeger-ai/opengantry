@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Fix import-layer CI path normalization (#42)
+msn_id: MSN-0032
+skill_key: gapman
+gate_command: npm run build && node --test dist/cli/tests/check-import-layers.test.js
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "# pass 4 — check-import-layers.test.js (relative + absolute lib→command violations fail; clean lib passes)"
+    anchor: "MSN-0032"
+    status: PASS
+gate_success_substring: pass

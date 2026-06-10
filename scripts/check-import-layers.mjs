@@ -13,11 +13,17 @@ function fail(msg) {
   process.exitCode = 1;
 }
 
+function normalizeCliPath(file) {
+  return file.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
 function layerOf(file) {
-  const norm = file.replace(/\\/g, "/");
-  if (norm.includes("/src/cli/commands/")) return "command";
-  if (norm.includes("/src/cli/lib/")) return "lib";
-  if (norm.endsWith("/src/cli/index.ts") || norm.endsWith("/src/cli/program.ts")) return "delivery";
+  const norm = normalizeCliPath(file);
+  if (/(^|\/)src\/cli\/commands\//.test(norm)) return "command";
+  if (/(^|\/)src\/cli\/lib\//.test(norm)) return "lib";
+  if (norm.endsWith("src/cli/index.ts") || norm.endsWith("src/cli/program.ts")) {
+    return "delivery";
+  }
   return "other";
 }
 
@@ -35,8 +41,15 @@ function resolveImportPath(file, spec) {
   if (!spec.startsWith(".")) return null;
   const dir = path.dirname(file);
   let target = path.normalize(path.join(dir, spec));
-  if (!target.endsWith(".ts")) target += ".ts";
-  return target.replace(/\\/g, "/");
+  const normalized = target.replace(/\\/g, "/");
+  if (normalized.endsWith(".js")) {
+    target = normalized.slice(0, -3) + ".ts";
+  } else if (!normalized.endsWith(".ts")) {
+    target = normalized + ".ts";
+  } else {
+    target = normalized;
+  }
+  return target;
 }
 
 for (const file of files) {
