@@ -67,9 +67,9 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
     .option("--commit <sha>", "Git commit to attach break-glass note (default HEAD)")
     .option("--audit-commit", "Write break-glass audit as empty commit instead of git note")
-    .option("--fix", "Interactive remediation menu on verify failure")
+    .option("--fix", "Interactive remediation on failure (human output only; cannot combine with --json)")
     .option("--non-interactive", "With --fix: print structured hints without prompts")
-    .option("--json", "Emit structured JSON result (with --fix: non-interactive hints only)")
+    .option("--json", "Emit structured JSON (failures include fix_hints and next_actions). Incompatible with --fix.")
     .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
     .action(
       async (opts: {

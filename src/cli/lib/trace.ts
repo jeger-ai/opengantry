@@ -27,13 +27,62 @@ export interface TraceVerifyOptions {
   strictTrace?: boolean;
 }
 
+export interface ResolvedQuoteLine {
+  row: TraceRow;
+  lineNumber: number;
+}
+
 export interface TraceVerifyResult {
   failures: TraceVerifyFailure[];
   warnings: TraceVerifyWarning[];
+  resolvedLines: ResolvedQuoteLine[];
+  map: WorkerLogLineMap | null;
 }
 
-function isPassStatus(status: string): boolean {
+export function isPassTraceRow(status: string): boolean {
   return status.toUpperCase().includes("PASS");
+}
+
+export function resolveQuoteLineNumber(
+  map: WorkerLogLineMap,
+  row: TraceRow,
+  resolvedLineByDodId: ReadonlyMap<string, number>,
+): number | null {
+  const override = resolvedLineByDodId.get(row.dodId);
+  if (override !== undefined) return override;
+
+  const anchor = row.anchor.trim();
+  if (/^\d+$/.test(anchor)) {
+    const declared = parseInt(anchor, 10);
+    const line = map.lines[declared - 1];
+    if (line !== undefined && line.includes(row.traceQuote)) return declared;
+    const matches = quoteLineNumbers(map, row.traceQuote);
+    if (matches.length === 1) return matches[0]!;
+    return null;
+  }
+
+  for (let i = 0; i < map.lines.length; i++) {
+    const line = map.lines[i]!;
+    if (line.includes(anchor) && line.includes(row.traceQuote)) return i + 1;
+  }
+  return null;
+}
+
+function buildResolvedQuoteLines(
+  passRows: TraceRow[],
+  map: WorkerLogLineMap,
+  warnings: TraceVerifyWarning[],
+): ResolvedQuoteLine[] {
+  const resolvedLineByDodId = new Map<string, number>();
+  for (const warning of warnings) {
+    resolvedLineByDodId.set(warning.row.dodId, warning.foundLine);
+  }
+  const resolved: ResolvedQuoteLine[] = [];
+  for (const row of passRows) {
+    const lineNumber = resolveQuoteLineNumber(map, row, resolvedLineByDodId);
+    if (lineNumber !== null) resolved.push({ row, lineNumber });
+  }
+  return resolved;
 }
 
 function verifyNumericAnchorExact(
@@ -111,7 +160,7 @@ export function verifyTraceRows(
 ): TraceVerifyResult {
   const forceFuzzy = options.fuzzyNumericAnchor === true;
   const autoFuzzy = options.strictTrace !== true;
-  const passRows = rows.filter((r) => isPassStatus(r.status));
+  const passRows = rows.filter((r) => isPassTraceRow(r.status));
 
   const quotes = passRows.map((r) => r.traceQuote);
   const map = buildWorkerLogLineMapForQuotes(workerLogPath, quotes);
@@ -123,6 +172,8 @@ export function verifyTraceRows(
         reason: `WORKER_LOG missing: ${workerLogPath}`,
       })),
       warnings: [],
+      resolvedLines: [],
+      map: null,
     };
   }
 
@@ -166,7 +217,12 @@ export function verifyTraceRows(
     if (failure) failures.push(failure);
   }
 
-  return { failures, warnings };
+  return {
+    failures,
+    warnings,
+    resolvedLines: buildResolvedQuoteLines(passRows, map, warnings),
+    map,
+  };
 }
 
 export function defaultWorkerLogPath(repoRoot: string): string {

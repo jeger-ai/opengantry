@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-10 (thermo-nuclear review #2 findings recorded below; MSN-0031 merged → PR [#41](https://github.com/jeger-ai/opengantry/pull/41); **v1.1.1** remainder tracked below)
+**Last synced:** 2026-06-10 (thermo-nuclear review #2 findings recorded below; MSN-0031 merged → PR [#41](https://github.com/jeger-ai/opengantry/pull/41); **v1.1.0 npm publish** after tag; **v1.1.1** remainder tracked below)
 
 ---
 
@@ -142,7 +142,7 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | **Init tutorial dependency inversion** | → v1.1.1 (#43) | [#11](https://github.com/jeger-ai/opengantry/issues/11) |
 | **Program registrar cleanup** | Open | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
 | **Specimen MANIFEST routing** | Open | [#13](https://github.com/jeger-ai/opengantry/issues/13) |
-| **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `trace.ts` `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
+| **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `verifyTraceRows` returns `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
 | **`gapman mission validate` (JSON Schema)** | Open | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
 | **Configurable git-proof scan depth** | Open | [#24](https://github.com/jeger-ai/opengantry/issues/24) |
 | **Pre-commit TMVC path guard hook** | Open | [#25](https://github.com/jeger-ai/opengantry/issues/25) |
@@ -186,7 +186,7 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 
 ## Sprint guidance
 
-**Current focus:** **v1.1.1 maintainability** — [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#10](https://github.com/jeger-ai/opengantry/issues/10), [#11](https://github.com/jeger-ai/opengantry/issues/11). **No new features** until v1.1.1 blockers ship.
+**Current focus:** **Tag `v1.1.0` → npm publish** (MSN-0031 merged); then **v1.1.1 maintainability** — [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#10](https://github.com/jeger-ai/opengantry/issues/10), [#11](https://github.com/jeger-ai/opengantry/issues/11). **No new features** until v1.1.1 blockers ship.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

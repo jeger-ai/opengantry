@@ -27,6 +27,11 @@ test("gxtCodeFromGapmanUserError: passthrough GXT_* codes", () => {
   assert.equal(gxtCodeFromGapmanUserError("GXT_GATE_FAILED"), GXT_ERROR.GATE_FAILED);
 });
 
+test("gxtCodeFromGapmanUserError: INVALID_ARGUMENT maps to GXT_INVALID_ARGUMENT", () => {
+  assert.equal(gxtCodeFromGapmanUserError("INVALID_ARGUMENT"), GXT_ERROR.INVALID_ARGUMENT);
+  assert.equal(isKnownGapmanUserErrorCode("INVALID_ARGUMENT"), true);
+});
+
 test("gxtCodeFromGapmanUserError: runtime and forbidden codes", () => {
   assert.equal(gxtCodeFromGapmanUserError("FORBIDDEN_ZONE_VIOLATION"), GXT_ERROR.FORBIDDEN_ZONE);
   assert.equal(gxtCodeFromGapmanUserError("RUNTIME_EXEC_FAILED"), GXT_ERROR.RUNTIME_EXEC_FAILED);

@@ -93,6 +93,17 @@ Re-run the gate, append a fresh unique trace line to `WORKER_LOG.md`, update mis
 
 Migration escape hatch: `gapman verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
 
+### MCP verify envelope (v1.1+)
+
+`gxt_verify` / `handleVerify` returns a flat **`VerifyResultPayload`** — same shape as `gapman verify --json`:
+
+- Success: `{ "status": "passed", "phase": "full" | "pre_push_stub" | "break_glass", "exit_code": 0, … }`
+- Failure: `{ "status": "failed", "phase": "<phase>", "error_code": "GXT_*", "fix_hints": [], "next_actions": [], "exit_code": N, … }`
+
+Init and parse failures use **`status: "failed"`, `phase: "init"`** — not legacy `{ "status": "error" }`. Other MCP tools (`gxt_runtime_env`, `gxt_runtime_exec`) still use `{ "status": "error" }` until a future unification.
+
+`gapman verify --json` and `--fix` are mutually exclusive; combining them returns **`GXT_INVALID_ARGUMENT`** (`exit_code: 2`).
+
 ## Enforcement boundary
 
 **IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gapman verify`, and hooks.**
@@ -111,13 +122,13 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 |---------|------------|
 | **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 | **v1.0.0** | `gapman init --tutorial`, global `--audience`, adoption-first docs |
-| **v1.1.0** | Mission isolation (MSN-0024–0026): integration-branch PR base lock (`default_branch` + `GXT_INTEGRATION_BRANCH`), mission purity in `verify-pr-missions.sh`, stale trace evidence, script shipped via init |
+| **v1.1.0** | Mission isolation (MSN-0024–0026), stale trace evidence, `verify --json`, doctor substrate drift; MSN-0031 fail-closed stale evidence + verify orchestration unification |
 
 - Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **1.1.0**.
 - **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
 - **Local validate base ref:** `npm run validate` / `./scripts/dev-validate.sh` default to `origin/main`; pass your integration ref explicitly when it differs (e.g. `./scripts/dev-validate.sh origin/develop`).
-- **Upgrade from v1.0:** `gapman upgrade apply` (or `gapman init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, and updated workflow.
-- Package publishing remains disabled (`package.json` is `private: true`).
+- **Upgrade from v1.0:** `npm install @jeger-ai/opengantry@latest` (or `@1.1.0`), then `gapman upgrade apply` (or `gapman init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, stale-evidence verify, and updated workflow.
+- **npm publish (maintainers):** push an annotated tag `v1.1.0` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@1.1.0` or `@latest`.
 
 ## Hooks (fast, scoped)
 

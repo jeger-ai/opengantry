@@ -1,0 +1,27 @@
+# v1.1 thermo-nuclear review remediation — fail-closed stale evidence, verify orchestration, trace dedup (MSN-0031).
+# Legislated intent: v1.1 thermo-nuclear review remediation: fail-closed stale evidence, verify orchestration unification, trace quote dedup, MCP docs
+msn_id: MSN-0031
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0031: gitDiffNameOnlySinceCommit returns GitDiffSinceCommitResult; stale evidence fails closed on git diff error"
+    anchor: "99"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0031: unified runVerify orchestration with buildBreakGlassPayload and GXT_INVALID_ARGUMENT for --json --fix collision"
+    anchor: "100"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0031: verifyTraceRows returns resolvedLines; trace quote dedup removes second WORKER_LOG parse"
+    anchor: "101"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0031: ADOPTION MCP verify envelope documented; BACKLOG #22 marked done"
+    anchor: "102"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0031: traceWarningsJson dedup; VerifyMcpResult alias removed; 219 tests pass"
+    anchor: "103"
+    status: PASS
