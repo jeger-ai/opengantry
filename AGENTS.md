@@ -45,3 +45,40 @@ For **`gapman`** command reference, see root **`README.md`** (gapman CLI section
 When legislating missions, review **`.gitagent/out-of-scope/`** for relevant ADRs (Teacher obligation per **RULES**).
 
 If the user clearly scopes work to something that cannot affect OpenGantry (e.g. a typo in unrelated docs), still skim **RULES** and **MANIFEST** when the change could touch skills, missions, routing, or manifest sync.
+
+## Cursor Cloud specific instructions
+
+This repo is a **CLI-only** product (`gapman`); there is no dev server, database, or HTTP port to start.
+
+### Node.js 24+
+
+`package.json` requires **Node ≥ 24**. Cloud VMs may ship `/exec-daemon/node` at v22 — prepend nvm’s Node 24 to `PATH` before any `npm`/`gapman` command:
+
+```bash
+export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 24
+export PATH="$(dirname "$(nvm which 24)"):$PATH" && hash -r
+```
+
+Or invoke the built CLI directly: `node dist/cli/index.js <subcommand>` (after `npm run build`).
+
+### One-time repo config (not in the update script)
+
+```bash
+git config core.hooksPath .githooks
+git config commit.gpgsign false   # SSH/GPG signing agent is unavailable in Cloud VMs; required for git-based tests
+gapman teacher set "$(git config user.email)"
+```
+
+### Run / test / lint
+
+| Task | Command |
+|------|---------|
+| Build | `npm run build` |
+| CLI | `npm run gapman -- <subcommand>` |
+| Unit tests | `npm test` |
+| Full validation (CI parity) | `npm run validate` |
+| Lint | `npm run lint` |
+| Readiness | `gapman doctor` |
+| MCP dogfood (no Cursor) | `./scripts/validate-mcp-dogfood.sh` |
+
+See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the mission loop and Cursor MCP handoff.
