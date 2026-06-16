@@ -16,7 +16,8 @@
   ],
   "scripts": {
     "gen:version": "node scripts/gen-version.mjs",
-    "build": "npm run gen:version && tsc",
+    "gen:catalog": "node scripts/gen-asset-catalog.mjs",
+    "build": "npm run gen:version && npm run gen:catalog && tsc",
     "gapman": "node dist/cli/index.js",
     "lint": "eslint src/cli/**/*.ts",
     "check:changed": "./scripts/check-changed-code.sh",

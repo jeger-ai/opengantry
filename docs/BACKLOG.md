@@ -176,7 +176,7 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | Item | Status | Issue |
 |------|--------|-------|
 | **MCP type safety completion** | Open | [#8](https://github.com/jeger-ai/opengantry/issues/8) |
-| **Asset catalog generation** | Open | [#9](https://github.com/jeger-ai/opengantry/issues/9) |
+| **Asset catalog generation** | **Done** | [#9](https://github.com/jeger-ai/opengantry/issues/9); `scripts/gen-asset-catalog.mjs` |
 | **Verify test granularity** | → v1.1.1 | [#10](https://github.com/jeger-ai/opengantry/issues/10) |
 | **Init tutorial dependency inversion** | → v1.1.1 (#43) | [#11](https://github.com/jeger-ai/opengantry/issues/11) |
 | **Program registrar cleanup** | Open | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
