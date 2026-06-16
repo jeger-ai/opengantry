@@ -147,3 +147,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0045 close-out: MSN-0045 gapman verify full pass git_proof gate kpi trace
 - DoD 4 MSN-0045 close-out: MSN-0045 TOCTOU committed drift failed --pre-push with GXT_KPI_REPORT_STALE then recovery verify pass
 - DoD 5 MSN-0045 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (242 tests)
+
+## MSN-0046 — OpenGantry 2.0.0 release close-out
+
+- DoD 1 MSN-0046 close-out: Hardening: kpi-report-stale tests pass + TOCTOU artifact removed
+- DoD 2 MSN-0046 close-out: package.json / version.gen.js at 2.0.0
+- DoD 3 MSN-0046 close-out: README + DEVELOPMENT 2.0 release notes synced
+- DoD 4 MSN-0046 close-out: npm run validate green on main
+- DoD 5 MSN-0046 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (246 tests)

@@ -25,21 +25,21 @@ kpi_gate:
 trace_rows:
   - dod_id: "1"
     trace_quote: "Hardening: kpi-report-stale tests pass + TOCTOU artifact removed"
-    anchor: "MSN-0046"
-    status: PENDING
+    anchor: "MSN-0046 close-out"
+    status: PASS
   - dod_id: "2"
     trace_quote: "package.json / version.gen.js at 2.0.0"
-    anchor: "MSN-0046"
-    status: PENDING
+    anchor: "MSN-0046 close-out"
+    status: PASS
   - dod_id: "3"
     trace_quote: "README + DEVELOPMENT 2.0 release notes synced"
-    anchor: "MSN-0046"
-    status: PENDING
+    anchor: "MSN-0046 close-out"
+    status: PASS
   - dod_id: "4"
     trace_quote: "npm run validate green on main"
-    anchor: "MSN-0046"
-    status: PENDING
+    anchor: "MSN-0046 close-out"
+    status: PASS
   - dod_id: "5"
-    trace_quote: "dev-validate-core OK"
-    anchor: "MSN-0046"
-    status: PENDING
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (246 tests)"
+    anchor: "MSN-0046 close-out"
+    status: PASS
