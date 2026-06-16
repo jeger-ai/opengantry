@@ -26,11 +26,11 @@ trace_rows:
   - dod_id: "1"
     trace_quote: "MSN-0045 Phase 0 bootstrap: npm run build and KPI deterministic tests pass"
     anchor: "MSN-0045"
-    status: PENDING
+    status: PASS
   - dod_id: "2"
     trace_quote: "MSN-0045 gapman scan wrote .gitagent/kpi/MSN-0045.json with namespaced metrics"
     anchor: "MSN-0045"
-    status: PENDING
+    status: PASS
   - dod_id: "3"
     trace_quote: "MSN-0045 gapman verify full pass git_proof gate kpi trace"
     anchor: "MSN-0045"

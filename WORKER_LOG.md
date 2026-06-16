@@ -131,3 +131,8 @@ example trace line for gapman verify
 - DoD 2 MSN-0035: GitProofOutcome and TracePhaseOutcome use consistent kind discriminant in verify-engine.ts
 - DoD 3 MSN-0035: errorMessage sweep across src/cli; fromPosix/repoAbsPath in upgrade, teacher, substrate, architecture paths
 - DoD 4 MSN-0035: dev-validate-core OK — full test suite green
+
+## MSN-0045 — OpenGantry 2.0 KPI/perimeter hardened checkpoint
+
+- DoD 1 MSN-0045: MSN-0045 Phase 0 bootstrap: npm run build and KPI deterministic tests pass
+- DoD 2 MSN-0045: MSN-0045 gapman scan wrote .gitagent/kpi/MSN-0045.json with namespaced metrics

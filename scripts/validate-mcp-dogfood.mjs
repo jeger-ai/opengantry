@@ -16,7 +16,7 @@ process.chdir(dest);
 const draft = handleDraftLegislation({
   title: "Dogfood MCP flow",
   msn_id: "MSN-0301",
-  skill_key: "ui",
+  skill_key: "gapman",
   gate_command: "echo OK",
   gate_success_substring: "OK",
 });
