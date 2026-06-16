@@ -1,5 +1,6 @@
 # OpenGantry 2.0 checkpoint mission: KPI gate, scan, register, perimeter.
 # Legislated intent: hardened single-MSN local go/no-go for LLM-fed deterministic KPI gate + AST + perimeter.
+# Teacher attest: trace DoD 1-2 PASS after Phase 0 bootstrap and KPI scan evidence.
 msn_id: MSN-0045
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
