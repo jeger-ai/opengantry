@@ -162,6 +162,8 @@ npm run validate
 
 Runs **`dev-validate-core.sh`** (build, `gapman check`, `validate-gxt.sh manifest` via Node—no `jq`, tests, doctor, MCP dogfood, changed-code, MSN vs `origin/main`) then **`verify-pr-missions.sh`** (full `gapman verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
 
+**Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `check-import-layers.mjs`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
+
 **Hooks (automatic when `core.hooksPath=.githooks`):**
 
 - **pre-push** — `gapman verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gapman check` if manifest/skills changed; advisory `gapman perimeter` when governance files change; changed-code gate for touched `src/cli/**/*.ts`.

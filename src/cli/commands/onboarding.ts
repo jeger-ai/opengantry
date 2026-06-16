@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { CLI_NAME } from "../lib/constants.js";
 import {
   ONBOARDING_ADOPTION_DOC,
@@ -29,9 +31,6 @@ async function resolveOnboardingMissionPath(
   root: string,
   intent: string,
 ): Promise<{ missionPath: string; useExample: boolean; exitCode?: number } | null> {
-  const fs = await import("node:fs");
-  const path = await import("node:path");
-
   let missionPath = EXAMPLE_MISSION;
   const useExample = fs.existsSync(path.join(root, EXAMPLE_MISSION));
   if (useExample) {
@@ -75,8 +74,6 @@ async function maybeRunExampleVerify(
 
 export async function runOnboarding(options: OnboardingOptions = {}): Promise<void> {
   const p = await import("@clack/prompts");
-  const fs = await import("node:fs");
-  const path = await import("node:path");
 
   p.intro(`${CLI_NAME} onboarding — guided first mission loop`);
 

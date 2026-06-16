@@ -50,7 +50,25 @@ const STATIC_ASSETS = [
   { targetPath: "scripts/gxt-cursor-env.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
 ];
 
-/** Per-IDE discovery rules (tags/mode); paths come from filesystem scan. */
+/** Repo-only scripts — never ship via init catalog (OpenGantry specimen dev gates). */
+const REPO_ONLY_SCRIPTS = [
+  "check-changed-code.sh",
+  "check-import-layers.mjs",
+  "dev-validate-core.sh",
+  "dev-validate.sh",
+  "npm-pack-check.sh",
+  "validate-mcp-dogfood.mjs",
+  "validate-mcp-dogfood.sh",
+  "gen-asset-catalog.mjs",
+  "gen-version.mjs",
+];
+
+/** @param {string} fileNameOrRel */
+function isRepoOnlyScript(fileNameOrRel) {
+  const base = path.basename(fileNameOrRel);
+  return REPO_ONLY_SCRIPTS.includes(base);
+}
+
 const IDE_DISCOVERY_RULES = {
   cursor: { mode: "managed_strict", scanDir: ".cursor", targetPrefix: ".cursor" },
   default: { mode: "scaffold_only", scanSubdir: "integrations/{key}", templatePrefix: "integrations/{key}" },
@@ -87,8 +105,10 @@ function listFilesSorted(dirAbs, baseRel = "") {
   const out = [];
   const entries = fs.readdirSync(dirAbs).sort((a, b) => a.localeCompare(b));
   for (const name of entries) {
+    if (isRepoOnlyScript(name)) continue;
     const abs = path.join(dirAbs, name);
     const rel = baseRel ? `${baseRel}/${name}` : name;
+    if (isRepoOnlyScript(rel)) continue;
     const stat = fs.statSync(abs);
     if (stat.isDirectory()) {
       out.push(...listFilesSorted(abs, rel));
@@ -172,6 +192,23 @@ function formatCatalog(assets) {
 }
 
 /** @param {AssetSpec[]} assets */
+function assertRepoOnlyScriptsExcluded(assets) {
+  /** @type {string[]} */
+  const leaked = [];
+  for (const asset of assets) {
+    if (!asset.targetPath.startsWith("scripts/")) continue;
+    if (isRepoOnlyScript(asset.targetPath)) {
+      leaked.push(asset.targetPath);
+    }
+  }
+  if (leaked.length > 0) {
+    throw new Error(
+      `repo-only scripts must not appear in init catalog (see REPO_ONLY_SCRIPTS):\n  ${leaked.join("\n  ")}`,
+    );
+  }
+}
+
+/** @param {AssetSpec[]} assets */
 function assertNoDuplicateTargets(assets) {
   const seen = new Set();
   for (const asset of assets) {
@@ -245,6 +282,7 @@ function main() {
   );
 
   assertNoDuplicateTargets(assets);
+  assertRepoOnlyScriptsExcluded(assets);
   assertCanonicalPathsCovered(compat.integrations, assets);
   assertTemplateFilesExist(assets);
 

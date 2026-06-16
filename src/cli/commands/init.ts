@@ -81,6 +81,7 @@ async function resolveProfile(
 ): Promise<InitProfile | null> {
   const partial = profileFromCliFlags(options);
   if (shouldRunInteractiveWizard({ yes: options.yes, partial })) {
+    // Lazy-load: interactive wizard + @clack/prompts not needed on non-interactive init paths.
     const { runInitInteractiveWizard } = await import("../lib/init-interactive.js");
     return runInitInteractiveWizard(repoRoot, templatesRoot, partial);
   }
@@ -163,6 +164,7 @@ async function resolveInitAssetPlan(
   }
 
   logManagedAssetConflicts(plan.conflicts);
+  // Lazy-load: overwrite prompts only when managed-asset conflicts need resolution.
   const { canPromptInitOverwrite, promptOverwriteManagedAssets } = await import(
     "../lib/init-interactive.js"
   );
@@ -223,6 +225,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     substrateAlreadyPresent(repoRoot)
   ) {
     logInfo(`${CLI_NAME} init: substrate already present — tutorial only (skip re-scaffold)`);
+    // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
     const { runInitTutorial } = await import("../lib/init-tutorial.js");
     await runInitTutorial();
     mergeGitignoreFromTemplate(repoRoot, templatesRoot);
@@ -262,6 +265,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   }
   logInitSummary(plan.writes, plan.skippedUserMutable, plan.unchanged);
   if (options.tutorial) {
+    // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
     const { runInitTutorial } = await import("../lib/init-tutorial.js");
     await runInitTutorial();
   } else {

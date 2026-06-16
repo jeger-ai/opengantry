@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import * as p from "@clack/prompts";
 import { CLI_NAME } from "./constants.js";
 import { fromPosix, logError, logInfo, setExitCode } from "./cli-io.js";
 import { teacherMissionStamped } from "./git-proof.js";
@@ -15,8 +16,6 @@ import {
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
 import { runVerifyCore } from "./verify-run.js";
-
-type ClackPrompts = typeof import("@clack/prompts");
 
 function findExistingTutorialMission(repoRoot: string): string | null {
   const missionsDir = path.join(repoRoot, ".gitagent", "missions");
@@ -43,7 +42,6 @@ function missionAbsolute(repoRoot: string, missionRel: string): string {
 }
 
 async function confirmTeacherStamp(
-  p: ClackPrompts,
   repoRoot: string,
   missionPath: string,
 ): Promise<boolean> {
@@ -73,7 +71,6 @@ async function confirmTeacherStamp(
 }
 
 async function scaffoldTutorialMission(
-  p: ClackPrompts,
   repoRoot: string,
   skillKey: string,
 ): Promise<string | null> {
@@ -104,7 +101,6 @@ async function scaffoldTutorialMission(
 }
 
 async function runTutorialVerifyStep(
-  p: ClackPrompts,
   missionPath: string,
 ): Promise<{ verifyOk: boolean; ranVerify: boolean; verifyExitCode?: number }> {
   p.log.step("Step 5 — Verify");
@@ -131,7 +127,6 @@ async function runTutorialVerifyStep(
 }
 
 function emitTutorialOutro(
-  p: ClackPrompts,
   missionPath: string,
   verifyOk: boolean,
   ranVerify: boolean,
@@ -154,7 +149,6 @@ function emitTutorialOutro(
 }
 
 export async function runInitTutorial(): Promise<void> {
-  const p = await import("@clack/prompts");
   const { root: repoRoot, manifest } = loadWorkspace();
   const manifestPath = path.join(repoRoot, ".gitagent", "foreman", "MANIFEST.json");
   if (!fs.existsSync(manifestPath)) {
@@ -177,14 +171,13 @@ export async function runInitTutorial(): Promise<void> {
   logInfo('  gapman teacher set "$(git config user.email)"');
 
   const missionPath = await scaffoldTutorialMission(
-    p,
     repoRoot,
     pickTutorialSkillKey(Object.keys(manifest.skills)),
   );
   if (!missionPath) return;
 
   p.log.step("Step 3 — Teacher stamp (manual, required)");
-  if (!(await confirmTeacherStamp(p, repoRoot, missionPath))) {
+  if (!(await confirmTeacherStamp(repoRoot, missionPath))) {
     p.note(
       "Verify will fail until git-proof passes. Re-run: gapman verify --mission " + missionPath,
       "Paused",
@@ -202,8 +195,8 @@ export async function runInitTutorial(): Promise<void> {
     "  Init merged WORKER_LOG.md into .prettierignore — keep formatters off the trace log so line anchors stay stable",
   );
 
-  const { verifyOk, ranVerify, verifyExitCode } = await runTutorialVerifyStep(p, missionPath);
+  const { verifyOk, ranVerify, verifyExitCode } = await runTutorialVerifyStep(missionPath);
   p.log.step("Step 6 — Status dashboard");
   logInfo(`  ${onboardingStatusHint()}`);
-  emitTutorialOutro(p, missionPath, verifyOk, ranVerify, verifyExitCode);
+  emitTutorialOutro(missionPath, verifyOk, ranVerify, verifyExitCode);
 }
