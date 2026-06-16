@@ -23,22 +23,22 @@ kpi_gate:
       value: 0
 trace_rows:
   - dod_id: "1"
-    trace_quote: "Registry resolves GXT_IMPORT_LAYER_VIOLATION from structured gate JSON"
+    trace_quote: "DoD 1 MSN-0048 close-out: Registry resolves GXT_IMPORT_LAYER_VIOLATION from structured gate JSON"
     anchor: "MSN-0048"
     status: PASS
   - dod_id: "2"
-    trace_quote: "verify --fix quarantines lib-to-command import via AST with RULE-IMPORT-LAYER markers"
+    trace_quote: "DoD 2 MSN-0048 close-out: verify --fix quarantines lib-to-command import via AST with RULE-IMPORT-LAYER markers"
     anchor: "MSN-0048"
     status: PASS
   - dod_id: "3"
-    trace_quote: "SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun"
+    trace_quote: "DoD 3 MSN-0048 close-out: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun"
     anchor: "MSN-0048"
     status: PASS
   - dod_id: "4"
-    trace_quote: "verify --fix reruns full pipeline with fix false after import-layer mutation"
+    trace_quote: "DoD 4 MSN-0048 close-out: verify --fix reruns full pipeline with fix false after import-layer mutation"
     anchor: "MSN-0048"
     status: PASS
   - dod_id: "5"
-    trace_quote: "dev-validate-core OK"
+    trace_quote: "DoD 5 MSN-0048 close-out: dev-validate-core OK"
     anchor: "MSN-0048"
     status: PASS
