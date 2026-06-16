@@ -29,6 +29,18 @@ function validatePerimeterProtected(o: Record<string, unknown>): void {
   }
 }
 
+function validateSkillEntry(k: string, s: unknown): void {
+  if (typeof s !== "object" || s === null) throw new Error(`MANIFEST: skills.${k} must be an object`);
+  const sk = s as Record<string, unknown>;
+  if (!("trust_threshold" in sk)) throw new Error(`MANIFEST: skills.${k} missing trust_threshold`);
+  if (!("tmvc_roots" in sk)) throw new Error(`MANIFEST: skills.${k} missing tmvc_roots`);
+  if (!("forbidden_zones" in sk)) throw new Error(`MANIFEST: skills.${k} missing forbidden_zones`);
+  if (!Array.isArray(sk.tmvc_roots)) throw new Error(`MANIFEST: skills.${k}.tmvc_roots must be array`);
+  if (!Array.isArray(sk.forbidden_zones)) {
+    throw new Error(`MANIFEST: skills.${k}.forbidden_zones must be array`);
+  }
+}
+
 /** Mirrors scripts/validate-gxt.sh manifest checks */
 export function validateManifestShape(m: unknown): asserts m is Manifest {
   if (typeof m !== "object" || m === null) throw new Error("MANIFEST: not an object");
@@ -47,15 +59,6 @@ export function validateManifestShape(m: unknown): asserts m is Manifest {
   if (!Array.isArray(o.risk_keywords)) throw new Error("MANIFEST: risk_keywords must be an array");
   validatePerimeterProtected(o);
   for (const k of Object.keys(skills)) {
-    const s = skills[k];
-    if (typeof s !== "object" || s === null) throw new Error(`MANIFEST: skills.${k} must be an object`);
-    const sk = s as Record<string, unknown>;
-    if (!("trust_threshold" in sk)) throw new Error(`MANIFEST: skills.${k} missing trust_threshold`);
-    if (!("tmvc_roots" in sk)) throw new Error(`MANIFEST: skills.${k} missing tmvc_roots`);
-    if (!("forbidden_zones" in sk)) throw new Error(`MANIFEST: skills.${k} missing forbidden_zones`);
-    if (!Array.isArray(sk.tmvc_roots)) throw new Error(`MANIFEST: skills.${k}.tmvc_roots must be array`);
-    if (!Array.isArray(sk.forbidden_zones)) {
-      throw new Error(`MANIFEST: skills.${k}.forbidden_zones must be array`);
-    }
+    validateSkillEntry(k, skills[k]);
   }
 }

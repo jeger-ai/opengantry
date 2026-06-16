@@ -24,6 +24,55 @@ function integrationBlockers(repoRoot: string): string[] {
   return lines.filter((l) => l.level === "warn" || l.level === "fail").map((l) => l.message);
 }
 
+async function resolveOnboardingMissionPath(
+  p: typeof import("@clack/prompts"),
+  root: string,
+  intent: string,
+): Promise<{ missionPath: string; useExample: boolean; exitCode?: number } | null> {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  let missionPath = EXAMPLE_MISSION;
+  const useExample = fs.existsSync(path.join(root, EXAMPLE_MISSION));
+  if (useExample) {
+    p.log.step("Step 3 — Example mission available");
+    logInfo(`  Use existing ${EXAMPLE_MISSION} after Teacher stamps it.`);
+    logInfo(`  ${onboardingVerifyHint(EXAMPLE_MISSION)}`);
+    return { missionPath, useExample };
+  }
+
+  p.log.step("Step 3 — Scaffold mission (gapman start)");
+  const result = runStartOrchestration({
+    intent: intent.trim(),
+    writeMission: true,
+  });
+  if (!result.ok) {
+    logError("Start failed — see triage output above.");
+    return { missionPath, useExample: false, exitCode: result.exit_code };
+  }
+  missionPath = result.mission_file_path ?? missionPath;
+  for (const step of result.next_steps) logInfo(`  ${step}`);
+  return { missionPath, useExample: false };
+}
+
+async function maybeRunExampleVerify(
+  p: typeof import("@clack/prompts"),
+  useExample: boolean,
+): Promise<number | undefined> {
+  if (!useExample) return undefined;
+  const runNow = await p.confirm({
+    message: "Run verify on example mission now (non-interactive repair hints)?",
+    initialValue: true,
+  });
+  if (p.isCancel(runNow) || !runNow) return undefined;
+  const result = await runVerifyCore({
+    mission: EXAMPLE_MISSION,
+    fix: true,
+    fixNonInteractive: true,
+  });
+  return result.ok ? undefined : result.exitCode;
+}
+
 export async function runOnboarding(options: OnboardingOptions = {}): Promise<void> {
   const p = await import("@clack/prompts");
   const fs = await import("node:fs");
@@ -72,53 +121,25 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
     return;
   }
 
-  let missionPath = EXAMPLE_MISSION;
-  const useExample = fs.existsSync(path.join(root, EXAMPLE_MISSION));
-  if (useExample) {
-    p.log.step("Step 3 — Example mission available");
-    logInfo(`  Use existing ${EXAMPLE_MISSION} after Teacher stamps it.`);
-    logInfo(`  ${onboardingVerifyHint(EXAMPLE_MISSION)}`);
-  } else {
-    p.log.step("Step 3 — Scaffold mission (gapman start)");
-    const result = runStartOrchestration({
-      intent: intent.trim(),
-      writeMission: true,
-    });
-    if (!result.ok) {
-      logError("Start failed — see triage output above.");
-      setExitCode(result.exit_code);
-      p.outro("Onboarding incomplete");
-      return;
-    }
-    missionPath = result.mission_file_path ?? missionPath;
-    for (const step of result.next_steps) logInfo(`  ${step}`);
+  const resolved = await resolveOnboardingMissionPath(p, root, intent);
+  if (!resolved) return;
+  if (resolved.exitCode !== undefined) {
+    setExitCode(resolved.exitCode);
+    p.outro("Onboarding incomplete");
+    return;
   }
 
   p.log.step("Step 4 — Worker runtime");
-  logInfo(`  ${onboardingRuntimeEnvHint(missionPath)}`);
+  logInfo(`  ${onboardingRuntimeEnvHint(resolved.missionPath)}`);
 
   p.log.step("Step 5 — Verify with guided repair");
-  logInfo(`  ${onboardingVerifyHint(missionPath)}`);
+  logInfo(`  ${onboardingVerifyHint(resolved.missionPath)}`);
 
   p.log.step("Step 6 — Unified status dashboard");
   logInfo(`  ${onboardingStatusHint()}`);
 
-  if (useExample) {
-    const runNow = await p.confirm({
-      message: "Run verify on example mission now (non-interactive repair hints)?",
-      initialValue: true,
-    });
-    if (!p.isCancel(runNow) && runNow) {
-      const result = await runVerifyCore({
-        mission: EXAMPLE_MISSION,
-        fix: true,
-        fixNonInteractive: true,
-      });
-      if (!result.ok) {
-        setExitCode(result.exitCode);
-      }
-    }
-  }
+  const verifyExit = await maybeRunExampleVerify(p, resolved.useExample);
+  if (verifyExit !== undefined) setExitCode(verifyExit);
 
   p.outro(`Onboarding complete — see ${ONBOARDING_ADOPTION_DOC} for the full loop`);
 }

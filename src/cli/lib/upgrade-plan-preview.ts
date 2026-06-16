@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
-import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
 import type { PlannedWrite } from "./init-plan.js";
 
