@@ -163,3 +163,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0047: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
 - DoD 4 MSN-0047: verify --fix reruns full pipeline with fix false after mutation
 - DoD 5 MSN-0047: dev-validate-core OK
+
+## MSN-0048 — Import-layer Code Surgeon (JSON gate + AST quarantine)
+
+- DoD 1 MSN-0048: Registry resolves GXT_IMPORT_LAYER_VIOLATION from structured gate JSON
+- DoD 2 MSN-0048: verify --fix quarantines lib-to-command import via AST with RULE-IMPORT-LAYER markers
+- DoD 3 MSN-0048: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
+- DoD 4 MSN-0048: verify --fix reruns full pipeline with fix false after import-layer mutation
+- DoD 5 MSN-0048: dev-validate-core OK

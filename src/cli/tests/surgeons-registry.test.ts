@@ -43,3 +43,31 @@ test("getSurgeonForErrorCode: BANNED_IMPORT_DETECTED registered", () => {
   assert.ok(surgeon);
   assert.equal(surgeon!.errorCode, GXT_ERROR.BANNED_IMPORT_DETECTED);
 });
+
+test("resolveSurgeonErrorCode: maps import-layer gate JSON", () => {
+  const json = JSON.stringify({
+    schema_version: 1,
+    ok: false,
+    violations: [
+      {
+        file: "src/cli/lib/bad.ts",
+        rule_id: "RULE-LIB-TO-COMMAND",
+        module_specifier: "../commands/verify.js",
+        bindings: ["runVerify"],
+        line: 1,
+        column: 1,
+      },
+    ],
+  });
+  const code = resolveSurgeonErrorCode(gateFailure(""));
+  assert.equal(code, null);
+  const withStdout = resolveSurgeonErrorCode({
+    ...gateFailure(""),
+    gateStdout: json,
+  });
+  assert.equal(withStdout, GXT_ERROR.IMPORT_LAYER_VIOLATION);
+});
+
+test("getSurgeonForErrorCode: IMPORT_LAYER_VIOLATION registered", () => {
+  assert.equal(hasRegisteredSurgeon(GXT_ERROR.IMPORT_LAYER_VIOLATION), true);
+});

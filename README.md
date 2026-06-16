@@ -37,7 +37,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.0.0** — LLM evidence quarantine (`gapman scan`), deterministic KPI gate, AST skill discovery (`gapman register`), perimeter checks. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.1.0** — import-layer Code Surgeon (JSON gate + AST quarantine), LLM evidence quarantine (`gapman scan`), KPI gate, `register`, perimeter checks. Core verify is language-agnostic; native surgeons opt into workspace TypeScript. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## v1.0 adoption release
 
@@ -50,6 +50,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **v1.1.1** | Lib/command boundary, unified `runVerifyCore`, typed remediation, CommandReporter, mission YAML emitter |
 | **v1.1.2** | Verify pipeline close-out (MSN-0034–0035); typed verify phases, trace status at parse boundary |
 | **v2.0.0** | `gapman scan` + KPI gate, `register`, `check-imports`, `perimeter`; BYO `llm_verifiers`; KPI stale binding on `--pre-push`/`--ci` |
+| **v2.1.0** | Import-layer Code Surgeon (`check-import-layers.mjs --json`, AST quarantine, `GXT_IMPORT_LAYER_VIOLATION`); workspace-resolved optional TypeScript for surgeons |
 | **v1.1.0** | Stale trace evidence, mission purity PR lock, CI target lock, `verify --json`, doctor substrate drift warn |
 
 ## What you get

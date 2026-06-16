@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-16 (v2.0.0 **shipped** MSN-0046; MSN-0047 self-healing surgeon foundation **Done**; MSN-0045 checkpoint **Done**; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+**Last synced:** 2026-06-16 (v2.1.0 import-layer surgeon **MSN-0048**; v2.0.0 **shipped** MSN-0046; MSN-0047 foundation **Done**)
 
 ---
 
@@ -30,9 +30,11 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 | Item | Status | Mission |
 |------|--------|---------|
 | **Pluggable Code Surgeon registry + banned-import quarantine** | **Done** | MSN-0047 |
-| **Additional surgeons (compile roadblocks, perimeter drift)** | Open | — |
+| **Import-layer surgeon (JSON gate + AST quarantine)** | **Done** | MSN-0048 |
+| **Perimeter drift surgeon** | Open | v2.1.1+ (ADR; git-restore category) |
+| **Multi-language external surgeon adapter contract** | Open | post-v2.1 |
 
-Core invariant (MSN-0047): `gapman verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `WORKER_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
+Core invariant (MSN-0047+): `gapman verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `WORKER_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
 
 ---
 
@@ -245,7 +247,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** **MSN-0036–MSN-0044** tactical core + adoption UX ([#8](https://github.com/jeger-ai/opengantry/issues/8), [#13](https://github.com/jeger-ai/opengantry/issues/13), [#23](https://github.com/jeger-ai/opengantry/issues/23), [#30](https://github.com/jeger-ai/opengantry/issues/30)–[#33](https://github.com/jeger-ai/opengantry/issues/33)).
+**Current focus:** v2.1.0 import-layer surgeon shipped (MSN-0048); next: perimeter drift ADR, external adapter contract, tactical backlog ([#8](https://github.com/jeger-ai/opengantry/issues/8)–[#33](https://github.com/jeger-ai/opengantry/issues/33)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

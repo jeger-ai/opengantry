@@ -12,9 +12,9 @@ const FIXTURE_VIOLATION = path.join(
   "import-layer-violation.ts",
 );
 
-function runImportLayersCheck(repoRoot: string, ...files: string[]) {
+function runImportLayersCheck(repoRoot: string, ...args: string[]) {
   const script = path.join(repoRoot, "scripts", "check-import-layers.mjs");
-  return spawnSync("node", [script, ...files], {
+  return spawnSync("node", [script, ...args], {
     cwd: repoRoot,
     encoding: "utf8",
   });
@@ -55,4 +55,26 @@ test("check-import-layers: full-tree lib scan has zero command imports (#43)", (
   const result = runImportLayersCheck(repoRoot, ...files);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /import-layers OK/);
+});
+
+test("check-import-layers: --json emits structured violations", () => {
+  const repoRoot = getRepoRoot();
+  const result = runImportLayersCheck(repoRoot, "--json", FIXTURE_VIOLATION);
+  assert.notEqual(result.status, 0, result.stdout + result.stderr);
+  const payload = JSON.parse(result.stdout.trim());
+  assert.equal(payload.schema_version, 1);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.violations.length, 1);
+  assert.equal(payload.violations[0].rule_id, "RULE-LIB-TO-COMMAND");
+  assert.match(payload.violations[0].module_specifier, /verify\.js/);
+});
+
+test("check-import-layers: --json success payload", () => {
+  const repoRoot = getRepoRoot();
+  const clean = path.join("src", "cli", "lib", "constants.ts");
+  const result = runImportLayersCheck(repoRoot, "--json", clean);
+  assert.equal(result.status, 0, result.stderr);
+  const payload = JSON.parse(result.stdout.trim());
+  assert.equal(payload.ok, true);
+  assert.deepEqual(payload.violations, []);
 });

@@ -1,0 +1,44 @@
+# MSN-0048: Import-layer Code Surgeon (structured JSON gate + AST quarantine).
+msn_id: MSN-0048
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+llm_verifiers:
+  - id: stub
+    command: ./scripts/kpi-stub-verifier.sh
+    required: true
+aggregators:
+  - key: security_flaws
+    op: max
+    sources:
+      - stub::security_vulnerabilities
+kpi_gate:
+  report_path: .gitagent/kpi/MSN-0048.json
+  thresholds:
+    - metric: stub::complexity_score
+      op: "<="
+      value: 12
+    - metric: security_flaws
+      op: "=="
+      value: 0
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "Registry resolves GXT_IMPORT_LAYER_VIOLATION from structured gate JSON"
+    anchor: "MSN-0048"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "verify --fix quarantines lib-to-command import via AST with RULE-IMPORT-LAYER markers"
+    anchor: "MSN-0048"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun"
+    anchor: "MSN-0048"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "verify --fix reruns full pipeline with fix false after import-layer mutation"
+    anchor: "MSN-0048"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "dev-validate-core OK"
+    anchor: "MSN-0048"
+    status: PASS

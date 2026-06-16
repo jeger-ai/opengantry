@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 /**
  * Enforce src/cli import layers for changed TypeScript files.
- * Usage: node scripts/check-import-layers.mjs [file...]
+ * Usage: node scripts/check-import-layers.mjs [--json] [file...]
  */
 import fs from "node:fs";
 import path from "node:path";
 
-const files = process.argv.slice(2).filter((f) => f.endsWith(".ts"));
+const rawArgs = process.argv.slice(2);
+const jsonMode = rawArgs.includes("--json");
+const files = rawArgs.filter((f) => f.endsWith(".ts"));
 
-function fail(msg) {
-  console.error(`import-layers: ${msg}`);
-  process.exitCode = 1;
-}
+const violations = [];
 
 function normalizeCliPath(file) {
   return file.replace(/\\/g, "/").replace(/^\.\//, "");
@@ -28,14 +27,43 @@ function layerOf(file) {
   return "other";
 }
 
-function extractImports(source) {
-  const imports = [];
-  const re = /from\s+["']([^"']+)["']/g;
+function stripSurgeonQuarantineRegions(source) {
+  return source.replace(
+    /\/\/ GXT-SURGEON-QUARANTINE-START[\s\S]*?\/\/ GXT-SURGEON-QUARANTINE-END\s*/g,
+    "",
+  );
+}
+
+function extractImportsWithMeta(source) {
+  const scrubbed = stripSurgeonQuarantineRegions(source);
+  const results = [];
+  const re = /import\s+(?:type\s+)?(?:[\w*{}\s,]+)\s+from\s+["']([^"']+)["']|import\s+["']([^"']+)["']/g;
   let m;
-  while ((m = re.exec(source)) !== null) {
-    imports.push(m[1]);
+  while ((m = re.exec(scrubbed)) !== null) {
+    const spec = m[1] ?? m[2];
+    if (!spec) continue;
+    const before = scrubbed.slice(0, m.index);
+    const line = before.split(/\r?\n/).length;
+    const lastNl = before.lastIndexOf("\n");
+    const column = m.index - (lastNl === -1 ? 0 : lastNl + 1) + 1;
+    results.push({ spec, line, column, snippet: m[0] });
   }
-  return imports;
+  return results;
+}
+
+function extractBindingsFromSnippet(snippet) {
+  const named = /import\s+(?:type\s+)?\{([^}]+)\}/.exec(snippet);
+  if (named) {
+    return named[1]
+      .split(",")
+      .map((part) => part.trim().split(/\s+as\s+/i).pop().trim())
+      .filter((b) => b.length > 0 && !/^type\s/.test(b));
+  }
+  const def = /import\s+(\w+)\s+from/.exec(snippet);
+  if (def) return [def[1]];
+  const ns = /import\s+\*\s+as\s+(\w+)/.exec(snippet);
+  if (ns) return [ns[1]];
+  return ["__gxtImportLayer"];
 }
 
 function resolveImportPath(file, spec) {
@@ -53,29 +81,67 @@ function resolveImportPath(file, spec) {
   return target;
 }
 
+function recordViolation(file, ruleId, moduleSpecifier, bindings, line, column) {
+  violations.push({
+    file: normalizeCliPath(file),
+    rule_id: ruleId,
+    module_specifier: moduleSpecifier,
+    bindings,
+    line,
+    column,
+  });
+  if (!jsonMode) {
+    console.error(`import-layers: ${humanMessage(ruleId, file, moduleSpecifier)}`);
+    process.exitCode = 1;
+  }
+}
+
+function humanMessage(ruleId, file, spec) {
+  switch (ruleId) {
+    case "RULE-LIB-TO-COMMAND":
+      return `${file} must not import command module ${spec}`;
+    case "RULE-LIB-COMMANDER":
+      return `${file} (lib) must not import commander`;
+    case "RULE-COMMAND-RUNTIME-EXEC-PROCESS":
+      return `${file} must not import runtime-exec-process directly; use runtime-exec.js`;
+    default:
+      return `${file} import layer violation (${ruleId})`;
+  }
+}
+
 for (const file of files) {
   if (!file.includes("src/cli/")) continue;
   const src = fs.readFileSync(file, "utf8");
   const layer = layerOf(file);
-  const imports = extractImports(src);
+  const imports = extractImportsWithMeta(src);
 
-  for (const spec of imports) {
+  for (const imp of imports) {
+    const spec = imp.spec;
     const resolved = resolveImportPath(file, spec);
     if (!resolved) continue;
     const targetLayer = layerOf(resolved);
+    const bindings = extractBindingsFromSnippet(imp.snippet);
 
     if (layer === "lib" && targetLayer === "command") {
-      fail(`${file} must not import command module ${spec}`);
+      recordViolation(file, "RULE-LIB-TO-COMMAND", spec, bindings, imp.line, imp.column);
     }
     if (layer === "command" && resolved.includes("runtime-exec-process")) {
-      fail(`${file} must not import runtime-exec-process directly; use runtime-exec.js`);
+      recordViolation(file, "RULE-COMMAND-RUNTIME-EXEC-PROCESS", spec, bindings, imp.line, imp.column);
     }
     if (layer === "lib" && spec.includes("commander")) {
-      fail(`${file} (lib) must not import commander`);
+      recordViolation(file, "RULE-LIB-COMMANDER", spec, bindings, imp.line, imp.column);
     }
   }
 }
 
-if (process.exitCode !== 1) {
+if (jsonMode) {
+  const payload = {
+    schema_version: 1,
+    ok: violations.length === 0,
+    violations,
+  };
+  process.stdout.write(`${JSON.stringify(payload)}\n`);
+  process.exitCode = violations.length === 0 ? 0 : 1;
+} else if (process.exitCode !== 1) {
   console.log(`import-layers OK (${files.length} file(s))`);
 }

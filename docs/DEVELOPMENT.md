@@ -171,15 +171,20 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
 Deterministic quarantine mutations for specific gate failures — an isolation layer, **not** a pass generator:
 
-1. **`gapman verify --fix`** (interactive or `--non-interactive`) invokes a registered **Code Surgeon** when gate stderr matches a known failure (baseline: `GXT_BANNED_IMPORT_DETECTED` from `gapman check-imports`).
-2. Surgeon **quarantines** the offending import: removes the live `import` line, injects `GXT-SURGEON-QUARANTINE` markers and compile-time Proxy roadblocks (no silent deletion).
+1. **`gapman verify --fix`** (interactive or `--non-interactive`) invokes a registered **Code Surgeon** when gate output matches a known failure:
+   - **`GXT_BANNED_IMPORT_DETECTED`** — `gapman check-imports` stderr
+   - **`GXT_IMPORT_LAYER_VIOLATION`** — `check-import-layers.mjs --json` structured report (v2.1+)
+2. Surgeon **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
 3. On mutation, append **`[SURGEON-MUTATION] …`** to `WORKER_LOG.md`, then **rerun the full verify pipeline with `--fix` disabled**.
 4. Plain `gapman verify` (no `--fix`) remains fail-closed and never mutates TMVC.
 
+**Language boundary:** verify core phases (`git_proof`, `gate`, `kpi`, `trace`) are language-agnostic. Native surgeons require TypeScript in the adopter workspace (or gapman package root); unresolved `typescript` disables surgeon paths only — core verify still runs.
+
+**Import-layer JSON contract:** `node scripts/check-import-layers.mjs --json <files…>` emits `{ schema_version, ok, violations[] }` with stable `rule_id` values. Surgeons parse JSON only — not human stderr.
+
 Implementation: [`src/cli/lib/surgeons/`](../src/cli/lib/surgeons/) registry + orchestration in `surgeon-orchestration.ts` / `verify-present.ts`.
 
-**Release (v2.0.0):** bump `package.json` with `npm version 2.0.0 --no-git-tag-version`; set `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json) to match; tag `v2.0.0` to trigger [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml).
-- **post-checkout** — scaffold `WORKER_LOG.md` on feature branches when missing.
+**Release (v2.1.0):** bump `package.json` with `npm version 2.1.0 --no-git-tag-version`; sync `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json); tag `v2.1.0` for npm publish.
 
 ## Definition of done (OpenGantry repo)
 

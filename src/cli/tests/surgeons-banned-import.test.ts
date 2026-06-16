@@ -23,7 +23,7 @@ export const x = fetchData;
 
   const out = fs.readFileSync(file, "utf8");
   assert.match(out, /GXT-SURGEON-QUARANTINE-START \[RULE-BANNED-IMPORT\]/);
-  assert.match(out, /GXT-SURGEON-QUARANTINE: removed banned specifier "axios"/);
+  assert.match(out, /GXT-SURGEON-QUARANTINE: removed banned specifier axios/);
   assert.match(out, /const fetchData = new Proxy/);
   assert.match(out, /GXT Security Violation/);
   assert.match(out, /GXT-SURGEON-QUARANTINE-END/);
