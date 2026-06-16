@@ -46,6 +46,17 @@ When legislating missions, review **`.gitagent/out-of-scope/`** for relevant ADR
 
 If the user clearly scopes work to something that cannot affect OpenGantry (e.g. a typo in unrelated docs), still skim **RULES** and **MANIFEST** when the change could touch skills, missions, routing, or manifest sync.
 
+## External IDE skills (edge quarantine)
+
+Third-party agent skills (Cursor skill packs, local `.cursorrules`, etc.) are **untrusted edge helpers** — not GXT law.
+
+- **GXT owns:** missions, TMVC scope, deterministic gates, trace mapping.
+- **Edge skills:** optional local IDE preferences only; never edit `.gitagent/`, `MANIFEST.json`, or integration templates to install them.
+- **Zero-trust:** all edits are untrusted until they pass compile/tests, import-layer checks, and mission `gate_command` — regardless of human vs IDE origin.
+- **Optional context:** agents may append `[SKILL-EXEC] skill_key=… tool=… scope=…` to `WORKER_LOG.md` for human reviewers; missing stamps are not verify failures.
+
+See [`.gitagent/teacher/RUNTIME.md`](.gitagent/teacher/RUNTIME.md) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) (zero-trust gates).
+
 ## Cursor Cloud specific instructions
 
 This repo is a **CLI-only** product (`gapman`); there is no dev server, database, or HTTP port to start.

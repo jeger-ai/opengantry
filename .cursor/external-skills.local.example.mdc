@@ -1,0 +1,17 @@
+---
+description: Local-only external IDE skills (copy to external-skills.local.mdc — not tracked)
+alwaysApply: false
+---
+
+# External IDE skills (local edge — optional)
+
+Copy this file to **`.cursor/external-skills.local.mdc`** (gitignored). Wire your preferred third-party agent skills here.
+
+**Not GXT law.** This file is outside OpenGantry governance. It does not change TMVC roots, missions, or verify behavior.
+
+- GXT owns: legislation, scope, deterministic gates, trace mapping.
+- Local skills own: tactical IDE preferences only.
+- All code changes are **untrusted** until they pass mission gates and `npm run validate` / CI checks.
+- Optional: append `[SKILL-EXEC] …` lines to `WORKER_LOG.md` for human reviewers (see `.gitagent/teacher/WORKER_LOG.template.md`).
+
+Replace this stub with your own skill imports or rules. Do not commit subjective style guides into `AGENTS.md`, `.gitagent/`, or integration templates.

@@ -22,3 +22,7 @@ When the user **explicitly** asks to write, edit, refactor, or implement code an
 - **Fast-path** trivial single-file work; **full interview** for heavy/risky scope.
 - **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
 - **CLI fallback:** one copy-paste `gapman legislate …` command — never raw YAML blocks.
+
+## External IDE skills (edge quarantine)
+
+Third-party agent skills are **untrusted edge helpers** — not GXT law. Keep them in local IDE config (gitignored); do not add subjective style guides to this file or `.gitagent/`. Repository safety is deterministic gates only (compile, tests, import layers). Optional `[SKILL-EXEC]` lines in `WORKER_LOG.md` are reviewer context only — see `.gitagent/teacher/RUNTIME.md`.

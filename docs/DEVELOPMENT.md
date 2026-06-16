@@ -124,6 +124,24 @@ MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply` (same gates as CLI).
 
 IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; use `runtime exec` when you need manifest-enforced subprocess boundaries. See INTEGRATIONS **Enforcement boundary**.
 
+## Zero-trust gates (sole trust boundary)
+
+All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry does not deterministically attribute offline IDE provenance. Security relies on **result-state checks** only:
+
+| Check | When | Mechanism |
+|-------|------|-----------|
+| Mission gate | `gapman verify` | Mission `gate_command` + optional `gate_success_substring` |
+| Unit tests | gate / CI | `npm test` (`node:test`) |
+| Compile / types | build / CI | `npm run build` (`tsc`) |
+| Manifest shape | CI / pre-push | `gapman check`, `validate-gxt.sh manifest` |
+| Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
+| Banned imports | mission gate / surgeon | `gapman check-imports` |
+| KPI thresholds | verify (optional) | `gapman scan` + mission `kpi_gate` |
+| Perimeter (CI) | PR | `gapman perimeter --ci` on protected governance paths |
+| Trace mapping | verify | Verbatim quotes from `WORKER_LOG.md` for mission PASS rows |
+
+External IDE skill packs are **edge-only** (local, gitignored). They must not be wired into `.gitagent/` or shipped integration templates. Optional `[SKILL-EXEC]` lines in `WORKER_LOG.md` are human triage context only — not verify evidence. See [`AGENTS.md`](../AGENTS.md) and [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
+
 ## Before push / PR
 
 ```bash

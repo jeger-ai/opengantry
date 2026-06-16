@@ -22,6 +22,8 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 8. **Bootstrap + architecture (v1.1.1)** — **`gapman init`** installs this tree from packaged templates. **[`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json)** tells agents where code layout docs live; **`gapman arch cred`** stores git-ignored tokens for protected external sources. Primary mission format from **`gapman legislate`** is **YAML** under [`missions/`](missions/); Markdown missions remain supported for verify.
 
+9. **Zero-trust + external IDE skills** — All file changes are untrusted until deterministic gates pass. Third-party agent skill packs are **local IDE edge only** (gitignored); optional `[SKILL-EXEC]` lines in `WORKER_LOG.md` are reviewer context, not verify evidence. See [`teacher/RUNTIME.md`](teacher/RUNTIME.md) and [`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md).
+
 ## Files (quick map)
 
 | Path | Role |

@@ -14,3 +14,9 @@ src/cli/lib/version.gen.ts
 .gitagent/history/.ignored-last-error.json
 .gitagent/history/.draft-token-replay.json
 .gitagent/foreman/DRAFT_TOKEN.key
+
+# Local IDE edge — external agent skills (not GXT law)
+.cursor/external-skills.local.mdc
+.cursorrules.local
+.clinerules/*.local.md
+.clinerules/*.local

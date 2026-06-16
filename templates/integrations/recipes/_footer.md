@@ -9,6 +9,10 @@
 5. `gapman verify --mission .gitagent/missions/<file>.yaml`
 6. `git push` (pre-push uses `--pre-push` handoff semantics)
 
+## External IDE skills
+
+Optional third-party skill packs belong on the **local IDE edge** (gitignored), not in GXT substrate or init templates. All edits are zero-trust until deterministic gates pass. Optional `[SKILL-EXEC]` lines in `WORKER_LOG.md` are reviewer context only — see `.gitagent/teacher/RUNTIME.md`.
+
 ## Troubleshooting
 
 | Symptom | Fix |

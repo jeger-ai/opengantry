@@ -45,6 +45,28 @@ On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented
 
 **IDE agent file edits are not TMVC-trapped unless the tool runs inside `runtime exec`.** Docs here optimize context injection and workflow — not generic “be careful” advice.
 
+## External IDE skills (edge quarantine)
+
+Third-party agent skill packs (Cursor `SKILL.md`, community rule collections, dependency-aware generators) are **local IDE preferences** — not OpenGantry routing skills and not GXT law.
+
+| Layer | What belongs | Enforcement |
+|-------|----------------|---------------|
+| **GXT core** | `RULES.md`, `MANIFEST.json`, mission YAML, deterministic gates | `gapman verify`, hooks, CI |
+| **IDE edge** | Optional local rules/skills (gitignored) | None — advisory to the IDE only |
+| **Result state** | Files on disk after any edit | Compile, tests, import layers, KPI gates |
+
+**Zero-trust:** Git cannot attest *how* a line was produced. All incoming diffs are validated the same way. Do **not** add subjective coding-style packs to `AGENTS.md`, `.gitagent/`, or `gapman init` templates.
+
+**Local wiring (adopters):** copy tool-specific examples only on the developer machine — e.g. Cursor: `.cursor/external-skills.local.mdc` (see specimen `.cursor/external-skills.local.example.mdc`). Cline: `.clinerules/*.local.md`. Keep GXT pointer files (`gxt.md`, `CLAUDE.md`) linking canonical law only.
+
+**Optional `[SKILL-EXEC]` stamps:** workers may append one-line context to `WORKER_LOG.md` for human PR triage:
+
+```text
+[SKILL-EXEC] skill_key=<provider::skill> tool=<tool_name> scope=<path_or_glob>
+```
+
+Missing stamps are **not** verify failures. Stamps are not cryptographic proof and must not replace mission trace PASS quotes.
+
 ## Remote handoff (Teacher push → remote agent)
 
 Enterprise async pattern:
