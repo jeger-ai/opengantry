@@ -61,6 +61,12 @@ jobs:
       - name: gapman doctor (readiness)
         run: node dist/cli/index.js doctor
 
+      - name: gapman perimeter (CI signature enforcement)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node dist/cli/index.js perimeter --ci --base-ref "$BASE_SHA"
+
   code_quality:
     if: github.event_name == 'pull_request'
     needs: pr_governance

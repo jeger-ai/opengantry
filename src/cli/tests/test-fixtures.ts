@@ -15,6 +15,10 @@ export interface MiniManifestSkill {
 export function copyMissionSchema(ogTeacherDir: string, destTeacherDir: string): void {
   fs.mkdirSync(destTeacherDir, { recursive: true });
   fs.copyFileSync(path.join(ogTeacherDir, "MISSION.schema.yaml"), path.join(destTeacherDir, "MISSION.schema.yaml"));
+  const kpiSchema = path.join(ogTeacherDir, "KPI-REPORT.schema.yaml");
+  if (fs.existsSync(kpiSchema)) {
+    fs.copyFileSync(kpiSchema, path.join(destTeacherDir, "KPI-REPORT.schema.yaml"));
+  }
 }
 
 export function writeManifest(

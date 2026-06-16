@@ -105,6 +105,12 @@ test("distribution: packed gapman init works outside workspace", () => {
     fs.cpSync(path.join(ogRoot, "node_modules", "yaml"), path.join(pkgNodeModules, "yaml"), {
       recursive: true,
     });
+    for (const dep of ["ajv", "ajv-formats", "fast-uri", "fast-deep-equal", "json-schema-traverse"]) {
+      const src = path.join(ogRoot, "node_modules", dep);
+      if (fs.existsSync(src)) {
+        fs.cpSync(src, path.join(pkgNodeModules, dep), { recursive: true });
+      }
+    }
 
     const cli = path.join(pkgDir, "dist", "cli", "index.js");
     const run = spawnSync(process.execPath, [cli, "init"], { cwd: targetRepo, encoding: "utf8" });

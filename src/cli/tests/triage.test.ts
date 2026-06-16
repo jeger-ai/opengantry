@@ -44,6 +44,8 @@ test("triage: optional ADR hints when match_terms overlap intent", () => {
   const m = loadManifest(dest);
   const r = triageIntent(dest, "ui tweak example widget", m);
   assert.equal(r.action, "DIRECT_EXECUTION");
+  assert.equal(r.confidence, 1);
+  assert.ok(r.match_reasons.length > 0);
   assert.ok(r.adr_hints?.length, "expected adr_hints");
   assert.ok(r.adr_hints?.some((h) => h.id === "ADR-TST-HINT"), "expected fixture ADR hint");
 });

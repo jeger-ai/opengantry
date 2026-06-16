@@ -41,7 +41,7 @@ async function seedUpgradeRepo(): Promise<string> {
 
 test("upgradeEligibleAssets: excludes scaffold_only paths", () => {
   const profile = defaultInitProfile();
-  const assets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot));
+  const assets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot), templatesRoot);
   const eligible = upgradeEligibleAssets(assets);
   const targets = eligible.map((a) => a.targetPath);
   assert.ok(!targets.includes(".gitagent/foreman/MANIFEST.json"));

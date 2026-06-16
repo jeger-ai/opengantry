@@ -1,0 +1,45 @@
+# OpenGantry 2.0 checkpoint mission: KPI gate, scan, register, perimeter.
+# Legislated intent: hardened single-MSN local go/no-go for LLM-fed deterministic KPI gate + AST + perimeter.
+msn_id: MSN-0045
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+llm_verifiers:
+  - id: stub
+    command: ./scripts/kpi-stub-verifier.sh
+    required: true
+aggregators:
+  - key: security_flaws
+    op: max
+    sources:
+      - stub::security_vulnerabilities
+kpi_gate:
+  report_path: .gitagent/kpi/MSN-0045.json
+  thresholds:
+    - metric: stub::complexity_score
+      op: "<="
+      value: 12
+    - metric: security_flaws
+      op: "=="
+      value: 0
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "MSN-0045 Phase 0 bootstrap: npm run build and KPI deterministic tests pass"
+    anchor: "MSN-0045"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: "MSN-0045 gapman scan wrote .gitagent/kpi/MSN-0045.json with namespaced metrics"
+    anchor: "MSN-0045"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: "MSN-0045 gapman verify full pass git_proof gate kpi trace"
+    anchor: "MSN-0045"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: "MSN-0045 TOCTOU committed drift failed --pre-push with GXT_KPI_REPORT_STALE then recovery verify pass"
+    anchor: "MSN-0045"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: "dev-validate-core OK"
+    anchor: "MSN-0045"
+    status: PENDING

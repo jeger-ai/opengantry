@@ -1,9 +1,11 @@
-import { setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { gitRevParse } from "../lib/git-repo.js";
 import { parseMissionFile } from "../lib/mission-parser.js";
 import { initFailurePayload } from "../lib/verify-result-payload.js";
 import { emitVerifyJson } from "../lib/verify-present.js";
 import type { VerifyOptions } from "../lib/verify-types.js";
 import { evaluateVerifyPhases } from "../lib/verify-engine.js";
+import { discoverChangedMissionFiles } from "../lib/verify-changed-missions.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GapmanUserError, reportUserFacingError } from "../lib/user-error.js";
 import { runVerifyCore } from "../lib/verify-run.js";
@@ -19,6 +21,46 @@ function assertVerifyOptionsCompatible(options: VerifyOptions): void {
       2,
     );
   }
+  if (options.changedMissions === true && !options.mission) {
+    return;
+  }
+  if (options.changedMissions === true && options.mission) {
+    throw new GapmanUserError(
+      "INVALID_ARGUMENT",
+      "Use either --mission or --changed-missions, not both.",
+      undefined,
+      2,
+    );
+  }
+}
+
+function resolveChangedMissionsBaseRef(root: string, explicit?: string): string {
+  if (explicit?.trim()) return explicit.trim();
+  for (const candidate of ["origin/main", "origin/master", "main", "master"]) {
+    if (gitRevParse(root, candidate)) return candidate;
+  }
+  return "HEAD~1";
+}
+
+async function runVerifyChangedMissions(options: VerifyOptions): Promise<void> {
+  const { root } = loadWorkspace();
+  const baseRef = resolveChangedMissionsBaseRef(root, options.baseRef);
+  const missions = discoverChangedMissionFiles(root, baseRef);
+  if (missions.length === 0) {
+    logInfo(`gapman verify: no changed mission files vs ${baseRef}`);
+    return;
+  }
+  let worstExit = 0;
+  for (const mission of missions) {
+    logInfo(`gapman verify: ${mission} (changed vs ${baseRef})`);
+    const result = await runVerifyCore({ ...options, mission, changedMissions: false });
+    if (!result.ok && result.exitCode > worstExit) {
+      worstExit = result.exitCode;
+    }
+  }
+  if (worstExit !== 0) {
+    setExitCode(worstExit);
+  }
 }
 
 export async function runVerify(options: VerifyOptions): Promise<void> {
@@ -32,6 +74,27 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
       return;
     }
     reportUserFacingError(e);
+    return;
+  }
+
+  if (options.changedMissions) {
+    try {
+      await runVerifyChangedMissions(options);
+    } catch (e) {
+      if (options.json) {
+        const payload = initFailurePayload(e);
+        emitVerifyJson(payload, options);
+        setExitCode(payload.exit_code);
+        return;
+      }
+      reportUserFacingError(e);
+    }
+    return;
+  }
+
+  if (!options.mission) {
+    logError("gapman verify: --mission is required (or use --changed-missions)");
+    setExitCode(2);
     return;
   }
 
@@ -54,6 +117,6 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
 /** Exposed for tests that need silent phase evaluation without fix wrapper. */
 export function evaluateVerifyForMission(options: VerifyOptions) {
   const { root, manifest } = loadWorkspace();
-  const mission = parseMissionFile(root, options.mission);
+  const mission = parseMissionFile(root, options.mission!);
   return evaluateVerifyPhases(root, mission, options, manifest);
 }

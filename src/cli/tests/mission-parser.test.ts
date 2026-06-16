@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { isMarkdownTableSeparatorRow, parseMarkdownMission, parseMissionFile } from "../lib/mission-parser.js";
-import { extractMsnIdFromMissionFile } from "../lib/mission-msn.js";
+import { extractMsnIdFromMissionPath } from "../lib/mission-msn.js";
 
 test("parseMarkdownMission: Success alias maps substring", () => {
   const body = `# Mission: MSN-0001
@@ -40,19 +40,19 @@ test("parseMarkdownMission: trace quote may contain --- without dropping row", (
 });
 
 
-test("extractMsnIdFromMissionFile: YAML frontmatter on markdown", () => {
+test("extractMsnIdFromMissionPath: YAML frontmatter on markdown", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-ex-"));
   const p = path.join(dir, "m.md");
   fs.writeFileSync(p, "---\nmsn_id: MSN-0888\n---\n# body\n", "utf8");
-  assert.equal(extractMsnIdFromMissionFile(p), "MSN-0888");
+  assert.equal(extractMsnIdFromMissionPath(p), "MSN-0888");
 });
 
 
-test("extractMsnIdFromMissionFile: line-start bracket id", () => {
+test("extractMsnIdFromMissionPath: line-start bracket id", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-ex-"));
   const p = path.join(dir, "m.md");
   fs.writeFileSync(p, "[MSN-0777] Title line\nrest\n", "utf8");
-  assert.equal(extractMsnIdFromMissionFile(p), "MSN-0777");
+  assert.equal(extractMsnIdFromMissionPath(p), "MSN-0777");
 });
 
 

@@ -66,6 +66,18 @@ export function verifyFailurePresentation(
           exitCode: failure.gateExitCode,
         },
       };
+    case "kpi":
+      return {
+        ...base,
+        headline: "verify: KPI GATE FAILED",
+        detail_lines: [
+          failure.kpiReason ?? failure.message,
+          ...(failure.kpiMetric
+            ? [`metric: ${failure.kpiMetric} ${failure.kpiOp ?? ""} ${String(failure.kpiExpected ?? "")} (actual: ${String(failure.kpiActual ?? "missing")})`]
+            : []),
+          ...(failure.kpiReportPath ? [`report: ${failure.kpiReportPath}`] : []),
+        ],
+      };
     case "trace_pending":
       return {
         ...base,

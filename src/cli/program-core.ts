@@ -6,7 +6,9 @@ import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
 import { runStart } from "./commands/start.js";
-import { readStdinIfEmpty, runTriage } from "./commands/triage.js";
+import { runTriage } from "./commands/triage.js";
+import { readStdinIfEmpty } from "./lib/program-stdin.js";
+import type { InitOptions } from "./commands/init.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
@@ -60,36 +62,8 @@ export function registerCoreCommands(program: Command): void {
       "--tutorial",
       "After init, run guided first mission loop (Teacher stamp + verify walkthrough)",
     )
-    .action(async (opts: {
-      force?: boolean;
-      yes?: boolean;
-      dryRun?: boolean;
-      tutorial?: boolean;
-      ides?: string;
-      docsPath?: string;
-      skills?: string;
-      hooks?: boolean;
-      noHooks?: boolean;
-      ci?: boolean;
-      noCi?: boolean;
-      archSource?: string;
-      archLocation?: string;
-    }) => {
-      await runInit({
-        force: opts.force,
-        yes: opts.yes,
-        dryRun: opts.dryRun,
-        tutorial: opts.tutorial,
-        ides: opts.ides,
-        docsPath: opts.docsPath,
-        skills: opts.skills,
-        hooks: opts.hooks,
-        noHooks: opts.noHooks,
-        ci: opts.ci,
-        noCi: opts.noCi,
-        archSource: opts.archSource,
-        archLocation: opts.archLocation,
-      });
+    .action(async (opts: InitOptions) => {
+      await runInit(opts);
     });
 
   program
@@ -199,7 +173,8 @@ export function registerCoreCommands(program: Command): void {
   program
     .command("onboarding")
     .description("Interactive walkthrough of the strict GXT mission loop")
-    .action(async () => {
-      await runOnboarding();
+    .option("--force", "Continue despite integration doctor warnings")
+    .action(async (opts: { force?: boolean }) => {
+      await runOnboarding({ force: opts.force });
     });
 }

@@ -33,5 +33,10 @@
     "src/auth/": "Tier-3",
     "src/db/schema/": "Tier-3"
   },
-  "risk_keywords": ["refactor", "migrate", "delete", "security", "schema"]
+  "risk_keywords": ["refactor", "migrate", "delete", "security", "schema"],
+  "perimeter_protected": [
+    "**/.gxt-skill.yaml",
+    ".gitagent/foreman/MANIFEST.json",
+    ".gitagent/teacher/RULES.md"
+  ]
 }

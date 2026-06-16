@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-10 (MSN-0034 — **v1.1.2 verify pipeline close-out** in progress; MSN-0033 shipped **1.1.1**; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+**Last synced:** 2026-06-10 (v1.1.2 **published** on npm; MSN-0036–MSN-0044 tactical/adoption sprint in progress; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
 
 ---
 
@@ -222,12 +222,13 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** **Tag `v1.1.2` → npm publish** (MSN-0034–MSN-0035). Tactical debt ([#8](https://github.com/jeger-ai/opengantry/issues/8)–[#13](https://github.com/jeger-ai/opengantry/issues/13), [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58)) is next.
+**Current focus:** **MSN-0036–MSN-0044** tactical core + adoption UX ([#8](https://github.com/jeger-ai/opengantry/issues/8), [#13](https://github.com/jeger-ai/opengantry/issues/13), [#23](https://github.com/jeger-ai/opengantry/issues/23), [#30](https://github.com/jeger-ai/opengantry/issues/30)–[#33](https://github.com/jeger-ai/opengantry/issues/33)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
-| **Now** | Tag/publish **v1.1.2** | MSN-0034–MSN-0035 complete |
-| **Next** | [#8](https://github.com/jeger-ai/opengantry/issues/8)–[#13](https://github.com/jeger-ai/opengantry/issues/13), [#23](https://github.com/jeger-ai/opengantry/issues/23)–[#29](https://github.com/jeger-ai/opengantry/issues/29), [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58) | Tactical debt post-thermo close-out |
+| **Now** | MSN-0036–MSN-0044 | Post-v1.1.2 tactical + adoption sprint |
+| **Done (release)** | v1.1.2 npm publish | MSN-0034–MSN-0035; tag + npm **1.1.2** |
+| **Next** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29), v1.2+ [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | Deferred tactical + strategic (ADR first) |
 | Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
 | Done (v1.1.1) | [#10](https://github.com/jeger-ai/opengantry/issues/10)–[#11](https://github.com/jeger-ai/opengantry/issues/11), [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#50](https://github.com/jeger-ai/opengantry/issues/50) | MSN-0032–MSN-0033 |
 | Done (v1.1) | [#18](https://github.com/jeger-ai/opengantry/issues/18)–[#22](https://github.com/jeger-ai/opengantry/issues/22) | MSN-0028–MSN-0031 |

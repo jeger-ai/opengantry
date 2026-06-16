@@ -32,6 +32,9 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
             successSubstring: gateFromMarkdown(successRaw),
           }
         : null,
+    kpiGate: null,
+    llmVerifiers: [],
+    aggregators: [],
     traceRows: parseTraceTable(body),
     rawPath: filePath,
   };

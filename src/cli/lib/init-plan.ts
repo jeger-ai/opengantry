@@ -8,7 +8,7 @@ import {
   formatAudienceNextStep,
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
-import type { InitAsset } from "./init-assets.js";
+import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
 import type { InitProfile } from "./init-profile.js";
 

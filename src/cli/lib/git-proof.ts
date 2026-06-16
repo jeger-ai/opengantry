@@ -2,7 +2,20 @@ import path from "node:path";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRun } from "./git-repo.js";
-import { throwGitProofError } from "./git-proof-errors.js";
+import { hintGitProof, type GitProofHintContext } from "./fix-hints.js";
+import { GapmanUserError } from "./user-error.js";
+
+function throwGitProofError(
+  code: string,
+  detail: string,
+  ctx: GitProofHintContext = {},
+): never {
+  throw new GapmanUserError(
+    code,
+    `${CLI_NAME} verify: git-proof: ${code} — ${detail}`,
+    hintGitProof(code, ctx),
+  );
+}
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 import { resolveTeacherEmails } from "./teacher-identity.js";
 

@@ -35,6 +35,7 @@ export interface VerifyHintContext {
   traceKind?: TraceFailureKind;
   traceQuote?: string;
   traceFailureReason?: string;
+  kpiFailureReason?: string;
 }
 
 export function buildVerifyHintContext(
@@ -54,6 +55,7 @@ export function buildVerifyHintContext(
     traceKind: failure.traceKind,
     traceQuote: failure.traceQuote,
     traceFailureReason: failure.traceReason,
+    kpiFailureReason: failure.kpiReason ?? failure.message,
     strictTrace: options.strictTrace,
   };
 }
@@ -116,6 +118,32 @@ function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
   };
 }
 
+function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
+  const mission = ctx.missionPath;
+  const verifyCmdStr = verifyCmd(mission);
+  const reason = ctx.kpiFailureReason ?? "";
+  const errorCode = reason.includes("missing")
+    ? GXT_ERROR.KPI_REPORT_MISSING
+    : reason.includes("invalid") || reason.includes("schema")
+      ? GXT_ERROR.KPI_REPORT_INVALID
+      : reason.includes("STALE") || reason.includes("stale")
+        ? GXT_ERROR.KPI_REPORT_STALE
+        : GXT_ERROR.KPI_GATE_FAILED;
+  return {
+    error_code: errorCode,
+    fix_hints: [
+      `gapman scan --mission ${mission}`,
+      `commit updated KPI report under .gitagent/kpi/`,
+      verifyCmdStr,
+    ],
+    next_actions: [`gapman scan --mission ${mission}`, verifyCmdStr],
+    tagged_steps: [
+      tagStep("worker", `gapman scan --mission ${mission}`),
+      tagStep("verifier", verifyCmdStr),
+    ],
+  };
+}
+
 function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
@@ -165,6 +193,8 @@ export function hintsForVerifyPhase(
       return hintsForGitProofPhase(ctx);
     case "gate":
       return hintsForGatePhase(ctx);
+    case "kpi":
+      return hintsForKpiPhase(ctx);
     case "trace_pending":
       return hintsForTracePendingPhase(ctx);
     case "trace":

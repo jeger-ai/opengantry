@@ -1,3 +1,5 @@
+import type { AgentErrorPayload } from "./agent-error.js";
+
 export type McpToolStatus =
   | "awaiting_human_approval"
   | "pending_signature"
@@ -60,7 +62,7 @@ export type ResolveMissionResult =
 
 export type LastErrorResult =
   | { status: "empty"; message: string }
-  | { status: "found"; payload: Record<string, unknown> }
+  | { status: "found"; payload: AgentErrorPayload }
   | { status: "error"; message: string };
 
 export function mcpError(code: string, message: string, retryable: boolean): { status: "error"; error: McpErrorBody } {

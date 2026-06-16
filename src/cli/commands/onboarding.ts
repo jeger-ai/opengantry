@@ -5,14 +5,26 @@ import {
   onboardingStatusHint,
   onboardingVerifyHint,
 } from "../lib/onboarding-flow.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
+import { runIntegrationDoctorChecks } from "../lib/doctor-integration-checks.js";
+import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
 import { runVerifyCore } from "../lib/verify-run.js";
 
 const EXAMPLE_MISSION = ".gitagent/missions/example.verify.yaml";
 
-export async function runOnboarding(): Promise<void> {
+export interface OnboardingOptions {
+  force?: boolean;
+}
+
+function integrationBlockers(repoRoot: string): string[] {
+  const templatesRoot = resolveTemplateRootFromModule();
+  const lines = runIntegrationDoctorChecks(repoRoot, templatesRoot);
+  return lines.filter((l) => l.level === "warn" || l.level === "fail").map((l) => l.message);
+}
+
+export async function runOnboarding(options: OnboardingOptions = {}): Promise<void> {
   const p = await import("@clack/prompts");
   const fs = await import("node:fs");
   const path = await import("node:path");
@@ -25,6 +37,16 @@ export async function runOnboarding(): Promise<void> {
     logError("Run gapman init first — substrate not found.");
     setExitCode(2);
     p.outro("Onboarding aborted");
+    return;
+  }
+
+  const blockers = integrationBlockers(root);
+  if (blockers.length > 0 && !options.force) {
+    p.log.step("Integration health");
+    for (const msg of blockers) logWarn(`  ${msg}`);
+    logError("Integration issues detected — run gapman doctor or pass --force to continue.");
+    setExitCode(2);
+    p.outro("Onboarding aborted (integration gates)");
     return;
   }
 

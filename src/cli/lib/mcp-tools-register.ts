@@ -8,7 +8,7 @@ import {
   handlePinMission,
   handleResolveMission,
 } from "./mcp-legislation.js";
-import { handleRuntimeEnv, handleRuntimeExec, handleVerify } from "./mcp-runtime.js";
+import { handleRuntimeEnv, handleRuntimeExec, handleScan, handleVerify } from "./mcp-runtime.js";
 import { handleStartOrchestration } from "./mcp-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 
@@ -77,8 +77,19 @@ function registerRuntimeTools(server: McpServer): void {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
       skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
+      ci: z.boolean().optional().describe("Authoritative CI mode for KPI stale binding"),
     },
-    async (args) => jsonText(handleVerify(args.mission_file_path, args.pre_push === true, args.skip_stale_evidence === true)),
+    async (args) => jsonText(handleVerify(args.mission_file_path, args.pre_push === true, args.skip_stale_evidence === true, args.ci === true)),
+  );
+
+  server.tool(
+    "gxt_scan",
+    "Run gapman scan (llm_verifiers) and write KPI report for verify kpi_gate.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      cwd: z.string().optional().describe("Working directory for verifier commands"),
+    },
+    async (args) => jsonText(handleScan(args.mission_file_path, args.cwd)),
   );
 
   server.tool(

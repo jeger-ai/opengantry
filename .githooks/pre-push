@@ -38,6 +38,11 @@ for mission in "${missions[@]}"; do
   "${GAPMAN[@]}" verify --mission "$mission" --pre-push || exit 1
 done
 
+if git diff --name-only "${base}..HEAD" | grep -qE '^\.gitagent/foreman/MANIFEST\.json$|^\.gitagent/teacher/RULES\.md$|\.gxt-skill\.yaml$'; then
+  echo "pre-push: gapman perimeter (advisory)" >&2
+  "${GAPMAN[@]}" perimeter --base-ref "$base" || true
+fi
+
 if git diff --name-only "${base}..HEAD" | grep -qE '^\.gitagent/foreman/MANIFEST\.json$|^skills/'; then
   echo "pre-push: gapman check (manifest / skills changed)" >&2
   "${GAPMAN[@]}" check || exit 1

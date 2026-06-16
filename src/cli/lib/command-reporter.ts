@@ -73,6 +73,11 @@ export class CommandReporter {
       return;
     }
     this.emitInfo(`${CLI_NAME} verify: gate passed`);
+    if (result.kpiWarnings) {
+      for (const w of result.kpiWarnings) {
+        this.emitInfo(`  ${w}`);
+      }
+    }
     for (const warning of result.traceWarnings) {
       const tag = warning.autoResolved ? "auto-resolved" : "drift";
       this.emitInfo(

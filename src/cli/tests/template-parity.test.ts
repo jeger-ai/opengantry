@@ -13,7 +13,7 @@ test("template parity: managed_strict root assets match templates/", () => {
   const templatesRoot = path.join(repoRoot, "templates");
   const mismatches: string[] = [];
 
-  for (const asset of allUpgradeEligibleFromCatalog()) {
+  for (const asset of allUpgradeEligibleFromCatalog(templatesRoot)) {
     if (DOGFOOD_PARITY_EXEMPT.has(asset.targetPath)) continue;
     const targetAbs = path.join(repoRoot, asset.targetPath.split("/").join(path.sep));
     const templateRel = templatePathForAsset(asset);

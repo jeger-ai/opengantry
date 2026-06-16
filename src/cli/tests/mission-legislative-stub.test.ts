@@ -8,6 +8,9 @@ function mission(traceRows: ParsedMission["traceRows"]): ParsedMission {
     msnId: "MSN-0001",
     skillKey: "ui",
     gate: { command: "echo OK", successSubstring: "OK" },
+    kpiGate: null,
+    llmVerifiers: [],
+    aggregators: [],
     traceRows,
     rawPath: "/tmp/m.yaml",
   };

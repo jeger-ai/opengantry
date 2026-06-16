@@ -1,6 +1,6 @@
 import { CLI_NAME } from "../lib/constants.js";
 import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { isValidMsnId } from "../lib/msn.js";
+import { isValidMsnId } from "../lib/mission-msn.js";
 import { assertMissionGatePresent, parseMissionFile } from "../lib/mission-parser.js";
 import { captureStartState, writeSnapshot } from "../lib/start-state.js";
 import { loadWorkspace } from "../lib/workspace.js";

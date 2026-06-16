@@ -1,7 +1,19 @@
+import fs from "node:fs";
 import path from "node:path";
-import type { InitAsset } from "./init-assets.js";
-import type { IntegrationCompatManifest } from "./integration-compat.js";
+import {
+  loadIntegrationCompat,
+  resolveTemplateRootFromModule,
+  type IntegrationCompatManifest,
+} from "./integration-compat.js";
 import type { InitProfile } from "./init-profile.js";
+
+export type InitAssetMode = "scaffold_only" | "managed_strict";
+
+export interface InitAsset {
+  targetPath: string;
+  mode: InitAssetMode;
+  executable?: boolean;
+}
 
 export type InitAssetTag =
   | "core"
@@ -26,147 +38,30 @@ export interface InitAssetSpec extends InitAsset {
   tags: InitAssetTag[];
 }
 
-const CORE_ASSETS: InitAssetSpec[] = [
-  { targetPath: ".gitagent/foreman/MANIFEST.json", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/foreman/BYPASS.sha256", mode: "scaffold_only", tags: ["core"] },
-  {
-    targetPath: ".gitagent/foreman/SUBSTRATE.version.json",
-    mode: "scaffold_only",
-    tags: ["core"],
-  },
-  { targetPath: ".gitagent/teacher/RULES.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/missions/README.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: "AGENTS.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/teacher/ARCHITECTURE-DISCOVERY.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/teacher/ARCHITECTURE-ACCESS.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/teacher/MISSION-ARCHITECT.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: "docs/ARCHITECTURE.md", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/teacher/MISSION.schema.yaml", mode: "managed_strict", tags: ["core"] },
-  { targetPath: ".gitagent/teacher/WORKER_LOG.template.md", mode: "managed_strict", tags: ["core"] },
-  { targetPath: "scripts/validate-gxt.sh", mode: "managed_strict", executable: true, tags: ["core"] },
-  {
-    targetPath: "scripts/gxt-manifest-lib.mjs",
-    mode: "managed_strict",
-    executable: true,
-    tags: ["core"],
-  },
-];
+interface AssetCatalogJson {
+  schema_version: string;
+  assets: InitAssetSpec[];
+}
 
-const SKILL_ASSETS: InitAssetSpec[] = [
-  { targetPath: "skills/ui.md", mode: "scaffold_only", tags: ["skill-minimal", "skill-specimen"] },
-  { targetPath: "skills/logic.md", mode: "scaffold_only", tags: ["skill-minimal", "skill-specimen"] },
-  { targetPath: "skills/gapman.md", mode: "scaffold_only", tags: ["skill-specimen"] },
-  { targetPath: "skills/substrate.md", mode: "scaffold_only", tags: ["skill-specimen"] },
-];
+const catalogCache = new Map<string, InitAssetSpec[]>();
 
-const HOOK_ASSETS: InitAssetSpec[] = [
-  { targetPath: ".githooks/post-checkout", mode: "managed_strict", executable: true, tags: ["hooks"] },
-  { targetPath: ".githooks/pre-push", mode: "managed_strict", executable: true, tags: ["hooks"] },
-];
+export function loadInitAssetCatalog(templatesRoot: string): readonly InitAssetSpec[] {
+  const cached = catalogCache.get(templatesRoot);
+  if (cached) return cached;
 
-const CI_ASSETS: InitAssetSpec[] = [
-  {
-    targetPath: ".github/workflows/gxt-validate.yml",
-    mode: "managed_strict",
-    tags: ["ci"],
-  },
-  {
-    targetPath: "scripts/verify-pr-missions.sh",
-    mode: "managed_strict",
-    executable: true,
-    tags: ["ci"],
-  },
-];
-
-const RUNTIME_ASSETS: InitAssetSpec[] = [
-  { targetPath: "scripts/gxt-runtime-env.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
-  { targetPath: "scripts/gxt-resolve-mission.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
-  { targetPath: "scripts/gxt-pin-mission.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
-  { targetPath: "scripts/gxt-cursor-env.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
-];
-
-const CURSOR_ASSETS: InitAssetSpec[] = [
-  {
-    targetPath: ".cursor/rules/opengantry-gxt-substrate.mdc",
-    mode: "managed_strict",
-    tags: ["cursor"],
-  },
-  { targetPath: ".cursor/hooks.json", mode: "managed_strict", tags: ["cursor"] },
-  {
-    targetPath: ".cursor/hooks/gxt-before-shell.sh",
-    mode: "managed_strict",
-    executable: true,
-    tags: ["cursor"],
-  },
-  {
-    targetPath: ".cursor/hooks/gxt-session-start.sh",
-    mode: "managed_strict",
-    executable: true,
-    tags: ["cursor"],
-  },
-  { targetPath: ".cursor/mcp.json", mode: "managed_strict", tags: ["cursor"] },
-];
-
-const IDE_PACK_ASSETS: InitAssetSpec[] = [
-  {
-    targetPath: "CLAUDE.md",
-    templatePath: "integrations/claude-code/CLAUDE.md",
-    mode: "scaffold_only",
-    tags: ["claude-code"],
-  },
-  {
-    targetPath: ".codex/config.toml",
-    templatePath: "integrations/codex-cli/.codex/config.toml",
-    mode: "scaffold_only",
-    tags: ["codex-cli"],
-  },
-  {
-    targetPath: "opencode.json",
-    templatePath: "integrations/opencode/opencode.json",
-    mode: "scaffold_only",
-    tags: ["opencode"],
-  },
-  {
-    targetPath: ".junie/guidelines.md",
-    templatePath: "integrations/junie/.junie/guidelines.md",
-    mode: "scaffold_only",
-    tags: ["junie"],
-  },
-  {
-    targetPath: ".agent/rules/gxt.md",
-    templatePath: "integrations/antigravity/.agent/rules/gxt.md",
-    mode: "scaffold_only",
-    tags: ["antigravity"],
-  },
-  {
-    targetPath: ".clinerules/gxt.md",
-    templatePath: "integrations/cline/.clinerules/gxt.md",
-    mode: "scaffold_only",
-    tags: ["cline"],
-  },
-  {
-    targetPath: ".aider.conf.yml",
-    templatePath: "integrations/aider/.aider.conf.yml",
-    mode: "scaffold_only",
-    tags: ["aider"],
-  },
-  {
-    targetPath: ".openhands/microagents/gxt.md",
-    templatePath: "integrations/openhands/.openhands/microagents/gxt.md",
-    mode: "scaffold_only",
-    tags: ["openhands"],
-  },
-];
-
-export const INIT_ASSET_CATALOG: readonly InitAssetSpec[] = [
-  ...CORE_ASSETS,
-  ...SKILL_ASSETS,
-  ...HOOK_ASSETS,
-  ...CI_ASSETS,
-  ...RUNTIME_ASSETS,
-  ...CURSOR_ASSETS,
-  ...IDE_PACK_ASSETS,
-];
+  const compat = loadIntegrationCompat(templatesRoot);
+  const catalogRel = compat.asset_catalog ?? "integrations/asset-catalog.json";
+  const catalogPath = path.join(templatesRoot, catalogRel.split("/").join(path.sep));
+  if (!fs.existsSync(catalogPath)) {
+    throw new Error(`missing init asset catalog at ${catalogRel}`);
+  }
+  const raw = JSON.parse(fs.readFileSync(catalogPath, "utf8")) as AssetCatalogJson;
+  if (raw.schema_version !== "1" || !Array.isArray(raw.assets)) {
+    throw new Error(`${catalogRel}: unsupported schema`);
+  }
+  catalogCache.set(templatesRoot, raw.assets);
+  return raw.assets;
+}
 
 function skillTag(profile: InitProfile): InitAssetTag {
   return profile.skillsPreset === "minimal" ? "skill-minimal" : "skill-specimen";
@@ -187,10 +82,11 @@ function assetMatchesProfile(asset: InitAssetSpec, profile: InitProfile): boolea
 
 export function resolveAssetsFromProfile(
   profile: InitProfile,
-  _compat: IntegrationCompatManifest,
+  compat: IntegrationCompatManifest,
+  templatesRoot: string,
 ): InitAssetSpec[] {
-  void _compat;
-  return INIT_ASSET_CATALOG.filter((a) => assetMatchesProfile(a, profile));
+  void compat;
+  return loadInitAssetCatalog(templatesRoot).filter((a) => assetMatchesProfile(a, profile));
 }
 
 export function templatePathForAsset(asset: InitAssetSpec): string {
@@ -198,7 +94,8 @@ export function templatePathForAsset(asset: InitAssetSpec): string {
 }
 
 /** Legacy default profile asset target paths (non-TTY / --yes parity). */
-export function legacyDefaultInitTargetPaths(): string[] {
+export function legacyDefaultInitTargetPaths(templatesRoot?: string): string[] {
+  const root = templatesRoot ?? resolveTemplateRootFromModule();
   return resolveAssetsFromProfile(
     {
       ides: ["cursor"],
@@ -208,6 +105,7 @@ export function legacyDefaultInitTargetPaths(): string[] {
       ciWorkflow: true,
       architectureSource: "unset",
     },
-    { schema_version: "1", opengantry_version: "1.0.0", integrations: {} as never },
+    loadIntegrationCompat(root),
+    root,
   ).map((a) => a.targetPath);
 }

@@ -26,9 +26,9 @@ gapman doctor
 
 ### Specimen routing (this repository only)
 
-**jeger-ai/opengantry** dogfoods through the **`gapman`** skill and TMVC `src/cli/`. The `ui` and `logic` skills in the specimen MANIFEST point at directories that do not exist here—they exist so adopters have a template after `gapman init`. Do not route specimen work through `ui`/`logic`.
+**jeger-ai/opengantry** dogfoods through the **`gapman`** skill and TMVC `src/cli/` only. The specimen [`.gitagent/foreman/MANIFEST.json`](../.gitagent/foreman/MANIFEST.json) intentionally **diverges** from [`templates/.gitagent/foreman/MANIFEST.json`](../templates/.gitagent/foreman/MANIFEST.json): adopters still receive `ui`/`logic` skills and example app paths after `gapman init`, but this CLI-only repo does not list fictional `src/components/` or `src/lib/` roots.
 
-MSN-enforced paths for commits and PR guards come from **fixed substrate paths** plus **every `tmvc_roots` entry in MANIFEST** (see `scripts/gxt-manifest-lib.mjs`)—not hardcoded `src/cli/` in shell.
+MSN-enforced paths for commits and PR guards come from **fixed substrate paths** plus **every `tmvc_roots` entry in MANIFEST** (see `scripts/gxt-manifest-lib.mjs`).
 
 **Teacher allowlist:** committed [`.gitagent/foreman/TEACHER.allowlist`](../.gitagent/foreman/TEACHER.allowlist) (team emails for CI git-proof). Personal overrides: `.gitagent/foreman/TEACHER.allowlist.local` (gitignored). Run `gapman teacher show` to confirm.
 
@@ -134,7 +134,20 @@ Runs **`dev-validate-core.sh`** (build, `gapman check`, `validate-gxt.sh manifes
 
 **Hooks (automatic when `core.hooksPath=.githooks`):**
 
-- **pre-push** — `gapman verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gapman check` if manifest/skills changed; changed-code gate for touched `src/cli/**/*.ts`.
+- **pre-push** — `gapman verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gapman check` if manifest/skills changed; advisory `gapman perimeter` when governance files change; changed-code gate for touched `src/cli/**/*.ts`.
+
+## OpenGantry 2.0: LLM evidence + KPI gate
+
+Nondeterministic LLM checks produce **committed evidence**; merge stays deterministic:
+
+1. Mission declares optional `llm_verifiers` + `kpi_gate` (see [`.gitagent/teacher/MISSION.schema.yaml`](../.gitagent/teacher/MISSION.schema.yaml)).
+2. Worker runs **`gapman scan --mission …`** — each verifier command emits JSON metrics (namespaced `provider::metric`).
+3. **`gapman verify`** runs shell `gate_command`, then evaluates `kpi_gate.thresholds` against [`.gitagent/kpi/MSN-NNNN.json`](../.gitagent/teacher/KPI-REPORT.schema.yaml), then trace mapping.
+4. KPI stale binding mirrors trace evidence: local warnings only; **`--pre-push`** / **`--ci`** fail-closed when TMVC drifts after the report commit.
+5. **`gapman register <dir>`** proposes skills from AST footprints; Teacher still owns manifest edits (Rule 4.4).
+6. **`gapman perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
+
+See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 - **post-checkout** — scaffold `WORKER_LOG.md` on feature branches when missing.
 
 ## Definition of done (OpenGantry repo)
@@ -153,7 +166,7 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 | Job | What it enforces |
 |-----|------------------|
 | `pr_governance` | PRs must target the integration branch (`main` here; `default_branch` in init template; override via repo variable `GXT_INTEGRATION_BRANCH`) — blocks stacked mission PRs |
-| `manifest` | `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doctor` |
+| `manifest` | `gapman check`, `validate-gxt.sh manifest`, unit tests, `gapman doctor`, `gapman perimeter --ci` on PRs |
 | `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
 | `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); checkout **PR head SHA** |
 | `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gapman verify` on each mission file in `${base}...${head}` triple-dot diff; fails if protected paths change without a mission file |

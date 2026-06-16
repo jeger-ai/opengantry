@@ -9,6 +9,8 @@ export const REL_ARCHITECTURE_DISCOVERY_SKILL = ".gitagent/teacher/ARCHITECTURE-
 /** Git-ignored credential slots for architecture sources (see gapman arch cred). */
 export const REL_ARCHITECTURE_CREDENTIALS_DIR = ".gitagent/history/credentials" as const;
 export const REL_MISSION_SCHEMA = ".gitagent/teacher/MISSION.schema.yaml" as const;
+export const REL_KPI_REPORT_SCHEMA = ".gitagent/teacher/KPI-REPORT.schema.yaml" as const;
+export const DEFAULT_KPI_REPORT_DIR = ".gitagent/kpi" as const;
 export const REL_MISSION_TEMPLATE = ".gitagent/teacher/MISSION.template.md" as const;
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
 /** Git-ignored machine-readable runtime error (see templates/.gitignore.gxt). */

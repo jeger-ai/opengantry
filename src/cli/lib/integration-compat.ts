@@ -31,6 +31,8 @@ export interface IntegrationCompatEntry {
 export interface IntegrationCompatManifest {
   schema_version: string;
   opengantry_version: string;
+  /** Repo-relative path under templates/ for init asset catalog JSON. */
+  asset_catalog?: string;
   integrations: Record<IntegrationIdeKey, IntegrationCompatEntry>;
 }
 

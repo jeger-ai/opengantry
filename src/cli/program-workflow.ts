@@ -2,7 +2,11 @@ import type { Command } from "commander";
 import { runLegislate } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
-import { readStdinIfEmpty } from "./commands/triage.js";
+import { runScan } from "./commands/scan.js";
+import { runRegister } from "./commands/register.js";
+import { runCheckImports } from "./commands/check-imports.js";
+import { runPerimeter } from "./commands/perimeter.js";
+import { readStdinIfEmpty } from "./lib/program-stdin.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
@@ -56,12 +60,15 @@ export function registerWorkflowCommands(program: Command): void {
     .description(
       "Git-proof (Teacher + MSN) + deterministic gate + hard-stop trace mapping vs WORKER_LOG.md",
     )
-    .requiredOption("--mission <path>", "Mission file (.md or .yaml)")
+    .option("--mission <path>", "Mission file (.md or .yaml)")
+    .option("--changed-missions", "Verify all mission files changed vs base ref on current branch")
+    .option("--base-ref <ref>", "Base ref for --changed-missions (default: origin/main or main)")
     .option("--worker-log <path>", "Override WORKER_LOG.md path")
     .option("--cwd <dir>", "Working directory for gate command")
     .option("--fuzzy-trace", "Force content-based anchor matching for all numeric anchors")
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
     .option("--skip-stale-evidence", "Skip TMVC stale-evidence binding for committed PASS trace lines")
+    .option("--ci", "Authoritative mode: fail-closed on KPI report stale evidence (use in CI)")
     .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
     .option("--break-glass", "Skip all verify gates when GXT_BYPASS_SECRET is authorized")
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
@@ -73,12 +80,15 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
     .action(
       async (opts: {
-        mission: string;
+        mission?: string;
+        changedMissions?: boolean;
+        baseRef?: string;
         workerLog?: string;
         cwd?: string;
         fuzzyTrace?: boolean;
         strictTrace?: boolean;
         skipStaleEvidence?: boolean;
+        ci?: boolean;
         prePush?: boolean;
         breakGlass?: boolean;
         reason?: string;
@@ -90,24 +100,54 @@ export function registerWorkflowCommands(program: Command): void {
         audience?: string;
       }) => {
         await runVerify({
-          mission: opts.mission,
-          workerLog: opts.workerLog,
-          cwd: opts.cwd,
-          fuzzyTrace: opts.fuzzyTrace,
-          strictTrace: opts.strictTrace,
-          skipStaleEvidence: opts.skipStaleEvidence,
-          prePush: opts.prePush,
-          breakGlass: opts.breakGlass,
+          ...opts,
           breakGlassReason: opts.reason,
           breakGlassCommit: opts.commit,
-          auditCommit: opts.auditCommit,
-          fix: opts.fix,
           fixNonInteractive: opts.nonInteractive,
-          json: opts.json,
           audience: getOutputAudience(),
         });
       },
     );
+
+  program
+    .command("scan")
+    .description("Run llm_verifiers and write committed KPI report JSON for verify kpi_gate")
+    .requiredOption("--mission <path>", "Mission file with llm_verifiers configured")
+    .option("--cwd <dir>", "Working directory for verifier commands")
+    .option("--json", "Emit structured JSON")
+    .action((opts: { mission: string; cwd?: string; json?: boolean }) => {
+      runScan(opts);
+    });
+
+  program
+    .command("register")
+    .description("AST discovery: propose skill scope from folder imports/exports (does not mutate MANIFEST)")
+    .argument("<dir>", "Repo-relative directory to analyze")
+    .option("--skill-key <key>", "Override suggested skill_key")
+    .option("--json", "Emit proposal JSON")
+    .action((dir: string, opts: { skillKey?: string; json?: boolean }) => {
+      runRegister({ dir, skillKey: opts.skillKey, json: opts.json });
+    });
+
+  program
+    .command("check-imports")
+    .description("Deterministic AST import ban check for a folder (usable as gate_command)")
+    .argument("<dir>", "Repo-relative directory to scan")
+    .requiredOption("--ban <specifier...>", "Banned import specifier (repeatable)")
+    .option("--json", "Emit structured JSON")
+    .action((dir: string, opts: { ban: string[]; json?: boolean }) => {
+      runCheckImports({ dir, ban: opts.ban, json: opts.json });
+    });
+
+  program
+    .command("perimeter")
+    .description("Check protected governance files; local advisory, --ci requires verified signatures")
+    .option("--base-ref <ref>", "Base ref for change detection (default: origin/main or main)")
+    .option("--ci", "Authoritative CI mode: fail on unsigned protected-file commits")
+    .option("--json", "Emit structured JSON")
+    .action((opts: { baseRef?: string; ci?: boolean; json?: boolean }) => {
+      runPerimeter(opts);
+    });
 
   program
     .command("metrics")

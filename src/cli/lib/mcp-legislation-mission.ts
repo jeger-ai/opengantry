@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import type { AgentErrorPayload } from "./agent-error.js";
 import { formatRepoRelative } from "./cli-io.js";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import {
@@ -93,7 +94,7 @@ export function handleLastError(): LastErrorResult {
     return { status: "empty", message: "No last error recorded." };
   }
   try {
-    const payload = JSON.parse(fs.readFileSync(errPath, "utf8")) as Record<string, unknown>;
+    const payload = JSON.parse(fs.readFileSync(errPath, "utf8")) as AgentErrorPayload;
     return { status: "found", payload };
   } catch {
     return { status: "error", message: "Failed to parse last error file." };

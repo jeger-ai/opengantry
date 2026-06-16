@@ -43,7 +43,8 @@ test("resolveAssetsFromProfile: claude-code only skips cursor assets", () => {
     ...defaultInitProfile(),
     ides: ["claude-code"],
   };
-  const assets = resolveAssetsFromProfile(profile, loadIntegrationCompat(path.join(getRepoRoot(), "templates")));
+  const templatesRoot = path.join(getRepoRoot(), "templates");
+  const assets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot), templatesRoot);
   const targets = assets.map((a) => a.targetPath);
   assert.ok(targets.includes("CLAUDE.md"));
   assert.ok(!targets.some((t) => t.startsWith(".cursor/")));

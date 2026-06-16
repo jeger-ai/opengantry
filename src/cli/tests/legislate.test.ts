@@ -18,7 +18,7 @@ test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "prior.yaml"),
     `msn_id: MSN-0988
-skill_key: ui
+skill_key: gapman
 gate_command: "echo OK"
 gate_success_substring: "OK"
 trace_rows: []
@@ -32,9 +32,9 @@ trace_rows: []
   try {
     process.exitCode = undefined;
     const result = runLegislate({
-      intent: "Add button hover state ui",
+      intent: "Add gapman verify helper",
       msn: "MSN-0989",
-      skillKey: "ui",
+      skillKey: "gapman",
     });
     assert.equal(result.ok, true);
     assert.equal(process.exitCode, undefined);
@@ -45,7 +45,7 @@ trace_rows: []
       .find((f) => f.startsWith("MSN-0989.") && f.endsWith(".yaml"))!;
     const body = fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
     assert.ok(body.includes("msn_id: MSN-0989") || body.includes("MSN-0989"));
-    assert.ok(body.includes("skill_key: ui"));
+    assert.ok(body.includes("skill_key: gapman"));
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -94,7 +94,7 @@ test("legislate: rejects missing msn", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    const result = runLegislate({ intent: "ui adjust spacing", skillKey: "ui" });
+    const result = runLegislate({ intent: "ui adjust spacing", skillKey: "gapman" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.exitCode, 2);
     assert.equal(process.exitCode, undefined);
@@ -123,7 +123,7 @@ test("legislate: rejects malformed msn", () => {
     const result = runLegislate({
       intent: "ui adjust spacing",
       msn: "msn-0043",
-      skillKey: "ui",
+      skillKey: "gapman",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.exitCode, 2);
@@ -147,7 +147,7 @@ test("legislate: duplicate msn fails closed by default", () => {
   fs.mkdirSync(missionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(missionsDir, "existing.yaml"),
-    "msn_id: MSN-0999\nskill_key: ui\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0999\nskill_key: gapman\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -159,7 +159,7 @@ test("legislate: duplicate msn fails closed by default", () => {
     const result = runLegislate({
       intent: "ui adjust spacing",
       msn: "MSN-0999",
-      skillKey: "ui",
+      skillKey: "gapman",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.exitCode, 2);
@@ -183,7 +183,7 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   fs.mkdirSync(missionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(missionsDir, "existing.yaml"),
-    "msn_id: MSN-0999\nskill_key: ui\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0999\nskill_key: gapman\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -195,7 +195,7 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
     const result = runLegislate({
       intent: "ui add hover state",
       msn: "MSN-0999",
-      skillKey: "ui",
+      skillKey: "gapman",
       allowDuplicate: true,
     });
     assert.equal(result.ok, true);
@@ -223,7 +223,7 @@ test("legislate: emits PENDING stub trace row", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({ intent: "ui tweak padding", msn: "MSN-0777", skillKey: "ui" });
+    runLegislate({ intent: "ui tweak padding", msn: "MSN-0777", skillKey: "gapman" });
     const created = fs
       .readdirSync(path.join(dest, ".gitagent", "missions"))
       .find((f) => f.startsWith("MSN-0777.") && f.endsWith(".yaml"))!;
@@ -254,7 +254,7 @@ test("legislate: --gate-command preserves spaces in complex command", () => {
     runLegislate({
       intent: "ui timeline card padding",
       msn: "MSN-0778",
-      skillKey: "ui",
+      skillKey: "gapman",
       gateCommand: gateCmd,
       gateSuccessSubstring: "Tests:",
     });

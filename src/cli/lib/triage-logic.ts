@@ -40,7 +40,7 @@ function withAdrHints(root: string, intent: string, result: TriageResult): Triag
   return { ...result, adr_hints: hints };
 }
 
-function legislativeEscalation(reason: string): TriageResult {
+function legislativeEscalation(reason: string, matchReasons: string[], confidence: number): TriageResult {
   return {
     action: "LEGISLATIVE_ESCALATION",
     skill_key: "NONE",
@@ -48,10 +48,12 @@ function legislativeEscalation(reason: string): TriageResult {
     tmvc_roots: [],
     forbidden_zones: [],
     reason,
+    confidence,
+    match_reasons: matchReasons,
   };
 }
 
-function directExecution(skillKey: string, manifest: Manifest): TriageResult {
+function directExecution(skillKey: string, manifest: Manifest, matchReasons: string[]): TriageResult {
   const skill = manifest.skills[skillKey]!;
   return {
     action: "DIRECT_EXECUTION",
@@ -60,6 +62,8 @@ function directExecution(skillKey: string, manifest: Manifest): TriageResult {
     tmvc_roots: [...skill.tmvc_roots],
     forbidden_zones: [...skill.forbidden_zones],
     reason: `Single confident skill match: ${skillKey}`,
+    confidence: 1,
+    match_reasons: matchReasons,
   };
 }
 
@@ -74,28 +78,46 @@ function matchingSkillKeys(intentNorm: string, manifest: Manifest): string[] {
  * overlap intent; routing remains binary.
  */
 export function triageIntent(repoRoot: string, intent: string, manifest: Manifest): TriageResult {
+  const matchReasons: string[] = [];
   const risk = shouldEscalateForRisk(intent, manifest);
   if (risk.escalate) {
-    return withAdrHints(repoRoot, intent, legislativeEscalation(risk.reason));
+    matchReasons.push(risk.reason);
+    return withAdrHints(
+      repoRoot,
+      intent,
+      legislativeEscalation(risk.reason, matchReasons, 0.2),
+    );
   }
 
   const intentNorm = normalizeIntent(intent);
   const matches = matchingSkillKeys(intentNorm, manifest);
 
   if (matches.length === 1) {
-    return withAdrHints(repoRoot, intent, directExecution(matches[0]!, manifest));
+    const key = matches[0]!;
+    matchReasons.push(`Intent mentions skill key "${key}"`);
+    return withAdrHints(repoRoot, intent, directExecution(key, manifest, matchReasons));
   }
   if (matches.length === 0) {
+    matchReasons.push("No manifest skill key matched intent text");
     return withAdrHints(
       repoRoot,
       intent,
-      legislativeEscalation("No confident skill_key match in intent (ambiguous or missing)"),
+      legislativeEscalation(
+        "No confident skill_key match in intent (ambiguous or missing)",
+        matchReasons,
+        0.1,
+      ),
     );
   }
+  matchReasons.push(`Multiple skill matches: ${matches.join(", ")}`);
   return withAdrHints(
     repoRoot,
     intent,
-    legislativeEscalation(`Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`),
+    legislativeEscalation(
+      `Multiple skill matches: ${matches.join(", ")} — escalate to Teacher`,
+      matchReasons,
+      0.3,
+    ),
   );
 }
 
@@ -108,10 +130,17 @@ export function formatTriageHuman(result: TriageResult): string {
     `Action: ${result.action}`,
     `Skill_key: ${result.skill_key}`,
     `Risk_tier: ${result.risk_tier}`,
+    `Confidence: ${result.confidence.toFixed(2)}`,
     `tmvc_roots: ${JSON.stringify(result.tmvc_roots)}`,
     `forbidden_zones: ${JSON.stringify(result.forbidden_zones)}`,
     `Reason: ${result.reason}`,
   ];
+  if (result.match_reasons.length) {
+    lines.push("Match_reasons:");
+    for (const r of result.match_reasons) {
+      lines.push(`  - ${r}`);
+    }
+  }
   if (result.adr_hints?.length) {
     lines.push("ADR_hints (non-binding; Teacher confirms):");
     for (const h of result.adr_hints) {

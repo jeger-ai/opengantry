@@ -1,8 +1,10 @@
 import path from "node:path";
 import { assertTeacherMissionProof } from "./git-proof.js";
 import { gatePassed, runGate } from "./gate.js";
+import { evaluateKpiPhase } from "./kpi-phase.js";
 import { isLegislativeStub } from "./mission-legislative-stub.js";
 import type { GateSpec, Manifest, ParsedMission } from "./types.js";
+import type { KpiThresholdOp } from "./types.js";
 import { classifyTraceFailure, type TraceFailureKind } from "./trace-failure-kind.js";
 import { isPendingStatus } from "./trace-status.js";
 import { verifyTraceEvidenceFreshness } from "./trace-evidence.js";
@@ -10,7 +12,7 @@ import { defaultWorkerLogPath, verifyTraceRows, type TraceVerifyWarning } from "
 import type { VerifyOptions } from "./verify-types.js";
 import { errorMessage } from "./cli-io.js";
 
-export type VerifyFailurePhase = "git_proof" | "gate" | "trace_pending" | "trace";
+export type VerifyFailurePhase = "git_proof" | "gate" | "kpi" | "trace_pending" | "trace";
 
 export interface VerifyPhaseFailure {
   ok: false;
@@ -28,6 +30,13 @@ export interface VerifyPhaseFailure {
   traceReason?: string;
   attestationCommit?: string;
   stalePaths?: string[];
+  kpiReportPath?: string;
+  kpiReason?: string;
+  kpiMetric?: string;
+  kpiOp?: KpiThresholdOp;
+  kpiExpected?: number;
+  kpiActual?: number | boolean;
+  kpiStalePaths?: string[];
 }
 
 export interface VerifyPhaseSuccess {
@@ -36,6 +45,7 @@ export interface VerifyPhaseSuccess {
   proofMsnId: string;
   workerLogPath: string;
   traceWarnings: TraceVerifyWarning[];
+  kpiWarnings?: string[];
   traceEvidenceSkippedUncommitted?: number;
 }
 
@@ -213,6 +223,24 @@ export function evaluateVerifyPhases(
   const gateFailure = evaluateGatePhase(root, gate, options, workerLogPath);
   if (gateFailure) return gateFailure;
 
+  let kpiWarnings: string[] | undefined;
+  if (mission.kpiGate) {
+    const kpiOutcome = evaluateKpiPhase(
+      root,
+      manifest,
+      mission.skillKey,
+      mission.kpiGate,
+      options,
+      workerLogPath,
+    );
+    if (kpiOutcome && "ok" in kpiOutcome && kpiOutcome.ok === false) {
+      return kpiOutcome;
+    }
+    if (kpiOutcome && "warnings" in kpiOutcome) {
+      kpiWarnings = kpiOutcome.warnings;
+    }
+  }
+
   const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
   if (trace.kind === "fail") return trace.failure;
 
@@ -222,6 +250,7 @@ export function evaluateVerifyPhases(
     proofMsnId,
     workerLogPath,
     traceWarnings: trace.warnings,
+    ...(kpiWarnings && kpiWarnings.length > 0 ? { kpiWarnings } : {}),
     traceEvidenceSkippedUncommitted:
       trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
   };

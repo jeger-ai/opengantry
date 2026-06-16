@@ -1,18 +1,6 @@
 {
   "schema_version": "0.5.0",
   "skills": {
-    "ui": {
-      "desc": "UI components and styles within declared roots.",
-      "trust_threshold": "Tier-1",
-      "tmvc_roots": ["src/components/", "src/styles/"],
-      "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
-    },
-    "logic": {
-      "desc": "Application logic and utilities within declared roots.",
-      "trust_threshold": "Tier-2",
-      "tmvc_roots": ["src/lib/", "src/utils/"],
-      "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
-    },
     "gapman": {
       "desc": "gapman CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
       "trust_threshold": "Tier-2",
@@ -33,5 +21,10 @@
     "src/auth/": "Tier-3",
     "src/db/schema/": "Tier-3"
   },
-  "risk_keywords": ["refactor", "migrate", "delete", "security", "schema"]
+  "risk_keywords": ["refactor", "migrate", "delete", "security", "schema"],
+  "perimeter_protected": [
+    "**/.gxt-skill.yaml",
+    ".gitagent/foreman/MANIFEST.json",
+    ".gitagent/teacher/RULES.md"
+  ]
 }

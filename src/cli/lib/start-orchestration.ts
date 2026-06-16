@@ -2,7 +2,7 @@ import { runLegislate } from "./legislate-core.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { allocateMsn } from "./msn-allocate.js";
-import { isValidMsnId } from "./msn.js";
+import { isValidMsnId } from "./mission-msn.js";
 import { isTriageEscalated } from "./legislate-skill.js";
 import { formatTriageHuman, triageIntent } from "./triage-logic.js";
 import type { TriageResult } from "./types.js";

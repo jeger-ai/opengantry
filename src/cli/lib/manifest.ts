@@ -17,6 +17,18 @@ export function loadManifest(root: string): Manifest {
   return raw;
 }
 
+function validatePerimeterProtected(o: Record<string, unknown>): void {
+  if (o.perimeter_protected === undefined) return;
+  if (!Array.isArray(o.perimeter_protected)) {
+    throw new Error("MANIFEST: perimeter_protected must be an array when present");
+  }
+  for (const g of o.perimeter_protected) {
+    if (typeof g !== "string" || g.length === 0) {
+      throw new Error("MANIFEST: perimeter_protected items must be non-empty strings");
+    }
+  }
+}
+
 /** Mirrors scripts/validate-gxt.sh manifest checks */
 export function validateManifestShape(m: unknown): asserts m is Manifest {
   if (typeof m !== "object" || m === null) throw new Error("MANIFEST: not an object");
@@ -33,6 +45,7 @@ export function validateManifestShape(m: unknown): asserts m is Manifest {
     throw new Error("MANIFEST: path_risks must be an object");
   }
   if (!Array.isArray(o.risk_keywords)) throw new Error("MANIFEST: risk_keywords must be an array");
+  validatePerimeterProtected(o);
   for (const k of Object.keys(skills)) {
     const s = skills[k];
     if (typeof s !== "object" || s === null) throw new Error(`MANIFEST: skills.${k} must be an object`);

@@ -1,0 +1,48 @@
+# KPI-REPORT.schema — JSON Schema for committed LLM/scan evidence reports
+# Consumed by gapman verify kpi phase (Ajv). Version label for docs only.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://opengantry.local/schemas/kpi-report.v2_0.json
+title: OpenGantryKpiReport
+type: object
+additionalProperties: false
+required:
+  - msn_id
+  - generated_at
+  - exit_code
+  - metrics
+properties:
+  msn_id:
+    type: string
+    pattern: "^MSN-[0-9]{4}$"
+  generated_at:
+    type: string
+    format: date-time
+  exit_code:
+    type: integer
+  metrics:
+    type: object
+    additionalProperties:
+      oneOf:
+        - type: number
+        - type: boolean
+  findings:
+    type: array
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - severity
+        - path
+        - message
+      properties:
+        severity:
+          type: string
+          enum: [info, warn, error]
+        path:
+          type: string
+        line:
+          type: integer
+          minimum: 1
+        message:
+          type: string

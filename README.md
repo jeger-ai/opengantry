@@ -180,7 +180,11 @@ Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry
 | `gapman runtime env --mission <path>` | Worker Runtime Contract: emit `GXT_REPO_ROOT`, `GXT_MISSION_FILE`, `GXT_MSN_ID`, `GXT_SKILL_KEY`, `GXT_TMVC_ROOTS`, `GXT_FORBIDDEN_ZONES`, `GXT_WORKER_LOG`. Default: POSIX `export …` lines; `--json` for scripts. [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md). |
 | `gapman runtime exec --mission <path> -- <cmd…>` | Run worker command with mission env, telemetry capture, and forbidden-zone scan (strongest TMVC trap). |
 | `gapman mcp serve` | Stdio MCP server exposing `gxt_*` tools (legislation, pin, runtime env, verify with `fix_hints`, `gxt_start_orchestration`, exec). `gxt_verify` uses the flat `--json` envelope — see [ADOPTION.md § MCP verify envelope](docs/ADOPTION.md). Configure via `.cursor/mcp.json`. |
-| `gapman verify --mission <path>` | Teacher-approved mission commit + gate + trace. **`--json`** structured output (`status`, `phase`, `error_code`, `fix_hints`). **`--fix`** guided repair. CI: `--audience verifier` (errors only). Failures emit **`GXT_*`** codes. |
+| `gapman verify --mission <path>` | Teacher-approved mission commit + gate + trace. **`--json`** structured output (`status`, `phase`, `error_code`, `fix_hints`). **`--fix`** guided repair. CI: `--audience verifier` (errors only). Failures emit **`GXT_*`** codes. Optional **`kpi_gate`** phase reads committed [KPI report](.gitagent/teacher/KPI-REPORT.schema.yaml) (after gate, before trace). **`--ci`** / **`--pre-push`**: fail-closed on stale KPI evidence. |
+| `gapman scan --mission <path>` | Run mission `llm_verifiers` (BYO commands) and write namespaced KPI report JSON for `kpi_gate`. |
+| `gapman register <dir>` | AST discovery: propose skill scope from folder imports/exports (does not mutate `MANIFEST.json`). |
+| `gapman check-imports <dir> --ban <spec…>` | Deterministic banned-import scan (usable as `gate_command`; no LLM). |
+| `gapman perimeter [--base-ref <ref>] [--ci]` | Protected governance paths: local advisory; **`--ci`** requires verified commit signatures. |
 | `gapman arch pointer` | Print architecture pointer summary for agents (`.gitagent/ARCHITECTURE.pointer.json`). |
 | `gapman arch cred status\|set\|unset` | Git-ignored credential slots for authenticated external architecture sources (secrets via stdin only). |
 | `gapman metrics [--json] [--ref main]` | Git-native governance rollup (stream-parsed). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |

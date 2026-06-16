@@ -9,7 +9,7 @@ import {
   logWarn,
   toPosixRel,
 } from "./cli-io.js";
-import { isValidMsnId } from "./msn.js";
+import { isValidMsnId } from "./mission-msn.js";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 import { resolveSkillKeyForLegislation } from "./legislate-skill.js";
 import { loadWorkspace } from "./workspace.js";

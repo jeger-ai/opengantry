@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { extractMsnIdFromMissionPath } from "./mission-msn.js";
 import { gitLogSubjects } from "./git-repo.js";
-import { isValidMsnId } from "./msn.js";
+import { isValidMsnId } from "./mission-msn.js";
 
 export const WORK_MSN_BAND_MAX = 8999;
 export const UPGRADE_MSN_BAND_MIN = 9000;

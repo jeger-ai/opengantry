@@ -20,8 +20,13 @@ import {
   readInstalledSubstrateVersion,
 } from "./substrate-version.js";
 import { allocateMsn } from "./msn-allocate.js";
-import { isValidMsnId } from "./msn.js";
+import { isValidMsnId } from "./mission-msn.js";
 import { buildLegislativeTraceRows, buildMissionYamlScaffold } from "./mission-yaml.js";
+import {
+  buildUpgradeFileChanges,
+  groupUpgradeChangesByCategory,
+  type UpgradeFileChange,
+} from "./upgrade-plan-preview.js";
 
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
 export { UPGRADE_MSN_BAND_MIN, UPGRADE_MSN_BAND_MAX } from "./msn-allocate.js";
@@ -49,6 +54,8 @@ export interface UpgradePlanResult {
   skipped_scaffold_only?: string[];
   unchanged?: string[];
   legacy_warning?: string | null;
+  file_changes?: UpgradeFileChange[];
+  changes_by_category?: Record<string, UpgradeFileChange[]>;
 }
 
 function sha256Buffer(buf: Buffer): string {
@@ -206,11 +213,22 @@ function logUpgradePlanSummary(
     legacyWarning: string | null;
     missionRel: string;
     suggestedHumanAction: string;
+    fileChanges?: UpgradeFileChange[];
   },
 ): void {
   if (options.json) return;
   logInfo(`${CLI_NAME} upgrade: ${options.dryRun ? "dry-run — would stage" : "staged"} ${opts.plannedWrites.length} file(s) under ${REL_UPGRADE_TMP}/`);
   for (const rel of opts.plannedWrites) logInfo(`  - ${rel}`);
+  if (opts.fileChanges?.length) {
+    logInfo("Changelog preview:");
+    for (const c of opts.fileChanges) {
+      const delta =
+        c.bytes_before === null
+          ? `new ${c.bytes_after} bytes`
+          : `${c.bytes_before} → ${c.bytes_after} bytes`;
+      logInfo(`  [${c.action}] ${c.path} (${delta})`);
+    }
+  }
   if (opts.legacyWarning) logWarn(opts.legacyWarning);
   logInfo(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
   logInfo(`${options.dryRun ? "Suggested Teacher action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
@@ -231,7 +249,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   if (versionGate) return versionGate;
 
   const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);
-  const catalogAssets = resolveAssetsFromProfile(profile, compat);
+  const catalogAssets = resolveAssetsFromProfile(profile, compat, templatesRoot);
   const assets = upgradeEligibleAssets(catalogAssets);
   const plan = planInitAssets(assets, templatesRoot, repoRoot, true);
   if (!plan.ok) {
@@ -270,6 +288,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   const missionAbs = path.join(repoRoot, fromPosix(missionRel));
   const suggestedHumanAction = `git add ${missionRel}\ngit commit -m "[${msnId}] approve substrate upgrade to v${bundled}"`;
 
+  const fileChanges = buildUpgradeFileChanges(repoRoot, plan.writes);
   const shared: UpgradePlanResult = {
     status: "planned",
     from_version: installed.version,
@@ -280,10 +299,12 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
     skipped_scaffold_only: plan.skippedUserMutable,
     unchanged: plan.unchanged,
     legacy_warning: legacyWarning,
+    file_changes: fileChanges,
+    changes_by_category: groupUpgradeChangesByCategory(fileChanges),
   };
 
   if (options.dryRun) {
-    logUpgradePlanSummary(options, { plannedWrites, legacyWarning, missionRel, suggestedHumanAction });
+    logUpgradePlanSummary(options, { plannedWrites, legacyWarning, missionRel, suggestedHumanAction, fileChanges });
     return shared;
   }
 

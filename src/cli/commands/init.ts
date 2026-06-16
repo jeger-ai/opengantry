@@ -236,7 +236,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   }
   if (!validateInitProfile(profile, repoRoot, compat)) return;
 
-  const assets = resolveAssetsFromProfile(profile, compat);
+  const assets = resolveAssetsFromProfile(profile, compat, templatesRoot);
   const assetPlan = await resolveInitAssetPlan(options, assets, templatesRoot, repoRoot);
   if (!assetPlan) return;
 

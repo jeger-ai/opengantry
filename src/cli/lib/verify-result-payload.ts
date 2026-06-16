@@ -3,7 +3,7 @@ import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
 import { assertMissionGatePresent, parseMissionFile } from "./mission-parser.js";
 import type { Manifest, ParsedMission } from "./types.js";
-import { isGapmanUserError } from "./user-error.js";
+import { GapmanUserError, isGapmanUserError } from "./user-error.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseFailure,
@@ -31,6 +31,7 @@ export interface VerifyPassedPayload {
   message?: string;
   audit_commit?: string;
   trace_warnings?: VerifyTraceWarningJson[];
+  kpi_warnings?: string[];
   trace_evidence_skipped_uncommitted?: number;
 }
 
@@ -85,6 +86,9 @@ function successPayload(
     msn_id: mission.msnId ?? undefined,
     mission_file_path: missionRelPath(root, mission),
     ...(traceWarnings ? { trace_warnings: traceWarnings } : {}),
+    ...(result.kpiWarnings && result.kpiWarnings.length > 0
+      ? { kpi_warnings: result.kpiWarnings }
+      : {}),
     ...(result.traceEvidenceSkippedUncommitted !== undefined
       ? { trace_evidence_skipped_uncommitted: result.traceEvidenceSkippedUncommitted }
       : {}),
@@ -142,6 +146,12 @@ function failureFromPhase(
       ...base,
       ...(failure.gateStdout !== undefined ? { stdout: failure.gateStdout } : {}),
       ...(failure.gateStderr !== undefined ? { stderr: failure.gateStderr } : {}),
+    };
+  }
+  if (failure.phase === "kpi") {
+    return {
+      ...base,
+      failures: [failure.kpiReason ?? failure.message],
     };
   }
   if (failure.phase === "trace" && failure.traceReason) {
@@ -214,6 +224,9 @@ export function buildVerifyResultPayload(
 /** Load workspace, parse mission, assert gate — flat init failures on error. */
 export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): VerifyResultPayload {
   try {
+    if (!options.mission) {
+      throw new GapmanUserError("INVALID_ARGUMENT", "gapman verify: --mission is required", undefined, 2);
+    }
     const { root, manifest } = loadWorkspace();
     const mission = parseMissionFile(root, options.mission);
     assertMissionGatePresent(mission);

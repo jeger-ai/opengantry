@@ -3,6 +3,10 @@ import path from "node:path";
 import YAML from "yaml";
 import { MSN_ID_PATTERN } from "./constants.js";
 
+export function isValidMsnId(id: string): boolean {
+  return MSN_ID_PATTERN.test(id.trim());
+}
+
 function pickMsnFromYamlRecord(o: Record<string, unknown>): string | null {
   const a = o.msn_id;
   const b = o.msnId;
@@ -77,5 +81,3 @@ export function extractMsnIdFromMissionPath(missionAbsolutePath: string): string
   return extractMsnIdFromMissionBody(body, ext);
 }
 
-/** @deprecated Prefer `extractMsnIdFromMissionPath` (parser-owned identity). */
-export const extractMsnIdFromMissionFile = extractMsnIdFromMissionPath;

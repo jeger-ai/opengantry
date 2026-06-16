@@ -1,9 +1,12 @@
 import fs from "node:fs";
 import { handleResolveMission } from "./mcp-legislation.js";
 import { handleRuntimeEnv } from "./mcp-runtime.js";
+import type { StartOrchestrationMcpResult } from "./mcp-orchestration-types.js";
 import { resolveMissionFilePath, pinMissionFile } from "./mission-path.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
+
+export type { StartOrchestrationMcpResult } from "./mcp-orchestration-types.js";
 
 export interface StartOrchestrationInput {
   intent: string;
@@ -16,7 +19,7 @@ export interface StartOrchestrationInput {
   write_mission?: boolean;
 }
 
-export function handleStartOrchestration(input: StartOrchestrationInput): Record<string, unknown> {
+export function handleStartOrchestration(input: StartOrchestrationInput): StartOrchestrationMcpResult {
   const result = runStartOrchestration({
     intent: input.intent,
     msn: input.msn_id,
@@ -41,7 +44,7 @@ export function handleStartOrchestration(input: StartOrchestrationInput): Record
     };
   }
 
-  const payload: Record<string, unknown> = {
+  const payload: StartOrchestrationMcpResult = {
     status: "ok",
     triage: result.triage,
     triage_action: result.triage_action,
@@ -51,6 +54,7 @@ export function handleStartOrchestration(input: StartOrchestrationInput): Record
     next_steps: result.next_steps,
     next_actions: result.next_steps,
     exit_code: result.exit_code,
+    resolve: handleResolveMission(result.mission_file_path ?? undefined),
   };
 
   if (input.pin_if_needed === true && result.mission_file_path) {
@@ -65,6 +69,5 @@ export function handleStartOrchestration(input: StartOrchestrationInput): Record
     payload.runtime_env = handleRuntimeEnv(result.mission_file_path);
   }
 
-  payload.resolve = handleResolveMission(result.mission_file_path ?? undefined);
   return payload;
 }

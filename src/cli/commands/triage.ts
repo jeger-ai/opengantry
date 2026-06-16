@@ -1,5 +1,5 @@
 import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { isValidMsnId } from "../lib/msn.js";
+import { isValidMsnId } from "../lib/mission-msn.js";
 import { emitActiveMissionFromTemplate } from "../lib/mission-emit.js";
 import { formatTriageHuman, formatTriageJson, triageIntent } from "../lib/triage-logic.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -45,15 +45,4 @@ export function runTriage(options: TriageRunOptions): void {
   logInfo(`Wrote ${formatRepoRelative(root, outputPath)}`);
 }
 
-export function readStdinIfEmpty(text: string): Promise<string> {
-  if (text.trim()) return Promise.resolve(text);
-  return new Promise((resolve, reject) => {
-    let data = "";
-    process.stdin.setEncoding("utf8");
-    process.stdin.on("data", (chunk) => {
-      data += chunk;
-    });
-    process.stdin.on("end", () => resolve(data.trim()));
-    process.stdin.on("error", reject);
-  });
-}
+export { readStdinIfEmpty } from "../lib/program-stdin.js";

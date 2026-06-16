@@ -23,6 +23,9 @@ export interface VerifyRunResult {
  */
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
   const { root, manifest } = loadWorkspace();
+  if (!options.mission) {
+    throw new Error("gapman verify: --mission is required");
+  }
   const mission = parseMissionFile(root, options.mission);
   const missionArg = options.mission;
   const sink = resolveVerifySink(options);

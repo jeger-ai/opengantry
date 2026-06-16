@@ -1,9 +1,13 @@
-import { writeAgentErrorPayload } from "./agent-error.js";
+import { writeAgentErrorPayload, type AgentErrorPayload } from "./agent-error.js";
+import type { ForbiddenViolation } from "./forbidden-scan.js";
+import type { RuntimeExecResult } from "./runtime-exec-result.js";
 import { errorMessage } from "./cli-io.js";
 import {
   buildVerifyResultPayloadFromOptions,
   type VerifyResultPayload,
 } from "./verify-result-payload.js";
+import { parseMissionFile } from "./mission-parser.js";
+import { runKpiScan } from "./kpi-scan.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
 import { runRuntimeExec } from "./runtime-exec.js";
 import { loadWorkspace } from "./workspace.js";
@@ -23,10 +27,10 @@ export type RuntimeEnvMcpResult =
 export type RuntimeExecMcpResult =
   | { status: "success"; exit_code: number; flight_id: string }
   | {
-      status: string;
+      status: Exclude<RuntimeExecResult["status"], "success">;
       exit_code: number;
-      violations: unknown;
-      agent_error: unknown;
+      violations: ForbiddenViolation[];
+      agent_error: AgentErrorPayload;
     }
   | { status: "error"; error: McpRuntimeErrorBody };
 
@@ -54,12 +58,39 @@ export function handleVerify(
   missionFilePath: string,
   prePush = false,
   skipStaleEvidence = false,
+  ci = false,
 ): VerifyResultPayload {
   return buildVerifyResultPayloadFromOptions({
     mission: missionFilePath,
     prePush,
     skipStaleEvidence,
+    ci,
   });
+}
+
+export interface KpiScanMcpResult {
+  status: "ok" | "error";
+  report_path?: string;
+  report?: unknown;
+  error?: McpRuntimeErrorBody;
+}
+
+export function handleScan(missionFilePath: string, cwd?: string): KpiScanMcpResult {
+  try {
+    const workspace = loadWorkspace();
+    const mission = parseMissionFile(workspace.root, missionFilePath);
+    const result = runKpiScan(workspace.root, mission, { cwd });
+    return { status: "ok", report_path: result.reportPath, report: result.report };
+  } catch (e) {
+    return {
+      status: "error",
+      error: {
+        code: "SCAN_FAILED",
+        message: errorMessage(e),
+        retryable: true,
+      },
+    };
+  }
 }
 
 export type RuntimeExecMcpInput = {

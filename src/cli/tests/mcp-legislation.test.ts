@@ -36,7 +36,7 @@ test("mcp legislation: draft does not write mission file", () => {
     const draft = handleDraftLegislation({
       title: "Add button hover",
       msn_id: "MSN-0201",
-      skill_key: "ui",
+      skill_key: "gapman",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -58,7 +58,7 @@ test("mcp legislation: execute writes mission and returns pending_signature", ()
     const draft = handleDraftLegislation({
       title: "Add button hover",
       msn_id: "MSN-0202",
-      skill_key: "ui",
+      skill_key: "gapman",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -90,7 +90,7 @@ test("mcp legislation: check_signature valid after teacher commit", () => {
     const draft = handleDraftLegislation({
       title: "Signed mission",
       msn_id: "MSN-0203",
-      skill_key: "ui",
+      skill_key: "gapman",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -120,7 +120,7 @@ test("mcp legislation: execute does not mutate process.exitCode on failure", () 
     const draft = handleDraftLegislation({
       title: "Exit code leak guard",
       msn_id: "MSN-0204",
-      skill_key: "ui",
+      skill_key: "gapman",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -130,7 +130,7 @@ test("mcp legislation: execute does not mutate process.exitCode on failure", () 
     }
 
     const collidingMission = path.join(dest, ".gitagent", "missions", "MSN-0204.exit-code-leak-guard.yaml");
-    fs.writeFileSync(collidingMission, "msn_id: MSN-0204\nskill_key: ui\ngate_command: echo OK\ntrace_rows: []\n", "utf8");
+    fs.writeFileSync(collidingMission, "msn_id: MSN-0204\nskill_key: gapman\ngate_command: echo OK\ntrace_rows: []\n", "utf8");
 
     process.exitCode = 0;
     const executed = handleExecuteLegislation(draft.draft_token);
