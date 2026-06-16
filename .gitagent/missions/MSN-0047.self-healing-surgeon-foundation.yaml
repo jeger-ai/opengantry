@@ -1,0 +1,44 @@
+# MSN-0047: Autonomous self-healing surgeon foundation (quarantine-only, no auto-pass).
+msn_id: MSN-0047
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+llm_verifiers:
+  - id: stub
+    command: ./scripts/kpi-stub-verifier.sh
+    required: true
+aggregators:
+  - key: security_flaws
+    op: max
+    sources:
+      - stub::security_vulnerabilities
+kpi_gate:
+  report_path: .gitagent/kpi/MSN-0047.json
+  thresholds:
+    - metric: stub::complexity_score
+      op: "<="
+      value: 12
+    - metric: security_flaws
+      op: "=="
+      value: 0
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "Surgeon registry resolves GXT_BANNED_IMPORT_DETECTED to quarantine surgeon"
+    anchor: "MSN-0047"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: "gapman verify --fix quarantines banned import with GXT-SURGEON-QUARANTINE markers"
+    anchor: "MSN-0047"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: "SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun"
+    anchor: "MSN-0047"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: "verify --fix reruns full pipeline with fix false after mutation"
+    anchor: "MSN-0047"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: "dev-validate-core OK"
+    anchor: "MSN-0047"
+    status: PENDING
