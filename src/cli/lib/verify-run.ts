@@ -54,10 +54,10 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
       }
       const result = evaluateVerifyPhases(root, mission, options, manifest);
       if (sink === "fix_interactive") {
-        return presentFix(root, mission, missionArg, options, result, false);
+        return presentFix(root, mission, missionArg, options, result, false, manifest);
       }
       if (sink === "fix_noninteractive") {
-        return presentFix(root, mission, missionArg, options, result, true);
+        return presentFix(root, mission, missionArg, options, result, true, manifest);
       }
       return presentHuman(root, mission, missionArg, options, result);
     }

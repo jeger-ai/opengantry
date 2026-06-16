@@ -11,6 +11,7 @@ import {
   type VerifyPhaseResult,
 } from "./verify-engine.js";
 import { verifyFailurePresentation } from "./verify-failure-presentation.js";
+import { trySurgeonAndRerunVerify } from "./surgeon-orchestration.js";
 import {
   buildBreakGlassPayload,
   buildVerifyResultPayloadFromPhaseResult,
@@ -153,12 +154,25 @@ export async function presentFix(
   options: VerifyOptions,
   result: VerifyPhaseResult,
   nonInteractive: boolean,
+  manifest: Manifest,
 ): Promise<VerifyPresentResult> {
   if (result.ok) {
     return presentHuman(root, mission, missionArg, options, result);
   }
 
   const failure = result as VerifyPhaseFailure;
+  const surgeonRerun = await trySurgeonAndRerunVerify({
+    root,
+    mission,
+    missionArg,
+    options,
+    manifest,
+    failure,
+  });
+  if (surgeonRerun) {
+    return surgeonRerun;
+  }
+
   if (nonInteractive) {
     return presentHuman(root, mission, missionArg, options, result);
   }

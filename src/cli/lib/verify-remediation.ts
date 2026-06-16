@@ -1,4 +1,5 @@
 import { GXT_ERROR, mapGitProofCodeToGxt } from "./gxt-error-codes.js";
+import { gateOutputIndicatesBannedImport } from "./banned-import-violation.js";
 import type { OutputAudience } from "./audience-output.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import type { TraceFailureKind } from "./trace-failure-kind.js";
@@ -36,6 +37,8 @@ export interface VerifyHintContext {
   traceQuote?: string;
   traceFailureReason?: string;
   kpiFailureReason?: string;
+  gateStderr?: string;
+  gateStdout?: string;
 }
 
 export function buildVerifyHintContext(
@@ -56,6 +59,8 @@ export function buildVerifyHintContext(
     traceQuote: failure.traceQuote,
     traceFailureReason: failure.traceReason,
     kpiFailureReason: failure.kpiReason ?? failure.message,
+    gateStderr: failure.gateStderr,
+    gateStdout: failure.gateStdout,
     strictTrace: options.strictTrace,
   };
 }
@@ -107,8 +112,12 @@ function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const verifyCmdStr = verifyCmd(mission);
   const gate = ctx.gateCommand ?? "<gate>";
+  const combined = `${ctx.gateStderr ?? ""}\n${ctx.gateStdout ?? ""}`;
+  const errorCode = gateOutputIndicatesBannedImport(combined)
+    ? GXT_ERROR.BANNED_IMPORT_DETECTED
+    : GXT_ERROR.GATE_FAILED;
   return {
-    error_code: GXT_ERROR.GATE_FAILED,
+    error_code: errorCode,
     fix_hints: [hintGate(gate, mission)],
     next_actions: [`re-run gate: ${gate}`, verifyCmdStr],
     tagged_steps: [
