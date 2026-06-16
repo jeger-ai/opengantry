@@ -191,3 +191,7 @@ example trace line for gapman verify
 ## MSN-0051 — Commander option-bag registrar cleanup (issue #55)
 
 - DoD 1 MSN-0051: program registrars pass Commander options via typed callback interfaces; dev-validate-core OK
+
+## MSN-0052 — Wave 1 thermo cleanup N8-N10 (#58 #56 #57)
+
+- DoD 1 MSN-0052: Wave 1 thermo cleanup — start failure factory, static tutorial imports, REPO_ONLY_SCRIPTS catalog guard; dev-validate-core OK

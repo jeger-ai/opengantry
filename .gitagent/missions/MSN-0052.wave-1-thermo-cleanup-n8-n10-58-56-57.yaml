@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Wave 1 thermo cleanup N8-N10 (#58 #56 #57)
+msn_id: MSN-0052
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0052: Wave 1 thermo cleanup — start failure factory, static tutorial imports, REPO_ONLY_SCRIPTS catalog guard; dev-validate-core OK"
+    anchor: "MSN-0052"
+    status: PASS

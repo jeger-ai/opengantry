@@ -67,14 +67,28 @@ function logStartTriage(
   skillOverride: string | undefined,
 ): void {
   if (suppressStartOutput(options)) return;
-  if (!escalated) {
-    logInfo(formatTriageHuman(triage));
-    return;
-  }
-  if (skillOverride) {
-    return;
-  }
+  if (escalated && skillOverride) return;
   logInfo(formatTriageHuman(triage));
+}
+
+type StartFailureResult = StartResult & { ok: false };
+
+function createStartFailure(
+  triage: TriageResult,
+  msnId: string | null,
+  skillKey: string,
+  nextSteps: string[],
+): StartFailureResult {
+  return {
+    ok: false,
+    triage,
+    triage_action: triage.action,
+    skill_key: skillKey,
+    msn_id: msnId,
+    mission_file_path: null,
+    next_steps: nextSteps,
+    exit_code: 2,
+  };
 }
 
 function startEscalationFailure(
@@ -88,18 +102,9 @@ function startEscalationFailure(
       `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
     );
   }
-  return {
-    ok: false,
-    triage,
-    triage_action: triage.action,
-    skill_key: triage.skill_key,
-    msn_id: null,
-    mission_file_path: null,
-    next_steps: [
-      `gapman start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
-    ],
-    exit_code: 2,
-  };
+  return createStartFailure(triage, null, triage.skill_key, [
+    `gapman start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+  ]);
 }
 
 function scaffoldStartMission(
@@ -135,19 +140,10 @@ function scaffoldStartMission(
   }
 
   const freshMsn = suggestNextMsn(root);
-  return {
-    ok: false,
-    triage,
-    triage_action: triage.action,
-    skill_key: resolvedSkillKey,
-    msn_id: msnId,
-    mission_file_path: null,
-    next_steps: [
-      `try a fresh MSN: gapman start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
-      `or gapman legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
-    ],
-    exit_code: 2,
-  };
+  return createStartFailure(triage, msnId, resolvedSkillKey, [
+    `try a fresh MSN: gapman start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
+    `or gapman legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
+  ]);
 }
 
 export function runStartOrchestration(options: StartOptions): StartResult {
@@ -172,16 +168,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
     if (!suppressStartOutput(options)) {
       logError(`${CLI_NAME} start: --msn must match MSN-0007`);
     }
-    return {
-      ok: false,
-      triage,
-      triage_action: triage.action,
-      skill_key: triage.skill_key,
-      msn_id: null,
-      mission_file_path: null,
-      next_steps: [],
-      exit_code: 2,
-    };
+    return createStartFailure(triage, null, triage.skill_key, []);
   }
 
   const scaffold = scaffoldStartMission(root, options, msnId, resolvedSkillKey, triage);
