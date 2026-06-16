@@ -1,7 +1,8 @@
 import type { Command } from "commander";
-import { runLegislate } from "./commands/legislate.js";
+import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
+import type { VerifyOptions } from "./lib/verify-types.js";
 import { runScan } from "./commands/scan.js";
 import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
@@ -9,6 +10,58 @@ import { runPerimeter } from "./commands/perimeter.js";
 import { readStdinIfEmpty } from "./lib/program-stdin.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
+
+/** Commander-parsed legislate flags (intent text is a positional arg). */
+type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent">;
+
+/** Commander-parsed verify flags (before name/coercion adapter). */
+interface VerifyCliOptions {
+  mission?: string;
+  changedMissions?: boolean;
+  baseRef?: string;
+  workerLog?: string;
+  cwd?: string;
+  fuzzyTrace?: boolean;
+  strictTrace?: boolean;
+  skipStaleEvidence?: boolean;
+  ci?: boolean;
+  prePush?: boolean;
+  breakGlass?: boolean;
+  reason?: string;
+  commit?: string;
+  auditCommit?: boolean;
+  fix?: boolean;
+  nonInteractive?: boolean;
+  json?: boolean;
+  audience?: string;
+  scanDepth?: string;
+}
+
+function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
+  const scanDepth =
+    opts.scanDepth !== undefined ? Number.parseInt(opts.scanDepth, 10) : undefined;
+  return {
+    mission: opts.mission,
+    changedMissions: opts.changedMissions,
+    baseRef: opts.baseRef,
+    workerLog: opts.workerLog,
+    cwd: opts.cwd,
+    fuzzyTrace: opts.fuzzyTrace,
+    strictTrace: opts.strictTrace,
+    skipStaleEvidence: opts.skipStaleEvidence,
+    ci: opts.ci,
+    prePush: opts.prePush,
+    breakGlass: opts.breakGlass,
+    auditCommit: opts.auditCommit,
+    fix: opts.fix,
+    json: opts.json,
+    scanDepth: Number.isFinite(scanDepth) && scanDepth! > 0 ? scanDepth : undefined,
+    breakGlassReason: opts.reason,
+    breakGlassCommit: opts.commit,
+    fixNonInteractive: opts.nonInteractive,
+    audience: getOutputAudience(),
+  };
+}
 
 export function registerWorkflowCommands(program: Command): void {
   program
@@ -27,15 +80,7 @@ export function registerWorkflowCommands(program: Command): void {
       "--gate-success-substring <text>",
       "Optional substring required in combined gate stdout/stderr",
     )
-    .action(async function (this: Command, intentParts: string[]) {
-      const opts = this.opts<{
-        msn: string;
-        skillKey?: string;
-        out?: string;
-        allowDuplicate?: boolean;
-        gateCommand?: string;
-        gateSuccessSubstring?: string;
-      }>();
+    .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
       if (!text) {
@@ -43,15 +88,7 @@ export function registerWorkflowCommands(program: Command): void {
         setExitCode(2);
         return;
       }
-      const result = runLegislate({
-        intent: text,
-        msn: opts.msn,
-        skillKey: opts.skillKey,
-        out: opts.out,
-        allowDuplicate: opts.allowDuplicate,
-        gateCommand: opts.gateCommand,
-        gateSuccessSubstring: opts.gateSuccessSubstring,
-      });
+      const result = runLegislate({ ...options, intent: text });
       if (!result.ok) setExitCode(result.exitCode);
     });
 
@@ -82,40 +119,9 @@ export function registerWorkflowCommands(program: Command): void {
       "Max commits to scan for Teacher [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",
     )
     .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
-    .action(
-      async (opts: {
-        mission?: string;
-        changedMissions?: boolean;
-        baseRef?: string;
-        workerLog?: string;
-        cwd?: string;
-        fuzzyTrace?: boolean;
-        strictTrace?: boolean;
-        skipStaleEvidence?: boolean;
-        ci?: boolean;
-        prePush?: boolean;
-        breakGlass?: boolean;
-        reason?: string;
-        commit?: string;
-        auditCommit?: boolean;
-        fix?: boolean;
-        nonInteractive?: boolean;
-        json?: boolean;
-        audience?: string;
-        scanDepth?: string;
-      }) => {
-        const scanDepth =
-          opts.scanDepth !== undefined ? Number.parseInt(opts.scanDepth, 10) : undefined;
-        await runVerify({
-          ...opts,
-          scanDepth: Number.isFinite(scanDepth) && scanDepth! > 0 ? scanDepth : undefined,
-          breakGlassReason: opts.reason,
-          breakGlassCommit: opts.commit,
-          fixNonInteractive: opts.nonInteractive,
-          audience: getOutputAudience(),
-        });
-      },
-    );
+    .action(async (opts: VerifyCliOptions) => {
+      await runVerify(verifyOptionsFromCli(opts));
+    });
 
   program
     .command("scan")

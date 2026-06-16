@@ -41,6 +41,18 @@ MSN-enforced paths for commits and PR guards come from **fixed substrate paths**
 | UI (if present) | `ui` | `src/components/`, `src/styles/` |
 | `.gitagent/`, hooks, workflows | Teacher + mission | Tier-3 — legislate first |
 
+### CLI registrar conventions (`program-core.ts`, `program-workflow.ts`)
+
+Commander `.action()` handlers MUST extract options from the **typed callback parameter** — never `this.opts()` (arrow handlers have no Command `this`).
+
+| Pattern | When | Example |
+|---------|------|---------|
+| **Pass-through** | CLI flag names match the command `*Options` interface | `init`: `(options: InitOptions) => runInit(options)` |
+| **Typed adapter** | Commander names differ or values need coercion | `start` (`--no-write` → `writeMission`), `verify` (`--reason` → `breakGlassReason`, `--scan-depth` string → number) |
+| **Positional + options** | Variadic intent args | `(intentParts, options, _cmd)` — options is the second arg; join positionals before calling `run*` |
+
+Numeric or transformed flags MUST coerce in `.option()` parsers or the command adapter — never blind pass-through. See `verifyOptionsFromCli` in `program-workflow.ts`.
+
 ## Mission loop (required for substantive work)
 
 1. **Triage** — `gapman triage "<intent>"` (escalation → Teacher legislates).

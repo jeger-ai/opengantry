@@ -1,16 +1,25 @@
 import type { Command } from "commander";
 import { runCheck } from "./commands/check.js";
 import { runInit } from "./commands/init.js";
-import { runUpgrade } from "./commands/upgrade.js";
+import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
 import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
 import { runStart } from "./commands/start.js";
-import { runTriage } from "./commands/triage.js";
+import { runTriage, type TriageRunOptions } from "./commands/triage.js";
 import { readStdinIfEmpty } from "./lib/program-stdin.js";
 import type { InitOptions } from "./commands/init.js";
+import type { StartOptions } from "./lib/start-orchestration.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
+
+/** Commander-parsed triage flags (intent text is a positional arg). */
+type TriageCliOptions = Omit<TriageRunOptions, "text">;
+
+/** Commander `--no-write` maps to `write`; start adapter maps to `writeMission`. */
+type StartCliOptions = Omit<StartOptions, "intent" | "writeMission" | "audience" | "silent"> & {
+  write?: boolean;
+};
 
 export function registerCoreCommands(program: Command): void {
   program
@@ -74,20 +83,8 @@ export function registerCoreCommands(program: Command): void {
     .option("--json", "Emit structured JSON")
     .option("--msn <id>", "Mission id for upgrade plan (default: next MSN in 9000-9099 band)")
     .option("--mission <path>", "Signed upgrade mission YAML (required for --apply unless pinned)")
-    .action((opts: {
-      apply?: boolean;
-      dryRun?: boolean;
-      json?: boolean;
-      msn?: string;
-      mission?: string;
-    }) => {
-      runUpgrade({
-        apply: opts.apply,
-        dryRun: opts.dryRun,
-        json: opts.json,
-        msn: opts.msn,
-        mission: opts.mission,
-      });
+    .action((options: UpgradeOptions) => {
+      runUpgrade(options);
     });
 
   program
@@ -104,13 +101,7 @@ export function registerCoreCommands(program: Command): void {
       "--out <file>",
       "Mission output path for --emit-mission (default .gitagent/missions/ACTIVE_MISSION.md; use under .gitagent/missions/ for gapman verify)",
     )
-    .action(async function (this: Command, intentParts: string[]) {
-      const opts = this.opts<{
-        json?: boolean;
-        emitMission?: boolean;
-        msn?: string;
-        out?: string;
-      }>();
+    .action(async (intentParts: string[], options: TriageCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
       if (!text) {
@@ -118,13 +109,7 @@ export function registerCoreCommands(program: Command): void {
         setExitCode(2);
         return;
       }
-      runTriage({
-        text,
-        json: opts.json,
-        emitMission: opts.emitMission,
-        msn: opts.msn,
-        out: opts.out,
-      });
+      runTriage({ ...options, text });
     });
 
   program
@@ -139,17 +124,7 @@ export function registerCoreCommands(program: Command): void {
     .option("--allow-duplicate", "Allow duplicate msn_id (branch migration only)")
     .option("--json", "Emit structured JSON on success")
     .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
-    .action(async function (this: Command, intentParts: string[]) {
-      const opts = this.opts<{
-        msn?: string;
-        skillKey?: string;
-        gateCommand?: string;
-        gateSuccessSubstring?: string;
-        write?: boolean;
-        allowDuplicate?: boolean;
-        json?: boolean;
-        audience?: string;
-      }>();
+    .action(async (intentParts: string[], options: StartCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
       if (!text) {
@@ -157,15 +132,12 @@ export function registerCoreCommands(program: Command): void {
         setExitCode(2);
         return;
       }
+      const { write, ...startFlags } = options;
+      // Adapter: Commander --no-write → writeMission; audience from output context (not CLI flag).
       runStart({
+        ...startFlags,
         intent: text,
-        msn: opts.msn,
-        skillKey: opts.skillKey,
-        gateCommand: opts.gateCommand,
-        gateSuccessSubstring: opts.gateSuccessSubstring,
-        writeMission: opts.write !== false,
-        allowDuplicate: opts.allowDuplicate,
-        json: opts.json,
+        writeMission: write !== false,
         audience: getOutputAudience(),
       });
     });

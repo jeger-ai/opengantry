@@ -187,3 +187,7 @@ example trace line for gapman verify
 - DoD 3 MSN-0050: resolveMsnScanDepth and git-proof tests cover flag and env precedence
 - DoD 4 MSN-0050: RULES and missions README document --scan-depth and GXT_MSN_SCAN_DEPTH
 - DoD 5 MSN-0050: dev-validate-core OK
+
+## MSN-0051 — Commander option-bag registrar cleanup (issue #55)
+
+- DoD 1 MSN-0051: program registrars pass Commander options via typed callback interfaces; dev-validate-core OK
