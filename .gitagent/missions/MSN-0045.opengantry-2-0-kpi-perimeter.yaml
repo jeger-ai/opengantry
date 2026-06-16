@@ -2,6 +2,7 @@
 # Legislated intent: hardened single-MSN local go/no-go for LLM-fed deterministic KPI gate + AST + perimeter.
 # Teacher attest: trace DoD 1-2 PASS after Phase 0 bootstrap and KPI scan evidence.
 # TOCTOU: committed TMVC drift without rescan (simulated bypass).
+# Teacher attest: all DoD trace rows PASS for hardened checkpoint close-out.
 msn_id: MSN-0045
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
@@ -36,12 +37,12 @@ trace_rows:
   - dod_id: "3"
     trace_quote: "MSN-0045 gapman verify full pass git_proof gate kpi trace"
     anchor: "MSN-0045"
-    status: PENDING
+    status: PASS
   - dod_id: "4"
     trace_quote: "MSN-0045 TOCTOU committed drift failed --pre-push with GXT_KPI_REPORT_STALE then recovery verify pass"
     anchor: "MSN-0045"
-    status: PENDING
+    status: PASS
   - dod_id: "5"
     trace_quote: "dev-validate-core OK"
     anchor: "MSN-0045"
-    status: PENDING
+    status: PASS
