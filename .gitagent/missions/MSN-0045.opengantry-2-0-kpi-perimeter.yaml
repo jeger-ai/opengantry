@@ -28,21 +28,21 @@ kpi_gate:
 trace_rows:
   - dod_id: "1"
     trace_quote: "MSN-0045 Phase 0 bootstrap: npm run build and KPI deterministic tests pass"
-    anchor: "MSN-0045"
+    anchor: "MSN-0045 close-out"
     status: PASS
   - dod_id: "2"
     trace_quote: "MSN-0045 gapman scan wrote .gitagent/kpi/MSN-0045.json with namespaced metrics"
-    anchor: "MSN-0045"
+    anchor: "MSN-0045 close-out"
     status: PASS
   - dod_id: "3"
     trace_quote: "MSN-0045 gapman verify full pass git_proof gate kpi trace"
-    anchor: "MSN-0045"
+    anchor: "MSN-0045 close-out"
     status: PASS
   - dod_id: "4"
     trace_quote: "MSN-0045 TOCTOU committed drift failed --pre-push with GXT_KPI_REPORT_STALE then recovery verify pass"
-    anchor: "MSN-0045"
+    anchor: "MSN-0045 close-out"
     status: PASS
   - dod_id: "5"
-    trace_quote: "dev-validate-core OK"
-    anchor: "MSN-0045"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (242 tests)"
+    anchor: "MSN-0045 close-out"
     status: PASS

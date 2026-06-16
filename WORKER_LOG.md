@@ -139,3 +139,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0045: MSN-0045 gapman verify full pass git_proof gate kpi trace
 - DoD 4 MSN-0045: MSN-0045 TOCTOU committed drift failed --pre-push with GXT_KPI_REPORT_STALE then recovery verify pass
 - DoD 5 MSN-0045: dev-validate-core OK
+
+## MSN-0045 — checkpoint close-out (fresh trace attestation)
+
+- DoD 1 MSN-0045 close-out: MSN-0045 Phase 0 bootstrap: npm run build and KPI deterministic tests pass
+- DoD 2 MSN-0045 close-out: MSN-0045 gapman scan wrote .gitagent/kpi/MSN-0045.json with namespaced metrics
+- DoD 3 MSN-0045 close-out: MSN-0045 gapman verify full pass git_proof gate kpi trace
+- DoD 4 MSN-0045 close-out: MSN-0045 TOCTOU committed drift failed --pre-push with GXT_KPI_REPORT_STALE then recovery verify pass
+- DoD 5 MSN-0045 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (242 tests)
