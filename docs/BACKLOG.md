@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-16 (v2.1.0 import-layer surgeon **MSN-0048**; v2.0.0 **shipped** MSN-0046; MSN-0047 foundation **Done**)
+**Last synced:** 2026-06-16 (v2.1.0 **shipped** — MSN-0048 import-layer surgeon, tactical [#9](https://github.com/jeger-ai/opengantry/issues/9) + [#24](https://github.com/jeger-ai/opengantry/issues/24))
 
 ---
 
@@ -31,6 +31,7 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 |------|--------|---------|
 | **Pluggable Code Surgeon registry + banned-import quarantine** | **Done** | MSN-0047 |
 | **Import-layer surgeon (JSON gate + AST quarantine)** | **Done** | MSN-0048 |
+| **Tactical close-out (asset catalog + git-proof scan depth)** | **Done** | [#9](https://github.com/jeger-ai/opengantry/issues/9), [#24](https://github.com/jeger-ai/opengantry/issues/24) |
 | **Perimeter drift surgeon** | Open | v2.1.1+ (ADR; git-restore category) |
 | **Multi-language external surgeon adapter contract** | Open | post-v2.1 |
 
@@ -175,20 +176,20 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 
 | Item | Status | Issue |
 |------|--------|-------|
-| **MCP type safety completion** | Open | [#8](https://github.com/jeger-ai/opengantry/issues/8) |
+| **MCP type safety completion** | **Done** | [#8](https://github.com/jeger-ai/opengantry/issues/8) |
 | **Asset catalog generation** | **Done** | [#9](https://github.com/jeger-ai/opengantry/issues/9); `scripts/gen-asset-catalog.mjs` |
 | **Verify test granularity** | → v1.1.1 | [#10](https://github.com/jeger-ai/opengantry/issues/10) |
 | **Init tutorial dependency inversion** | → v1.1.1 (#43) | [#11](https://github.com/jeger-ai/opengantry/issues/11) |
-| **Program registrar cleanup** | Open | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
-| **Specimen MANIFEST routing** | Open | [#13](https://github.com/jeger-ai/opengantry/issues/13) |
+| **Program registrar cleanup** | **Done** | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
+| **Specimen MANIFEST routing** | **Done** | [#13](https://github.com/jeger-ai/opengantry/issues/13) |
 | **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `verifyTraceRows` returns `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
-| **`gapman mission validate` (JSON Schema)** | Open | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
-| **Configurable git-proof scan depth** | Open | [#24](https://github.com/jeger-ai/opengantry/issues/24) |
-| **Pre-commit TMVC path guard hook** | Open | [#25](https://github.com/jeger-ai/opengantry/issues/25) |
-| **Context Request helper** | Open | [#26](https://github.com/jeger-ai/opengantry/issues/26) |
-| **`gapman verify --changed-missions`** | Open | [#27](https://github.com/jeger-ai/opengantry/issues/27) |
-| **Triage scoring / explainability** | Open | [#28](https://github.com/jeger-ai/opengantry/issues/28) |
-| **Metrics fidelity improvement** | Open | [#29](https://github.com/jeger-ai/opengantry/issues/29) |
+| **`gapman mission validate` (JSON Schema)** | **Done** | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
+| **Configurable git-proof scan depth** | **Done** | [#24](https://github.com/jeger-ai/opengantry/issues/24); MSN-0050 |
+| **Pre-commit TMVC path guard hook** | Open | [#25](https://github.com/jeger-ai/opengantry/issues/25) → v2.2 |
+| **Context Request helper** | Open | [#26](https://github.com/jeger-ai/opengantry/issues/26) → v2.2 |
+| **`gapman verify --changed-missions`** | **Done** | [#27](https://github.com/jeger-ai/opengantry/issues/27) |
+| **Triage scoring / explainability** | **Done** | [#28](https://github.com/jeger-ai/opengantry/issues/28) |
+| **Metrics fidelity improvement** | Open | [#29](https://github.com/jeger-ai/opengantry/issues/29) → v2.2 |
 
 ---
 
@@ -247,7 +248,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.1.0 import-layer surgeon shipped (MSN-0048); next: perimeter drift ADR, external adapter contract, tactical backlog ([#8](https://github.com/jeger-ai/opengantry/issues/8)–[#33](https://github.com/jeger-ai/opengantry/issues/33)).
+**Current focus:** v2.1.0 **shipped** (MSN-0047–0048, [#9](https://github.com/jeger-ai/opengantry/issues/9), [#24](https://github.com/jeger-ai/opengantry/issues/24)); next: v2.2 tactical ([#25](https://github.com/jeger-ai/opengantry/issues/25)–[#29](https://github.com/jeger-ai/opengantry/issues/29), [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58)), perimeter drift ADR.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
