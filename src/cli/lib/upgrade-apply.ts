@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import YAML from "yaml";
 import { CLI_NAME } from "./constants.js";
 import { errorMessage, fromPosix, logInfo } from "./cli-io.js";
 import { promoteFileAtomic } from "./atomic-fs.js";
@@ -11,6 +12,7 @@ import {
 } from "./file-merge-gxt.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
 import { resolveMissionPathRequired } from "./mission-resolution.js";
+import { assertMissionSchemaValid } from "./mission-schema-validate.js";
 import { writeSubstrateVersionFile } from "./substrate-version.js";
 import {
   parseUpgradePayloadFromMissionBody,
@@ -121,6 +123,8 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
 
   let payload: UpgradePayload;
   try {
+    const data = YAML.parse(missionBody) as unknown;
+    assertMissionSchemaValid(repoRoot, data, missionAbs);
     payload = parseUpgradePayloadFromMissionBody(missionBody);
   } catch (e) {
     throw new GapmanUserError(

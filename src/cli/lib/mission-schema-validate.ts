@@ -4,6 +4,7 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 import Ajv2020Import from "ajv/dist/2020.js";
 import addFormatsImport from "ajv-formats";
 import YAML from "yaml";
+import { GXT_ERROR } from "./gxt-error-codes.js";
 import { REL_MISSION_SCHEMA } from "./constants.js";
 
 type AjvCtor = new (opts?: object) => { compile: (schema: object) => ValidateFunction };
@@ -41,5 +42,7 @@ export function assertMissionSchemaValid(root: string, data: unknown, filePath: 
   const validate = loadMissionSchemaValidator(root);
   if (validate(data)) return;
   const detail = formatAjvErrors(validate.errors ?? []);
-  throw new Error(`gapman mission: ${filePath}: schema validation failed: ${detail}`);
+  throw new Error(
+    `${GXT_ERROR.MISSION_SCHEMA_INVALID}: gapman mission: ${filePath}: schema validation failed: ${detail}`,
+  );
 }

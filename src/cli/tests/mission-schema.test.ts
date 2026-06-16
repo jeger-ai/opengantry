@@ -25,7 +25,7 @@ trace_rows: []
 `;
   const file = path.join(root, "bad.yaml");
   fs.writeFileSync(file, body, "utf8");
-  assert.throws(() => validateYamlMission(root, file, body), /schema validation failed/);
+  assert.throws(() => validateYamlMission(root, file, body), /GXT_MISSION_SCHEMA_INVALID/);
 });
 
 test("mission schema: kpi_gate and llm_verifiers pass validateYamlMission", () => {

@@ -17,6 +17,12 @@ export interface QuarantineImportResult {
   startOffset?: number;
 }
 
+interface ImportBindingGroups {
+  defaultBinding?: string;
+  namedBindings: string[];
+  namespaceBinding?: string;
+}
+
 function specifierMatches(found: string, expected: string): boolean {
   if (found === expected) return true;
   const norm = (s: string) => s.replace(/\.js$/i, ".ts");
@@ -26,37 +32,55 @@ function specifierMatches(found: string, expected: string): boolean {
 function extractBindingsFromClause(
   ts: typeof import("typescript"),
   clause: import("typescript").ImportClause | undefined,
-): string[] {
-  if (!clause) return ["__gxtQuarantineImport"];
-  if (clause.name) return [clause.name.text];
-  const named = clause.namedBindings;
-  if (!named) return ["__gxtQuarantineImport"];
-  if (ts.isNamespaceImport(named)) return [named.name.text];
-  if (ts.isNamedImports(named)) {
-    const bindings: string[] = [];
-    for (const el of named.elements) {
-      if (el.isTypeOnly) continue;
-      bindings.push(el.name.text);
-    }
-    return bindings.length > 0 ? bindings : ["__gxtQuarantineImport"];
+): ImportBindingGroups {
+  if (!clause) {
+    return { namedBindings: ["__gxtQuarantineImport"] };
   }
-  return ["__gxtQuarantineImport"];
+  const groups: ImportBindingGroups = { namedBindings: [] };
+  if (clause.name) {
+    groups.defaultBinding = clause.name.text;
+  }
+  const named = clause.namedBindings;
+  if (named) {
+    if (ts.isNamespaceImport(named)) {
+      groups.namespaceBinding = named.name.text;
+    } else if (ts.isNamedImports(named)) {
+      for (const el of named.elements) {
+        if (el.isTypeOnly) continue;
+        groups.namedBindings.push(el.name.text);
+      }
+    }
+  }
+  if (!groups.defaultBinding && !groups.namespaceBinding && groups.namedBindings.length === 0) {
+    groups.namedBindings.push("__gxtQuarantineImport");
+  }
+  return groups;
+}
+
+function flattenBindingGroups(groups: ImportBindingGroups): string[] {
+  const out: string[] = [];
+  if (groups.defaultBinding) out.push(groups.defaultBinding);
+  out.push(...groups.namedBindings);
+  if (groups.namespaceBinding) out.push(groups.namespaceBinding);
+  return out;
+}
+
+function proxyConstLine(binding: string, specifier: string, ruleId: string, reason: string): string {
+  return [
+    `const ${binding} = new Proxy(Object.create(null), {`,
+    `  get() { throw new Error("GXT Security Violation: Execution blocked. ${reason} Import '${specifier}' quarantined by Code Surgeon [${ruleId}]."); }`,
+    `});`,
+  ].join("\n");
 }
 
 function buildProxyBlock(
-  bindings: string[],
+  groups: ImportBindingGroups,
   specifier: string,
   ruleId: string,
   reason: string,
 ): string {
-  return bindings
-    .map((binding) => {
-      return [
-        `const ${binding} = new Proxy(Object.create(null), {`,
-        `  get() { throw new Error("GXT Security Violation: Execution blocked. ${reason} Import '${specifier}' quarantined by Code Surgeon [${ruleId}]."); }`,
-        `});`,
-      ].join("\n");
-    })
+  return flattenBindingGroups(groups)
+    .map((binding) => proxyConstLine(binding, specifier, ruleId, reason))
     .join("\n");
 }
 
@@ -118,7 +142,8 @@ export function quarantineImportDeclaration(
     return { mutated: false, bindings: [] };
   }
 
-  const bindings = extractBindingsFromClause(ts, decl.importClause);
+  const bindingGroups = extractBindingsFromClause(ts, decl.importClause);
+  const bindings = flattenBindingGroups(bindingGroups);
   const specifier = decl.moduleSpecifier.text;
   const start = decl.getFullStart();
   const end = decl.getEnd();
@@ -127,7 +152,7 @@ export function quarantineImportDeclaration(
   const quarantine = [
     `// GXT-SURGEON-QUARANTINE-START [${target.ruleId}]`,
     `// GXT-SURGEON-QUARANTINE: ${target.reason} ${specifier} (formerly line ${String(line)})`,
-    buildProxyBlock(bindings, specifier, target.ruleId, target.reason),
+    buildProxyBlock(bindingGroups, specifier, target.ruleId, target.reason),
     "// GXT-SURGEON-QUARANTINE-END",
   ].join("\n");
 

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
+import { extractImportSpecifiers } from "./import-scanner.js";
 
 export interface FolderSignature {
   folderRel: string;
@@ -15,33 +16,18 @@ function isTypeScriptFile(name: string): boolean {
   return TS_EXTENSIONS.has(path.extname(name).toLowerCase());
 }
 
-/** Lightweight import/export scan (regex-based, no network, deterministic). */
-function scanFileImportsExports(absPath: string): { imports: string[]; exports: string[] } {
+function scanFileExports(absPath: string): string[] {
   const body = fs.readFileSync(absPath, "utf8");
-  const imports = new Set<string>();
   const exports = new Set<string>();
-
-  const importRe =
-    /(?:import\s+(?:type\s+)?(?:[\w*{}\s,]+)\s+from\s+|import\s+|export\s+(?:type\s+)?(?:[\w*{}\s,]+)\s+from\s+)["']([^"']+)["']/g;
-  let m: RegExpExecArray | null;
-  while ((m = importRe.exec(body)) !== null) {
-    imports.add(m[1]!);
-  }
-
-  const sideEffectImportRe = /import\s+["']([^"']+)["']/g;
-  while ((m = sideEffectImportRe.exec(body)) !== null) {
-    imports.add(m[1]!);
-  }
-
   const exportNamedRe = /export\s+(?:async\s+)?(?:function|class|const|let|var|enum|interface|type)\s+(\w+)/g;
+  let m: RegExpExecArray | null;
   while ((m = exportNamedRe.exec(body)) !== null) {
     exports.add(m[1]!);
   }
   if (/export\s+default/.test(body)) {
     exports.add("default");
   }
-
-  return { imports: [...imports].sort(), exports: [...exports].sort() };
+  return [...exports].sort();
 }
 
 function walkTypeScriptFiles(absDir: string): string[] {
@@ -77,9 +63,9 @@ export function discoverFolderSignature(repoRoot: string, targetDir: string): Fo
   const files = walkTypeScriptFiles(absDir);
 
   for (const file of files) {
-    const { imports, exports } = scanFileImportsExports(file);
+    const imports = extractImportSpecifiers(fs.readFileSync(file, "utf8"));
     for (const i of imports) allImports.add(i);
-    for (const e of exports) allExports.add(e);
+    for (const e of scanFileExports(file)) allExports.add(e);
   }
 
   return {
@@ -104,7 +90,7 @@ export function findBannedImportsInFolder(
   const absDir = path.isAbsolute(targetDir) ? targetDir : path.join(repoRoot, targetDir);
   const violations: Array<{ file: string; specifier: string }> = [];
   for (const file of walkTypeScriptFiles(absDir)) {
-    const { imports } = scanFileImportsExports(file);
+    const imports = extractImportSpecifiers(fs.readFileSync(file, "utf8"));
     const fileRel = toPosixRel(repoRoot, file);
     for (const spec of imports) {
       for (const ban of banned) {

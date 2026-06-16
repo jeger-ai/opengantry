@@ -81,3 +81,72 @@ test("quarantineImportDeclaration: type-only import is no-op", () => {
   assert.equal(result.mutated, false);
   assert.equal(fs.readFileSync(file, "utf8"), source);
 });
+
+test("quarantineImportDeclaration: mixed default + named quarantines all bindings", () => {
+  const root = getRepoRoot();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-quarantine-mixed-"));
+  const file = path.join(dir, "bad.ts");
+  fs.writeFileSync(
+    file,
+    `import runVerify, { runPerimeter } from "../commands/verify.js";\nexport const a = runVerify;\nexport const b = runPerimeter;\n`,
+    "utf8",
+  );
+
+  const result = quarantineImportDeclaration({
+    absPath: file,
+    moduleSpecifier: "../commands/verify.js",
+    ruleId: "RULE-IMPORT-LAYER",
+    reason: "removed lib-to-command import",
+    root,
+  });
+
+  assert.equal(result.mutated, true);
+  assert.deepEqual(result.bindings, ["runVerify", "runPerimeter"]);
+  const out = fs.readFileSync(file, "utf8");
+  assert.match(out, /const runVerify = new Proxy/);
+  assert.match(out, /const runPerimeter = new Proxy/);
+  assert.doesNotMatch(out, /^import .*verify\.js/m);
+});
+
+test("quarantineImportDeclaration: mixed default + namespace quarantines both bindings", () => {
+  const root = getRepoRoot();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-quarantine-mixed-ns-"));
+  const file = path.join(dir, "bad.ts");
+  fs.writeFileSync(
+    file,
+    `import def, * as ns from "axios";\nexport const a = def;\nexport const b = ns;\n`,
+    "utf8",
+  );
+
+  const result = quarantineImportDeclaration({
+    absPath: file,
+    moduleSpecifier: "axios",
+    ruleId: "RULE-BANNED-IMPORT",
+    reason: "removed banned specifier",
+    root,
+  });
+
+  assert.equal(result.mutated, true);
+  assert.deepEqual(result.bindings, ["def", "ns"]);
+  const out = fs.readFileSync(file, "utf8");
+  assert.match(out, /const def = new Proxy/);
+  assert.match(out, /const ns = new Proxy/);
+});
+
+test("quarantineImportDeclaration: inline type-only named skipped in mixed import", () => {
+  const root = getRepoRoot();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-quarantine-mixed-type-"));
+  const file = path.join(dir, "bad.ts");
+  fs.writeFileSync(file, `import foo, { type T, bar } from "axios";\n`, "utf8");
+
+  const result = quarantineImportDeclaration({
+    absPath: file,
+    moduleSpecifier: "axios",
+    ruleId: "RULE-BANNED-IMPORT",
+    reason: "removed banned specifier",
+    root,
+  });
+
+  assert.equal(result.mutated, true);
+  assert.deepEqual(result.bindings, ["foo", "bar"]);
+});

@@ -5,10 +5,24 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const rawArgs = process.argv.slice(2);
 const jsonMode = rawArgs.includes("--json");
 const files = rawArgs.filter((f) => f.endsWith(".ts"));
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const distScanner = path.join(scriptDir, "..", "dist", "cli", "lib", "import-scanner.js");
+if (!fs.existsSync(distScanner)) {
+  console.error(
+    "import-layers: missing dist/cli/lib/import-scanner.js — run npm run build first",
+  );
+  process.exit(1);
+}
+
+const { extractBindingsFromSnippet, extractImportsWithMeta } = await import(
+  pathToFileURL(distScanner).href
+);
 
 const violations = [];
 
@@ -25,45 +39,6 @@ function layerOf(file) {
     return "delivery";
   }
   return "other";
-}
-
-function stripSurgeonQuarantineRegions(source) {
-  return source.replace(
-    /\/\/ GXT-SURGEON-QUARANTINE-START[\s\S]*?\/\/ GXT-SURGEON-QUARANTINE-END\s*/g,
-    "",
-  );
-}
-
-function extractImportsWithMeta(source) {
-  const scrubbed = stripSurgeonQuarantineRegions(source);
-  const results = [];
-  const re = /import\s+(?:type\s+)?(?:[\w*{}\s,]+)\s+from\s+["']([^"']+)["']|import\s+["']([^"']+)["']/g;
-  let m;
-  while ((m = re.exec(scrubbed)) !== null) {
-    const spec = m[1] ?? m[2];
-    if (!spec) continue;
-    const before = scrubbed.slice(0, m.index);
-    const line = before.split(/\r?\n/).length;
-    const lastNl = before.lastIndexOf("\n");
-    const column = m.index - (lastNl === -1 ? 0 : lastNl + 1) + 1;
-    results.push({ spec, line, column, snippet: m[0] });
-  }
-  return results;
-}
-
-function extractBindingsFromSnippet(snippet) {
-  const named = /import\s+(?:type\s+)?\{([^}]+)\}/.exec(snippet);
-  if (named) {
-    return named[1]
-      .split(",")
-      .map((part) => part.trim().split(/\s+as\s+/i).pop().trim())
-      .filter((b) => b.length > 0 && !/^type\s/.test(b));
-  }
-  const def = /import\s+(\w+)\s+from/.exec(snippet);
-  if (def) return [def[1]];
-  const ns = /import\s+\*\s+as\s+(\w+)/.exec(snippet);
-  if (ns) return [ns[1]];
-  return ["__gxtImportLayer"];
 }
 
 function resolveImportPath(file, spec) {
@@ -113,7 +88,7 @@ for (const file of files) {
   if (!file.includes("src/cli/")) continue;
   const src = fs.readFileSync(file, "utf8");
   const layer = layerOf(file);
-  const imports = extractImportsWithMeta(src);
+  const imports = extractImportsWithMeta(src, true);
 
   for (const imp of imports) {
     const spec = imp.spec;

@@ -144,3 +144,32 @@ test("runUpgradeApply: hash mismatch fails closed", async () => {
     (e: unknown) => e instanceof Error && e.message.includes("hash mismatch"),
   );
 });
+
+test("runUpgradeApply: rejects mission with unknown top-level fields", async () => {
+  const dest = await seedUpgradeRepo();
+  const missionRel = ".gitagent/missions/MSN-9010.upgrade-bad.yaml";
+  const missionAbs = path.join(dest, missionRel.split("/").join(path.sep));
+  fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
+  fs.writeFileSync(
+    missionAbs,
+    `msn_id: MSN-9010
+skill_key: substrate
+gate_command: gapman doctor
+unknown_field: true
+upgrade_payload:
+  from_version: "0.7.0"
+  to_version: "2.1.0"
+  staged_root: .gitagent/.upgrade-tmp
+  planned_writes: []
+  skipped_scaffold_only: []
+  staged_hashes: {}
+  created_at: "2026-01-01T00:00:00.000Z"
+trace_rows: []
+`,
+    "utf8",
+  );
+  await assert.rejects(
+    async () => runUpgradeApply({ repoRoot: dest, mission: missionRel, json: true }),
+    (e: unknown) => e instanceof Error && /GXT_MISSION_SCHEMA_INVALID/.test(e.message),
+  );
+});

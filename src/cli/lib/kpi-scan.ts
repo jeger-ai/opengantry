@@ -48,6 +48,11 @@ function parseVerifierStdout(stdout: string): KpiScanFragment {
   }
 }
 
+/** Verifier stdout contract: exit 0 and at least one metrics key. */
+export function verifierOutputSucceeded(exitCode: number, fragment: KpiScanFragment): boolean {
+  return exitCode === 0 && Object.keys(fragment.metrics ?? {}).length > 0;
+}
+
 function applyAggregators(
   metrics: Record<string, number | boolean>,
   aggregators: readonly KpiAggregator[],
@@ -161,6 +166,6 @@ function runSingleVerifier(
   const result = runGate(workDir, { command: verifier.command, successSubstring: null });
   const exitCode = result.exitCode ?? 1;
   const fragment = parseVerifierStdout(result.stdout);
-  const failed = exitCode !== 0 || Object.keys(fragment.metrics ?? {}).length === 0;
+  const failed = !verifierOutputSucceeded(exitCode, fragment);
   return { failed, exitCode, fragment };
 }

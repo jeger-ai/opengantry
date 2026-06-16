@@ -159,7 +159,11 @@ Runs **`dev-validate-core.sh`** (build, `gapman check`, `validate-gxt.sh manifes
 Nondeterministic LLM checks produce **committed evidence**; merge stays deterministic:
 
 1. Mission declares optional `llm_verifiers` + `kpi_gate` (see [`.gitagent/teacher/MISSION.schema.yaml`](../.gitagent/teacher/MISSION.schema.yaml)).
-2. Worker runs **`gapman scan --mission …`** — each verifier command emits JSON metrics (namespaced `provider::metric`).
+2. Worker runs **`gapman scan --mission …`** — each verifier command must print **JSON on stdout** (trailing whitespace/newlines tolerated). Success contract per verifier:
+   - process exit code `0`
+   - parseable JSON object with a non-empty `metrics` map (`Record<string, number | boolean>`)
+   - optional `findings` array and `exit_code` field in JSON (fragment `exit_code` can raise report `exit_code` even when the process exits 0)
+   - failed optional verifiers set `{id}::__verifier_ok: false` in the committed report; required verifiers fail the scan when the contract is not met
 3. **`gapman verify`** runs shell `gate_command`, then evaluates `kpi_gate.thresholds` against [`.gitagent/kpi/MSN-NNNN.json`](../.gitagent/teacher/KPI-REPORT.schema.yaml), then trace mapping.
 4. KPI stale binding mirrors trace evidence: local warnings only; **`--pre-push`** / **`--ci`** fail-closed when TMVC drifts after the report commit.
 5. **`gapman register <dir>`** proposes skills from AST footprints; Teacher still owns manifest edits (Rule 4.4).
