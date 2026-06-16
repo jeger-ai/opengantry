@@ -28,4 +28,6 @@ export interface VerifyOptions {
   baseRef?: string;
   /** Authoritative mode: fail-closed on KPI stale evidence and perimeter (CI). */
   ci?: boolean;
+  /** Max commits to scan for Teacher [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
+  scanDepth?: number;
 }

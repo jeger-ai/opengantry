@@ -1,0 +1,45 @@
+# MSN-0050: Configurable git-proof scan depth (--scan-depth + GXT_MSN_SCAN_DEPTH).
+msn_id: MSN-0050
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+llm_verifiers:
+  - id: stub
+    command: ./scripts/kpi-stub-verifier.sh
+    required: true
+aggregators:
+  - key: security_flaws
+    op: max
+    sources:
+      - stub::security_vulnerabilities
+kpi_gate:
+  report_path: .gitagent/kpi/MSN-0050.json
+  thresholds:
+    - metric: stub::complexity_score
+      op: "<="
+      value: 12
+    - metric: security_flaws
+      op: "=="
+      value: 0
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0050: gapman verify --scan-depth overrides default git-proof window"
+    anchor: "MSN-0050"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0050: GXT_MSN_SCAN_DEPTH env configures git-proof when flag omitted"
+    anchor: "MSN-0050"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0050: resolveMsnScanDepth and git-proof tests cover flag and env precedence"
+    anchor: "MSN-0050"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0050: RULES and missions README document --scan-depth and GXT_MSN_SCAN_DEPTH"
+    anchor: "MSN-0050"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0050: dev-validate-core OK"
+    anchor: "MSN-0050"
+    status: PASS
+
