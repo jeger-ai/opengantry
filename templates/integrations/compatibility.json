@@ -1,11 +1,11 @@
 {
   "schema_version": "1",
-  "opengantry_version": "1.1.0",
+  "opengantry_version": "2.0.0",
   "asset_catalog": "integrations/asset-catalog.json",
   "integrations": {
     "cursor": {
       "display_name": "Cursor",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://cursor.com/docs/agent/hooks",
       "recipe_file": "cursor.md",
       "canonical_paths": [
@@ -18,7 +18,7 @@
     },
     "claude-code": {
       "display_name": "Claude Code",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://docs.anthropic.com/en/docs/claude-code",
       "recipe_file": "claude-code.md",
       "canonical_paths": ["CLAUDE.md"],
@@ -27,7 +27,7 @@
     },
     "codex-cli": {
       "display_name": "OpenAI Codex CLI",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://developers.openai.com/codex/config-basic",
       "disambiguation": "OpenAI Codex API (2021-2023) is NOT this product",
       "recipe_file": "codex-cli.md",
@@ -37,7 +37,7 @@
     },
     "opencode": {
       "display_name": "OpenCode",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://opencode.ai/docs",
       "recipe_file": "opencode.md",
       "canonical_paths": ["opencode.json"],
@@ -46,7 +46,7 @@
     },
     "junie": {
       "display_name": "JetBrains Junie",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://www.jetbrains.com/junie/",
       "recipe_file": "junie.md",
       "canonical_paths": [".junie/guidelines.md"],
@@ -55,7 +55,7 @@
     },
     "antigravity": {
       "display_name": "Google Antigravity",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://antigravity.google/",
       "recipe_file": "antigravity.md",
       "canonical_paths": [".agent/rules/gxt.md"],
@@ -64,7 +64,7 @@
     },
     "cline": {
       "display_name": "Cline",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://docs.cline.bot/",
       "recipe_file": "cline.md",
       "canonical_paths": [".clinerules/gxt.md"],
@@ -73,7 +73,7 @@
     },
     "aider": {
       "display_name": "Aider",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://aider.chat/docs/",
       "recipe_file": "aider.md",
       "canonical_paths": [".aider.conf.yml"],
@@ -82,7 +82,7 @@
     },
     "openhands": {
       "display_name": "OpenHands",
-      "verified_date": "2026-05-19",
+      "verified_date": "2026-06-16",
       "docs_url": "https://docs.all-hands.dev/",
       "recipe_file": "openhands.md",
       "canonical_paths": [".openhands/microagents/gxt.md"],

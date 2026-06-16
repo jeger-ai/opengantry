@@ -37,7 +37,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v1.1.1** — maintainability hardening (lib/command boundary, unified verify core, CommandReporter). See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.0.0** — LLM evidence quarantine (`gapman scan`), deterministic KPI gate, AST skill discovery (`gapman register`), perimeter checks. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## v1.0 adoption release
 
@@ -48,6 +48,8 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 | **v1.0.0** | `gapman init --tutorial`, global `--audience` / `GXT_AUDIENCE`, adoption-first README + runbook |
 | **v1.1.1** | Lib/command boundary, unified `runVerifyCore`, typed remediation, CommandReporter, mission YAML emitter |
+| **v1.1.2** | Verify pipeline close-out (MSN-0034–0035); typed verify phases, trace status at parse boundary |
+| **v2.0.0** | `gapman scan` + KPI gate, `register`, `check-imports`, `perimeter`; BYO `llm_verifiers`; KPI stale binding on `--pre-push`/`--ci` |
 | **v1.1.0** | Stale trace evidence, mission purity PR lock, CI target lock, `verify --json`, doctor substrate drift warn |
 
 ## What you get

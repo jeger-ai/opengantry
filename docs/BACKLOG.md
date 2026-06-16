@@ -9,7 +9,18 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-10 (v1.1.2 **published** on npm; MSN-0036–MSN-0044 tactical/adoption sprint in progress; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+**Last synced:** 2026-06-16 (v2.0.0 release slice MSN-0046 in progress; MSN-0045 checkpoint **Done**; v1.1.2 published; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+
+---
+
+## v2.0.0 — LLM evidence + KPI gate (release slice)
+
+| Item | Status | Mission |
+|------|--------|---------|
+| **KPI gate, scan, register, perimeter checkpoint** | **Done** | MSN-0045 |
+| **2.0.0 npm publish (version bump, docs, compatibility parity)** | In progress | MSN-0046 |
+
+See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
 ---
 

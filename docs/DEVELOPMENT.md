@@ -148,6 +148,8 @@ Nondeterministic LLM checks produce **committed evidence**; merge stays determin
 6. **`gapman perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
+
+**Release (v2.0.0):** bump `package.json` with `npm version 2.0.0 --no-git-tag-version`; set `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json) to match; tag `v2.0.0` to trigger [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml).
 - **post-checkout** — scaffold `WORKER_LOG.md` on feature branches when missing.
 
 ## Definition of done (OpenGantry repo)
