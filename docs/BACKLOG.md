@@ -18,7 +18,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | Item | Status | Mission |
 |------|--------|---------|
 | **KPI gate, scan, register, perimeter checkpoint** | **Done** | MSN-0045 |
-| **2.0.0 npm publish (version bump, docs, compatibility parity)** | In progress | MSN-0046 |
+| **2.0.0 npm publish (version bump, docs, compatibility parity)** | **Done** | MSN-0046 |
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
