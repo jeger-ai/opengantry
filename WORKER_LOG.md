@@ -155,3 +155,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0046 close-out: README + DEVELOPMENT 2.0 release notes synced
 - DoD 4 MSN-0046 close-out: npm run validate green on main
 - DoD 5 MSN-0046 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (246 tests)
+
+## MSN-0047 — Autonomous self-healing surgeon foundation
+
+- DoD 1 MSN-0047: Surgeon registry resolves GXT_BANNED_IMPORT_DETECTED to quarantine surgeon
+- DoD 2 MSN-0047: gapman verify --fix quarantines banned import with GXT-SURGEON-QUARANTINE markers
+- DoD 3 MSN-0047: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
+- DoD 4 MSN-0047: verify --fix reruns full pipeline with fix false after mutation
+- DoD 5 MSN-0047: dev-validate-core OK

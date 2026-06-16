@@ -25,20 +25,20 @@ trace_rows:
   - dod_id: "1"
     trace_quote: "Surgeon registry resolves GXT_BANNED_IMPORT_DETECTED to quarantine surgeon"
     anchor: "MSN-0047"
-    status: PENDING
+    status: PASS
   - dod_id: "2"
     trace_quote: "gapman verify --fix quarantines banned import with GXT-SURGEON-QUARANTINE markers"
     anchor: "MSN-0047"
-    status: PENDING
+    status: PASS
   - dod_id: "3"
     trace_quote: "SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun"
     anchor: "MSN-0047"
-    status: PENDING
+    status: PASS
   - dod_id: "4"
     trace_quote: "verify --fix reruns full pipeline with fix false after mutation"
     anchor: "MSN-0047"
-    status: PENDING
+    status: PASS
   - dod_id: "5"
     trace_quote: "dev-validate-core OK"
     anchor: "MSN-0047"
-    status: PENDING
+    status: PASS

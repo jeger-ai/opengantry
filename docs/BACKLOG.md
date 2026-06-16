@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-16 (v2.0.0 **shipped** MSN-0046; MSN-0047 self-healing surgeon foundation **in progress**; MSN-0045 checkpoint **Done**; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
+**Last synced:** 2026-06-16 (v2.0.0 **shipped** MSN-0046; MSN-0047 self-healing surgeon foundation **Done**; MSN-0045 checkpoint **Done**; **v2.0 adaptive-perimeter items** [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) on strategic horizon)
 
 ---
 
@@ -19,7 +19,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 |------|--------|---------|
 | **KPI gate, scan, register, perimeter checkpoint** | **Done** | MSN-0045 |
 | **2.0.0 npm publish (version bump, docs, compatibility parity)** | **Done** | MSN-0046 |
-| **Autonomous self-healing surgeon (quarantine-only, no auto-pass)** | **In progress** | MSN-0047 |
+| **Autonomous self-healing surgeon (quarantine-only, no auto-pass)** | **Done** | MSN-0047 |
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
@@ -29,7 +29,7 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
 | Item | Status | Mission |
 |------|--------|---------|
-| **Pluggable Code Surgeon registry + banned-import quarantine** | **In progress** | MSN-0047 |
+| **Pluggable Code Surgeon registry + banned-import quarantine** | **Done** | MSN-0047 |
 | **Additional surgeons (compile roadblocks, perimeter drift)** | Open | — |
 
 Core invariant (MSN-0047): `gapman verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `WORKER_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
