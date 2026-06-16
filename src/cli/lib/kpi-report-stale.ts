@@ -29,6 +29,21 @@ function reportRelPath(reportPath: string, repoRoot: string): string {
   return toPosixRel(repoRoot, abs);
 }
 
+function resolveKpiAttestationCommit(
+  repoRoot: string,
+  reportRel: string,
+  blameByLine: Map<number, string>,
+): string | undefined {
+  if ([...blameByLine.values()].some((hash) => hash === UNCOMMITTED_BLAME_COMMIT)) {
+    return UNCOMMITTED_BLAME_COMMIT;
+  }
+  const log = gitRunOk(repoRoot, ["log", "-1", "--format=%H", "--", reportRel]);
+  if (log.ok && log.stdout.trim().length > 0) {
+    return log.stdout.trim();
+  }
+  return blameByLine.get(1);
+}
+
 /** Bind KPI report attestation to TMVC drift (mirrors trace-evidence committed/uncommitted split). */
 export function verifyKpiReportFreshness(
   repoRoot: string,
@@ -48,7 +63,7 @@ export function verifyKpiReportFreshness(
 
   const reportRel = reportRelPath(reportPath, repoRoot);
   const blameByLine = readBlamePorcelainByLine(repoRoot, reportRel);
-  const attestationCommit = blameByLine.get(1);
+  const attestationCommit = resolveKpiAttestationCommit(repoRoot, reportRel, blameByLine);
   if (!attestationCommit) {
     return {
       stale: options.strictStale === true,
