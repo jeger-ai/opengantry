@@ -1,0 +1,45 @@
+# OpenGantry 2.0.0 release mission: version bump, docs sync, npm publish.
+# Legislated intent: ship gapman 2.0.0 after MSN-0045 checkpoint with hardened leftovers closed.
+msn_id: MSN-0046
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+llm_verifiers:
+  - id: stub
+    command: ./scripts/kpi-stub-verifier.sh
+    required: true
+aggregators:
+  - key: security_flaws
+    op: max
+    sources:
+      - stub::security_vulnerabilities
+kpi_gate:
+  report_path: .gitagent/kpi/MSN-0046.json
+  thresholds:
+    - metric: stub::complexity_score
+      op: "<="
+      value: 12
+    - metric: security_flaws
+      op: "=="
+      value: 0
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "Hardening: kpi-report-stale tests pass + TOCTOU artifact removed"
+    anchor: "MSN-0046"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: "package.json / version.gen.js at 2.0.0"
+    anchor: "MSN-0046"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: "README + DEVELOPMENT 2.0 release notes synced"
+    anchor: "MSN-0046"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: "npm run validate green on main"
+    anchor: "MSN-0046"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: "dev-validate-core OK"
+    anchor: "MSN-0046"
+    status: PENDING
