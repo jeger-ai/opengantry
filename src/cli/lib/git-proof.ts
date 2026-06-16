@@ -24,7 +24,23 @@ export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
 
 export { ENV_TEACHER_EMAILS, parseTeacherEmailsFromEnv } from "./teacher-identity.js";
 
-const DEFAULT_MSN_SCAN_DEPTH = 200;
+export const ENV_MSN_SCAN_DEPTH = "GXT_MSN_SCAN_DEPTH" as const;
+export const DEFAULT_MSN_SCAN_DEPTH = 200;
+
+/** Resolve git-proof scan depth: explicit option, then env, then default. */
+export function resolveMsnScanDepth(explicit?: number): number {
+  if (explicit !== undefined && Number.isFinite(explicit) && explicit > 0) {
+    return Math.floor(explicit);
+  }
+  const envRaw = process.env[ENV_MSN_SCAN_DEPTH];
+  if (envRaw !== undefined && envRaw.trim() !== "") {
+    const envParsed = Number.parseInt(envRaw.trim(), 10);
+    if (Number.isFinite(envParsed) && envParsed > 0) {
+      return envParsed;
+    }
+  }
+  return DEFAULT_MSN_SCAN_DEPTH;
+}
 
 export function missionPathRepoRelative(root: string, missionAbsolutePath: string): string {
   const absMission = path.resolve(missionAbsolutePath);
@@ -73,9 +89,9 @@ export function commitSubjectHasMsnPrefix(subject: string, msnId: string): boole
 export function listMsnSubjectCommits(
   root: string,
   msnId: string,
-  scanDepth: number = DEFAULT_MSN_SCAN_DEPTH,
+  scanDepth?: number,
 ): MsnCommitRow[] {
-  const depth = Number.isFinite(scanDepth) && scanDepth > 0 ? Math.floor(scanDepth) : DEFAULT_MSN_SCAN_DEPTH;
+  const depth = resolveMsnScanDepth(scanDepth);
   const { ok, stdout, stderr } = gitRun(root, [
     "log",
     "-z",
@@ -172,8 +188,7 @@ export function assertTeacherMissionProof(
   const repoRelMission = missionPathRepoRelative(root, missionAbsolutePath);
   assertMissionUnderMissionsDir(repoRelMission);
 
-  const scanDepth = options?.scanDepth;
-  const rows = listMsnSubjectCommits(root, msnId, scanDepth);
+  const rows = listMsnSubjectCommits(root, msnId, resolveMsnScanDepth(options?.scanDepth));
   if (rows.length === 0) {
     throwGitProofError(
       "NO_MSN_COMMITS",

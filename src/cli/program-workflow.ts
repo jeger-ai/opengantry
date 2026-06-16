@@ -77,6 +77,10 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--fix", "Interactive remediation on failure (human output only; cannot combine with --json)")
     .option("--non-interactive", "With --fix: print structured hints without prompts")
     .option("--json", "Emit structured JSON (failures include fix_hints and next_actions). Incompatible with --fix.")
+    .option(
+      "--scan-depth <number>",
+      "Max commits to scan for Teacher [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",
+    )
     .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
     .action(
       async (opts: {
@@ -98,9 +102,13 @@ export function registerWorkflowCommands(program: Command): void {
         nonInteractive?: boolean;
         json?: boolean;
         audience?: string;
+        scanDepth?: string;
       }) => {
+        const scanDepth =
+          opts.scanDepth !== undefined ? Number.parseInt(opts.scanDepth, 10) : undefined;
         await runVerify({
           ...opts,
+          scanDepth: Number.isFinite(scanDepth) && scanDepth! > 0 ? scanDepth : undefined,
           breakGlassReason: opts.reason,
           breakGlassCommit: opts.commit,
           fixNonInteractive: opts.nonInteractive,

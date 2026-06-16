@@ -179,3 +179,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0048 close-out: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
 - DoD 4 MSN-0048 close-out: verify --fix reruns full pipeline with fix false after import-layer mutation
 - DoD 5 MSN-0048 close-out: dev-validate-core OK
+
+## MSN-0050 — Configurable git-proof scan depth (issue #24)
+
+- DoD 1 MSN-0050: gapman verify --scan-depth overrides default git-proof window
+- DoD 2 MSN-0050: GXT_MSN_SCAN_DEPTH env configures git-proof when flag omitted
+- DoD 3 MSN-0050: resolveMsnScanDepth and git-proof tests cover flag and env precedence
+- DoD 4 MSN-0050: RULES and missions README document --scan-depth and GXT_MSN_SCAN_DEPTH
+- DoD 5 MSN-0050: dev-validate-core OK

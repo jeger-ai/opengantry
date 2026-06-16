@@ -8,6 +8,8 @@ import {
   commitSubjectHasMsnPrefix,
   assertTeacherMissionProof,
   missionPathRepoRelative,
+  ENV_MSN_SCAN_DEPTH,
+  resolveMsnScanDepth,
 } from "../lib/git-proof.js";
 import { GapmanUserError } from "../lib/user-error.js";
 import { writeMiniGapmanRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
@@ -140,6 +142,68 @@ test("git-proof: MISSION_FILE_NOT_MODIFIED_BY_TEACHER", () => {
       /MISSION_FILE_NOT_MODIFIED_BY_TEACHER/,
     );
   });
+});
+
+
+test("resolveMsnScanDepth: explicit option overrides env and default", () => {
+  const prev = process.env[ENV_MSN_SCAN_DEPTH];
+  process.env[ENV_MSN_SCAN_DEPTH] = "500";
+  try {
+    assert.equal(resolveMsnScanDepth(50), 50);
+    assert.equal(resolveMsnScanDepth(undefined), 500);
+  } finally {
+    if (prev === undefined) delete process.env[ENV_MSN_SCAN_DEPTH];
+    else process.env[ENV_MSN_SCAN_DEPTH] = prev;
+  }
+});
+
+
+test("git-proof: scanDepth option reaches Teacher stamp beyond default window", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-depth-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] teacher legislate", TEACHER_EMAIL);
+  for (let i = 0; i < 5; i++) {
+    fs.writeFileSync(path.join(dest, `layer-${i}.txt`), String(i), "utf8");
+    execSync(`git add layer-${i}.txt`, { cwd: dest, stdio: "pipe" });
+    execSync(`git commit -m "chore: filler ${i}"`, { cwd: dest, stdio: "pipe" });
+  }
+  const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
+  withTeacherEnv(() => {
+    assert.throws(
+      () => assertTeacherMissionProof(dest, missionAbs, { scanDepth: 1 }),
+      /NO_MSN_COMMITS/,
+    );
+    assert.equal(assertTeacherMissionProof(dest, missionAbs, { scanDepth: 10 }), "MSN-0999");
+  });
+});
+
+
+test("git-proof: GXT_MSN_SCAN_DEPTH env reaches Teacher stamp", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-env-depth-"));
+  writeMiniGapmanRepo(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] teacher legislate", TEACHER_EMAIL);
+  for (let i = 0; i < 5; i++) {
+    fs.writeFileSync(path.join(dest, `env-layer-${i}.txt`), String(i), "utf8");
+    execSync(`git add env-layer-${i}.txt`, { cwd: dest, stdio: "pipe" });
+    execSync(`git commit -m "chore: env filler ${i}"`, { cwd: dest, stdio: "pipe" });
+  }
+  const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
+  const prev = process.env[ENV_MSN_SCAN_DEPTH];
+  process.env[ENV_MSN_SCAN_DEPTH] = "1";
+  try {
+    withTeacherEnv(() => {
+      assert.throws(() => assertTeacherMissionProof(dest, missionAbs), /NO_MSN_COMMITS/);
+    });
+    process.env[ENV_MSN_SCAN_DEPTH] = "10";
+    withTeacherEnv(() => {
+      assert.equal(assertTeacherMissionProof(dest, missionAbs), "MSN-0999");
+    });
+  } finally {
+    if (prev === undefined) delete process.env[ENV_MSN_SCAN_DEPTH];
+    else process.env[ENV_MSN_SCAN_DEPTH] = prev;
+  }
 });
 
 

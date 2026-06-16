@@ -92,11 +92,13 @@ export function resolveWorkerLogPath(root: string, options: VerifyOptions): stri
 function evaluateGitProof(
   root: string,
   mission: ParsedMission,
+  options: VerifyOptions,
   workerLogPath: string,
 ): GitProofOutcome {
   try {
     const proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
       msnId: mission.msnId ?? undefined,
+      scanDepth: options.scanDepth,
     });
     return { kind: "ok", proofMsnId };
   } catch (e) {
@@ -201,7 +203,7 @@ export function evaluateVerifyPhases(
 ): VerifyPhaseResult {
   const workerLogPath = resolveWorkerLogPath(root, options);
 
-  const proof = evaluateGitProof(root, mission, workerLogPath);
+  const proof = evaluateGitProof(root, mission, options, workerLogPath);
   if (proof.kind === "fail") return proof.failure;
   const { proofMsnId } = proof;
 
