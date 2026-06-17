@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { handleStartOrchestration } from "../lib/mcp-orchestration.js";
+import { handleStartOrchestration } from "../lib/mcp-governance.js";
 
 test("mcp orchestration: typed ok result", () => {
   const result = handleStartOrchestration({

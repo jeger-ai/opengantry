@@ -6,7 +6,7 @@ import {
   handleExecuteLegislation,
   handleCheckSignature,
   handlePinMission,
-} from "../dist/cli/lib/mcp-legislation.js";
+} from "../dist/cli/lib/mcp-governance.js";
 import { handleRuntimeEnv } from "../dist/cli/lib/mcp-runtime.js";
 
 const dest = process.env.GXT_DOGFOOD_TMP;

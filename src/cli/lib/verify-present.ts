@@ -1,25 +1,41 @@
 import { CLI_NAME } from "./constants.js";
-import { runBreakGlassAuditFlow } from "./break-glass-flow.js";
-import { errorMessage } from "./cli-io.js";
+import { runBreakGlassAuditFlow } from "./break-glass.js";
+import { errorMessage, logInfo, logWarn } from "./cli-io.js";
 import { CommandReporter } from "./command-reporter.js";
 import { logFixHint } from "./fix-hints.js";
+import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import { loadPrompts } from "./prompts-loader.js";
 import type { Manifest, ParsedMission } from "./types.js";
-import { isGapmanUserError } from "./user-error.js";
+import { isGapmanUserError } from "./errors.js";
+import { appendSurgeonMutationLog } from "./surgeon.js";
+import { loadWorkspace } from "./workspace.js";
 import {
+  evaluateVerifyPhases,
+  type VerifyOptions,
   type VerifyPhaseFailure,
   type VerifyPhaseResult,
 } from "./verify-engine.js";
-import { verifyFailurePresentation } from "./verify-failure-presentation.js";
-import { trySurgeonAndRerunVerify } from "./surgeon-orchestration.js";
 import {
   buildBreakGlassPayload,
   buildVerifyResultPayloadFromPhaseResult,
   initFailurePayload,
   type VerifyResultPayload,
-} from "./verify-result-payload.js";
-import { hintsForVerifyPhase, buildVerifyHintContext } from "./verify-remediation.js";
-import type { VerifyOptions } from "./verify-types.js";
+} from "./verify-payload.js";
+import {
+  buildVerifyHintContext,
+  hintsForVerifyPhase,
+  verifyFailurePresentation,
+} from "./verify-remediation.js";
+import {
+  getSurgeonForErrorCode,
+  resolveSurgeonErrorCode,
+  type SurgeonContext,
+} from "./surgeons/registry.js";
+
+export interface VerifyRunResult {
+  ok: boolean;
+  exitCode: number;
+}
 
 export interface VerifyPresentResult {
   ok: boolean;
@@ -33,6 +49,50 @@ export type VerifySink =
   | "fix_interactive"
   | "fix_noninteractive"
   | "human";
+
+async function trySurgeonAndRerunVerify(
+  input: {
+    root: string;
+    mission: ParsedMission;
+    missionArg: string;
+    options: VerifyOptions;
+    manifest: Manifest;
+    failure: VerifyPhaseFailure;
+  },
+): Promise<VerifyRunResult | null> {
+  if (input.options.fix !== true) return null;
+
+  const errorCode = resolveSurgeonErrorCode(input.failure);
+  if (!errorCode) return null;
+
+  const surgeon = getSurgeonForErrorCode(errorCode);
+  if (!surgeon) return null;
+
+  const workerLogPath = input.failure.workerLogPath;
+  const context: SurgeonContext = {
+    root: input.root,
+    failure: input.failure,
+    manifest: input.manifest,
+    workerLogPath,
+    errorCode,
+  };
+
+  logWarn(`[Surgeon] Autonomous mutation triggered for error ${errorCode}`);
+  const mutation = await surgeon.applyMutation(context);
+  if (!mutation.mutated) {
+    logInfo(`${CLI_NAME} verify: [Surgeon] no mutation applied (${mutation.summary})`);
+    return null;
+  }
+
+  appendSurgeonMutationLog(workerLogPath, mutation.summary);
+  logInfo(`${CLI_NAME} verify: [Surgeon] mutation logged; rerunning full verify (fix disabled)`);
+
+  return runVerifyCore({
+    ...input.options,
+    fix: false,
+    fixNonInteractive: false,
+  });
+}
 
 export function resolveVerifySink(options: VerifyOptions): VerifySink {
   if (options.breakGlass === true) {
@@ -210,7 +270,54 @@ export async function presentFix(
   return { ok: false, exitCode: failure.exitCode };
 }
 
-/** Emit structured JSON without re-evaluating phases (tests / init errors). */
 export function emitVerifyJson(payload: VerifyResultPayload, options: VerifyOptions): void {
   reporterFor(options).emitJsonPayload(payload);
+}
+
+/** Unified verify orchestration: load workspace once, evaluate once, present by sink. */
+export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
+  const { root, manifest } = loadWorkspace();
+  if (!options.mission) {
+    throw new Error("gapman verify: --mission is required");
+  }
+  const mission = parseMissionFile(root, options.mission);
+  const missionArg = options.mission;
+  const sink = resolveVerifySink(options);
+
+  switch (sink) {
+    case "break_glass_json":
+      return presentBreakGlassJson(root, mission, options);
+    case "break_glass_human":
+      return presentBreakGlassHuman(root, mission, options);
+    case "json": {
+      try {
+        assertMissionGatePresent(mission);
+        const result = evaluateVerifyPhases(root, mission, options, manifest);
+        return presentJsonFromResult(root, mission, missionArg, options, manifest, result);
+      } catch (e) {
+        return presentJsonInitFailure(options, e);
+      }
+    }
+    case "fix_interactive":
+    case "fix_noninteractive":
+    case "human": {
+      try {
+        assertMissionGatePresent(mission);
+      } catch (e) {
+        return presentHumanInitFailure(options, e);
+      }
+      const result = evaluateVerifyPhases(root, mission, options, manifest);
+      if (sink === "fix_interactive") {
+        return presentFix(root, mission, missionArg, options, result, false, manifest);
+      }
+      if (sink === "fix_noninteractive") {
+        return presentFix(root, mission, missionArg, options, result, true, manifest);
+      }
+      return presentHuman(root, mission, missionArg, options, result);
+    }
+    default: {
+      const _exhaustive: never = sink;
+      return _exhaustive;
+    }
+  }
 }

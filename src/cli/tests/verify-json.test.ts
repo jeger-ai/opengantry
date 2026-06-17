@@ -13,7 +13,7 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnv, withTeacherEnvAsync } from "./test-shared.js";
-import type { VerifyFailedPayload } from "../lib/verify-result-payload.js";
+import type { VerifyFailedPayload } from "../lib/verify-presentation.js";
 
 function parseStdoutJson(stdout: string): Record<string, unknown> {
   const trimmed = stdout.trim();

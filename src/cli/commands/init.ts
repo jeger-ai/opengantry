@@ -13,8 +13,8 @@ import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
 import {
   composeArchitecturePointer,
   serializeArchitecturePointer,
-} from "../lib/init-compose-arch-pointer.js";
-import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose-doc.js";
+} from "../lib/init-compose.js";
+import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose.js";
 import {
   defaultInitProfile,
   mergeInitProfile,

@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
-import type { VerifyOptions } from "./lib/verify-types.js";
+import type { VerifyOptions } from "./lib/verify-engine.js";
 import { runScan } from "./commands/scan.js";
 import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";

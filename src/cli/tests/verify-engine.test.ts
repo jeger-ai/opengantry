@@ -4,16 +4,16 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/mission-legislative-stub.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
 import { runVerify } from "../commands/verify.js";
-import { resolveGateWorkDir } from "../lib/verify-engine.js";
+import { resolveGateWorkDir } from "../lib/gate-work-dir.js";
 import { writeMiniGapmanRepo, writeMiniGapmanMission, gitInitCommit } from "./test-fixtures.js";
 import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
 
 test("resolveGateWorkDir: honors verify --cwd", () => {
   const root = "/repo";
-  assert.equal(resolveGateWorkDir(root, { mission: "m.yaml", cwd: "pkg" }), path.resolve(root, "pkg"));
-  assert.equal(resolveGateWorkDir(root, { mission: "m.yaml" }), root);
+  assert.equal(resolveGateWorkDir(root, { cwd: "pkg" }), path.resolve(root, "pkg"));
+  assert.equal(resolveGateWorkDir(root, {}), root);
 });
 
 test("runVerify --fix: gate evaluated once (same cwd semantics as normal verify)", async () => {

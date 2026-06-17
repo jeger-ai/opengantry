@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { runStatus } from "../commands/status.js";
-import { pinMissionFile } from "../lib/mission-path.js";
+import { pinMissionFile } from "../lib/missions/parser.js";
 import { writeMiniGapmanRepo, gitInitCommit, writeMiniGapmanMission } from "./test-fixtures.js";
 import { captureConsole, TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
 

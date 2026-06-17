@@ -7,9 +7,9 @@ import {
   handleLastError,
   handlePinMission,
   handleResolveMission,
-} from "./mcp-legislation.js";
+  handleStartOrchestration,
+} from "./mcp-governance.js";
 import { handleRuntimeEnv, handleRuntimeExec, handleScan, handleVerify } from "./mcp-runtime.js";
-import { handleStartOrchestration } from "./mcp-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {

@@ -8,7 +8,7 @@ import {
   handleDraftLegislation,
   handleExecuteLegislation,
   handleCheckSignature,
-} from "../lib/mcp-legislation.js";
+} from "../lib/mcp-governance.js";
 import { getRepoRoot } from "../lib/git.js";
 
 function scaffoldRepo(): string {

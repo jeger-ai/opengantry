@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { verifyFailurePresentation } from "../lib/verify-failure-presentation.js";
+import { verifyFailurePresentation } from "../lib/verify-presentation.js";
 import type { VerifyPhaseFailure } from "../lib/verify-engine.js";
 
 test("verifyFailurePresentation: gate phase includes remediation", () => {

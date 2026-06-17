@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "./cli-io.js";
-import { gitRunOk } from "./git-repo.js";
+import { gitRunOk } from "./git.js";
 
 export const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS" as const;
 export const GIT_CONFIG_TEACHER_EMAILS = "gapman.teacherEmails" as const;

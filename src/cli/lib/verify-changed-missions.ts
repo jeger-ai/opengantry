@@ -1,6 +1,6 @@
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
-import { gitRunOk } from "./git-repo.js";
+import { gitRunOk } from "./git.js";
 import { REL_MISSIONS_PREFIX } from "./git-proof.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);

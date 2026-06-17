@@ -1,6 +1,6 @@
 import path from "node:path";
 import { GXT_ERROR } from "../gxt-error-codes.js";
-import { extractImportLayerGateReport, type ImportLayerViolation } from "../import-layer-violation.js";
+import { extractImportLayerGateReport, type ImportLayerViolation } from "../surgeon.js";
 import {
   quarantineImportDeclaration,
   resolveImportDeclarationOffset,

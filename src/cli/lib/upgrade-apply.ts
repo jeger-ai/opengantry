@@ -11,15 +11,15 @@ import {
   mergePrettierignoreFromTemplate,
 } from "./file-merge-gxt.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
-import { resolveMissionPathRequired } from "./mission-resolution.js";
-import { assertMissionSchemaValid } from "./mission-schema-validate.js";
+import { resolveMissionPathRequired } from "./missions/parser.js";
+import { assertMissionSchemaValid } from "./missions/validator.js";
 import { writeSubstrateVersionFile } from "./substrate-version.js";
 import {
   parseUpgradePayloadFromMissionBody,
   REL_UPGRADE_TMP,
   type UpgradePayload,
 } from "./upgrade-plan.js";
-import { GapmanUserError } from "./user-error.js";
+import { GapmanUserError } from "./errors.js";
 
 export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 

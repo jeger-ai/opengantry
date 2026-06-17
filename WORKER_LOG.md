@@ -195,3 +195,7 @@ example trace line for gapman verify
 ## MSN-0052 — Wave 1 thermo cleanup N8-N10 (#58 #56 #57)
 
 - DoD 1 MSN-0052: Wave 1 thermo cleanup — start failure factory, static tutorial imports, REPO_ONLY_SCRIPTS catalog guard; dev-validate-core OK
+
+## MSN-0053 — Wave 2 lib consolidation (#54)
+
+- DoD 1 MSN-0053: Wave 2 lib consolidation — domain modules, missions/ submodule, gate-work-dir, check-lib-cycles; dev-validate-core OK

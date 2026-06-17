@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
-import { agentErrorAbsolutePath } from "./agent-error.js";
-import { parseMissionFile } from "./mission-parser.js";
+import { agentErrorAbsolutePath } from "./errors.js";
+import { parseMissionFile } from "./missions/parser.js";
 import type { Workspace } from "./workspace.js";
 import { defaultWorkerLogPath } from "./trace.js";
 

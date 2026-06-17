@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { runStart, runStartOrchestration } from "../lib/start-orchestration.js";
-import { handleStartOrchestration } from "../lib/mcp-orchestration.js";
+import { handleStartOrchestration } from "../lib/mcp-governance.js";
 import { writeMiniGapmanRepo, gitInitCommit } from "./test-fixtures.js";
 import { TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
 

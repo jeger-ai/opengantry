@@ -1,4 +1,4 @@
-import type { NormalizedTraceStatus } from "./trace-status.js";
+import type { NormalizedTraceStatus } from "./trace.js";
 
 export type TrustThreshold = "Tier-1" | "Tier-2" | "Tier-3" | string;
 

@@ -1,6 +1,6 @@
 import { logInfo } from "./cli-io.js";
 import { teacherIdentitySetupHint } from "./teacher-identity.js";
-import type { TraceFailureKind } from "./trace-failure-kind.js";
+import type { TraceFailureKind } from "./trace.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
 

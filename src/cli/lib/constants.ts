@@ -19,6 +19,9 @@ export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json"
 export const REL_OUT_OF_SCOPE_DIR = ".gitagent/out-of-scope" as const;
 export const SKILLS_DIR_NAME = "skills" as const;
 export const WORKER_LOG_FILENAME = "WORKER_LOG.md" as const;
+/** Default trace quote emitted by `gapman legislate` before worker execution. */
+export const LEGISLATE_TRACE_PLACEHOLDER =
+  "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION" as const;
 /** Default path for `--emit-mission` (must stay under `.gitagent/missions/` for `gapman verify` git-proof). */
 export const DEFAULT_ACTIVE_MISSION = ".gitagent/missions/ACTIVE_MISSION.md" as const;
 

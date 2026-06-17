@@ -1,7 +1,7 @@
 import path from "node:path";
 import { WORKER_LOG_FILENAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git-repo.js";
+import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git.js";
 import type { Manifest } from "./types.js";
 import type { TraceRow } from "./types.js";
 import type { ResolvedQuoteLine } from "./trace.js";

@@ -12,7 +12,7 @@ import {
   type InitProfile,
   type SkillsPreset,
 } from "./init-profile.js";
-import { defaultArchitectureLocation } from "./init-compose-arch-pointer.js";
+import { defaultArchitectureLocation } from "./init-compose.js";
 
 function wizardCancelled<T>(value: T | symbol): value is symbol {
   return p.isCancel(value);

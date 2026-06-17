@@ -81,4 +81,8 @@ if [[ "${#LAYER_FILES[@]}" -gt 0 ]]; then
   node scripts/check-import-layers.mjs "${LAYER_FILES[@]}"
 fi
 
+if [[ "${#EXISTING[@]}" -gt 0 ]]; then
+  node scripts/check-lib-cycles.mjs
+fi
+
 echo "check-changed-code OK"

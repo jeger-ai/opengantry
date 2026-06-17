@@ -1,6 +1,6 @@
 import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { isValidMsnId } from "../lib/mission-msn.js";
-import { emitActiveMissionFromTemplate } from "../lib/mission-emit.js";
+import { isValidMsnId } from "../lib/missions/parser.js";
+import { emitActiveMissionFromTemplate } from "../lib/missions/formatter.js";
 import { formatTriageHuman, formatTriageJson, triageIntent } from "../lib/triage-logic.js";
 import { loadWorkspace } from "../lib/workspace.js";
 

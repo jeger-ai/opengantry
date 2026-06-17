@@ -4,12 +4,12 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
-import { gitDiffNameOnlySinceCommit } from "../lib/git-repo.js";
+import { gitDiffNameOnlySinceCommit } from "../lib/git.js";
 import {
   parseBlamePorcelainByLine,
   UNCOMMITTED_BLAME_COMMIT,
   verifyTraceEvidenceFreshness,
-} from "../lib/trace-evidence.js";
+} from "../lib/trace.js";
 import { verifyTraceRows } from "../lib/trace.js";
 import { copyMissionSchema, gitInitCommit, writeManifest, writeSkillsForManifest } from "./test-fixtures.js";
 
