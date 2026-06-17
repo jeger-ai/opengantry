@@ -22,6 +22,7 @@
     { "targetPath": ".gitagent/teacher/RULES.md", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/teacher/WORKER_LOG.template.md", "mode": "managed_strict", "tags": ["core"] },
     { "targetPath": ".githooks/post-checkout", "mode": "managed_strict", "executable": true, "tags": ["hooks"] },
+    { "targetPath": ".githooks/pre-commit", "mode": "managed_strict", "executable": true, "tags": ["hooks"] },
     { "targetPath": ".githooks/pre-push", "mode": "managed_strict", "executable": true, "tags": ["hooks"] },
     { "targetPath": ".github/workflows/gxt-validate.yml", "mode": "managed_strict", "tags": ["ci"] },
     { "targetPath": ".junie/guidelines.md", "templatePath": "integrations/junie/.junie/guidelines.md", "mode": "scaffold_only", "tags": ["junie"] },

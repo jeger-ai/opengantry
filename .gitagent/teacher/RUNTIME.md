@@ -39,6 +39,30 @@ The `<path>` must be a **file that already exists** under the repo root (or abso
 - `GXT_TMVC_ROOTS` / `GXT_FORBIDDEN_ZONES` MUST be resolved from manifest entries (repo-relative POSIX strings in manifest, joined against `GXT_REPO_ROOT`).
 - The worker MUST append trace evidence required by **`gapman verify`** to the file referenced by **`GXT_WORKER_LOG`** (or the path `--worker-log` if the verify step overrides it).
 
+## Context Request scaffold (`gapman context-request`)
+
+When a worker needs access outside `GXT_TMVC_ROOTS`, append a **PENDING** Context Request to `WORKER_LOG.md` before proceeding:
+
+```bash
+gapman context-request --path docs/FOO.md --reason "doc sync for adoption"
+# optional: gapman context-request ... --stage-worker-log
+```
+
+The Verifier accepts or rejects the request in `WORKER_LOG.md` before out-of-scope edits proceed ([`RULES.md`](RULES.md) §4).
+
+## Pre-commit TMVC guard (`gapman tmvc guard`)
+
+Optional `.githooks/pre-commit` (installed via `gapman init --hooks`) shells to:
+
+```bash
+gapman tmvc guard --mission <pinned>
+```
+
+- **Advisory default:** warnings on `stderr`, exit `0`.
+- **`--strict`** or **`GXT_TMVC_GUARD_STRICT=1`:** block commit on staged paths outside TMVC roots.
+- **No pinned mission:** warn and skip.
+- `WORKER_LOG.md` and `.gitagent/missions/.active-mission` are governance transport — never TMVC drift violations.
+
 ## Relationship to verification
 
 **`gapman verify`** performs git-proof Teacher legislation, deterministic gate execution, and trace mapping (`--fuzzy-trace` for formatter line drift; `--break-glass` only with `GXT_BYPASS_SECRET`). **`gapman runtime env`** does **not** replace verify; it only standardizes inputs for the worker loop before or during execution.

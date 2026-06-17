@@ -77,7 +77,8 @@ export function inferInitProfileFromRepo(repoRoot: string, templatesRoot?: strin
   if (detected.length > 0) {
     profile.ides = detected;
   }
-  profile.gitHooks = pathExists(repoRoot, ".githooks/pre-push");
+  profile.gitHooks =
+    pathExists(repoRoot, ".githooks/pre-push") || pathExists(repoRoot, ".githooks/pre-commit");
   profile.ciWorkflow = pathExists(repoRoot, ".github/workflows/gxt-validate.yml");
   profile.skillsPreset = pathExists(repoRoot, "skills/gapman.md") ? "specimen" : "minimal";
   return profile;

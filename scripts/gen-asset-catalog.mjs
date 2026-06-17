@@ -41,6 +41,7 @@ const STATIC_ASSETS = [
   { targetPath: "skills/gapman.md", mode: "scaffold_only", tags: ["skill-specimen"] },
   { targetPath: "skills/substrate.md", mode: "scaffold_only", tags: ["skill-specimen"] },
   { targetPath: ".githooks/post-checkout", mode: "managed_strict", executable: true, tags: ["hooks"] },
+  { targetPath: ".githooks/pre-commit", mode: "managed_strict", executable: true, tags: ["hooks"] },
   { targetPath: ".githooks/pre-push", mode: "managed_strict", executable: true, tags: ["hooks"] },
   { targetPath: ".github/workflows/gxt-validate.yml", mode: "managed_strict", tags: ["ci"] },
   { targetPath: "scripts/verify-pr-missions.sh", mode: "managed_strict", executable: true, tags: ["ci"] },
@@ -241,6 +242,28 @@ function assertCanonicalPathsCovered(integrations, assets) {
 }
 
 /** @param {AssetSpec[]} assets */
+function assertHookTemplatesInCatalog(assets) {
+  const hooksDir = path.join(TEMPLATES_DIR, ".githooks");
+  if (!fs.existsSync(hooksDir)) return;
+  const targets = new Set(assets.map((a) => a.targetPath));
+  /** @type {string[]} */
+  const missing = [];
+  for (const name of fs.readdirSync(hooksDir).sort((a, b) => a.localeCompare(b))) {
+    const abs = path.join(hooksDir, name);
+    if (!fs.statSync(abs).isFile()) continue;
+    const targetPath = `.githooks/${name}`;
+    if (!targets.has(targetPath)) {
+      missing.push(targetPath);
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `hook templates missing from generated catalog (add to STATIC_ASSETS):\n  ${missing.join("\n  ")}`,
+    );
+  }
+}
+
+/** @param {AssetSpec[]} assets */
 function assertTemplateFilesExist(assets) {
   /** @type {string[]} */
   const missing = [];
@@ -285,6 +308,7 @@ function main() {
   assertNoDuplicateTargets(assets);
   assertRepoOnlyScriptsExcluded(assets);
   assertCanonicalPathsCovered(compat.integrations, assets);
+  assertHookTemplatesInCatalog(assets);
   assertTemplateFilesExist(assets);
 
   const payload = formatCatalog(assets);
