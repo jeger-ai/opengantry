@@ -7,7 +7,7 @@ skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0054: Wave 3 governance enforcement — context-request, tmvc guard, pre-commit hook (#25 #26); dev-validate-core OK"
+    trace_quote: "DoD 1 MSN-0054 close-out: rebase onto main, kpi-engine TS narrowing fix; dev-validate-core OK"
     anchor: "MSN-0054"
     status: PASS
 gate_success_substring: dev-validate-core OK
