@@ -199,3 +199,8 @@ example trace line for gapman verify
 ## MSN-0053 — Wave 2 lib consolidation (#54)
 
 - DoD 1 MSN-0053: Wave 2 lib consolidation — domain modules, missions/ submodule, gate-work-dir, check-lib-cycles; dev-validate-core OK
+
+## MSN-0054 — Wave 3 governance enforcement surfaces (#25 #26)
+
+- DoD 1 MSN-0054: Wave 3 governance enforcement — context-request, tmvc guard, pre-commit hook (#25 #26); dev-validate-core OK
+- DoD 1 MSN-0054 close-out: rebase onto main, kpi-engine TS narrowing fix; dev-validate-core OK

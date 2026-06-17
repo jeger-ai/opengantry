@@ -1,6 +1,8 @@
 import type { Command } from "commander";
+import { runContextRequest } from "./commands/context-request.js";
 import { runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
+import { runTmvcGuard } from "./commands/tmvc-guard.js";
 import { parseOptionalTimeoutMs } from "./lib/cli-io.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
@@ -97,4 +99,52 @@ export function registerMissionCommands(program: Command): void {
     });
 
   attachRuntimeExec(runtime);
+
+  program
+    .command("context-request")
+    .description("Append a PENDING Context Request to WORKER_LOG.md (RULES §4 TMVC expansion)")
+    .requiredOption("--reason <text>", "Why access outside TMVC is needed")
+    .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
+    .option("--path <paths...>", "Repo-relative path(s) requiring expansion")
+    .option("--proposed <files...>", "Proposed file(s) to touch after approval")
+    .option("--stage-worker-log", "Stage WORKER_LOG.md after append (opt-in)")
+    .option("--worker-log <path>", "Override WORKER_LOG.md path")
+    .option("--json", "Emit result as JSON on stdout")
+    .action(
+      (opts: {
+        reason: string;
+        mission?: string;
+        path?: string[];
+        proposed?: string[];
+        stageWorkerLog?: boolean;
+        workerLog?: string;
+        json?: boolean;
+      }) => {
+        runContextRequest({
+          mission: opts.mission,
+          paths: opts.path ?? [],
+          reason: opts.reason,
+          proposed: opts.proposed,
+          stageWorkerLog: opts.stageWorkerLog,
+          workerLog: opts.workerLog,
+          json: opts.json,
+        });
+      },
+    );
+
+  const tmvc = program.command("tmvc").description("TMVC boundary checks (staged index)");
+
+  tmvc
+    .command("guard")
+    .description("Pre-commit TMVC path guard — advisory by default; --strict to block")
+    .option("--mission <path>", "Mission path; defaults to pinned mission")
+    .option("--strict", "Block commit when staged paths drift outside TMVC")
+    .option("--json", "Emit result as JSON on stdout")
+    .action((opts: { mission?: string; strict?: boolean; json?: boolean }) => {
+      runTmvcGuard({
+        mission: opts.mission,
+        strict: opts.strict,
+        json: opts.json,
+      });
+    });
 }

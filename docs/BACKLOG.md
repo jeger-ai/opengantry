@@ -185,8 +185,8 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `verifyTraceRows` returns `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
 | **`gapman mission validate` (JSON Schema)** | **Done** | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
 | **Configurable git-proof scan depth** | **Done** | [#24](https://github.com/jeger-ai/opengantry/issues/24); MSN-0050 |
-| **Pre-commit TMVC path guard hook** | Open | [#25](https://github.com/jeger-ai/opengantry/issues/25) → v2.2 |
-| **Context Request helper** | Open | [#26](https://github.com/jeger-ai/opengantry/issues/26) → v2.2 |
+| **Pre-commit TMVC path guard hook** | Done | [#25](https://github.com/jeger-ai/opengantry/issues/25) → v2.2 |
+| **Context Request helper** | Done | [#26](https://github.com/jeger-ai/opengantry/issues/26) → v2.2 |
 | **`gapman verify --changed-missions`** | **Done** | [#27](https://github.com/jeger-ai/opengantry/issues/27) |
 | **Triage scoring / explainability** | **Done** | [#28](https://github.com/jeger-ai/opengantry/issues/28) |
 | **Metrics fidelity improvement** | Open | [#29](https://github.com/jeger-ai/opengantry/issues/29) → v2.2 |

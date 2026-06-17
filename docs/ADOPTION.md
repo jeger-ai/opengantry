@@ -137,7 +137,10 @@ git config core.hooksPath .githooks
 ```
 
 - **post-checkout:** creates `WORKER_LOG.md` on feature branches when missing.
+- **pre-commit:** `gapman tmvc guard` — advisory TMVC path warnings for staged files (stderr; exit 0). Skips when no pinned mission. Set `GXT_TMVC_GUARD_STRICT=1` or pass `--strict` to block.
 - **pre-push:** `gapman verify --pre-push` for mission files changed on branch — ensures Teacher review before remote handoff; full gate+trace still required to merge.
+
+Record out-of-TMVC expansion before editing: `gapman context-request --path <p…> --reason <text>` (optional `--stage-worker-log`).
 
 ## Break-glass (emergency only)
 

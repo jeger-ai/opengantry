@@ -34,6 +34,7 @@ test("resolveAssetsFromProfile: default catalog covers all core managed paths", 
   assert.ok(fromCatalog.includes("scripts/validate-gxt.sh"));
   assert.ok(fromCatalog.includes("scripts/gxt-manifest-lib.mjs"));
   assert.ok(fromCatalog.includes("scripts/verify-pr-missions.sh"));
+  assert.ok(fromCatalog.includes(".githooks/pre-commit"));
   assert.ok(fromCatalog.includes(".cursor/mcp.json"));
   assert.ok(fromCatalog.length >= 20);
 });

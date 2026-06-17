@@ -1,0 +1,13 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Wave 3 governance enforcement surfaces (#25 #26)
+# Teacher stamp: closes #25 pre-commit TMVC guard and #26 context-request helper
+# Post-rebase stamp after kpi-engine typeof narrowing fix (CI git-proof)
+msn_id: MSN-0054
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0054 close-out: rebase onto main, kpi-engine TS narrowing fix; dev-validate-core OK"
+    anchor: "MSN-0054"
+    status: PASS
+gate_success_substring: dev-validate-core OK
