@@ -2,7 +2,10 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
-import { gitHead, gitRevParse, gitRun } from "./git-repo.js";
+import { toPosixRel } from "./cli-io.js";
+import { gitHead, gitRevParse, gitRun } from "./git.js";
+import type { ParsedMission } from "./types.js";
+import type { VerifyOptions } from "./verify-engine.js";
 
 export const ENV_BYPASS_SECRET = "GXT_BYPASS_SECRET";
 export const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";
@@ -164,4 +167,50 @@ export function runBreakGlassAudit(
 
   writeBypassGitNote(root, commitSha, payload);
   return commitSha;
+}
+
+export interface BreakGlassAuditOk {
+  kind: "ok";
+  missionRel: string;
+  commitSha: string;
+  reason: string;
+  msnId?: string;
+  auditCommit: boolean;
+}
+
+export interface BreakGlassAuditFail {
+  kind: "fail";
+  error: unknown;
+}
+
+export type BreakGlassAuditOutcome = BreakGlassAuditOk | BreakGlassAuditFail;
+
+/** Single break-glass audit path shared by human and JSON presenters. */
+export function runBreakGlassAuditFlow(
+  root: string,
+  mission: ParsedMission,
+  options: VerifyOptions,
+): BreakGlassAuditOutcome {
+  try {
+    const reason = validateBreakGlassReason(options.breakGlassReason);
+    assertBypassSecretAuthorized(root);
+    const missionRel = toPosixRel(root, mission.rawPath);
+    const commitSha = runBreakGlassAudit(root, {
+      reason,
+      msnId: mission.msnId,
+      missionFile: missionRel,
+      commit: options.breakGlassCommit,
+      auditCommit: options.auditCommit === true,
+    });
+    return {
+      kind: "ok",
+      missionRel,
+      commitSha,
+      reason,
+      msnId: mission.msnId ?? undefined,
+      auditCommit: options.auditCommit === true,
+    };
+  } catch (error) {
+    return { kind: "fail", error };
+  }
 }

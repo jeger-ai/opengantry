@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import type { AgentErrorPayload } from "../lib/agent-error.js";
-import { agentErrorAbsolutePath } from "../lib/agent-error.js";
+import type { AgentErrorPayload } from "../lib/errors.js";
+import { agentErrorAbsolutePath } from "../lib/errors.js";
 import { hintForbiddenZone, hintRuntimeHumanSummary, logFixHint } from "../lib/fix-hints.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
 import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";

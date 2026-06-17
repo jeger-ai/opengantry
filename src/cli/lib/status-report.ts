@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
-import { collectDoctorReport } from "./doctor-orchestration.js";
-import type { DoctorLine } from "./doctor-checks.js";
-import { resolvePinnedMission } from "./mission-resolution.js";
+import { collectDoctorReport, type DoctorLine } from "./doctor.js";
+import { resolvePinnedMission } from "./missions/parser.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
 import type { Manifest } from "./types.js";
 

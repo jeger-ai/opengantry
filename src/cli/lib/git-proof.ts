@@ -1,9 +1,9 @@
 import path from "node:path";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitRun } from "./git-repo.js";
+import { gitRun } from "./git.js";
 import { hintGitProof, type GitProofHintContext } from "./fix-hints.js";
-import { GapmanUserError } from "./user-error.js";
+import { GapmanUserError } from "./errors.js";
 
 function throwGitProofError(
   code: string,
@@ -16,7 +16,7 @@ function throwGitProofError(
     hintGitProof(code, ctx),
   );
 }
-import { extractMsnIdFromMissionPath } from "./mission-msn.js";
+import { extractMsnIdFromMissionPath } from "./missions/parser.js";
 import { resolveTeacherEmails } from "./teacher-identity.js";
 
 /** Missions verified by `gapman verify` must live under this repo-relative prefix. */

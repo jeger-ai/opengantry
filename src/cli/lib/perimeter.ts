@@ -1,7 +1,7 @@
 import path from "node:path";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitRevParse, gitRun, gitRunOk } from "./git-repo.js";
+import { gitRevParse, gitRun, gitRunOk } from "./git.js";
 import {
   commitSubjectHasMsnPrefix,
   listCommitChangedPaths,

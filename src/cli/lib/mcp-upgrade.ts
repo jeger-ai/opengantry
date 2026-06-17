@@ -1,12 +1,15 @@
 import { errorMessage } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
-import type { McpErrorBody } from "./mcp-legislation-types.js";
-import type { UpgradeApplyMcpResult, UpgradePlanMcpResult } from "./mcp-upgrade-types.js";
+import type { McpErrorBody } from "./mcp-governance.js";
+import type { UpgradeApplyResult } from "./upgrade-apply.js";
+import type { UpgradePlanResult } from "./upgrade-plan.js";
 import { runUpgradeApply } from "./upgrade-apply.js";
 import { runUpgradePlan } from "./upgrade-plan.js";
-import { GapmanUserError } from "./user-error.js";
+import { GapmanUserError } from "./errors.js";
 
-export type { UpgradeApplyMcpResult, UpgradePlanMcpResult } from "./mcp-upgrade-types.js";
+export type UpgradePlanMcpResult = UpgradePlanResult | { status: "error"; error: McpErrorBody };
+
+export type UpgradeApplyMcpResult = UpgradeApplyResult | { status: "error"; error: McpErrorBody };
 
 export interface UpgradePlanMcpInput {
   msn_id?: string;

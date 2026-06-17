@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execFileSync } from "node:child_process";
-import { verifyKpiReportFreshness } from "../lib/kpi-report-stale.js";
+import { verifyKpiReportFreshness } from "../lib/kpi-engine.js";
 import { copyMissionSchema, gitInitCommit, writeManifest, writeSkillsForManifest } from "./test-fixtures.js";
 
 const TEACHER = "teacher@example.com";

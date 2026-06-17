@@ -11,7 +11,7 @@ import {
   ENV_MSN_SCAN_DEPTH,
   resolveMsnScanDepth,
 } from "../lib/git-proof.js";
-import { GapmanUserError } from "../lib/user-error.js";
+import { GapmanUserError } from "../lib/errors.js";
 import { writeMiniGapmanRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";
 import { TEACHER_EMAIL, OTHER_EMAIL, withTeacherEnv } from "./test-shared.js";

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { appendSurgeonMutationLog } from "../lib/surgeon-mutation-log.js";
+import { appendSurgeonMutationLog } from "../lib/surgeon.js";
 
 test("appendSurgeonMutationLog: prefixes and appends immutable line", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-log-"));

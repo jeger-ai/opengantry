@@ -1,8 +1,8 @@
 import { CLI_NAME } from "../lib/constants.js";
 import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { isValidMsnId } from "../lib/mission-msn.js";
-import { assertMissionGatePresent, parseMissionFile } from "../lib/mission-parser.js";
-import { captureStartState, writeSnapshot } from "../lib/start-state.js";
+import { isValidMsnId } from "../lib/missions/parser.js";
+import { assertMissionGatePresent, parseMissionFile } from "../lib/missions/parser.js";
+import { captureStartState, writeSnapshot } from "../lib/start-orchestration.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export function runMissionValidate(file: string): void {

@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_KPI_REPORT_DIR } from "./constants.js";
 import { runGate } from "./gate.js";
-import { assertKpiReportSchemaValid } from "./kpi-report.js";
-import { resolveGateWorkDir } from "./verify-engine.js";
+import { assertKpiReportSchemaValid } from "./kpi-engine.js";
+import { resolveGateWorkDir } from "./gate-work-dir.js";
 import type {
   KpiAggregator,
   KpiFinding,
@@ -112,7 +112,7 @@ export function runKpiScan(
     mission.kpiGate?.reportPath.replace(/\\/g, "/") ??
     `${DEFAULT_KPI_REPORT_DIR}/${msnId}.json`;
 
-  const workDir = options.cwd ? path.resolve(root, options.cwd) : resolveGateWorkDir(root, {});
+  const workDir = resolveGateWorkDir(root, options);
   const mergedMetrics: Record<string, number | boolean> = {};
   const mergedFindings: KpiFinding[] = [];
   let scanExitCode = 0;

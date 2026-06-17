@@ -4,7 +4,7 @@ import {
   GapmanUserError,
   isGapmanUserError,
   reportUserFacingError,
-} from "../lib/user-error.js";
+} from "../lib/errors.js";
 import { captureConsole } from "./test-shared.js";
 
 test("GapmanUserError: isGapmanUserError type guard", () => {

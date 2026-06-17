@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
-import { parseOptionalTimeoutMs } from "./lib/cli-timeout.js";
+import { parseOptionalTimeoutMs } from "./lib/cli-io.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 function attachRuntimeExec(cmd: Command): void {

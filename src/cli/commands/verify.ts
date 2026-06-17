@@ -1,16 +1,16 @@
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { gitRevParse } from "../lib/git-repo.js";
-import { parseMissionFile } from "../lib/mission-parser.js";
-import { initFailurePayload } from "../lib/verify-result-payload.js";
-import { emitVerifyJson } from "../lib/verify-present.js";
-import type { VerifyOptions } from "../lib/verify-types.js";
+import { gitRevParse } from "../lib/git.js";
+import { parseMissionFile } from "../lib/missions/parser.js";
+import { initFailurePayload } from "../lib/verify-presentation.js";
+import { emitVerifyJson } from "../lib/verify-presentation.js";
+import type { VerifyOptions } from "../lib/verify-engine.js";
 import { evaluateVerifyPhases } from "../lib/verify-engine.js";
-import { discoverChangedMissionFiles } from "../lib/verify-changed-missions.js";
+import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
-import { GapmanUserError, reportUserFacingError } from "../lib/user-error.js";
-import { runVerifyCore } from "../lib/verify-run.js";
+import { GapmanUserError, reportUserFacingError } from "../lib/errors.js";
+import { runVerifyCore } from "../lib/verify-presentation.js";
 
-export type { VerifyOptions } from "../lib/verify-types.js";
+export type { VerifyOptions } from "../lib/verify-engine.js";
 
 function assertVerifyOptionsCompatible(options: VerifyOptions): void {
   if (options.json === true && options.fix === true) {

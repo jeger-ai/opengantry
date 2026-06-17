@@ -13,7 +13,7 @@ import {
   legacyDefaultInitTargetPaths,
   resolveAssetsFromProfile,
 } from "../lib/init-asset-catalog.js";
-import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose-doc.js";
+import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose.js";
 import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "../lib/init-profile.js";
 import { canPromptInitOverwrite } from "../lib/init-interactive.js";
 import type { IntegrationIdeKey } from "../lib/integration-compat.js";
@@ -101,7 +101,7 @@ test("runIntegrationDoctorChecks: warns on deprecated .cursorrules", async () =>
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
   const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../lib/doctor-integration-checks.js");
+  const { runIntegrationDoctorChecks } = await import("../lib/doctor.js");
   const lines = runIntegrationDoctorChecks(dest, templatesRoot);
   assert.ok(lines.some((l) => l.message.includes("deprecated path .cursorrules")));
 });
@@ -115,7 +115,7 @@ test("runIntegrationDoctorChecks: AGENTS.md alone does not detect codex-cli", as
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
   const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../lib/doctor-integration-checks.js");
+  const { runIntegrationDoctorChecks } = await import("../lib/doctor.js");
   const lines = runIntegrationDoctorChecks(dest, templatesRoot);
   const wiring = lines.find((l) => l.message.startsWith("detected agent wiring:"));
   assert.ok(wiring);

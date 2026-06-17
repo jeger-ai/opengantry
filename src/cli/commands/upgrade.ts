@@ -4,7 +4,7 @@ import { getRepoRoot } from "../lib/git.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
 import { runUpgradePlan } from "../lib/upgrade-plan.js";
-import { GapmanUserError } from "../lib/user-error.js";
+import { GapmanUserError } from "../lib/errors.js";
 
 export interface UpgradeOptions {
   apply?: boolean;

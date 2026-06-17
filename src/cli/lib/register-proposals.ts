@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { FolderSignature } from "./ast-discovery.js";
 
 export interface SkillProposal {
@@ -6,6 +7,11 @@ export interface SkillProposal {
   desc: string;
   suggested_forbidden_imports: string[];
   signature: FolderSignature;
+}
+
+export function suggestSkillKeyFromFolder(folderRel: string): string {
+  const base = path.basename(folderRel.replace(/\/$/, ""));
+  return base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "skill";
 }
 
 export function buildSkillProposal(
@@ -31,8 +37,6 @@ export function buildSkillProposal(
     signature,
   };
 }
-
-export { suggestSkillKeyFromFolder } from "./register-proposals-format.js";
 
 export function formatProposalJson(proposal: SkillProposal): string {
   return JSON.stringify(proposal, null, 2);

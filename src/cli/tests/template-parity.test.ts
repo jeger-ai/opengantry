@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { getRepoRoot } from "../lib/git.js";
-import { allUpgradeEligibleFromCatalog } from "../lib/upgrade-eligible-assets.js";
+import { allUpgradeEligibleFromCatalog } from "../lib/upgrade-plan.js";
 import { templatePathForAsset } from "../lib/init-asset-catalog.js";
 
 const DOGFOOD_PARITY_EXEMPT = new Set([".cursor/rules/opengantry-gxt-substrate.mdc"]);

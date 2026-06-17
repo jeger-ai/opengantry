@@ -10,7 +10,7 @@ import {
   runArchitecturePointerDoctorChecks,
   validateArchitecturePointer,
 } from "../lib/architecture-pointer.js";
-import { composeArchitecturePointer } from "../lib/init-compose-arch-pointer.js";
+import { composeArchitecturePointer } from "../lib/init-compose.js";
 import { defaultInitProfile } from "../lib/init-profile.js";
 
 test("validateArchitecturePointer: accepts file, directory, external", () => {

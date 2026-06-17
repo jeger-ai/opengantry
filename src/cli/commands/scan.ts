@@ -1,4 +1,4 @@
-import { parseMissionFile } from "../lib/mission-parser.js";
+import { parseMissionFile } from "../lib/missions/parser.js";
 import { runKpiScan } from "../lib/kpi-scan.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { loadWorkspace } from "../lib/workspace.js";

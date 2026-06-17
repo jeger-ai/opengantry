@@ -1,7 +1,7 @@
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
-import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git-repo.js";
-import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace-evidence.js";
+import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git.js";
+import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import type { Manifest } from "./types.js";
 
 export interface KpiReportStaleOptions {

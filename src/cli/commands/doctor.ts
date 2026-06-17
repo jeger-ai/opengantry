@@ -4,8 +4,7 @@ import {
   filterNextStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
-import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor-checks.js";
-import { collectDoctorReport } from "../lib/doctor-orchestration.js";
+import { doctorLinesHasFail, collectDoctorReport, type DoctorLine } from "../lib/doctor.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface DoctorReport {

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { gitRunOk } from "./git-repo.js";
+import { gitRunOk } from "./git.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
 

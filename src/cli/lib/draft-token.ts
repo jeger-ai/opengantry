@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
-import { gitRun } from "./git-repo.js";
+import { gitRun } from "./git.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
 export const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;

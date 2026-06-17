@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { getRepoRoot } from "../lib/git.js";
-import { runVerifyCore } from "../lib/verify-run.js";
+import { runVerifyCore } from "../lib/verify-presentation.js";
 import { gitInitCommit, writeMiniGapmanMission, writeMiniGapmanRepo } from "./test-fixtures.js";
 import { TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
 

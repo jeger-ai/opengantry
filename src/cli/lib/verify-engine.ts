@@ -1,16 +1,73 @@
 import path from "node:path";
-import { assertTeacherMissionProof } from "./git-proof.js";
+import type { OutputAudience } from "./audience-output.js";
+import { toPosixRel } from "./cli-io.js";
+import { gitRunOk } from "./git.js";
+import { assertTeacherMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
 import { gatePassed, runGate } from "./gate.js";
-import { evaluateKpiPhase } from "./kpi-phase.js";
-import { isLegislativeStub } from "./mission-legislative-stub.js";
-import type { GateSpec, Manifest, ParsedMission } from "./types.js";
-import type { KpiThresholdOp } from "./types.js";
-import { classifyTraceFailure, type TraceFailureKind } from "./trace-failure-kind.js";
-import { isPendingStatus } from "./trace-status.js";
-import { verifyTraceEvidenceFreshness } from "./trace-evidence.js";
-import { defaultWorkerLogPath, verifyTraceRows, type TraceVerifyWarning } from "./trace.js";
-import type { VerifyOptions } from "./verify-types.js";
+import { resolveGateWorkDir } from "./gate-work-dir.js";
+import { evaluateKpiPhase } from "./kpi-engine.js";
+import { isLegislativeStub } from "./missions/formatter.js";
+import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
+import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultWorkerLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
 import { errorMessage } from "./cli-io.js";
+
+export interface VerifyOptions {
+  mission?: string;
+  workerLog?: string;
+  cwd?: string;
+  fuzzyTrace?: boolean;
+  strictTrace?: boolean;
+  /** Pre-push handoff: legislative stubs stop after git-proof; others run full verify. */
+  prePush?: boolean;
+  breakGlass?: boolean;
+  breakGlassReason?: string;
+  breakGlassCommit?: string;
+  auditCommit?: boolean;
+  /** Interactive remediation menu on failure. */
+  fix?: boolean;
+  /** Print structured fix hints without prompts (used with --fix). */
+  fixNonInteractive?: boolean;
+  /** Tailor remediation next steps by role. */
+  audience?: OutputAudience;
+  /** Skip TMVC stale-evidence binding (committed PASS quote lines only). */
+  skipStaleEvidence?: boolean;
+  /** Emit a single structured JSON document on stdout (no human logs). */
+  json?: boolean;
+  /** Verify every mission file changed vs base ref on current branch. */
+  changedMissions?: boolean;
+  /** Base ref for --changed-missions (default: merge-base with origin/HEAD or main). */
+  baseRef?: string;
+  /** Authoritative mode: fail-closed on KPI stale evidence and perimeter (CI). */
+  ci?: boolean;
+  /** Max commits to scan for Teacher [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
+  scanDepth?: number;
+}
+
+const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
+
+function isMissionFile(repoRel: string): boolean {
+  const norm = repoRel.replace(/\\/g, "/");
+  if (!norm.startsWith(REL_MISSIONS_PREFIX)) return false;
+  const ext = path.extname(norm).toLowerCase();
+  return MISSION_EXTENSIONS.has(ext);
+}
+
+/** Discover mission files changed between baseRef and HEAD (inclusive triple-dot). */
+export function discoverChangedMissionFiles(repoRoot: string, baseRef: string): string[] {
+  const { ok, stdout } = gitRunOk(repoRoot, [
+    "diff",
+    "--name-only",
+    `${baseRef}...HEAD`,
+    "--",
+    REL_MISSIONS_PREFIX,
+  ]);
+  if (!ok) return [];
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && isMissionFile(line))
+    .map((rel) => toPosixRel(repoRoot, path.join(repoRoot, rel)));
+}
 
 export type VerifyFailurePhase = "git_proof" | "gate" | "kpi" | "trace_pending" | "trace";
 
@@ -79,10 +136,6 @@ function tracePhaseFailure(
   fields: Omit<VerifyPhaseFailure, "ok" | "phase" | "workerLogPath">,
 ): VerifyPhaseFailure {
   return { ok: false, phase, workerLogPath, ...fields };
-}
-
-export function resolveGateWorkDir(root: string, options: VerifyOptions): string {
-  return options.cwd ? path.resolve(root, options.cwd) : root;
 }
 
 export function resolveWorkerLogPath(root: string, options: VerifyOptions): string {
