@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Wave 3 governance enforcement surfaces (#25 #26)
+# Teacher stamp: closes #25 pre-commit TMVC guard and #26 context-request helper
 msn_id: MSN-0054
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
