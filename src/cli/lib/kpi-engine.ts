@@ -60,7 +60,7 @@ export interface KpiThresholdFailure {
 function metricNumericValue(value: number | boolean | undefined): number | null {
   if (value === undefined) return null;
   if (typeof value === "boolean") return value ? 1 : 0;
-  if (!Number.isFinite(value)) return null;
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
   return value;
 }
 
