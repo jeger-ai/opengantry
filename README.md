@@ -1,6 +1,12 @@
 # OpenGantry
 
-**Insurance for autonomous code** — OpenGantry helps teams **prevent unreviewed AI scope**, **block edits outside approved paths**, and **produce greppable audit evidence in plain Git**—without a proprietary runtime.
+**OpenGantry turns AI coding into auditable engineering work: every material agent change is scoped before execution, verified by deterministic gates, and traceable in Git before merge.**
+
+Use OpenGantry when you need:
+
+- **Agent-assisted product delivery without silent scope creep:** keep velocity while forcing explicit mission scope and path boundaries.
+- **Evidence for regulated or security-sensitive change control:** keep verifiable proofs in Git (`[MSN-XXXX]`, deterministic gate outputs, trace quotes).
+- **A reusable governance layer across many repos:** apply one Git-native workflow instead of building custom policy glue per project.
 
 ### What you get in production
 
@@ -39,19 +45,19 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 
 **Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.1.0** — import-layer Code Surgeon (JSON gate + AST quarantine), LLM evidence quarantine (`gapman scan`), KPI gate, `register`, perimeter checks. Core verify is language-agnostic; native surgeons opt into workspace TypeScript. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
-## v1.0 adoption release
+## Release timeline (latest first)
 
-`v1.0.0` productizes the specimen: first-run tutorial, global `--audience` output modes, and docs framed for enterprise adoption. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
+Current npm release in this repository: **`gapman` v2.1.0**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
-| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
-| **v1.0.0** | `gapman init --tutorial`, global `--audience` / `GXT_AUDIENCE`, adoption-first README + runbook |
-| **v1.1.1** | Lib/command boundary, unified `runVerifyCore`, typed remediation, CommandReporter, mission YAML emitter |
-| **v1.1.2** | Verify pipeline close-out (MSN-0034–0035); typed verify phases, trace status at parse boundary |
-| **v2.0.0** | `gapman scan` + KPI gate, `register`, `check-imports`, `perimeter`; BYO `llm_verifiers`; KPI stale binding on `--pre-push`/`--ci` |
 | **v2.1.0** | Import-layer Code Surgeon (`check-import-layers.mjs --json`, AST quarantine, `GXT_IMPORT_LAYER_VIOLATION`); workspace-resolved optional TypeScript for surgeons |
+| **v2.0.0** | `gapman scan` + KPI gate, `register`, `check-imports`, `perimeter`; BYO `llm_verifiers`; KPI stale binding on `--pre-push`/`--ci` |
+| **v1.1.2** | Verify pipeline close-out (MSN-0034–0035); typed verify phases, trace status at parse boundary |
+| **v1.1.1** | Lib/command boundary, unified `runVerifyCore`, typed remediation, CommandReporter, mission YAML emitter |
 | **v1.1.0** | Stale trace evidence, mission purity PR lock, CI target lock, `verify --json`, doctor substrate drift warn |
+| **v1.0.0** | `gapman init --tutorial`, global `--audience` / `GXT_AUDIENCE`, adoption-first README + runbook |
+| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 
 ## What you get
 
@@ -340,7 +346,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v1.1.1** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gapman init` in your project.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v2.1.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gapman init` in your project.
 
 ## Security
 
