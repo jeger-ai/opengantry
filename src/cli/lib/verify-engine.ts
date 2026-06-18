@@ -10,6 +10,12 @@ import { isLegislativeStub } from "./missions/formatter.js";
 import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultWorkerLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
 import { errorMessage } from "./cli-io.js";
+import {
+  createVirtualFlightId,
+  purgeVirtualFlightDir,
+  scavengeStaleVirtualFlights,
+  writeGateCaptureSync,
+} from "./virtual-scratch-store.js";
 
 export interface VerifyOptions {
   mission?: string;
@@ -164,19 +170,22 @@ function evaluateGatePhase(
   gate: GateSpec,
   options: VerifyOptions,
   workerLogPath: string,
-): VerifyPhaseFailure | null {
+): { failure: VerifyPhaseFailure | null; gateResult?: ReturnType<typeof runGate> } {
   const gateResult = runGate(resolveGateWorkDir(root, options), gate);
-  if (gatePassed(gateResult, gate.successSubstring)) return null;
+  if (gatePassed(gateResult, gate.successSubstring)) return { failure: null, gateResult };
   return {
-    ok: false,
-    phase: "gate",
-    message: "GATE FAILED",
-    exitCode: 1,
-    workerLogPath,
-    gateCommand: gate.command,
-    gateStdout: gateResult.stdout,
-    gateStderr: gateResult.stderr,
-    gateExitCode: gateResult.exitCode ?? undefined,
+    failure: {
+      ok: false,
+      phase: "gate",
+      message: "GATE FAILED",
+      exitCode: 1,
+      workerLogPath,
+      gateCommand: gate.command,
+      gateStdout: gateResult.stdout,
+      gateStderr: gateResult.stderr,
+      gateExitCode: gateResult.exitCode ?? undefined,
+    },
+    gateResult,
   };
 }
 
@@ -275,8 +284,23 @@ export function evaluateVerifyPhases(
     };
   }
 
-  const gateFailure = evaluateGatePhase(root, gate, options, workerLogPath);
-  if (gateFailure) return gateFailure;
+  const virtualFlightId = mission.virtualCapture ? createVirtualFlightId() : null;
+  if (virtualFlightId) {
+    scavengeStaleVirtualFlights(root, { protectFlightId: virtualFlightId });
+  }
+
+  const gateOutcome = evaluateGatePhase(root, gate, options, workerLogPath);
+
+  if (virtualFlightId && gateOutcome.gateResult) {
+    writeGateCaptureSync(root, virtualFlightId, {
+      gate_command: gate.command,
+      exit_code: gateOutcome.gateResult.exitCode,
+      stdout: gateOutcome.gateResult.stdout,
+      stderr: gateOutcome.gateResult.stderr,
+    });
+  }
+
+  if (gateOutcome.failure) return gateOutcome.failure;
 
   let kpiWarnings: string[] | undefined;
   if (mission.kpiGate) {
@@ -298,6 +322,10 @@ export function evaluateVerifyPhases(
 
   const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
   if (trace.kind === "fail") return trace.failure;
+
+  if (virtualFlightId) {
+    purgeVirtualFlightDir(root, virtualFlightId);
+  }
 
   return {
     ok: true,

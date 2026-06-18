@@ -1,6 +1,6 @@
-# ADR: Ephemeral State Virtualization (v2.2 stretch)
+# ADR: Ephemeral State Virtualization (v2.2)
 
-**Status:** Proposed (design-first; no runtime writes in v2.2 must-have wave)  
+**Status:** Accepted  
 **Issue:** [#68](https://github.com/jeger-ai/opengantry/issues/68)
 
 ## Context
@@ -15,7 +15,7 @@ Introduce an **opt-in virtual scratch contract** at `.gitagent/virtual/` that ma
 
 1. **Ignore before write:** `gapman init` must merge `.gitagent/virtual/` and `.gitagent/tmp/` into the target `.gitignore` via `templates/.gitignore.gxt` **before** any virtual snapshot is written.
 2. **Sterile scratch:** virtual bytes are git-ignored forensic bulk — not TMVC law, not mission evidence.
-3. **Crash-safe cleanup:** writers SHOULD use per-flight subdirectories (`.gitagent/virtual/<flight-id>/`) and document a `gapman doctor` advisory when stale virtual trees exceed a age threshold (future).
+3. **Crash-safe cleanup:** writers use per-flight subdirectories (`.gitagent/virtual/<flight-id>/`); successful verify passes purge their flight dir synchronously; `scavengeStaleVirtualFlights` bounds abnormal leftovers.
 4. **Opt-in only:** missions declare virtual capture intent explicitly; verify does not silently create virtual state.
 
 ## Consequences

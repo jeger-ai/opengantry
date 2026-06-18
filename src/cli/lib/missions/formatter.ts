@@ -40,6 +40,7 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
           }
         : null,
     kpiGate: null,
+    virtualCapture: false,
     llmVerifiers: [],
     aggregators: [],
     traceRows: parseTraceTable(body),

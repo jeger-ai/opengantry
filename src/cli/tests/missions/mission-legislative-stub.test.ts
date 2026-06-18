@@ -10,6 +10,7 @@ function mission(traceRows: ParsedMission["traceRows"]): ParsedMission {
     skillKey: "ui",
     gate: { command: "echo OK", successSubstring: "OK" },
     kpiGate: null,
+    virtualCapture: false,
     llmVerifiers: [],
     aggregators: [],
     traceRows,

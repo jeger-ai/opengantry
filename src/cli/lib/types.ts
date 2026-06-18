@@ -102,6 +102,8 @@ export interface ParsedMission {
   skillKey: string | null;
   gate: GateSpec | null;
   kpiGate: KpiGateSpec | null;
+  /** Opt-in ephemeral gate capture under .gitagent/virtual/ (issue #68). */
+  virtualCapture: boolean;
   llmVerifiers: LlmVerifierSpec[];
   aggregators: KpiAggregator[];
   traceRows: TraceRow[];
@@ -115,6 +117,7 @@ export interface YamlMission {
   skill_key: string;
   gate_command: string;
   gate_success_substring?: string | null;
+  virtual_capture?: boolean;
   kpi_gate?: {
     report_path?: string;
     thresholds: Array<{ metric: string; op: string; value: number }>;

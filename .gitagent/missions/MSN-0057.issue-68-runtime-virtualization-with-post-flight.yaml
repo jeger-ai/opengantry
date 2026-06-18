@@ -1,11 +1,10 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: Issue #68 runtime virtualization with post-flight purge and KPI virtual freshness
+# Issue #68 runtime virtualization with post-flight purge and KPI virtual freshness.
 msn_id: MSN-0057
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "virtual-scratch-store with post-success purge and KPI virtual-path stale bypass; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0057"
+    status: PASS

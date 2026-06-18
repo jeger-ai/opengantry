@@ -216,6 +216,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
       successSubstring: data.gate_success_substring ?? null,
     },
     kpiGate: parsedKpiGateFromYaml(data, msnId),
+    virtualCapture: data.virtual_capture === true,
     llmVerifiers: parsedLlmVerifiersFromYaml(data),
     aggregators: parsedAggregatorsFromYaml(data),
     traceRows,
