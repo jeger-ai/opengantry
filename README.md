@@ -175,11 +175,11 @@ Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry
 | Command | Purpose |
 |--------|---------|
 | `gapman init` | Bootstrap substrate + IDE packs + hooks + CI. `--tutorial` runs guided first loop after scaffold. |
-| `gapman upgrade` | Plan substrate updates from the installed package (stages to `.gitagent/.upgrade-tmp/`, drafts upgrade mission YAML). `gapman upgrade --apply --mission …` after Teacher `[MSN-…]` commit. |
+| `gapman upgrade` | Plan substrate updates (`gapman upgrade plan` / `--dry-run` for preview JSON). Stage with `gapman upgrade`; `gapman upgrade apply --mission …` after Teacher commit. |
 | `gapman check` | Validate `MANIFEST.json` shape + **Rule 4.4** sync: every `manifest.skills` key must have `skills/<key>.md`, with no orphan skill files. |
 | `gapman status` | GXT readiness dashboard (`--json`, `--verbose`, `--audience worker\|teacher\|verifier\|platform`). |
 | `gapman start "<intent>"` | Goal-first orchestration: triage → legislate stub → runtime next steps (`--msn`, `--skill-key`, `--json`). |
-| `gapman onboarding` | Interactive walkthrough of the strict mission loop (no relaxed checks). |
+| `gapman onboarding` | Interactive walkthrough of the strict mission loop. Blocks on corrupt configured integration state; allows pristine uninitialized repos. |
 | `gapman doctor` | Active readiness check (manifest, Teacher email, bypass secret match, hooks, architecture pointer, integration staleness). Warnings exit 0. `--audience` tailors next steps. |
 | `gapman triage "<intent>"` | Foreman-style routing ([`SOUL.md`](.gitagent/foreman/SOUL.md)). `--json` for machine output (may include non-binding `adr_hints` from [`.gitagent/out-of-scope/`](.gitagent/out-of-scope/README.md)). `--emit-mission --msn MSN-0007` writes `.gitagent/missions/ACTIVE_MISSION.md` by default on **DIRECT_EXECUTION** only. |
 | `gapman teacher show\|set` | Repo-local Teacher git-proof allowlist (`.gitagent/foreman/TEACHER.allowlist.local`; avoids global `GAPMAN_TEACHER_EMAILS` leaking across projects). |

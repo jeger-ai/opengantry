@@ -36,6 +36,7 @@
     { "targetPath": "scripts/gxt-pin-mission.sh", "mode": "managed_strict", "executable": true, "tags": ["runtime"] },
     { "targetPath": "scripts/gxt-resolve-mission.sh", "mode": "managed_strict", "executable": true, "tags": ["runtime"] },
     { "targetPath": "scripts/gxt-runtime-env.sh", "mode": "managed_strict", "executable": true, "tags": ["runtime"] },
+    { "targetPath": "scripts/gxt-shell-agent.sh", "mode": "managed_strict", "executable": true, "tags": ["runtime", "claude-code", "codex-cli", "opencode"] },
     { "targetPath": "scripts/validate-gxt.sh", "mode": "managed_strict", "executable": true, "tags": ["core"] },
     { "targetPath": "scripts/verify-pr-missions.sh", "mode": "managed_strict", "executable": true, "tags": ["ci"] },
     { "targetPath": "skills/gapman.md", "mode": "scaffold_only", "tags": ["skill-specimen"] },

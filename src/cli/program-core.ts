@@ -75,9 +75,29 @@ export function registerCoreCommands(program: Command): void {
       await runInit(opts);
     });
 
-  program
+  const upgradeCmd = program
     .command("upgrade")
-    .description("Plan or apply substrate upgrades from the installed gapman package (Tier-3)")
+    .description("Plan or apply substrate upgrades from the installed gapman package (Tier-3)");
+
+  upgradeCmd
+    .command("plan")
+    .description("Preview upgrade file changes without writing staging dir or mission YAML")
+    .option("--json", "Emit stable structured JSON (schema_version 1)")
+    .option("--msn <id>", "Mission id for preview labels (default: next MSN in 9000-9099 band)")
+    .action((options: UpgradeOptions) => {
+      runUpgrade({ ...options, dryRun: true });
+    });
+
+  upgradeCmd
+    .command("apply")
+    .description("Apply a Teacher-signed upgrade mission after hash verification")
+    .option("--json", "Emit structured JSON")
+    .option("--mission <path>", "Signed upgrade mission YAML (required unless pinned)")
+    .action((options: UpgradeOptions) => {
+      runUpgrade({ ...options, apply: true });
+    });
+
+  upgradeCmd
     .option("--apply", "Apply a Teacher-signed upgrade mission after hash verification")
     .option("--dry-run", "Print upgrade plan without writing staging dir or mission YAML")
     .option("--json", "Emit structured JSON")
@@ -145,7 +165,7 @@ export function registerCoreCommands(program: Command): void {
   program
     .command("onboarding")
     .description("Interactive walkthrough of the strict GXT mission loop")
-    .option("--force", "Continue despite integration doctor warnings")
+    .option("--force", "Continue despite integration health blockers on configured (broken) state")
     .action(async (opts: { force?: boolean }) => {
       await runOnboarding({ force: opts.force });
     });

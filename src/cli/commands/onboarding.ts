@@ -8,7 +8,7 @@ import {
   onboardingVerifyHint,
 } from "../lib/onboarding-flow.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
-import { runIntegrationDoctorChecks } from "../lib/doctor.js";
+import { integrationOnboardingBlockers } from "../lib/doctor-integration.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
@@ -20,10 +20,10 @@ export interface OnboardingOptions {
   force?: boolean;
 }
 
-function integrationBlockers(repoRoot: string): string[] {
+function integrationBlockers(repoRoot: string): { blockers: string[]; notices: string[] } {
   const templatesRoot = resolveTemplateRootFromModule();
-  const lines = runIntegrationDoctorChecks(repoRoot, templatesRoot);
-  return lines.filter((l) => l.level === "warn" || l.level === "fail").map((l) => l.message);
+  const gate = integrationOnboardingBlockers(repoRoot, templatesRoot);
+  return { blockers: gate.blockers, notices: gate.notices };
 }
 
 async function resolveOnboardingMissionPath(
@@ -86,7 +86,11 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
     return;
   }
 
-  const blockers = integrationBlockers(root);
+  const { blockers, notices } = integrationBlockers(root);
+  if (notices.length > 0) {
+    p.log.step("Integration health");
+    for (const msg of notices) logInfo(`  ${msg}`);
+  }
   if (blockers.length > 0 && !options.force) {
     p.log.step("Integration health");
     for (const msg of blockers) logWarn(`  ${msg}`);

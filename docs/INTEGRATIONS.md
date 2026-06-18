@@ -113,15 +113,15 @@ Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with
 
 | Tool | Context injection | Wrap / bootstrap |
 |------|-------------------|------------------|
-| **Cursor** | `.cursor/rules/opengantry-gxt-substrate.mdc` + `.cursor/hooks.json` + `.cursor/mcp.json` (`gxt_*` tools) | `scripts/gxt-pin-mission.sh <mission>` · `source scripts/gxt-runtime-env.sh` · `gapman runtime exec … -- cursor agent "<task>"` |
-| **Claude Code** | `CLAUDE.md` or `.claude/CLAUDE.md` → link canonical files | `gapman runtime exec … -- claude "<task>"` |
-| **OpenAI Codex CLI** | Root `AGENTS.md` (native); optional `.codex/config.toml` | `source scripts/gxt-runtime-env.sh <mission>` · `gapman runtime exec … -- codex exec "<task>"` |
-| **OpenCode** | `AGENTS.md` (native); optional `opencode.json` `instructions` | `gapman runtime exec … -- opencode run "<task>"` |
-| **JetBrains Junie** | `.junie/AGENTS.md` or `.junie/guidelines.md` | Terminal: `source scripts/gxt-runtime-env.sh <mission>` |
-| **Google Antigravity** | `AGENTS.md` + `.agent/rules/gxt.md` (`always_on`) | `gapman runtime exec … -- <agent-command>` |
-| **Cline** | `.clinerules/gxt.md` + root `AGENTS.md` | Terminal: `source scripts/gxt-runtime-env.sh <mission>` |
-| **Aider** | `.aider.conf.yml` `read:` list | `gapman runtime exec … -- aider --message "<task>"` |
-| **OpenHands** | `.openhands/microagents/gxt.md` + root `AGENTS.md` | Terminal: `source scripts/gxt-runtime-env.sh <mission>` |
+| **Cursor** | `.cursor/rules/opengantry-gxt-substrate.mdc` + `.cursor/hooks.json` + `.cursor/mcp.json` (`gxt_*` tools) | **Hook:** `sessionStart` auto-inject · `scripts/gxt-pin-mission.sh <mission>` · `source scripts/gxt-runtime-env.sh` |
+| **Claude Code** | `CLAUDE.md` or `.claude/CLAUDE.md` → link canonical files | **Shell wrapper:** `scripts/gxt-shell-agent.sh claude <mission>` · `gapman runtime exec … -- claude "<task>"` |
+| **OpenAI Codex CLI** | Root `AGENTS.md` (native); optional `.codex/config.toml` | **Shell wrapper:** `scripts/gxt-shell-agent.sh codex <mission>` · `gapman runtime exec … -- codex exec "<task>"` |
+| **OpenCode** | `AGENTS.md` (native); optional `opencode.json` `instructions` | **Shell wrapper:** `scripts/gxt-shell-agent.sh opencode <mission>` · `gapman runtime exec … -- opencode run "<task>"` |
+| **JetBrains Junie** | `.junie/AGENTS.md` or `.junie/guidelines.md` | **Manual:** Terminal → `source scripts/gxt-runtime-env.sh <mission>` |
+| **Google Antigravity** | `AGENTS.md` + `.agent/rules/gxt.md` (`always_on`) | **Manual:** `gapman runtime exec … -- <agent-command>` |
+| **Cline** | `.clinerules/gxt.md` + root `AGENTS.md` | **Manual:** Terminal → `source scripts/gxt-runtime-env.sh <mission>` |
+| **Aider** | `.aider.conf.yml` `read:` list | **Manual:** `gapman runtime exec … -- aider --message "<task>"` |
+| **OpenHands** | `.openhands/microagents/gxt.md` + root `AGENTS.md` | **Manual:** Terminal → `source scripts/gxt-runtime-env.sh <mission>` |
 
 **Related tools (not duplicate matrix rows):**
 
@@ -162,30 +162,31 @@ gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- cursor 
 ### Claude Code
 
 - **Context injection:** Minimal `CLAUDE.md` pointing at `AGENTS.md`, `RULES.md`, `MANIFEST.json` (keep under ~200 lines).
-- **Session bootstrap:**
+- **Session bootstrap (shell wrapper — no project hooks):**
 
 ```bash
-source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
+scripts/gxt-pin-mission.sh .gitagent/missions/MSN-0001.<slug>.yaml
+scripts/gxt-shell-agent.sh claude .gitagent/missions/MSN-0001.<slug>.yaml
 gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- claude "<task>"
 ```
 
-- **Enforcement:** Advisory in interactive session; process-boundary when wrapped with `runtime exec`.
-- **Gotcha:** Link canonical files — do not copy full RULES into `CLAUDE.md`.
+- **Enforcement:** Advisory in interactive session; process-boundary when wrapped with `runtime exec` or `gxt-shell-agent.sh`.
+- **Gotcha:** Claude Code does not execute project hook directories — use the shell wrapper. Link canonical files — do not copy full RULES into `CLAUDE.md`.
 
 ### OpenAI Codex CLI
 
 - **Context injection:** Root [`AGENTS.md`](../AGENTS.md) (loaded automatically after `gapman init`). Optional [`.codex/config.toml`](https://developers.openai.com/codex/config-basic) for project defaults (sandbox, approval policy). Do not duplicate RULES/MANIFEST — link via `AGENTS.md`.
-- **Session bootstrap:**
+- **Session bootstrap (shell wrapper — no project hooks):**
 
 ```bash
-source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
-# interactive: codex
+scripts/gxt-pin-mission.sh .gitagent/missions/MSN-0001.<slug>.yaml
+scripts/gxt-shell-agent.sh codex .gitagent/missions/MSN-0001.<slug>.yaml
 # headless / CI:
 gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- codex exec "<task>"
 ```
 
-- **Enforcement:** Advisory in interactive TUI/IDE extension; **process-boundary** when wrapped with `runtime exec` (same tier as Claude Code / Aider). Codex's own sandbox is separate from GXT TMVC.
-- **Gotcha:** Codex sandbox/approval settings (`sandbox_mode`, `approval_policy`) govern Codex — not GXT forbidden zones. Use `runtime exec` when you need manifest-enforced boundaries.
+- **Enforcement:** Advisory in interactive TUI/IDE extension; **process-boundary** when wrapped with `runtime exec` or `gxt-shell-agent.sh`. Codex's own sandbox is separate from GXT TMVC.
+- **Gotcha:** Codex CLI does not scan project hook folders. Codex sandbox/approval settings govern Codex — not GXT forbidden zones.
 
 ### OpenCode
 
@@ -195,9 +196,15 @@ gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- codex e
 { "instructions": ["AGENTS.md", ".gitagent/teacher/RULES.md"] }
 ```
 
-- **Session bootstrap:** `source scripts/gxt-runtime-env.sh <mission>` then OpenCode in same terminal.
+- **Session bootstrap (shell wrapper — no project hooks):**
+
+```bash
+scripts/gxt-pin-mission.sh .gitagent/missions/MSN-0001.<slug>.yaml
+scripts/gxt-shell-agent.sh opencode .gitagent/missions/MSN-0001.<slug>.yaml
+```
+
 - **Enforcement:** Advisory; `opencode.json` permissions are separate from GXT TMVC.
-- **Gotcha:** OpenCode prefers `AGENTS.md` over `CLAUDE.md` when both exist.
+- **Gotcha:** OpenCode does not execute project hook directories. OpenCode prefers `AGENTS.md` over `CLAUDE.md` when both exist.
 
 ### JetBrains Junie
 

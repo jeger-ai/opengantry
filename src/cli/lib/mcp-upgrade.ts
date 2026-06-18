@@ -2,12 +2,18 @@ import { errorMessage } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
 import type { McpErrorBody } from "./mcp-governance.js";
 import type { UpgradeApplyResult } from "./upgrade-apply.js";
-import type { UpgradePlanResult } from "./upgrade-plan.js";
+import {
+  assertStableUpgradePlanPayloadV1,
+  toStableUpgradePlanPayloadV1,
+  type StableUpgradePlanPayloadV1,
+} from "./upgrade-plan-payload.js";
 import { runUpgradeApply } from "./upgrade-apply.js";
 import { runUpgradePlan } from "./upgrade-plan.js";
 import { GapmanUserError } from "./errors.js";
 
-export type UpgradePlanMcpResult = UpgradePlanResult | { status: "error"; error: McpErrorBody };
+export type UpgradePlanMcpResult =
+  | StableUpgradePlanPayloadV1
+  | { status: "error"; error: McpErrorBody };
 
 export type UpgradeApplyMcpResult = UpgradeApplyResult | { status: "error"; error: McpErrorBody };
 
@@ -32,12 +38,15 @@ function mcpErrorBody(e: unknown): { status: "error"; error: McpErrorBody } {
 export function handleUpgradePlan(input: UpgradePlanMcpInput = {}): UpgradePlanMcpResult {
   const repoRoot = getRepoRoot();
   try {
-    return runUpgradePlan({
+    const result = runUpgradePlan({
       repoRoot,
       msn: input.msn_id,
       dryRun: input.dry_run === true,
       json: true,
     });
+    const payload = toStableUpgradePlanPayloadV1(result);
+    assertStableUpgradePlanPayloadV1(payload);
+    return payload;
   } catch (e) {
     return mcpErrorBody(e);
   }

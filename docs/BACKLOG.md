@@ -201,10 +201,10 @@ Onboarding, init, and multi-IDE wiring improvements.
 
 | Item | Status | Issue |
 |------|--------|-------|
-| **Session bootstrap hooks beyond Cursor** | Open | [#30](https://github.com/jeger-ai/opengantry/issues/30) |
+| **Session bootstrap hooks beyond Cursor** | Done | [#30](https://github.com/jeger-ai/opengantry/issues/30) — shell wrappers for CLI agents |
 | **Dogfood MANIFEST overlay** | Open | [#31](https://github.com/jeger-ai/opengantry/issues/31) — alternative to #13 |
-| **`gapman upgrade` changelog preview** | Open | [#32](https://github.com/jeger-ai/opengantry/issues/32) |
-| **Integration health gates in onboarding** | Open | [#33](https://github.com/jeger-ai/opengantry/issues/33) |
+| **`gapman upgrade` changelog preview** | Done | [#32](https://github.com/jeger-ai/opengantry/issues/32) — `upgrade plan` + stable JSON |
+| **Integration health gates in onboarding** | Done | [#33](https://github.com/jeger-ai/opengantry/issues/33) — uninitialized vs corrupt |
 
 ---
 

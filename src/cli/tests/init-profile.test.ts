@@ -26,6 +26,7 @@ test("integration compat: all IDE keys have manifest entries and recipes", () =>
   recipeFilesExist(templatesRoot, compat);
   for (const key of INTEGRATION_IDE_KEYS) {
     assert.ok(compat.integrations[key], key);
+    assert.ok(compat.integrations[key].bootstrap_mode, `${key} bootstrap_mode`);
   }
 });
 

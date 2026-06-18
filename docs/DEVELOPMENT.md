@@ -116,11 +116,13 @@ Tier-3 lifecycle updates use the installed `gapman` package only (no remote fetc
 
 ```bash
 npm install @jeger-ai/opengantry@latest   # when a newer release exists
+gapman upgrade plan --json          # preview file changes (stable schema_version 1)
 gapman upgrade                     # stage managed_strict assets + draft MSN-900x mission YAML
 # Review .gitagent/.upgrade-tmp/ diff; commit mission YAML only (tmp is gitignored)
 git add .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
 git commit -m "[MSN-9001] approve substrate upgrade to vX.Y.Z"
-gapman upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
+gapman upgrade apply --mission .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
+# Legacy: gapman upgrade --apply --mission … and --dry-run still work
 gapman doctor
 ```
 

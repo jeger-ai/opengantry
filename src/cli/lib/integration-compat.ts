@@ -16,6 +16,10 @@ export const INTEGRATION_IDE_KEYS = [
 
 export type IntegrationIdeKey = (typeof INTEGRATION_IDE_KEYS)[number];
 
+/** How session bootstrap is invoked for this integration (not all tools run project hooks). */
+export const BOOTSTRAP_MODES = ["hook", "shell_wrapper", "manual_recipe"] as const;
+export type BootstrapMode = (typeof BOOTSTRAP_MODES)[number];
+
 export interface IntegrationCompatEntry {
   display_name: string;
   verified_date: string;
@@ -23,6 +27,8 @@ export interface IntegrationCompatEntry {
   recipe_file: string;
   canonical_paths: string[];
   deprecated_paths: string[];
+  /** hook = IDE sessionStart; shell_wrapper = gxt-shell-agent.sh; manual_recipe = documented only */
+  bootstrap_mode: BootstrapMode;
   hooks_schema_version?: number;
   cli_probe?: string[] | null;
   disambiguation?: string;
@@ -66,7 +72,21 @@ export function validateIntegrationCompat(manifest: IntegrationCompatManifest): 
     if (!entry) throw new Error(`integration compat: missing entry for ${key}`);
     if (!entry.recipe_file) throw new Error(`integration compat: ${key} missing recipe_file`);
     if (!entry.display_name) throw new Error(`integration compat: ${key} missing display_name`);
+    if (!entry.bootstrap_mode || !(BOOTSTRAP_MODES as readonly string[]).includes(entry.bootstrap_mode)) {
+      throw new Error(`integration compat: ${key} missing or invalid bootstrap_mode`);
+    }
+    if (entry.bootstrap_mode === "hook" && entry.hooks_schema_version == null) {
+      throw new Error(`integration compat: ${key} hook mode requires hooks_schema_version`);
+    }
   }
+}
+
+export function isBootstrapHookMode(entry: IntegrationCompatEntry): boolean {
+  return entry.bootstrap_mode === "hook";
+}
+
+export function isBootstrapShellWrapperMode(entry: IntegrationCompatEntry): boolean {
+  return entry.bootstrap_mode === "shell_wrapper";
 }
 
 export function integrationWizardLabel(entry: IntegrationCompatEntry): string {

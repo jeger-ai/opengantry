@@ -8,6 +8,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://cursor.com/docs/agent/hooks",
       "recipe_file": "cursor.md",
+      "bootstrap_mode": "hook",
       "canonical_paths": [
         ".cursor/rules/opengantry-gxt-substrate.mdc",
         ".cursor/hooks.json"
@@ -21,6 +22,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://docs.anthropic.com/en/docs/claude-code",
       "recipe_file": "claude-code.md",
+      "bootstrap_mode": "shell_wrapper",
       "canonical_paths": ["CLAUDE.md"],
       "deprecated_paths": [],
       "cli_probe": ["claude", "--version"]
@@ -31,6 +33,7 @@
       "docs_url": "https://developers.openai.com/codex/config-basic",
       "disambiguation": "OpenAI Codex API (2021-2023) is NOT this product",
       "recipe_file": "codex-cli.md",
+      "bootstrap_mode": "shell_wrapper",
       "canonical_paths": ["AGENTS.md", ".codex/config.toml"],
       "deprecated_paths": [],
       "cli_probe": ["codex", "--version"]
@@ -40,6 +43,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://opencode.ai/docs",
       "recipe_file": "opencode.md",
+      "bootstrap_mode": "shell_wrapper",
       "canonical_paths": ["opencode.json"],
       "deprecated_paths": [],
       "cli_probe": ["opencode", "--version"]
@@ -49,6 +53,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://www.jetbrains.com/junie/",
       "recipe_file": "junie.md",
+      "bootstrap_mode": "manual_recipe",
       "canonical_paths": [".junie/guidelines.md"],
       "deprecated_paths": [],
       "cli_probe": null
@@ -58,6 +63,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://antigravity.google/",
       "recipe_file": "antigravity.md",
+      "bootstrap_mode": "manual_recipe",
       "canonical_paths": [".agent/rules/gxt.md"],
       "deprecated_paths": [],
       "cli_probe": null
@@ -67,6 +73,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://docs.cline.bot/",
       "recipe_file": "cline.md",
+      "bootstrap_mode": "manual_recipe",
       "canonical_paths": [".clinerules/gxt.md"],
       "deprecated_paths": [".cursorrules"],
       "cli_probe": null
@@ -76,6 +83,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://aider.chat/docs/",
       "recipe_file": "aider.md",
+      "bootstrap_mode": "manual_recipe",
       "canonical_paths": [".aider.conf.yml"],
       "deprecated_paths": [],
       "cli_probe": ["aider", "--version"]
@@ -85,6 +93,7 @@
       "verified_date": "2026-06-16",
       "docs_url": "https://docs.all-hands.dev/",
       "recipe_file": "openhands.md",
+      "bootstrap_mode": "manual_recipe",
       "canonical_paths": [".openhands/microagents/gxt.md"],
       "deprecated_paths": [],
       "cli_probe": null

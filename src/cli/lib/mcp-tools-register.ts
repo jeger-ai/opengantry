@@ -148,7 +148,7 @@ function registerRuntimeTools(server: McpServer): void {
 function registerUpgradeTools(server: McpServer): void {
   server.tool(
     "gxt_upgrade_plan",
-    "Plan substrate upgrade: stage managed_strict assets and draft upgrade mission YAML.",
+    "Plan substrate upgrade preview (stable JSON schema_version 1). Set dry_run true to preview without staging.",
     {
       msn_id: z.string().optional().describe("Optional MSN-NNNN in upgrade band (9000-9099)"),
       dry_run: z.boolean().optional().describe("Preview plan without writing files"),

@@ -4,6 +4,7 @@ import { getRepoRoot } from "../lib/git.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
 import { runUpgradePlan } from "../lib/upgrade-plan.js";
+import { toStableUpgradePlanPayloadV1 } from "../lib/upgrade-plan-payload.js";
 import { GapmanUserError } from "../lib/errors.js";
 
 export interface UpgradeOptions {
@@ -65,7 +66,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
     });
 
     if (options.json) {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(toStableUpgradePlanPayloadV1(result), null, 2));
     }
 
     if (result.status === "downgrade_blocked") {

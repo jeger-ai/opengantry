@@ -140,6 +140,38 @@ export function writeBypassAnchor(dest: string, secret: string): void {
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "BYPASS.sha256"), `${hash}\n`, "utf8");
 }
 
+export type IntegrationFixtureState = "uninitialized" | "healthy" | "corrupt";
+
+/** Minimal substrate for integration doctor / onboarding gate tests. */
+export function writeIntegrationSubstrate(dest: string): void {
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    JSON.stringify({ schema_version: "0.5.0", skills: {} }),
+    "utf8",
+  );
+}
+
+/** Shared integration on-disk states for onboarding and doctor suites. */
+export function writeIntegrationFixtureState(dest: string, state: IntegrationFixtureState): void {
+  writeIntegrationSubstrate(dest);
+  if (state === "uninitialized") return;
+
+  fs.mkdirSync(path.join(dest, ".cursor", "rules"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".cursor", "rules", "opengantry-gxt-substrate.mdc"),
+    "---\nalwaysApply: true\n---\n",
+    "utf8",
+  );
+
+  const hooksVersion = state === "healthy" ? 1 : 99;
+  fs.writeFileSync(
+    path.join(dest, ".cursor", "hooks.json"),
+    JSON.stringify({ version: hooksVersion, hooks: {} }, null, 2) + "\n",
+    "utf8",
+  );
+}
+
 export function writeRuntimeExecRepo(
   dest: string,
   ogRoot: string,
