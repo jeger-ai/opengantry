@@ -7,7 +7,7 @@ import {
   REL_ARCHITECTURE_DISCOVERY_SKILL,
   REL_ARCHITECTURE_POINTER,
 } from "./constants.js";
-import type { DoctorLine } from "./doctor.js";
+import type { DoctorLine } from "./doctor-types.js";
 
 export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
 

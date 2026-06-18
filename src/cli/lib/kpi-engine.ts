@@ -8,6 +8,7 @@ import { REL_KPI_REPORT_SCHEMA } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
+import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
 import type { VerifyOptions } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-engine.js";
@@ -161,12 +162,6 @@ export interface KpiReportStaleResult {
   reason?: string;
 }
 
-function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[] {
-  if (!skillKey?.trim()) return [];
-  const skill = manifest.skills[skillKey];
-  return skill ? [...skill.tmvc_roots] : [];
-}
-
 function reportRelPath(reportPath: string, repoRoot: string): string {
   const abs = path.isAbsolute(reportPath) ? reportPath : path.join(repoRoot, reportPath);
   return toPosixRel(repoRoot, abs);
@@ -262,13 +257,6 @@ export function verifyKpiReportFreshness(
     attestationCommit,
     reason,
   };
-}
-
-/** True when report file is tracked in git. */
-export function isKpiReportCommitted(repoRoot: string, reportPath: string): boolean {
-  const reportRel = reportRelPath(reportPath, repoRoot);
-  const r = gitRunOk(repoRoot, ["ls-files", "--error-unmatch", reportRel]);
-  return r.ok;
 }
 
 function loadReportOrFail(

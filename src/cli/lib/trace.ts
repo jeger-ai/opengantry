@@ -3,6 +3,7 @@ import { LEGISLATE_TRACE_PLACEHOLDER, WORKER_LOG_FILENAME } from "./constants.js
 import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git.js";
 import { isLineDriftFailure, quoteLineNumbers, type WorkerLogLineMap, buildWorkerLogLineMapForQuotes } from "./worker-log-line-map.js";
+import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest, TraceRow } from "./types.js";
 
 /** Normalized trace row status at mission boundary. */
@@ -80,12 +81,6 @@ export interface TraceEvidenceFailure {
 
 export interface TraceEvidenceOptions {
   skipStaleEvidence?: boolean;
-}
-
-function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[] {
-  if (!skillKey?.trim()) return [];
-  const skill = manifest.skills[skillKey];
-  return skill ? [...skill.tmvc_roots] : [];
 }
 
 function workerLogRelPath(workerLogPath: string, repoRoot: string): string {

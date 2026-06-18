@@ -73,3 +73,30 @@ test("evaluateKpiPhase: missing report fails", () => {
   assert.ok(result && "ok" in result && result.ok === false);
   assert.equal(result.phase, "kpi");
 });
+
+test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
+  const ogRoot = getRepoRoot();
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-phase-skip-"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  writeManifest(root, { gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
+  fs.mkdirSync(path.join(root, "src", "app"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".gitagent", "kpi"), { recursive: true });
+  fs.writeFileSync(path.join(root, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
+  fs.writeFileSync(
+    path.join(root, ".gitagent/kpi/MSN-0099.json"),
+    JSON.stringify({
+      msn_id: "MSN-0099",
+      generated_at: "2026-06-16T08:00:00.000Z",
+      exit_code: 0,
+      metrics: { security_flaws: 0 },
+    }),
+    "utf8",
+  );
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, ".gitagent/foreman/MANIFEST.json"), "utf8"));
+  const kpiGate: KpiGateSpec = {
+    reportPath: ".gitagent/kpi/MSN-0099.json",
+    thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
+  };
+  const result = evaluateKpiPhase(root, manifest, "gapman", kpiGate, { skipStaleEvidence: true }, "WORKER_LOG.md");
+  assert.ok(result === null || ("warnings" in result && Array.isArray(result.warnings)));
+});

@@ -2,10 +2,8 @@ import { runBreakGlassAuditFlow } from "./break-glass.js";
 import { errorMessage, toPosixRel } from "./cli-io.js";
 import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
-import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import type { Manifest, ParsedMission } from "./types.js";
-import { GapmanUserError, isGapmanUserError } from "./errors.js";
-import { loadWorkspace } from "./workspace.js";
+import { isGapmanUserError } from "./errors.js";
 import {
   evaluateVerifyPhases,
   type VerifyOptions,
@@ -13,7 +11,7 @@ import {
   type VerifyPhaseResult,
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
-import { verifyFailurePresentation } from "./verify-remediation.js";
+import { verifyFailurePresentation } from "./verify-failure-format.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;
@@ -216,18 +214,4 @@ export function buildVerifyResultPayload(
     manifest,
     result,
   );
-}
-
-export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): VerifyResultPayload {
-  try {
-    if (!options.mission) {
-      throw new GapmanUserError("INVALID_ARGUMENT", "gapman verify: --mission is required", undefined, 2);
-    }
-    const { root, manifest } = loadWorkspace();
-    const mission = parseMissionFile(root, options.mission);
-    assertMissionGatePresent(mission);
-    return buildVerifyResultPayload(root, manifest, mission, options.mission, options);
-  } catch (e) {
-    return initFailurePayload(e);
-  }
 }

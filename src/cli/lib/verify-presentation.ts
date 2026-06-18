@@ -20,7 +20,6 @@ export type {
 export {
   buildBreakGlassPayload,
   buildVerifyResultPayload,
-  buildVerifyResultPayloadFromOptions,
   buildVerifyResultPayloadFromPhaseResult,
   initFailurePayload,
 } from "./verify-payload.js";
@@ -38,3 +37,5 @@ export {
   resolveVerifySink,
   runVerifyCore,
 } from "./verify-present.js";
+
+export { buildVerifyResultPayloadFromOptions } from "./verify-run.js";
