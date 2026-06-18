@@ -15,6 +15,10 @@ export const REL_MISSION_TEMPLATE = ".gitagent/teacher/MISSION.template.md" as c
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
 /** Git-ignored machine-readable runtime error (see templates/.gitignore.gxt). */
 export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json" as const;
+/** Git-ignored verify failure remediation feed for IDE/agent loops (atomic swap writes). */
+export const REL_NEXT_REMEDIATION = ".gitagent/tmp/NEXT_REMEDIATION.json" as const;
+/** Ephemeral runtime snapshot scratch (gitignored; see docs/ADR-EPHEMERAL-VIRTUALIZATION.md). */
+export const REL_VIRTUAL_SCRATCH = ".gitagent/virtual/" as const;
 /** ADR markdown (optional `match_terms` in frontmatter) — Foreman may emit non-binding hints only. */
 export const REL_OUT_OF_SCOPE_DIR = ".gitagent/out-of-scope" as const;
 export const SKILLS_DIR_NAME = "skills" as const;

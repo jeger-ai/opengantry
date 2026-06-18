@@ -12,6 +12,7 @@ import {
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
 import { verifyFailurePresentation } from "./verify-failure-format.js";
+import { persistRemediationFromFailedPayload } from "./context-feed-remediation.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;
@@ -195,7 +196,9 @@ export function buildVerifyResultPayloadFromPhaseResult(
   if (result.ok) {
     return successPayload(root, mission, result);
   }
-  return failureFromPhase(result, missionRel, options, root, msnId);
+  const payload = failureFromPhase(result, missionRel, options, root, msnId);
+  persistRemediationFromFailedPayload(root, mission, missionArg, payload);
+  return payload;
 }
 
 export function buildVerifyResultPayload(

@@ -7,6 +7,7 @@ import { loadPrompts } from "./prompts-loader.js";
 import type { Manifest, ParsedMission } from "./types.js";
 import { isGapmanUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
+import { loadWorkspace } from "./workspace.js";
 import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult } from "./verify-engine.js";
 import {
   buildBreakGlassPayload,
@@ -24,6 +25,10 @@ import {
   resolveSurgeonErrorCode,
   type SurgeonContext,
 } from "./surgeons/registry.js";
+import {
+  persistRemediationFromFailedPayload,
+  persistRemediationFromPhaseFailure,
+} from "./context-feed-remediation.js";
 
 export interface VerifyPresentResult {
   ok: boolean;
@@ -91,6 +96,12 @@ export function presentJsonInitFailure(
   error: unknown,
 ): VerifyPresentResult {
   const payload = initFailurePayload(error);
+  try {
+    const { root } = loadWorkspace();
+    persistRemediationFromFailedPayload(root, null, options.mission, payload);
+  } catch {
+    // best-effort remediation feed
+  }
   reporterFor(options).emitJsonPayload(payload);
   return { ok: false, exitCode: payload.exit_code };
 }
@@ -100,13 +111,20 @@ export function presentHumanInitFailure(
   error: unknown,
 ): VerifyPresentResult {
   const reporter = reporterFor(options);
+  const payload = initFailurePayload(error);
+  try {
+    const { root } = loadWorkspace();
+    persistRemediationFromFailedPayload(root, null, options.mission, payload);
+  } catch {
+    // best-effort remediation feed
+  }
   if (isGapmanUserError(error)) {
     reporter.emitError(`[${error.gxtCode}] ${error.message}`);
     if (error.hint) reporter.emitFixHint(error.hint);
     return { ok: false, exitCode: error.exitCode };
   }
   reporter.emitError(errorMessage(error));
-  return { ok: false, exitCode: 1 };
+  return { ok: false, exitCode: payload.exit_code };
 }
 
 export function presentHuman(
@@ -128,6 +146,7 @@ export function presentHuman(
     root,
     msnId: mission.msnId ?? undefined,
   });
+  persistRemediationFromPhaseFailure(root, mission, missionArg, options, result);
   reporter.emitFailurePresentation(presentation);
   return { ok: false, exitCode: presentation.exit_code };
 }

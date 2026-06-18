@@ -5,3 +5,5 @@
 .gitagent/history/.ignored-last-error.json
 .gitagent/history/.draft-token-replay.json
 .gitagent/foreman/DRAFT_TOKEN.key
+.gitagent/tmp/
+.gitagent/virtual/

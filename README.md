@@ -1,6 +1,8 @@
 # OpenGantry
 
-**OpenGantry turns AI coding into auditable engineering work: every material agent change is scoped before execution, verified by deterministic gates, and traceable in Git before merge.**
+**OpenGantry is a platform for Autonomous Repository Engineering** — AI-assisted product delivery where every material agent change is scoped before execution, verified by deterministic gates, and traceable in Git before merge.
+
+It is **not** a real-time conversational agent wrapper. Use OpenGantry when you need auditable, mission-scoped repository work with explicit Teacher approval and forensic trace.
 
 Use OpenGantry when you need:
 
@@ -33,6 +35,18 @@ npx @jeger-ai/opengantry init --tutorial
 
 Developing this repository from source: `npm ci && npm run build` — see [gapman CLI](#gapman-cli) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
+## Documentation map (start here)
+
+| Goal | Read first |
+|------|------------|
+| **Adopt in your repo (5 min)** | This README → [`docs/ADOPTION.md`](docs/ADOPTION.md) |
+| **Wire IDE agents** | [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) |
+| **Contribute / dogfood** | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
+| **Governance law + workflow** | [`.gitagent/README.md`](.gitagent/README.md) · [`.gitagent/teacher/RULES.md`](.gitagent/teacher/RULES.md) |
+| **Roadmap / open work** | [`docs/BACKLOG.md`](docs/BACKLOG.md) |
+| **Compliance framing** | [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) |
+| **Ephemeral virtualization (stretch)** | [`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](docs/ADR-EPHEMERAL-VIRTUALIZATION.md) |
+
 ## Why teams adopt this
 
 | Outcome | How OpenGantry delivers it |
@@ -43,7 +57,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.1.0** — import-layer Code Surgeon (JSON gate + AST quarantine), LLM evidence quarantine (`gapman scan`), KPI gate, `register`, perimeter checks. Core verify is language-agnostic; native surgeons opt into workspace TypeScript. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.2** (in progress) — diagnostic context feed, meta-governance audit, adoption UX from v2.2.0 milestone. Current npm publish: **v2.1.0**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## Release timeline (latest first)
 
@@ -51,6 +65,7 @@ Current npm release in this repository: **`gapman` v2.1.0**. Use [`docs/ADOPTION
 
 | Release | Highlights |
 |---------|------------|
+| **v2.2.0** (in progress) | `gapman context-feed`, `gapman audit-rigor`, product positioning, docs quality ([#66](https://github.com/jeger-ai/opengantry/issues/66)–[#69](https://github.com/jeger-ai/opengantry/issues/69), [#76](https://github.com/jeger-ai/opengantry/issues/76)) |
 | **v2.1.0** | Import-layer Code Surgeon (`check-import-layers.mjs --json`, AST quarantine, `GXT_IMPORT_LAYER_VIOLATION`); workspace-resolved optional TypeScript for surgeons |
 | **v2.0.0** | `gapman scan` + KPI gate, `register`, `check-imports`, `perimeter`; BYO `llm_verifiers`; KPI stale binding on `--pre-push`/`--ci` |
 | **v1.1.2** | Verify pipeline close-out (MSN-0034–0035); typed verify phases, trace status at parse boundary |
@@ -199,6 +214,8 @@ Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry
 | `gapman arch pointer` | Print architecture pointer summary for agents (`.gitagent/ARCHITECTURE.pointer.json`). |
 | `gapman arch cred status\|set\|unset` | Git-ignored credential slots for authenticated external architecture sources (secrets via stdin only). |
 | `gapman metrics [--json] [--ref main]` | Git-native governance rollup (`--json` includes `gxt_extension_metadata`). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |
+| `gapman context-feed [--json] [--clear]` | Read or atomically clear the latest verify remediation snapshot (`.gitagent/tmp/NEXT_REMEDIATION.json`) for IDE repair loops. |
+| `gapman audit-rigor [--json] [--strict]` | Meta-governance audit: TypeScript strictness, coverage artifacts, MANIFEST wildcard hygiene. |
 
 **Who can approve missions (Teacher allowlist):** only allowlisted identities can legislate missions that verify accepts. Precedence:
 
@@ -338,7 +355,7 @@ Always **review the diff** before commit; never bulk-overwrite a customized `MAN
 
 | Pattern | Typical shape | Audit / production readiness |
 |---------|----------------|------------------------------|
-| **GXT / OpenGantry** | Git-native missions, manifest routing, deterministic gates, auditable log mapped to **`WORKER_LOG.md`**, human `[MSN-XXXX]` approval + SOD ([`RULES.md`](.gitagent/teacher/RULES.md)) | **Can we find every AI-governed change?** Greppable missions. **Can we prove what was checked?** Gate output + log quotes. **Can agents edit compliance files silently?** Hooks + verify fail closed. |
+| **GXT / OpenGantry** | Git-native missions, manifest routing, deterministic gates, auditable log mapped to **`WORKER_LOG.md`**, human `[MSN-XXXX]` approval + SOD ([`RULES.md`](.gitagent/teacher/RULES.md)) | **Autonomous Repository Engineering** — scoped missions, not always-on chat. Greppable missions + gate output + log quotes. |
 | Agent "swarm" / choreography layers | Orchestrates model calls across services; emphasizes throughput and parallelism | Strong on **coverage** of tasks; lineage and per-change evidence depends on tooling above the swarm |
 | Unstructured desktop assistants | Reactive help in-editor or OS-wide; informal plans | Lightweight for exploration; weakest default for **reproducible** production sign-off without additional discipline |
 

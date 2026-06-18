@@ -5,6 +5,8 @@ import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
 import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
+import { runContextFeed } from "./commands/context-feed.js";
+import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
 import { readStdinIfEmpty } from "./lib/program-stdin.js";
@@ -168,5 +170,28 @@ export function registerCoreCommands(program: Command): void {
     .option("--force", "Continue despite integration health blockers on configured (broken) state")
     .action(async (opts: { force?: boolean }) => {
       await runOnboarding({ force: opts.force });
+    });
+
+  program
+    .command("context-feed")
+    .description("Read or clear the latest verify remediation snapshot for IDE/agent loops")
+    .option("--json", "Emit structured remediation payload")
+    .option("--clear", "Atomically clear remediation feed (tombstone swap)")
+    .action((opts: { json?: boolean; clear?: boolean }) => {
+      runContextFeed({ json: opts.json, clear: opts.clear });
+    });
+
+  program
+    .command("audit-rigor")
+    .description("Meta-governance audit: compiler strictness, coverage artifacts, MANIFEST wildcards")
+    .option("--json", "Emit structured report")
+    .option("--strict", "Treat warnings as failures")
+    .option("--workspace <path>", "Workspace root override (tests; default: git repo root)")
+    .action((opts: { json?: boolean; strict?: boolean; workspace?: string }) => {
+      runAuditRigorCommand({
+        json: opts.json,
+        strict: opts.strict,
+        workspace: opts.workspace,
+      });
     });
 }

@@ -22,7 +22,7 @@ source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
 gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml --json
 ```
 
-On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. **`gxt_verify`** returns structured `error_code`, `fix_hints`, and `next_actions` for IDE agents. See [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
+On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. **`gxt_verify`** returns structured `error_code`, `fix_hints`, and `next_actions` for IDE agents. After **`gapman verify`** failures, consume **`gapman context-feed --json`** (or read `.gitagent/tmp/NEXT_REMEDIATION.json` directly) for the latest structured remediation snapshot — atomic swap writes; eventual consistency under concurrent repair loops. See [`.gitagent/teacher/RUNTIME.md`](../.gitagent/teacher/RUNTIME.md).
 
 ## MCP tools (Cursor and other MCP clients)
 
@@ -108,6 +108,17 @@ Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with
 4. Worker executes; append PASS quotes to `WORKER_LOG.md`
 5. `gapman verify --mission .gitagent/missions/<file>.yaml`
 6. `git push` (pre-push uses `--pre-push` handoff semantics)
+
+## Diagnostic context feed (verify repair loops)
+
+When `gapman verify` fails, OpenGantry writes a machine-readable snapshot to **`.gitagent/tmp/NEXT_REMEDIATION.json`** (gitignored). IDE wrappers and agent rules can read this before the next prompt cycle:
+
+```bash
+gapman context-feed --json    # latest failure payload (empty when none)
+gapman context-feed --clear   # atomic tombstone clear after remediation
+```
+
+Writes use temp-file + rename swap to avoid read/write races during automated test-and-repair loops.
 
 ## Compatibility matrix
 
