@@ -215,7 +215,7 @@ Onboarding, init, and multi-IDE wiring improvements.
 | Priority | Issues | Notes |
 |----------|--------|-------|
 | **Must-have** | [#66](https://github.com/jeger-ai/opengantry/issues/66), [#67](https://github.com/jeger-ai/opengantry/issues/67), [#69](https://github.com/jeger-ai/opengantry/issues/69), [#76](https://github.com/jeger-ai/opengantry/issues/76) | Context feed, audit-rigor, product position, docs quality |
-| **Stretch** | [#68](https://github.com/jeger-ai/opengantry/issues/68) | Ephemeral virtualization — ADR-first ([`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](ADR-EPHEMERAL-VIRTUALIZATION.md)) |
+| **Stretch** | [#68](https://github.com/jeger-ai/opengantry/issues/68) | Ephemeral virtualization — runtime adapter shipped in v2.2.0 ([`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](ADR-EPHEMERAL-VIRTUALIZATION.md)) |
 | **Done (milestone)** | [#30](https://github.com/jeger-ai/opengantry/issues/30)–[#33](https://github.com/jeger-ai/opengantry/issues/33) | v2.2.0 Adoption UX milestone closed |
 
 | Item | Status | Issue |
@@ -227,9 +227,9 @@ Onboarding, init, and multi-IDE wiring improvements.
 | **Meta-Governance Gates** | Done | [#67](https://github.com/jeger-ai/opengantry/issues/67) — `gapman audit-rigor` with explicit `workspaceRoot` scanner |
 | **Product Position Clarification** | Done | [#69](https://github.com/jeger-ai/opengantry/issues/69) — Autonomous Repository Engineering narrative |
 | **Documentation quality initiative** | Done | [#76](https://github.com/jeger-ai/opengantry/issues/76) — docs map, INTEGRATIONS context-feed, BACKLOG v2.2 board |
-| **Ephemeral State Virtualization** | Stretch | [#68](https://github.com/jeger-ai/opengantry/issues/68) — design ADR + gitignore contract only |
+| **Ephemeral State Virtualization** | Done | [#68](https://github.com/jeger-ai/opengantry/issues/68) — `virtual_capture` mission flag, `.gitagent/virtual/<flight-id>/` scratch + post-success purge |
 
-**v2.2 docs changelog (summary):** README product positioning + documentation map; INTEGRATIONS diagnostic context-feed section; DEVELOPMENT roadmap links; BACKLOG v2.2 release board; ADR for virtualization stretch.
+**v2.2 docs changelog (summary):** README product positioning + documentation map; INTEGRATIONS diagnostic context-feed section; DEVELOPMENT roadmap links; BACKLOG v2.2 release board; ADR ephemeral virtualization accepted; `virtual_capture` runtime adapter.
 
 ---
 
@@ -275,13 +275,12 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.2 wave — diagnostics + meta-governance + docs ([#66](https://github.com/jeger-ai/opengantry/issues/66)–[#67](https://github.com/jeger-ai/opengantry/issues/67), [#69](https://github.com/jeger-ai/opengantry/issues/69), [#76](https://github.com/jeger-ai/opengantry/issues/76)); [#68](https://github.com/jeger-ai/opengantry/issues/68) stretch (ADR-first).
+**Current focus:** v2.2.0 release prep — version parity + publish gate (MSN-0058); [#68](https://github.com/jeger-ai/opengantry/issues/68) runtime virtualization shipped (MSN-0057).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
 | **Now** | v2.2 must-have | `context-feed`, `audit-rigor`, positioning, docs map |
-| **Stretch** | [#68](https://github.com/jeger-ai/opengantry/issues/68) | Virtualization — no runtime writes until ADR + mission |
-| **Done (milestone)** | [#30](https://github.com/jeger-ai/opengantry/issues/30)–[#33](https://github.com/jeger-ai/opengantry/issues/33) | v2.2.0 Adoption UX |
+| **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |
 | **Done (release)** | v2.1.0 npm publish | MSN-0056; tag + npm **2.1.0** |
 | **Next** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29), v1.2+ [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | Deferred tactical + strategic (ADR first) |
 | Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
