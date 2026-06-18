@@ -307,7 +307,7 @@ Findings from comparing code to narrative docs. **Last refreshed:** 2026-06-08 (
 | **Architecture pointer** | init, doctor, arch cred, agent rules | Buried in late README prose | **Resolved** — promoted in What you get, init flow, command table |
 | **Integration count** | 9 tools in `compatibility.json` | Generally matched | **Resolved** — unchanged; doctor integration checks remain live source of truth |
 | **Forbidden zone enforcement** | `runtime exec` scans filesystem; IDE rules advisory | TMVC read as uniformly enforced | **Resolved** — Enforcement boundary callout in README + ADOPTION; INTEGRATIONS unchanged |
-| **Metrics semantics** | `legislative_commits` / `worker_trace_commits` are heuristics | Easy to over-interpret | **Open** — ADOPTION caveat retained; no change needed |
+| **Metrics semantics** | `legislative_commits` / `worker_trace_commits` are path-touch proxies | Easy to over-interpret | **Resolved** — `gxt_extension_metadata` in `--json`; ADOPTION documents PATH_TOUCH_PROXY rules |
 
 **Remaining narrative debt:** specimen `MANIFEST.json` still lists hypothetical app paths (`src/lib/`, `src/components/`) — intentional for adopters, not this repo's actual `src/cli/` layout. `trace-evidence.ts` still duplicates quote-line resolution from `trace.ts` (known refactor target from code review).
 

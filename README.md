@@ -192,7 +192,7 @@ Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry
 | `gapman perimeter [--base-ref <ref>] [--ci]` | Protected governance paths: local advisory; **`--ci`** requires verified commit signatures. |
 | `gapman arch pointer` | Print architecture pointer summary for agents (`.gitagent/ARCHITECTURE.pointer.json`). |
 | `gapman arch cred status\|set\|unset` | Git-ignored credential slots for authenticated external architecture sources (secrets via stdin only). |
-| `gapman metrics [--json] [--ref main]` | Git-native governance rollup (stream-parsed). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |
+| `gapman metrics [--json] [--ref main]` | Git-native governance rollup (`--json` includes `gxt_extension_metadata`). See [`docs/ADOPTION.md`](docs/ADOPTION.md). |
 
 **Who can approve missions (Teacher allowlist):** only allowlisted identities can legislate missions that verify accepts. Precedence:
 
