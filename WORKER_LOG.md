@@ -204,3 +204,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0054: Wave 3 governance enforcement — context-request, tmvc guard, pre-commit hook (#25 #26); dev-validate-core OK
 - DoD 1 MSN-0054 close-out: rebase onto main, kpi-engine TS narrowing fix; dev-validate-core OK
+
+## MSN-0055 — Wave 4 metrics fidelity (#29)
+
+- DoD 1 MSN-0055: Wave 4 metrics fidelity — gxt_extension_metadata PATH_TOUCH_PROXY, classification edge tests; dev-validate-core OK

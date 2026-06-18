@@ -173,7 +173,28 @@ gapman metrics --json --ref main
 
 Git-native only (single streamed `git log` pass). No local event ledger.
 
-**Routing proxy caveat:** `legislative_commits` vs `worker_trace_commits` are heuristics, not historical `gapman triage` replay.
+**Routing proxy caveat:** `legislative_commits` vs `worker_trace_commits` are path-touch heuristics, not historical `gapman triage` replay. JSON exposes this explicitly via `gxt_extension_metadata` (see below).
+
+### Metrics JSON envelope
+
+`gapman metrics --json` includes a namespaced extension block so strict top-level parsers that only read primitive counters remain compatible:
+
+```json
+{
+  "legislative_commits": 12,
+  "worker_trace_commits": 4,
+  "gxt_extension_metadata": {
+    "classification_mode": "PATH_TOUCH_PROXY",
+    "schema_version": 1
+  }
+}
+```
+
+**Classification rules (PATH_TOUCH_PROXY):**
+
+- `legislative_commits`: commit touches `.gitagent/missions/*` with `MSN-NNNN` in the filename, subject starts with `[MSN-NNNN]`, author is in `GAPMAN_TEACHER_EMAILS` (non-empty allowlist entries only).
+- `worker_trace_commits`: commit touches `WORKER_LOG.md` and does **not** qualify as legislative (mutually exclusive; dual-touch legislative commits never increment worker-trace).
+- Human stdout labels `(proxy)` on the counters; JSON uses `gxt_extension_metadata.classification_mode` instead of suffixing field names.
 
 ## Code quality (changed files only)
 
@@ -196,4 +217,4 @@ npm run lint -- path/to/changed.ts
 2. `./scripts/check-changed-code.sh origin/main HEAD` (when you changed `src/cli`)
 3. `gapman doctor` → exit 0 with warnings allowed
 4. Formatter drift: `gapman verify` passes without `--fuzzy-trace`
-5. `gapman metrics --json` identical on two consecutive runs at same ref
+5. `gapman metrics --json` identical on two consecutive runs at same ref (including `gxt_extension_metadata`)

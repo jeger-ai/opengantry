@@ -1,0 +1,10 @@
+# Wave 4 metrics fidelity (#29): explicit PATH_TOUCH_PROXY metadata in gapman metrics --json.
+msn_id: MSN-0055
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0055: Wave 4 metrics fidelity — gxt_extension_metadata PATH_TOUCH_PROXY, classification edge tests; dev-validate-core OK"
+    anchor: "MSN-0055"
+    status: PASS

@@ -165,8 +165,10 @@ export function registerWorkflowCommands(program: Command): void {
 
   program
     .command("metrics")
-    .description("Git-native governance metrics (no local event ledger)")
-    .option("--json", "Emit stable JSON summary")
+    .description(
+      "Git-native governance metrics (path-touch proxy classification; no local event ledger)",
+    )
+    .option("--json", "Emit stable JSON summary (includes gxt_extension_metadata)")
     .option("--ref <name>", "Git ref to analyze (default HEAD)", "HEAD")
     .action((opts: { json?: boolean; ref?: string }) => {
       runMetrics({ json: opts.json, ref: opts.ref });

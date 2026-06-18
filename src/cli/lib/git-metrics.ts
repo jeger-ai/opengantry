@@ -15,6 +15,15 @@ export interface LogRecord {
   ts: string;
 }
 
+/** Namespaced extension block for additive metrics semantics (strict-parser safe). */
+export const GXT_METRICS_CLASSIFICATION_MODE = "PATH_TOUCH_PROXY" as const;
+export const GXT_METRICS_EXTENSION_SCHEMA_VERSION = 1 as const;
+
+export interface GxtExtensionMetadata {
+  classification_mode: typeof GXT_METRICS_CLASSIFICATION_MODE;
+  schema_version: typeof GXT_METRICS_EXTENSION_SCHEMA_VERSION;
+}
+
 export interface GitMetricsReport {
   ref: string;
   missions_completed: number;
@@ -28,6 +37,14 @@ export interface GitMetricsReport {
     samples: number;
   };
   mission_ids: string[];
+  gxt_extension_metadata: GxtExtensionMetadata;
+}
+
+export function buildGxtExtensionMetadata(): GxtExtensionMetadata {
+  return {
+    classification_mode: GXT_METRICS_CLASSIFICATION_MODE,
+    schema_version: GXT_METRICS_EXTENSION_SCHEMA_VERSION,
+  };
 }
 
 function parseMsnFromYamlContent(content: string): string | null {
@@ -111,9 +128,15 @@ function commitChangedPaths(root: string, hash: string): string[] {
 }
 
 function isTeacherEmail(email: string): boolean {
+  const normalizedAuthor = email.trim().toLowerCase();
+  if (!normalizedAuthor) return false;
+
   const allow = parseTeacherEmailsFromEnv();
   if (allow.length === 0) return false;
-  return allow.includes(email.trim().toLowerCase());
+
+  return allow.some(
+    (teacherEmail) => teacherEmail.length > 0 && teacherEmail === normalizedAuthor,
+  );
 }
 
 function subjectMsnId(subject: string): string | null {
@@ -182,16 +205,17 @@ export function aggregateFromLogStream(
       }
     }
 
-    if (
-      msnFromSubject &&
+    const isLegislative =
+      msnFromSubject !== null &&
       commitSubjectHasMsnPrefix(rec.subject, msnFromSubject) &&
       isTeacherEmail(rec.email) &&
-      touchesMission
-    ) {
-      legislative++;
-    }
+      touchesMission;
 
-    if (touchesWorkerLog && !touchesMission) worker_trace++;
+    if (isLegislative) {
+      legislative++;
+    } else if (touchesWorkerLog && !touchesMission) {
+      worker_trace++;
+    }
 
     if (msnFromSubject) lastSeen.set(msnFromSubject, ts);
   }
@@ -241,6 +265,7 @@ export function collectGitMetrics(root: string, refName: string): GitMetricsRepo
     worker_trace_commits: stream.worker_trace,
     turnaround_seconds: computeTurnaround(stream.firstSeen, stream.lastSeen),
     mission_ids: missionIds,
+    gxt_extension_metadata: buildGxtExtensionMetadata(),
   };
 }
 
@@ -250,6 +275,7 @@ export function formatGitMetricsHuman(report: GitMetricsReport): string {
     `  missions_completed: ${String(report.missions_completed)}`,
     `  bypass_count (git notes): ${String(report.bypass_count)}`,
     `  bypass_audit_commits: ${String(report.bypass_audit_commits)}`,
+    `  classification_mode: ${report.gxt_extension_metadata.classification_mode}`,
     `  legislative_commits (proxy): ${String(report.legislative_commits)}`,
     `  worker_trace_commits (proxy): ${String(report.worker_trace_commits)}`,
     `  turnaround_seconds.mean: ${report.turnaround_seconds.mean === null ? "n/a" : report.turnaround_seconds.mean.toFixed(1)}`,

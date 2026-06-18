@@ -189,7 +189,7 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | **Context Request helper** | Done | [#26](https://github.com/jeger-ai/opengantry/issues/26) → v2.2 |
 | **`gapman verify --changed-missions`** | **Done** | [#27](https://github.com/jeger-ai/opengantry/issues/27) |
 | **Triage scoring / explainability** | **Done** | [#28](https://github.com/jeger-ai/opengantry/issues/28) |
-| **Metrics fidelity improvement** | Open | [#29](https://github.com/jeger-ai/opengantry/issues/29) → v2.2 |
+| **Metrics fidelity improvement** | **Done** | [#29](https://github.com/jeger-ai/opengantry/issues/29) → v2.2 |
 
 ---
 
