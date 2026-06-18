@@ -1,0 +1,45 @@
+# OpenGantry 2.1.0 release mission: version parity, docs sync, npm publish (issue #74).
+# Legislated intent: ship gapman 2.1.0 after v2.1 waves MSN-0047–0055 with race-safe publish gates.
+msn_id: MSN-0056
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+llm_verifiers:
+  - id: stub
+    command: ./scripts/kpi-stub-verifier.sh
+    required: true
+aggregators:
+  - key: security_flaws
+    op: max
+    sources:
+      - stub::security_vulnerabilities
+kpi_gate:
+  report_path: .gitagent/kpi/MSN-0056.json
+  thresholds:
+    - metric: stub::complexity_score
+      op: "<="
+      value: 12
+    - metric: security_flaws
+      op: "=="
+      value: 0
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "Runtime version parity: node dist/cli/index.js --version matches package.json 2.1.0"
+    anchor: "MSN-0056 close-out"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "package.json / version.gen.ts / compatibility.json at 2.1.0"
+    anchor: "MSN-0056 close-out"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "README + BACKLOG v2.1.0 release gate synced (issue #74)"
+    anchor: "MSN-0056 close-out"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "npm run validate green on main"
+    anchor: "MSN-0056 close-out"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0056 close-out"
+    status: PASS
