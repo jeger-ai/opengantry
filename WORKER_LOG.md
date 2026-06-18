@@ -223,7 +223,7 @@ example trace line for gapman verify
 
 [CONTEXT-REQUEST] paths: .gitagent/teacher/MISSION.schema.yaml, templates/.gitagent/teacher/MISSION.schema.yaml, docs/ADR-EPHEMERAL-VIRTUALIZATION.md — mission schema + ADR for virtual_capture contract (substrate law).
 
-- DoD 1 MSN-0057: virtual-scratch-store with post-success purge and KPI virtual-path stale bypass; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+- DoD 1 MSN-0057: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 
 ## MSN-0058 — OpenGantry 2.2.0 release prep (version parity + publish gate)
 

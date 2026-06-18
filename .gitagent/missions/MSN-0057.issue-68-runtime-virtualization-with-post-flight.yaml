@@ -5,6 +5,6 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "virtual-scratch-store with post-success purge and KPI virtual-path stale bypass; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "MSN-0057"
     status: PASS

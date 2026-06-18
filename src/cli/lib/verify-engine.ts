@@ -3,7 +3,7 @@ import type { OutputAudience } from "./audience-output.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRunOk } from "./git.js";
 import { assertTeacherMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
-import { gatePassed, runGate } from "./gate.js";
+import { gatePassed, runGate, type GateRunResult } from "./gate.js";
 import { resolveGateWorkDir } from "./gate-work-dir.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { isLegislativeStub } from "./missions/formatter.js";
@@ -256,6 +256,28 @@ function evaluateTracePhase(
   return { kind: "ok", warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
 }
 
+function beginVirtualCapture(root: string, mission: ParsedMission): string | null {
+  if (!mission.virtualCapture) return null;
+  const flightId = createVirtualFlightId();
+  scavengeStaleVirtualFlights(root, { protectFlightId: flightId });
+  return flightId;
+}
+
+function recordVirtualGateCapture(
+  root: string,
+  flightId: string | null,
+  gate: GateSpec,
+  gateResult: GateRunResult | undefined,
+): void {
+  if (!flightId || !gateResult) return;
+  writeGateCaptureSync(root, flightId, {
+    gate_command: gate.command,
+    exit_code: gateResult.exitCode,
+    stdout: gateResult.stdout,
+    stderr: gateResult.stderr,
+  });
+}
+
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
 export function evaluateVerifyPhases(
   root: string,
@@ -284,21 +306,10 @@ export function evaluateVerifyPhases(
     };
   }
 
-  const virtualFlightId = mission.virtualCapture ? createVirtualFlightId() : null;
-  if (virtualFlightId) {
-    scavengeStaleVirtualFlights(root, { protectFlightId: virtualFlightId });
-  }
+  const virtualFlightId = beginVirtualCapture(root, mission);
 
   const gateOutcome = evaluateGatePhase(root, gate, options, workerLogPath);
-
-  if (virtualFlightId && gateOutcome.gateResult) {
-    writeGateCaptureSync(root, virtualFlightId, {
-      gate_command: gate.command,
-      exit_code: gateOutcome.gateResult.exitCode,
-      stdout: gateOutcome.gateResult.stdout,
-      stderr: gateOutcome.gateResult.stderr,
-    });
-  }
+  recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome.gateResult);
 
   if (gateOutcome.failure) return gateOutcome.failure;
 
