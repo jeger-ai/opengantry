@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-16 (v2.1.0 **shipped** — MSN-0048 import-layer surgeon, tactical [#9](https://github.com/jeger-ai/opengantry/issues/9) + [#24](https://github.com/jeger-ai/opengantry/issues/24))
+**Last synced:** 2026-06-18 (v2.1.0 **release gate** — MSN-0056 npm publish, [#74](https://github.com/jeger-ai/opengantry/issues/74))
 
 ---
 
@@ -32,6 +32,8 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 | **Pluggable Code Surgeon registry + banned-import quarantine** | **Done** | MSN-0047 |
 | **Import-layer surgeon (JSON gate + AST quarantine)** | **Done** | MSN-0048 |
 | **Tactical close-out (asset catalog + git-proof scan depth)** | **Done** | [#9](https://github.com/jeger-ai/opengantry/issues/9), [#24](https://github.com/jeger-ai/opengantry/issues/24) |
+| **Wave close-out (#25–#29, #54–#58)** | **Done** | MSN-0051–MSN-0055 |
+| **2.1.0 npm publish (version parity, release gate scripts, tag/npm/GH release)** | **Done** | MSN-0056, [#74](https://github.com/jeger-ai/opengantry/issues/74) |
 | **Perimeter drift surgeon** | Open | v2.1.1+ (ADR; git-restore category) |
 | **Multi-language external surgeon adapter contract** | Open | post-v2.1 |
 
@@ -248,7 +250,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.1.0 **shipped** (MSN-0047–0048, [#9](https://github.com/jeger-ai/opengantry/issues/9), [#24](https://github.com/jeger-ai/opengantry/issues/24)); next: v2.2 tactical ([#25](https://github.com/jeger-ai/opengantry/issues/25)–[#29](https://github.com/jeger-ai/opengantry/issues/29), [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58)), perimeter drift ADR.
+**Current focus:** v2.1.0 **released** (MSN-0056, [#74](https://github.com/jeger-ai/opengantry/issues/74)); next: v2.2 tactical ([#25](https://github.com/jeger-ai/opengantry/issues/25)–[#29](https://github.com/jeger-ai/opengantry/issues/29) shipped in v2.1 waves; [#54](https://github.com/jeger-ai/opengantry/issues/54)–[#58](https://github.com/jeger-ai/opengantry/issues/58) shipped), perimeter drift ADR (v2.1.1+).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

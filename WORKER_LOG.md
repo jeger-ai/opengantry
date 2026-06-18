@@ -208,3 +208,13 @@ example trace line for gapman verify
 ## MSN-0055 — Wave 4 metrics fidelity (#29)
 
 - DoD 1 MSN-0055: Wave 4 metrics fidelity — gxt_extension_metadata PATH_TOUCH_PROXY, classification edge tests; dev-validate-core OK
+
+## MSN-0056 — OpenGantry 2.1.0 release close-out (issue #74)
+
+[CONTEXT-REQUEST] paths: docs/BACKLOG.md, docs/DEVELOPMENT.md, scripts/assert-cli-version-parity.sh, scripts/poll-npm-version.sh, scripts/release-gate-publish.sh, .gitagent/kpi/MSN-0056.json — release gate MSN-0056; non-TMVC publish documentation and registry guards.
+
+- DoD 1 MSN-0056 close-out: Runtime version parity: node dist/cli/index.js --version matches package.json 2.1.0
+- DoD 2 MSN-0056 close-out: package.json / version.gen.ts / compatibility.json at 2.1.0
+- DoD 3 MSN-0056 close-out: README + BACKLOG v2.1.0 release gate synced (issue #74)
+- DoD 4 MSN-0056 close-out: npm run validate green on main
+- DoD 5 MSN-0056 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

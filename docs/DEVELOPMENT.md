@@ -202,7 +202,7 @@ Deterministic quarantine mutations for specific gate failures — an isolation l
 
 Implementation: [`src/cli/lib/surgeons/`](../src/cli/lib/surgeons/) registry + orchestration in `surgeon-orchestration.ts` / `verify-present.ts`.
 
-**Release (v2.1.0):** bump `package.json` with `npm version 2.1.0 --no-git-tag-version`; sync `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json); tag `v2.1.0` for npm publish.
+**Release (v2.1.0+):** bump `package.json` with `npm version <semver> --no-git-tag-version`; sync `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json); run [`scripts/assert-cli-version-parity.sh`](../scripts/assert-cli-version-parity.sh); tag `v<semver>` for npm publish. Race-safe publish: draft GitHub release → push tag → block on [`npm-publish.yml`](../.github/workflows/npm-publish.yml) → [`scripts/poll-npm-version.sh`](../scripts/poll-npm-version.sh) → promote release live ([`scripts/release-gate-publish.sh`](../scripts/release-gate-publish.sh)).
 
 ## Definition of done (OpenGantry repo)
 
