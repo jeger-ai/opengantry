@@ -1,0 +1,27 @@
+# v2.2.1 patch — thermo review remediation (verify-failure contract unification, context-feed concurrency).
+# Closes missing track after v2.2.0 thermo audit (B+): single normalized failure DTO, race-safe remediation writes.
+msn_id: MSN-0060
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "verify-failure-normalize — single NormalizedVerifyFailure contract; JSON, human, and context-feed sinks parity-tested"
+    anchor: "MSN-0060"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "context-feed-store race-safe writes — writer-scoped temp cleanup; multiprocess concurrent write test passes"
+    anchor: "MSN-0060"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "assert-cli-version-parity OK — source + runtime at 2.2.1"
+    anchor: "MSN-0060"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "README + BACKLOG v2.2.1 patch release docs synced"
+    anchor: "MSN-0060"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.1 thermo remediation)"
+    anchor: "MSN-0060"
+    status: PASS
