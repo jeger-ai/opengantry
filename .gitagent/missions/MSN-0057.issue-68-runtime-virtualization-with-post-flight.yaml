@@ -1,4 +1,5 @@
 # Issue #68 runtime virtualization with post-flight purge and KPI virtual freshness.
+# PR1 scope: runtime adapter only (release prep is MSN-0058).
 msn_id: MSN-0057
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh

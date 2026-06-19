@@ -224,11 +224,3 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/teacher/MISSION.schema.yaml, templates/.gitagent/teacher/MISSION.schema.yaml, docs/ADR-EPHEMERAL-VIRTUALIZATION.md — mission schema + ADR for virtual_capture contract (substrate law).
 
 - DoD 1 MSN-0057: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
-
-## MSN-0058 — OpenGantry 2.2.0 release prep (version parity + publish gate)
-
-[CONTEXT-REQUEST] paths: docs/BACKLOG.md, README.md, templates/integrations/compatibility.json, scripts/assert-cli-version-parity.sh — release metadata and hardened parity script (non-TMVC).
-
-- DoD 1 MSN-0058: npm version 2.2.0 atomic bump; assert-cli-version-parity source + runtime at 2.2.0
-- DoD 2 MSN-0058: README + BACKLOG v2.2.0 release docs synced
-- DoD 3 MSN-0058: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
