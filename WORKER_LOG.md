@@ -252,3 +252,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0060: assert-cli-version-parity OK — source + runtime at 2.2.1
 - DoD 4 MSN-0060: README + BACKLOG v2.2.1 patch release docs synced
 - DoD 5 MSN-0060: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.1 thermo remediation)
+
+## MSN-0060 — Close-out (normalize LOC split, verify PASS)
+
+- DoD 1 MSN-0060 close-out: verify-failure-normalize — single NormalizedVerifyFailure contract; JSON, human, and context-feed sinks parity-tested
+- DoD 2 MSN-0060 close-out: context-feed-store race-safe writes — writer-scoped temp cleanup; multiprocess concurrent write test passes
+- DoD 3 MSN-0060 close-out: assert-cli-version-parity OK — source + runtime at 2.2.1
+- DoD 4 MSN-0060 close-out: README + BACKLOG v2.2.1 patch release docs synced
+- DoD 5 MSN-0060 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.1 thermo remediation)
