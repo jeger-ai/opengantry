@@ -39,7 +39,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 
 | Goal | Read first |
 |------|------------|
-| **Adopt in your repo (5 min)** | This README → [`docs/ADOPTION.md`](docs/ADOPTION.md) |
+| **Adopt in your repo (5 min)** | This README → [`docs/ADOPTION.md`](docs/ADOPTION.md) → [`docs/KATA.md`](docs/KATA.md) |
 | **Wire IDE agents** | [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) |
 | **Contribute / dogfood** | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | **Governance law + workflow** | [`.gitagent/README.md`](.gitagent/README.md) · [`.gitagent/teacher/RULES.md`](.gitagent/teacher/RULES.md) |

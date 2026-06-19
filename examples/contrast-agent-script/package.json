@@ -1,0 +1,8 @@
+{
+  "name": "contrast-agent-script",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/smoke.test.js"
+  }
+}

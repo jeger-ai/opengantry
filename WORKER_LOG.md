@@ -232,3 +232,13 @@ example trace line for gapman verify
 - DoD 1 MSN-0058: assert-cli-version-parity OK — source + runtime at 2.2.0
 - DoD 2 MSN-0058: README + BACKLOG v2.2.0 release docs synced (issue #68 closed)
 - DoD 3 MSN-0058: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.0)
+
+## MSN-0059 — v2.2+ adoption engineering (positioning, contrast examples, kata, benchmark)
+
+[CONTEXT-REQUEST] paths: docs/ADOPTION.md, docs/KATA.md, examples/, scripts/benchmark-scaffold.sh — adoption proof artifacts (non-TMVC, mission-authorized).
+
+- DoD 1 MSN-0059: ADOPTION.md positioning pass — OpenGantry vs agent scripts, Git-native audit envelope, v2.2.0 version sync
+- DoD 2 MSN-0059: examples/contrast-agent-script + examples/gantry-minimal — same task, script fragility vs GXT mission scope
+- DoD 3 MSN-0059: scripts/benchmark-scaffold.sh — reproducible Time-to-Scaffold timing (init, legislate, verify path)
+- DoD 4 MSN-0059: docs/KATA.md — first-5-minute onboarding kata with headless (--yes / --json) equivalents
+- DoD 5 MSN-0059: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2+ adoption engineering)

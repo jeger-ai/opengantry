@@ -11,20 +11,20 @@ trace_rows:
   - dod_id: "1"
     trace_quote: "ADOPTION.md positioning pass — OpenGantry vs agent scripts, Git-native audit envelope, v2.2.0 version sync"
     anchor: "MSN-0059"
-    status: PENDING
+    status: PASS
   - dod_id: "2"
     trace_quote: "examples/contrast-agent-script + examples/gantry-minimal — same task, script fragility vs GXT mission scope"
     anchor: "MSN-0059"
-    status: PENDING
+    status: PASS
   - dod_id: "3"
     trace_quote: "scripts/benchmark-scaffold.sh — reproducible Time-to-Scaffold timing (init, legislate, verify path)"
     anchor: "MSN-0059"
-    status: PENDING
+    status: PASS
   - dod_id: "4"
     trace_quote: "docs/KATA.md — first-5-minute onboarding kata with headless (--yes / --json) equivalents"
     anchor: "MSN-0059"
-    status: PENDING
+    status: PASS
   - dod_id: "5"
     trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2+ adoption engineering)"
     anchor: "MSN-0059"
-    status: PENDING
+    status: PASS
