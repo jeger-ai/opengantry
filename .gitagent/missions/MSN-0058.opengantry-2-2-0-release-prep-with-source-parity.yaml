@@ -1,4 +1,5 @@
 # OpenGantry 2.2.0 release prep with source parity hardening and race-safe publish.
+# PR targets main after MSN-0057 (#77) merged.
 msn_id: MSN-0058
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
