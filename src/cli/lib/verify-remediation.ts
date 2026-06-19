@@ -11,5 +11,5 @@ export {
 export type {
   VerifyFailurePresentation,
   VerifyFailurePresentationInput,
-} from "./verify-failure-format.js";
+} from "./verify-failure-presentation-types.js";
 export { verifyFailurePresentation } from "./verify-failure-format.js";

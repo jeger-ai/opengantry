@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "opengantry_version": "2.2.0",
+  "opengantry_version": "2.2.1",
   "asset_catalog": "integrations/asset-catalog.json",
   "integrations": {
     "cursor": {

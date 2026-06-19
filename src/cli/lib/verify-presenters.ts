@@ -19,7 +19,11 @@ import {
   buildVerifyHintContext,
   hintsForVerifyPhase,
 } from "./verify-hints.js";
-import { verifyFailurePresentation } from "./verify-failure-format.js";
+import {
+  normalizeVerifyPhaseFailure,
+  toFailurePresentation,
+  toRemediationSnapshot,
+} from "./verify-failure-normalize.js";
 import {
   getSurgeonForErrorCode,
   resolveSurgeonErrorCode,
@@ -27,7 +31,7 @@ import {
 } from "./surgeons/registry.js";
 import {
   persistRemediationFromFailedPayload,
-  persistRemediationFromPhaseFailure,
+  persistRemediationSnapshot,
 } from "./context-feed-remediation.js";
 
 export interface VerifyPresentResult {
@@ -139,16 +143,17 @@ export function presentHuman(
     reporter.emitVerifySuccess(result, missionArg);
     return { ok: true, exitCode: 0 };
   }
-  const presentation = verifyFailurePresentation({
+  const normalized = normalizeVerifyPhaseFailure({
     failure: result,
     missionArg,
     options,
     root,
     msnId: mission.msnId ?? undefined,
+    mission,
   });
-  persistRemediationFromPhaseFailure(root, mission, missionArg, options, result);
-  reporter.emitFailurePresentation(presentation);
-  return { ok: false, exitCode: presentation.exit_code };
+  persistRemediationSnapshot(root, toRemediationSnapshot(normalized));
+  reporter.emitFailurePresentation(toFailurePresentation(normalized));
+  return { ok: false, exitCode: normalized.exit_code };
 }
 
 export async function presentFix(

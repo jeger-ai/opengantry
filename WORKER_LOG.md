@@ -242,3 +242,13 @@ example trace line for gapman verify
 - DoD 3 MSN-0059: scripts/benchmark-scaffold.sh — reproducible Time-to-Scaffold timing (init, legislate, verify path)
 - DoD 4 MSN-0059: docs/KATA.md — first-5-minute onboarding kata with headless (--yes / --json) equivalents
 - DoD 5 MSN-0059: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2+ adoption engineering)
+
+## MSN-0060 — v2.2.1 thermo remediation (verify-failure contract, context-feed concurrency, release parity)
+
+[CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, templates/integrations/compatibility.json, package.json — v2.2.1 release metadata (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0060: verify-failure-normalize — single NormalizedVerifyFailure contract; JSON, human, and context-feed sinks parity-tested
+- DoD 2 MSN-0060: context-feed-store race-safe writes — writer-scoped temp cleanup; multiprocess concurrent write test passes
+- DoD 3 MSN-0060: assert-cli-version-parity OK — source + runtime at 2.2.1
+- DoD 4 MSN-0060: README + BACKLOG v2.2.1 patch release docs synced
+- DoD 5 MSN-0060: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.1 thermo remediation)

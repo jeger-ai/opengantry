@@ -9,7 +9,17 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-18 (v2.1.0 **release gate** — MSN-0056 npm publish, [#74](https://github.com/jeger-ai/opengantry/issues/74))
+**Last synced:** 2026-06-19 (v2.2.1 **patch release** — MSN-0060 thermo remediation)
+
+---
+
+## v2.2.1 — Thermo remediation (patch)
+
+| Item | Status | Mission |
+|------|--------|---------|
+| **Unified verify-failure contract** (`verify-failure-normalize`; JSON/human/context-feed parity) | **Done** | MSN-0060 |
+| **Race-safe context-feed writes** (writer-scoped temp cleanup) | **Done** | MSN-0060 |
+| **2.2.1 npm publish** (version parity, docs sync) | **Done** | MSN-0060 |
 
 ---
 
@@ -275,11 +285,11 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.2.0 release prep — version parity + publish gate (MSN-0058); [#68](https://github.com/jeger-ai/opengantry/issues/68) runtime virtualization shipped (MSN-0057).
+**Current focus:** v2.2.1 patch shipped (MSN-0060 thermo remediation); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
-| **Now** | v2.2 must-have | `context-feed`, `audit-rigor`, positioning, docs map |
+| **Done (release)** | v2.2.1 patch | MSN-0060 thermo remediation + version parity |
 | **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |
 | **Done (release)** | v2.1.0 npm publish | MSN-0056; tag + npm **2.1.0** |
 | **Next** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29), v1.2+ [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | Deferred tactical + strategic (ADR first) |

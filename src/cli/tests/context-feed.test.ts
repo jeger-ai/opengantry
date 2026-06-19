@@ -3,8 +3,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { REL_NEXT_REMEDIATION } from "../lib/constants.js";
 import {
+  REMEDIATION_SCHEMA_VERSION,
   clearRemediationSnapshot,
   readRemediationSnapshot,
   writeRemediationSnapshot,
@@ -17,7 +20,7 @@ import { TEACHER_EMAIL } from "./test-shared.js";
 
 function sampleSnapshot(overrides: Partial<RemediationSnapshot> = {}): RemediationSnapshot {
   return {
-    schema_version: 1,
+    schema_version: REMEDIATION_SCHEMA_VERSION,
     written_at: new Date().toISOString(),
     source: "gapman verify",
     phase: "gate",
@@ -49,7 +52,30 @@ test("context-feed store: clear uses tombstone swap", () => {
   assert.equal(parsed.cleared, true);
 });
 
-test("context-feed store: concurrent writes do not throw", async () => {
+test("context-feed store: multiprocess concurrent writes all succeed", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-cf-mp-race-"));
+  const workerJs = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "context-feed-write-worker.js",
+  );
+  const workers = 16;
+  const results = Array.from({ length: workers }, (_, i) =>
+    spawnSync(process.execPath, [workerJs, root, String(i)], { encoding: "utf8" }),
+  );
+  for (const [i, r] of results.entries()) {
+    assert.equal(r.status, 0, `worker ${String(i)} failed: ${r.stderr ?? r.stdout}`);
+  }
+  const final = readRemediationSnapshot(root);
+  assert.ok(final);
+  assert.match(final!.message, /^worker-/);
+  const tmpDir = path.join(root, path.dirname(REL_NEXT_REMEDIATION));
+  if (fs.existsSync(tmpDir)) {
+    const leftovers = fs.readdirSync(tmpDir).filter((e) => e.includes(".tmp."));
+    assert.equal(leftovers.length, 0, `stale temps: ${leftovers.join(", ")}`);
+  }
+});
+
+test("context-feed store: sequential microtask writes do not throw", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-cf-race-"));
   const workers = Array.from({ length: 12 }, (_, i) =>
     Promise.resolve().then(() => {

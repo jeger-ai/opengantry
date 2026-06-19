@@ -47,16 +47,21 @@ function ensureRemediationDir(repoRoot: string): void {
   fs.mkdirSync(remediationDir(repoRoot), { recursive: true });
 }
 
-function bestEffortCleanupStaleTemps(repoRoot: string): void {
+/** Remove abandoned temp files older than maxAgeMs (optional scavenger — not on hot write path). */
+export function scavengerStaleRemediationTemps(repoRoot: string, maxAgeMs = 300_000): void {
   const dir = remediationDir(repoRoot);
   if (!fs.existsSync(dir)) return;
+  const now = Date.now();
   for (const entry of fs.readdirSync(dir)) {
     if (!entry.startsWith(TMP_PREFIX)) continue;
     const full = path.join(dir, entry);
     try {
-      fs.unlinkSync(full);
+      const stat = fs.statSync(full);
+      if (now - stat.mtimeMs > maxAgeMs) {
+        fs.unlinkSync(full);
+      }
     } catch {
-      // abandoned temp from crashed writer — ignore
+      // ignore per-file errors
     }
   }
 }
@@ -77,8 +82,6 @@ export function writeRemediationSnapshot(repoRoot: string, snapshot: Remediation
       // ignore cleanup failure
     }
     throw e;
-  } finally {
-    bestEffortCleanupStaleTemps(repoRoot);
   }
 }
 

@@ -57,14 +57,15 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.2.0** — diagnostic context feed, meta-governance audit, ephemeral virtualization (`virtual_capture`), adoption UX. Current npm publish: **v2.2.0**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.2.1** — verify-failure contract unification, race-safe context-feed. Current npm publish: **v2.2.1**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## Release timeline (latest first)
 
-Current npm release in this repository: **`gapman` v2.2.0**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
+Current npm release in this repository: **`gapman` v2.2.1**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
+| **v2.2.1** | Thermo remediation — unified `NormalizedVerifyFailure` contract across JSON/human/context-feed; race-safe remediation snapshot writes; canonical `verify-presentation` entrypoint |
 | **v2.2.0** | `gapman context-feed`, `gapman audit-rigor`, `virtual_capture` ephemeral virtualization ([#68](https://github.com/jeger-ai/opengantry/issues/68)), product positioning, docs quality ([#66](https://github.com/jeger-ai/opengantry/issues/66)–[#69](https://github.com/jeger-ai/opengantry/issues/69), [#76](https://github.com/jeger-ai/opengantry/issues/76)) |
 | **v2.1.0** | Import-layer Code Surgeon (`check-import-layers.mjs --json`, AST quarantine, `GXT_IMPORT_LAYER_VIOLATION`); workspace-resolved optional TypeScript for surgeons |
 | **v2.0.0** | `gapman scan` + KPI gate, `register`, `check-imports`, `perimeter`; BYO `llm_verifiers`; KPI stale binding on `--pre-push`/`--ci` |
@@ -363,7 +364,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v2.2.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gapman init` in your project.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gapman` v2.2.1** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gapman init` in your project.
 
 ## Security
 

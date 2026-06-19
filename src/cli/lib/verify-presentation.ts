@@ -1,22 +1,38 @@
 export type {
   AudienceTaggedStep,
-  VerifyFailurePresentation,
-  VerifyFailurePresentationInput,
   VerifyHintContext,
   VerifyRemediation,
-} from "./verify-remediation.js";
+} from "./verify-hints.js";
 export {
   buildVerifyHintContext,
   hintsForVerifyPhase,
-  verifyFailurePresentation,
-} from "./verify-remediation.js";
+} from "./verify-hints.js";
+
+export type {
+  VerifyFailurePresentation,
+  VerifyFailurePresentationInput,
+} from "./verify-failure-presentation-types.js";
+export { verifyFailurePresentation } from "./verify-failure-format.js";
+
+export type {
+  NormalizedVerifyFailure,
+  NormalizePhaseFailureInput,
+} from "./verify-failure-normalize.js";
+export {
+  normalizeFromFailedPayload,
+  normalizeInitFailure,
+  normalizeVerifyPhaseFailure,
+  toFailurePresentation,
+  toRemediationSnapshot,
+  toVerifyFailedPayload,
+} from "./verify-failure-normalize.js";
 
 export type {
   VerifyFailedPayload,
   VerifyPassedPayload,
   VerifyResultPayload,
   VerifyTraceWarningJson,
-} from "./verify-payload.js";
+} from "./verify-payload-types.js";
 export {
   buildBreakGlassPayload,
   buildVerifyResultPayload,
@@ -24,7 +40,10 @@ export {
   initFailurePayload,
 } from "./verify-payload.js";
 
-export type { VerifyPresentResult, VerifyRunResult, VerifySink } from "./verify-present.js";
+export type { VerifyPresentResult } from "./verify-presenters.js";
+export type { VerifyRunResult } from "./verify-run.js";
+export type { VerifySink } from "./verify-sinks.js";
+
 export {
   emitVerifyJson,
   presentBreakGlassHuman,
@@ -34,8 +53,7 @@ export {
   presentHumanInitFailure,
   presentJsonFromResult,
   presentJsonInitFailure,
-  resolveVerifySink,
-  runVerifyCore,
-} from "./verify-present.js";
+} from "./verify-presenters.js";
 
-export { buildVerifyResultPayloadFromOptions } from "./verify-run.js";
+export { resolveVerifySink } from "./verify-sinks.js";
+export { buildVerifyResultPayloadFromOptions, runVerifyCore } from "./verify-run.js";

@@ -1,53 +1,33 @@
 import { runBreakGlassAuditFlow } from "./break-glass.js";
-import { errorMessage, toPosixRel } from "./cli-io.js";
-import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
-import type { GxtErrorCode } from "./gxt-error-codes.js";
+import { toPosixRel } from "./cli-io.js";
 import type { Manifest, ParsedMission } from "./types.js";
-import { isGapmanUserError } from "./errors.js";
 import {
   evaluateVerifyPhases,
   type VerifyOptions,
-  type VerifyPhaseFailure,
   type VerifyPhaseResult,
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
-import { verifyFailurePresentation } from "./verify-failure-format.js";
-import { persistRemediationFromFailedPayload } from "./context-feed-remediation.js";
+import {
+  normalizeInitFailure,
+  normalizeVerifyPhaseFailure,
+  toRemediationSnapshot,
+  toVerifyFailedPayload,
+} from "./verify-failure-normalize.js";
+import { persistRemediationSnapshot } from "./context-feed-remediation.js";
 
-export interface VerifyTraceWarningJson {
-  dod_id: string;
-  declared_line: number;
-  found_line: number;
-  auto_resolved?: boolean;
-}
+export type {
+  VerifyFailedPayload,
+  VerifyPassedPayload,
+  VerifyResultPayload,
+  VerifyTraceWarningJson,
+} from "./verify-payload-types.js";
 
-export interface VerifyPassedPayload {
-  status: "passed";
-  phase: "full" | "pre_push_stub" | "break_glass";
-  exit_code: 0;
-  msn_id?: string;
-  mission_file_path?: string;
-  message?: string;
-  audit_commit?: string;
-  trace_warnings?: VerifyTraceWarningJson[];
-  kpi_warnings?: string[];
-  trace_evidence_skipped_uncommitted?: number;
-}
-
-export interface VerifyFailedPayload {
-  status: "failed";
-  phase: string;
-  message: string;
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-  exit_code: number;
-  stdout?: string;
-  stderr?: string;
-  failures?: string[];
-}
-
-export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
+import type {
+  VerifyFailedPayload,
+  VerifyPassedPayload,
+  VerifyResultPayload,
+  VerifyTraceWarningJson,
+} from "./verify-payload-types.js";
 
 function missionRelPath(root: string, mission: ParsedMission): string {
   return toPosixRel(root, mission.rawPath);
@@ -114,73 +94,8 @@ export function buildBreakGlassPayload(
   };
 }
 
-function failureFromPhase(
-  failure: VerifyPhaseFailure,
-  missionRel: string,
-  options: VerifyOptions,
-  root: string,
-  msnId?: string,
-): VerifyFailedPayload {
-  const presentation = verifyFailurePresentation({
-    failure,
-    missionArg: missionRel,
-    options,
-    root,
-    msnId,
-  });
-
-  const base: VerifyFailedPayload = {
-    status: "failed",
-    phase: failure.phase,
-    message: failure.message,
-    error_code: presentation.error_code,
-    fix_hints: presentation.fix_hints,
-    next_actions: presentation.next_actions,
-    exit_code: presentation.exit_code,
-  };
-
-  if (failure.phase === "gate") {
-    return {
-      ...base,
-      ...(failure.gateStdout !== undefined ? { stdout: failure.gateStdout } : {}),
-      ...(failure.gateStderr !== undefined ? { stderr: failure.gateStderr } : {}),
-    };
-  }
-  if (failure.phase === "kpi") {
-    return {
-      ...base,
-      failures: [failure.kpiReason ?? failure.message],
-    };
-  }
-  if (failure.phase === "trace" && failure.traceReason) {
-    return { ...base, failures: [`DoD trace: ${failure.traceReason}`] };
-  }
-  return base;
-}
-
 export function initFailurePayload(e: unknown): VerifyFailedPayload {
-  if (isGapmanUserError(e)) {
-    const errorCode = gxtCodeFromGapmanUserError(e.code);
-    return {
-      status: "failed",
-      phase: "init",
-      message: e.message,
-      error_code: errorCode,
-      fix_hints: e.hint ? [e.hint] : [],
-      next_actions: [],
-      exit_code: e.exitCode,
-    };
-  }
-  const message = errorMessage(e);
-  return {
-    status: "failed",
-    phase: "init",
-    message,
-    error_code: GXT_ERROR.PARSE_ERROR,
-    fix_hints: [],
-    next_actions: [],
-    exit_code: 1,
-  };
+  return toVerifyFailedPayload(normalizeInitFailure(e));
 }
 
 export function buildVerifyResultPayloadFromPhaseResult(
@@ -192,12 +107,19 @@ export function buildVerifyResultPayloadFromPhaseResult(
   result: VerifyPhaseResult,
 ): VerifyResultPayload {
   const missionRel = missionRelPath(root, mission);
-  const msnId = mission.msnId ?? undefined;
   if (result.ok) {
     return successPayload(root, mission, result);
   }
-  const payload = failureFromPhase(result, missionRel, options, root, msnId);
-  persistRemediationFromFailedPayload(root, mission, missionArg, payload);
+  const normalized = normalizeVerifyPhaseFailure({
+    failure: result,
+    missionArg: missionRel,
+    options,
+    root,
+    msnId: mission.msnId ?? undefined,
+    mission,
+  });
+  const payload = toVerifyFailedPayload(normalized);
+  persistRemediationSnapshot(root, toRemediationSnapshot(normalized));
   return payload;
 }
 
