@@ -27,6 +27,12 @@ properties:
     minLength: 1
   gate_success_substring:
     type: ["string", "null"]
+  virtual_capture:
+    type: boolean
+    default: false
+    description: >-
+      When true, gapman verify captures gate stdout/stderr under
+      .gitagent/virtual/<flight-id>/ (gitignored) and purges on success.
   upgrade_payload:
     type: object
     additionalProperties: false

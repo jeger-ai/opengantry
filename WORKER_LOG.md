@@ -218,3 +218,9 @@ example trace line for gapman verify
 - DoD 3 MSN-0056 close-out: README + BACKLOG v2.1.0 release gate synced (issue #74)
 - DoD 4 MSN-0056 close-out: npm run validate green on main
 - DoD 5 MSN-0056 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0057 — Issue #68 ephemeral virtualization runtime (virtual_capture)
+
+[CONTEXT-REQUEST] paths: .gitagent/teacher/MISSION.schema.yaml, templates/.gitagent/teacher/MISSION.schema.yaml, docs/ADR-EPHEMERAL-VIRTUALIZATION.md — mission schema + ADR for virtual_capture contract (substrate law).
+
+- DoD 1 MSN-0057: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

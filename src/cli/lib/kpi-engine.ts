@@ -9,6 +9,7 @@ import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
+import { isVirtualScratchPath } from "./virtual-scratch-store.js";
 import type { KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
 import type { VerifyOptions } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-engine.js";
@@ -194,12 +195,21 @@ export function verifyKpiReportFreshness(
     return { stale: false, advisoryOnly: false, stalePaths: [] };
   }
 
+  const reportRel = reportRelPath(reportPath, repoRoot);
+  if (isVirtualScratchPath(reportRel)) {
+    return {
+      stale: false,
+      advisoryOnly: false,
+      stalePaths: [],
+      reason: "virtual scratch KPI report — stale-evidence binding skipped",
+    };
+  }
+
   const tmvcRoots = tmvcRootsForSkill(manifest, skillKey);
   if (tmvcRoots.length === 0) {
     return { stale: false, advisoryOnly: false, stalePaths: [] };
   }
 
-  const reportRel = reportRelPath(reportPath, repoRoot);
   const blameByLine = readBlamePorcelainByLine(repoRoot, reportRel);
   const attestationCommit = resolveKpiAttestationCommit(repoRoot, reportRel, blameByLine);
   if (!attestationCommit) {

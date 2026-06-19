@@ -3,13 +3,19 @@ import type { OutputAudience } from "./audience-output.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRunOk } from "./git.js";
 import { assertTeacherMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
-import { gatePassed, runGate } from "./gate.js";
+import { gatePassed, runGate, type GateRunResult } from "./gate.js";
 import { resolveGateWorkDir } from "./gate-work-dir.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultWorkerLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
 import { errorMessage } from "./cli-io.js";
+import {
+  createVirtualFlightId,
+  purgeVirtualFlightDir,
+  scavengeStaleVirtualFlights,
+  writeGateCaptureSync,
+} from "./virtual-scratch-store.js";
 
 export interface VerifyOptions {
   mission?: string;
@@ -164,19 +170,22 @@ function evaluateGatePhase(
   gate: GateSpec,
   options: VerifyOptions,
   workerLogPath: string,
-): VerifyPhaseFailure | null {
+): { failure: VerifyPhaseFailure | null; gateResult?: ReturnType<typeof runGate> } {
   const gateResult = runGate(resolveGateWorkDir(root, options), gate);
-  if (gatePassed(gateResult, gate.successSubstring)) return null;
+  if (gatePassed(gateResult, gate.successSubstring)) return { failure: null, gateResult };
   return {
-    ok: false,
-    phase: "gate",
-    message: "GATE FAILED",
-    exitCode: 1,
-    workerLogPath,
-    gateCommand: gate.command,
-    gateStdout: gateResult.stdout,
-    gateStderr: gateResult.stderr,
-    gateExitCode: gateResult.exitCode ?? undefined,
+    failure: {
+      ok: false,
+      phase: "gate",
+      message: "GATE FAILED",
+      exitCode: 1,
+      workerLogPath,
+      gateCommand: gate.command,
+      gateStdout: gateResult.stdout,
+      gateStderr: gateResult.stderr,
+      gateExitCode: gateResult.exitCode ?? undefined,
+    },
+    gateResult,
   };
 }
 
@@ -247,6 +256,28 @@ function evaluateTracePhase(
   return { kind: "ok", warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
 }
 
+function beginVirtualCapture(root: string, mission: ParsedMission): string | null {
+  if (!mission.virtualCapture) return null;
+  const flightId = createVirtualFlightId();
+  scavengeStaleVirtualFlights(root, { protectFlightId: flightId });
+  return flightId;
+}
+
+function recordVirtualGateCapture(
+  root: string,
+  flightId: string | null,
+  gate: GateSpec,
+  gateResult: GateRunResult | undefined,
+): void {
+  if (!flightId || !gateResult) return;
+  writeGateCaptureSync(root, flightId, {
+    gate_command: gate.command,
+    exit_code: gateResult.exitCode,
+    stdout: gateResult.stdout,
+    stderr: gateResult.stderr,
+  });
+}
+
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
 export function evaluateVerifyPhases(
   root: string,
@@ -275,8 +306,12 @@ export function evaluateVerifyPhases(
     };
   }
 
-  const gateFailure = evaluateGatePhase(root, gate, options, workerLogPath);
-  if (gateFailure) return gateFailure;
+  const virtualFlightId = beginVirtualCapture(root, mission);
+
+  const gateOutcome = evaluateGatePhase(root, gate, options, workerLogPath);
+  recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome.gateResult);
+
+  if (gateOutcome.failure) return gateOutcome.failure;
 
   let kpiWarnings: string[] | undefined;
   if (mission.kpiGate) {
@@ -298,6 +333,10 @@ export function evaluateVerifyPhases(
 
   const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
   if (trace.kind === "fail") return trace.failure;
+
+  if (virtualFlightId) {
+    purgeVirtualFlightDir(root, virtualFlightId);
+  }
 
   return {
     ok: true,
