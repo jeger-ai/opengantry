@@ -1,44 +1,27 @@
-import { CLI_NAME } from "./constants.js";
-import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
-import { toPosixRel } from "./cli-io.js";
-import { errorMessage } from "./cli-io.js";
+import { errorMessage, toPosixRel } from "./cli-io.js";
 import { isGapmanUserError } from "./errors.js";
 import type { ParsedMission } from "./types.js";
 import type { VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
 import {
   buildVerifyHintContext,
   hintsForVerifyPhase,
-  type AudienceTaggedStep,
 } from "./verify-hints.js";
-import type { VerifyFailurePresentation } from "./verify-failure-presentation-types.js";
-import type { VerifyFailedPayload } from "./verify-payload-types.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
   type RemediationSnapshot,
 } from "./context-feed-store.js";
-
-/** Canonical verify-failure contract — single mapping for all sinks. */
-export interface NormalizedVerifyFailure {
-  phase: string;
-  message: string;
-  exit_code: number;
-  error_code: GxtErrorCode;
-  fix_hints: string[];
-  next_actions: string[];
-  tagged_steps?: AudienceTaggedStep[];
-  headline: string;
-  detail_lines: string[];
-  stdout?: string;
-  stderr?: string;
-  failures?: string[];
-  gate?: RemediationSnapshot["gate"];
-  kpi?: RemediationSnapshot["kpi"];
-  presentation_gate?: { stdout?: string; stderr?: string; exitCode?: number };
-  trace?: { failures?: string[] };
-  mission_file_path?: string;
-  msn_id?: string;
-}
+import {
+  normalizeGatePhase,
+  normalizeGitProofPhase,
+  normalizeKpiPhase,
+  normalizeTracePendingPhase,
+  normalizeTracePhase,
+} from "./verify-failure-normalize-phases.js";
+import type { VerifyFailurePresentation } from "./verify-failure-presentation-types.js";
+import type { VerifyFailedPayload } from "./verify-payload-types.js";
+import type { NormalizedVerifyFailure } from "./verify-failure-normalize-types.js";
+export type { NormalizedVerifyFailure } from "./verify-failure-normalize-types.js";
 
 export interface NormalizePhaseFailureInput {
   failure: VerifyPhaseFailure;
@@ -87,71 +70,15 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
 
   switch (failure.phase) {
     case "git_proof":
-      return {
-        ...base,
-        headline: failure.message,
-        detail_lines: [],
-      };
+      return normalizeGitProofPhase(base);
     case "gate":
-      return {
-        ...base,
-        headline: "verify: GATE FAILED",
-        detail_lines: [
-          ...(failure.gateStdout !== undefined ? [`--- stdout ---\n${failure.gateStdout}`] : []),
-          ...(failure.gateStderr !== undefined ? [`--- stderr ---\n${failure.gateStderr}`] : []),
-          ...(failure.gateExitCode !== undefined ? [`exit code: ${String(failure.gateExitCode)}`] : []),
-        ],
-        stdout: failure.gateStdout,
-        stderr: failure.gateStderr,
-        gate: {
-          ...(failure.gateStdout !== undefined ? { stdout: failure.gateStdout } : {}),
-          ...(failure.gateStderr !== undefined ? { stderr: failure.gateStderr } : {}),
-          ...(failure.gateExitCode !== undefined ? { exit_code: failure.gateExitCode } : {}),
-        },
-        presentation_gate: {
-          stdout: failure.gateStdout,
-          stderr: failure.gateStderr,
-          exitCode: failure.gateExitCode,
-        },
-      };
+      return normalizeGatePhase(base, failure);
     case "kpi":
-      return {
-        ...base,
-        headline: "verify: KPI GATE FAILED",
-        detail_lines: [
-          failure.kpiReason ?? failure.message,
-          ...(failure.kpiMetric
-            ? [`metric: ${failure.kpiMetric} ${failure.kpiOp ?? ""} ${String(failure.kpiExpected ?? "")} (actual: ${String(failure.kpiActual ?? "missing")})`]
-            : []),
-          ...(failure.kpiReportPath ? [`report: ${failure.kpiReportPath}`] : []),
-        ],
-        failures: [failure.kpiReason ?? failure.message],
-        kpi: {
-          ...(failure.kpiMetric ? { metric: failure.kpiMetric } : {}),
-          ...(failure.kpiOp ? { op: failure.kpiOp } : {}),
-          ...(failure.kpiExpected !== undefined ? { expected: failure.kpiExpected } : {}),
-          ...(failure.kpiActual !== undefined ? { actual: failure.kpiActual } : {}),
-          ...(failure.kpiReportPath ? { report_path: failure.kpiReportPath } : {}),
-        },
-      };
+      return normalizeKpiPhase(base, failure);
     case "trace_pending":
-      return {
-        ...base,
-        headline: `${CLI_NAME} verify: legislative stub complete (git-proof OK) — worker must execute, append ${failure.workerLogPath}, set trace row PASS, then re-verify`,
-        detail_lines: [],
-      };
+      return normalizeTracePendingPhase(base, failure);
     case "trace":
-      return {
-        ...base,
-        headline: "verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)",
-        detail_lines: [`DoD trace failure: ${failure.traceReason ?? failure.message}`],
-        ...(failure.traceReason
-          ? {
-              failures: [`DoD trace: ${failure.traceReason}`],
-              trace: { failures: [`DoD trace: ${failure.traceReason}`] },
-            }
-          : {}),
-      };
+      return normalizeTracePhase(base, failure);
     default: {
       const _exhaustive: never = failure.phase;
       return _exhaustive;
