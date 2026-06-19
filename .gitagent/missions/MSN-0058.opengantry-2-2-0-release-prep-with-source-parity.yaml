@@ -1,0 +1,19 @@
+# OpenGantry 2.2.0 release prep with source parity hardening and race-safe publish.
+# PR targets main after MSN-0057 (#77) merged.
+msn_id: MSN-0058
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "assert-cli-version-parity OK — source + runtime at 2.2.0"
+    anchor: "MSN-0058"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "README + BACKLOG v2.2.0 release docs synced (issue #68 closed)"
+    anchor: "MSN-0058"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.0)"
+    anchor: "MSN-0058"
+    status: PASS
