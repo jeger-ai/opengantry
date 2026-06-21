@@ -6,7 +6,7 @@ This runbook documents the OpenGantry specimen flow for adopters testing `gapman
 
 OpenGantry is **Autonomous Repository Engineering** — determinism, predictability, and standardized protocols for scoped agent work. It is **not** a real-time conversational wrapper.
 
-| Concern | Typical standalone agent script | OpenGantry (GXT) |
+| Concern | Improvised agent workflow (scripted or IDE-only) | OpenGantry (GXT) |
 |---------|--------------------------------|------------------|
 | **Scope** | Implicit; edits anywhere the model chooses | Declared **tmvc_roots** + **forbidden zones** in mission + manifest |
 | **Approval** | None or ad-hoc prompts | Teacher **`[MSN-XXXX]`** commit before worker execution |
@@ -16,7 +16,9 @@ OpenGantry is **Autonomous Repository Engineering** — determinism, predictabil
 
 ### Reproducible benchmark
 
-Clone this repository and run one command to compare a fragile raw agent script against OpenGantry TMVC on the same task. The harness uses **local `dist/cli/index.js`** (not a global `gapman` install).
+Clone this repository and run one command to compare a **pedagogical orchestrator specimen** against OpenGantry TMVC on the same task. The harness uses **local `dist/cli/index.js`** (not a global `gapman` install).
+
+**What this is (and is not):** the raw-script phase runs a contrast specimen that compresses common anti-patterns into one file — ad-hoc state, heuristic scope, no `[MSN-XXXX]` gate. Most teams do not ship a monolithic `agent-run.mjs`; many use IDE agents with no orchestrator at all. The benchmark still holds: **without a Git-native protocol envelope, structure and auditability are improvised.** Measured LOC counts the orchestrator specimen only; conceptual rows (state tracking, concurrency) apply to IDE-only workflows too.
 
 **Prerequisites:** Node.js 24+, built CLI from this repo (`npm run build`).
 
@@ -49,11 +51,11 @@ Benchmark comparison
 Benchmark complete — repo working tree unchanged.
 ```
 
-*(Note: Execution timings captured on a standard local developer environment; your exact ms variance will differ, but the LOC structural boundaries are deterministic.)*
+*(Note: Execution timings captured on a standard local developer environment; your exact ms variance will differ, but the LOC structural boundaries are deterministic. Raw LOC = orchestrator specimen only; it is not a prediction of what your team will write.)*
 
 Machine-readable: `npm run examples:benchmark -- --json`. Maintainer timings JSON (gantry phases only): [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh).
 
-**Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (fragile Node orchestrator) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Full harness: [`examples/benchmark-agent/`](../examples/benchmark-agent/).
+**Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (pedagogical orchestrator — anti-patterns compressed for demo) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Full harness: [`examples/benchmark-agent/`](../examples/benchmark-agent/).
 
 **Git-native state:** pinned mission (`.gitagent/missions/.active-mission`), legislative commits, and worker trace in `WORKER_LOG.md` — agent actions are reviewable, transactional steps toward merge, not ephemeral chat mutations.
 

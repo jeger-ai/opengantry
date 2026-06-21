@@ -2,7 +2,13 @@
 
 Same task as [`../gantry-minimal/`](../gantry-minimal/): add a versioned `greet()` export and pass a smoke test.
 
-This folder shows what teams often build first — a Node orchestrator with local state, ad-hoc scope, and no Git-native audit trail.
+This folder is a **pedagogical worst-case** — not a census of what every team ships on day one. Most teams never write a monolithic `agent-run.mjs`; they improvise with IDE agents, thin shell wrappers, or framework glue spread across several files. This specimen **compresses common anti-patterns** into one runnable orchestrator so the gaps are visible in a demo:
+
+- ad-hoc local state instead of Git-native audit
+- heuristic scope instead of declared boundaries
+- custom recovery instead of verify-gated workflow
+
+A typical **IDE-only** workflow (Cursor chat + manual commits, no orchestrator file) has *less* scripted LOC but often *less* structure — the benchmark's conceptual rows cover that case too.
 
 ## Run
 
@@ -22,6 +28,6 @@ npm test          # passes after agent run
 | Crash recovery | Partial writes + stale state file |
 | Compliance story | "We have a script" ≠ auditable change control |
 
-**Line count (approx.):** orchestrator ~180 LOC vs GXT mission + gate ~25 LOC in gantry-minimal.
+**Orchestrator specimen LOC (measured):** [`agent-run.mjs`](agent-run.mjs) ~140+ non-empty lines vs Gantry mission + worker patch boundary in the benchmark harness (see [`../benchmark-agent/`](../benchmark-agent/)). This is **not** a claim that your team will write this file — it models what improvised agent glue tends to reinvent.
 
 Compare: [`../gantry-minimal/`](../gantry-minimal/) · [`../benchmark-agent/`](../benchmark-agent/) · [`../../docs/ADOPTION.md`](../../docs/ADOPTION.md).

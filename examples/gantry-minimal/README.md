@@ -47,7 +47,7 @@ npm test
 
 | | Script specimen | This specimen |
 |--|-----------------|---------------|
-| Orchestrator | [`agent-run.mjs`](../contrast-agent-script/agent-run.mjs) (~180 LOC) | `gapman` primitives + mission YAML |
+| Orchestrator | [`agent-run.mjs`](../contrast-agent-script/agent-run.mjs) (pedagogical — anti-patterns in one file) | `gapman` primitives + mission YAML |
 | Audit | `.agent-state.json` | Git + `WORKER_LOG.md` |
 | Scope | Heuristic | `tmvc_roots` / forbidden zones |
 
