@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Time-to-Scaffold benchmark: raw agent script vs OpenGantry TMVC in isolated sandboxes.
+ * Sandboxes live under .gitagent/virtual/benchmark-run/ (gitignored); torn down after each run.
  * Default: human-readable summary on stdout. Use --json (v2) or --timings-only (v1 legacy).
  */
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -15,13 +15,23 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const GAPMAN_CLI = path.join(REPO_ROOT, "dist/cli/index.js");
 const TASK_TEMPLATE = path.join(BENCHMARK_DIR, "task");
 const RAW_SCRIPT = path.join(BENCHMARK_DIR, "raw-script.mjs");
+const BENCHMARK_RUN_ROOT = path.join(REPO_ROOT, ".gitagent/virtual/benchmark-run");
+const RUN_ID_PREFIX = "benchmark-run_";
+const STALE_RUN_MS = 15 * 60 * 1000;
 const MSN_ID = "MSN-0999";
+const BENCHMARK_TRACE_QUOTE = "benchmark greet exports VERSION and smoke test passes";
+const GATE_COMMAND = "node --test test/smoke.test.js";
+const GATE_SUCCESS_SUBSTRING = "pass";
 const TEACHER_EMAIL = process.env.BENCHMARK_TEACHER_EMAIL ?? "benchmark-teacher@example.com";
 const TEACHER_NAME = process.env.BENCHMARK_TEACHER_NAME ?? "Benchmark Teacher";
+const LEGISLATE_PLACEHOLDER = "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION";
 
 const args = process.argv.slice(2);
 const jsonMode = args.includes("--json");
 const timingsOnly = args.includes("--timings-only");
+
+/** @type {string | null} */
+let runDirToTeardown = null;
 
 function nowNs() {
   return process.hrtime.bigint();
@@ -36,6 +46,15 @@ function die(message) {
   process.exit(1);
 }
 
+function teardownRunDir() {
+  if (runDirToTeardown && fs.existsSync(runDirToTeardown)) {
+    fs.rmSync(runDirToTeardown, { recursive: true, force: true });
+  }
+  runDirToTeardown = null;
+}
+
+process.on("exit", teardownRunDir);
+
 function assertBuilt() {
   if (!fs.existsSync(GAPMAN_CLI)) {
     die("run npm run build first (missing dist/cli/index.js)");
@@ -44,6 +63,10 @@ function assertBuilt() {
 
 function gapmanArgs() {
   return ["node", GAPMAN_CLI];
+}
+
+function teacherEnv() {
+  return { GAPMAN_TEACHER_EMAILS: TEACHER_EMAIL };
 }
 
 function run(cmd, cwd, env = {}) {
@@ -78,10 +101,36 @@ function copyDir(src, dest) {
   }
 }
 
+function createRunId() {
+  const ts = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "");
+  return `${RUN_ID_PREFIX}${ts}_${process.pid}`;
+}
+
+function scavengeStaleBenchmarkRuns(currentRunId) {
+  if (!fs.existsSync(BENCHMARK_RUN_ROOT)) return;
+  const now = Date.now();
+  for (const entry of fs.readdirSync(BENCHMARK_RUN_ROOT, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !entry.name.startsWith(RUN_ID_PREFIX)) continue;
+    if (entry.name === currentRunId) continue;
+    const full = path.join(BENCHMARK_RUN_ROOT, entry.name);
+    let mtimeMs;
+    try {
+      mtimeMs = fs.statSync(full).mtimeMs;
+    } catch {
+      continue;
+    }
+    if (now - mtimeMs > STALE_RUN_MS) {
+      fs.rmSync(full, { recursive: true, force: true });
+    }
+  }
+}
+
+function sandboxPath(runId, phase) {
+  return path.join(BENCHMARK_RUN_ROOT, runId, phase);
+}
+
 function initSandboxGit(sandbox) {
-  const env = {
-    GAPMAN_TEACHER_EMAILS: TEACHER_EMAIL,
-  };
+  const env = teacherEnv();
   const init = git(sandbox, ["init", "-q"], env);
   if (!init.ok) die(`git init failed: ${init.stderr}`);
 
@@ -123,149 +172,183 @@ function resolveTmvcTarget(sandbox, skillKey) {
   return path.join(root, "greeting.js");
 }
 
-function runRawPath() {
-  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "og-benchmark-raw-"));
-  try {
-    copyDir(TASK_TEMPLATE, sandbox);
-    fs.copyFileSync(RAW_SCRIPT, path.join(sandbox, "raw-script.mjs"));
-    initSandboxGit(sandbox);
-
-    const t0 = nowNs();
-    const result = run(
-      ["node", path.join(sandbox, "raw-script.mjs")],
-      sandbox,
-      { BENCHMARK_ROOT: sandbox },
+function patchBenchmarkMission(missionAbs, { status }) {
+  let yaml = fs.readFileSync(missionAbs, "utf8");
+  yaml = yaml.replace(
+    `trace_quote: ${LEGISLATE_PLACEHOLDER}`,
+    `trace_quote: "${BENCHMARK_TRACE_QUOTE}"`,
+  );
+  yaml = yaml.replace(/gate_command: .+\n/, `gate_command: "${GATE_COMMAND}"\n`);
+  yaml = yaml.replace(
+    /gate_success_substring: .+\n/,
+    `gate_success_substring: "${GATE_SUCCESS_SUBSTRING}"\n`,
+  );
+  if (!yaml.includes("virtual_capture:")) {
+    yaml = yaml.replace(
+      /gate_success_substring: .+\n/,
+      (line) => `${line}virtual_capture: true\n`,
     );
-    const t1 = nowNs();
+  }
+  yaml = yaml.replace(/status: PENDING/, `status: ${status}`);
+  yaml = yaml.replace(/status: PASS/, `status: ${status}`);
+  fs.writeFileSync(missionAbs, yaml, "utf8");
+}
 
-    if (!result.ok) {
-      die(`raw script failed (exit ${result.status}): ${result.stderr || result.stdout}`);
-    }
-
-    return {
-      exitCode: result.status,
-      durationMs: elapsedMs(t0, t1),
-      sandbox,
-    };
-  } catch (err) {
-    fs.rmSync(sandbox, { recursive: true, force: true });
-    throw err;
-  } finally {
-    if (fs.existsSync(sandbox)) {
-      fs.rmSync(sandbox, { recursive: true, force: true });
-    }
+function assertGantryVirtualPurged(sandbox) {
+  const virtualRoot = path.join(sandbox, ".gitagent", "virtual");
+  if (!fs.existsSync(virtualRoot)) return;
+  const entries = fs.readdirSync(virtualRoot);
+  if (entries.length > 0) {
+    die(`gantry virtual flight not purged after verify (left: ${entries.join(", ")})`);
   }
 }
 
-function runGantryPath() {
-  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "og-benchmark-gantry-"));
-  const env = {
-    GAPMAN_TEACHER_EMAILS: TEACHER_EMAIL,
-  };
-
-  try {
-    copyDir(TASK_TEMPLATE, sandbox);
-    initSandboxGit(sandbox);
-
-    const t0 = nowNs();
-
-    const initResult = run(
-      [...gapmanArgs(), "init", "--yes", "--no-ci", "--no-hooks"],
-      sandbox,
-      env,
-    );
-    const t1 = nowNs();
-    if (!initResult.ok) {
-      die(`gapman init failed: ${initResult.stderr || initResult.stdout}`);
-    }
-
-    git(sandbox, ["add", "-A"], env);
-    git(sandbox, ["commit", "-m", "post-init", "-q"], env);
-
-    const t2 = nowNs();
-    const legislateResult = run(
-      [
-        ...gapmanArgs(),
-        "legislate",
-        "benchmark task",
-        "--msn",
-        MSN_ID,
-        "--skill-key",
-        "logic",
-        "--gate-command",
-        "npm test",
-        "--gate-success-substring",
-        "pass",
-      ],
-      sandbox,
-      env,
-    );
-    const t3 = nowNs();
-    if (!legislateResult.ok) {
-      die(`gapman legislate failed: ${legislateResult.stderr || legislateResult.stdout}`);
-    }
-
-    const legislateOutput = `${legislateResult.stdout}\n${legislateResult.stderr}`;
-    const missionRel = legislateOutput
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .find((line) => line.includes("legislate: wrote "))
-      ?.replace(/^.*legislate: wrote /, "");
-
-    if (!missionRel || !fs.existsSync(path.join(sandbox, missionRel))) {
-      die("gapman legislate did not write mission file");
-    }
-
-    git(sandbox, ["add", missionRel], env);
-    git(sandbox, ["commit", "-m", `[${MSN_ID}] legislate mission`, "-q"], env);
-
-    const skillKey = "logic";
-    const targetRel = resolveTmvcTarget(sandbox, skillKey);
-    const targetAbs = path.join(sandbox, targetRel);
-    if (!fs.existsSync(targetAbs)) {
-      die(`TMVC target missing after init: ${targetRel}`);
-    }
-
-    const patched = applyGreetingPatch(fs.readFileSync(targetAbs, "utf8"));
-    fs.writeFileSync(targetAbs, patched, "utf8");
-
-    const workerLog = path.join(sandbox, "WORKER_LOG.md");
-    const traceLine = `- ${MSN_ID}: benchmark greet exports VERSION and smoke test passes`;
-    if (fs.existsSync(workerLog)) {
-      fs.appendFileSync(workerLog, `${traceLine}\n`, "utf8");
-    } else {
-      fs.writeFileSync(workerLog, `${traceLine}\n`, "utf8");
-    }
-
-    const t4 = nowNs();
-    const verifyResult = run(
-      [...gapmanArgs(), "verify", "--mission", missionRel, "--pre-push"],
-      sandbox,
-      env,
-    );
-    const t5 = nowNs();
-    if (!verifyResult.ok) {
-      die(`gapman verify --pre-push failed: ${verifyResult.stderr || verifyResult.stdout}`);
-    }
-
-    return {
-      initMs: elapsedMs(t0, t1),
-      legislateMs: elapsedMs(t2, t3),
-      verifyMs: elapsedMs(t4, t5),
-      totalMs: elapsedMs(t0, t5),
-      missionFile: missionRel,
-      sandbox,
-    };
-  } catch (err) {
-    if (fs.existsSync(sandbox)) {
-      fs.rmSync(sandbox, { recursive: true, force: true });
-    }
-    throw err;
-  } finally {
-    if (fs.existsSync(sandbox)) {
-      fs.rmSync(sandbox, { recursive: true, force: true });
-    }
+function assertHostGitClean() {
+  const status = git(REPO_ROOT, ["status", "--porcelain"]);
+  if (!status.ok) die(`git status failed: ${status.stderr}`);
+  if (status.stdout.trim()) {
+    die(`host git working tree dirty:\n${status.stdout}`);
   }
+}
+
+function runRawPath(runId) {
+  const sandbox = sandboxPath(runId, "raw");
+  fs.mkdirSync(sandbox, { recursive: true });
+  copyDir(TASK_TEMPLATE, sandbox);
+  fs.copyFileSync(RAW_SCRIPT, path.join(sandbox, "raw-script.mjs"));
+  initSandboxGit(sandbox);
+
+  const t0 = nowNs();
+  const result = run(
+    ["node", path.join(sandbox, "raw-script.mjs")],
+    sandbox,
+    { BENCHMARK_ROOT: sandbox },
+  );
+  const t1 = nowNs();
+
+  if (!result.ok) {
+    die(`raw script failed (exit ${result.status}): ${result.stderr || result.stdout}`);
+  }
+
+  const rawWouldLeaveDebris = fs.existsSync(path.join(sandbox, ".agent-state.json"));
+
+  return {
+    exitCode: result.status,
+    durationMs: elapsedMs(t0, t1),
+    rawWouldLeaveDebris,
+  };
+}
+
+function runGantryPath(runId) {
+  const sandbox = sandboxPath(runId, "gantry");
+  const env = teacherEnv();
+  fs.mkdirSync(sandbox, { recursive: true });
+
+  copyDir(TASK_TEMPLATE, sandbox);
+  initSandboxGit(sandbox);
+
+  const t0 = nowNs();
+
+  const initResult = run(
+    [...gapmanArgs(), "init", "--yes", "--no-ci", "--no-hooks"],
+    sandbox,
+    env,
+  );
+  const t1 = nowNs();
+  if (!initResult.ok) {
+    die(`gapman init failed: ${initResult.stderr || initResult.stdout}`);
+  }
+
+  git(sandbox, ["add", "-A"], env);
+  git(sandbox, ["commit", "-m", "post-init", "-q"], env);
+
+  const t2 = nowNs();
+  const legislateResult = run(
+    [
+      ...gapmanArgs(),
+      "legislate",
+      "benchmark task",
+      "--msn",
+      MSN_ID,
+      "--skill-key",
+      "logic",
+      "--gate-command",
+      GATE_COMMAND,
+      "--gate-success-substring",
+      GATE_SUCCESS_SUBSTRING,
+    ],
+    sandbox,
+    env,
+  );
+  const t3 = nowNs();
+  if (!legislateResult.ok) {
+    die(`gapman legislate failed: ${legislateResult.stderr || legislateResult.stdout}`);
+  }
+
+  const legislateOutput = `${legislateResult.stdout}\n${legislateResult.stderr}`;
+  const missionRel = legislateOutput
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.includes("legislate: wrote "))
+    ?.replace(/^.*legislate: wrote /, "");
+
+  if (!missionRel || !fs.existsSync(path.join(sandbox, missionRel))) {
+    die("gapman legislate did not write mission file");
+  }
+
+  const missionAbs = path.join(sandbox, missionRel);
+  patchBenchmarkMission(missionAbs, { status: "PENDING" });
+
+  git(sandbox, ["add", missionRel], env);
+  git(sandbox, ["commit", "-m", `[${MSN_ID}] legislate mission`, "-q"], env);
+
+  const skillKey = "logic";
+  const targetRel = resolveTmvcTarget(sandbox, skillKey);
+  const targetAbs = path.join(sandbox, targetRel);
+  if (!fs.existsSync(targetAbs)) {
+    die(`TMVC target missing after init: ${targetRel}`);
+  }
+
+  const patched = applyGreetingPatch(fs.readFileSync(targetAbs, "utf8"));
+  fs.writeFileSync(targetAbs, patched, "utf8");
+
+  const workerLog = path.join(sandbox, "WORKER_LOG.md");
+  const traceLine = `- ${MSN_ID}: ${BENCHMARK_TRACE_QUOTE}`;
+  if (fs.existsSync(workerLog)) {
+    fs.appendFileSync(workerLog, `${traceLine}\n`, "utf8");
+  } else {
+    fs.writeFileSync(workerLog, `${traceLine}\n`, "utf8");
+  }
+
+  patchBenchmarkMission(missionAbs, { status: "PASS" });
+
+  git(sandbox, ["add", missionRel, targetRel, "WORKER_LOG.md"], env);
+  const workerCommit = git(sandbox, ["commit", "-m", `[${MSN_ID}] worker benchmark evidence`, "-q"], env);
+  if (!workerCommit.ok) {
+    die(`worker commit failed: ${workerCommit.stderr}`);
+  }
+
+  const t4 = nowNs();
+  const verifyResult = run(
+    [...gapmanArgs(), "verify", "--mission", missionRel],
+    sandbox,
+    env,
+  );
+  const t5 = nowNs();
+  if (!verifyResult.ok) {
+    die(`gapman verify failed: ${verifyResult.stderr || verifyResult.stdout}`);
+  }
+
+  assertGantryVirtualPurged(sandbox);
+
+  return {
+    initMs: elapsedMs(t0, t1),
+    legislateMs: elapsedMs(t2, t3),
+    verifyMs: elapsedMs(t4, t5),
+    totalMs: elapsedMs(t0, t5),
+    missionFile: missionRel,
+    virtualPurged: true,
+  };
 }
 
 function emitSummary(raw, gantry) {
@@ -292,12 +375,17 @@ function emitSummary(raw, gantry) {
       benchmark: "time-to-scaffold",
       schema_version: 2,
       phases: {
-        raw_script: { exit_code: raw.exitCode, duration_ms: raw.durationMs },
+        raw_script: {
+          exit_code: raw.exitCode,
+          duration_ms: raw.durationMs,
+          raw_would_leave_debris: raw.rawWouldLeaveDebris,
+        },
         gantry: {
           init_ms: gantry.initMs,
           legislate_ms: gantry.legislateMs,
           verify_ms: gantry.verifyMs,
           total_ms: gantry.totalMs,
+          virtual_purged: gantry.virtualPurged,
         },
       },
       mission_file: gantry.missionFile,
@@ -308,17 +396,32 @@ function emitSummary(raw, gantry) {
   }
 
   console.log(`[✓] Raw script: ${raw.durationMs}ms (exit ${raw.exitCode})`);
+  if (raw.rawWouldLeaveDebris) {
+    console.log("    Raw script would leave debris (.agent-state.json) — no crash-safe cleanup");
+  }
   console.log(
     `[✓] OpenGantry: ${gantry.totalMs}ms total (init ${gantry.initMs}ms · legislate ${gantry.legislateMs}ms · verify ${gantry.verifyMs}ms)`,
   );
+  console.log("    Gantry virtual flight purged after verify");
   console.log("Benchmark complete — repo working tree unchanged.");
 }
 
 function main() {
   assertBuilt();
-  const raw = runRawPath();
-  const gantry = runGantryPath();
-  emitSummary(raw, gantry);
+  const runId = createRunId();
+  const runDir = path.join(BENCHMARK_RUN_ROOT, runId);
+  runDirToTeardown = runDir;
+  fs.mkdirSync(BENCHMARK_RUN_ROOT, { recursive: true });
+  scavengeStaleBenchmarkRuns(runId);
+
+  try {
+    const raw = runRawPath(runId);
+    const gantry = runGantryPath(runId);
+    emitSummary(raw, gantry);
+    assertHostGitClean();
+  } finally {
+    teardownRunDir();
+  }
 }
 
 main();

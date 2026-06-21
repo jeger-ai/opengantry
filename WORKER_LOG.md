@@ -268,3 +268,5 @@ example trace line for gapman verify
 - DoD 1 MSN-0061: examples/benchmark-agent/ runs raw + gantry paths sequentially without unhandled exceptions
 - DoD 2 MSN-0061: npm run examples:benchmark wired from repo root
 - DoD 3 MSN-0061: scripts/benchmark-scaffold.sh delegates to public harness (thin wrapper, v1 JSON compat)
+- DoD 4 MSN-0061: benchmark sandboxes under .gitagent/virtual/benchmark-run/; host git status clean after run
+- DoD 5 MSN-0061: gantry path virtual_capture + full verify purges flight dir; orchestrator teardown removes runId

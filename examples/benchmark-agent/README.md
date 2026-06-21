@@ -23,7 +23,9 @@ Example output:
 
 ```
 [✓] Raw script: 254ms (exit 0)
-[✓] OpenGantry: 1114ms total (init 287ms · legislate 284ms · verify 479ms)
+    Raw script would leave debris (.agent-state.json) — no crash-safe cleanup
+[✓] OpenGantry: 1200ms total (init 287ms · legislate 284ms · verify 448ms)
+    Gantry virtual flight purged after verify
 Benchmark complete — repo working tree unchanged.
 ```
 
@@ -34,14 +36,26 @@ npm run examples:benchmark -- --json          # schema v2 (raw + gantry phases)
 ./scripts/benchmark-scaffold.sh               # legacy schema v1 (gantry timings only)
 ```
 
+## Isolation model (#81)
+
+Sandboxes are created under **`.gitagent/virtual/benchmark-run/<runId>/`** (gitignored). Each run uses a unique `benchmark-run_<timestamp>_<pid>` directory with `raw/` and `gantry/` phases.
+
+| Behavior | Detail |
+|----------|--------|
+| **Scavenger** | On startup, deletes stale `benchmark-run_*` dirs older than 15 minutes — never wipes the whole `virtual/` tree or other flights |
+| **Teardown** | After each run, the orchestrator removes **only** the current `<runId>` tree (`finally` + `process.on('exit')`) |
+| **Host git** | `git status` stays clean (virtual paths are ignored) |
+
 ## What it proves
 
 | Phase | Mechanism |
 |-------|-----------|
-| **Raw script** | Full [`raw-script.mjs`](raw-script.mjs) (~156 LOC vendored from [`../contrast-agent-script/`](../contrast-agent-script/)) mutates files with ad-hoc state (`.agent-state.json`) |
-| **OpenGantry** | Ephemeral repo → `gapman init` → dynamic `gapman legislate` → Teacher `[MSN-0999]` commit → TMVC-resolved patch → `gapman verify --pre-push` |
+| **Raw script** | Full [`raw-script.mjs`](raw-script.mjs) (~156 LOC) mutates files with ad-hoc state (`.agent-state.json`); narrative explains lack of crash-safe cleanup |
+| **OpenGantry** | `gapman init` → dynamic `gapman legislate` → Teacher commit → worker patch → **full** `gapman verify` with `virtual_capture: true` and dependency-free gate (`node --test test/smoke.test.js`) |
 
-Both phases run in **isolated `mktemp` sandboxes** with `git init` + seed commit (hermetic git boundary). Your clone's working tree is not modified.
+Both phases use `git init` + seed commit inside their sandbox. The orchestrator tears down the run directory before exit — repeated runs do not accrue debris layers.
+
+See also: [`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](../../docs/ADR-EPHEMERAL-VIRTUALIZATION.md)
 
 ## Layout
 
@@ -58,7 +72,6 @@ No pre-baked mission YAML — the gantry phase always calls `gapman legislate` a
 - Script specimen: [`../contrast-agent-script/`](../contrast-agent-script/)
 - Mission specimen: [`../gantry-minimal/`](../gantry-minimal/)
 - Epic: [GitHub #79](https://github.com/jeger-ai/opengantry/issues/79)
-- Virtual-scratch dogfood (future): [#81](https://github.com/jeger-ai/opengantry/issues/81)
 
 ## Environment
 
