@@ -281,3 +281,11 @@ example trace line for gapman verify
 
 - DoD 7 MSN-0061: docs/ADOPTION.md embeds reproducible benchmark commands and captured matrix output under OpenGantry vs agent scripts
 - DoD 8 MSN-0061: README hero callout and documentation map row point adopters to npm run examples:benchmark
+
+## MSN-0061 — v2.2.2 release (#84)
+
+[CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, templates/integrations/compatibility.json, package.json — v2.2.2 release metadata (mission-authorized, non-TMVC).
+
+- DoD 9 MSN-0061: assert-cli-version-parity OK — source + runtime at 2.2.2
+- DoD 10 MSN-0061: README + BACKLOG + ADOPTION v2.2.2 release docs synced
+- DoD 11 MSN-0061: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.2 Time-to-Scaffold benchmark)
