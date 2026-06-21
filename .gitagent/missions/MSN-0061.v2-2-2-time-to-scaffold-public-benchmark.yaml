@@ -9,20 +9,20 @@ trace_rows:
   - dod_id: "1"
     trace_quote: "examples/benchmark-agent/ runs raw + gantry paths sequentially without unhandled exceptions"
     anchor: "MSN-0061"
-    status: PENDING
+    status: PASS
   - dod_id: "2"
     trace_quote: "npm run examples:benchmark wired from repo root"
     anchor: "MSN-0061"
-    status: PENDING
+    status: PASS
   - dod_id: "3"
     trace_quote: "scripts/benchmark-scaffold.sh delegates to public harness (thin wrapper, v1 JSON compat)"
     anchor: "MSN-0061"
-    status: PENDING
+    status: PASS
   - dod_id: "4"
     trace_quote: "benchmark sandboxes under .gitagent/virtual/benchmark-run/; host git status clean after run"
     anchor: "MSN-0061"
-    status: PENDING
+    status: PASS
   - dod_id: "5"
     trace_quote: "gantry path virtual_capture + full verify purges flight dir; orchestrator teardown removes runId"
     anchor: "MSN-0061"
-    status: PENDING
+    status: PASS
