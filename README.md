@@ -35,11 +35,14 @@ npx @jeger-ai/opengantry init --tutorial
 
 Developing this repository from source: `npm ci && npm run build` — see [gapman CLI](#gapman-cli) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
+*Want to see the ROI? Run `npm run examples:benchmark` to compare a raw agent script against OpenGantry's TMVC protocol.* (Requires clone + `npm run build` — see [`docs/ADOPTION.md`](docs/ADOPTION.md).)
+
 ## Documentation map (start here)
 
 | Goal | Read first |
 |------|------------|
 | **Adopt in your repo (5 min)** | This README → [`docs/ADOPTION.md`](docs/ADOPTION.md) → [`docs/KATA.md`](docs/KATA.md) |
+| **See benchmark ROI (3 min)** | [`examples/benchmark-agent/`](examples/benchmark-agent/) → [`docs/ADOPTION.md`](docs/ADOPTION.md) |
 | **Wire IDE agents** | [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) |
 | **Contribute / dogfood** | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | **Governance law + workflow** | [`.gitagent/README.md`](.gitagent/README.md) · [`.gitagent/teacher/RULES.md`](.gitagent/teacher/RULES.md) |

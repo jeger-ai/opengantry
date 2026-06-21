@@ -26,6 +26,15 @@ const TEACHER_EMAIL = process.env.BENCHMARK_TEACHER_EMAIL ?? "benchmark-teacher@
 const TEACHER_NAME = process.env.BENCHMARK_TEACHER_NAME ?? "Benchmark Teacher";
 const LEGISLATE_PLACEHOLDER = "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION";
 
+/** Formatter-stable worker patch payload (counted in Gantry LOC boundary). */
+const WORKER_PATCH_PAYLOAD_LINES = [
+  "export const VERSION = '1.0.0';",
+  "",
+  "export function greet(name) {",
+  "  return `Hello, ${name}! (v${VERSION})`;",
+  "}",
+];
+
 const args = process.argv.slice(2);
 const jsonMode = args.includes("--json");
 const timingsOnly = args.includes("--timings-only");
@@ -44,6 +53,72 @@ function elapsedMs(start, end) {
 function die(message) {
   console.error(`benchmark: ${message}`);
   process.exit(1);
+}
+
+function summarizeCommandError(label, result) {
+  const combined = `${result.stderr ?? ""}\n${result.stdout ?? ""}`.trim();
+  const firstLine =
+    combined
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => line.length > 0) ?? `exit ${result.status}`;
+  die(`${label}: ${firstLine}`);
+}
+
+/** CRLF-safe; ignores whitespace-only lines for deterministic LOC. */
+function countNonEmptyLines(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0).length;
+}
+
+function countLocFromFile(filePath) {
+  return countNonEmptyLines(fs.readFileSync(filePath, "utf8"));
+}
+
+function workerPatchPayloadText() {
+  return WORKER_PATCH_PAYLOAD_LINES.join("\n");
+}
+
+function measureRawLoc() {
+  return countLocFromFile(RAW_SCRIPT);
+}
+
+function measureGantryLoc(missionYaml) {
+  return countNonEmptyLines(missionYaml) + countNonEmptyLines(workerPatchPayloadText());
+}
+
+function padCell(text, width) {
+  const s = String(text);
+  if (s.length > width) {
+    return `${s.slice(0, width - 1)}…`;
+  }
+  return s.padEnd(width);
+}
+
+function formatAsciiMatrix({ rawLoc, gantryLoc, raw, gantry }) {
+  const dimW = 20;
+  const rawW = 31;
+  const gantryW = 45;
+  const border = `+${"-".repeat(dimW + 2)}+${"-".repeat(rawW + 2)}+${"-".repeat(gantryW + 2)}+`;
+  const header = `| ${padCell("Dimension", dimW)} | ${padCell("Raw script", rawW)} | ${padCell("OpenGantry", gantryW)} |`;
+  const row = (dim, rawVal, gantryVal) =>
+    `| ${padCell(dim, dimW)} | ${padCell(rawVal, rawW)} | ${padCell(gantryVal, gantryW)} |`;
+
+  return [
+    "",
+    "Benchmark comparison",
+    border,
+    header,
+    border,
+    row("LOC (measured)", String(rawLoc), String(gantryLoc)),
+    row("Execution time", `${raw.durationMs}ms`, `${gantry.totalMs}ms`),
+    row("State tracking", "Ephemeral .agent-state.json", ".active-mission + git-native WORKER_LOG.md"),
+    row("Concurrency safety", "Ad-hoc file writes", "Atomic swaps + verify-gated workflow"),
+    border,
+    "* Gantry LOC = mission YAML + worker patch payload (non-empty lines; CRLF-normalized).",
+  ].join("\n");
 }
 
 function teardownRunDir() {
@@ -227,7 +302,7 @@ function runRawPath(runId) {
   const t1 = nowNs();
 
   if (!result.ok) {
-    die(`raw script failed (exit ${result.status}): ${result.stderr || result.stdout}`);
+    summarizeCommandError(`raw script failed (exit ${result.status})`, result);
   }
 
   const rawWouldLeaveDebris = fs.existsSync(path.join(sandbox, ".agent-state.json"));
@@ -256,7 +331,7 @@ function runGantryPath(runId) {
   );
   const t1 = nowNs();
   if (!initResult.ok) {
-    die(`gapman init failed: ${initResult.stderr || initResult.stdout}`);
+    summarizeCommandError("gapman init failed", initResult);
   }
 
   git(sandbox, ["add", "-A"], env);
@@ -282,7 +357,7 @@ function runGantryPath(runId) {
   );
   const t3 = nowNs();
   if (!legislateResult.ok) {
-    die(`gapman legislate failed: ${legislateResult.stderr || legislateResult.stdout}`);
+    summarizeCommandError("gapman legislate failed", legislateResult);
   }
 
   const legislateOutput = `${legislateResult.stdout}\n${legislateResult.stderr}`;
@@ -336,8 +411,10 @@ function runGantryPath(runId) {
   );
   const t5 = nowNs();
   if (!verifyResult.ok) {
-    die(`gapman verify failed: ${verifyResult.stderr || verifyResult.stdout}`);
+    summarizeCommandError("gapman verify failed", verifyResult);
   }
+
+  const missionYaml = fs.readFileSync(missionAbs, "utf8");
 
   assertGantryVirtualPurged(sandbox);
 
@@ -347,11 +424,15 @@ function runGantryPath(runId) {
     verifyMs: elapsedMs(t4, t5),
     totalMs: elapsedMs(t0, t5),
     missionFile: missionRel,
+    missionYaml,
     virtualPurged: true,
   };
 }
 
 function emitSummary(raw, gantry) {
+  const rawLoc = measureRawLoc();
+  const gantryLoc = measureGantryLoc(gantry.missionYaml);
+
   if (timingsOnly) {
     const payload = {
       benchmark: "time-to-scaffold",
@@ -379,6 +460,7 @@ function emitSummary(raw, gantry) {
           exit_code: raw.exitCode,
           duration_ms: raw.durationMs,
           raw_would_leave_debris: raw.rawWouldLeaveDebris,
+          loc: rawLoc,
         },
         gantry: {
           init_ms: gantry.initMs,
@@ -386,6 +468,8 @@ function emitSummary(raw, gantry) {
           verify_ms: gantry.verifyMs,
           total_ms: gantry.totalMs,
           virtual_purged: gantry.virtualPurged,
+          loc: gantryLoc,
+          loc_boundary: "mission YAML + worker patch payload",
         },
       },
       mission_file: gantry.missionFile,
@@ -403,6 +487,7 @@ function emitSummary(raw, gantry) {
     `[✓] OpenGantry: ${gantry.totalMs}ms total (init ${gantry.initMs}ms · legislate ${gantry.legislateMs}ms · verify ${gantry.verifyMs}ms)`,
   );
   console.log("    Gantry virtual flight purged after verify");
+  console.log(formatAsciiMatrix({ rawLoc, gantryLoc, raw, gantry }));
   console.log("Benchmark complete — repo working tree unchanged.");
 }
 

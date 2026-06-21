@@ -26,8 +26,21 @@ Example output:
     Raw script would leave debris (.agent-state.json) — no crash-safe cleanup
 [✓] OpenGantry: 1200ms total (init 287ms · legislate 284ms · verify 448ms)
     Gantry virtual flight purged after verify
+
+Benchmark comparison
++--------------------+-------------------------------+---------------------------------------------+
+| Dimension          | Raw script                    | OpenGantry                                  |
++--------------------+-------------------------------+---------------------------------------------+
+| LOC (measured)     | 161                           | 42                                          |
+| Execution time     | 254ms                         | 1200ms                                      |
+| State tracking     | Ephemeral .agent-state.json   | .active-mission + git-native WORKER_LOG.md  |
+| Concurrency safety | Ad-hoc file writes            | Atomic swaps + verify-gated workflow        |
++--------------------+-------------------------------+---------------------------------------------+
+* Gantry LOC = mission YAML + worker patch payload (non-empty lines; CRLF-normalized).
 Benchmark complete — repo working tree unchanged.
 ```
+
+LOC values are measured at runtime (not hard-coded). Gantry LOC counts the generated mission YAML plus the formatter-stable worker patch payload defined in `run-benchmark.mjs`.
 
 **Machine-readable:**
 
@@ -50,7 +63,7 @@ Sandboxes are created under **`.gitagent/virtual/benchmark-run/<runId>/`** (giti
 
 | Phase | Mechanism |
 |-------|-----------|
-| **Raw script** | Full [`raw-script.mjs`](raw-script.mjs) (~156 LOC) mutates files with ad-hoc state (`.agent-state.json`); narrative explains lack of crash-safe cleanup |
+| **Raw script** | Full [`raw-script.mjs`](raw-script.mjs) (measured LOC at runtime) mutates files with ad-hoc state (`.agent-state.json`); narrative explains lack of crash-safe cleanup |
 | **OpenGantry** | `gapman init` → dynamic `gapman legislate` → Teacher commit → worker patch → **full** `gapman verify` with `virtual_capture: true` and dependency-free gate (`node --test test/smoke.test.js`) |
 
 Both phases use `git init` + seed commit inside their sandbox. The orchestrator tears down the run directory before exit — repeated runs do not accrue debris layers.

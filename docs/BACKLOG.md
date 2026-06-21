@@ -9,7 +9,21 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-19 (v2.2.1 **patch release** — MSN-0060 thermo remediation)
+**Last synced:** 2026-06-21 (v2.2.2 **in progress** — benchmark harness #80–#83 done; #84 release pending)
+
+---
+
+## v2.2.2 — Time-to-Scaffold benchmark
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Public benchmark harness** (`examples/benchmark-agent/`) | **Done** | [#80](https://github.com/jeger-ai/opengantry/issues/80) · MSN-0061 |
+| **Virtual-scratch isolation** (`.gitagent/virtual/benchmark-run/`) | **Done** | [#81](https://github.com/jeger-ai/opengantry/issues/81) · MSN-0061 |
+| **Benchmark comparison matrix** (terminal UX, measured LOC) | **Done** | [#82](https://github.com/jeger-ai/opengantry/issues/82) · MSN-0061 |
+| **ADOPTION.md + README benchmark discovery** | **Done** | [#83](https://github.com/jeger-ai/opengantry/issues/83) · MSN-0061 |
+| **2.2.2 npm publish** | Open | [#84](https://github.com/jeger-ai/opengantry/issues/84) |
+
+Epic: [#79](https://github.com/jeger-ai/opengantry/issues/79). Milestone: **v2.2.2 — Time-to-Scaffold benchmark**.
 
 ---
 
@@ -285,7 +299,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.2.1 patch shipped (MSN-0060 thermo remediation); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
+**Current focus:** v2.2.2 in progress ([#79](https://github.com/jeger-ai/opengantry/issues/79) — benchmark #82–#84); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

@@ -14,7 +14,46 @@ OpenGantry is **Autonomous Repository Engineering** — determinism, predictabil
 | **Recovery** | Custom error handling per script | Stable **`GXT_*`** codes, `gapman verify --fix`, role-based `--audience` |
 | **Enterprise fit** | Hard to explain to risk/compliance | Greppable history: `git log --grep='MSN-'` |
 
-**Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (fragile Node orchestrator) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Run the interactive comparison: `npm run examples:benchmark` ([`examples/benchmark-agent/`](../examples/benchmark-agent/)). Maintainer timings JSON: [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh).
+### Reproducible benchmark
+
+Clone this repository and run one command to compare a fragile raw agent script against OpenGantry TMVC on the same task. The harness uses **local `dist/cli/index.js`** (not a global `gapman` install).
+
+**Prerequisites:** Node.js 24+, built CLI from this repo (`npm run build`).
+
+```bash
+git clone https://github.com/jeger-ai/opengantry.git
+cd opengantry
+npm ci
+npm run build
+npm run examples:benchmark
+```
+
+Example output (captured on a standard local developer environment):
+
+```text
+[✓] Raw script: 183ms (exit 0)
+    Raw script would leave debris (.agent-state.json) — no crash-safe cleanup
+[✓] OpenGantry: 975ms total (init 215ms · legislate 217ms · verify 486ms)
+    Gantry virtual flight purged after verify
+
+Benchmark comparison
++----------------------+---------------------------------+-----------------------------------------------+
+| Dimension            | Raw script                      | OpenGantry                                    |
++----------------------+---------------------------------+-----------------------------------------------+
+| LOC (measured)       | 142                             | 16                                            |
+| Execution time       | 183ms                           | 975ms                                         |
+| State tracking       | Ephemeral .agent-state.json     | .active-mission + git-native WORKER_LOG.md    |
+| Concurrency safety   | Ad-hoc file writes              | Atomic swaps + verify-gated workflow          |
++----------------------+---------------------------------+-----------------------------------------------+
+* Gantry LOC = mission YAML + worker patch payload (non-empty lines; CRLF-normalized).
+Benchmark complete — repo working tree unchanged.
+```
+
+*(Note: Execution timings captured on a standard local developer environment; your exact ms variance will differ, but the LOC structural boundaries are deterministic.)*
+
+Machine-readable: `npm run examples:benchmark -- --json`. Maintainer timings JSON (gantry phases only): [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh).
+
+**Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (fragile Node orchestrator) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Full harness: [`examples/benchmark-agent/`](../examples/benchmark-agent/).
 
 **Git-native state:** pinned mission (`.gitagent/missions/.active-mission`), legislative commits, and worker trace in `WORKER_LOG.md` — agent actions are reviewable, transactional steps toward merge, not ephemeral chat mutations.
 

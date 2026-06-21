@@ -270,3 +270,14 @@ example trace line for gapman verify
 - DoD 3 MSN-0061: scripts/benchmark-scaffold.sh delegates to public harness (thin wrapper, v1 JSON compat)
 - DoD 4 MSN-0061: benchmark sandboxes under .gitagent/virtual/benchmark-run/; host git status clean after run
 - DoD 5 MSN-0061: gantry path virtual_capture + full verify purges flight dir; orchestrator teardown removes runId
+
+## MSN-0061 — Benchmark matrix UX (#82)
+
+- DoD 6 MSN-0061: benchmark comparison matrix prints measured LOC + execution time and conceptual state/concurrency rows with Gantry LOC footnote
+
+## MSN-0061 — Adoption discovery (#83)
+
+[CONTEXT-REQUEST] paths: README.md — benchmark ROI hero callout and documentation map row (#83, mission-authorized via epic #79).
+
+- DoD 7 MSN-0061: docs/ADOPTION.md embeds reproducible benchmark commands and captured matrix output under OpenGantry vs agent scripts
+- DoD 8 MSN-0061: README hero callout and documentation map row point adopters to npm run examples:benchmark
