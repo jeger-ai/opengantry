@@ -1,6 +1,6 @@
-# v2.2.2 Time-to-Scaffold public benchmark — examples/benchmark-agent harness (#80, #81).
+# v2.2.2 Time-to-Scaffold public benchmark — examples/benchmark-agent harness (#80–#84).
 # Scope outside gapman TMVC (src/cli/): examples/benchmark-agent/, scripts/benchmark-scaffold.sh,
-# package.json (examples:benchmark script), example README cross-links — mission-authorized.
+# package.json (examples:benchmark script), README.md, docs/ADOPTION.md, docs/BACKLOG.md — mission-authorized.
 msn_id: MSN-0061
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
@@ -24,5 +24,29 @@ trace_rows:
     status: PASS
   - dod_id: "5"
     trace_quote: "gantry path virtual_capture + full verify purges flight dir; orchestrator teardown removes runId"
+    anchor: "MSN-0061"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "benchmark comparison matrix prints measured LOC + execution time and conceptual state/concurrency rows with Gantry LOC footnote"
+    anchor: "MSN-0061"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "docs/ADOPTION.md embeds reproducible benchmark commands and captured matrix output under OpenGantry vs agent scripts"
+    anchor: "MSN-0061"
+    status: PASS
+  - dod_id: "8"
+    trace_quote: "README hero callout and documentation map row point adopters to npm run examples:benchmark"
+    anchor: "MSN-0061"
+    status: PASS
+  - dod_id: "9"
+    trace_quote: "assert-cli-version-parity OK — source + runtime at 2.2.2"
+    anchor: "MSN-0061"
+    status: PASS
+  - dod_id: "10"
+    trace_quote: "README + BACKLOG + ADOPTION v2.2.2 release docs synced"
+    anchor: "MSN-0061"
+    status: PASS
+  - dod_id: "11"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.2 Time-to-Scaffold benchmark)"
     anchor: "MSN-0061"
     status: PASS
