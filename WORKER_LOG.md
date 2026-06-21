@@ -260,3 +260,11 @@ example trace line for gapman verify
 - DoD 3 MSN-0060 close-out: assert-cli-version-parity OK — source + runtime at 2.2.1
 - DoD 4 MSN-0060 close-out: README + BACKLOG v2.2.1 patch release docs synced
 - DoD 5 MSN-0060 close-out: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.1 thermo remediation)
+
+## MSN-0061 — v2.2.2 Time-to-Scaffold public benchmark (#80)
+
+[CONTEXT-REQUEST] paths: examples/benchmark-agent/, scripts/benchmark-scaffold.sh, package.json, docs/ADOPTION.md, docs/KATA.md, examples/contrast-agent-script/README.md, examples/gantry-minimal/README.md — adoption benchmark harness (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0061: examples/benchmark-agent/ runs raw + gantry paths sequentially without unhandled exceptions
+- DoD 2 MSN-0061: npm run examples:benchmark wired from repo root
+- DoD 3 MSN-0061: scripts/benchmark-scaffold.sh delegates to public harness (thin wrapper, v1 JSON compat)

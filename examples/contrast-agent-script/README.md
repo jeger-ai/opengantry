@@ -24,4 +24,4 @@ npm test          # passes after agent run
 
 **Line count (approx.):** orchestrator ~180 LOC vs GXT mission + gate ~25 LOC in gantry-minimal.
 
-Compare: [`../gantry-minimal/`](../gantry-minimal/) · [`../../scripts/benchmark-scaffold.sh`](../../scripts/benchmark-scaffold.sh) · [`../../docs/ADOPTION.md`](../../docs/ADOPTION.md).
+Compare: [`../gantry-minimal/`](../gantry-minimal/) · [`../benchmark-agent/`](../benchmark-agent/) · [`../../docs/ADOPTION.md`](../../docs/ADOPTION.md).

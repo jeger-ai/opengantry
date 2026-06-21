@@ -14,7 +14,7 @@ OpenGantry is **Autonomous Repository Engineering** — determinism, predictabil
 | **Recovery** | Custom error handling per script | Stable **`GXT_*`** codes, `gapman verify --fix`, role-based `--audience` |
 | **Enterprise fit** | Hard to explain to risk/compliance | Greppable history: `git log --grep='MSN-'` |
 
-**Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (fragile Node orchestrator) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Reproduce timings with [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh).
+**Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (fragile Node orchestrator) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Run the interactive comparison: `npm run examples:benchmark` ([`examples/benchmark-agent/`](../examples/benchmark-agent/)). Maintainer timings JSON: [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh).
 
 **Git-native state:** pinned mission (`.gitagent/missions/.active-mission`), legislative commits, and worker trace in `WORKER_LOG.md` — agent actions are reviewable, transactional steps toward merge, not ephemeral chat mutations.
 

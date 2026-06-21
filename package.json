@@ -24,7 +24,8 @@
     "validate": "./scripts/dev-validate.sh",
     "prepublishOnly": "npm run build && npm test",
     "pack:check": "./scripts/npm-pack-check.sh",
-    "test": "npm run build && node --test dist/cli/tests/*.test.js"
+    "test": "npm run build && node --test dist/cli/tests/*.test.js",
+    "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs"
   },
   "publishConfig": {
     "access": "public",

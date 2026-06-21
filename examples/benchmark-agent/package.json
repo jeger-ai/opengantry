@@ -1,0 +1,6 @@
+{
+  "name": "benchmark-agent",
+  "private": true,
+  "type": "module",
+  "description": "Time-to-Scaffold benchmark: raw agent script vs OpenGantry TMVC"
+}

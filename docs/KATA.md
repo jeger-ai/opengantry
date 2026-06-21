@@ -45,5 +45,5 @@ File an issue or append to your team runbook — this is the highest-signal adop
 
 - Operational runbook: [`ADOPTION.md`](ADOPTION.md)
 - Contrast specimens: [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) · [`examples/gantry-minimal/`](../examples/gantry-minimal/)
-- Time-to-Scaffold benchmark: [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh)
+- Time-to-Scaffold benchmark: [`examples/benchmark-agent/`](../examples/benchmark-agent/) (`npm run examples:benchmark`) · maintainer JSON: [`scripts/benchmark-scaffold.sh`](../scripts/benchmark-scaffold.sh)
 - IDE wiring: [`INTEGRATIONS.md`](INTEGRATIONS.md)

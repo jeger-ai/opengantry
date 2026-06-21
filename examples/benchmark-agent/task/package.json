@@ -1,0 +1,8 @@
+{
+  "name": "benchmark-agent-task",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/smoke.test.js"
+  }
+}
