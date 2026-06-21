@@ -1,4 +1,5 @@
 # v2.2.2 Time-to-Scaffold public benchmark — examples/benchmark-agent harness (#80–#84).
+# Docs: benchmark raw-script is a pedagogical orchestrator specimen (not typical team output).
 # Scope outside gapman TMVC (src/cli/): examples/benchmark-agent/, scripts/benchmark-scaffold.sh,
 # package.json (examples:benchmark script), README.md, docs/ADOPTION.md, docs/BACKLOG.md — mission-authorized.
 msn_id: MSN-0061
