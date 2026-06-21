@@ -1,0 +1,20 @@
+# v2.2.2 Time-to-Scaffold public benchmark — examples/benchmark-agent harness (#80).
+# Scope outside gapman TMVC (src/cli/): examples/benchmark-agent/, scripts/benchmark-scaffold.sh,
+# package.json (examples:benchmark script), example README cross-links — mission-authorized.
+msn_id: MSN-0061
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "examples/benchmark-agent/ runs raw + gantry paths sequentially without unhandled exceptions"
+    anchor: "MSN-0061"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: "npm run examples:benchmark wired from repo root"
+    anchor: "MSN-0061"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: "scripts/benchmark-scaffold.sh delegates to public harness (thin wrapper, v1 JSON compat)"
+    anchor: "MSN-0061"
+    status: PENDING
