@@ -1,4 +1,4 @@
-# Adoption Runbook (v2.2.2)
+# Adoption Runbook (v2.2.3)
 
 This runbook documents the OpenGantry specimen flow for adopters testing `gapman` locally. Product positioning lives in the [README](../README.md); this file is the operational path.
 
@@ -127,7 +127,38 @@ git log --grep='MSN-' --oneline
 gapman verify --mission .gitagent/missions/<file>.yaml
 ```
 
-PR CI (this specimen): commits touching `.gitagent/`, `WORKER_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects.
+PR CI (this specimen): commits touching `.gitagent/`, `WORKER_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects **unless** the change satisfies a repository-declared **`trusted_automation`** rule in [`.gitagent/config.json`](../.gitagent/config.json) (fail-closed when absent).
+
+### Trusted automation policy (v2.2.3+)
+
+Low-risk ecosystem bot maintenance (for example Dependabot workflow version pins) can bypass manual mission authoring when **all** constraints in a committed policy rule pass:
+
+| Constraint | Meaning |
+|------------|---------|
+| `allowed_actors` | Commit author email must match an entry you legislated (no hardcoded platform strings in the engine) |
+| `allowed_paths` | Every changed file must match a glob in the rule (e.g. `.github/workflows/**`) |
+| `allowed_structural_changes` | Only `workflow_version_pin` is supported in v2.2.3 — YAML structure unchanged; only existing `uses:` version segments may differ |
+| `max_net_loc` | Total diff churn (additions + deletions) per evaluation; hard engine cap **`<= 5`** |
+
+Example (specimen repo):
+
+```json
+{
+  "trusted_automation": {
+    "rules": [
+      {
+        "id": "workflow-dependency-bumps",
+        "allowed_actors": ["dependabot[bot]@users.noreply.github.com"],
+        "allowed_paths": [".github/workflows/**"],
+        "allowed_structural_changes": ["workflow_version_pin"],
+        "max_net_loc": 5
+      }
+    ]
+  }
+}
+```
+
+Evaluation is **git-derived only** (`gxt-manifest-lib.mjs eval-commit` / `eval-range`) — not CI environment variables. Missing or invalid config → full MSN/mission workflow remains enforced.
 
 ## Role-based CLI output (v1.0)
 
@@ -186,15 +217,16 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 | **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 | **v1.0.0** | `gapman init --tutorial`, global `--audience`, adoption-first docs |
 | **v1.1.0** | Mission isolation (MSN-0024–0026), stale trace evidence, `verify --json`, doctor substrate drift; MSN-0031 fail-closed stale evidence + verify orchestration unification |
+| **v2.2.3** | Declarative `trusted_automation` policy (`.gitagent/config.json`, `max_net_loc <= 5`, git-derived eval) ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
 | **v2.2.2** | Time-to-Scaffold public benchmark (`examples/benchmark-agent/`, measured LOC matrix, adoption discovery docs) |
 | **v2.2.1** | Verify-failure contract unification (`verify-failure-normalize`), race-safe `context-feed` writes, canonical verify presentation entrypoint |
 | **v2.2.0** | `gapman context-feed`, `gapman audit-rigor`, `virtual_capture`, adoption UX (#30–#33), product positioning (#69), docs map (#76) |
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.2.2**.
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.2.3**.
 - **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
 - **Local validate base ref:** `npm run validate` / `./scripts/dev-validate.sh` default to `origin/main`; pass your integration ref explicitly when it differs (e.g. `./scripts/dev-validate.sh origin/develop`).
 - **Upgrade from v1.x:** `npm install @jeger-ai/opengantry@latest`, then `gapman upgrade apply` (or `gapman init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, stale-evidence verify, and updated workflow.
-- **npm publish (maintainers):** push an annotated tag `v2.2.2` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.2.2` or `@latest`.
+- **npm publish (maintainers):** push an annotated tag `v2.2.3` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.2.3` or `@latest`.
 
 ## Hooks (fast, scoped)
 

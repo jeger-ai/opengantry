@@ -9,7 +9,20 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-21 (v2.2.2 **released** — Time-to-Scaffold benchmark #79–#84)
+**Last synced:** 2026-06-23 (v2.2.3 **released** — declarative trusted automation policy #92)
+
+---
+
+## v2.2.3 — Trusted automation policy (patch)
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Repository-declared `trusted_automation` policy** (`.gitagent/config.json`, fail-closed by default) | **Done** | [#92](https://github.com/jeger-ai/opengantry/issues/92) |
+| **Deterministic policy engine** (`gxt-manifest-lib.mjs` eval-commit / eval-range; git evidence only) | **Done** | [#92](https://github.com/jeger-ai/opengantry/issues/92) |
+| **MSN + mission verify integration** (`validate-gxt.sh`, `verify-pr-missions.sh`) | **Done** | [#92](https://github.com/jeger-ai/opengantry/issues/92) |
+| **Regression tests** (net_loc boundary, structural denial, determinism) | **Done** | [#92](https://github.com/jeger-ai/opengantry/issues/92) |
+
+Epic: [#92](https://github.com/jeger-ai/opengantry/issues/92). Hard cap: `max_net_loc <= 5`. No CI env-variable trust; adopters explicitly legislate allowed actors and paths.
 
 ---
 
@@ -299,10 +312,11 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.2.2 released ([#79](https://github.com/jeger-ai/opengantry/issues/79)); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
+**Current focus:** v2.2.3 released ([#92](https://github.com/jeger-ai/opengantry/issues/92)); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
+| **Done (release)** | v2.2.3 trusted automation policy | MSN-0063 declarative bot maintenance bypass ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
 | **Done (release)** | v2.2.2 Time-to-Scaffold benchmark | MSN-0061 public harness + matrix + adoption discovery |
 | **Done (release)** | v2.2.1 patch | MSN-0060 thermo remediation + version parity |
 | **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |

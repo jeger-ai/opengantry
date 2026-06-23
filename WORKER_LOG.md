@@ -293,3 +293,13 @@ example trace line for gapman verify
 ## MSN-0062 — Dependabot workflow compliance fix (#85)
 
 - DoD 1 MSN-0062: compliance fix for dependabot workflow bump — template parity restored, mission included, and bypass note policy path documented
+
+## MSN-0063 — Trusted automation policy (#92, v2.2.3)
+
+- DoD 1 MSN-0063: trusted_automation policy in .gitagent/config.json — fail-closed declarative rules with max_net_loc <= 5
+- DoD 2 MSN-0063: gxt-manifest-lib eval-commit/eval-range — git-derived policy engine, no CI env-variable trust
+- DoD 3 MSN-0063: validate-gxt.sh + verify-pr-missions.sh wired to policy engine; template mirrors synced
+- DoD 4 MSN-0063: trusted-automation.test.ts — net_loc 4/6 boundary, structural denial, determinism, mission skip
+- DoD 5 MSN-0063: assert-cli-version-parity OK — source + runtime at 2.2.3
+- DoD 6 MSN-0063: README + BACKLOG + ADOPTION v2.2.3 release docs synced
+- DoD 7 MSN-0063: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.3 trusted automation policy)

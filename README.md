@@ -60,14 +60,15 @@ Developing this repository from source: `npm ci && npm run build` — see [gapma
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gapman verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.2.2** — Time-to-Scaffold public benchmark, measured LOC matrix. Current npm publish: **v2.2.2**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gapman` v2.2.3** — declarative trusted automation policy for low-risk bot maintenance. Current npm publish: **v2.2.3**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## Release timeline (latest first)
 
-Current npm release in this repository: **`gapman` v2.2.2**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
+Current npm release in this repository: **`gapman` v2.2.3**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
+| **v2.2.3** | Declarative `trusted_automation` policy in `.gitagent/config.json` — repository-legislated bot maintenance bypass with `max_net_loc <= 5` ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
 | **v2.2.2** | Time-to-Scaffold benchmark — `npm run examples:benchmark`, measured LOC matrix, adoption discovery ([#79](https://github.com/jeger-ai/opengantry/issues/79)) |
 | **v2.2.1** | Thermo remediation — unified `NormalizedVerifyFailure` contract across JSON/human/context-feed; race-safe remediation snapshot writes; canonical `verify-presentation` entrypoint |
 | **v2.2.0** | `gapman context-feed`, `gapman audit-rigor`, `virtual_capture` ephemeral virtualization ([#68](https://github.com/jeger-ai/opengantry/issues/68)), product positioning, docs quality ([#66](https://github.com/jeger-ai/opengantry/issues/66)–[#69](https://github.com/jeger-ai/opengantry/issues/69), [#76](https://github.com/jeger-ai/opengantry/issues/76)) |

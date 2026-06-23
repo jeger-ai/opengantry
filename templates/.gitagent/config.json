@@ -1,0 +1,15 @@
+{
+  "trusted_automation": {
+    "rules": [
+      {
+        "id": "workflow-dependency-bumps",
+        "allowed_actors": [
+          "dependabot[bot]@users.noreply.github.com"
+        ],
+        "allowed_paths": [".github/workflows/**"],
+        "allowed_structural_changes": ["workflow_version_pin"],
+        "max_net_loc": 5
+      }
+    ]
+  }
+}

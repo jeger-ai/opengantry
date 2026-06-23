@@ -120,6 +120,10 @@ cmd_msn() {
     if commit_has_gxt_bypass_note "$commit"; then
       continue
     fi
+    if eval_out="$(node "$GXT_MANIFEST_LIB" eval-commit "$ROOT" "$commit" 2>&1)"; then
+      echo "$eval_out" >&2
+      continue
+    fi
     echo "MSN check FAILED: commit $commit touches MSN-enforced paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note" >&2
     echo "  subject: $subject" >&2
     echo "  hint: run gapman verify --break-glass --reason \"...\" with GXT_BYPASS_SECRET, push refs/notes/gxt-bypass" >&2
