@@ -18,6 +18,9 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | Item | Status | Issue |
 |------|--------|-------|
 | **Move primary CLI naming from `gapman` to `gantry`** (docs/help/output/templates) with `gapman` compatibility alias + migration guidance | Open | [#94](https://github.com/jeger-ai/opengantry/issues/94) |
+| **Capture Gantry long-tail developer intent** (`Open Source Gantry`, `Gantry CLI`, `Gantry Git hook`) across README/docs surfaces | Open | [#95](https://github.com/jeger-ai/opengantry/issues/95) |
+| **README anti-bounce disambiguation** (clearly route observability-seekers to Gantry.io while defining OpenGantry first) | Open | [#96](https://github.com/jeger-ai/opengantry/issues/96) |
+| **Vendor-neutral OpenGantry positioning pass** (cloud dashboard contrast + local git-native governance framing across core docs) | Open | [#97](https://github.com/jeger-ai/opengantry/issues/97) |
 
 ---
 
@@ -320,7 +323,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.2.3 released ([#92](https://github.com/jeger-ai/opengantry/issues/92)); next: v2.2.4 CLI naming transition ([#94](https://github.com/jeger-ai/opengantry/issues/94)), then v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
+**Current focus:** v2.2.3 released ([#92](https://github.com/jeger-ai/opengantry/issues/92)); next: v2.2.4 naming + SEO positioning ([#94](https://github.com/jeger-ai/opengantry/issues/94)–[#97](https://github.com/jeger-ai/opengantry/issues/97)), then v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
@@ -329,7 +332,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 | **Done (release)** | v2.2.1 patch | MSN-0060 thermo remediation + version parity |
 | **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |
 | **Done (release)** | v2.1.0 npm publish | MSN-0056; tag + npm **2.1.0** |
-| **Next (v2.2.4)** | [#94](https://github.com/jeger-ai/opengantry/issues/94) | Rename legacy CLI naming from `gapman` to `gantry` |
+| **Next (v2.2.4)** | [#94](https://github.com/jeger-ai/opengantry/issues/94)–[#97](https://github.com/jeger-ai/opengantry/issues/97) | CLI naming transition plus SEO/disambiguation positioning tasks |
 | **After** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29), v1.2+ [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | Deferred tactical + strategic (ADR first) |
 | Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
 | Done (v1.1.1) | [#10](https://github.com/jeger-ai/opengantry/issues/10)–[#11](https://github.com/jeger-ai/opengantry/issues/11), [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#50](https://github.com/jeger-ai/opengantry/issues/50) | MSN-0032–MSN-0033 |
