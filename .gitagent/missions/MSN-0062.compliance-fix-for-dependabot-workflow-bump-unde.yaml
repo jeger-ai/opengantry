@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Compliance fix for dependabot workflow bump under MSN governance
+msn_id: MSN-0062
+skill_key: substrate
+gate_command: node --test dist/cli/tests/template-parity.test.js && echo MSN-0062-GATE-OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0062: compliance fix for dependabot workflow bump — template parity restored, mission included, and bypass note policy path documented"
+    anchor: "MSN-0062"
+    status: PASS
+gate_success_substring: MSN-0062-GATE-OK

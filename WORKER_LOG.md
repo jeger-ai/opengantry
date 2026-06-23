@@ -289,3 +289,7 @@ example trace line for gapman verify
 - DoD 9 MSN-0061: assert-cli-version-parity OK — source + runtime at 2.2.2
 - DoD 10 MSN-0061: README + BACKLOG + ADOPTION v2.2.2 release docs synced
 - DoD 11 MSN-0061: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.2 Time-to-Scaffold benchmark)
+
+## MSN-0062 — Dependabot workflow compliance fix (#85)
+
+- DoD 1 MSN-0062: compliance fix for dependabot workflow bump — template parity restored, mission included, and bypass note policy path documented
