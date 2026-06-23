@@ -109,8 +109,14 @@ mapfile -t CHANGED_MISSIONS < <(
 )
 
 if [[ "$needs_mission" -eq 1 && ${#CHANGED_MISSIONS[@]} -eq 0 ]]; then
+  if eval_out="$(node "$GXT_MANIFEST_LIB" eval-range "$ROOT" "$BASE_SHA" "$HEAD_SHA" 2>&1)"; then
+    echo "$eval_out" >&2
+    echo "verify-pr-missions: trusted automation policy satisfied — mission file not required"
+    exit 0
+  fi
   echo "verify-pr-missions FAILED: diff touches MSN-enforced paths but no mission file under ${MISSIONS_PREFIX}" >&2
   echo "  Fix: gapman legislate \"<intent>\" --msn MSN-NNNN --skill-key gapman && include mission YAML in this PR" >&2
+  echo "  Or: declare eligible automation in .gitagent/config.json trusted_automation (fail-closed by default)" >&2
   exit 1
 fi
 

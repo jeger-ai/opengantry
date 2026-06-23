@@ -5,6 +5,7 @@ export const STATIC_ASSETS = [
   { targetPath: ".gitagent/foreman/SUBSTRATE.version.json", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/teacher/RULES.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/missions/README.md", mode: "scaffold_only", tags: ["core"] },
+  { targetPath: ".gitagent/config.json", mode: "scaffold_only", tags: ["core"] },
   { targetPath: "AGENTS.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/teacher/ARCHITECTURE-DISCOVERY.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/teacher/ARCHITECTURE-ACCESS.md", mode: "scaffold_only", tags: ["core"] },

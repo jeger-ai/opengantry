@@ -1,0 +1,36 @@
+# v2.2.3 — Declarative trusted automation policy for low-risk bot maintenance (#92).
+# Teacher stamp: mission file included in every [MSN-0063] commit for git-proof.
+# Scope outside gapman TMVC: .gitagent/config.json, scripts/, templates/, docs/, workflows — mission-authorized.
+msn_id: MSN-0063
+skill_key: gapman
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "trusted_automation policy in .gitagent/config.json — fail-closed declarative rules with max_net_loc <= 5"
+    anchor: "MSN-0063"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "gxt-manifest-lib eval-commit/eval-range — git-derived policy engine, no CI env-variable trust"
+    anchor: "MSN-0063"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "validate-gxt.sh + verify-pr-missions.sh wired to policy engine; template mirrors synced"
+    anchor: "MSN-0063"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "trusted-automation.test.ts — net_loc 4/6 boundary, structural denial, determinism, mission skip"
+    anchor: "MSN-0063"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "assert-cli-version-parity OK — source + runtime at 2.2.3"
+    anchor: "MSN-0063"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "README + BACKLOG + ADOPTION v2.2.3 release docs synced"
+    anchor: "MSN-0063"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.3 trusted automation policy)"
+    anchor: "MSN-0063"
+    status: PASS
