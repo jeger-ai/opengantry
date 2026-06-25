@@ -39,8 +39,8 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   if (!fs.existsSync(tmpRoot)) {
     throw new GapmanUserError(
       "UPGRADE_STAGING_MISSING",
-      `${CLI_NAME} upgrade --apply: staging directory missing at ${REL_UPGRADE_TMP}/ — re-run gapman upgrade`,
-      `Run \`gapman upgrade\` to regenerate staged files before apply.`,
+      `${CLI_NAME} upgrade --apply: staging directory missing at ${REL_UPGRADE_TMP}/ — re-run gantry upgrade`,
+      `Run \`gantry upgrade\` to regenerate staged files before apply.`,
     );
   }
 
@@ -58,7 +58,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
       throw new GapmanUserError(
         "UPGRADE_STAGING_DRIFT",
         `${CLI_NAME} upgrade --apply: missing staged file ${relPath} under ${REL_UPGRADE_TMP}/`,
-        "Re-run gapman upgrade to regenerate staging after mission was signed.",
+        "Re-run gantry upgrade to regenerate staging after mission was signed.",
       );
     }
     const actual = sha256File(stageAbs);
@@ -66,7 +66,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
       throw new GapmanUserError(
         "UPGRADE_HASH_MISMATCH",
         `${CLI_NAME} upgrade --apply: staged file hash mismatch for ${relPath}`,
-        "Staging directory was modified after plan. Re-run gapman upgrade and re-sign the mission.",
+        "Staging directory was modified after plan. Re-run gantry upgrade and re-sign the mission.",
       );
     }
   }
@@ -153,7 +153,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
 
     mergeGitignoreFromTemplate(repoRoot, templatesRoot);
     mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
-    writeSubstrateVersionFile(repoRoot, payload.to_version, "gapman upgrade --apply");
+    writeSubstrateVersionFile(repoRoot, payload.to_version, "gantry upgrade --apply");
   } catch (e) {
     cleanupApplyTmp(applyTmpRoot);
     throw e;
@@ -168,7 +168,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   const message = [
     `${CLI_NAME} upgrade: applied substrate ${payload.from_version} → ${payload.to_version}`,
     `Updated ${appliedPaths.length} managed asset(s).`,
-    "Next: restart Cursor, confirm MCP enabled, run gapman doctor.",
+    "Next: restart Cursor, confirm MCP enabled, run gantry doctor.",
   ].join("\n");
 
   if (!options.json) {

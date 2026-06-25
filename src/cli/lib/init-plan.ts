@@ -96,16 +96,16 @@ export function logInitSummary(
 }
 
 const INIT_NEXT_STEPS: string[] = [
-  "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gapman check",
+  "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check",
   "git config core.hooksPath .githooks",
-  'gapman teacher set "$(git config user.email)"',
-  'gapman start "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
+  'gantry teacher set "$(git config user.email)"',
+  'gantry start "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
   'Teacher: git commit -m "[MSN-0001] legislate mission" including mission file',
-  "eval \"$(gapman runtime env --mission .gitagent/missions/<file>.yaml)\"",
-  "gapman verify --mission .gitagent/missions/<file>.yaml",
+  "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"",
+  "gantry verify --mission .gitagent/missions/<file>.yaml",
   "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml",
   "scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml",
-  "gapman onboarding  # guided walkthrough (strict checks)",
+  "gantry onboarding  # guided walkthrough (strict checks)",
 ];
 
 export function logInitNextSteps(profile?: InitProfile): void {

@@ -69,7 +69,7 @@ export function parseOptionalTimeoutMs(
   if (!/^\d+$/.test(t)) {
     return {
       ok: false,
-      message: "gapman: runtime exec: --timeout-ms must be a non-negative integer",
+      message: "gantry: runtime exec: --timeout-ms must be a non-negative integer",
     };
   }
   const n = Number.parseInt(t, 10);

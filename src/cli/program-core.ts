@@ -79,7 +79,7 @@ export function registerCoreCommands(program: Command): void {
 
   const upgradeCmd = program
     .command("upgrade")
-    .description("Plan or apply substrate upgrades from the installed gapman package (Tier-3)");
+    .description("Plan or apply substrate upgrades from the installed gantry package (Tier-3)");
 
   upgradeCmd
     .command("plan")
@@ -121,7 +121,7 @@ export function registerCoreCommands(program: Command): void {
     .option("--msn <id>", "Mission id for --emit-mission", "MSN-0000")
     .option(
       "--out <file>",
-      "Mission output path for --emit-mission (default .gitagent/missions/ACTIVE_MISSION.md; use under .gitagent/missions/ for gapman verify)",
+      "Mission output path for --emit-mission (default .gitagent/missions/ACTIVE_MISSION.md; use under .gitagent/missions/ for gantry verify)",
     )
     .action(async (intentParts: string[], options: TriageCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();

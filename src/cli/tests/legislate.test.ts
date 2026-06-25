@@ -18,7 +18,7 @@ test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "prior.yaml"),
     `msn_id: MSN-0988
-skill_key: gapman
+skill_key: gantry
 gate_command: "echo OK"
 gate_success_substring: "OK"
 trace_rows: []
@@ -32,7 +32,7 @@ trace_rows: []
   try {
     process.exitCode = undefined;
     const result = runLegislate({
-      intent: "Add gapman verify helper",
+      intent: "Add gantry verify helper",
       msn: "MSN-0989",
       skillKey: "gapman",
     });
@@ -45,7 +45,7 @@ trace_rows: []
       .find((f) => f.startsWith("MSN-0989.") && f.endsWith(".yaml"))!;
     const body = fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
     assert.ok(body.includes("msn_id: MSN-0989") || body.includes("MSN-0989"));
-    assert.ok(body.includes("skill_key: gapman"));
+    assert.ok(body.includes("skill_key: gantry"));
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
@@ -147,7 +147,7 @@ test("legislate: duplicate msn fails closed by default", () => {
   fs.mkdirSync(missionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(missionsDir, "existing.yaml"),
-    "msn_id: MSN-0999\nskill_key: gapman\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0999\nskill_key: gantry\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -183,7 +183,7 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   fs.mkdirSync(missionsDir, { recursive: true });
   fs.writeFileSync(
     path.join(missionsDir, "existing.yaml"),
-    "msn_id: MSN-0999\nskill_key: gapman\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0999\nskill_key: gantry\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });

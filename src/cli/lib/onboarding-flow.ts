@@ -11,22 +11,22 @@ export function tutorialTeacherStampBlock(missionPath: string, msnId: string): s
   return [
     `git add ${missionPath}`,
     `git commit -m "[${msnId}] legislate mission"`,
-    "gapman teacher set \"$(git config user.email)\"  # if not already configured",
+    "gantry teacher set \"$(git config user.email)\"  # if not already configured",
   ].join("\n  ");
 }
 
 export function onboardingRuntimeEnvHint(missionPath: string): string {
-  return `eval "$(gapman runtime env --mission ${missionPath})"`;
+  return `eval "$(gantry runtime env --mission ${missionPath})"`;
 }
 
 export function onboardingVerifyHint(missionPath: string): string {
-  return `gapman verify --mission ${missionPath} --fix`;
+  return `gantry verify --mission ${missionPath} --fix`;
 }
 
 export function onboardingStatusHint(): string {
-  return "gapman status --json --verbose";
+  return "gantry status --json --verbose";
 }
 
 export function onboardingStartHint(): string {
-  return 'gapman start "<intent>" --msn MSN-0001 --skill-key <key> --gate-command "npm test"';
+  return 'gantry start "<intent>" --msn MSN-0001 --skill-key <key> --gate-command "npm test"';
 }

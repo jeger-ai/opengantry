@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PR / branch mission verify: mission purity, triple-dot file diff, full gapman verify on changed missions.
+# PR / branch mission verify: mission purity, triple-dot file diff, full gantry verify on changed missions.
 # Usage:
 #   BASE_SHA=<base> HEAD_SHA=<head> ./scripts/verify-pr-missions.sh
 #   ./scripts/verify-pr-missions.sh <base-ref> <head-ref>   # rev-parse refs to SHAs
@@ -57,10 +57,10 @@ fi
 
 if [[ -f dist/cli/index.js ]]; then
   GAPMAN=(node dist/cli/index.js)
-elif command -v gapman >/dev/null 2>&1; then
-  GAPMAN=(gapman)
+elif command -v gantry >/dev/null 2>&1; then
+  GAPMAN=(gantry)
 else
-  echo "verify-pr-missions: build gapman first (npm run build)" >&2
+  echo "verify-pr-missions: build gantry first (npm run build)" >&2
   exit 1
 fi
 
@@ -115,7 +115,7 @@ if [[ "$needs_mission" -eq 1 && ${#CHANGED_MISSIONS[@]} -eq 0 ]]; then
     exit 0
   fi
   echo "verify-pr-missions FAILED: diff touches MSN-enforced paths but no mission file under ${MISSIONS_PREFIX}" >&2
-  echo "  Fix: gapman legislate \"<intent>\" --msn MSN-NNNN --skill-key gapman && include mission YAML in this PR" >&2
+  echo "  Fix: gantry legislate \"<intent>\" --msn MSN-NNNN --skill-key gantry && include mission YAML in this PR" >&2
   echo "  Or: declare eligible automation in .gitagent/config.json trusted_automation (fail-closed by default)" >&2
   exit 1
 fi
@@ -140,7 +140,7 @@ if [[ ${#UNIQUE_MSNS[@]} -eq 1 ]]; then
 fi
 
 for mission in "${CHANGED_MISSIONS[@]}"; do
-  echo "verify-pr-missions: gapman verify --mission ${mission}" >&2
+  echo "verify-pr-missions: gantry verify --mission ${mission}" >&2
   "${GAPMAN[@]}" verify --mission "$mission" --audience verifier || exit 1
 done
 

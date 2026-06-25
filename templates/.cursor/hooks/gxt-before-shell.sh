@@ -52,9 +52,9 @@ if printf '%s' "$command" | grep -qE '\.gitagent/foreman/|\.gitagent/teacher/RUL
 fi
 
 # Fallback guard when agents bypass MCP and run legislate via raw shell.
-if printf '%s' "$command" | grep -qE '(^|[[:space:]/])gapman[[:space:]]+legislate\b'; then
+if printf '%s' "$command" | grep -qE '(^|[[:space:]/])gantry[[:space:]]+legislate\b'; then
   ask \
-    "Shell command runs gapman legislate directly. Confirm you intend to write mission law outside the MCP draft/execute gate." \
+    "Shell command runs gantry legislate directly. Confirm you intend to write mission law outside the MCP draft/execute gate." \
     "Prefer MCP: gxt_draft_legislation (preview) → human chat approval → gxt_execute_legislation. Shell legislate is a fallback path only."
   exit 0
 fi

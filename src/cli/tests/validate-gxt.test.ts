@@ -92,7 +92,7 @@ test("validate-gxt.sh msn: enforces MSN on MANIFEST tmvc_roots (src/cli)", () =>
   assert.notEqual(bad.status, 0);
 
   fs.writeFileSync(path.join(dest, "src/cli", "touch2.ts"), "export const x = 1\n", "utf8");
-  gitCommit(dest, "[MSN-7777] gapman cli change", TEACHER_EMAIL);
+  gitCommit(dest, "[MSN-7777] gantry cli change", TEACHER_EMAIL);
   const headGood = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
   const good = spawnSync("bash", [script, "msn", headSha, headGood], { cwd: dest, encoding: "utf8" });
   assert.equal(good.status, 0, (good.stderr || "") + (good.stdout || ""));

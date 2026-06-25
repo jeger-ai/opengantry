@@ -13,14 +13,14 @@ import { writeMiniGapmanRepo, gitInitCommit } from "./test-fixtures.js";
 import { TEACHER_EMAIL } from "./test-shared.js";
 import type { Manifest } from "../lib/types.js";
 
-test("runSubstrateDriftDoctorChecks: behind bundled suggests gapman upgrade", () => {
+test("runSubstrateDriftDoctorChecks: behind bundled suggests gantry upgrade", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-drift-behind-"));
   const templatesRoot = resolveTemplateRootFromModule();
   const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
   writeSubstrateVersionFile(dest, "0.8.1", "test");
   const r = runSubstrateDriftDoctorChecks(dest, templatesRoot);
-  assert.ok(r.lines.some((l) => l.level === "warn" && l.message.includes("behind bundled gapman")));
-  assert.equal(r.nextStep, "gapman upgrade");
+  assert.ok(r.lines.some((l) => l.level === "warn" && l.message.includes("behind bundled gantry")));
+  assert.equal(r.nextStep, "gantry upgrade");
   assert.ok(r.lines.some((l) => l.message.includes(bundled)));
 });
 
@@ -30,7 +30,7 @@ test("runSubstrateDriftDoctorChecks: matches bundled is ok", () => {
   const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
   writeSubstrateVersionFile(dest, bundled, "test");
   const r = runSubstrateDriftDoctorChecks(dest, templatesRoot);
-  assert.ok(r.lines.some((l) => l.level === "ok" && l.message.includes("matches bundled gapman")));
+  assert.ok(r.lines.some((l) => l.level === "ok" && l.message.includes("matches bundled gantry")));
   assert.equal(r.nextStep, null);
 });
 
@@ -39,7 +39,7 @@ test("runSubstrateDriftDoctorChecks: ahead of bundled warns without nextStep", (
   const templatesRoot = resolveTemplateRootFromModule();
   writeSubstrateVersionFile(dest, "99.0.0", "test");
   const r = runSubstrateDriftDoctorChecks(dest, templatesRoot);
-  assert.ok(r.lines.some((l) => l.level === "warn" && l.message.includes("ahead of bundled gapman")));
+  assert.ok(r.lines.some((l) => l.level === "warn" && l.message.includes("ahead of bundled gantry")));
   assert.equal(r.nextStep, null);
 });
 
@@ -52,7 +52,7 @@ test("runSubstrateDriftDoctorChecks: legacy default adds legacy warn", () => {
   );
 });
 
-test("collectDoctorReport: drift behind sets nextStep gapman upgrade", () => {
+test("collectDoctorReport: drift behind sets nextStep gantry upgrade", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-drift-report-"));
   writeMiniGapmanRepo(dest, ogRoot);
@@ -69,10 +69,10 @@ test("collectDoctorReport: drift behind sets nextStep gapman upgrade", () => {
   process.env.GAPMAN_TEACHER_EMAILS = TEACHER_EMAIL;
   try {
     const report = collectDoctorReport(dest, manifest);
-    assert.ok(report.lines.some((l) => l.message.includes("behind bundled gapman")));
+    assert.ok(report.lines.some((l) => l.message.includes("behind bundled gantry")));
     // nextStep is first-wins; drift upgrade hint applies when no higher-priority core hint is set
     const driftOnly = runSubstrateDriftDoctorChecks(dest, resolveTemplateRootFromModule());
-    assert.equal(driftOnly.nextStep, "gapman upgrade");
+    assert.equal(driftOnly.nextStep, "gantry upgrade");
   } finally {
     if (prevTeachers === undefined) delete process.env.GAPMAN_TEACHER_EMAILS;
     else process.env.GAPMAN_TEACHER_EMAILS = prevTeachers;

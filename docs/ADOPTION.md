@@ -1,22 +1,24 @@
-# Adoption Runbook (v2.2.3)
+# Adoption Runbook (v2.2.4)
 
-This runbook documents the OpenGantry specimen flow for adopters testing `gapman` locally. Product positioning lives in the [README](../README.md); this file is the operational path.
+This runbook documents the OpenGantry specimen flow for adopters testing `gantry` locally. Product positioning lives in the [README](../README.md); this file is the operational path.
+
+**Open Source Gantry** is **vendor-neutral**, **local-first**, **git-native governance** — the **Gantry CLI** plus **Gantry Git hook** enforcement in your repository, not a hosted agent dashboard.
 
 ## OpenGantry vs agent scripts
 
-OpenGantry is **Autonomous Repository Engineering** — determinism, predictability, and standardized protocols for scoped agent work. It is **not** a real-time conversational wrapper.
+OpenGantry is **Autonomous Repository Engineering** — determinism, predictability, and standardized protocols for scoped agent work. It is **not** a real-time conversational wrapper and **not** a cloud observability product (see [Gantry.io](https://gantry.io) for that category).
 
-| Concern | Improvised agent workflow (scripted or IDE-only) | OpenGantry (GXT) |
-|---------|--------------------------------|------------------|
-| **Scope** | Implicit; edits anywhere the model chooses | Declared **tmvc_roots** + **forbidden zones** in mission + manifest |
-| **Approval** | None or ad-hoc prompts | Teacher **`[MSN-XXXX]`** commit before worker execution |
-| **Audit trail** | Local JSON / chat logs (if any) | **Git-native:** mission YAML, gate output, verbatim **`WORKER_LOG.md`** quotes |
-| **Recovery** | Custom error handling per script | Stable **`GXT_*`** codes, `gapman verify --fix`, role-based `--audience` |
-| **Enterprise fit** | Hard to explain to risk/compliance | Greppable history: `git log --grep='MSN-'` |
+| Concern | Improvised agent workflow (scripted or IDE-only) | Cloud agent / observability dashboard | OpenGantry (GXT) |
+|---------|--------------------------------|---------------------------|------------------|
+| **Scope** | Implicit; edits anywhere the model chooses | Session visibility in vendor UI; repo policy varies | Declared **tmvc_roots** + **forbidden zones** in mission + manifest |
+| **Approval** | None or ad-hoc prompts | Vendor workflow / RBAC | Teacher **`[MSN-XXXX]`** commit before worker execution |
+| **Audit trail** | Local JSON / chat logs (if any) | Vendor-retained telemetry | **Git-native:** mission YAML, gate output, verbatim **`WORKER_LOG.md`** quotes |
+| **Recovery** | Custom error handling per script | Vendor dashboards + support | Stable **`GXT_*`** codes, `gantry verify --fix`, role-based `--audience` |
+| **Enterprise fit** | Hard to explain to risk/compliance | Strong fleet visibility; per-repo Git evidence may need extra tooling | Greppable history: `git log --grep='MSN-'` |
 
 ### Reproducible benchmark
 
-Clone this repository and run one command to compare a **pedagogical orchestrator specimen** against OpenGantry TMVC on the same task. The harness uses **local `dist/cli/index.js`** (not a global `gapman` install).
+Clone this repository and run one command to compare a **pedagogical orchestrator specimen** against OpenGantry TMVC on the same task. The harness uses **local `dist/cli/index.js`** (not a global `gantry` install).
 
 **What this is (and is not):** the raw-script phase runs a contrast specimen that compresses common anti-patterns into one file — ad-hoc state, heuristic scope, no `[MSN-XXXX]` gate. Most teams do not ship a monolithic `agent-run.mjs`; many use IDE agents with no orchestrator at all. The benchmark still holds: **without a Git-native protocol envelope, structure and auditability are improvised.** Measured LOC counts the orchestrator specimen only; conceptual rows (state tracking, concurrency) apply to IDE-only workflows too.
 
@@ -67,7 +69,7 @@ See also: README [OpenGantry Ledger](../README.md#opengantry-ledger--how-gxt-fit
 
 ## First run (onboarding)
 
-Install **gapman** (Node.js 24+):
+Install **gantry** (Node.js 24+):
 
 ```bash
 npm install -g @jeger-ai/opengantry
@@ -75,36 +77,36 @@ npm install -g @jeger-ai/opengantry
 ```
 
 ```bash
-gapman init --tutorial   # guided loop after scaffold (~3 min)
+gantry init --tutorial   # guided loop after scaffold (~3 min)
 # or:
-gapman init
-gapman onboarding      # same strict checks as production
-gapman teacher set "$(git config user.email)"
-gapman doctor
+gantry init
+gantry onboarding      # same strict checks as production
+gantry teacher set "$(git config user.email)"
+gantry doctor
 ```
 
 ## Standard change loop (review → run → audit)
 
 ```bash
 # 1. Human reviews mission BEFORE worker (Teacher commit required)
-gapman start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
+gantry start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
 # Teacher: review YAML scope/gates, then:
 git add .gitagent/missions/MSN-0001.<slug>.yaml
 git commit -m "[MSN-0001] legislate mission"
 
 # 2. Worker runs inside approved scope
-eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
+eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
 
 # 3. Audit evidence: verify + grep
-gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --fix
-gapman verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --json | jq -r '.error_code // "passed"'
+gantry verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --fix
+gantry verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --json | jq -r '.error_code // "passed"'
 git log --grep='MSN-0001' --oneline
-gapman status --json --verbose
+gantry status --json --verbose
 ```
 
-Legacy equivalent: `gapman legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"`.
+Legacy equivalent: `gantry legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"`.
 
-`gapman init` composes per-tool recipes into `docs/INTEGRATIONS.md`. Non-interactive: `gapman init --yes` or `gapman init --ides cursor,claude-code --no-ci`.
+`gantry init` composes per-tool recipes into `docs/INTEGRATIONS.md`. Non-interactive: `gantry init --yes` or `gantry init --ides cursor,claude-code --no-ci`.
 
 Wire your IDE agent: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
@@ -114,9 +116,11 @@ If auditors ask how AI-assisted coding fits your ISMS or AI management system, s
 
 ## Prevent unreviewed edits
 
+**Gantry Git hook** enforcement (`.githooks/pre-commit`, `.githooks/pre-push`, IDE `beforeShellExecution`) complements the **Gantry CLI** — hard boundaries live in hooks, `gantry verify`, and `runtime exec`, not in a vendor cloud console.
+
 - **Teacher-approved mission commit:** among recent commits, the newest `[MSN-XXXX]` from an allowlisted Teacher email must **modify** the mission file passed to `--mission`.
-- **Pre-push handoff:** `gapman verify --pre-push` lets legislative stubs push for remote agent handoff; **full verify** (gate + trace) is still required before merge.
-- **IDE writes are advisory:** rules and `AGENTS.md` guide agents; hooks + `gapman runtime exec` enforce hard boundaries.
+- **Pre-push handoff:** `gantry verify --pre-push` lets legislative stubs push for remote agent handoff; **full verify** (gate + trace) is still required before merge.
+- **IDE writes are advisory:** rules and `AGENTS.md` guide agents; hooks + `gantry runtime exec` enforce hard boundaries.
 
 ## Audit evidence cheatsheet
 
@@ -124,7 +128,7 @@ If auditors ask how AI-assisted coding fits your ISMS or AI management system, s
 git log --grep='MSN-' --oneline
 # Mission file: .gitagent/missions/<MSN>.<slug>.yaml
 # Worker trace: repo-root WORKER_LOG.md (verifier cites verbatim quotes)
-gapman verify --mission .gitagent/missions/<file>.yaml
+gantry verify --mission .gitagent/missions/<file>.yaml
 ```
 
 PR CI (this specimen): commits touching `.gitagent/`, `WORKER_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects **unless** the change satisfies a repository-declared **`trusted_automation`** rule in [`.gitagent/config.json`](../.gitagent/config.json) (fail-closed when absent).
@@ -163,15 +167,15 @@ Evaluation is **git-derived only** (`gxt-manifest-lib.mjs eval-commit` / `eval-r
 ## Role-based CLI output (v1.0)
 
 ```bash
-gapman --audience worker start "…"      # constraint-forward next steps
-gapman --audience teacher verify …      # copyable git / mission hints
-gapman --audience verifier verify …     # silence unless [GXT_*] errors (CI)
+gantry --audience worker start "…"      # constraint-forward next steps
+gantry --audience teacher verify …      # copyable git / mission hints
+gantry --audience verifier verify …     # silence unless [GXT_*] errors (CI)
 export GXT_AUDIENCE=verifier            # same as global --audience
 ```
 
 ## Verify troubleshooting
 
-`gapman verify` **auto-resolves formatter line drift** in `WORKER_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gapman verify --pre-push` for legislative stub handoff.
+`gantry verify` **auto-resolves formatter line drift** in `WORKER_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gantry verify --pre-push` for legislative stub handoff.
 
 ### Stale trace evidence (v1.1+)
 
@@ -183,28 +187,28 @@ After gate + trace quote mapping, full verify binds each **committed** PASS quot
 
 Re-run the gate, append a fresh unique trace line to `WORKER_LOG.md`, update mission `trace_quote`, commit, and verify again. After interactive rebase/squash, historical attestation may be invalidated — expect to refresh traces.
 
-**Formatter guard (recommended):** Add `WORKER_LOG.md` to `.prettierignore` (Prettier) or an equivalent ignore for your formatter (Biome `files.ignore`, ESLint ignore, editor format-on-save exclude). Numeric anchors and v1.1+ stale-evidence `git blame` bind to **committed line numbers**; auto-formatting the log causes avoidable drift (`verify` can fuzzy-resolve, but prevention is cheaper). `gapman init` and `gapman upgrade apply` merge this entry automatically; existing repos should add it once manually or re-run upgrade.
+**Formatter guard (recommended):** Add `WORKER_LOG.md` to `.prettierignore` (Prettier) or an equivalent ignore for your formatter (Biome `files.ignore`, ESLint ignore, editor format-on-save exclude). Numeric anchors and v1.1+ stale-evidence `git blame` bind to **committed line numbers**; auto-formatting the log causes avoidable drift (`verify` can fuzzy-resolve, but prevention is cheaper). `gantry init` and `gantry upgrade apply` merge this entry automatically; existing repos should add it once manually or re-run upgrade.
 
-Migration escape hatch: `gapman verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
+Migration escape hatch: `gantry verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
 
 ### MCP verify envelope (v1.1+)
 
-`gxt_verify` / `handleVerify` returns a flat **`VerifyResultPayload`** — same shape as `gapman verify --json`:
+`gxt_verify` / `handleVerify` returns a flat **`VerifyResultPayload`** — same shape as `gantry verify --json`:
 
 - Success: `{ "status": "passed", "phase": "full" | "pre_push_stub" | "break_glass", "exit_code": 0, … }`
 - Failure: `{ "status": "failed", "phase": "<phase>", "error_code": "GXT_*", "fix_hints": [], "next_actions": [], "exit_code": N, … }`
 
 Init and parse failures use **`status: "failed"`, `phase: "init"`** — not legacy `{ "status": "error" }`. Other MCP tools (`gxt_runtime_env`, `gxt_runtime_exec`) still use `{ "status": "error" }` until a future unification.
 
-`gapman verify --json` and `--fix` are mutually exclusive; combining them returns **`GXT_INVALID_ARGUMENT`** (`exit_code: 2`).
+`gantry verify --json` and `--fix` are mutually exclusive; combining them returns **`GXT_INVALID_ARGUMENT`** (`exit_code: 2`).
 
 ## Enforcement boundary
 
-**IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gapman verify`, and hooks.**
+**IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gantry verify`, and hooks.**
 
 | Tier | Mechanism | Enterprise control |
 |------|-----------|-------------------|
-| **Process-boundary** | `gapman runtime exec` | Forbidden-zone scan + subprocess TMVC envelope |
+| **Process-boundary** | `gantry runtime exec` | Forbidden-zone scan + subprocess TMVC envelope |
 | **Deterministic hook** | Cursor `beforeShellExecution`, pre-push verify | Governance path writes require mission + verify |
 | **Advisory** | IDE rules, `AGENTS.md`, sessionStart context | IDE suggestions alone do not count as approval |
 
@@ -214,19 +218,20 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
 | Release | Highlights |
 |---------|------------|
-| **v0.9.0** | `gapman start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
-| **v1.0.0** | `gapman init --tutorial`, global `--audience`, adoption-first docs |
-| **v1.1.0** | Mission isolation (MSN-0024–0026), stale trace evidence, `verify --json`, doctor substrate drift; MSN-0031 fail-closed stale evidence + verify orchestration unification |
+| **v2.2.4** | Unified gantry naming ([#94](https://github.com/jeger-ai/opengantry/issues/94)); docs positioning — Gantry.io disambiguation, long-tail SEO, vendor-neutral local governance ([#95](https://github.com/jeger-ai/opengantry/issues/95)–[#97](https://github.com/jeger-ai/opengantry/issues/97)) |
 | **v2.2.3** | Declarative `trusted_automation` policy (`.gitagent/config.json`, `max_net_loc <= 5`, git-derived eval) ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
 | **v2.2.2** | Time-to-Scaffold public benchmark (`examples/benchmark-agent/`, measured LOC matrix, adoption discovery docs) |
 | **v2.2.1** | Verify-failure contract unification (`verify-failure-normalize`), race-safe `context-feed` writes, canonical verify presentation entrypoint |
-| **v2.2.0** | `gapman context-feed`, `gapman audit-rigor`, `virtual_capture`, adoption UX (#30–#33), product positioning (#69), docs map (#76) |
+| **v2.2.0** | `gantry context-feed`, `gantry audit-rigor`, `virtual_capture`, adoption UX (#30–#33), product positioning (#69), docs map (#76) |
+| **v1.1.0** | Mission isolation (MSN-0024–0026), stale trace evidence, `verify --json`, doctor substrate drift; MSN-0031 fail-closed stale evidence + verify orchestration unification |
+| **v1.0.0** | `gantry init --tutorial`, global `--audience`, adoption-first docs |
+| **v0.9.0** | `gantry start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.2.3**.
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.2.4**.
 - **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
 - **Local validate base ref:** `npm run validate` / `./scripts/dev-validate.sh` default to `origin/main`; pass your integration ref explicitly when it differs (e.g. `./scripts/dev-validate.sh origin/develop`).
-- **Upgrade from v1.x:** `npm install @jeger-ai/opengantry@latest`, then `gapman upgrade apply` (or `gapman init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, stale-evidence verify, and updated workflow.
-- **npm publish (maintainers):** push an annotated tag `v2.2.3` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.2.3` or `@latest`.
+- **Upgrade from v1.x:** `npm install @jeger-ai/opengantry@latest`, then `gantry upgrade apply` (or `gantry init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, stale-evidence verify, and updated workflow.
+- **npm publish (maintainers):** push an annotated tag `v2.2.4` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.2.4` or `@latest`.
 
 ## Hooks (fast, scoped)
 
@@ -235,10 +240,10 @@ git config core.hooksPath .githooks
 ```
 
 - **post-checkout:** creates `WORKER_LOG.md` on feature branches when missing.
-- **pre-commit:** `gapman tmvc guard` — advisory TMVC path warnings for staged files (stderr; exit 0). Skips when no pinned mission. Set `GXT_TMVC_GUARD_STRICT=1` or pass `--strict` to block.
-- **pre-push:** `gapman verify --pre-push` for mission files changed on branch — ensures Teacher review before remote handoff; full gate+trace still required to merge.
+- **pre-commit:** `gantry tmvc guard` — advisory TMVC path warnings for staged files (stderr; exit 0). Skips when no pinned mission. Set `GXT_TMVC_GUARD_STRICT=1` or pass `--strict` to block.
+- **pre-push:** `gantry verify --pre-push` for mission files changed on branch — ensures Teacher review before remote handoff; full gate+trace still required to merge.
 
-Record out-of-TMVC expansion before editing: `gapman context-request --path <p…> --reason <text>` (optional `--stage-worker-log`).
+Record out-of-TMVC expansion before editing: `gantry context-request --path <p…> --reason <text>` (optional `--stage-worker-log`).
 
 ## Break-glass (emergency only)
 
@@ -249,33 +254,33 @@ Emergency bypass for verify when production is down — **not** a substitute for
 ```bash
 printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/foreman/BYPASS.sha256
 export GXT_BYPASS_SECRET='your-team-secret'
-gapman verify --break-glass --reason "Production auth down: hotfix session cookie" \
+gantry verify --break-glass --reason "Production auth down: hotfix session cookie" \
   --mission .gitagent/missions/MSN-0001.<slug>.yaml
 git push origin refs/notes/gxt-bypass
 ```
 
-`gapman doctor` tests whether `GXT_BYPASS_SECRET` matches the anchor when set.
+`gantry doctor` tests whether `GXT_BYPASS_SECRET` matches the anchor when set.
 
-**Substrate version drift (v1.1+):** `gapman doctor` compares on-disk `.gitagent/foreman/SUBSTRATE.version.json` to the `opengantry_version` bundled with your installed gapman (same source as `gapman upgrade`). When behind, doctor emits a **warn** (exit 0) and suggests `gapman upgrade` after updating the npm package. Warnings do not fail gates that only check exit code.
+**Substrate version drift (v1.1+):** `gantry doctor` compares on-disk `.gitagent/foreman/SUBSTRATE.version.json` to the `opengantry_version` bundled with your installed gantry (same source as `gantry upgrade`). When behind, doctor emits a **warn** (exit 0) and suggests `gantry upgrade` after updating the npm package. Warnings do not fail gates that only check exit code.
 
 ## Agent errors (machine vs human)
 
-On `runtime exec` failure, a one-line human summary goes to stdout; full JSON goes to stderr and `.gitagent/history/.ignored-last-error.json`. Orchestrators read `GXT_LAST_ERROR_FILE` from `gapman runtime env`.
+On `runtime exec` failure, a one-line human summary goes to stdout; full JSON goes to stderr and `.gitagent/history/.ignored-last-error.json`. Orchestrators read `GXT_LAST_ERROR_FILE` from `gantry runtime env`.
 
 ## Metrics
 
 ```bash
-gapman metrics
-gapman metrics --json --ref main
+gantry metrics
+gantry metrics --json --ref main
 ```
 
 Git-native only (single streamed `git log` pass). No local event ledger.
 
-**Routing proxy caveat:** `legislative_commits` vs `worker_trace_commits` are path-touch heuristics, not historical `gapman triage` replay. JSON exposes this explicitly via `gxt_extension_metadata` (see below).
+**Routing proxy caveat:** `legislative_commits` vs `worker_trace_commits` are path-touch heuristics, not historical `gantry triage` replay. JSON exposes this explicitly via `gxt_extension_metadata` (see below).
 
 ### Metrics JSON envelope
 
-`gapman metrics --json` includes a namespaced extension block so strict top-level parsers that only read primitive counters remain compatible:
+`gantry metrics --json` includes a namespaced extension block so strict top-level parsers that only read primitive counters remain compatible:
 
 ```json
 {
@@ -290,7 +295,7 @@ Git-native only (single streamed `git log` pass). No local event ledger.
 
 **Classification rules (PATH_TOUCH_PROXY):**
 
-- `legislative_commits`: commit touches `.gitagent/missions/*` with `MSN-NNNN` in the filename, subject starts with `[MSN-NNNN]`, author is in `GAPMAN_TEACHER_EMAILS` (non-empty allowlist entries only).
+- `legislative_commits`: commit touches `.gitagent/missions/*` with `MSN-NNNN` in the filename, subject starts with `[MSN-NNNN]`, author is in `GANTRY_TEACHER_EMAILS` (non-empty allowlist entries only).
 - `worker_trace_commits`: commit touches `WORKER_LOG.md` and does **not** qualify as legislative (mutually exclusive; dual-touch legislative commits never increment worker-trace).
 - Human stdout labels `(proxy)` on the counters; JSON uses `gxt_extension_metadata.classification_mode` instead of suffixing field names.
 
@@ -313,6 +318,6 @@ npm run lint -- path/to/changed.ts
 
 1. `npm run build && npm test`
 2. `./scripts/check-changed-code.sh origin/main HEAD` (when you changed `src/cli`)
-3. `gapman doctor` → exit 0 with warnings allowed
-4. Formatter drift: `gapman verify` passes without `--fuzzy-trace`
-5. `gapman metrics --json` identical on two consecutive runs at same ref (including `gxt_extension_metadata`)
+3. `gantry doctor` → exit 0 with warnings allowed
+4. Formatter drift: `gantry verify` passes without `--fuzzy-trace`
+5. `gantry metrics --json` identical on two consecutive runs at same ref (including `gxt_extension_metadata`)

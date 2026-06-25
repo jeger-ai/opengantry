@@ -29,7 +29,7 @@ function findExistingTutorialMission(repoRoot: string): string | null {
 }
 
 function pickTutorialSkillKey(skillKeys: string[]): string {
-  const preferred = ["logic", "ui", "gapman"];
+  const preferred = ["logic", "ui", "gantry"];
   for (const key of preferred) {
     if (skillKeys.includes(key)) return key;
   }
@@ -49,7 +49,7 @@ async function confirmTeacherStamp(
     logInfo(tutorialTeacherStampBlock(missionPath, TUTORIAL_MSN_ID));
     const ready = await p.confirm({
       message:
-        "I've run the git commands above (gapman will check git history before continuing)",
+        "I've run the git commands above (gantry will check git history before continuing)",
       initialValue: false,
     });
     if (p.isCancel(ready) || !ready) return false;
@@ -74,7 +74,7 @@ async function scaffoldTutorialMission(
   repoRoot: string,
   skillKey: string,
 ): Promise<string | null> {
-  p.log.step("Step 2 — Scaffold tutorial mission (gapman start)");
+  p.log.step("Step 2 — Scaffold tutorial mission (gantry start)");
   const existing = findExistingTutorialMission(repoRoot);
   if (existing) {
     p.log.message(`Using existing tutorial mission: ${existing}`);
@@ -85,13 +85,13 @@ async function scaffoldTutorialMission(
     intent: TUTORIAL_INTENT,
     msn: TUTORIAL_MSN_ID,
     skillKey,
-    gateCommand: "gapman check",
+    gateCommand: "gantry check",
     writeMission: true,
     silent: true,
     audience: "teacher",
   });
   if (!start.ok || !start.mission_file_path) {
-    logError("Tutorial start failed — run gapman onboarding or pass --skill-key");
+    logError("Tutorial start failed — run gantry onboarding or pass --skill-key");
     setExitCode(start.exit_code);
     p.outro("Tutorial incomplete");
     return null;
@@ -106,7 +106,7 @@ async function runTutorialVerifyStep(
   p.log.step("Step 5 — Verify");
   logInfo(`  ${onboardingVerifyHint(missionPath)}`);
   const runVerifyNow = await p.confirm({
-    message: "Run gapman verify now (git-proof, gate, trace — expect errors until trace is complete)?",
+    message: "Run gantry verify now (git-proof, gate, trace — expect errors until trace is complete)?",
     initialValue: true,
   });
   if (p.isCancel(runVerifyNow) || !runVerifyNow) {
@@ -135,13 +135,13 @@ function emitTutorialOutro(
   if (!verifyOk) {
     setExitCode(verifyExitCode ?? 1);
     p.outro(
-      `Tutorial incomplete — finish stamp/trace, then: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
+      `Tutorial incomplete — finish stamp/trace, then: gantry verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
     );
     return;
   }
   if (!ranVerify) {
     p.outro(
-      `Tutorial paused before verify — run: gapman verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
+      `Tutorial paused before verify — run: gantry verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
     );
     return;
   }
@@ -168,7 +168,7 @@ export async function runInitTutorial(): Promise<void> {
   }
 
   p.log.step("Step 1 — Teacher allowlist");
-  logInfo('  gapman teacher set "$(git config user.email)"');
+  logInfo('  gantry teacher set "$(git config user.email)"');
 
   const missionPath = await scaffoldTutorialMission(
     repoRoot,
@@ -179,7 +179,7 @@ export async function runInitTutorial(): Promise<void> {
   p.log.step("Step 3 — Teacher stamp (manual, required)");
   if (!(await confirmTeacherStamp(repoRoot, missionPath))) {
     p.note(
-      "Verify will fail until git-proof passes. Re-run: gapman verify --mission " + missionPath,
+      "Verify will fail until git-proof passes. Re-run: gantry verify --mission " + missionPath,
       "Paused",
     );
     p.outro(`Tutorial paused — see ${ONBOARDING_ADOPTION_DOC}`);

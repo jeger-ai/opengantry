@@ -75,7 +75,7 @@ function tagStep(audience: OutputAudience, step: string): AudienceTaggedStep {
 }
 
 function verifyCmd(mission: string): string {
-  return `gapman verify --mission ${mission}`;
+  return `gantry verify --mission ${mission}`;
 }
 
 function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
@@ -91,10 +91,10 @@ function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
   const hint = code ? hintGitProof(code, gitCtx) : verifyCmdStr;
   const nextActions =
     code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
-      ? [hint.split("; ")[0]!, 'gapman teacher set "$(git config user.email)"', verifyCmdStr]
-      : ['gapman teacher set "$(git config user.email)"', verifyCmdStr];
+      ? [hint.split("; ")[0]!, 'gantry teacher set "$(git config user.email)"', verifyCmdStr]
+      : ['gantry teacher set "$(git config user.email)"', verifyCmdStr];
   const tagged_steps: AudienceTaggedStep[] = [
-    tagStep("teacher", 'gapman teacher set "$(git config user.email)"'),
+    tagStep("teacher", 'gantry teacher set "$(git config user.email)"'),
     tagStep("verifier", verifyCmdStr),
   ];
   if (code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER") {
@@ -144,13 +144,13 @@ function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
   return {
     error_code: errorCode,
     fix_hints: [
-      `gapman scan --mission ${mission}`,
+      `gantry scan --mission ${mission}`,
       `commit updated KPI report under .gitagent/kpi/`,
       verifyCmdStr,
     ],
-    next_actions: [`gapman scan --mission ${mission}`, verifyCmdStr],
+    next_actions: [`gantry scan --mission ${mission}`, verifyCmdStr],
     tagged_steps: [
-      tagStep("worker", `gapman scan --mission ${mission}`),
+      tagStep("worker", `gantry scan --mission ${mission}`),
       tagStep("verifier", verifyCmdStr),
     ],
   };
@@ -188,10 +188,10 @@ function hintsForTracePhase(ctx: VerifyHintContext): VerifyRemediation {
   return {
     error_code: errorCode,
     fix_hints: hints,
-    next_actions: [verifyCmdStr, `gapman verify --mission ${mission} --fix`],
+    next_actions: [verifyCmdStr, `gantry verify --mission ${mission} --fix`],
     tagged_steps: [
       tagStep("verifier", verifyCmdStr),
-      tagStep("verifier", `gapman verify --mission ${mission} --fix`),
+      tagStep("verifier", `gantry verify --mission ${mission} --fix`),
     ],
   };
 }

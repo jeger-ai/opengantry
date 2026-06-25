@@ -6,7 +6,7 @@ import path from "node:path";
 import { mergeGxtFragment } from "../lib/file-merge-gxt.js";
 
 const HEADER =
-  "# OpenGantry (gapman init) — keep WORKER_LOG line numbers stable for trace mapping";
+  "# OpenGantry (gantry init) — keep WORKER_LOG line numbers stable for trace mapping";
 
 function withTempDir(fn: (dir: string) => void): void {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-file-merge-"));

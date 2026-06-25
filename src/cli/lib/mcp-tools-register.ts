@@ -25,7 +25,7 @@ function registerLegislationTools(server: McpServer): void {
     {
       title: z.string().describe("Concise summary of the proposed law"),
       msn_id: z.string().describe('Mission id, e.g. "MSN-0010"'),
-      skill_key: z.string().describe("Manifest skill key (e.g. gapman, ui, logic)"),
+      skill_key: z.string().describe("Manifest skill key (e.g. gantry, ui, logic)"),
       gate_command: z.string().describe("Deterministic verification command"),
       gate_success_substring: z.string().optional().describe("Optional gate success substring"),
     },
@@ -34,7 +34,7 @@ function registerLegislationTools(server: McpServer): void {
 
   server.tool(
     "gxt_execute_legislation",
-    "Execute gapman legislate using a valid draft_token after explicit human chat approval.",
+    "Execute gantry legislate using a valid draft_token after explicit human chat approval.",
     {
       draft_token: z.string().describe("Token from gxt_draft_legislation"),
     },
@@ -72,7 +72,7 @@ function registerRuntimeTools(server: McpServer): void {
 
   server.tool(
     "gxt_verify",
-    "Run gapman verify phases for a mission and return structured result.",
+    "Run gantry verify phases for a mission and return structured result.",
     {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
@@ -84,7 +84,7 @@ function registerRuntimeTools(server: McpServer): void {
 
   server.tool(
     "gxt_scan",
-    "Run gapman scan (llm_verifiers) and write KPI report for verify kpi_gate.",
+    "Run gantry scan (llm_verifiers) and write KPI report for verify kpi_gate.",
     {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       cwd: z.string().optional().describe("Working directory for verifier commands"),

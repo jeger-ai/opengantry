@@ -93,7 +93,7 @@ export function allocateMsn(repoRoot: string, options: { band: MsnBand }): strin
     const next = max + 1;
     if (next > WORK_MSN_BAND_MAX) {
       throw new Error(
-        `gapman: no MSN available in work band 1-${WORK_MSN_BAND_MAX} (upgrade band starts at ${UPGRADE_MSN_BAND_MIN})`,
+        `gantry: no MSN available in work band 1-${WORK_MSN_BAND_MAX} (upgrade band starts at ${UPGRADE_MSN_BAND_MIN})`,
       );
     }
     return `MSN-${String(next).padStart(4, "0")}`;
@@ -104,6 +104,6 @@ export function allocateMsn(repoRoot: string, options: { band: MsnBand }): strin
     if (!used.has(id)) return id;
   }
   throw new Error(
-    `gapman upgrade: no MSN available in upgrade band ${UPGRADE_MSN_BAND_MIN}-${UPGRADE_MSN_BAND_MAX}`,
+    `gantry upgrade: no MSN available in upgrade band ${UPGRADE_MSN_BAND_MIN}-${UPGRADE_MSN_BAND_MAX}`,
   );
 }

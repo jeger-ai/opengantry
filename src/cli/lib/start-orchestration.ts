@@ -52,9 +52,9 @@ function buildNextSteps(missionRel: string | null, msnId: string | null): string
   const msn = msnId ?? "MSN-NNNN";
   return [
     `Teacher: git add ${mission} && git commit -m "[${msn}] legislate mission"`,
-    `eval "$(gapman runtime env --mission ${mission})"`,
+    `eval "$(gantry runtime env --mission ${mission})"`,
     "Append gate evidence to WORKER_LOG.md",
-    `gapman verify --mission ${mission}`,
+    `gantry verify --mission ${mission}`,
     `scripts/gxt-pin-mission.sh ${mission}`,
   ];
 }
@@ -102,7 +102,7 @@ function startEscalationFailure(
     );
   }
   return createStartFailure(triage, null, triage.skill_key, [
-    `gapman start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+    `gantry start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
   ]);
 }
 
@@ -140,8 +140,8 @@ function scaffoldStartMission(
 
   const freshMsn = suggestNextMsn(root);
   return createStartFailure(triage, msnId, resolvedSkillKey, [
-    `try a fresh MSN: gapman start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
-    `or gapman legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
+    `try a fresh MSN: gantry start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
+    `or gantry legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
   ]);
 }
 

@@ -8,7 +8,7 @@ export const REMEDIATION_SCHEMA_VERSION = 1 as const;
 export interface RemediationSnapshot {
   schema_version: typeof REMEDIATION_SCHEMA_VERSION;
   written_at: string;
-  source: "gapman verify";
+  source: "gantry verify";
   cleared?: true;
   phase: string;
   error_code: string;
@@ -120,7 +120,7 @@ export function clearRemediationSnapshot(repoRoot: string): void {
   const tombstone: RemediationSnapshot = {
     schema_version: REMEDIATION_SCHEMA_VERSION,
     written_at: new Date().toISOString(),
-    source: "gapman verify",
+    source: "gantry verify",
     cleared: true,
     phase: "cleared",
     error_code: "GXT_REMEDIATION_CLEARED",

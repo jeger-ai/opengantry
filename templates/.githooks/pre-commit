@@ -6,10 +6,10 @@ cd "$(git rev-parse --show-toplevel)"
 
 if [[ -f dist/cli/index.js ]]; then
   GAPMAN=(node dist/cli/index.js)
-elif command -v gapman >/dev/null 2>&1; then
-  GAPMAN=(gapman)
+elif command -v gantry >/dev/null 2>&1; then
+  GAPMAN=(gantry)
 else
-  echo "pre-commit: gapman not found — run: npm run build" >&2
+  echo "pre-commit: gantry not found — run: npm run build" >&2
   exit 1
 fi
 
@@ -21,6 +21,6 @@ else
   exit 0
 fi
 
-echo "pre-commit: gapman tmvc guard --mission ${mission} (advisory default)" >&2
+echo "pre-commit: gantry tmvc guard --mission ${mission} (advisory default)" >&2
 "${GAPMAN[@]}" tmvc guard --mission "$mission"
 exit 0

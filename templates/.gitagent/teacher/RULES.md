@@ -27,10 +27,10 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 ## 5. Mission commit indexing
 
 - Mission-related commits MUST begin with `[MSN-XXXX]` in the subject line.
-- Keep mission files for `gapman verify` under `.gitagent/missions/`.
+- Keep mission files for `gantry verify` under `.gitagent/missions/`.
 
 ## 6. Break-glass (v0.8.0)
 
 - Set `GXT_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256` (SHA-256 hex of the team secret).
-- Use `gapman verify --break-glass --reason "..."` only in emergencies; push `refs/notes/gxt-bypass` with the branch.
+- Use `gantry verify --break-glass --reason "..."` only in emergencies; push `refs/notes/gxt-bypass` with the branch.
 - Forbidden-zone runtime policy is never bypassed.

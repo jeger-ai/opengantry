@@ -147,7 +147,7 @@ export function toRemediationSnapshot(normalized: NormalizedVerifyFailure): Reme
   return {
     schema_version: REMEDIATION_SCHEMA_VERSION,
     written_at: new Date().toISOString(),
-    source: "gapman verify",
+    source: "gantry verify",
     phase: normalized.phase,
     error_code: normalized.error_code,
     message: normalized.message,

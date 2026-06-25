@@ -39,7 +39,7 @@ export function mergeGitignoreFromTemplate(repoRoot: string, templatesRoot: stri
     repoRoot,
     ".gitignore",
     path.join(templatesRoot, ".gitignore.gxt"),
-    "# OpenGantry (gapman init) — local forensic paths",
+    "# OpenGantry (gantry init) — local forensic paths",
   );
 }
 
@@ -48,6 +48,6 @@ export function mergePrettierignoreFromTemplate(repoRoot: string, templatesRoot:
     repoRoot,
     ".prettierignore",
     path.join(templatesRoot, ".prettierignore.gxt"),
-    "# OpenGantry (gapman init) — keep WORKER_LOG line numbers stable for trace mapping",
+    "# OpenGantry (gantry init) — keep WORKER_LOG line numbers stable for trace mapping",
   );
 }

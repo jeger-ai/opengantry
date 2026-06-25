@@ -49,22 +49,22 @@ jobs:
       - name: Install Node deps
         run: npm ci
 
-      - name: Build gapman
+      - name: Build gantry
         run: npm run build
 
-      - name: gapman check (MANIFEST + Rule 4.4 skills sync)
+      - name: gantry check (MANIFEST + Rule 4.4 skills sync)
         run: node dist/cli/index.js check
 
       - name: Validate Foreman MANIFEST.json (Node parity)
         run: ./scripts/validate-gxt.sh manifest
 
-      - name: gapman unit tests
+      - name: gantry unit tests
         run: node --test dist/cli/tests/*.test.js
 
-      - name: gapman doctor (readiness)
+      - name: gantry doctor (readiness)
         run: node dist/cli/index.js doctor
 
-      - name: gapman perimeter (CI signature enforcement)
+      - name: gantry perimeter (CI signature enforcement)
         if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -88,7 +88,7 @@ jobs:
       - name: Install Node deps
         run: npm ci
 
-      - name: Build gapman
+      - name: Build gantry
         run: npm run build
 
       - name: Changed-code quality gates (complexity + import layers)
@@ -150,7 +150,7 @@ jobs:
       - name: Install Node deps
         run: npm ci
 
-      - name: Build gapman
+      - name: Build gantry
         run: npm run build
 
       - name: Full verify on PR-changed missions

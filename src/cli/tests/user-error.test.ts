@@ -24,7 +24,7 @@ test("reportUserFacingError: GapmanUserError prints Fix hint without stack", () 
   try {
     const err = new GapmanUserError(
       "MISSION_NO_GATE",
-      "gapman verify: MISSION_NO_GATE — no gate",
+      "gantry verify: MISSION_NO_GATE — no gate",
       "add gate_command to mission",
       1,
     );
@@ -46,7 +46,7 @@ test("reportUserFacingError: legacy git-proof message gets code-specific hint", 
   const prevExit = process.exitCode;
   try {
     const err = new Error(
-      "gapman verify: git-proof: NO_MSN_COMMITS — No commits found starting with [MSN-0999].",
+      "gantry verify: git-proof: NO_MSN_COMMITS — No commits found starting with [MSN-0999].",
     );
     const { output } = captureConsole(() => {
       process.exitCode = undefined;
@@ -62,9 +62,10 @@ test("reportUserFacingError: legacy git-proof message gets code-specific hint", 
   }
 });
 
-test("reportUserFacingError: plain Error has no stack unless GAPMAN_DEBUG", () => {
+test("reportUserFacingError: plain Error has no stack unless GANTRY_DEBUG", () => {
   const prevExit = process.exitCode;
-  const prevDebug = process.env.GAPMAN_DEBUG;
+  const prevDebug = process.env.GANTRY_DEBUG;
+  delete process.env.GANTRY_DEBUG;
   delete process.env.GAPMAN_DEBUG;
   try {
     const err = new Error("unexpected internal");
@@ -75,7 +76,7 @@ test("reportUserFacingError: plain Error has no stack unless GAPMAN_DEBUG", () =
     assert.doesNotMatch(combined, /at fakeFn/);
   } finally {
     process.exitCode = prevExit;
-    if (prevDebug === undefined) delete process.env.GAPMAN_DEBUG;
-    else process.env.GAPMAN_DEBUG = prevDebug;
+    if (prevDebug === undefined) delete process.env.GANTRY_DEBUG;
+    else process.env.GANTRY_DEBUG = prevDebug;
   }
 });

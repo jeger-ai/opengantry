@@ -1,5 +1,5 @@
 # MISSION.schema — JSON Schema (YAML encoding) for structured missions
-# Consumed by gapman (Ajv). Version label for docs only.
+# Consumed by gantry (Ajv). Version label for docs only.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://opengantry.local/schemas/mission.v1_1.json
 title: OpenGantryMission
@@ -31,7 +31,7 @@ properties:
     type: boolean
     default: false
     description: >-
-      When true, gapman verify captures gate stdout/stderr under
+      When true, gantry verify captures gate stdout/stderr under
       .gitagent/virtual/<flight-id>/ (gitignored) and purges on success.
   upgrade_payload:
     type: object

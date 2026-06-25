@@ -3,7 +3,7 @@ import { gitRunOk } from "./git.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
 
-/** Docs under missions/ are not gapman verify targets (no gate/trace contract). */
+/** Docs under missions/ are not gantry verify targets (no gate/trace contract). */
 const NON_VERIFIABLE_BASENAMES = new Set(["README.md"]);
 
 /** True for YAML/Markdown mission work orders under `.gitagent/missions/` (excludes README). */

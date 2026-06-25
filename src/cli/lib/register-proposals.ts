@@ -55,7 +55,7 @@ export function formatProposalHuman(proposal: SkillProposal): string {
   }
   lines.push("");
   lines.push(
-    "Teacher: review proposal, add skill to MANIFEST.json (Rule 4.4), then gapman legislate with --skill-key.",
+    "Teacher: review proposal, add skill to MANIFEST.json (Rule 4.4), then gantry legislate with --skill-key.",
   );
   return lines.join("\n");
 }

@@ -14,8 +14,8 @@ if [ -n "$explicit" ]; then
   exit 0
 fi
 
-if [ -n "${GAPMAN_MISSION:-}" ]; then
-  printf '%s\n' "$GAPMAN_MISSION"
+if [ -n "${GANTRY_MISSION:-}" ]; then
+  printf '%s\n' "$GANTRY_MISSION"
   exit 0
 fi
 

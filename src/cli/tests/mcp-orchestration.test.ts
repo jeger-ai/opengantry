@@ -4,7 +4,7 @@ import { handleStartOrchestration } from "../lib/mcp-governance.js";
 
 test("mcp orchestration: typed ok result", () => {
   const result = handleStartOrchestration({
-    intent: "gapman verify helper",
+    intent: "gantry verify helper",
     msn_id: "MSN-9999",
     skill_key: "gapman",
     gate_command: "echo OK",

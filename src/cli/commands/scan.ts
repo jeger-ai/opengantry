@@ -11,7 +11,7 @@ export interface ScanOptions {
 
 export function runScan(options: ScanOptions): void {
   if (!options.mission) {
-    logError("gapman scan: --mission is required");
+    logError("gantry scan: --mission is required");
     setExitCode(2);
     return;
   }
@@ -28,7 +28,7 @@ export function runScan(options: ScanOptions): void {
       return;
     }
 
-    logInfo(`gapman scan: wrote ${result.reportPath}`);
+    logInfo(`gantry scan: wrote ${result.reportPath}`);
     logInfo(`metrics: ${Object.keys(result.report.metrics).length}`);
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));

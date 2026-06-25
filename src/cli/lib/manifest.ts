@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { REL_MANIFEST } from "./constants.js";
+import { CLI_NAME, REL_MANIFEST } from "./constants.js";
 import type { Manifest } from "./types.js";
 
 export function manifestPath(root: string): string {
@@ -10,7 +10,7 @@ export function manifestPath(root: string): string {
 export function loadManifest(root: string): Manifest {
   const p = manifestPath(root);
   if (!fs.existsSync(p)) {
-    throw new Error(`gapman: missing ${REL_MANIFEST}`);
+    throw new Error(`${CLI_NAME}: missing ${REL_MANIFEST}`);
   }
   const raw = JSON.parse(fs.readFileSync(p, "utf8")) as unknown;
   validateManifestShape(raw);

@@ -35,7 +35,7 @@ export function runTeacherShow(options: TeacherShowOptions = {}): void {
 
   if (resolved.emails.length === 0) {
     logInfo(`${CLI_NAME} teacher: no allowlist configured`);
-    logInfo(`  Run: gapman teacher set "$(git config user.email)"`);
+    logInfo(`  Run: gantry teacher set "$(git config user.email)"`);
     return;
   }
 

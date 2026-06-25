@@ -35,7 +35,7 @@ export type ChangedPathsResult =
   | { ok: false; code: string; reason: string };
 
 const SHALLOW_HISTORY_HINT =
-  "Configure CI checkout with fetch-depth: 0 or fetch the base ref explicitly before running gapman perimeter --ci.";
+  "Configure CI checkout with fetch-depth: 0 or fetch the base ref explicitly before running gantry perimeter --ci.";
 
 function perimeterGlobs(manifest: Manifest): string[] {
   return manifest.perimeter_protected?.length

@@ -44,7 +44,7 @@ function writeWave3Repo(dest: string, ogRoot: string): { missionRel: string } {
   fs.writeFileSync(
     path.join(dest, missionRel),
     `msn_id: MSN-0801
-skill_key: gapman
+skill_key: gantry
 gate_command: echo OK
 gate_success_substring: OK
 trace_rows: []

@@ -18,7 +18,7 @@ test("mission schema: rejects unknown top-level keys", () => {
     path.join(root, ".gitagent", "teacher", "KPI-REPORT.schema.yaml"),
   );
   const body = `msn_id: MSN-0990
-skill_key: gapman
+skill_key: gantry
 gate_command: echo OK
 unknown_field: true
 trace_rows: []
@@ -37,7 +37,7 @@ test("mission schema: kpi_gate and llm_verifiers pass validateYamlMission", () =
     path.join(root, ".gitagent", "teacher", "MISSION.schema.yaml"),
   );
   const body = `msn_id: MSN-0991
-skill_key: gapman
+skill_key: gantry
 gate_command: echo OK
 kpi_gate:
   report_path: ".gitagent/kpi/MSN-0991.json"

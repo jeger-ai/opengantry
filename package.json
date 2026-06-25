@@ -1,9 +1,10 @@
 {
   "name": "@jeger-ai/opengantry",
-  "version": "2.2.3",
-  "description": "OpenGantry GXT substrate + gapman CLI",
+  "version": "2.2.4",
+  "description": "Open Source Gantry — vendor-neutral GXT substrate and Gantry CLI for local git-native agent governance",
   "type": "module",
   "bin": {
+    "gantry": "dist/cli/index.js",
     "gapman": "dist/cli/index.js"
   },
   "files": [
@@ -25,7 +26,8 @@
     "prepublishOnly": "npm run build && npm test",
     "pack:check": "./scripts/npm-pack-check.sh",
     "test": "npm run build && node --test dist/cli/tests/*.test.js",
-    "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs"
+    "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
+    "gantry": "node dist/cli/index.js"
   },
   "publishConfig": {
     "access": "public",
@@ -33,7 +35,10 @@
   },
   "keywords": [
     "gxt",
-    "gapman",
+    "gantry",
+    "gantry-cli",
+    "open-source-gantry",
+    "git-hooks",
     "ai-agents",
     "governance",
     "devtools"

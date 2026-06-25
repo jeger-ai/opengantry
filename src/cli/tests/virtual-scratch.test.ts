@@ -38,7 +38,7 @@ function writeVirtualMission(
       ? ""
       : `gate_success_substring: "${opts.gateSubstring}"\n`;
   const yaml = `msn_id: MSN-0999
-skill_key: gapman
+skill_key: gantry
 gate_command: ${gateCommand}
 ${substringLine}virtual_capture: true
 trace_rows:

@@ -9,8 +9,8 @@ import {
 test("filterNextStepsForAudience: preserves concrete mission-specific steps", () => {
   const concrete = [
     "Teacher: git add .gitagent/missions/MSN-0015.foo.yaml && git commit -m \"[MSN-0015] legislate mission\"",
-    "eval \"$(gapman runtime env --mission .gitagent/missions/MSN-0015.foo.yaml)\"",
-    "gapman verify --mission .gitagent/missions/MSN-0015.foo.yaml",
+    "eval \"$(gantry runtime env --mission .gitagent/missions/MSN-0015.foo.yaml)\"",
+    "gantry verify --mission .gitagent/missions/MSN-0015.foo.yaml",
   ];
   const workerSteps = filterNextStepsForAudience("worker", concrete);
   assert.ok(workerSteps.some((s) => s.includes("MSN-0015.foo.yaml")));
@@ -27,7 +27,7 @@ test("filterNextStepsForAudience: falls back to role defaults when no computed s
 });
 
 test("formatAudienceNextStep: worker and teacher prefixes", () => {
-  assert.match(formatAudienceNextStep("gapman verify --mission x.yaml", "worker"), /^Constraint:/);
+  assert.match(formatAudienceNextStep("gantry verify --mission x.yaml", "worker"), /^Constraint:/);
   assert.match(
     formatAudienceNextStep('git commit -m "[MSN-0001] legislate"', "teacher"),
     /Teacher:|git commit/,

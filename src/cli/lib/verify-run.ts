@@ -1,3 +1,4 @@
+import { CLI_NAME } from "./constants.js";
 import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import { GapmanUserError } from "./errors.js";
 import { loadWorkspace } from "./workspace.js";
@@ -30,7 +31,7 @@ export interface VerifyRunResult {
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
   const { root, manifest } = loadWorkspace();
   if (!options.mission) {
-    throw new Error("gapman verify: --mission is required");
+    throw new Error("gantry verify: --mission is required");
   }
   const mission = parseMissionFile(root, options.mission);
   const missionArg = options.mission;
@@ -77,7 +78,7 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
 export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): VerifyResultPayload {
   try {
     if (!options.mission) {
-      throw new GapmanUserError("INVALID_ARGUMENT", "gapman verify: --mission is required", undefined, 2);
+      throw new GapmanUserError("INVALID_ARGUMENT", `${CLI_NAME} verify: --mission is required`, undefined, 2);
     }
     const { root, manifest } = loadWorkspace();
     const mission = parseMissionFile(root, options.mission);

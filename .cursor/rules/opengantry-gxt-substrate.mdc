@@ -11,7 +11,7 @@ Whenever the user starts a prompt with `/gantry`:
 
 1. Immediately switch to Mission Architect behavior.
 2. Run the protocol in `.gitagent/teacher/MISSION-ARCHITECT.md`.
-3. Hand off via MCP tools (`gxt_draft_legislation` → chat approval → `gxt_execute_legislation`) or CLI `gapman legislate` fallback.
+3. Hand off via MCP tools (`gxt_draft_legislation` → chat approval → `gxt_execute_legislation`) or CLI `gantry legislate` fallback.
 
 Do not use `/plan` — Cursor reserves it for native Plan Mode.
 
@@ -28,13 +28,13 @@ Treat these as the **law + routing contract** for agent work. For orientation an
 
 - **Do NOT** trigger for questions, explanations, or code discovery.
 - **MCP handoff:** two-step draft/execute with semantic chat approval before any mission file write.
-- **CLI fallback:** one copy-paste `gapman legislate …` command only (no raw YAML blocks).
+- **CLI fallback:** one copy-paste `gantry legislate …` command only (no raw YAML blocks).
 
 ## Cursor wiring
 
 - **Rules:** this file (`alwaysApply: true`) + root `AGENTS.md`.
-- **MCP:** `.cursor/mcp.json` — `gxt_*` tools via `gapman mcp serve`.
-- **Hooks:** `.cursor/hooks.json` (installed by `gapman init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths (fallback for non-MCP shell paths).
+- **MCP:** `.cursor/mcp.json` — `gxt_*` tools via `gantry mcp serve`.
+- **Hooks:** `.cursor/hooks.json` (installed by `gantry init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths (fallback for non-MCP shell paths).
 - **Pin mission:** `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml` before Agent work.
 - **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission or explicit path).
 - **Code architecture:** `.gitagent/ARCHITECTURE.pointer.json` — if `kind=unset` or stub, read `.gitagent/teacher/ARCHITECTURE-DISCOVERY.md` and ask user before coding.

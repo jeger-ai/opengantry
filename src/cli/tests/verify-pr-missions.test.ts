@@ -98,7 +98,7 @@ test("verify-pr-missions.sh: fails when changed mission file mismatches commit M
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent/missions", "MSN-0022.wrong-mission.yaml"),
-    "msn_id: MSN-0022\nskill_key: gapman\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
+    "msn_id: MSN-0022\nskill_key: gantry\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
   gitCommit(dest, "[MSN-0025] legislate mismatched mission file", TEACHER_EMAIL);

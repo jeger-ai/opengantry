@@ -25,7 +25,7 @@ function withTempRepo(fn: (dest: string) => void): void {
   });
 }
 
-test("runStartOrchestration: scaffolds mission for gapman skill intent", () => {
+test("runStartOrchestration: scaffolds mission for gantry skill intent", () => {
   withTempRepo((dest) => {
     const result = runStartOrchestration({
       intent: "fix ui button component",

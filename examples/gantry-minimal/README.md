@@ -19,21 +19,21 @@ trace_rows:
     status: PENDING
 ```
 
-Manifest skill `logic` declares `tmvc_roots: ["src/lib/"]` — edits outside that path require `gapman context-request`.
+Manifest skill `logic` declares `tmvc_roots: ["src/lib/"]` — edits outside that path require `gantry context-request`.
 
 ## Closed loop (headless-friendly)
 
 ```bash
-gapman init --yes --no-ci
-gapman teacher set "$(git config user.email)"
-gapman legislate "Add greeting VERSION export" --msn MSN-0001 --skill-key logic \
+gantry init --yes --no-ci
+gantry teacher set "$(git config user.email)"
+gantry legislate "Add greeting VERSION export" --msn MSN-0001 --skill-key logic \
   --gate-command "npm test" --gate-success-substring "pass"
 git add .gitagent/missions/MSN-0001.*.yaml
 git commit -m "[MSN-0001] legislate mission"
-eval "$(gapman runtime env --mission .gitagent/missions/MSN-0001.add-greeting-version.yaml)"
+eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.add-greeting-version.yaml)"
 # … edit src/lib/greeting.js within TMVC …
 echo "- MSN-0001: greet exports VERSION and smoke test passes" >> WORKER_LOG.md
-gapman verify --mission .gitagent/missions/MSN-0001.add-greeting-version.yaml
+gantry verify --mission .gitagent/missions/MSN-0001.add-greeting-version.yaml
 git log --grep='MSN-0001' --oneline
 ```
 
@@ -47,7 +47,7 @@ npm test
 
 | | Script specimen | This specimen |
 |--|-----------------|---------------|
-| Orchestrator | [`agent-run.mjs`](../contrast-agent-script/agent-run.mjs) (pedagogical — anti-patterns in one file) | `gapman` primitives + mission YAML |
+| Orchestrator | [`agent-run.mjs`](../contrast-agent-script/agent-run.mjs) (pedagogical — anti-patterns in one file) | `gantry` primitives + mission YAML |
 | Audit | `.agent-state.json` | Git + `WORKER_LOG.md` |
 | Scope | Heuristic | `tmvc_roots` / forbidden zones |
 

@@ -1,4 +1,4 @@
-# gapman CLI architecture
+# gantry CLI architecture
 
 Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.gitagent/ARCHITECTURE.pointer.json`](../.gitagent/ARCHITECTURE.pointer.json) (`kind: file`). Dependencies flow **downward only** (higher layers may import lower; never the reverse).
 
@@ -10,7 +10,7 @@ Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.git
 | **Application** | `*orchestrator*.ts`, `commands/*` orchestration | compose domain steps into use-cases |
 | **Domain** | `mission-*.ts`, `trace.ts`, `triage-logic.ts`, `git-proof.ts`, `gate.ts`, `manifest.ts`, … | policy and pure rules |
 | **Infrastructure** | `git-repo.ts`, `git.ts`, `runtime-exec-process.ts` | git, subprocess, FS |
-| **Governance surface** | `.githooks/`, `scripts/`, `.github/workflows/` | shell out to `gapman`; no duplicated policy |
+| **Governance surface** | `.githooks/`, `scripts/`, `.github/workflows/` | shell out to `gantry`; no duplicated policy |
 
 ```mermaid
 flowchart TB
@@ -29,7 +29,7 @@ flowchart TB
 1. `src/cli/lib/**` MUST NOT import from `src/cli/commands/**`.
 2. `src/cli/commands/**` MUST NOT import `runtime-exec-process.ts` directly (use `runtime-exec.js`).
 3. Domain modules SHOULD NOT import `commander`.
-4. Hooks and shell scripts MUST NOT reimplement MSN/git-proof logic; call `gapman`.
+4. Hooks and shell scripts MUST NOT reimplement MSN/git-proof logic; call `gantry`.
 
 ## Complexity budgets (changed `.ts` only)
 
@@ -45,7 +45,7 @@ Grandfathered paths (full-file exempt until refactored) live in [`.gxt-quality-b
 
 OpenGantry contributors use the **full GXT stack** — see [`docs/DEVELOPMENT.md`](DEVELOPMENT.md).
 
-- `npm run validate` (build, `gapman check`, tests, doctor, changed-code, MSN subjects)
+- `npm run validate` (build, `gantry check`, tests, doctor, changed-code, MSN subjects)
 - Mission + Teacher `[MSN-…]` commit when GXT or CLI behavior changes
-- `gapman verify --mission …` with matching `WORKER_LOG.md` trace
+- `gantry verify --mission …` with matching `WORKER_LOG.md` trace
 - No new duplicate `gitSpawn` helpers (use [`git-repo.ts`](../src/cli/lib/git-repo.ts))

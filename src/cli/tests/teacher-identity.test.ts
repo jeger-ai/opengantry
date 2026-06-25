@@ -36,11 +36,19 @@ test("resolveTeacherEmails: repo allowlist.local beats env", () => {
   }
 });
 
-test("resolveTeacherEmails: git config gapman.teacherEmails", () => {
+test("resolveTeacherEmails: git config gantry.teacherEmails", () => {
   const dest = mkRepo();
-  execSync('git config gapman.teacherEmails "gitcfg@example.com"', { cwd: dest, stdio: "pipe" });
+  execSync('git config gantry.teacherEmails "gitcfg@example.com"', { cwd: dest, stdio: "pipe" });
   const r = resolveTeacherEmails(dest);
   assert.deepEqual(r.emails, ["gitcfg@example.com"]);
+  assert.equal(r.source, "git_config");
+});
+
+test("resolveTeacherEmails: legacy git config gapman.teacherEmails fallback", () => {
+  const dest = mkRepo();
+  execSync('git config gapman.teacherEmails "legacy@example.com"', { cwd: dest, stdio: "pipe" });
+  const r = resolveTeacherEmails(dest);
+  assert.deepEqual(r.emails, ["legacy@example.com"]);
   assert.equal(r.source, "git_config");
 });
 

@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
+import { CLI_NAME } from "./constants.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";
+import { resolveManifestSkillKey } from "./skill-key.js";
 import type { Workspace } from "./workspace.js";
 import { defaultWorkerLogPath } from "./trace.js";
 
@@ -26,7 +28,7 @@ export interface ResolvedRuntimeEnv {
 function toRepoRelativePosix(repoRoot: string, absolutePath: string): string {
   const rel = toPosixRel(repoRoot, path.resolve(absolutePath));
   if (rel.startsWith("..") || path.isAbsolute(rel)) {
-    throw new Error(`gapman runtime: mission path outside repository`);
+    throw new Error(`${CLI_NAME} runtime: mission path outside repository`);
   }
   return rel;
 }
@@ -47,13 +49,14 @@ export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: st
   const skillKey = mission.skillKey?.trim();
 
   if (!skillKey?.length) {
-    throw new Error(`gapman runtime: mission missing skill_key / Skill key (${mission.rawPath})`);
+    throw new Error(`${CLI_NAME} runtime: mission missing skill_key / Skill key (${mission.rawPath})`);
   }
 
-  const skill = manifest.skills[skillKey];
+  const resolvedKey = resolveManifestSkillKey(manifest, skillKey);
+  const skill = manifest.skills[resolvedKey];
   if (!skill) {
     throw new Error(
-      `gapman runtime: manifest has no skill "${skillKey}". Rule 4.4: sync manifest with skills.`,
+      `${CLI_NAME} runtime: manifest has no skill "${skillKey}". Rule 4.4: sync manifest with skills.`,
     );
   }
 

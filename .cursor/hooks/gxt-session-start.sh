@@ -14,15 +14,15 @@ if MISSION="$(scripts/gxt-resolve-mission.sh 2>/dev/null)"; then
 else
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gapman legislate.",
+      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gantry legislate.",
     }));
   '
   exit 0
 fi
 
 RUNTIME_JSON=""
-if command -v gapman >/dev/null 2>&1; then
-  RUNTIME_JSON="$(gapman runtime env --mission "$MISSION" --json 2>/dev/null || true)"
+if command -v gantry >/dev/null 2>&1; then
+  RUNTIME_JSON="$(gantry runtime env --mission "$MISSION" --json 2>/dev/null || true)"
 elif [ -f "dist/cli/index.js" ]; then
   RUNTIME_JSON="$(node dist/cli/index.js runtime env --mission "$MISSION" --json 2>/dev/null || true)"
 fi
@@ -30,7 +30,7 @@ fi
 if [ -z "$RUNTIME_JSON" ]; then
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "GXT: gapman not built — run npm ci && npm run build, then scripts/gxt-pin-mission.sh <mission>",
+      additional_context: "GXT: gantry not built — run npm ci && npm run build, then scripts/gxt-pin-mission.sh <mission>",
     }));
   '
   exit 0
@@ -58,7 +58,7 @@ process.stdout.write(JSON.stringify({
     `- Forbidden: ${forbidden.join(", ") || "(none)"}`,
     `- Trace sink: ${payload.GXT_WORKER_LOG || "WORKER_LOG.md"}`,
     "",
-    "Worker loop: edit within TMVC → append PASS quotes to WORKER_LOG.md → gapman verify --mission … → npm run validate",
+    "Worker loop: edit within TMVC → append PASS quotes to WORKER_LOG.md → gantry verify --mission … → npm run validate",
     "MCP tools: gxt_draft_legislation, gxt_execute_legislation, gxt_check_signature, gxt_pin_mission, gxt_runtime_env, gxt_verify (see .cursor/mcp.json).",
     "IDE Agent edits are advisory TMVC; shell substrate writes are hook-guarded. Full loop: docs/DEVELOPMENT.md",
   ].join("\n"),

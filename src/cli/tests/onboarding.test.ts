@@ -16,7 +16,7 @@ test("onboarding hints: align with v0.9.0 adoption loop", () => {
   assert.match(onboardingVerifyHint(mission), /--fix/);
   assert.match(onboardingVerifyHint(mission), /MSN-0001\.example\.yaml/);
   assert.match(onboardingStatusHint(), /--json/);
-  assert.match(onboardingStartHint(), /gapman start/);
+  assert.match(onboardingStartHint(), /gantry start/);
   assert.equal(ONBOARDING_ADOPTION_DOC, "docs/ADOPTION.md");
 });
 

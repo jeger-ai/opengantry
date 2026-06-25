@@ -43,6 +43,6 @@ export function assertMissionSchemaValid(root: string, data: unknown, filePath: 
   if (validate(data)) return;
   const detail = formatAjvErrors(validate.errors ?? []);
   throw new Error(
-    `${GXT_ERROR.MISSION_SCHEMA_INVALID}: gapman mission: ${filePath}: schema validation failed: ${detail}`,
+    `${GXT_ERROR.MISSION_SCHEMA_INVALID}: gantry mission: ${filePath}: schema validation failed: ${detail}`,
   );
 }

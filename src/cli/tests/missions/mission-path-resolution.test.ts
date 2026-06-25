@@ -11,6 +11,17 @@ import {
 } from "../../lib/missions/parser.js";
 import { pinMissionFile } from "../../lib/missions/parser.js";
 
+test("buildMissionResolutionCandidates: GANTRY_MISSION wins over GAPMAN_MISSION", () => {
+  const candidates = buildMissionResolutionCandidates("/repo", {
+    profile: "full",
+    env: {
+      GANTRY_MISSION: "gantry.yaml",
+      GAPMAN_MISSION: "legacy.yaml",
+    },
+  });
+  assert.equal(candidates[0], "gantry.yaml");
+});
+
 test("buildMissionResolutionCandidates full profile ordering", () => {
   const repo = "/repo";
   const candidates = buildMissionResolutionCandidates(repo, {

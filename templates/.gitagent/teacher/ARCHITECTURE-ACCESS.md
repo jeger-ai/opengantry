@@ -22,7 +22,7 @@ Check in order:
 
 1. **MCP / IDE integrations** — list configured MCP servers and tools; match `access.detect` and `access.tool`.
 2. **Environment** — env vars suggested by `access.detect` or `auth_hint` (never print values).
-3. **Stored credentials** — run `gapman arch cred status` (or `--slot <credential_slot>`). Status shows slot + kind only, never secrets.
+3. **Stored credentials** — run `gantry arch cred status` (or `--slot <credential_slot>`). Status shows slot + kind only, never secrets.
 4. **User docs** — project README / human INTEGRATIONS doc for team setup (not duplicated here).
 
 If a path already works, record in `WORKER_LOG.md` which method you used (not the secret) and fetch architecture docs.
@@ -33,28 +33,28 @@ Ask **one focused question at a time**:
 
 - Which system hosts architecture docs? (confirm or override `access.tool`)
 - How does your team authenticate? (PAT, API key, OAuth device flow, MCP already configured, …)
-- Whether you may store a credential locally via `gapman arch cred set` (git-ignored, mode 600)
+- Whether you may store a credential locally via `gantry arch cred set` (git-ignored, mode 600)
 
 **Never** ask the user to paste tokens into chat, commits, or `WORKER_LOG.md`.
 
 ## 4. Store credentials securely
 
-Use **`gapman arch cred set`** — secrets on **stdin only**, never argv:
+Use **`gantry arch cred set`** — secrets on **stdin only**, never argv:
 
 ```bash
 # Bearer / PAT
-printf '%s' 'YOUR_TOKEN' | gapman arch cred set --slot architecture/confluence --kind bearer
+printf '%s' 'YOUR_TOKEN' | gantry arch cred set --slot architecture/confluence --kind bearer
 
 # API key
-printf '%s' 'YOUR_KEY' | gapman arch cred set --slot architecture/notion --kind api_key
+printf '%s' 'YOUR_KEY' | gantry arch cred set --slot architecture/notion --kind api_key
 
 # Basic auth (JSON on stdin)
-printf '%s' '{"username":"you@corp.com","password":"…"}' | gapman arch cred set --slot architecture/wiki --kind basic
+printf '%s' '{"username":"you@corp.com","password":"…"}' | gantry arch cred set --slot architecture/wiki --kind basic
 ```
 
-Files live under **`.gitagent/history/credentials/`** (git-ignored). Verify with `gapman arch cred status`.
+Files live under **`.gitagent/history/credentials/`** (git-ignored). Verify with `gantry arch cred status`.
 
-To remove: `gapman arch cred unset --slot <name>`.
+To remove: `gantry arch cred unset --slot <name>`.
 
 ## 5. Context request (GXT)
 

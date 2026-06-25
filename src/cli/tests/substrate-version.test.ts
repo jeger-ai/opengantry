@@ -48,12 +48,12 @@ test("readInstalledSubstrateVersion: legacy default 0.0.0", () => {
 test("alreadyCurrentMessage: includes npm install guidance", () => {
   const msg = alreadyCurrentMessage("0.8.1", "0.8.1");
   assert.match(msg, /npm install @jeger-ai\/opengantry@latest/);
-  assert.match(msg, /gapman upgrade/);
+  assert.match(msg, /gantry upgrade/);
 });
 
 test("writeSubstrateVersionFile: creates foreman path", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-subv-"));
-  writeSubstrateVersionFile(dest, "0.8.1", "gapman upgrade --apply");
+  writeSubstrateVersionFile(dest, "0.8.1", "gantry upgrade --apply");
   const abs = path.join(dest, REL_SUBSTRATE_VERSION.split("/").join(path.sep));
   assert.ok(fs.existsSync(abs));
   const raw = JSON.parse(fs.readFileSync(abs, "utf8")) as { opengantry_version: string };

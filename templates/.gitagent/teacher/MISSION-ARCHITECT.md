@@ -26,7 +26,7 @@ Before proposing legislation, read (do not lecture the user):
 - `.gitagent/ARCHITECTURE.pointer.json` — code layout (if `kind=unset`, follow ARCHITECTURE-DISCOVERY.md and ask)
 - Optional: `.gitagent/out-of-scope/` ADRs when scope is ambiguous
 
-**Do not** run `gapman triage` in chat. Reason from manifest + architecture directly.
+**Do not** run `gantry triage` in chat. Reason from manifest + architecture directly.
 
 ## Fast-path vs full interview
 
@@ -70,7 +70,7 @@ This two-step draft/execute gate prevents silent legislation even when Cursor ru
 One bash command the user copies into their terminal:
 
 ```bash
-gapman legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
+gantry legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
   --gate-command "<deterministic gate shell command>" \
   --gate-success-substring "<optional substring>"
 ```
@@ -82,12 +82,12 @@ gapman legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
 
 ## Teacher loop (human)
 
-1. Approve draft (MCP) or paste and run `gapman legislate` (CLI).
+1. Approve draft (MCP) or paste and run `gantry legislate` (CLI).
 2. Optionally review/edit the generated YAML.
-3. `git commit -m "[MSN-NNNN] legislate …"` including the mission file (Teacher email in `GAPMAN_TEACHER_EMAILS`).
+3. `git commit -m "[MSN-NNNN] legislate …"` including the mission file (Teacher email in `GANTRY_TEACHER_EMAILS`).
 4. Pin mission (`gxt_pin_mission` MCP tool or `scripts/gxt-pin-mission.sh`).
 5. Worker phase begins.
 
 ## Worker phase (after pin)
 
-Edit within TMVC → append PASS quotes to `WORKER_LOG.md` → `gapman verify --mission …` (or `gxt_verify`) → pin stays until mission complete.
+Edit within TMVC → append PASS quotes to `WORKER_LOG.md` → `gantry verify --mission …` (or `gxt_verify`) → pin stays until mission complete.

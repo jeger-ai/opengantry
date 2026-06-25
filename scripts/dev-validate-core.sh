@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Core GXT + gapman stack without PR mission verify (avoids verify gate recursion).
+# Core GXT + gantry stack without PR mission verify (avoids verify gate recursion).
 # Used as MSN-0020 gate_command; full stack: ./scripts/dev-validate.sh
 set -euo pipefail
 
@@ -24,14 +24,14 @@ npm run build
 
 if [[ -f dist/cli/index.js ]]; then
   GAPMAN=(node dist/cli/index.js)
-elif command -v gapman >/dev/null 2>&1; then
-  GAPMAN=(gapman)
+elif command -v gantry >/dev/null 2>&1; then
+  GAPMAN=(gantry)
 else
-  echo "dev-validate-core: gapman unavailable after build (missing dist/cli/index.js)" >&2
+  echo "dev-validate-core: gantry unavailable after build (missing dist/cli/index.js)" >&2
   exit 1
 fi
 
-echo "dev-validate-core: gapman check (Rule 4.4)"
+echo "dev-validate-core: gantry check (Rule 4.4)"
 "${GAPMAN[@]}" check
 
 echo "dev-validate-core: Foreman MANIFEST (Node parity)"
@@ -46,7 +46,7 @@ node --test dist/cli/tests/*.test.js
 echo "dev-validate-core: MCP dogfood flow"
 ./scripts/validate-mcp-dogfood.sh
 
-echo "dev-validate-core: gapman doctor"
+echo "dev-validate-core: gantry doctor"
 "${GAPMAN[@]}" doctor
 
 echo "dev-validate-core: changed-code quality (${BASE_REF}..${HEAD_REF})"

@@ -1,10 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "./cli-io.js";
+import { CLI_NAME } from "./constants.js";
+import {
+  ENV_TEACHER_EMAILS,
+  GIT_CONFIG_TEACHER_EMAILS,
+  readEnvWithLegacy,
+  readGitConfigWithLegacy,
+} from "./config-namespace.js";
 import { gitRunOk } from "./git.js";
 
-export const ENV_TEACHER_EMAILS = "GAPMAN_TEACHER_EMAILS" as const;
-export const GIT_CONFIG_TEACHER_EMAILS = "gapman.teacherEmails" as const;
+export { ENV_TEACHER_EMAILS } from "./config-namespace.js";
 
 export const REL_TEACHER_ALLOWLIST = ".gitagent/foreman/TEACHER.allowlist" as const;
 export const REL_TEACHER_ALLOWLIST_LOCAL = ".gitagent/foreman/TEACHER.allowlist.local" as const;
@@ -39,15 +45,9 @@ function readAllowlistFile(repoRoot: string, relPath: string): string[] {
 }
 
 function readGitConfigTeacherEmails(repoRoot: string): string[] {
-  const local = gitRunOk(repoRoot, ["config", "--local", "--get", GIT_CONFIG_TEACHER_EMAILS]);
-  if (local.ok && local.stdout.trim()) {
-    return normalizeEmailList(local.stdout);
-  }
-  const global = gitRunOk(repoRoot, ["config", "--global", "--get", GIT_CONFIG_TEACHER_EMAILS]);
-  if (global.ok && global.stdout.trim()) {
-    return normalizeEmailList(global.stdout);
-  }
-  return [];
+  const raw = readGitConfigWithLegacy(repoRoot, "teacherEmails");
+  if (!raw) return [];
+  return normalizeEmailList(raw);
 }
 
 function readGitUserEmail(repoRoot: string): string | null {
@@ -60,8 +60,8 @@ function readGitUserEmail(repoRoot: string): string | null {
 
 /** Legacy env-only parser (tests / explicit CI override). */
 export function parseTeacherEmailsFromEnv(): string[] {
-  const raw = process.env[ENV_TEACHER_EMAILS];
-  if (!raw?.trim()) return [];
+  const raw = readEnvWithLegacy("TEACHER_EMAILS");
+  if (!raw) return [];
   return normalizeEmailList(raw);
 }
 
@@ -140,8 +140,8 @@ export function ensureTeacherAllowlistOnInit(repoRoot: string): boolean {
 export function teacherIdentitySetupHint(_repoRoot: string): string {
   return [
     `echo "$(git config user.email)" >> ${REL_TEACHER_ALLOWLIST_LOCAL}`,
-    `or: git config gapman.teacherEmails "$(git config user.email)"`,
-    `or: gapman teacher set "$(git config user.email)"`,
+    `or: git config ${GIT_CONFIG_TEACHER_EMAILS} "$(git config user.email)"`,
+    `or: ${CLI_NAME} teacher set "$(git config user.email)"`,
     `# env ${ENV_TEACHER_EMAILS} is CI-only fallback; prefer repo-local config`,
   ].join("\n       ");
 }

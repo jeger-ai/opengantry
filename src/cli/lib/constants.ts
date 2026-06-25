@@ -1,4 +1,4 @@
-/** Repo-relative paths used across gapman */
+/** Repo-relative paths used across gantry */
 export const REL_MANIFEST = ".gitagent/foreman/MANIFEST.json" as const;
 /** Agent discovery for code layout (file, directory, or external). */
 export const REL_ARCHITECTURE_POINTER = ".gitagent/ARCHITECTURE.pointer.json" as const;
@@ -6,7 +6,7 @@ export const REL_ARCHITECTURE_POINTER = ".gitagent/ARCHITECTURE.pointer.json" as
 export const REL_ARCHITECTURE_ACCESS_SKILL = ".gitagent/teacher/ARCHITECTURE-ACCESS.md" as const;
 /** Agent instructions when architecture is unset, stub, or uncertain — ask before implementing. */
 export const REL_ARCHITECTURE_DISCOVERY_SKILL = ".gitagent/teacher/ARCHITECTURE-DISCOVERY.md" as const;
-/** Git-ignored credential slots for architecture sources (see gapman arch cred). */
+/** Git-ignored credential slots for architecture sources (see gantry arch cred). */
 export const REL_ARCHITECTURE_CREDENTIALS_DIR = ".gitagent/history/credentials" as const;
 export const REL_MISSION_SCHEMA = ".gitagent/teacher/MISSION.schema.yaml" as const;
 export const REL_KPI_REPORT_SCHEMA = ".gitagent/teacher/KPI-REPORT.schema.yaml" as const;
@@ -23,14 +23,15 @@ export const REL_VIRTUAL_SCRATCH = ".gitagent/virtual/" as const;
 export const REL_OUT_OF_SCOPE_DIR = ".gitagent/out-of-scope" as const;
 export const SKILLS_DIR_NAME = "skills" as const;
 export const WORKER_LOG_FILENAME = "WORKER_LOG.md" as const;
-/** Default trace quote emitted by `gapman legislate` before worker execution. */
+/** Default trace quote emitted by `gantry legislate` before worker execution. */
 export const LEGISLATE_TRACE_PLACEHOLDER =
   "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION" as const;
-/** Default path for `--emit-mission` (must stay under `.gitagent/missions/` for `gapman verify` git-proof). */
+/** Default path for `--emit-mission` (must stay under `.gitagent/missions/` for `gantry verify` git-proof). */
 export const DEFAULT_ACTIVE_MISSION = ".gitagent/missions/ACTIVE_MISSION.md" as const;
 
 /** Mission id in commits / missions (four digits) */
 export const MSN_ID_PATTERN = /^MSN-\d{4}$/;
 
-export const CLI_NAME = "gapman";
+export const CLI_NAME = "gantry";
+export const LEGACY_CLI_NAME = "gapman";
 export { CLI_VERSION, NPM_PACKAGE_NAME } from "./version.gen.js";

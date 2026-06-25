@@ -250,7 +250,7 @@ export function computeTurnaround(
 export function collectGitMetrics(root: string, refName: string): GitMetricsReport {
   clearMetricsDiffCache();
   const ref = gitRevParse(root, refName);
-  if (!ref) throw new Error(`gapman metrics: invalid ref ${refName}`);
+  if (!ref) throw new Error(`gantry metrics: invalid ref ${refName}`);
   const records = streamLogRecords(root, ref);
   const stream = aggregateFromLogStream(root, records);
   const fromMissions = listMissionMsnIdsAtRef(root, ref);

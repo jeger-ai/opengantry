@@ -15,6 +15,7 @@ import {
   toPosixRel,
 } from "./cli-io.js";
 import { triageIntent } from "./triage-logic.js";
+import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import type { Manifest, TriageResult } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -34,7 +35,7 @@ export function resolveSkillKeyForLegislation(opts: {
 }): ResolveSkillKeyResult {
   const explicit = opts.skillKey?.trim();
   if (explicit) {
-    if (!opts.manifest.skills[explicit]) {
+    if (!manifestHasSkill(opts.manifest, explicit)) {
       return {
         ok: false,
         triage: triageIntent(opts.root, opts.intent, opts.manifest),
@@ -43,7 +44,8 @@ export function resolveSkillKeyForLegislation(opts: {
       };
     }
     const triage = triageIntent(opts.root, opts.intent, opts.manifest);
-    return { ok: true, skillKey: explicit, triage };
+    const canonical = resolveManifestSkillKey(opts.manifest, explicit);
+    return { ok: true, skillKey: canonical, triage };
   }
 
   const triage = triageIntent(opts.root, opts.intent, opts.manifest);
@@ -55,7 +57,11 @@ export function resolveSkillKeyForLegislation(opts: {
       kind: "escalated",
     };
   }
-  return { ok: true, skillKey: triage.skill_key, triage };
+  return {
+    ok: true,
+    skillKey: resolveManifestSkillKey(opts.manifest, triage.skill_key),
+    triage,
+  };
 }
 
 export interface LegislateOptions {
@@ -145,7 +151,7 @@ function resolveLegislateOutputPath(
   }
   if (!normRel.startsWith(".gitagent/missions/")) {
     logError(
-      `legislate: mission path must stay under .gitagent/missions/ for gapman verify (got ${normRel})`,
+      `legislate: mission path must stay under .gitagent/missions/ for gantry verify (got ${normRel})`,
     );
     return null;
   }
@@ -241,7 +247,7 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
   if (!options.silent) {
     logInfo(`${CLI_NAME} legislate: wrote ${missionRel}`);
     logInfo(
-      `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gapman teacher show).`,
+      `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gantry teacher show).`,
     );
   }
   return { ok: true, missionAbs: absolute, missionRel };

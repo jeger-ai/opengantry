@@ -46,7 +46,7 @@ export function hintMissionNoGate(missionPath: string): string {
 
 export function hintGitProof(code: string, ctx: GitProofHintContext): string {
   const mission = ctx.missionPath ?? "<mission>";
-  const verifyCmd = `gapman verify --mission ${mission}`;
+  const verifyCmd = `gantry verify --mission ${mission}`;
   const root = ctx.root ?? ".";
 
   switch (code) {
@@ -62,14 +62,14 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
       const msn = ctx.msnId ?? "MSN-NNNN";
       return [
         `git add ${mission} && git commit -m "[${msn}] legislate mission"`,
-        `gapman teacher set "$(git config user.email)"`,
+        `gantry teacher set "$(git config user.email)"`,
         verifyCmd,
       ].join("; ");
     }
     case "NO_TEACHER_MSN_COMMIT": {
       const email = ctx.latestAuthorEmail ?? "$(git log -1 --format=%ae)";
       return [
-        `gapman teacher set "${email}"`,
+        `gantry teacher set "${email}"`,
         "add each Teacher email allowed to legislate in this repo",
         verifyCmd,
       ].join("; ");
@@ -96,11 +96,11 @@ export function hintTeacherEmails(repoRoot: string): string {
 }
 
 export function hintGate(command: string, missionPath: string): string {
-  return `re-run gate: ${command}  # then gapman verify --mission ${missionPath}`;
+  return `re-run gate: ${command}  # then gantry verify --mission ${missionPath}`;
 }
 
 export function hintTraceStrictTrace(missionPath: string): string {
-  return `remove --strict-trace to allow auto line-drift resolution: gapman verify --mission ${missionPath}`;
+  return `remove --strict-trace to allow auto line-drift resolution: gantry verify --mission ${missionPath}`;
 }
 
 export function hintTraceAmbiguous(
@@ -111,7 +111,7 @@ export function hintTraceAmbiguous(
   if (traceQuote !== undefined && traceQuote.trim().length <= 12) {
     return `trace_quote "${traceQuote.trim()}" matches multiple lines in ${workerLogPath} — append a unique mission-specific line (e.g. "- DoD 1: MSN-… gate passed") and set trace_quote to that full verbatim line in ${missionPath}`;
   }
-  return `disambiguate quotes in ${workerLogPath} or re-run: gapman runtime exec --mission ${missionPath} -- <worker>`;
+  return `disambiguate quotes in ${workerLogPath} or re-run: gantry runtime exec --mission ${missionPath} -- <worker>`;
 }
 
 export function hintTraceMissing(workerLogPath: string): string {
@@ -138,9 +138,9 @@ export function hintTracePendingSteps(
   missionPath: string,
   gateCommand?: string,
 ): string[] {
-  const verifyCmd = `gapman verify --mission ${missionPath}`;
+  const verifyCmd = `gantry verify --mission ${missionPath}`;
   return [
-    `eval "$(gapman runtime env --mission ${missionPath})" then execute worker within TMVC`,
+    `eval "$(gantry runtime env --mission ${missionPath})" then execute worker within TMVC`,
     gateCommand
       ? `run gate (${gateCommand}); append a unique mission-specific line to ${workerLogPath} (not bare gate output if "OK" appears elsewhere)`
       : `append a unique mission-specific evidence line to ${workerLogPath}`,
@@ -150,7 +150,7 @@ export function hintTracePendingSteps(
 }
 
 export function hintForbiddenZone(firstPath: string, missionPath: string): string {
-  return `revert changes under ${firstPath}; stay inside GXT_TMVC_ROOTS — gapman runtime exec --mission ${missionPath}`;
+  return `revert changes under ${firstPath}; stay inside GXT_TMVC_ROOTS — gantry runtime exec --mission ${missionPath}`;
 }
 
 export function hintRuntimeHumanSummary(summary: string, errorFile: string): string {

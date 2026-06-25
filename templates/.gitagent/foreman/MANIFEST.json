@@ -13,8 +13,8 @@
       "tmvc_roots": ["src/lib/", "src/utils/"],
       "forbidden_zones": [".gitagent/", "src/auth/", "src/core/", "src/db/schema/"]
     },
-    "gapman": {
-      "desc": "gapman CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
+    "gantry": {
+      "desc": "gantry CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
       "trust_threshold": "Tier-2",
       "tmvc_roots": ["src/cli/"],
       "forbidden_zones": [".gitagent/foreman/", ".gitagent/teacher/RULES.md"]

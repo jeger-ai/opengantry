@@ -1,4 +1,5 @@
 import type { Manifest } from "./types.js";
+import { resolveManifestSkillKey } from "./skill-key.js";
 
 /** Governance transport files — never TMVC drift violations during pre-commit scans. */
 export const GOVERNANCE_TRANSPORT_PATHS = [
@@ -23,13 +24,15 @@ export function isGovernanceTransportPath(repoRel: string): boolean {
 
 export function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[] {
   if (!skillKey?.trim()) return [];
-  const skill = manifest.skills[skillKey];
+  const resolved = resolveManifestSkillKey(manifest, skillKey.trim());
+  const skill = manifest.skills[resolved];
   return skill ? [...skill.tmvc_roots] : [];
 }
 
 export function forbiddenZonesForSkill(manifest: Manifest, skillKey: string | null): string[] {
   if (!skillKey?.trim()) return [];
-  const skill = manifest.skills[skillKey];
+  const resolved = resolveManifestSkillKey(manifest, skillKey.trim());
+  const skill = manifest.skills[resolved];
   return skill ? [...skill.forbidden_zones] : [];
 }
 

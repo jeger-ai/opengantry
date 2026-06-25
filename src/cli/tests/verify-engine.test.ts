@@ -90,7 +90,7 @@ trace_rows:
       assert.equal(process.exitCode, 1);
       assert.match(combined, /Worker next steps/);
       assert.match(combined, /runtime env --mission \.gitagent\/missions\/pending\.yaml/);
-      assert.doesNotMatch(combined, /gapman verify --mission.*next actions/s);
+      assert.doesNotMatch(combined, /gantry verify --mission.*next actions/s);
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;

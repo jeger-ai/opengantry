@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { runArchitecturePointerDoctorChecks } from "./architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "./break-glass.js";
-import { REL_AGENT_ERROR_FILE, REL_MANIFEST } from "./constants.js";
+import { REL_AGENT_ERROR_FILE, REL_MANIFEST, CLI_NAME } from "./constants.js";
+import { ENV_TEACHER_EMAILS } from "./config-namespace.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { gitConfigGet } from "./git.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
@@ -46,13 +47,13 @@ function appendTeacherAllowlistChecks(
       lines.push({
         level: "warn",
         message:
-          "Teacher identity from GAPMAN_TEACHER_EMAILS env — prefer repo-local .gitagent/foreman/TEACHER.allowlist.local when working across projects",
+          `Teacher identity from ${ENV_TEACHER_EMAILS} env — prefer repo-local .gitagent/foreman/TEACHER.allowlist.local when working across projects`,
       });
     }
     return { nextStep, teacherAllowlistUnset: false };
   }
   lines.push({ level: "warn", message: "Teacher allowlist unset — verify git-proof will fail" });
-  nextStep = pickNextStep(nextStep, 'gapman teacher set "$(git config user.email)"');
+  nextStep = pickNextStep(nextStep, `${CLI_NAME} teacher set "$(git config user.email)"`);
   return { nextStep, teacherAllowlistUnset: true };
 }
 
@@ -98,11 +99,11 @@ function appendHooksAndExampleMissionChecks(
   if (fs.existsSync(path.join(root, exampleMission))) {
     lines.push({ level: "ok", message: `example mission: ${exampleMission}` });
     if (teacherIdentity.emails.length > 0) {
-      nextStep = pickNextStep(nextStep, `gapman verify --mission ${exampleMission}`);
+      nextStep = pickNextStep(nextStep, `gantry verify --mission ${exampleMission}`);
     }
   } else {
     lines.push({ level: "warn", message: "no example.verify.yaml — legislate a mission first" });
-    nextStep = pickNextStep(nextStep, 'gapman legislate "<intent>" --msn MSN-0001 --skill-key <key>');
+    nextStep = pickNextStep(nextStep, 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key>');
   }
   return nextStep;
 }
@@ -132,7 +133,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   } else {
     for (const err of skillSync.errors) lines.push({ level: "fail", message: err });
     hasFail = true;
-    nextStep = pickNextStep(nextStep, "gapman check");
+    nextStep = pickNextStep(nextStep, "gantry check");
   }
 
   const teacherResult = appendTeacherAllowlistChecks(root, lines, nextStep);
@@ -145,7 +146,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   if (!fs.existsSync(path.join(root, REL_MANIFEST))) {
     lines.push({ level: "fail", message: `${REL_MANIFEST} missing` });
     hasFail = true;
-    nextStep = pickNextStep(nextStep, "gapman init");
+    nextStep = pickNextStep(nextStep, "gantry init");
   }
 
   return { lines, hasFail, nextStep, teacherAllowlistUnset };

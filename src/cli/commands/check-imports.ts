@@ -10,7 +10,7 @@ export interface CheckImportsOptions {
 
 export function runCheckImports(options: CheckImportsOptions): void {
   if (options.ban.length === 0) {
-    logError("gapman check-imports: provide at least one --ban specifier");
+    logError("gantry check-imports: provide at least one --ban specifier");
     setExitCode(2);
     return;
   }

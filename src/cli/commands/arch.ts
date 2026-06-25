@@ -36,7 +36,7 @@ export function runArchPointer(options: ArchOptions = {}): void {
   try {
     repoRoot = getRepoRoot(options.cwd);
   } catch (e) {
-    logError(e instanceof Error ? e.message.replace("gapman: ", "") : String(e));
+    logError(e instanceof Error ? e.message.replace("gantry: ", "") : String(e));
     setExitCode(2);
     return;
   }
@@ -72,7 +72,7 @@ export async function runArchCredSet(options: ArchCredSetOptions): Promise<void>
   try {
     const values = parseCredentialValuesFromStdin(options.kind, stdin);
     writeArchitectureCredential(repoRoot, options.slot, options.kind, values);
-    logInfo(`gapman arch cred: stored slot=${options.slot} kind=${options.kind}`);
+    logInfo(`gantry arch cred: stored slot=${options.slot} kind=${options.kind}`);
   } catch (e) {
     logError(errorMessage(e));
     setExitCode(2);
@@ -90,11 +90,11 @@ export function runArchCredUnset(options: ArchCredUnsetOptions): void {
     return;
   }
   if (!removeArchitectureCredential(repoRoot, options.slot)) {
-    logError(`gapman arch cred: slot ${options.slot} not found`);
+    logError(`gantry arch cred: slot ${options.slot} not found`);
     setExitCode(2);
     return;
   }
-  logInfo(`gapman arch cred: removed slot=${options.slot}`);
+  logInfo(`gantry arch cred: removed slot=${options.slot}`);
 }
 
 export function runArchCredStatus(options: ArchCredStatusOptions = {}): void {

@@ -12,6 +12,7 @@ import { resolvePinnedMission } from "./missions/parser.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import type { TriageResult } from "./types.js";
 import { GapmanUserError } from "./errors.js";
+import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import { loadWorkspace } from "./workspace.js";
 
 export type McpToolStatus =
@@ -169,7 +170,7 @@ export function handleDraftLegislation(
 
   const { root, manifest } = loadWorkspace();
   const skillKey = input.skill_key.trim();
-  if (!manifest.skills[skillKey]) {
+  if (!manifestHasSkill(manifest, skillKey)) {
     return mcpError(
       "UNKNOWN_SKILL",
       `unknown skill_key "${skillKey}" (manifest skills: ${Object.keys(manifest.skills).join(", ")})`,
@@ -188,7 +189,10 @@ export function handleDraftLegislation(
   return {
     status: "awaiting_human_approval",
     draft_token: token.draft_token,
-    chat_message_to_user: buildDraftChatMessage(input, manifest.skills[skillKey]?.desc),
+    chat_message_to_user: buildDraftChatMessage(
+      input,
+      manifest.skills[resolveManifestSkillKey(manifest, skillKey)]?.desc,
+    ),
     expires_at: token.expires_at,
     requires_teacher_commit: true,
   };
@@ -219,7 +223,7 @@ export function handleExecuteLegislation(
 
   const result = runLegislate(legislateOpts);
   if (!result.ok) {
-    return mcpError("LEGISLATE_FAILED", "gapman legislate failed; check skill_key, msn, or output path", true);
+    return mcpError("LEGISLATE_FAILED", "gantry legislate failed; check skill_key, msn, or output path", true);
   }
 
   const missionRel = formatRepoRelative(root, result.missionAbs);

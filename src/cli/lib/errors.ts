@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { readEnvWithLegacy } from "./config-namespace.js";
 import path from "node:path";
 import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
@@ -31,7 +32,7 @@ export function isGapmanUserError(e: unknown): e is GapmanUserError {
 }
 
 function logUnexpectedError(error: Error): void {
-  if (process.env.GAPMAN_DEBUG === "1") {
+  if (readEnvWithLegacy("DEBUG") === "1") {
     logError(error.stack ?? error.message);
   } else {
     logError(error.message);

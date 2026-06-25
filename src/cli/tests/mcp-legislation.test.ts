@@ -130,7 +130,7 @@ test("mcp legislation: execute does not mutate process.exitCode on failure", () 
     }
 
     const collidingMission = path.join(dest, ".gitagent", "missions", "MSN-0204.exit-code-leak-guard.yaml");
-    fs.writeFileSync(collidingMission, "msn_id: MSN-0204\nskill_key: gapman\ngate_command: echo OK\ntrace_rows: []\n", "utf8");
+    fs.writeFileSync(collidingMission, "msn_id: MSN-0204\nskill_key: gantry\ngate_command: echo OK\ntrace_rows: []\n", "utf8");
 
     process.exitCode = 0;
     const executed = handleExecuteLegislation(draft.draft_token);

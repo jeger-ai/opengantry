@@ -9,24 +9,24 @@ Prerequisites: Node.js 24+, empty Git repository (or use a throwaway branch).
 | # | Goal | Interactive | Headless |
 |---|------|-------------|----------|
 | 1 | Install CLI | `npm install -g @jeger-ai/opengantry` | `npx @jeger-ai/opengantry --version` |
-| 2 | Scaffold substrate | `gapman init --tutorial` | `gapman init --yes --no-ci` |
-| 3 | Teacher identity | `gapman teacher set "$(git config user.email)"` | same (requires git config) |
-| 4 | Health check | `gapman onboarding` | `gapman doctor --json` → exit 0 |
-| 5 | Legislate mission | `gapman start "First kata change" --msn MSN-KATA --skill-key logic --gate-command "npm test"` | `gapman legislate "First kata change" --msn MSN-KATA --skill-key logic --gate-command "npm test"` |
+| 2 | Scaffold substrate | `gantry init --tutorial` | `gantry init --yes --no-ci` |
+| 3 | Teacher identity | `gantry teacher set "$(git config user.email)"` | same (requires git config) |
+| 4 | Health check | `gantry onboarding` | `gantry doctor --json` → exit 0 |
+| 5 | Legislate mission | `gantry start "First kata change" --msn MSN-KATA --skill-key logic --gate-command "npm test"` | `gantry legislate "First kata change" --msn MSN-KATA --skill-key logic --gate-command "npm test"` |
 | 6 | Teacher commit | Review YAML, then `git commit -m "[MSN-KATA] legislate mission"` | same |
-| 7 | Worker env | `eval "$(gapman runtime env --mission .gitagent/missions/MSN-KATA.*.yaml)"` | `gapman runtime env --mission … --json` |
-| 8 | Execute change | Edit within mission **tmvc_roots** | `gapman runtime exec --mission … -- npm test` (after edits) |
+| 7 | Worker env | `eval "$(gantry runtime env --mission .gitagent/missions/MSN-KATA.*.yaml)"` | `gantry runtime env --mission … --json` |
+| 8 | Execute change | Edit within mission **tmvc_roots** | `gantry runtime exec --mission … -- npm test` (after edits) |
 | 9 | Trace evidence | Append unique line to `WORKER_LOG.md` | same |
-| 10 | Verify | `gapman verify --mission …` | `gapman verify --mission … --json` |
+| 10 | Verify | `gantry verify --mission …` | `gantry verify --mission … --json` |
 | 11 | Audit grep | `git log --grep='MSN-KATA' --oneline` | same |
 
 Replace `MSN-KATA` with a valid id (e.g. `MSN-0001`) and match the legislated mission filename.
 
 ## Expected outcomes
 
-- `gapman verify` exits **0** with gate PASS and trace rows **PASS** (or PENDING cleared after quotes committed).
+- `gantry verify` exits **0** with gate PASS and trace rows **PASS** (or PENDING cleared after quotes committed).
 - `git log --grep='MSN-'` shows at least one legislative commit from a Teacher allowlisted email.
-- `gapman status --json` reports pinned or resolved mission context.
+- `gantry status --json` reports pinned or resolved mission context.
 
 ## Friction log (optional)
 

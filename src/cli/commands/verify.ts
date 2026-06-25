@@ -47,12 +47,12 @@ async function runVerifyChangedMissions(options: VerifyOptions): Promise<void> {
   const baseRef = resolveChangedMissionsBaseRef(root, options.baseRef);
   const missions = discoverChangedMissionFiles(root, baseRef);
   if (missions.length === 0) {
-    logInfo(`gapman verify: no changed mission files vs ${baseRef}`);
+    logInfo(`gantry verify: no changed mission files vs ${baseRef}`);
     return;
   }
   let worstExit = 0;
   for (const mission of missions) {
-    logInfo(`gapman verify: ${mission} (changed vs ${baseRef})`);
+    logInfo(`gantry verify: ${mission} (changed vs ${baseRef})`);
     const result = await runVerifyCore({ ...options, mission, changedMissions: false });
     if (!result.ok && result.exitCode > worstExit) {
       worstExit = result.exitCode;
@@ -93,7 +93,7 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
   }
 
   if (!options.mission) {
-    logError("gapman verify: --mission is required (or use --changed-missions)");
+    logError("gantry verify: --mission is required (or use --changed-missions)");
     setExitCode(2);
     return;
   }

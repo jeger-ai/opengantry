@@ -55,7 +55,7 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
     const errno = typeof e === "object" && e !== null ? (e as NodeJS.ErrnoException).code : undefined;
     if (errno === "ENOENT") {
       logError(
-        `runtime env: mission file not found: ${options.mission} (ENOENT). Use an existing mission path — e.g. .gitagent/missions/example.verify.yaml — or run gapman legislate first, then pass that YAML path.`,
+        `runtime env: mission file not found: ${options.mission} (ENOENT). Use an existing mission path — e.g. .gitagent/missions/example.verify.yaml — or run gantry legislate first, then pass that YAML path.`,
       );
     } else {
       logError(errorMessage(e));

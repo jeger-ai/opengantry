@@ -54,7 +54,7 @@ function walkTypeScriptFiles(absDir: string): string[] {
 export function discoverFolderSignature(repoRoot: string, targetDir: string): FolderSignature {
   const absDir = path.isAbsolute(targetDir) ? targetDir : path.join(repoRoot, targetDir);
   if (!fs.existsSync(absDir) || !fs.statSync(absDir).isDirectory()) {
-    throw new Error(`gapman register: not a directory: ${targetDir}`);
+    throw new Error(`gantry register: not a directory: ${targetDir}`);
   }
 
   const folderRel = toPosixRel(repoRoot, absDir);

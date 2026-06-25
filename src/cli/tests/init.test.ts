@@ -79,7 +79,7 @@ test("init --force: overwrites only managed files", async () => {
   }
 });
 
-test("distribution: packed gapman init works outside workspace", () => {
+test("distribution: packed gantry init works outside workspace", () => {
   const ogRoot = getRepoRoot();
   const pack = spawnSync("npm", ["pack", "--json"], { cwd: ogRoot, encoding: "utf8" });
   assert.equal(pack.status, 0, (pack.stderr || "") + (pack.stdout || ""));

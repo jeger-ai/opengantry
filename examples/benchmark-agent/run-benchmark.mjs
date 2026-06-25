@@ -141,7 +141,7 @@ function gapmanArgs() {
 }
 
 function teacherEnv() {
-  return { GAPMAN_TEACHER_EMAILS: TEACHER_EMAIL };
+  return { GANTRY_TEACHER_EMAILS: TEACHER_EMAIL };
 }
 
 function run(cmd, cwd, env = {}) {
@@ -331,7 +331,7 @@ function runGantryPath(runId) {
   );
   const t1 = nowNs();
   if (!initResult.ok) {
-    summarizeCommandError("gapman init failed", initResult);
+    summarizeCommandError("gantry init failed", initResult);
   }
 
   git(sandbox, ["add", "-A"], env);
@@ -357,7 +357,7 @@ function runGantryPath(runId) {
   );
   const t3 = nowNs();
   if (!legislateResult.ok) {
-    summarizeCommandError("gapman legislate failed", legislateResult);
+    summarizeCommandError("gantry legislate failed", legislateResult);
   }
 
   const legislateOutput = `${legislateResult.stdout}\n${legislateResult.stderr}`;
@@ -368,7 +368,7 @@ function runGantryPath(runId) {
     ?.replace(/^.*legislate: wrote /, "");
 
   if (!missionRel || !fs.existsSync(path.join(sandbox, missionRel))) {
-    die("gapman legislate did not write mission file");
+    die("gantry legislate did not write mission file");
   }
 
   const missionAbs = path.join(sandbox, missionRel);
@@ -411,7 +411,7 @@ function runGantryPath(runId) {
   );
   const t5 = nowNs();
   if (!verifyResult.ok) {
-    summarizeCommandError("gapman verify failed", verifyResult);
+    summarizeCommandError("gantry verify failed", verifyResult);
   }
 
   const missionYaml = fs.readFileSync(missionAbs, "utf8");
@@ -437,7 +437,7 @@ function emitSummary(raw, gantry) {
     const payload = {
       benchmark: "time-to-scaffold",
       schema_version: 1,
-      gapman: "local-dist",
+      gantry: "local-dist",
       timings_ms: {
         init_yes_no_ci: gantry.initMs,
         legislate: gantry.legislateMs,

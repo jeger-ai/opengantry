@@ -100,12 +100,12 @@ export function runKpiScan(
 ): KpiScanResult {
   const msnId = mission.msnId;
   if (!msnId) {
-    throw new Error("gapman scan: mission missing msn_id");
+    throw new Error("gantry scan: mission missing msn_id");
   }
 
   const verifiers = mission.llmVerifiers;
   if (verifiers.length === 0) {
-    throw new Error("gapman scan: mission has no llm_verifiers configured");
+    throw new Error("gantry scan: mission has no llm_verifiers configured");
   }
 
   const reportPath =
@@ -121,7 +121,7 @@ export function runKpiScan(
     const outcome = runSingleVerifier(workDir, verifier);
     if (outcome.failed && verifier.required) {
       throw new Error(
-        `gapman scan: required verifier "${verifier.id}" failed (exit ${String(outcome.exitCode)})`,
+        `gantry scan: required verifier "${verifier.id}" failed (exit ${String(outcome.exitCode)})`,
       );
     }
     if (outcome.failed) {

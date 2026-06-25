@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OpenGantry dogfood: run the full local GXT + gapman stack before push/PR.
+# OpenGantry dogfood: run the full local GXT + gantry stack before push/PR.
 # Usage: ./scripts/dev-validate.sh [base-ref] [head-ref]
 #   base-ref defaults to origin/main (falls back to HEAD~1)
 #   head-ref defaults to HEAD

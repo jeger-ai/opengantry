@@ -102,7 +102,7 @@ export function alreadyCurrentMessage(installed: string, bundled: string): strin
   return [
     `Substrate is up to date (installed ${installed}, bundled ${bundled}).`,
     "To upgrade to a newer OpenGantry release, first update the package manager dependency",
-    `(e.g. npm install ${NPM_PACKAGE_NAME}@latest) and re-run: gapman upgrade`,
+    `(e.g. npm install ${NPM_PACKAGE_NAME}@latest) and re-run: gantry upgrade`,
   ].join("\n");
 }
 
@@ -110,7 +110,7 @@ export function ensureSubstrateVersionOnInit(repoRoot: string, templatesRoot: st
   const substrateAbs = path.join(repoRoot, fromPosix(REL_SUBSTRATE_VERSION));
   if (fs.existsSync(substrateAbs)) return;
   const version = loadIntegrationCompat(templatesRoot).opengantry_version;
-  writeSubstrateVersionFile(repoRoot, version, "gapman init");
+  writeSubstrateVersionFile(repoRoot, version, "gantry init");
 }
 
 export function legacyVersionWarning(source: SubstrateVersionSource): string | null {

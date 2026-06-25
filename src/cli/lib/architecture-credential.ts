@@ -19,7 +19,7 @@ const VALID_KINDS = new Set<ArchitectureCredentialKind>(["bearer", "api_key", "b
 
 export function parseArchitectureCredentialKind(raw: string): ArchitectureCredentialKind {
   if (!VALID_KINDS.has(raw as ArchitectureCredentialKind)) {
-    throw new Error(`gapman arch cred: kind must be one of ${[...VALID_KINDS].join(", ")}`);
+    throw new Error(`gantry arch cred: kind must be one of ${[...VALID_KINDS].join(", ")}`);
   }
   return raw as ArchitectureCredentialKind;
 }

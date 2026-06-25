@@ -12,7 +12,7 @@ import type { DoctorLine } from "./doctor-types.js";
 
 export type IntegrationProfileState = "uninitialized" | "configured";
 
-const NO_INTEGRATION_MSG = "no agent integration files detected — run gapman init";
+const NO_INTEGRATION_MSG = "no agent integration files detected — run gantry init";
 
 function pathExists(repoRoot: string, rel: string): boolean {
   const normalized = rel.endsWith("/") ? rel.slice(0, -1) : rel;

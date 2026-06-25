@@ -154,7 +154,7 @@ test("runUpgradeApply: rejects mission with unknown top-level fields", async () 
     missionAbs,
     `msn_id: MSN-9010
 skill_key: substrate
-gate_command: gapman doctor
+gate_command: gantry doctor
 unknown_field: true
 upgrade_payload:
   from_version: "0.7.0"

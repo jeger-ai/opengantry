@@ -21,7 +21,7 @@ When the user **explicitly** asks to write, edit, refactor, or implement code an
 - **Do NOT** trigger for questions, explanations, or code discovery — answer normally.
 - **Fast-path** trivial single-file work; **full interview** for heavy/risky scope.
 - **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
-- **CLI fallback:** one copy-paste `gapman legislate …` command — never raw YAML blocks.
+- **CLI fallback:** one copy-paste `gantry legislate …` command — never raw YAML blocks.
 
 ## Developing this repo (mandatory dogfood)
 
@@ -29,18 +29,18 @@ OpenGantry development **MUST** use the full GXT stack — same as adopters. See
 
 | Step | Command |
 |------|---------|
-| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `gapman teacher set "$(git config user.email)"` |
-| Readiness | `gapman doctor` |
-| Scope work | Mission Architect / MCP tools or `gapman legislate … --msn MSN-NNNN --skill-key gapman` |
-| Worker env | `eval "$(gapman runtime env --mission .gitagent/missions/<file>.yaml)"` |
-| Finish | Trace in `WORKER_LOG.md` · `gapman verify --mission …` |
+| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `gantry teacher set "$(git config user.email)"` |
+| Readiness | `gantry doctor` |
+| Scope work | Mission Architect / MCP tools or `gantry legislate … --msn MSN-NNNN --skill-key gantry` |
+| Worker env | `eval "$(gantry runtime env --mission .gitagent/missions/<file>.yaml)"` |
+| Finish | Trace in `WORKER_LOG.md` · `gantry verify --mission …` |
 | Pre-PR | `npm run validate` |
 
-- **`src/cli/`** → skill **`gapman`** (TMVC `src/cli/`).
+- **`src/cli/`** → skill **`gantry`** (TMVC `src/cli/`).
 - **`.gitagent/`**, hooks, workflows** → Tier-3; Teacher mission + `[MSN-…]` commits required.
 - Do **not** bypass hooks or skip verify for “internal” convenience.
 
-For **`gapman`** command reference, see root **`README.md`** (gapman CLI section).
+For **`gantry`** command reference, see root **`README.md`** (gantry CLI section).
 
 When legislating missions, review **`.gitagent/out-of-scope/`** for relevant ADRs (Teacher obligation per **RULES**).
 
@@ -59,11 +59,11 @@ See [`.gitagent/teacher/RUNTIME.md`](.gitagent/teacher/RUNTIME.md) and [`docs/DE
 
 ## Cursor Cloud specific instructions
 
-This repo is a **CLI-only** product (`gapman`); there is no dev server, database, or HTTP port to start.
+This repo is a **CLI-only** product (`gantry`); there is no dev server, database, or HTTP port to start.
 
 ### Node.js 24+
 
-`package.json` requires **Node ≥ 24**. Cloud VMs may ship `/exec-daemon/node` at v22 — prepend nvm’s Node 24 to `PATH` before any `npm`/`gapman` command:
+`package.json` requires **Node ≥ 24**. Cloud VMs may ship `/exec-daemon/node` at v22 — prepend nvm’s Node 24 to `PATH` before any `npm`/`gantry` command:
 
 ```bash
 export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 24
@@ -77,7 +77,7 @@ Or invoke the built CLI directly: `node dist/cli/index.js <subcommand>` (after `
 ```bash
 git config core.hooksPath .githooks
 git config commit.gpgsign false   # SSH/GPG signing agent is unavailable in Cloud VMs; required for git-based tests
-gapman teacher set "$(git config user.email)"
+gantry teacher set "$(git config user.email)"
 ```
 
 ### Run / test / lint
@@ -85,11 +85,11 @@ gapman teacher set "$(git config user.email)"
 | Task | Command |
 |------|---------|
 | Build | `npm run build` |
-| CLI | `npm run gapman -- <subcommand>` |
+| CLI | `npm run gantry -- <subcommand>` |
 | Unit tests | `npm test` |
 | Full validation (CI parity) | `npm run validate` |
 | Lint | `npm run lint` |
-| Readiness | `gapman doctor` |
+| Readiness | `gantry doctor` |
 | MCP dogfood (no Cursor) | `./scripts/validate-mcp-dogfood.sh` |
 
 See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the mission loop and Cursor MCP handoff.

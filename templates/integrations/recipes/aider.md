@@ -4,7 +4,7 @@
 - **Session bootstrap:**
 
 ```bash
-gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- aider --message "<task>"
+gantry runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- aider --message "<task>"
 ```
 
 - **Enforcement:** Process-boundary when wrapped — strongest TMVC trap among IDE-adjacent tools.

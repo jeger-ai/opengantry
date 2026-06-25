@@ -40,7 +40,7 @@ async function resolveOnboardingMissionPath(
     return { missionPath, useExample };
   }
 
-  p.log.step("Step 3 — Scaffold mission (gapman start)");
+  p.log.step("Step 3 — Scaffold mission (gantry start)");
   const result = runStartOrchestration({
     intent: intent.trim(),
     writeMission: true,
@@ -80,7 +80,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   const { root } = loadWorkspace();
   const manifestPath = path.join(root, ".gitagent", "foreman", "MANIFEST.json");
   if (!fs.existsSync(manifestPath)) {
-    logError("Run gapman init first — substrate not found.");
+    logError("Run gantry init first — substrate not found.");
     setExitCode(2);
     p.outro("Onboarding aborted");
     return;
@@ -94,7 +94,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   if (blockers.length > 0 && !options.force) {
     p.log.step("Integration health");
     for (const msg of blockers) logWarn(`  ${msg}`);
-    logError("Integration issues detected — run gapman doctor or pass --force to continue.");
+    logError("Integration issues detected — run gantry doctor or pass --force to continue.");
     setExitCode(2);
     p.outro("Onboarding aborted (integration gates)");
     return;
@@ -110,9 +110,9 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   }
 
   p.log.step("Step 1 — Teacher allowlist");
-  logInfo('  gapman teacher set "$(git config user.email)"');
+  logInfo('  gantry teacher set "$(git config user.email)"');
 
-  p.log.step("Step 2 — Declare intent (gapman start)");
+  p.log.step("Step 2 — Declare intent (gantry start)");
   const intent = await p.text({
     message: "What do you want to build?",
     placeholder: "Fix login spinner on checkout",

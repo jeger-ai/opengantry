@@ -1,4 +1,5 @@
 import path from "node:path";
+import { GIT_CONFIG_TEACHER_EMAILS } from "./config-namespace.js";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRun } from "./git.js";
@@ -19,7 +20,7 @@ function throwGitProofError(
 import { extractMsnIdFromMissionPath } from "./missions/parser.js";
 import { resolveTeacherEmails } from "./teacher-identity.js";
 
-/** Missions verified by `gapman verify` must live under this repo-relative prefix. */
+/** Missions verified by `gantry verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
 
 export { ENV_TEACHER_EMAILS, parseTeacherEmailsFromEnv } from "./teacher-identity.js";
@@ -203,7 +204,7 @@ export function assertTeacherMissionProof(
     throwGitProofError(
       "NO_TEACHER_MSN_COMMIT",
       `The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${teacherIdentity.detail}). ` +
-        `Add that email to .gitagent/foreman/TEACHER.allowlist.local, git config gapman.teacherEmails, or run gapman teacher set.`,
+        `Add that email to .gitagent/foreman/TEACHER.allowlist.local, git config ${GIT_CONFIG_TEACHER_EMAILS}, or run ${CLI_NAME} teacher set.`,
       { root, missionPath, msnId, latestAuthorEmail: latest.authorEmail },
     );
   }

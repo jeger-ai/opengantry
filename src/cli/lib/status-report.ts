@@ -35,7 +35,7 @@ function collectBlockers(
     if (line.level === "fail") blockers.push(line.message);
   }
   if (verifyReadiness === "needs_teacher") {
-    blockers.push("Teacher allowlist unset — gapman verify git-proof will fail");
+    blockers.push("Teacher allowlist unset — gantry verify git-proof will fail");
   }
   if (verifyReadiness === "needs_mission") {
     blockers.push("No pinned mission — legislate or pin before worker execution");
@@ -87,9 +87,9 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
   );
   let nextStep = doctorReport.nextStep;
   if (pinnedMission) {
-    nextStep = `gapman verify --mission ${pinnedMission}`;
+    nextStep = `gantry verify --mission ${pinnedMission}`;
   } else if (verifyReadiness === "needs_mission") {
-    nextStep = nextStep ?? 'gapman start "<intent>" --msn MSN-0001 --skill-key <key>';
+    nextStep = nextStep ?? 'gantry start "<intent>" --msn MSN-0001 --skill-key <key>';
   }
 
   const hasFail = !skillSync.ok || doctorReport.hasFail;

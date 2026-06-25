@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Time-to-Scaffold benchmark: delegates to public examples/benchmark-agent harness.
-# Prints legacy v1 JSON timings to stdout. Requires built gapman (npm run build).
+# Prints legacy v1 JSON timings to stdout. Requires built gantry (npm run build).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

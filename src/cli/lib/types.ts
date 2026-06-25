@@ -110,7 +110,7 @@ export interface ParsedMission {
   rawPath: string;
 }
 
-/** Structured mission on disk (YAML), validated by gapman */
+/** Structured mission on disk (YAML), validated by gantry */
 export interface YamlMission {
   msn_id?: string;
   msnId?: string;

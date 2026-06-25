@@ -48,7 +48,7 @@ export function assertKpiReportSchemaValid(root: string, data: unknown, filePath
   const validate = loadKpiReportSchemaValidator(root);
   if (validate(data)) return;
   const detail = formatAjvErrors(validate.errors ?? []);
-  throw new Error(`gapman kpi: ${filePath}: schema validation failed: ${detail}`);
+  throw new Error(`gantry kpi: ${filePath}: schema validation failed: ${detail}`);
 }
 
 export interface KpiThresholdFailure {
@@ -248,7 +248,7 @@ export function verifyKpiReportFreshness(
       : "";
   const reason =
     `KPI report STALE (attested at ${shortCommit}): TMVC drift since scan — ` +
-    `${shown.join(", ")}${suffix}. Re-run gapman scan and commit the updated report.`;
+    `${shown.join(", ")}${suffix}. Re-run gantry scan and commit the updated report.`;
 
   if (options.strictStale === true) {
     return {
@@ -347,7 +347,7 @@ export function evaluateKpiPhase(
 
   const warnings: string[] = [];
   if (stale.advisoryOnly && stale.reason) {
-    warnings.push(`gapman verify: advisory — ${stale.reason}`);
+    warnings.push(`gantry verify: advisory — ${stale.reason}`);
   }
   if (stale.stale) return staleFailure(reportRel, workerLogPath, stale);
 

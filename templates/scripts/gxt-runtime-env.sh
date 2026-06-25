@@ -15,17 +15,17 @@ if ! MISSION="$(scripts/gxt-resolve-mission.sh "${1:-}" 2>/dev/null)"; then
 gxt-runtime-env: no mission file resolved.
   scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml
   source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml
-  export GAPMAN_MISSION=.gitagent/missions/<file>.yaml
+  export GANTRY_MISSION=.gitagent/missions/<file>.yaml
 EOF
   exit 1
 fi
 
-if command -v gapman >/dev/null 2>&1; then
-  eval "$(gapman runtime env --mission "$MISSION")"
+if command -v gantry >/dev/null 2>&1; then
+  eval "$(gantry runtime env --mission "$MISSION")"
 elif [ -f "dist/cli/index.js" ]; then
   eval "$(node dist/cli/index.js runtime env --mission "$MISSION")"
 else
-  echo "gxt-runtime-env: gapman not found (npm ci && npm run build)" >&2
+  echo "gxt-runtime-env: gantry not found (npm ci && npm run build)" >&2
   exit 1
 fi
 

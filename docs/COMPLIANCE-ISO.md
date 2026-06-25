@@ -34,7 +34,7 @@ ISO 27001 treats developers (human or automated) as actors inside the Informatio
 |---------|-----------|
 | Executor ≠ Verifier | [RULES §2 SOD](../.gitagent/teacher/RULES.md): the agent that runs the gate command must not declare verifier PASS |
 | Worker ≠ Teacher | Mission law (scope, gates, TMVC) is Teacher-owned; workers must not amend mission law without re-legislation |
-| Approval before merge | `gapman verify` requires **git-proof**: among recent commits, the newest `[MSN-XXXX]` from an allowlisted **Teacher** email must **modify** the mission file under `.gitagent/missions/` |
+| Approval before merge | `gantry verify` requires **git-proof**: among recent commits, the newest `[MSN-XXXX]` from an allowlisted **Teacher** email must **modify** the mission file under `.gitagent/missions/` |
 
 **Artifact pack for auditors:** mission YAML, Teacher `[MSN-XXXX]` commit in `git log`, worker commits, `WORKER_LOG.md`, verify output.
 
@@ -47,9 +47,9 @@ ISO 27001 treats developers (human or automated) as actors inside the Informatio
 | Control | Mechanism |
 |---------|-----------|
 | Declared edit scope | **tmvc_roots** and **forbidden_zones** in [MANIFEST.json](../.gitagent/foreman/MANIFEST.json); mission may narrow further |
-| Hard subprocess boundary | `gapman runtime exec` enforces TMVC + forbidden-zone scan for orchestrated runs |
+| Hard subprocess boundary | `gantry runtime exec` enforces TMVC + forbidden-zone scan for orchestrated runs |
 | Governance path protection | Hooks block casual shell writes to `.gitagent/foreman/`, `RULES.md`, etc. |
-| Merge gate | Pre-push / CI `gapman verify` fails closed without Teacher legislation + gate + trace (when configured) |
+| Merge gate | Pre-push / CI `gantry verify` fails closed without Teacher legislation + gate + trace (when configured) |
 
 **Honest limit:** Default IDE Agent **Write/Edit** is **advisory** — compliance strength depends on adopting `runtime exec`, verify gates, and code review. See [Enforcement boundary](#enforcement-boundary-honest-limits).
 
@@ -64,7 +64,7 @@ ISO 27001 treats developers (human or automated) as actors inside the Informatio
 | `.gitagent/missions/MSN-*.yaml` | Declared intent, skill, TMVC scope, gate command, trace rows |
 | `git log --grep='MSN-XXXX'` | Greppable mission index — author, timestamp, commit message |
 | `WORKER_LOG.md` | Execution trace; verifier PASS requires **verbatim quote** from this file ([RULES §3](../.gitagent/teacher/RULES.md)) |
-| `gapman verify` output | Structured phases; failures emit `GXT_*` codes for remediation |
+| `gantry verify` output | Structured phases; failures emit `GXT_*` codes for remediation |
 
 **Honest limit:** Trace mapping is **process control**, not cryptographic tamper-proofing. Evidence integrity relies on Git history, hook/verify gates, and human review — not on proving the model could not lie.
 
@@ -102,7 +102,7 @@ ISO 42001 focuses on governing **AI system behavior and risk**, not only securin
 
 - All mission and trace artifacts live in **Git** — versioned, branchable, revertible like any other change.
 - CI workflow ([`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)) and `npm run validate` exercise substrate checks on PRs.
-- `gapman status --json` surfaces mission pin state and last errors for operational monitoring.
+- `gantry status --json` surfaces mission pin state and last errors for operational monitoring.
 
 ---
 
@@ -125,7 +125,7 @@ Compliance claims must match what your deployment actually enforces:
 
 | Tier | Mechanism | Compliance relevance |
 |------|-----------|----------------------|
-| **Process-boundary** | `gapman runtime exec` | Strongest TMVC trap for subprocess / headless agents |
+| **Process-boundary** | `gantry runtime exec` | Strongest TMVC trap for subprocess / headless agents |
 | **Deterministic hook** | `beforeShellExecution`, pre-push verify | Blocks unlegislated governance edits; git-proof on handoff |
 | **Advisory** | IDE rules, `AGENTS.md`, MCP context | Process guidance only — **not** sufficient alone for "AI cannot touch X" claims |
 
@@ -142,7 +142,7 @@ For platforms where **auditability and change management are non-negotiable**, O
 1. **Intent** — Product/engineering defines change; Foreman routes to skill + risk tier.
 2. **Legislation** — Teacher reviews mission scope, gates, and TMVC; commits `[MSN-XXXX]`.
 3. **Execution** — Worker runs under pinned mission (`runtime env` / `runtime exec`); appends gate output to `WORKER_LOG.md`.
-4. **Verification** — Independent verifier phase (human or automated per tier); `gapman verify` before merge.
+4. **Verification** — Independent verifier phase (human or automated per tier); `gantry verify` before merge.
 5. **Audit** — Assessor greps `git log --grep='MSN-'`, reads mission + log + verify record.
 
 This is the process cage assessors expect: not "we trust the model," but "we can **prove** authorization, scope, and execution evidence in plain Git."
@@ -164,10 +164,10 @@ cat .gitagent/missions/MSN-0042.<slug>.yaml
 cat WORKER_LOG.md
 
 # Verify record (CI log or local)
-gapman verify --mission .gitagent/missions/MSN-0042.<slug>.yaml --audience verifier
+gantry verify --mission .gitagent/missions/MSN-0042.<slug>.yaml --audience verifier
 ```
 
-Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + merge verify) and **Teacher allowlist** policy (`GAPMAN_TEACHER_EMAILS`).
+Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + merge verify) and **Teacher allowlist** policy (`GANTRY_TEACHER_EMAILS`).
 
 ---
 

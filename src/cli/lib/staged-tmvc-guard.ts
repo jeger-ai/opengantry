@@ -90,6 +90,6 @@ export function formatStagedTmvcAdvisory(result: StagedTmvcGuardResult): string[
     const label = v.classification === "forbidden_zone" ? "FORBIDDEN" : "OUTSIDE_TMVC";
     lines.push(`  [${label}] ${v.path}`);
   }
-  lines.push("Record a Context Request in WORKER_LOG.md before editing outside TMVC (gapman context-request).");
+  lines.push("Record a Context Request in WORKER_LOG.md before editing outside TMVC (gantry context-request).");
   return lines;
 }

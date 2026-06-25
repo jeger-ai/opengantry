@@ -46,9 +46,9 @@ export function runPerimeter(options: PerimeterOptions): void {
     }
 
     if (result.violations.length > 0 && options.ci !== true) {
-      logInfo("gapman perimeter: advisory-only mode — no hard failures locally");
+      logInfo("gantry perimeter: advisory-only mode — no hard failures locally");
     } else {
-      logInfo("gapman perimeter: OK");
+      logInfo("gantry perimeter: OK");
     }
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));

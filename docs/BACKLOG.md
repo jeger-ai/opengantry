@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-23 (v2.2.3 **released**; v2.2.4 queued — CLI naming transition #94)
+**Last synced:** 2026-06-25 (v2.2.4 docs positioning — #95–#97)
 
 ---
 
@@ -17,10 +17,10 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 
 | Item | Status | Issue |
 |------|--------|-------|
-| **Move primary CLI naming from `gapman` to `gantry`** (docs/help/output/templates) with `gapman` compatibility alias + migration guidance | Open | [#94](https://github.com/jeger-ai/opengantry/issues/94) |
-| **Capture Gantry long-tail developer intent** (`Open Source Gantry`, `Gantry CLI`, `Gantry Git hook`) across README/docs surfaces | Open | [#95](https://github.com/jeger-ai/opengantry/issues/95) |
-| **README anti-bounce disambiguation** (clearly route observability-seekers to Gantry.io while defining OpenGantry first) | Open | [#96](https://github.com/jeger-ai/opengantry/issues/96) |
-| **Vendor-neutral OpenGantry positioning pass** (cloud dashboard contrast + local git-native governance framing across core docs) | Open | [#97](https://github.com/jeger-ai/opengantry/issues/97) |
+| **Unified gantry naming cutover** (`gantry` primary CLI + `GANTRY_*` / `git config gantry.*`; `gapman` alias + silent legacy config fallback; manifest skill key `gantry`) | **Done** | [#94](https://github.com/jeger-ai/opengantry/issues/94) |
+| **Capture Gantry long-tail developer intent** (`Open Source Gantry`, `Gantry CLI`, `Gantry Git hook`) across README/docs surfaces | **Done** | [#95](https://github.com/jeger-ai/opengantry/issues/95) |
+| **README anti-bounce disambiguation** (clearly route observability-seekers to Gantry.io while defining OpenGantry first) | **Done** | [#96](https://github.com/jeger-ai/opengantry/issues/96) |
+| **Vendor-neutral OpenGantry positioning pass** (cloud dashboard contrast + local git-native governance framing across core docs) | **Done** | [#97](https://github.com/jeger-ai/opengantry/issues/97) |
 
 ---
 
@@ -85,7 +85,7 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 | **Perimeter drift surgeon** | Open | v2.1.1+ (ADR; git-restore category) |
 | **Multi-language external surgeon adapter contract** | Open | post-v2.1 |
 
-Core invariant (MSN-0047+): `gapman verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `WORKER_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
+Core invariant (MSN-0047+): `gantry verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `WORKER_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
 
 ---
 
@@ -198,7 +198,7 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 | **Template CI script deployment** (`verify-pr-missions.sh` in init catalog) | **Done** | `src/cli/lib/init-asset-catalog.ts` → `CI_ASSETS` |
 | **CI target lock** (mission PRs → default branch, not hardcoded `main`) | **Done** | MSN-0026; `vars.GXT_INTEGRATION_BRANCH` override; template parity restored ([#6](https://github.com/jeger-ai/opengantry/issues/6)) |
 | **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Done** | MSN-0027; `docs/ADOPTION.md` § Formatter guard; `src/cli/lib/file-merge-gxt.ts` ([#7](https://github.com/jeger-ai/opengantry/issues/7)) |
-| **`gapman verify --json`** (structured output for CI/orchestrators) | **Done** | MSN-0028; `src/cli/lib/verify-result-payload.ts`; flat `error_code` envelope ([#18](https://github.com/jeger-ai/opengantry/issues/18)) |
+| **`gantry verify --json`** (structured output for CI/orchestrators) | **Done** | MSN-0028; `src/cli/lib/verify-result-payload.ts`; flat `error_code` envelope ([#18](https://github.com/jeger-ai/opengantry/issues/18)) |
 | **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
 | **Doctor detects substrate version drift** | **Done** | MSN-0029; `src/cli/lib/doctor-substrate-drift.ts`; `docs/ADOPTION.md` § substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)) |
 | **Doc/substrate version string sync** | **Done** | MSN-0030; README + `.gitagent/README` v1.1.0 ([#21](https://github.com/jeger-ai/opengantry/issues/21)) |
@@ -210,12 +210,12 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 - **Stale trace evidence:** `git blame` + TMVC `git diff` binding; `GXT_TRACE_STALE`; `--skip-stale-evidence` escape hatch.
 - **CI target lock:** dogfood + init template `gxt-validate.yml` compare PR base to `vars.GXT_INTEGRATION_BRANCH || github.event.repository.default_branch`; template parity restored (no workflow exemption).
 - **Formatter guard:** `docs/ADOPTION.md` mandates `WORKER_LOG.md` in `.prettierignore` (or equivalent); init tutorial copy; rebase invalidation cross-linked.
-- **Init prettierignore:** `gapman init` / `gapman upgrade apply` merge `WORKER_LOG.md` via `file-merge-gxt.ts` (exact line idempotency).
+- **Init prettierignore:** `gantry init` / `gantry upgrade apply` merge `WORKER_LOG.md` via `file-merge-gxt.ts` (exact line idempotency).
 
 ### v1.1 remaining acceptance
 
 - **Verify JSON ([#18](https://github.com/jeger-ai/opengantry/issues/18)):** ~~stable success/failure JSON with `error_code`, phase, and `fix_hints`.~~ Shipped MSN-0028.
-- **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** ~~`gapman doctor` compares on-disk `SUBSTRATE.version.json` to bundled gapman version.~~ Shipped MSN-0029.
+- **Substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)):** ~~`gantry doctor` compares on-disk `SUBSTRATE.version.json` to bundled gantry version.~~ Shipped MSN-0029.
 - **Doc version sync ([#21](https://github.com/jeger-ai/opengantry/issues/21)):** ~~README / `.gitagent/README` semver strings match `package.json`.~~ Shipped MSN-0030.
 
 ---
@@ -233,11 +233,11 @@ Refactors deferred during Missions A/B/C (MSN-0021–0023) to limit blast radius
 | **Program registrar cleanup** | **Done** | [#12](https://github.com/jeger-ai/opengantry/issues/12) |
 | **Specimen MANIFEST routing** | **Done** | [#13](https://github.com/jeger-ai/opengantry/issues/13) |
 | **Deduplicate trace quote-line resolution** | **Done** | MSN-0031; `verifyTraceRows` returns `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)) |
-| **`gapman mission validate` (JSON Schema)** | **Done** | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
+| **`gantry mission validate` (JSON Schema)** | **Done** | [#23](https://github.com/jeger-ai/opengantry/issues/23) |
 | **Configurable git-proof scan depth** | **Done** | [#24](https://github.com/jeger-ai/opengantry/issues/24); MSN-0050 |
 | **Pre-commit TMVC path guard hook** | Done | [#25](https://github.com/jeger-ai/opengantry/issues/25) → v2.2 |
 | **Context Request helper** | Done | [#26](https://github.com/jeger-ai/opengantry/issues/26) → v2.2 |
-| **`gapman verify --changed-missions`** | **Done** | [#27](https://github.com/jeger-ai/opengantry/issues/27) |
+| **`gantry verify --changed-missions`** | **Done** | [#27](https://github.com/jeger-ai/opengantry/issues/27) |
 | **Triage scoring / explainability** | **Done** | [#28](https://github.com/jeger-ai/opengantry/issues/28) |
 | **Metrics fidelity improvement** | **Done** | [#29](https://github.com/jeger-ai/opengantry/issues/29) → v2.2 |
 
@@ -251,7 +251,7 @@ Onboarding, init, and multi-IDE wiring improvements.
 |------|--------|-------|
 | **Session bootstrap hooks beyond Cursor** | Done | [#30](https://github.com/jeger-ai/opengantry/issues/30) — shell wrappers for CLI agents |
 | **Dogfood MANIFEST overlay** | Open | [#31](https://github.com/jeger-ai/opengantry/issues/31) — alternative to #13 |
-| **`gapman upgrade` changelog preview** | Done | [#32](https://github.com/jeger-ai/opengantry/issues/32) — `upgrade plan` + stable JSON |
+| **`gantry upgrade` changelog preview** | Done | [#32](https://github.com/jeger-ai/opengantry/issues/32) — `upgrade plan` + stable JSON |
 | **Integration health gates in onboarding** | Done | [#33](https://github.com/jeger-ai/opengantry/issues/33) — uninitialized vs corrupt |
 
 ---
@@ -269,10 +269,10 @@ Onboarding, init, and multi-IDE wiring improvements.
 | Item | Status | Issue |
 |------|--------|-------|
 | **Session bootstrap hooks beyond Cursor** | Done | [#30](https://github.com/jeger-ai/opengantry/issues/30) |
-| **`gapman upgrade` changelog preview** | Done | [#32](https://github.com/jeger-ai/opengantry/issues/32) |
+| **`gantry upgrade` changelog preview** | Done | [#32](https://github.com/jeger-ai/opengantry/issues/32) |
 | **Integration health gates in onboarding** | Done | [#33](https://github.com/jeger-ai/opengantry/issues/33) |
-| **Diagnostic Context Feed** | Done | [#66](https://github.com/jeger-ai/opengantry/issues/66) — `gapman context-feed`, atomic `.gitagent/tmp/NEXT_REMEDIATION.json` |
-| **Meta-Governance Gates** | Done | [#67](https://github.com/jeger-ai/opengantry/issues/67) — `gapman audit-rigor` with explicit `workspaceRoot` scanner |
+| **Diagnostic Context Feed** | Done | [#66](https://github.com/jeger-ai/opengantry/issues/66) — `gantry context-feed`, atomic `.gitagent/tmp/NEXT_REMEDIATION.json` |
+| **Meta-Governance Gates** | Done | [#67](https://github.com/jeger-ai/opengantry/issues/67) — `gantry audit-rigor` with explicit `workspaceRoot` scanner |
 | **Product Position Clarification** | Done | [#69](https://github.com/jeger-ai/opengantry/issues/69) — Autonomous Repository Engineering narrative |
 | **Documentation quality initiative** | Done | [#76](https://github.com/jeger-ai/opengantry/issues/76) — docs map, INTEGRATIONS context-feed, BACKLOG v2.2 board |
 | **Ephemeral State Virtualization** | Done | [#68](https://github.com/jeger-ai/opengantry/issues/68) — `virtual_capture` mission flag, `.gitagent/virtual/<flight-id>/` scratch + post-success purge |
@@ -303,9 +303,9 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 | Item | Status | Issue |
 |------|--------|-------|
-| **Self-learning auto-discovery engine** — `gapman init` static-analysis pass (module boundaries, dependency graph, stack detection) synthesizes baseline `TARGET_ARCHITECTURE.yaml` + MANIFEST draft. Anti-trap: emits an **Architecture Proposal** (conventions + flagged anomalies) requiring one-time human confirmation before entering the cryptographic baseline — never codifies legacy spaghetti as law. Automated front-end to `ARCHITECTURE-DISCOVERY.md`; feeds [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#61](https://github.com/jeger-ai/opengantry/issues/61) |
+| **Self-learning auto-discovery engine** — `gantry init` static-analysis pass (module boundaries, dependency graph, stack detection) synthesizes baseline `TARGET_ARCHITECTURE.yaml` + MANIFEST draft. Anti-trap: emits an **Architecture Proposal** (conventions + flagged anomalies) requiring one-time human confirmation before entering the cryptographic baseline — never codifies legacy spaghetti as law. Automated front-end to `ARCHITECTURE-DISCOVERY.md`; feeds [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#61](https://github.com/jeger-ai/opengantry/issues/61) |
 | **AI performance judge against docs** — judge ingests `PERFORMANCE.md` / specs / ADRs and audits mission diffs for structural performance violations (pooling, blocking I/O in async paths, dropped memoization). Anti-trap: judges **strategies only, never empirical metrics**; runtime thresholds come from a deterministic benchmark gate; verdicts are ADVISORY_ONLY and cannot flip gate PASS/FAIL. Extends [#16](https://github.com/jeger-ai/opengantry/issues/16) | Open | [#62](https://github.com/jeger-ai/opengantry/issues/62) |
-| **`gapman blueprint` — interactive documentation scaffolding** — closes the governance cold-start hole (no docs = no semantic cage). Forensic discovery pass (reuses #61 scanner) → evidence-anchored terminal interview (every question cites file:line findings) → emits synchronized `ARCHITECTURE.md` (human spec) + `TARGET_ARCHITECTURE.yaml` (machine spec) with shared rule IDs; `gapman doctor` flags MD/YAML drift. Anti-trap: **context-anchored guidance only** — no rule without an on-disk evidence anchor, no generic best-practices fluff. Enforcement split: YAML is the sole deterministic-engine input; MD aligns humans + feeds #62 judge as advisory corpus. Depends on [#61](https://github.com/jeger-ai/opengantry/issues/61); feeds [#62](https://github.com/jeger-ai/opengantry/issues/62), [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#63](https://github.com/jeger-ai/opengantry/issues/63) |
+| **`gantry blueprint` — interactive documentation scaffolding** — closes the governance cold-start hole (no docs = no semantic cage). Forensic discovery pass (reuses #61 scanner) → evidence-anchored terminal interview (every question cites file:line findings) → emits synchronized `ARCHITECTURE.md` (human spec) + `TARGET_ARCHITECTURE.yaml` (machine spec) with shared rule IDs; `gantry doctor` flags MD/YAML drift. Anti-trap: **context-anchored guidance only** — no rule without an on-disk evidence anchor, no generic best-practices fluff. Enforcement split: YAML is the sole deterministic-engine input; MD aligns humans + feeds #62 judge as advisory corpus. Depends on [#61](https://github.com/jeger-ai/opengantry/issues/61); feeds [#62](https://github.com/jeger-ai/opengantry/issues/62), [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#63](https://github.com/jeger-ai/opengantry/issues/63) |
 
 **v2.0 paradigm shift (target):**
 
@@ -317,13 +317,13 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 **PoC decision (recorded):** the discovery scanner core is a **deterministic offline TypeScript AST / dependency-graph parser** (reproducible, byte-identical re-runs, no LLM in the trust path). A localized LLM pass may optionally annotate naming conventions and directory intent in the proposal, but its output stays advisory until human confirmation.
 
-**Enforcement-split decision (recorded, #63):** generated `ARCHITECTURE.md` is **never** a strict semantic input to the deterministic verification engine — `TARGET_ARCHITECTURE.yaml` is the sole enforcement source. The MD exists to align humans and serves as the advisory corpus for the #62 AI judge. Drift between the two is caught deterministically: blueprint stamps both artifacts with shared rule IDs + a provenance checksum, and `gapman doctor` flags divergence.
+**Enforcement-split decision (recorded, #63):** generated `ARCHITECTURE.md` is **never** a strict semantic input to the deterministic verification engine — `TARGET_ARCHITECTURE.yaml` is the sole enforcement source. The MD exists to align humans and serves as the advisory corpus for the #62 AI judge. Drift between the two is caught deterministically: blueprint stamps both artifacts with shared rule IDs + a provenance checksum, and `gantry doctor` flags divergence.
 
 ---
 
 ## Sprint guidance
 
-**Current focus:** v2.2.3 released ([#92](https://github.com/jeger-ai/opengantry/issues/92)); next: v2.2.4 naming + SEO positioning ([#94](https://github.com/jeger-ai/opengantry/issues/94)–[#97](https://github.com/jeger-ai/opengantry/issues/97)), then v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
+**Current focus:** v2.2.4 shipped ([#94](https://github.com/jeger-ai/opengantry/issues/94)–[#97](https://github.com/jeger-ai/opengantry/issues/97)); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
@@ -332,7 +332,8 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 | **Done (release)** | v2.2.1 patch | MSN-0060 thermo remediation + version parity |
 | **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |
 | **Done (release)** | v2.1.0 npm publish | MSN-0056; tag + npm **2.1.0** |
-| **Next (v2.2.4)** | [#94](https://github.com/jeger-ai/opengantry/issues/94)–[#97](https://github.com/jeger-ai/opengantry/issues/97) | CLI naming transition plus SEO/disambiguation positioning tasks |
+| **Done (release)** | v2.2.4 unified gantry naming + docs positioning | #94 CLI/config/manifest cutover; #95–#97 SEO/disambiguation |
+| **Next** | [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | v2.3.0 cage hardening (ADR first) |
 | **After** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29), v1.2+ [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | Deferred tactical + strategic (ADR first) |
 | Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
 | Done (v1.1.1) | [#10](https://github.com/jeger-ai/opengantry/issues/10)–[#11](https://github.com/jeger-ai/opengantry/issues/11), [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#50](https://github.com/jeger-ai/opengantry/issues/50) | MSN-0032–MSN-0033 |

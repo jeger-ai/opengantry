@@ -7,7 +7,7 @@ The raw-script phase runs [`raw-script.mjs`](raw-script.mjs) (vendored from [`..
 ## Prerequisites
 
 - **Node.js 24+**
-- Built `gapman` from this repository:
+- Built `gantry` from this repository:
 
 ```bash
 npm run build
@@ -66,7 +66,7 @@ Sandboxes are created under **`.gitagent/virtual/benchmark-run/<runId>/`** (giti
 | Phase | Mechanism |
 |-------|-----------|
 | **Raw script (specimen)** | [`raw-script.mjs`](raw-script.mjs) — compressed anti-patterns (local state, heuristic scope, no legislative gate); measured LOC is this file only |
-| **OpenGantry** | `gapman init` → dynamic `gapman legislate` → Teacher commit → worker patch → **full** `gapman verify` with `virtual_capture: true` and dependency-free gate (`node --test test/smoke.test.js`) |
+| **OpenGantry** | `gantry init` → dynamic `gantry legislate` → Teacher commit → worker patch → **full** `gantry verify` with `virtual_capture: true` and dependency-free gate (`node --test test/smoke.test.js`) |
 
 Both phases use `git init` + seed commit inside their sandbox. The orchestrator tears down the run directory before exit — repeated runs do not accrue debris layers.
 
@@ -80,7 +80,7 @@ raw-script.mjs     # fragile orchestrator (BENCHMARK_ROOT env)
 run-benchmark.mjs  # sequential runner
 ```
 
-No pre-baked mission YAML — the gantry phase always calls `gapman legislate` against the running CLI.
+No pre-baked mission YAML — the gantry phase always calls `gantry legislate` against the running CLI.
 
 ## Compare
 

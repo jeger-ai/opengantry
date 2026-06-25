@@ -43,7 +43,7 @@ export interface UpgradeFileChange {
   sha256_after: string;
 }
 
-/** managed_strict substrate assets eligible for gapman upgrade (excludes user law / missions). */
+/** managed_strict substrate assets eligible for gantry upgrade (excludes user law / missions). */
 export function upgradeEligibleAssets(assets: InitAssetSpec[]): InitAssetSpec[] {
   return assets.filter((a) => a.mode === "managed_strict");
 }
@@ -80,7 +80,7 @@ export function inferInitProfileFromRepo(repoRoot: string, templatesRoot?: strin
   profile.gitHooks =
     pathExists(repoRoot, ".githooks/pre-push") || pathExists(repoRoot, ".githooks/pre-commit");
   profile.ciWorkflow = pathExists(repoRoot, ".github/workflows/gxt-validate.yml");
-  profile.skillsPreset = pathExists(repoRoot, "skills/gapman.md") ? "specimen" : "minimal";
+  profile.skillsPreset = pathExists(repoRoot, "skills/gantry.md") ? "specimen" : "minimal";
   return profile;
 }
 
@@ -214,7 +214,7 @@ export function buildUpgradeMissionYaml(opts: {
   const doc: Record<string, unknown> = {
     msn_id: opts.msnId,
     skill_key: "substrate",
-    gate_command: "gapman doctor",
+    gate_command: "gantry doctor",
     gate_success_substring: null,
     upgrade_payload: opts.payload,
     trace_rows: buildLegislativeTraceRows(),
@@ -332,7 +332,7 @@ function logUpgradePlanSummary(
   logInfo(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
   logInfo(`${options.dryRun ? "Suggested Teacher action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
   if (!options.dryRun) {
-    logInfo(`After Teacher commit: gapman upgrade --apply --mission ${opts.missionRel}`);
+    logInfo(`After Teacher commit: gantry upgrade --apply --mission ${opts.missionRel}`);
   }
 }
 

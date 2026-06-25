@@ -54,12 +54,12 @@ export interface AudienceNextStep {
 }
 
 const DEFAULT_NEXT_STEPS: AudienceNextStep[] = [
-  { audience: "teacher", step: 'gapman legislate "<intent>" --msn MSN-0001 --skill-key <key>' },
+  { audience: "teacher", step: 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key>' },
   { audience: "teacher", step: "Teacher: git commit -m \"[MSN-0001] legislate …\" including mission file" },
-  { audience: "worker", step: "eval \"$(gapman runtime env --mission .gitagent/missions/<file>.yaml)\"" },
+  { audience: "worker", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
   { audience: "worker", step: "Append gate evidence to WORKER_LOG.md" },
-  { audience: "verifier", step: "gapman verify --mission .gitagent/missions/<file>.yaml" },
-  { audience: "platform", step: "git config core.hooksPath .githooks && gapman doctor" },
+  { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
+  { audience: "platform", step: "git config core.hooksPath .githooks && gantry doctor" },
 ];
 
 function stepMatchesAudience(step: string, audience: OutputAudience): boolean {
@@ -67,11 +67,11 @@ function stepMatchesAudience(step: string, audience: OutputAudience): boolean {
     case "teacher":
       return /legislate|Teacher:|git commit -m "\[MSN-/i.test(step);
     case "worker":
-      return /runtime env|WORKER_LOG|gate evidence|eval "\$\(gapman runtime|execute worker/i.test(step);
+      return /runtime env|WORKER_LOG|gate evidence|eval "\$\(gantry runtime|execute worker/i.test(step);
     case "verifier":
-      return /gapman verify/i.test(step);
+      return /gantry verify/i.test(step);
     case "platform":
-      return /hooksPath|gapman doctor|gapman init/i.test(step);
+      return /hooksPath|gantry doctor|gantry init/i.test(step);
     default: {
       const _exhaustive: never = audience;
       return _exhaustive;

@@ -7,7 +7,7 @@
 scripts/gxt-pin-mission.sh .gitagent/missions/MSN-0001.<slug>.yaml
 scripts/gxt-shell-agent.sh claude .gitagent/missions/MSN-0001.<slug>.yaml
 # or with explicit task:
-gapman runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- claude "<task>"
+gantry runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- claude "<task>"
 ```
 
 - **Enforcement:** Advisory in interactive session; process-boundary when wrapped with `runtime exec` or `gxt-shell-agent.sh`.

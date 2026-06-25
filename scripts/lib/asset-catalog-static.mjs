@@ -18,7 +18,7 @@ export const STATIC_ASSETS = [
   { targetPath: "scripts/gxt-manifest-lib.mjs", mode: "managed_strict", executable: true, tags: ["core"] },
   { targetPath: "skills/ui.md", mode: "scaffold_only", tags: ["skill-minimal", "skill-specimen"] },
   { targetPath: "skills/logic.md", mode: "scaffold_only", tags: ["skill-minimal", "skill-specimen"] },
-  { targetPath: "skills/gapman.md", mode: "scaffold_only", tags: ["skill-specimen"] },
+  { targetPath: "skills/gantry.md", mode: "scaffold_only", tags: ["skill-specimen"] },
   { targetPath: "skills/substrate.md", mode: "scaffold_only", tags: ["skill-specimen"] },
   { targetPath: ".githooks/post-checkout", mode: "managed_strict", executable: true, tags: ["hooks"] },
   { targetPath: ".githooks/pre-commit", mode: "managed_strict", executable: true, tags: ["hooks"] },

@@ -1,4 +1,4 @@
 # One Git author email per line (case-insensitive). Committed team allowlist.
 # Personal override (gitignored): .gitagent/foreman/TEACHER.allowlist.local
-# Or: git config gapman.teacherEmails "you@example.com"
+# Or: git config gantry.teacherEmails "you@example.com"
 teacher@example.com

@@ -6,17 +6,17 @@ type TsModule = typeof import("typescript");
 
 let cachedTs: TsModule | null | undefined;
 
-function gapmanPackageRoot(): string {
+function gantryPackageRoot(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(here, "..", "..", "..", "..");
 }
 
-/** Resolve TypeScript compiler API from adopter workspace or gapman package (lazy, fail-soft). */
+/** Resolve TypeScript compiler API from adopter workspace or gantry package (lazy, fail-soft). */
 export function getWorkspaceTypeScript(root: string): TsModule | null {
   if (cachedTs !== undefined) return cachedTs;
   try {
     const require = createRequire(import.meta.url);
-    const searchPaths = [root, gapmanPackageRoot()];
+    const searchPaths = [root, gantryPackageRoot()];
     let tsPath: string | undefined;
     for (const base of searchPaths) {
       try {

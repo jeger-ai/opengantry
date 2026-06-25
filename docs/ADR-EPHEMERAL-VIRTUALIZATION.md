@@ -13,7 +13,7 @@ Introduce an **opt-in virtual scratch contract** at `.gitagent/virtual/` that ma
 
 ## Mandatory invariants (pre-implementation)
 
-1. **Ignore before write:** `gapman init` must merge `.gitagent/virtual/` and `.gitagent/tmp/` into the target `.gitignore` via `templates/.gitignore.gxt` **before** any virtual snapshot is written.
+1. **Ignore before write:** `gantry init` must merge `.gitagent/virtual/` and `.gitagent/tmp/` into the target `.gitignore` via `templates/.gitignore.gxt` **before** any virtual snapshot is written.
 2. **Sterile scratch:** virtual bytes are git-ignored forensic bulk — not TMVC law, not mission evidence.
 3. **Crash-safe cleanup:** writers use per-flight subdirectories (`.gitagent/virtual/<flight-id>/`); successful verify passes purge their flight dir synchronously; `scavengeStaleVirtualFlights` bounds abnormal leftovers.
 4. **Opt-in only:** missions declare virtual capture intent explicitly; verify does not silently create virtual state.
@@ -27,5 +27,5 @@ Introduce an **opt-in virtual scratch contract** at `.gitagent/virtual/` that ma
 ## References
 
 - KPI gate: `.gitagent/teacher/KPI-REPORT.schema.yaml`
-- Runtime exec telemetry: `gapman runtime exec`
+- Runtime exec telemetry: `gantry runtime exec`
 - Related backlog: [#68](https://github.com/jeger-ai/opengantry/issues/68)

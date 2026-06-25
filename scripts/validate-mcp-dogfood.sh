@@ -27,7 +27,7 @@ git -C "$TMP" config user.name "MCP Dogfood Teacher"
 git -C "$TMP" add .
 git -C "$TMP" commit -m "init" -q
 
-export GAPMAN_TEACHER_EMAILS="teacher@example.com"
+export GANTRY_TEACHER_EMAILS="teacher@example.com"
 export GXT_DOGFOOD_TMP="$TMP"
 
 node "$ROOT/scripts/validate-mcp-dogfood.mjs"

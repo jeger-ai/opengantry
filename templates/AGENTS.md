@@ -21,7 +21,7 @@ When the user **explicitly** asks to write, edit, refactor, or implement code an
 - **Do NOT** trigger for questions, explanations, or code discovery — answer normally.
 - **Fast-path** trivial single-file work; **full interview** for heavy/risky scope.
 - **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
-- **CLI fallback:** one copy-paste `gapman legislate …` command — never raw YAML blocks.
+- **CLI fallback:** one copy-paste `gantry legislate …` command — never raw YAML blocks.
 
 ## External IDE skills (edge quarantine)
 

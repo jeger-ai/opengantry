@@ -112,7 +112,7 @@ export function emitActiveMissionFromTemplate(
 ): string {
   const templatePath = path.join(repoRoot, REL_MISSION_TEMPLATE);
   if (!fs.existsSync(templatePath)) {
-    throw new Error(`gapman: missing mission template ${REL_MISSION_TEMPLATE}`);
+    throw new Error(`gantry: missing mission template ${REL_MISSION_TEMPLATE}`);
   }
 
   let body = fs.readFileSync(templatePath, "utf8");

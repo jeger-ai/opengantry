@@ -81,13 +81,13 @@ test("parseOptionalTimeoutMs: rejects junk", () => {
 
 
 test("verifyTraceRows: auto-fuzzy resolves line drift by default", () => {
-  const lines = ["", "", "", "", "", "example trace line for gapman verify"];
+  const lines = ["", "", "", "", "", "example trace line for gantry verify"];
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-fuzzy-"));
   const p = path.join(dir, "WORKER_LOG.md");
   fs.writeFileSync(p, `${lines.join("\n")}\n`, "utf8");
   const row = {
     dodId: "1",
-    traceQuote: "example trace line for gapman verify",
+    traceQuote: "example trace line for gantry verify",
     anchor: "1",
     status: "PASS" as const,
   };

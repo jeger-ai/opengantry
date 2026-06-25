@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { CLI_NAME, DEFAULT_ACTIVE_MISSION, DEFAULT_KPI_REPORT_DIR, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_PATTERN, REL_MISSION_SCHEMA } from "../constants.js";
+import { readEnvWithLegacy } from "../config-namespace.js";
 import { formatRepoRelative } from "../cli-io.js";
 import { GapmanUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
@@ -160,7 +161,7 @@ export function buildLegislativeTraceRows(): MissionTraceRowStub[] {
 export function ensureMissionSchemaFileExists(root: string): void {
   const schemaPath = path.join(root, REL_MISSION_SCHEMA);
   if (!fs.existsSync(schemaPath)) {
-    throw new Error(`gapman: missing MISSION schema at ${REL_MISSION_SCHEMA}`);
+    throw new Error(`gantry: missing MISSION schema at ${REL_MISSION_SCHEMA}`);
   }
   YAML.parse(fs.readFileSync(schemaPath, "utf8"));
 }
@@ -284,7 +285,8 @@ export function buildMissionResolutionCandidates(
   if (options.explicit?.trim()) out.push(options.explicit.trim());
 
   if (profile === "full") {
-    if (env.GAPMAN_MISSION?.trim()) out.push(env.GAPMAN_MISSION.trim());
+    const missionEnv = readEnvWithLegacy("MISSION", env);
+    if (missionEnv) out.push(missionEnv);
   }
   if (profile === "full" || profile === "status") {
     if (env.GXT_MISSION_FILE?.trim()) out.push(env.GXT_MISSION_FILE.trim());
@@ -321,7 +323,7 @@ export function resolveMissionPathRequired(
     if (fs.existsSync(abs)) return abs;
     throw new GapmanUserError(
       options.errorCode ?? "MISSION_NOT_FOUND",
-      `gapman: mission not found at ${explicit}`,
+      `gantry: mission not found at ${explicit}`,
     );
   }
 
@@ -333,8 +335,8 @@ export function resolveMissionPathRequired(
 
   throw new GapmanUserError(
     "UPGRADE_MISSION_REQUIRED",
-    "gapman upgrade --apply: pass --mission <path> to the signed upgrade mission YAML",
-    "Example: gapman upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-v0.8.1.yaml",
+    "gantry upgrade --apply: pass --mission <path> to the signed upgrade mission YAML",
+    "Example: gantry upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-v0.8.1.yaml",
   );
 }
 

@@ -126,7 +126,7 @@ cmd_msn() {
     fi
     echo "MSN check FAILED: commit $commit touches MSN-enforced paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note" >&2
     echo "  subject: $subject" >&2
-    echo "  hint: run gapman verify --break-glass --reason \"...\" with GXT_BYPASS_SECRET, push refs/notes/gxt-bypass" >&2
+    echo "  hint: run gantry verify --break-glass --reason \"...\" with GXT_BYPASS_SECRET, push refs/notes/gxt-bypass" >&2
     echo "  touched paths (sample):" >&2
     git diff-tree --no-commit-id --name-only -r "$commit" | head -20 >&2
     exit 1

@@ -139,7 +139,7 @@ async function promptInitInfrastructure(
     message: "Skills preset",
     options: [
       { value: "minimal", label: "minimal (ui + logic)" },
-      { value: "specimen", label: "specimen (ui, logic, gapman, substrate)" },
+      { value: "specimen", label: "specimen (ui, logic, gantry, substrate)" },
     ],
     initialValue: (partial.skillsPreset ?? base.skillsPreset) as SkillsPreset,
   });
@@ -179,7 +179,7 @@ export async function runInitInteractiveWizard(
   partial: Partial<InitProfile>,
 ): Promise<InitProfile | null> {
   const compat = loadIntegrationCompat(templatesRoot);
-  p.intro("gapman init — OpenGantry substrate bootstrap");
+  p.intro("gantry init — OpenGantry substrate bootstrap");
 
   const base = defaultInitProfile();
   const integrations = await promptInitIntegrations(repoRoot, partial, base, compat);

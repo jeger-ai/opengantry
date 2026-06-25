@@ -169,7 +169,7 @@ export function validateArchitecturePointer(raw: unknown): ArchitecturePointer {
 export function loadArchitecturePointer(repoRoot: string): ArchitecturePointer {
   const abs = architecturePointerPath(repoRoot);
   if (!fs.existsSync(abs)) {
-    throw new Error(`${REL_ARCHITECTURE_POINTER} missing — run gapman init or add the pointer manually`);
+    throw new Error(`${REL_ARCHITECTURE_POINTER} missing — run gantry init or add the pointer manually`);
   }
   let parsed: unknown;
   try {

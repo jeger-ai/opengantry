@@ -1,5 +1,5 @@
 # KPI-REPORT.schema — JSON Schema for committed LLM/scan evidence reports
-# Consumed by gapman verify kpi phase (Ajv). Version label for docs only.
+# Consumed by gantry verify kpi phase (Ajv). Version label for docs only.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://opengantry.local/schemas/kpi-report.v2_0.json
 title: OpenGantryKpiReport

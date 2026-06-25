@@ -25,18 +25,18 @@ export function runSubstrateDriftDoctorChecks(
   if (cmp === 0) {
     lines.push({
       level: "ok",
-      message: `substrate version: ${installed.version} (matches bundled gapman)`,
+      message: `substrate version: ${installed.version} (matches bundled gantry)`,
     });
   } else if (cmp < 0) {
     lines.push({
       level: "warn",
-      message: `substrate version ${installed.version} is behind bundled gapman ${bundled} — run gapman upgrade after updating ${NPM_PACKAGE_NAME}`,
+      message: `substrate version ${installed.version} is behind bundled gantry ${bundled} — run gantry upgrade after updating ${NPM_PACKAGE_NAME}`,
     });
-    nextStep = "gapman upgrade";
+    nextStep = "gantry upgrade";
   } else {
     lines.push({
       level: "warn",
-      message: `substrate version ${installed.version} is ahead of bundled gapman ${bundled} — update ${NPM_PACKAGE_NAME} (e.g. npm install ${NPM_PACKAGE_NAME}@latest), then re-run gapman doctor`,
+      message: `substrate version ${installed.version} is ahead of bundled gantry ${bundled} — update ${NPM_PACKAGE_NAME} (e.g. npm install ${NPM_PACKAGE_NAME}@latest), then re-run gantry doctor`,
     });
   }
 
