@@ -6,18 +6,18 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "assert-cli-version-parity OK — source + runtime at 2.2.4"
+    trace_quote: "DoD 1 MSN-0064: assert-cli-version-parity OK — source + runtime at 2.2.4"
     anchor: "MSN-0064"
     status: PASS
   - dod_id: "2"
-    trace_quote: "compatibility.json opengantry_version synced to 2.2.4 (release blocker cleared)"
+    trace_quote: "DoD 2 MSN-0064: compatibility.json opengantry_version synced to 2.2.4 (release blocker cleared)"
     anchor: "MSN-0064"
     status: PASS
   - dod_id: "3"
-    trace_quote: "BACKLOG v2.2.4 npm publish row added (#98)"
+    trace_quote: "DoD 3 MSN-0064: BACKLOG v2.2.4 npm publish row added (#98)"
     anchor: "MSN-0064"
     status: PASS
   - dod_id: "4"
-    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.4 release)"
+    trace_quote: "DoD 4 MSN-0064: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.4 release)"
     anchor: "MSN-0064"
     status: PASS
