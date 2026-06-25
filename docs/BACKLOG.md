@@ -9,7 +9,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-25 (v2.2.4 docs positioning — #95–#97)
+**Last synced:** 2026-06-25 (v2.2.4 release close-out — #98 in progress)
 
 ---
 
@@ -21,6 +21,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **Capture Gantry long-tail developer intent** (`Open Source Gantry`, `Gantry CLI`, `Gantry Git hook`) across README/docs surfaces | **Done** | [#95](https://github.com/jeger-ai/opengantry/issues/95) |
 | **README anti-bounce disambiguation** (clearly route observability-seekers to Gantry.io while defining OpenGantry first) | **Done** | [#96](https://github.com/jeger-ai/opengantry/issues/96) |
 | **Vendor-neutral OpenGantry positioning pass** (cloud dashboard contrast + local git-native governance framing across core docs) | **Done** | [#97](https://github.com/jeger-ai/opengantry/issues/97) |
+| **2.2.4 npm publish** (version parity, MSN-0064, tag + npm + GH release) | Open | [#98](https://github.com/jeger-ai/opengantry/issues/98) |
 
 ---
 

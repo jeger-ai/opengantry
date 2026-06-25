@@ -303,3 +303,12 @@ example trace line for gapman verify
 - DoD 5 MSN-0063: assert-cli-version-parity OK — source + runtime at 2.2.3
 - DoD 6 MSN-0063: README + BACKLOG + ADOPTION v2.2.3 release docs synced
 - DoD 7 MSN-0063: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.3 trusted automation policy)
+
+## MSN-0064 — v2.2.4 release (#98)
+
+[CONTEXT-REQUEST] paths: docs/BACKLOG.md, templates/integrations/compatibility.json — v2.2.4 release parity and publish prep (mission-authorized, non-TMVC).
+
+- assert-cli-version-parity OK — source + runtime at 2.2.4
+- compatibility.json opengantry_version synced to 2.2.4 (release blocker cleared)
+- BACKLOG v2.2.4 npm publish row added (#98)
+- dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.4 release)

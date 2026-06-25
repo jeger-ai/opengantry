@@ -1,0 +1,23 @@
+# v2.2.4 release — compatibility.json parity sync, BACKLOG #98, npm publish prep.
+# Closes release gate after naming cutover (#94) and docs positioning (#95–#97) on main.
+msn_id: MSN-0064
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "assert-cli-version-parity OK — source + runtime at 2.2.4"
+    anchor: "MSN-0064"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "compatibility.json opengantry_version synced to 2.2.4 (release blocker cleared)"
+    anchor: "MSN-0064"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "BACKLOG v2.2.4 npm publish row added (#98)"
+    anchor: "MSN-0064"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.4 release)"
+    anchor: "MSN-0064"
+    status: PASS
