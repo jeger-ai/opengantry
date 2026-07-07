@@ -7,8 +7,9 @@ import { formatTriageHuman, triageIntent } from "./triage-logic.js";
 import type { TriageResult } from "./types.js";
 import {
   audienceSectionTitle,
-  filterNextStepsForAudience,
+  filterTaggedStepsForAudience,
   formatAudienceNextStep,
+  type AudienceNextStep,
   type OutputAudience,
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
@@ -47,16 +48,28 @@ function suggestNextMsn(root: string): string {
   return allocateMsn(root, { band: "work" });
 }
 
-function buildNextSteps(missionRel: string | null, msnId: string | null): string[] {
+function buildTaggedNextSteps(missionRel: string | null, msnId: string | null): AudienceNextStep[] {
   const mission = missionRel ?? ".gitagent/missions/<file>.yaml";
   const msn = msnId ?? "MSN-NNNN";
   return [
-    `Teacher: git add ${mission} && git commit -m "[${msn}] legislate mission"`,
-    `eval "$(gantry runtime env --mission ${mission})"`,
-    "Append gate evidence to WORKER_LOG.md",
-    `gantry verify --mission ${mission}`,
-    `scripts/gxt-pin-mission.sh ${mission}`,
+    {
+      audience: "teacher",
+      step: `Teacher: git add ${mission} && git commit -m "[${msn}] legislate mission"`,
+    },
+    { audience: "worker", step: `eval "$(gantry runtime env --mission ${mission})"` },
+    { audience: "worker", step: "Append gate evidence to WORKER_LOG.md" },
+    { audience: "verifier", step: `gantry verify --mission ${mission}` },
+    { audience: "platform", step: `scripts/gxt-pin-mission.sh ${mission}` },
   ];
+}
+
+function formatTaggedStepsForAudience(
+  tagged: AudienceNextStep[],
+  audience: OutputAudience | undefined,
+): string[] {
+  return filterTaggedStepsForAudience(audience, tagged).map((step) =>
+    formatAudienceNextStep(step, audience),
+  );
 }
 
 function logStartTriage(
@@ -76,7 +89,7 @@ function createStartFailure(
   triage: TriageResult,
   msnId: string | null,
   skillKey: string,
-  nextSteps: string[],
+  nextSteps: AudienceNextStep[],
 ): StartFailureResult {
   return {
     ok: false,
@@ -85,7 +98,7 @@ function createStartFailure(
     skill_key: skillKey,
     msn_id: msnId,
     mission_file_path: null,
-    next_steps: nextSteps,
+    next_steps: formatTaggedStepsForAudience(nextSteps, undefined),
     exit_code: 2,
   };
 }
@@ -102,7 +115,10 @@ function startEscalationFailure(
     );
   }
   return createStartFailure(triage, null, triage.skill_key, [
-    `gantry start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+    {
+      audience: "teacher",
+      step: `gantry start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+    },
   ]);
 }
 
@@ -140,8 +156,14 @@ function scaffoldStartMission(
 
   const freshMsn = suggestNextMsn(root);
   return createStartFailure(triage, msnId, resolvedSkillKey, [
-    `try a fresh MSN: gantry start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
-    `or gantry legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
+    {
+      audience: "teacher",
+      step: `try a fresh MSN: gantry start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
+    },
+    {
+      audience: "teacher",
+      step: `or gantry legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
+    },
   ]);
 }
 
@@ -174,10 +196,8 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   if ("ok" in scaffold) return scaffold;
 
   const audience = options.audience ?? getOutputAudience();
-  const nextSteps = buildNextSteps(scaffold.missionRel, msnId);
-  const filtered = filterNextStepsForAudience(audience, nextSteps).map((step) =>
-    formatAudienceNextStep(step, audience),
-  );
+  const tagged = buildTaggedNextSteps(scaffold.missionRel, msnId);
+  const filtered = formatTaggedStepsForAudience(tagged, audience);
   const section = audienceSectionTitle(audience);
 
   if (!suppressStartOutput(options)) {

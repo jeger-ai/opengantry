@@ -1,7 +1,7 @@
 import { logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import {
   audienceSectionTitle,
-  filterNextStepsForAudience,
+  filterTaggedStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
 import { doctorLinesHasFail, collectDoctorReport, type DoctorLine } from "../lib/doctor.js";
@@ -28,7 +28,10 @@ function emitDoctor(
       logInfo(`${line.level}: ${line.message}`);
     }
     const section = audienceSectionTitle(audience);
-    const steps = filterNextStepsForAudience(audience, nextStep ? [nextStep] : []);
+    const steps = filterTaggedStepsForAudience(
+      audience,
+      nextStep ? [{ audience: "platform", step: nextStep }] : [],
+    );
     if (section && steps.length > 0) {
       logInfo(`${section}:`);
       for (const step of steps) logInfo(`  ${step}`);

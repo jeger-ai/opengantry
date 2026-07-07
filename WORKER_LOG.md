@@ -341,3 +341,7 @@ example trace line for gapman verify
 ## MSN-0068 — v2.3.0 #103 kpiKind
 
 - DoD 1 MSN-0068: kpiKind discriminant on KPI failures; verify-hints switches on kpiKind not message.includes (#103)
+
+## MSN-0069 — v2.3.0 #104 audience-tagged start
+
+- DoD 1 MSN-0069: start orchestration uses filterTaggedStepsForAudience; regex stepMatchesAudience removed (#104)

@@ -1,7 +1,7 @@
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import {
   audienceSectionTitle,
-  filterNextStepsForAudience,
+  filterTaggedStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
 import { buildStatusReport, type StatusReport } from "../lib/status-report.js";
@@ -48,9 +48,9 @@ function logStatusChecks(
 
 function logStatusNextSteps(report: StatusReport, audience: OutputAudience | undefined): void {
   const section = audienceSectionTitle(audience);
-  const nextSteps = filterNextStepsForAudience(
+  const nextSteps = filterTaggedStepsForAudience(
     audience,
-    report.next_step ? [report.next_step] : [],
+    report.next_step ? [{ audience: "platform", step: report.next_step }] : [],
   );
   if (section && nextSteps.length > 0) {
     logInfo(`${section}:`);

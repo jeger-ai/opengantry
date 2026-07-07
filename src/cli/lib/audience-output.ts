@@ -62,22 +62,22 @@ const DEFAULT_NEXT_STEPS: AudienceNextStep[] = [
   { audience: "platform", step: "git config core.hooksPath .githooks && gantry doctor" },
 ];
 
-function stepMatchesAudience(step: string, audience: OutputAudience): boolean {
-  switch (audience) {
-    case "teacher":
-      return /legislate|Teacher:|git commit -m "\[MSN-/i.test(step);
-    case "worker":
-      return /runtime env|WORKER_LOG|gate evidence|eval "\$\(gantry runtime|execute worker/i.test(step);
-    case "verifier":
-      return /gantry verify/i.test(step);
-    case "platform":
-      return /hooksPath|gantry doctor|gantry init/i.test(step);
-    default: {
-      const _exhaustive: never = audience;
-      return _exhaustive;
-    }
-  }
-}
+export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
+  {
+    audience: "platform",
+    step: "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check",
+  },
+  { audience: "platform", step: "git config core.hooksPath .githooks" },
+  { audience: "teacher", step: 'gantry teacher set "$(git config user.email)"' },
+  { audience: "teacher", step: 'gantry start "<intent>" --msn MSN-0001 --skill-key <manifest-key>' },
+  { audience: "teacher", step: 'Teacher: git commit -m "[MSN-0001] legislate mission" including mission file' },
+  { audience: "worker", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
+  { audience: "worker", step: "Append gate evidence to WORKER_LOG.md" },
+  { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
+  { audience: "platform", step: "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml" },
+  { audience: "platform", step: "scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml" },
+  { audience: "platform", step: "gantry onboarding  # guided walkthrough (strict checks)" },
+];
 
 export function filterTaggedStepsForAudience(
   audience: OutputAudience | undefined,
@@ -88,19 +88,6 @@ export function filterTaggedStepsForAudience(
   if (filtered.length > 0) return filtered;
   const roleDefaults = DEFAULT_NEXT_STEPS.filter((s) => s.audience === audience).map((s) => s.step);
   return roleDefaults.length > 0 ? roleDefaults : tagged.map((t) => t.step);
-}
-
-export function filterNextStepsForAudience(
-  audience: OutputAudience | undefined,
-  steps: string[],
-): string[] {
-  if (!audience) return steps;
-  if (steps.length > 0) {
-    const filtered = [...new Set(steps.filter((step) => stepMatchesAudience(step, audience)))];
-    if (filtered.length > 0) return filtered;
-  }
-  const roleDefaults = DEFAULT_NEXT_STEPS.filter((s) => s.audience === audience).map((s) => s.step);
-  return roleDefaults.length > 0 ? roleDefaults : steps;
 }
 
 export function audienceSectionTitle(audience: OutputAudience | undefined): string | null {

@@ -4,8 +4,10 @@ import { CLI_NAME } from "./constants.js";
 import { logError, logInfo } from "./cli-io.js";
 import {
   audienceSectionTitle,
-  filterNextStepsForAudience,
+  filterTaggedStepsForAudience,
   formatAudienceNextStep,
+  INIT_TAGGED_NEXT_STEPS,
+  type AudienceNextStep,
 } from "./audience-output.js";
 import { getOutputAudience } from "./output-context.js";
 import type { InitAsset } from "./init-asset-catalog.js";
@@ -95,30 +97,18 @@ export function logInitSummary(
   }
 }
 
-const INIT_NEXT_STEPS: string[] = [
-  "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check",
-  "git config core.hooksPath .githooks",
-  'gantry teacher set "$(git config user.email)"',
-  'gantry start "<intent>" --msn MSN-0001 --skill-key <manifest-key>',
-  'Teacher: git commit -m "[MSN-0001] legislate mission" including mission file',
-  "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"",
-  "gantry verify --mission .gitagent/missions/<file>.yaml",
-  "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml",
-  "scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml",
-  "gantry onboarding  # guided walkthrough (strict checks)",
-];
 
 export function logInitNextSteps(profile?: InitProfile): void {
-  const steps = [...INIT_NEXT_STEPS];
+  const tagged: AudienceNextStep[] = [...INIT_TAGGED_NEXT_STEPS];
   if (profile?.integrationsDocPath) {
-    steps.push(`human IDE setup: ${profile.integrationsDocPath}`);
+    tagged.push({ audience: "platform", step: `human IDE setup: ${profile.integrationsDocPath}` });
   }
   if (profile?.gitHooks === false) {
-    const hookIdx = steps.indexOf("git config core.hooksPath .githooks");
-    if (hookIdx >= 0) steps.splice(hookIdx, 1);
+    const hookIdx = tagged.findIndex((t) => t.step.startsWith("git config core.hooksPath"));
+    if (hookIdx >= 0) tagged.splice(hookIdx, 1);
   }
   const audience = getOutputAudience();
-  const filtered = filterNextStepsForAudience(audience, steps).map((step) =>
+  const filtered = filterTaggedStepsForAudience(audience, tagged).map((step) =>
     formatAudienceNextStep(step, audience),
   );
   const section = audienceSectionTitle(audience) ?? "next steps";
