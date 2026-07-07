@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const FIXED_MSN_PREFIXES = [
   ".gitagent/",
-  "WORKER_LOG.md",
+  "EXECUTOR_LOG.md",
   ".githooks/",
   ".github/workflows/gxt-validate.yml",
 ];

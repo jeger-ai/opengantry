@@ -20,7 +20,7 @@ test("onboarding hints: align with v0.9.0 adoption loop", () => {
   assert.equal(ONBOARDING_ADOPTION_DOC, "docs/ADOPTION.md");
 });
 
-test("init tutorial: MSN-9001 band and Teacher stamp block", () => {
+test("init tutorial: MSN-9001 band and Planner stamp block", () => {
   const mission = ".gitagent/missions/MSN-9001.tutorial.yaml";
   assert.equal(TUTORIAL_MSN_ID, "MSN-9001");
   assert.match(tutorialTeacherStampBlock(mission, TUTORIAL_MSN_ID), /git add/);

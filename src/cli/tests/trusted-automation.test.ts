@@ -6,7 +6,7 @@ import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
 import { gitInitCommit, gitCommit } from "./test-fixtures.js";
-import { TEACHER_EMAIL } from "./test-shared.js";
+import { PLANNER_EMAIL } from "./test-shared.js";
 
 const DEPENDABOT_EMAIL = "dependabot[bot]@users.noreply.github.com";
 const WORKFLOW_REL = ".github/workflows/gxt-validate.yml";
@@ -95,7 +95,7 @@ function initWorkflowRepo(dest: string, ogRoot: string, usesLines: string[]): st
   fs.writeFileSync(path.join(dest, WORKFLOW_REL), workflowYaml(usesLines), "utf8");
   copyAutomationScripts(dest, ogRoot);
   writeTrustedAutomationConfig(dest);
-  gitInitCommit(dest, "init", TEACHER_EMAIL);
+  gitInitCommit(dest, "init", PLANNER_EMAIL);
   return execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 }
 

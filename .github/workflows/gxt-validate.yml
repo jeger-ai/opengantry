@@ -6,7 +6,7 @@
 # subject [MSN-NNNN] (four digits), a valid gxt-bypass git note, or satisfy
 # repository-declared trusted_automation policy (.gitagent/config.json).
 # Mission purity: scripts/verify-pr-missions.sh — one [MSN-NNNN] per PR commit range.
-# Paths = fixed substrate (.gitagent/, WORKER_LOG.md, .githooks/, gxt-validate.yml)
+# Paths = fixed substrate (.gitagent/, EXECUTOR_LOG.md, .githooks/, gxt-validate.yml)
 #       + all MANIFEST skills[].tmvc_roots (Node via scripts/gxt-manifest-lib.mjs).
 # Logic: scripts/validate-gxt.sh — keep workflow header and script in sync.
 

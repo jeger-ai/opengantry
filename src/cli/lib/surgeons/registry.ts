@@ -16,7 +16,7 @@ export interface SurgeonContext {
   root: string;
   failure: VerifyPhaseFailure;
   manifest: Manifest;
-  workerLogPath: string;
+  executorLogPath: string;
   errorCode: GxtErrorCode;
 }
 

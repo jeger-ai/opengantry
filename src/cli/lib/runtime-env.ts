@@ -6,7 +6,7 @@ import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";
 import { resolveManifestSkillKey } from "./skill-key.js";
 import type { Workspace } from "./workspace.js";
-import { defaultWorkerLogPath } from "./trace.js";
+import { defaultExecutorLogPath } from "./trace.js";
 
 export interface ResolvedRuntimeEnv {
   /** Absolute Git repo root */
@@ -21,8 +21,8 @@ export interface ResolvedRuntimeEnv {
   /** Absolute TMVC roots, newline-delimited string for shells */
   tmvc_roots_joined: string;
   forbidden_zones_joined: string;
-  /** Absolute WORKER_LOG path */
-  worker_log: string;
+  /** Absolute EXECUTOR_LOG path */
+  executor_log: string;
 }
 
 function toRepoRelativePosix(repoRoot: string, absolutePath: string): string {
@@ -40,7 +40,7 @@ function resolvePaths(repoRoot: string, rootsOrZones: readonly string[]): string
 }
 
 /**
- * Resolve worker runtime variables for a mission (manifest-aligned TMVC/forbidden zones).
+ * Resolve executor runtime variables for a mission (manifest-aligned TMVC/forbidden zones).
  */
 export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: string): ResolvedRuntimeEnv {
   const { root, manifest } = workspace;
@@ -76,7 +76,7 @@ export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: st
     skill_key: skillKey,
     tmvc_roots_joined: tmvcAbs.join("\n"),
     forbidden_zones_joined: fzAbs.join("\n"),
-    worker_log: defaultWorkerLogPath(root),
+    executor_log: defaultExecutorLogPath(root),
   };
 }
 
@@ -93,7 +93,7 @@ export function resolvedRuntimeEnvToJsonPayload(r: ResolvedRuntimeEnv): Record<s
     GXT_SKILL_KEY: r.skill_key,
     GXT_TMVC_ROOTS: r.tmvc_roots_joined,
     GXT_FORBIDDEN_ZONES: r.forbidden_zones_joined,
-    GXT_WORKER_LOG: r.worker_log,
+    GXT_EXECUTOR_LOG: r.executor_log,
     GXT_LAST_ERROR_FILE: lastErrorFileForRepo(r.repo_root),
   };
 }

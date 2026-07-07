@@ -12,13 +12,13 @@ import {
   writeBypassAnchor,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 test("runVerify: break-glass without secret exits 2", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-bypass-fail-"));
   writeMiniGapmanRepo(dest, ogRoot);
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   const prevSecret = process.env[ENV_BYPASS_SECRET];
   delete process.env[ENV_BYPASS_SECRET];
@@ -27,7 +27,7 @@ test("runVerify: break-glass without secret exits 2", async () => {
     process.exitCode = undefined;
     await runVerify({
       mission: ".gitagent/missions/m.yaml",
-      workerLog: "WORKER_LOG.md",
+      executorLog: "EXECUTOR_LOG.md",
       breakGlass: true,
       breakGlassReason: "production outage requires hotfix",
     });
@@ -59,7 +59,7 @@ test("runVerify: break-glass skips gate requirement on gate-less mission", async
 `,
     "utf8",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   const prevSecret = process.env[ENV_BYPASS_SECRET];
   process.env[ENV_BYPASS_SECRET] = secret;
@@ -68,7 +68,7 @@ test("runVerify: break-glass skips gate requirement on gate-less mission", async
     process.exitCode = undefined;
     await runVerify({
       mission: missionRel,
-      workerLog: "WORKER_LOG.md",
+      executorLog: "EXECUTOR_LOG.md",
       breakGlass: true,
       breakGlassReason: "production outage requires hotfix",
     });
@@ -98,14 +98,14 @@ test("runVerify: missing gate prints Fix hint without stack", async () => {
 `,
     "utf8",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
-        await runVerify({ mission: missionRel, workerLog: "WORKER_LOG.md" });
+        await runVerify({ mission: missionRel, executorLog: "EXECUTOR_LOG.md" });
       });
       const combined = output.stdout + output.stderr;
       assert.equal(process.exitCode, 1);
@@ -127,7 +127,7 @@ test("runVerify: break-glass with secret skips gates", async () => {
   writeMiniGapmanRepo(dest, ogRoot);
   const secret = "emergency-bypass-secret-ok";
   writeBypassAnchor(dest, secret);
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   const prevSecret = process.env[ENV_BYPASS_SECRET];
   process.env[ENV_BYPASS_SECRET] = secret;
@@ -136,7 +136,7 @@ test("runVerify: break-glass with secret skips gates", async () => {
     process.exitCode = undefined;
     await runVerify({
       mission: ".gitagent/missions/m.yaml",
-      workerLog: "WORKER_LOG.md",
+      executorLog: "EXECUTOR_LOG.md",
       breakGlass: true,
       breakGlassReason: "production outage requires hotfix",
     });

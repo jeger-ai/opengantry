@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Compliance fix for dependabot workflow bump under MSN governance
 msn_id: MSN-0062
 skill_key: substrate

@@ -10,7 +10,7 @@ import { parseOptionalTimeoutMs } from "../lib/cli-io.js";
 test("verifyTraceRows: anchor line must contain quote", () => {
   const log = "line one\nline two evidence here\n";
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-"));
-  const p = path.join(dir, "WORKER_LOG.md");
+  const p = path.join(dir, "EXECUTOR_LOG.md");
   fs.writeFileSync(p, log, "utf8");
   const ok = verifyTraceRows(p, [
     { dodId: "1", traceQuote: "evidence here", anchor: "2", status: "PASS" as const },
@@ -35,19 +35,19 @@ test("gatePassed: exit code and substring rules", () => {
 });
 
 
-test("verifyTraceRows: missing WORKER_LOG", () => {
+test("verifyTraceRows: missing EXECUTOR_LOG", () => {
   const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-miss-")), "nope.md");
   const result = verifyTraceRows(p, [
     { dodId: "1", traceQuote: "x", anchor: "1", status: "PASS" as const },
   ]);
   assert.equal(result.failures.length, 1);
-  assert.match(result.failures[0]!.reason, /WORKER_LOG missing/);
+  assert.match(result.failures[0]!.reason, /EXECUTOR_LOG missing/);
 });
 
 
 test("verifyTraceRows: numeric anchor out of range", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-range-"));
-  const p = path.join(dir, "WORKER_LOG.md");
+  const p = path.join(dir, "EXECUTOR_LOG.md");
   fs.writeFileSync(p, "one line only\n", "utf8");
   const row = { dodId: "1", traceQuote: "one line only", anchor: "9", status: "PASS" as const };
   const strict = verifyTraceRows(p, [row], { strictTrace: true });
@@ -63,7 +63,7 @@ test("verifyTraceRows: numeric anchor out of range", () => {
 
 test("verifyTraceRows: freeform anchor same line as quote", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-free-"));
-  const p = path.join(dir, "WORKER_LOG.md");
+  const p = path.join(dir, "EXECUTOR_LOG.md");
   fs.writeFileSync(p, "prefix | evidence | suffix\n", "utf8");
   const result = verifyTraceRows(p, [
     { dodId: "1", traceQuote: "evidence", anchor: "|", status: "PASS" as const },
@@ -83,7 +83,7 @@ test("parseOptionalTimeoutMs: rejects junk", () => {
 test("verifyTraceRows: auto-fuzzy resolves line drift by default", () => {
   const lines = ["", "", "", "", "", "example trace line for gantry verify"];
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-fuzzy-"));
-  const p = path.join(dir, "WORKER_LOG.md");
+  const p = path.join(dir, "EXECUTOR_LOG.md");
   fs.writeFileSync(p, `${lines.join("\n")}\n`, "utf8");
   const row = {
     dodId: "1",

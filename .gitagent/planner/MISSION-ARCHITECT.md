@@ -1,6 +1,6 @@
-# Mission Architect (Teacher-Assistant Contract)
+# Mission Architect (Planner-Assistant Contract)
 
-IDE chat protocol for drafting missions **before** worker execution. No CLI chatbot. No agent-authored Git commits.
+IDE chat protocol for drafting missions **before** executor execution. No CLI chatbot. No agent-authored Git commits.
 
 ## When to activate
 
@@ -26,7 +26,7 @@ Before proposing legislation, read (do not lecture the user):
 - `.gitagent/ARCHITECTURE.pointer.json` — code layout (if `kind=unset`, follow ARCHITECTURE-DISCOVERY.md and ask)
 - Optional: `.gitagent/out-of-scope/` ADRs when scope is ambiguous
 
-**Do not** run `gantry triage` in chat. Reason from manifest + architecture directly.
+**Do not** run `gapman triage` in chat. Reason from manifest + architecture directly.
 
 ## Fast-path vs full interview
 
@@ -50,7 +50,7 @@ Use for new features, multi-file scope, forbidden-zone proximity, path_risks/ris
 
 ## Handoff (legislate only)
 
-**Forbidden:** multi-line YAML mission blocks, “save this file manually” instructions, agent-authored Teacher git commits.
+**Forbidden:** multi-line YAML mission blocks, “save this file manually” instructions, agent-authored Planner git commits.
 
 ### Cursor MCP (preferred — zero copy/paste)
 
@@ -60,8 +60,8 @@ When the OpenGantry MCP server is configured (`.cursor/mcp.json`):
 2. Present the returned `chat_message_to_user` to the human.
 3. Wait for clear approval intent in chat (`yes`, `approve`, `looks good`, `do it`) or rejection (`no`, `deny`, `stop`). If ambiguous, ask one short clarification.
 4. On approval only, call **`gxt_execute_legislation`** with the `draft_token`.
-5. Render the returned `suggested_human_action` in a fenced shell block for the Teacher commit.
-6. After the human commits, call **`gxt_check_signature`**. On `signature_valid`, proceed to **`gxt_pin_mission`** then worker phase.
+5. Render the returned `suggested_human_action` in a fenced shell block for the Planner commit.
+6. After the human commits, call **`gxt_check_signature`**. On `signature_valid`, proceed to **`gxt_pin_mission`** then executor phase.
 
 This two-step draft/execute gate prevents silent legislation even when Cursor runs tools in auto-run (“Yolo”) mode.
 
@@ -70,24 +70,25 @@ This two-step draft/execute gate prevents silent legislation even when Cursor ru
 One bash command the user copies into their terminal:
 
 ```bash
-gantry legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
+gapman legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
   --gate-command "<deterministic gate shell command>" \
   --gate-success-substring "<optional substring>"
 ```
 
-- Quote `--gate-command` when it contains spaces.
+- Quote `--gate-command` when it contains spaces (e.g. `"npm run test:ui -- --watchAll=false"`).
 - Omit `--gate-success-substring` when exit code 0 alone is sufficient.
+- `legislate` writes `.gitagent/missions/MSN-NNNN.<slug>.yaml` with `status: PENDING` stub trace rows.
 
-**Stop after handoff.** Do not write application code until the Teacher commits and pins the mission.
+**Stop after handoff.** Do not write application code until the Planner commits and pins the mission.
 
-## Teacher loop (human)
+## Planner loop (human)
 
-1. Approve draft (MCP) or paste and run `gantry legislate` (CLI).
+1. Approve draft (MCP) or paste and run `gapman legislate` (CLI).
 2. Optionally review/edit the generated YAML.
-3. `git commit -m "[MSN-NNNN] legislate …"` including the mission file (Teacher email in `GANTRY_TEACHER_EMAILS`).
-4. Pin mission (`gxt_pin_mission` MCP tool or `scripts/gxt-pin-mission.sh`).
-5. Worker phase begins.
+3. `git commit -m "[MSN-NNNN] legislate …"` including the mission file (Planner email in `GAPMAN_PLANNER_EMAILS`).
+4. `scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml` (or `gxt_pin_mission` MCP tool).
+5. Executor phase begins.
 
-## Worker phase (after pin)
+## Executor phase (after pin)
 
-Edit within TMVC → append PASS quotes to `WORKER_LOG.md` → `gantry verify --mission …` (or `gxt_verify`) → pin stays until mission complete.
+Edit within TMVC → append PASS quotes to `EXECUTOR_LOG.md` → `gapman verify --mission …` (or `gxt_verify` MCP tool) → pin stays until mission complete.

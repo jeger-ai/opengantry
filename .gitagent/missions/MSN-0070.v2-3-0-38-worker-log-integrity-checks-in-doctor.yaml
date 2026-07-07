@@ -1,10 +1,10 @@
-# Legislated intent: v2.3.0 #38: WORKER_LOG integrity checks in doctor
+# Legislated intent: v2.3.0 #38: EXECUTOR_LOG integrity checks in doctor
 msn_id: MSN-0070
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0070: doctor warns on WORKER_LOG conflict markers, duplicate DoD lines, placeholder quotes (#38)"
+    trace_quote: "DoD 1 MSN-0070: doctor warns on EXECUTOR_LOG conflict markers, duplicate DoD lines, placeholder quotes (#38)"
     anchor: "MSN-0070"
     status: PASS

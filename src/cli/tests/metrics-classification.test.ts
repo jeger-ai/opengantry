@@ -19,19 +19,19 @@ import {
   writeMiniGapmanMission,
   gitCommit,
 } from "./test-fixtures.js";
-import { TEACHER_EMAIL, OTHER_EMAIL, withTeacherEnv } from "./test-shared.js";
+import { PLANNER_EMAIL, OTHER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
 function initMetricsRepo(dest: string, ogRoot: string): void {
   copyMissionSchema(
-    path.join(ogRoot, ".gitagent", "teacher"),
-    path.join(dest, ".gitagent", "teacher"),
+    path.join(ogRoot, ".gitagent", "planner"),
+    path.join(dest, ".gitagent", "planner"),
   );
   writeManifest(dest, {
     ui: { trust_threshold: "Tier-1", tmvc_roots: [], forbidden_zones: [] },
   });
   writeMiniGapmanMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "MSN-0999.yaml");
   execSync("git init", { cwd: dest, stdio: "pipe" });
-  execSync(`git config user.email "${TEACHER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
+  execSync(`git config user.email "${PLANNER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
   execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync("git add -A", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
@@ -48,35 +48,35 @@ test("collectGitMetrics: includes namespaced gxt_extension_metadata", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-meta-"));
   initMetricsRepo(dest, ogRoot);
 
-  const report = withTeacherEnv(() => collectGitMetrics(dest, "HEAD"));
+  const report = withPlannerEnv(() => collectGitMetrics(dest, "HEAD"));
   assert.deepEqual(report.gxt_extension_metadata, {
     classification_mode: GXT_METRICS_CLASSIFICATION_MODE,
     schema_version: GXT_METRICS_EXTENSION_SCHEMA_VERSION,
   });
 });
 
-test("aggregateFromLogStream: teacher mission commit counts legislative", () => {
+test("aggregateFromLogStream: planner mission commit counts legislative", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-leg-"));
   initMetricsRepo(dest, ogRoot);
 
-  withTeacherEnv(() => {
+  withPlannerEnv(() => {
     const missionPath = path.join(dest, ".gitagent", "missions", "MSN-0999.yaml");
     fs.appendFileSync(missionPath, "# legislated\n");
-    gitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+    gitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
     const stream = aggregateAtHead(dest);
     assert.equal(stream.legislative, 1);
     assert.equal(stream.worker_trace, 0);
   });
 });
 
-test("aggregateFromLogStream: WORKER_LOG-only commit counts worker_trace", () => {
+test("aggregateFromLogStream: EXECUTOR_LOG-only commit counts worker_trace", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-trace-"));
   initMetricsRepo(dest, ogRoot);
 
-  fs.appendFileSync(path.join(dest, "WORKER_LOG.md"), "worker trace line\n");
-  gitCommit(dest, "[MSN-0999] worker trace", OTHER_EMAIL);
+  fs.appendFileSync(path.join(dest, "EXECUTOR_LOG.md"), "executor trace line\n");
+  gitCommit(dest, "[MSN-0999] executor trace", OTHER_EMAIL);
 
   const stream = aggregateAtHead(dest);
   assert.equal(stream.legislative, 0);
@@ -88,11 +88,11 @@ test("aggregateFromLogStream: dual-touch legislative commit does not double-coun
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-dual-"));
   initMetricsRepo(dest, ogRoot);
 
-  withTeacherEnv(() => {
-    fs.appendFileSync(path.join(dest, "WORKER_LOG.md"), "dual-touch evidence\n");
+  withPlannerEnv(() => {
+    fs.appendFileSync(path.join(dest, "EXECUTOR_LOG.md"), "dual-touch evidence\n");
     const missionPath = path.join(dest, ".gitagent", "missions", "MSN-0999.yaml");
     fs.appendFileSync(missionPath, "# amended\n");
-    gitCommit(dest, "[MSN-0999] legislate and trace", TEACHER_EMAIL);
+    gitCommit(dest, "[MSN-0999] legislate and trace", PLANNER_EMAIL);
 
     const stream = aggregateAtHead(dest);
     assert.equal(stream.legislative, 1);
@@ -101,42 +101,42 @@ test("aggregateFromLogStream: dual-touch legislative commit does not double-coun
   });
 });
 
-test("aggregateFromLogStream: missing teacher identity yields zero legislative", () => {
+test("aggregateFromLogStream: missing planner identity yields zero legislative", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-noteacher-"));
   initMetricsRepo(dest, ogRoot);
 
-  const prev = process.env.GAPMAN_TEACHER_EMAILS;
-  delete process.env.GAPMAN_TEACHER_EMAILS;
+  const prev = process.env.GAPMAN_PLANNER_EMAILS;
+  delete process.env.GAPMAN_PLANNER_EMAILS;
   try {
     const missionPath = path.join(dest, ".gitagent", "missions", "MSN-0999.yaml");
-    fs.appendFileSync(missionPath, "# no teacher env\n");
-    gitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+    fs.appendFileSync(missionPath, "# no planner env\n");
+    gitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
     const stream = aggregateAtHead(dest);
     assert.equal(stream.legislative, 0);
     assert.equal(stream.worker_trace, 0);
   } finally {
-    if (prev === undefined) delete process.env.GAPMAN_TEACHER_EMAILS;
-    else process.env.GAPMAN_TEACHER_EMAILS = prev;
+    if (prev === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
+    else process.env.GAPMAN_PLANNER_EMAILS = prev;
   }
 });
 
-test("aggregateFromLogStream: empty teacher env entry does not match empty author", () => {
+test("aggregateFromLogStream: empty planner env entry does not match empty author", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-empty-"));
   initMetricsRepo(dest, ogRoot);
 
-  const prev = process.env.GAPMAN_TEACHER_EMAILS;
-  process.env.GAPMAN_TEACHER_EMAILS = "   ,  ";
+  const prev = process.env.GAPMAN_PLANNER_EMAILS;
+  process.env.GAPMAN_PLANNER_EMAILS = "   ,  ";
   try {
     const missionPath = path.join(dest, ".gitagent", "missions", "MSN-0999.yaml");
     fs.appendFileSync(missionPath, "# empty allowlist\n");
-    gitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+    gitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
     const stream = aggregateAtHead(dest);
     assert.equal(stream.legislative, 0);
   } finally {
-    if (prev === undefined) delete process.env.GAPMAN_TEACHER_EMAILS;
-    else process.env.GAPMAN_TEACHER_EMAILS = prev;
+    if (prev === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
+    else process.env.GAPMAN_PLANNER_EMAILS = prev;
   }
 });
 

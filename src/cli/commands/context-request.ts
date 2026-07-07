@@ -1,8 +1,8 @@
 import path from "node:path";
 import {
   appendContextRequest,
-  stageWorkerLogIfRequested,
-  workerLogRepoRelative,
+  stageExecutorLogIfRequested,
+  executorLogRepoRelative,
 } from "../lib/context-request.js";
 import { logError, logInfo, logWarn, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
@@ -14,8 +14,8 @@ export interface ContextRequestCliOptions {
   paths: string[];
   reason?: string;
   proposed?: string[];
-  stageWorkerLog?: boolean;
-  workerLog?: string;
+  stageExecutorLog?: boolean;
+  executorLog?: string;
   json?: boolean;
 }
 
@@ -47,12 +47,12 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
     }
 
     const resolved = resolveRuntimeEnv(workspace, missionRel);
-    const workerLogPath = options.workerLog
-      ? path.resolve(workspace.root, options.workerLog)
-      : resolved.worker_log;
+    const executorLogPath = options.executorLog
+      ? path.resolve(workspace.root, options.executorLog)
+      : resolved.executor_log;
 
     const line = appendContextRequest({
-      workerLogPath,
+      executorLogPath,
       entry: {
         status: "PENDING",
         paths,
@@ -62,13 +62,13 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
       },
     });
 
-    const stageResult = stageWorkerLogIfRequested(
+    const stageResult = stageExecutorLogIfRequested(
       workspace.root,
-      workerLogPath,
-      options.stageWorkerLog === true,
+      executorLogPath,
+      options.stageExecutorLog === true,
     );
 
-    const workerLogRel = workerLogRepoRelative(workspace.root, workerLogPath);
+    const executorLogRel = executorLogRepoRelative(workspace.root, executorLogPath);
 
     if (options.json) {
       logInfo(
@@ -77,7 +77,7 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
             status: "ok",
             mission: resolved.mission_file,
             msn_id: resolved.msn_id,
-            worker_log: workerLogRel,
+            executor_log: executorLogRel,
             line,
             staged: stageResult.staged,
           },
@@ -88,16 +88,16 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
       return;
     }
 
-    logInfo(`context-request: appended to ${workerLogRel}`);
+    logInfo(`context-request: appended to ${executorLogRel}`);
     logInfo(`  ${line}`);
-    if (options.stageWorkerLog === true) {
+    if (options.stageExecutorLog === true) {
       if (stageResult.staged) {
-        logInfo(`  staged: ${workerLogRel}`);
+        logInfo(`  staged: ${executorLogRel}`);
       } else {
-        logWarn(`failed to stage ${workerLogRel}: ${stageResult.stderr || "git add failed"}`);
+        logWarn(`failed to stage ${executorLogRel}: ${stageResult.stderr || "git add failed"}`);
       }
     } else {
-      logWarn(`run: git add ${workerLogRel}  (or pass --stage-worker-log to stage automatically)`);
+      logWarn(`run: git add ${executorLogRel}  (or pass --stage-worker-log to stage automatically)`);
     }
   } catch (e) {
     logError(errorMessage(e));

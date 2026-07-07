@@ -1,6 +1,6 @@
 /**
  * Multiprocess test helper — spawned by context-feed.test.ts to exercise concurrent writes.
- * Usage: node context-feed-write-worker.js <repoRoot> <workerIndex>
+ * Usage: node context-feed-write-executor.js <repoRoot> <workerIndex>
  */
 import { writeRemediationSnapshot, REMEDIATION_SCHEMA_VERSION } from "../lib/context-feed-store.js";
 

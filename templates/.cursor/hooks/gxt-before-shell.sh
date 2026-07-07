@@ -43,11 +43,11 @@ if [ -z "$command" ]; then
   exit 0
 fi
 
-# Block casual shell writes to GXT law/manifest — Teacher legislation required.
-if printf '%s' "$command" | grep -qE '\.gitagent/foreman/|\.gitagent/teacher/RULES\.md'; then
+# Block casual shell writes to GXT law/manifest — Planner legislation required.
+if printf '%s' "$command" | grep -qE '\.gitagent/foreman/|\.gitagent/planner/RULES\.md'; then
   ask \
-    "Shell command touches GXT law or manifest. Confirm this is under an active Teacher mission." \
-    "Direct shell edits to .gitagent/foreman/ or .gitagent/teacher/RULES.md require Teacher legislation ([MSN-NNNN] commit). Prefer gxt_draft_legislation + gxt_execute_legislation MCP tools."
+    "Shell command touches GXT law or manifest. Confirm this is under an active Planner mission." \
+    "Direct shell edits to .gitagent/foreman/ or .gitagent/planner/RULES.md require Planner legislation ([MSN-NNNN] commit). Prefer gxt_draft_legislation + gxt_execute_legislation MCP tools."
   exit 0
 fi
 

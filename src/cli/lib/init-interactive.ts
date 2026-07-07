@@ -149,7 +149,7 @@ async function promptInitInfrastructure(
   }
 
   const gitHooks = await p.confirm({
-    message: "Install .githooks (pre-commit TMVC guard, pre-push verify, post-checkout WORKER_LOG)?",
+    message: "Install .githooks (pre-commit TMVC guard, pre-push verify, post-checkout EXECUTOR_LOG)?",
     initialValue: partial.gitHooks ?? base.gitHooks,
   });
   if (wizardCancelled(gitHooks)) {

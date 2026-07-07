@@ -246,12 +246,12 @@ async function trySurgeonAndRerunVerify(
   const surgeon = getSurgeonForErrorCode(errorCode);
   if (!surgeon) return null;
 
-  const workerLogPath = input.failure.workerLogPath;
+  const executorLogPath = input.failure.executorLogPath;
   const context: SurgeonContext = {
     root: input.root,
     failure: input.failure,
     manifest: input.manifest,
-    workerLogPath,
+    executorLogPath,
     errorCode,
   };
 
@@ -262,7 +262,7 @@ async function trySurgeonAndRerunVerify(
     return null;
   }
 
-  appendSurgeonMutationLog(workerLogPath, mutation.summary);
+  appendSurgeonMutationLog(executorLogPath, mutation.summary);
   logInfo(`${CLI_NAME} verify: [Surgeon] mutation logged; rerunning full verify (fix disabled)`);
 
   return rerunVerify({

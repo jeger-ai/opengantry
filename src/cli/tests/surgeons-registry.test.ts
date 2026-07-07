@@ -13,7 +13,7 @@ function gateFailure(stderr: string): VerifyPhaseFailure {
     phase: "gate",
     message: "GATE FAILED",
     exitCode: 1,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
     gateStderr: stderr,
   };
 }
@@ -31,7 +31,7 @@ test("resolveSurgeonErrorCode: non-gate phase returns null", () => {
     phase: "trace",
     message: "trace fail",
     exitCode: 1,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
   };
   assert.equal(resolveSurgeonErrorCode(failure), null);
 });

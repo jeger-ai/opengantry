@@ -2,8 +2,8 @@
   "schema_version": "0.1.0",
   "kind": "unset",
   "location": "",
-  "read_hint": "Architecture source not selected. Do NOT invent layer layout or module boundaries. Read .gitagent/teacher/ARCHITECTURE-DISCOVERY.md and ask the user before any application code changes.",
+  "read_hint": "Architecture source not selected. Do NOT invent layer layout or module boundaries. Read .gitagent/planner/ARCHITECTURE-DISCOVERY.md and ask the user before any application code changes.",
   "discovery": {
-    "skill": ".gitagent/teacher/ARCHITECTURE-DISCOVERY.md"
+    "skill": ".gitagent/planner/ARCHITECTURE-DISCOVERY.md"
   }
 }

@@ -35,7 +35,7 @@ async function resolveOnboardingMissionPath(
   const useExample = fs.existsSync(path.join(root, EXAMPLE_MISSION));
   if (useExample) {
     p.log.step("Step 3 — Example mission available");
-    logInfo(`  Use existing ${EXAMPLE_MISSION} after Teacher stamps it.`);
+    logInfo(`  Use existing ${EXAMPLE_MISSION} after Planner stamps it.`);
     logInfo(`  ${onboardingVerifyHint(EXAMPLE_MISSION)}`);
     return { missionPath, useExample };
   }
@@ -109,8 +109,8 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
     return;
   }
 
-  p.log.step("Step 1 — Teacher allowlist");
-  logInfo('  gantry teacher set "$(git config user.email)"');
+  p.log.step("Step 1 — Planner allowlist");
+  logInfo('  gantry planner set "$(git config user.email)"');
 
   p.log.step("Step 2 — Declare intent (gantry start)");
   const intent = await p.text({
@@ -130,7 +130,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
     return;
   }
 
-  p.log.step("Step 4 — Worker runtime");
+  p.log.step("Step 4 — Executor runtime");
   logInfo(`  ${onboardingRuntimeEnvHint(resolved.missionPath)}`);
 
   p.log.step("Step 5 — Verify with guided repair");

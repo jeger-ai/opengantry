@@ -19,7 +19,7 @@ export interface RuntimeExecResult {
   workerExitCode: number | null;
   workerSignal: NodeJS.Signals | null;
   violations: ForbiddenViolation[];
-  workerLogPath: string;
+  executorLogPath: string;
   flightId: string;
 }
 
@@ -30,7 +30,7 @@ export function emptyWorkerCommandResult(): RuntimeExecResult {
     workerExitCode: null,
     workerSignal: null,
     violations: [],
-    workerLogPath: "",
+    executorLogPath: "",
     flightId: "",
   };
 }
@@ -40,14 +40,14 @@ export function buildRuntimeExecResult(input: {
   timedOut: boolean;
   exitCode: number | null;
   exitSignal: NodeJS.Signals | null;
-  workerLogPath: string;
+  executorLogPath: string;
   flightId: string;
 }): RuntimeExecResult {
   const base = {
     workerExitCode: input.exitCode,
     workerSignal: input.exitSignal,
     violations: input.violations,
-    workerLogPath: input.workerLogPath,
+    executorLogPath: input.executorLogPath,
     flightId: input.flightId,
   };
 
@@ -64,7 +64,7 @@ export function buildRuntimeExecResult(input: {
 }
 
 export function runtimeErrorResult(
-  workerLogPath: string,
+  executorLogPath: string,
   flightId: string,
 ): RuntimeExecResult {
   return {
@@ -73,7 +73,7 @@ export function runtimeErrorResult(
     workerExitCode: null,
     workerSignal: null,
     violations: [],
-    workerLogPath,
+    executorLogPath,
     flightId,
   };
 }
@@ -147,7 +147,7 @@ export interface RuntimeExecOptions {
   mission: string;
   workerCommand: string[];
   cwd?: string;
-  workerLog?: string;
+  executorLog?: string;
   append?: boolean;
   timeoutMs?: number;
   streamOutput?: boolean;
@@ -193,7 +193,7 @@ function beginRuntimeFlight(
   envPayload: Record<string, string>;
   repoRoot: string;
   forbiddenZones: string[];
-  workerLogPath: string;
+  executorLogPath: string;
   cwd: string;
   flightId: string;
   streamOutput: boolean;
@@ -204,15 +204,15 @@ function beginRuntimeFlight(
   const envPayload = resolvedRuntimeEnvToJsonPayload(resolved);
   const repoRoot = resolved.repo_root;
   const forbiddenZones = parseJoinedLines(resolved.forbidden_zones_joined);
-  const workerLogPath = options.workerLog
-    ? path.resolve(repoRoot, options.workerLog)
-    : resolved.worker_log;
+  const executorLogPath = options.executorLog
+    ? path.resolve(repoRoot, options.executorLog)
+    : resolved.executor_log;
   const cwd = chooseWorkingDirectory(repoRoot, options.cwd);
   const flightId = randomFlightId();
   const streamOutput = options.streamOutput !== false;
   const baseline = buildForbiddenBaseline(repoRoot, forbiddenZones);
   const writer = createTelemetryWriter(
-    workerLogPath,
+    executorLogPath,
     {
       flight_id: flightId,
       msn_id: resolved.msn_id,
@@ -226,7 +226,7 @@ function beginRuntimeFlight(
     type: "flight_start",
     repo_root: repoRoot,
     skill_key: resolved.skill_key,
-    worker_log: workerLogPath,
+    executor_log: executorLogPath,
     worker_command: options.workerCommand,
     forbidden_zones: forbiddenZones,
   });
@@ -235,7 +235,7 @@ function beginRuntimeFlight(
     envPayload,
     repoRoot,
     forbiddenZones,
-    workerLogPath,
+    executorLogPath,
     cwd,
     flightId,
     streamOutput,
@@ -257,7 +257,7 @@ export async function runRuntimeExec(
     envPayload,
     repoRoot,
     forbiddenZones,
-    workerLogPath,
+    executorLogPath,
     cwd,
     flightId,
     streamOutput,
@@ -273,7 +273,7 @@ export async function runRuntimeExec(
       command: cmd!,
       argv,
       cwd,
-      env: { ...process.env, ...envPayload, GXT_WORKER_LOG: workerLogPath },
+      env: { ...process.env, ...envPayload, GXT_EXECUTOR_LOG: executorLogPath },
       streamOutput,
       timeoutMs,
       writer,
@@ -302,7 +302,7 @@ export async function runRuntimeExec(
       timedOut: exit.timedOut,
       exitCode: exit.code,
       exitSignal: exit.signal,
-      workerLogPath,
+      executorLogPath,
       flightId,
     });
 
@@ -316,7 +316,7 @@ export async function runRuntimeExec(
       type: "runtime_error",
       message: errorMessage(e),
     });
-    const errorResult = runtimeErrorResult(workerLogPath, flightId);
+    const errorResult = runtimeErrorResult(executorLogPath, flightId);
     logFlightEnd(writer, errorResult, 0);
     writeAgentErrorPayload(repoRoot, resolved, errorResult);
     return errorResult;

@@ -104,11 +104,11 @@ function buildSummary(result: RuntimeExecResult): string {
     case "forbidden_zone_violation":
       return `Forbidden-zone violation: ${String(result.violations.length)} path(s) changed outside policy.`;
     case "timeout":
-      return "Worker exceeded the configured timeout and was terminated.";
+      return "Executor exceeded the configured timeout and was terminated.";
     case "worker_failed":
-      return `Worker exited with code ${String(result.workerExitCode ?? "unknown")}.`;
+      return `Executor exited with code ${String(result.workerExitCode ?? "unknown")}.`;
     case "runtime_error":
-      return "Runtime orchestration failed before or during worker execution.";
+      return "Runtime orchestration failed before or during executor execution.";
     default:
       return `Flight ended with status ${result.status}.`;
   }
@@ -123,13 +123,13 @@ function buildRemediation(
     for (const v of result.violations.slice(0, 5)) {
       steps.push(`Revert or avoid changes to forbidden path: ${v.path} (${v.kind})`);
     }
-    steps.push("Confine edits to GXT_TMVC_ROOTS unless a Context Request is approved in WORKER_LOG.md");
+    steps.push("Confine edits to GXT_TMVC_ROOTS unless a Context Request is approved in EXECUTOR_LOG.md");
   }
   if (result.status === "timeout") {
-    steps.push("Increase --timeout-ms or reduce worker scope; retry with a smaller command");
+    steps.push("Increase --timeout-ms or reduce executor scope; retry with a smaller command");
   }
   if (result.status === "worker_failed") {
-    steps.push("Inspect worker stderr in WORKER_LOG.md flight JSONL and fix the failing command");
+    steps.push("Inspect executor stderr in EXECUTOR_LOG.md flight JSONL and fix the failing command");
   }
   steps.push(`Mission: ${resolved.mission_file}; skill: ${resolved.skill_key}`);
   return steps;

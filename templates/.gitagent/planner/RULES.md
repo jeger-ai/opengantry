@@ -11,18 +11,18 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 ## 2. Segregation of duties
 
 - The agent executing the gate MUST NOT be the same actor declaring PASS.
-- Mission law is Teacher-owned; workers MUST NOT silently rewrite mission law.
+- Mission law is Planner-owned; executors MUST NOT silently rewrite mission law.
 
 ## 3. Trace-mapped verification
 
-- PASS claims MUST quote `WORKER_LOG.md` with a valid anchor (line or timestamp).
+- PASS claims MUST quote `EXECUTOR_LOG.md` with a valid anchor (line or timestamp).
 - Missing quotes/anchors for claimed PASS is evidence tampering and MUST fail verification.
 
 ## 4. Dynamic TMVC
 
 - Work is bounded to manifest roots unless explicit mission expansion is approved.
-- Access outside effective TMVC requires a context request recorded in `WORKER_LOG.md`.
-- Access into forbidden zones MUST fail closed unless Teacher policy explicitly allows it.
+- Access outside effective TMVC requires a context request recorded in `EXECUTOR_LOG.md`.
+- Access into forbidden zones MUST fail closed unless Planner policy explicitly allows it.
 
 ## 5. Mission commit indexing
 

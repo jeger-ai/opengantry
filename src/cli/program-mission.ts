@@ -9,24 +9,24 @@ import { logError, setExitCode } from "./lib/cli-io.js";
 function attachRuntimeExec(cmd: Command): void {
   cmd
     .command("exec")
-    .description("Run worker command with mission env + telemetry capture")
+    .description("Run executor command with mission env + telemetry capture")
     .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
-    .option("--cwd <dir>", "Working directory for worker command")
-    .option("--worker-log <path>", "Override WORKER_LOG.md path")
-    .option("--append", "Append to WORKER_LOG.md instead of overwrite")
-    .option("--timeout-ms <n>", "Kill worker after N milliseconds")
-    .option("--no-stream", "Do not mirror worker output to this terminal")
+    .option("--cwd <dir>", "Working directory for executor command")
+    .option("--executor-log <path>", "Override EXECUTOR_LOG.md path")
+    .option("--append", "Append to EXECUTOR_LOG.md instead of overwrite")
+    .option("--timeout-ms <n>", "Kill executor after N milliseconds")
+    .option("--no-stream", "Do not mirror executor output to this terminal")
     .option("--json", "Emit final result as JSON")
     .allowUnknownOption(true)
     .passThroughOptions()
-    .argument("<workerCommand...>", "Worker command to execute after --")
+    .argument("<workerCommand...>", "Executor command to execute after --")
     .action(
       async (
         workerCommand: string[],
         opts: {
           mission: string;
           cwd?: string;
-          workerLog?: string;
+          executorLog?: string;
           append?: boolean;
           timeoutMs?: string;
           stream?: boolean;
@@ -49,7 +49,7 @@ function attachRuntimeExec(cmd: Command): void {
           mission: opts.mission,
           workerCommand: workerArgs,
           cwd: opts.cwd,
-          workerLog: opts.workerLog,
+          executorLog: opts.executorLog,
           append: opts.append,
           timeoutMs: to.ms,
           streamOutput: opts.stream,
@@ -81,11 +81,11 @@ export function registerMissionCommands(program: Command): void {
 
   const runtime = program
     .command("runtime")
-    .description("Worker Runtime Contract bootstrap (`.gitagent/teacher/RUNTIME.md`)");
+    .description("Executor Runtime Contract bootstrap (`.gitagent/planner/RUNTIME.md`)");
 
   runtime
     .command("env")
-    .description("Print exportable env for workers (skill TMVC roots, WORKER_LOG path)")
+    .description("Print exportable env for executors (skill TMVC roots, EXECUTOR_LOG path)")
     .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
     .option("--json", "Emit JSON payload instead of shell exports")
     .option("--format <mode>", "`shell` (default POSIX exports) or `text` KEY=value lines", "shell")
@@ -102,13 +102,13 @@ export function registerMissionCommands(program: Command): void {
 
   program
     .command("context-request")
-    .description("Append a PENDING Context Request to WORKER_LOG.md (RULES §4 TMVC expansion)")
+    .description("Append a PENDING Context Request to EXECUTOR_LOG.md (RULES §4 TMVC expansion)")
     .requiredOption("--reason <text>", "Why access outside TMVC is needed")
     .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
     .option("--path <paths...>", "Repo-relative path(s) requiring expansion")
     .option("--proposed <files...>", "Proposed file(s) to touch after approval")
-    .option("--stage-worker-log", "Stage WORKER_LOG.md after append (opt-in)")
-    .option("--worker-log <path>", "Override WORKER_LOG.md path")
+    .option("--stage-worker-log", "Stage EXECUTOR_LOG.md after append (opt-in)")
+    .option("--executor-log <path>", "Override EXECUTOR_LOG.md path")
     .option("--json", "Emit result as JSON on stdout")
     .action(
       (opts: {
@@ -116,8 +116,8 @@ export function registerMissionCommands(program: Command): void {
         mission?: string;
         path?: string[];
         proposed?: string[];
-        stageWorkerLog?: boolean;
-        workerLog?: string;
+        stageExecutorLog?: boolean;
+        executorLog?: string;
         json?: boolean;
       }) => {
         runContextRequest({
@@ -125,8 +125,8 @@ export function registerMissionCommands(program: Command): void {
           paths: opts.path ?? [],
           reason: opts.reason,
           proposed: opts.proposed,
-          stageWorkerLog: opts.stageWorkerLog,
-          workerLog: opts.workerLog,
+          stageExecutorLog: opts.stageExecutorLog,
+          executorLog: opts.executorLog,
           json: opts.json,
         });
       },

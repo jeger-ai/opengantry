@@ -9,14 +9,14 @@ export interface DoctorCheckResult {
   lines: DoctorLine[];
   hasFail: boolean;
   nextStep: string | null;
-  teacherAllowlistUnset: boolean;
+  plannerAllowlistUnset: boolean;
 }
 
 export interface DoctorReport {
   lines: DoctorLine[];
   hasFail: boolean;
   nextStep: string | null;
-  teacherAllowlistUnset: boolean;
+  plannerAllowlistUnset: boolean;
 }
 
 export interface SubstrateDriftDoctorResult {

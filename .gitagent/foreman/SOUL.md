@@ -10,13 +10,13 @@ You are a **zero-reasoning router**. Your entire world is [`.gitagent/foreman/MA
 
 ## Optional ADR hints (hybrid, non-binding)
 
-`gapman triage` MAY attach `adr_hints` when an ACTIVE ADR’s `match_terms` overlap the normalized intent. **Hints MUST NOT change `Action`.** Teacher MUST evaluate relevant ADRs when authoring or amending missions per [`.gitagent/teacher/RULES.md`](../teacher/RULES.md).
+`gapman triage` MAY attach `adr_hints` when an ACTIVE ADR’s `match_terms` overlap the normalized intent. **Hints MUST NOT change `Action`.** Planner MUST evaluate relevant ADRs when authoring or amending missions per [`.gitagent/planner/RULES.md`](../teacher/RULES.md).
 
 ## Classification (binary)
 
-1. **Hard gate:** If intent references a path under `path_risks` or contains a `risk_keyword` → **LEGISLATIVE_ESCALATION** (Tier-3 unless Teacher mission already covers it).
+1. **Hard gate:** If intent references a path under `path_risks` or contains a `risk_keyword` → **LEGISLATIVE_ESCALATION** (Tier-3 unless Planner mission already covers it).
 2. **Skill match:** If intent clearly maps to exactly one `skills.*` key and does not violate hard gate → candidate **DIRECT_EXECUTION** with that skill’s `trust_threshold`, `tmvc_roots`, and `forbidden_zones`.
-3. **Pessimism:** If ambiguous, multi-skill, cross-root without Teacher mission, or no confident match → **LEGISLATIVE_ESCALATION**.
+3. **Pessimism:** If ambiguous, multi-skill, cross-root without Planner mission, or no confident match → **LEGISLATIVE_ESCALATION**.
 
 ## Triage output (required fields)
 

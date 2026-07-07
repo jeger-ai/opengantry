@@ -12,7 +12,7 @@ import {
 import {
   appendContextRequest,
   formatContextRequestLine,
-  stageWorkerLogIfRequested,
+  stageExecutorLogIfRequested,
 } from "../lib/context-request.js";
 import { gitReadStagedBlob, gitStagedNameOnly } from "../lib/git-staged.js";
 import {
@@ -31,7 +31,7 @@ function initGitRepo(dest: string): void {
 }
 
 function writeWave3Repo(dest: string, ogRoot: string): { missionRel: string } {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: {
       trust_threshold: "Tier-2",
@@ -61,7 +61,7 @@ trace_rows: []
 }
 
 test("tmvc-path: governance transport passthrough", () => {
-  assert.equal(isGovernanceTransportPath("WORKER_LOG.md"), true);
+  assert.equal(isGovernanceTransportPath("EXECUTOR_LOG.md"), true);
   assert.equal(isGovernanceTransportPath(".gitagent/missions/.active-mission"), true);
   assert.equal(isGovernanceTransportPath("src/cli/foo.ts"), false);
 });
@@ -75,7 +75,7 @@ test("tmvc-path: classify inside, outside, forbidden", () => {
     classifyRepoRelativePath(".gitagent/foreman/MANIFEST.json", roots, fz),
     "forbidden_zone",
   );
-  assert.equal(classifyRepoRelativePath("WORKER_LOG.md", roots, fz), "governance_transport");
+  assert.equal(classifyRepoRelativePath("EXECUTOR_LOG.md", roots, fz), "governance_transport");
 });
 
 test("tmvc-path: isPathUnderRoot", () => {
@@ -85,7 +85,7 @@ test("tmvc-path: isPathUnderRoot", () => {
 
 test("context-request: format and append scaffold", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ctx-req-"));
-  const logPath = path.join(dest, "WORKER_LOG.md");
+  const logPath = path.join(dest, "EXECUTOR_LOG.md");
   const line = formatContextRequestLine({
     status: "PENDING",
     paths: ["docs/FOO.md"],
@@ -96,7 +96,7 @@ test("context-request: format and append scaffold", () => {
   assert.match(line, /Context Request PENDING/);
   assert.match(line, /`docs\/FOO\.md`/);
   appendContextRequest({
-    workerLogPath: logPath,
+    executorLogPath: logPath,
     entry: { status: "PENDING", paths: ["docs/FOO.md"], reason: "doc sync" },
   });
   const body = fs.readFileSync(logPath, "utf8");
@@ -126,9 +126,9 @@ test("staged-tmvc-guard: governance files never violate", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-guard-gov-"));
   initGitRepo(dest);
   writeWave3Repo(dest, ogRoot);
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "# WORKER_LOG\n", "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "# EXECUTOR_LOG\n", "utf8");
   fs.writeFileSync(path.join(dest, "README.md"), "# readme\n", "utf8");
-  execSync("git add WORKER_LOG.md README.md", { cwd: dest, stdio: "pipe" });
+  execSync("git add EXECUTOR_LOG.md README.md", { cwd: dest, stdio: "pipe" });
 
   const manifest = loadManifest(dest);
   const result = evaluateStagedTmvcGuard({
@@ -275,24 +275,24 @@ test("runContextRequest: --stage-worker-log stages only when opted in", () => {
       paths: ["docs/X.md"],
       reason: "more docs",
       mission: ".gitagent/missions/wave3.yaml",
-      stageWorkerLog: true,
+      stageExecutorLog: true,
     });
     const stagedOptIn = execSync("git diff --cached --name-only", {
       cwd: dest,
       encoding: "utf8",
     }).trim();
-    assert.equal(stagedOptIn, "WORKER_LOG.md");
+    assert.equal(stagedOptIn, "EXECUTOR_LOG.md");
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
   }
 });
 
-test("stageWorkerLogIfRequested: no stage by default", () => {
+test("stageExecutorLogIfRequested: no stage by default", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ctx-nostage-"));
   initGitRepo(dest);
-  const logPath = path.join(dest, "WORKER_LOG.md");
+  const logPath = path.join(dest, "EXECUTOR_LOG.md");
   fs.writeFileSync(logPath, "# log\n", "utf8");
-  const r = stageWorkerLogIfRequested(dest, logPath, false);
+  const r = stageExecutorLogIfRequested(dest, logPath, false);
   assert.equal(r.staged, false);
 });

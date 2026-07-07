@@ -1,2 +1,2 @@
-# OpenGantry (gapman init) — keep WORKER_LOG line numbers stable for trace mapping
-WORKER_LOG.md
+# OpenGantry (gapman init) — keep EXECUTOR_LOG line numbers stable for trace mapping
+EXECUTOR_LOG.md

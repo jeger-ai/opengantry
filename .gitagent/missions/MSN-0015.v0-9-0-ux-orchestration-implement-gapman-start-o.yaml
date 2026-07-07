@@ -1,6 +1,6 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v0.9.0 UX orchestration: Implement gapman start orchestration, interactive verify repair mode, unified status dashboard, error taxonomy, and first-run onboarding tutorial.
-# Teacher closure stamp: final verify gate aligned to WORKER_LOG DoD 1.
+# Planner closure stamp: final verify gate aligned to EXECUTOR_LOG DoD 1.
 msn_id: MSN-0015
 skill_key: gapman
 gate_command: npm run validate

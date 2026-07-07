@@ -13,8 +13,8 @@ This file is an example. Replace with real decisions for your repo.
 
 ## Decision
 
-We do not do X without a new ADR and Teacher mission.
+We do not do X without a new ADR and Planner mission.
 
 ## Consequences
 
-Foreman triage may surface non-binding `adr_hints` when ADR `match_terms` overlap intent; Teacher checks this folder when legislating.
+Foreman triage may surface non-binding `adr_hints` when ADR `match_terms` overlap intent; Planner checks this folder when legislating.

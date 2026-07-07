@@ -4,7 +4,7 @@ always_on: true
 
 # GXT substrate (Google Antigravity)
 
-Read **`AGENTS.md`**, **`.gitagent/teacher/RULES.md`**, and **`.gitagent/foreman/MANIFEST.json`** before acting.
+Read **`AGENTS.md`**, **`.gitagent/planner/RULES.md`**, and **`.gitagent/foreman/MANIFEST.json`** before acting.
 
 Bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`
 

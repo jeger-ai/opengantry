@@ -16,7 +16,7 @@ import {
 import { runContextFeed } from "../commands/context-feed.js";
 import { resetOutputContext, setJsonOutputMode } from "../lib/output-context.js";
 import { gitInitCommit } from "./test-fixtures.js";
-import { TEACHER_EMAIL } from "./test-shared.js";
+import { PLANNER_EMAIL } from "./test-shared.js";
 
 function sampleSnapshot(overrides: Partial<RemediationSnapshot> = {}): RemediationSnapshot {
   return {
@@ -56,14 +56,14 @@ test("context-feed store: multiprocess concurrent writes all succeed", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-cf-mp-race-"));
   const workerJs = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
-    "context-feed-write-worker.js",
+    "context-feed-write-executor.js",
   );
-  const workers = 16;
-  const results = Array.from({ length: workers }, (_, i) =>
+  const executors = 16;
+  const results = Array.from({ length: executors }, (_, i) =>
     spawnSync(process.execPath, [workerJs, root, String(i)], { encoding: "utf8" }),
   );
   for (const [i, r] of results.entries()) {
-    assert.equal(r.status, 0, `worker ${String(i)} failed: ${r.stderr ?? r.stdout}`);
+    assert.equal(r.status, 0, `executor ${String(i)} failed: ${r.stderr ?? r.stdout}`);
   }
   const final = readRemediationSnapshot(root);
   assert.ok(final);
@@ -77,12 +77,12 @@ test("context-feed store: multiprocess concurrent writes all succeed", () => {
 
 test("context-feed store: sequential microtask writes do not throw", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-cf-race-"));
-  const workers = Array.from({ length: 12 }, (_, i) =>
+  const executors = Array.from({ length: 12 }, (_, i) =>
     Promise.resolve().then(() => {
       writeRemediationSnapshot(root, sampleSnapshot({ message: `worker-${String(i)}` }));
     }),
   );
-  await Promise.all(workers);
+  await Promise.all(executors);
   const final = readRemediationSnapshot(root);
   assert.ok(final);
   assert.match(final!.message, /^worker-/);
@@ -108,7 +108,7 @@ test("context-feed command: json empty and clear", () => {
     }),
     "utf8",
   );
-  gitInitCommit(root, "init", TEACHER_EMAIL);
+  gitInitCommit(root, "init", PLANNER_EMAIL);
 
   const prev = process.cwd();
   process.chdir(root);

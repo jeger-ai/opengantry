@@ -1,6 +1,6 @@
 # OpenGantry 2.1.0 release mission: version parity, docs sync, npm publish (issue #74).
 # Legislated intent: ship gapman 2.1.0 after v2.1 waves MSN-0047–0055 with race-safe publish gates.
-# Teacher stamp: worker evidence committed; mission file included in newest [MSN-0056] commit for git-proof.
+# Planner stamp: executor evidence committed; mission file included in newest [MSN-0056] commit for git-proof.
 msn_id: MSN-0056
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh

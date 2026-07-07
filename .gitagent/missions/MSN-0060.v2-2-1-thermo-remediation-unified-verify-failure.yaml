@@ -1,6 +1,6 @@
 # v2.2.1 patch — thermo review remediation (verify-failure contract unification, context-feed concurrency).
 # Closes missing track after v2.2.0 thermo audit (B+): single normalized failure DTO, race-safe remediation writes.
-# Release: MSN-0060 worker commit attests trace rows in WORKER_LOG.md (LOC split in normalize modules).
+# Release: MSN-0060 executor commit attests trace rows in EXECUTOR_LOG.md (LOC split in normalize modules).
 msn_id: MSN-0060
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh

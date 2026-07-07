@@ -30,7 +30,7 @@ export interface VerifyHintContext {
   root?: string;
   missionPath: string;
   msnId?: string;
-  workerLogPath?: string;
+  executorLogPath?: string;
   gateCommand?: string;
   gitProofMessage?: string;
   strictTrace?: boolean;
@@ -54,7 +54,7 @@ export function buildVerifyHintContext(
     root,
     missionPath: missionArg,
     msnId,
-    workerLogPath: failure.workerLogPath,
+    executorLogPath: failure.executorLogPath,
     gateCommand: failure.gateCommand,
     gitProofMessage: failure.gitProofMessage ?? failure.message,
     traceKind: failure.traceKind,
@@ -88,15 +88,15 @@ function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
   };
   const hint = code ? hintGitProof(code, gitCtx) : verifyCmdStr;
   const nextActions =
-    code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER"
-      ? [hint.split("; ")[0]!, 'gantry teacher set "$(git config user.email)"', verifyCmdStr]
-      : ['gantry teacher set "$(git config user.email)"', verifyCmdStr];
+    code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_PLANNER"
+      ? [hint.split("; ")[0]!, 'gantry planner set "$(git config user.email)"', verifyCmdStr]
+      : ['gantry planner set "$(git config user.email)"', verifyCmdStr];
   const tagged_steps: AudienceTaggedStep[] = [
-    tagStep("teacher", 'gantry teacher set "$(git config user.email)"'),
+    tagStep("planner", 'gantry planner set "$(git config user.email)"'),
     tagStep("verifier", verifyCmdStr),
   ];
-  if (code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_TEACHER") {
-    tagged_steps.unshift(tagStep("teacher", nextActions[0]!));
+  if (code === "NO_MSN_COMMITS" || code === "MISSION_FILE_NOT_MODIFIED_BY_PLANNER") {
+    tagged_steps.unshift(tagStep("planner", nextActions[0]!));
   }
   return {
     error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
@@ -122,7 +122,7 @@ function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
     fix_hints: [hintGate(gate, mission)],
     next_actions: [`re-run gate: ${gate}`, verifyCmdStr],
     tagged_steps: [
-      tagStep("worker", `re-run gate: ${gate}`),
+      tagStep("executor", `re-run gate: ${gate}`),
       tagStep("verifier", verifyCmdStr),
     ],
   };
@@ -157,7 +157,7 @@ function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
     ],
     next_actions: [`gantry scan --mission ${mission}`, verifyCmdStr],
     tagged_steps: [
-      tagStep("worker", `gantry scan --mission ${mission}`),
+      tagStep("executor", `gantry scan --mission ${mission}`),
       tagStep("verifier", verifyCmdStr),
     ],
   };
@@ -165,16 +165,16 @@ function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
 
 function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
-  const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
-  const steps = hintTracePendingSteps(workerLog, mission, ctx.gateCommand);
+  const executorLog = ctx.executorLogPath ?? "EXECUTOR_LOG.md";
+  const steps = hintTracePendingSteps(executorLog, mission, ctx.gateCommand);
   return {
     error_code: GXT_ERROR.TRACE_PENDING,
     fix_hints: steps.slice(0, 3),
     next_actions: steps,
     tagged_steps: [
-      tagStep("worker", steps[0]!),
-      tagStep("worker", steps[1]!),
-      tagStep("worker", steps[2]!),
+      tagStep("executor", steps[0]!),
+      tagStep("executor", steps[1]!),
+      tagStep("executor", steps[2]!),
       tagStep("verifier", steps[3] ?? verifyCmd(mission)),
     ],
   };
@@ -182,10 +182,10 @@ function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
 
 function hintsForTracePhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
-  const workerLog = ctx.workerLogPath ?? "WORKER_LOG.md";
+  const executorLog = ctx.executorLogPath ?? "EXECUTOR_LOG.md";
   const verifyCmdStr = verifyCmd(mission);
   const traceKind = ctx.traceKind ?? "other";
-  const hints: string[] = [hintForTraceKind(traceKind, workerLog, mission, ctx.traceQuote)];
+  const hints: string[] = [hintForTraceKind(traceKind, executorLog, mission, ctx.traceQuote)];
   const errorCode =
     traceKind === "ambiguous"
       ? GXT_ERROR.TRACE_AMBIGUOUS

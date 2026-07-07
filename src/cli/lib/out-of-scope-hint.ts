@@ -71,7 +71,7 @@ export function collectOutOfScopeAdrHints(root: string, intentNorm: string): Adr
     hints.push({
       id: meta.id,
       title: meta.title,
-      note: `Intent may relate to ADR ${meta.id} (match_terms overlap); Teacher must confirm or reject during legislation.`,
+      note: `Intent may relate to ADR ${meta.id} (match_terms overlap); Planner must confirm or reject during legislation.`,
     });
   }
   return hints;

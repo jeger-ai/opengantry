@@ -72,7 +72,7 @@ test("init --force: overwrites only managed files", async () => {
     assert.equal(fs.existsSync(path.join(dest, ".gitagent", "missions", "README.md")), true);
     assert.equal(fs.existsSync(path.join(dest, ".gitagent", "foreman", "SUBSTRATE.version.json")), true);
     const prettierignore = fs.readFileSync(path.join(dest, ".prettierignore"), "utf8");
-    assert.match(prettierignore, /^WORKER_LOG\.md$/m);
+    assert.match(prettierignore, /^EXECUTOR_LOG\.md$/m);
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;

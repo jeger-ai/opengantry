@@ -25,12 +25,12 @@ cat .gitagent/foreman/SUBSTRATE.version.json   # after gapman init / upgrade
 
 - Vulnerabilities in **gapman** (CLI, MCP server, draft tokens, upgrade staging, git-proof, hooks helpers).
 - Vulnerabilities in **default substrate assets** shipped under `templates/` and applied by `gapman init` / `gapman upgrade` (e.g. hooks, governance paths, bundled workflows).
-- Issues that let an unapproved party bypass **Teacher git-proof**, mission legislation, or deterministic verify gates **without** the repo owner’s Git credentials and configured allowlist.
+- Issues that let an unapproved party bypass **Planner git-proof**, mission legislation, or deterministic verify gates **without** the repo owner’s Git credentials and configured allowlist.
 
 ## Out of scope
 
 - Security of **application code** in repositories that ran `gapman init` (your product, dependencies, and deployment are your responsibility).
-- Misconfiguration (empty Teacher allowlist, disabled hooks, committed secrets) unless gapman documents unsafe defaults.
+- Misconfiguration (empty Planner allowlist, disabled hooks, committed secrets) unless gapman documents unsafe defaults.
 - IDE or agent products themselves; integration recipes point to upstream docs ([`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md)).
 
 ## Reporting a vulnerability

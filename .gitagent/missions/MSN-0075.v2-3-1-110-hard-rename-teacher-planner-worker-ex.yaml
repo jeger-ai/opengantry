@@ -1,11 +1,11 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.3.1 #110: hard rename Teacher→Planner, Worker→Executor (no aliases)
 msn_id: MSN-0075
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0075: gantry planner set/show; .gitagent/planner/; EXECUTOR_LOG.md; audience executor|planner; 372 tests pass (#110)"
     anchor: "1"
-    status: PENDING
+    status: PASS
 gate_success_substring: dev-validate-core OK

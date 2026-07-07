@@ -46,10 +46,10 @@ test("hintsForVerifyPhase: kpi stale maps error code", () => {
   assert.equal(remediation.error_code, GXT_ERROR.KPI_REPORT_STALE);
 });
 
-test("hintsForVerifyPhase: trace_pending includes worker steps", () => {
+test("hintsForVerifyPhase: trace_pending includes executor steps", () => {
   const remediation = hintsForVerifyPhase("trace_pending", {
     missionPath: mission,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
     gateCommand: "npm test",
   });
   assert.equal(remediation.error_code, GXT_ERROR.TRACE_PENDING);
@@ -59,7 +59,7 @@ test("hintsForVerifyPhase: trace_pending includes worker steps", () => {
 test("hintsForVerifyPhase: trace stale evidence", () => {
   const remediation = hintsForVerifyPhase("trace", {
     missionPath: mission,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
     traceKind: "stale_evidence",
   });
   assert.equal(remediation.error_code, GXT_ERROR.TRACE_STALE);

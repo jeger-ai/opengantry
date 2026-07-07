@@ -14,7 +14,7 @@ import { loadManifest } from "../lib/manifest.js";
 test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-env-fix"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     "logic": {
       trust_threshold: "Tier-2",
@@ -34,7 +34,7 @@ trace_rows: []
   const r = resolveRuntimeEnv({ root: dest, manifest }, ".gitagent/missions/x.yaml");
   assert.equal(r.skill_key, "logic");
   assert.equal(r.msn_id, "MSN-0701");
-  assert.match(r.worker_log, /WORKER_LOG\.md$/);
+  assert.match(r.executor_log, /EXECUTOR_LOG\.md$/);
   assert.ok(r.tmvc_roots_joined.includes(`${path.sep}src${path.sep}lib`));
   assert.ok(r.forbidden_zones_joined.includes(`${path.sep}.gitagent${path.sep}foreman`));
 });
@@ -44,14 +44,14 @@ test("runtime env: rejects unknown manifest skill_key", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-unknown-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
-  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   fs.copyFileSync(
     path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
     path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
   );
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "teacher", "MISSION.schema.yaml"),
-    path.join(dest, ".gitagent", "teacher", "MISSION.schema.yaml"),
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(dest, ".gitagent", "planner", "MISSION.schema.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   const missionYaml = `msn_id: MSN-0990
@@ -84,8 +84,8 @@ test("runtime exec: captures stream telemetry and succeeds", async () => {
   );
   assert.equal(result.status, "success");
   assert.equal(result.exitCode, 0);
-  assert.equal(fs.existsSync(path.join(dest, "WORKER_LOG.md")), true);
-  const body = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+  assert.equal(fs.existsSync(path.join(dest, "EXECUTOR_LOG.md")), true);
+  const body = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
   assert.match(body, /"type":"flight_start"/);
   assert.match(body, /"type":"stream"/);
   assert.match(body, /"type":"flight_end"/);
@@ -154,7 +154,7 @@ test("runtime exec: forbidden-zone write returns violation code", async () => {
   assert.equal(result.status, "forbidden_zone_violation");
   assert.equal(result.exitCode, 3);
   assert.ok(result.violations.some((v) => v.path === "forbidden/pwn.txt"));
-  const body = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+  const body = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
   assert.match(body, /"type":"forbidden_scan"/);
 });
 

@@ -8,7 +8,7 @@ import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
 import { runVerify } from "../commands/verify.js";
 import { resolveGateWorkDir } from "../lib/gate-work-dir.js";
 import { writeMiniGapmanRepo, writeMiniGapmanMission, gitInitCommit } from "./test-fixtures.js";
-import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 test("resolveGateWorkDir: honors verify --cwd", () => {
   const root = "/repo";
@@ -30,19 +30,19 @@ test("runVerify --fix: gate evaluated once (same cwd semantics as normal verify)
     dest,
     "MSN-0999",
     "gate-ran-here",
-    'bash -lc "cat marker >> ../WORKER_LOG.md && echo OK"',
+    'bash -lc "cat marker >> ../EXECUTOR_LOG.md && echo OK"',
     "OK",
     "cwd.yaml",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       await runVerify({
         mission: ".gitagent/missions/cwd.yaml",
-        workerLog: "WORKER_LOG.md",
+        executorLog: "EXECUTOR_LOG.md",
         cwd: "sub",
       });
       assert.equal(process.exitCode, undefined, "gate in sub/ should pass with trace match");
@@ -53,7 +53,7 @@ test("runVerify --fix: gate evaluated once (same cwd semantics as normal verify)
   });
 });
 
-test("runVerify --fix --non-interactive: worker audience filters next actions", async () => {
+test("runVerify --fix --non-interactive: executor audience filters next actions", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-audience-"));
   writeMiniGapmanRepo(dest, ogRoot);
@@ -72,9 +72,9 @@ trace_rows:
 `,
     "utf8",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -83,12 +83,12 @@ trace_rows:
           mission: ".gitagent/missions/pending.yaml",
           fix: true,
           fixNonInteractive: true,
-          audience: "worker",
+          audience: "executor",
         });
       });
       const combined = output.stdout + output.stderr;
       assert.equal(process.exitCode, 1);
-      assert.match(combined, /Worker next steps/);
+      assert.match(combined, /Executor next steps/);
       assert.match(combined, /runtime env --mission \.gitagent\/missions\/pending\.yaml/);
       assert.doesNotMatch(combined, /gantry verify --mission.*next actions/s);
     } finally {

@@ -11,7 +11,7 @@ export function tutorialTeacherStampBlock(missionPath: string, msnId: string): s
   return [
     `git add ${missionPath}`,
     `git commit -m "[${msnId}] legislate mission"`,
-    "gantry teacher set \"$(git config user.email)\"  # if not already configured",
+    "gantry planner set \"$(git config user.email)\"  # if not already configured",
   ].join("\n  ");
 }
 

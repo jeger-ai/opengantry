@@ -1,5 +1,5 @@
 .gitagent/.upgrade-tmp/
-.gitagent/foreman/TEACHER.allowlist.local
+.gitagent/foreman/PLANNER.allowlist.local
 .gitagent/history/
 .gitagent/history/credentials/
 .gitagent/history/.ignored-last-error.json

@@ -11,7 +11,7 @@ function normalizeToken(raw: string): string {
 
 /**
  * Return manifest forbidden_zone globs that the intent text may target.
- * Warn-only at legislate time — Teacher narrows TMVC in the mission file.
+ * Warn-only at legislate time — Planner narrows TMVC in the mission file.
  */
 export function findForbiddenZoneHits(
   manifest: Manifest,

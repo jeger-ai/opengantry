@@ -1,19 +1,19 @@
 import fs from "node:fs";
 
 /** Quote substring → 1-based line numbers where it appears (built in one pass). */
-export interface WorkerLogLineMap {
+export interface ExecutorLogLineMap {
   lines: string[];
   content: string;
   quoteToLines: Map<string, number[]>;
 }
 
 /** Single read + one scan for all trace quotes needed by PASS rows. */
-export function buildWorkerLogLineMapForQuotes(
-  workerLogPath: string,
+export function buildExecutorLogLineMapForQuotes(
+  executorLogPath: string,
   quotes: string[],
-): WorkerLogLineMap | null {
-  if (!fs.existsSync(workerLogPath)) return null;
-  const content = fs.readFileSync(workerLogPath, "utf8");
+): ExecutorLogLineMap | null {
+  if (!fs.existsSync(executorLogPath)) return null;
+  const content = fs.readFileSync(executorLogPath, "utf8");
   const lines = content.split(/\r?\n/);
   const quoteToLines = new Map<string, number[]>();
   const unique = [...new Set(quotes.filter((q) => q.length > 0))];
@@ -29,7 +29,7 @@ export function buildWorkerLogLineMapForQuotes(
   return { lines, content, quoteToLines };
 }
 
-export function quoteLineNumbers(map: WorkerLogLineMap, quote: string): number[] {
+export function quoteLineNumbers(map: ExecutorLogLineMap, quote: string): number[] {
   return map.quoteToLines.get(quote) ?? [];
 }
 

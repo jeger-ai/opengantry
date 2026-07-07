@@ -5,7 +5,7 @@ import YAML from "yaml";
 import { CLI_NAME } from "./constants.js";
 import { errorMessage, fromPosix, logInfo } from "./cli-io.js";
 import { promoteFileAtomic } from "./atomic-fs.js";
-import { assertTeacherMissionProof } from "./git-proof.js";
+import { assertPlannerMissionProof } from "./git-proof.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -134,7 +134,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   }
 
   try {
-    assertTeacherMissionProof(repoRoot, missionAbs);
+    assertPlannerMissionProof(repoRoot, missionAbs);
   } catch (e) {
     return {
       status: "blocked",

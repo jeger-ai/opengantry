@@ -13,9 +13,9 @@ import { upgradeEligibleAssets } from "../lib/upgrade-plan.js";
 import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
 import { defaultInitProfile } from "../lib/init-profile.js";
 import { copyMissionSchema, gitInitCommit } from "./test-fixtures.js";
-import { withTeacherEnvAsync } from "./test-shared.js";
+import { withPlannerEnvAsync } from "./test-shared.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
-import { TEACHER_EMAIL } from "./test-shared.js";
+import { PLANNER_EMAIL } from "./test-shared.js";
 
 const ogRoot = getRepoRoot();
 const templatesRoot = path.join(ogRoot, "templates");
@@ -31,8 +31,8 @@ async function seedUpgradeRepo(): Promise<string> {
     process.chdir(prev);
   }
   copyMissionSchema(
-    path.join(ogRoot, ".gitagent/teacher"),
-    path.join(dest, ".gitagent/teacher"),
+    path.join(ogRoot, ".gitagent/planner"),
+    path.join(dest, ".gitagent/planner"),
   );
   writeSubstrateVersionFile(dest, "0.7.0", "test-fixture");
   fs.writeFileSync(path.join(dest, ".cursor/hooks.json"), '{"version":1,"hooks":{"stale":true}}\n', "utf8");
@@ -45,7 +45,7 @@ test("upgradeEligibleAssets: excludes scaffold_only paths", () => {
   const eligible = upgradeEligibleAssets(assets);
   const targets = eligible.map((a) => a.targetPath);
   assert.ok(!targets.includes(".gitagent/foreman/MANIFEST.json"));
-  assert.ok(!targets.includes(".gitagent/teacher/RULES.md"));
+  assert.ok(!targets.includes(".gitagent/planner/RULES.md"));
   assert.ok(targets.includes(".cursor/hooks.json"));
 });
 
@@ -87,28 +87,28 @@ test("runUpgradePlan: stages files and writes mission YAML without UPGRADE.manif
   assert.match(missionBody, /staged_hashes:/);
 });
 
-test("runUpgradeApply: blocked without Teacher proof", async () => {
+test("runUpgradeApply: blocked without Planner proof", async () => {
   const dest = await seedUpgradeRepo();
-  gitInitCommit(dest, "init", TEACHER_EMAIL);
+  gitInitCommit(dest, "init", PLANNER_EMAIL);
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9002", json: true });
   const result = await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, json: true });
   assert.equal(result.status, "blocked");
 });
 
 function commitUpgradeMission(dest: string, missionRel: string, msnId: string): void {
-  execSync(`git config user.email "${TEACHER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
+  execSync(`git config user.email "${PLANNER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
   execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync(`git add ${missionRel}`, { cwd: dest, stdio: "pipe" });
   execSync(`git commit -m "[${msnId}] approve upgrade"`, { cwd: dest, stdio: "pipe" });
 }
 
-test("runUpgradeApply: succeeds with Teacher proof and updates SUBSTRATE", async () => {
+test("runUpgradeApply: succeeds with Planner proof and updates SUBSTRATE", async () => {
   const dest = await seedUpgradeRepo();
-  gitInitCommit(dest, "init", TEACHER_EMAIL);
+  gitInitCommit(dest, "init", PLANNER_EMAIL);
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9003", json: true });
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9003");
   let result: Awaited<ReturnType<typeof runUpgradeApply>>;
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     result = await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
   });
   assert.equal(result!.status, "applied");
@@ -124,11 +124,11 @@ test("runUpgradeApply: succeeds with Teacher proof and updates SUBSTRATE", async
 
 test("runUpgradeApply: legacy repo creates SUBSTRATE.version.json on apply", async () => {
   const dest = await seedUpgradeRepo();
-  gitInitCommit(dest, "init", TEACHER_EMAIL);
+  gitInitCommit(dest, "init", PLANNER_EMAIL);
   fs.unlinkSync(path.join(dest, ".gitagent/foreman/SUBSTRATE.version.json"));
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9004", json: true });
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9004");
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
   });
   assert.ok(fs.existsSync(path.join(dest, ".gitagent/foreman/SUBSTRATE.version.json")));
@@ -136,13 +136,13 @@ test("runUpgradeApply: legacy repo creates SUBSTRATE.version.json on apply", asy
 
 test("runUpgradeApply: hash mismatch fails closed", async () => {
   const dest = await seedUpgradeRepo();
-  gitInitCommit(dest, "init", TEACHER_EMAIL);
+  gitInitCommit(dest, "init", PLANNER_EMAIL);
   const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9005", json: true });
   fs.writeFileSync(path.join(dest, ".gitagent/.upgrade-tmp/.cursor/hooks.json"), '{"tampered":true}\n', "utf8");
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9005");
   await assert.rejects(
     async () =>
-      withTeacherEnvAsync(async () => {
+      withPlannerEnvAsync(async () => {
         await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot, json: true });
       }),
     (e: unknown) => e instanceof Error && e.message.includes("hash mismatch"),

@@ -35,7 +35,7 @@ import {
   mergePrettierignoreFromTemplate,
 } from "../lib/file-merge-gxt.js";
 import { ensureSubstrateVersionOnInit } from "../lib/substrate-version.js";
-import { ensureTeacherAllowlistOnInit } from "../lib/teacher-identity.js";
+import { ensurePlannerAllowlistOnInit } from "../lib/planner-identity.js";
 
 export interface InitOptions {
   force?: boolean;
@@ -256,7 +256,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
 
   applyInitWrites(allWrites);
   ensureSubstrateVersionOnInit(repoRoot, templatesRoot);
-  ensureTeacherAllowlistOnInit(repoRoot);
+  ensurePlannerAllowlistOnInit(repoRoot);
   if (docWrite) {
     logInfo(`${CLI_NAME} init: wrote composed ${profile.integrationsDocPath}`);
   }

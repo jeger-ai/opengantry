@@ -1,7 +1,7 @@
 import YAML from "yaml";
 import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
-import { MSN_ID_PATTERN, WORKER_LOG_FILENAME } from "./constants.js";
-import { parseTeacherEmailsFromEnv, commitSubjectHasMsnPrefix } from "./git-proof.js";
+import { MSN_ID_PATTERN, EXECUTOR_LOG_FILENAME } from "./constants.js";
+import { parsePlannerEmailsFromEnv, commitSubjectHasMsnPrefix } from "./git-proof.js";
 import { gitRevParse, gitRunOk } from "./git.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
@@ -127,15 +127,15 @@ function commitChangedPaths(root: string, hash: string): string[] {
   return paths;
 }
 
-function isTeacherEmail(email: string): boolean {
+function isPlannerEmail(email: string): boolean {
   const normalizedAuthor = email.trim().toLowerCase();
   if (!normalizedAuthor) return false;
 
-  const allow = parseTeacherEmailsFromEnv();
+  const allow = parsePlannerEmailsFromEnv();
   if (allow.length === 0) return false;
 
   return allow.some(
-    (teacherEmail) => teacherEmail.length > 0 && teacherEmail === normalizedAuthor,
+    (plannerEmail) => plannerEmail.length > 0 && plannerEmail === normalizedAuthor,
   );
 }
 
@@ -193,10 +193,10 @@ export function aggregateFromLogStream(
 
     const paths = commitChangedPaths(root, rec.hash);
     let touchesMission = false;
-    let touchesWorkerLog = false;
+    let touchesExecutorLog = false;
 
     for (const p of paths) {
-      if (p === WORKER_LOG_FILENAME) touchesWorkerLog = true;
+      if (p === EXECUTOR_LOG_FILENAME) touchesExecutorLog = true;
       const msnFromPath = msnFromMissionPath(p);
       if (msnFromPath) {
         touchesMission = true;
@@ -208,12 +208,12 @@ export function aggregateFromLogStream(
     const isLegislative =
       msnFromSubject !== null &&
       commitSubjectHasMsnPrefix(rec.subject, msnFromSubject) &&
-      isTeacherEmail(rec.email) &&
+      isPlannerEmail(rec.email) &&
       touchesMission;
 
     if (isLegislative) {
       legislative++;
-    } else if (touchesWorkerLog && !touchesMission) {
+    } else if (touchesExecutorLog && !touchesMission) {
       worker_trace++;
     }
 

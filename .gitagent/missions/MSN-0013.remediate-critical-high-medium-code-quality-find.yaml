@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Remediate critical/high/medium code quality findings: upgrade-tmp safety, MCP legislation refactor, command registrar split, template parity, architecture-pointer split
 msn_id: MSN-0013
 skill_key: gapman

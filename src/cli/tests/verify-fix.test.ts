@@ -11,23 +11,23 @@ import {
   writeMiniGapmanMission,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 test("runVerify: --fix --non-interactive emits GXT error code on gate failure", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-"));
   writeMiniGapmanRepo(dest, ogRoot);
   writeMiniGapmanMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
         await runVerify({
           mission: ".gitagent/missions/m.yaml",
-          workerLog: "WORKER_LOG.md",
+          executorLog: "EXECUTOR_LOG.md",
           fix: true,
           fixNonInteractive: true,
         });
@@ -43,7 +43,7 @@ test("runVerify: --fix --non-interactive emits GXT error code on gate failure", 
   });
 });
 
-test("runVerify: --fix --non-interactive trace_pending lists worker loop steps", async () => {
+test("runVerify: --fix --non-interactive trace_pending lists executor loop steps", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-pending-"));
   writeMiniGapmanRepo(dest, ogRoot);
@@ -62,9 +62,9 @@ trace_rows:
 `,
     "utf8",
   );
-  gitInitCommit(dest, "[MSN-0014] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0014] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -107,10 +107,10 @@ trace_rows:
 `,
     "utf8",
   );
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "OK\n", "utf8");
-  gitInitCommit(dest, "[MSN-0014] legislate mission", TEACHER_EMAIL);
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "OK\n", "utf8");
+  gitInitCommit(dest, "[MSN-0014] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -125,7 +125,7 @@ trace_rows:
       assert.equal(process.exitCode, 1);
       assert.match(combined, /GXT_TRACE_MISSING/);
       assert.match(combined, /replace trace_quote placeholder/);
-      assert.doesNotMatch(combined, /append verbatim trace_quote to .* from worker flight evidence/);
+      assert.doesNotMatch(combined, /append verbatim trace_quote to .* from executor flight evidence/);
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;
@@ -138,9 +138,9 @@ test("runVerify: --fix --non-interactive git-proof hint uses mission MSN", async
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-msn-"));
   writeMiniGapmanRepo(dest, ogRoot);
   writeMiniGapmanMission(dest, "MSN-0014", "evidence A", "echo OK", "OK", "m.yaml");
-  gitInitCommit(dest, "chore: init repo", TEACHER_EMAIL);
+  gitInitCommit(dest, "chore: init repo", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -163,7 +163,7 @@ test("runVerify: --fix --non-interactive git-proof hint uses mission MSN", async
   });
 });
 
-test("runVerify: --fix --non-interactive --audience worker filters next actions", async () => {
+test("runVerify: --fix --non-interactive --audience executor filters next actions", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-audience-"));
   writeMiniGapmanRepo(dest, ogRoot);
@@ -182,9 +182,9 @@ trace_rows:
 `,
     "utf8",
   );
-  gitInitCommit(dest, "[MSN-0014] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0014] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -193,14 +193,14 @@ trace_rows:
           mission: ".gitagent/missions/pending.yaml",
           fix: true,
           fixNonInteractive: true,
-          audience: "worker",
+          audience: "executor",
         });
       });
       const combined = output.stdout + output.stderr;
       assert.equal(process.exitCode, 1);
-      assert.match(combined, /Worker next steps:/);
+      assert.match(combined, /Executor next steps:/);
       assert.match(combined, /runtime env --mission/);
-      assert.doesNotMatch(combined, /Teacher: git commit/);
+      assert.doesNotMatch(combined, /Planner: git commit/);
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;

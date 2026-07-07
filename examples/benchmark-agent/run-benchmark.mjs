@@ -24,9 +24,9 @@ const GATE_COMMAND = "node --test test/smoke.test.js";
 const GATE_SUCCESS_SUBSTRING = "pass";
 const TEACHER_EMAIL = process.env.BENCHMARK_TEACHER_EMAIL ?? "benchmark-teacher@example.com";
 const TEACHER_NAME = process.env.BENCHMARK_TEACHER_NAME ?? "Benchmark Teacher";
-const LEGISLATE_PLACEHOLDER = "REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION";
+const LEGISLATE_PLACEHOLDER = "REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION";
 
-/** Formatter-stable worker patch payload (counted in Gantry LOC boundary). */
+/** Formatter-stable executor patch payload (counted in Gantry LOC boundary). */
 const WORKER_PATCH_PAYLOAD_LINES = [
   "export const VERSION = '1.0.0';",
   "",
@@ -114,10 +114,10 @@ function formatAsciiMatrix({ rawLoc, gantryLoc, raw, gantry }) {
     border,
     row("LOC (measured)", String(rawLoc), String(gantryLoc)),
     row("Execution time", `${raw.durationMs}ms`, `${gantry.totalMs}ms`),
-    row("State tracking", "Ephemeral .agent-state.json", ".active-mission + git-native WORKER_LOG.md"),
+    row("State tracking", "Ephemeral .agent-state.json", ".active-mission + git-native EXECUTOR_LOG.md"),
     row("Concurrency safety", "Ad-hoc file writes", "Atomic swaps + verify-gated workflow"),
     border,
-    "* Gantry LOC = mission YAML + worker patch payload (non-empty lines; CRLF-normalized).",
+    "* Gantry LOC = mission YAML + executor patch payload (non-empty lines; CRLF-normalized).",
   ].join("\n");
 }
 
@@ -387,20 +387,20 @@ function runGantryPath(runId) {
   const patched = applyGreetingPatch(fs.readFileSync(targetAbs, "utf8"));
   fs.writeFileSync(targetAbs, patched, "utf8");
 
-  const workerLog = path.join(sandbox, "WORKER_LOG.md");
+  const executorLog = path.join(sandbox, "EXECUTOR_LOG.md");
   const traceLine = `- ${MSN_ID}: ${BENCHMARK_TRACE_QUOTE}`;
-  if (fs.existsSync(workerLog)) {
-    fs.appendFileSync(workerLog, `${traceLine}\n`, "utf8");
+  if (fs.existsSync(executorLog)) {
+    fs.appendFileSync(executorLog, `${traceLine}\n`, "utf8");
   } else {
-    fs.writeFileSync(workerLog, `${traceLine}\n`, "utf8");
+    fs.writeFileSync(executorLog, `${traceLine}\n`, "utf8");
   }
 
   patchBenchmarkMission(missionAbs, { status: "PASS" });
 
-  git(sandbox, ["add", missionRel, targetRel, "WORKER_LOG.md"], env);
-  const workerCommit = git(sandbox, ["commit", "-m", `[${MSN_ID}] worker benchmark evidence`, "-q"], env);
+  git(sandbox, ["add", missionRel, targetRel, "EXECUTOR_LOG.md"], env);
+  const workerCommit = git(sandbox, ["commit", "-m", `[${MSN_ID}] executor benchmark evidence`, "-q"], env);
   if (!workerCommit.ok) {
-    die(`worker commit failed: ${workerCommit.stderr}`);
+    die(`executor commit failed: ${workerCommit.stderr}`);
   }
 
   const t4 = nowNs();
@@ -469,7 +469,7 @@ function emitSummary(raw, gantry) {
           total_ms: gantry.totalMs,
           virtual_purged: gantry.virtualPurged,
           loc: gantryLoc,
-          loc_boundary: "mission YAML + worker patch payload",
+          loc_boundary: "mission YAML + executor patch payload",
         },
       },
       mission_file: gantry.missionFile,

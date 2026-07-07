@@ -10,7 +10,7 @@ import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures
 test("captureStartState: records head and manifest hash", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-start-snapshot-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" },
   });
@@ -32,7 +32,7 @@ test("captureStartState: records head and manifest hash", () => {
 test("captureStartState: dirty flag when working tree has changes", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-start-snapshot-dirty-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" },
   });

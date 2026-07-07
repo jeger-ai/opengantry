@@ -14,7 +14,7 @@ trace_rows:
     anchor: "100"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0031: verifyTraceRows returns resolvedLines; trace quote dedup removes second WORKER_LOG parse"
+    trace_quote: "DoD 3 MSN-0031: verifyTraceRows returns resolvedLines; trace quote dedup removes second EXECUTOR_LOG parse"
     anchor: "101"
     status: PASS
   - dod_id: "4"

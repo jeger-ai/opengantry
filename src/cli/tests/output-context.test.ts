@@ -11,12 +11,12 @@ import {
 import { resolveAudience } from "../lib/audience-output.js";
 
 test("resolveAudience: CLI overrides env", () => {
-  const r = resolveAudience("worker", "verifier");
-  assert.equal(r.audience, "worker");
+  const r = resolveAudience("executor", "verifier");
+  assert.equal(r.audience, "executor");
 });
 
 test("resolveAudience: invalid CLI value", () => {
-  const r = resolveAudience("bot", "teacher");
+  const r = resolveAudience("bot", "planner");
   assert.equal(r.invalidCli, "bot");
   assert.equal(r.audience, undefined);
 });

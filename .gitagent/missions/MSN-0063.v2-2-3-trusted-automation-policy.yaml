@@ -1,5 +1,5 @@
 # v2.2.3 — Declarative trusted automation policy for low-risk bot maintenance (#92).
-# Teacher stamp: mission file included in every [MSN-0063] commit for git-proof.
+# Planner stamp: mission file included in every [MSN-0063] commit for git-proof.
 # Scope outside gapman TMVC: .gitagent/config.json, scripts/, templates/, docs/, workflows — mission-authorized.
 msn_id: MSN-0063
 skill_key: gapman

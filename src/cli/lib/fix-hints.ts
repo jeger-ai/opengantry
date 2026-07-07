@@ -1,5 +1,5 @@
 import { logInfo } from "./cli-io.js";
-import { teacherIdentitySetupHint } from "./teacher-identity.js";
+import { plannerIdentitySetupHint } from "./planner-identity.js";
 import type { TraceFailureKind } from "./trace.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
@@ -56,29 +56,29 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
         "see .gitagent/missions/example.verify.yaml",
         verifyCmd,
       ].join("; ");
-    case "TEACHER_IDENTITY_UNCONFIGURED":
+    case "PLANNER_IDENTITY_UNCONFIGURED":
       return hintTeacherEmails(root);
     case "NO_MSN_COMMITS": {
       const msn = ctx.msnId ?? "MSN-NNNN";
       return [
         `git add ${mission} && git commit -m "[${msn}] legislate mission"`,
-        `gantry teacher set "$(git config user.email)"`,
+        `gantry planner set "$(git config user.email)"`,
         verifyCmd,
       ].join("; ");
     }
-    case "NO_TEACHER_MSN_COMMIT": {
+    case "NO_PLANNER_MSN_COMMIT": {
       const email = ctx.latestAuthorEmail ?? "$(git log -1 --format=%ae)";
       return [
-        `gantry teacher set "${email}"`,
-        "add each Teacher email allowed to legislate in this repo",
+        `gantry planner set "${email}"`,
+        "add each Planner email allowed to legislate in this repo",
         verifyCmd,
       ].join("; ");
     }
-    case "MISSION_FILE_NOT_MODIFIED_BY_TEACHER": {
+    case "MISSION_FILE_NOT_MODIFIED_BY_PLANNER": {
       const msn = ctx.msnId ?? "MSN-NNNN";
       const rel = ctx.repoRelMission ?? mission;
       return [
-        `git add ${rel} && git commit -m "[${msn}] include mission in Teacher stamp"`,
+        `git add ${rel} && git commit -m "[${msn}] include mission in Planner stamp"`,
         verifyCmd,
       ].join("; ");
     }
@@ -92,7 +92,7 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
 }
 
 export function hintTeacherEmails(repoRoot: string): string {
-  return teacherIdentitySetupHint(repoRoot);
+  return plannerIdentitySetupHint(repoRoot);
 }
 
 export function hintGate(command: string, missionPath: string): string {
@@ -104,47 +104,47 @@ export function hintTraceStrictTrace(missionPath: string): string {
 }
 
 export function hintTraceAmbiguous(
-  workerLogPath: string,
+  executorLogPath: string,
   missionPath: string,
   traceQuote?: string,
 ): string {
   if (traceQuote !== undefined && traceQuote.trim().length <= 12) {
-    return `trace_quote "${traceQuote.trim()}" matches multiple lines in ${workerLogPath} — append a unique mission-specific line (e.g. "- DoD 1: MSN-… gate passed") and set trace_quote to that full verbatim line in ${missionPath}`;
+    return `trace_quote "${traceQuote.trim()}" matches multiple lines in ${executorLogPath} — append a unique mission-specific line (e.g. "- DoD 1: MSN-… gate passed") and set trace_quote to that full verbatim line in ${missionPath}`;
   }
-  return `disambiguate quotes in ${workerLogPath} or re-run: gantry runtime exec --mission ${missionPath} -- <worker>`;
+  return `disambiguate quotes in ${executorLogPath} or re-run: gantry runtime exec --mission ${missionPath} -- <worker>`;
 }
 
-export function hintTraceMissing(workerLogPath: string): string {
-  return `append verbatim trace_quote to ${workerLogPath} from worker flight evidence`;
+export function hintTraceMissing(executorLogPath: string): string {
+  return `append verbatim trace_quote to ${executorLogPath} from executor flight evidence`;
 }
 
-export function hintTraceStaleEvidence(workerLogPath: string, missionPath: string): string {
+export function hintTraceStaleEvidence(executorLogPath: string, missionPath: string): string {
   return [
-    `TMVC drift since WORKER_LOG trace attestation — re-run gate (${missionPath})`,
-    `append a fresh unique trace line to ${workerLogPath} and set mission trace_quote to that verbatim line`,
+    `TMVC drift since EXECUTOR_LOG trace attestation — re-run gate (${missionPath})`,
+    `append a fresh unique trace line to ${executorLogPath} and set mission trace_quote to that verbatim line`,
     "after interactive rebase/squash, re-run gate + verify (historical attestation may be invalidated)",
   ].join("; ");
 }
 
 export function hintTraceQuoteStillPlaceholder(
   missionPath: string,
-  workerLogPath: string,
+  executorLogPath: string,
 ): string {
-  return `edit ${missionPath}: replace trace_quote placeholder with a verbatim substring from ${workerLogPath} (not the other way around)`;
+  return `edit ${missionPath}: replace trace_quote placeholder with a verbatim substring from ${executorLogPath} (not the other way around)`;
 }
 
 export function hintTracePendingSteps(
-  workerLogPath: string,
+  executorLogPath: string,
   missionPath: string,
   gateCommand?: string,
 ): string[] {
   const verifyCmd = `gantry verify --mission ${missionPath}`;
   return [
-    `eval "$(gantry runtime env --mission ${missionPath})" then execute worker within TMVC`,
+    `eval "$(gantry runtime env --mission ${missionPath})" then execute executor within TMVC`,
     gateCommand
-      ? `run gate (${gateCommand}); append a unique mission-specific line to ${workerLogPath} (not bare gate output if "OK" appears elsewhere)`
-      : `append a unique mission-specific evidence line to ${workerLogPath}`,
-    `edit ${missionPath}: set trace row status PASS and trace_quote to verbatim substring from ${workerLogPath}`,
+      ? `run gate (${gateCommand}); append a unique mission-specific line to ${executorLogPath} (not bare gate output if "OK" appears elsewhere)`
+      : `append a unique mission-specific evidence line to ${executorLogPath}`,
+    `edit ${missionPath}: set trace row status PASS and trace_quote to verbatim substring from ${executorLogPath}`,
     verifyCmd,
   ];
 }
@@ -159,24 +159,24 @@ export function hintRuntimeHumanSummary(summary: string, errorFile: string): str
 
 export function hintForTraceKind(
   traceKind: TraceFailureKind,
-  workerLog: string,
+  executorLog: string,
   mission: string,
   traceQuote?: string,
 ): string {
   switch (traceKind) {
     case "ambiguous":
-      return hintTraceAmbiguous(workerLog, mission, traceQuote);
+      return hintTraceAmbiguous(executorLog, mission, traceQuote);
     case "placeholder_quote":
-      return hintTraceQuoteStillPlaceholder(mission, workerLog);
+      return hintTraceQuoteStillPlaceholder(mission, executorLog);
     case "strict_line_drift":
       return hintTraceStrictTrace(mission);
     case "stale_evidence":
-      return hintTraceStaleEvidence(workerLog, mission);
+      return hintTraceStaleEvidence(executorLog, mission);
     case "quote_missing":
-    case "worker_log_missing":
+    case "executor_log_missing":
     case "empty_quote":
     case "anchor_mismatch":
     case "other":
-      return hintTraceMissing(workerLog);
+      return hintTraceMissing(executorLog);
   }
 }

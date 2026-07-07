@@ -3,11 +3,11 @@ import path from "node:path";
 import { runArchitecturePointerDoctorChecks } from "./architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "./break-glass.js";
 import { REL_AGENT_ERROR_FILE, REL_MANIFEST, CLI_NAME } from "./constants.js";
-import { ENV_TEACHER_EMAILS } from "./config-namespace.js";
+import { ENV_PLANNER_EMAILS } from "./config-namespace.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { gitConfigGet } from "./git.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
-import { resolveTeacherEmails } from "./teacher-identity.js";
+import { resolvePlannerEmails } from "./planner-identity.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
 import type { Manifest } from "./types.js";
 import {
@@ -19,7 +19,7 @@ import {
 } from "./doctor-types.js";
 import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
-import { runWorkerLogIntegrityDoctorChecks } from "./worker-log-integrity.js";
+import { runExecutorLogIntegrityDoctorChecks } from "./executor-log-integrity.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -33,29 +33,29 @@ function readHooksPath(repoRoot: string): string | null {
   return gitConfigGet(repoRoot, "core.hooksPath");
 }
 
-function appendTeacherAllowlistChecks(
+function appendPlannerAllowlistChecks(
   root: string,
   lines: DoctorLine[],
   nextStep: string | null,
-): { nextStep: string | null; teacherAllowlistUnset: boolean } {
-  const teacherIdentity = resolveTeacherEmails(root);
-  if (teacherIdentity.emails.length > 0) {
+): { nextStep: string | null; plannerAllowlistUnset: boolean } {
+  const plannerIdentity = resolvePlannerEmails(root);
+  if (plannerIdentity.emails.length > 0) {
     lines.push({
       level: "ok",
-      message: `Teacher allowlist (${teacherIdentity.source}): ${teacherIdentity.emails.join(", ")}`,
+      message: `Planner allowlist (${plannerIdentity.source}): ${plannerIdentity.emails.join(", ")}`,
     });
-    if (teacherIdentity.source === "env") {
+    if (plannerIdentity.source === "env") {
       lines.push({
         level: "warn",
         message:
-          `Teacher identity from ${ENV_TEACHER_EMAILS} env — prefer repo-local .gitagent/foreman/TEACHER.allowlist.local when working across projects`,
+          `Planner identity from ${ENV_PLANNER_EMAILS} env — prefer repo-local .gitagent/foreman/PLANNER.allowlist.local when working across projects`,
       });
     }
-    return { nextStep, teacherAllowlistUnset: false };
+    return { nextStep, plannerAllowlistUnset: false };
   }
-  lines.push({ level: "warn", message: "Teacher allowlist unset — verify git-proof will fail" });
-  nextStep = pickNextStep(nextStep, `${CLI_NAME} teacher set "$(git config user.email)"`);
-  return { nextStep, teacherAllowlistUnset: true };
+  lines.push({ level: "warn", message: "Planner allowlist unset — verify git-proof will fail" });
+  nextStep = pickNextStep(nextStep, `${CLI_NAME} planner set "$(git config user.email)"`);
+  return { nextStep, plannerAllowlistUnset: true };
 }
 
 function appendBypassChecks(root: string, lines: DoctorLine[]): void {
@@ -96,10 +96,10 @@ function appendHooksAndExampleMissionChecks(
   }
 
   const exampleMission = ".gitagent/missions/example.verify.yaml";
-  const teacherIdentity = resolveTeacherEmails(root);
+  const plannerIdentity = resolvePlannerEmails(root);
   if (fs.existsSync(path.join(root, exampleMission))) {
     lines.push({ level: "ok", message: `example mission: ${exampleMission}` });
-    if (teacherIdentity.emails.length > 0) {
+    if (plannerIdentity.emails.length > 0) {
       nextStep = pickNextStep(nextStep, `gantry verify --mission ${exampleMission}`);
     }
   } else {
@@ -126,7 +126,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const lines: DoctorLine[] = [{ level: "ok", message: `repo: ${root}` }];
   let hasFail = false;
   let nextStep: string | null = null;
-  let teacherAllowlistUnset = false;
+  let plannerAllowlistUnset = false;
 
   const skillSync = checkSkillManifestSync(root, manifest);
   if (skillSync.ok) {
@@ -137,9 +137,9 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     nextStep = pickNextStep(nextStep, "gantry check");
   }
 
-  const teacherResult = appendTeacherAllowlistChecks(root, lines, nextStep);
-  nextStep = teacherResult.nextStep;
-  teacherAllowlistUnset = teacherResult.teacherAllowlistUnset;
+  const plannerResult = appendPlannerAllowlistChecks(root, lines, nextStep);
+  nextStep = plannerResult.nextStep;
+  plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
   appendBypassChecks(root, lines);
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);
@@ -150,7 +150,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     nextStep = pickNextStep(nextStep, "gantry init");
   }
 
-  return { lines, hasFail, nextStep, teacherAllowlistUnset };
+  return { lines, hasFail, nextStep, plannerAllowlistUnset };
 }
 
 export function collectDoctorReport(
@@ -160,7 +160,7 @@ export function collectDoctorReport(
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
   let lines = [...result.lines, ...runArchitecturePointerDoctorChecks(root)];
-  lines = [...lines, ...runWorkerLogIntegrityDoctorChecks(root)];
+  lines = [...lines, ...runExecutorLogIntegrityDoctorChecks(root)];
   let nextStep = result.nextStep;
   try {
     const tpl = templatesRoot ?? resolveTemplateRootFromModule();
@@ -180,6 +180,6 @@ export function collectDoctorReport(
     lines,
     hasFail: doctorLinesHasFail(lines) || result.hasFail,
     nextStep,
-    teacherAllowlistUnset: result.teacherAllowlistUnset,
+    plannerAllowlistUnset: result.plannerAllowlistUnset,
   };
 }

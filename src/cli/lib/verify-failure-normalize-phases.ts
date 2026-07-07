@@ -68,7 +68,7 @@ export function normalizeTracePendingPhase(
 ): NormalizedVerifyFailure {
   return {
     ...base,
-    headline: `${CLI_NAME} verify: legislative stub complete (git-proof OK) — worker must execute, append ${failure.workerLogPath}, set trace row PASS, then re-verify`,
+    headline: `${CLI_NAME} verify: legislative stub complete (git-proof OK) — executor must execute, append ${failure.executorLogPath}, set trace row PASS, then re-verify`,
     detail_lines: [],
   };
 }

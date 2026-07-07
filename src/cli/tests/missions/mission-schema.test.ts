@@ -8,14 +8,14 @@ import { validateYamlMission } from "../../lib/missions/parser.js";
 test("mission schema: rejects unknown top-level keys", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-"));
   const ogRoot = getRepoRoot();
-  fs.mkdirSync(path.join(root, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".gitagent", "planner"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "teacher", "MISSION.schema.yaml"),
-    path.join(root, ".gitagent", "teacher", "MISSION.schema.yaml"),
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(root, ".gitagent", "planner", "MISSION.schema.yaml"),
   );
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "teacher", "KPI-REPORT.schema.yaml"),
-    path.join(root, ".gitagent", "teacher", "KPI-REPORT.schema.yaml"),
+    path.join(ogRoot, ".gitagent", "planner", "KPI-REPORT.schema.yaml"),
+    path.join(root, ".gitagent", "planner", "KPI-REPORT.schema.yaml"),
   );
   const body = `msn_id: MSN-0990
 skill_key: gantry
@@ -31,10 +31,10 @@ trace_rows: []
 test("mission schema: kpi_gate and llm_verifiers pass validateYamlMission", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-kpi-"));
   const ogRoot = getRepoRoot();
-  fs.mkdirSync(path.join(root, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".gitagent", "planner"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "teacher", "MISSION.schema.yaml"),
-    path.join(root, ".gitagent", "teacher", "MISSION.schema.yaml"),
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(root, ".gitagent", "planner", "MISSION.schema.yaml"),
   );
   const body = `msn_id: MSN-0991
 skill_key: gantry

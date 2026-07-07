@@ -40,10 +40,10 @@ test("gxtCodeFromGapmanUserError: runtime and forbidden codes", () => {
 test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
   const codes = [
     "MISSION_MISSING_MSN",
-    "TEACHER_IDENTITY_UNCONFIGURED",
+    "PLANNER_IDENTITY_UNCONFIGURED",
     "NO_MSN_COMMITS",
-    "NO_TEACHER_MSN_COMMIT",
-    "MISSION_FILE_NOT_MODIFIED_BY_TEACHER",
+    "NO_PLANNER_MSN_COMMIT",
+    "MISSION_FILE_NOT_MODIFIED_BY_PLANNER",
     "MISSION_OUTSIDE_MISSIONS_DIR",
     "MISSION_NO_GATE",
   ];

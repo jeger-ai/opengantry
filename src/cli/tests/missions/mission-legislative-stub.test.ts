@@ -61,7 +61,7 @@ test("isLegislativeStub: PENDING with real quote is execution claimed", () => {
       mission([
         {
           dodId: "1",
-          traceQuote: "worker evidence line",
+          traceQuote: "executor evidence line",
           anchor: "1",
           status: "PENDING" as const,
         },

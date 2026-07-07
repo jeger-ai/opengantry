@@ -265,7 +265,7 @@ export function verifyKpiReportFreshness(
 function loadReportOrFail(
   root: string,
   reportRel: string,
-  workerLogPath: string,
+  executorLogPath: string,
 ): { report: KpiReport } | VerifyPhaseFailure {
   try {
     return { report: loadKpiReport(root, reportRel) };
@@ -277,7 +277,7 @@ function loadReportOrFail(
       phase: "kpi",
       message: missing ? `KPI report missing: ${reportRel}` : `KPI report invalid: ${reportRel}`,
       exitCode: 1,
-      workerLogPath,
+      executorLogPath,
       kpiReportPath: reportRel,
       kpiKind: missing ? "missing" : "invalid",
       kpiReason: message,
@@ -287,7 +287,7 @@ function loadReportOrFail(
 
 function staleFailure(
   reportRel: string,
-  workerLogPath: string,
+  executorLogPath: string,
   stale: ReturnType<typeof verifyKpiReportFreshness>,
 ): VerifyPhaseFailure {
   return {
@@ -295,7 +295,7 @@ function staleFailure(
     phase: "kpi",
     message: stale.reason ?? "KPI report stale",
     exitCode: 1,
-    workerLogPath,
+    executorLogPath,
     kpiReportPath: reportRel,
     kpiKind: "stale",
     kpiReason: stale.reason,
@@ -305,7 +305,7 @@ function staleFailure(
 
 function thresholdFailure(
   reportRel: string,
-  workerLogPath: string,
+  executorLogPath: string,
   first: ReturnType<typeof evaluateKpiThresholds>[number],
 ): VerifyPhaseFailure {
   return {
@@ -313,7 +313,7 @@ function thresholdFailure(
     phase: "kpi",
     message: first.reason,
     exitCode: 1,
-    workerLogPath,
+    executorLogPath,
     kpiReportPath: reportRel,
     kpiKind: "threshold",
     kpiReason: first.reason,
@@ -335,10 +335,10 @@ export function evaluateKpiPhase(
   skillKey: string | null,
   kpiGate: KpiGateSpec,
   options: VerifyOptions,
-  workerLogPath: string,
+  executorLogPath: string,
 ): KpiPhaseOutcome {
   const reportRel = kpiGate.reportPath.replace(/\\/g, "/");
-  const loaded = loadReportOrFail(root, reportRel, workerLogPath);
+  const loaded = loadReportOrFail(root, reportRel, executorLogPath);
   if ("ok" in loaded) return { kind: "fail", failure: loaded };
 
   const stale = verifyKpiReportFreshness(root, manifest, skillKey, reportRel, {
@@ -350,12 +350,12 @@ export function evaluateKpiPhase(
   if (stale.advisoryOnly && stale.reason) {
     warnings.push(`gantry verify: advisory — ${stale.reason}`);
   }
-  if (stale.stale) return { kind: "fail", failure: staleFailure(reportRel, workerLogPath, stale) };
+  if (stale.stale) return { kind: "fail", failure: staleFailure(reportRel, executorLogPath, stale) };
 
   const report = loaded.report;
   const failures = evaluateKpiThresholds(report, kpiGate.thresholds);
   if (failures.length > 0) {
-    return { kind: "fail", failure: thresholdFailure(reportRel, workerLogPath, failures[0]!) };
+    return { kind: "fail", failure: thresholdFailure(reportRel, executorLogPath, failures[0]!) };
   }
 
   if (report.exit_code !== 0) {
@@ -366,7 +366,7 @@ export function evaluateKpiPhase(
         phase: "kpi",
         message: `KPI report exit_code=${String(report.exit_code)} (expected 0)`,
         exitCode: 1,
-        workerLogPath,
+        executorLogPath,
         kpiReportPath: reportRel,
         kpiKind: "exit_code",
         kpiReason: `report exit_code=${String(report.exit_code)}`,

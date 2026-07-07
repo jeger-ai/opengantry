@@ -11,8 +11,8 @@ OpenGantry is **Autonomous Repository Engineering** — determinism, predictabil
 | Concern | Improvised agent workflow (scripted or IDE-only) | Cloud agent / observability dashboard | OpenGantry (GXT) |
 |---------|--------------------------------|---------------------------|------------------|
 | **Scope** | Implicit; edits anywhere the model chooses | Session visibility in vendor UI; repo policy varies | Declared **tmvc_roots** + **forbidden zones** in mission + manifest |
-| **Approval** | None or ad-hoc prompts | Vendor workflow / RBAC | Teacher **`[MSN-XXXX]`** commit before worker execution |
-| **Audit trail** | Local JSON / chat logs (if any) | Vendor-retained telemetry | **Git-native:** mission YAML, gate output, verbatim **`WORKER_LOG.md`** quotes |
+| **Approval** | None or ad-hoc prompts | Vendor workflow / RBAC | Planner **`[MSN-XXXX]`** commit before executor execution |
+| **Audit trail** | Local JSON / chat logs (if any) | Vendor-retained telemetry | **Git-native:** mission YAML, gate output, verbatim **`EXECUTOR_LOG.md`** quotes |
 | **Recovery** | Custom error handling per script | Vendor dashboards + support | Stable **`GXT_*`** codes, `gantry verify --fix`, role-based `--audience` |
 | **Enterprise fit** | Hard to explain to risk/compliance | Strong fleet visibility; per-repo Git evidence may need extra tooling | Greppable history: `git log --grep='MSN-'` |
 
@@ -46,10 +46,10 @@ Benchmark comparison
 +----------------------+---------------------------------+-----------------------------------------------+
 | LOC (measured)       | 142                             | 16                                            |
 | Execution time       | 183ms                           | 975ms                                         |
-| State tracking       | Ephemeral .agent-state.json     | .active-mission + git-native WORKER_LOG.md    |
+| State tracking       | Ephemeral .agent-state.json     | .active-mission + git-native EXECUTOR_LOG.md    |
 | Concurrency safety   | Ad-hoc file writes              | Atomic swaps + verify-gated workflow          |
 +----------------------+---------------------------------+-----------------------------------------------+
-* Gantry LOC = mission YAML + worker patch payload (non-empty lines; CRLF-normalized).
+* Gantry LOC = mission YAML + executor patch payload (non-empty lines; CRLF-normalized).
 Benchmark complete — repo working tree unchanged.
 ```
 
@@ -59,7 +59,7 @@ Machine-readable: `npm run examples:benchmark -- --json`. Maintainer timings JSO
 
 **Contrast specimens:** [`examples/contrast-agent-script/`](../examples/contrast-agent-script/) (pedagogical orchestrator — anti-patterns compressed for demo) vs [`examples/gantry-minimal/`](../examples/gantry-minimal/) (same task via mission YAML + gates). Full harness: [`examples/benchmark-agent/`](../examples/benchmark-agent/).
 
-**Git-native state:** pinned mission (`.gitagent/missions/.active-mission`), legislative commits, and worker trace in `WORKER_LOG.md` — agent actions are reviewable, transactional steps toward merge, not ephemeral chat mutations.
+**Git-native state:** pinned mission (`.gitagent/missions/.active-mission`), legislative commits, and executor trace in `EXECUTOR_LOG.md` — agent actions are reviewable, transactional steps toward merge, not ephemeral chat mutations.
 
 **Non-goals:** always-on improvisation, unscoped IDE writes as source of truth, replacing your CI — GXT adds a **narrow inspectable envelope** on top of Git.
 
@@ -81,20 +81,20 @@ gantry init --tutorial   # guided loop after scaffold (~3 min)
 # or:
 gantry init
 gantry onboarding      # same strict checks as production
-gantry teacher set "$(git config user.email)"
+gantry planner set "$(git config user.email)"
 gantry doctor
 ```
 
 ## Standard change loop (review → run → audit)
 
 ```bash
-# 1. Human reviews mission BEFORE worker (Teacher commit required)
+# 1. Human reviews mission BEFORE executor (Planner commit required)
 gantry start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
-# Teacher: review YAML scope/gates, then:
+# Planner: review YAML scope/gates, then:
 git add .gitagent/missions/MSN-0001.<slug>.yaml
 git commit -m "[MSN-0001] legislate mission"
 
-# 2. Worker runs inside approved scope
+# 2. Executor runs inside approved scope
 eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
 
 # 3. Audit evidence: verify + grep
@@ -118,7 +118,7 @@ If auditors ask how AI-assisted coding fits your ISMS or AI management system, s
 
 **Gantry Git hook** enforcement (`.githooks/pre-commit`, `.githooks/pre-push`, IDE `beforeShellExecution`) complements the **Gantry CLI** — hard boundaries live in hooks, `gantry verify`, and `runtime exec`, not in a vendor cloud console.
 
-- **Teacher-approved mission commit:** among recent commits, the newest `[MSN-XXXX]` from an allowlisted Teacher email must **modify** the mission file passed to `--mission`.
+- **Teacher-approved mission commit:** among recent commits, the newest `[MSN-XXXX]` from an allowlisted Planner email must **modify** the mission file passed to `--mission`.
 - **Pre-push handoff:** `gantry verify --pre-push` lets legislative stubs push for remote agent handoff; **full verify** (gate + trace) is still required before merge.
 - **IDE writes are advisory:** rules and `AGENTS.md` guide agents; hooks + `gantry runtime exec` enforce hard boundaries.
 
@@ -127,11 +127,11 @@ If auditors ask how AI-assisted coding fits your ISMS or AI management system, s
 ```bash
 git log --grep='MSN-' --oneline
 # Mission file: .gitagent/missions/<MSN>.<slug>.yaml
-# Worker trace: repo-root WORKER_LOG.md (verifier cites verbatim quotes)
+# Executor trace: repo-root EXECUTOR_LOG.md (verifier cites verbatim quotes)
 gantry verify --mission .gitagent/missions/<file>.yaml
 ```
 
-PR CI (this specimen): commits touching `.gitagent/`, `WORKER_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects **unless** the change satisfies a repository-declared **`trusted_automation`** rule in [`.gitagent/config.json`](../.gitagent/config.json) (fail-closed when absent).
+PR CI (this specimen): commits touching `.gitagent/`, `EXECUTOR_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects **unless** the change satisfies a repository-declared **`trusted_automation`** rule in [`.gitagent/config.json`](../.gitagent/config.json) (fail-closed when absent).
 
 ### Trusted automation policy (v2.2.3+)
 
@@ -167,27 +167,27 @@ Evaluation is **git-derived only** (`gxt-manifest-lib.mjs eval-commit` / `eval-r
 ## Role-based CLI output (v1.0)
 
 ```bash
-gantry --audience worker start "…"      # constraint-forward next steps
-gantry --audience teacher verify …      # copyable git / mission hints
+gantry --audience executor start "…"      # constraint-forward next steps
+gantry --audience planner verify …      # copyable git / mission hints
 gantry --audience verifier verify …     # silence unless [GXT_*] errors (CI)
 export GXT_AUDIENCE=verifier            # same as global --audience
 ```
 
 ## Verify troubleshooting
 
-`gantry verify` **auto-resolves formatter line drift** in `WORKER_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gantry verify --pre-push` for legislative stub handoff.
+`gantry verify` **auto-resolves formatter line drift** in `EXECUTOR_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gantry verify --pre-push` for legislative stub handoff.
 
 ### Stale trace evidence (v1.1+)
 
-After gate + trace quote mapping, full verify binds each **committed** PASS quote line in `WORKER_LOG.md` to the mission skill's full `tmvc_roots`:
+After gate + trace quote mapping, full verify binds each **committed** PASS quote line in `EXECUTOR_LOG.md` to the mission skill's full `tmvc_roots`:
 
 1. Resolve the quote line (numeric anchor, fuzzy drift, or freeform anchor + quote).
 2. `git blame --porcelain` on that line → attestation commit (skip when blame is all-zeros — uncommitted line; trace and code co-evolve in the working tree).
 3. `git diff --name-only <attestationCommit> -- <tmvc_roots…>` vs working tree — any path listed → **`Trace STALE`** (`GXT_TRACE_STALE`).
 
-Re-run the gate, append a fresh unique trace line to `WORKER_LOG.md`, update mission `trace_quote`, commit, and verify again. After interactive rebase/squash, historical attestation may be invalidated — expect to refresh traces.
+Re-run the gate, append a fresh unique trace line to `EXECUTOR_LOG.md`, update mission `trace_quote`, commit, and verify again. After interactive rebase/squash, historical attestation may be invalidated — expect to refresh traces.
 
-**Formatter guard (recommended):** Add `WORKER_LOG.md` to `.prettierignore` (Prettier) or an equivalent ignore for your formatter (Biome `files.ignore`, ESLint ignore, editor format-on-save exclude). Numeric anchors and v1.1+ stale-evidence `git blame` bind to **committed line numbers**; auto-formatting the log causes avoidable drift (`verify` can fuzzy-resolve, but prevention is cheaper). `gantry init` and `gantry upgrade apply` merge this entry automatically; existing repos should add it once manually or re-run upgrade.
+**Formatter guard (recommended):** Add `EXECUTOR_LOG.md` to `.prettierignore` (Prettier) or an equivalent ignore for your formatter (Biome `files.ignore`, ESLint ignore, editor format-on-save exclude). Numeric anchors and v1.1+ stale-evidence `git blame` bind to **committed line numbers**; auto-formatting the log causes avoidable drift (`verify` can fuzzy-resolve, but prevention is cheaper). `gantry init` and `gantry upgrade apply` merge this entry automatically; existing repos should add it once manually or re-run upgrade.
 
 Migration escape hatch: `gantry verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
 
@@ -218,7 +218,7 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
 | Release | Highlights |
 |---------|------------|
-| **v2.3.0** | Cage hardening — `gen:dogfood` ([#105](https://github.com/jeger-ai/opengantry/issues/105)), typed `kpiKind` ([#103](https://github.com/jeger-ai/opengantry/issues/103)), audience-tagged start ([#104](https://github.com/jeger-ai/opengantry/issues/104)), doctor WORKER_LOG checks ([#38](https://github.com/jeger-ai/opengantry/issues/38)), TS/mjs parity ([#106](https://github.com/jeger-ai/opengantry/issues/106)), verify failure contract ([#102](https://github.com/jeger-ai/opengantry/issues/102)), legislate forbidden-zone warn ([#35](https://github.com/jeger-ai/opengantry/issues/35)); removed deprecated `upgrade --apply`/`--dry-run` parent flags |
+| **v2.3.0** | Cage hardening — `gen:dogfood` ([#105](https://github.com/jeger-ai/opengantry/issues/105)), typed `kpiKind` ([#103](https://github.com/jeger-ai/opengantry/issues/103)), audience-tagged start ([#104](https://github.com/jeger-ai/opengantry/issues/104)), doctor EXECUTOR_LOG checks ([#38](https://github.com/jeger-ai/opengantry/issues/38)), TS/mjs parity ([#106](https://github.com/jeger-ai/opengantry/issues/106)), verify failure contract ([#102](https://github.com/jeger-ai/opengantry/issues/102)), legislate forbidden-zone warn ([#35](https://github.com/jeger-ai/opengantry/issues/35)); removed deprecated `upgrade --apply`/`--dry-run` parent flags |
 | **v2.2.5** | Quality remediation — recursive test glob ([#99](https://github.com/jeger-ai/opengantry/issues/99)), dead code prune ([#100](https://github.com/jeger-ai/opengantry/issues/100)–[#101](https://github.com/jeger-ai/opengantry/issues/101)), mechanical cleanups ([#107](https://github.com/jeger-ai/opengantry/issues/107)) |
 | **v2.2.4** | Unified gantry naming ([#94](https://github.com/jeger-ai/opengantry/issues/94)); docs positioning — Gantry.io disambiguation, long-tail SEO, vendor-neutral local governance ([#95](https://github.com/jeger-ai/opengantry/issues/95)–[#97](https://github.com/jeger-ai/opengantry/issues/97)) |
 | **v2.2.3** | Declarative `trusted_automation` policy (`.gitagent/config.json`, `max_net_loc <= 5`, git-derived eval) ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
@@ -241,9 +241,9 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 git config core.hooksPath .githooks
 ```
 
-- **post-checkout:** creates `WORKER_LOG.md` on feature branches when missing.
+- **post-checkout:** creates `EXECUTOR_LOG.md` on feature branches when missing.
 - **pre-commit:** `gantry tmvc guard` — advisory TMVC path warnings for staged files (stderr; exit 0). Skips when no pinned mission. Set `GXT_TMVC_GUARD_STRICT=1` or pass `--strict` to block.
-- **pre-push:** `gantry verify --pre-push` for mission files changed on branch — ensures Teacher review before remote handoff; full gate+trace still required to merge.
+- **pre-push:** `gantry verify --pre-push` for mission files changed on branch — ensures Planner review before remote handoff; full gate+trace still required to merge.
 
 Record out-of-TMVC expansion before editing: `gantry context-request --path <p…> --reason <text>` (optional `--stage-worker-log`).
 
@@ -297,8 +297,8 @@ Git-native only (single streamed `git log` pass). No local event ledger.
 
 **Classification rules (PATH_TOUCH_PROXY):**
 
-- `legislative_commits`: commit touches `.gitagent/missions/*` with `MSN-NNNN` in the filename, subject starts with `[MSN-NNNN]`, author is in `GANTRY_TEACHER_EMAILS` (non-empty allowlist entries only).
-- `worker_trace_commits`: commit touches `WORKER_LOG.md` and does **not** qualify as legislative (mutually exclusive; dual-touch legislative commits never increment worker-trace).
+- `legislative_commits`: commit touches `.gitagent/missions/*` with `MSN-NNNN` in the filename, subject starts with `[MSN-NNNN]`, author is in `GANTRY_PLANNER_EMAILS` (non-empty allowlist entries only).
+- `worker_trace_commits`: commit touches `EXECUTOR_LOG.md` and does **not** qualify as legislative (mutually exclusive; dual-touch legislative commits never increment worker-trace).
 - Human stdout labels `(proxy)` on the counters; JSON uses `gxt_extension_metadata.classification_mode` instead of suffixing field names.
 
 ## Code quality (changed files only)

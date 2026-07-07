@@ -31,8 +31,8 @@ async function seedUpgradeRepoForPayloadTest(): Promise<string> {
     process.chdir(prev);
   }
   copyMissionSchema(
-    path.join(ogRoot, ".gitagent", "teacher"),
-    path.join(dest, ".gitagent", "teacher"),
+    path.join(ogRoot, ".gitagent", "planner"),
+    path.join(dest, ".gitagent", "planner"),
   );
   writeSubstrateVersionFile(dest, "0.7.0", "test-fixture");
   fs.writeFileSync(path.join(dest, ".cursor/hooks.json"), '{"version":1,"hooks":{"stale":true}}\n', "utf8");

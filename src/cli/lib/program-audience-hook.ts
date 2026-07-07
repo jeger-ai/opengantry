@@ -29,7 +29,7 @@ export function registerAudiencePreActionHook(program: Command): void {
     const applied = applyAudienceFromArgv(raw);
     if (!applied.ok) {
       logError(
-        `invalid --audience "${applied.invalidValue}" (expected worker|teacher|verifier|platform)`,
+        `invalid --audience "${applied.invalidValue}" (expected executor|planner|verifier|platform)`,
       );
       setExitCode(2);
       throw new Error(`${CLI_NAME}: invalid audience`);

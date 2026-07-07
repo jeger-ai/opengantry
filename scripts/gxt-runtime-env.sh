@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Load GXT Worker Runtime Contract into the current shell (any IDE terminal / manual runs).
+# Load GXT Executor Runtime Contract into the current shell (any IDE terminal / manual runs).
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"

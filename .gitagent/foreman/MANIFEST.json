@@ -5,10 +5,10 @@
       "desc": "gantry CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
       "trust_threshold": "Tier-2",
       "tmvc_roots": ["src/cli/"],
-      "forbidden_zones": [".gitagent/foreman/", ".gitagent/teacher/RULES.md"]
+      "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md"]
     },
     "substrate": {
-      "desc": "Reserved for high-risk substrate work; requires Teacher mission.",
+      "desc": "Reserved for high-risk substrate work; requires Planner mission.",
       "trust_threshold": "Tier-3",
       "tmvc_roots": [],
       "forbidden_zones": []
@@ -25,6 +25,6 @@
   "perimeter_protected": [
     "**/.gxt-skill.yaml",
     ".gitagent/foreman/MANIFEST.json",
-    ".gitagent/teacher/RULES.md"
+    ".gitagent/planner/RULES.md"
   ]
 }

@@ -31,7 +31,7 @@ trace_rows:
     anchor: "MSN-0047"
     status: PASS
   - dod_id: "3"
-    trace_quote: "SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun"
+    trace_quote: "SURGEON-MUTATION trace appended to EXECUTOR_LOG before verify rerun"
     anchor: "MSN-0047"
     status: PASS
   - dod_id: "4"

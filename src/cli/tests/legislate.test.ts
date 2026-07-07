@@ -277,7 +277,7 @@ test("findForbiddenZoneHits: flags intent paths in skill forbidden_zones", () =>
   const hits = findForbiddenZoneHits(
     manifest,
     "gantry",
-    "update .gitagent/teacher/RULES.md for legislate flow",
+    "update .gitagent/planner/RULES.md for legislate flow",
   );
   assert.ok(hits.some((z) => z.includes("RULES.md")));
 });

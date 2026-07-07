@@ -2,25 +2,25 @@
 
 Before planning, editing code, or running substantive commands in this repository:
 
-1. Read **`.gitagent/teacher/RULES.md`** — governance (SOD, trace mapping, risk tiers, dynamic TMVC, Rule 4.4).
+1. Read **`.gitagent/planner/RULES.md`** — governance (SOD, trace mapping, risk tiers, dynamic TMVC, Rule 4.4).
 2. Read **`.gitagent/foreman/MANIFEST.json`** — Foreman map (`schema_version`, per-skill `trust_threshold`, `tmvc_roots`, `forbidden_zones`, `path_risks`, `risk_keywords`).
 
-Treat these as the **law + routing contract** for agent work. Before editing application code, read **[`.gitagent/ARCHITECTURE.pointer.json`](.gitagent/ARCHITECTURE.pointer.json)**. If **`kind` is `unset`**, or docs are missing/stub, read **[`.gitagent/teacher/ARCHITECTURE-DISCOVERY.md`](.gitagent/teacher/ARCHITECTURE-DISCOVERY.md)** and **ask the user** — do **not** invent layer layout or assume architecture. When `access.required` is true, read **[`.gitagent/teacher/ARCHITECTURE-ACCESS.md`](.gitagent/teacher/ARCHITECTURE-ACCESS.md)** for auth. For orientation and workflow, see **`.gitagent/README.md`**.
+Treat these as the **law + routing contract** for agent work. Before editing application code, read **[`.gitagent/ARCHITECTURE.pointer.json`](.gitagent/ARCHITECTURE.pointer.json)**. If **`kind` is `unset`**, or docs are missing/stub, read **[`.gitagent/planner/ARCHITECTURE-DISCOVERY.md`](.gitagent/planner/ARCHITECTURE-DISCOVERY.md)** and **ask the user** — do **not** invent layer layout or assume architecture. When `access.required` is true, read **[`.gitagent/planner/ARCHITECTURE-ACCESS.md`](.gitagent/planner/ARCHITECTURE-ACCESS.md)** for auth. For orientation and workflow, see **`.gitagent/README.md`**.
 
 ## Mission Architect (IDE chat)
 
 **Activation macro:**
 
 - If a user prompt starts with `/gantry`, treat that as an explicit Mission Architect activation request. Do not use `/plan` — Cursor reserves it for native Plan Mode.
-- On activation, follow [`.gitagent/teacher/MISSION-ARCHITECT.md`](.gitagent/teacher/MISSION-ARCHITECT.md) and complete the legislate handoff flow.
+- On activation, follow [`.gitagent/planner/MISSION-ARCHITECT.md`](.gitagent/planner/MISSION-ARCHITECT.md) and complete the legislate handoff flow.
 
 **Implicit interception:**
 
-When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **[`.gitagent/teacher/MISSION-ARCHITECT.md`](.gitagent/teacher/MISSION-ARCHITECT.md)** and follow it.
+When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **[`.gitagent/planner/MISSION-ARCHITECT.md`](.gitagent/planner/MISSION-ARCHITECT.md)** and follow it.
 
 - **Do NOT** trigger for questions, explanations, or code discovery — answer normally.
 - **Fast-path** trivial single-file work; **full interview** for heavy/risky scope.
-- **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Teacher commit → `gxt_check_signature` → `gxt_pin_mission`.
+- **Cursor MCP handoff (preferred):** `gxt_draft_legislation` → human chat approval → `gxt_execute_legislation` → Planner commit → `gxt_check_signature` → `gxt_pin_mission`.
 - **CLI fallback:** one copy-paste `gantry legislate …` command — never raw YAML blocks.
 
 ## Developing this repo (mandatory dogfood)
@@ -29,20 +29,20 @@ OpenGantry development **MUST** use the full GXT stack — same as adopters. See
 
 | Step | Command |
 |------|---------|
-| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `gantry teacher set "$(git config user.email)"` |
+| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `gantry planner set "$(git config user.email)"` |
 | Readiness | `gantry doctor` |
 | Scope work | Mission Architect / MCP tools or `gantry legislate … --msn MSN-NNNN --skill-key gantry` |
-| Worker env | `eval "$(gantry runtime env --mission .gitagent/missions/<file>.yaml)"` |
-| Finish | Trace in `WORKER_LOG.md` · `gantry verify --mission …` |
+| Executor env | `eval "$(gantry runtime env --mission .gitagent/missions/<file>.yaml)"` |
+| Finish | Trace in `EXECUTOR_LOG.md` · `gantry verify --mission …` |
 | Pre-PR | `npm run validate` |
 
 - **`src/cli/`** → skill **`gantry`** (TMVC `src/cli/`).
-- **`.gitagent/`**, hooks, workflows** → Tier-3; Teacher mission + `[MSN-…]` commits required.
+- **`.gitagent/`**, hooks, workflows** → Tier-3; Planner mission + `[MSN-…]` commits required.
 - Do **not** bypass hooks or skip verify for “internal” convenience.
 
 For **`gantry`** command reference, see root **`README.md`** (gantry CLI section).
 
-When legislating missions, review **`.gitagent/out-of-scope/`** for relevant ADRs (Teacher obligation per **RULES**).
+When legislating missions, review **`.gitagent/out-of-scope/`** for relevant ADRs (Planner obligation per **RULES**).
 
 If the user clearly scopes work to something that cannot affect OpenGantry (e.g. a typo in unrelated docs), still skim **RULES** and **MANIFEST** when the change could touch skills, missions, routing, or manifest sync.
 
@@ -53,9 +53,9 @@ Third-party agent skills (Cursor skill packs, local `.cursorrules`, etc.) are **
 - **GXT owns:** missions, TMVC scope, deterministic gates, trace mapping.
 - **Edge skills:** optional local IDE preferences only; never edit `.gitagent/`, `MANIFEST.json`, or integration templates to install them.
 - **Zero-trust:** all edits are untrusted until they pass compile/tests, import-layer checks, and mission `gate_command` — regardless of human vs IDE origin.
-- **Optional context:** agents may append `[SKILL-EXEC] skill_key=… tool=… scope=…` to `WORKER_LOG.md` for human reviewers; missing stamps are not verify failures.
+- **Optional context:** agents may append `[SKILL-EXEC] skill_key=… tool=… scope=…` to `EXECUTOR_LOG.md` for human reviewers; missing stamps are not verify failures.
 
-See [`.gitagent/teacher/RUNTIME.md`](.gitagent/teacher/RUNTIME.md) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) (zero-trust gates).
+See [`.gitagent/planner/RUNTIME.md`](.gitagent/planner/RUNTIME.md) and [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) (zero-trust gates).
 
 ## Cursor Cloud specific instructions
 
@@ -77,7 +77,7 @@ Or invoke the built CLI directly: `node dist/cli/index.js <subcommand>` (after `
 ```bash
 git config core.hooksPath .githooks
 git config commit.gpgsign false   # SSH/GPG signing agent is unavailable in Cloud VMs; required for git-based tests
-gantry teacher set "$(git config user.email)"
+gantry planner set "$(git config user.email)"
 ```
 
 ### Run / test / lint

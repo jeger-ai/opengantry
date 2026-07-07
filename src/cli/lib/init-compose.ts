@@ -35,7 +35,7 @@ export function composeArchitecturePointer(profile: InitProfile): ArchitecturePo
       kind: "unset",
       location: "",
       read_hint:
-        "Architecture source not selected. Do NOT invent layer layout, module boundaries, or dependency rules. Read .gitagent/teacher/ARCHITECTURE-DISCOVERY.md and ask the user structured questions before any application code changes.",
+        "Architecture source not selected. Do NOT invent layer layout, module boundaries, or dependency rules. Read .gitagent/planner/ARCHITECTURE-DISCOVERY.md and ask the user structured questions before any application code changes.",
       discovery: { skill: REL_ARCHITECTURE_DISCOVERY_SKILL },
     };
   }

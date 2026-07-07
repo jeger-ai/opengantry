@@ -43,7 +43,7 @@ function registerLegislationTools(server: McpServer): void {
 
   server.tool(
     "gxt_check_signature",
-    "Check whether Teacher git signature exists for a mission file.",
+    "Check whether Planner git signature exists for a mission file.",
     {
       mission_file_path: z.string().describe("Repo-relative mission YAML path"),
     },
@@ -94,10 +94,10 @@ function registerRuntimeTools(server: McpServer): void {
 
   server.tool(
     "gxt_runtime_exec",
-    "Run worker command with mission env + forbidden-zone enforcement.",
+    "Run executor command with mission env + forbidden-zone enforcement.",
     {
       mission_file_path: z.string().describe("Repo-relative mission path"),
-      command: z.array(z.string()).describe("Worker argv (after --)"),
+      command: z.array(z.string()).describe("Executor argv (after --)"),
       cwd: z.string().optional(),
       timeout_ms: z.number().int().positive().optional(),
     },

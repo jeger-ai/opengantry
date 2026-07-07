@@ -1,5 +1,5 @@
 # OpenGantry v1.0 meaningful self-dogfood — enforcement cage for specimen development.
-# Legislated intent: v1.0 meaningful self-dogfood: MANIFEST-driven MSN paths (Node), PR mission verify, TEACHER.allowlist, verify-pr-missions, MSN-9001 PASS.
+# Legislated intent: v1.0 meaningful self-dogfood: MANIFEST-driven MSN paths (Node), PR mission verify, PLANNER.allowlist, verify-pr-missions, MSN-9001 PASS.
 msn_id: MSN-0020
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
@@ -14,7 +14,7 @@ trace_rows:
     anchor: "20"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0020: gxt-validate mission_verify job uses pull_request head SHA and TEACHER.allowlist git-proof"
+    trace_quote: "DoD 3 MSN-0020: gxt-validate mission_verify job uses pull_request head SHA and PLANNER.allowlist git-proof"
     anchor: "21"
     status: PASS
   - dod_id: "4"

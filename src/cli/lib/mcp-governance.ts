@@ -4,7 +4,7 @@ import type { AgentErrorPayload } from "./errors.js";
 import { formatRepoRelative } from "./cli-io.js";
 import { MSN_ID_PATTERN } from "./constants.js";
 import { createDraftToken, DraftTokenError, verifyDraftToken } from "./draft-token.js";
-import { assertTeacherMissionProof } from "./git-proof.js";
+import { assertPlannerMissionProof } from "./git-proof.js";
 import { runLegislate, type LegislateOptions } from "./legislate.js";
 import { handleRuntimeEnv, type RuntimeEnvMcpResult } from "./mcp-runtime.js";
 import { pinMissionFile, resolveMissionFilePath } from "./missions/parser.js";
@@ -41,7 +41,7 @@ export interface DraftLegislationResult {
   draft_token: string;
   chat_message_to_user: string;
   expires_at: string;
-  requires_teacher_commit: true;
+  requires_planner_commit: true;
 }
 
 export interface ExecuteLegislationResult {
@@ -51,7 +51,7 @@ export interface ExecuteLegislationResult {
   suggested_human_action: string;
   commit_message: string;
   commit_target: string;
-  requires_teacher_commit: true;
+  requires_planner_commit: true;
   next_tool: "gxt_check_signature";
 }
 
@@ -192,7 +192,7 @@ export function handleDraftLegislation(
       manifest.skills[resolveManifestSkillKey(manifest, skillKey)]?.desc,
     ),
     expires_at: token.expires_at,
-    requires_teacher_commit: true,
+    requires_planner_commit: true,
   };
 }
 
@@ -236,7 +236,7 @@ export function handleExecuteLegislation(
     suggested_human_action: suggestedHumanAction,
     commit_message: commitMessage,
     commit_target: missionRel,
-    requires_teacher_commit: true,
+    requires_planner_commit: true,
     next_tool: "gxt_check_signature",
   };
 }
@@ -252,13 +252,13 @@ export function handleCheckSignature(
   }
 
   try {
-    const msnId = assertTeacherMissionProof(root, missionAbs);
+    const msnId = assertPlannerMissionProof(root, missionAbs);
     const rel = formatRepoRelative(root, missionAbs);
     return {
       status: "signature_valid",
       msn_id: msnId,
       mission_file_path: rel,
-      message: `Teacher signature valid for ${msnId}. You may pin the mission and begin worker execution.`,
+      message: `Planner signature valid for ${msnId}. You may pin the mission and begin executor execution.`,
       next_tools: ["gxt_pin_mission", "gxt_runtime_env"],
     };
   } catch (err) {

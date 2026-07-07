@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v1.1.1 maintainability hardening — legislate-core, verify core, CommandReporter, YAML/MCP splits
 msn_id: MSN-0033
 skill_key: gapman

@@ -28,6 +28,6 @@ npm test          # passes after agent run
 | Crash recovery | Partial writes + stale state file |
 | Compliance story | "We have a script" ≠ auditable change control |
 
-**Orchestrator specimen LOC (measured):** [`agent-run.mjs`](agent-run.mjs) ~140+ non-empty lines vs Gantry mission + worker patch boundary in the benchmark harness (see [`../benchmark-agent/`](../benchmark-agent/)). This is **not** a claim that your team will write this file — it models what improvised agent glue tends to reinvent.
+**Orchestrator specimen LOC (measured):** [`agent-run.mjs`](agent-run.mjs) ~140+ non-empty lines vs Gantry mission + executor patch boundary in the benchmark harness (see [`../benchmark-agent/`](../benchmark-agent/)). This is **not** a claim that your team will write this file — it models what improvised agent glue tends to reinvent.
 
 Compare: [`../gantry-minimal/`](../gantry-minimal/) · [`../benchmark-agent/`](../benchmark-agent/) · [`../../docs/ADOPTION.md`](../../docs/ADOPTION.md).

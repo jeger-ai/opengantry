@@ -11,14 +11,14 @@ import {
   writeManifest,
   writeSkillsForManifest,
 } from "./test-fixtures.js";
-import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 function writeSurgeonFixtureRepo(
   dest: string,
   ogRoot: string,
   options: { gateCommand: string; gateSubstring: string },
 ): string {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     ui: { trust_threshold: "Tier-1", tmvc_roots: [], forbidden_zones: [] },
   });
@@ -48,7 +48,7 @@ trace_rows:
 `,
     "utf8",
   );
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), `${traceQuote}\n`, "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), `${traceQuote}\n`, "utf8");
   return missionRel;
 }
 
@@ -60,31 +60,31 @@ test("runVerify: --fix quarantines banned import, logs mutation, reruns verify",
     gateCommand: `node ${cli} check-imports src --ban axios`,
     gateSubstring: "check-imports: OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
   const prevCwd = process.cwd();
 
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
         await runVerify({
           mission: missionRel,
-          workerLog: "WORKER_LOG.md",
+          executorLog: "EXECUTOR_LOG.md",
           fix: true,
           fixNonInteractive: true,
         });
       });
       const combined = output.stdout + output.stderr;
       const after = fs.readFileSync(badPath, "utf8");
-      const workerLog = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
 
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START/);
-      assert.match(workerLog, /\[SURGEON-MUTATION\] banned-import quarantined: src\/bad\.ts:1 -> RULE-BANNED-IMPORT/);
+      assert.match(executorLog, /\[SURGEON-MUTATION\] banned-import quarantined: src\/bad\.ts:1 -> RULE-BANNED-IMPORT/);
       assert.match(combined, /\[Surgeon\] mutation logged; rerunning full verify \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {
@@ -102,25 +102,25 @@ test("runVerify: without --fix does not quarantine banned import", async () => {
     gateCommand: `node ${cli} check-imports src --ban axios`,
     gateSubstring: "check-imports: OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
   const prevCwd = process.cwd();
 
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
-        await runVerify({ mission: missionRel, workerLog: "WORKER_LOG.md" });
+        await runVerify({ mission: missionRel, executorLog: "EXECUTOR_LOG.md" });
       });
       const combined = output.stdout + output.stderr;
       const after = fs.readFileSync(badPath, "utf8");
-      const workerLog = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
 
       assert.equal(after, before);
-      assert.doesNotMatch(workerLog, /\[SURGEON-MUTATION\]/);
+      assert.doesNotMatch(executorLog, /\[SURGEON-MUTATION\]/);
       assert.equal(process.exitCode, 1);
       assert.match(combined, /GXT_BANNED_IMPORT_DETECTED|GXT_GATE_FAILED/);
     } finally {
@@ -138,23 +138,23 @@ test("runVerify: --fix writes only one SURGEON-MUTATION line on successful rerun
     gateCommand: `node ${cli} check-imports src --ban axios`,
     gateSubstring: "check-imports: OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", PLANNER_EMAIL);
 
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       await captureConsoleAsync(async () => {
         await runVerify({
           mission: missionRel,
-          workerLog: "WORKER_LOG.md",
+          executorLog: "EXECUTOR_LOG.md",
           fix: true,
           fixNonInteractive: true,
         });
       });
-      const workerLog = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
-      const matches = workerLog.match(/\[SURGEON-MUTATION\]/g);
+      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
+      const matches = executorLog.match(/\[SURGEON-MUTATION\]/g);
       assert.equal(matches?.length ?? 0, 1);
     } finally {
       process.chdir(prevCwd);
@@ -168,7 +168,7 @@ function writeImportLayerFixtureRepo(
   ogRoot: string,
   options: { gateCommand: string; gateSubstring: string },
 ): string {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     ui: { trust_threshold: "Tier-1", tmvc_roots: [], forbidden_zones: [] },
   });
@@ -199,7 +199,7 @@ trace_rows:
 `,
     "utf8",
   );
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), `${traceQuote}\n`, "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), `${traceQuote}\n`, "utf8");
   return missionRel;
 }
 
@@ -211,31 +211,31 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
     gateCommand: `node ${layerScript} --json src/cli/lib/bad.ts`,
     gateSubstring: '"ok":true',
   });
-  gitInitCommit(dest, "[MSN-0998] legislate import-layer surgeon mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0998] legislate import-layer surgeon mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/cli/lib/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
   const prevCwd = process.cwd();
 
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
         await runVerify({
           mission: missionRel,
-          workerLog: "WORKER_LOG.md",
+          executorLog: "EXECUTOR_LOG.md",
           fix: true,
           fixNonInteractive: true,
         });
       });
       const combined = output.stdout + output.stderr;
       const after = fs.readFileSync(badPath, "utf8");
-      const workerLog = fs.readFileSync(path.join(dest, "WORKER_LOG.md"), "utf8");
+      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
 
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START \[RULE-IMPORT-LAYER\]/);
-      assert.match(workerLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/lib\/bad\.ts/);
+      assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/lib\/bad\.ts/);
       assert.match(combined, /\[Surgeon\] mutation logged; rerunning full verify \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {

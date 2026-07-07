@@ -43,7 +43,7 @@ test("evaluateKpiThresholds: fails on threshold breach", () => {
 test("loadKpiReport: schema-validates committed report", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   fs.mkdirSync(path.join(root, ".gitagent", "kpi"), { recursive: true });
   const rel = ".gitagent/kpi/MSN-0028.json";
   fs.writeFileSync(
@@ -63,13 +63,13 @@ test("loadKpiReport: schema-validates committed report", () => {
 test("evaluateKpiPhase: missing report fails", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-phase-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   writeManifest(root, { gapman: { tmvc_roots: ["src/cli/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
   const kpiGate: KpiGateSpec = {
     reportPath: ".gitagent/kpi/MSN-0099.json",
     thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
   };
-  const result = evaluateKpiPhase(root, { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] }, "gapman", kpiGate, {}, "/tmp/WORKER_LOG.md");
+  const result = evaluateKpiPhase(root, { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] }, "gapman", kpiGate, {}, "/tmp/EXECUTOR_LOG.md");
   assert.equal(result?.kind, "fail");
   assert.equal(result?.failure.phase, "kpi");
   assert.equal(result?.failure.kpiKind, "missing");
@@ -78,7 +78,7 @@ test("evaluateKpiPhase: missing report fails", () => {
 test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-phase-skip-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   writeManifest(root, { gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
   fs.mkdirSync(path.join(root, "src", "app"), { recursive: true });
   fs.mkdirSync(path.join(root, ".gitagent", "kpi"), { recursive: true });
@@ -98,6 +98,6 @@ test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
     reportPath: ".gitagent/kpi/MSN-0099.json",
     thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
   };
-  const result = evaluateKpiPhase(root, manifest, "gapman", kpiGate, { skipStaleEvidence: true }, "WORKER_LOG.md");
+  const result = evaluateKpiPhase(root, manifest, "gapman", kpiGate, { skipStaleEvidence: true }, "EXECUTOR_LOG.md");
   assert.ok(result === null || (result.kind === "ok" && Array.isArray(result.warnings)));
 });

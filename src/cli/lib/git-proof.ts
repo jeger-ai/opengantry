@@ -1,12 +1,12 @@
 import path from "node:path";
-import { GIT_CONFIG_TEACHER_EMAILS } from "./config-namespace.js";
+import { GIT_CONFIG_PLANNER_EMAILS } from "./config-namespace.js";
 import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRun } from "./git.js";
 import { hintGitProof, type GitProofHintContext } from "./fix-hints.js";
 import { GapmanUserError } from "./errors.js";
 import { extractMsnIdFromMissionPath } from "./missions/parser.js";
-import { resolveTeacherEmails } from "./teacher-identity.js";
+import { resolvePlannerEmails } from "./planner-identity.js";
 
 function throwGitProofError(
   code: string,
@@ -23,7 +23,7 @@ function throwGitProofError(
 /** Missions verified by `gantry verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
 
-export { ENV_TEACHER_EMAILS, parseTeacherEmailsFromEnv } from "./teacher-identity.js";
+export { ENV_PLANNER_EMAILS, parsePlannerEmailsFromEnv } from "./planner-identity.js";
 
 export const ENV_MSN_SCAN_DEPTH = "GXT_MSN_SCAN_DEPTH" as const;
 export const DEFAULT_MSN_SCAN_DEPTH = 200;
@@ -137,8 +137,8 @@ export function listCommitChangedPaths(root: string, hash: string): string[] {
     .filter((l) => l.length > 0);
 }
 
-function isTeacherEmail(authorEmail: string, teacherEmails: string[]): boolean {
-  return teacherEmails.includes(authorEmail.trim().toLowerCase());
+function isPlannerEmail(authorEmail: string, plannerEmails: string[]): boolean {
+  return plannerEmails.includes(authorEmail.trim().toLowerCase());
 }
 
 function commitTouchesMission(changed: string[], repoRelMission: string): boolean {
@@ -146,7 +146,7 @@ function commitTouchesMission(changed: string[], repoRelMission: string): boolea
   return changed.some((p) => p.replace(/\\/g, "/") === normMission);
 }
 
-export interface TeacherMissionProofOptions {
+export interface PlannerMissionProofOptions {
   /** Max commits to scan in `git log` (default 200). */
   scanDepth?: number;
   /** When set, must match parser-resolved mission MSN (avoids re-resolving identity from disk). */
@@ -155,13 +155,13 @@ export interface TeacherMissionProofOptions {
 
 /**
  * Forensic gate (v0.6.2): MSN is read from the mission file; the most recent
- * Teacher-authored commit whose subject starts with `[MSN-XXXX]` must modify
+ * Planner-authored commit whose subject starts with `[MSN-XXXX]` must modify
  * that mission path. Returns the resolved MSN id.
  */
-export function assertTeacherMissionProof(
+export function assertPlannerMissionProof(
   root: string,
   missionAbsolutePath: string,
-  options?: TeacherMissionProofOptions,
+  options?: PlannerMissionProofOptions,
 ): string {
   const msnId =
     options?.msnId && MSN_ID_PATTERN.test(options.msnId)
@@ -176,12 +176,12 @@ export function assertTeacherMissionProof(
     );
   }
 
-  const teacherIdentity = resolveTeacherEmails(root);
-  const teacherEmails = teacherIdentity.emails;
-  if (teacherEmails.length === 0) {
+  const plannerIdentity = resolvePlannerEmails(root);
+  const plannerEmails = plannerIdentity.emails;
+  if (plannerEmails.length === 0) {
     throwGitProofError(
-      "TEACHER_IDENTITY_UNCONFIGURED",
-      "No Teacher allowlist configured for this repository.",
+      "PLANNER_IDENTITY_UNCONFIGURED",
+      "No Planner allowlist configured for this repository.",
       { root, missionPath, msnId },
     );
   }
@@ -198,13 +198,13 @@ export function assertTeacherMissionProof(
     );
   }
 
-  const stamp = rows.find((r) => isTeacherEmail(r.authorEmail, teacherEmails));
+  const stamp = rows.find((r) => isPlannerEmail(r.authorEmail, plannerEmails));
   if (!stamp) {
     const latest = rows[0]!;
     throwGitProofError(
-      "NO_TEACHER_MSN_COMMIT",
-      `The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Teacher allowlist (${teacherIdentity.detail}). ` +
-        `Add that email to .gitagent/foreman/TEACHER.allowlist.local, git config ${GIT_CONFIG_TEACHER_EMAILS}, or run ${CLI_NAME} teacher set.`,
+      "NO_PLANNER_MSN_COMMIT",
+      `The legislation was committed by ${JSON.stringify(latest.authorEmail)}, who is not in the Planner allowlist (${plannerIdentity.detail}). ` +
+        `Add that email to .gitagent/foreman/PLANNER.allowlist.local, git config ${GIT_CONFIG_PLANNER_EMAILS}, or run ${CLI_NAME} planner set.`,
       { root, missionPath, msnId, latestAuthorEmail: latest.authorEmail },
     );
   }
@@ -212,10 +212,10 @@ export function assertTeacherMissionProof(
   const changed = listCommitChangedPaths(root, stamp.hash);
   if (!commitTouchesMission(changed, repoRelMission)) {
     throwGitProofError(
-      "MISSION_FILE_NOT_MODIFIED_BY_TEACHER",
-      `The Teacher stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
-        `The stamp is the newest (scanning backward) commit authored by a Teacher allowlist email (${teacherIdentity.detail}) whose subject begins with [${msnId}]. ` +
-        `Either add a newer Teacher commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose only qualifying commits touch this file.`,
+      "MISSION_FILE_NOT_MODIFIED_BY_PLANNER",
+      `The Planner stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
+        `The stamp is the newest (scanning backward) commit authored by a Planner allowlist email (${plannerIdentity.detail}) whose subject begins with [${msnId}]. ` +
+        `Either add a newer Planner commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose only qualifying commits touch this file.`,
       {
         root,
         missionPath,
@@ -231,13 +231,13 @@ export function assertTeacherMissionProof(
 }
 
 /** Non-throwing git-proof check for onboarding/tutorial flows. */
-export function teacherMissionStamped(
+export function plannerMissionStamped(
   root: string,
   missionAbsolutePath: string,
-  options?: TeacherMissionProofOptions,
+  options?: PlannerMissionProofOptions,
 ): boolean {
   try {
-    assertTeacherMissionProof(root, missionAbsolutePath, options);
+    assertPlannerMissionProof(root, missionAbsolutePath, options);
     return true;
   } catch {
     return false;

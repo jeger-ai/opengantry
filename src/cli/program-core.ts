@@ -36,7 +36,7 @@ export function registerCoreCommands(program: Command): void {
     .description("Manifest sync + GXT readiness dashboard")
     .option("--json", "Emit structured report")
     .option("--verbose", "Include all doctor check lines")
-    .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
+    .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
     .action((opts: { json?: boolean; verbose?: boolean; audience?: string }) => {
       runStatus({
         json: opts.json,
@@ -49,7 +49,7 @@ export function registerCoreCommands(program: Command): void {
     .command("doctor")
     .description("Active GXT readiness check (warnings do not fail exit)")
     .option("--json", "Emit structured report")
-    .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
+    .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
     .action((opts: { json?: boolean; audience?: string }) => {
       runDoctor({ json: opts.json, audience: getOutputAudience() });
     });
@@ -71,7 +71,7 @@ export function registerCoreCommands(program: Command): void {
     .option("--arch-location <path>", "Architecture file path, folder, or external URL")
     .option(
       "--tutorial",
-      "After init, run guided first mission loop (Teacher stamp + verify walkthrough)",
+      "After init, run guided first mission loop (Planner stamp + verify walkthrough)",
     )
     .action(async (opts: InitOptions) => {
       await runInit(opts);
@@ -135,7 +135,7 @@ export function registerCoreCommands(program: Command): void {
     .option("--no-write", "Skip writing mission file (preview only)")
     .option("--allow-duplicate", "Allow duplicate msn_id (branch migration only)")
     .option("--json", "Emit structured JSON on success")
-    .option("--audience <role>", "Tailor next steps: worker|teacher|verifier|platform")
+    .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
     .action(async (intentParts: string[], options: StartCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import * as p from "@clack/prompts";
 import { CLI_NAME } from "./constants.js";
 import { fromPosix, logError, logInfo, setExitCode } from "./cli-io.js";
-import { teacherMissionStamped } from "./git-proof.js";
+import { plannerMissionStamped } from "./git-proof.js";
 import {
   ONBOARDING_ADOPTION_DOC,
   onboardingRuntimeEnvHint,
@@ -54,13 +54,13 @@ async function confirmTeacherStamp(
     });
     if (p.isCancel(ready) || !ready) return false;
 
-    if (teacherMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID })) {
-      p.log.success("Teacher stamp OK — [MSN-9001] commit touches this mission file");
+    if (plannerMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID })) {
+      p.log.success("Planner stamp OK — [MSN-9001] commit touches this mission file");
       return true;
     }
 
     p.log.warn(
-      "Git-proof not satisfied yet: no allowlisted Teacher commit [MSN-9001] modifying this mission file.",
+      "Git-proof not satisfied yet: no allowlisted Planner commit [MSN-9001] modifying this mission file.",
     );
     const retry = await p.confirm({
       message: "Run the commands above in another terminal, then check again?",
@@ -88,7 +88,7 @@ async function scaffoldTutorialMission(
     gateCommand: "gantry check",
     writeMission: true,
     silent: true,
-    audience: "teacher",
+    audience: "planner",
   });
   if (!start.ok || !start.mission_file_path) {
     logError("Tutorial start failed — run gantry onboarding or pass --skill-key");
@@ -117,11 +117,11 @@ async function runTutorialVerifyStep(
     mission: missionPath,
     fix: true,
     fixNonInteractive: true,
-    audience: "teacher",
+    audience: "planner",
   });
   const verifyOk = verifyResult.ok;
   if (!verifyOk) {
-    p.log.warn("Verify did not pass yet — expected until gate runs and trace rows cite WORKER_LOG.md");
+    p.log.warn("Verify did not pass yet — expected until gate runs and trace rows cite EXECUTOR_LOG.md");
   }
   return { verifyOk, ranVerify: true, verifyExitCode: verifyResult.exitCode };
 }
@@ -159,7 +159,7 @@ export async function runInitTutorial(): Promise<void> {
 
   p.intro(`${CLI_NAME} init --tutorial — first mission loop (~3 min)`);
   const confirm = await p.confirm({
-    message: "Walk through scaffold → Teacher stamp → trace → verify (strict checks)?",
+    message: "Walk through scaffold → Planner stamp → trace → verify (strict checks)?",
     initialValue: true,
   });
   if (p.isCancel(confirm) || !confirm) {
@@ -167,8 +167,8 @@ export async function runInitTutorial(): Promise<void> {
     return;
   }
 
-  p.log.step("Step 1 — Teacher allowlist");
-  logInfo('  gantry teacher set "$(git config user.email)"');
+  p.log.step("Step 1 — Planner allowlist");
+  logInfo('  gantry planner set "$(git config user.email)"');
 
   const missionPath = await scaffoldTutorialMission(
     repoRoot,
@@ -176,7 +176,7 @@ export async function runInitTutorial(): Promise<void> {
   );
   if (!missionPath) return;
 
-  p.log.step("Step 3 — Teacher stamp (manual, required)");
+  p.log.step("Step 3 — Planner stamp (manual, required)");
   if (!(await confirmTeacherStamp(repoRoot, missionPath))) {
     p.note(
       "Verify will fail until git-proof passes. Re-run: gantry verify --mission " + missionPath,
@@ -186,13 +186,13 @@ export async function runInitTutorial(): Promise<void> {
     return;
   }
 
-  p.log.step("Step 4 — Worker trace");
+  p.log.step("Step 4 — Executor trace");
   logInfo(`  ${onboardingRuntimeEnvHint(missionPath)}`);
   logInfo(
-    "  Append a unique gate evidence line to WORKER_LOG.md, then set mission trace_row PASS + trace_quote",
+    "  Append a unique gate evidence line to EXECUTOR_LOG.md, then set mission trace_row PASS + trace_quote",
   );
   logInfo(
-    "  Init merged WORKER_LOG.md into .prettierignore — keep formatters off the trace log so line anchors stay stable",
+    "  Init merged EXECUTOR_LOG.md into .prettierignore — keep formatters off the trace log so line anchors stay stable",
   );
 
   const { verifyOk, ranVerify, verifyExitCode } = await runTutorialVerifyStep(missionPath);

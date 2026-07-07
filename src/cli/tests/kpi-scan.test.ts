@@ -34,7 +34,7 @@ echo '{"metrics":{"complexity_score":3},"exit_code":0}'
 test("runKpiScan: namespaces metrics and applies aggregators", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-scan-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   const mission = missionWithVerifiers(root);
   const result = runKpiScan(root, mission);
   assert.equal(result.reportPath, ".gitagent/kpi/MSN-0030.json");
@@ -47,7 +47,7 @@ test("runKpiScan: namespaces metrics and applies aggregators", () => {
 test("runKpiScan: required verifier failure throws", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-scan-fail-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   const mission = missionWithVerifiers(root);
   mission.llmVerifiers[0]!.command = "exit 1";
   assert.throws(() => runKpiScan(root, mission), /required verifier/);
@@ -63,7 +63,7 @@ test("verifierOutputSucceeded: requires exit 0 and non-empty metrics", () => {
 test("runKpiScan: optional verifier failure writes __verifier_ok false", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-scan-optional-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   const mission = missionWithVerifiers(root);
   mission.llmVerifiers.push({ id: "optional", command: "exit 1", required: false });
   const result = runKpiScan(root, mission);
@@ -74,7 +74,7 @@ test("runKpiScan: optional verifier failure writes __verifier_ok false", () => {
 test("runKpiScan: tolerates trailing whitespace in verifier stdout", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-scan-trim-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(root, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   const scriptPath = path.join(root, "verifier-trim.sh");
   fs.writeFileSync(
     scriptPath,

@@ -21,11 +21,11 @@ Introduce an **opt-in virtual scratch contract** at `.gitagent/virtual/` that ma
 ## Consequences
 
 - Enables runtime-boundary KPI gates without a streaming rewrite.
-- Requires Teacher mission + ADR before substrate templates change beyond gitignore lines.
+- Requires Planner mission + ADR before substrate templates change beyond gitignore lines.
 - Failure to enforce ignore rules would pollute `git diff` and trip TMVC path guards — mitigated by init catalog gitignore merge (shipped in v2.2).
 
 ## References
 
-- KPI gate: `.gitagent/teacher/KPI-REPORT.schema.yaml`
+- KPI gate: `.gitagent/planner/KPI-REPORT.schema.yaml`
 - Runtime exec telemetry: `gantry runtime exec`
 - Related backlog: [#68](https://github.com/jeger-ai/opengantry/issues/68)

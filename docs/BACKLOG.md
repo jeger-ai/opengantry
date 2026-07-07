@@ -20,7 +20,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **`gen:dogfood` generator** (templates/scripts → scripts/) | **Done** | [#105](https://github.com/jeger-ai/opengantry/issues/105) · MSN-0067 |
 | **Typed `kpiKind` discriminant** | **Done** | [#103](https://github.com/jeger-ai/opengantry/issues/103) · MSN-0068 |
 | **Audience-tagged start orchestration** | **Done** | [#104](https://github.com/jeger-ai/opengantry/issues/104) · MSN-0069 |
-| **Doctor WORKER_LOG integrity checks** | **Done** | [#38](https://github.com/jeger-ai/opengantry/issues/38) · MSN-0070 |
+| **Doctor EXECUTOR_LOG integrity checks** | **Done** | [#38](https://github.com/jeger-ai/opengantry/issues/38) · MSN-0070 |
 | **TS/mjs MANIFEST + glob parity** | **Done** | [#106](https://github.com/jeger-ai/opengantry/issues/106) · MSN-0071 |
 | **Verify failure contract collapse** | **Done** | [#102](https://github.com/jeger-ai/opengantry/issues/102) · MSN-0072 |
 | **Legislate forbidden-zone warn** | **Done** | [#35](https://github.com/jeger-ai/opengantry/issues/35) · MSN-0073 |
@@ -113,7 +113,7 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 | **Perimeter drift surgeon** | Open | v2.1.1+ (ADR; git-restore category) |
 | **Multi-language external surgeon adapter contract** | Open | post-v2.1 |
 
-Core invariant (MSN-0047+): `gantry verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `WORKER_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
+Core invariant (MSN-0047+): `gantry verify --fix` may mutate TMVC under quarantine markers, append `[SURGEON-MUTATION]` to `EXECUTOR_LOG.md`, then **rerun full verify with `fix: false`** — surgeon never grants immediate PASS.
 
 ---
 
@@ -225,9 +225,9 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 | **Mission purity PR lock** (one `[MSN-XXXX]` per PR commit range) | **Done** | MSN-0024; `scripts/verify-pr-missions.sh`; CI `mission_verify` job |
 | **Template CI script deployment** (`verify-pr-missions.sh` in init catalog) | **Done** | `src/cli/lib/init-asset-catalog.ts` → `CI_ASSETS` |
 | **CI target lock** (mission PRs → default branch, not hardcoded `main`) | **Done** | MSN-0026; `vars.GXT_INTEGRATION_BRANCH` override; template parity restored ([#6](https://github.com/jeger-ai/opengantry/issues/6)) |
-| **WORKER_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Done** | MSN-0027; `docs/ADOPTION.md` § Formatter guard; `src/cli/lib/file-merge-gxt.ts` ([#7](https://github.com/jeger-ai/opengantry/issues/7)) |
+| **EXECUTOR_LOG formatter guard** (mandate `.prettierignore` in adoption docs) | **Done** | MSN-0027; `docs/ADOPTION.md` § Formatter guard; `src/cli/lib/file-merge-gxt.ts` ([#7](https://github.com/jeger-ai/opengantry/issues/7)) |
 | **`gantry verify --json`** (structured output for CI/orchestrators) | **Done** | MSN-0028; `src/cli/lib/verify-result-payload.ts`; flat `error_code` envelope ([#18](https://github.com/jeger-ai/opengantry/issues/18)) |
-| **Init scaffolds `.prettierignore` for `WORKER_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
+| **Init scaffolds `.prettierignore` for `EXECUTOR_LOG.md`** | **Done** | MSN-0027; `templates/.prettierignore.gxt`; init + upgrade merge ([#19](https://github.com/jeger-ai/opengantry/issues/19)) |
 | **Doctor detects substrate version drift** | **Done** | MSN-0029; `src/cli/lib/doctor-substrate-drift.ts`; `docs/ADOPTION.md` § substrate drift ([#20](https://github.com/jeger-ai/opengantry/issues/20)) |
 | **Doc/substrate version string sync** | **Done** | MSN-0030; README + `.gitagent/README` v1.1.0 ([#21](https://github.com/jeger-ai/opengantry/issues/21)) |
 | **Thermo-nuclear review remediation (phase 1)** | **Done** | MSN-0031; fail-closed stale evidence, verify JSON path dedup, trace `resolvedLines` ([#22](https://github.com/jeger-ai/opengantry/issues/22)); PR [#41](https://github.com/jeger-ai/opengantry/pull/41) |
@@ -237,8 +237,8 @@ Harden the cage immediately after v1.0 launch. Shipped in **MSN-0024** (mission 
 - **Mission purity:** one `[MSN-XXXX]` per PR; `verify-pr-missions.sh` in init catalog and CI `mission_verify`.
 - **Stale trace evidence:** `git blame` + TMVC `git diff` binding; `GXT_TRACE_STALE`; `--skip-stale-evidence` escape hatch.
 - **CI target lock:** dogfood + init template `gxt-validate.yml` compare PR base to `vars.GXT_INTEGRATION_BRANCH || github.event.repository.default_branch`; template parity restored (no workflow exemption).
-- **Formatter guard:** `docs/ADOPTION.md` mandates `WORKER_LOG.md` in `.prettierignore` (or equivalent); init tutorial copy; rebase invalidation cross-linked.
-- **Init prettierignore:** `gantry init` / `gantry upgrade apply` merge `WORKER_LOG.md` via `file-merge-gxt.ts` (exact line idempotency).
+- **Formatter guard:** `docs/ADOPTION.md` mandates `EXECUTOR_LOG.md` in `.prettierignore` (or equivalent); init tutorial copy; rebase invalidation cross-linked.
+- **Init prettierignore:** `gantry init` / `gantry upgrade apply` merge `EXECUTOR_LOG.md` via `file-merge-gxt.ts` (exact line idempotency).
 
 ### v1.1 remaining acceptance
 
@@ -311,7 +311,7 @@ Onboarding, init, and multi-IDE wiring improvements.
 
 ## Strategic horizon — v1.2+
 
-Shift from reactive validation to proactive containment. Requires ADR + Teacher mission before implementation (Tier-3 substrate).
+Shift from reactive validation to proactive containment. Requires ADR + Planner mission before implementation (Tier-3 substrate).
 
 | Item | Status | Issue |
 |------|--------|-------|
@@ -322,12 +322,12 @@ Shift from reactive validation to proactive containment. Requires ADR + Teacher 
 | **External architecture pointer HTTP fetch** | Open | [#34](https://github.com/jeger-ai/opengantry/issues/34) |
 | **Forbidden-zone check at legislate time** | Open | [#35](https://github.com/jeger-ai/opengantry/issues/35) |
 | **Verify SARIF/JUnit export** | Open | [#36](https://github.com/jeger-ai/opengantry/issues/36) |
-| **Teacher stamp hardening (GPG/sigstore)** | Open | [#37](https://github.com/jeger-ai/opengantry/issues/37) |
-| **WORKER_LOG integrity checks in doctor** | Open | [#38](https://github.com/jeger-ai/opengantry/issues/38) |
+| **Planner stamp hardening (GPG/sigstore)** | Open | [#37](https://github.com/jeger-ai/opengantry/issues/37) |
+| **EXECUTOR_LOG integrity checks in doctor** | Open | [#38](https://github.com/jeger-ai/opengantry/issues/38) |
 
 ### v2.0 — Adaptive perimeter (passive cage → self-configuring platform)
 
-Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual-YAML setup tax and add semantic verification on top of deterministic gates. Both items are Tier-3 substrate and **require an ADR + Teacher mission** before any implementation.
+Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual-YAML setup tax and add semantic verification on top of deterministic gates. Both items are Tier-3 substrate and **require an ADR + Planner mission** before any implementation.
 
 | Item | Status | Issue |
 |------|--------|-------|
@@ -376,7 +376,7 @@ Rationale: thermo-nuclear review verify-stack findings closed in 1.1.2; tactical
 2. **Tactical ergonomics** — #12, #27–#28 (registrar, verify/triage helpers)
 3. **Adoption** — #30–#33 (session hooks, upgrade preview, onboarding gates)
 4. **v1.2+** — #14–#17, #34–#38 (ADR + mission first)
-5. **v2.0 adaptive perimeter** — [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) (ADR + Teacher mission first; #61 PoC may start once v1.1.1 ships; #63 builds on the #61 scanner core)
+5. **v2.0 adaptive perimeter** — [#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63) (ADR + Planner mission first; #61 PoC may start once v1.1.1 ships; #63 builds on the #61 scanner core)
 
 ---
 

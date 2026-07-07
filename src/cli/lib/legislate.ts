@@ -54,7 +54,7 @@ export function resolveSkillKeyForLegislation(opts: {
     return {
       ok: false,
       triage,
-      reason: `triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Teacher assigns scope.`,
+      reason: `triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Planner assigns scope.`,
       kind: "escalated",
     };
   }
@@ -109,7 +109,7 @@ function buildYamlMissionBody(opts: {
   }
   return buildMissionYamlScaffold({
     header:
-      `# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).\n` +
+      `# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).\n` +
       `# Legislated intent: ${opts.intent.trim().replace(/\n/g, " ")}\n`,
     doc,
   });
@@ -227,7 +227,7 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
 
   for (const zone of findForbiddenZoneHits(manifest, skill_key, options.intent)) {
     logWarn(
-      `legislate: intent may touch forbidden zone ${zone} for skill ${skill_key} — narrow TMVC in mission or confirm Teacher override`,
+      `legislate: intent may touch forbidden zone ${zone} for skill ${skill_key} — narrow TMVC in mission or confirm Planner override`,
     );
   }
 
@@ -254,7 +254,7 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
   if (!options.silent) {
     logInfo(`${CLI_NAME} legislate: wrote ${missionRel}`);
     logInfo(
-      `Teacher: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Teacher email (gantry teacher show).`,
+      `Planner: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Planner email (gantry planner show).`,
     );
   }
   return { ok: true, missionAbs: absolute, missionRel };

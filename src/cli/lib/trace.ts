@@ -1,8 +1,8 @@
 import path from "node:path";
-import { LEGISLATE_TRACE_PLACEHOLDER, WORKER_LOG_FILENAME } from "./constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER, EXECUTOR_LOG_FILENAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git.js";
-import { isLineDriftFailure, quoteLineNumbers, type WorkerLogLineMap, buildWorkerLogLineMapForQuotes } from "./worker-log-line-map.js";
+import { isLineDriftFailure, quoteLineNumbers, type ExecutorLogLineMap, buildExecutorLogLineMapForQuotes } from "./executor-log-line-map.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest, TraceRow } from "./types.js";
 
@@ -31,7 +31,7 @@ export function isPendingStatus(status: NormalizedTraceStatus): boolean {
 export type TraceFailureKind =
   | "ambiguous"
   | "quote_missing"
-  | "worker_log_missing"
+  | "executor_log_missing"
   | "placeholder_quote"
   | "strict_line_drift"
   | "empty_quote"
@@ -44,7 +44,7 @@ export function classifyTraceFailure(
   traceQuote: string,
   strictTrace: boolean,
 ): TraceFailureKind {
-  if (reason.startsWith("WORKER_LOG missing:")) return "worker_log_missing";
+  if (reason.startsWith("EXECUTOR_LOG missing:")) return "executor_log_missing";
   if (reason.includes("Ambiguous")) return "ambiguous";
   if (reason.includes("not found verbatim")) {
     if (traceQuote.trim() === LEGISLATE_TRACE_PLACEHOLDER) return "placeholder_quote";
@@ -79,10 +79,10 @@ export interface TraceEvidenceOptions {
   skipStaleEvidence?: boolean;
 }
 
-function workerLogRelPath(workerLogPath: string, repoRoot: string): string {
-  const abs = path.resolve(workerLogPath);
+function executorLogRelPath(executorLogPath: string, repoRoot: string): string {
+  const abs = path.resolve(executorLogPath);
   const rel = toPosixRel(repoRoot, abs);
-  return rel.length > 0 && !rel.startsWith("..") ? rel : WORKER_LOG_FILENAME;
+  return rel.length > 0 && !rel.startsWith("..") ? rel : EXECUTOR_LOG_FILENAME;
 }
 
 /** Parse `git blame --porcelain` into 1-based line number → commit hash. */
@@ -120,8 +120,8 @@ export function parseBlamePorcelainByLine(blameOutput: string): Map<number, stri
   return byLine;
 }
 
-export function readBlamePorcelainByLine(repoRoot: string, workerLogRelPath: string): Map<number, string> {
-  const r = gitRun(repoRoot, ["blame", "--porcelain", "--", workerLogRelPath]);
+export function readBlamePorcelainByLine(repoRoot: string, executorLogRelPath: string): Map<number, string> {
+  const r = gitRun(repoRoot, ["blame", "--porcelain", "--", executorLogRelPath]);
   if (!r.ok) return new Map();
   return parseBlamePorcelainByLine(r.stdout);
 }
@@ -137,7 +137,7 @@ function formatStaleReason(
   const suffix =
     stalePaths.length > shown.length ? ` (+${String(stalePaths.length - shown.length)} more)` : "";
   return (
-    `Trace STALE for DoD ${row.dodId} (WORKER_LOG.md line ${String(quoteLine)}, attested at ${shortCommit}): ` +
+    `Trace STALE for DoD ${row.dodId} (EXECUTOR_LOG.md line ${String(quoteLine)}, attested at ${shortCommit}): ` +
     `TMVC drift since attestation — ${shown.join(", ")}${suffix}. Re-run gate and append a fresh trace line.`
   );
 }
@@ -146,7 +146,7 @@ export function verifyTraceEvidenceFreshness(
   repoRoot: string,
   manifest: Manifest,
   skillKey: string | null,
-  workerLogPath: string,
+  executorLogPath: string,
   resolvedLines: ResolvedQuoteLine[],
   options: TraceEvidenceOptions = {},
 ): { failures: TraceEvidenceFailure[]; skippedUncommitted: number } {
@@ -159,8 +159,8 @@ export function verifyTraceEvidenceFreshness(
     return { failures: [], skippedUncommitted: 0 };
   }
 
-  const workerLogRel = workerLogRelPath(workerLogPath, repoRoot);
-  const blameByLine = readBlamePorcelainByLine(repoRoot, workerLogRel);
+  const executorLogRel = executorLogRelPath(executorLogPath, repoRoot);
+  const blameByLine = readBlamePorcelainByLine(repoRoot, executorLogRel);
   const diffCache = new Map<string, GitDiffSinceCommitResult>();
   const failures: TraceEvidenceFailure[] = [];
   let skippedUncommitted = 0;
@@ -173,7 +173,7 @@ export function verifyTraceEvidenceFreshness(
         attestationCommit: "unknown",
         quoteLine: lineNumber,
         stalePaths: [],
-        reason: `Trace STALE for DoD ${row.dodId}: cannot resolve git blame for WORKER_LOG.md line ${String(lineNumber)}`,
+        reason: `Trace STALE for DoD ${row.dodId}: cannot resolve git blame for EXECUTOR_LOG.md line ${String(lineNumber)}`,
       });
       continue;
     }
@@ -242,7 +242,7 @@ export interface TraceVerifyResult {
   failures: TraceVerifyFailure[];
   warnings: TraceVerifyWarning[];
   resolvedLines: ResolvedQuoteLine[];
-  map: WorkerLogLineMap | null;
+  map: ExecutorLogLineMap | null;
 }
 
 export function isPassTraceRow(status: string): boolean {
@@ -250,7 +250,7 @@ export function isPassTraceRow(status: string): boolean {
 }
 
 export function resolveQuoteLineNumber(
-  map: WorkerLogLineMap,
+  map: ExecutorLogLineMap,
   row: TraceRow,
   resolvedLineByDodId: ReadonlyMap<string, number>,
 ): number | null {
@@ -276,7 +276,7 @@ export function resolveQuoteLineNumber(
 
 function buildResolvedQuoteLines(
   passRows: TraceRow[],
-  map: WorkerLogLineMap,
+  map: ExecutorLogLineMap,
   warnings: TraceVerifyWarning[],
 ): ResolvedQuoteLine[] {
   const resolvedLineByDodId = new Map<string, number>();
@@ -292,7 +292,7 @@ function buildResolvedQuoteLines(
 }
 
 function verifyNumericAnchorExact(
-  map: WorkerLogLineMap,
+  map: ExecutorLogLineMap,
   row: TraceRow,
   lineNumber: number,
 ): TraceVerifyFailure | null {
@@ -310,14 +310,14 @@ function verifyNumericAnchorExact(
 }
 
 function resolveDriftFromMap(
-  map: WorkerLogLineMap,
+  map: ExecutorLogLineMap,
   row: TraceRow,
   lineNumber: number,
 ): { failure: TraceVerifyFailure | null; warning: TraceVerifyWarning | null } {
   const matches = quoteLineNumbers(map, row.traceQuote);
   if (matches.length === 0) {
     return {
-      failure: { row, reason: "Trace quote not found verbatim in WORKER_LOG.md" },
+      failure: { row, reason: "Trace quote not found verbatim in EXECUTOR_LOG.md" },
       warning: null,
     };
   }
@@ -338,7 +338,7 @@ function resolveDriftFromMap(
 }
 
 function verifyNumericAnchorFuzzy(
-  map: WorkerLogLineMap,
+  map: ExecutorLogLineMap,
   row: TraceRow,
   lineNumber: number,
 ): { failure: TraceVerifyFailure | null; warning: TraceVerifyWarning | null } {
@@ -347,7 +347,7 @@ function verifyNumericAnchorFuzzy(
   return resolveDriftFromMap(map, row, lineNumber);
 }
 
-function verifyFreeformAnchor(map: WorkerLogLineMap, row: TraceRow, anchor: string): TraceVerifyFailure | null {
+function verifyFreeformAnchor(map: ExecutorLogLineMap, row: TraceRow, anchor: string): TraceVerifyFailure | null {
   const found = map.lines.some((line) => line.includes(anchor) && line.includes(row.traceQuote));
   if (!found) {
     return {
@@ -360,7 +360,7 @@ function verifyFreeformAnchor(map: WorkerLogLineMap, row: TraceRow, anchor: stri
 
 /** Line numbers are 1-based in mission table; other anchors match a substring on a line */
 export function verifyTraceRows(
-  workerLogPath: string,
+  executorLogPath: string,
   rows: TraceRow[],
   options: TraceVerifyOptions = {},
 ): TraceVerifyResult {
@@ -369,13 +369,13 @@ export function verifyTraceRows(
   const passRows = rows.filter((r) => isPassTraceRow(r.status));
 
   const quotes = passRows.map((r) => r.traceQuote);
-  const map = buildWorkerLogLineMapForQuotes(workerLogPath, quotes);
+  const map = buildExecutorLogLineMapForQuotes(executorLogPath, quotes);
 
   if (!map) {
     return {
       failures: passRows.map((row) => ({
         row,
-        reason: `WORKER_LOG missing: ${workerLogPath}`,
+        reason: `EXECUTOR_LOG missing: ${executorLogPath}`,
       })),
       warnings: [],
       resolvedLines: [],
@@ -392,7 +392,7 @@ export function verifyTraceRows(
       continue;
     }
     if (!map.content.includes(row.traceQuote)) {
-      failures.push({ row, reason: "Trace quote not found verbatim in WORKER_LOG.md" });
+      failures.push({ row, reason: "Trace quote not found verbatim in EXECUTOR_LOG.md" });
       continue;
     }
 
@@ -431,6 +431,6 @@ export function verifyTraceRows(
   };
 }
 
-export function defaultWorkerLogPath(repoRoot: string): string {
-  return path.join(repoRoot, WORKER_LOG_FILENAME);
+export function defaultExecutorLogPath(repoRoot: string): string {
+  return path.join(repoRoot, EXECUTOR_LOG_FILENAME);
 }

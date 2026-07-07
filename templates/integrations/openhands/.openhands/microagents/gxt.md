@@ -3,7 +3,7 @@
 Before planning or editing code, read:
 
 - `AGENTS.md`
-- `.gitagent/teacher/RULES.md`
+- `.gitagent/planner/RULES.md`
 - `.gitagent/foreman/MANIFEST.json`
 
 Bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`

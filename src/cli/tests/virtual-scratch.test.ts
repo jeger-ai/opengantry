@@ -23,9 +23,9 @@ import {
   writeManifest,
   writeSkillsForManifest,
 } from "./test-fixtures.js";
-import { TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
-const TEACHER = TEACHER_EMAIL;
+const PLANNER = PLANNER_EMAIL;
 
 function writeVirtualMission(
   dest: string,
@@ -48,11 +48,11 @@ trace_rows:
     status: PASS
 `;
   fs.writeFileSync(path.join(dest, ".gitagent", "missions", "virtual.yaml"), yaml, "utf8");
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "virtual capture evidence\n", "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "virtual capture evidence\n", "utf8");
 }
 
 function setupVirtualVerifyRepo(dest: string, ogRoot: string, missionOpts: Parameters<typeof writeVirtualMission>[1]): void {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: {
       trust_threshold: "Tier-2",
@@ -105,7 +105,7 @@ test("scavengeStaleVirtualFlights: removes over-capacity dirs", () => {
 test("verifyKpiReportFreshness: virtual scratch report skips stale binding", () => {
   const ogRoot = process.cwd();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-virtual-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: {
       trust_threshold: "Tier-2",
@@ -132,7 +132,7 @@ test("verifyKpiReportFreshness: virtual scratch report skips stale binding", () 
     "utf8",
   );
   fs.writeFileSync(path.join(dest, "src", "cli", "mutate.ts"), "export const x = 1;\n", "utf8");
-  gitInitCommit(dest, "[MSN-0999] init", TEACHER);
+  gitInitCommit(dest, "[MSN-0999] init", PLANNER);
   fs.writeFileSync(path.join(dest, "src", "cli", "mutate.ts"), "export const x = 2;\n", "utf8");
 
   const manifest = JSON.parse(
@@ -152,13 +152,13 @@ test("runVerify: virtual_capture purges flight dir on full success", async () =>
     gateCommand: "echo dev-validate-core OK",
     gateSubstring: "dev-validate-core OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate virtual mission", TEACHER);
+  gitInitCommit(dest, "[MSN-0999] legislate virtual mission", PLANNER);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
-      await runVerify({ mission: ".gitagent/missions/virtual.yaml", workerLog: "WORKER_LOG.md" });
+      await runVerify({ mission: ".gitagent/missions/virtual.yaml", executorLog: "EXECUTOR_LOG.md" });
       assert.equal(process.exitCode, undefined);
       const virtualRoot = path.join(dest, ".gitagent", "virtual");
       if (fs.existsSync(virtualRoot)) {
@@ -178,13 +178,13 @@ test("runVerify: virtual_capture retains flight dir on gate failure", async () =
     gateCommand: "/bin/false",
     gateSubstring: null,
   });
-  gitInitCommit(dest, "[MSN-0999] legislate virtual mission", TEACHER);
+  gitInitCommit(dest, "[MSN-0999] legislate virtual mission", PLANNER);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
-      await runVerify({ mission: ".gitagent/missions/virtual.yaml", workerLog: "WORKER_LOG.md" });
+      await runVerify({ mission: ".gitagent/missions/virtual.yaml", executorLog: "EXECUTOR_LOG.md" });
       assert.equal(process.exitCode, 1);
       const virtualRoot = path.join(dest, ".gitagent", "virtual");
       assert.ok(fs.existsSync(virtualRoot));

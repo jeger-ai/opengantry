@@ -10,21 +10,21 @@ alwaysApply: true
 Whenever the user starts a prompt with `/gantry`:
 
 1. Immediately switch to Mission Architect behavior.
-2. Run the protocol in `.gitagent/teacher/MISSION-ARCHITECT.md`.
+2. Run the protocol in `.gitagent/planner/MISSION-ARCHITECT.md`.
 3. Hand off via MCP tools (`gxt_draft_legislation` → chat approval → `gxt_execute_legislation`) or CLI `gantry legislate` fallback.
 
 Do not use `/plan` — Cursor reserves it for native Plan Mode.
 
 Before planning, editing code, or running substantive commands in this repository:
 
-1. Read **`.gitagent/teacher/RULES.md`** — governance (SOD, trace mapping, risk tiers, dynamic TMVC, Rule 4.4).
+1. Read **`.gitagent/planner/RULES.md`** — governance (SOD, trace mapping, risk tiers, dynamic TMVC, Rule 4.4).
 2. Read **`.gitagent/foreman/MANIFEST.json`** — Foreman map (`schema_version`, per-skill `trust_threshold`, `tmvc_roots`, `forbidden_zones`, `path_risks`, `risk_keywords`).
 
 Treat these as the **law + routing contract** for agent work. For orientation and workflow, see **`.gitagent/README.md`**.
 
 ## Mission Architect (IDE chat)
 
-**Implicit interception:** When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **`.gitagent/teacher/MISSION-ARCHITECT.md`**.
+**Implicit interception:** When the user **explicitly** asks to write, edit, refactor, or implement code and **no mission is pinned**, read **`.gitagent/planner/MISSION-ARCHITECT.md`**.
 
 - **Do NOT** trigger for questions, explanations, or code discovery.
 - **MCP handoff:** two-step draft/execute with semantic chat approval before any mission file write.
@@ -37,7 +37,7 @@ Treat these as the **law + routing contract** for agent work. For orientation an
 - **Hooks:** `.cursor/hooks.json` (installed by `gantry init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths (fallback for non-MCP shell paths).
 - **Pin mission:** `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml` before Agent work.
 - **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission or explicit path).
-- **Code architecture:** `.gitagent/ARCHITECTURE.pointer.json` — if `kind=unset` or stub, read `.gitagent/teacher/ARCHITECTURE-DISCOVERY.md` and ask user before coding.
+- **Code architecture:** `.gitagent/ARCHITECTURE.pointer.json` — if `kind=unset` or stub, read `.gitagent/planner/ARCHITECTURE-DISCOVERY.md` and ask user before coding.
 - **Human IDE setup:** `docs/INTEGRATIONS.md` (adopter reference — not agent context).
 - **External IDE skills:** local only — copy `.cursor/external-skills.local.example.mdc` → `.cursor/external-skills.local.mdc` (gitignored). Never commit third-party skill packs into GXT substrate.
 

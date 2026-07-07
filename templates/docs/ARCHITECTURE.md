@@ -9,11 +9,11 @@ This file is the **default** architecture source when [`.gitagent/ARCHITECTURE.p
 
 Agents discover how to read architecture via the pointer on first substantive work — do not hardcode alternate paths in IDE rules.
 
-**If the pointer has `kind: unset`**, or pointed docs are still the init stub, read **`.gitagent/teacher/ARCHITECTURE-DISCOVERY.md`** and ask the user structured questions before implementing — never invent the full architecture yourself.
+**If the pointer has `kind: unset`**, or pointed docs are still the init stub, read **`.gitagent/planner/ARCHITECTURE-DISCOVERY.md`** and ask the user structured questions before implementing — never invent the full architecture yourself.
 
 ## GXT governance (always read first)
 
-1. **`.gitagent/teacher/RULES.md`** — law (SOD, trace, TMVC, Rule 4.4).
+1. **`.gitagent/planner/RULES.md`** — law (SOD, trace, TMVC, Rule 4.4).
 2. **`.gitagent/foreman/MANIFEST.json`** — skill routing, `tmvc_roots`, forbidden zones.
 
 Workflow orientation: **`.gitagent/README.md`**.

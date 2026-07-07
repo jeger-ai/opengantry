@@ -1,6 +1,6 @@
 # GXT policy for Cline
 
-Before substantive work, read `AGENTS.md`, `.gitagent/teacher/RULES.md`, and `.gitagent/foreman/MANIFEST.json`.
+Before substantive work, read `AGENTS.md`, `.gitagent/planner/RULES.md`, and `.gitagent/foreman/MANIFEST.json`.
 
 Terminal bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`
 

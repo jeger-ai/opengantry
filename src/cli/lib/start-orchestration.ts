@@ -53,11 +53,11 @@ function buildTaggedNextSteps(missionRel: string | null, msnId: string | null): 
   const msn = msnId ?? "MSN-NNNN";
   return [
     {
-      audience: "teacher",
-      step: `Teacher: git add ${mission} && git commit -m "[${msn}] legislate mission"`,
+      audience: "planner",
+      step: `Planner: git add ${mission} && git commit -m "[${msn}] legislate mission"`,
     },
-    { audience: "worker", step: `eval "$(gantry runtime env --mission ${mission})"` },
-    { audience: "worker", step: "Append gate evidence to WORKER_LOG.md" },
+    { audience: "executor", step: `eval "$(gantry runtime env --mission ${mission})"` },
+    { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },
     { audience: "verifier", step: `gantry verify --mission ${mission}` },
     { audience: "platform", step: `scripts/gxt-pin-mission.sh ${mission}` },
   ];
@@ -116,7 +116,7 @@ function startEscalationFailure(
   }
   return createStartFailure(triage, null, triage.skill_key, [
     {
-      audience: "teacher",
+      audience: "planner",
       step: `gantry start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
     },
   ]);
@@ -157,11 +157,11 @@ function scaffoldStartMission(
   const freshMsn = suggestNextMsn(root);
   return createStartFailure(triage, msnId, resolvedSkillKey, [
     {
-      audience: "teacher",
+      audience: "planner",
       step: `try a fresh MSN: gantry start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
     },
     {
-      audience: "teacher",
+      audience: "planner",
       step: `or gantry legislate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey} --allow-duplicate`,
     },
   ]);

@@ -46,7 +46,7 @@ test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", asyn
     phase: "gate",
     message: "GATE FAILED",
     exitCode: 1,
-    workerLogPath: path.join(dir, "WORKER_LOG.md"),
+    executorLogPath: path.join(dir, "EXECUTOR_LOG.md"),
     gateStdout: gateJson,
     gateStderr: "",
   };
@@ -55,7 +55,7 @@ test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", asyn
     root: dir,
     failure,
     manifest: { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] },
-    workerLogPath: path.join(dir, "WORKER_LOG.md"),
+    executorLogPath: path.join(dir, "EXECUTOR_LOG.md"),
     errorCode: "GXT_IMPORT_LAYER_VIOLATION",
   };
 

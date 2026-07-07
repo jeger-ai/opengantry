@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.3.0 #35: forbidden-zone warn at legislate time
 msn_id: MSN-0073
 skill_key: gantry

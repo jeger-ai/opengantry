@@ -2,13 +2,13 @@ import path from "node:path";
 import type { OutputAudience } from "./audience-output.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRunOk } from "./git.js";
-import { assertTeacherMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
+import { assertPlannerMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
 import { gatePassed, runGate, type GateRunResult } from "./gate.js";
 import { resolveGateWorkDir } from "./gate-work-dir.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
-import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultWorkerLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
+import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
 import { errorMessage } from "./cli-io.js";
 import {
   createVirtualFlightId,
@@ -19,7 +19,7 @@ import {
 
 export interface VerifyOptions {
   mission?: string;
-  workerLog?: string;
+  executorLog?: string;
   cwd?: string;
   fuzzyTrace?: boolean;
   strictTrace?: boolean;
@@ -45,7 +45,7 @@ export interface VerifyOptions {
   baseRef?: string;
   /** Authoritative mode: fail-closed on KPI stale evidence and perimeter (CI). */
   ci?: boolean;
-  /** Max commits to scan for Teacher [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
+  /** Max commits to scan for Planner [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
   scanDepth?: number;
 }
 
@@ -84,7 +84,7 @@ export interface VerifyPhaseFailure {
   phase: VerifyFailurePhase;
   message: string;
   exitCode: number;
-  workerLogPath: string;
+  executorLogPath: string;
   gateCommand?: string;
   gateStdout?: string;
   gateStderr?: string;
@@ -109,7 +109,7 @@ export interface VerifyPhaseSuccess {
   ok: true;
   outcome: "full" | "pre_push_stub";
   proofMsnId: string;
-  workerLogPath: string;
+  executorLogPath: string;
   traceWarnings: TraceVerifyWarning[];
   kpiWarnings?: string[];
   traceEvidenceSkippedUncommitted?: number;
@@ -126,7 +126,7 @@ type TracePhaseOutcome =
   | { kind: "fail"; failure: VerifyPhaseFailure };
 
 function gitProofFailure(
-  workerLogPath: string,
+  executorLogPath: string,
   message: string,
 ): VerifyPhaseFailure {
   return {
@@ -134,37 +134,37 @@ function gitProofFailure(
     phase: "git_proof",
     message,
     exitCode: 1,
-    workerLogPath,
+    executorLogPath,
     gitProofMessage: message,
   };
 }
 
 function tracePhaseFailure(
   phase: "trace_pending" | "trace",
-  workerLogPath: string,
-  fields: Omit<VerifyPhaseFailure, "ok" | "phase" | "workerLogPath">,
+  executorLogPath: string,
+  fields: Omit<VerifyPhaseFailure, "ok" | "phase" | "executorLogPath">,
 ): VerifyPhaseFailure {
-  return { ok: false, phase, workerLogPath, ...fields };
+  return { ok: false, phase, executorLogPath, ...fields };
 }
 
-export function resolveWorkerLogPath(root: string, options: VerifyOptions): string {
-  return options.workerLog ? path.resolve(root, options.workerLog) : defaultWorkerLogPath(root);
+export function resolveExecutorLogPath(root: string, options: VerifyOptions): string {
+  return options.executorLog ? path.resolve(root, options.executorLog) : defaultExecutorLogPath(root);
 }
 
 function evaluateGitProof(
   root: string,
   mission: ParsedMission,
   options: VerifyOptions,
-  workerLogPath: string,
+  executorLogPath: string,
 ): GitProofOutcome {
   try {
-    const proofMsnId = assertTeacherMissionProof(root, mission.rawPath, {
+    const proofMsnId = assertPlannerMissionProof(root, mission.rawPath, {
       msnId: mission.msnId ?? undefined,
       scanDepth: options.scanDepth,
     });
     return { kind: "ok", proofMsnId };
   } catch (e) {
-    return { kind: "fail", failure: gitProofFailure(workerLogPath, errorMessage(e)) };
+    return { kind: "fail", failure: gitProofFailure(executorLogPath, errorMessage(e)) };
   }
 }
 
@@ -172,7 +172,7 @@ function evaluateGatePhase(
   root: string,
   gate: GateSpec,
   options: VerifyOptions,
-  workerLogPath: string,
+  executorLogPath: string,
 ): { failure: VerifyPhaseFailure | null; gateResult?: ReturnType<typeof runGate> } {
   const gateResult = runGate(resolveGateWorkDir(root, options), gate);
   if (gatePassed(gateResult, gate.successSubstring)) return { failure: null, gateResult };
@@ -182,7 +182,7 @@ function evaluateGatePhase(
       phase: "gate",
       message: "GATE FAILED",
       exitCode: 1,
-      workerLogPath,
+      executorLogPath,
       gateCommand: gate.command,
       gateStdout: gateResult.stdout,
       gateStderr: gateResult.stderr,
@@ -197,22 +197,22 @@ function evaluateTracePhase(
   manifest: Manifest,
   mission: ParsedMission,
   options: VerifyOptions,
-  workerLogPath: string,
+  executorLogPath: string,
 ): TracePhaseOutcome {
   const hasPending = mission.traceRows.some((row) => isPendingStatus(row.status));
   if (hasPending) {
     return {
       kind: "fail",
-      failure: tracePhaseFailure("trace_pending", workerLogPath, {
+      failure: tracePhaseFailure("trace_pending", executorLogPath, {
         message:
-          "Trace rows still PENDING — worker must execute, update mission trace row, then verify",
+          "Trace rows still PENDING — executor must execute, update mission trace row, then verify",
         exitCode: 1,
         gateCommand: mission.gate?.command,
       }),
     };
   }
 
-  const traceResult = verifyTraceRows(workerLogPath, mission.traceRows, {
+  const traceResult = verifyTraceRows(executorLogPath, mission.traceRows, {
     fuzzyNumericAnchor: options.fuzzyTrace === true,
     strictTrace: options.strictTrace === true,
   });
@@ -221,7 +221,7 @@ function evaluateTracePhase(
     const first = traceResult.failures[0]!;
     return {
       kind: "fail",
-      failure: tracePhaseFailure("trace", workerLogPath, {
+      failure: tracePhaseFailure("trace", executorLogPath, {
         message: first.reason,
         exitCode: 1,
         traceKind: classifyTraceFailure(first.reason, first.row.traceQuote, options.strictTrace === true),
@@ -235,7 +235,7 @@ function evaluateTracePhase(
     root,
     manifest,
     mission.skillKey,
-    workerLogPath,
+    executorLogPath,
     traceResult.resolvedLines,
     { skipStaleEvidence: options.skipStaleEvidence === true },
   );
@@ -244,7 +244,7 @@ function evaluateTracePhase(
     const first = evidence.failures[0]!;
     return {
       kind: "fail",
-      failure: tracePhaseFailure("trace", workerLogPath, {
+      failure: tracePhaseFailure("trace", executorLogPath, {
         message: first.reason,
         exitCode: 1,
         traceKind: "stale_evidence",
@@ -288,14 +288,14 @@ export function evaluateVerifyPhases(
   options: VerifyOptions,
   manifest: Manifest,
 ): VerifyPhaseResult {
-  const workerLogPath = resolveWorkerLogPath(root, options);
+  const executorLogPath = resolveExecutorLogPath(root, options);
 
-  const proof = evaluateGitProof(root, mission, options, workerLogPath);
+  const proof = evaluateGitProof(root, mission, options, executorLogPath);
   if (proof.kind === "fail") return proof.failure;
   const { proofMsnId } = proof;
 
   if (options.prePush === true && isLegislativeStub(mission)) {
-    return { ok: true, outcome: "pre_push_stub", proofMsnId, workerLogPath, traceWarnings: [] };
+    return { ok: true, outcome: "pre_push_stub", proofMsnId, executorLogPath, traceWarnings: [] };
   }
 
   const gate = mission.gate;
@@ -305,13 +305,13 @@ export function evaluateVerifyPhases(
       phase: "gate",
       message: "Mission has no gate_command",
       exitCode: 1,
-      workerLogPath,
+      executorLogPath,
     };
   }
 
   const virtualFlightId = beginVirtualCapture(root, mission);
 
-  const gateOutcome = evaluateGatePhase(root, gate, options, workerLogPath);
+  const gateOutcome = evaluateGatePhase(root, gate, options, executorLogPath);
   recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome.gateResult);
 
   if (gateOutcome.failure) return gateOutcome.failure;
@@ -324,7 +324,7 @@ export function evaluateVerifyPhases(
       mission.skillKey,
       mission.kpiGate,
       options,
-      workerLogPath,
+      executorLogPath,
     );
     if (kpiOutcome?.kind === "fail") {
       return kpiOutcome.failure;
@@ -334,7 +334,7 @@ export function evaluateVerifyPhases(
     }
   }
 
-  const trace = evaluateTracePhase(root, manifest, mission, options, workerLogPath);
+  const trace = evaluateTracePhase(root, manifest, mission, options, executorLogPath);
   if (trace.kind === "fail") return trace.failure;
 
   if (virtualFlightId) {
@@ -345,7 +345,7 @@ export function evaluateVerifyPhases(
     ok: true,
     outcome: "full",
     proofMsnId,
-    workerLogPath,
+    executorLogPath,
     traceWarnings: trace.warnings,
     ...(kpiWarnings && kpiWarnings.length > 0 ? { kpiWarnings } : {}),
     traceEvidenceSkippedUncommitted:

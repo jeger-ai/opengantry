@@ -32,11 +32,11 @@ ISO 27001 treats developers (human or automated) as actors inside the Informatio
 
 | Control | Mechanism |
 |---------|-----------|
-| Executor ≠ Verifier | [RULES §2 SOD](../.gitagent/teacher/RULES.md): the agent that runs the gate command must not declare verifier PASS |
-| Worker ≠ Teacher | Mission law (scope, gates, TMVC) is Teacher-owned; workers must not amend mission law without re-legislation |
-| Approval before merge | `gantry verify` requires **git-proof**: among recent commits, the newest `[MSN-XXXX]` from an allowlisted **Teacher** email must **modify** the mission file under `.gitagent/missions/` |
+| Executor ≠ Verifier | [RULES §2 SOD](../.gitagent/planner/RULES.md): the agent that runs the gate command must not declare verifier PASS |
+| Executor ≠ Planner | Mission law (scope, gates, TMVC) is Planner-owned; executors must not amend mission law without re-legislation |
+| Approval before merge | `gantry verify` requires **git-proof**: among recent commits, the newest `[MSN-XXXX]` from an allowlisted **Planner** email must **modify** the mission file under `.gitagent/missions/` |
 
-**Artifact pack for auditors:** mission YAML, Teacher `[MSN-XXXX]` commit in `git log`, worker commits, `WORKER_LOG.md`, verify output.
+**Artifact pack for auditors:** mission YAML, Planner `[MSN-XXXX]` commit in `git log`, executor commits, `EXECUTOR_LOG.md`, verify output.
 
 ### Annex A.8.28 — Secure development (application security requirements)
 
@@ -49,7 +49,7 @@ ISO 27001 treats developers (human or automated) as actors inside the Informatio
 | Declared edit scope | **tmvc_roots** and **forbidden_zones** in [MANIFEST.json](../.gitagent/foreman/MANIFEST.json); mission may narrow further |
 | Hard subprocess boundary | `gantry runtime exec` enforces TMVC + forbidden-zone scan for orchestrated runs |
 | Governance path protection | Hooks block casual shell writes to `.gitagent/foreman/`, `RULES.md`, etc. |
-| Merge gate | Pre-push / CI `gantry verify` fails closed without Teacher legislation + gate + trace (when configured) |
+| Merge gate | Pre-push / CI `gantry verify` fails closed without Planner legislation + gate + trace (when configured) |
 
 **Honest limit:** Default IDE Agent **Write/Edit** is **advisory** — compliance strength depends on adopting `runtime exec`, verify gates, and code review. See [Enforcement boundary](#enforcement-boundary-honest-limits).
 
@@ -63,7 +63,7 @@ ISO 27001 treats developers (human or automated) as actors inside the Informatio
 |----------|----------|
 | `.gitagent/missions/MSN-*.yaml` | Declared intent, skill, TMVC scope, gate command, trace rows |
 | `git log --grep='MSN-XXXX'` | Greppable mission index — author, timestamp, commit message |
-| `WORKER_LOG.md` | Execution trace; verifier PASS requires **verbatim quote** from this file ([RULES §3](../.gitagent/teacher/RULES.md)) |
+| `EXECUTOR_LOG.md` | Execution trace; verifier PASS requires **verbatim quote** from this file ([RULES §3](../.gitagent/planner/RULES.md)) |
 | `gantry verify` output | Structured phases; failures emit `GXT_*` codes for remediation |
 
 **Honest limit:** Trace mapping is **process control**, not cryptographic tamper-proofing. Evidence integrity relies on Git history, hook/verify gates, and human review — not on proving the model could not lie.
@@ -80,9 +80,9 @@ ISO 42001 focuses on governing **AI system behavior and risk**, not only securin
 
 **OpenGantry evidence:**
 
-- Mission files define scope, skill routing, gate commands, and trace expectations **before** worker execution (adoption runbook: Teacher reviews mission **before** `runtime env` / worker run).
+- Mission files define scope, skill routing, gate commands, and trace expectations **before** executor execution (adoption runbook: Planner reviews mission **before** `runtime env` / executor run).
 - [Foreman MANIFEST](../.gitagent/foreman/MANIFEST.json) maps skills to trust tiers, TMVC roots, path risks, and forbidden zones.
-- Out-of-scope expansion requires a logged **Context Request** in `WORKER_LOG.md` ([RULES §4](../.gitagent/teacher/RULES.md)).
+- Out-of-scope expansion requires a logged **Context Request** in `EXECUTOR_LOG.md` ([RULES §4](../.gitagent/planner/RULES.md)).
 
 ### Human oversight thresholds
 
@@ -90,9 +90,9 @@ ISO 42001 focuses on governing **AI system behavior and risk**, not only securin
 
 **OpenGantry evidence:**
 
-- **Two-phase staging:** draft mission → human Teacher approval via `[MSN-XXXX]` commit → worker execution → verify.
-- **Risk tiers** ([RULES §1](../.gitagent/teacher/RULES.md)): Tier-2/3 work requires human trace audit or multi-provider verification when configured.
-- **Break-glass** ([RULES §6.2](../.gitagent/teacher/RULES.md)): emergency bypass is explicit, secret-gated, and recorded in `refs/notes/gxt-bypass` — not silent policy drift.
+- **Two-phase staging:** draft mission → human Planner approval via `[MSN-XXXX]` commit → executor execution → verify.
+- **Risk tiers** ([RULES §1](../.gitagent/planner/RULES.md)): Tier-2/3 work requires human trace audit or multi-provider verification when configured.
+- **Break-glass** ([RULES §6.2](../.gitagent/planner/RULES.md)): emergency bypass is explicit, secret-gated, and recorded in `refs/notes/gxt-bypass` — not silent policy drift.
 
 ### Continuous monitoring & reversibility
 
@@ -110,11 +110,11 @@ ISO 42001 focuses on governing **AI system behavior and risk**, not only securin
 
 | Framework & focus | Typical audit requirement | OpenGantry operational proof | Adoption note |
 |-------------------|---------------------------|------------------------------|---------------|
-| **ISO 27001 — Change control** | Managed, approved changes to IT systems | Teacher git-proof + mission YAML before merge; verify gate + trace | Full strength when verify gates merge and Teacher workflow is mandatory |
-| **ISO 27001 — Audit logs** | Record of who/what changed systems | `WORKER_LOG.md` + greppable `[MSN-XXXX]` commits + mission file history; v1.1+ stale-evidence binds committed trace lines to TMVC via `git blame` + `git diff` | Quote-matching is forensic process control, not immutable crypto logs |
+| **ISO 27001 — Change control** | Managed, approved changes to IT systems | Planner git-proof + mission YAML before merge; verify gate + trace | Full strength when verify gates merge and Planner workflow is mandatory |
+| **ISO 27001 — Audit logs** | Record of who/what changed systems | `EXECUTOR_LOG.md` + greppable `[MSN-XXXX]` commits + mission file history; v1.1+ stale-evidence binds committed trace lines to TMVC via `git blame` + `git diff` | Quote-matching is forensic process control, not immutable crypto logs |
 | **ISO 27001 — Least privilege** | Limit actor capabilities | TMVC roots, forbidden zones; hard enforcement via `runtime exec` | IDE Write/Edit alone is advisory — document your enforcement tier |
 | **ISO 42001 — AI boundaries** | Documented, verified operational limits | Mission files + manifest routing before execution | Scope must be legislated and pinned, not implied in chat |
-| **ISO 42001 — Accountability** | Clear ownership of AI-driven outcomes | Teacher author email on legislation commit owns authorized scope | Teacher owns **authorized scope**, not every line the model wrote — human review + verify still required |
+| **ISO 42001 — Accountability** | Clear ownership of AI-driven outcomes | Planner author email on legislation commit owns authorized scope | Planner owns **authorized scope**, not every line the model wrote — human review + verify still required |
 | **ISO 42001 — Monitoring** | Ongoing oversight of AI in operations | Git-native artifacts, CI validate, structured verify failures | Treat bypass and advisory-mode usage as audit findings if unrecorded |
 
 ---
@@ -140,8 +140,8 @@ Recommended adoption loop for regulated teams: [`docs/ADOPTION.md`](ADOPTION.md)
 For platforms where **auditability and change management are non-negotiable**, OpenGantry turns abstract AI governance policies into **fail-closed engineering gates** when the full loop is adopted:
 
 1. **Intent** — Product/engineering defines change; Foreman routes to skill + risk tier.
-2. **Legislation** — Teacher reviews mission scope, gates, and TMVC; commits `[MSN-XXXX]`.
-3. **Execution** — Worker runs under pinned mission (`runtime env` / `runtime exec`); appends gate output to `WORKER_LOG.md`.
+2. **Legislation** — Planner reviews mission scope, gates, and TMVC; commits `[MSN-XXXX]`.
+3. **Execution** — Executor runs under pinned mission (`runtime env` / `runtime exec`); appends gate output to `EXECUTOR_LOG.md`.
 4. **Verification** — Independent verifier phase (human or automated per tier); `gantry verify` before merge.
 5. **Audit** — Assessor greps `git log --grep='MSN-'`, reads mission + log + verify record.
 
@@ -161,13 +161,13 @@ git log --grep='MSN-0042' --format=fuller
 cat .gitagent/missions/MSN-0042.<slug>.yaml
 
 # Execution trace
-cat WORKER_LOG.md
+cat EXECUTOR_LOG.md
 
 # Verify record (CI log or local)
 gantry verify --mission .gitagent/missions/MSN-0042.<slug>.yaml --audience verifier
 ```
 
-Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + merge verify) and **Teacher allowlist** policy (`GANTRY_TEACHER_EMAILS`).
+Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + merge verify) and **Planner allowlist** policy (`GANTRY_PLANNER_EMAILS`).
 
 ---
 
@@ -176,4 +176,4 @@ Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + me
 - [Adoption runbook](ADOPTION.md) — ordered legislate → execute → verify loop
 - [Integrations — enforcement boundary](INTEGRATIONS.md#enforcement-boundary-where-the-cage-is-ironclad)
 - [Honest narrative corrections](FEEDBACK-agent-worth-narrative.md) — claims to avoid in external messaging
-- [RULES](../.gitagent/teacher/RULES.md) — normative SOD, trace mapping, TMVC, break-glass
+- [RULES](../.gitagent/planner/RULES.md) — normative SOD, trace mapping, TMVC, break-glass

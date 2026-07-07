@@ -40,7 +40,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0020: Node gxt-manifest-lib.mjs drives MSN-enforced paths from MANIFEST tmvc_roots (no jq on hook path)
 - DoD 2 MSN-0020: verify-pr-missions.sh enforces triple-dot PR diff and full gapman verify on changed missions
-- DoD 3 MSN-0020: gxt-validate mission_verify job uses pull_request head SHA and TEACHER.allowlist git-proof
+- DoD 3 MSN-0020: gxt-validate mission_verify job uses pull_request head SHA and PLANNER.allowlist git-proof
 - DoD 4 MSN-0020: MSN-9001 tutorial mission verify PASS on canonical specimen
 
 ## MSN-0024 — v1.1 mission isolation (stacked-PR defense)
@@ -64,10 +64,10 @@ example trace line for gapman verify
 - DoD 3 MSN-0026: ADOPTION documents GXT_INTEGRATION_BRANCH override and default_branch pr_governance behavior
 - DoD 4 MSN-0026: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 
-## MSN-0027 — v1.1 WORKER_LOG formatter guard (.prettierignore)
+## MSN-0027 — v1.1 EXECUTOR_LOG formatter guard (.prettierignore)
 
-- DoD 1 MSN-0027: file-merge-gxt.ts exact-line idempotency; init merges WORKER_LOG.md into .prettierignore
-- DoD 2 MSN-0027: ADOPTION.md mandates WORKER_LOG.md in .prettierignore with formatter-equivalent note
+- DoD 1 MSN-0027: file-merge-gxt.ts exact-line idempotency; init merges EXECUTOR_LOG.md into .prettierignore
+- DoD 2 MSN-0027: ADOPTION.md mandates EXECUTOR_LOG.md in .prettierignore with formatter-equivalent note
 - DoD 3 MSN-0027: init-tutorial Step 4 mentions .prettierignore scaffold for stable trace lines
 - DoD 4 MSN-0027: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 
@@ -80,7 +80,7 @@ example trace line for gapman verify
 
 ## MSN-0029 — v1.1 doctor substrate drift (SUBSTRATE.version.json vs bundled compat)
 
-- Context Request ACCEPTED: `docs/ADOPTION.md`, `docs/BACKLOG.md` — adoption/backlog docs for #20 acceptance (Teacher mission MSN-0029).
+- Context Request ACCEPTED: `docs/ADOPTION.md`, `docs/BACKLOG.md` — adoption/backlog docs for #20 acceptance (Planner mission MSN-0029).
 - DoD 1 MSN-0029: runSubstrateDriftDoctorChecks compares readInstalledSubstrateVersion to loadIntegrationCompat bundled opengantry_version
 - DoD 2 MSN-0029: warn-only DoctorLine entries; installed greater than bundled warns without failing exit code
 - DoD 3 MSN-0029: doctor-substrate-drift.test.ts covers behind, match, ahead, legacy, and doctor --json exit_code 0
@@ -88,7 +88,7 @@ example trace line for gapman verify
 
 ## MSN-0030 — v1.1 doc semver sync (README + .gitagent/README)
 
-- Context Request ACCEPTED: `README.md`, `.gitagent/README.md`, `PROJECT_OUTLINE_ANALYSIS.md`, `SECURITY.md`, `docs/BACKLOG.md` — narrative doc sync for #21 (Teacher mission MSN-0030).
+- Context Request ACCEPTED: `README.md`, `.gitagent/README.md`, `PROJECT_OUTLINE_ANALYSIS.md`, `SECURITY.md`, `docs/BACKLOG.md` — narrative doc sync for #21 (Planner mission MSN-0030).
 - DoD 1 MSN-0030: README protocol maturity and footer headline gapman v1.1.0 matching package.json
 - DoD 2 MSN-0030: .gitagent/README title and CLI references updated to v1.1.0; schema_version 0.5.0 unchanged
 - DoD 3 MSN-0030: README release table adds v1.1.0 row; PROJECT_OUTLINE_ANALYSIS CLI version row resolved
@@ -98,7 +98,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0031: gitDiffNameOnlySinceCommit returns GitDiffSinceCommitResult; stale evidence fails closed on git diff error
 - DoD 2 MSN-0031: unified runVerify orchestration with buildBreakGlassPayload and GXT_INVALID_ARGUMENT for --json --fix collision
-- DoD 3 MSN-0031: verifyTraceRows returns resolvedLines; trace quote dedup removes second WORKER_LOG parse
+- DoD 3 MSN-0031: verifyTraceRows returns resolvedLines; trace quote dedup removes second EXECUTOR_LOG parse
 - DoD 4 MSN-0031: ADOPTION MCP verify envelope documented; BACKLOG #22 marked done
 - DoD 5 MSN-0031: traceWarningsJson dedup; VerifyMcpResult alias removed; 219 tests pass
 
@@ -160,7 +160,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0047: Surgeon registry resolves GXT_BANNED_IMPORT_DETECTED to quarantine surgeon
 - DoD 2 MSN-0047: gapman verify --fix quarantines banned import with GXT-SURGEON-QUARANTINE markers
-- DoD 3 MSN-0047: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
+- DoD 3 MSN-0047: SURGEON-MUTATION trace appended to EXECUTOR_LOG before verify rerun
 - DoD 4 MSN-0047: verify --fix reruns full pipeline with fix false after mutation
 - DoD 5 MSN-0047: dev-validate-core OK
 
@@ -168,7 +168,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0048: Registry resolves GXT_IMPORT_LAYER_VIOLATION from structured gate JSON
 - DoD 2 MSN-0048: verify --fix quarantines lib-to-command import via AST with RULE-IMPORT-LAYER markers
-- DoD 3 MSN-0048: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
+- DoD 3 MSN-0048: SURGEON-MUTATION trace appended to EXECUTOR_LOG before verify rerun
 - DoD 4 MSN-0048: verify --fix reruns full pipeline with fix false after import-layer mutation
 - DoD 5 MSN-0048: dev-validate-core OK
 
@@ -176,7 +176,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0048 close-out: Registry resolves GXT_IMPORT_LAYER_VIOLATION from structured gate JSON
 - DoD 2 MSN-0048 close-out: verify --fix quarantines lib-to-command import via AST with RULE-IMPORT-LAYER markers
-- DoD 3 MSN-0048 close-out: SURGEON-MUTATION trace appended to WORKER_LOG before verify rerun
+- DoD 3 MSN-0048 close-out: SURGEON-MUTATION trace appended to EXECUTOR_LOG before verify rerun
 - DoD 4 MSN-0048 close-out: verify --fix reruns full pipeline with fix false after import-layer mutation
 - DoD 5 MSN-0048 close-out: dev-validate-core OK
 
@@ -221,7 +221,7 @@ example trace line for gapman verify
 
 ## MSN-0057 — Issue #68 ephemeral virtualization runtime (virtual_capture)
 
-[CONTEXT-REQUEST] paths: .gitagent/teacher/MISSION.schema.yaml, templates/.gitagent/teacher/MISSION.schema.yaml, docs/ADR-EPHEMERAL-VIRTUALIZATION.md — mission schema + ADR for virtual_capture contract (substrate law).
+[CONTEXT-REQUEST] paths: .gitagent/planner/MISSION.schema.yaml, templates/.gitagent/planner/MISSION.schema.yaml, docs/ADR-EPHEMERAL-VIRTUALIZATION.md — mission schema + ADR for virtual_capture contract (substrate law).
 
 - DoD 1 MSN-0057: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 
@@ -346,9 +346,9 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0069: start orchestration uses filterTaggedStepsForAudience; regex stepMatchesAudience removed (#104)
 
-## MSN-0070 — v2.3.0 #38 WORKER_LOG doctor
+## MSN-0070 — v2.3.0 #38 EXECUTOR_LOG doctor
 
-- DoD 1 MSN-0070: doctor warns on WORKER_LOG conflict markers, duplicate DoD lines, placeholder quotes (#38)
+- DoD 1 MSN-0070: doctor warns on EXECUTOR_LOG conflict markers, duplicate DoD lines, placeholder quotes (#38)
 
 ## MSN-0071 — v2.3.0 #106 TS/mjs parity
 
@@ -371,3 +371,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: package.json, templates/integrations/compatibility.json, docs/BACKLOG.md, docs/ADOPTION.md, README.md — v2.3.0 release parity and publish prep (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0074: version 2.3.0 parity; removed deprecated upgrade parent flags; dev-validate-core OK (#109)
+
+## MSN-0075 — v2.3.1 #110 Planner/Executor rename
+
+[CONTEXT-REQUEST] paths: .gitagent/planner/, EXECUTOR_LOG.md, templates/, docs/, AGENTS.md, README.md, scripts/ — hard rename Teacher→Planner, Worker→Executor (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0075: gantry planner set/show; .gitagent/planner/; EXECUTOR_LOG.md; audience executor|planner; 372 tests pass (#110)

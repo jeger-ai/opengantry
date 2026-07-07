@@ -7,15 +7,15 @@ import { getRepoRoot } from "../lib/git.js";
 import { runStart, runStartOrchestration } from "../lib/start-orchestration.js";
 import { handleStartOrchestration } from "../lib/mcp-governance.js";
 import { writeMiniGapmanRepo, gitInitCommit } from "./test-fixtures.js";
-import { TEACHER_EMAIL, withTeacherEnv } from "./test-shared.js";
+import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
 function withTempRepo(fn: (dest: string) => void): void {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-start-"));
   writeMiniGapmanRepo(dest, ogRoot);
-  gitInitCommit(dest, "chore: init", TEACHER_EMAIL);
+  gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  withTeacherEnv(() => {
+  withPlannerEnv(() => {
     process.chdir(dest);
     try {
       fn(dest);

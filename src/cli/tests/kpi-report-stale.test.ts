@@ -15,7 +15,7 @@ function gitCommitAll(dest: string, subject: string): void {
 }
 
 function writeMiniRepoWithKpi(dest: string, ogRoot: string): void {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: {
       trust_threshold: "Tier-2",

@@ -38,7 +38,7 @@ export interface TriageResult {
   confidence: number;
   /** Human-readable signals that informed routing. */
   match_reasons: string[];
-  /** Optional; never changes `action` — Teacher resolves ADRs during legislation. */
+  /** Optional; never changes `action` — Planner resolves ADRs during legislation. */
   adr_hints?: AdrHint[];
 }
 

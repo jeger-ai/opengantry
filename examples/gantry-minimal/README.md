@@ -4,7 +4,7 @@ Same task as [`../contrast-agent-script/`](../contrast-agent-script/): versioned
 
 ## Artifacts (~25 LOC of law)
 
-Mission file (Teacher commits before worker run):
+Mission file (Planner commits before executor run):
 
 ```yaml
 # .gitagent/missions/MSN-0001.add-greeting-version.yaml
@@ -25,14 +25,14 @@ Manifest skill `logic` declares `tmvc_roots: ["src/lib/"]` — edits outside tha
 
 ```bash
 gantry init --yes --no-ci
-gantry teacher set "$(git config user.email)"
+gantry planner set "$(git config user.email)"
 gantry legislate "Add greeting VERSION export" --msn MSN-0001 --skill-key logic \
   --gate-command "npm test" --gate-success-substring "pass"
 git add .gitagent/missions/MSN-0001.*.yaml
 git commit -m "[MSN-0001] legislate mission"
 eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.add-greeting-version.yaml)"
 # … edit src/lib/greeting.js within TMVC …
-echo "- MSN-0001: greet exports VERSION and smoke test passes" >> WORKER_LOG.md
+echo "- MSN-0001: greet exports VERSION and smoke test passes" >> EXECUTOR_LOG.md
 gantry verify --mission .gitagent/missions/MSN-0001.add-greeting-version.yaml
 git log --grep='MSN-0001' --oneline
 ```
@@ -48,7 +48,7 @@ npm test
 | | Script specimen | This specimen |
 |--|-----------------|---------------|
 | Orchestrator | [`agent-run.mjs`](../contrast-agent-script/agent-run.mjs) (pedagogical — anti-patterns in one file) | `gantry` primitives + mission YAML |
-| Audit | `.agent-state.json` | Git + `WORKER_LOG.md` |
+| Audit | `.agent-state.json` | Git + `EXECUTOR_LOG.md` |
 | Scope | Heuristic | `tmvc_roots` / forbidden zones |
 
 Benchmark: [`../benchmark-agent/`](../benchmark-agent/) · [`../../scripts/benchmark-scaffold.sh`](../../scripts/benchmark-scaffold.sh) · Practice: [`../../docs/KATA.md`](../../docs/KATA.md).

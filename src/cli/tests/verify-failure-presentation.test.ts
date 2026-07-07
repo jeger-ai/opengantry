@@ -10,7 +10,7 @@ test("verifyFailurePresentation: gate phase includes remediation", () => {
     phase: "gate",
     message: "gate failed",
     exitCode: 1,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
     gateCommand: "npm test",
     gateStdout: "fail",
     gateStderr: "err",
@@ -32,7 +32,7 @@ test("verifyFailurePresentation: trace_pending aligns with fix hints", () => {
     phase: "trace_pending",
     message: "pending",
     exitCode: 1,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
   };
   const presentation = verifyFailurePresentation({
     failure,
@@ -49,7 +49,7 @@ test("verifyFailurePresentation: trace uses engine traceKind", () => {
     phase: "trace",
     message: "trace fail",
     exitCode: 1,
-    workerLogPath: "WORKER_LOG.md",
+    executorLogPath: "EXECUTOR_LOG.md",
     traceKind: "ambiguous",
     traceReason: "Ambiguous match",
   };

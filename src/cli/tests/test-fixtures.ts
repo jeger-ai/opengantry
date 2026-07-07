@@ -63,7 +63,7 @@ trace_rows:
     status: PASS
 `;
   fs.writeFileSync(path.join(dest, rel), missionYaml, "utf8");
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), `${traceQuote}\n`, "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), `${traceQuote}\n`, "utf8");
   return rel;
 }
 
@@ -77,7 +77,7 @@ export function writeSkillsForManifest(dest: string, skillKeys: string[]): void 
 }
 
 export function writeMiniGapmanRepo(dest: string, ogRoot: string): string {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     "ui": {
       trust_threshold: "Tier-1",
@@ -178,9 +178,9 @@ export function writeRuntimeExecRepo(
   forbiddenZones: string[],
 ): void {
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
-  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     "ui": {
       trust_threshold: "Tier-1",

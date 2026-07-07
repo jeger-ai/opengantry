@@ -1,16 +1,16 @@
-# v1.1 WORKER_LOG formatter guard — file-merge-gxt, .prettierignore scaffold, ADOPTION docs (#7 + #19).
-# Legislated intent: v1.1 WORKER_LOG formatter guard: file-merge-gxt, prettierignore init scaffold, ADOPTION mandate
+# v1.1 EXECUTOR_LOG formatter guard — file-merge-gxt, .prettierignore scaffold, ADOPTION docs (#7 + #19).
+# Legislated intent: v1.1 EXECUTOR_LOG formatter guard: file-merge-gxt, prettierignore init scaffold, ADOPTION mandate
 msn_id: MSN-0027
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0027: file-merge-gxt.ts exact-line idempotency; init merges WORKER_LOG.md into .prettierignore"
+    trace_quote: "DoD 1 MSN-0027: file-merge-gxt.ts exact-line idempotency; init merges EXECUTOR_LOG.md into .prettierignore"
     anchor: "69"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0027: ADOPTION.md mandates WORKER_LOG.md in .prettierignore with formatter-equivalent note"
+    trace_quote: "DoD 2 MSN-0027: ADOPTION.md mandates EXECUTOR_LOG.md in .prettierignore with formatter-equivalent note"
     anchor: "70"
     status: PASS
   - dod_id: "3"

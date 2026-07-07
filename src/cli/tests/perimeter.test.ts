@@ -65,7 +65,7 @@ test("checkPerimeter: CI mode fails on unsigned protected commit", () => {
     "utf8",
   );
   execSync("git add -A", { cwd: root, stdio: "pipe" });
-  execSync('git commit -m "[MSN-0001] tweak" --author="Teacher <teacher@test.local>"', {
+  execSync('git commit -m "[MSN-0001] tweak" --author="Planner <teacher@test.local>"', {
     cwd: root,
     stdio: "pipe",
   });
@@ -93,7 +93,7 @@ test("checkPerimeter: CI mode fails when unsigned commit precedes later touch on
   });
   fs.writeFileSync(manifestPath, `${JSON.stringify({ ...manifest, schema_version: "0.5.2" }, null, 2)}\n`, "utf8");
   execSync("git add -A", { cwd: root, stdio: "pipe" });
-  execSync('git commit -m "[MSN-0001] signed follow-up" --author="Teacher <teacher@test.local>"', {
+  execSync('git commit -m "[MSN-0001] signed follow-up" --author="Planner <teacher@test.local>"', {
     cwd: root,
     stdio: "pipe",
   });

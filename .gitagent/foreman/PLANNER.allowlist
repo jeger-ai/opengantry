@@ -1,0 +1,3 @@
+# Team Planner identities for gapman verify git-proof (one email per line).
+# Personal overrides: .gitagent/foreman/PLANNER.allowlist.local (gitignored)
+jeger@commitly.com

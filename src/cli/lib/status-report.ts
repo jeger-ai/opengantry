@@ -14,7 +14,7 @@ export interface StatusReport {
   skills_md: string[];
   doctor_lines: DoctorLine[];
   pinned_mission: string | null;
-  verify_readiness: "ready" | "needs_teacher" | "needs_mission" | "blocked";
+  verify_readiness: "ready" | "needs_planner" | "needs_mission" | "blocked";
   /** Human-readable blockers preventing verify readiness. */
   blockers: string[];
   /** Rollup label for dashboards and MCP consumers. */
@@ -34,11 +34,11 @@ function collectBlockers(
   for (const line of doctorLines) {
     if (line.level === "fail") blockers.push(line.message);
   }
-  if (verifyReadiness === "needs_teacher") {
-    blockers.push("Teacher allowlist unset — gantry verify git-proof will fail");
+  if (verifyReadiness === "needs_planner") {
+    blockers.push("Planner allowlist unset — gantry verify git-proof will fail");
   }
   if (verifyReadiness === "needs_mission") {
-    blockers.push("No pinned mission — legislate or pin before worker execution");
+    blockers.push("No pinned mission — legislate or pin before executor execution");
   }
   return blockers;
 }
@@ -59,10 +59,10 @@ function assessVerifyReadiness(
   root: string,
   doctorLines: DoctorLine[],
   pinnedMission: string | null,
-  teacherAllowlistUnset: boolean,
+  plannerAllowlistUnset: boolean,
 ): StatusReport["verify_readiness"] {
   if (doctorLines.some((l) => l.level === "fail")) return "blocked";
-  if (teacherAllowlistUnset) return "needs_teacher";
+  if (plannerAllowlistUnset) return "needs_planner";
   if (!pinnedMission) {
     const example = ".gitagent/missions/example.verify.yaml";
     if (fs.existsSync(path.join(root, example))) return "ready";
@@ -83,7 +83,7 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
     root,
     doctorReport.lines,
     pinnedMission,
-    doctorReport.teacherAllowlistUnset,
+    doctorReport.plannerAllowlistUnset,
   );
   let nextStep = doctorReport.nextStep;
   if (pinnedMission) {

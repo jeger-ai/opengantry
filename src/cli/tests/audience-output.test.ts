@@ -10,11 +10,11 @@ import {
 test("filterTaggedStepsForAudience: preserves concrete mission-specific steps", () => {
   const concrete: AudienceNextStep[] = [
     {
-      audience: "teacher",
-      step: 'Teacher: git add .gitagent/missions/MSN-0015.foo.yaml && git commit -m "[MSN-0015] legislate mission"',
+      audience: "planner",
+      step: 'Planner: git add .gitagent/missions/MSN-0015.foo.yaml && git commit -m "[MSN-0015] legislate mission"',
     },
     {
-      audience: "worker",
+      audience: "executor",
       step: 'eval "$(gantry runtime env --mission .gitagent/missions/MSN-0015.foo.yaml)"',
     },
     {
@@ -22,7 +22,7 @@ test("filterTaggedStepsForAudience: preserves concrete mission-specific steps", 
       step: "gantry verify --mission .gitagent/missions/MSN-0015.foo.yaml",
     },
   ];
-  const workerSteps = filterTaggedStepsForAudience("worker", concrete);
+  const workerSteps = filterTaggedStepsForAudience("executor", concrete);
   assert.ok(workerSteps.some((s) => s.includes("MSN-0015.foo.yaml")));
   assert.ok(workerSteps.every((s) => !s.includes("<file>.yaml")));
 
@@ -36,10 +36,10 @@ test("filterTaggedStepsForAudience: falls back to role defaults when no computed
   assert.ok(defaults.some((s) => s.includes("core.hooksPath")));
 });
 
-test("formatAudienceNextStep: worker and teacher prefixes", () => {
-  assert.match(formatAudienceNextStep("gantry verify --mission x.yaml", "worker"), /^Constraint:/);
+test("formatAudienceNextStep: executor and planner prefixes", () => {
+  assert.match(formatAudienceNextStep("gantry verify --mission x.yaml", "executor"), /^Constraint:/);
   assert.match(
-    formatAudienceNextStep('git commit -m "[MSN-0001] legislate"', "teacher"),
+    formatAudienceNextStep('git commit -m "[MSN-0001] legislate"', "planner"),
     /Teacher:|git commit/,
   );
 });
@@ -49,17 +49,17 @@ test("resolveAudience: env fallback when CLI omitted", () => {
   assert.equal(r.audience, "verifier");
 });
 
-test("filterTaggedStepsForAudience: dedupes identical teacher steps", () => {
+test("filterTaggedStepsForAudience: dedupes identical planner steps", () => {
   const duped: AudienceNextStep[] = [
     {
-      audience: "teacher",
-      step: 'Teacher: git add m.yaml && git commit -m "[MSN-9001] legislate mission"',
+      audience: "planner",
+      step: 'Planner: git add m.yaml && git commit -m "[MSN-9001] legislate mission"',
     },
     {
-      audience: "teacher",
-      step: 'Teacher: git add m.yaml && git commit -m "[MSN-9001] legislate mission"',
+      audience: "planner",
+      step: 'Planner: git add m.yaml && git commit -m "[MSN-9001] legislate mission"',
     },
   ];
-  const steps = filterTaggedStepsForAudience("teacher", duped);
+  const steps = filterTaggedStepsForAudience("planner", duped);
   assert.equal(steps.length, 1);
 });

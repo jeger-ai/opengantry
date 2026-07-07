@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.2.5 quality remediation: fix recursive test glob (#99), delete dead verify-changed-missions (#100), prune dead exports (#101), mechanical cleanups (#107). Scope: src/cli/, package.json, scripts/dev-validate-core.sh, .github/workflows/gxt-validate.yml, templates/.github/workflows/gxt-validate.yml
 msn_id: MSN-0065
 skill_key: gantry

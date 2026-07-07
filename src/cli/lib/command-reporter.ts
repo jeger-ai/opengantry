@@ -65,7 +65,7 @@ export class CommandReporter {
 
   emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {
     if (this.channel === "silent" || this.channel === "json") return;
-    this.emitInfo(`${CLI_NAME} verify: git-proof OK (Teacher legislation for ${result.proofMsnId})`);
+    this.emitInfo(`${CLI_NAME} verify: git-proof OK (Planner legislation for ${result.proofMsnId})`);
     if (result.outcome === "pre_push_stub") {
       this.emitInfo(
         `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,
@@ -86,10 +86,10 @@ export class CommandReporter {
     }
     if (result.traceEvidenceSkippedUncommitted !== undefined) {
       this.emitInfo(
-        `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted WORKER_LOG line(s) skipped stale check`,
+        `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted EXECUTOR_LOG line(s) skipped stale check`,
       );
     }
-    this.emitInfo(`${CLI_NAME} verify: trace mapping OK (${result.workerLogPath})`);
+    this.emitInfo(`${CLI_NAME} verify: trace mapping OK (${result.executorLogPath})`);
   }
 
   emitFailurePresentation(presentation: VerifyFailurePresentation): void {

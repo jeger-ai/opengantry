@@ -1,9 +1,9 @@
 /** Tailor command output verbosity by role. */
-export type OutputAudience = "worker" | "teacher" | "verifier" | "platform";
+export type OutputAudience = "executor" | "planner" | "verifier" | "platform";
 
 const VALID_AUDIENCES: readonly OutputAudience[] = [
-  "worker",
-  "teacher",
+  "executor",
+  "planner",
   "verifier",
   "platform",
 ];
@@ -39,11 +39,11 @@ export function resolveAudience(
 
 export function formatAudienceNextStep(step: string, audience: OutputAudience | undefined): string {
   if (!audience || audience === "platform") return step;
-  if (audience === "worker") {
+  if (audience === "executor") {
     return step.startsWith("Constraint:") ? step : `Constraint: ${step}`;
   }
-  if (audience === "teacher") {
-    return /^(Teacher:|git )/i.test(step) ? step : `Teacher: ${step}`;
+  if (audience === "planner") {
+    return /^(Teacher:|git )/i.test(step) ? step : `Planner: ${step}`;
   }
   return step;
 }
@@ -54,10 +54,10 @@ export interface AudienceNextStep {
 }
 
 const DEFAULT_NEXT_STEPS: AudienceNextStep[] = [
-  { audience: "teacher", step: 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key>' },
-  { audience: "teacher", step: "Teacher: git commit -m \"[MSN-0001] legislate …\" including mission file" },
-  { audience: "worker", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
-  { audience: "worker", step: "Append gate evidence to WORKER_LOG.md" },
+  { audience: "planner", step: 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key>' },
+  { audience: "planner", step: "Planner: git commit -m \"[MSN-0001] legislate …\" including mission file" },
+  { audience: "executor", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
+  { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },
   { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "git config core.hooksPath .githooks && gantry doctor" },
 ];
@@ -68,11 +68,11 @@ export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
     step: "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check",
   },
   { audience: "platform", step: "git config core.hooksPath .githooks" },
-  { audience: "teacher", step: 'gantry teacher set "$(git config user.email)"' },
-  { audience: "teacher", step: 'gantry start "<intent>" --msn MSN-0001 --skill-key <manifest-key>' },
-  { audience: "teacher", step: 'Teacher: git commit -m "[MSN-0001] legislate mission" including mission file' },
-  { audience: "worker", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
-  { audience: "worker", step: "Append gate evidence to WORKER_LOG.md" },
+  { audience: "planner", step: 'gantry planner set "$(git config user.email)"' },
+  { audience: "planner", step: 'gantry start "<intent>" --msn MSN-0001 --skill-key <manifest-key>' },
+  { audience: "planner", step: 'Planner: git commit -m "[MSN-0001] legislate mission" including mission file' },
+  { audience: "executor", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
+  { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },
   { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml" },
@@ -93,8 +93,8 @@ export function filterTaggedStepsForAudience(
 export function audienceSectionTitle(audience: OutputAudience | undefined): string | null {
   if (!audience) return null;
   const labels: Record<OutputAudience, string> = {
-    worker: "Worker next steps",
-    teacher: "Teacher next steps",
+    executor: "Executor next steps",
+    planner: "Planner next steps",
     verifier: "Verifier next steps",
     platform: "Platform next steps",
   };

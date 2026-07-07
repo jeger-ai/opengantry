@@ -1,6 +1,6 @@
 ### Claude Code
 
-- **Context injection:** Minimal `CLAUDE.md` pointing at `AGENTS.md`, `.gitagent/teacher/RULES.md`, `.gitagent/foreman/MANIFEST.json`.
+- **Context injection:** Minimal `CLAUDE.md` pointing at `AGENTS.md`, `.gitagent/planner/RULES.md`, `.gitagent/foreman/MANIFEST.json`.
 - **Session bootstrap (shell wrapper — no project hooks):**
 
 ```bash

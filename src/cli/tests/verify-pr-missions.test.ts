@@ -6,7 +6,7 @@ import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
 import { gitInitCommit, gitCommit } from "./test-fixtures.js";
-import { TEACHER_EMAIL } from "./test-shared.js";
+import { PLANNER_EMAIL } from "./test-shared.js";
 
 function copyVerifyPrScripts(dest: string, ogRoot: string): string {
   const script = path.join(ogRoot, "scripts", "verify-pr-missions.sh");
@@ -34,7 +34,7 @@ function copyVerifyPrScripts(dest: string, ogRoot: string): string {
 function initRepoWithScripts(dest: string, ogRoot: string): string {
   fs.writeFileSync(path.join(dest, "README.md"), "init\n", "utf8");
   const script = copyVerifyPrScripts(dest, ogRoot);
-  gitInitCommit(dest, "init", TEACHER_EMAIL);
+  gitInitCommit(dest, "init", PLANNER_EMAIL);
   return script;
 }
 
@@ -46,10 +46,10 @@ test("verify-pr-missions.sh: fails on mission contamination (multiple MSNs in ra
 
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "a.txt"), "1\n", "utf8");
-  gitCommit(dest, "[MSN-0022] first mission touch", TEACHER_EMAIL);
+  gitCommit(dest, "[MSN-0022] first mission touch", PLANNER_EMAIL);
 
   fs.writeFileSync(path.join(dest, ".gitagent", "b.txt"), "2\n", "utf8");
-  gitCommit(dest, "[MSN-0023] second mission touch", TEACHER_EMAIL);
+  gitCommit(dest, "[MSN-0023] second mission touch", PLANNER_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
   const bad = spawnSync("bash", [script, baseSha, headSha], { cwd: dest, encoding: "utf8" });
@@ -66,9 +66,9 @@ test("verify-pr-missions.sh: allows repeated same MSN in commit range", () => {
   const baseSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
   fs.writeFileSync(path.join(dest, "README.md"), "change 1\n", "utf8");
-  gitCommit(dest, "[MSN-0025] doc update one", TEACHER_EMAIL);
+  gitCommit(dest, "[MSN-0025] doc update one", PLANNER_EMAIL);
   fs.writeFileSync(path.join(dest, "README.md"), "change 2\n", "utf8");
-  gitCommit(dest, "[MSN-0025] doc update two", TEACHER_EMAIL);
+  gitCommit(dest, "[MSN-0025] doc update two", PLANNER_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
   const run = spawnSync("bash", [script, baseSha, headSha], { cwd: dest, encoding: "utf8" });
@@ -82,7 +82,7 @@ test("verify-pr-missions.sh: passes with zero MSN tags in range", () => {
   const baseSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
   fs.writeFileSync(path.join(dest, "README.md"), "docs only\n", "utf8");
-  gitCommit(dest, "chore: readme tweak", TEACHER_EMAIL);
+  gitCommit(dest, "chore: readme tweak", PLANNER_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
   const run = spawnSync("bash", [script, baseSha, headSha], { cwd: dest, encoding: "utf8" });
@@ -101,7 +101,7 @@ test("verify-pr-missions.sh: fails when changed mission file mismatches commit M
     "msn_id: MSN-0022\nskill_key: gantry\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n",
     "utf8",
   );
-  gitCommit(dest, "[MSN-0025] legislate mismatched mission file", TEACHER_EMAIL);
+  gitCommit(dest, "[MSN-0025] legislate mismatched mission file", PLANNER_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
   const bad = spawnSync("bash", [script, baseSha, headSha], { cwd: dest, encoding: "utf8" });

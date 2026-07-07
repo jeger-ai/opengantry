@@ -6,6 +6,6 @@ gate_command: "echo ok"
 gate_success_substring: "ok"
 trace_rows:
   - dod_id: "1"
-    trace_quote: "worker completed step A"
+    trace_quote: "executor completed step A"
     anchor: "1"
     status: PASS

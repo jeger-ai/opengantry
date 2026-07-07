@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.2.5 release: version parity 2.2.5, compatibility.json sync, BACKLOG #108, npm publish prep. Scope: package.json, templates/integrations/compatibility.json, docs/BACKLOG.md, docs/ADOPTION.md, README.md
 msn_id: MSN-0066
 skill_key: gantry

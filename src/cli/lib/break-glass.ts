@@ -57,7 +57,7 @@ export function assertBypassSecretAuthorized(repoRoot: string): void {
   const anchorPath = path.join(repoRoot, REL_BYPASS_SHA256);
   if (!fs.existsSync(anchorPath)) {
     throw new Error(
-      `${CLI_NAME}: break-glass: BYPASS_NOT_CONFIGURED — ${REL_BYPASS_SHA256} is missing. Teacher must install a SHA-256 anchor of the team secret.`,
+      `${CLI_NAME}: break-glass: BYPASS_NOT_CONFIGURED — ${REL_BYPASS_SHA256} is missing. Planner must install a SHA-256 anchor of the team secret.`,
     );
   }
   if (!process.env[ENV_BYPASS_SECRET]?.length) {

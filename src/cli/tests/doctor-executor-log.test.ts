@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { runWorkerLogIntegrityDoctorChecks } from "../lib/worker-log-integrity.js";
+import { runExecutorLogIntegrityDoctorChecks } from "../lib/executor-log-integrity.js";
 
-test("runWorkerLogIntegrityDoctorChecks: detects conflict markers and duplicates", () => {
+test("runExecutorLogIntegrityDoctorChecks: detects conflict markers and duplicates", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-wl-doc-"));
   fs.writeFileSync(
-    path.join(root, "WORKER_LOG.md"),
+    path.join(root, "EXECUTOR_LOG.md"),
     [
       "## MSN-TEST",
       "- DoD 1 MSN-TEST: identical trace line",
@@ -17,12 +17,12 @@ test("runWorkerLogIntegrityDoctorChecks: detects conflict markers and duplicates
     ].join("\n"),
     "utf8",
   );
-  const lines = runWorkerLogIntegrityDoctorChecks(root);
+  const lines = runExecutorLogIntegrityDoctorChecks(root);
   assert.ok(lines.some((l) => l.message.includes("merge conflict")));
   assert.ok(lines.some((l) => l.message.includes("duplicate")));
 });
 
-test("runWorkerLogIntegrityDoctorChecks: no-op when log missing", () => {
+test("runExecutorLogIntegrityDoctorChecks: no-op when log missing", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-wl-miss-"));
-  assert.equal(runWorkerLogIntegrityDoctorChecks(root).length, 0);
+  assert.equal(runExecutorLogIntegrityDoctorChecks(root).length, 0);
 });

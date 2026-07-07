@@ -142,7 +142,7 @@ export function formatTriageHuman(result: TriageResult): string {
     }
   }
   if (result.adr_hints?.length) {
-    lines.push("ADR_hints (non-binding; Teacher confirms):");
+    lines.push("ADR_hints (non-binding; Planner confirms):");
     for (const h of result.adr_hints) {
       const title = h.title ? ` — ${h.title}` : "";
       lines.push(`  - ${h.id}${title}: ${h.note}`);

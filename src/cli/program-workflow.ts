@@ -19,7 +19,7 @@ interface VerifyCliOptions {
   mission?: string;
   changedMissions?: boolean;
   baseRef?: string;
-  workerLog?: string;
+  executorLog?: string;
   cwd?: string;
   fuzzyTrace?: boolean;
   strictTrace?: boolean;
@@ -44,7 +44,7 @@ function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     mission: opts.mission,
     changedMissions: opts.changedMissions,
     baseRef: opts.baseRef,
-    workerLog: opts.workerLog,
+    executorLog: opts.executorLog,
     cwd: opts.cwd,
     fuzzyTrace: opts.fuzzyTrace,
     strictTrace: opts.strictTrace,
@@ -66,8 +66,8 @@ function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
 export function registerWorkflowCommands(program: Command): void {
   program
     .command("legislate")
-    .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Teacher still commits)")
-    .argument("[intent...]", "One-line Teacher intent summary")
+    .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Planner still commits)")
+    .argument("[intent...]", "One-line Planner intent summary")
     .requiredOption("--msn <id>", "Explicit mission id (must match MSN-0007)")
     .option("--skill-key <key>", "Override Foreman-derived skill_key when triage escalates")
     .option("--allow-duplicate", "Allow duplicate msn_id only for intentional branch migrations")
@@ -95,12 +95,12 @@ export function registerWorkflowCommands(program: Command): void {
   program
     .command("verify")
     .description(
-      "Git-proof (Teacher + MSN) + deterministic gate + hard-stop trace mapping vs WORKER_LOG.md",
+      "Git-proof (Planner + MSN) + deterministic gate + hard-stop trace mapping vs EXECUTOR_LOG.md",
     )
     .option("--mission <path>", "Mission file (.md or .yaml)")
     .option("--changed-missions", "Verify all mission files changed vs base ref on current branch")
     .option("--base-ref <ref>", "Base ref for --changed-missions (default: origin/main or main)")
-    .option("--worker-log <path>", "Override WORKER_LOG.md path")
+    .option("--executor-log <path>", "Override EXECUTOR_LOG.md path")
     .option("--cwd <dir>", "Working directory for gate command")
     .option("--fuzzy-trace", "Force content-based anchor matching for all numeric anchors")
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
@@ -116,9 +116,9 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--json", "Emit structured JSON (failures include fix_hints and next_actions). Incompatible with --fix.")
     .option(
       "--scan-depth <number>",
-      "Max commits to scan for Teacher [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",
+      "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",
     )
-    .option("--audience <role>", "Tailor output: worker|teacher|verifier|platform")
+    .option("--audience <role>", "Tailor output: executor|planner|verifier|platform")
     .action(async (opts: VerifyCliOptions) => {
       await runVerify(verifyOptionsFromCli(opts));
     });

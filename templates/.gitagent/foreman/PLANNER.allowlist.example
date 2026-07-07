@@ -1,0 +1,4 @@
+# One Git author email per line (case-insensitive). Committed team allowlist.
+# Personal override (gitignored): .gitagent/foreman/PLANNER.allowlist.local
+# Or: git config gantry.plannerEmails "you@example.com"
+teacher@example.com

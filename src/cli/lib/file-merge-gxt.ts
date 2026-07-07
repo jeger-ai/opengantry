@@ -48,6 +48,6 @@ export function mergePrettierignoreFromTemplate(repoRoot: string, templatesRoot:
     repoRoot,
     ".prettierignore",
     path.join(templatesRoot, ".prettierignore.gxt"),
-    "# OpenGantry (gantry init) — keep WORKER_LOG line numbers stable for trace mapping",
+    "# OpenGantry (gantry init) — keep EXECUTOR_LOG line numbers stable for trace mapping",
   );
 }

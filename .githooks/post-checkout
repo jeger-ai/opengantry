@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# post-checkout: create empty WORKER_LOG.md on branch checkouts (feature branches only).
+# post-checkout: create empty EXECUTOR_LOG.md on branch checkouts (feature branches only).
 # Git passes: $1 = previous HEAD, $2 = new HEAD, $3 = 1 if branch checkout, 0 if file checkout.
 set -euo pipefail
 
@@ -15,12 +15,12 @@ case "$branch" in
   main|master) exit 0 ;;
 esac
 
-log_file="WORKER_LOG.md"
+log_file="EXECUTOR_LOG.md"
 [[ -f "$log_file" ]] && exit 0
 
-template=".gitagent/teacher/WORKER_LOG.template.md"
+template=".gitagent/planner/EXECUTOR_LOG.template.md"
 if [[ -f "$template" ]]; then
   cp "$template" "$log_file"
 else
-  printf '%s\n\n' '# WORKER_LOG' >"$log_file"
+  printf '%s\n\n' '# EXECUTOR_LOG' >"$log_file"
 fi

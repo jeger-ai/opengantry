@@ -143,7 +143,7 @@ function isPlaceholderQuote(quote: string): boolean {
 }
 
 /**
- * True when the mission file represents Teacher legislation only — no worker
+ * True when the mission file represents Planner legislation only — no worker
  * execution evidence claimed yet. Pre-push may pass after git-proof alone.
  */
 export function isLegislativeStub(mission: ParsedMission): boolean {

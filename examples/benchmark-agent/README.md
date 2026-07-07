@@ -2,7 +2,7 @@
 
 Public harness comparing a **pedagogical orchestrator specimen** vs **OpenGantry TMVC** on the same task (versioned `greet()` + smoke test).
 
-The raw-script phase runs [`raw-script.mjs`](raw-script.mjs) (vendored from [`../contrast-agent-script/`](../contrast-agent-script/)). It models improvised agent glue — not what most teams literally build. Many teams use IDE agents with no orchestrator file at all; the matrix's **conceptual** rows (state tracking, concurrency) still apply. **Measured LOC** counts only this orchestrator specimen; Gantry LOC uses the explicit mission YAML + worker patch boundary printed in the footnote.
+The raw-script phase runs [`raw-script.mjs`](raw-script.mjs) (vendored from [`../contrast-agent-script/`](../contrast-agent-script/)). It models improvised agent glue — not what most teams literally build. Many teams use IDE agents with no orchestrator file at all; the matrix's **conceptual** rows (state tracking, concurrency) still apply. **Measured LOC** counts only this orchestrator specimen; Gantry LOC uses the explicit mission YAML + executor patch boundary printed in the footnote.
 
 ## Prerequisites
 
@@ -35,14 +35,14 @@ Benchmark comparison
 +--------------------+-------------------------------+---------------------------------------------+
 | LOC (measured)     | 161                           | 42                                          |
 | Execution time     | 254ms                         | 1200ms                                      |
-| State tracking     | Ephemeral .agent-state.json   | .active-mission + git-native WORKER_LOG.md  |
+| State tracking     | Ephemeral .agent-state.json   | .active-mission + git-native EXECUTOR_LOG.md  |
 | Concurrency safety | Ad-hoc file writes            | Atomic swaps + verify-gated workflow        |
 +--------------------+-------------------------------+---------------------------------------------+
-* Gantry LOC = mission YAML + worker patch payload (non-empty lines; CRLF-normalized).
+* Gantry LOC = mission YAML + executor patch payload (non-empty lines; CRLF-normalized).
 Benchmark complete — repo working tree unchanged.
 ```
 
-LOC values are measured at runtime (not hard-coded). **Raw LOC** = orchestrator specimen (`raw-script.mjs`) only. **Gantry LOC** = generated mission YAML plus the formatter-stable worker patch payload defined in `run-benchmark.mjs`. Neither number claims "what your team will write" — the comparison is **protocol vs improvisation**.
+LOC values are measured at runtime (not hard-coded). **Raw LOC** = orchestrator specimen (`raw-script.mjs`) only. **Gantry LOC** = generated mission YAML plus the formatter-stable executor patch payload defined in `run-benchmark.mjs`. Neither number claims "what your team will write" — the comparison is **protocol vs improvisation**.
 
 **Machine-readable:**
 
@@ -66,7 +66,7 @@ Sandboxes are created under **`.gitagent/virtual/benchmark-run/<runId>/`** (giti
 | Phase | Mechanism |
 |-------|-----------|
 | **Raw script (specimen)** | [`raw-script.mjs`](raw-script.mjs) — compressed anti-patterns (local state, heuristic scope, no legislative gate); measured LOC is this file only |
-| **OpenGantry** | `gantry init` → dynamic `gantry legislate` → Teacher commit → worker patch → **full** `gantry verify` with `virtual_capture: true` and dependency-free gate (`node --test test/smoke.test.js`) |
+| **OpenGantry** | `gantry init` → dynamic `gantry legislate` → Planner commit → executor patch → **full** `gantry verify` with `virtual_capture: true` and dependency-free gate (`node --test test/smoke.test.js`) |
 
 Both phases use `git init` + seed commit inside their sandbox. The orchestrator tears down the run directory before exit — repeated runs do not accrue debris layers.
 

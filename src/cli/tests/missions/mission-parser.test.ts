@@ -30,7 +30,7 @@ test("isMarkdownTableSeparatorRow: dash cells vs data containing ---", () => {
 test("parseMarkdownMission: trace quote may contain --- without dropping row", () => {
   const body = `## 4. Verification trace
 
-| DoD # | Trace quote (from WORKER_LOG) | Line or timestamp | Status |
+| DoD # | Trace quote (from EXECUTOR_LOG) | Line or timestamp | Status |
 |-------|-------------------------------|-------------------|--------|
 | 1 | marker---end | 2 | PASS |
 `;
@@ -60,11 +60,11 @@ test("parseMissionFile: YAML mission with msnId only", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-msnid-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
-  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "teacher", "MISSION.schema.yaml"),
-    path.join(dest, ".gitagent", "teacher", "MISSION.schema.yaml"),
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(dest, ".gitagent", "planner", "MISSION.schema.yaml"),
   );
   const missionYaml = `msnId: MSN-0555
 skill_key: ui

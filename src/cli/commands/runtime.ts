@@ -18,7 +18,7 @@ export interface RuntimeExecCliOptions {
   mission: string;
   workerCommand: string[];
   cwd?: string;
-  workerLog?: string;
+  executorLog?: string;
   append?: boolean;
   timeoutMs?: number;
   streamOutput?: boolean;
@@ -66,7 +66,7 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
 
 export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Promise<void> {
   if (options.workerCommand.length === 0) {
-    logError("runtime exec: missing worker command. Use -- <worker-command...>");
+    logError("runtime exec: missing executor command. Use -- <worker-command...>");
     setExitCode(2);
     return;
   }
@@ -77,7 +77,7 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
       mission: options.mission,
       workerCommand: options.workerCommand,
       cwd: options.cwd,
-      workerLog: options.workerLog,
+      executorLog: options.executorLog,
       append: options.append,
       timeoutMs: options.timeoutMs,
       streamOutput: options.streamOutput,
@@ -101,7 +101,7 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
             worker_signal: result.workerSignal,
             violation_count: result.violations.length,
             violations: result.violations,
-            worker_log: result.workerLogPath,
+            executor_log: result.executorLogPath,
             flight_id: result.flightId,
             agent_error_path: agentError?.error_file ?? "",
             agent_error: agentError,
@@ -112,7 +112,7 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
       );
     } else {
       logInfo(`runtime exec: ${result.status}`);
-      logInfo(`  worker_log: ${result.workerLogPath}`);
+      logInfo(`  executor_log: ${result.executorLogPath}`);
       logInfo(`  violations: ${String(result.violations.length)}`);
       if (agentError) {
         logInfo(hintRuntimeHumanSummary(agentError.summary, agentError.error_file));

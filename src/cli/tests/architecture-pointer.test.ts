@@ -55,7 +55,7 @@ test("validateArchitecturePointer: accepts unset without location", () => {
     kind: "unset",
     location: "",
     read_hint: "Ask the user.",
-    discovery: { skill: ".gitagent/teacher/ARCHITECTURE-DISCOVERY.md" },
+    discovery: { skill: ".gitagent/planner/ARCHITECTURE-DISCOVERY.md" },
   });
   assert.equal(pointer.kind, "unset");
 });
@@ -159,8 +159,8 @@ test("runArchitecturePointerDoctorChecks: warns when target missing", () => {
 
 test("runArchitecturePointerDoctorChecks: warns when access required but credential missing", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-arch-access-"));
-  fs.mkdirSync(path.join(dest, ".gitagent", "teacher"), { recursive: true });
-  fs.writeFileSync(path.join(dest, ".gitagent", "teacher", "ARCHITECTURE-ACCESS.md"), "# access\n", "utf8");
+  fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
+  fs.writeFileSync(path.join(dest, ".gitagent", "planner", "ARCHITECTURE-ACCESS.md"), "# access\n", "utf8");
   fs.writeFileSync(
     path.join(dest, ".gitagent", "ARCHITECTURE.pointer.json"),
     JSON.stringify({

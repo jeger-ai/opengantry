@@ -21,7 +21,7 @@ function gitCommitAll(dest: string, subject: string): void {
 }
 
 function writeMiniRepoWithTmvc(dest: string, ogRoot: string): void {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: {
       trust_threshold: "Tier-2",
@@ -32,7 +32,7 @@ function writeMiniRepoWithTmvc(dest: string, ogRoot: string): void {
   writeSkillsForManifest(dest, ["gapman"]);
   fs.mkdirSync(path.join(dest, "src", "app"), { recursive: true });
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "initial\n", "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "initial\n", "utf8");
 }
 
 test("parseBlamePorcelainByLine: maps final line to commit", () => {
@@ -47,7 +47,7 @@ test("parseBlamePorcelainByLine: maps final line to commit", () => {
     "committer-time 1",
     "committer-tz +0000",
     "summary x",
-    "filename WORKER_LOG.md",
+    "filename EXECUTOR_LOG.md",
     "\tline one",
     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 1 2 1",
     "author Bob",
@@ -59,7 +59,7 @@ test("parseBlamePorcelainByLine: maps final line to commit", () => {
     "committer-time 2",
     "committer-tz +0000",
     "summary y",
-    "filename WORKER_LOG.md",
+    "filename EXECUTOR_LOG.md",
     "\tline two",
   ].join("\n");
   const map = parseBlamePorcelainByLine(sample);
@@ -81,19 +81,19 @@ test("verifyTraceEvidenceFreshness: committed quote with no TMVC drift passes", 
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stale-fresh-"));
   writeMiniRepoWithTmvc(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "- DoD 1: evidence fresh\n", "utf8");
-  gitCommitAll(dest, "[MSN-0999] worker trace");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "- DoD 1: evidence fresh\n", "utf8");
+  gitCommitAll(dest, "[MSN-0999] executor trace");
   const head = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "evidence fresh", anchor: "1", status: "PASS" as const };
-  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "EXECUTOR_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
     "gapman",
-    path.join(dest, "WORKER_LOG.md"),
+    path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
   assert.equal(result.failures.length, 0);
@@ -117,19 +117,19 @@ test("verifyTraceEvidenceFreshness: TMVC edit after attestation is STALE", () =>
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stale-drift-"));
   writeMiniRepoWithTmvc(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "- DoD 1: stale test quote\n", "utf8");
-  gitCommitAll(dest, "[MSN-0999] worker trace");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "- DoD 1: stale test quote\n", "utf8");
+  gitCommitAll(dest, "[MSN-0999] executor trace");
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 2;\n", "utf8");
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "stale test quote", anchor: "1", status: "PASS" as const };
-  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "EXECUTOR_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
     "gapman",
-    path.join(dest, "WORKER_LOG.md"),
+    path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
   assert.equal(result.failures.length, 1);
@@ -142,18 +142,18 @@ test("verifyTraceEvidenceFreshness: uncommitted quote line skips stale check", (
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stale-uncommitted-"));
   writeMiniRepoWithTmvc(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "- DoD 1: uncommitted quote\n", "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "- DoD 1: uncommitted quote\n", "utf8");
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 9;\n", "utf8");
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "uncommitted quote", anchor: "1", status: "PASS" as const };
-  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "EXECUTOR_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
     "gapman",
-    path.join(dest, "WORKER_LOG.md"),
+    path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
   assert.equal(result.failures.length, 0);
@@ -165,19 +165,19 @@ test("verifyTraceEvidenceFreshness: skipStaleEvidence bypasses drift", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stale-skip-"));
   writeMiniRepoWithTmvc(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "- DoD 1: skip flag quote\n", "utf8");
-  gitCommitAll(dest, "[MSN-0999] worker trace");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "- DoD 1: skip flag quote\n", "utf8");
+  gitCommitAll(dest, "[MSN-0999] executor trace");
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 3;\n", "utf8");
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "skip flag quote", anchor: "1", status: "PASS" as const };
-  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "EXECUTOR_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
     "gapman",
-    path.join(dest, "WORKER_LOG.md"),
+    path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
     { skipStaleEvidence: true },
   );
@@ -187,23 +187,23 @@ test("verifyTraceEvidenceFreshness: skipStaleEvidence bypasses drift", () => {
 test("verifyTraceEvidenceFreshness: empty tmvc_roots passes", () => {
   const ogRoot = process.cwd();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stale-empty-"));
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "teacher"), path.join(dest, ".gitagent", "teacher"));
+  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gapman: { trust_threshold: "Tier-2", tmvc_roots: [], forbidden_zones: [] },
   });
   writeSkillsForManifest(dest, ["gapman"]);
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "quote\n", "utf8");
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "quote\n", "utf8");
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
   const row = { dodId: "1", traceQuote: "quote", anchor: "1", status: "PASS" as const };
-  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "WORKER_LOG.md"), [row]);
+  const { resolvedLines: resolved } = verifyTraceRows(path.join(dest, "EXECUTOR_LOG.md"), [row]);
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
     "gapman",
-    path.join(dest, "WORKER_LOG.md"),
+    path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
   assert.equal(result.failures.length, 0);

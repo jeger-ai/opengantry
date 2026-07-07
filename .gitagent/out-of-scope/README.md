@@ -1,4 +1,4 @@
-# Out-of-scope ADRs (Teacher gate + Foreman hints)
+# Out-of-scope ADRs (Planner gate + Foreman hints)
 
 Markdown files in this directory are **Architectural Decision Records (ADRs)** for decisions the team will not revisit without explicit governance.
 
@@ -10,6 +10,6 @@ Optional frontmatter (YAML between `---` lines at file start):
 - `id`: stable id (e.g. `ADR-0001`)
 - `title`: short title
 - `status`: `ACTIVE` | `SUPERSEDED`
-- `match_terms`: list of lowercase-ish substrings; if any appear in the user intent, triage may surface an `adr_hint` (Teacher still decides).
+- `match_terms`: list of lowercase-ish substrings; if any appear in the user intent, triage may surface an `adr_hint` (Planner still decides).
 
 Body: context, decision, and consequences in plain prose.

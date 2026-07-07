@@ -38,16 +38,16 @@ function writeLine(fd: number, line: string): void {
 }
 
 export function createTelemetryWriter(
-  workerLogPath: string,
+  executorLogPath: string,
   context: TelemetryContext,
   append: boolean,
 ): TelemetryWriter {
-  const dir = path.dirname(workerLogPath);
+  const dir = path.dirname(executorLogPath);
   fs.mkdirSync(dir, { recursive: true });
 
-  const fd = fs.openSync(workerLogPath, append ? "a" : "w");
+  const fd = fs.openSync(executorLogPath, append ? "a" : "w");
   if (!append) {
-    writeLine(fd, "# WORKER_LOG");
+    writeLine(fd, "# EXECUTOR_LOG");
     writeLine(fd, "");
   } else {
     writeLine(fd, "");

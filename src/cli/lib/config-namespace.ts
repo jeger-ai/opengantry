@@ -6,11 +6,11 @@ export const LEGACY_ENV_PREFIX = "GAPMAN_" as const;
 export const GIT_CONFIG_PREFIX = "gantry." as const;
 export const LEGACY_GIT_CONFIG_PREFIX = "gapman." as const;
 
-export const ENV_TEACHER_EMAILS = "GANTRY_TEACHER_EMAILS" as const;
+export const ENV_PLANNER_EMAILS = "GANTRY_PLANNER_EMAILS" as const;
 export const ENV_MISSION = "GANTRY_MISSION" as const;
 export const ENV_DEBUG = "GANTRY_DEBUG" as const;
 
-export const GIT_CONFIG_TEACHER_EMAILS = "gantry.teacherEmails" as const;
+export const GIT_CONFIG_PLANNER_EMAILS = "gantry.plannerEmails" as const;
 
 /**
  * Read env var preferring GANTRY_<suffix>, then silent GAPMAN_<suffix> fallback.

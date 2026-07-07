@@ -11,16 +11,16 @@ import {
   writeMiniGapmanMission,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { captureConsoleAsync, TEACHER_EMAIL, withTeacherEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 test("runVerify: --pre-push passes legislative stub after git-proof", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pre-push-stub-"));
   writeMiniGapmanRepo(dest, ogRoot);
   writeMiniGapmanMission(dest, "MSN-0999", LEGISLATE_TRACE_PLACEHOLDER, "echo OK", "OK", "stub.yaml");
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -41,9 +41,9 @@ test("runVerify: --pre-push fails unlegislated stub with NO_MSN_COMMITS", async 
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pre-push-nostamp-"));
   writeMiniGapmanRepo(dest, ogRoot);
   writeMiniGapmanMission(dest, "MSN-0999", LEGISLATE_TRACE_PLACEHOLDER, "echo OK", "OK", "stub.yaml");
-  gitInitCommit(dest, "chore: add stub without teacher stamp", TEACHER_EMAIL);
+  gitInitCommit(dest, "chore: add stub without planner stamp", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -63,10 +63,10 @@ test("runVerify: --pre-push runs full verify when execution claimed", async () =
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pre-push-full-"));
   writeMiniGapmanRepo(dest, ogRoot);
   writeMiniGapmanMission(dest, "MSN-0999", "mission-only trace quote", "echo OK", "OK", "exec.yaml");
-  fs.writeFileSync(path.join(dest, "WORKER_LOG.md"), "unrelated worker evidence\n");
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "unrelated executor evidence\n");
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;
@@ -98,9 +98,9 @@ trace_rows:
 `,
     "utf8",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate mission", TEACHER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  await withTeacherEnvAsync(async () => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
       process.exitCode = undefined;

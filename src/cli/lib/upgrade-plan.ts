@@ -221,7 +221,7 @@ export function buildUpgradeMissionYaml(opts: {
   };
   return buildMissionYamlScaffold({
     header:
-      `# OpenGantry substrate upgrade mission (Teacher: review staged diff under ${REL_UPGRADE_TMP}/).\n` +
+      `# OpenGantry substrate upgrade mission (Planner: review staged diff under ${REL_UPGRADE_TMP}/).\n` +
       `# Upgrade ${opts.fromVersion} → ${opts.toVersion}. Commit this file only; staging dir is gitignored.\n`,
     doc,
   });
@@ -330,9 +330,9 @@ function logUpgradePlanSummary(
   }
   if (opts.legacyWarning) logWarn(opts.legacyWarning);
   logInfo(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
-  logInfo(`${options.dryRun ? "Suggested Teacher action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
+  logInfo(`${options.dryRun ? "Suggested Planner action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
   if (!options.dryRun) {
-    logInfo(`After Teacher commit: gantry upgrade --apply --mission ${opts.missionRel}`);
+    logInfo(`After Planner commit: gantry upgrade --apply --mission ${opts.missionRel}`);
   }
 }
 

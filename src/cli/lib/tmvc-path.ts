@@ -3,7 +3,7 @@ import { resolveManifestSkillKey } from "./skill-key.js";
 
 /** Governance transport files — never TMVC drift violations during pre-commit scans. */
 export const GOVERNANCE_TRANSPORT_PATHS = [
-  "WORKER_LOG.md",
+  "EXECUTOR_LOG.md",
   ".gitagent/missions/.active-mission",
 ] as const;
 

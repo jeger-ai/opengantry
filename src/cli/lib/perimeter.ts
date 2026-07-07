@@ -8,13 +8,13 @@ import {
   listMsnSubjectCommits,
   type MsnCommitRow,
 } from "./git-proof.js";
-import { resolveTeacherEmails } from "./teacher-identity.js";
+import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "./types.js";
 
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",
   ".gitagent/foreman/MANIFEST.json",
-  ".gitagent/teacher/RULES.md",
+  ".gitagent/planner/RULES.md",
 ] as const;
 
 export interface PerimeterViolation {
@@ -150,11 +150,11 @@ function findTeacherStampForPath(
   repoRoot: string,
   msnId: string,
   repoRelPath: string,
-  teacherEmails: string[],
+  plannerEmails: string[],
 ): MsnCommitRow | null {
   const rows = listMsnSubjectCommits(repoRoot, msnId);
   for (const row of rows) {
-    if (!teacherEmails.includes(row.authorEmail.trim().toLowerCase())) continue;
+    if (!plannerEmails.includes(row.authorEmail.trim().toLowerCase())) continue;
     const changed = listCommitChangedPaths(repoRoot, row.hash);
     if (changed.some((p) => p.replace(/\\/g, "/") === repoRelPath.replace(/\\/g, "/"))) {
       return row;
@@ -226,7 +226,7 @@ function checkProtectedPathCi(
 function checkProtectedPathLocal(
   repoRoot: string,
   filePath: string,
-  teacherEmails: string[],
+  plannerEmails: string[],
   violations: PerimeterViolation[],
   advisories: string[],
 ): void {
@@ -255,14 +255,14 @@ function checkProtectedPathLocal(
   const msnId = extractMsnFromRecentCommits(repoRoot, commit);
   const emailMatch =
     row.authorEmail.trim().toLowerCase() &&
-    teacherEmails.includes(row.authorEmail.trim().toLowerCase());
+    plannerEmails.includes(row.authorEmail.trim().toLowerCase());
   const subjectMatch = msnId !== null && commitSubjectHasMsnPrefix(row.subject, msnId);
   const stamp =
-    msnId !== null ? findTeacherStampForPath(repoRoot, msnId, filePath, teacherEmails) : null;
+    msnId !== null ? findTeacherStampForPath(repoRoot, msnId, filePath, plannerEmails) : null;
 
   if (stamp) {
     advisories.push(
-      `perimeter (advisory): ${filePath} — Teacher email + MSN stamp hint matched ${stamp.hash.slice(0, 7)} (forgeable locally; CI verifies signature)`,
+      `perimeter (advisory): ${filePath} — Planner email + MSN stamp hint matched ${stamp.hash.slice(0, 7)} (forgeable locally; CI verifies signature)`,
     );
     return;
   }
@@ -302,7 +302,7 @@ export function checkPerimeter(
     return { ok: true, violations: [], advisories: [] };
   }
 
-  const teacherEmails = resolveTeacherEmails(repoRoot).emails;
+  const plannerEmails = resolvePlannerEmails(repoRoot).emails;
   const violations: PerimeterViolation[] = [];
   const advisories: string[] = [];
 
@@ -310,7 +310,7 @@ export function checkPerimeter(
     if (options.ci === true) {
       checkProtectedPathCi(repoRoot, options.baseRef, filePath, violations, advisories);
     } else {
-      checkProtectedPathLocal(repoRoot, filePath, teacherEmails, violations, advisories);
+      checkProtectedPathLocal(repoRoot, filePath, plannerEmails, violations, advisories);
     }
   }
 

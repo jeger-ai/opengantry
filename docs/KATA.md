@@ -10,13 +10,13 @@ Prerequisites: Node.js 24+, empty Git repository (or use a throwaway branch).
 |---|------|-------------|----------|
 | 1 | Install CLI | `npm install -g @jeger-ai/opengantry` | `npx @jeger-ai/opengantry --version` |
 | 2 | Scaffold substrate | `gantry init --tutorial` | `gantry init --yes --no-ci` |
-| 3 | Teacher identity | `gantry teacher set "$(git config user.email)"` | same (requires git config) |
+| 3 | Planner identity | `gantry planner set "$(git config user.email)"` | same (requires git config) |
 | 4 | Health check | `gantry onboarding` | `gantry doctor --json` → exit 0 |
 | 5 | Legislate mission | `gantry start "First kata change" --msn MSN-KATA --skill-key logic --gate-command "npm test"` | `gantry legislate "First kata change" --msn MSN-KATA --skill-key logic --gate-command "npm test"` |
-| 6 | Teacher commit | Review YAML, then `git commit -m "[MSN-KATA] legislate mission"` | same |
-| 7 | Worker env | `eval "$(gantry runtime env --mission .gitagent/missions/MSN-KATA.*.yaml)"` | `gantry runtime env --mission … --json` |
+| 6 | Planner commit | Review YAML, then `git commit -m "[MSN-KATA] legislate mission"` | same |
+| 7 | Executor env | `eval "$(gantry runtime env --mission .gitagent/missions/MSN-KATA.*.yaml)"` | `gantry runtime env --mission … --json` |
 | 8 | Execute change | Edit within mission **tmvc_roots** | `gantry runtime exec --mission … -- npm test` (after edits) |
-| 9 | Trace evidence | Append unique line to `WORKER_LOG.md` | same |
+| 9 | Trace evidence | Append unique line to `EXECUTOR_LOG.md` | same |
 | 10 | Verify | `gantry verify --mission …` | `gantry verify --mission … --json` |
 | 11 | Audit grep | `git log --grep='MSN-KATA' --oneline` | same |
 
@@ -25,7 +25,7 @@ Replace `MSN-KATA` with a valid id (e.g. `MSN-0001`) and match the legislated mi
 ## Expected outcomes
 
 - `gantry verify` exits **0** with gate PASS and trace rows **PASS** (or PENDING cleared after quotes committed).
-- `git log --grep='MSN-'` shows at least one legislative commit from a Teacher allowlisted email.
+- `git log --grep='MSN-'` shows at least one legislative commit from a Planner allowlisted email.
 - `gantry status --json` reports pinned or resolved mission context.
 
 ## Friction log (optional)

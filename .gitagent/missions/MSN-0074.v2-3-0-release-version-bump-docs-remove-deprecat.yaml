@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.3.0 release: version bump, docs, remove deprecated upgrade flags
 msn_id: MSN-0074
 skill_key: gantry

@@ -23,8 +23,8 @@ Read this when [`.gitagent/ARCHITECTURE.pointer.json`](../ARCHITECTURE.pointer.j
    - Which directories are entry points for each skill / TMVC root in MANIFEST?
    - Dependency direction rules (what may import what)?
    - Existing conventions from another repo or ADR to follow?
-4. **Log a Context Request** in `WORKER_LOG.md` when the discussion expands scope beyond current TMVC.
-5. **Update the pointer** (or ask the user / Teacher to) once source is chosen — e.g. set `kind: file` and fill `docs/ARCHITECTURE.md`, or `kind: external` with `access` if authenticated.
+4. **Log a Context Request** in `EXECUTOR_LOG.md` when the discussion expands scope beyond current TMVC.
+5. **Update the pointer** (or ask the user / Planner to) once source is chosen — e.g. set `kind: file` and fill `docs/ARCHITECTURE.md`, or `kind: external` with `access` if authenticated.
 6. **Only then** proceed with implementation aligned to documented layout and MANIFEST `tmvc_roots`.
 
 ## After the user answers
@@ -38,7 +38,3 @@ Read this when [`.gitagent/ARCHITECTURE.pointer.json`](../ARCHITECTURE.pointer.j
 - Silently invent `src/` layout, clean/hexagonal layers, or package structure without approval
 - Treat generic best practices as this repository's architecture
 - Skip discovery because the task "sounds simple"
-
-## Specimen note
-
-This OpenGantry repo uses `kind: file` → `docs/ARCHITECTURE.md` with real layer rules. Discovery applies to adopters with `kind: unset` or stub docs.

@@ -81,10 +81,10 @@ test("mcp legislation: execute writes mission and returns pending_signature", ()
   }
 });
 
-test("mcp legislation: check_signature valid after teacher commit", () => {
+test("mcp legislation: check_signature valid after planner commit", () => {
   const dest = scaffoldRepo();
   const prevCwd = process.cwd();
-  process.env.GAPMAN_TEACHER_EMAILS = "teacher@example.com";
+  process.env.GAPMAN_PLANNER_EMAILS = "teacher@example.com";
   process.chdir(dest);
   try {
     const draft = handleDraftLegislation({

@@ -1,6 +1,6 @@
-import { ENV_TEACHER_EMAILS } from "../lib/config-namespace.js";
+import { ENV_PLANNER_EMAILS } from "../lib/config-namespace.js";
 
-export const TEACHER_EMAIL = "teacher-mini-repo@opengantry.test";
+export const PLANNER_EMAIL = "planner-mini-repo@opengantry.test";
 export const OTHER_EMAIL = "other@opengantry.test";
 
 export interface CapturedConsole {
@@ -70,25 +70,25 @@ export async function captureConsoleAsync<T>(
   }
 }
 
-export function withTeacherEnv<T>(fn: () => T): T {
-  const prev = process.env[ENV_TEACHER_EMAILS];
-  process.env[ENV_TEACHER_EMAILS] = TEACHER_EMAIL;
+export function withPlannerEnv<T>(fn: () => T): T {
+  const prev = process.env[ENV_PLANNER_EMAILS];
+  process.env[ENV_PLANNER_EMAILS] = PLANNER_EMAIL;
   try {
     return fn();
   } finally {
-    if (prev === undefined) delete process.env[ENV_TEACHER_EMAILS];
-    else process.env[ENV_TEACHER_EMAILS] = prev;
+    if (prev === undefined) delete process.env[ENV_PLANNER_EMAILS];
+    else process.env[ENV_PLANNER_EMAILS] = prev;
   }
 }
 
 /** Async-safe variant — restores env only after the callback promise settles. */
-export async function withTeacherEnvAsync<T>(fn: () => T | Promise<T>): Promise<T> {
-  const prev = process.env[ENV_TEACHER_EMAILS];
-  process.env[ENV_TEACHER_EMAILS] = TEACHER_EMAIL;
+export async function withPlannerEnvAsync<T>(fn: () => T | Promise<T>): Promise<T> {
+  const prev = process.env[ENV_PLANNER_EMAILS];
+  process.env[ENV_PLANNER_EMAILS] = PLANNER_EMAIL;
   try {
     return await fn();
   } finally {
-    if (prev === undefined) delete process.env[ENV_TEACHER_EMAILS];
-    else process.env[ENV_TEACHER_EMAILS] = prev;
+    if (prev === undefined) delete process.env[ENV_PLANNER_EMAILS];
+    else process.env[ENV_PLANNER_EMAILS] = prev;
   }
 }

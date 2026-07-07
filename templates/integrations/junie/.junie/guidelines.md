@@ -3,7 +3,7 @@
 Before planning, editing code, or running substantive commands:
 
 1. Read **`AGENTS.md`**
-2. Read **`.gitagent/teacher/RULES.md`**
+2. Read **`.gitagent/planner/RULES.md`**
 3. Read **`.gitagent/foreman/MANIFEST.json`**
 
 Bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`

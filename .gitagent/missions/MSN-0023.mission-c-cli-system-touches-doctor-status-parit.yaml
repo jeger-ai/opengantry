@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Mission C CLI system touches: doctor/status parity, atomic upgrade with Windows-safe promote
 msn_id: MSN-0023
 skill_key: gapman

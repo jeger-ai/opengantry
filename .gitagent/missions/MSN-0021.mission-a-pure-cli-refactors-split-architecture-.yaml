@@ -1,5 +1,5 @@
 # CI gate: ./scripts/dev-validate-core.sh (non-recursive; MSN-0020 pattern)
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Mission A pure CLI refactors: split architecture-pointer, purify runLegislate exit semantics, extract legislate-skill, MCP handler result types — zero behavioral change
 msn_id: MSN-0021
 skill_key: gapman

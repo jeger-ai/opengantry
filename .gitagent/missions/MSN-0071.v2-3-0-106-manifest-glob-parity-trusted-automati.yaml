@@ -1,4 +1,4 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.3.0 #106: MANIFEST/glob parity, trusted-automation range N+1 fix, validate-gxt CLI path
 msn_id: MSN-0071
 skill_key: gantry
