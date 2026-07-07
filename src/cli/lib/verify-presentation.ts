@@ -9,23 +9,33 @@ export {
 } from "./verify-hints.js";
 
 export type {
-  VerifyFailurePresentation,
-  VerifyFailurePresentationInput,
-} from "./verify-failure-presentation-types.js";
-export { verifyFailurePresentation } from "./verify-failure-format.js";
-
-export type {
   NormalizedVerifyFailure,
   NormalizePhaseFailureInput,
+  VerifyFailurePresentation,
+  VerifyFailurePresentationInput,
 } from "./verify-failure-normalize.js";
 export {
-  normalizeFromFailedPayload,
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
   toRemediationSnapshot,
   toVerifyFailedPayload,
 } from "./verify-failure-normalize.js";
+
+import {
+  normalizeVerifyPhaseFailure,
+  toFailurePresentation,
+  type NormalizePhaseFailureInput,
+  type VerifyFailurePresentation,
+  type VerifyFailurePresentationInput,
+} from "./verify-failure-normalize.js";
+
+export function verifyFailurePresentation(
+  input: VerifyFailurePresentationInput,
+): VerifyFailurePresentation {
+  const normalized = normalizeVerifyPhaseFailure(input satisfies NormalizePhaseFailureInput);
+  return toFailurePresentation(normalized);
+}
 
 export type {
   VerifyFailedPayload,

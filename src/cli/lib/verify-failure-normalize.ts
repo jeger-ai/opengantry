@@ -1,4 +1,5 @@
 import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
+import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { errorMessage, toPosixRel } from "./cli-io.js";
 import { isGapmanUserError } from "./errors.js";
 import type { ParsedMission } from "./types.js";
@@ -6,6 +7,7 @@ import type { VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
 import {
   buildVerifyHintContext,
   hintsForVerifyPhase,
+  type AudienceTaggedStep,
 } from "./verify-hints.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
@@ -18,10 +20,62 @@ import {
   normalizeTracePendingPhase,
   normalizeTracePhase,
 } from "./verify-failure-normalize-phases.js";
-import type { VerifyFailurePresentation } from "./verify-failure-presentation-types.js";
 import type { VerifyFailedPayload } from "./verify-payload-types.js";
-import type { NormalizedVerifyFailure } from "./verify-failure-normalize-types.js";
-export type { NormalizedVerifyFailure } from "./verify-failure-normalize-types.js";
+
+/** Canonical verify-failure contract — single mapping for all sinks. */
+export interface NormalizedVerifyFailure {
+  phase: string;
+  message: string;
+  exit_code: number;
+  error_code: GxtErrorCode;
+  fix_hints: string[];
+  next_actions: string[];
+  tagged_steps?: AudienceTaggedStep[];
+  headline: string;
+  detail_lines: string[];
+  stdout?: string;
+  stderr?: string;
+  failures?: string[];
+  gate?: RemediationSnapshot["gate"];
+  kpi?: RemediationSnapshot["kpi"];
+  presentation_gate?: { stdout?: string; stderr?: string; exitCode?: number };
+  trace?: { failures?: string[] };
+  mission_file_path?: string;
+  msn_id?: string;
+}
+
+export type NormalizedVerifyFailureBase = Pick<
+  NormalizedVerifyFailure,
+  | "phase"
+  | "message"
+  | "exit_code"
+  | "error_code"
+  | "fix_hints"
+  | "next_actions"
+  | "tagged_steps"
+  | "mission_file_path"
+  | "msn_id"
+>;
+
+export interface VerifyFailurePresentationInput {
+  failure: VerifyPhaseFailure;
+  missionArg: string;
+  options: Pick<VerifyOptions, "strictTrace" | "audience">;
+  root?: string;
+  msnId?: string;
+}
+
+export interface VerifyFailurePresentation {
+  error_code: GxtErrorCode;
+  headline: string;
+  detail_lines: string[];
+  fix_hints: string[];
+  next_actions: string[];
+  tagged_steps?: AudienceTaggedStep[];
+  exit_code: number;
+  gate?: { stdout?: string; stderr?: string; exitCode?: number };
+  trace?: { failures?: string[] };
+}
 
 export interface NormalizePhaseFailureInput {
   failure: VerifyPhaseFailure;
@@ -158,34 +212,5 @@ export function toRemediationSnapshot(normalized: NormalizedVerifyFailure): Reme
     ...(normalized.failures ? { failures: normalized.failures } : {}),
     ...(normalized.gate ? { gate: normalized.gate } : {}),
     ...(normalized.kpi ? { kpi: normalized.kpi } : {}),
-  };
-}
-
-/** Project an existing JSON failure payload into remediation snapshot (init / replay paths). */
-export function normalizeFromFailedPayload(
-  payload: VerifyFailedPayload,
-  meta: { mission_file_path?: string; msn_id?: string } = {},
-): NormalizedVerifyFailure {
-  return {
-    phase: payload.phase,
-    message: payload.message,
-    exit_code: payload.exit_code,
-    error_code: payload.error_code,
-    fix_hints: payload.fix_hints,
-    next_actions: payload.next_actions,
-    headline: payload.message,
-    detail_lines: [],
-    ...(payload.stdout !== undefined ? { stdout: payload.stdout } : {}),
-    ...(payload.stderr !== undefined ? { stderr: payload.stderr } : {}),
-    ...(payload.failures ? { failures: payload.failures } : {}),
-    ...(payload.stdout !== undefined || payload.stderr !== undefined
-      ? {
-          gate: {
-            ...(payload.stdout !== undefined ? { stdout: payload.stdout } : {}),
-            ...(payload.stderr !== undefined ? { stderr: payload.stderr } : {}),
-          },
-        }
-      : {}),
-    ...meta,
   };
 }

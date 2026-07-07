@@ -355,3 +355,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: templates/scripts/gxt-manifest-lib.mjs, templates/scripts/validate-gxt.sh — mjs manifest/glob parity + validate-gxt CLI path (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0071: perimeter_protected in mjs validateManifestStructure; **/ glob parity; range N+1 fix; manifest-parity tests (#106)
+
+## MSN-0072 — v2.3.0 #102 verify failure contract
+
+- DoD 1 MSN-0072: NormalizedVerifyFailure single contract; deleted verify-failure-format and type satellites; verify-presentation facade (#102)
+- DoD 2 MSN-0072: dev-validate-core OK — verify failure contract collapse; 389 tests pass (#102)
+- DoD 3 MSN-0072: file deletions staged; dev-validate-core OK post-amend (#102)

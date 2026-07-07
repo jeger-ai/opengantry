@@ -3,7 +3,7 @@ import type { VerifyPhaseFailure } from "./verify-engine.js";
 import type {
   NormalizedVerifyFailure,
   NormalizedVerifyFailureBase,
-} from "./verify-failure-normalize-types.js";
+} from "./verify-failure-normalize.js";
 
 export function normalizeGitProofPhase(base: NormalizedVerifyFailureBase): NormalizedVerifyFailure {
   return { ...base, headline: base.message, detail_lines: [] };

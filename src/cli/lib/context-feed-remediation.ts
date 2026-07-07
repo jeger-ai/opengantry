@@ -6,13 +6,36 @@ import { toPosixRel } from "./cli-io.js";
 import {
   readRemediationSnapshot,
   writeRemediationSnapshot,
+  REMEDIATION_SCHEMA_VERSION,
   type RemediationSnapshot,
 } from "./context-feed-store.js";
-import {
-  normalizeFromFailedPayload,
-  normalizeVerifyPhaseFailure,
-  toRemediationSnapshot,
-} from "./verify-failure-normalize.js";
+import { normalizeVerifyPhaseFailure, toRemediationSnapshot } from "./verify-failure-normalize.js";
+
+function remediationSnapshotFromFailedPayload(
+  payload: VerifyFailedPayload,
+  meta: { mission_file_path?: string; msn_id?: string },
+): RemediationSnapshot {
+  return {
+    schema_version: REMEDIATION_SCHEMA_VERSION,
+    written_at: new Date().toISOString(),
+    source: "gantry verify",
+    phase: payload.phase,
+    error_code: payload.error_code,
+    message: payload.message,
+    ...meta,
+    fix_hints: payload.fix_hints,
+    next_actions: payload.next_actions,
+    ...(payload.failures ? { failures: payload.failures } : {}),
+    ...(payload.stdout !== undefined || payload.stderr !== undefined
+      ? {
+          gate: {
+            ...(payload.stdout !== undefined ? { stdout: payload.stdout } : {}),
+            ...(payload.stderr !== undefined ? { stderr: payload.stderr } : {}),
+          },
+        }
+      : {}),
+  };
+}
 
 export function remediationFromFailedPayload(
   root: string,
@@ -28,7 +51,7 @@ export function remediationFromFailedPayload(
     : missionArg
       ? { mission_file_path: missionArg }
       : {};
-  return toRemediationSnapshot(normalizeFromFailedPayload(payload, meta));
+  return remediationSnapshotFromFailedPayload(payload, meta);
 }
 
 export function remediationFromPhaseFailure(
