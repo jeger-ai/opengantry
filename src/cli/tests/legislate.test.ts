@@ -6,6 +6,8 @@ import os from "node:os";
 import { runLegislate } from "../commands/legislate.js";
 import { getRepoRoot } from "../lib/git.js";
 import { execSync } from "node:child_process";
+import { findForbiddenZoneHits } from "../lib/legislate-forbidden-zone.js";
+import { loadManifest } from "../lib/manifest.js";
 test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-"));
@@ -268,5 +270,15 @@ test("legislate: --gate-command preserves spaces in complex command", () => {
     process.chdir(prevCwd);
     process.exitCode = undefined;
   }
+});
+
+test("findForbiddenZoneHits: flags intent paths in skill forbidden_zones", () => {
+  const manifest = loadManifest(getRepoRoot());
+  const hits = findForbiddenZoneHits(
+    manifest,
+    "gantry",
+    "update .gitagent/teacher/RULES.md for legislate flow",
+  );
+  assert.ok(hits.some((z) => z.includes("RULES.md")));
 });
 

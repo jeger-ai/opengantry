@@ -18,6 +18,7 @@ import { triageIntent } from "./triage-logic.js";
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import type { Manifest, TriageResult } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
+import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
 
 export function isTriageEscalated(triage: TriageResult): boolean {
   return triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
@@ -223,6 +224,12 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
 
   const skill_key = resolveLegislateSkillKey(options, root, manifest);
   if (!skill_key) return { ok: false, exitCode: 2 };
+
+  for (const zone of findForbiddenZoneHits(manifest, skill_key, options.intent)) {
+    logWarn(
+      `legislate: intent may touch forbidden zone ${zone} for skill ${skill_key} — narrow TMVC in mission or confirm Teacher override`,
+    );
+  }
 
   const absolute = resolveLegislateOutputPath(root, options, msnId);
   if (!absolute) return { ok: false, exitCode: 2 };
