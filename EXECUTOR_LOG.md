@@ -395,3 +395,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0023-planner-stamp-signing.md — ADR for optional planner_signature tier (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0078: planner_signature off|warn|require; GXT_PLANNER_STAMP_UNSIGNED; doctor tier line (#37)
+
+## MSN-0079 — v2.3.1 release
+
+[CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, package.json, templates/integrations/compatibility.json — v2.3.1 release docs and version bump (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0079: v2.3.1 version parity; README/ADOPTION/BACKLOG; npm validate ready (#111)

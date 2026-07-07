@@ -9,7 +9,19 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-07-07 (v2.3.0 released — #35, #38, #102–#106, #109, MSN-0067–MSN-0074, npm **2.3.0**)
+**Last synced:** 2026-07-07 (v2.3.1 released — #14, #17, #37, #110, #111, MSN-0075–MSN-0079, npm **2.3.1**)
+
+---
+
+## v2.3.1 — ADR-gated cage
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Planner/Executor hard rename** (no aliases) | **Done** | [#110](https://github.com/jeger-ai/opengantry/issues/110) · MSN-0075 |
+| **Break-glass ADR reconciliation** | **Done** | [#17](https://github.com/jeger-ai/opengantry/issues/17) · MSN-0076 |
+| **MCP write-containment** (`GXT_MCP_WRITE_DENIED`) | **Done** | [#14](https://github.com/jeger-ai/opengantry/issues/14) · MSN-0077 |
+| **Optional `planner_signature` tier** | **Done** | [#37](https://github.com/jeger-ai/opengantry/issues/37) · MSN-0078 |
+| **2.3.1 npm publish** (version bump, docs, tag + npm + GH release) | **Done** | [#111](https://github.com/jeger-ai/opengantry/issues/111) · MSN-0079 |
 
 ---
 
@@ -351,10 +363,11 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.3.0 released ([#35](https://github.com/jeger-ai/opengantry/issues/35), [#38](https://github.com/jeger-ai/opengantry/issues/38), [#102](https://github.com/jeger-ai/opengantry/issues/102)–[#106](https://github.com/jeger-ai/opengantry/issues/106), [#109](https://github.com/jeger-ai/opengantry/issues/109), npm **2.3.0**); next: v2.3.1 ADR-gated cage ([#14](https://github.com/jeger-ai/opengantry/issues/14), [#17](https://github.com/jeger-ai/opengantry/issues/17), [#37](https://github.com/jeger-ai/opengantry/issues/37)).
+**Current focus:** v2.3.1 released ([#14](https://github.com/jeger-ai/opengantry/issues/14), [#17](https://github.com/jeger-ai/opengantry/issues/17), [#37](https://github.com/jeger-ai/opengantry/issues/37), [#110](https://github.com/jeger-ai/opengantry/issues/110), [#111](https://github.com/jeger-ai/opengantry/issues/111), npm **2.3.1**); next: v2.4 or v3.0 planning.
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
+| **Done (release)** | v2.3.1 ADR-gated cage | MSN-0075–MSN-0079; npm **2.3.1** ([#14](https://github.com/jeger-ai/opengantry/issues/14), [#17](https://github.com/jeger-ai/opengantry/issues/17), [#37](https://github.com/jeger-ai/opengantry/issues/37), [#110](https://github.com/jeger-ai/opengantry/issues/110), [#111](https://github.com/jeger-ai/opengantry/issues/111)) |
 | **Done (release)** | v2.3.0 cage hardening | MSN-0067–MSN-0074; npm **2.3.0** ([#102](https://github.com/jeger-ai/opengantry/issues/102)–[#106](https://github.com/jeger-ai/opengantry/issues/106), [#35](https://github.com/jeger-ai/opengantry/issues/35), [#38](https://github.com/jeger-ai/opengantry/issues/38), [#109](https://github.com/jeger-ai/opengantry/issues/109)) |
 | **Done (release)** | v2.2.5 quality remediation | MSN-0065–MSN-0066; npm **2.2.5** ([#99](https://github.com/jeger-ai/opengantry/issues/99)–[#101](https://github.com/jeger-ai/opengantry/issues/101), [#107](https://github.com/jeger-ai/opengantry/issues/107)–[#108](https://github.com/jeger-ai/opengantry/issues/108)) |
 | **Done (release)** | v2.2.2 Time-to-Scaffold benchmark | MSN-0061 public harness + matrix + adoption discovery |
@@ -362,8 +375,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 | **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |
 | **Done (release)** | v2.1.0 npm publish | MSN-0056; tag + npm **2.1.0** |
 | **Done (release)** | v2.2.4 unified gantry naming + docs + npm publish | #94–#98; MSN-0064; npm **2.2.4** |
-| **Next** | [#14](https://github.com/jeger-ai/opengantry/issues/14), [#17](https://github.com/jeger-ai/opengantry/issues/17), [#37](https://github.com/jeger-ai/opengantry/issues/37) | v2.3.1 ADR-gated cage hardening |
-| **After** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29) | Deferred tactical + strategic |
+| **Next** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29) | Deferred tactical + strategic (v2.4+) |
 | Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
 | Done (v1.1.1) | [#10](https://github.com/jeger-ai/opengantry/issues/10)–[#11](https://github.com/jeger-ai/opengantry/issues/11), [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#50](https://github.com/jeger-ai/opengantry/issues/50) | MSN-0032–MSN-0033 |
 | Done (v1.1) | [#18](https://github.com/jeger-ai/opengantry/issues/18)–[#22](https://github.com/jeger-ai/opengantry/issues/22) | MSN-0028–MSN-0031 |
