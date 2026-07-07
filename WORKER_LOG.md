@@ -345,3 +345,7 @@ example trace line for gapman verify
 ## MSN-0069 — v2.3.0 #104 audience-tagged start
 
 - DoD 1 MSN-0069: start orchestration uses filterTaggedStepsForAudience; regex stepMatchesAudience removed (#104)
+
+## MSN-0070 — v2.3.0 #38 WORKER_LOG doctor
+
+- DoD 1 MSN-0070: doctor warns on WORKER_LOG conflict markers, duplicate DoD lines, placeholder quotes (#38)

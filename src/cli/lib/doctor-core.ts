@@ -19,6 +19,7 @@ import {
 } from "./doctor-types.js";
 import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
+import { runWorkerLogIntegrityDoctorChecks } from "./worker-log-integrity.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -159,6 +160,7 @@ export function collectDoctorReport(
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
   let lines = [...result.lines, ...runArchitecturePointerDoctorChecks(root)];
+  lines = [...lines, ...runWorkerLogIntegrityDoctorChecks(root)];
   let nextStep = result.nextStep;
   try {
     const tpl = templatesRoot ?? resolveTemplateRootFromModule();
