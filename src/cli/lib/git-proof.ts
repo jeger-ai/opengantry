@@ -7,6 +7,9 @@ import { hintGitProof, type GitProofHintContext } from "./fix-hints.js";
 import { GapmanUserError } from "./errors.js";
 import { extractMsnIdFromMissionPath } from "./missions/parser.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
+import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
+import { checkPlannerStampSignature } from "./planner-signature.js";
+import { logWarn } from "./cli-io.js";
 
 function throwGitProofError(
   code: string,
@@ -151,6 +154,33 @@ export interface PlannerMissionProofOptions {
   scanDepth?: number;
   /** When set, must match parser-resolved mission MSN (avoids re-resolving identity from disk). */
   msnId?: string;
+  /** Collect non-fatal planner_signature warn-tier messages (verify). */
+  warnings?: string[];
+}
+
+function enforcePlannerStampSignature(
+  root: string,
+  stamp: MsnCommitRow,
+  ctx: GitProofHintContext,
+  options?: PlannerMissionProofOptions,
+): void {
+  const signatureTier = resolvePlannerSignatureTier(loadGxtConfig(root));
+  if (signatureTier === "off") return;
+
+  const sig = checkPlannerStampSignature(root, stamp.hash);
+  if (sig.ok) return;
+
+  const detail = `Planner stamp ${stamp.hash} is unsigned (git %G?=${sig.status})`;
+  if (signatureTier === "require") {
+    throwGitProofError("PLANNER_STAMP_UNSIGNED", detail, {
+      ...ctx,
+      stampHash: stamp.hash,
+      stampSubject: stamp.subject.trim(),
+    });
+  }
+  const warning = `${CLI_NAME} verify: ${detail}`;
+  options?.warnings?.push(warning);
+  logWarn(warning);
 }
 
 /**
@@ -226,6 +256,13 @@ export function assertPlannerMissionProof(
       },
     );
   }
+
+  enforcePlannerStampSignature(
+    root,
+    stamp,
+    { root, missionPath, msnId, repoRelMission },
+    options,
+  );
 
   return msnId;
 }

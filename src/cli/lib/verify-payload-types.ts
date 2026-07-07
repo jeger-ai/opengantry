@@ -16,6 +16,7 @@ export interface VerifyPassedPayload {
   message?: string;
   audit_commit?: string;
   trace_warnings?: VerifyTraceWarningJson[];
+  git_proof_warnings?: string[];
   kpi_warnings?: string[];
   trace_evidence_skipped_uncommitted?: number;
 }

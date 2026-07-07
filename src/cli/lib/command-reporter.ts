@@ -1,4 +1,4 @@
-import { logError, logInfo } from "./cli-io.js";
+import { logError, logInfo, logWarn } from "./cli-io.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
@@ -66,6 +66,11 @@ export class CommandReporter {
   emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {
     if (this.channel === "silent" || this.channel === "json") return;
     this.emitInfo(`${CLI_NAME} verify: git-proof OK (Planner legislation for ${result.proofMsnId})`);
+    if (result.gitProofWarnings) {
+      for (const w of result.gitProofWarnings) {
+        logWarn(w);
+      }
+    }
     if (result.outcome === "pre_push_stub") {
       this.emitInfo(
         `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,

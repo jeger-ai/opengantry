@@ -20,6 +20,9 @@ import {
 import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
 import { runExecutorLogIntegrityDoctorChecks } from "./executor-log-integrity.js";
+import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
+import { gitCommitSignatureStatus, isGoodGitSignatureStatus } from "./planner-signature.js";
+import { gitRunOk } from "./git.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -56,6 +59,29 @@ function appendPlannerAllowlistChecks(
   lines.push({ level: "warn", message: "Planner allowlist unset — verify git-proof will fail" });
   nextStep = pickNextStep(nextStep, `${CLI_NAME} planner set "$(git config user.email)"`);
   return { nextStep, plannerAllowlistUnset: true };
+}
+
+function appendPlannerSignatureChecks(root: string, lines: DoctorLine[]): void {
+  const tier = resolvePlannerSignatureTier(loadGxtConfig(root));
+  lines.push({ level: "ok", message: `planner_signature tier: ${tier}` });
+  if (tier === "off") return;
+
+  const plannerIdentity = resolvePlannerEmails(root);
+  if (plannerIdentity.emails.length === 0) return;
+
+  const headAuthor = gitRunOk(root, ["log", "-1", "--format=%ae"]);
+  if (!headAuthor.ok) return;
+  const authorEmail = headAuthor.stdout.trim().toLowerCase();
+  if (!plannerIdentity.emails.includes(authorEmail)) return;
+
+  const status = gitCommitSignatureStatus(root, "HEAD");
+  const signed = isGoodGitSignatureStatus(status);
+  lines.push({
+    level: signed ? "ok" : "warn",
+    message: signed
+      ? "HEAD Planner stamp: signed"
+      : `HEAD Planner stamp: unsigned (git %G?=${status})`,
+  });
 }
 
 function appendBypassChecks(root: string, lines: DoctorLine[]): void {
@@ -140,6 +166,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const plannerResult = appendPlannerAllowlistChecks(root, lines, nextStep);
   nextStep = plannerResult.nextStep;
   plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
+  appendPlannerSignatureChecks(root, lines);
   appendBypassChecks(root, lines);
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);

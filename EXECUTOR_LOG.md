@@ -389,3 +389,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md — ADR for MCP write guard (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0077: mcp-write-guard at gxt_* boundaries; GXT_MCP_WRITE_DENIED; ADR-0022 (#14)
+
+## MSN-0078 — v2.3.1 #37 planner stamp signing
+
+[CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0023-planner-stamp-signing.md — ADR for optional planner_signature tier (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0078: planner_signature off|warn|require; GXT_PLANNER_STAMP_UNSIGNED; doctor tier line (#37)

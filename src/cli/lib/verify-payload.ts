@@ -65,6 +65,9 @@ function successPayload(
     msn_id: mission.msnId ?? undefined,
     mission_file_path: missionRelPath(root, mission),
     ...(traceWarnings ? { trace_warnings: traceWarnings } : {}),
+    ...(result.gitProofWarnings && result.gitProofWarnings.length > 0
+      ? { git_proof_warnings: result.gitProofWarnings }
+      : {}),
     ...(result.kpiWarnings && result.kpiWarnings.length > 0
       ? { kpi_warnings: result.kpiWarnings }
       : {}),

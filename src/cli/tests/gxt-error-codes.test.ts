@@ -47,9 +47,14 @@ test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
     "MISSION_FILE_NOT_MODIFIED_BY_PLANNER",
     "MISSION_OUTSIDE_MISSIONS_DIR",
     "MISSION_NO_GATE",
+    "PLANNER_STAMP_UNSIGNED",
   ];
   for (const code of codes) {
     assert.equal(isKnownGapmanUserErrorCode(code), true);
-    assert.equal(mapGitProofCodeToGxt(code), GXT_ERROR.MISSION_UNSTAMPED);
+    if (code === "PLANNER_STAMP_UNSIGNED") {
+      assert.equal(mapGitProofCodeToGxt(code), GXT_ERROR.PLANNER_STAMP_UNSIGNED);
+    } else {
+      assert.equal(mapGitProofCodeToGxt(code), GXT_ERROR.MISSION_UNSTAMPED);
+    }
   }
 });

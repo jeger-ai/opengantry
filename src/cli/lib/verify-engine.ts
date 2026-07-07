@@ -111,6 +111,7 @@ export interface VerifyPhaseSuccess {
   proofMsnId: string;
   executorLogPath: string;
   traceWarnings: TraceVerifyWarning[];
+  gitProofWarnings?: string[];
   kpiWarnings?: string[];
   traceEvidenceSkippedUncommitted?: number;
 }
@@ -118,7 +119,7 @@ export interface VerifyPhaseSuccess {
 export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
 
 type GitProofOutcome =
-  | { kind: "ok"; proofMsnId: string }
+  | { kind: "ok"; proofMsnId: string; warnings: string[] }
   | { kind: "fail"; failure: VerifyPhaseFailure };
 
 type TracePhaseOutcome =
@@ -158,11 +159,13 @@ function evaluateGitProof(
   executorLogPath: string,
 ): GitProofOutcome {
   try {
+    const gitProofWarnings: string[] = [];
     const proofMsnId = assertPlannerMissionProof(root, mission.rawPath, {
       msnId: mission.msnId ?? undefined,
       scanDepth: options.scanDepth,
+      warnings: gitProofWarnings,
     });
-    return { kind: "ok", proofMsnId };
+    return { kind: "ok", proofMsnId, warnings: gitProofWarnings };
   } catch (e) {
     return { kind: "fail", failure: gitProofFailure(executorLogPath, errorMessage(e)) };
   }
@@ -292,10 +295,17 @@ export function evaluateVerifyPhases(
 
   const proof = evaluateGitProof(root, mission, options, executorLogPath);
   if (proof.kind === "fail") return proof.failure;
-  const { proofMsnId } = proof;
+  const { proofMsnId, warnings: gitProofWarnings } = proof;
 
   if (options.prePush === true && isLegislativeStub(mission)) {
-    return { ok: true, outcome: "pre_push_stub", proofMsnId, executorLogPath, traceWarnings: [] };
+    return {
+      ok: true,
+      outcome: "pre_push_stub",
+      proofMsnId,
+      executorLogPath,
+      traceWarnings: [],
+      ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
+    };
   }
 
   const gate = mission.gate;
@@ -347,6 +357,7 @@ export function evaluateVerifyPhases(
     proofMsnId,
     executorLogPath,
     traceWarnings: trace.warnings,
+    ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     ...(kpiWarnings && kpiWarnings.length > 0 ? { kpiWarnings } : {}),
     traceEvidenceSkippedUncommitted:
       trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,

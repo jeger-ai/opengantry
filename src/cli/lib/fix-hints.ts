@@ -86,6 +86,12 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
       return `move mission under ${REL_MISSIONS_PREFIX} (got path outside missions dir)`;
     case "MISSION_NO_GATE":
       return hintMissionNoGate(mission);
+    case "PLANNER_STAMP_UNSIGNED":
+      return [
+        "enable commit signing for Planner legislation (git config commit.gpgsign true or SSH signing)",
+        "or set planner_signature to off or warn in .gitagent/config.json",
+        verifyCmd,
+      ].join("; ");
     default:
       return verifyCmd;
   }
