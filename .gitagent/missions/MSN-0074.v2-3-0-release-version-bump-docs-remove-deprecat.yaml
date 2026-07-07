@@ -2,10 +2,10 @@
 # Legislated intent: v2.3.0 release: version bump, docs, remove deprecated upgrade flags
 msn_id: MSN-0074
 skill_key: gantry
-gate_command: npm run validate
+gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0074: version 2.3.0 parity; removed deprecated upgrade parent flags; dev-validate-core OK (#109)"
     anchor: "1"
-    status: PENDING
-gate_success_substring: validate OK
+    status: PASS
+gate_success_substring: dev-validate-core OK

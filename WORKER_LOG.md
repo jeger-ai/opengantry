@@ -365,3 +365,9 @@ example trace line for gapman verify
 ## MSN-0073 — v2.3.0 #35 legislate forbidden-zone warn
 
 - DoD 1 MSN-0073: legislate warns when intent may touch skill forbidden_zones; findForbiddenZoneHits unit test (#35)
+
+## MSN-0074 — v2.3.0 release (#109)
+
+[CONTEXT-REQUEST] paths: package.json, templates/integrations/compatibility.json, docs/BACKLOG.md, docs/ADOPTION.md, README.md — v2.3.0 release parity and publish prep (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0074: version 2.3.0 parity; removed deprecated upgrade parent flags; dev-validate-core OK (#109)

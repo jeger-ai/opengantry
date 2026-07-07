@@ -13,7 +13,6 @@ import { readStdinIfEmpty } from "./lib/program-stdin.js";
 import type { InitOptions } from "./commands/init.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
 import { getOutputAudience } from "./lib/output-context.js";
-import { logWarn } from "./lib/cli-io.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */
@@ -98,21 +97,6 @@ export function registerCoreCommands(program: Command): void {
     .option("--mission <path>", "Signed upgrade mission YAML (required unless pinned)")
     .action((options: UpgradeOptions) => {
       runUpgrade({ ...options, apply: true });
-    });
-
-  upgradeCmd
-    .option("--apply", "Apply a Teacher-signed upgrade mission after hash verification")
-    .option("--dry-run", "Print upgrade plan without writing staging dir or mission YAML")
-    .option("--json", "Emit structured JSON")
-    .option("--msn <id>", "Mission id for upgrade plan (default: next MSN in 9000-9099 band)")
-    .option("--mission <path>", "Signed upgrade mission YAML (required for --apply unless pinned)")
-    .action((options: UpgradeOptions) => {
-      if (options.apply === true || options.dryRun === true) {
-        logWarn(
-          "gantry upgrade: --apply and --dry-run on the parent command are deprecated; use `gantry upgrade apply` or `gantry upgrade plan` (removal planned in v2.3).",
-        );
-      }
-      runUpgrade(options);
     });
 
   program
