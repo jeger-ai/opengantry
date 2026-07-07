@@ -47,10 +47,20 @@ We aim to acknowledge reports within **5 business days** and to coordinate discl
 ## Upgrading for security fixes
 
 1. Update gapman to the latest **1.0.x** (e.g. `npm install @jeger-ai/opengantry@latest` or rebuild from an updated clone of this repo).
-2. Run `gapman upgrade`, review `.gitagent/.upgrade-tmp/`, Teacher-commit the upgrade mission, then `gapman upgrade --apply --mission …`.
-3. Run `gapman doctor` and your usual `gapman verify` / CI checks.
+2. Run `gantry upgrade plan`, review `.gitagent/.upgrade-tmp/`, Planner-commit the upgrade mission, then `gantry upgrade apply --mission …`.
+3. Run `gantry doctor` and your usual `gantry verify` / CI checks.
 
-See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#substrate-upgrade-loop-adopters--dogfood) and [`docs/ADOPTION.md`](docs/ADOPTION.md).
+## Break-glass (emergency verify bypass)
+
+When a production hotfix cannot wait for full git-proof + trace mapping:
+
+1. Provision `.gitagent/foreman/BYPASS.sha256` (SHA-256 of team secret; never commit plaintext).
+2. Set `GXT_BYPASS_SECRET` in the execution environment.
+3. Run `gantry verify --break-glass --reason "<incident description>" --mission <path>` (optional `--audit-commit` if git notes cannot be pushed).
+4. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
+5. Planner reviews bypass usage post-incident (RULES.md §6.2, ADR-0021).
+
+See [`docs/ADOPTION.md`](docs/ADOPTION.md).
 
 ## Acknowledgments
 

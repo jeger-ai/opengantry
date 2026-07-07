@@ -377,3 +377,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/planner/, EXECUTOR_LOG.md, templates/, docs/, AGENTS.md, README.md, scripts/ — hard rename Teacher→Planner, Worker→Executor (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0075: gantry planner set/show; .gitagent/planner/; EXECUTOR_LOG.md; audience executor|planner; 372 tests pass (#110)
+
+## MSN-0076 — v2.3.1 #17 break-glass ADR
+
+[CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md, SECURITY.md — ADR + security runbook (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0076: ADR-0021 documents verify --break-glass + git-notes as protocol; SECURITY.md runbook (#17)
