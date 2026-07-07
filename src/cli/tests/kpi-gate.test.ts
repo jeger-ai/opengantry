@@ -72,6 +72,7 @@ test("evaluateKpiPhase: missing report fails", () => {
   const result = evaluateKpiPhase(root, { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] }, "gapman", kpiGate, {}, "/tmp/WORKER_LOG.md");
   assert.equal(result?.kind, "fail");
   assert.equal(result?.failure.phase, "kpi");
+  assert.equal(result?.failure.kpiKind, "missing");
 });
 
 test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {

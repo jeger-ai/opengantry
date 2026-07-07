@@ -1,11 +1,10 @@
-# OpenGantry mission scaffold (Teacher: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: v2.3.0 #103: typed kpiKind discriminant on VerifyPhaseFailure; remove KPI string sniffing in verify-hints
 msn_id: MSN-0068
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "DoD 1 MSN-0068: kpiKind discriminant on KPI failures; verify-hints switches on kpiKind not message.includes (#103)"
+    anchor: "MSN-0068"
+    status: PASS

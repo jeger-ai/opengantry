@@ -337,3 +337,7 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: package.json, scripts/gen-dogfood.mjs — gen:dogfood generator (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0067: gen:dogfood syncs templates/scripts to scripts/ and gxt-validate workflow; wired into npm run build (#105)
+
+## MSN-0068 — v2.3.0 #103 kpiKind
+
+- DoD 1 MSN-0068: kpiKind discriminant on KPI failures; verify-hints switches on kpiKind not message.includes (#103)

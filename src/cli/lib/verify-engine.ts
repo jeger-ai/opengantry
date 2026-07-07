@@ -77,6 +77,8 @@ export function discoverChangedMissionFiles(repoRoot: string, baseRef: string): 
 
 export type VerifyFailurePhase = "git_proof" | "gate" | "kpi" | "trace_pending" | "trace";
 
+export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
+
 export interface VerifyPhaseFailure {
   ok: false;
   phase: VerifyFailurePhase;
@@ -94,6 +96,7 @@ export interface VerifyPhaseFailure {
   attestationCommit?: string;
   stalePaths?: string[];
   kpiReportPath?: string;
+  kpiKind?: KpiFailureKind;
   kpiReason?: string;
   kpiMetric?: string;
   kpiOp?: KpiThresholdOp;

@@ -12,7 +12,7 @@ import {
   parseMsnIdFromGitProofMessage,
 } from "./fix-hints.js";
 import type { TraceFailureKind } from "./trace.js";
-import type { VerifyFailurePhase, VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
+import type { VerifyFailurePhase, VerifyOptions, VerifyPhaseFailure, KpiFailureKind } from "./verify-engine.js";
 
 export interface AudienceTaggedStep {
   audience: OutputAudience;
@@ -38,6 +38,7 @@ export interface VerifyHintContext {
   traceQuote?: string;
   traceFailureReason?: string;
   kpiFailureReason?: string;
+  kpiKind?: KpiFailureKind;
   gateStderr?: string;
   gateStdout?: string;
 }
@@ -60,6 +61,7 @@ export function buildVerifyHintContext(
     traceQuote: failure.traceQuote,
     traceFailureReason: failure.traceReason,
     kpiFailureReason: failure.kpiReason ?? failure.message,
+    kpiKind: failure.kpiKind,
     gateStderr: failure.gateStderr,
     gateStdout: failure.gateStdout,
     strictTrace: options.strictTrace,
@@ -126,17 +128,26 @@ function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
   };
 }
 
+function kpiErrorCodeForKind(kind: KpiFailureKind | undefined): GxtErrorCode {
+  switch (kind) {
+    case "missing":
+      return GXT_ERROR.KPI_REPORT_MISSING;
+    case "invalid":
+      return GXT_ERROR.KPI_REPORT_INVALID;
+    case "stale":
+      return GXT_ERROR.KPI_REPORT_STALE;
+    case "threshold":
+    case "exit_code":
+      return GXT_ERROR.KPI_GATE_FAILED;
+    default:
+      return GXT_ERROR.KPI_GATE_FAILED;
+  }
+}
+
 function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const verifyCmdStr = verifyCmd(mission);
-  const reason = ctx.kpiFailureReason ?? "";
-  const errorCode = reason.includes("missing")
-    ? GXT_ERROR.KPI_REPORT_MISSING
-    : reason.includes("invalid") || reason.includes("schema")
-      ? GXT_ERROR.KPI_REPORT_INVALID
-      : reason.includes("STALE") || reason.includes("stale")
-        ? GXT_ERROR.KPI_REPORT_STALE
-        : GXT_ERROR.KPI_GATE_FAILED;
+  const errorCode = kpiErrorCodeForKind(ctx.kpiKind);
   return {
     error_code: errorCode,
     fix_hints: [

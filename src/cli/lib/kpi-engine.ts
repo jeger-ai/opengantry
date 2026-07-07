@@ -279,6 +279,7 @@ function loadReportOrFail(
       exitCode: 1,
       workerLogPath,
       kpiReportPath: reportRel,
+      kpiKind: missing ? "missing" : "invalid",
       kpiReason: message,
     };
   }
@@ -296,6 +297,7 @@ function staleFailure(
     exitCode: 1,
     workerLogPath,
     kpiReportPath: reportRel,
+    kpiKind: "stale",
     kpiReason: stale.reason,
     kpiStalePaths: stale.stalePaths,
   };
@@ -313,6 +315,7 @@ function thresholdFailure(
     exitCode: 1,
     workerLogPath,
     kpiReportPath: reportRel,
+    kpiKind: "threshold",
     kpiReason: first.reason,
     kpiMetric: first.metric,
     kpiOp: first.op,
@@ -365,6 +368,7 @@ export function evaluateKpiPhase(
         exitCode: 1,
         workerLogPath,
         kpiReportPath: reportRel,
+        kpiKind: "exit_code",
         kpiReason: `report exit_code=${String(report.exit_code)}`,
       },
     };
