@@ -322,3 +322,12 @@ example trace line for gapman verify
 - DoD 3 MSN-0065: pruned dead verify exports/barrels; tests retargeted to canonical surgeon and init APIs (#101)
 - DoD 4 MSN-0065: ajv-loader, parseMsnId dedupe, kpi KpiPhaseOutcome union, upgrade payload atomicity, MCP next_actions only (#107)
 - DoD 5 MSN-0065: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.5 quality remediation)
+
+## MSN-0066 — v2.2.5 release (#108)
+
+[CONTEXT-REQUEST] paths: package.json, templates/integrations/compatibility.json, docs/BACKLOG.md, docs/ADOPTION.md, README.md — v2.2.5 release parity and publish prep (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0066: assert-cli-version-parity OK — source + runtime at 2.2.5
+- DoD 2 MSN-0066: compatibility.json opengantry_version synced to 2.2.5 (release blocker cleared)
+- DoD 3 MSN-0066: BACKLOG v2.2.5 npm publish row added (#108)
+- DoD 4 MSN-0066: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.5 release)

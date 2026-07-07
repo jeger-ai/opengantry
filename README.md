@@ -74,14 +74,15 @@ Developing this repository from source: `npm ci && npm run build` — see [gantr
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gantry verify --fix`, role output via `--audience worker\|teacher\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v2.2.4** — unified CLI naming (`gantry` primary; legacy `gapman` alias). Current npm publish: **v2.2.4**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v2.2.5** — unified CLI naming (`gantry` primary; legacy `gapman` alias). Current npm publish: **v2.2.5**. See [.gitagent/teacher/RUNTIME.md](.gitagent/teacher/RUNTIME.md).
 
 ## Release timeline (latest first)
 
-Current npm release in this repository: **`gantry` v2.2.4**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
+Current npm release in this repository: **`gantry` v2.2.5**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
+| **v2.2.5** | Quality remediation — recursive test glob ([#99](https://github.com/jeger-ai/opengantry/issues/99)), dead verify code prune ([#100](https://github.com/jeger-ai/opengantry/issues/100)–[#101](https://github.com/jeger-ai/opengantry/issues/101)), mechanical cleanups ([#107](https://github.com/jeger-ai/opengantry/issues/107)) |
 | **v2.2.4** | Unified gantry naming cutover ([#94](https://github.com/jeger-ai/opengantry/issues/94)); docs positioning — Gantry.io disambiguation, long-tail SEO (`Open Source Gantry`, `Gantry CLI`, `Gantry Git hook`), vendor-neutral local governance framing ([#95](https://github.com/jeger-ai/opengantry/issues/95)–[#97](https://github.com/jeger-ai/opengantry/issues/97)) |
 | **v2.2.3** | Declarative `trusted_automation` policy in `.gitagent/config.json` — repository-legislated bot maintenance bypass with `max_net_loc <= 5` ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
 | **v2.2.2** | Time-to-Scaffold benchmark — `npm run examples:benchmark`, measured LOC matrix, adoption discovery ([#79](https://github.com/jeger-ai/opengantry/issues/79)) |
@@ -387,7 +388,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gantry` v2.2.4** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gantry init` in your project.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gantry` v2.2.5** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gantry init` in your project.
 
 ## Security
 

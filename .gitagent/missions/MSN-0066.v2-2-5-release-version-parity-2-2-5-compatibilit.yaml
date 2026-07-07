@@ -3,9 +3,21 @@
 msn_id: MSN-0066
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "DoD 1 MSN-0066: assert-cli-version-parity OK — source + runtime at 2.2.5"
+    anchor: "MSN-0066"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0066: compatibility.json opengantry_version synced to 2.2.5 (release blocker cleared)"
+    anchor: "MSN-0066"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0066: BACKLOG v2.2.5 npm publish row added (#108)"
+    anchor: "MSN-0066"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0066: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.5 release)"
+    anchor: "MSN-0066"
+    status: PASS

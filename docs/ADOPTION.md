@@ -1,4 +1,4 @@
-# Adoption Runbook (v2.2.4)
+# Adoption Runbook (v2.2.5)
 
 This runbook documents the OpenGantry specimen flow for adopters testing `gantry` locally. Product positioning lives in the [README](../README.md); this file is the operational path.
 
@@ -218,6 +218,7 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
 | Release | Highlights |
 |---------|------------|
+| **v2.2.5** | Quality remediation — recursive test glob ([#99](https://github.com/jeger-ai/opengantry/issues/99)), dead code prune ([#100](https://github.com/jeger-ai/opengantry/issues/100)–[#101](https://github.com/jeger-ai/opengantry/issues/101)), mechanical cleanups ([#107](https://github.com/jeger-ai/opengantry/issues/107)) |
 | **v2.2.4** | Unified gantry naming ([#94](https://github.com/jeger-ai/opengantry/issues/94)); docs positioning — Gantry.io disambiguation, long-tail SEO, vendor-neutral local governance ([#95](https://github.com/jeger-ai/opengantry/issues/95)–[#97](https://github.com/jeger-ai/opengantry/issues/97)) |
 | **v2.2.3** | Declarative `trusted_automation` policy (`.gitagent/config.json`, `max_net_loc <= 5`, git-derived eval) ([#92](https://github.com/jeger-ai/opengantry/issues/92)) |
 | **v2.2.2** | Time-to-Scaffold public benchmark (`examples/benchmark-agent/`, measured LOC matrix, adoption discovery docs) |
@@ -227,11 +228,11 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 | **v1.0.0** | `gantry init --tutorial`, global `--audience`, adoption-first docs |
 | **v0.9.0** | `gantry start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.2.4**.
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.2.5**.
 - **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
 - **Local validate base ref:** `npm run validate` / `./scripts/dev-validate.sh` default to `origin/main`; pass your integration ref explicitly when it differs (e.g. `./scripts/dev-validate.sh origin/develop`).
 - **Upgrade from v1.x:** `npm install @jeger-ai/opengantry@latest`, then `gantry upgrade apply` (or `gantry init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, stale-evidence verify, and updated workflow.
-- **npm publish (maintainers):** push an annotated tag `v2.2.4` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.2.4` or `@latest`.
+- **npm publish (maintainers):** push an annotated tag `v2.2.5` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.2.5` or `@latest`.
 
 ## Hooks (fast, scoped)
 

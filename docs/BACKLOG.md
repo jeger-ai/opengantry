@@ -9,7 +9,19 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-06-25 (v2.2.4 released — #94–#98, MSN-0064, npm **2.2.4**)
+**Last synced:** 2026-07-07 (v2.2.5 released — #99–#101, #107–#108, MSN-0065–MSN-0066, npm **2.2.5**)
+
+---
+
+## v2.2.5 — Quality remediation (patch)
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Recursive test glob** (`dist/cli/tests/**/*.test.js` — missions/ suite runs in CI) | **Done** | [#99](https://github.com/jeger-ai/opengantry/issues/99) · MSN-0065 |
+| **Delete dead verify-changed-missions.ts** | **Done** | [#100](https://github.com/jeger-ai/opengantry/issues/100) · MSN-0065 |
+| **Prune dead verify exports/barrels** | **Done** | [#101](https://github.com/jeger-ai/opengantry/issues/101) · MSN-0065 |
+| **Mechanical cleanups** (ajv-loader, KpiPhaseOutcome, MCP next_actions, upgrade deprecation) | **Done** | [#107](https://github.com/jeger-ai/opengantry/issues/107) · MSN-0065 |
+| **2.2.5 npm publish** (version parity, MSN-0066, tag + npm + GH release) | **Done** | [#108](https://github.com/jeger-ai/opengantry/issues/108) · MSN-0066 |
 
 ---
 
@@ -324,7 +336,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.2.4 released ([#94](https://github.com/jeger-ai/opengantry/issues/94)–[#98](https://github.com/jeger-ai/opengantry/issues/98), npm **2.2.4**); next: v2.3.0 cage hardening ([#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17)).
+**Current focus:** v2.2.5 released ([#99](https://github.com/jeger-ai/opengantry/issues/99)–[#101](https://github.com/jeger-ai/opengantry/issues/101), [#107](https://github.com/jeger-ai/opengantry/issues/107)–[#108](https://github.com/jeger-ai/opengantry/issues/108), npm **2.2.5**); next: v2.3.0 cage hardening ([#102](https://github.com/jeger-ai/opengantry/issues/102)–[#106](https://github.com/jeger-ai/opengantry/issues/106)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
@@ -333,8 +345,9 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 | **Done (release)** | v2.2.1 patch | MSN-0060 thermo remediation + version parity |
 | **Done (release)** | v2.2.0 prep | MSN-0057 (#68 virtualization), MSN-0058 (release parity) |
 | **Done (release)** | v2.1.0 npm publish | MSN-0056; tag + npm **2.1.0** |
+| **Done (release)** | v2.2.5 quality remediation + npm publish | #99–#101, #107–#108; MSN-0065–MSN-0066; npm **2.2.5** |
 | **Done (release)** | v2.2.4 unified gantry naming + docs + npm publish | #94–#98; MSN-0064; npm **2.2.4** |
-| **Next** | [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | v2.3.0 cage hardening (ADR first) |
+| **Next** | [#102](https://github.com/jeger-ai/opengantry/issues/102)–[#106](https://github.com/jeger-ai/opengantry/issues/106) | v2.3.0 cage hardening |
 | **After** | [#24](https://github.com/jeger-ai/opengantry/issues/24)–[#29](https://github.com/jeger-ai/opengantry/issues/29), v1.2+ [#14](https://github.com/jeger-ai/opengantry/issues/14)–[#17](https://github.com/jeger-ai/opengantry/issues/17) | Deferred tactical + strategic (ADR first) |
 | Done (v1.1.2) | [#44](https://github.com/jeger-ai/opengantry/issues/44)–[#46](https://github.com/jeger-ai/opengantry/issues/46), [#49](https://github.com/jeger-ai/opengantry/issues/49)–[#53](https://github.com/jeger-ai/opengantry/issues/53) | MSN-0034–MSN-0035 |
 | Done (v1.1.1) | [#10](https://github.com/jeger-ai/opengantry/issues/10)–[#11](https://github.com/jeger-ai/opengantry/issues/11), [#42](https://github.com/jeger-ai/opengantry/issues/42)–[#48](https://github.com/jeger-ai/opengantry/issues/48), [#50](https://github.com/jeger-ai/opengantry/issues/50) | MSN-0032–MSN-0033 |
