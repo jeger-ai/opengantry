@@ -331,3 +331,9 @@ example trace line for gapman verify
 - DoD 2 MSN-0066: compatibility.json opengantry_version synced to 2.2.5 (release blocker cleared)
 - DoD 3 MSN-0066: BACKLOG v2.2.5 npm publish row added (#108)
 - DoD 4 MSN-0066: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.5 release)
+
+## MSN-0067 — v2.3.0 #105 gen:dogfood
+
+[CONTEXT-REQUEST] paths: package.json, scripts/gen-dogfood.mjs — gen:dogfood generator (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0067: gen:dogfood syncs templates/scripts to scripts/ and gxt-validate workflow; wired into npm run build (#105)
