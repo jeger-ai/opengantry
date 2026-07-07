@@ -12,8 +12,10 @@ import { resolvePinnedMission } from "./missions/parser.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import type { TriageResult } from "./types.js";
 import { GapmanUserError } from "./errors.js";
+import { GXT_ERROR } from "./gxt-error-codes.js";
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import { loadWorkspace } from "./workspace.js";
+import { assertMcpMissionWritePath, McpWriteDeniedError } from "./mcp-write-guard.js";
 
 export type McpToolStatus =
   | "awaiting_human_approval"
@@ -118,6 +120,20 @@ export interface StartOrchestrationInput {
 
 export function mcpError(code: string, message: string, retryable: boolean): { status: "error"; error: McpErrorBody } {
   return { status: "error", error: { code, message, retryable } };
+}
+
+function mcpWriteDenied(err: McpWriteDeniedError): { status: "error"; error: McpErrorBody } {
+  return mcpError(GXT_ERROR.MCP_WRITE_DENIED, err.message, false);
+}
+
+function resolveGuardedMissionAbs(root: string, missionFilePath: string): string | { status: "error"; error: McpErrorBody } {
+  try {
+    assertMcpMissionWritePath(missionFilePath);
+  } catch (err) {
+    if (err instanceof McpWriteDeniedError) return mcpWriteDenied(err);
+    throw err;
+  }
+  return resolveMissionFilePath(root, missionFilePath);
 }
 
 function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?: string): string {
@@ -225,6 +241,12 @@ export function handleExecuteLegislation(
   }
 
   const missionRel = formatRepoRelative(root, result.missionAbs);
+  try {
+    assertMcpMissionWritePath(missionRel);
+  } catch (err) {
+    if (err instanceof McpWriteDeniedError) return mcpWriteDenied(err);
+    throw err;
+  }
   const escapedTitle = payload.title.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const commitMessage = `[${payload.msn_id}] Legislate ${escapedTitle}`;
   const suggestedHumanAction = `git add ${missionRel} && git commit -m "${commitMessage}"`;
@@ -245,7 +267,9 @@ export function handleCheckSignature(
   missionFilePath: string,
 ): CheckSignatureResult | { status: "error"; error: McpErrorBody } {
   const { root } = loadWorkspace();
-  const missionAbs = resolveMissionFilePath(root, missionFilePath);
+  const missionAbsOrErr = resolveGuardedMissionAbs(root, missionFilePath);
+  if (typeof missionAbsOrErr !== "string") return missionAbsOrErr;
+  const missionAbs = missionAbsOrErr;
 
   if (!fs.existsSync(missionAbs)) {
     return mcpError("MISSION_NOT_FOUND", `mission file not found: ${missionFilePath}`, true);
@@ -277,7 +301,9 @@ export function handleCheckSignature(
 
 export function handlePinMission(missionFilePath: string): PinMissionResult | { status: "error"; error: McpErrorBody } {
   const { root } = loadWorkspace();
-  const missionAbs = resolveMissionFilePath(root, missionFilePath);
+  const missionAbsOrErr = resolveGuardedMissionAbs(root, missionFilePath);
+  if (typeof missionAbsOrErr !== "string") return missionAbsOrErr;
+  const missionAbs = missionAbsOrErr;
 
   if (!fs.existsSync(missionAbs)) {
     return mcpError("MISSION_NOT_FOUND", `mission file not found: ${missionFilePath}`, true);
@@ -361,9 +387,9 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
 
   if (input.pin_if_needed === true && result.mission_file_path) {
     const { root } = loadWorkspace();
-    const missionAbs = resolveMissionFilePath(root, result.mission_file_path);
-    if (fs.existsSync(missionAbs)) {
-      payload.pinned_mission = pinMissionFile(root, missionAbs);
+    const missionAbsOrErr = resolveGuardedMissionAbs(root, result.mission_file_path);
+    if (typeof missionAbsOrErr === "string" && fs.existsSync(missionAbsOrErr)) {
+      payload.pinned_mission = pinMissionFile(root, missionAbsOrErr);
     }
   }
 

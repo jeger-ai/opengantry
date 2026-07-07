@@ -35,6 +35,7 @@ test("gxtCodeFromGapmanUserError: INVALID_ARGUMENT maps to GXT_INVALID_ARGUMENT"
 test("gxtCodeFromGapmanUserError: runtime and forbidden codes", () => {
   assert.equal(gxtCodeFromGapmanUserError("FORBIDDEN_ZONE_VIOLATION"), GXT_ERROR.FORBIDDEN_ZONE);
   assert.equal(gxtCodeFromGapmanUserError("RUNTIME_EXEC_FAILED"), GXT_ERROR.RUNTIME_EXEC_FAILED);
+  assert.equal(gxtCodeFromGapmanUserError("MCP_WRITE_DENIED"), GXT_ERROR.MCP_WRITE_DENIED);
 });
 
 test("mapGitProofCodeToGxt: all git-proof codes are known", () => {

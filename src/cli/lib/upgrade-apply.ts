@@ -13,6 +13,8 @@ import {
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
 import { resolveMissionPathRequired } from "./missions/parser.js";
 import { assertMissionSchemaValid } from "./missions/validator.js";
+import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "./mcp-write-guard.js";
+import { loadManifest } from "./manifest.js";
 import { writeSubstrateVersionFile } from "./substrate-version.js";
 import {
   parseUpgradePayloadFromMissionBody,
@@ -140,6 +142,16 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
       status: "blocked",
       message: errorMessage(e),
     };
+  }
+
+  try {
+    const manifest = loadManifest(repoRoot);
+    assertMcpSubstrateUpgradeWritePaths(manifest, payload.planned_writes);
+  } catch (e) {
+    if (e instanceof McpWriteDeniedError) {
+      throw new GapmanUserError(e.code, e.message, e.hint);
+    }
+    throw e;
   }
 
   verifyStagedHashes(repoRoot, payload);

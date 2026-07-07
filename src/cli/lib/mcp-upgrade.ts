@@ -1,6 +1,8 @@
 import { errorMessage } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
+import { GXT_ERROR } from "./gxt-error-codes.js";
 import type { McpErrorBody } from "./mcp-governance.js";
+import { McpWriteDeniedError } from "./mcp-write-guard.js";
 import type { UpgradeApplyResult } from "./upgrade-apply.js";
 import {
   assertStableUpgradePlanPayloadV1,
@@ -23,6 +25,12 @@ export interface UpgradePlanMcpInput {
 }
 
 function mcpErrorBody(e: unknown): { status: "error"; error: McpErrorBody } {
+  if (e instanceof McpWriteDeniedError) {
+    return {
+      status: "error",
+      error: { code: GXT_ERROR.MCP_WRITE_DENIED, message: e.message, retryable: false },
+    };
+  }
   if (e instanceof GapmanUserError) {
     return {
       status: "error",

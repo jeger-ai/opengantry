@@ -383,3 +383,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md, SECURITY.md — ADR + security runbook (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0076: ADR-0021 documents verify --break-glass + git-notes as protocol; SECURITY.md runbook (#17)
+
+## MSN-0077 — v2.3.1 #14 MCP write-containment
+
+[CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md — ADR for MCP write guard (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0077: mcp-write-guard at gxt_* boundaries; GXT_MCP_WRITE_DENIED; ADR-0022 (#14)
