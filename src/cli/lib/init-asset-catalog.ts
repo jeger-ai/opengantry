@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   loadIntegrationCompat,
-  resolveTemplateRootFromModule,
   type IntegrationCompatManifest,
 } from "./integration-compat.js";
 import type { InitProfile } from "./init-profile.js";
@@ -91,21 +90,4 @@ export function resolveAssetsFromProfile(
 
 export function templatePathForAsset(asset: InitAssetSpec): string {
   return (asset.templatePath ?? asset.targetPath).split("/").join(path.sep);
-}
-
-/** Legacy default profile asset target paths (non-TTY / --yes parity). */
-export function legacyDefaultInitTargetPaths(templatesRoot?: string): string[] {
-  const root = templatesRoot ?? resolveTemplateRootFromModule();
-  return resolveAssetsFromProfile(
-    {
-      ides: ["cursor"],
-      integrationsDocPath: "docs/INTEGRATIONS.md",
-      skillsPreset: "specimen",
-      gitHooks: true,
-      ciWorkflow: true,
-      architectureSource: "unset",
-    },
-    loadIntegrationCompat(root),
-    root,
-  ).map((a) => a.targetPath);
 }

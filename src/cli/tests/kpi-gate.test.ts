@@ -70,8 +70,8 @@ test("evaluateKpiPhase: missing report fails", () => {
     thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
   };
   const result = evaluateKpiPhase(root, { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] }, "gapman", kpiGate, {}, "/tmp/WORKER_LOG.md");
-  assert.ok(result && "ok" in result && result.ok === false);
-  assert.equal(result.phase, "kpi");
+  assert.equal(result?.kind, "fail");
+  assert.equal(result?.failure.phase, "kpi");
 });
 
 test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
@@ -98,5 +98,5 @@ test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
     thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
   };
   const result = evaluateKpiPhase(root, manifest, "gapman", kpiGate, { skipStaleEvidence: true }, "WORKER_LOG.md");
-  assert.ok(result === null || ("warnings" in result && Array.isArray(result.warnings)));
+  assert.ok(result === null || (result.kind === "ok" && Array.isArray(result.warnings)));
 });

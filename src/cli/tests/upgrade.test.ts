@@ -10,7 +10,7 @@ import { runUpgradePlan } from "../lib/upgrade-plan.js";
 import { loadIntegrationCompat } from "../lib/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import { upgradeEligibleAssets } from "../lib/upgrade-plan.js";
-import { resolveAssetsFromProfile, legacyDefaultInitTargetPaths } from "../lib/init-asset-catalog.js";
+import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
 import { defaultInitProfile } from "../lib/init-profile.js";
 import { copyMissionSchema, gitInitCommit } from "./test-fixtures.js";
 import { withTeacherEnvAsync } from "./test-shared.js";
@@ -49,8 +49,12 @@ test("upgradeEligibleAssets: excludes scaffold_only paths", () => {
   assert.ok(targets.includes(".cursor/hooks.json"));
 });
 
-test("legacyDefaultInitTargetPaths: includes SUBSTRATE.version.json", () => {
-  const paths = legacyDefaultInitTargetPaths();
+test("resolveAssetsFromProfile: default includes SUBSTRATE.version.json", () => {
+  const paths = resolveAssetsFromProfile(
+    defaultInitProfile(),
+    loadIntegrationCompat(templatesRoot),
+    templatesRoot,
+  ).map((a) => a.targetPath);
   assert.ok(paths.includes(".gitagent/foreman/SUBSTRATE.version.json"));
 });
 

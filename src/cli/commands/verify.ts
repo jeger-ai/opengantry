@@ -1,10 +1,8 @@
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { gitRevParse } from "../lib/git.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
 import { initFailurePayload } from "../lib/verify-presentation.js";
 import { emitVerifyJson } from "../lib/verify-presentation.js";
 import type { VerifyOptions } from "../lib/verify-engine.js";
-import { evaluateVerifyPhases } from "../lib/verify-engine.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GapmanUserError, reportUserFacingError } from "../lib/errors.js";
@@ -112,11 +110,4 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
     }
     reportUserFacingError(e);
   }
-}
-
-/** Exposed for tests that need silent phase evaluation without fix wrapper. */
-export function evaluateVerifyForMission(options: VerifyOptions) {
-  const { root, manifest } = loadWorkspace();
-  const mission = parseMissionFile(root, options.mission!);
-  return evaluateVerifyPhases(root, mission, options, manifest);
 }

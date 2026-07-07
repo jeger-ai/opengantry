@@ -9,6 +9,7 @@ import {
   hintGitProof,
   hintTracePendingSteps,
   parseGitProofCode,
+  parseMsnIdFromGitProofMessage,
 } from "./fix-hints.js";
 import type { TraceFailureKind } from "./trace.js";
 import type { VerifyFailurePhase, VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
@@ -63,11 +64,6 @@ export function buildVerifyHintContext(
     gateStdout: failure.gateStdout,
     strictTrace: options.strictTrace,
   };
-}
-
-function parseMsnIdFromGitProofMessage(message: string): string | undefined {
-  const m = message.match(/\[(MSN-\d{4})\]/);
-  return m?.[1];
 }
 
 function tagStep(audience: OutputAudience, step: string): AudienceTaggedStep {

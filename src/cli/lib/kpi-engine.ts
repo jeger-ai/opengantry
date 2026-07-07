@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ErrorObject, ValidateFunction } from "ajv";
-import Ajv2020Import from "ajv/dist/2020.js";
-import addFormatsImport from "ajv-formats";
 import YAML from "yaml";
+import { createSchemaValidator } from "./ajv-loader.js";
 import { REL_KPI_REPORT_SCHEMA } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git.js";
@@ -14,10 +13,6 @@ import type { KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } f
 import type { VerifyOptions } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-engine.js";
 
-type AjvCtor = new (opts?: object) => { compile: (schema: object) => ValidateFunction };
-const Ajv2020 = Ajv2020Import as unknown as AjvCtor;
-const addFormats = addFormatsImport as unknown as (ajv: InstanceType<AjvCtor>) => void;
-
 let compiledValidator: ValidateFunction | null = null;
 let compiledForRoot: string | null = null;
 
@@ -27,9 +22,7 @@ function loadKpiReportSchemaValidator(root: string): ValidateFunction {
   }
   const schemaPath = path.join(root, REL_KPI_REPORT_SCHEMA);
   const schemaDoc = YAML.parse(fs.readFileSync(schemaPath, "utf8")) as Record<string, unknown>;
-  const ajv = new Ajv2020({ allErrors: true, strict: false });
-  addFormats(ajv);
-  const validate = ajv.compile(schemaDoc);
+  const validate = createSchemaValidator(schemaDoc);
   compiledValidator = validate;
   compiledForRoot = root;
   return validate;
@@ -328,6 +321,11 @@ function thresholdFailure(
   };
 }
 
+export type KpiPhaseOutcome =
+  | { kind: "ok"; warnings: string[] }
+  | { kind: "fail"; failure: VerifyPhaseFailure }
+  | null;
+
 export function evaluateKpiPhase(
   root: string,
   manifest: Manifest,
@@ -335,10 +333,10 @@ export function evaluateKpiPhase(
   kpiGate: KpiGateSpec,
   options: VerifyOptions,
   workerLogPath: string,
-): VerifyPhaseFailure | { warnings: string[] } | null {
+): KpiPhaseOutcome {
   const reportRel = kpiGate.reportPath.replace(/\\/g, "/");
   const loaded = loadReportOrFail(root, reportRel, workerLogPath);
-  if ("ok" in loaded) return loaded;
+  if ("ok" in loaded) return { kind: "fail", failure: loaded };
 
   const stale = verifyKpiReportFreshness(root, manifest, skillKey, reportRel, {
     skipStaleEvidence: options.skipStaleEvidence === true,
@@ -349,23 +347,28 @@ export function evaluateKpiPhase(
   if (stale.advisoryOnly && stale.reason) {
     warnings.push(`gantry verify: advisory — ${stale.reason}`);
   }
-  if (stale.stale) return staleFailure(reportRel, workerLogPath, stale);
+  if (stale.stale) return { kind: "fail", failure: staleFailure(reportRel, workerLogPath, stale) };
 
   const report = loaded.report;
   const failures = evaluateKpiThresholds(report, kpiGate.thresholds);
-  if (failures.length > 0) return thresholdFailure(reportRel, workerLogPath, failures[0]!);
+  if (failures.length > 0) {
+    return { kind: "fail", failure: thresholdFailure(reportRel, workerLogPath, failures[0]!) };
+  }
 
   if (report.exit_code !== 0) {
     return {
-      ok: false,
-      phase: "kpi",
-      message: `KPI report exit_code=${String(report.exit_code)} (expected 0)`,
-      exitCode: 1,
-      workerLogPath,
-      kpiReportPath: reportRel,
-      kpiReason: `report exit_code=${String(report.exit_code)}`,
+      kind: "fail",
+      failure: {
+        ok: false,
+        phase: "kpi",
+        message: `KPI report exit_code=${String(report.exit_code)} (expected 0)`,
+        exitCode: 1,
+        workerLogPath,
+        kpiReportPath: reportRel,
+        kpiReason: `report exit_code=${String(report.exit_code)}`,
+      },
     };
   }
 
-  return warnings.length > 0 ? { warnings } : null;
+  return warnings.length > 0 ? { kind: "ok", warnings } : null;
 }

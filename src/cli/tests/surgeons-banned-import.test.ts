@@ -4,9 +4,25 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { findBannedImportsInFolder } from "../lib/ast-discovery.js";
-import { quarantineBannedImportInFile } from "../lib/surgeons/banned-import.js";
+import { quarantineImportDeclaration } from "../lib/surgeons/quarantine-import.js";
 
-test("quarantineBannedImportInFile: comments import and injects proxy roadblock", () => {
+function quarantineBannedImportInFile(
+  absPath: string,
+  specifier: string,
+  ruleId: string = "RULE-BANNED-IMPORT",
+  root: string = process.cwd(),
+): { mutated: boolean; lineNumber?: number } {
+  const result = quarantineImportDeclaration({
+    absPath,
+    moduleSpecifier: specifier,
+    ruleId,
+    reason: "removed banned specifier",
+    root,
+  });
+  return { mutated: result.mutated, lineNumber: result.line };
+}
+
+test("quarantineImportDeclaration: comments import and injects proxy roadblock", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-ban-"));
   const file = path.join(dir, "bad.ts");
   fs.writeFileSync(
@@ -30,7 +46,7 @@ export const x = fetchData;
   assert.doesNotMatch(out, /^import .*axios/m);
 });
 
-test("quarantineBannedImportInFile: no-op when specifier absent", () => {
+test("quarantineImportDeclaration: no-op when specifier absent", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-ban-miss-"));
   const file = path.join(dir, "clean.ts");
   const source = `import fs from "node:fs";\nexport const x = 1;\n`;
@@ -41,7 +57,7 @@ test("quarantineBannedImportInFile: no-op when specifier absent", () => {
   assert.equal(fs.readFileSync(file, "utf8"), source);
 });
 
-test("quarantineBannedImportInFile: gate scan no longer detects banned specifier", () => {
+test("quarantineImportDeclaration: gate scan no longer detects banned specifier", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-ban-gate-"));
   const relDir = path.join("src", "pkg");
   const absDir = path.join(dir, relDir);

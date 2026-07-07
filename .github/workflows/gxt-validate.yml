@@ -59,7 +59,7 @@ jobs:
         run: ./scripts/validate-gxt.sh manifest
 
       - name: gantry unit tests
-        run: node --test dist/cli/tests/*.test.js
+        run: node --test "dist/cli/tests/**/*.test.js"
 
       - name: gantry doctor (readiness)
         run: node dist/cli/index.js doctor

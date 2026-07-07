@@ -373,16 +373,6 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
     toPosixRel(repoRoot, w.absoluteTarget),
   );
 
-  const payload: UpgradePayload = {
-    from_version: installed.version,
-    to_version: bundled,
-    staged_root: REL_UPGRADE_TMP,
-    planned_writes: plannedWrites,
-    skipped_scaffold_only: plan.skippedUserMutable,
-    staged_hashes: {},
-    created_at: new Date().toISOString(),
-  };
-
   const missionRel = `.gitagent/missions/${msnId}.upgrade-v${semverSlug(bundled)}.yaml`;
   const missionAbs = path.join(repoRoot, fromPosix(missionRel));
   const suggestedHumanAction = `git add ${missionRel}\ngit commit -m "[${msnId}] approve substrate upgrade to v${bundled}"`;
@@ -407,9 +397,18 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
     return shared;
   }
 
-  payload.staged_hashes = writeStagedFiles(repoRoot, plan.writes);
+  const stagedHashes = writeStagedFiles(repoRoot, plan.writes);
   mergeGitignoreFromTemplate(repoRoot, templatesRoot);
   mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
+  const payload: UpgradePayload = {
+    from_version: installed.version,
+    to_version: bundled,
+    staged_root: REL_UPGRADE_TMP,
+    planned_writes: plannedWrites,
+    skipped_scaffold_only: plan.skippedUserMutable,
+    staged_hashes: stagedHashes,
+    created_at: new Date().toISOString(),
+  };
   const missionBody = buildUpgradeMissionYaml({ msnId, fromVersion: installed.version, toVersion: bundled, payload });
   fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
   fs.writeFileSync(missionAbs, missionBody, "utf8");

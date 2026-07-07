@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { architectureCredentialPath, loadArchitectureCredential } from "./architecture-credential.js";
+import { loadArchitectureCredential } from "./architecture-credential.js";
 import { errorMessage, fromPosix } from "./cli-io.js";
 import {
   REL_ARCHITECTURE_ACCESS_SKILL,
@@ -349,8 +349,4 @@ export function runArchitecturePointerDoctorChecks(repoRoot: string): DoctorLine
   lines.push(...doctorCheckArchitectureAccess(repoRoot, pointer));
   lines.push(...doctorCheckArchitectureTarget(repoRoot, pointer));
   return lines;
-}
-
-export function architectureCredentialConfigured(repoRoot: string, slot: string): boolean {
-  return fs.existsSync(architectureCredentialPath(repoRoot, slot));
 }

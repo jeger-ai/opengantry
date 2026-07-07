@@ -4,7 +4,6 @@ import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import type { VerifyPhaseFailure } from "../lib/verify-engine.js";
 import {
   getSurgeonForErrorCode,
-  hasRegisteredSurgeon,
   resolveSurgeonErrorCode,
 } from "../lib/surgeons/registry.js";
 
@@ -38,7 +37,6 @@ test("resolveSurgeonErrorCode: non-gate phase returns null", () => {
 });
 
 test("getSurgeonForErrorCode: BANNED_IMPORT_DETECTED registered", () => {
-  assert.equal(hasRegisteredSurgeon(GXT_ERROR.BANNED_IMPORT_DETECTED), true);
   const surgeon = getSurgeonForErrorCode(GXT_ERROR.BANNED_IMPORT_DETECTED);
   assert.ok(surgeon);
   assert.equal(surgeon!.errorCode, GXT_ERROR.BANNED_IMPORT_DETECTED);
@@ -69,5 +67,5 @@ test("resolveSurgeonErrorCode: maps import-layer gate JSON", () => {
 });
 
 test("getSurgeonForErrorCode: IMPORT_LAYER_VIOLATION registered", () => {
-  assert.equal(hasRegisteredSurgeon(GXT_ERROR.IMPORT_LAYER_VIOLATION), true);
+  assert.ok(getSurgeonForErrorCode(GXT_ERROR.IMPORT_LAYER_VIOLATION));
 });

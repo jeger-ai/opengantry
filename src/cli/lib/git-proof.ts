@@ -5,6 +5,8 @@ import { toPosixRel } from "./cli-io.js";
 import { gitRun } from "./git.js";
 import { hintGitProof, type GitProofHintContext } from "./fix-hints.js";
 import { GapmanUserError } from "./errors.js";
+import { extractMsnIdFromMissionPath } from "./missions/parser.js";
+import { resolveTeacherEmails } from "./teacher-identity.js";
 
 function throwGitProofError(
   code: string,
@@ -17,8 +19,6 @@ function throwGitProofError(
     hintGitProof(code, ctx),
   );
 }
-import { extractMsnIdFromMissionPath } from "./missions/parser.js";
-import { resolveTeacherEmails } from "./teacher-identity.js";
 
 /** Missions verified by `gantry verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;

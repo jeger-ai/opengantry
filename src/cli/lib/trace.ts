@@ -25,10 +25,6 @@ export function isPendingStatus(status: NormalizedTraceStatus): boolean {
   return status === "PENDING";
 }
 
-export function isFailStatus(status: NormalizedTraceStatus): boolean {
-  return status === "FAIL";
-}
-
 
 
 /** Typed trace verification failure — control flow must branch on this, not UI strings. */

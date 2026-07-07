@@ -161,20 +161,3 @@ export function quarantineImportDeclaration(
 
   return { mutated: true, line, bindings, startOffset: start };
 }
-
-/** Back-compat alias used by banned-import surgeon tests. */
-export function quarantineBannedImportInFile(
-  absPath: string,
-  specifier: string,
-  ruleId: string = "RULE-BANNED-IMPORT",
-  root: string = process.cwd(),
-): { mutated: boolean; lineNumber?: number } {
-  const result = quarantineImportDeclaration({
-    absPath,
-    moduleSpecifier: specifier,
-    ruleId,
-    reason: "removed banned specifier",
-    root,
-  });
-  return { mutated: result.mutated, lineNumber: result.line };
-}

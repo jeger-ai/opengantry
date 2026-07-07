@@ -10,7 +10,6 @@ import {
   validateIntegrationCompat,
 } from "../lib/integration-compat.js";
 import {
-  legacyDefaultInitTargetPaths,
   resolveAssetsFromProfile,
 } from "../lib/init-asset-catalog.js";
 import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose.js";
@@ -31,7 +30,14 @@ test("integration compat: all IDE keys have manifest entries and recipes", () =>
 });
 
 test("resolveAssetsFromProfile: default catalog covers all core managed paths", () => {
-  const fromCatalog = legacyDefaultInitTargetPaths().sort();
+  const templatesRoot = path.join(getRepoRoot(), "templates");
+  const fromCatalog = resolveAssetsFromProfile(
+    defaultInitProfile(),
+    loadIntegrationCompat(templatesRoot),
+    templatesRoot,
+  )
+    .map((a) => a.targetPath)
+    .sort();
   assert.ok(fromCatalog.includes("scripts/validate-gxt.sh"));
   assert.ok(fromCatalog.includes("scripts/gxt-manifest-lib.mjs"));
   assert.ok(fromCatalog.includes("scripts/verify-pr-missions.sh"));

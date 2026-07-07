@@ -26,7 +26,7 @@ export function parseGitProofCode(message: string): string | null {
   return m?.[1] ?? null;
 }
 
-function parseMsnIdFromGitProofMessage(message: string): string | undefined {
+export function parseMsnIdFromGitProofMessage(message: string): string | undefined {
   const m = message.match(/\[(MSN-\d{4})\]/);
   return m?.[1];
 }

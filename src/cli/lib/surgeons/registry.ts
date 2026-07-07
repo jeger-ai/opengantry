@@ -31,10 +31,6 @@ export function getSurgeonForErrorCode(code: GxtErrorCode): CodeSurgeon | undefi
   return SURGEONS.find((s) => s.errorCode === code);
 }
 
-export function hasRegisteredSurgeon(code: GxtErrorCode): boolean {
-  return getSurgeonForErrorCode(code) !== undefined;
-}
-
 export function resolveSurgeonErrorCode(failure: VerifyPhaseFailure): GxtErrorCode | null {
   if (failure.phase !== "gate") return null;
   const stdout = failure.gateStdout ?? "";

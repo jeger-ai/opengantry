@@ -8,7 +8,9 @@ export interface CapturedConsole {
   stderr: string;
 }
 
-function withCapturedConsole<T>(fn: () => T): { result: T; output: CapturedConsole } {
+function swapCapturedConsole<T>(
+  run: () => T,
+): { result: T; output: CapturedConsole } {
   const stdoutChunks: string[] = [];
   const stderrChunks: string[] = [];
   const origLog = console.log;
@@ -20,7 +22,7 @@ function withCapturedConsole<T>(fn: () => T): { result: T; output: CapturedConso
     stderrChunks.push(args.map(String).join(" "));
   };
   try {
-    const result = fn();
+    const result = run();
     return {
       result,
       output: {
@@ -36,7 +38,7 @@ function withCapturedConsole<T>(fn: () => T): { result: T; output: CapturedConso
 
 /** Capture console.log / console.error for a synchronous callback. */
 export function captureConsole<T>(fn: () => T): { result: T; output: CapturedConsole } {
-  return withCapturedConsole(fn);
+  return swapCapturedConsole(fn);
 }
 
 /** Capture console.log / console.error for an async callback. */

@@ -88,7 +88,6 @@ export type StartOrchestrationMcpResult =
       msn_id: string | null;
       mission_file_path: string | null;
       skill_key: string;
-      next_steps: string[];
       next_actions: string[];
       exit_code: number;
       pinned_mission?: string;
@@ -102,7 +101,6 @@ export type StartOrchestrationMcpResult =
       skill_key: string;
       msn_id: string | null;
       mission_file_path: string | null;
-      next_steps: string[];
       next_actions: string[];
       exit_code: number;
     };
@@ -344,7 +342,6 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
       skill_key: result.skill_key,
       msn_id: result.msn_id,
       mission_file_path: result.mission_file_path,
-      next_steps: result.next_steps,
       next_actions: result.next_steps,
       exit_code: result.exit_code,
     };
@@ -357,7 +354,6 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
     msn_id: result.msn_id,
     mission_file_path: result.mission_file_path,
     skill_key: result.skill_key,
-    next_steps: result.next_steps,
     next_actions: result.next_steps,
     exit_code: result.exit_code,
     resolve: handleResolveMission(result.mission_file_path ?? undefined),

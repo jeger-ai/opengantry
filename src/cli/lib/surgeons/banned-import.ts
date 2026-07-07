@@ -6,8 +6,6 @@ import type { CodeSurgeon, SurgeonContext, SurgeonMutationResult } from "./regis
 
 const QUARANTINE_RULE = "RULE-BANNED-IMPORT";
 
-export { quarantineBannedImportInFile } from "./quarantine-import.js";
-
 export const bannedImportSurgeon: CodeSurgeon = {
   errorCode: GXT_ERROR.BANNED_IMPORT_DETECTED,
 

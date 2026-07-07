@@ -321,10 +321,3 @@ export function checkPerimeter(
     advisories,
   };
 }
-
-/** Verify a single commit has a good signature (for CI helpers). */
-export function verifyCommitSignature(repoRoot: string, hash: string): boolean {
-  const r = gitRun(repoRoot, ["verify-commit", hash]);
-  if (r.ok) return true;
-  return isGoodSignature(signatureStatus(repoRoot, hash));
-}

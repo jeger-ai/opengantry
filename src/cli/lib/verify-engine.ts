@@ -323,10 +323,10 @@ export function evaluateVerifyPhases(
       options,
       workerLogPath,
     );
-    if (kpiOutcome && "ok" in kpiOutcome && kpiOutcome.ok === false) {
-      return kpiOutcome;
+    if (kpiOutcome?.kind === "fail") {
+      return kpiOutcome.failure;
     }
-    if (kpiOutcome && "warnings" in kpiOutcome) {
+    if (kpiOutcome?.kind === "ok") {
       kpiWarnings = kpiOutcome.warnings;
     }
   }

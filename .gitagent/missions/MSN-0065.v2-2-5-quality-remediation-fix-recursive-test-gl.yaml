@@ -3,9 +3,25 @@
 msn_id: MSN-0065
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_WORKER_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "DoD 1 MSN-0065: recursive test glob dist/cli/tests/**/*.test.js — 385 tests including missions/ suite (#99)"
+    anchor: "MSN-0065"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0065: deleted verify-changed-missions.ts dead duplicate of verify-engine (#100)"
+    anchor: "MSN-0065"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0065: pruned dead verify exports/barrels; tests retargeted to canonical surgeon and init APIs (#101)"
+    anchor: "MSN-0065"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0065: ajv-loader, parseMsnId dedupe, kpi KpiPhaseOutcome union, upgrade payload atomicity, MCP next_actions only (#107)"
+    anchor: "MSN-0065"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0065: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (v2.2.5 quality remediation)"
+    anchor: "MSN-0065"
+    status: PASS
