@@ -87,7 +87,12 @@ cmd_upgrade_tmp() {
 }
 
 cmd_manifest() {
-  node "$GXT_MANIFEST_LIB" validate-manifest "$ROOT"
+  if [[ -f dist/cli/index.js ]]; then
+    node dist/cli/index.js check >/dev/null
+    echo "MANIFEST OK (gantry check)"
+  else
+    node "$GXT_MANIFEST_LIB" validate-manifest "$ROOT"
+  fi
 }
 
 cmd_msn() {

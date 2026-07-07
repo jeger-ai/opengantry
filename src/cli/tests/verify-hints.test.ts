@@ -40,6 +40,7 @@ test("hintsForVerifyPhase: gate detects import layer violation", () => {
 test("hintsForVerifyPhase: kpi stale maps error code", () => {
   const remediation = hintsForVerifyPhase("kpi", {
     missionPath: mission,
+    kpiKind: "stale",
     kpiFailureReason: "KPI report STALE (attested at abc1234)",
   });
   assert.equal(remediation.error_code, GXT_ERROR.KPI_REPORT_STALE);

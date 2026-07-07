@@ -349,3 +349,9 @@ example trace line for gapman verify
 ## MSN-0070 — v2.3.0 #38 WORKER_LOG doctor
 
 - DoD 1 MSN-0070: doctor warns on WORKER_LOG conflict markers, duplicate DoD lines, placeholder quotes (#38)
+
+## MSN-0071 — v2.3.0 #106 TS/mjs parity
+
+[CONTEXT-REQUEST] paths: templates/scripts/gxt-manifest-lib.mjs, templates/scripts/validate-gxt.sh — mjs manifest/glob parity + validate-gxt CLI path (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0071: perimeter_protected in mjs validateManifestStructure; **/ glob parity; range N+1 fix; manifest-parity tests (#106)

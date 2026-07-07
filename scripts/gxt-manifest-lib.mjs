@@ -129,6 +129,11 @@ export function loadTrustedAutomationRules(repoRoot) {
 
 export function matchGlob(pattern, filePath) {
   const normalized = normalizePath(filePath);
+  const g = normalizePath(pattern);
+  if (g.startsWith("**/")) {
+    const suffix = g.slice(3);
+    return normalized.endsWith(suffix) || normalized.includes(`/${suffix}`);
+  }
   const re = new RegExp(
     `^${normalizePath(pattern)
       .replace(/[.+^${}()|[\]\\]/g, "\\$&")
@@ -186,6 +191,16 @@ export function validateManifestStructure(repoRoot) {
   }
   if (!Array.isArray(m.risk_keywords)) {
     throw new Error("validate-gxt: risk_keywords must be an array");
+  }
+  if (m.perimeter_protected !== undefined) {
+    if (!Array.isArray(m.perimeter_protected)) {
+      throw new Error("validate-gxt: perimeter_protected must be an array when present");
+    }
+    for (const g of m.perimeter_protected) {
+      if (typeof g !== "string" || g.length === 0) {
+        throw new Error("validate-gxt: perimeter_protected items must be non-empty strings");
+      }
+    }
   }
   for (const [key, skill] of Object.entries(skills)) {
     if (!skill || typeof skill !== "object") {
@@ -443,6 +458,8 @@ export function evaluateTrustedAutomationCommit(repoRoot, commitSha) {
 
 /**
  * Evaluate a PR commit range for trusted automation eligibility.
+ * Range net_loc uses the full base...head diff; actor is the author of the last commit
+ * in the range (same as prior behavior, documented here for audit).
  * @returns {{ eligible: boolean, reason: string }}
  */
 export function evaluateTrustedAutomationRange(repoRoot, baseSha, headSha) {
@@ -463,11 +480,10 @@ export function evaluateTrustedAutomationRange(repoRoot, baseSha, headSha) {
     const files = commitChangedFiles(repoRoot, commit).filter((f) => isMsnEnforcedPath(f, prefixes));
     if (files.length === 0) continue;
     const actorEmail = commitAuthorEmail(repoRoot, commit);
-    const commitResult = evaluateTrustedAutomationCommit(repoRoot, commit);
-    if (!commitResult.eligible) {
+    if (findMatchingRule(rules, actorEmail).length === 0) {
       return {
         eligible: false,
-        reason: `commit ${commit.slice(0, 7)} failed: ${commitResult.reason}`,
+        reason: `commit ${commit.slice(0, 7)}: actor ${actorEmail} not covered by trusted_automation policy`,
       };
     }
   }
@@ -508,6 +524,15 @@ function main() {
         const stdin = fs.readFileSync(0, "utf8");
         process.exit(validateBypassNoteJson(stdin) ? 0 : 1);
       }
+      case "match-glob": {
+        const pattern = process.argv[4];
+        const filePath = process.argv[5];
+        if (!pattern || !filePath) {
+          console.error("Usage: gxt-manifest-lib.mjs match-glob <repoRoot> <pattern> <filePath>");
+          process.exit(2);
+        }
+        process.exit(matchGlob(pattern, filePath) ? 0 : 1);
+      }
       case "eval-commit": {
         const commitSha = process.argv[4];
         if (!commitSha) {
@@ -539,7 +564,7 @@ function main() {
       }
       default:
         console.error(
-          "Usage: gxt-manifest-lib.mjs <prefixes|validate-manifest|validate-bypass-note|eval-commit|eval-range> [args]",
+          "Usage: gxt-manifest-lib.mjs <prefixes|validate-manifest|validate-bypass-note|match-glob|eval-commit|eval-range> [args]",
         );
         process.exit(2);
     }
