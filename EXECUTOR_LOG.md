@@ -423,3 +423,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/planner/ARCHITECTURE_RUBRIC.md, templates/.gitagent/planner/ARCHITECTURE_RUBRIC.template.md, .gitagent/out-of-scope/ADR-0025-architecture-rubric-judge.md — rubric template + ADR (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0083: advisory KPI findings surfaced; GXT-ARCH-OVERRIDE notice; ADR-0025 (#16)
+
+## MSN-0084 — v2.4.0 release
+
+[CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, package.json, templates/integrations/compatibility.json — v2.4.0 release docs (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0084: v2.4.0 version parity; README/ADOPTION/BACKLOG; npm validate ready (#112)
