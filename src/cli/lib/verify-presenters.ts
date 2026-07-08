@@ -8,7 +8,9 @@ import type { Manifest, ParsedMission } from "./types.js";
 import { isGapmanUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
 import { loadWorkspace } from "./workspace.js";
-import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult } from "./verify-engine.js";
+import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult, VerifyExportFormat } from "./verify-engine.js";
+import { resolveVerifyExportFormat } from "./verify-engine.js";
+import { buildVerifyExportDocument } from "./verify-export.js";
 import {
   buildBreakGlassPayload,
   buildVerifyResultPayloadFromPhaseResult,
@@ -49,7 +51,7 @@ export function presentBreakGlassJson(
   options: VerifyOptions,
 ): VerifyPresentResult {
   const payload = buildBreakGlassPayload(root, mission, options);
-  reporterFor(options).emitJsonPayload(payload);
+  emitStructuredPayload(payload, options);
   return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
 }
 
@@ -75,6 +77,11 @@ export function presentBreakGlassHuman(
   return { ok: true, exitCode: 0 };
 }
 
+function emitStructuredPayload(payload: VerifyResultPayload, options: VerifyOptions): void {
+  const format: VerifyExportFormat = resolveVerifyExportFormat(options) ?? "json";
+  logInfo(buildVerifyExportDocument(payload, format));
+}
+
 export function presentJsonFromResult(
   root: string,
   mission: ParsedMission,
@@ -91,7 +98,7 @@ export function presentJsonFromResult(
     manifest,
     result,
   );
-  reporterFor(options).emitJsonPayload(payload);
+  emitStructuredPayload(payload, options);
   return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
 }
 
@@ -106,7 +113,7 @@ export function presentJsonInitFailure(
   } catch {
     // best-effort remediation feed
   }
-  reporterFor(options).emitJsonPayload(payload);
+  emitStructuredPayload(payload, options);
   return { ok: false, exitCode: payload.exit_code };
 }
 

@@ -33,8 +33,8 @@ export class CommandReporter {
     this.audience = options.audience;
   }
 
-  static forVerify(options: { json?: boolean; audience?: OutputAudience }): CommandReporter {
-    if (options.json) {
+  static forVerify(options: { json?: boolean; format?: string; audience?: OutputAudience }): CommandReporter {
+    if (options.json || options.format) {
       return new CommandReporter({ channel: "json", audience: options.audience });
     }
     return new CommandReporter({

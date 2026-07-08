@@ -407,3 +407,7 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0026-arch-external-fetch.md — ADR for arch fetch (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0080: gantry arch fetch for kind=external; ADR-0026; mocked tests (#34)
+
+## MSN-0081 — v2.4.0 #36 verify SARIF/JUnit export
+
+- DoD 1 MSN-0081: gantry verify --format sarif|junit; ADR-0027; golden tests (#36)

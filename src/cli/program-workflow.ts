@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
-import type { VerifyOptions } from "./lib/verify-engine.js";
+import type { VerifyOptions, VerifyExportFormat } from "./lib/verify-engine.js";
 import { runScan } from "./commands/scan.js";
 import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
@@ -33,13 +33,22 @@ interface VerifyCliOptions {
   fix?: boolean;
   nonInteractive?: boolean;
   json?: boolean;
+  format?: string;
   audience?: string;
   scanDepth?: string;
+}
+
+function parseVerifyExportFormat(raw?: string): VerifyExportFormat | undefined {
+  if (!raw?.trim()) return undefined;
+  const v = raw.trim().toLowerCase();
+  if (v === "json" || v === "sarif" || v === "junit") return v;
+  throw new Error(`gantry verify: --format must be json, sarif, or junit (got ${raw})`);
 }
 
 function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
   const scanDepth =
     opts.scanDepth !== undefined ? Number.parseInt(opts.scanDepth, 10) : undefined;
+  const format = opts.format ? parseVerifyExportFormat(opts.format) : undefined;
   return {
     mission: opts.mission,
     changedMissions: opts.changedMissions,
@@ -55,6 +64,7 @@ function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     auditCommit: opts.auditCommit,
     fix: opts.fix,
     json: opts.json,
+    format,
     scanDepth: Number.isFinite(scanDepth) && scanDepth! > 0 ? scanDepth : undefined,
     breakGlassReason: opts.reason,
     breakGlassCommit: opts.commit,
@@ -113,7 +123,8 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--audit-commit", "Write break-glass audit as empty commit instead of git note")
     .option("--fix", "Interactive remediation on failure (human output only; cannot combine with --json)")
     .option("--non-interactive", "With --fix: print structured hints without prompts")
-    .option("--json", "Emit structured JSON (failures include fix_hints and next_actions). Incompatible with --fix.")
+    .option("--json", "Emit structured JSON (alias for --format json). Incompatible with --fix.")
+    .option("--format <fmt>", "Export format: json | sarif | junit")
     .option(
       "--scan-depth <number>",
       "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",

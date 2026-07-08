@@ -16,6 +16,15 @@ import {
   scavengeStaleVirtualFlights,
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
+import type { VerifyExportFormat } from "./verify-export.js";
+
+export type { VerifyExportFormat } from "./verify-export.js";
+
+export function resolveVerifyExportFormat(options: VerifyOptions): VerifyExportFormat | undefined {
+  if (options.format) return options.format;
+  if (options.json === true) return "json";
+  return undefined;
+}
 
 export interface VerifyOptions {
   mission?: string;
@@ -39,6 +48,8 @@ export interface VerifyOptions {
   skipStaleEvidence?: boolean;
   /** Emit a single structured JSON document on stdout (no human logs). */
   json?: boolean;
+  /** Structured export format (json default when --json). */
+  format?: VerifyExportFormat;
   /** Verify every mission file changed vs base ref on current branch. */
   changedMissions?: boolean;
   /** Base ref for --changed-missions (default: merge-base with origin/HEAD or main). */
