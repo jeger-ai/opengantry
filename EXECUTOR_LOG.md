@@ -411,3 +411,9 @@ example trace line for gapman verify
 ## MSN-0081 — v2.4.0 #36 verify SARIF/JUnit export
 
 - DoD 1 MSN-0081: gantry verify --format sarif|junit; ADR-0027; golden tests (#36)
+
+## MSN-0082 — v2.4.0 #15 TARGET_ARCHITECTURE.yaml
+
+[CONTEXT-REQUEST] paths: TARGET_ARCHITECTURE.yaml, .gitagent/out-of-scope/ADR-0024-target-architecture-yaml.md, scripts/check-changed-code.sh — arch check + dogfood YAML (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0082: gantry arch check; TARGET_ARCHITECTURE.yaml dogfood; ADR-0024 (#15)

@@ -1,0 +1,23 @@
+schema_version: "0.1.0"
+layers:
+  - id: command
+    globs:
+      - src/cli/commands/**
+  - id: lib
+    globs:
+      - src/cli/lib/**
+      - src/cli/tests/fixtures/**
+  - id: delivery
+    globs:
+      - src/cli/index.ts
+      - src/cli/program.ts
+rules:
+  - id: RULE-LIB-TO-COMMAND
+    from_layer: lib
+    forbid_import_layer: command
+  - id: RULE-LIB-COMMANDER
+    from_layer: lib
+    forbid_specifier_substring: commander
+  - id: RULE-COMMAND-RUNTIME-EXEC-PROCESS
+    from_layer: command
+    forbid_resolved_path_substring: runtime-exec-process

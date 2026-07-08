@@ -78,7 +78,7 @@ for f in "${EXISTING[@]}"; do
   LAYER_FILES+=("$f")
 done
 if [[ "${#LAYER_FILES[@]}" -gt 0 ]]; then
-  node scripts/check-import-layers.mjs "${LAYER_FILES[@]}"
+  node dist/cli/index.js arch check "${LAYER_FILES[@]}"
 fi
 
 if [[ "${#EXISTING[@]}" -gt 0 ]]; then

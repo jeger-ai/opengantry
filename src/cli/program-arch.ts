@@ -5,6 +5,7 @@ import {
   runArchCredSet,
   runArchCredStatus,
   runArchCredUnset,
+  runArchCheckCommand,
   runArchFetch,
   runArchPointer,
 } from "./commands/arch.js";
@@ -25,6 +26,15 @@ export function registerArchCommands(program: Command): void {
     .option("--json", "Emit structured fetch result JSON")
     .action(async (opts: { json?: boolean }) => {
       await runArchFetch({ json: opts.json === true });
+    });
+
+  arch
+    .command("check")
+    .description("Evaluate TARGET_ARCHITECTURE.yaml import/layer rules for TypeScript paths")
+    .argument("[files...]", "Repo-relative or absolute .ts paths")
+    .option("--json", "Emit structured violation JSON")
+    .action((files: string[], opts: { json?: boolean }) => {
+      runArchCheckCommand({ files, json: opts.json === true });
     });
 
   const cred = arch.command("cred").description("Git-ignored credential slots for authenticated architecture sources");

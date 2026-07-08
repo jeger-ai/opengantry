@@ -2,6 +2,10 @@ import { getRepoRoot } from "../lib/git.js";
 import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { fetchExternalArchitecture } from "../lib/architecture-fetch.js";
 import {
+  formatArchCheckHuman,
+  runArchCheck,
+} from "../lib/target-architecture.js";
+import {
   loadArchitecturePointer,
   summarizeArchitecturePointer,
 } from "../lib/architecture-pointer.js";
@@ -34,6 +38,11 @@ export interface ArchCredStatusOptions extends ArchOptions {
 
 export interface ArchFetchOptions extends ArchOptions {
   json?: boolean;
+}
+
+export interface ArchCheckOptions extends ArchOptions {
+  json?: boolean;
+  files?: string[];
 }
 
 export function runArchPointer(options: ArchOptions = {}): void {
@@ -136,6 +145,37 @@ export async function runArchFetch(options: ArchFetchOptions = {}): Promise<void
       logInfo(result.message);
     }
     if (result.status === "fallback") setExitCode(1);
+  } catch (e) {
+    logError(errorMessage(e));
+    setExitCode(2);
+  }
+}
+
+export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
+  let repoRoot: string;
+  try {
+    repoRoot = getRepoRoot(options.cwd);
+  } catch (e) {
+    logError(e instanceof Error ? e.message.replace("gantry: ", "") : String(e));
+    setExitCode(2);
+    return;
+  }
+
+  const files = options.files?.length ? options.files : [];
+  if (files.length === 0) {
+    logError("gantry arch check: pass one or more .ts file paths");
+    setExitCode(2);
+    return;
+  }
+
+  try {
+    const result = runArchCheck(repoRoot, files);
+    if (options.json) {
+      logInfo(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations }, null, 2));
+    } else {
+      logInfo(formatArchCheckHuman(result));
+    }
+    if (!result.ok) setExitCode(1);
   } catch (e) {
     logError(errorMessage(e));
     setExitCode(2);
