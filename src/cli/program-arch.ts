@@ -5,6 +5,7 @@ import {
   runArchCredSet,
   runArchCredStatus,
   runArchCredUnset,
+  runArchFetch,
   runArchPointer,
 } from "./commands/arch.js";
 
@@ -16,6 +17,14 @@ export function registerArchCommands(program: Command): void {
     .description("Print architecture pointer summary for agents")
     .action(() => {
       runArchPointer();
+    });
+
+  arch
+    .command("fetch")
+    .description("Fetch kind=external architecture docs (convenience; doctor stays offline)")
+    .option("--json", "Emit structured fetch result JSON")
+    .action(async (opts: { json?: boolean }) => {
+      await runArchFetch({ json: opts.json === true });
     });
 
   const cred = arch.command("cred").description("Git-ignored credential slots for authenticated architecture sources");

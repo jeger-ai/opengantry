@@ -401,3 +401,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, package.json, templates/integrations/compatibility.json — v2.3.1 release docs and version bump (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0079: v2.3.1 version parity; README/ADOPTION/BACKLOG; npm validate ready (#111)
+
+## MSN-0080 — v2.4.0 #34 arch fetch
+
+[CONTEXT-REQUEST] paths: .gitagent/out-of-scope/ADR-0026-arch-external-fetch.md — ADR for arch fetch (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0080: gantry arch fetch for kind=external; ADR-0026; mocked tests (#34)
