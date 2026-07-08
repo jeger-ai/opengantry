@@ -1,5 +1,3 @@
-import { execFileSync } from "node:child_process";
-import path from "node:path";
 import { gitRunOk } from "./git.js";
 import { normalizeRepoRelativePath } from "./tmvc-path.js";
 import { loadGxtConfig } from "./gxt-config.js";
@@ -59,43 +57,11 @@ function netLocForPaths(repoRoot: string, files: readonly string[]): number {
   return worktree + staged;
 }
 
-/** Cross-platform git numstat helper for tests (explicit git invocation). */
+/** Net LOC across worktree + staged diffs for the given repo-relative paths. */
 export function computeNetLocForFiles(repoRoot: string, files: readonly string[]): number {
   if (files.length === 0) return 0;
-  const absRoot = path.resolve(repoRoot);
   const relFiles = files.map((f) => normalizeRepoRelativePath(f));
-  try {
-    const out = execFileSync(
-      "git",
-      ["diff", "--numstat", "HEAD", "--", ...relFiles],
-      { cwd: absRoot, encoding: "utf8" },
-    );
-    let total = 0;
-    for (const line of out.trimEnd().split("\n")) {
-      if (!line.trim()) continue;
-      const parts = line.split("\t");
-      if (parts.length < 2) continue;
-      const add = parts[0] === "-" ? 0 : Number.parseInt(parts[0] ?? "0", 10);
-      const del = parts[1] === "-" ? 0 : Number.parseInt(parts[1] ?? "0", 10);
-      total += (Number.isFinite(add) ? add : 0) + (Number.isFinite(del) ? del : 0);
-    }
-    const stagedOut = execFileSync(
-      "git",
-      ["diff", "--numstat", "--cached", "--", ...relFiles],
-      { cwd: absRoot, encoding: "utf8" },
-    );
-    for (const line of stagedOut.trimEnd().split("\n")) {
-      if (!line.trim()) continue;
-      const parts = line.split("\t");
-      if (parts.length < 2) continue;
-      const add = parts[0] === "-" ? 0 : Number.parseInt(parts[0] ?? "0", 10);
-      const del = parts[1] === "-" ? 0 : Number.parseInt(parts[1] ?? "0", 10);
-      total += (Number.isFinite(add) ? add : 0) + (Number.isFinite(del) ? del : 0);
-    }
-    return total;
-  } catch {
-    return netLocForPaths(repoRoot, relFiles);
-  }
+  return netLocForPaths(repoRoot, relFiles);
 }
 
 export function evaluateNetLocBudgetGuard(

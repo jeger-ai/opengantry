@@ -473,4 +473,4 @@ example trace line for gapman verify
 
 [CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, package.json, templates/integrations/compatibility.json — v2.5.0 release docs (mission-authorized, non-TMVC).
 
-- DoD 1 MSN-0097: v2.5.0 version parity; README/ADOPTION/BACKLOG; npm validate ready (#122)
+- DoD 1 MSN-0097: v2.5.0 #122 v2-5-0-release — dev-validate-core OK

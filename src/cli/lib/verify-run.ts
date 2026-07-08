@@ -11,7 +11,7 @@ import {
   initFailurePayload,
   type VerifyResultPayload,
 } from "./verify-payload.js";
-import { resolveVerifySink, type VerifySink } from "./verify-presenters.js";
+import { resolveVerifySink } from "./verify-presenters.js";
 import {
   presentBreakGlassHuman,
   presentBreakGlassJson,
