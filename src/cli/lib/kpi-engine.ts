@@ -374,5 +374,12 @@ export function evaluateKpiPhase(
     };
   }
 
+  for (const finding of report.findings ?? []) {
+    const id = finding.id?.trim() || "finding";
+    const severity = finding.severity?.trim() || "info";
+    const message = finding.message?.trim() || "(no message)";
+    warnings.push(`gantry verify: advisory rubric [${severity}] ${id}: ${message}`);
+  }
+
   return warnings.length > 0 ? { kind: "ok", warnings } : null;
 }

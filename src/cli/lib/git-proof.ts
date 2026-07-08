@@ -10,6 +10,7 @@ import { resolvePlannerEmails } from "./planner-identity.js";
 import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
 import { checkPlannerStampSignature } from "./planner-signature.js";
 import { logWarn } from "./cli-io.js";
+import { archOverrideAdvisoryMessage, commitSubjectHasArchOverride } from "./arch-override.js";
 
 function throwGitProofError(
   code: string,
@@ -263,6 +264,12 @@ export function assertPlannerMissionProof(
     { root, missionPath, msnId, repoRelMission },
     options,
   );
+
+  if (commitSubjectHasArchOverride(stamp.subject)) {
+    const msg = archOverrideAdvisoryMessage(msnId, stamp.hash);
+    options?.warnings?.push(msg);
+    logWarn(msg);
+  }
 
   return msnId;
 }

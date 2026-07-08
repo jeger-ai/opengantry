@@ -417,3 +417,9 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: TARGET_ARCHITECTURE.yaml, .gitagent/out-of-scope/ADR-0024-target-architecture-yaml.md, scripts/check-changed-code.sh — arch check + dogfood YAML (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0082: gantry arch check; TARGET_ARCHITECTURE.yaml dogfood; ADR-0024 (#15)
+
+## MSN-0083 — v2.4.0 #16 ARCHITECTURE_RUBRIC advisory judge
+
+[CONTEXT-REQUEST] paths: .gitagent/planner/ARCHITECTURE_RUBRIC.md, templates/.gitagent/planner/ARCHITECTURE_RUBRIC.template.md, .gitagent/out-of-scope/ADR-0025-architecture-rubric-judge.md — rubric template + ADR (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0083: advisory KPI findings surfaced; GXT-ARCH-OVERRIDE notice; ADR-0025 (#16)
