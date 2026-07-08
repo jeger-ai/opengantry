@@ -5,9 +5,9 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 if [[ -f dist/cli/index.js ]]; then
-  GAPMAN=(node dist/cli/index.js)
+  GANTRY_CLI=(node dist/cli/index.js)
 elif command -v gantry >/dev/null 2>&1; then
-  GAPMAN=(gantry)
+  GANTRY_CLI=(gantry)
 else
   echo "pre-commit: gantry not found — run: npm run build" >&2
   exit 1
@@ -22,5 +22,5 @@ else
 fi
 
 echo "pre-commit: gantry tmvc guard --mission ${mission} (advisory default)" >&2
-"${GAPMAN[@]}" tmvc guard --mission "$mission"
+"${GANTRY_CLI[@]}" tmvc guard --mission "$mission"
 exit 0

@@ -14,6 +14,7 @@ import {
   type RemediationSnapshot,
 } from "./context-feed-store.js";
 import {
+  normalizeDefensivePhase,
   normalizeGatePhase,
   normalizeGitProofPhase,
   normalizeKpiPhase,
@@ -127,6 +128,8 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       return normalizeGitProofPhase(base);
     case "gate":
       return normalizeGatePhase(base, failure);
+    case "defensive":
+      return normalizeDefensivePhase(base, failure);
     case "kpi":
       return normalizeKpiPhase(base, failure);
     case "trace_pending":

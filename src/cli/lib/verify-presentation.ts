@@ -52,7 +52,7 @@ export {
 
 export type { VerifyPresentResult } from "./verify-presenters.js";
 export type { VerifyRunResult } from "./verify-run.js";
-export type { VerifySink } from "./verify-sinks.js";
+export type { VerifySink } from "./verify-presenters.js";
 
 export {
   emitVerifyJson,
@@ -65,5 +65,5 @@ export {
   presentJsonInitFailure,
 } from "./verify-presenters.js";
 
-export { resolveVerifySink } from "./verify-sinks.js";
+export { resolveVerifySink } from "./verify-presenters.js";
 export { buildVerifyResultPayloadFromOptions, runVerifyCore } from "./verify-run.js";

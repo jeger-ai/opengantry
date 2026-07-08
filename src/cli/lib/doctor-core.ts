@@ -23,6 +23,7 @@ import { runExecutorLogIntegrityDoctorChecks } from "./executor-log-integrity.js
 import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
 import { gitCommitSignatureStatus, isGoodGitSignatureStatus } from "./planner-signature.js";
 import { gitRunOk } from "./git.js";
+import { runTargetArchitectureDoctorChecks } from "./target-architecture-doctor.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -187,6 +188,7 @@ export function collectDoctorReport(
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
   let lines = [...result.lines, ...runArchitecturePointerDoctorChecks(root)];
+  lines = [...lines, ...runTargetArchitectureDoctorChecks(root)];
   lines = [...lines, ...runExecutorLogIntegrityDoctorChecks(root)];
   let nextStep = result.nextStep;
   try {

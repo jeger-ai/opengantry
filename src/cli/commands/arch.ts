@@ -1,6 +1,7 @@
 import { getRepoRoot } from "../lib/git.js";
 import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { fetchExternalArchitecture } from "../lib/architecture-fetch.js";
+import { loadWorkspace } from "../lib/workspace.js";
 import {
   formatArchCheckHuman,
   runArchCheck,
@@ -169,7 +170,10 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
   }
 
   try {
-    const result = runArchCheck(repoRoot, files);
+    const { manifest } = loadWorkspace();
+    const skill = manifest.skills.gantry ?? Object.values(manifest.skills)[0];
+    const manifestTmvcRoots = skill?.tmvc_roots;
+    const result = runArchCheck(repoRoot, files, { manifestTmvcRoots });
     if (options.json) {
       logInfo(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations }, null, 2));
     } else {

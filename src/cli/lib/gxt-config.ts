@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import type { DefensiveProfileConfig } from "./defensive-profile.js";
+import { validateDefensiveProfile } from "./defensive-profile.js";
+
 export type PlannerSignatureTier = "off" | "warn" | "require";
 
 export const PLANNER_SIGNATURE_TIERS: readonly PlannerSignatureTier[] = ["off", "warn", "require"];
@@ -8,6 +11,7 @@ export const PLANNER_SIGNATURE_TIERS: readonly PlannerSignatureTier[] = ["off", 
 export interface GxtConfig {
   planner_signature?: PlannerSignatureTier;
   trusted_automation?: unknown;
+  defensive_profile?: DefensiveProfileConfig;
 }
 
 export function loadGxtConfig(root: string): GxtConfig {
@@ -15,7 +19,11 @@ export function loadGxtConfig(root: string): GxtConfig {
   if (!fs.existsSync(configPath)) return {};
   try {
     const parsed = JSON.parse(fs.readFileSync(configPath, "utf8")) as GxtConfig;
-    return parsed ?? {};
+    const config = parsed ?? {};
+    if (config.defensive_profile != null) {
+      config.defensive_profile = validateDefensiveProfile(config.defensive_profile);
+    }
+    return config;
   } catch {
     return {};
   }

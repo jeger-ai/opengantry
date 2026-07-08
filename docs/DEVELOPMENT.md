@@ -166,7 +166,19 @@ npm run validate
 
 Runs **`dev-validate-core.sh`** (build, `gantry check`, `validate-gxt.sh manifest` via Node—no `jq`, tests, doctor, MCP dogfood, changed-code, MSN vs `origin/main`) then **`verify-pr-missions.sh`** (full `gantry verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
 
-**Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `check-import-layers.mjs`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
+**Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `check-import-layers.mjs`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` in [`scripts/lib/asset-catalog-static.mjs`](../scripts/lib/asset-catalog-static.mjs) — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
+
+| Script | Why repo-only |
+|--------|----------------|
+| `check-changed-code.sh` | Dogfood complexity/import-layer gate on PR diff |
+| `check-import-layers.mjs` | Legacy import scanner; dogfood delegates to `gantry arch check` |
+| `check-lib-cycles.mjs` | Specimen maintainability gate |
+| `dev-validate-core.sh` / `dev-validate.sh` | Full validation superset for maintainers |
+| `gen-asset-catalog.mjs` / `gen-dogfood.mjs` / `gen-version.mjs` | Build-time generators |
+| `validate-mcp-dogfood.sh` | MCP integration dogfood harness |
+| `release-gate-publish.sh` / `poll-npm-version.sh` | npm publish orchestration |
+
+Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and runtime helpers from the init catalog — not the specimen-only gates above.
 
 **Hooks (automatic when `core.hooksPath=.githooks`):**
 

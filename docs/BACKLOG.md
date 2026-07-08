@@ -9,7 +9,28 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-07-08 (v2.4.0 released — #15, #16, #34, #36, #112, MSN-0080–MSN-0084, npm **2.4.0**)
+**Last synced:** 2026-07-08 (v2.5.0 released — #113–#122, #87, #90, MSN-0085–MSN-0097, npm **2.5.0**)
+
+---
+
+## v2.5.0 — Adopter-ready cage + defensive foundation
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Release tracker** | **Done** | [#113](https://github.com/jeger-ai/opengantry/issues/113) |
+| **Documentation drift sweep** | **Done** | [#117](https://github.com/jeger-ai/opengantry/issues/117) · MSN-0085 |
+| **Generic arch check roots** | **Done** | [#114](https://github.com/jeger-ai/opengantry/issues/114) · MSN-0086 |
+| **TARGET_ARCHITECTURE.yaml init scaffold + doctor** | **Done** | [#115](https://github.com/jeger-ai/opengantry/issues/115) · MSN-0088 |
+| **Schema 0.2.0 with 0.1.x compatibility** | **Done** | [#116](https://github.com/jeger-ai/opengantry/issues/116) · MSN-0087 |
+| **Defensive profile schema** | **Done** | [#87](https://github.com/jeger-ai/opengantry/issues/87) · MSN-0089 |
+| **Net LOC budget guard (binary)** | **Done** | [#90](https://github.com/jeger-ai/opengantry/issues/90) · MSN-0090 |
+| **Happy-path I/O contract tests (scan/register/check)** | **Done** | [#118](https://github.com/jeger-ai/opengantry/issues/118) · MSN-0091 |
+| **Lib micro-module consolidation (atomic chunks)** | **Done** | [#119](https://github.com/jeger-ai/opengantry/issues/119) · MSN-0092–MSN-0095 |
+| **Start orchestration simplification** | **Done** | [#120](https://github.com/jeger-ai/opengantry/issues/120) · MSN-0096 |
+| **Document repo-only scripts** | **Done** | [#121](https://github.com/jeger-ai/opengantry/issues/121) |
+| **2.5.0 npm publish** | **Done** | [#122](https://github.com/jeger-ai/opengantry/issues/122) · MSN-0097 |
+
+Spec: [V2.5.0-PROPOSAL.md](V2.5.0-PROPOSAL.md)
 
 ---
 
@@ -339,15 +360,15 @@ Shift from reactive validation to proactive containment. Requires ADR + Planner 
 
 | Item | Status | Issue |
 |------|--------|-------|
-| **Active MCP write-containment (“hard cage”)** | Open | [#14](https://github.com/jeger-ai/opengantry/issues/14) |
-| **Deterministic architecture boundaries** | Open | [#15](https://github.com/jeger-ai/opengantry/issues/15) |
-| **LLM-as-a-judge rubric (async audit)** | Open | [#16](https://github.com/jeger-ai/opengantry/issues/16) |
-| **Auditable break-glass protocol** | Open | [#17](https://github.com/jeger-ai/opengantry/issues/17) |
-| **External architecture pointer HTTP fetch** | Open | [#34](https://github.com/jeger-ai/opengantry/issues/34) |
-| **Forbidden-zone check at legislate time** | Open | [#35](https://github.com/jeger-ai/opengantry/issues/35) |
-| **Verify SARIF/JUnit export** | Open | [#36](https://github.com/jeger-ai/opengantry/issues/36) |
-| **Planner stamp hardening (GPG/sigstore)** | Open | [#37](https://github.com/jeger-ai/opengantry/issues/37) |
-| **EXECUTOR_LOG integrity checks in doctor** | Open | [#38](https://github.com/jeger-ai/opengantry/issues/38) |
+| **Active MCP write-containment (“hard cage”)** | **Done** | [#14](https://github.com/jeger-ai/opengantry/issues/14) · MSN-0077 |
+| **Deterministic architecture boundaries** | **Done** | [#15](https://github.com/jeger-ai/opengantry/issues/15) · MSN-0082 |
+| **LLM-as-a-judge rubric (async audit)** | **Done** | [#16](https://github.com/jeger-ai/opengantry/issues/16) · MSN-0083 |
+| **Auditable break-glass protocol** | **Done** | [#17](https://github.com/jeger-ai/opengantry/issues/17) · MSN-0076 |
+| **External architecture pointer HTTP fetch** | **Done** | [#34](https://github.com/jeger-ai/opengantry/issues/34) · MSN-0080 |
+| **Forbidden-zone check at legislate time** | **Done** | [#35](https://github.com/jeger-ai/opengantry/issues/35) · MSN-0073 |
+| **Verify SARIF/JUnit export** | **Done** | [#36](https://github.com/jeger-ai/opengantry/issues/36) · MSN-0081 |
+| **Planner stamp hardening (GPG/sigstore)** | **Done** | [#37](https://github.com/jeger-ai/opengantry/issues/37) · MSN-0078 |
+| **EXECUTOR_LOG integrity checks in doctor** | **Done** | [#38](https://github.com/jeger-ai/opengantry/issues/38) · MSN-0070 |
 
 ### v2.0 — Adaptive perimeter (passive cage → self-configuring platform)
 
@@ -375,7 +396,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.4.0 released ([#15](https://github.com/jeger-ai/opengantry/issues/15), [#16](https://github.com/jeger-ai/opengantry/issues/16), [#34](https://github.com/jeger-ai/opengantry/issues/34), [#36](https://github.com/jeger-ai/opengantry/issues/36), [#112](https://github.com/jeger-ai/opengantry/issues/112), npm **2.4.0**); next: v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63), [#86](https://github.com/jeger-ai/opengantry/issues/86)–[#91](https://github.com/jeger-ai/opengantry/issues/91)).
+**Current focus:** v2.5.0 released ([#113](https://github.com/jeger-ai/opengantry/issues/113)–[#122](https://github.com/jeger-ai/opengantry/issues/122), [#87](https://github.com/jeger-ai/opengantry/issues/87), [#90](https://github.com/jeger-ai/opengantry/issues/90), MSN-0085–MSN-0097, npm **2.5.0**); next: v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63), [#86](https://github.com/jeger-ai/opengantry/issues/86), [#88](https://github.com/jeger-ai/opengantry/issues/88)–[#89](https://github.com/jeger-ai/opengantry/issues/89), [#91](https://github.com/jeger-ai/opengantry/issues/91)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

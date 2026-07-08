@@ -3,7 +3,7 @@ import path from "node:path";
 import { DEFAULT_KPI_REPORT_DIR } from "./constants.js";
 import { runGate } from "./gate.js";
 import { assertKpiReportSchemaValid } from "./kpi-engine.js";
-import { resolveGateWorkDir } from "./gate-work-dir.js";
+import { resolveGateWorkDir } from "./gate.js";
 import type {
   KpiAggregator,
   KpiFinding,

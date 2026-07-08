@@ -43,6 +43,7 @@
     { "targetPath": "skills/gantry.md", "mode": "scaffold_only", "tags": ["skill-specimen"] },
     { "targetPath": "skills/logic.md", "mode": "scaffold_only", "tags": ["skill-minimal", "skill-specimen"] },
     { "targetPath": "skills/substrate.md", "mode": "scaffold_only", "tags": ["skill-specimen"] },
-    { "targetPath": "skills/ui.md", "mode": "scaffold_only", "tags": ["skill-minimal", "skill-specimen"] }
+    { "targetPath": "skills/ui.md", "mode": "scaffold_only", "tags": ["skill-minimal", "skill-specimen"] },
+    { "targetPath": "TARGET_ARCHITECTURE.yaml", "mode": "scaffold_only", "tags": ["core"] }
   ]
 }

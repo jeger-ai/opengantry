@@ -1,0 +1,20 @@
+schema_version: "0.2.0"
+scan_roots:
+  - src/**
+languages:
+  - typescript
+layers:
+  - id: command
+    globs:
+      - src/**/commands/**
+  - id: lib
+    globs:
+      - src/**/lib/**
+  - id: delivery
+    globs:
+      - src/**/index.ts
+      - src/**/program.ts
+rules:
+  - id: RULE-LIB-TO-COMMAND
+    from_layer: lib
+    forbid_import_layer: command

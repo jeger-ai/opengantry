@@ -429,3 +429,48 @@ example trace line for gapman verify
 [CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, package.json, templates/integrations/compatibility.json — v2.4.0 release docs (mission-authorized, non-TMVC).
 
 - DoD 1 MSN-0084: v2.4.0 version parity; README/ADOPTION/BACKLOG; npm validate ready (#112)
+
+## MSN-0085 — v2.5.0 C1 doc drift (#117)
+
+- DoD 1 MSN-0085: doc drift sweep — README arch commands, BACKLOG v2.5.0 section, program.ts MVP removed, pre-commit GANTRY_CLI rename (#117)
+
+## MSN-0086 — v2.5.0 A1 generic arch roots (#114)
+
+- DoD 1 MSN-0086: arch check scan_roots from TARGET_ARCHITECTURE.yaml; non-dogfood layout tests (#114)
+
+## MSN-0087 — v2.5.0 A3 schema 0.2.0 (#116)
+
+- DoD 1 MSN-0087: TARGET_ARCHITECTURE schema 0.2.0 with 0.1.x compatibility and doctor migration hint (#116)
+
+## MSN-0088 — v2.5.0 A2 init scaffold (#115)
+
+- DoD 1 MSN-0088: TARGET_ARCHITECTURE.yaml init catalog + deterministic doctor checks (#115)
+
+## MSN-0089 — v2.5.0 B1 defensive profile (#87)
+
+- DoD 1 MSN-0089: defensive_profile schema in gxt-config with fail-closed defaults (#87)
+
+## MSN-0090 — v2.5.0 B2 net LOC guard (#90)
+
+- DoD 1 MSN-0090: binary net_loc_budget verify phase wired via defensive-guard.ts (#90)
+
+## MSN-0091 — v2.5.0 C2 I/O contract tests (#118)
+
+- DoD 1 MSN-0091: happy-path command I/O tests for scan/register/check (#118)
+
+## MSN-0092–MSN-0095 — v2.5.0 C3 lib consolidation (#119)
+
+- DoD 1 MSN-0092: merge gate-work-dir into gate.ts (#119 chunk 1)
+- DoD 1 MSN-0093: merge verify-sinks into verify-presenters.ts (#119 chunk 2)
+- DoD 1 MSN-0094: merge program-stdin into cli-io.ts (#119 chunk 3)
+- DoD 1 MSN-0095: consolidation chunk 4 complete (#119)
+
+## MSN-0096 — v2.5.0 C4 start orchestration (#120)
+
+- DoD 1 MSN-0096: start-orchestration failure factory retained; behavior pinned (#120)
+
+## MSN-0097 — v2.5.0 release (#122)
+
+[CONTEXT-REQUEST] paths: README.md, docs/ADOPTION.md, docs/BACKLOG.md, package.json, templates/integrations/compatibility.json — v2.5.0 release docs (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0097: v2.5.0 version parity; README/ADOPTION/BACKLOG; npm validate ready (#122)

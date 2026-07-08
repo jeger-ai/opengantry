@@ -11,6 +11,7 @@ export const STATIC_ASSETS = [
   { targetPath: ".gitagent/planner/ARCHITECTURE-ACCESS.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/planner/MISSION-ARCHITECT.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: "docs/ARCHITECTURE.md", mode: "scaffold_only", tags: ["core"] },
+  { targetPath: "TARGET_ARCHITECTURE.yaml", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/planner/MISSION.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/planner/KPI-REPORT.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/planner/EXECUTOR_LOG.template.md", mode: "managed_strict", tags: ["core"] },

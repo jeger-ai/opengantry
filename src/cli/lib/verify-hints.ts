@@ -39,6 +39,7 @@ export interface VerifyHintContext {
   traceFailureReason?: string;
   kpiFailureReason?: string;
   kpiKind?: KpiFailureKind;
+  defensiveReason?: string;
   gateStderr?: string;
   gateStdout?: string;
 }
@@ -64,6 +65,7 @@ export function buildVerifyHintContext(
     kpiKind: failure.kpiKind,
     gateStderr: failure.gateStderr,
     gateStdout: failure.gateStdout,
+    defensiveReason: failure.defensiveReason,
     strictTrace: options.strictTrace,
   };
 }
@@ -144,6 +146,18 @@ function kpiErrorCodeForKind(kind: KpiFailureKind | undefined): GxtErrorCode {
   }
 }
 
+function hintsForDefensivePhase(ctx: VerifyHintContext): VerifyRemediation {
+  const mission = ctx.missionPath;
+  const verifyCmdStr = verifyCmd(mission);
+  const reason = ctx.defensiveReason ?? "defensive guard failed";
+  return {
+    error_code: GXT_ERROR.DEFENSIVE_GUARD_FAILED,
+    fix_hints: [reason, "reduce TMVC diff size or adjust defensive_profile.guards.net_loc_budget"],
+    next_actions: [verifyCmdStr],
+    tagged_steps: [tagStep("executor", "reduce diff churn in mission TMVC roots"), tagStep("verifier", verifyCmdStr)],
+  };
+}
+
 function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
   const mission = ctx.missionPath;
   const verifyCmdStr = verifyCmd(mission);
@@ -212,6 +226,8 @@ export function hintsForVerifyPhase(
       return hintsForGitProofPhase(ctx);
     case "gate":
       return hintsForGatePhase(ctx);
+    case "defensive":
+      return hintsForDefensivePhase(ctx);
     case "kpi":
       return hintsForKpiPhase(ctx);
     case "trace_pending":

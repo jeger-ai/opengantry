@@ -1,7 +1,17 @@
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 import type { GateSpec } from "./types.js";
 
 const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
+
+export interface GateWorkDirOptions {
+  cwd?: string;
+}
+
+/** Resolve working directory for gate/scan subprocess execution. */
+export function resolveGateWorkDir(root: string, options: GateWorkDirOptions = {}): string {
+  return options.cwd ? path.resolve(root, options.cwd) : root;
+}
 
 export interface GateRunResult {
   exitCode: number | null;

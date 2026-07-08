@@ -11,5 +11,14 @@
         "max_net_loc": 5
       }
     ]
+  },
+  "defensive_profile": {
+    "enabled": false,
+    "guards": {
+      "net_loc_budget": {
+        "enabled": false,
+        "max_net_loc": 500
+      }
+    }
   }
 }

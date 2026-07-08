@@ -3,9 +3,9 @@ import type { OutputAudience } from "./audience-output.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRunOk } from "./git.js";
 import { assertPlannerMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
-import { gatePassed, runGate, type GateRunResult } from "./gate.js";
-import { resolveGateWorkDir } from "./gate-work-dir.js";
+import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./gate.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
+import { evaluateNetLocBudgetGuard } from "./defensive-guard.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
@@ -86,7 +86,7 @@ export function discoverChangedMissionFiles(repoRoot: string, baseRef: string): 
     .map((rel) => toPosixRel(repoRoot, path.join(repoRoot, rel)));
 }
 
-export type VerifyFailurePhase = "git_proof" | "gate" | "kpi" | "trace_pending" | "trace";
+export type VerifyFailurePhase = "git_proof" | "gate" | "defensive" | "kpi" | "trace_pending" | "trace";
 
 export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
 
@@ -114,6 +114,9 @@ export interface VerifyPhaseFailure {
   kpiExpected?: number;
   kpiActual?: number | boolean;
   kpiStalePaths?: string[];
+  defensiveReason?: string;
+  defensiveNetLoc?: number;
+  defensiveMaxNetLoc?: number;
 }
 
 export interface VerifyPhaseSuccess {
@@ -295,6 +298,26 @@ function recordVirtualGateCapture(
   });
 }
 
+function evaluateDefensiveGuardPhase(
+  root: string,
+  manifest: Manifest,
+  skillKey: string,
+  executorLogPath: string,
+): VerifyPhaseFailure | null {
+  const result = evaluateNetLocBudgetGuard(root, manifest, skillKey);
+  if (result.ok) return null;
+  return {
+    ok: false,
+    phase: "defensive",
+    message: result.reason ?? "DEFENSIVE GUARD FAILED",
+    exitCode: 1,
+    executorLogPath,
+    defensiveReason: result.reason,
+    defensiveNetLoc: result.net_loc,
+    defensiveMaxNetLoc: result.max_net_loc,
+  };
+}
+
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
 export function evaluateVerifyPhases(
   root: string,
@@ -336,6 +359,16 @@ export function evaluateVerifyPhases(
   recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome.gateResult);
 
   if (gateOutcome.failure) return gateOutcome.failure;
+
+  if (mission.skillKey) {
+    const defensiveOutcome = evaluateDefensiveGuardPhase(
+      root,
+      manifest,
+      mission.skillKey,
+      executorLogPath,
+    );
+    if (defensiveOutcome) return defensiveOutcome;
+  }
 
   let kpiWarnings: string[] | undefined;
   if (mission.kpiGate) {

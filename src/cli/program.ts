@@ -13,7 +13,7 @@ export { CLI_VERSION } from "./lib/constants.js";
 export function buildProgram(): Command {
   const program = new Command();
   program.enablePositionalOptions(true);
-  program.name(CLI_NAME).description("OpenGantry GXT CLI (MVP)").version(CLI_VERSION);
+  program.name(CLI_NAME).description("OpenGantry GXT CLI").version(CLI_VERSION);
   program.option(
     "--audience <role>",
     "Tailor stdout/stderr: executor|planner|verifier|platform (also GXT_AUDIENCE env)",

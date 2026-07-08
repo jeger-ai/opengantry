@@ -36,6 +36,24 @@ export function normalizeGatePhase(
   };
 }
 
+export function normalizeDefensivePhase(
+  base: NormalizedVerifyFailureBase,
+  failure: VerifyPhaseFailure,
+): NormalizedVerifyFailure {
+  const reason = failure.defensiveReason ?? failure.message;
+  return {
+    ...base,
+    headline: "verify: DEFENSIVE GUARD FAILED",
+    detail_lines: [
+      reason,
+      ...(failure.defensiveNetLoc !== undefined
+        ? [`net_loc: ${String(failure.defensiveNetLoc)} (max: ${String(failure.defensiveMaxNetLoc ?? "?")})`]
+        : []),
+    ],
+    failures: [reason],
+  };
+}
+
 export function normalizeKpiPhase(
   base: NormalizedVerifyFailureBase,
   failure: VerifyPhaseFailure,
