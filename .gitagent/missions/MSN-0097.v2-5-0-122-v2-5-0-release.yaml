@@ -1,4 +1,4 @@
-# v2.5.0 mission MSN-0097 (#122)
+# v2.5.0 release mission MSN-0097 (#122) — squashed MSN-0085..0096 execution
 msn_id: MSN-0097
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
