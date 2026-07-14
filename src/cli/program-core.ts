@@ -70,6 +70,11 @@ export function registerCoreCommands(program: Command): void {
     .option("--arch-source <kind>", "Architecture source: unset | file | directory | external")
     .option("--arch-location <path>", "Architecture file path, folder, or external URL")
     .option(
+      "--defensive-profile <preset>",
+      "Defensive profile preset: strict_enterprise | balanced_partner | lean_scratchpad",
+    )
+    .option("--no-defensive-profile", "Skip defensive profile preset (template defaults)")
+    .option(
       "--tutorial",
       "After init, run guided first mission loop (Planner stamp + verify walkthrough)",
     )

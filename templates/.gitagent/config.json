@@ -18,6 +18,18 @@
       "net_loc_budget": {
         "enabled": false,
         "max_net_loc": 500
+      },
+      "file_scope": {
+        "enabled": false,
+        "max_files": 25
+      },
+      "churn_ratio": {
+        "enabled": false,
+        "max_ratio": 0.75
+      },
+      "test_to_code": {
+        "enabled": false,
+        "min_assertion_delta": 0
       }
     }
   }

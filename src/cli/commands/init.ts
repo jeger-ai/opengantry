@@ -52,6 +52,8 @@ export interface InitOptions {
   noCi?: boolean;
   archSource?: string;
   archLocation?: string;
+  defensiveProfile?: string;
+  noDefensiveProfile?: boolean;
 }
 
 function planArchitecturePointerWrite(profile: InitProfile, repoRoot: string): PlannedWrite | null {
@@ -149,12 +151,13 @@ function validateInitProfile(
 
 async function resolveInitAssetPlan(
   options: InitOptions,
+  profile: InitProfile,
   assets: ReturnType<typeof resolveAssetsFromProfile>,
   templatesRoot: string,
   repoRoot: string,
 ) {
   let force = options.force === true;
-  let plan = planInitAssets(assets, templatesRoot, repoRoot, force);
+  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, profile);
   if (!plan.ok) {
     setExitCode(2);
     return null;
@@ -181,7 +184,7 @@ async function resolveInitAssetPlan(
   }
 
   force = true;
-  plan = planInitAssets(assets, templatesRoot, repoRoot, force);
+  plan = planInitAssets(assets, templatesRoot, repoRoot, force, profile);
   if (!plan.ok) {
     setExitCode(2);
     return null;
@@ -240,7 +243,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   if (!validateInitProfile(profile, repoRoot, compat)) return;
 
   const assets = resolveAssetsFromProfile(profile, compat, templatesRoot);
-  const assetPlan = await resolveInitAssetPlan(options, assets, templatesRoot, repoRoot);
+  const assetPlan = await resolveInitAssetPlan(options, profile, assets, templatesRoot, repoRoot);
   if (!assetPlan) return;
 
   const { plan } = assetPlan;

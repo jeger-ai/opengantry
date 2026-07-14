@@ -5,7 +5,7 @@ import { gitRunOk } from "./git.js";
 import { assertPlannerMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
 import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./gate.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
-import { evaluateNetLocBudgetGuard } from "./defensive-guard.js";
+import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
 import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
@@ -117,6 +117,8 @@ export interface VerifyPhaseFailure {
   defensiveReason?: string;
   defensiveNetLoc?: number;
   defensiveMaxNetLoc?: number;
+  defensiveWarnings?: string[];
+  defensiveAudits?: string[];
 }
 
 export interface VerifyPhaseSuccess {
@@ -127,6 +129,8 @@ export interface VerifyPhaseSuccess {
   traceWarnings: TraceVerifyWarning[];
   gitProofWarnings?: string[];
   kpiWarnings?: string[];
+  defensiveWarnings?: string[];
+  defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
 }
 
@@ -298,23 +302,68 @@ function recordVirtualGateCapture(
   });
 }
 
-function evaluateDefensiveGuardPhase(
+function collectDefensiveAndKpiOutcomes(
   root: string,
   manifest: Manifest,
-  skillKey: string,
+  mission: ParsedMission,
+  options: VerifyOptions,
   executorLogPath: string,
-): VerifyPhaseFailure | null {
-  const result = evaluateNetLocBudgetGuard(root, manifest, skillKey);
-  if (result.ok) return null;
+): VerifyPhaseFailure | { kpiWarnings?: string[]; defensiveWarnings?: string[]; defensiveAudits?: string[] } {
+  let kpiWarnings: string[] | undefined;
+  let defensiveWarnings: string[] | undefined;
+  let defensiveAudits: string[] | undefined;
+
+  if (mission.skillKey) {
+    const defensiveOutcome = evaluateDefensiveGuardPhase(
+      root,
+      manifest,
+      mission.skillKey,
+      executorLogPath,
+    );
+    if (defensiveOutcome.failure) return defensiveOutcome.failure;
+    if (defensiveOutcome.warnings.length > 0) defensiveWarnings = defensiveOutcome.warnings;
+    if (defensiveOutcome.audits.length > 0) defensiveAudits = defensiveOutcome.audits;
+  }
+
+  if (mission.kpiGate) {
+    const kpiOutcome = evaluateKpiPhase(
+      root,
+      manifest,
+      mission.skillKey,
+      mission.kpiGate,
+      options,
+      executorLogPath,
+    );
+    if (kpiOutcome?.kind === "fail") return kpiOutcome.failure;
+    if (kpiOutcome?.kind === "ok") kpiWarnings = kpiOutcome.warnings;
+  }
+
+  return { kpiWarnings, defensiveWarnings, defensiveAudits };
+}
+
+function buildFullVerifySuccess(
+  proofMsnId: string,
+  executorLogPath: string,
+  trace: Extract<TracePhaseOutcome, { kind: "ok" }>,
+  gitProofWarnings: string[],
+  extras: { kpiWarnings?: string[]; defensiveWarnings?: string[]; defensiveAudits?: string[] },
+): VerifyPhaseSuccess {
   return {
-    ok: false,
-    phase: "defensive",
-    message: result.reason ?? "DEFENSIVE GUARD FAILED",
-    exitCode: 1,
+    ok: true,
+    outcome: "full",
+    proofMsnId,
     executorLogPath,
-    defensiveReason: result.reason,
-    defensiveNetLoc: result.net_loc,
-    defensiveMaxNetLoc: result.max_net_loc,
+    traceWarnings: trace.warnings,
+    ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
+    ...(extras.kpiWarnings && extras.kpiWarnings.length > 0 ? { kpiWarnings: extras.kpiWarnings } : {}),
+    ...(extras.defensiveWarnings && extras.defensiveWarnings.length > 0
+      ? { defensiveWarnings: extras.defensiveWarnings }
+      : {}),
+    ...(extras.defensiveAudits && extras.defensiveAudits.length > 0
+      ? { defensiveAudits: extras.defensiveAudits }
+      : {}),
+    traceEvidenceSkippedUncommitted:
+      trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
   };
 }
 
@@ -360,33 +409,8 @@ export function evaluateVerifyPhases(
 
   if (gateOutcome.failure) return gateOutcome.failure;
 
-  if (mission.skillKey) {
-    const defensiveOutcome = evaluateDefensiveGuardPhase(
-      root,
-      manifest,
-      mission.skillKey,
-      executorLogPath,
-    );
-    if (defensiveOutcome) return defensiveOutcome;
-  }
-
-  let kpiWarnings: string[] | undefined;
-  if (mission.kpiGate) {
-    const kpiOutcome = evaluateKpiPhase(
-      root,
-      manifest,
-      mission.skillKey,
-      mission.kpiGate,
-      options,
-      executorLogPath,
-    );
-    if (kpiOutcome?.kind === "fail") {
-      return kpiOutcome.failure;
-    }
-    if (kpiOutcome?.kind === "ok") {
-      kpiWarnings = kpiOutcome.warnings;
-    }
-  }
+  const postGate = collectDefensiveAndKpiOutcomes(root, manifest, mission, options, executorLogPath);
+  if ("ok" in postGate && postGate.ok === false) return postGate;
 
   const trace = evaluateTracePhase(root, manifest, mission, options, executorLogPath);
   if (trace.kind === "fail") return trace.failure;
@@ -395,15 +419,5 @@ export function evaluateVerifyPhases(
     purgeVirtualFlightDir(root, virtualFlightId);
   }
 
-  return {
-    ok: true,
-    outcome: "full",
-    proofMsnId,
-    executorLogPath,
-    traceWarnings: trace.warnings,
-    ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
-    ...(kpiWarnings && kpiWarnings.length > 0 ? { kpiWarnings } : {}),
-    traceEvidenceSkippedUncommitted:
-      trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
-  };
+  return buildFullVerifySuccess(proofMsnId, executorLogPath, trace, gitProofWarnings, postGate);
 }

@@ -1,4 +1,4 @@
-# Adoption Runbook (v2.5.0)
+# Adoption Runbook (v2.6.0)
 
 This runbook documents the OpenGantry specimen flow for adopters testing `gantry` locally. Product positioning lives in the [README](../README.md); this file is the operational path.
 
@@ -218,6 +218,7 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 
 | Release | Highlights |
 |---------|------------|
+| **v2.6.0** | Defensive profile completion — presets + severity tiers, file-scope / churn / test-to-code guards ([#88](https://github.com/jeger-ai/opengantry/issues/88)–[#91](https://github.com/jeger-ai/opengantry/issues/91)), `gantry init` profile onboarding ([#86](https://github.com/jeger-ai/opengantry/issues/86)) |
 | **v2.5.0** | Adopter-ready cage — generic `arch check` roots ([#114](https://github.com/jeger-ai/opengantry/issues/114)), `TARGET_ARCHITECTURE.yaml` init scaffold ([#115](https://github.com/jeger-ai/opengantry/issues/115)), schema 0.2.0 ([#116](https://github.com/jeger-ai/opengantry/issues/116)), defensive profile + net LOC guard ([#87](https://github.com/jeger-ai/opengantry/issues/87), [#90](https://github.com/jeger-ai/opengantry/issues/90)) |
 | **v2.4.0** | Architecture cage — `gantry arch fetch` ([#34](https://github.com/jeger-ai/opengantry/issues/34)), `gantry verify --format sarif\|junit` ([#36](https://github.com/jeger-ai/opengantry/issues/36)), `TARGET_ARCHITECTURE.yaml` + `gantry arch check` ([#15](https://github.com/jeger-ai/opengantry/issues/15)), `ARCHITECTURE_RUBRIC` advisory judge ([#16](https://github.com/jeger-ai/opengantry/issues/16)) |
 | **v2.3.1** | **Breaking:** Planner/Executor rename ([#110](https://github.com/jeger-ai/opengantry/issues/110)) — `gantry planner`, `.gitagent/planner/`, `EXECUTOR_LOG.md`, `GXT_PLANNER_*` / `GXT_EXECUTOR_*` env vars (no aliases). ADR-gated cage: MCP write guard ([#14](https://github.com/jeger-ai/opengantry/issues/14)), break-glass ADR ([#17](https://github.com/jeger-ai/opengantry/issues/17)), optional `planner_signature` tier ([#37](https://github.com/jeger-ai/opengantry/issues/37)) |
@@ -232,7 +233,7 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 | **v1.0.0** | `gantry init --tutorial`, global `--audience`, adoption-first docs |
 | **v0.9.0** | `gantry start`, `verify --fix`, `status --json`, `onboarding`, GXT error codes |
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.5.0**.
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **2.6.0**.
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates (replaces direct `check-import-layers.mjs` in dogfood).
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
@@ -240,7 +241,7 @@ Per-tool closed-loop recipes: [`docs/INTEGRATIONS.md`](INTEGRATIONS.md).
 - **PR policy (v1.1+):** one mission per PR; target your repo **integration branch** only. CI `pr_governance` compares the PR base to `github.event.repository.default_branch` by default. When your integration branch differs from GitHub's default branch setting (e.g. GitFlow with `develop`), set repository variable **`GXT_INTEGRATION_BRANCH`** (Settings → Secrets and variables → Actions → Variables). Stacked PRs (e.g. MSN-B onto MSN-A branch) fail `pr_governance` and local `verify-pr-missions.sh` purity when rebased onto the integration branch.
 - **Local validate base ref:** `npm run validate` / `./scripts/dev-validate.sh` default to `origin/main`; pass your integration ref explicitly when it differs (e.g. `./scripts/dev-validate.sh origin/develop`).
 - **Upgrade from v1.x:** `npm install @jeger-ai/opengantry@latest`, then `gantry upgrade apply` (or `gantry init --force` for managed CI assets) to pull `pr_governance`, `verify-pr-missions.sh`, stale-evidence verify, and updated workflow.
-- **npm publish (maintainers):** push an annotated tag `v2.5.0` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.5.0` or `@latest`.
+- **npm publish (maintainers):** push an annotated tag `v2.6.0` on `main` after CI is green — [`.github/workflows/npm-publish.yml`](../.github/workflows/npm-publish.yml) runs `npm run validate` then `npm publish --provenance --access public` (requires `NPM_TOKEN` repo secret). Adopters install with `npm install -g @jeger-ai/opengantry@2.6.0` or `@latest`.
 
 ## Hooks (fast, scoped)
 

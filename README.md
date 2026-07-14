@@ -74,14 +74,15 @@ Developing this repository from source: `npm ci && npm run build` — see [gantr
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gantry verify --fix`, role output via `--audience executor\|planner\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v2.5.0** — unified CLI naming (`gantry` primary; legacy `gapman` alias). Current npm publish: **v2.5.0**. See [.gitagent/planner/RUNTIME.md](.gitagent/planner/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v2.6.0** — unified CLI naming (`gantry` primary; legacy `gapman` alias). Current npm publish: **v2.6.0**. See [.gitagent/planner/RUNTIME.md](.gitagent/planner/RUNTIME.md).
 
 ## Release timeline (latest first)
 
-Current npm release in this repository: **`gantry` v2.5.0**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
+Current npm release in this repository: **`gantry` v2.6.0**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
+| **v2.6.0** | Defensive profile completion — presets + severity tiers (ADR-0029), file-scope / churn / test-to-code guards ([#88](https://github.com/jeger-ai/opengantry/issues/88)–[#91](https://github.com/jeger-ai/opengantry/issues/91)), init onboarding ([#86](https://github.com/jeger-ai/opengantry/issues/86)) |
 | **v2.5.0** | Adopter-ready cage — generic `arch check` roots ([#114](https://github.com/jeger-ai/opengantry/issues/114)), `TARGET_ARCHITECTURE.yaml` init scaffold ([#115](https://github.com/jeger-ai/opengantry/issues/115)), schema 0.2.0 ([#116](https://github.com/jeger-ai/opengantry/issues/116)), defensive profile + net LOC guard ([#87](https://github.com/jeger-ai/opengantry/issues/87), [#90](https://github.com/jeger-ai/opengantry/issues/90)) |
 | **v2.4.0** | Architecture cage — `gantry arch fetch` ([#34](https://github.com/jeger-ai/opengantry/issues/34)), `verify --format sarif\|junit` ([#36](https://github.com/jeger-ai/opengantry/issues/36)), `TARGET_ARCHITECTURE.yaml` + `gantry arch check` ([#15](https://github.com/jeger-ai/opengantry/issues/15)), `ARCHITECTURE_RUBRIC` advisory judge ([#16](https://github.com/jeger-ai/opengantry/issues/16)) |
 | **v2.3.1** | **Breaking:** Planner/Executor rename ([#110](https://github.com/jeger-ai/opengantry/issues/110)) — `gantry planner`, `.gitagent/planner/`, `EXECUTOR_LOG.md`, `GXT_PLANNER_*` / `GXT_EXECUTOR_*` env vars (no aliases). ADR-gated cage: MCP write guard ([#14](https://github.com/jeger-ai/opengantry/issues/14)), break-glass ADR ([#17](https://github.com/jeger-ai/opengantry/issues/17)), optional `planner_signature` tier ([#37](https://github.com/jeger-ai/opengantry/issues/37)) |
@@ -394,7 +395,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gantry` v2.5.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gantry init` in your project.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gantry` v2.6.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gantry init` in your project.
 
 ## Security
 

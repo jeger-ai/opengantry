@@ -1,5 +1,9 @@
 import path from "node:path";
 import type { IntegrationIdeKey } from "./integration-compat.js";
+import {
+  parseDefensiveProfilePreset,
+  type DefensiveProfilePresetName,
+} from "./defensive-profile-presets.js";
 
 export type SkillsPreset = "minimal" | "specimen";
 
@@ -17,6 +21,8 @@ export interface InitProfile {
   architectureAccessRequired?: boolean;
   architectureCredentialSlot?: string;
   architectureAuthHint?: string;
+  /** Selected defensive profile preset; undefined = prompt/default, null = explicit skip */
+  defensiveProfilePreset?: DefensiveProfilePresetName | null;
 }
 
 export const DEFAULT_INTEGRATIONS_DOC_PATH = "docs/INTEGRATIONS.md";
@@ -70,6 +76,8 @@ export function profileFromCliFlags(opts: {
   noCi?: boolean;
   archSource?: string;
   archLocation?: string;
+  defensiveProfile?: string;
+  noDefensiveProfile?: boolean;
 }): Partial<InitProfile> {
   const partial: Partial<InitProfile> = {};
   if (opts.ides) partial.ides = parseIdesCsv(opts.ides);
@@ -81,6 +89,10 @@ export function profileFromCliFlags(opts: {
   else if (opts.ci) partial.ciWorkflow = true;
   if (opts.archSource) partial.architectureSource = parseArchitectureSource(opts.archSource);
   if (opts.archLocation) partial.architectureLocation = opts.archLocation.replace(/\\/g, "/");
+  if (opts.noDefensiveProfile) partial.defensiveProfilePreset = null;
+  else if (opts.defensiveProfile) {
+    partial.defensiveProfilePreset = parseDefensiveProfilePreset(opts.defensiveProfile);
+  }
   return partial;
 }
 
@@ -96,6 +108,10 @@ export function mergeInitProfile(base: InitProfile, partial: Partial<InitProfile
     architectureAccessRequired: partial.architectureAccessRequired ?? base.architectureAccessRequired,
     architectureCredentialSlot: partial.architectureCredentialSlot ?? base.architectureCredentialSlot,
     architectureAuthHint: partial.architectureAuthHint ?? base.architectureAuthHint,
+    defensiveProfilePreset:
+      partial.defensiveProfilePreset !== undefined
+        ? partial.defensiveProfilePreset
+        : base.defensiveProfilePreset,
   };
 }
 

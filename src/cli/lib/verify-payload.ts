@@ -71,6 +71,12 @@ function successPayload(
     ...(result.kpiWarnings && result.kpiWarnings.length > 0
       ? { kpi_warnings: result.kpiWarnings }
       : {}),
+    ...(result.defensiveWarnings && result.defensiveWarnings.length > 0
+      ? { defensive_warnings: result.defensiveWarnings }
+      : {}),
+    ...(result.defensiveAudits && result.defensiveAudits.length > 0
+      ? { defensive_audits: result.defensiveAudits }
+      : {}),
     ...(result.traceEvidenceSkippedUncommitted !== undefined
       ? { trace_evidence_skipped_uncommitted: result.traceEvidenceSkippedUncommitted }
       : {}),

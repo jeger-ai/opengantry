@@ -78,6 +78,16 @@ export class CommandReporter {
       return;
     }
     this.emitInfo(`${CLI_NAME} verify: gate passed`);
+    if (result.defensiveWarnings) {
+      for (const w of result.defensiveWarnings) {
+        logWarn(`defensive: ${w}`);
+      }
+    }
+    if (result.defensiveAudits) {
+      for (const w of result.defensiveAudits) {
+        this.emitInfo(`defensive audit: ${w}`);
+      }
+    }
     if (result.kpiWarnings) {
       for (const w of result.kpiWarnings) {
         this.emitInfo(`  ${w}`);

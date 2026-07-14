@@ -18,6 +18,8 @@ export interface VerifyPassedPayload {
   trace_warnings?: VerifyTraceWarningJson[];
   git_proof_warnings?: string[];
   kpi_warnings?: string[];
+  defensive_warnings?: string[];
+  defensive_audits?: string[];
   trace_evidence_skipped_uncommitted?: number;
 }
 

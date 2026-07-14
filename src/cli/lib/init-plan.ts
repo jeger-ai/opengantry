@@ -13,6 +13,10 @@ import { getOutputAudience } from "./output-context.js";
 import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
 import type { InitProfile } from "./init-profile.js";
+import {
+  isConfigJsonTarget,
+  mergeDefensiveProfileIntoConfigBody,
+} from "./init-defensive-profile.js";
 
 export interface PlannedWrite {
   absoluteTarget: string;
@@ -33,6 +37,7 @@ export function planInitAssets(
   templatesRoot: string,
   repoRoot: string,
   force: boolean,
+  profile?: InitProfile,
 ): InitPlanResult {
   const writes: PlannedWrite[] = [];
   const conflicts: string[] = [];
@@ -50,7 +55,11 @@ export function planInitAssets(
       logError(`init: missing template for ${asset.targetPath} at ${templateAbs}`);
       return { ok: false, writes, skippedUserMutable, unchanged, conflicts };
     }
-    const body = fs.readFileSync(templateAbs, "utf8");
+    const bodyRaw = fs.readFileSync(templateAbs, "utf8");
+    const body =
+      profile?.defensiveProfilePreset && isConfigJsonTarget(asset.targetPath)
+        ? mergeDefensiveProfileIntoConfigBody(bodyRaw, profile.defensiveProfilePreset)
+        : bodyRaw;
     const existing = fs.existsSync(targetAbs) ? fs.readFileSync(targetAbs, "utf8") : null;
 
     if (existing === null) {

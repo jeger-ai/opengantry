@@ -9,7 +9,22 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-07-08 (v2.5.0 released — #113–#122, #87, #90, MSN-0085–MSN-0097, npm **2.5.0**)
+**Last synced:** 2026-07-14 (v2.6.0 released — #86, #88–#89, #91, npm **2.6.0**)
+
+---
+
+## v2.6.0 — Defensive profile completion
+
+| Item | Status | Issue |
+|------|--------|-------|
+| **Profile presets + severity tiers (ADR-0029)** | **Done** | ADR-0029 |
+| **File scope leakage guard (blast radius)** | **Done** | [#91](https://github.com/jeger-ai/opengantry/issues/91) |
+| **Churn ratio guard** | **Done** | [#89](https://github.com/jeger-ai/opengantry/issues/89) |
+| **Test-to-code ratio stability guard** | **Done** | [#88](https://github.com/jeger-ai/opengantry/issues/88) |
+| **Interactive Defensive Profile onboarding in `gantry init`** | **Done** | [#86](https://github.com/jeger-ai/opengantry/issues/86) |
+| **2.6.0 npm publish** | **Done** | — |
+
+Builds on v2.5.0 defensive profile schema (#87) and net-LOC guard (#90). v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63)) is next major.
 
 ---
 
@@ -396,7 +411,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v2.5.0 released ([#113](https://github.com/jeger-ai/opengantry/issues/113)–[#122](https://github.com/jeger-ai/opengantry/issues/122), [#87](https://github.com/jeger-ai/opengantry/issues/87), [#90](https://github.com/jeger-ai/opengantry/issues/90), MSN-0085–MSN-0097, npm **2.5.0**); next: v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63), [#86](https://github.com/jeger-ai/opengantry/issues/86), [#88](https://github.com/jeger-ai/opengantry/issues/88)–[#89](https://github.com/jeger-ai/opengantry/issues/89), [#91](https://github.com/jeger-ai/opengantry/issues/91)).
+**Current focus:** v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63)); v2.6.0 released ([#86](https://github.com/jeger-ai/opengantry/issues/86), [#88](https://github.com/jeger-ai/opengantry/issues/88)–[#89](https://github.com/jeger-ai/opengantry/issues/89), [#91](https://github.com/jeger-ai/opengantry/issues/91), npm **2.6.0**).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
