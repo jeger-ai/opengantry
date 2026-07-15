@@ -1,0 +1,24 @@
+# Retroactive governance backfill: v2.6.0 shipped in ab1a20b without a mission file.
+# This mission documents what MSN-0098 delivered and binds its trace evidence.
+# Legislated intent: v2.6.0 defensive profile completion (retroactive governance backfill)
+msn_id: MSN-0098
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0098: ADR-0029 profile presets + severity tiers (strict_enterprise / balanced_partner / lean_scratchpad)"
+    anchor: "480"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0098: defensive guards — file_scope (#91), churn_ratio (#89), test_to_code (#88) wired into gantry verify"
+    anchor: "481"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0098: gantry init interactive + --defensive-profile onboarding (#86)"
+    anchor: "482"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0098: npm 2.6.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, docs sync"
+    anchor: "483"
+    status: PASS
+gate_success_substring: dev-validate-core OK

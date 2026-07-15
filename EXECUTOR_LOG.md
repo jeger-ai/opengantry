@@ -475,9 +475,9 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0097: v2.5.0 #122 v2-5-0-release — dev-validate-core OK
 
-## v2.6.0 — Defensive profile completion
+## MSN-0098 — v2.6.0 defensive profile completion
 
-- DoD 1 v2.6.0: ADR-0029 profile presets + severity tiers (strict_enterprise / balanced_partner / lean_scratchpad)
-- DoD 2 v2.6.0: defensive guards — file_scope (#91), churn_ratio (#89), test_to_code (#88) wired into gantry verify
-- DoD 3 v2.6.0: gantry init interactive + --defensive-profile onboarding (#86)
-- DoD 4 v2.6.0: npm 2.6.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, docs sync
+- DoD 1 MSN-0098: ADR-0029 profile presets + severity tiers (strict_enterprise / balanced_partner / lean_scratchpad)
+- DoD 2 MSN-0098: defensive guards — file_scope (#91), churn_ratio (#89), test_to_code (#88) wired into gantry verify
+- DoD 3 MSN-0098: gantry init interactive + --defensive-profile onboarding (#86)
+- DoD 4 MSN-0098: npm 2.6.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, docs sync

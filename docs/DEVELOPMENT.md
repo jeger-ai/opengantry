@@ -220,6 +220,8 @@ Implementation: [`src/cli/lib/surgeons/`](../src/cli/lib/surgeons/) registry + o
 
 **Release (v2.1.0+):** bump `package.json` with `npm version <semver> --no-git-tag-version`; sync `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json); run [`scripts/assert-cli-version-parity.sh`](../scripts/assert-cli-version-parity.sh); tag `v<semver>` for npm publish. Race-safe publish: draft GitHub release → push tag → block on [`npm-publish.yml`](../.github/workflows/npm-publish.yml) → [`scripts/poll-npm-version.sh`](../scripts/poll-npm-version.sh) → promote release live ([`scripts/release-gate-publish.sh`](../scripts/release-gate-publish.sh)).
 
+**Release-squash policy:** a release MUST NOT ship under an MSN that has no committed mission file (as happened with v2.6.0/MSN-0098, backfilled retroactively). When multiple planned missions are consolidated into one release mission (the v2.5.0/MSN-0097 pattern), the surviving mission file MUST name the squashed MSN range in its header comment, `EXECUTOR_LOG.md` trace quotes MUST reference the surviving `MSN-XXXX` id (never a bare version string), and the release MUST pass `gantry verify --mission` against that surviving mission before tagging. Retroactive stub mission files for the squashed MSNs are not required — the surviving mission is the index entry.
+
 ## Definition of done (OpenGantry repo)
 
 - [ ] Mission under `.gitagent/missions/` with Planner `[MSN-…]` commit when GXT paths or behavior changed
