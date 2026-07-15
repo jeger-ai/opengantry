@@ -1,4 +1,5 @@
 # OpenGantry v3.0.1 release — squashed MSN-0121..MSN-0129 (thermo remediation + docs/website #123–#126)
+# Planner stamp: post lint fix (discovery-scanner unused import)
 msn_id: MSN-0129
 skill_key: gantry
 gate_command: npm run validate
