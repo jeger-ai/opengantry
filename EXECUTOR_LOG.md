@@ -489,7 +489,7 @@ example trace line for gapman verify
 
 ## MSN-0101 — typed trace failures
 
-- DoD 1 MSN-0101: TraceVerifyFailure carries kind from construction; classifyTraceFailure and isLineDriftFailure string re-parsing deleted (J1)
+- DoD 1 MSN-0101: TraceVerifyFailure carries kind from construction; classifyTraceFailure and isLineDriftFailure string re-parsing deleted (J1) — re-attested v2.7.0
 
 ## MSN-0102 — discriminated VerifyPhaseFailure union
 
