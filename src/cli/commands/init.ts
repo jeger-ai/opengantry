@@ -47,6 +47,8 @@ export interface InitOptions {
   yes?: boolean;
   dryRun?: boolean;
   tutorial?: boolean;
+  discover?: boolean;
+  discoverStdout?: boolean;
   cwd?: string;
   ides?: string;
   docsPath?: string;
@@ -218,6 +220,18 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   if (!workspace) return;
 
   const { repoRoot, templatesRoot, compat } = workspace;
+
+  if (options.discover === true) {
+    const { runInitDiscoverFlow } = await import("../lib/init-discover.js");
+    const result = await runInitDiscoverFlow(repoRoot, {
+      yes: options.yes,
+      stdout: options.discoverStdout,
+    });
+    if (!options.discoverStdout) {
+      logInfo(`${CLI_NAME} init: discovery complete — run init without --discover to scaffold substrate`);
+    }
+    return;
+  }
 
   if (
     options.tutorial === true &&

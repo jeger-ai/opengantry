@@ -75,11 +75,17 @@ export function registerCoreCommands(program: Command): void {
     )
     .option("--no-defensive-profile", "Skip defensive profile preset (template defaults)")
     .option(
+      "--discover",
+      "Run fast-path architecture discovery (emits proposal only until confirmed)",
+    )
+    .option("--discover-stdout", "Emit discovery proposal JSON to stdout (implies --discover)")
+    .option(
       "--tutorial",
       "After init, run guided first mission loop (Planner stamp + verify walkthrough)",
     )
     .action(async (opts: InitOptions) => {
-      await runInit(opts);
+      const discover = opts.discover === true || opts.discoverStdout === true;
+      await runInit({ ...opts, discover, discoverStdout: opts.discoverStdout });
     });
 
   const upgradeCmd = program

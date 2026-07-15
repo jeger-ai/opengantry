@@ -524,3 +524,4 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0107: v2.7.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; README/ADOPTION/BACKLOG release tables synced; npm run validate green
 DoD 1 MSN-0108: ADR-0030 fast-path discovery scanner — regex streaming, proposal schema, sub-5s budget (#61)
+DoD 1 MSN-0109: gantry init --discover fast-path scanner; proposal JSON; sub-5s 5k-file benchmark; discovery tests green (#61)
