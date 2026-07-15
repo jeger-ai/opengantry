@@ -1,11 +1,10 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: v3.0.0 ADR-0031 blueprint agent contract tri-artifacts (#63)
 msn_id: MSN-0110
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0110: ADR-0031 blueprint agent contract — tri-artifacts, verification_plan.json, required_skills (#63)"
+    trace_quote: "DoD 1 MSN-0110: re-attested v3.0.0 release — ADR-0031 blueprint
+      agent contract (#63)"
     anchor: "1"
     status: PASS
 gate_success_substring: dev-validate-core OK
