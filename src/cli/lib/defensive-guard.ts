@@ -26,7 +26,8 @@ export interface DefensiveGuardResult {
   audits: DefensiveFinding[];
   net_loc?: number;
   max_net_loc?: number;
-  reason?: string;
+  /** Hard evaluation error (e.g. unknown skill) — never a guard finding message. */
+  error?: string;
 }
 
 interface FileNumstat {
@@ -158,85 +159,51 @@ function fileSourceWorking(repoRoot: string, filePath: string): string {
   }
 }
 
-function pushFinding(
-  findings: DefensiveFinding[],
-  blocked: DefensiveFinding[],
-  warnings: DefensiveFinding[],
-  audits: DefensiveFinding[],
-  finding: DefensiveFinding,
-): void {
-  findings.push(finding);
-  switch (finding.severity) {
-    case "block":
-      blocked.push(finding);
-      break;
-    case "warn":
-      warnings.push(finding);
-      break;
-    case "audit":
-      audits.push(finding);
-      break;
-    default: {
-      const _exhaustive: never = finding.severity;
-      return _exhaustive;
-    }
-  }
-}
-
 function evaluateNetLocBudget(
   profile: ResolvedDefensiveProfile,
   netLoc: number,
-  findings: DefensiveFinding[],
-  blocked: DefensiveFinding[],
-  warnings: DefensiveFinding[],
-  audits: DefensiveFinding[],
-): { net_loc?: number; max_net_loc?: number; reason?: string } {
+): DefensiveFinding[] {
   const guard = profile.net_loc_budget;
-  if (!guard) return { net_loc: netLoc };
+  if (!guard) return [];
   const max = guard.config.max_net_loc;
-  if (netLoc <= max) return { net_loc: netLoc, max_net_loc: max };
-  const finding: DefensiveFinding = {
-    guard: "net_loc_budget",
-    severity: guard.severity,
-    message: `net_loc ${netLoc} exceeds defensive_profile max_net_loc ${max}`,
-    detail: { net_loc: netLoc, max_net_loc: max },
-  };
-  pushFinding(findings, blocked, warnings, audits, finding);
-  return { net_loc: netLoc, max_net_loc: max, reason: finding.message };
+  if (netLoc <= max) return [];
+  return [
+    {
+      guard: "net_loc_budget",
+      severity: guard.severity,
+      message: `net_loc ${netLoc} exceeds defensive_profile max_net_loc ${max}`,
+      detail: { net_loc: netLoc, max_net_loc: max },
+    },
+  ];
 }
 
 function evaluateFileScope(
   profile: ResolvedDefensiveProfile,
   fileCount: number,
-  findings: DefensiveFinding[],
-  blocked: DefensiveFinding[],
-  warnings: DefensiveFinding[],
-  audits: DefensiveFinding[],
-): void {
+): DefensiveFinding[] {
   const guard = profile.file_scope;
-  if (!guard) return;
+  if (!guard) return [];
   const max = guard.config.max_files;
-  if (fileCount <= max) return;
-  pushFinding(findings, blocked, warnings, audits, {
-    guard: "file_scope",
-    severity: guard.severity,
-    message: `touched ${fileCount} TMVC files exceeds defensive_profile max_files ${max}`,
-    detail: { files_touched: fileCount, max_files: max },
-  });
+  if (fileCount <= max) return [];
+  return [
+    {
+      guard: "file_scope",
+      severity: guard.severity,
+      message: `touched ${fileCount} TMVC files exceeds defensive_profile max_files ${max}`,
+      detail: { files_touched: fileCount, max_files: max },
+    },
+  ];
 }
 
 function evaluateChurnRatio(
   repoRoot: string,
   profile: ResolvedDefensiveProfile,
   rows: readonly FileNumstat[],
-  findings: DefensiveFinding[],
-  blocked: DefensiveFinding[],
-  warnings: DefensiveFinding[],
-  audits: DefensiveFinding[],
-): void {
+): DefensiveFinding[] {
   const guard = profile.churn_ratio;
-  if (!guard) return;
+  if (!guard) return [];
   const maxRatio = guard.config.max_ratio;
+  const findings: DefensiveFinding[] = [];
   for (const row of rows) {
     const changed = row.additions + row.deletions;
     if (changed === 0) continue;
@@ -244,7 +211,7 @@ function evaluateChurnRatio(
     const denom = Math.max(baseline, changed, 1);
     const ratio = changed / denom;
     if (ratio > maxRatio) {
-      pushFinding(findings, blocked, warnings, audits, {
+      findings.push({
         guard: "churn_ratio",
         severity: guard.severity,
         message: `churn ratio ${ratio.toFixed(2)} for ${row.path} exceeds max_ratio ${maxRatio}`,
@@ -256,13 +223,13 @@ function evaluateChurnRatio(
       });
     }
   }
-  if (rows.length === 0) return;
+  if (rows.length === 0) return findings;
   const totalChanged = rows.reduce((s, r) => s + r.additions + r.deletions, 0);
-  if (totalChanged === 0) return;
+  if (totalChanged === 0) return findings;
   const totalBaseline = rows.reduce((s, r) => s + baselineLineCount(repoRoot, r.path), 0);
   const aggregateRatio = totalChanged / Math.max(totalBaseline, totalChanged, 1);
   if (aggregateRatio > maxRatio) {
-    pushFinding(findings, blocked, warnings, audits, {
+    findings.push({
       guard: "churn_ratio",
       severity: guard.severity,
       message: `mission aggregate churn ratio ${aggregateRatio.toFixed(2)} exceeds max_ratio ${maxRatio}`,
@@ -272,19 +239,16 @@ function evaluateChurnRatio(
       },
     });
   }
+  return findings;
 }
 
 function evaluateTestToCode(
   repoRoot: string,
   profile: ResolvedDefensiveProfile,
   rows: readonly FileNumstat[],
-  findings: DefensiveFinding[],
-  blocked: DefensiveFinding[],
-  warnings: DefensiveFinding[],
-  audits: DefensiveFinding[],
-): void {
+): DefensiveFinding[] {
   const guard = profile.test_to_code;
-  if (!guard) return;
+  if (!guard) return [];
   const minDelta = guard.config.min_assertion_delta;
 
   let assertionDelta = 0;
@@ -300,17 +264,20 @@ function evaluateTestToCode(
     .reduce((s, r) => s + r.additions + r.deletions, 0);
 
   if (nonTestNetLoc > 0 && assertionDelta < minDelta) {
-    pushFinding(findings, blocked, warnings, audits, {
-      guard: "test_to_code",
-      severity: guard.severity,
-      message: `assertion delta ${assertionDelta} below min_assertion_delta ${minDelta} while non-test LOC changed by ${nonTestNetLoc}`,
-      detail: {
-        assertion_delta: assertionDelta,
-        min_assertion_delta: minDelta,
-        non_test_net_loc: nonTestNetLoc,
+    return [
+      {
+        guard: "test_to_code",
+        severity: guard.severity,
+        message: `assertion delta ${assertionDelta} below min_assertion_delta ${minDelta} while non-test LOC changed by ${nonTestNetLoc}`,
+        detail: {
+          assertion_delta: assertionDelta,
+          min_assertion_delta: minDelta,
+          non_test_net_loc: nonTestNetLoc,
+        },
       },
-    });
+    ];
   }
+  return [];
 }
 
 function hasActiveGuards(profile: ResolvedDefensiveProfile): boolean {
@@ -348,7 +315,7 @@ export function evaluateDefensiveGuards(
       blocked: [],
       warnings: [],
       audits: [],
-      reason: `defensive guard: unknown skill ${skillKey}`,
+      error: `defensive guard: unknown skill ${skillKey}`,
     };
   }
 
@@ -357,15 +324,15 @@ export function evaluateDefensiveGuards(
   const rows = numstatForTmvcFiles(repoRoot, tmvcRoots);
   const netLoc = computeNetLocForFiles(repoRoot, changed);
 
-  const findings: DefensiveFinding[] = [];
-  const blocked: DefensiveFinding[] = [];
-  const warnings: DefensiveFinding[] = [];
-  const audits: DefensiveFinding[] = [];
-
-  const netLocMeta = evaluateNetLocBudget(profile, netLoc, findings, blocked, warnings, audits);
-  evaluateFileScope(profile, changed.length, findings, blocked, warnings, audits);
-  evaluateChurnRatio(repoRoot, profile, rows, findings, blocked, warnings, audits);
-  evaluateTestToCode(repoRoot, profile, rows, findings, blocked, warnings, audits);
+  const findings: DefensiveFinding[] = [
+    ...evaluateNetLocBudget(profile, netLoc),
+    ...evaluateFileScope(profile, changed.length),
+    ...evaluateChurnRatio(repoRoot, profile, rows),
+    ...evaluateTestToCode(repoRoot, profile, rows),
+  ];
+  const blocked = findings.filter((f) => f.severity === "block");
+  const warnings = findings.filter((f) => f.severity === "warn");
+  const audits = findings.filter((f) => f.severity === "audit");
 
   return {
     ok: blocked.length === 0,
@@ -373,15 +340,7 @@ export function evaluateDefensiveGuards(
     blocked,
     warnings,
     audits,
-    ...netLocMeta,
+    net_loc: netLoc,
+    ...(profile.net_loc_budget ? { max_net_loc: profile.net_loc_budget.config.max_net_loc } : {}),
   };
-}
-
-/** @deprecated Use evaluateDefensiveGuards — kept for direct net_loc tests */
-export function evaluateNetLocBudgetGuard(
-  repoRoot: string,
-  manifest: Manifest,
-  skillKey: string,
-): DefensiveGuardResult {
-  return evaluateDefensiveGuards(repoRoot, manifest, skillKey);
 }

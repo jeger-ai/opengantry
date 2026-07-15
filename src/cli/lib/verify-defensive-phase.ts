@@ -34,35 +34,35 @@ export function evaluateDefensiveGuardPhase(
   const warnings = findingMessages(result.warnings);
   const audits = findingMessages(result.audits);
 
-  if (!result.ok) {
-    const firstBlock = result.blocked[0];
+  if (result.error) {
     return {
       failure: {
         ok: false,
         phase: "defensive",
-        message: firstBlock?.message ?? result.reason ?? "DEFENSIVE GUARD FAILED",
+        message: result.error,
         exitCode: 1,
         executorLogPath,
-        defensiveReason: firstBlock?.message ?? result.reason,
-        defensiveNetLoc: result.net_loc,
-        defensiveMaxNetLoc: result.max_net_loc,
-        ...(warnings.length > 0 ? { defensiveWarnings: warnings } : {}),
-        ...(audits.length > 0 ? { defensiveAudits: audits } : {}),
+        defensiveReason: result.error,
       },
       warnings,
       audits,
     };
   }
 
-  if (result.reason && result.blocked.length === 0 && result.warnings.length === 0) {
+  if (!result.ok) {
+    const firstBlock = result.blocked[0];
     return {
       failure: {
         ok: false,
         phase: "defensive",
-        message: result.reason,
+        message: firstBlock?.message ?? "DEFENSIVE GUARD FAILED",
         exitCode: 1,
         executorLogPath,
-        defensiveReason: result.reason,
+        defensiveReason: firstBlock?.message,
+        defensiveNetLoc: result.net_loc,
+        defensiveMaxNetLoc: result.max_net_loc,
+        ...(warnings.length > 0 ? { defensiveWarnings: warnings } : {}),
+        ...(audits.length > 0 ? { defensiveAudits: audits } : {}),
       },
       warnings,
       audits,

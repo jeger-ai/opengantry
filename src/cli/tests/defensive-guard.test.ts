@@ -5,6 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
 import { evaluateDefensiveGuards } from "../lib/defensive-guard.js";
+import { evaluateDefensiveGuardPhase } from "../lib/verify-defensive-phase.js";
 import { buildDefensiveProfileFromPreset } from "../lib/defensive-profile-presets.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
@@ -94,6 +95,26 @@ test("evaluateDefensiveGuards: lean_scratchpad audits only", () => {
   assert.equal(result.ok, true);
   assert.ok(result.audits.some((f) => f.guard === "file_scope"));
   assert.equal(result.warnings.length, 0);
+});
+
+test("evaluateDefensiveGuardPhase: audit-severity net_loc overflow does NOT fail verify (lean_scratchpad)", () => {
+  const repo = initRepoWithFiles({ "src/a.ts": "a\n" });
+  writeConfig(repo, buildDefensiveProfileFromPreset("lean_scratchpad"));
+  // lean_scratchpad max_net_loc is 800; one 900-line file overflows the budget at audit severity.
+  const bigBody = Array.from({ length: 900 }, (_, i) => `export const v${i} = ${i};`).join("\n");
+  fs.writeFileSync(path.join(repo, "src/big.ts"), `${bigBody}\n`, "utf8");
+  stageNewFiles(repo, ["src/big.ts"]);
+  const outcome = evaluateDefensiveGuardPhase(repo, MANIFEST, "gantry", "EXECUTOR_LOG.md");
+  assert.equal(outcome.failure, null);
+  assert.ok(outcome.audits.some((msg) => msg.includes("net_loc_budget")));
+});
+
+test("evaluateDefensiveGuardPhase: unknown skill is a hard error, not a finding", () => {
+  const repo = initRepoWithFiles({ "src/a.ts": "a\n" });
+  writeConfig(repo, buildDefensiveProfileFromPreset("lean_scratchpad"));
+  const outcome = evaluateDefensiveGuardPhase(repo, MANIFEST, "no-such-skill", "EXECUTOR_LOG.md");
+  assert.ok(outcome.failure);
+  assert.match(outcome.failure.message, /unknown skill no-such-skill/);
 });
 
 test("evaluateDefensiveGuards: test_to_code detects assertion erosion", () => {
