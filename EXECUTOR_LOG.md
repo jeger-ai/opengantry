@@ -537,3 +537,18 @@ DoD 1 MSN-0118: content adapter + blueprint --domain content; code blueprint map
 DoD 1 MSN-0119: examples/content-governance fixture + docs/DOMAINS.md + README repositioning; 454 tests green
 DoD 1 MSN-0120: v3.0.0 domain-generic re-tag — BACKLOG synced; npm run validate green; local v3.0.0 tag refreshed
 DoD 1 MSN-0120: domain-generic release complete — 454 tests; domain adapters code+content; perimeter schema 0.3.0; content-governance fixture green
+
+## v3.0.0 release re-attestation (pre-push)
+DoD 1 MSN-0108: re-attested v3.0.0 release — ADR-0030 fast-path discovery scanner (#61)
+DoD 1 MSN-0109: re-attested v3.0.0 release — gantry init --discover scanner (#61)
+DoD 1 MSN-0110: re-attested v3.0.0 release — ADR-0031 blueprint agent contract (#63)
+DoD 1 MSN-0111: re-attested v3.0.0 release — gantry blueprint tri-artifacts (#63)
+DoD 1 MSN-0112: re-attested v3.0.0 release — ADR-0032 failure envelope findings[]
+DoD 1 MSN-0113: re-attested v3.0.0 release — verify failure envelope JSON/SARIF/MCP
+DoD 1 MSN-0114: re-attested v3.0.0 release — v3.0.0 version bump and docs sync
+DoD 1 MSN-0115: re-attested v3.0.0 release — ADR-0033 domain adapters
+DoD 1 MSN-0116: re-attested v3.0.0 release — domain adapter core and code extraction
+DoD 1 MSN-0117: re-attested v3.0.0 release — perimeter schema 0.3.0 pattern rules
+DoD 1 MSN-0118: re-attested v3.0.0 release — content adapter and blueprint dispatch
+DoD 1 MSN-0119: re-attested v3.0.0 release — content-governance example and docs
+DoD 1 MSN-0120: re-attested v3.0.0 release — README manifesto front door; 454 tests green; publish v3.0.0

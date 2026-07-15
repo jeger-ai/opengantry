@@ -1,11 +1,10 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: v3.0.0 ADR-0030 fast-path discovery scanner design (#61)
 msn_id: MSN-0108
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0108: ADR-0030 fast-path discovery scanner — regex streaming, proposal schema, sub-5s budget (#61)"
+    trace_quote: "DoD 1 MSN-0108: re-attested v3.0.0 release — ADR-0030 fast-path
+      discovery scanner (#61)"
     anchor: "1"
     status: PASS
 gate_success_substring: dev-validate-core OK
