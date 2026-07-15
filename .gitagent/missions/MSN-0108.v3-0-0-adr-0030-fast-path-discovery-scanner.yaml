@@ -7,5 +7,5 @@ trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0108: ADR-0030 fast-path discovery scanner — regex streaming, proposal schema, sub-5s budget (#61)"
     anchor: "1"
-    status: PENDING
+    status: PASS
 gate_success_substring: dev-validate-core OK
