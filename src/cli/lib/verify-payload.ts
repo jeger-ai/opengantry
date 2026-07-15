@@ -16,8 +16,8 @@ import {
 import { persistRemediationSnapshot } from "./context-feed-remediation.js";
 
 import type { GxtErrorCode } from "./gxt-error-codes.js";
-import type { VerifyFinding, VerifyFailedGate } from "./verify-finding.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "./verify-finding.js";
+import type { VerifyFinding } from "./verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "./verify-finding.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;

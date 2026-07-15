@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1.0",
-  "opengantry_version": "2.7.0",
+  "opengantry_version": "3.0.0",
   "installed_at": "2026-01-01T00:00:00.000Z",
   "installed_by": "gantry init"
 }

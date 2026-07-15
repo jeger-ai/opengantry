@@ -9,7 +9,22 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-07-15 (v2.7.0 released — quality & governance consolidation, npm **2.7.0**)
+**Last synced:** 2026-07-15 (v3.0.0 released — native governance layer for autonomous agents, npm **3.0.0**)
+
+---
+
+## v3.0.0 — Native governance layer for autonomous agents
+
+| Item | Status | MSN |
+|------|--------|-----|
+| **Fast-path discovery scanner (`gantry init --discover`)** | **Done** | MSN-0108–MSN-0109 |
+| **Blueprint agent contract (tri-artifacts + verification_plan.json + required_skills)** | **Done** | MSN-0110–MSN-0111 |
+| **Machine-readable verify failure envelope (`findings[]`)** | **Done** | MSN-0112–MSN-0113 |
+| **Remove deprecated GapmanUserError aliases (major bump)** | **Done** | MSN-0114 |
+| **3.0.0 npm publish** | **Done** | MSN-0114 |
+| **AI performance judge (#62)** | **Deferred v3.1** | — |
+
+Onboard in seconds → negotiate the contract → self-correct from structured verdicts. Integration surface: [`docs/AGENT-LOOP.md`](AGENT-LOOP.md).
 
 ---
 
@@ -429,7 +444,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63)); v2.7.0 released (quality & governance consolidation, MSN-0098–MSN-0107, npm **2.7.0**).
+**Current focus:** v3.1 AI performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)); v3.0.0 released (autonomous-agent governance layer, MSN-0108–MSN-0114, npm **3.0.0**).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

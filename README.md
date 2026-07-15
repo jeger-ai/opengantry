@@ -74,14 +74,15 @@ Developing this repository from source: `npm ci && npm run build` — see [gantr
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gantry verify --fix`, role output via `--audience executor\|planner\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v2.7.0** — unified CLI naming (`gantry` primary; legacy `gapman` alias, deprecated). Current npm publish: **v2.7.0**. See [.gitagent/planner/RUNTIME.md](.gitagent/planner/RUNTIME.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v3.0.0** — native governance layer for autonomous AI agents (`gantry` primary; legacy `gapman` bin alias for npm compatibility). Current npm publish: **v3.0.0**. See [.gitagent/planner/RUNTIME.md](.gitagent/planner/RUNTIME.md) and [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md).
 
 ## Release timeline (latest first)
 
-Current npm release in this repository: **`gantry` v2.7.0**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
+Current npm release in this repository: **`gantry` v3.0.0**. Use [`docs/ADOPTION.md`](docs/ADOPTION.md) for the ordered runbook.
 
 | Release | Highlights |
 |---------|------------|
+| **v3.0.0** | Native governance layer for autonomous agents — `gantry init --discover` fast-path scanner, `gantry blueprint` tri-artifacts (ARCHITECTURE.md + TARGET_ARCHITECTURE.yaml + verification_plan.json with `required_skills`), machine-readable verify failure envelope (`findings[]` for `--json`/SARIF/MCP), removed deprecated `GapmanUserError` aliases |
 | **v2.7.0** | Quality & governance consolidation — audit-severity net_loc verify bugfix, discriminated `VerifyPhaseFailure` union, typed trace failure kinds, verify pipeline collapse (−3 modules), shared command error boundary, `GantryUserError` naming, MSN-0098 governance backfill, test-gap closure (435 tests) |
 | **v2.6.0** | Defensive profile completion — presets + severity tiers (ADR-0029), file-scope / churn / test-to-code guards ([#88](https://github.com/jeger-ai/opengantry/issues/88)–[#91](https://github.com/jeger-ai/opengantry/issues/91)), init onboarding ([#86](https://github.com/jeger-ai/opengantry/issues/86)) |
 | **v2.5.0** | Adopter-ready cage — generic `arch check` roots ([#114](https://github.com/jeger-ai/opengantry/issues/114)), `TARGET_ARCHITECTURE.yaml` init scaffold ([#115](https://github.com/jeger-ai/opengantry/issues/115)), schema 0.2.0 ([#116](https://github.com/jeger-ai/opengantry/issues/116)), defensive profile + net LOC guard ([#87](https://github.com/jeger-ai/opengantry/issues/87), [#90](https://github.com/jeger-ai/opengantry/issues/90)) |
@@ -396,7 +397,7 @@ GXT deliberately trades "always-on improvisation" for a **narrow, inspectable en
 
 ## Relationship to this repository
 
-**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gantry` v2.7.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gantry init` in your project.
+**jeger-ai/opengantry** is the **canonical reference tree** for **GXT** (manifest `schema_version` **v0.5.0** law + **`gantry` v3.0.0** CLI). Install the CLI with `npm install -g @jeger-ai/opengantry`, or fork this repo and run `gantry init` in your project.
 
 ## Security
 

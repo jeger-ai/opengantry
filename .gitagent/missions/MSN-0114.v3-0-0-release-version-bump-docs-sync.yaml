@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v3.0.0 release version bump docs sync validate tag
+msn_id: MSN-0114
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0114: v3.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; README/ADOPTION/BACKLOG/AGENT-LOOP synced; npm run validate green"
+    anchor: "1"
+    status: PASS
+gate_success_substring: dev-validate-core OK

@@ -223,7 +223,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
 
   if (options.discover === true) {
     const { runInitDiscoverFlow } = await import("../lib/init-discover.js");
-    const result = await runInitDiscoverFlow(repoRoot, {
+    await runInitDiscoverFlow(repoRoot, {
       yes: options.yes,
       stdout: options.discoverStdout,
     });

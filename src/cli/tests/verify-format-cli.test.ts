@@ -8,7 +8,6 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { runVerify } from "../commands/verify.js";
 import type { VerifyExportFormat } from "../lib/verify-export.js";
 import {
