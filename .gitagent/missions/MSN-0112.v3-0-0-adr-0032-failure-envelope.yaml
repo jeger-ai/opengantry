@@ -1,11 +1,10 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: v3.0.0 ADR-0032 machine-readable failure envelope
 msn_id: MSN-0112
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0112: ADR-0032 machine-readable verify failure envelope — findings[] schema v2"
+    trace_quote: "DoD 1 MSN-0112: re-attested v3.0.0 release — ADR-0032 failure
+      envelope findings[]"
     anchor: "1"
     status: PASS
 gate_success_substring: dev-validate-core OK
