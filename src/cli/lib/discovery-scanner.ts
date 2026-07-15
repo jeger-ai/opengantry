@@ -5,7 +5,6 @@ import {
   getDomainAdapter,
   isDomainFile,
   type DomainFileRecord,
-  type DomainKey,
 } from "./domains/index.js";
 
 export type {
