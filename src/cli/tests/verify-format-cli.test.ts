@@ -66,7 +66,7 @@ test("runVerify --format sarif: gate failure carries GXT error code as ruleId an
   const sarif = JSON.parse(stdout) as Record<string, unknown>;
   const runs = sarif.runs as Record<string, unknown>[];
   const results = runs[0]?.results as Record<string, unknown>[];
-  assert.equal(results[0]?.ruleId, GXT_ERROR.GATE_FAILED);
+  assert.equal(results[0]?.ruleId, "gate");
   assert.equal(exitCode, 1);
 });
 

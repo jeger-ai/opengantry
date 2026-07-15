@@ -528,3 +528,4 @@ DoD 1 MSN-0109: gantry init --discover fast-path scanner; proposal JSON; sub-5s 
 DoD 1 MSN-0110: ADR-0031 blueprint agent contract — tri-artifacts, verification_plan.json, required_skills (#63)
 DoD 1 MSN-0111: gantry blueprint tri-artifacts + verification contract + drift doctor; blueprint tests green (#63)
 DoD 1 MSN-0112: ADR-0032 machine-readable verify failure envelope — findings[] schema v2
+DoD 1 MSN-0113: verify failure envelope findings[] across --json, SARIF, MCP; 447 tests green

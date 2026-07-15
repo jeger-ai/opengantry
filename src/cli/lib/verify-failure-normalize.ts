@@ -18,6 +18,7 @@ import type {
   TracePendingFailure,
 } from "./verify-engine.js";
 import type { VerifyFailedPayload } from "./verify-payload.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "./verify-finding.js";
 
 /** Canonical verify-failure contract — single mapping for all sinks.
  * Gate output lives in the single `gate` field; sink projections rename at their boundary. */
@@ -254,7 +255,50 @@ export function normalizeInitFailure(error: unknown): NormalizedVerifyFailure {
   };
 }
 
-export function toVerifyFailedPayload(normalized: NormalizedVerifyFailure): VerifyFailedPayload {
+export function buildFindingsForFailure(
+  normalized: NormalizedVerifyFailure,
+  failure?: VerifyPhaseFailure,
+): import("./verify-finding.js").VerifyFinding[] {
+  const hint = normalized.fix_hints[0] ?? normalized.message;
+  const phaseGate = (normalized.phase === "trace_pending" ? "trace" : normalized.phase) as import("./verify-finding.js").VerifyFailedGate;
+
+  if (failure?.phase === "trace") {
+    return [
+      verifyFinding("trace", hint, {
+        offending_file: failure.executorLogPath,
+        line: 0,
+      }),
+    ];
+  }
+  if (failure?.phase === "kpi") {
+    return [
+      verifyFinding("kpi", hint, {
+        offending_file: failure.kpiReportPath,
+      }),
+    ];
+  }
+  if (failure?.phase === "gate") {
+    return [verifyFinding("gate", hint)];
+  }
+  if (failure?.phase === "defensive") {
+    return [verifyFinding("defensive", failure.defensiveReason || hint)];
+  }
+  if (failure?.phase === "git_proof") {
+    return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
+  }
+
+  if (normalized.failures && normalized.failures.length > 0) {
+    return normalized.failures.map((f) => verifyFinding(phaseGate, f));
+  }
+
+  return [verifyFinding(phaseGate, hint)];
+}
+
+export function toVerifyFailedPayload(
+  normalized: NormalizedVerifyFailure,
+  failure?: import("./verify-engine.js").VerifyPhaseFailure,
+): VerifyFailedPayload {
+  const findings = buildFindingsForFailure(normalized, failure);
   return {
     status: "failed",
     phase: normalized.phase,
@@ -263,6 +307,8 @@ export function toVerifyFailedPayload(normalized: NormalizedVerifyFailure): Veri
     fix_hints: normalized.fix_hints,
     next_actions: normalized.next_actions,
     exit_code: normalized.exit_code,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings,
     ...(normalized.gate?.stdout !== undefined ? { stdout: normalized.gate.stdout } : {}),
     ...(normalized.gate?.stderr !== undefined ? { stderr: normalized.gate.stderr } : {}),
     ...(normalized.failures ? { failures: normalized.failures } : {}),

@@ -16,6 +16,8 @@ import {
 import { persistRemediationSnapshot } from "./context-feed-remediation.js";
 
 import type { GxtErrorCode } from "./gxt-error-codes.js";
+import type { VerifyFinding, VerifyFailedGate } from "./verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "./verify-finding.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;
@@ -48,6 +50,8 @@ export interface VerifyFailedPayload {
   fix_hints: string[];
   next_actions: string[];
   exit_code: number;
+  envelope_schema_version: typeof VERIFY_ENVELOPE_SCHEMA_VERSION;
+  findings: VerifyFinding[];
   stdout?: string;
   stderr?: string;
   failures?: string[];
@@ -153,7 +157,7 @@ export function buildVerifyResultPayloadFromPhaseResult(
     msnId: mission.msnId ?? undefined,
     mission,
   });
-  const payload = toVerifyFailedPayload(normalized);
+  const payload = toVerifyFailedPayload(normalized, result);
   persistRemediationSnapshot(root, toRemediationSnapshot(normalized));
   return payload;
 }

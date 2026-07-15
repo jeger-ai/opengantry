@@ -36,23 +36,33 @@ export function buildSarifDocument(payload: VerifyResultPayload): Record<string,
   const results: Record<string, unknown>[] = [];
 
   if (payload.status === "failed") {
-    results.push({
-      ruleId: payload.error_code,
-      level: "error",
-      message: { text: payload.message },
-      ...(payload.stdout || payload.stderr
-        ? {
-            attachments: [
-              ...(payload.stdout
-                ? [{ description: { text: "gate stdout" }, content: { text: payload.stdout } }]
-                : []),
-              ...(payload.stderr
-                ? [{ description: { text: "gate stderr" }, content: { text: payload.stderr } }]
-                : []),
-            ],
-          }
-        : {}),
-    });
+    for (const finding of payload.findings ?? []) {
+      results.push({
+        ruleId: finding.failed_gate,
+        level: finding.severity === "warning" ? "warning" : "error",
+        message: { text: finding.resolution_hint },
+        ...(finding.offending_file
+          ? {
+              locations: [
+                {
+                  physicalLocation: {
+                    artifactLocation: { uri: finding.offending_file },
+                    region: { startLine: finding.line > 0 ? finding.line : 1 },
+                  },
+                },
+              ],
+            }
+          : {}),
+        properties: { resolution_hint: finding.resolution_hint },
+      });
+    }
+    if (results.length === 0) {
+      results.push({
+        ruleId: payload.error_code,
+        level: "error",
+        message: { text: payload.message },
+      });
+    }
   } else if (payload.trace_warnings?.length) {
     for (const w of payload.trace_warnings) {
       results.push({

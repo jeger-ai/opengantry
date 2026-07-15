@@ -30,15 +30,6 @@ export class GantryUserError extends Error {
 export function isGantryUserError(e: unknown): e is GantryUserError {
   return e instanceof GantryUserError;
 }
-
-/** @deprecated Use {@link GantryUserError}; alias kept for one release (v2.7.0). */
-export const GapmanUserError = GantryUserError;
-/** @deprecated Use {@link GantryUserError}; alias kept for one release (v2.7.0). */
-export type GapmanUserError = GantryUserError;
-
-/** @deprecated Use {@link isGantryUserError}; alias kept for one release (v2.7.0). */
-export const isGapmanUserError = isGantryUserError;
-
 function logUnexpectedError(error: Error): void {
   if (readEnvWithLegacy("DEBUG") === "1") {
     logError(error.stack ?? error.message);

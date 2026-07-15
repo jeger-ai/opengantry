@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildJUnitXml, buildSarifDocument, buildVerifyExportDocument } from "../lib/verify-export.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "../lib/verify-finding.js";
 
-test("verify-export: SARIF failure uses GXT error code as ruleId", () => {
+test("verify-export: SARIF failure uses finding failed_gate as ruleId", () => {
   const sarif = buildSarifDocument({
     status: "failed",
     phase: "gate",
@@ -12,10 +13,20 @@ test("verify-export: SARIF failure uses GXT error code as ruleId", () => {
     fix_hints: ["re-run gate"],
     next_actions: ["gantry verify"],
     exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [
+      {
+        failed_gate: "gate",
+        offending_file: "",
+        line: 0,
+        severity: "error",
+        resolution_hint: "re-run gate",
+      },
+    ],
   });
   const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
   const results = run.results as Record<string, unknown>[];
-  assert.equal(results[0]?.ruleId, GXT_ERROR.GATE_FAILED);
+  assert.equal(results[0]?.ruleId, "gate");
 });
 
 test("verify-export: JUnit pass emits phase testcases", () => {
@@ -40,6 +51,16 @@ test("verify-export: JUnit fail includes failure element", () => {
     fix_hints: [],
     next_actions: [],
     exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [
+      {
+        failed_gate: "trace",
+        offending_file: "EXECUTOR_LOG.md",
+        line: 0,
+        severity: "error",
+        resolution_hint: "append trace evidence",
+      },
+    ],
   });
   assert.match(xml, /<failure/);
   assert.match(xml, /name="trace"/);

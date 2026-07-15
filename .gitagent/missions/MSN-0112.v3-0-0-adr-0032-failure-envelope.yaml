@@ -5,7 +5,7 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0112: ADR-0032 machine-readable verify failure envelope — findings[] schema v2"
     anchor: "1"
-    status: PENDING
+    status: PASS
 gate_success_substring: dev-validate-core OK

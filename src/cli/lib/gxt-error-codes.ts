@@ -80,6 +80,3 @@ export function gxtCodeFromGantryUserError(code: string): GxtErrorCode {
 export function isKnownGantryUserErrorCode(code: string): boolean {
   return code.startsWith("GXT_") || code in GIT_PROOF_TO_GXT || code in GANTRY_USER_ERROR_TO_GXT;
 }
-
-/** @deprecated Use {@link gxtCodeFromGantryUserError}; alias kept for one release (v2.7.0). */
-export const gxtCodeFromGapmanUserError = gxtCodeFromGantryUserError;
