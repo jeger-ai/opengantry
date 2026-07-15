@@ -7,8 +7,17 @@ import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./g
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { isLegislativeStub } from "./missions/formatter.js";
-import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
-import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
+import type { GateSpec, Manifest, ParsedMission } from "./types.js";
+import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceVerifyWarning } from "./trace.js";
+import type {
+  DefensiveFailure,
+  GateFailure,
+  GitProofFailure,
+  KpiFailure,
+  TraceFailure,
+  TracePendingFailure,
+  VerifyPhaseFailure,
+} from "./verify-failure.js";
 import { errorMessage } from "./cli-io.js";
 import {
   createVirtualFlightId,
@@ -86,74 +95,17 @@ export function discoverChangedMissionFiles(repoRoot: string, baseRef: string): 
     .map((rel) => toPosixRel(repoRoot, path.join(repoRoot, rel)));
 }
 
-export type VerifyFailurePhase = "git_proof" | "gate" | "defensive" | "kpi" | "trace_pending" | "trace";
-
-export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
-
-interface VerifyFailureBase {
-  ok: false;
-  message: string;
-  exitCode: number;
-  executorLogPath: string;
-}
-
-export interface GitProofFailure extends VerifyFailureBase {
-  phase: "git_proof";
-  gitProofMessage: string;
-}
-
-export interface GateFailure extends VerifyFailureBase {
-  phase: "gate";
-  /** Absent only for the "mission has no gate_command" failure. */
-  gateCommand?: string;
-  gateStdout?: string;
-  gateStderr?: string;
-  gateExitCode?: number;
-}
-
-export interface DefensiveFailure extends VerifyFailureBase {
-  phase: "defensive";
-  defensiveReason: string;
-  defensiveNetLoc?: number;
-  defensiveMaxNetLoc?: number;
-  defensiveWarnings?: string[];
-  defensiveAudits?: string[];
-}
-
-export interface KpiFailure extends VerifyFailureBase {
-  phase: "kpi";
-  kpiKind: KpiFailureKind;
-  kpiReason: string;
-  kpiReportPath: string;
-  kpiMetric?: string;
-  kpiOp?: KpiThresholdOp;
-  kpiExpected?: number;
-  kpiActual?: number | boolean;
-  kpiStalePaths?: string[];
-}
-
-export interface TracePendingFailure extends VerifyFailureBase {
-  phase: "trace_pending";
-  gateCommand?: string;
-}
-
-export interface TraceFailure extends VerifyFailureBase {
-  phase: "trace";
-  traceKind: TraceFailureKind;
-  traceReason: string;
-  traceQuote: string;
-  attestationCommit?: string;
-  stalePaths?: string[];
-}
-
-/** Discriminated on `phase` — phase-specific fields exist only on their variant. */
-export type VerifyPhaseFailure =
-  | GitProofFailure
-  | GateFailure
-  | DefensiveFailure
-  | KpiFailure
-  | TracePendingFailure
-  | TraceFailure;
+export type {
+  DefensiveFailure,
+  GateFailure,
+  GitProofFailure,
+  KpiFailure,
+  KpiFailureKind,
+  TraceFailure,
+  TracePendingFailure,
+  VerifyFailurePhase,
+  VerifyPhaseFailure,
+} from "./verify-failure.js";
 
 export interface VerifyPhaseSuccess {
   ok: true;

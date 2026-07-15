@@ -493,5 +493,5 @@ example trace line for gapman verify
 
 ## MSN-0102 — discriminated VerifyPhaseFailure union
 
-- DoD 1 MSN-0102: VerifyPhaseFailure rekeyed on phase discriminant; phase fields exist only on their variant; VerifyHintContext and DefensivePhaseFailureFields deleted (J2/R1)
-- DoD 2 MSN-0102: postGate and resolveGuardedMissionAbs unions tagged; surgeons operate on GateFailure only (R3)
+- DoD 1 MSN-0102: VerifyPhaseFailure rekeyed on phase discriminant in verify-failure.ts; phase fields exist only on their variant; VerifyHintContext and DefensivePhaseFailureFields deleted (J2/R1)
+- DoD 2 MSN-0102: postGate and resolveGuardedMissionAbs unions tagged; surgeon context narrowed to GateFailure (R3)

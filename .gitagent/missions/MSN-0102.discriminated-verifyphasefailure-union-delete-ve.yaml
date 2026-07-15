@@ -5,11 +5,11 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0102: VerifyPhaseFailure rekeyed on phase discriminant; phase fields exist only on their variant; VerifyHintContext and DefensivePhaseFailureFields deleted (J2/R1)"
+    trace_quote: "DoD 1 MSN-0102: VerifyPhaseFailure rekeyed on phase discriminant in verify-failure.ts; phase fields exist only on their variant; VerifyHintContext and DefensivePhaseFailureFields deleted (J2/R1)"
     anchor: "496"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0102: postGate and resolveGuardedMissionAbs unions tagged; surgeons operate on GateFailure only (R3)"
+    trace_quote: "DoD 2 MSN-0102: postGate and resolveGuardedMissionAbs unions tagged; surgeon context narrowed to GateFailure (R3)"
     anchor: "497"
     status: PASS
 gate_success_substring: dev-validate-core OK
