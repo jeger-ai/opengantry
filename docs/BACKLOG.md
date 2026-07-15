@@ -13,7 +13,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 
 ---
 
-## v3.0.0 — Native governance layer for autonomous agents
+## v3.0.0 — Domain-agnostic governance layer for autonomous agents
 
 | Item | Status | MSN |
 |------|--------|-----|
@@ -21,10 +21,14 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **Blueprint agent contract (tri-artifacts + verification_plan.json + required_skills)** | **Done** | MSN-0110–MSN-0111 |
 | **Machine-readable verify failure envelope (`findings[]`)** | **Done** | MSN-0112–MSN-0113 |
 | **Remove deprecated GapmanUserError aliases (major bump)** | **Done** | MSN-0114 |
-| **3.0.0 npm publish** | **Done** | MSN-0114 |
+| **Domain adapter architecture (ADR-0033)** | **Done** | MSN-0115 |
+| **Built-in `code` + `content` adapters, `--domain` flag** | **Done** | MSN-0116–MSN-0118 |
+| **Perimeter schema 0.3.0 + `gantry perimeter check`** | **Done** | MSN-0117 |
+| **Content governance example + `docs/DOMAINS.md`** | **Done** | MSN-0119 |
+| **3.0.0 re-tag + publish** | **Done** | MSN-0120 |
 | **AI performance judge (#62)** | **Deferred v3.1** | — |
 
-Onboard in seconds → negotiate the contract → self-correct from structured verdicts. Integration surface: [`docs/AGENT-LOOP.md`](AGENT-LOOP.md).
+Context ingestion → rules of engagement → standardized audit API. Not just software: brand/compliance content uses the same loop. See [`docs/DOMAINS.md`](DOMAINS.md) and [`examples/content-governance/`](../examples/content-governance/).
 
 ---
 

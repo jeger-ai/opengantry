@@ -61,6 +61,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gantr
 | **Contribute / dogfood** | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | **Governance law + workflow** | [`.gitagent/README.md`](.gitagent/README.md) · [`.gitagent/planner/RULES.md`](.gitagent/planner/RULES.md) |
 | **Roadmap / open work** | [`docs/BACKLOG.md`](docs/BACKLOG.md) |
+| **Domain adapters (code + content)** | [`docs/DOMAINS.md`](docs/DOMAINS.md) · [`examples/content-governance/`](examples/content-governance/) |
 | **Compliance framing** | [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) |
 | **Ephemeral virtualization (stretch)** | [`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](docs/ADR-EPHEMERAL-VIRTUALIZATION.md) |
 
@@ -74,7 +75,7 @@ Developing this repository from source: `npm ci && npm run build` — see [gantr
 | **Regulated / ISO-aligned workflows** | SOD, mission authorization, and Git-native trace — see [`docs/COMPLIANCE-ISO.md`](docs/COMPLIANCE-ISO.md) (27001 change control, 42001 AI governance) |
 | **Faster recovery from failure** | Stable `GXT_*` error codes, `gantry verify --fix`, role output via `--audience executor\|planner\|verifier` |
 
-**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v3.0.0** — native governance layer for autonomous AI agents (`gantry` primary; legacy `gapman` bin alias for npm compatibility). Current npm publish: **v3.0.0**. See [.gitagent/planner/RUNTIME.md](.gitagent/planner/RUNTIME.md) and [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md).
+**Protocol maturity:** substrate law **v0.5.0**; **`gantry` v3.0.0** — domain-agnostic governance layer for autonomous agents (code **and** content/compliance — not just a TypeScript linter). See [`docs/DOMAINS.md`](docs/DOMAINS.md) and [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md).
 
 ## Release timeline (latest first)
 

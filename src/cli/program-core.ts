@@ -79,6 +79,7 @@ export function registerCoreCommands(program: Command): void {
       "Run fast-path architecture discovery (emits proposal only until confirmed)",
     )
     .option("--discover-stdout", "Emit discovery proposal JSON to stdout (implies --discover)")
+    .option("--domain <key>", "Domain adapter for discovery (code | content)", "code")
     .option(
       "--tutorial",
       "After init, run guided first mission loop (Planner stamp + verify walkthrough)",

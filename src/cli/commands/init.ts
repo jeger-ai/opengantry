@@ -49,6 +49,7 @@ export interface InitOptions {
   tutorial?: boolean;
   discover?: boolean;
   discoverStdout?: boolean;
+  domain?: string;
   cwd?: string;
   ides?: string;
   docsPath?: string;
@@ -226,6 +227,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     await runInitDiscoverFlow(repoRoot, {
       yes: options.yes,
       stdout: options.discoverStdout,
+      domain: options.domain,
     });
     if (!options.discoverStdout) {
       logInfo(`${CLI_NAME} init: discovery complete — run init without --discover to scaffold substrate`);

@@ -6,8 +6,10 @@ import { toPosixRel } from "./cli-io.js";
 import {
   TARGET_ARCHITECTURE_FILENAME,
   TARGET_ARCHITECTURE_SCHEMA_VERSION,
+  TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
   type TargetArchitectureSpec,
 } from "./target-architecture.js";
+import { getDomainAdapter } from "./domains/index.js";
 import {
   type DiscoveryProposal,
   runDiscoveryScan,
@@ -29,7 +31,7 @@ function proposalPath(repoRoot: string): string {
 /** Emit discovery proposal JSON without writing baseline governance files. */
 export function emitDiscoveryProposal(
   repoRoot: string,
-  options: { onProgress?: (n: number) => void } = {},
+  options: { domain?: string; onProgress?: (n: number) => void } = {},
 ): { proposal: DiscoveryProposal; proposalPath: string } {
   const proposal = runDiscoveryScan(repoRoot, options);
   const out = proposalPath(repoRoot);
@@ -53,10 +55,23 @@ function inferLayersFromProposal(proposal: DiscoveryProposal): TargetArchitectur
 }
 
 function buildDraftTargetArchitecture(proposal: DiscoveryProposal): TargetArchitectureSpec {
+  const adapter = getDomainAdapter(proposal.domain ?? "code");
+  if (adapter.key === "content") {
+    const globs = [...adapter.defaultScanGlobs];
+    return {
+      schema_version: TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
+      domain: "content",
+      scan_roots: globs.map((g) => g.replace(/\/\*\*$/, "")),
+      languages: ["markdown", "html", "text"],
+      layers: [{ id: "content", globs }],
+      rules: [],
+    };
+  }
   const layers = inferLayersFromProposal(proposal);
   const scan_roots = layers.map((l) => l.globs[0]!.replace(/\/\*\*$/, ""));
   return {
     schema_version: TARGET_ARCHITECTURE_SCHEMA_VERSION,
+    domain: "code",
     scan_roots,
     languages: ["typescript"],
     layers,

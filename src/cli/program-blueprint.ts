@@ -8,7 +8,8 @@ export function registerBlueprintCommands(program: Command): void {
       "Co-author ARCHITECTURE.md, TARGET_ARCHITECTURE.yaml, and verification_plan.json from discovery interview",
     )
     .option("--yes", "Accept defaults without interactive prompts")
-    .action(async (opts: { yes?: boolean }) => {
-      await runBlueprintCommand({ yes: opts.yes });
+    .option("--domain <key>", "Domain adapter (code | content)", "code")
+    .action(async (opts: { yes?: boolean; domain?: string }) => {
+      await runBlueprintCommand({ yes: opts.yes, domain: opts.domain });
     });
 }

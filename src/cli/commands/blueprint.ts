@@ -11,6 +11,7 @@ import {
 export interface BlueprintOptions {
   yes?: boolean;
   cwd?: string;
+  domain?: string;
 }
 
 async function runInterview(
@@ -66,8 +67,8 @@ export async function runBlueprintCommand(options: BlueprintOptions = {}): Promi
   if (repoRoot === null) return;
 
   try {
-    const proposal = runBlueprintDiscovery(repoRoot);
-    const questions = buildBlueprintQuestions(proposal);
+    const proposal = runBlueprintDiscovery(repoRoot, options.domain);
+    const questions = buildBlueprintQuestions(proposal, options.domain);
     if (questions.length < 3) {
       logInfo(`${CLI_NAME} blueprint: insufficient evidence-anchored questions (${questions.length}) — add source files`);
       setExitCode(2);
@@ -77,7 +78,7 @@ export async function runBlueprintCommand(options: BlueprintOptions = {}): Promi
     const answers = await runInterview(questions, options.yes === true);
     if (answers.length === 0) return;
 
-    const artifacts = emitBlueprintArtifacts(repoRoot, proposal, questions, answers);
+    const artifacts = emitBlueprintArtifacts(repoRoot, proposal, questions, answers, options.domain);
     logInfo(`${CLI_NAME} blueprint: wrote ${artifacts.architectureMdPath}`);
     logInfo(`${CLI_NAME} blueprint: wrote ${artifacts.targetArchitecturePath}`);
     logInfo(`${CLI_NAME} blueprint: wrote ${artifacts.verificationPlanPath}`);

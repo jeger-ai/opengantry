@@ -90,14 +90,14 @@ test("arch check command: --json emits schema_version payload", () => {
   });
 });
 
-test("arch check command: missing file args exits 2 with usage error", () => {
+test("arch check command: auto-walks scan_roots when no file args", () => {
   const dest = makeArchRepo();
   inRepo(dest, () => {
     const { output } = captureConsole(() => {
       runArchCheckCommand({ cwd: dest, files: [] });
     });
-    assert.match(output.stderr, /pass one or more \.ts file paths/);
-    assert.equal(process.exitCode, 2);
+    assert.match(output.stdout, /arch check: OK/);
+    assert.equal(process.exitCode, undefined);
   });
 });
 

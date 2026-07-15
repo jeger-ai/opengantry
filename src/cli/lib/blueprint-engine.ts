@@ -3,10 +3,13 @@ import path from "node:path";
 import YAML from "yaml";
 import { createHash } from "node:crypto";
 import { toPosixRel } from "./cli-io.js";
-import { runDiscoveryScan, type DiscoveryAnomaly, type DiscoveryProposal } from "./discovery-scanner.js";
+import {
+  runDiscoveryScan,
+  type DiscoveryProposal,
+} from "./discovery-scanner.js";
 import {
   TARGET_ARCHITECTURE_FILENAME,
-  TARGET_ARCHITECTURE_SCHEMA_VERSION,
+  TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
   type ArchRuleSpec,
   type TargetArchitectureSpec,
 } from "./target-architecture.js";
@@ -16,10 +19,16 @@ import {
   VERIFICATION_PLAN_REL,
   type VerificationGateCommand,
 } from "./verification-plan.js";
+import {
+  getDomainAdapter,
+  type DomainBlueprintQuestion,
+  type DomainEnforcementChoice,
+  type DomainKey,
+} from "./domains/index.js";
 
 export const ARCHITECTURE_MD_FILENAME = "ARCHITECTURE.md" as const;
 
-export type BlueprintEnforcementChoice = "enforce" | "warn" | "legacy";
+export type BlueprintEnforcementChoice = DomainEnforcementChoice;
 
 export interface BlueprintInterviewAnswer {
   questionId: string;
@@ -27,12 +36,7 @@ export interface BlueprintInterviewAnswer {
   gateCommand?: string;
 }
 
-export interface BlueprintQuestion {
-  id: string;
-  message: string;
-  evidence: { file: string; line: number };
-  ruleId: string;
-}
+export type BlueprintQuestion = DomainBlueprintQuestion;
 
 export interface BlueprintArtifacts {
   architectureMdPath: string;
@@ -40,58 +44,22 @@ export interface BlueprintArtifacts {
   verificationPlanPath: string;
 }
 
-function questionFromAnomaly(anomaly: DiscoveryAnomaly, index: number): BlueprintQuestion {
-  const ev = anomaly.evidence[0]!;
-  return {
-    id: `q-${index + 1}`,
-    message: `${anomaly.description} — evidence at ${ev.file}:${ev.line}. How should OpenGantry treat this?`,
-    evidence: { file: ev.file, line: ev.line },
-    ruleId: `rule-${index + 1}`,
-  };
-}
-
-/** Build evidence-anchored interview questions from discovery output. */
-export function buildBlueprintQuestions(proposal: DiscoveryProposal): BlueprintQuestion[] {
-  const questions: BlueprintQuestion[] = [];
-  for (const [i, anomaly] of proposal.anomalies.entries()) {
-    questions.push(questionFromAnomaly(anomaly, i));
-  }
-  if (questions.length < 3 && proposal.conventions.length > 0) {
-    for (const [i, conv] of proposal.conventions.entries()) {
-      if (questions.length >= 3) break;
-      const ev = conv.evidence[0];
-      if (!ev) continue;
-      questions.push({
-        id: `q-conv-${i + 1}`,
-        message: `Convention: ${conv.description}. Evidence at ${ev.file}:${ev.line}. Codify as enforced rule?`,
-        evidence: { file: ev.file, line: ev.line },
-        ruleId: `rule-conv-${i + 1}`,
-      });
-    }
-  }
-  return questions.slice(0, Math.max(3, questions.length));
-}
-
-function choiceToLayerRule(
-  q: BlueprintQuestion,
-  choice: BlueprintEnforcementChoice,
-  layers: TargetArchitectureSpec["layers"],
-): ArchRuleSpec | null {
-  if (choice === "legacy") return null;
-  const fromLayer = layers[0]?.id ?? "app";
-  return {
-    id: q.ruleId,
-    from_layer: fromLayer,
-    forbid_specifier_substring: choice === "enforce" ? "node:fs" : undefined,
-  };
+/** Build evidence-anchored interview questions from discovery output via domain adapter. */
+export function buildBlueprintQuestions(
+  proposal: DiscoveryProposal,
+  domain?: string,
+): BlueprintQuestion[] {
+  const adapter = getDomainAdapter(domain ?? proposal.domain ?? "code");
+  return adapter.buildBlueprintQuestions(proposal.conventions, proposal.anomalies);
 }
 
 function buildArchitectureMarkdown(
   questions: BlueprintQuestion[],
   answers: BlueprintInterviewAnswer[],
   ruleIds: string[],
+  domain: string,
 ): string {
-  const lines = ["# Architecture (blueprint-generated)", "", "## Rules", ""];
+  const lines = [`# Architecture (blueprint-generated — domain: ${domain})`, "", "## Rules", ""];
   for (const q of questions) {
     const answer = answers.find((a) => a.questionId === q.id);
     lines.push(
@@ -141,12 +109,19 @@ function detectRequiredSkills(
   return [...needed].sort();
 }
 
-function buildTargetArchitecture(ruleIds: string[], rules: ArchRuleSpec[]): TargetArchitectureSpec {
-  const layers = [{ id: "app", globs: ["src/**"] }];
+function buildTargetArchitecture(
+  domain: DomainKey,
+  ruleIds: string[],
+  rules: ArchRuleSpec[],
+  adapterGlobs: readonly string[],
+): TargetArchitectureSpec {
+  const layerId = domain === "content" ? "content" : "app";
+  const layers = [{ id: layerId, globs: [...adapterGlobs] }];
   return {
-    schema_version: TARGET_ARCHITECTURE_SCHEMA_VERSION,
-    scan_roots: ["src"],
-    languages: ["typescript"],
+    schema_version: TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
+    domain,
+    scan_roots: adapterGlobs.map((g) => g.replace(/\/\*\*$/, "")),
+    languages: domain === "content" ? ["markdown", "html", "text"] : ["typescript"],
     layers,
     rules: rules.filter((r): r is ArchRuleSpec => r != null),
   };
@@ -158,13 +133,19 @@ export function emitBlueprintArtifacts(
   proposal: DiscoveryProposal,
   questions: BlueprintQuestion[],
   answers: BlueprintInterviewAnswer[],
+  domain?: string,
 ): BlueprintArtifacts {
-  const layers = [{ id: "app", globs: ["src/**"] }];
+  const adapter = getDomainAdapter(domain ?? proposal.domain ?? "code");
   const rules = questions
     .map((q) => {
       const answer = answers.find((a) => a.questionId === q.id);
       if (!answer) return null;
-      return choiceToLayerRule(q, answer.choice, layers);
+      const ev = proposal.anomalies
+        .flatMap((a) => a.evidence)
+        .concat(proposal.conventions.flatMap((c) => c.evidence))
+        .find((e) => e.file === q.evidence.file && e.line === q.evidence.line);
+      if (!ev) return null;
+      return adapter.buildRuleFromAnswer(q, answer.choice, ev);
     })
     .filter((r): r is ArchRuleSpec => r != null);
 
@@ -180,8 +161,8 @@ export function emitBlueprintArtifacts(
   if (gateCommands.length === 0) {
     gateCommands.push({
       rule_id: "default-gate",
-      command: "npm test",
-      description: "Default project test gate",
+      command: adapter.key === "content" ? "gantry perimeter check" : "npm test",
+      description: "Default project gate",
     });
   }
 
@@ -191,11 +172,11 @@ export function emitBlueprintArtifacts(
     requiredSkills: detectRequiredSkills(repoRoot, gateCommands, answers),
   });
 
-  const archMd = buildArchitectureMarkdown(questions, answers, ruleIds);
+  const archMd = buildArchitectureMarkdown(questions, answers, ruleIds, adapter.key);
   const archMdAbs = path.join(repoRoot, ARCHITECTURE_MD_FILENAME);
   fs.writeFileSync(archMdAbs, archMd, "utf8");
 
-  const yamlSpec = buildTargetArchitecture(ruleIds, rules);
+  const yamlSpec = buildTargetArchitecture(adapter.key, ruleIds, rules, adapter.defaultScanGlobs);
   const yamlAbs = path.join(repoRoot, TARGET_ARCHITECTURE_FILENAME);
   fs.writeFileSync(yamlAbs, YAML.stringify(yamlSpec), "utf8");
 
@@ -210,11 +191,14 @@ export function emitBlueprintArtifacts(
   };
 }
 
-export function runBlueprintDiscovery(repoRoot: string): DiscoveryProposal {
-  return runDiscoveryScan(repoRoot);
+export function runBlueprintDiscovery(repoRoot: string, domain?: string): DiscoveryProposal {
+  return runDiscoveryScan(repoRoot, { domain });
 }
 
 export function checksumArchitectureMarkdown(mdBody: string, ruleIds: string[]): string {
-  const payload = JSON.stringify({ rule_ids: [...ruleIds].sort(), md_sha256: createHash("sha256").update(mdBody).digest("hex") });
+  const payload = JSON.stringify({
+    rule_ids: [...ruleIds].sort(),
+    md_sha256: createHash("sha256").update(mdBody).digest("hex"),
+  });
   return createHash("sha256").update(payload, "utf8").digest("hex");
 }

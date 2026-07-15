@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v3.0.0 MSN-0120:v3.0.0 re-tag release --msn MSN-0120 --out .gitagent/missions/MSN-0120.v3-0-0-rerelease.yaml
+msn_id: MSN-0120
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0120: v3.0.0 domain-generic re-tag — BACKLOG synced; npm run validate green; local v3.0.0 tag refreshed"
+    anchor: "1"
+    status: PASS
+gate_success_substring: dev-validate-core OK

@@ -530,3 +530,9 @@ DoD 1 MSN-0111: gantry blueprint tri-artifacts + verification contract + drift d
 DoD 1 MSN-0112: ADR-0032 machine-readable verify failure envelope — findings[] schema v2
 DoD 1 MSN-0113: verify failure envelope findings[] across --json, SARIF, MCP; 447 tests green
 DoD 1 MSN-0114: v3.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; README/ADOPTION/BACKLOG/AGENT-LOOP synced; npm run validate green
+DoD 1 MSN-0115: ADR-0033 pluggable domain adapters — DomainAdapter interface, zero-heuristics mandate, built-in registry
+DoD 1 MSN-0116: domain adapter core — src/cli/lib/domains/, code adapter extraction, --domain on init --discover
+DoD 1 MSN-0117: perimeter schema 0.3.0 — forbid_pattern/require_pattern, gantry perimeter check alias, scan_roots normalization
+DoD 1 MSN-0118: content adapter + blueprint --domain content; code blueprint maps evidence to forbid_specifier_substring
+DoD 1 MSN-0119: examples/content-governance fixture + docs/DOMAINS.md + README repositioning; 454 tests green
+DoD 1 MSN-0120: v3.0.0 domain-generic re-tag — BACKLOG synced; npm run validate green; local v3.0.0 tag refreshed

@@ -1,0 +1,26 @@
+schema_version: "0.3.0"
+domain: content
+scan_roots:
+  - content
+languages:
+  - markdown
+layers:
+  - id: content
+    globs:
+      - content/**
+rules:
+  - id: forbid-cure-claim
+    from_layer: content
+    applies_to:
+      - content/**
+    forbid_pattern: "(?i)cures cancer"
+  - id: require-fda-disclaimer
+    from_layer: content
+    applies_to:
+      - content/**
+    require_pattern: "These statements have not been evaluated by the FDA"
+  - id: forbid-wrong-brand-hex
+    from_layer: content
+    applies_to:
+      - content/**
+    forbid_pattern: "#FF0000"

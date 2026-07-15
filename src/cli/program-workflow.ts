@@ -8,6 +8,8 @@ import { runScan } from "./commands/scan.js";
 import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
 import { runPerimeter } from "./commands/perimeter.js";
+import { runArchCheckCommand } from "./commands/arch.js";
+import { listDomainKeys } from "./lib/domains/index.js";
 import { readStdinIfEmpty } from "./lib/program-stdin.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
@@ -165,14 +167,33 @@ export function registerWorkflowCommands(program: Command): void {
       runCheckImports({ dir, ban: opts.ban, json: opts.json });
     });
 
-  program
+  const perimeterCmd = program
     .command("perimeter")
+    .description("Governance perimeter: protected-file guard (default) and TARGET_ARCHITECTURE checks");
+
+  perimeterCmd
+    .command("check")
+    .description("Evaluate TARGET_ARCHITECTURE.yaml rules (domain-neutral alias of arch check)")
+    .argument("[files...]", "Repo-relative or absolute paths (default: all files under scan_roots)")
+    .option("--json", "Emit structured violation JSON")
+    .action((files: string[], opts: { json?: boolean }) => {
+      runArchCheckCommand({ files, json: opts.json === true, label: "perimeter" });
+    });
+
+  perimeterCmd
     .description("Check protected governance files; local advisory, --ci requires verified signatures")
     .option("--base-ref <ref>", "Base ref for change detection (default: origin/main or main)")
     .option("--ci", "Authoritative CI mode: fail on unsigned protected-file commits")
     .option("--json", "Emit structured JSON")
     .action((opts: { baseRef?: string; ci?: boolean; json?: boolean }) => {
       runPerimeter(opts);
+    });
+
+  program
+    .command("domains")
+    .description("List built-in domain adapters (code, content)")
+    .action(() => {
+      process.stdout.write(`${listDomainKeys().join("\n")}\n`);
     });
 
   program

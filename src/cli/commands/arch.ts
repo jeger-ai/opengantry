@@ -9,7 +9,9 @@ import { fetchExternalArchitecture } from "../lib/architecture-fetch.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import {
   formatArchCheckHuman,
+  loadTargetArchitecture,
   runArchCheck,
+  walkPerimeterFiles,
 } from "../lib/target-architecture.js";
 import {
   loadArchitecturePointer,
@@ -49,6 +51,7 @@ export interface ArchFetchOptions extends ArchOptions {
 export interface ArchCheckOptions extends ArchOptions {
   json?: boolean;
   files?: string[];
+  label?: "arch" | "perimeter";
 }
 
 /** Repo root plus optional credential-slot validation shared by the cred subcommands. */
@@ -126,11 +129,21 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
   const repoRoot = resolveRepoRootAtBoundary(options.cwd);
   if (repoRoot === null) return;
 
-  const files = options.files?.length ? options.files : [];
+  const label = options.label ?? "arch";
+  let files = options.files?.length ? options.files : [];
   if (files.length === 0) {
-    logError("gantry arch check: pass one or more .ts file paths");
-    setExitCode(2);
-    return;
+    try {
+      const spec = loadTargetArchitecture(repoRoot);
+      files = walkPerimeterFiles(repoRoot, spec);
+    } catch (e) {
+      reportCommandError(e);
+      return;
+    }
+    if (files.length === 0) {
+      logError(`gantry ${label} check: no files under scan_roots`);
+      setExitCode(2);
+      return;
+    }
   }
 
   runAtCommandBoundary(2, () => {
@@ -141,7 +154,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     if (options.json) {
       logInfo(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations }, null, 2));
     } else {
-      logInfo(formatArchCheckHuman(result));
+      logInfo(formatArchCheckHuman(result, label));
     }
     if (!result.ok) setExitCode(1);
   });

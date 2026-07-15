@@ -10,6 +10,7 @@ import type { DiscoveryProposal } from "./discovery-scanner.js";
 export interface InitDiscoverOptions {
   yes?: boolean;
   stdout?: boolean;
+  domain?: string;
   onProgress?: (filesScanned: number) => void;
 }
 
@@ -30,6 +31,7 @@ export async function runInitDiscoverFlow(
   const started = Date.now();
   let progressLogged = false;
   const { proposal, proposalPath } = emitDiscoveryProposal(repoRoot, {
+    domain: options.domain,
     onProgress: (n) => {
       if (!progressLogged && Date.now() - started > 1000) {
         logInfo(`${CLI_NAME} discover: scanning… (${n} files so far)`);

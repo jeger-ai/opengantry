@@ -8,13 +8,17 @@ import {
   extractBindingsFromSnippet,
   extractImportsWithMeta,
 } from "./import-scanner.js";
+import { walkDomainFiles } from "./discovery-scanner.js";
+import { getDomainAdapter } from "./domains/index.js";
 
 export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
-export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
+export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
+export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;
 export const SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS = [
   TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_SCHEMA_VERSION,
+  TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
 ] as const;
 
 export type TargetArchitectureSchemaVersion =
@@ -31,10 +35,16 @@ export interface ArchRuleSpec {
   forbid_import_layer?: string;
   forbid_specifier_substring?: string;
   forbid_resolved_path_substring?: string;
+  /** Schema 0.3.0: glob(s) for pattern rules (content domain). */
+  applies_to?: string[];
+  forbid_pattern?: string;
+  require_pattern?: string;
 }
 
 export interface TargetArchitectureSpec {
   schema_version: TargetArchitectureSchemaVersion;
+  /** Schema 0.3.0: domain adapter key (code | content). */
+  domain?: string;
   /** Explicit scan roots (schema 0.2.0+). When absent, derived from layer globs. */
   scan_roots?: string[];
   /** Supported languages for boundary checks (default: typescript). */
@@ -142,7 +152,11 @@ export function resolveArchScanRoots(
   manifestTmvcRoots?: readonly string[],
 ): string[] {
   if (spec.scan_roots && spec.scan_roots.length > 0) {
-    return spec.scan_roots.map(normalizeRepoRelativePath);
+    return spec.scan_roots.map((root) => {
+      const norm = normalizeRepoRelativePath(root);
+      if (norm.includes("*")) return norm;
+      return `${norm.replace(/\/$/, "")}/**`;
+    });
   }
   const fromLayers = spec.layers.flatMap((layer) => layer.globs.map(normalizeRepoRelativePath));
   if (fromLayers.length > 0) return fromLayers;
@@ -165,8 +179,85 @@ function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string[]): bo
   return scanRoots.some((root) => globMatches(norm, root));
 }
 
-function fileMatchesLanguage(repoRel: string, languages: readonly string[]): boolean {
+function fileMatchesAppliesTo(repoRel: string, appliesTo: readonly string[] | undefined, scanRoots: readonly string[]): boolean {
+  if (appliesTo && appliesTo.length > 0) {
+    return appliesTo.some((g) => globMatches(repoRel, g));
+  }
+  return fileMatchesScanRoots(repoRel, scanRoots);
+}
+
+function isImportRule(rule: ArchRuleSpec): boolean {
+  return (
+    rule.forbid_import_layer != null ||
+    rule.forbid_specifier_substring != null ||
+    rule.forbid_resolved_path_substring != null
+  );
+}
+
+function isPatternRule(rule: ArchRuleSpec): boolean {
+  return rule.forbid_pattern != null || rule.require_pattern != null;
+}
+
+function shouldEvaluateImportRules(spec: TargetArchitectureSpec): boolean {
+  const domain = spec.domain?.toLowerCase();
+  return domain == null || domain === "" || domain === "code";
+}
+
+function compilePerimeterPattern(pattern: string): RegExp | null {
+  try {
+    if (pattern.startsWith("(?i)")) {
+      return new RegExp(pattern.slice(4), "im");
+    }
+    return new RegExp(pattern, "m");
+  } catch {
+    return null;
+  }
+}
+
+function findPatternMatchLine(body: string, pattern: string): { line: number; column: number; match: string } | null {
+  const re = compilePerimeterPattern(pattern);
+  if (!re) return null;
+  const m = re.exec(body);
+  if (!m || m.index == null) return null;
+  const before = body.slice(0, m.index);
+  const line = before.split(/\r?\n/).length;
+  const lastNl = before.lastIndexOf("\n");
+  const column = m.index - (lastNl === -1 ? 0 : lastNl + 1) + 1;
+  return { line, column, match: m[0] ?? "" };
+}
+
+function checkPatternRulesForFile(
+  violations: ArchBoundaryViolation[],
+  repoRel: string,
+  body: string,
+  rules: readonly ArchRuleSpec[],
+  scanRoots: readonly string[],
+): void {
+  for (const rule of rules) {
+    if (!isPatternRule(rule)) continue;
+    if (!fileMatchesAppliesTo(repoRel, rule.applies_to, scanRoots)) continue;
+
+    if (rule.forbid_pattern) {
+      const hit = findPatternMatchLine(body, rule.forbid_pattern);
+      if (hit) {
+        recordViolation(violations, repoRel, rule.id, hit.match, [], hit.line, hit.column);
+      }
+    }
+    if (rule.require_pattern) {
+      const hit = findPatternMatchLine(body, rule.require_pattern);
+      if (!hit) {
+        recordViolation(violations, repoRel, rule.id, `(missing: ${rule.require_pattern})`, [], 1, 1);
+      }
+    }
+  }
+}
+
+function fileMatchesLanguage(repoRel: string, languages: readonly string[], domain?: string): boolean {
   const norm = normalizeRepoRelativePath(repoRel).toLowerCase();
+  if (domain === "content") {
+    return /\.(md|html|htm|txt|json)$/i.test(norm);
+  }
+  if (languages.includes("typescript") && /\.tsx?$/i.test(norm)) return true;
   if (languages.includes("typescript") && norm.endsWith(".ts")) return true;
   return false;
 }
@@ -185,6 +276,7 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
   }
   const scan_roots = parseStringArrayField(o.scan_roots, "scan_roots");
   const languages = parseStringArrayField(o.languages, "languages");
+  const domain = typeof o.domain === "string" ? o.domain.trim() : undefined;
   const layers: ArchLayerSpec[] = o.layers.map((layer, i) => {
     if (layer == null || typeof layer !== "object") {
       throw new Error(`TARGET_ARCHITECTURE.yaml: layers[${String(i)}] invalid`);
@@ -219,10 +311,16 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
       ...(r.forbid_resolved_path_substring != null
         ? { forbid_resolved_path_substring: String(r.forbid_resolved_path_substring) }
         : {}),
+      ...(parseStringArrayField(r.applies_to, "applies_to")
+        ? { applies_to: parseStringArrayField(r.applies_to, "applies_to") }
+        : {}),
+      ...(r.forbid_pattern != null ? { forbid_pattern: String(r.forbid_pattern) } : {}),
+      ...(r.require_pattern != null ? { require_pattern: String(r.require_pattern) } : {}),
     };
   });
   return {
     schema_version,
+    ...(domain ? { domain } : {}),
     ...(scan_roots ? { scan_roots } : {}),
     ...(languages ? { languages } : {}),
     layers,
@@ -261,15 +359,21 @@ export function checkArchBoundariesForFiles(
   const root = path.resolve(repoRoot);
   const scanRoots = resolveArchScanRoots(spec, options.manifestTmvcRoots);
   const languages = resolveArchLanguages(spec);
+  const evaluateImports = shouldEvaluateImportRules(spec);
 
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(root, file);
     const repoRel = toPosixRel(root, abs);
     if (!fileMatchesScanRoots(repoRel, scanRoots)) continue;
-    if (!fileMatchesLanguage(repoRel, languages)) continue;
+    if (!fileMatchesLanguage(repoRel, languages, spec.domain)) continue;
     if (!fs.existsSync(abs)) continue;
-    const fromLayer = layerForFile(spec, repoRel);
     const src = fs.readFileSync(abs, "utf8");
+
+    checkPatternRulesForFile(violations, repoRel, src, spec.rules, scanRoots);
+
+    if (!evaluateImports) continue;
+
+    const fromLayer = layerForFile(spec, repoRel);
     const imports = extractImportsWithMeta(src, true);
 
     for (const imp of imports) {
@@ -278,6 +382,7 @@ export function checkArchBoundariesForFiles(
       const targetLayer = resolved ? layerForFile(spec, resolved) : "other";
 
       for (const rule of spec.rules) {
+        if (!isImportRule(rule)) continue;
         if (rule.from_layer !== fromLayer) continue;
         if (rule.forbid_import_layer && targetLayer === rule.forbid_import_layer) {
           recordViolation(violations, repoRel, rule.id, imp.spec, bindings, imp.line, imp.column);
@@ -310,12 +415,24 @@ export function runArchCheck(
   return checkArchBoundariesForFiles(spec, repoRoot, absFiles, options);
 }
 
-export function formatArchCheckHuman(result: ArchCheckResult): string {
-  if (result.ok) return `${CLI_NAME} arch check: OK`;
+export function formatArchCheckHuman(result: ArchCheckResult, label: "arch" | "perimeter" = "arch"): string {
+  if (result.ok) return `${CLI_NAME} ${label} check: OK`;
   const lines = result.violations.map(
     (v) => `${v.file}:${String(v.line)}:${String(v.column)} ${v.rule_id} ${v.module_specifier}`,
   );
-  return [`${CLI_NAME} arch check: ${String(result.violations.length)} violation(s)`, ...lines].join(
+  return [`${CLI_NAME} ${label} check: ${String(result.violations.length)} violation(s)`, ...lines].join(
     "\n",
   );
+}
+
+/** Walk all files under scan_roots for the spec's domain. */
+export function walkPerimeterFiles(repoRoot: string, spec: TargetArchitectureSpec): string[] {
+  const domain = spec.domain?.toLowerCase() ?? "code";
+  const adapter = getDomainAdapter(domain);
+  const scanRoots = resolveArchScanRoots(spec);
+  const all = walkDomainFiles(repoRoot, adapter.fileExtensions);
+  return all.filter((abs) => {
+    const rel = toPosixRel(repoRoot, abs);
+    return fileMatchesScanRoots(rel, scanRoots);
+  });
 }

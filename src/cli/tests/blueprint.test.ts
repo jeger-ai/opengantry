@@ -83,4 +83,30 @@ describe("blueprint", () => {
     const drift = runArchitectureDriftDoctorChecks(root);
     assert.ok(drift.some((l) => l.message.includes("rule_id mismatch")));
   });
+
+  it("content domain blueprint emits pattern rules and passes drift doctor", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "gxt-blueprint-content-"));
+    const contentDir = path.join(root, "content");
+    fs.mkdirSync(contentDir, { recursive: true });
+    const disclaimer =
+      "These statements have not been evaluated by the FDA.\nThis product is not intended to diagnose, treat, cure, or prevent any disease.\n";
+    fs.writeFileSync(path.join(contentDir, "a.md"), `# A\n${disclaimer}`, "utf8");
+    fs.writeFileSync(path.join(contentDir, "b.md"), `# B\n${disclaimer}`, "utf8");
+    fs.writeFileSync(path.join(contentDir, "c.md"), `# C\nMissing footer.\n`, "utf8");
+
+    const proposal = runDiscoveryScan(root, { domain: "content" });
+    const questions = buildBlueprintQuestions(proposal, "content");
+    assert.ok(questions.length >= 1);
+    const answers = questions.map((q) => ({
+      questionId: q.id,
+      choice: "enforce" as const,
+      gateCommand: "gantry perimeter check",
+    }));
+    emitBlueprintArtifacts(root, proposal, questions, answers, "content");
+    const yaml = YAML.parse(fs.readFileSync(path.join(root, "TARGET_ARCHITECTURE.yaml"), "utf8"));
+    assert.equal(yaml.domain, "content");
+    assert.equal(yaml.schema_version, "0.3.0");
+    const drift = runArchitectureDriftDoctorChecks(root);
+    assert.ok(drift.some((l) => l.level === "ok"));
+  });
 });
