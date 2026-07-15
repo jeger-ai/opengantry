@@ -5,11 +5,11 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0100: audit-severity net_loc overflow no longer fails verify; phase regression tests added (R2)"
+    trace_quote: "DoD 1 MSN-0100: audit-severity net_loc overflow no longer fails verify; phase regression tests added (R2) — re-attested v2.7.0"
     anchor: "487"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0100: guards return DefensiveFinding[]; severity buckets derived once; unknown-skill split into error field; deprecated wrapper deleted (J4)"
+    trace_quote: "DoD 2 MSN-0100: guards return DefensiveFinding[]; severity buckets derived once; unknown-skill split into error field; deprecated wrapper deleted (J4) — re-attested v2.7.0"
     anchor: "488"
     status: PASS
 gate_success_substring: dev-validate-core OK
