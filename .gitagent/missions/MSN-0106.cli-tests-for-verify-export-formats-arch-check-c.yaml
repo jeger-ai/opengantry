@@ -5,7 +5,11 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0106: CLI-level verify --format sarif/junit integration tests (pass + gate-failure paths) and gantry arch check command tests (OK, violation, usage, non-repo) added"
     anchor: "1"
-    status: PENDING
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0106: mcp-tools-register smoke test asserts full gxt_* tool surface wiring; mcp-orchestration expanded with invalid-msn and duplicate-MSN failure paths (435 tests)"
+    anchor: "2"
+    status: PASS
 gate_success_substring: dev-validate-core OK

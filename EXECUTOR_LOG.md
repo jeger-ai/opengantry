@@ -512,3 +512,8 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0105: GantryUserError / isGantryUserError / gxtCodeFromGantryUserError renamed across src/cli with deprecated GapmanUserError aliases kept for one release
 - DoD 2 MSN-0105: writeMiniGantryRepo / writeMiniGantryMission fixture rename across 17 test files; gapman bin alias and GAPMAN_* env marked deprecated in README
+
+## MSN-0106 — test gaps on newest features
+
+- DoD 1 MSN-0106: CLI-level verify --format sarif/junit integration tests (pass + gate-failure paths) and gantry arch check command tests (OK, violation, usage, non-repo) added
+- DoD 2 MSN-0106: mcp-tools-register smoke test asserts full gxt_* tool surface wiring; mcp-orchestration expanded with invalid-msn and duplicate-MSN failure paths (435 tests)
