@@ -1,5 +1,10 @@
-import { getRepoRoot } from "../lib/git.js";
-import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import {
+  reportCommandError,
+  resolveRepoRootAtBoundary,
+  runAtCommandBoundary,
+  runAtCommandBoundaryAsync,
+} from "../lib/command-boundary.js";
 import { fetchExternalArchitecture } from "../lib/architecture-fetch.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import {
@@ -46,64 +51,45 @@ export interface ArchCheckOptions extends ArchOptions {
   files?: string[];
 }
 
-export function runArchPointer(options: ArchOptions = {}): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace("gantry: ", "") : String(e));
-    setExitCode(2);
-    return;
+/** Repo root plus optional credential-slot validation shared by the cred subcommands. */
+function resolveCredCommandRoot(cwd?: string, slot?: string): string | null {
+  const repoRoot = resolveRepoRootAtBoundary(cwd);
+  if (repoRoot === null) return null;
+  if (slot !== undefined) {
+    try {
+      validateCredentialSlot(slot);
+    } catch (e) {
+      reportCommandError(e);
+      return null;
+    }
   }
-  try {
+  return repoRoot;
+}
+
+export function runArchPointer(options: ArchOptions = {}): void {
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return;
+  runAtCommandBoundary(2, () => {
     const pointer = loadArchitecturePointer(repoRoot);
     logInfo(summarizeArchitecturePointer(pointer));
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-  }
+  });
 }
 
 export async function runArchCredSet(options: ArchCredSetOptions): Promise<void> {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-    validateCredentialSlot(options.slot);
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveCredCommandRoot(options.cwd, options.slot);
+  if (repoRoot === null) return;
 
-  let stdin: string;
-  try {
-    stdin = await readStdinCredentialPayload();
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-    return;
-  }
-
-  try {
+  await runAtCommandBoundaryAsync(2, async () => {
+    const stdin = await readStdinCredentialPayload();
     const values = parseCredentialValuesFromStdin(options.kind, stdin);
     writeArchitectureCredential(repoRoot, options.slot, options.kind, values);
     logInfo(`gantry arch cred: stored slot=${options.slot} kind=${options.kind}`);
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-  }
+  });
 }
 
 export function runArchCredUnset(options: ArchCredUnsetOptions): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-    validateCredentialSlot(options.slot);
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveCredCommandRoot(options.cwd, options.slot);
+  if (repoRoot === null) return;
   if (!removeArchitectureCredential(repoRoot, options.slot)) {
     logError(`gantry arch cred: slot ${options.slot} not found`);
     setExitCode(2);
@@ -113,29 +99,16 @@ export function runArchCredUnset(options: ArchCredUnsetOptions): void {
 }
 
 export function runArchCredStatus(options: ArchCredStatusOptions = {}): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-    if (options.slot) validateCredentialSlot(options.slot);
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveCredCommandRoot(options.cwd, options.slot);
+  if (repoRoot === null) return;
   logCredentialStatus(repoRoot, options.slot);
 }
 
 export async function runArchFetch(options: ArchFetchOptions = {}): Promise<void> {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace("gantry: ", "") : String(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return;
 
-  try {
+  await runAtCommandBoundaryAsync(2, async () => {
     const result = await fetchExternalArchitecture({ repoRoot });
     if (options.json) {
       logInfo(JSON.stringify(result, null, 2));
@@ -146,21 +119,12 @@ export async function runArchFetch(options: ArchFetchOptions = {}): Promise<void
       logInfo(result.message);
     }
     if (result.status === "fallback") setExitCode(1);
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-  }
+  });
 }
 
 export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace("gantry: ", "") : String(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return;
 
   const files = options.files?.length ? options.files : [];
   if (files.length === 0) {
@@ -169,7 +133,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     return;
   }
 
-  try {
+  runAtCommandBoundary(2, () => {
     const { manifest } = loadWorkspace();
     const skill = manifest.skills.gantry ?? Object.values(manifest.skills)[0];
     const manifestTmvcRoots = skill?.tmvc_roots;
@@ -180,8 +144,5 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
       logInfo(formatArchCheckHuman(result));
     }
     if (!result.ok) setExitCode(1);
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-  }
+  });
 }

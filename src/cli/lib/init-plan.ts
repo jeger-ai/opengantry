@@ -13,10 +13,6 @@ import { getOutputAudience } from "./output-context.js";
 import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
 import type { InitProfile } from "./init-profile.js";
-import {
-  isConfigJsonTarget,
-  mergeDefensiveProfileIntoConfigBody,
-} from "./init-defensive-profile.js";
 
 export interface PlannedWrite {
   absoluteTarget: string;
@@ -32,12 +28,15 @@ export interface InitPlanResult {
   conflicts: string[];
 }
 
+/** Caller-supplied template post-processing (e.g. profile-specific config merges). */
+export type InitBodyTransform = (body: string, targetPath: string) => string;
+
 export function planInitAssets(
   assets: (InitAsset | InitAssetSpec)[],
   templatesRoot: string,
   repoRoot: string,
   force: boolean,
-  profile?: InitProfile,
+  transformBody?: InitBodyTransform,
 ): InitPlanResult {
   const writes: PlannedWrite[] = [];
   const conflicts: string[] = [];
@@ -56,10 +55,7 @@ export function planInitAssets(
       return { ok: false, writes, skippedUserMutable, unchanged, conflicts };
     }
     const bodyRaw = fs.readFileSync(templateAbs, "utf8");
-    const body =
-      profile?.defensiveProfilePreset && isConfigJsonTarget(asset.targetPath)
-        ? mergeDefensiveProfileIntoConfigBody(bodyRaw, profile.defensiveProfilePreset)
-        : bodyRaw;
+    const body = transformBody ? transformBody(bodyRaw, asset.targetPath) : bodyRaw;
     const existing = fs.existsSync(targetAbs) ? fs.readFileSync(targetAbs, "utf8") : null;
 
     if (existing === null) {

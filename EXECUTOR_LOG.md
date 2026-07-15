@@ -500,3 +500,8 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0103: NormalizedVerifyFailure carries gate output once; verify-presentation barrel, verify-payload-types, and verify-failure-normalize-phases deleted; verify-run re-exports removed (J3)
 - DoD 2 MSN-0103: resolveVerifyExportFormat moved to verify-presenters next to resolveVerifySink; pipeline order documented in verify-engine module comment (S2)
+
+## MSN-0104 — command error boundary + init transform hook
+
+- DoD 1 MSN-0104: command-boundary.ts helpers replace ~10 hand-rolled try/catch copies across arch, planner, perimeter, init, upgrade; verify boundary catch blocks deduped into reportVerifyBoundaryError (J5)
+- DoD 2 MSN-0104: planInitAssets takes a transformBody hook; defensive-profile special case moved out of the generic asset planner into init.ts (S1)

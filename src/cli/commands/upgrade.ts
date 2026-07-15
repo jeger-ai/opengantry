@@ -1,6 +1,5 @@
-import { CLI_NAME } from "../lib/constants.js";
 import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
-import { getRepoRoot } from "../lib/git.js";
+import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
 import { runUpgradePlan } from "../lib/upgrade-plan.js";
@@ -17,21 +16,14 @@ export interface UpgradeOptions {
 }
 
 export function runUpgrade(options: UpgradeOptions = {}): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return;
 
   let templatesRoot: string;
   try {
     templatesRoot = resolveTemplateRootFromModule();
   } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
+    reportCommandError(e);
     return;
   }
 

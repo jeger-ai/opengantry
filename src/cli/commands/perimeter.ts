@@ -1,5 +1,6 @@
 import { checkPerimeter } from "../lib/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
+import { runAtCommandBoundary } from "../lib/command-boundary.js";
 import { gitRevParse } from "../lib/git.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import type { PerimeterViolation } from "../lib/perimeter.js";
@@ -20,7 +21,7 @@ function resolveBaseRef(root: string, baseRef?: string): string {
 }
 
 export function runPerimeter(options: PerimeterOptions): void {
-  try {
+  runAtCommandBoundary(1, () => {
     const { root, manifest } = loadWorkspace();
     const baseRef = resolveBaseRef(root, options.baseRef);
     const result = checkPerimeter(root, manifest, { baseRef, ci: options.ci === true });
@@ -50,8 +51,5 @@ export function runPerimeter(options: PerimeterOptions): void {
     } else {
       logInfo("gantry perimeter: OK");
     }
-  } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
-    setExitCode(1);
-  }
+  });
 }

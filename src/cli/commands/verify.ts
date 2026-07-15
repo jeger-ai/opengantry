@@ -10,6 +10,17 @@ import { runVerifyCore } from "../lib/verify-run.js";
 
 export type { VerifyOptions } from "../lib/verify-engine.js";
 
+/** Single verify boundary reporter: JSON payload when --json, canonical human error otherwise. */
+function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
+  if (options.json) {
+    const payload = initFailurePayload(e);
+    emitVerifyJson(payload, options);
+    setExitCode(payload.exit_code);
+    return;
+  }
+  reportUserFacingError(e);
+}
+
 function assertVerifyOptionsCompatible(options: VerifyOptions): void {
   if (options.json === true && options.fix === true) {
     throw new GapmanUserError(
@@ -65,13 +76,7 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
   try {
     assertVerifyOptionsCompatible(options);
   } catch (e) {
-    if (options.json) {
-      const payload = initFailurePayload(e);
-      emitVerifyJson(payload, options);
-      setExitCode(payload.exit_code);
-      return;
-    }
-    reportUserFacingError(e);
+    reportVerifyBoundaryError(e, options);
     return;
   }
 
@@ -79,13 +84,7 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
     try {
       await runVerifyChangedMissions(options);
     } catch (e) {
-      if (options.json) {
-        const payload = initFailurePayload(e);
-        emitVerifyJson(payload, options);
-        setExitCode(payload.exit_code);
-        return;
-      }
-      reportUserFacingError(e);
+      reportVerifyBoundaryError(e, options);
     }
     return;
   }
@@ -102,12 +101,6 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
       setExitCode(result.exitCode);
     }
   } catch (e) {
-    if (options.json) {
-      const payload = initFailurePayload(e);
-      emitVerifyJson(payload, options);
-      setExitCode(payload.exit_code);
-      return;
-    }
-    reportUserFacingError(e);
+    reportVerifyBoundaryError(e, options);
   }
 }

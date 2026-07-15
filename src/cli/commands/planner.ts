@@ -1,5 +1,5 @@
-import { getRepoRoot } from "../lib/git.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import { CLI_NAME } from "../lib/constants.js";
 import {
   REL_PLANNER_ALLOWLIST_LOCAL,
@@ -18,14 +18,8 @@ export interface PlannerSetOptions {
 }
 
 export function runPlannerShow(options: PlannerShowOptions = {}): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return;
 
   const resolved = resolvePlannerEmails(repoRoot);
   if (options.json) {
@@ -44,14 +38,8 @@ export function runPlannerShow(options: PlannerShowOptions = {}): void {
 }
 
 export function runPlannerSet(options: PlannerSetOptions): void {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
-    setExitCode(2);
-    return;
-  }
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return;
 
   const emails = options.emails.flatMap((e) => e.split(",")).map((e) => e.trim()).filter(Boolean);
   if (emails.length === 0) {

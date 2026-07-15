@@ -1,8 +1,8 @@
 import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER, REL_MANIFEST } from "../lib/constants.js";
-import { logError, logInfo, logManagedAssetConflicts, setExitCode, errorMessage } from "../lib/cli-io.js";
-import { getRepoRoot } from "../lib/git.js";
+import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
+import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import {
   isIntegrationIdeKey,
   loadIntegrationCompat,
@@ -28,8 +28,13 @@ import {
   logInitNextSteps,
   logInitSummary,
   planInitAssets,
+  type InitBodyTransform,
   type PlannedWrite,
 } from "../lib/init-plan.js";
+import {
+  isConfigJsonTarget,
+  mergeDefensiveProfileIntoConfigBody,
+} from "../lib/init-defensive-profile.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -97,31 +102,16 @@ type InitWorkspace = {
 };
 
 function loadInitWorkspace(options: InitOptions): InitWorkspace | null {
-  let repoRoot: string;
-  try {
-    repoRoot = getRepoRoot(options.cwd);
-  } catch (e) {
-    logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
-    setExitCode(2);
-    return null;
-  }
-
-  let templatesRoot: string;
-  try {
-    templatesRoot = resolveTemplateRootFromModule();
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-    return null;
-  }
+  const repoRoot = resolveRepoRootAtBoundary(options.cwd);
+  if (repoRoot === null) return null;
 
   try {
+    const templatesRoot = resolveTemplateRootFromModule();
     const compat = loadIntegrationCompat(templatesRoot);
     recipeFilesExist(templatesRoot, compat);
     return { repoRoot, templatesRoot, compat };
   } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
+    reportCommandError(e);
     return null;
   }
 }
@@ -134,8 +124,7 @@ function validateInitProfile(
   try {
     profile.integrationsDocPath = validateIntegrationsDocPath(repoRoot, profile.integrationsDocPath);
   } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
+    reportCommandError(e);
     return false;
   }
 
@@ -149,6 +138,14 @@ function validateInitProfile(
   return true;
 }
 
+/** Profile-aware template transform: merges the chosen defensive preset into config.json. */
+function initBodyTransformForProfile(profile: InitProfile): InitBodyTransform | undefined {
+  const preset = profile.defensiveProfilePreset;
+  if (!preset) return undefined;
+  return (body, targetPath) =>
+    isConfigJsonTarget(targetPath) ? mergeDefensiveProfileIntoConfigBody(body, preset) : body;
+}
+
 async function resolveInitAssetPlan(
   options: InitOptions,
   profile: InitProfile,
@@ -156,8 +153,9 @@ async function resolveInitAssetPlan(
   templatesRoot: string,
   repoRoot: string,
 ) {
+  const transformBody = initBodyTransformForProfile(profile);
   let force = options.force === true;
-  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, profile);
+  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
   if (!plan.ok) {
     setExitCode(2);
     return null;
@@ -184,7 +182,7 @@ async function resolveInitAssetPlan(
   }
 
   force = true;
-  plan = planInitAssets(assets, templatesRoot, repoRoot, force, profile);
+  plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
   if (!plan.ok) {
     setExitCode(2);
     return null;
