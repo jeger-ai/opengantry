@@ -498,8 +498,8 @@ example trace line for gapman verify
 
 ## MSN-0103 — verify presentation collapse
 
-- DoD 1 MSN-0103: NormalizedVerifyFailure carries gate output once; verify-presentation barrel, verify-payload-types, and verify-failure-normalize-phases deleted; verify-run re-exports removed (J3)
-- DoD 2 MSN-0103: resolveVerifyExportFormat moved to verify-presenters next to resolveVerifySink; pipeline order documented in verify-engine module comment (S2)
+- DoD 1 MSN-0103: NormalizedVerifyFailure carries gate output once; verify-presentation barrel, verify-payload-types, and verify-failure-normalize-phases deleted; verify-run re-exports removed (J3) — re-attested v2.7.0
+- DoD 2 MSN-0103: resolveVerifyExportFormat moved to verify-presenters next to resolveVerifySink; pipeline order documented in verify-engine module comment (S2) — re-attested v2.7.0
 
 ## MSN-0104 — command error boundary + init transform hook
 
