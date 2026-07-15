@@ -530,4 +530,3 @@ DoD 1 MSN-0111: gantry blueprint tri-artifacts + verification contract + drift d
 DoD 1 MSN-0112: ADR-0032 machine-readable verify failure envelope — findings[] schema v2
 DoD 1 MSN-0113: verify failure envelope findings[] across --json, SARIF, MCP; 447 tests green
 DoD 1 MSN-0114: v3.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; README/ADOPTION/BACKLOG/AGENT-LOOP synced; npm run validate green
-DoD 1 MSN-0114: v3.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; README/ADOPTION/BACKLOG/AGENT-LOOP synced; npm run validate green
