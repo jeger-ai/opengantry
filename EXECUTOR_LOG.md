@@ -510,8 +510,8 @@ example trace line for gapman verify
 
 [CONTEXT-REQUEST] paths: README.md — gapman alias / GAPMAN_* env deprecation note (mission-authorized, non-TMVC).
 
-- DoD 1 MSN-0105: GantryUserError / isGantryUserError / gxtCodeFromGantryUserError renamed across src/cli with deprecated GapmanUserError aliases kept for one release
-- DoD 2 MSN-0105: writeMiniGantryRepo / writeMiniGantryMission fixture rename across 17 test files; gapman bin alias and GAPMAN_* env marked deprecated in README
+- DoD 1 MSN-0105: GantryUserError / isGantryUserError / gxtCodeFromGantryUserError renamed across src/cli with deprecated GapmanUserError aliases kept for one release — re-attested v2.7.0
+- DoD 2 MSN-0105: writeMiniGantryRepo / writeMiniGantryMission fixture rename across 17 test files; gapman bin alias and GAPMAN_* env marked deprecated in README — re-attested v2.7.0
 
 ## MSN-0106 — test gaps on newest features
 

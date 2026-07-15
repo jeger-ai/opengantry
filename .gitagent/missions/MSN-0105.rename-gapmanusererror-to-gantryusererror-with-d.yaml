@@ -6,11 +6,11 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0105: GantryUserError / isGantryUserError / gxtCodeFromGantryUserError renamed across src/cli with deprecated GapmanUserError aliases kept for one release"
+    trace_quote: "DoD 1 MSN-0105: GantryUserError / isGantryUserError / gxtCodeFromGantryUserError renamed across src/cli with deprecated GapmanUserError aliases kept for one release — re-attested v2.7.0"
     anchor: "1"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0105: writeMiniGantryRepo / writeMiniGantryMission fixture rename across 17 test files; gapman bin alias and GAPMAN_* env marked deprecated in README"
+    trace_quote: "DoD 2 MSN-0105: writeMiniGantryRepo / writeMiniGantryMission fixture rename across 17 test files; gapman bin alias and GAPMAN_* env marked deprecated in README — re-attested v2.7.0"
     anchor: "2"
     status: PASS
 gate_success_substring: dev-validate-core OK
