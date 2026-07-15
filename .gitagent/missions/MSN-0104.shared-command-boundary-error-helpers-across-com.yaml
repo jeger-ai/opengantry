@@ -5,11 +5,11 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0104: command-boundary.ts helpers replace ~10 hand-rolled try/catch copies across arch, planner, perimeter, init, upgrade; verify boundary catch blocks deduped into reportVerifyBoundaryError (J5)"
+    trace_quote: "DoD 1 MSN-0104: command-boundary.ts helpers replace ~10 hand-rolled try/catch copies across arch, planner, perimeter, init, upgrade; verify boundary catch blocks deduped into reportVerifyBoundaryError (J5) — re-attested v2.7.0"
     anchor: "1"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0104: planInitAssets takes a transformBody hook; defensive-profile special case moved out of the generic asset planner into init.ts (S1)"
+    trace_quote: "DoD 2 MSN-0104: planInitAssets takes a transformBody hook; defensive-profile special case moved out of the generic asset planner into init.ts (S1) — re-attested v2.7.0"
     anchor: "2"
     status: PASS
 gate_success_substring: dev-validate-core OK

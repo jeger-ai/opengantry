@@ -503,8 +503,8 @@ example trace line for gapman verify
 
 ## MSN-0104 — command error boundary + init transform hook
 
-- DoD 1 MSN-0104: command-boundary.ts helpers replace ~10 hand-rolled try/catch copies across arch, planner, perimeter, init, upgrade; verify boundary catch blocks deduped into reportVerifyBoundaryError (J5)
-- DoD 2 MSN-0104: planInitAssets takes a transformBody hook; defensive-profile special case moved out of the generic asset planner into init.ts (S1)
+- DoD 1 MSN-0104: command-boundary.ts helpers replace ~10 hand-rolled try/catch copies across arch, planner, perimeter, init, upgrade; verify boundary catch blocks deduped into reportVerifyBoundaryError (J5) — re-attested v2.7.0
+- DoD 2 MSN-0104: planInitAssets takes a transformBody hook; defensive-profile special case moved out of the generic asset planner into init.ts (S1) — re-attested v2.7.0
 
 ## MSN-0105 — Gapman → Gantry naming migration
 
