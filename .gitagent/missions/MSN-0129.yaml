@@ -1,0 +1,10 @@
+# OpenGantry v3.0.1 release — squashed MSN-0121..MSN-0129 (thermo remediation + docs/website #123–#126)
+msn_id: MSN-0129
+skill_key: gantry
+gate_command: npm run validate
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0129: v3.0.1 thermo remediation + docs/website (#123-#126); dev-validate OK — stack: check, manifest, tests, doctor, changed-code, MSN, mission-verify; 462 tests green"
+    anchor: "1"
+    status: PASS
+gate_success_substring: validate OK

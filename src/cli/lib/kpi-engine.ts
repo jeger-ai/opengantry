@@ -10,8 +10,8 @@ import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import { isVirtualScratchPath } from "./virtual-scratch-store.js";
 import type { KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
-import type { VerifyOptions } from "./verify-engine.js";
-import type { KpiFailure } from "./verify-engine.js";
+import type { VerifyOptions } from "./verify-options.js";
+import type { KpiFailure } from "./verify-failure.js";
 
 let compiledValidator: ValidateFunction | null = null;
 let compiledForRoot: string | null = null;

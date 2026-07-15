@@ -6,8 +6,8 @@ import YAML from "yaml";
 import { describe, it } from "node:test";
 import { applyDiscoveryProposal, emitDiscoveryProposal } from "../lib/discovery-proposal.js";
 import { runDiscoveryScan, serializeDiscoveryProposal } from "../lib/discovery-scanner.js";
-import { validateTargetArchitecture } from "../lib/target-architecture.js";
-import { runTargetArchitectureDoctorChecks } from "../lib/target-architecture-doctor.js";
+import { validateTargetArchitecture } from "../lib/arch/cage/target-architecture.js";
+import { runTargetArchitectureDoctorChecks } from "../lib/arch/cage/target-architecture-doctor.js";
 
 function writeFixtureRepo(root: string): void {
   fs.mkdirSync(path.join(root, "src", "services"), { recursive: true });

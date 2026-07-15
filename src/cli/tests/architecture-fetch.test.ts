@@ -7,8 +7,8 @@ import {
   buildAuthHeaders,
   fetchExternalArchitecture,
   type HttpFetcher,
-} from "../lib/architecture-fetch.js";
-import { writeArchitectureCredential } from "../lib/architecture-credential.js";
+} from "../lib/arch/external/architecture-fetch.js";
+import { writeArchitectureCredential } from "../lib/arch/external/architecture-credential.js";
 import { REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
 
 function writePointer(dest: string, body: Record<string, unknown>): void {

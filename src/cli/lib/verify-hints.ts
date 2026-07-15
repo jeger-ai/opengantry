@@ -20,7 +20,7 @@ import type {
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
-} from "./verify-engine.js";
+} from "./verify-failure.js";
 
 export interface AudienceTaggedStep {
   audience: OutputAudience;

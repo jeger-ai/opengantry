@@ -5,7 +5,7 @@ import { CLI_NAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitHead, gitRevParse, gitRun } from "./git.js";
 import type { ParsedMission } from "./types.js";
-import type { VerifyOptions } from "./verify-engine.js";
+import type { VerifyOptions } from "./verify-options.js";
 
 export const ENV_BYPASS_SECRET = "GXT_BYPASS_SECRET";
 export const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";

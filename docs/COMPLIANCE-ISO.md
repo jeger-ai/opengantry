@@ -4,7 +4,7 @@ How OpenGantry's GXT workflow maps to common audit questions for teams using AI-
 
 **Disclaimer:** This document is **operational guidance**, not legal or certification advice. ISO 27001 and ISO 42001 conformance depends on your full ISMS / AIMS scope, policies, training, and third-party assessment. OpenGantry provides **engineering artifacts and process controls** that auditors typically ask for; it does not by itself grant certification.
 
-For honest limits on enforcement and trace (what is advisory vs fail-closed), see [Enforcement boundary](#enforcement-boundary-honest-limits) below and [`docs/FEEDBACK-agent-worth-narrative.md`](FEEDBACK-agent-worth-narrative.md).
+For honest limits on enforcement and trace (what is advisory vs fail-closed), see [Enforcement boundary](#enforcement-boundary-honest-limits) below.
 
 ---
 
@@ -175,5 +175,4 @@ Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + me
 
 - [Adoption runbook](ADOPTION.md) — ordered legislate → execute → verify loop
 - [Integrations — enforcement boundary](INTEGRATIONS.md#enforcement-boundary-where-the-cage-is-ironclad)
-- [Honest narrative corrections](FEEDBACK-agent-worth-narrative.md) — claims to avoid in external messaging
 - [RULES](../.gitagent/planner/RULES.md) — normative SOD, trace mapping, TMVC, break-glass

@@ -1,4 +1,4 @@
-import type { UpgradeFileChange, UpgradePlanResult } from "./upgrade-plan.js";
+import type { UpgradeFileChange, UpgradePlanResult } from "./upgrade-plan-types.js";
 
 /** Wire contract version for automation consumers (MCP, CI). Bump only with migration. */
 export const STABLE_UPGRADE_PLAN_PAYLOAD_VERSION = 1 as const;

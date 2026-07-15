@@ -3,8 +3,8 @@ import type {
   DiscoveryConvention,
   DiscoveryEdge,
   DiscoveryEvidence,
-} from "../discovery-scanner.js";
-import type { ArchRuleSpec } from "../target-architecture.js";
+} from "../discovery-types.js";
+import type { ArchRuleSpec } from "../arch/cage/target-architecture.js";
 
 export type DomainKey = "code" | "content";
 
@@ -35,6 +35,8 @@ export interface DomainAdapter {
   readonly label: string;
   readonly fileExtensions: readonly string[];
   readonly defaultScanGlobs: readonly string[];
+  /** When true, TARGET_ARCHITECTURE import-layer rules apply for this domain. */
+  readonly supportsImportRules: boolean;
   extractEvidence(repoRoot: string, files: DomainFileRecord[]): DomainEvidenceResult;
   buildRuleFromAnswer(
     question: DomainBlueprintQuestion,

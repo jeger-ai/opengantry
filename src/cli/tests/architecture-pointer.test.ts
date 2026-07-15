@@ -9,7 +9,7 @@ import {
   architectureRequiresDiscovery,
   runArchitecturePointerDoctorChecks,
   validateArchitecturePointer,
-} from "../lib/architecture-pointer.js";
+} from "../lib/arch/external/architecture-pointer.js";
 import { composeArchitecturePointer } from "../lib/init-compose.js";
 import { defaultInitProfile } from "../lib/init-profile.js";
 

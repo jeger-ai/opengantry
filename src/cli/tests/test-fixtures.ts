@@ -12,6 +12,24 @@ export interface MiniManifestSkill {
   forbidden_zones: string[];
 }
 
+const MANIFEST_LIB_FILES = [
+  "scripts/gxt-manifest-lib.mjs",
+  "scripts/lib/glob-match.mjs",
+  "scripts/lib/manifest-validate.mjs",
+  "scripts/lib/trusted-automation.mjs",
+] as const;
+
+/** Copy gxt-manifest-lib CLI and its scripts/lib dependencies into a temp repo. */
+export function copyManifestLibScripts(dest: string, ogRoot: string): string {
+  for (const rel of MANIFEST_LIB_FILES) {
+    const abs = path.join(ogRoot, rel);
+    const target = path.join(dest, rel);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(abs, target);
+  }
+  return path.join(dest, "scripts/gxt-manifest-lib.mjs");
+}
+
 export function copyMissionSchema(ogTeacherDir: string, destTeacherDir: string): void {
   fs.mkdirSync(destTeacherDir, { recursive: true });
   fs.copyFileSync(path.join(ogTeacherDir, "MISSION.schema.yaml"), path.join(destTeacherDir, "MISSION.schema.yaml"));

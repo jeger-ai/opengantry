@@ -5,18 +5,18 @@ import {
   runAtCommandBoundary,
   runAtCommandBoundaryAsync,
 } from "../lib/command-boundary.js";
-import { fetchExternalArchitecture } from "../lib/architecture-fetch.js";
+import { fetchExternalArchitecture } from "../lib/arch/external/architecture-fetch.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import {
   formatArchCheckHuman,
   loadTargetArchitecture,
   runArchCheck,
   walkPerimeterFiles,
-} from "../lib/target-architecture.js";
+} from "../lib/arch/cage/target-architecture.js";
 import {
   loadArchitecturePointer,
   summarizeArchitecturePointer,
-} from "../lib/architecture-pointer.js";
+} from "../lib/arch/external/architecture-pointer.js";
 import {
   logCredentialStatus,
   parseCredentialValuesFromStdin,
@@ -25,7 +25,7 @@ import {
   validateCredentialSlot,
   writeArchitectureCredential,
   type ArchitectureCredentialKind,
-} from "../lib/architecture-credential.js";
+} from "../lib/arch/external/architecture-credential.js";
 
 export interface ArchOptions {
   cwd?: string;

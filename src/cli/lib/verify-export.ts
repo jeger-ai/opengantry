@@ -1,4 +1,5 @@
-import { CLI_NAME, CLI_VERSION } from "./constants.js";
+import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "./constants.js";
+import { CLI_VERSION } from "./version.gen.js";
 import type { VerifyResultPayload } from "./verify-payload.js";
 
 export type VerifyExportFormat = "json" | "sarif" | "junit";
@@ -84,7 +85,7 @@ export function buildSarifDocument(payload: VerifyResultPayload): Record<string,
           driver: {
             name: CLI_NAME,
             version: CLI_VERSION,
-            informationUri: "https://github.com/jeger-ai/opengantry",
+            informationUri: OPENGANTRY_WEBSITE_URL,
           },
         },
         results,

@@ -5,17 +5,14 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
-import { gitInitCommit, gitCommit } from "./test-fixtures.js";
+import { copyManifestLibScripts, gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
 function copyVerifyPrScripts(dest: string, ogRoot: string): string {
   const script = path.join(ogRoot, "scripts", "verify-pr-missions.sh");
   fs.mkdirSync(path.join(dest, "scripts"), { recursive: true });
   fs.copyFileSync(script, path.join(dest, "scripts/verify-pr-missions.sh"));
-  fs.copyFileSync(
-    path.join(ogRoot, "scripts/gxt-manifest-lib.mjs"),
-    path.join(dest, "scripts/gxt-manifest-lib.mjs"),
-  );
+  copyManifestLibScripts(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent/foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
   fs.copyFileSync(

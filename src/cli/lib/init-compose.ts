@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ArchitecturePointer } from "./architecture-pointer.js";
+import type { ArchitecturePointer } from "./arch/external/architecture-pointer.js";
 import { REL_ARCHITECTURE_DISCOVERY_SKILL } from "./constants.js";
 import {
   INTEGRATION_IDE_KEYS,

@@ -1,4 +1,4 @@
-import { CLI_NAME } from "./constants.js";
+import { CLI_NAME } from "../../constants.js";
 import {
   loadArchitectureCredential,
   type ArchitectureCredentialRecord,

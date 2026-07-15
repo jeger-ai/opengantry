@@ -1,7 +1,7 @@
 import type { VerifyFailedPayload } from "./verify-payload.js";
 import type { ParsedMission } from "./types.js";
-import type { VerifyPhaseFailure } from "./verify-engine.js";
-import type { VerifyOptions } from "./verify-engine.js";
+import type { VerifyPhaseFailure } from "./verify-failure.js";
+import type { VerifyOptions } from "./verify-options.js";
 import { toPosixRel } from "./cli-io.js";
 import {
   readRemediationSnapshot,

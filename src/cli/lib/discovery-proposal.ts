@@ -8,7 +8,7 @@ import {
   TARGET_ARCHITECTURE_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
   type TargetArchitectureSpec,
-} from "./target-architecture.js";
+} from "./arch/cage/target-architecture.js";
 import { getDomainAdapter } from "./domains/index.js";
 import {
   type DiscoveryProposal,

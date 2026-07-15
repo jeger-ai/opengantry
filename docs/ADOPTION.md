@@ -1,4 +1,6 @@
-# Adoption Runbook (v3.0.0)
+# Adoption Runbook (v3.0.1)
+
+Product home: [https://opengantry.ai](https://opengantry.ai) · All docs: [`index.md`](index.md)
 
 This runbook documents the OpenGantry specimen flow for adopters testing `gantry` locally. Product positioning lives in the [README](../README.md); this file is the operational path.
 

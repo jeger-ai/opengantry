@@ -181,7 +181,6 @@ export function registerWorkflowCommands(program: Command): void {
     });
 
   perimeterCmd
-    .description("Check protected governance files; local advisory, --ci requires verified signatures")
     .option("--base-ref <ref>", "Base ref for change detection (default: origin/main or main)")
     .option("--ci", "Authoritative CI mode: fail on unsigned protected-file commits")
     .option("--json", "Emit structured JSON")

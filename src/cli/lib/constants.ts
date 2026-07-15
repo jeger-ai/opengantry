@@ -34,4 +34,5 @@ export const MSN_ID_PATTERN = /^MSN-\d{4}$/;
 
 export const CLI_NAME = "gantry";
 export const LEGACY_CLI_NAME = "gapman";
+export const OPENGANTRY_WEBSITE_URL = "https://opengantry.ai" as const;
 export { CLI_VERSION, NPM_PACKAGE_NAME } from "./version.gen.js";

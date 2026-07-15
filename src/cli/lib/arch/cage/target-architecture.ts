@@ -1,15 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
+import { pathMatchesArchGlob } from "../../path-glob.js";
+import { getDomainAdapter } from "../../domains/index.js";
 import YAML from "yaml";
-import { CLI_NAME } from "./constants.js";
-import { toPosixRel } from "./cli-io.js";
-import { normalizeRepoRelativePath } from "./tmvc-path.js";
+import { CLI_NAME } from "../../constants.js";
+import { toPosixRel } from "../../cli-io.js";
+import { normalizeRepoRelativePath } from "../../tmvc-path.js";
 import {
   extractBindingsFromSnippet,
   extractImportsWithMeta,
-} from "./import-scanner.js";
-import { walkDomainFiles } from "./discovery-scanner.js";
-import { getDomainAdapter } from "./domains/index.js";
+} from "../../import-scanner.js";
+import { walkDomainFiles } from "../../discovery-scanner.js";
 
 export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
 export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
@@ -68,17 +69,7 @@ export interface ArchCheckResult {
 }
 
 function globMatches(repoRel: string, glob: string): boolean {
-  const norm = normalizeRepoRelativePath(repoRel);
-  const g = normalizeRepoRelativePath(glob);
-  if (g.endsWith("/**")) {
-    const prefix = g.slice(0, -3);
-    return norm === prefix || norm.startsWith(`${prefix}/`);
-  }
-  if (g.endsWith("**")) {
-    const prefix = g.slice(0, -2).replace(/\/$/, "");
-    return norm === prefix || norm.startsWith(`${prefix}/`);
-  }
-  return norm === g;
+  return pathMatchesArchGlob(normalizeRepoRelativePath(repoRel), normalizeRepoRelativePath(glob));
 }
 
 export function layerForFile(spec: TargetArchitectureSpec, repoRel: string): string {
@@ -198,9 +189,14 @@ function isPatternRule(rule: ArchRuleSpec): boolean {
   return rule.forbid_pattern != null || rule.require_pattern != null;
 }
 
-function shouldEvaluateImportRules(spec: TargetArchitectureSpec): boolean {
-  const domain = spec.domain?.toLowerCase();
-  return domain == null || domain === "" || domain === "code";
+function adapterSupportsImportRules(spec: TargetArchitectureSpec): boolean {
+  const domain = spec.domain?.trim().toLowerCase();
+  if (!domain) return getDomainAdapter("code").supportsImportRules;
+  try {
+    return getDomainAdapter(domain).supportsImportRules;
+  } catch {
+    return getDomainAdapter("code").supportsImportRules;
+  }
 }
 
 function compilePerimeterPattern(pattern: string): RegExp | null {
@@ -359,7 +355,7 @@ export function checkArchBoundariesForFiles(
   const root = path.resolve(repoRoot);
   const scanRoots = resolveArchScanRoots(spec, options.manifestTmvcRoots);
   const languages = resolveArchLanguages(spec);
-  const evaluateImports = shouldEvaluateImportRules(spec);
+  const evaluateImports = adapterSupportsImportRules(spec);
 
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(root, file);

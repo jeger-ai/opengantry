@@ -8,7 +8,20 @@ import {
   type DomainKey,
 } from "./domains/index.js";
 
-export const DISCOVERY_SCHEMA_VERSION = 1 as const;
+export type {
+  DiscoveryEvidence,
+  DiscoveryConvention,
+  DiscoveryAnomaly,
+  DiscoveryEdge,
+  DiscoveryScanStats,
+  DiscoveryProposal,
+  DiscoveryScanOptions,
+} from "./discovery-types.js";
+
+export { DISCOVERY_SCHEMA_VERSION } from "./discovery-types.js";
+
+import type { DiscoveryProposal, DiscoveryScanOptions } from "./discovery-types.js";
+import { DISCOVERY_SCHEMA_VERSION } from "./discovery-types.js";
 
 const SKIP_DIR_NAMES = new Set([
   "node_modules",
@@ -20,50 +33,6 @@ const SKIP_DIR_NAMES = new Set([
   "out",
   "vendor",
 ]);
-
-export interface DiscoveryEvidence {
-  file: string;
-  line: number;
-  snippet: string;
-}
-
-export interface DiscoveryConvention {
-  id: string;
-  description: string;
-  coverage_pct: number;
-  evidence: DiscoveryEvidence[];
-}
-
-export interface DiscoveryAnomaly {
-  id: string;
-  description: string;
-  coverage_pct: number;
-  evidence: DiscoveryEvidence[];
-}
-
-export interface DiscoveryEdge {
-  from_file: string;
-  to_specifier: string;
-}
-
-export interface DiscoveryScanStats {
-  files_scanned: number;
-  duration_ms: number;
-}
-
-export interface DiscoveryProposal {
-  schema_version: typeof DISCOVERY_SCHEMA_VERSION;
-  domain: DomainKey;
-  conventions: DiscoveryConvention[];
-  anomalies: DiscoveryAnomaly[];
-  dependency_edges: DiscoveryEdge[];
-  scan_stats: DiscoveryScanStats;
-}
-
-export interface DiscoveryScanOptions {
-  domain?: string;
-  onProgress?: (filesScanned: number) => void;
-}
 
 function shouldSkipDir(name: string): boolean {
   return name.startsWith(".") || SKIP_DIR_NAMES.has(name);

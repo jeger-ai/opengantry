@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { runArchitecturePointerDoctorChecks } from "./architecture-pointer.js";
+import { runArchitecturePointerDoctorChecks } from "./arch/external/architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "./break-glass.js";
 import { REL_AGENT_ERROR_FILE, REL_MANIFEST, CLI_NAME } from "./constants.js";
 import { ENV_PLANNER_EMAILS } from "./config-namespace.js";
@@ -23,8 +23,8 @@ import { runExecutorLogIntegrityDoctorChecks } from "./executor-log-integrity.js
 import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
 import { gitCommitSignatureStatus, isGoodGitSignatureStatus } from "./planner-signature.js";
 import { gitRunOk } from "./git.js";
-import { runTargetArchitectureDoctorChecks } from "./target-architecture-doctor.js";
-import { runArchitectureDriftDoctorChecks } from "./architecture-drift-doctor.js";
+import { runTargetArchitectureDoctorChecks } from "./arch/cage/target-architecture-doctor.js";
+import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift-doctor.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);

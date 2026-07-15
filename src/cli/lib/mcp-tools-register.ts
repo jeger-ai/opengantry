@@ -1,14 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import {
-  handleCheckSignature,
-  handleDraftLegislation,
-  handleExecuteLegislation,
-  handleLastError,
-  handlePinMission,
-  handleResolveMission,
-  handleStartOrchestration,
-} from "./mcp-governance.js";
+import { handleCheckSignature } from "./mcp-check-signature.js";
+import { handleDraftLegislation } from "./mcp-draft-legislation.js";
+import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
+import { handleLastError } from "./mcp-last-error.js";
+import { handlePinMission } from "./mcp-pin-mission.js";
+import { handleResolveMission } from "./mcp-resolve-mission.js";
+import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleRuntimeEnv, handleRuntimeExec, handleScan, handleVerify } from "./mcp-runtime.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 

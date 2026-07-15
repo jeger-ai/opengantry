@@ -1,4 +1,4 @@
-import type { DoctorLine } from "./doctor-types.js";
+import type { DoctorLine } from "../../doctor-types.js";
 import {
   TARGET_ARCHITECTURE_FILENAME,
   loadTargetArchitecture,

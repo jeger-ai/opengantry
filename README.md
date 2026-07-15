@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://opengantry.ai"><img src="docs/assets/opengantry-logo.svg" alt="OpenGantry logo" width="96" height="96"></a>
+</p>
+
 # OpenGantry: What It Is, Why It Exists, and How to Use It
 
 ## The one-line pitch
@@ -6,7 +10,7 @@
 
 Think of it as a **court of law** for agentic work: binary rules, reproducible checks, audit trail in Git.
 
-> **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native governance in your repository, not a hosted observability dashboard.
+> **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native governance in your repository, not a hosted observability dashboard. Product home: [opengantry.ai](https://opengantry.ai).
 
 ---
 
@@ -200,10 +204,15 @@ You adopt OpenGantry when agent velocity is valuable but **unreviewed scope cree
 
 ---
 
+## Documentation map {#documentation-map-start-here}
+
+Full doc index: [`docs/index.md`](docs/index.md) — adopters, contributors, ADRs, and planning.
+
 ## Where to go next
 
 | Goal | Doc |
 |------|-----|
+| All documentation | [`docs/index.md`](docs/index.md) |
 | 5-minute adoption | [`docs/ADOPTION.md`](docs/ADOPTION.md) |
 | Domain adapters deep dive | [`docs/DOMAINS.md`](docs/DOMAINS.md) |
 | External agent integration | [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md) |

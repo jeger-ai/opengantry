@@ -5,9 +5,8 @@ import type {
   DiscoveryEdge,
   DiscoveryEvidence,
 } from "../discovery-scanner.js";
-import type { ArchRuleSpec } from "../target-architecture.js";
+import type { ArchRuleSpec } from "../arch/cage/target-architecture.js";
 import {
-  registerDomainAdapter,
   type DomainAdapter,
   type DomainBlueprintQuestion,
   type DomainEnforcementChoice,
@@ -200,9 +199,8 @@ export const codeDomainAdapter: DomainAdapter = {
   label: "Software engineering (TypeScript/JavaScript imports)",
   fileExtensions: [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"],
   defaultScanGlobs: ["src/**"],
+  supportsImportRules: true,
   extractEvidence: (_repoRoot, files) => extractCodeEvidence(files),
   buildBlueprintQuestions: buildCodeBlueprintQuestions,
   buildRuleFromAnswer: (q, choice, ev) => buildCodeRule(q, choice, ev),
 };
-
-registerDomainAdapter(codeDomainAdapter);

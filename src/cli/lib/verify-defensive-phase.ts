@@ -1,5 +1,5 @@
 import { evaluateDefensiveGuards, type DefensiveFinding } from "./defensive-guard.js";
-import type { DefensiveFailure } from "./verify-engine.js";
+import type { DefensiveFailure } from "./verify-failure.js";
 import type { Manifest } from "./types.js";
 
 export interface DefensivePhaseOutcome {

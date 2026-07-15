@@ -4,14 +4,16 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { runDiscoveryScan } from "../lib/discovery-scanner.js";
-import { getDomainAdapter, listDomainKeys } from "../lib/domains/index.js";
+import { getDomainAdapter, listDomainKeys, registerBuiltinDomains } from "../lib/domains/index.js";
 import {
   checkArchBoundariesForFiles,
   validateTargetArchitecture,
-} from "../lib/target-architecture.js";
+} from "../lib/arch/cage/target-architecture.js";
 import YAML from "yaml";
 
 describe("domain adapters", () => {
+  registerBuiltinDomains();
+
   it("registers built-in code and content adapters", () => {
     assert.deepEqual(listDomainKeys(), ["code", "content"]);
     assert.equal(getDomainAdapter("code").key, "code");

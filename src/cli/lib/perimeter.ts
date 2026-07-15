@@ -10,6 +10,9 @@ import {
 } from "./git-proof.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "./types.js";
+import { pathMatchesPerimeterGlob } from "./path-glob.js";
+
+export { pathMatchesPerimeterGlob } from "./path-glob.js";
 
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",
@@ -41,17 +44,6 @@ function perimeterGlobs(manifest: Manifest): string[] {
   return manifest.perimeter_protected?.length
     ? [...manifest.perimeter_protected]
     : [...DEFAULT_PERIMETER_PROTECTED];
-}
-
-/** Simple glob: double-star slash prefix = suffix match; otherwise exact repo-relative match. */
-export function pathMatchesPerimeterGlob(repoRelPath: string, glob: string): boolean {
-  const norm = repoRelPath.replace(/\\/g, "/");
-  const g = glob.replace(/\\/g, "/");
-  if (g.startsWith("**/")) {
-    const suffix = g.slice(3);
-    return norm.endsWith(suffix) || norm.includes(`/${suffix}`);
-  }
-  return norm === g;
 }
 
 export function isPerimeterProtectedPath(repoRelPath: string, manifest: Manifest): boolean {

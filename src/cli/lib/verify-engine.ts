@@ -4,7 +4,6 @@
  * verify-hints (remediation) → verify-presenters (sinks) → verify-run (orchestration).
  */
 import path from "node:path";
-import type { OutputAudience } from "./audience-output.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRunOk } from "./git.js";
 import { assertPlannerMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
@@ -30,41 +29,7 @@ import {
   scavengeStaleVirtualFlights,
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
-import type { VerifyExportFormat } from "./verify-export.js";
-
-export interface VerifyOptions {
-  mission?: string;
-  executorLog?: string;
-  cwd?: string;
-  fuzzyTrace?: boolean;
-  strictTrace?: boolean;
-  /** Pre-push handoff: legislative stubs stop after git-proof; others run full verify. */
-  prePush?: boolean;
-  breakGlass?: boolean;
-  breakGlassReason?: string;
-  breakGlassCommit?: string;
-  auditCommit?: boolean;
-  /** Interactive remediation menu on failure. */
-  fix?: boolean;
-  /** Print structured fix hints without prompts (used with --fix). */
-  fixNonInteractive?: boolean;
-  /** Tailor remediation next steps by role. */
-  audience?: OutputAudience;
-  /** Skip TMVC stale-evidence binding (committed PASS quote lines only). */
-  skipStaleEvidence?: boolean;
-  /** Emit a single structured JSON document on stdout (no human logs). */
-  json?: boolean;
-  /** Structured export format (json default when --json). */
-  format?: VerifyExportFormat;
-  /** Verify every mission file changed vs base ref on current branch. */
-  changedMissions?: boolean;
-  /** Base ref for --changed-missions (default: merge-base with origin/HEAD or main). */
-  baseRef?: string;
-  /** Authoritative mode: fail-closed on KPI stale evidence and perimeter (CI). */
-  ci?: boolean;
-  /** Max commits to scan for Planner [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
-  scanDepth?: number;
-}
+import type { VerifyOptions } from "./verify-options.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -92,18 +57,6 @@ export function discoverChangedMissionFiles(repoRoot: string, baseRef: string): 
     .map((rel) => toPosixRel(repoRoot, path.join(repoRoot, rel)));
 }
 
-export type {
-  DefensiveFailure,
-  GateFailure,
-  GitProofFailure,
-  KpiFailure,
-  KpiFailureKind,
-  TraceFailure,
-  TracePendingFailure,
-  VerifyFailurePhase,
-  VerifyPhaseFailure,
-} from "./verify-failure.js";
-
 export interface VerifyPhaseSuccess {
   ok: true;
   outcome: "full" | "pre_push_stub";
@@ -116,6 +69,8 @@ export interface VerifyPhaseSuccess {
   defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
 }
+
+export type { VerifyOptions, VerifyMode } from "./verify-options.js";
 
 export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
 

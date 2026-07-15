@@ -22,12 +22,21 @@ function copyFileSync(src, dest) {
 }
 
 const templateScripts = path.join(REPO_ROOT, "templates", "scripts");
-for (const name of fs.readdirSync(templateScripts)) {
-  const src = path.join(templateScripts, name);
-  if (fs.statSync(src).isFile()) {
-    copyFileSync(src, path.join(REPO_ROOT, "scripts", name));
+
+function copyTreeSync(srcDir, destDir) {
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const name of fs.readdirSync(srcDir)) {
+    const src = path.join(srcDir, name);
+    const dest = path.join(destDir, name);
+    if (fs.statSync(src).isDirectory()) {
+      copyTreeSync(src, dest);
+    } else {
+      copyFileSync(src, dest);
+    }
   }
 }
+
+copyTreeSync(templateScripts, path.join(REPO_ROOT, "scripts"));
 
 const workflowSrc = path.join(REPO_ROOT, "templates", ".github", "workflows", "gxt-validate.yml");
 const workflowDest = path.join(REPO_ROOT, ".github", "workflows", "gxt-validate.yml");

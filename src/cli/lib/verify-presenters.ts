@@ -8,7 +8,9 @@ import type { Manifest, ParsedMission } from "./types.js";
 import { isGantryUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
 import { loadWorkspace } from "./workspace.js";
-import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult } from "./verify-engine.js";
+import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyPhaseResult } from "./verify-engine.js";
+import type { VerifyPhaseFailure } from "./verify-failure.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
 import {
   buildBreakGlassPayload,

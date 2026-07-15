@@ -3,9 +3,8 @@ import type {
   DiscoveryConvention,
   DiscoveryEvidence,
 } from "../discovery-scanner.js";
-import type { ArchRuleSpec } from "../target-architecture.js";
+import type { ArchRuleSpec } from "../arch/cage/target-architecture.js";
 import {
-  registerDomainAdapter,
   type DomainAdapter,
   type DomainBlueprintQuestion,
   type DomainEnforcementChoice,
@@ -205,9 +204,8 @@ export const contentDomainAdapter: DomainAdapter = {
   label: "Brand/compliance content (markdown, HTML, text)",
   fileExtensions: [".md", ".html", ".htm", ".txt", ".json"],
   defaultScanGlobs: ["content/**"],
+  supportsImportRules: false,
   extractEvidence: (_repoRoot, files) => extractContentEvidence(files),
   buildBlueprintQuestions: buildContentBlueprintQuestions,
   buildRuleFromAnswer: (q, choice, ev) => buildContentRule(q, choice, ev),
 };
-
-registerDomainAdapter(contentDomainAdapter);

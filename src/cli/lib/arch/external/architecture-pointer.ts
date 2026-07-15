@@ -1,13 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadArchitectureCredential } from "./architecture-credential.js";
-import { errorMessage, fromPosix } from "./cli-io.js";
+import { errorMessage, fromPosix } from "../../cli-io.js";
 import {
   REL_ARCHITECTURE_ACCESS_SKILL,
   REL_ARCHITECTURE_DISCOVERY_SKILL,
   REL_ARCHITECTURE_POINTER,
-} from "./constants.js";
-import type { DoctorLine } from "./doctor-types.js";
+} from "../../constants.js";
+import type { DoctorLine } from "../../doctor-types.js";
 
 export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
 

@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
-  toVerifyFailedPayload,
 } from "../lib/verify-failure-normalize.js";
+import { toVerifyFailedPayload } from "../lib/verify-payload.js";
 import { buildSarifDocument } from "../lib/verify-export.js";
 import { GantryUserError } from "../lib/errors.js";
 

@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { logError, setExitCode, errorMessage } from "./lib/cli-io.js";
-import { parseArchitectureCredentialKind, type ArchitectureCredentialKind } from "./lib/architecture-credential.js";
+import { parseArchitectureCredentialKind, type ArchitectureCredentialKind } from "./lib/arch/external/architecture-credential.js";
 import {
   runArchCredSet,
   runArchCredStatus,

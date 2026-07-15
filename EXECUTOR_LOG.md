@@ -552,3 +552,6 @@ DoD 1 MSN-0117: re-attested v3.0.0 release — perimeter schema 0.3.0 pattern ru
 DoD 1 MSN-0118: re-attested v3.0.0 release — content adapter and blueprint dispatch
 DoD 1 MSN-0119: re-attested v3.0.0 release — content-governance example and docs
 DoD 1 MSN-0120: re-attested v3.0.0 release — README manifesto front door; 454 tests green; publish v3.0.0
+
+## v3.0.1 release (MSN-0121..MSN-0129 squashed)
+DoD 1 MSN-0129: v3.0.1 thermo remediation + docs/website (#123-#126); dev-validate OK — stack: check, manifest, tests, doctor, changed-code, MSN, mission-verify; 462 tests green

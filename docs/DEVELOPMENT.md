@@ -19,7 +19,7 @@ gantry doctor
 
 **Roadmap / open work:** [`docs/BACKLOG.md`](BACKLOG.md) · [Project board #2](https://github.com/orgs/jeger-ai/projects/2) · [Issues](https://github.com/jeger-ai/opengantry/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog) ([v2.2](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Fv2.2) · [tactical](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Ftactical) · [adoption](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Fadoption) · [v1.2+](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Fv1.2)).
 
-**Docs map:** see root [README § Documentation map](../README.md#documentation-map-start-here).
+**Docs map:** [`docs/index.md`](index.md) · root [README § Documentation map](../README.md#documentation-map-start-here).
 
 ## Law + routing (before you edit)
 

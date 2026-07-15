@@ -2,10 +2,9 @@ import { CLI_NAME } from "./constants.js";
 import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import { GantryUserError } from "./errors.js";
 import { loadWorkspace } from "./workspace.js";
-import {
-  evaluateVerifyPhases,
-  type VerifyOptions,
-} from "./verify-engine.js";
+import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
+import type { VerifyOptions } from "./verify-options.js";
+import type { Manifest, ParsedMission } from "./types.js";
 import {
   buildVerifyResultPayload,
   initFailurePayload,
@@ -27,46 +26,97 @@ export interface VerifyRunResult {
   exitCode: number;
 }
 
-/** Unified verify orchestration: load workspace once, evaluate once, present by sink. */
-export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
+interface LoadedVerifyContext {
+  root: string;
+  manifest: Manifest;
+  mission: ParsedMission;
+  missionArg: string;
+  options: VerifyOptions;
+}
+
+function loadVerifyContext(options: VerifyOptions): LoadedVerifyContext {
   const { root, manifest } = loadWorkspace();
   if (!options.mission) {
     throw new Error("gantry verify: --mission is required");
   }
-  const mission = parseMissionFile(root, options.mission);
-  const missionArg = options.mission;
+  return {
+    root,
+    manifest,
+    mission: parseMissionFile(root, options.mission),
+    missionArg: options.mission,
+    options,
+  };
+}
+
+function evaluateOrInitFailure(
+  ctx: LoadedVerifyContext,
+): { ok: true; result: VerifyPhaseResult } | { ok: false; error: unknown } {
+  try {
+    assertMissionGatePresent(ctx.mission);
+    return { ok: true, result: evaluateVerifyPhases(ctx.root, ctx.mission, ctx.options, ctx.manifest) };
+  } catch (e) {
+    return { ok: false, error: e };
+  }
+}
+
+/** Unified verify orchestration: load once, evaluate once, present by sink. */
+export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
+  const ctx = loadVerifyContext(options);
   const sink = resolveVerifySink(options);
 
   switch (sink) {
     case "break_glass_json":
-      return presentBreakGlassJson(root, mission, options);
+      return presentBreakGlassJson(ctx.root, ctx.mission, options);
     case "break_glass_human":
-      return presentBreakGlassHuman(root, mission, options);
+      return presentBreakGlassHuman(ctx.root, ctx.mission, options);
     case "json": {
-      try {
-        assertMissionGatePresent(mission);
-        const result = evaluateVerifyPhases(root, mission, options, manifest);
-        return presentJsonFromResult(root, mission, missionArg, options, manifest, result);
-      } catch (e) {
-        return presentJsonInitFailure(options, e);
+      const evaluated = evaluateOrInitFailure(ctx);
+      if (!evaluated.ok) {
+        return presentJsonInitFailure(options, evaluated.error);
       }
+      return presentJsonFromResult(
+        ctx.root,
+        ctx.mission,
+        ctx.missionArg,
+        options,
+        ctx.manifest,
+        evaluated.result,
+      );
     }
     case "fix_interactive":
     case "fix_noninteractive":
     case "human": {
       try {
-        assertMissionGatePresent(mission);
+        assertMissionGatePresent(ctx.mission);
       } catch (e) {
         return presentHumanInitFailure(options, e);
       }
-      const result = evaluateVerifyPhases(root, mission, options, manifest);
+      const result = evaluateVerifyPhases(ctx.root, ctx.mission, options, ctx.manifest);
       if (sink === "fix_interactive") {
-        return presentFix(root, mission, missionArg, options, result, false, manifest, runVerifyCore);
+        return presentFix(
+          ctx.root,
+          ctx.mission,
+          ctx.missionArg,
+          options,
+          result,
+          false,
+          ctx.manifest,
+          runVerifyCore,
+        );
       }
       if (sink === "fix_noninteractive") {
-        return presentFix(root, mission, missionArg, options, result, true, manifest, runVerifyCore);
+        return presentFix(
+          ctx.root,
+          ctx.mission,
+          ctx.missionArg,
+          options,
+          result,
+          true,
+          ctx.manifest,
+          runVerifyCore,
+        );
       }
-      return presentHuman(root, mission, missionArg, options, result);
+      return presentHuman(ctx.root, ctx.mission, ctx.missionArg, options, result);
     }
     default: {
       const _exhaustive: never = sink;

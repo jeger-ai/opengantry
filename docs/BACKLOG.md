@@ -9,7 +9,27 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-07-15 (v3.0.0 released — native governance layer for autonomous agents, npm **3.0.0**)
+**Last synced:** 2026-07-15 (v3.0.1 patch — docs/discovery + thermo remediation, npm **3.0.1**)
+
+---
+
+## v3.0.1 — Docs cleanup + thermo remediation
+
+| Item | Status | Issue / MSN |
+|------|--------|-------------|
+| **Website references (opengantry.ai)** | **Done** | [#123](https://github.com/jeger-ai/opengantry/issues/123) · MSN-0129 |
+| **Docs index hub (`docs/index.md`)** | **Done** | [#125](https://github.com/jeger-ai/opengantry/issues/125) · MSN-0129 |
+| **Docs drift + archive v2.5 proposal** | **Done** | [#124](https://github.com/jeger-ai/opengantry/issues/124) · MSN-0129 |
+| **Verify type leaf + VerifyMode + verify-run pipeline** | **Done** | MSN-0121 |
+| **Domain adapter policy + explicit registration** | **Done** | MSN-0122 |
+| **Perimeter help + path-glob explicit modes** | **Done** | MSN-0123 |
+| **Split `gxt-manifest-lib.mjs` + manifest parity** | **Done** | MSN-0124 |
+| **Upgrade-plan extract** | **Done** | MSN-0125 |
+| **MCP one-file-per-tool** | **Done** | MSN-0126 |
+| **Arch namespace (`arch/external`, `arch/cage`)** | **Done** | MSN-0127 |
+| **Init `addInitOptions` + trace module split** | **Done** | MSN-0128 |
+| **3.0.1 npm publish** | **Done** | MSN-0129 |
+| **Homepage logo in README/docs** | **Done** | [#126](https://github.com/jeger-ai/opengantry/issues/126) · MSN-0129 |
 
 ---
 
@@ -82,7 +102,7 @@ Builds on v2.5.0 defensive profile schema (#87) and net-LOC guard (#90). v3.0 ad
 | **Document repo-only scripts** | **Done** | [#121](https://github.com/jeger-ai/opengantry/issues/121) |
 | **2.5.0 npm publish** | **Done** | [#122](https://github.com/jeger-ai/opengantry/issues/122) · MSN-0097 |
 
-Spec: [V2.5.0-PROPOSAL.md](V2.5.0-PROPOSAL.md)
+Spec: [archive/V2.5.0-PROPOSAL.md](archive/V2.5.0-PROPOSAL.md) (historical)
 
 ---
 
@@ -448,7 +468,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v3.1 AI performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)); v3.0.0 released (autonomous-agent governance layer, MSN-0108–MSN-0114, npm **3.0.0**).
+**Current focus:** v3.1 AI performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)); v3.0.1 shipped (docs/discovery + thermo remediation, MSN-0121–MSN-0129, npm **3.0.1**).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

@@ -6,7 +6,7 @@ import {
   toFailurePresentation,
   type VerifyFailurePresentationInput,
 } from "../lib/verify-failure-normalize.js";
-import type { VerifyPhaseFailure } from "../lib/verify-engine.js";
+import type { VerifyPhaseFailure } from "../lib/verify-failure.js";
 
 function verifyFailurePresentation(input: VerifyFailurePresentationInput) {
   return toFailurePresentation(normalizeVerifyPhaseFailure(input));

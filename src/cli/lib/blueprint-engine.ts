@@ -12,7 +12,7 @@ import {
   TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
   type ArchRuleSpec,
   type TargetArchitectureSpec,
-} from "./target-architecture.js";
+} from "./arch/cage/target-architecture.js";
 import {
   buildVerificationPlan,
   serializeVerificationPlan,

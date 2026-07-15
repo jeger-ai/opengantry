@@ -3,21 +3,22 @@ import { toPosixRel } from "./cli-io.js";
 import type { Manifest, ParsedMission } from "./types.js";
 import {
   evaluateVerifyPhases,
-  type VerifyOptions,
   type VerifyPhaseResult,
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
+import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyPhaseFailure } from "./verify-failure.js";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
   toRemediationSnapshot,
-  toVerifyFailedPayload,
+  type NormalizedVerifyFailure,
 } from "./verify-failure-normalize.js";
 import { persistRemediationSnapshot } from "./context-feed-remediation.js";
 
 import type { GxtErrorCode } from "./gxt-error-codes.js";
-import type { VerifyFinding } from "./verify-finding.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "./verify-finding.js";
+import type { VerifyFinding, VerifyFailedGate } from "./verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "./verify-finding.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;
@@ -58,6 +59,66 @@ export interface VerifyFailedPayload {
 }
 
 export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
+
+export function buildFindingsForFailure(
+  normalized: NormalizedVerifyFailure,
+  failure?: VerifyPhaseFailure,
+): VerifyFinding[] {
+  const hint = normalized.fix_hints[0] ?? normalized.message;
+  const phaseGate = (normalized.phase === "trace_pending" ? "trace" : normalized.phase) as VerifyFailedGate;
+
+  if (failure?.phase === "trace") {
+    return [
+      verifyFinding("trace", hint, {
+        offending_file: failure.executorLogPath,
+        line: 0,
+      }),
+    ];
+  }
+  if (failure?.phase === "kpi") {
+    return [
+      verifyFinding("kpi", hint, {
+        offending_file: failure.kpiReportPath,
+      }),
+    ];
+  }
+  if (failure?.phase === "gate") {
+    return [verifyFinding("gate", hint)];
+  }
+  if (failure?.phase === "defensive") {
+    return [verifyFinding("defensive", failure.defensiveReason || hint)];
+  }
+  if (failure?.phase === "git_proof") {
+    return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
+  }
+
+  if (normalized.failures && normalized.failures.length > 0) {
+    return normalized.failures.map((f) => verifyFinding(phaseGate, f));
+  }
+
+  return [verifyFinding(phaseGate, hint)];
+}
+
+export function toVerifyFailedPayload(
+  normalized: NormalizedVerifyFailure,
+  failure?: VerifyPhaseFailure,
+): VerifyFailedPayload {
+  const findings = buildFindingsForFailure(normalized, failure);
+  return {
+    status: "failed",
+    phase: normalized.phase,
+    message: normalized.message,
+    error_code: normalized.error_code,
+    fix_hints: normalized.fix_hints,
+    next_actions: normalized.next_actions,
+    exit_code: normalized.exit_code,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings,
+    ...(normalized.gate?.stdout !== undefined ? { stdout: normalized.gate.stdout } : {}),
+    ...(normalized.gate?.stderr !== undefined ? { stderr: normalized.gate.stderr } : {}),
+    ...(normalized.failures ? { failures: normalized.failures } : {}),
+  };
+}
 
 function missionRelPath(root: string, mission: ParsedMission): string {
   return toPosixRel(root, mission.rawPath);

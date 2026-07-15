@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { importLayerSurgeon } from "../lib/surgeons/import-layer.js";
 import type { SurgeonContext } from "../lib/surgeons/registry.js";
-import type { VerifyPhaseFailure } from "../lib/verify-engine.js";
+import type { VerifyPhaseFailure } from "../lib/verify-failure.js";
 
 test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-layer-"));

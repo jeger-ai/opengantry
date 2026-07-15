@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
-import { gitInitCommit, gitCommit } from "./test-fixtures.js";
+import { copyManifestLibScripts, gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
 const DEPENDABOT_EMAIL = "dependabot[bot]@users.noreply.github.com";
@@ -58,10 +58,7 @@ function copyAutomationScripts(dest: string, ogRoot: string): {
     path.join(ogRoot, "scripts/verify-pr-missions.sh"),
     path.join(dest, "scripts/verify-pr-missions.sh"),
   );
-  fs.copyFileSync(
-    path.join(ogRoot, "scripts/gxt-manifest-lib.mjs"),
-    path.join(dest, "scripts/gxt-manifest-lib.mjs"),
-  );
+  copyManifestLibScripts(dest, ogRoot);
   fs.copyFileSync(
     path.join(ogRoot, ".gitagent/foreman/MANIFEST.json"),
     path.join(dest, ".gitagent/foreman/MANIFEST.json"),

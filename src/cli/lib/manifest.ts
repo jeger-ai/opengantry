@@ -41,7 +41,7 @@ function validateSkillEntry(k: string, s: unknown): void {
   }
 }
 
-/** Mirrors scripts/validate-gxt.sh manifest checks */
+/** Mirrors scripts/validate-gxt.sh manifest checks (parity: manifest-parity.test.ts + manifest-validate.mjs). */
 export function validateManifestShape(m: unknown): asserts m is Manifest {
   if (typeof m !== "object" || m === null) throw new Error("MANIFEST: not an object");
   const o = m as Record<string, unknown>;

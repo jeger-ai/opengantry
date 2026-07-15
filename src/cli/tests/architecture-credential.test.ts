@@ -10,7 +10,7 @@ import {
   removeArchitectureCredential,
   validateCredentialSlot,
   writeArchitectureCredential,
-} from "../lib/architecture-credential.js";
+} from "../lib/arch/external/architecture-credential.js";
 
 test("validateCredentialSlot: accepts architecture/confluence", () => {
   assert.equal(validateCredentialSlot("architecture/confluence"), "architecture/confluence");
