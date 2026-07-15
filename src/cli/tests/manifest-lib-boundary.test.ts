@@ -17,6 +17,34 @@ function runManifestLib(root: string, args: string[], input?: string) {
   });
 }
 
+/** Resolve a valid base..head pair for eval-range (shallow CI checkouts may lack HEAD~1). */
+function resolveGitRange(root: string): { base: string; head: string } | null {
+  const head = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).stdout.trim();
+  const parent = spawnSync("git", ["rev-parse", "--verify", `${head}^`], { cwd: root, encoding: "utf8" });
+  if (parent.status === 0) {
+    return { base: parent.stdout.trim(), head };
+  }
+  const originMain = spawnSync("git", ["rev-parse", "--verify", "origin/main^{commit}"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (originMain.status === 0) {
+    const mergeBase = spawnSync("git", ["merge-base", "origin/main", head], { cwd: root, encoding: "utf8" });
+    const base = mergeBase.stdout.trim();
+    if (mergeBase.status === 0 && base && base !== head) {
+      return { base, head };
+    }
+  }
+  const older = spawnSync("git", ["rev-list", "--max-count=1", "--skip=1", head], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (older.status === 0 && older.stdout.trim()) {
+    return { base: older.stdout.trim(), head };
+  }
+  return null;
+}
+
 test("manifest-lib boundary: prefixes argv (validate-gxt + verify-pr-missions)", () => {
   const root = getRepoRoot();
   const r = runManifestLib(root, ["prefixes", root]);
@@ -77,10 +105,14 @@ test("manifest-lib boundary: eval-commit argv (validate-gxt msn trusted_automati
   assert.equal(usage.status, 2);
 });
 
-test("manifest-lib boundary: eval-range argv (verify-pr-missions trusted_automation path)", () => {
+test("manifest-lib boundary: eval-range argv (verify-pr-missions trusted_automation path)", (t) => {
   const root = getRepoRoot();
-  const base = spawnSync("git", ["rev-parse", "HEAD~1"], { cwd: root, encoding: "utf8" }).stdout.trim();
-  const head = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).stdout.trim();
+  const range = resolveGitRange(root);
+  if (!range) {
+    t.skip("insufficient git history for eval-range boundary test");
+    return;
+  }
+  const { base, head } = range;
   const r = runManifestLib(root, ["eval-range", root, base, head]);
   assert.ok(r.status === 0 || r.status === 1, `unexpected exit ${r.status}`);
   if (r.status === 0) {
