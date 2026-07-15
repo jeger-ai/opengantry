@@ -17,10 +17,7 @@ import {
   initFailurePayload,
   type VerifyResultPayload,
 } from "./verify-payload.js";
-import {
-  buildVerifyHintContext,
-  hintsForVerifyPhase,
-} from "./verify-hints.js";
+import { hintsForVerifyPhase } from "./verify-hints.js";
 import {
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
@@ -217,10 +214,11 @@ export async function presentFix(
   }
 
   const reporter = reporterFor(options);
-  const remediation = hintsForVerifyPhase(
-    failure.phase,
-    buildVerifyHintContext(failure, missionArg, options, root, mission.msnId ?? undefined),
-  );
+  const remediation = hintsForVerifyPhase(failure, {
+    missionPath: missionArg,
+    root,
+    msnId: mission.msnId ?? undefined,
+  });
 
   reporter.emitError(`[${remediation.error_code}] verify failed at phase: ${failure.phase}`);
 
@@ -265,6 +263,7 @@ async function trySurgeonAndRerunVerify(
   rerunVerify: (options: VerifyOptions) => Promise<{ ok: boolean; exitCode: number }>,
 ): Promise<VerifyPresentResult | null> {
   if (input.options.fix !== true) return null;
+  if (input.failure.phase !== "gate") return null;
 
   const errorCode = resolveSurgeonErrorCode(input.failure);
   if (!errorCode) return null;

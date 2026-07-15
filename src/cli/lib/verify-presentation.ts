@@ -1,12 +1,9 @@
 export type {
   AudienceTaggedStep,
-  VerifyHintContext,
+  VerifyHintMeta,
   VerifyRemediation,
 } from "./verify-hints.js";
-export {
-  buildVerifyHintContext,
-  hintsForVerifyPhase,
-} from "./verify-hints.js";
+export { hintsForVerifyPhase } from "./verify-hints.js";
 
 export type {
   NormalizedVerifyFailure,

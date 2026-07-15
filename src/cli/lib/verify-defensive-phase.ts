@@ -1,21 +1,9 @@
 import { evaluateDefensiveGuards, type DefensiveFinding } from "./defensive-guard.js";
+import type { DefensiveFailure } from "./verify-engine.js";
 import type { Manifest } from "./types.js";
 
-export interface DefensivePhaseFailureFields {
-  ok: false;
-  phase: "defensive";
-  message: string;
-  exitCode: 1;
-  executorLogPath: string;
-  defensiveReason?: string;
-  defensiveNetLoc?: number;
-  defensiveMaxNetLoc?: number;
-  defensiveWarnings?: string[];
-  defensiveAudits?: string[];
-}
-
 export interface DefensivePhaseOutcome {
-  failure: DefensivePhaseFailureFields | null;
+  failure: DefensiveFailure | null;
   warnings: string[];
   audits: string[];
 }
@@ -50,15 +38,15 @@ export function evaluateDefensiveGuardPhase(
   }
 
   if (!result.ok) {
-    const firstBlock = result.blocked[0];
+    const reason = result.blocked[0]?.message ?? "DEFENSIVE GUARD FAILED";
     return {
       failure: {
         ok: false,
         phase: "defensive",
-        message: firstBlock?.message ?? "DEFENSIVE GUARD FAILED",
+        message: reason,
         exitCode: 1,
         executorLogPath,
-        defensiveReason: firstBlock?.message,
+        defensiveReason: reason,
         defensiveNetLoc: result.net_loc,
         defensiveMaxNetLoc: result.max_net_loc,
         ...(warnings.length > 0 ? { defensiveWarnings: warnings } : {}),

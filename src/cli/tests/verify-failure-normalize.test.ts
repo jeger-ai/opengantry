@@ -55,6 +55,7 @@ test("normalizeVerifyPhaseFailure: kpi includes snapshot kpi block", () => {
     message: "kpi fail",
     exitCode: 1,
     executorLogPath: "EXECUTOR_LOG.md",
+    kpiKind: "threshold",
     kpiReason: "threshold miss",
     kpiMetric: "complexity",
     kpiOp: "<=",
@@ -81,6 +82,7 @@ test("normalizeVerifyPhaseFailure: trace failures aligned", () => {
     executorLogPath: "EXECUTOR_LOG.md",
     traceKind: "ambiguous",
     traceReason: "Ambiguous match",
+    traceQuote: "DoD 1 MSN-0001: quote",
   };
   const normalized = normalizeVerifyPhaseFailure({ failure, missionArg, options: {} });
   const payload = toVerifyFailedPayload(normalized);

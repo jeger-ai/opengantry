@@ -90,36 +90,70 @@ export type VerifyFailurePhase = "git_proof" | "gate" | "defensive" | "kpi" | "t
 
 export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
 
-export interface VerifyPhaseFailure {
+interface VerifyFailureBase {
   ok: false;
-  phase: VerifyFailurePhase;
   message: string;
   exitCode: number;
   executorLogPath: string;
+}
+
+export interface GitProofFailure extends VerifyFailureBase {
+  phase: "git_proof";
+  gitProofMessage: string;
+}
+
+export interface GateFailure extends VerifyFailureBase {
+  phase: "gate";
+  /** Absent only for the "mission has no gate_command" failure. */
   gateCommand?: string;
   gateStdout?: string;
   gateStderr?: string;
   gateExitCode?: number;
-  gitProofMessage?: string;
-  traceKind?: TraceFailureKind;
-  traceQuote?: string;
-  traceReason?: string;
-  attestationCommit?: string;
-  stalePaths?: string[];
-  kpiReportPath?: string;
-  kpiKind?: KpiFailureKind;
-  kpiReason?: string;
-  kpiMetric?: string;
-  kpiOp?: KpiThresholdOp;
-  kpiExpected?: number;
-  kpiActual?: number | boolean;
-  kpiStalePaths?: string[];
-  defensiveReason?: string;
+}
+
+export interface DefensiveFailure extends VerifyFailureBase {
+  phase: "defensive";
+  defensiveReason: string;
   defensiveNetLoc?: number;
   defensiveMaxNetLoc?: number;
   defensiveWarnings?: string[];
   defensiveAudits?: string[];
 }
+
+export interface KpiFailure extends VerifyFailureBase {
+  phase: "kpi";
+  kpiKind: KpiFailureKind;
+  kpiReason: string;
+  kpiReportPath: string;
+  kpiMetric?: string;
+  kpiOp?: KpiThresholdOp;
+  kpiExpected?: number;
+  kpiActual?: number | boolean;
+  kpiStalePaths?: string[];
+}
+
+export interface TracePendingFailure extends VerifyFailureBase {
+  phase: "trace_pending";
+  gateCommand?: string;
+}
+
+export interface TraceFailure extends VerifyFailureBase {
+  phase: "trace";
+  traceKind: TraceFailureKind;
+  traceReason: string;
+  traceQuote: string;
+  attestationCommit?: string;
+  stalePaths?: string[];
+}
+
+/** Discriminated on `phase` — phase-specific fields exist only on their variant. */
+export type VerifyPhaseFailure =
+  | GitProofFailure
+  | GateFailure
+  | DefensiveFailure
+  | KpiFailure
+  | TracePendingFailure
+  | TraceFailure;
 
 export interface VerifyPhaseSuccess {
   ok: true;
@@ -138,16 +172,16 @@ export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
 
 type GitProofOutcome =
   | { kind: "ok"; proofMsnId: string; warnings: string[] }
-  | { kind: "fail"; failure: VerifyPhaseFailure };
+  | { kind: "fail"; failure: GitProofFailure };
 
 type TracePhaseOutcome =
   | { kind: "ok"; warnings: TraceVerifyWarning[]; skippedUncommitted: number }
-  | { kind: "fail"; failure: VerifyPhaseFailure };
+  | { kind: "fail"; failure: TracePendingFailure | TraceFailure };
 
 function gitProofFailure(
   executorLogPath: string,
   message: string,
-): VerifyPhaseFailure {
+): GitProofFailure {
   return {
     ok: false,
     phase: "git_proof",
@@ -156,14 +190,6 @@ function gitProofFailure(
     executorLogPath,
     gitProofMessage: message,
   };
-}
-
-function tracePhaseFailure(
-  phase: "trace_pending" | "trace",
-  executorLogPath: string,
-  fields: Omit<VerifyPhaseFailure, "ok" | "phase" | "executorLogPath">,
-): VerifyPhaseFailure {
-  return { ok: false, phase, executorLogPath, ...fields };
 }
 
 export function resolveExecutorLogPath(root: string, options: VerifyOptions): string {
@@ -194,7 +220,7 @@ function evaluateGatePhase(
   gate: GateSpec,
   options: VerifyOptions,
   executorLogPath: string,
-): { failure: VerifyPhaseFailure | null; gateResult?: ReturnType<typeof runGate> } {
+): { failure: GateFailure | null; gateResult?: ReturnType<typeof runGate> } {
   const gateResult = runGate(resolveGateWorkDir(root, options), gate);
   if (gatePassed(gateResult, gate.successSubstring)) return { failure: null, gateResult };
   return {
@@ -224,12 +250,15 @@ function evaluateTracePhase(
   if (hasPending) {
     return {
       kind: "fail",
-      failure: tracePhaseFailure("trace_pending", executorLogPath, {
+      failure: {
+        ok: false,
+        phase: "trace_pending",
         message:
           "Trace rows still PENDING — executor must execute, update mission trace row, then verify",
         exitCode: 1,
+        executorLogPath,
         gateCommand: mission.gate?.command,
-      }),
+      },
     };
   }
 
@@ -242,13 +271,16 @@ function evaluateTracePhase(
     const first = traceResult.failures[0]!;
     return {
       kind: "fail",
-      failure: tracePhaseFailure("trace", executorLogPath, {
+      failure: {
+        ok: false,
+        phase: "trace",
         message: first.reason,
         exitCode: 1,
+        executorLogPath,
         traceKind: first.kind,
         traceQuote: first.row.traceQuote,
         traceReason: first.reason,
-      }),
+      },
     };
   }
 
@@ -265,15 +297,18 @@ function evaluateTracePhase(
     const first = evidence.failures[0]!;
     return {
       kind: "fail",
-      failure: tracePhaseFailure("trace", executorLogPath, {
+      failure: {
+        ok: false,
+        phase: "trace",
         message: first.reason,
         exitCode: 1,
+        executorLogPath,
         traceKind: "stale_evidence",
         traceQuote: first.row.traceQuote,
         traceReason: first.reason,
         attestationCommit: first.attestationCommit,
         stalePaths: first.stalePaths,
-      }),
+      },
     };
   }
 
@@ -302,13 +337,23 @@ function recordVirtualGateCapture(
   });
 }
 
+interface PostGateWarnings {
+  kpiWarnings?: string[];
+  defensiveWarnings?: string[];
+  defensiveAudits?: string[];
+}
+
+type PostGateOutcome =
+  | { kind: "ok"; warnings: PostGateWarnings }
+  | { kind: "fail"; failure: DefensiveFailure | KpiFailure };
+
 function collectDefensiveAndKpiOutcomes(
   root: string,
   manifest: Manifest,
   mission: ParsedMission,
   options: VerifyOptions,
   executorLogPath: string,
-): VerifyPhaseFailure | { kpiWarnings?: string[]; defensiveWarnings?: string[]; defensiveAudits?: string[] } {
+): PostGateOutcome {
   let kpiWarnings: string[] | undefined;
   let defensiveWarnings: string[] | undefined;
   let defensiveAudits: string[] | undefined;
@@ -320,7 +365,7 @@ function collectDefensiveAndKpiOutcomes(
       mission.skillKey,
       executorLogPath,
     );
-    if (defensiveOutcome.failure) return defensiveOutcome.failure;
+    if (defensiveOutcome.failure) return { kind: "fail", failure: defensiveOutcome.failure };
     if (defensiveOutcome.warnings.length > 0) defensiveWarnings = defensiveOutcome.warnings;
     if (defensiveOutcome.audits.length > 0) defensiveAudits = defensiveOutcome.audits;
   }
@@ -334,11 +379,11 @@ function collectDefensiveAndKpiOutcomes(
       options,
       executorLogPath,
     );
-    if (kpiOutcome?.kind === "fail") return kpiOutcome.failure;
+    if (kpiOutcome?.kind === "fail") return { kind: "fail", failure: kpiOutcome.failure };
     if (kpiOutcome?.kind === "ok") kpiWarnings = kpiOutcome.warnings;
   }
 
-  return { kpiWarnings, defensiveWarnings, defensiveAudits };
+  return { kind: "ok", warnings: { kpiWarnings, defensiveWarnings, defensiveAudits } };
 }
 
 function buildFullVerifySuccess(
@@ -346,7 +391,7 @@ function buildFullVerifySuccess(
   executorLogPath: string,
   trace: Extract<TracePhaseOutcome, { kind: "ok" }>,
   gitProofWarnings: string[],
-  extras: { kpiWarnings?: string[]; defensiveWarnings?: string[]; defensiveAudits?: string[] },
+  extras: PostGateWarnings,
 ): VerifyPhaseSuccess {
   return {
     ok: true,
@@ -410,7 +455,7 @@ export function evaluateVerifyPhases(
   if (gateOutcome.failure) return gateOutcome.failure;
 
   const postGate = collectDefensiveAndKpiOutcomes(root, manifest, mission, options, executorLogPath);
-  if ("ok" in postGate && postGate.ok === false) return postGate;
+  if (postGate.kind === "fail") return postGate.failure;
 
   const trace = evaluateTracePhase(root, manifest, mission, options, executorLogPath);
   if (trace.kind === "fail") return trace.failure;
@@ -419,5 +464,5 @@ export function evaluateVerifyPhases(
     purgeVirtualFlightDir(root, virtualFlightId);
   }
 
-  return buildFullVerifySuccess(proofMsnId, executorLogPath, trace, gitProofWarnings, postGate);
+  return buildFullVerifySuccess(proofMsnId, executorLogPath, trace, gitProofWarnings, postGate.warnings);
 }

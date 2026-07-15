@@ -11,8 +11,16 @@ import {
   parseGitProofCode,
   parseMsnIdFromGitProofMessage,
 } from "./fix-hints.js";
-import type { TraceFailureKind } from "./trace.js";
-import type { VerifyFailurePhase, VerifyOptions, VerifyPhaseFailure, KpiFailureKind } from "./verify-engine.js";
+import type {
+  DefensiveFailure,
+  GateFailure,
+  GitProofFailure,
+  KpiFailure,
+  KpiFailureKind,
+  TraceFailure,
+  TracePendingFailure,
+  VerifyPhaseFailure,
+} from "./verify-engine.js";
 
 export interface AudienceTaggedStep {
   audience: OutputAudience;
@@ -26,48 +34,11 @@ export interface VerifyRemediation {
   tagged_steps?: AudienceTaggedStep[];
 }
 
-export interface VerifyHintContext {
-  root?: string;
+/** Mission/repo coordinates shared by every remediation, independent of the failing phase. */
+export interface VerifyHintMeta {
   missionPath: string;
+  root?: string;
   msnId?: string;
-  executorLogPath?: string;
-  gateCommand?: string;
-  gitProofMessage?: string;
-  strictTrace?: boolean;
-  traceKind?: TraceFailureKind;
-  traceQuote?: string;
-  traceFailureReason?: string;
-  kpiFailureReason?: string;
-  kpiKind?: KpiFailureKind;
-  defensiveReason?: string;
-  gateStderr?: string;
-  gateStdout?: string;
-}
-
-export function buildVerifyHintContext(
-  failure: VerifyPhaseFailure,
-  missionArg: string,
-  options: Pick<VerifyOptions, "strictTrace">,
-  root?: string,
-  msnId?: string,
-): VerifyHintContext {
-  return {
-    root,
-    missionPath: missionArg,
-    msnId,
-    executorLogPath: failure.executorLogPath,
-    gateCommand: failure.gateCommand,
-    gitProofMessage: failure.gitProofMessage ?? failure.message,
-    traceKind: failure.traceKind,
-    traceQuote: failure.traceQuote,
-    traceFailureReason: failure.traceReason,
-    kpiFailureReason: failure.kpiReason ?? failure.message,
-    kpiKind: failure.kpiKind,
-    gateStderr: failure.gateStderr,
-    gateStdout: failure.gateStdout,
-    defensiveReason: failure.defensiveReason,
-    strictTrace: options.strictTrace,
-  };
 }
 
 function tagStep(audience: OutputAudience, step: string): AudienceTaggedStep {
@@ -78,14 +49,14 @@ function verifyCmd(mission: string): string {
   return `gantry verify --mission ${mission}`;
 }
 
-function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
+function hintsForGitProofPhase(failure: GitProofFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const mission = meta.missionPath;
   const verifyCmdStr = verifyCmd(mission);
-  const code = parseGitProofCode(ctx.gitProofMessage ?? "");
+  const code = parseGitProofCode(failure.gitProofMessage);
   const gitCtx = {
-    root: ctx.root,
+    root: meta.root,
     missionPath: mission,
-    msnId: ctx.msnId ?? parseMsnIdFromGitProofMessage(ctx.gitProofMessage ?? ""),
+    msnId: meta.msnId ?? parseMsnIdFromGitProofMessage(failure.gitProofMessage),
     repoRelMission: mission,
   };
   const hint = code ? hintGitProof(code, gitCtx) : verifyCmdStr;
@@ -108,13 +79,13 @@ function hintsForGitProofPhase(ctx: VerifyHintContext): VerifyRemediation {
   };
 }
 
-function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
+function hintsForGatePhase(failure: GateFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const mission = meta.missionPath;
   const verifyCmdStr = verifyCmd(mission);
-  const gate = ctx.gateCommand ?? "<gate>";
-  const combined = `${ctx.gateStderr ?? ""}\n${ctx.gateStdout ?? ""}`;
-  const errorCode = gateOutputIndicatesImportLayer(ctx.gateStdout ?? "")
-    || gateOutputIndicatesImportLayer(ctx.gateStderr ?? "")
+  const gate = failure.gateCommand ?? "<gate>";
+  const combined = `${failure.gateStderr ?? ""}\n${failure.gateStdout ?? ""}`;
+  const errorCode = gateOutputIndicatesImportLayer(failure.gateStdout ?? "")
+    || gateOutputIndicatesImportLayer(failure.gateStderr ?? "")
     ? GXT_ERROR.IMPORT_LAYER_VIOLATION
     : gateOutputIndicatesBannedImport(combined)
       ? GXT_ERROR.BANNED_IMPORT_DETECTED
@@ -130,7 +101,7 @@ function hintsForGatePhase(ctx: VerifyHintContext): VerifyRemediation {
   };
 }
 
-function kpiErrorCodeForKind(kind: KpiFailureKind | undefined): GxtErrorCode {
+function kpiErrorCodeForKind(kind: KpiFailureKind): GxtErrorCode {
   switch (kind) {
     case "missing":
       return GXT_ERROR.KPI_REPORT_MISSING;
@@ -141,29 +112,28 @@ function kpiErrorCodeForKind(kind: KpiFailureKind | undefined): GxtErrorCode {
     case "threshold":
     case "exit_code":
       return GXT_ERROR.KPI_GATE_FAILED;
-    default:
-      return GXT_ERROR.KPI_GATE_FAILED;
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
   }
 }
 
-function hintsForDefensivePhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const verifyCmdStr = verifyCmd(mission);
-  const reason = ctx.defensiveReason ?? "defensive guard failed";
+function hintsForDefensivePhase(failure: DefensiveFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const verifyCmdStr = verifyCmd(meta.missionPath);
   return {
     error_code: GXT_ERROR.DEFENSIVE_GUARD_FAILED,
-    fix_hints: [reason, "reduce TMVC diff size or adjust defensive_profile.guards.net_loc_budget"],
+    fix_hints: [failure.defensiveReason, "reduce TMVC diff size or adjust defensive_profile.guards.net_loc_budget"],
     next_actions: [verifyCmdStr],
     tagged_steps: [tagStep("executor", "reduce diff churn in mission TMVC roots"), tagStep("verifier", verifyCmdStr)],
   };
 }
 
-function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
+function hintsForKpiPhase(failure: KpiFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const mission = meta.missionPath;
   const verifyCmdStr = verifyCmd(mission);
-  const errorCode = kpiErrorCodeForKind(ctx.kpiKind);
   return {
-    error_code: errorCode,
+    error_code: kpiErrorCodeForKind(failure.kpiKind),
     fix_hints: [
       `gantry scan --mission ${mission}`,
       `commit updated KPI report under .gitagent/kpi/`,
@@ -177,10 +147,9 @@ function hintsForKpiPhase(ctx: VerifyHintContext): VerifyRemediation {
   };
 }
 
-function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const executorLog = ctx.executorLogPath ?? "EXECUTOR_LOG.md";
-  const steps = hintTracePendingSteps(executorLog, mission, ctx.gateCommand);
+function hintsForTracePendingPhase(failure: TracePendingFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const mission = meta.missionPath;
+  const steps = hintTracePendingSteps(failure.executorLogPath, mission, failure.gateCommand);
   return {
     error_code: GXT_ERROR.TRACE_PENDING,
     fix_hints: steps.slice(0, 3),
@@ -194,16 +163,16 @@ function hintsForTracePendingPhase(ctx: VerifyHintContext): VerifyRemediation {
   };
 }
 
-function hintsForTracePhase(ctx: VerifyHintContext): VerifyRemediation {
-  const mission = ctx.missionPath;
-  const executorLog = ctx.executorLogPath ?? "EXECUTOR_LOG.md";
+function hintsForTracePhase(failure: TraceFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const mission = meta.missionPath;
   const verifyCmdStr = verifyCmd(mission);
-  const traceKind = ctx.traceKind ?? "other";
-  const hints: string[] = [hintForTraceKind(traceKind, executorLog, mission, ctx.traceQuote)];
+  const hints: string[] = [
+    hintForTraceKind(failure.traceKind, failure.executorLogPath, mission, failure.traceQuote),
+  ];
   const errorCode =
-    traceKind === "ambiguous"
+    failure.traceKind === "ambiguous"
       ? GXT_ERROR.TRACE_AMBIGUOUS
-      : traceKind === "stale_evidence"
+      : failure.traceKind === "stale_evidence"
         ? GXT_ERROR.TRACE_STALE
         : GXT_ERROR.TRACE_MISSING;
   return {
@@ -218,24 +187,24 @@ function hintsForTracePhase(ctx: VerifyHintContext): VerifyRemediation {
 }
 
 export function hintsForVerifyPhase(
-  phase: VerifyFailurePhase,
-  ctx: VerifyHintContext,
+  failure: VerifyPhaseFailure,
+  meta: VerifyHintMeta,
 ): VerifyRemediation {
-  switch (phase) {
+  switch (failure.phase) {
     case "git_proof":
-      return hintsForGitProofPhase(ctx);
+      return hintsForGitProofPhase(failure, meta);
     case "gate":
-      return hintsForGatePhase(ctx);
+      return hintsForGatePhase(failure, meta);
     case "defensive":
-      return hintsForDefensivePhase(ctx);
+      return hintsForDefensivePhase(failure, meta);
     case "kpi":
-      return hintsForKpiPhase(ctx);
+      return hintsForKpiPhase(failure, meta);
     case "trace_pending":
-      return hintsForTracePendingPhase(ctx);
+      return hintsForTracePendingPhase(failure, meta);
     case "trace":
-      return hintsForTracePhase(ctx);
+      return hintsForTracePhase(failure, meta);
     default: {
-      const _exhaustive: never = phase;
+      const _exhaustive: never = failure;
       return _exhaustive;
     }
   }

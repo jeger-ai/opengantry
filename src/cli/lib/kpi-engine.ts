@@ -11,7 +11,7 @@ import { tmvcRootsForSkill } from "./tmvc-path.js";
 import { isVirtualScratchPath } from "./virtual-scratch-store.js";
 import type { KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
 import type { VerifyOptions } from "./verify-engine.js";
-import type { VerifyPhaseFailure } from "./verify-engine.js";
+import type { KpiFailure } from "./verify-engine.js";
 
 let compiledValidator: ValidateFunction | null = null;
 let compiledForRoot: string | null = null;
@@ -266,7 +266,7 @@ function loadReportOrFail(
   root: string,
   reportRel: string,
   executorLogPath: string,
-): { report: KpiReport } | VerifyPhaseFailure {
+): { report: KpiReport } | KpiFailure {
   try {
     return { report: loadKpiReport(root, reportRel) };
   } catch (e) {
@@ -289,16 +289,17 @@ function staleFailure(
   reportRel: string,
   executorLogPath: string,
   stale: ReturnType<typeof verifyKpiReportFreshness>,
-): VerifyPhaseFailure {
+): KpiFailure {
+  const reason = stale.reason ?? "KPI report stale";
   return {
     ok: false,
     phase: "kpi",
-    message: stale.reason ?? "KPI report stale",
+    message: reason,
     exitCode: 1,
     executorLogPath,
     kpiReportPath: reportRel,
     kpiKind: "stale",
-    kpiReason: stale.reason,
+    kpiReason: reason,
     kpiStalePaths: stale.stalePaths,
   };
 }
@@ -307,7 +308,7 @@ function thresholdFailure(
   reportRel: string,
   executorLogPath: string,
   first: ReturnType<typeof evaluateKpiThresholds>[number],
-): VerifyPhaseFailure {
+): KpiFailure {
   return {
     ok: false,
     phase: "kpi",
@@ -326,7 +327,7 @@ function thresholdFailure(
 
 export type KpiPhaseOutcome =
   | { kind: "ok"; warnings: string[] }
-  | { kind: "fail"; failure: VerifyPhaseFailure }
+  | { kind: "fail"; failure: KpiFailure }
   | null;
 
 export function evaluateKpiPhase(

@@ -52,6 +52,7 @@ test("verifyFailurePresentation: trace uses engine traceKind", () => {
     executorLogPath: "EXECUTOR_LOG.md",
     traceKind: "ambiguous",
     traceReason: "Ambiguous match",
+    traceQuote: "DoD 1 MSN-0001: quote",
   };
   const presentation = verifyFailurePresentation({
     failure,

@@ -126,14 +126,18 @@ function mcpWriteDenied(err: McpWriteDeniedError): { status: "error"; error: Mcp
   return mcpError(GXT_ERROR.MCP_WRITE_DENIED, err.message, false);
 }
 
-function resolveGuardedMissionAbs(root: string, missionFilePath: string): string | { status: "error"; error: McpErrorBody } {
+type GuardedMissionResolution =
+  | { kind: "resolved"; missionAbs: string }
+  | { kind: "denied"; error: { status: "error"; error: McpErrorBody } };
+
+function resolveGuardedMissionAbs(root: string, missionFilePath: string): GuardedMissionResolution {
   try {
     assertMcpMissionWritePath(missionFilePath);
   } catch (err) {
-    if (err instanceof McpWriteDeniedError) return mcpWriteDenied(err);
+    if (err instanceof McpWriteDeniedError) return { kind: "denied", error: mcpWriteDenied(err) };
     throw err;
   }
-  return resolveMissionFilePath(root, missionFilePath);
+  return { kind: "resolved", missionAbs: resolveMissionFilePath(root, missionFilePath) };
 }
 
 function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?: string): string {
@@ -267,9 +271,9 @@ export function handleCheckSignature(
   missionFilePath: string,
 ): CheckSignatureResult | { status: "error"; error: McpErrorBody } {
   const { root } = loadWorkspace();
-  const missionAbsOrErr = resolveGuardedMissionAbs(root, missionFilePath);
-  if (typeof missionAbsOrErr !== "string") return missionAbsOrErr;
-  const missionAbs = missionAbsOrErr;
+  const resolution = resolveGuardedMissionAbs(root, missionFilePath);
+  if (resolution.kind === "denied") return resolution.error;
+  const missionAbs = resolution.missionAbs;
 
   if (!fs.existsSync(missionAbs)) {
     return mcpError("MISSION_NOT_FOUND", `mission file not found: ${missionFilePath}`, true);
@@ -301,9 +305,9 @@ export function handleCheckSignature(
 
 export function handlePinMission(missionFilePath: string): PinMissionResult | { status: "error"; error: McpErrorBody } {
   const { root } = loadWorkspace();
-  const missionAbsOrErr = resolveGuardedMissionAbs(root, missionFilePath);
-  if (typeof missionAbsOrErr !== "string") return missionAbsOrErr;
-  const missionAbs = missionAbsOrErr;
+  const resolution = resolveGuardedMissionAbs(root, missionFilePath);
+  if (resolution.kind === "denied") return resolution.error;
+  const missionAbs = resolution.missionAbs;
 
   if (!fs.existsSync(missionAbs)) {
     return mcpError("MISSION_NOT_FOUND", `mission file not found: ${missionFilePath}`, true);
@@ -387,9 +391,9 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
 
   if (input.pin_if_needed === true && result.mission_file_path) {
     const { root } = loadWorkspace();
-    const missionAbsOrErr = resolveGuardedMissionAbs(root, result.mission_file_path);
-    if (typeof missionAbsOrErr === "string" && fs.existsSync(missionAbsOrErr)) {
-      payload.pinned_mission = pinMissionFile(root, missionAbsOrErr);
+    const resolution = resolveGuardedMissionAbs(root, result.mission_file_path);
+    if (resolution.kind === "resolved" && fs.existsSync(resolution.missionAbs)) {
+      payload.pinned_mission = pinMissionFile(root, resolution.missionAbs);
     }
   }
 

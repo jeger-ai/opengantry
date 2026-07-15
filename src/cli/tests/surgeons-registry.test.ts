@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import type { VerifyPhaseFailure } from "../lib/verify-engine.js";
+import type { GateFailure, VerifyPhaseFailure } from "../lib/verify-engine.js";
 import {
   getSurgeonForErrorCode,
   resolveSurgeonErrorCode,
 } from "../lib/surgeons/registry.js";
 
-function gateFailure(stderr: string): VerifyPhaseFailure {
+function gateFailure(stderr: string): GateFailure {
   return {
     ok: false,
     phase: "gate",
@@ -32,6 +32,9 @@ test("resolveSurgeonErrorCode: non-gate phase returns null", () => {
     message: "trace fail",
     exitCode: 1,
     executorLogPath: "EXECUTOR_LOG.md",
+    traceKind: "quote_missing",
+    traceReason: "trace fail",
+    traceQuote: "DoD 1 MSN-0001: quote",
   };
   assert.equal(resolveSurgeonErrorCode(failure), null);
 });

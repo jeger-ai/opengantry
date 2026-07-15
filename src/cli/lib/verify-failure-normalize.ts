@@ -4,11 +4,7 @@ import { errorMessage, toPosixRel } from "./cli-io.js";
 import { isGapmanUserError } from "./errors.js";
 import type { ParsedMission } from "./types.js";
 import type { VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
-import {
-  buildVerifyHintContext,
-  hintsForVerifyPhase,
-  type AudienceTaggedStep,
-} from "./verify-hints.js";
+import { hintsForVerifyPhase, type AudienceTaggedStep } from "./verify-hints.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
   type RemediationSnapshot,
@@ -107,11 +103,8 @@ function remediationMeta(
 
 /** Map engine phase failure to canonical contract (hints + phase artifacts in one switch). */
 export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): NormalizedVerifyFailure {
-  const { failure, missionArg, root, msnId, options, mission } = input;
-  const remediation = hintsForVerifyPhase(
-    failure.phase,
-    buildVerifyHintContext(failure, missionArg, options, root, msnId),
-  );
+  const { failure, missionArg, root, msnId, mission } = input;
+  const remediation = hintsForVerifyPhase(failure, { missionPath: missionArg, root, msnId });
   const base = {
     phase: failure.phase,
     message: failure.message,
@@ -137,7 +130,7 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
     case "trace":
       return normalizeTracePhase(base, failure);
     default: {
-      const _exhaustive: never = failure.phase;
+      const _exhaustive: never = failure;
       return _exhaustive;
     }
   }

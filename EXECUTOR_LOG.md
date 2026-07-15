@@ -490,3 +490,8 @@ example trace line for gapman verify
 ## MSN-0101 — typed trace failures
 
 - DoD 1 MSN-0101: TraceVerifyFailure carries kind from construction; classifyTraceFailure and isLineDriftFailure string re-parsing deleted (J1)
+
+## MSN-0102 — discriminated VerifyPhaseFailure union
+
+- DoD 1 MSN-0102: VerifyPhaseFailure rekeyed on phase discriminant; phase fields exist only on their variant; VerifyHintContext and DefensivePhaseFailureFields deleted (J2/R1)
+- DoD 2 MSN-0102: postGate and resolveGuardedMissionAbs unions tagged; surgeons operate on GateFailure only (R3)

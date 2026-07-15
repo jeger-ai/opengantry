@@ -1,5 +1,11 @@
 import { CLI_NAME } from "./constants.js";
-import type { VerifyPhaseFailure } from "./verify-engine.js";
+import type {
+  DefensiveFailure,
+  GateFailure,
+  KpiFailure,
+  TraceFailure,
+  TracePendingFailure,
+} from "./verify-engine.js";
 import type {
   NormalizedVerifyFailure,
   NormalizedVerifyFailureBase,
@@ -11,7 +17,7 @@ export function normalizeGitProofPhase(base: NormalizedVerifyFailureBase): Norma
 
 export function normalizeGatePhase(
   base: NormalizedVerifyFailureBase,
-  failure: VerifyPhaseFailure,
+  failure: GateFailure,
 ): NormalizedVerifyFailure {
   return {
     ...base,
@@ -38,9 +44,9 @@ export function normalizeGatePhase(
 
 export function normalizeDefensivePhase(
   base: NormalizedVerifyFailureBase,
-  failure: VerifyPhaseFailure,
+  failure: DefensiveFailure,
 ): NormalizedVerifyFailure {
-  const reason = failure.defensiveReason ?? failure.message;
+  const reason = failure.defensiveReason;
   return {
     ...base,
     headline: "verify: DEFENSIVE GUARD FAILED",
@@ -56,9 +62,9 @@ export function normalizeDefensivePhase(
 
 export function normalizeKpiPhase(
   base: NormalizedVerifyFailureBase,
-  failure: VerifyPhaseFailure,
+  failure: KpiFailure,
 ): NormalizedVerifyFailure {
-  const reason = failure.kpiReason ?? failure.message;
+  const reason = failure.kpiReason;
   return {
     ...base,
     headline: "verify: KPI GATE FAILED",
@@ -67,7 +73,7 @@ export function normalizeKpiPhase(
       ...(failure.kpiMetric
         ? [`metric: ${failure.kpiMetric} ${failure.kpiOp ?? ""} ${String(failure.kpiExpected ?? "")} (actual: ${String(failure.kpiActual ?? "missing")})`]
         : []),
-      ...(failure.kpiReportPath ? [`report: ${failure.kpiReportPath}`] : []),
+      `report: ${failure.kpiReportPath}`,
     ],
     failures: [reason],
     kpi: {
@@ -75,14 +81,14 @@ export function normalizeKpiPhase(
       ...(failure.kpiOp ? { op: failure.kpiOp } : {}),
       ...(failure.kpiExpected !== undefined ? { expected: failure.kpiExpected } : {}),
       ...(failure.kpiActual !== undefined ? { actual: failure.kpiActual } : {}),
-      ...(failure.kpiReportPath ? { report_path: failure.kpiReportPath } : {}),
+      report_path: failure.kpiReportPath,
     },
   };
 }
 
 export function normalizeTracePendingPhase(
   base: NormalizedVerifyFailureBase,
-  failure: VerifyPhaseFailure,
+  failure: TracePendingFailure,
 ): NormalizedVerifyFailure {
   return {
     ...base,
@@ -93,17 +99,13 @@ export function normalizeTracePendingPhase(
 
 export function normalizeTracePhase(
   base: NormalizedVerifyFailureBase,
-  failure: VerifyPhaseFailure,
+  failure: TraceFailure,
 ): NormalizedVerifyFailure {
   return {
     ...base,
     headline: "verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)",
-    detail_lines: [`DoD trace failure: ${failure.traceReason ?? failure.message}`],
-    ...(failure.traceReason
-      ? {
-          failures: [`DoD trace: ${failure.traceReason}`],
-          trace: { failures: [`DoD trace: ${failure.traceReason}`] },
-        }
-      : {}),
+    detail_lines: [`DoD trace failure: ${failure.traceReason}`],
+    failures: [`DoD trace: ${failure.traceReason}`],
+    trace: { failures: [`DoD trace: ${failure.traceReason}`] },
   };
 }
