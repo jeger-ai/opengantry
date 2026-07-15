@@ -1,12 +1,10 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: v3.0.0 domain-generic re-tag release
-# Verified: 2026-07-15
 msn_id: MSN-0120
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0120: domain-generic release complete — 454 tests; domain adapters code+content; perimeter schema 0.3.0; content-governance fixture green"
+    trace_quote: "DoD 1 MSN-0120: re-attested v3.0.0 release — README manifesto
+      front door; 454 tests green; publish v3.0.0"
     anchor: "1"
     status: PASS
 gate_success_substring: dev-validate-core OK
