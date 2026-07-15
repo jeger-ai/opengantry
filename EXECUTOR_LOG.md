@@ -517,3 +517,9 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0106: CLI-level verify --format sarif/junit integration tests (pass + gate-failure paths) and gantry arch check command tests (OK, violation, usage, non-repo) added
 - DoD 2 MSN-0106: mcp-tools-register smoke test asserts full gxt_* tool surface wiring; mcp-orchestration expanded with invalid-msn and duplicate-MSN failure paths (435 tests)
+
+## MSN-0107 — v2.7.0 release
+
+[CONTEXT-REQUEST] paths: package.json, package-lock.json, README.md, docs/ADOPTION.md, docs/BACKLOG.md, templates/integrations/compatibility.json, .gitagent/foreman/SUBSTRATE.version.json — v2.7.0 release version/docs sync (mission-authorized, non-TMVC).
+
+- DoD 1 MSN-0107: v2.7.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; README/ADOPTION/BACKLOG release tables synced; npm run validate green

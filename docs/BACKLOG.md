@@ -9,7 +9,25 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-07-14 (v2.6.0 released — #86, #88–#89, #91, npm **2.6.0**)
+**Last synced:** 2026-07-15 (v2.7.0 released — quality & governance consolidation, npm **2.7.0**)
+
+---
+
+## v2.7.0 — Quality & governance consolidation
+
+| Item | Status | MSN |
+|------|--------|-----|
+| **Governance backfill (retro MSN-0098 mission, trace quotes, release-squash policy)** | **Done** | MSN-0098 |
+| **Audit-severity net_loc verify bugfix + guard findings restructure (R2/J4)** | **Done** | MSN-0100 |
+| **Typed trace failure kinds, delete string re-parsing (J1)** | **Done** | MSN-0101 |
+| **Discriminated `VerifyPhaseFailure` union (J2/R1/R3)** | **Done** | MSN-0102 |
+| **Verify presentation pipeline collapse, −3 modules (J3/S2)** | **Done** | MSN-0103 |
+| **Shared command error boundary + init transform hook (J5/S1)** | **Done** | MSN-0104 |
+| **`GapmanUserError` → `GantryUserError` naming migration** | **Done** | MSN-0105 |
+| **Test-gap closure: verify formats, arch check CLI, MCP register/orchestration (435 tests)** | **Done** | MSN-0106 |
+| **2.7.0 npm publish** | **Done** | MSN-0107 |
+
+Debt paydown driven by the thermo-nuclear dogfood review; restores clean mission cadence before the v3.0 adaptive perimeter cycle ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63)).
 
 ---
 
@@ -411,7 +429,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63)); v2.6.0 released ([#86](https://github.com/jeger-ai/opengantry/issues/86), [#88](https://github.com/jeger-ai/opengantry/issues/88)–[#89](https://github.com/jeger-ai/opengantry/issues/89), [#91](https://github.com/jeger-ai/opengantry/issues/91), npm **2.6.0**).
+**Current focus:** v3.0 adaptive perimeter ([#61](https://github.com/jeger-ai/opengantry/issues/61)–[#63](https://github.com/jeger-ai/opengantry/issues/63)); v2.7.0 released (quality & governance consolidation, MSN-0098–MSN-0107, npm **2.7.0**).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
