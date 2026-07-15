@@ -13,7 +13,7 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnv, withPlannerEnvAsync } from "./test-shared.js";
-import type { VerifyFailedPayload } from "../lib/verify-presentation.js";
+import type { VerifyFailedPayload } from "../lib/verify-payload.js";
 
 function parseStdoutJson(stdout: string): Record<string, unknown> {
   const trimmed = stdout.trim();

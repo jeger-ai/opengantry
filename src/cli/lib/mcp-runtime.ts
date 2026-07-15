@@ -2,17 +2,15 @@ import { writeAgentErrorPayload, type AgentErrorPayload } from "./errors.js";
 import type { ForbiddenViolation } from "./forbidden-scan.js";
 import type { RuntimeExecResult } from "./runtime-exec.js";
 import { errorMessage } from "./cli-io.js";
-import {
-  buildVerifyResultPayloadFromOptions,
-  type VerifyResultPayload,
-} from "./verify-presentation.js";
+import { buildVerifyResultPayloadFromOptions } from "./verify-run.js";
+import type { VerifyResultPayload } from "./verify-payload.js";
 import { parseMissionFile } from "./missions/parser.js";
 import { runKpiScan } from "./kpi-scan.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "./runtime-env.js";
 import { runRuntimeExec } from "./runtime-exec.js";
 import { loadWorkspace } from "./workspace.js";
 
-export type { VerifyResultPayload } from "./verify-presentation.js";
+export type { VerifyResultPayload } from "./verify-payload.js";
 
 export interface McpRuntimeErrorBody {
   code: string;

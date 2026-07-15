@@ -1,8 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { verifyFailurePresentation } from "../lib/verify-presentation.js";
+import {
+  normalizeVerifyPhaseFailure,
+  toFailurePresentation,
+  type VerifyFailurePresentationInput,
+} from "../lib/verify-failure-normalize.js";
 import type { VerifyPhaseFailure } from "../lib/verify-engine.js";
+
+function verifyFailurePresentation(input: VerifyFailurePresentationInput) {
+  return toFailurePresentation(normalizeVerifyPhaseFailure(input));
+}
 
 test("verifyFailurePresentation: gate phase includes remediation", () => {
   const failure: VerifyPhaseFailure = {

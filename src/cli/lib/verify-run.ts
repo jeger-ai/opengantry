@@ -88,6 +88,3 @@ export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): Ver
     return initFailurePayload(e);
   }
 }
-
-export type { VerifyPresentResult } from "./verify-presenters.js";
-export type { VerifySink } from "./verify-presenters.js";

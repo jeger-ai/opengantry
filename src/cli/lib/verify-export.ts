@@ -1,5 +1,5 @@
 import { CLI_NAME, CLI_VERSION } from "./constants.js";
-import type { VerifyResultPayload } from "./verify-payload-types.js";
+import type { VerifyResultPayload } from "./verify-payload.js";
 
 export type VerifyExportFormat = "json" | "sarif" | "junit";
 

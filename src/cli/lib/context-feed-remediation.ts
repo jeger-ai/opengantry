@@ -1,4 +1,4 @@
-import type { VerifyFailedPayload } from "./verify-payload-types.js";
+import type { VerifyFailedPayload } from "./verify-payload.js";
 import type { ParsedMission } from "./types.js";
 import type { VerifyPhaseFailure } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-engine.js";

@@ -12,7 +12,7 @@ import { integrationOnboardingBlockers } from "../lib/doctor-integration.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
-import { runVerifyCore } from "../lib/verify-presentation.js";
+import { runVerifyCore } from "../lib/verify-run.js";
 
 const EXAMPLE_MISSION = ".gitagent/missions/example.verify.yaml";
 

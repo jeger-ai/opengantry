@@ -4,22 +4,23 @@ import { errorMessage, toPosixRel } from "./cli-io.js";
 import { isGapmanUserError } from "./errors.js";
 import type { ParsedMission } from "./types.js";
 import type { VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
+import { CLI_NAME } from "./constants.js";
 import { hintsForVerifyPhase, type AudienceTaggedStep } from "./verify-hints.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
   type RemediationSnapshot,
 } from "./context-feed-store.js";
-import {
-  normalizeDefensivePhase,
-  normalizeGatePhase,
-  normalizeGitProofPhase,
-  normalizeKpiPhase,
-  normalizeTracePendingPhase,
-  normalizeTracePhase,
-} from "./verify-failure-normalize-phases.js";
-import type { VerifyFailedPayload } from "./verify-payload-types.js";
+import type {
+  DefensiveFailure,
+  GateFailure,
+  KpiFailure,
+  TraceFailure,
+  TracePendingFailure,
+} from "./verify-engine.js";
+import type { VerifyFailedPayload } from "./verify-payload.js";
 
-/** Canonical verify-failure contract — single mapping for all sinks. */
+/** Canonical verify-failure contract — single mapping for all sinks.
+ * Gate output lives in the single `gate` field; sink projections rename at their boundary. */
 export interface NormalizedVerifyFailure {
   phase: string;
   message: string;
@@ -30,12 +31,9 @@ export interface NormalizedVerifyFailure {
   tagged_steps?: AudienceTaggedStep[];
   headline: string;
   detail_lines: string[];
-  stdout?: string;
-  stderr?: string;
   failures?: string[];
   gate?: RemediationSnapshot["gate"];
   kpi?: RemediationSnapshot["kpi"];
-  presentation_gate?: { stdout?: string; stderr?: string; exitCode?: number };
   trace?: { failures?: string[] };
   mission_file_path?: string;
   msn_id?: string;
@@ -81,6 +79,98 @@ export interface NormalizePhaseFailureInput {
   root?: string;
   msnId?: string;
   mission?: ParsedMission | null;
+}
+
+function normalizeGitProofPhase(base: NormalizedVerifyFailureBase): NormalizedVerifyFailure {
+  return { ...base, headline: base.message, detail_lines: [] };
+}
+
+function normalizeGatePhase(
+  base: NormalizedVerifyFailureBase,
+  failure: GateFailure,
+): NormalizedVerifyFailure {
+  return {
+    ...base,
+    headline: "verify: GATE FAILED",
+    detail_lines: [
+      ...(failure.gateStdout !== undefined ? [`--- stdout ---\n${failure.gateStdout}`] : []),
+      ...(failure.gateStderr !== undefined ? [`--- stderr ---\n${failure.gateStderr}`] : []),
+      ...(failure.gateExitCode !== undefined ? [`exit code: ${String(failure.gateExitCode)}`] : []),
+    ],
+    gate: {
+      ...(failure.gateStdout !== undefined ? { stdout: failure.gateStdout } : {}),
+      ...(failure.gateStderr !== undefined ? { stderr: failure.gateStderr } : {}),
+      ...(failure.gateExitCode !== undefined ? { exit_code: failure.gateExitCode } : {}),
+    },
+  };
+}
+
+function normalizeDefensivePhase(
+  base: NormalizedVerifyFailureBase,
+  failure: DefensiveFailure,
+): NormalizedVerifyFailure {
+  const reason = failure.defensiveReason;
+  return {
+    ...base,
+    headline: "verify: DEFENSIVE GUARD FAILED",
+    detail_lines: [
+      reason,
+      ...(failure.defensiveNetLoc !== undefined
+        ? [`net_loc: ${String(failure.defensiveNetLoc)} (max: ${String(failure.defensiveMaxNetLoc ?? "?")})`]
+        : []),
+    ],
+    failures: [reason],
+  };
+}
+
+function normalizeKpiPhase(
+  base: NormalizedVerifyFailureBase,
+  failure: KpiFailure,
+): NormalizedVerifyFailure {
+  const reason = failure.kpiReason;
+  return {
+    ...base,
+    headline: "verify: KPI GATE FAILED",
+    detail_lines: [
+      reason,
+      ...(failure.kpiMetric
+        ? [`metric: ${failure.kpiMetric} ${failure.kpiOp ?? ""} ${String(failure.kpiExpected ?? "")} (actual: ${String(failure.kpiActual ?? "missing")})`]
+        : []),
+      `report: ${failure.kpiReportPath}`,
+    ],
+    failures: [reason],
+    kpi: {
+      ...(failure.kpiMetric ? { metric: failure.kpiMetric } : {}),
+      ...(failure.kpiOp ? { op: failure.kpiOp } : {}),
+      ...(failure.kpiExpected !== undefined ? { expected: failure.kpiExpected } : {}),
+      ...(failure.kpiActual !== undefined ? { actual: failure.kpiActual } : {}),
+      report_path: failure.kpiReportPath,
+    },
+  };
+}
+
+function normalizeTracePendingPhase(
+  base: NormalizedVerifyFailureBase,
+  failure: TracePendingFailure,
+): NormalizedVerifyFailure {
+  return {
+    ...base,
+    headline: `${CLI_NAME} verify: legislative stub complete (git-proof OK) — executor must execute, append ${failure.executorLogPath}, set trace row PASS, then re-verify`,
+    detail_lines: [],
+  };
+}
+
+function normalizeTracePhase(
+  base: NormalizedVerifyFailureBase,
+  failure: TraceFailure,
+): NormalizedVerifyFailure {
+  return {
+    ...base,
+    headline: "verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)",
+    detail_lines: [`DoD trace failure: ${failure.traceReason}`],
+    failures: [`DoD trace: ${failure.traceReason}`],
+    trace: { failures: [`DoD trace: ${failure.traceReason}`] },
+  };
 }
 
 function remediationMeta(
@@ -173,8 +263,8 @@ export function toVerifyFailedPayload(normalized: NormalizedVerifyFailure): Veri
     fix_hints: normalized.fix_hints,
     next_actions: normalized.next_actions,
     exit_code: normalized.exit_code,
-    ...(normalized.stdout !== undefined ? { stdout: normalized.stdout } : {}),
-    ...(normalized.stderr !== undefined ? { stderr: normalized.stderr } : {}),
+    ...(normalized.gate?.stdout !== undefined ? { stdout: normalized.gate.stdout } : {}),
+    ...(normalized.gate?.stderr !== undefined ? { stderr: normalized.gate.stderr } : {}),
     ...(normalized.failures ? { failures: normalized.failures } : {}),
   };
 }
@@ -188,7 +278,15 @@ export function toFailurePresentation(normalized: NormalizedVerifyFailure): Veri
     next_actions: normalized.next_actions,
     tagged_steps: normalized.tagged_steps,
     exit_code: normalized.exit_code,
-    ...(normalized.presentation_gate ? { gate: normalized.presentation_gate } : {}),
+    ...(normalized.gate
+      ? {
+          gate: {
+            stdout: normalized.gate.stdout,
+            stderr: normalized.gate.stderr,
+            exitCode: normalized.gate.exit_code,
+          },
+        }
+      : {}),
     ...(normalized.trace ? { trace: normalized.trace } : {}),
   };
 }

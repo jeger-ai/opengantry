@@ -1,12 +1,12 @@
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { gitRevParse } from "../lib/git.js";
-import { initFailurePayload } from "../lib/verify-presentation.js";
-import { emitVerifyJson } from "../lib/verify-presentation.js";
+import { initFailurePayload } from "../lib/verify-payload.js";
+import { emitVerifyJson } from "../lib/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify-engine.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GapmanUserError, reportUserFacingError } from "../lib/errors.js";
-import { runVerifyCore } from "../lib/verify-presentation.js";
+import { runVerifyCore } from "../lib/verify-run.js";
 
 export type { VerifyOptions } from "../lib/verify-engine.js";
 

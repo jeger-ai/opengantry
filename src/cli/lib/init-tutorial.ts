@@ -15,7 +15,7 @@ import {
 } from "./onboarding-flow.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
-import { runVerifyCore } from "./verify-presentation.js";
+import { runVerifyCore } from "./verify-run.js";
 
 function findExistingTutorialMission(repoRoot: string): string | null {
   const missionsDir = path.join(repoRoot, ".gitagent", "missions");

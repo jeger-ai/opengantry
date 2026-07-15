@@ -1,3 +1,8 @@
+/**
+ * Verify pipeline order: engine (this module, evaluates phases — no logging or
+ * exit codes) → verify-failure-normalize (canonical failure contract) →
+ * verify-hints (remediation) → verify-presenters (sinks) → verify-run (orchestration).
+ */
 import path from "node:path";
 import type { OutputAudience } from "./audience-output.js";
 import { toPosixRel } from "./cli-io.js";
@@ -26,14 +31,6 @@ import {
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
 import type { VerifyExportFormat } from "./verify-export.js";
-
-export type { VerifyExportFormat } from "./verify-export.js";
-
-export function resolveVerifyExportFormat(options: VerifyOptions): VerifyExportFormat | undefined {
-  if (options.format) return options.format;
-  if (options.json === true) return "json";
-  return undefined;
-}
 
 export interface VerifyOptions {
   mission?: string;

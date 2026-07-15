@@ -495,3 +495,8 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0102: VerifyPhaseFailure rekeyed on phase discriminant in verify-failure.ts; phase fields exist only on their variant; VerifyHintContext and DefensivePhaseFailureFields deleted (J2/R1)
 - DoD 2 MSN-0102: postGate and resolveGuardedMissionAbs unions tagged; surgeon context narrowed to GateFailure (R3)
+
+## MSN-0103 — verify presentation collapse
+
+- DoD 1 MSN-0103: NormalizedVerifyFailure carries gate output once; verify-presentation barrel, verify-payload-types, and verify-failure-normalize-phases deleted; verify-run re-exports removed (J3)
+- DoD 2 MSN-0103: resolveVerifyExportFormat moved to verify-presenters next to resolveVerifySink; pipeline order documented in verify-engine module comment (S2)

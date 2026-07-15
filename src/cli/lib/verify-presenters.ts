@@ -8,9 +8,8 @@ import type { Manifest, ParsedMission } from "./types.js";
 import { isGapmanUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
 import { loadWorkspace } from "./workspace.js";
-import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult, VerifyExportFormat } from "./verify-engine.js";
-import { resolveVerifyExportFormat } from "./verify-engine.js";
-import { buildVerifyExportDocument } from "./verify-export.js";
+import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult } from "./verify-engine.js";
+import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
 import {
   buildBreakGlassPayload,
   buildVerifyResultPayloadFromPhaseResult,
@@ -40,6 +39,13 @@ export type VerifySink =
   | "fix_interactive"
   | "fix_noninteractive"
   | "human";
+
+/** Structured export format for verify output (json default when --json). */
+export function resolveVerifyExportFormat(options: VerifyOptions): VerifyExportFormat | undefined {
+  if (options.format) return options.format;
+  if (options.json === true) return "json";
+  return undefined;
+}
 
 export function resolveVerifySink(options: VerifyOptions): VerifySink {
   if (options.breakGlass === true) {
