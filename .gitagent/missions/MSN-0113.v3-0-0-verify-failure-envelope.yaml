@@ -1,11 +1,10 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: v3.0.0 verify failure envelope findings across json sarif mcp
 msn_id: MSN-0113
 skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0113: verify failure envelope findings[] across --json, SARIF, MCP; 447 tests green"
+    trace_quote: "DoD 1 MSN-0113: re-attested v3.0.0 release — verify failure
+      envelope JSON/SARIF/MCP"
     anchor: "1"
     status: PASS
 gate_success_substring: pass
