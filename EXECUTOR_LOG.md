@@ -554,4 +554,4 @@ DoD 1 MSN-0119: re-attested v3.0.0 release — content-governance example and do
 DoD 1 MSN-0120: re-attested v3.0.0 release — README manifesto front door; 454 tests green; publish v3.0.0
 
 ## v3.0.1 release (MSN-0121..MSN-0129 squashed)
-DoD 1 MSN-0129: v3.0.1 thermo remediation + docs/website (#123-#126); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; 462 tests green
+DoD 1 MSN-0129: v3.0.1 thermo remediation + docs/website (#123-#126); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; 462 tests green; npm-publish shallow-clone fix
