@@ -2,7 +2,7 @@ import path from "node:path";
 import { LEGISLATE_TRACE_PLACEHOLDER, EXECUTOR_LOG_FILENAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git.js";
-import { isLineDriftFailure, quoteLineNumbers, type ExecutorLogLineMap, buildExecutorLogLineMapForQuotes } from "./executor-log-line-map.js";
+import { quoteLineNumbers, type ExecutorLogLineMap, buildExecutorLogLineMapForQuotes } from "./executor-log-line-map.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest, TraceRow } from "./types.js";
 
@@ -39,31 +39,9 @@ export type TraceFailureKind =
   | "stale_evidence"
   | "other";
 
-export function classifyTraceFailure(
-  reason: string,
-  traceQuote: string,
-  strictTrace: boolean,
-): TraceFailureKind {
-  if (reason.startsWith("EXECUTOR_LOG missing:")) return "executor_log_missing";
-  if (reason.includes("Ambiguous")) return "ambiguous";
-  if (reason.includes("not found verbatim")) {
-    if (traceQuote.trim() === LEGISLATE_TRACE_PLACEHOLDER) return "placeholder_quote";
-    return "quote_missing";
-  }
-  if (reason.includes("PASS row has empty")) return "empty_quote";
-  if (strictTrace && isLineDriftFailure(reason)) return "strict_line_drift";
-  if (
-    reason.includes("Trace quote not on anchored line") ||
-    reason.includes("No line contains both anchor")
-  ) {
-    return "anchor_mismatch";
-  }
-  if (reason.startsWith("Trace STALE")) return "stale_evidence";
-  return "other";
+function missingQuoteKind(traceQuote: string): TraceFailureKind {
+  return traceQuote.trim() === LEGISLATE_TRACE_PLACEHOLDER ? "placeholder_quote" : "quote_missing";
 }
-
-
-
 
 export const UNCOMMITTED_BLAME_COMMIT = "0000000000000000000000000000000000000000";
 
@@ -216,6 +194,8 @@ export function verifyTraceEvidenceFreshness(
 
 export interface TraceVerifyFailure {
   row: TraceRow;
+  /** Set at construction — every failure site knows its own kind. */
+  kind: TraceFailureKind;
   reason: string;
 }
 
@@ -300,11 +280,12 @@ function verifyNumericAnchorExact(
   if (line === undefined) {
     return {
       row,
+      kind: "strict_line_drift",
       reason: `Anchor line ${lineNumber} out of range (file has ${map.lines.length} lines)`,
     };
   }
   if (!line.includes(row.traceQuote)) {
-    return { row, reason: `Trace quote not on anchored line ${lineNumber}` };
+    return { row, kind: "strict_line_drift", reason: `Trace quote not on anchored line ${lineNumber}` };
   }
   return null;
 }
@@ -317,7 +298,11 @@ function resolveDriftFromMap(
   const matches = quoteLineNumbers(map, row.traceQuote);
   if (matches.length === 0) {
     return {
-      failure: { row, reason: "Trace quote not found verbatim in EXECUTOR_LOG.md" },
+      failure: {
+        row,
+        kind: missingQuoteKind(row.traceQuote),
+        reason: "Trace quote not found verbatim in EXECUTOR_LOG.md",
+      },
       warning: null,
     };
   }
@@ -331,6 +316,7 @@ function resolveDriftFromMap(
   return {
     failure: {
       row,
+      kind: "ambiguous",
       reason: `Ambiguous trace quote: found on lines ${matches.join(", ")}; re-run a clean flight`,
     },
     warning: null,
@@ -352,6 +338,7 @@ function verifyFreeformAnchor(map: ExecutorLogLineMap, row: TraceRow, anchor: st
   if (!found) {
     return {
       row,
+      kind: "anchor_mismatch",
       reason: `No line contains both anchor "${anchor}" and trace quote`,
     };
   }
@@ -375,6 +362,7 @@ export function verifyTraceRows(
     return {
       failures: passRows.map((row) => ({
         row,
+        kind: "executor_log_missing" as const,
         reason: `EXECUTOR_LOG missing: ${executorLogPath}`,
       })),
       warnings: [],
@@ -388,11 +376,15 @@ export function verifyTraceRows(
 
   for (const row of passRows) {
     if (!row.traceQuote.trim()) {
-      failures.push({ row, reason: "PASS row has empty trace quote" });
+      failures.push({ row, kind: "empty_quote", reason: "PASS row has empty trace quote" });
       continue;
     }
     if (!map.content.includes(row.traceQuote)) {
-      failures.push({ row, reason: "Trace quote not found verbatim in EXECUTOR_LOG.md" });
+      failures.push({
+        row,
+        kind: missingQuoteKind(row.traceQuote),
+        reason: "Trace quote not found verbatim in EXECUTOR_LOG.md",
+      });
       continue;
     }
 
@@ -409,7 +401,8 @@ export function verifyTraceRows(
       const exactFailure = verifyNumericAnchorExact(map, row, lineNumber);
       if (exactFailure === null) continue;
 
-      if (autoFuzzy && isLineDriftFailure(exactFailure.reason)) {
+      // Exact numeric-anchor failures are always line drift; auto-fuzzy retries them.
+      if (autoFuzzy) {
         const { failure, warning } = resolveDriftFromMap(map, row, lineNumber);
         if (failure) failures.push(failure);
         else if (warning) warnings.push(warning);

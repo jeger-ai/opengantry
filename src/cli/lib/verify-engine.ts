@@ -8,7 +8,7 @@ import { evaluateKpiPhase } from "./kpi-engine.js";
 import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import type { GateSpec, KpiThresholdOp, Manifest, ParsedMission } from "./types.js";
-import { classifyTraceFailure, isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
+import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceFailureKind, type TraceVerifyWarning } from "./trace.js";
 import { errorMessage } from "./cli-io.js";
 import {
   createVirtualFlightId,
@@ -245,7 +245,7 @@ function evaluateTracePhase(
       failure: tracePhaseFailure("trace", executorLogPath, {
         message: first.reason,
         exitCode: 1,
-        traceKind: classifyTraceFailure(first.reason, first.row.traceQuote, options.strictTrace === true),
+        traceKind: first.kind,
         traceQuote: first.row.traceQuote,
         traceReason: first.reason,
       }),

@@ -486,3 +486,7 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0100: audit-severity net_loc overflow no longer fails verify; phase regression tests added (R2)
 - DoD 2 MSN-0100: guards return DefensiveFinding[]; severity buckets derived once; unknown-skill split into error field; deprecated wrapper deleted (J4)
+
+## MSN-0101 — typed trace failures
+
+- DoD 1 MSN-0101: TraceVerifyFailure carries kind from construction; classifyTraceFailure and isLineDriftFailure string re-parsing deleted (J1)

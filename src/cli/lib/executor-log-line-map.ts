@@ -32,11 +32,3 @@ export function buildExecutorLogLineMapForQuotes(
 export function quoteLineNumbers(map: ExecutorLogLineMap, quote: string): number[] {
   return map.quoteToLines.get(quote) ?? [];
 }
-
-/** Numeric anchor mismatch where the quote may still exist elsewhere (auto-fuzzy eligible). */
-export function isLineDriftFailure(reason: string): boolean {
-  return (
-    /^Trace quote not on anchored line \d+$/.test(reason) ||
-    /^Anchor line \d+ out of range \(file has \d+ lines\)$/.test(reason)
-  );
-}
