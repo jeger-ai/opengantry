@@ -16,12 +16,8 @@ import {
 const BOILERPLATE_MIN_LINES = 2;
 const BOILERPLATE_MAX_LINES = 12;
 
-function lineNumberAt(body: string, index: number): number {
-  return body.slice(0, index).split(/\r?\n/).length;
-}
-
 /** Extract verbatim multi-line blocks (≥2 lines, trimmed) for exact-match boilerplate detection. */
-function extractVerbatimBlocks(body: string, rel: string): Array<{ block: string; line: number }> {
+function extractVerbatimBlocks(body: string): Array<{ block: string; line: number }> {
   const lines = body.split(/\r?\n/);
   const blocks: Array<{ block: string; line: number }> = [];
   for (let start = 0; start < lines.length; start++) {
@@ -53,7 +49,7 @@ function extractContentEvidence(files: DomainFileRecord[]): DomainEvidenceResult
   const blockOccurrences = new Map<string, { files: Set<string>; evidence: DiscoveryEvidence[] }>();
 
   for (const file of files) {
-    for (const { block, line } of extractVerbatimBlocks(file.body, file.rel)) {
+    for (const { block, line } of extractVerbatimBlocks(file.body)) {
       const entry = blockOccurrences.get(block) ?? { files: new Set(), evidence: [] };
       entry.files.add(file.rel);
       if (entry.evidence.length < 3) {
