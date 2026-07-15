@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Rename GapmanUserError to GantryUserError with deprecated alias; rename gapman test fixtures
+# Context request: README.md deprecation note (recorded in EXECUTOR_LOG.md).
 msn_id: MSN-0105
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
