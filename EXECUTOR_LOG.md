@@ -536,3 +536,4 @@ DoD 1 MSN-0117: perimeter schema 0.3.0 — forbid_pattern/require_pattern, gantr
 DoD 1 MSN-0118: content adapter + blueprint --domain content; code blueprint maps evidence to forbid_specifier_substring
 DoD 1 MSN-0119: examples/content-governance fixture + docs/DOMAINS.md + README repositioning; 454 tests green
 DoD 1 MSN-0120: v3.0.0 domain-generic re-tag — BACKLOG synced; npm run validate green; local v3.0.0 tag refreshed
+DoD 1 MSN-0120: domain-generic release complete — 454 tests; domain adapters code+content; perimeter schema 0.3.0; content-governance fixture green

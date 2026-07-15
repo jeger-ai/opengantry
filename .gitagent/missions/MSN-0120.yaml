@@ -6,7 +6,7 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0120: v3.0.0 domain-generic re-tag — BACKLOG synced; npm run validate green; local v3.0.0 tag refreshed"
+    trace_quote: "DoD 1 MSN-0120: domain-generic release complete — 454 tests; domain adapters code+content; perimeter schema 0.3.0; content-governance fixture green"
     anchor: "1"
     status: PASS
 gate_success_substring: dev-validate-core OK
