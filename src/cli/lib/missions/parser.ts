@@ -4,7 +4,7 @@ import YAML from "yaml";
 import { CLI_NAME, DEFAULT_ACTIVE_MISSION, DEFAULT_KPI_REPORT_DIR, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_PATTERN, REL_MISSION_SCHEMA } from "../constants.js";
 import { readEnvWithLegacy } from "../config-namespace.js";
 import { formatRepoRelative } from "../cli-io.js";
-import { GapmanUserError } from "../errors.js";
+import { GantryUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
 import { normalizeTraceStatus } from "../trace.js";
 import type {
@@ -249,7 +249,7 @@ export function parseMissionFile(root: string, filePath: string): ParsedMission 
 
 export function assertMissionGatePresent(mission: ParsedMission): void {
   if (!mission.gate?.command?.trim()) {
-    throw new GapmanUserError(
+    throw new GantryUserError(
       "MISSION_NO_GATE",
       `${CLI_NAME} verify: MISSION_NO_GATE — no deterministic gate (Command) found in ${mission.rawPath}`,
       hintMissionNoGate(mission.rawPath),
@@ -321,7 +321,7 @@ export function resolveMissionPathRequired(
   if (explicit) {
     const abs = resolveMissionFilePath(repoRoot, explicit);
     if (fs.existsSync(abs)) return abs;
-    throw new GapmanUserError(
+    throw new GantryUserError(
       options.errorCode ?? "MISSION_NOT_FOUND",
       `gantry: mission not found at ${explicit}`,
     );
@@ -333,7 +333,7 @@ export function resolveMissionPathRequired(
     if (fs.existsSync(abs)) return abs;
   }
 
-  throw new GapmanUserError(
+  throw new GantryUserError(
     "UPGRADE_MISSION_REQUIRED",
     "gantry upgrade --apply: pass --mission <path> to the signed upgrade mission YAML",
     "Example: gantry upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-v0.8.1.yaml",

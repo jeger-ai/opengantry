@@ -1,28 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  GapmanUserError,
-  isGapmanUserError,
+  GantryUserError,
+  isGantryUserError,
   reportUserFacingError,
 } from "../lib/errors.js";
 import { captureConsole } from "./test-shared.js";
 
-test("GapmanUserError: isGapmanUserError type guard", () => {
-  const err = new GapmanUserError("TEST", "test message", "do this");
-  assert.equal(isGapmanUserError(err), true);
-  assert.equal(isGapmanUserError(new Error("x")), false);
+test("GantryUserError: isGantryUserError type guard", () => {
+  const err = new GantryUserError("TEST", "test message", "do this");
+  assert.equal(isGantryUserError(err), true);
+  assert.equal(isGantryUserError(new Error("x")), false);
   assert.equal(err.gxtCode, "GXT_VERIFY_FAILED");
 });
 
-test("GapmanUserError: git-proof codes expose stable GXT code", () => {
-  const err = new GapmanUserError("NO_MSN_COMMITS", "missing stamp", "commit first");
+test("GantryUserError: git-proof codes expose stable GXT code", () => {
+  const err = new GantryUserError("NO_MSN_COMMITS", "missing stamp", "commit first");
   assert.equal(err.gxtCode, "GXT_MISSION_UNSTAMPED");
 });
 
-test("reportUserFacingError: GapmanUserError prints Fix hint without stack", () => {
+test("reportUserFacingError: GantryUserError prints Fix hint without stack", () => {
   const prevExit = process.exitCode;
   try {
-    const err = new GapmanUserError(
+    const err = new GantryUserError(
       "MISSION_NO_GATE",
       "gantry verify: MISSION_NO_GATE — no gate",
       "add gate_command to mission",

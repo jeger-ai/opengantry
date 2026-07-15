@@ -7,8 +7,8 @@ import { getRepoRoot } from "../lib/git.js";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
 import { runVerify } from "../commands/verify.js";
 import {
-  writeMiniGapmanRepo,
-  writeMiniGapmanMission,
+  writeMiniGantryRepo,
+  writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
@@ -16,8 +16,8 @@ import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-
 test("runVerify: --fix --non-interactive emits GXT error code on gate failure", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -46,7 +46,7 @@ test("runVerify: --fix --non-interactive emits GXT error code on gate failure", 
 test("runVerify: --fix --non-interactive trace_pending lists executor loop steps", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-pending-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "pending.yaml"),
@@ -91,7 +91,7 @@ trace_rows:
 test("runVerify: --fix --non-interactive placeholder trace_quote hints mission edit", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-placeholder-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "pass-placeholder.yaml"),
@@ -136,8 +136,8 @@ trace_rows:
 test("runVerify: --fix --non-interactive git-proof hint uses mission MSN", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-msn-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0014", "evidence A", "echo OK", "OK", "m.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0014", "evidence A", "echo OK", "OK", "m.yaml");
   gitInitCommit(dest, "chore: init repo", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -166,7 +166,7 @@ test("runVerify: --fix --non-interactive git-proof hint uses mission MSN", async
 test("runVerify: --fix --non-interactive --audience executor filters next actions", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-audience-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "pending.yaml"),

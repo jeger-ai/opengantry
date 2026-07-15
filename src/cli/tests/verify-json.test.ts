@@ -8,8 +8,8 @@ import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { handleVerify } from "../lib/mcp-runtime.js";
 import { runVerify } from "../commands/verify.js";
 import {
-  writeMiniGapmanRepo,
-  writeMiniGapmanMission,
+  writeMiniGantryRepo,
+  writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnv, withPlannerEnvAsync } from "./test-shared.js";
@@ -46,7 +46,7 @@ async function runVerifyJsonInRepo(
 test("runVerify --json: pass emits single flat success document", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-pass-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const { payload } = await runVerifyJsonInRepo(dest, ".gitagent/missions/m.yaml", {
     executorLog: "EXECUTOR_LOG.md",
@@ -60,8 +60,8 @@ test("runVerify --json: pass emits single flat success document", async () => {
 test("runVerify --json: gate failure includes error_code and fix_hints", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-gate-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const { payload } = await runVerifyJsonInRepo(dest, ".gitagent/missions/m.yaml", {
     executorLog: "EXECUTOR_LOG.md",
@@ -77,7 +77,7 @@ test("runVerify --json: gate failure includes error_code and fix_hints", async (
 test("runVerify --json: trace failure uses trace error_code family", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-trace-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "wrong evidence\n", "utf8");
   const { payload } = await runVerifyJsonInRepo(dest, ".gitagent/missions/m.yaml", {
@@ -92,7 +92,7 @@ test("runVerify --json: trace failure uses trace error_code family", async () =>
 test("runVerify --json: git-proof failure exposes top-level error_code", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-git-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "chore: init without MSN stamp", PLANNER_EMAIL);
   const { payload } = await runVerifyJsonInRepo(dest, ".gitagent/missions/m.yaml", {
     executorLog: "EXECUTOR_LOG.md",
@@ -105,7 +105,7 @@ test("runVerify --json: git-proof failure exposes top-level error_code", async (
 test("runVerify --json: init parse failure uses flat envelope with GXT_PARSE_ERROR", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-init-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   const { payload } = await runVerifyJsonInRepo(dest, ".gitagent/missions/does-not-exist.yaml");
   assert.equal(payload.status, "failed");
@@ -117,8 +117,8 @@ test("runVerify --json: init parse failure uses flat envelope with GXT_PARSE_ERR
 test("runVerify --json: stdout purity — gate output only in JSON payload", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-leak-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(
     dest,
     "MSN-0999",
     "evidence A",
@@ -138,8 +138,8 @@ test("runVerify --json: stdout purity — gate output only in JSON payload", asy
 test("runVerify --json gate failure matches handleVerify field subset", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-parity-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -170,7 +170,7 @@ test("runVerify --json gate failure matches handleVerify field subset", async ()
 test("runVerify --json --fix: rejects with GXT_INVALID_ARGUMENT", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-fix-collision-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -200,7 +200,7 @@ test("runVerify --json --fix: rejects with GXT_INVALID_ARGUMENT", async () => {
 test("handleVerify: missing mission uses flat init failure envelope", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-mcp-verify-init-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   withPlannerEnv(() => {

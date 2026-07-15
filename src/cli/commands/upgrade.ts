@@ -4,7 +4,7 @@ import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { runUpgradeApply } from "../lib/upgrade-apply.js";
 import { runUpgradePlan } from "../lib/upgrade-plan.js";
 import { toStableUpgradePlanPayloadV1 } from "../lib/upgrade-plan-payload.js";
-import { GapmanUserError } from "../lib/errors.js";
+import { GantryUserError } from "../lib/errors.js";
 
 export interface UpgradeOptions {
   apply?: boolean;
@@ -82,7 +82,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
 }
 
 function handleUpgradeError(e: unknown, json?: boolean): void {
-  if (e instanceof GapmanUserError) {
+  if (e instanceof GantryUserError) {
     const payload = { error: e.code, message: e.message, hint: e.hint };
     if (json) console.log(JSON.stringify(payload, null, 2));
     else logError(e.message + (e.hint ? `\nFix: ${e.hint}` : ""));

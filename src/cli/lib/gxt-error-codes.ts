@@ -39,8 +39,8 @@ const GIT_PROOF_TO_GXT: Record<string, GxtErrorCode> = {
   PLANNER_STAMP_UNSIGNED: GXT_ERROR.PLANNER_STAMP_UNSIGNED,
 };
 
-/** Explicit mapping for non-git-proof GapmanUserError codes. */
-const GAPMAN_USER_ERROR_TO_GXT: Record<string, GxtErrorCode> = {
+/** Explicit mapping for non-git-proof GantryUserError codes. */
+const GANTRY_USER_ERROR_TO_GXT: Record<string, GxtErrorCode> = {
   UPGRADE_STAGING_MISSING: GXT_ERROR.VERIFY_FAILED,
   UPGRADE_EMPTY_MANIFEST: GXT_ERROR.VERIFY_FAILED,
   UPGRADE_STAGING_DRIFT: GXT_ERROR.VERIFY_FAILED,
@@ -61,22 +61,25 @@ export function mapRuntimeErrorCodeToGxt(code: string): GxtErrorCode {
     return GXT_ERROR.FORBIDDEN_ZONE;
   }
   if (code === "RUNTIME_EXEC_FAILED") return GXT_ERROR.RUNTIME_EXEC_FAILED;
-  return GAPMAN_USER_ERROR_TO_GXT[code] ?? GXT_ERROR.VERIFY_FAILED;
+  return GANTRY_USER_ERROR_TO_GXT[code] ?? GXT_ERROR.VERIFY_FAILED;
 }
 
 export function mapGitProofCodeToGxt(code: string): GxtErrorCode {
   return GIT_PROOF_TO_GXT[code] ?? GXT_ERROR.MISSION_UNSTAMPED;
 }
 
-export function gxtCodeFromGapmanUserError(code: string): GxtErrorCode {
+export function gxtCodeFromGantryUserError(code: string): GxtErrorCode {
   if (code.startsWith("GXT_")) return code as GxtErrorCode;
   if (code in GIT_PROOF_TO_GXT) return mapGitProofCodeToGxt(code);
-  const mapped = GAPMAN_USER_ERROR_TO_GXT[code];
+  const mapped = GANTRY_USER_ERROR_TO_GXT[code];
   if (mapped) return mapped;
   return GXT_ERROR.VERIFY_FAILED;
 }
 
 /** @internal Test helper — returns undefined when code would fall through to VERIFY_FAILED unexpectedly. */
-export function isKnownGapmanUserErrorCode(code: string): boolean {
-  return code.startsWith("GXT_") || code in GIT_PROOF_TO_GXT || code in GAPMAN_USER_ERROR_TO_GXT;
+export function isKnownGantryUserErrorCode(code: string): boolean {
+  return code.startsWith("GXT_") || code in GIT_PROOF_TO_GXT || code in GANTRY_USER_ERROR_TO_GXT;
 }
+
+/** @deprecated Use {@link gxtCodeFromGantryUserError}; alias kept for one release (v2.7.0). */
+export const gxtCodeFromGapmanUserError = gxtCodeFromGantryUserError;

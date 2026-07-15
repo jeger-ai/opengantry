@@ -21,7 +21,7 @@ import {
   REL_UPGRADE_TMP,
   type UpgradePayload,
 } from "./upgrade-plan.js";
-import { GapmanUserError } from "./errors.js";
+import { GantryUserError } from "./errors.js";
 
 export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 
@@ -39,7 +39,7 @@ function sha256File(absPath: string): string {
 function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   const tmpRoot = path.join(repoRoot, fromPosix(REL_UPGRADE_TMP));
   if (!fs.existsSync(tmpRoot)) {
-    throw new GapmanUserError(
+    throw new GantryUserError(
       "UPGRADE_STAGING_MISSING",
       `${CLI_NAME} upgrade --apply: staging directory missing at ${REL_UPGRADE_TMP}/ — re-run gantry upgrade`,
       `Run \`gantry upgrade\` to regenerate staged files before apply.`,
@@ -48,7 +48,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
 
   const entries = Object.entries(payload.staged_hashes);
   if (entries.length === 0) {
-    throw new GapmanUserError(
+    throw new GantryUserError(
       "UPGRADE_EMPTY_MANIFEST",
       `${CLI_NAME} upgrade --apply: upgrade_payload.staged_hashes is empty`,
     );
@@ -57,7 +57,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   for (const [relPath, expectedHash] of entries) {
     const stageAbs = path.join(tmpRoot, fromPosix(relPath));
     if (!fs.existsSync(stageAbs)) {
-      throw new GapmanUserError(
+      throw new GantryUserError(
         "UPGRADE_STAGING_DRIFT",
         `${CLI_NAME} upgrade --apply: missing staged file ${relPath} under ${REL_UPGRADE_TMP}/`,
         "Re-run gantry upgrade to regenerate staging after mission was signed.",
@@ -65,7 +65,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
     }
     const actual = sha256File(stageAbs);
     if (actual !== expectedHash) {
-      throw new GapmanUserError(
+      throw new GantryUserError(
         "UPGRADE_HASH_MISMATCH",
         `${CLI_NAME} upgrade --apply: staged file hash mismatch for ${relPath}`,
         "Staging directory was modified after plan. Re-run gantry upgrade and re-sign the mission.",
@@ -129,7 +129,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     assertMissionSchemaValid(repoRoot, data, missionAbs);
     payload = parseUpgradePayloadFromMissionBody(missionBody);
   } catch (e) {
-    throw new GapmanUserError(
+    throw new GantryUserError(
       "UPGRADE_INVALID_MISSION",
       errorMessage(e),
     );
@@ -149,7 +149,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     assertMcpSubstrateUpgradeWritePaths(manifest, payload.planned_writes);
   } catch (e) {
     if (e instanceof McpWriteDeniedError) {
-      throw new GapmanUserError(e.code, e.message, e.hint);
+      throw new GantryUserError(e.code, e.message, e.hint);
     }
     throw e;
   }

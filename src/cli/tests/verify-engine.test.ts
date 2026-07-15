@@ -7,7 +7,7 @@ import { getRepoRoot } from "../lib/git.js";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
 import { runVerify } from "../commands/verify.js";
 import { resolveGateWorkDir } from "../lib/gate.js";
-import { writeMiniGapmanRepo, writeMiniGapmanMission, gitInitCommit } from "./test-fixtures.js";
+import { writeMiniGantryRepo, writeMiniGantryMission, gitInitCommit } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 test("resolveGateWorkDir: honors verify --cwd", () => {
@@ -19,14 +19,14 @@ test("resolveGateWorkDir: honors verify --cwd", () => {
 test("runVerify --fix: gate evaluated once (same cwd semantics as normal verify)", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-cwd-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, "sub"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, "sub", "marker"),
     "gate-ran-here\n",
     "utf8",
   );
-  writeMiniGapmanMission(
+  writeMiniGantryMission(
     dest,
     "MSN-0999",
     "gate-ran-here",
@@ -56,7 +56,7 @@ test("runVerify --fix: gate evaluated once (same cwd semantics as normal verify)
 test("runVerify --fix --non-interactive: executor audience filters next actions", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-audience-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "pending.yaml"),

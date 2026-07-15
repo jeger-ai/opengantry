@@ -7,8 +7,8 @@ import { getRepoRoot } from "../lib/git.js";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
 import { runVerify } from "../commands/verify.js";
 import {
-  writeMiniGapmanRepo,
-  writeMiniGapmanMission,
+  writeMiniGantryRepo,
+  writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
@@ -16,8 +16,8 @@ import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-
 test("runVerify: --pre-push passes legislative stub after git-proof", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pre-push-stub-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", LEGISLATE_TRACE_PLACEHOLDER, "echo OK", "OK", "stub.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", LEGISLATE_TRACE_PLACEHOLDER, "echo OK", "OK", "stub.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -39,8 +39,8 @@ test("runVerify: --pre-push passes legislative stub after git-proof", async () =
 test("runVerify: --pre-push fails unlegislated stub with NO_MSN_COMMITS", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pre-push-nostamp-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", LEGISLATE_TRACE_PLACEHOLDER, "echo OK", "OK", "stub.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", LEGISLATE_TRACE_PLACEHOLDER, "echo OK", "OK", "stub.yaml");
   gitInitCommit(dest, "chore: add stub without planner stamp", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -61,8 +61,8 @@ test("runVerify: --pre-push fails unlegislated stub with NO_MSN_COMMITS", async 
 test("runVerify: --pre-push runs full verify when execution claimed", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pre-push-full-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "mission-only trace quote", "echo OK", "OK", "exec.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "mission-only trace quote", "echo OK", "OK", "exec.yaml");
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "unrelated executor evidence\n");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
@@ -82,7 +82,7 @@ test("runVerify: --pre-push runs full verify when execution claimed", async () =
 test("runVerify: full verify fails when trace rows still PENDING", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-pending-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "pending.yaml"),

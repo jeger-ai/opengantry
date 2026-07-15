@@ -6,13 +6,13 @@ import os from "node:os";
 import { runDoctor } from "../commands/doctor.js";
 import { getRepoRoot } from "../lib/git.js";
 import { ENV_BYPASS_SECRET } from "../lib/break-glass.js";
-import { writeMiniGapmanRepo, writeBypassAnchor, gitInitCommit } from "./test-fixtures.js";
+import { writeMiniGantryRepo, writeBypassAnchor, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
 test("runDoctor: implicit git user.email satisfies planner check", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-warn-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   const prevTeachers = process.env.GAPMAN_PLANNER_EMAILS;
@@ -33,7 +33,7 @@ test("runDoctor: implicit git user.email satisfies planner check", () => {
 test("runDoctor: invalid architecture pointer exits 1", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-arch-fail-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", PLANNER_EMAIL);
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "ARCHITECTURE.pointer.json"), "{ not json", "utf8");
@@ -56,7 +56,7 @@ test("runDoctor: invalid architecture pointer exits 1", () => {
 test("runDoctor: active bypass secret match", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-bypass-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", PLANNER_EMAIL);
   const secret = "doctor-bypass-secret";
   writeBypassAnchor(dest, secret);

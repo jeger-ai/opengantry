@@ -4,7 +4,7 @@ import { CLI_NAME, MSN_ID_PATTERN } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitRun } from "./git.js";
 import { hintGitProof, type GitProofHintContext } from "./fix-hints.js";
-import { GapmanUserError } from "./errors.js";
+import { GantryUserError } from "./errors.js";
 import { extractMsnIdFromMissionPath } from "./missions/parser.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
@@ -17,7 +17,7 @@ function throwGitProofError(
   detail: string,
   ctx: GitProofHintContext = {},
 ): never {
-  throw new GapmanUserError(
+  throw new GantryUserError(
     code,
     `${CLI_NAME} verify: git-proof: ${code} — ${detail}`,
     hintGitProof(code, ctx),

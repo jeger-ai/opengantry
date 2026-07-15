@@ -6,13 +6,13 @@ import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { runStatus } from "../commands/status.js";
 import { pinMissionFile } from "../lib/missions/parser.js";
-import { writeMiniGapmanRepo, gitInitCommit, writeMiniGapmanMission } from "./test-fixtures.js";
+import { writeMiniGantryRepo, gitInitCommit, writeMiniGantryMission } from "./test-fixtures.js";
 import { captureConsole, PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
 test("runStatus: --json includes verify_readiness and pinned_mission", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-status-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   withPlannerEnv(() => {
@@ -42,8 +42,8 @@ test("runStatus: --json includes verify_readiness and pinned_mission", () => {
 test("runStatus: next_step prefers pinned mission over example.verify", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-status-pin-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", "echo OK", "OK", "pinned.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", "echo OK", "OK", "pinned.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   pinMissionFile(dest, path.join(dest, ".gitagent/missions/pinned.yaml"));
   const prevCwd = process.cwd();
@@ -65,7 +65,7 @@ test("runStatus: next_step prefers pinned mission over example.verify", () => {
 test("runStatus: --json reports needs_mission blockers when unpinned", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-status-needs-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   withPlannerEnv(() => {

@@ -7,8 +7,8 @@ import { execSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
 import { runVerify } from "../commands/verify.js";
 import {
-  writeMiniGapmanRepo,
-  writeMiniGapmanMission,
+  writeMiniGantryRepo,
+  writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
@@ -16,7 +16,7 @@ import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 test("runVerify: passes with Planner git-proof in mini repo", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -36,8 +36,8 @@ test("runVerify: passes with Planner git-proof in mini repo", async () => {
 test("runVerify: gate failure sets exit code 1", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-gate-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -57,7 +57,7 @@ test("runVerify: gate failure sets exit code 1", async () => {
 test("runVerify: trace mapping failure sets exit code 1", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-trace-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "wrong evidence\n", "utf8");
   const prevCwd = process.cwd();
@@ -77,7 +77,7 @@ test("runVerify: trace mapping failure sets exit code 1", async () => {
 test("runVerify: git-proof uses Planner commit author from history, not CI runner identity", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-ci-runner-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent", "foreman", "PLANNER.allowlist"),

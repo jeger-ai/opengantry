@@ -5,7 +5,7 @@ import { CommandReporter } from "./command-reporter.js";
 import { logFixHint } from "./fix-hints.js";
 import { loadPrompts } from "./prompts-loader.js";
 import type { Manifest, ParsedMission } from "./types.js";
-import { isGapmanUserError } from "./errors.js";
+import { isGantryUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
 import { loadWorkspace } from "./workspace.js";
 import type { VerifyOptions, VerifyPhaseFailure, VerifyPhaseResult } from "./verify-engine.js";
@@ -151,7 +151,7 @@ export function presentHumanInitFailure(
   } catch {
     // best-effort remediation feed
   }
-  if (isGapmanUserError(error)) {
+  if (isGantryUserError(error)) {
     reporter.emitError(`[${error.gxtCode}] ${error.message}`);
     if (error.hint) reporter.emitFixHint(error.hint);
     return { ok: false, exitCode: error.exitCode };

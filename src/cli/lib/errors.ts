@@ -3,14 +3,14 @@ import { readEnvWithLegacy } from "./config-namespace.js";
 import path from "node:path";
 import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
-import { gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
+import { gxtCodeFromGantryUserError } from "./gxt-error-codes.js";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
 import type { ForbiddenViolation } from "./forbidden-scan.js";
 import type { RuntimeExecResult } from "./runtime-exec.js";
 import type { ResolvedRuntimeEnv } from "./runtime-env.js";
 
 /** Expected policy / validation failure — never print a stack at the CLI boundary. */
-export class GapmanUserError extends Error {
+export class GantryUserError extends Error {
   constructor(
     readonly code: string,
     message: string,
@@ -18,18 +18,26 @@ export class GapmanUserError extends Error {
     readonly exitCode = 1,
   ) {
     super(message);
-    this.name = "GapmanUserError";
+    this.name = "GantryUserError";
   }
 
   /** Stable GXT error code for JSON/MCP consumers. */
   get gxtCode(): string {
-    return gxtCodeFromGapmanUserError(this.code);
+    return gxtCodeFromGantryUserError(this.code);
   }
 }
 
-export function isGapmanUserError(e: unknown): e is GapmanUserError {
-  return e instanceof GapmanUserError;
+export function isGantryUserError(e: unknown): e is GantryUserError {
+  return e instanceof GantryUserError;
 }
+
+/** @deprecated Use {@link GantryUserError}; alias kept for one release (v2.7.0). */
+export const GapmanUserError = GantryUserError;
+/** @deprecated Use {@link GantryUserError}; alias kept for one release (v2.7.0). */
+export type GapmanUserError = GantryUserError;
+
+/** @deprecated Use {@link isGantryUserError}; alias kept for one release (v2.7.0). */
+export const isGapmanUserError = isGantryUserError;
 
 function logUnexpectedError(error: Error): void {
   if (readEnvWithLegacy("DEBUG") === "1") {
@@ -41,7 +49,7 @@ function logUnexpectedError(error: Error): void {
 
 /** User-facing failure reporter: message + optional Fix: hint, no stack by default. */
 export function reportUserFacingError(e: unknown): void {
-  if (isGapmanUserError(e)) {
+  if (isGantryUserError(e)) {
     logError(`[${e.gxtCode}] ${e.message}`);
     if (e.hint) logFixHint(e.hint);
     setExitCode(e.exitCode);
@@ -68,7 +76,7 @@ export interface UserFacingErrorJson {
 }
 
 export function userFacingErrorToJson(e: unknown): UserFacingErrorJson {
-  if (isGapmanUserError(e)) {
+  if (isGantryUserError(e)) {
     return {
       error_code: e.gxtCode,
       message: e.message,

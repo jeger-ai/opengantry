@@ -8,7 +8,7 @@ import { getRepoRoot } from "../lib/git.js";
 import { ENV_BYPASS_SECRET, commitHasValidBypassNote } from "../lib/break-glass.js";
 import { runVerify } from "../commands/verify.js";
 import {
-  writeMiniGapmanRepo,
+  writeMiniGantryRepo,
   writeBypassAnchor,
   gitInitCommit,
 } from "./test-fixtures.js";
@@ -17,7 +17,7 @@ import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-
 test("runVerify: break-glass without secret exits 2", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-bypass-fail-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   const prevSecret = process.env[ENV_BYPASS_SECRET];
@@ -44,7 +44,7 @@ test("runVerify: break-glass without secret exits 2", async () => {
 test("runVerify: break-glass skips gate requirement on gate-less mission", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-bypass-nogate-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   const secret = "emergency-bypass-no-gate";
   writeBypassAnchor(dest, secret);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
@@ -85,7 +85,7 @@ test("runVerify: break-glass skips gate requirement on gate-less mission", async
 test("runVerify: missing gate prints Fix hint without stack", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-nogate-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   const missionRel = ".gitagent/missions/no-gate.md";
   fs.writeFileSync(
@@ -124,7 +124,7 @@ test("runVerify: missing gate prints Fix hint without stack", async () => {
 test("runVerify: break-glass with secret skips gates", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-bypass-ok-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   const secret = "emergency-bypass-secret-ok";
   writeBypassAnchor(dest, secret);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);

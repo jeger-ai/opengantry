@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   GXT_ERROR,
-  gxtCodeFromGapmanUserError,
-  isKnownGapmanUserErrorCode,
+  gxtCodeFromGantryUserError,
+  isKnownGantryUserErrorCode,
   mapGitProofCodeToGxt,
 } from "../lib/gxt-error-codes.js";
 
@@ -12,30 +12,30 @@ test("mapGitProofCodeToGxt: known git-proof codes map to MISSION_UNSTAMPED", () 
   assert.equal(mapGitProofCodeToGxt("MISSION_NO_GATE"), GXT_ERROR.MISSION_UNSTAMPED);
 });
 
-test("gxtCodeFromGapmanUserError: upgrade codes map to VERIFY_FAILED not MISSION_UNSTAMPED", () => {
-  assert.equal(gxtCodeFromGapmanUserError("UPGRADE_STAGING_MISSING"), GXT_ERROR.VERIFY_FAILED);
-  assert.equal(gxtCodeFromGapmanUserError("UPGRADE_HASH_MISMATCH"), GXT_ERROR.VERIFY_FAILED);
-  assert.equal(gxtCodeFromGapmanUserError("MISSION_NOT_FOUND"), GXT_ERROR.PARSE_ERROR);
+test("gxtCodeFromGantryUserError: upgrade codes map to VERIFY_FAILED not MISSION_UNSTAMPED", () => {
+  assert.equal(gxtCodeFromGantryUserError("UPGRADE_STAGING_MISSING"), GXT_ERROR.VERIFY_FAILED);
+  assert.equal(gxtCodeFromGantryUserError("UPGRADE_HASH_MISMATCH"), GXT_ERROR.VERIFY_FAILED);
+  assert.equal(gxtCodeFromGantryUserError("MISSION_NOT_FOUND"), GXT_ERROR.PARSE_ERROR);
 });
 
-test("gxtCodeFromGapmanUserError: unknown codes fall back to VERIFY_FAILED", () => {
-  assert.equal(gxtCodeFromGapmanUserError("TOTALLY_UNKNOWN"), GXT_ERROR.VERIFY_FAILED);
-  assert.equal(isKnownGapmanUserErrorCode("TOTALLY_UNKNOWN"), false);
+test("gxtCodeFromGantryUserError: unknown codes fall back to VERIFY_FAILED", () => {
+  assert.equal(gxtCodeFromGantryUserError("TOTALLY_UNKNOWN"), GXT_ERROR.VERIFY_FAILED);
+  assert.equal(isKnownGantryUserErrorCode("TOTALLY_UNKNOWN"), false);
 });
 
-test("gxtCodeFromGapmanUserError: passthrough GXT_* codes", () => {
-  assert.equal(gxtCodeFromGapmanUserError("GXT_GATE_FAILED"), GXT_ERROR.GATE_FAILED);
+test("gxtCodeFromGantryUserError: passthrough GXT_* codes", () => {
+  assert.equal(gxtCodeFromGantryUserError("GXT_GATE_FAILED"), GXT_ERROR.GATE_FAILED);
 });
 
-test("gxtCodeFromGapmanUserError: INVALID_ARGUMENT maps to GXT_INVALID_ARGUMENT", () => {
-  assert.equal(gxtCodeFromGapmanUserError("INVALID_ARGUMENT"), GXT_ERROR.INVALID_ARGUMENT);
-  assert.equal(isKnownGapmanUserErrorCode("INVALID_ARGUMENT"), true);
+test("gxtCodeFromGantryUserError: INVALID_ARGUMENT maps to GXT_INVALID_ARGUMENT", () => {
+  assert.equal(gxtCodeFromGantryUserError("INVALID_ARGUMENT"), GXT_ERROR.INVALID_ARGUMENT);
+  assert.equal(isKnownGantryUserErrorCode("INVALID_ARGUMENT"), true);
 });
 
-test("gxtCodeFromGapmanUserError: runtime and forbidden codes", () => {
-  assert.equal(gxtCodeFromGapmanUserError("FORBIDDEN_ZONE_VIOLATION"), GXT_ERROR.FORBIDDEN_ZONE);
-  assert.equal(gxtCodeFromGapmanUserError("RUNTIME_EXEC_FAILED"), GXT_ERROR.RUNTIME_EXEC_FAILED);
-  assert.equal(gxtCodeFromGapmanUserError("MCP_WRITE_DENIED"), GXT_ERROR.MCP_WRITE_DENIED);
+test("gxtCodeFromGantryUserError: runtime and forbidden codes", () => {
+  assert.equal(gxtCodeFromGantryUserError("FORBIDDEN_ZONE_VIOLATION"), GXT_ERROR.FORBIDDEN_ZONE);
+  assert.equal(gxtCodeFromGantryUserError("RUNTIME_EXEC_FAILED"), GXT_ERROR.RUNTIME_EXEC_FAILED);
+  assert.equal(gxtCodeFromGantryUserError("MCP_WRITE_DENIED"), GXT_ERROR.MCP_WRITE_DENIED);
 });
 
 test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
@@ -50,7 +50,7 @@ test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
     "PLANNER_STAMP_UNSIGNED",
   ];
   for (const code of codes) {
-    assert.equal(isKnownGapmanUserErrorCode(code), true);
+    assert.equal(isKnownGantryUserErrorCode(code), true);
     if (code === "PLANNER_STAMP_UNSIGNED") {
       assert.equal(mapGitProofCodeToGxt(code), GXT_ERROR.PLANNER_STAMP_UNSIGNED);
     } else {

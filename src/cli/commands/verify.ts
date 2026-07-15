@@ -5,7 +5,7 @@ import { emitVerifyJson } from "../lib/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify-engine.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
-import { GapmanUserError, reportUserFacingError } from "../lib/errors.js";
+import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify-run.js";
 
 export type { VerifyOptions } from "../lib/verify-engine.js";
@@ -23,7 +23,7 @@ function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
 
 function assertVerifyOptionsCompatible(options: VerifyOptions): void {
   if (options.json === true && options.fix === true) {
-    throw new GapmanUserError(
+    throw new GantryUserError(
       "INVALID_ARGUMENT",
       "The --fix flag cannot be used with --json. Automated repair is not supported in structured output mode.",
       undefined,
@@ -34,7 +34,7 @@ function assertVerifyOptionsCompatible(options: VerifyOptions): void {
     return;
   }
   if (options.changedMissions === true && options.mission) {
-    throw new GapmanUserError(
+    throw new GantryUserError(
       "INVALID_ARGUMENT",
       "Use either --mission or --changed-missions, not both.",
       undefined,

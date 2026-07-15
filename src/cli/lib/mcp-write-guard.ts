@@ -7,13 +7,13 @@ import {
   normalizeRepoRelativePath,
   tmvcRootsForSkill,
 } from "./tmvc-path.js";
-import { GapmanUserError } from "./errors.js";
+import { GantryUserError } from "./errors.js";
 import type { Manifest } from "./types.js";
 import { resolveManifestSkillKey } from "./skill-key.js";
 
 export const MCP_WRITE_DENIED = "MCP_WRITE_DENIED" as const;
 
-export class McpWriteDeniedError extends GapmanUserError {
+export class McpWriteDeniedError extends GantryUserError {
   readonly repoRelPath: string;
 
   constructor(repoRelPath: string, reason: string) {

@@ -6,13 +6,13 @@ import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { runStart, runStartOrchestration } from "../lib/start-orchestration.js";
 import { handleStartOrchestration } from "../lib/mcp-governance.js";
-import { writeMiniGapmanRepo, gitInitCommit } from "./test-fixtures.js";
+import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
 function withTempRepo(fn: (dest: string) => void): void {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-start-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   withPlannerEnv(() => {

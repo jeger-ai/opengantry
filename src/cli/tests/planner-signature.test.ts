@@ -7,8 +7,8 @@ import { assertPlannerMissionProof } from "../lib/git-proof.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { isGoodGitSignatureStatus } from "../lib/planner-signature.js";
 import { resolvePlannerSignatureTier, loadGxtConfig } from "../lib/gxt-config.js";
-import { GapmanUserError } from "../lib/errors.js";
-import { writeMiniGapmanRepo, gitInitCommit } from "./test-fixtures.js";
+import { GantryUserError } from "../lib/errors.js";
+import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { getRepoRoot } from "../lib/git.js";
 import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
@@ -32,7 +32,7 @@ test("gxt-config: invalid planner_signature tier defaults to off", () => {
 test("git-proof: planner_signature off passes unsigned stamp", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-sig-off-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   withPlannerEnv(() => {
     gitInitCommit(dest, "[MSN-0999] legislate", PLANNER_EMAIL);
     const missionAbs = path.join(dest, ".gitagent/missions/m.yaml");
@@ -43,7 +43,7 @@ test("git-proof: planner_signature off passes unsigned stamp", () => {
 test("git-proof: planner_signature require fails unsigned stamp", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-sig-req-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent/config.json"),
@@ -56,7 +56,7 @@ test("git-proof: planner_signature require fails unsigned stamp", () => {
     assert.throws(
       () => assertPlannerMissionProof(dest, missionAbs),
       (e: unknown) => {
-        assert.ok(e instanceof GapmanUserError);
+        assert.ok(e instanceof GantryUserError);
         assert.match(String(e.message), /PLANNER_STAMP_UNSIGNED/);
         assert.equal(e.gxtCode, GXT_ERROR.PLANNER_STAMP_UNSIGNED);
         return true;
@@ -68,7 +68,7 @@ test("git-proof: planner_signature require fails unsigned stamp", () => {
 test("git-proof: planner_signature warn collects warning", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-sig-warn-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, ".gitagent/config.json"),

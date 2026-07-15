@@ -11,8 +11,8 @@ import {
   ENV_MSN_SCAN_DEPTH,
   resolveMsnScanDepth,
 } from "../lib/git-proof.js";
-import { GapmanUserError } from "../lib/errors.js";
-import { writeMiniGapmanRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
+import { GantryUserError } from "../lib/errors.js";
+import { writeMiniGantryRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";
 import { PLANNER_EMAIL, OTHER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
@@ -36,7 +36,7 @@ test("git-proof: MISSION_MISSING_MSN", () => {
   assert.throws(
     () => assertPlannerMissionProof(dest, missionAbs),
     (e: unknown) => {
-      assert.ok(e instanceof GapmanUserError);
+      assert.ok(e instanceof GantryUserError);
       assert.match(String(e.message), /MISSION_MISSING_MSN/);
       assert.ok(e.hint?.includes("example.verify.yaml"));
       return true;
@@ -54,7 +54,7 @@ test("git-proof: missionPathRepoRelative rejects outside repo", () => {
 test("git-proof: PLANNER_IDENTITY_UNCONFIGURED", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate", PLANNER_EMAIL);
   execSync("git config --unset user.email", { cwd: dest, stdio: "pipe" });
   execSync("git config --unset user.name", { cwd: dest, stdio: "pipe" });
@@ -73,7 +73,7 @@ test("git-proof: PLANNER_IDENTITY_UNCONFIGURED", () => {
 test("git-proof: NO_MSN_COMMITS", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "no msn prefix", PLANNER_EMAIL);
   const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
   withPlannerEnv(() => {
@@ -85,7 +85,7 @@ test("git-proof: NO_MSN_COMMITS", () => {
 test("git-proof: [MSN] only in commit body does not satisfy stamp", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-body"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommitWithBody(
     dest,
     "docs: tweak readme only",
@@ -102,7 +102,7 @@ test("git-proof: [MSN] only in commit body does not satisfy stamp", () => {
 test("git-proof: NO_PLANNER_MSN_COMMIT", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] other only", OTHER_EMAIL);
   const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
   withPlannerEnv(() => {
@@ -114,7 +114,7 @@ test("git-proof: NO_PLANNER_MSN_COMMIT", () => {
 test("git-proof: accepts Planner stamp when newer [MSN] commit is non-Planner", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] planner", PLANNER_EMAIL);
   execSync(`git config user.email "${OTHER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
   fs.writeFileSync(path.join(dest, "extra.txt"), "x", "utf8");
@@ -130,7 +130,7 @@ test("git-proof: accepts Planner stamp when newer [MSN] commit is non-Planner", 
 test("git-proof: MISSION_FILE_NOT_MODIFIED_BY_PLANNER", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] planner mission", PLANNER_EMAIL);
   fs.writeFileSync(path.join(dest, "noise.txt"), "n", "utf8");
   execSync("git add noise.txt", { cwd: dest, stdio: "pipe" });
@@ -161,7 +161,7 @@ test("resolveMsnScanDepth: explicit option overrides env and default", () => {
 test("git-proof: scanDepth option reaches Planner stamp beyond default window", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-depth-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] planner legislate", PLANNER_EMAIL);
   for (let i = 0; i < 5; i++) {
     fs.writeFileSync(path.join(dest, `layer-${i}.txt`), String(i), "utf8");
@@ -182,7 +182,7 @@ test("git-proof: scanDepth option reaches Planner stamp beyond default window", 
 test("git-proof: GXT_MSN_SCAN_DEPTH env reaches Planner stamp", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-env-depth-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] planner legislate", PLANNER_EMAIL);
   for (let i = 0; i < 5; i++) {
     fs.writeFileSync(path.join(dest, `env-layer-${i}.txt`), String(i), "utf8");

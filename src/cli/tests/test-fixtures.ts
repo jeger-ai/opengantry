@@ -41,7 +41,7 @@ export function writeManifest(
   );
 }
 
-export function writeMiniGapmanMission(
+export function writeMiniGantryMission(
   dest: string,
   msnId: string,
   traceQuote: string,
@@ -76,7 +76,7 @@ export function writeSkillsForManifest(dest: string, skillKeys: string[]): void 
   }
 }
 
-export function writeMiniGapmanRepo(dest: string, ogRoot: string): string {
+export function writeMiniGantryRepo(dest: string, ogRoot: string): string {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     "ui": {
@@ -86,7 +86,7 @@ export function writeMiniGapmanRepo(dest: string, ogRoot: string): string {
     },
   });
   writeSkillsForManifest(dest, ["ui"]);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "m.yaml");
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "m.yaml");
   return ".gitagent/missions/m.yaml";
 }
 

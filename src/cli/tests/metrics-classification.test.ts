@@ -16,7 +16,7 @@ import {
 import {
   copyMissionSchema,
   writeManifest,
-  writeMiniGapmanMission,
+  writeMiniGantryMission,
   gitCommit,
 } from "./test-fixtures.js";
 import { PLANNER_EMAIL, OTHER_EMAIL, withPlannerEnv } from "./test-shared.js";
@@ -29,7 +29,7 @@ function initMetricsRepo(dest: string, ogRoot: string): void {
   writeManifest(dest, {
     ui: { trust_threshold: "Tier-1", tmvc_roots: [], forbidden_zones: [] },
   });
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "MSN-0999.yaml");
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", "echo DONE", "DONE", "MSN-0999.yaml");
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync(`git config user.email "${PLANNER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
   execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });

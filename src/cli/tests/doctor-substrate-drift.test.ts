@@ -9,7 +9,7 @@ import { loadIntegrationCompat } from "../lib/integration-compat.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import { getRepoRoot } from "../lib/git.js";
-import { writeMiniGapmanRepo, gitInitCommit } from "./test-fixtures.js";
+import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import type { Manifest } from "../lib/types.js";
 
@@ -55,7 +55,7 @@ test("runSubstrateDriftDoctorChecks: legacy default adds legacy warn", () => {
 test("collectDoctorReport: drift behind sets nextStep gantry upgrade", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-drift-report-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   writeSubstrateVersionFile(dest, "0.8.1", "test");
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
   fs.copyFileSync(
@@ -82,7 +82,7 @@ test("collectDoctorReport: drift behind sets nextStep gantry upgrade", () => {
 test("runDoctor --json: drift warn keeps exit_code 0", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-drift-json-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", PLANNER_EMAIL);
   writeSubstrateVersionFile(dest, "0.8.1", "test");
   const prevCwd = process.cwd();

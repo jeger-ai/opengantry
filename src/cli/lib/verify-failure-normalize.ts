@@ -1,7 +1,7 @@
-import { GXT_ERROR, gxtCodeFromGapmanUserError } from "./gxt-error-codes.js";
+import { GXT_ERROR, gxtCodeFromGantryUserError } from "./gxt-error-codes.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { errorMessage, toPosixRel } from "./cli-io.js";
-import { isGapmanUserError } from "./errors.js";
+import { isGantryUserError } from "./errors.js";
 import type { ParsedMission } from "./types.js";
 import type { VerifyOptions, VerifyPhaseFailure } from "./verify-engine.js";
 import { CLI_NAME } from "./constants.js";
@@ -228,8 +228,8 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
 
 /** Map init/pre-phase errors to canonical contract. */
 export function normalizeInitFailure(error: unknown): NormalizedVerifyFailure {
-  if (isGapmanUserError(error)) {
-    const errorCode = gxtCodeFromGapmanUserError(error.code);
+  if (isGantryUserError(error)) {
+    const errorCode = gxtCodeFromGantryUserError(error.code);
     return {
       phase: "init",
       message: error.message,

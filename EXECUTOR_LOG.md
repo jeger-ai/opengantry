@@ -505,3 +505,8 @@ example trace line for gapman verify
 
 - DoD 1 MSN-0104: command-boundary.ts helpers replace ~10 hand-rolled try/catch copies across arch, planner, perimeter, init, upgrade; verify boundary catch blocks deduped into reportVerifyBoundaryError (J5)
 - DoD 2 MSN-0104: planInitAssets takes a transformBody hook; defensive-profile special case moved out of the generic asset planner into init.ts (S1)
+
+## MSN-0105 — Gapman → Gantry naming migration
+
+- DoD 1 MSN-0105: GantryUserError / isGantryUserError / gxtCodeFromGantryUserError renamed across src/cli with deprecated GapmanUserError aliases kept for one release
+- DoD 2 MSN-0105: writeMiniGantryRepo / writeMiniGantryMission fixture rename across 17 test files; gapman bin alias and GAPMAN_* env marked deprecated in README

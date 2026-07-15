@@ -11,7 +11,7 @@ import { pinMissionFile, resolveMissionFilePath } from "./missions/parser.js";
 import { resolvePinnedMission } from "./missions/parser.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import type { TriageResult } from "./types.js";
-import { GapmanUserError } from "./errors.js";
+import { GantryUserError } from "./errors.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import { loadWorkspace } from "./workspace.js";
@@ -290,7 +290,7 @@ export function handleCheckSignature(
       next_tools: ["gxt_pin_mission", "gxt_runtime_env"],
     };
   } catch (err) {
-    if (err instanceof GapmanUserError) {
+    if (err instanceof GantryUserError) {
       return {
         status: "signature_missing",
         msn_id: "unknown",

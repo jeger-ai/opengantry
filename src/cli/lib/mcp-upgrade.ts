@@ -11,7 +11,7 @@ import {
 } from "./upgrade-plan-payload.js";
 import { runUpgradeApply } from "./upgrade-apply.js";
 import { runUpgradePlan } from "./upgrade-plan.js";
-import { GapmanUserError } from "./errors.js";
+import { GantryUserError } from "./errors.js";
 
 export type UpgradePlanMcpResult =
   | StableUpgradePlanPayloadV1
@@ -31,7 +31,7 @@ function mcpErrorBody(e: unknown): { status: "error"; error: McpErrorBody } {
       error: { code: GXT_ERROR.MCP_WRITE_DENIED, message: e.message, retryable: false },
     };
   }
-  if (e instanceof GapmanUserError) {
+  if (e instanceof GantryUserError) {
     return {
       status: "error",
       error: { code: e.code, message: e.message, retryable: false },

@@ -5,13 +5,13 @@ import path from "node:path";
 import test from "node:test";
 import { getRepoRoot } from "../lib/git.js";
 import { runVerifyCore } from "../lib/verify-run.js";
-import { gitInitCommit, writeMiniGapmanMission, writeMiniGapmanRepo } from "./test-fixtures.js";
+import { gitInitCommit, writeMiniGantryMission, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 test("runVerifyCore: returns typed result without setting process.exitCode on success", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-"));
-  writeMiniGapmanRepo(dest, ogRoot);
+  writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -35,8 +35,8 @@ test("runVerifyCore: returns typed result without setting process.exitCode on su
 test("runVerifyCore: returns failure exit code for gate failure", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-gate-"));
-  writeMiniGapmanRepo(dest, ogRoot);
-  writeMiniGapmanMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
+  writeMiniGantryRepo(dest, ogRoot);
+  writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {

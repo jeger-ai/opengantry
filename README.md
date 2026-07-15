@@ -202,7 +202,7 @@ The gate is whatever command **fails closed** for your repo (lint, typecheck, in
 
 The **Gantry CLI** (`gantry`) is the primary interface for **Open Source Gantry** — local, vendor-neutral, git-native governance in your repository.
 
-Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry`** on npm; the `gantry` binary is registered via `package.json` `bin` (see [`package.json`](package.json)). The legacy `gapman` command remains a compatibility alias. Config namespaces: `GANTRY_*` env vars and `git config gantry.*` (legacy `GAPMAN_*` / `gapman.*` values are still read silently). From source: `npm ci && npm run build` → `dist/cli/index.js`.
+Requires **Node.js 24+** (Active LTS line). Published as **`@jeger-ai/opengantry`** on npm; the `gantry` binary is registered via `package.json` `bin` (see [`package.json`](package.json)). The legacy `gapman` command remains a compatibility alias (**deprecated** — will be removed in a future major release). Config namespaces: `GANTRY_*` env vars and `git config gantry.*` (legacy `GAPMAN_*` / `gapman.*` values are still read silently, also deprecated). From source: `npm ci && npm run build` → `dist/cli/index.js`.
 
 **Developing OpenGantry:** dogfood the full stack — [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) (missions, hooks, verify, `npm run validate`). Layer rules: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Adopters: [`docs/ADOPTION.md`](docs/ADOPTION.md). Roadmap: [`docs/BACKLOG.md`](docs/BACKLOG.md) · [Project board](https://github.com/orgs/jeger-ai/projects/2).
 
