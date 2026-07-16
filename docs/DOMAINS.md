@@ -1,6 +1,8 @@
-# Domain adapters (v3.0.0)
+# Domain adapters
 
-OpenGantry v3.0.0 is a **domain-agnostic governance layer for autonomous agents**. The mission/verify loop, trace mapping, failure envelope, and `gate_command` shell gates are domain-neutral. **Domain adapters** plug deterministic discovery, blueprint, and perimeter checks into that loop.
+OpenGantry is a **domain-agnostic governance layer for autonomous agents**. The mission/verify loop, trace mapping, failure envelope, and `gate_command` shell gates are domain-neutral. **Domain adapters** plug deterministic discovery, blueprint, and perimeter checks into that loop.
+
+All docs: [`index.md`](index.md) · Why features exist: [`FEATURES.md`](FEATURES.md)
 
 ## Universal framing
 
@@ -10,7 +12,7 @@ OpenGantry v3.0.0 is a **domain-agnostic governance layer for autonomous agents*
 | **Rules of engagement** | `gantry blueprint --domain <key>` | Human interview → `TARGET_ARCHITECTURE.yaml` + `verification_plan.json` |
 | **Standardized audit API** | `gantry verify` + failure envelope `findings[]` | Deterministic gates + machine-readable verdicts for external executors |
 
-## Built-in adapters (v3.0.0)
+## Built-in adapters
 
 | Key | Corpus | Enforcement rules |
 |-----|--------|-------------------|
@@ -64,20 +66,19 @@ Regardless of domain:
 3. Trace rows land in `EXECUTOR_LOG.md`.
 4. `gantry verify` runs gates and emits `findings[]` on failure.
 
-See [`docs/AGENT-LOOP.md`](AGENT-LOOP.md) for Hermes-style executor integration.
+See [`AGENT-LOOP.md`](AGENT-LOOP.md) for Hermes-style executor integration.
 
 ## Recipes without built-in adapters
 
-**Accounting, legal, custom corpora:** use `gate_command` scripts and TMVC path globs. Document patterns in your repo's `ARCHITECTURE.md`; add a custom adapter in v3.1+ via the registry extension point.
+**Accounting, legal, custom corpora:** use `gate_command` scripts and TMVC path globs. Document patterns in your repo's `ARCHITECTURE.md`; custom adapter plugins are a future extension point.
 
 ## Example
 
 Full content loop fixture: [`examples/content-governance/`](../examples/content-governance/)
 
-## Deferred (v3.1+)
+## Roadmap (not yet shipped)
 
 - Runtime-loaded adapter plugins (npm packages registered in config)
-- AI judge gate (#62)
-- Built-in accounting/legal adapters
+- AI judge gate ([#62](https://github.com/jeger-ai/opengantry/issues/62))
 
-See ADR-0033 in `.gitagent/out-of-scope/ADR-0033-domain-adapters.md`.
+See [`CHANGELOG.md`](CHANGELOG.md) for shipped releases.

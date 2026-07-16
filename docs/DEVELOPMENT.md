@@ -17,7 +17,7 @@ Confirm readiness:
 gantry doctor
 ```
 
-**Roadmap / open work:** [`docs/BACKLOG.md`](BACKLOG.md) · [Project board #2](https://github.com/orgs/jeger-ai/projects/2) · [Issues](https://github.com/jeger-ai/opengantry/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog) ([v2.2](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Fv2.2) · [tactical](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Ftactical) · [adoption](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Fadoption) · [v1.2+](https://github.com/jeger-ai/opengantry/issues?q=is%3Aopen+label%3Abacklog%2Fv1.2)).
+**Roadmap / open work:** [GitHub Issues](https://github.com/jeger-ai/opengantry/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog) · [Project board #2](https://github.com/orgs/jeger-ai/projects/2) · Historical backlog: [`docs/archive/BACKLOG.md`](archive/BACKLOG.md) · Release history: [`docs/CHANGELOG.md`](CHANGELOG.md)
 
 **Docs map:** [`docs/index.md`](index.md) · root [README § Documentation map](../README.md#documentation-map-start-here).
 
@@ -184,7 +184,7 @@ Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and 
 
 - **pre-push** — `gantry verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gantry check` if manifest/skills changed; advisory `gantry perimeter` when governance files change; changed-code gate for touched `src/cli/**/*.ts`.
 
-## OpenGantry 2.0: LLM evidence + KPI gate
+## LLM evidence + KPI gate
 
 Nondeterministic LLM checks produce **committed evidence**; merge stays deterministic:
 
@@ -207,7 +207,7 @@ Deterministic quarantine mutations for specific gate failures — an isolation l
 
 1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes a registered **Code Surgeon** when gate output matches a known failure:
    - **`GXT_BANNED_IMPORT_DETECTED`** — `gantry check-imports` stderr
-   - **`GXT_IMPORT_LAYER_VIOLATION`** — `check-import-layers.mjs --json` structured report (v2.1+)
+   - **`GXT_IMPORT_LAYER_VIOLATION`** — `check-import-layers.mjs --json` structured report
 2. Surgeon **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
 3. On mutation, append **`[SURGEON-MUTATION] …`** to `EXECUTOR_LOG.md`, then **rerun the full verify pipeline with `--fix` disabled**.
 4. Plain `gantry verify` (no `--fix`) remains fail-closed and never mutates TMVC.
@@ -218,9 +218,7 @@ Deterministic quarantine mutations for specific gate failures — an isolation l
 
 Implementation: [`src/cli/lib/surgeons/`](../src/cli/lib/surgeons/) registry + orchestration in `surgeon-orchestration.ts` / `verify-present.ts`.
 
-**Release (v2.1.0+):** bump `package.json` with `npm version <semver> --no-git-tag-version`; sync `opengantry_version` in [`templates/integrations/compatibility.json`](../templates/integrations/compatibility.json); run [`scripts/assert-cli-version-parity.sh`](../scripts/assert-cli-version-parity.sh); tag `v<semver>` for npm publish. Race-safe publish: draft GitHub release → push tag → block on [`npm-publish.yml`](../.github/workflows/npm-publish.yml) → [`scripts/poll-npm-version.sh`](../scripts/poll-npm-version.sh) → promote release live ([`scripts/release-gate-publish.sh`](../scripts/release-gate-publish.sh)).
-
-**Release-squash policy:** a release MUST NOT ship under an MSN that has no committed mission file (as happened with v2.6.0/MSN-0098, backfilled retroactively). When multiple planned missions are consolidated into one release mission (the v2.5.0/MSN-0097 pattern), the surviving mission file MUST name the squashed MSN range in its header comment, `EXECUTOR_LOG.md` trace quotes MUST reference the surviving `MSN-XXXX` id (never a bare version string), and the release MUST pass `gantry verify --mission` against that surviving mission before tagging. Retroactive stub mission files for the squashed MSNs are not required — the surviving mission is the index entry.
+**Release:** see [`CHANGELOG.md`](CHANGELOG.md) § Maintainers for npm publish and release-squash policy.
 
 ## Definition of done (OpenGantry repo)
 
@@ -245,9 +243,32 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 
 Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` + MSN vs `origin/main`). Run it before you open a PR.
 
-`gantry init` ships [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) when CI is enabled (v1.1+). Existing v1.0 installs: run `gantry upgrade apply` or re-init managed CI assets.
+`gantry init` ships [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) when CI is enabled. Existing installs: run `gantry upgrade apply` or re-init managed CI assets.
 
 ## Troubleshooting verify / hooks
 
 - Run the CLI from the repo root: `npm run gantry -- verify --mission .gitagent/missions/<file>.yaml` (after `npm run build`). Policy failures print a one-line error plus **`Fix:`** remediation hints — not stack traces.
 - Set `GANTRY_DEBUG=1` only when you need a stack trace for an unexpected error.
+
+## Smoke checklist (this repo)
+
+1. `npm run build && npm test`
+2. `./scripts/check-changed-code.sh origin/main HEAD` (when you changed `src/cli`)
+3. `gantry doctor` → exit 0 with warnings allowed
+4. Formatter drift: `gantry verify` passes without `--fuzzy-trace`
+5. `gantry metrics --json` identical on two consecutive runs at same ref (including `gxt_extension_metadata`)
+
+## Code quality (changed files only)
+
+PRs run `./scripts/check-changed-code.sh <base> <head>` (also `npm run check:changed` locally against `origin/main`).
+
+- ESLint complexity and function length on touched `src/cli/**/*.ts`
+- Import layer rules (`lib` must not import `commands`, etc.)
+- File line budgets for non-grandfathered paths (see [docs/ARCHITECTURE.md](ARCHITECTURE.md))
+
+**If CI fails:**
+
+```bash
+npm run lint -- path/to/changed.ts
+./scripts/check-changed-code.sh origin/main HEAD
+```

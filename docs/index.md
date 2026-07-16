@@ -6,24 +6,46 @@
 
 > Product home: [https://opengantry.ai](https://opengantry.ai) · Source: [https://github.com/jeger-ai/opengantry](https://github.com/jeger-ai/opengantry)
 
-## Where docs live
+OpenGantry docs answer three questions: **how** to use it, **what** it helps with, and **why** its features exist. Version history lives in one place: [`CHANGELOG.md`](CHANGELOG.md).
 
 | Location | Purpose |
 |----------|---------|
-| **This folder (`docs/`)** | Adopter runbooks, integration guides, contributor docs, ADRs, backlog |
-| **`.gitagent/`** | GXT substrate law, missions, manifest, planner skills (Tier-3 governance) |
+| **This folder (`docs/`)** | Adopter runbooks, feature insights, integration guides, contributor docs |
+| **`.gitagent/`** | GXT substrate law, missions, manifest, planner skills |
 | **Root [`README.md`](../README.md)** | Product pitch, feature tour, quick links |
 
-## Start here (adopters)
+---
+
+## How — use OpenGantry
 
 | Doc | When to read |
 |-----|--------------|
-| [`ADOPTION.md`](ADOPTION.md) | First install + mission loop |
+| [`ADOPTION.md`](ADOPTION.md) | Install, mission loop, troubleshooting, hooks |
 | [`KATA.md`](KATA.md) | 15-minute first mission practice |
-| [`INTEGRATIONS.md`](INTEGRATIONS.md) | Wire Cursor / Claude / CI |
+| [`INTEGRATIONS.md`](INTEGRATIONS.md) | Wire Cursor / Claude / Codex / CI |
 | [`DOMAINS.md`](DOMAINS.md) | Code vs content domain adapters |
 | [`AGENT-LOOP.md`](AGENT-LOOP.md) | External executor (Hermes-style) integration |
-| [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) | ISO 27001 / 42001 artifact mapping |
+
+---
+
+## What — problems it helps with
+
+| Doc | When to read |
+|-----|--------------|
+| [`USE-CASES.md`](USE-CASES.md) | Personas, situations, contrast vs improvised agent workflows |
+| [`examples/content-governance/`](../examples/content-governance/) | Brand/compliance content walkthrough |
+| [`examples/benchmark-agent/`](../examples/benchmark-agent/) | Reproducible contrast benchmark |
+
+---
+
+## Why — feature insights
+
+| Doc | When to read |
+|-----|--------------|
+| [`FEATURES.md`](FEATURES.md) | Why missions, TMVC, discover/blueprint/perimeter, verify, hooks exist |
+| [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) | ISO 27001 / 42001 artifact mapping for regulated teams |
+
+---
 
 ## Contributing (this repo)
 
@@ -32,17 +54,13 @@
 | [`DEVELOPMENT.md`](DEVELOPMENT.md) | Dogfood loop, missions, `npm run validate` |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Layer rules for `src/cli/` |
 
-## Design records
+---
+
+## Reference
 
 | Doc | When to read |
 |-----|--------------|
-| [`ADR-EPHEMERAL-VIRTUALIZATION.md`](ADR-EPHEMERAL-VIRTUALIZATION.md) | Virtual scratch contract (v2.2) |
-| [`arch/external/`](../src/cli/lib/arch/external/) | External architecture pointer modules (code) |
-| [`arch/cage/`](../src/cli/lib/arch/cage/) | In-repo TARGET_ARCHITECTURE enforcement (code) |
-
-## Planning
-
-| Doc | When to read |
-|-----|--------------|
-| [`BACKLOG.md`](BACKLOG.md) | Tiers, MSN cross-refs, open/done status |
-| [`archive/V2.5.0-PROPOSAL.md`](archive/V2.5.0-PROPOSAL.md) | Historical v2.5.0 release proposal (shipped) |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history and upgrade notes |
+| [`ADR-EPHEMERAL-VIRTUALIZATION.md`](ADR-EPHEMERAL-VIRTUALIZATION.md) | Virtual scratch contract (design record) |
+| [`archive/`](archive/) | Historical backlog and release proposals |
+| [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) | Planner ADRs (deep design rationale) |

@@ -1,4 +1,4 @@
-# ADR: Ephemeral State Virtualization (v2.2)
+# ADR: Ephemeral State Virtualization
 
 **Status:** Accepted  
 **Issue:** [#68](https://github.com/jeger-ai/opengantry/issues/68)
@@ -22,7 +22,7 @@ Introduce an **opt-in virtual scratch contract** at `.gitagent/virtual/` that ma
 
 - Enables runtime-boundary KPI gates without a streaming rewrite.
 - Requires Planner mission + ADR before substrate templates change beyond gitignore lines.
-- Failure to enforce ignore rules would pollute `git diff` and trip TMVC path guards — mitigated by init catalog gitignore merge (shipped in v2.2).
+- Failure to enforce ignore rules would pollute `git diff` and trip TMVC path guards — mitigated by init catalog gitignore merge.
 
 ## References
 

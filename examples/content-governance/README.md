@@ -1,6 +1,6 @@
 # Content governance example
 
-Brand/compliance fixture for OpenGantry v3.0.0 domain adapters. Demonstrates the same agent loop as code governance — discovery, blueprint, perimeter check, verify — over marketing copy instead of TypeScript imports.
+Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates the same agent loop as code governance — discovery, blueprint, perimeter check, verify — over marketing copy instead of TypeScript imports.
 
 ## Fixture layout
 

@@ -1,6 +1,8 @@
 # Autonomous agent loop integration
 
-OpenGantry v3.0.0 is the **governance layer** for external autonomous agents (e.g. Hermes). OpenGantry writes contracts and verdicts; the executor agent implements code, builds skills, and retries.
+OpenGantry is the **governance layer** for external autonomous agents (e.g. Hermes). OpenGantry writes contracts and verdicts; the executor agent implements code, builds skills, and retries.
+
+All docs: [`index.md`](index.md) · Use cases: [`USE-CASES.md`](USE-CASES.md)
 
 ## Workflow
 
@@ -40,4 +42,4 @@ See [ADR-0032](../.gitagent/out-of-scope/ADR-0032-failure-envelope.md).
 
 ## Content domain example
 
-Brand/compliance ad copy uses the same loop with `--domain content` and `gantry perimeter check` (regex rules in schema 0.3.0). Walkthrough fixture: [`examples/content-governance/`](../examples/content-governance/). See [`docs/DOMAINS.md`](DOMAINS.md).
+Brand/compliance ad copy uses the same loop with `--domain content` and `gantry perimeter check` (regex rules in schema 0.3.0). Walkthrough fixture: [`examples/content-governance/`](../examples/content-governance/). See [`DOMAINS.md`](DOMAINS.md).

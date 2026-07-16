@@ -21,7 +21,7 @@ Most AI agent tooling optimizes for *speed of generation*. OpenGantry optimizes 
 - **Scope before execution:** no silent edits to governance files, no wandering outside approved paths
 - **Deterministic verification:** gates are shell commands with pass/fail outcomes, not LLM opinions
 - **Forensic trace:** every mission ties to `[MSN-XXXX]` commits and verbatim quotes in `EXECUTOR_LOG.md`
-- **Domain-agnostic** (v3.0.0): the same loop governs TypeScript imports *and* brand/compliance copy
+- **Domain-agnostic:** the same loop governs TypeScript imports *and* brand/compliance copy
 
 The long-term bet: external executors (Cursor agents, Hermes, CI bots) do the work; **OpenGantry owns the contract and the verdict**. That separation is what makes agentic delivery auditable in regulated or security-sensitive environments.
 
@@ -72,9 +72,9 @@ flowchart LR
 
 ---
 
-## v3.0.0: Three phases, any domain
+## Three phases, any domain
 
-v3.0.0 reframes the product as a **universal governance layer**, not just a TypeScript linter:
+OpenGantry is a **universal governance layer**, not just a TypeScript linter:
 
 | Phase | Command | Output |
 |-------|---------|--------|
@@ -189,7 +189,7 @@ See [`examples/content-governance/`](examples/content-governance/). Ad copy with
 
 - **Not an agent:** it does not chat, plan features, or generate PRs by itself
 - **Not Gantry.io:** no hosted observability dashboard; everything runs in your repo
-- **Not an LLM judge** (yet): AI performance judge is deferred to v3.1; gates stay deterministic
+- **Not an LLM judge for merge:** gates stay deterministic; optional LLM evidence is committed separately via `gantry scan`
 
 ---
 
@@ -206,15 +206,18 @@ You adopt OpenGantry when agent velocity is valuable but **unreviewed scope cree
 
 ## Documentation map {#documentation-map-start-here}
 
-Full doc index: [`docs/index.md`](docs/index.md) — adopters, contributors, ADRs, and planning.
+Full doc index: [`docs/index.md`](docs/index.md) — organized by **how**, **what**, and **why**.
 
 ## Where to go next
 
 | Goal | Doc |
 |------|-----|
 | All documentation | [`docs/index.md`](docs/index.md) |
-| 5-minute adoption | [`docs/ADOPTION.md`](docs/ADOPTION.md) |
-| Domain adapters deep dive | [`docs/DOMAINS.md`](docs/DOMAINS.md) |
+| What it helps with | [`docs/USE-CASES.md`](docs/USE-CASES.md) |
+| Why features exist | [`docs/FEATURES.md`](docs/FEATURES.md) |
+| Adoption runbook | [`docs/ADOPTION.md`](docs/ADOPTION.md) |
+| Release history | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) |
+| Domain adapters | [`docs/DOMAINS.md`](docs/DOMAINS.md) |
 | External agent integration | [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md) |
 | Contributing / dogfooding this repo | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | Content walkthrough | [`examples/content-governance/`](examples/content-governance/) |
