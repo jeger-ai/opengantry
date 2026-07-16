@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BENCHMARK_DIR = __dirname;
 const REPO_ROOT = path.resolve(__dirname, "../..");
-const GAPMAN_CLI = path.join(REPO_ROOT, "dist/cli/index.js");
+const GANTRY_CLI = path.join(REPO_ROOT, "dist/cli/index.js");
 const TASK_TEMPLATE = path.join(BENCHMARK_DIR, "task");
 const RAW_SCRIPT = path.join(BENCHMARK_DIR, "raw-script.mjs");
 const BENCHMARK_RUN_ROOT = path.join(REPO_ROOT, ".gitagent/virtual/benchmark-run");
@@ -131,13 +131,13 @@ function teardownRunDir() {
 process.on("exit", teardownRunDir);
 
 function assertBuilt() {
-  if (!fs.existsSync(GAPMAN_CLI)) {
+  if (!fs.existsSync(GANTRY_CLI)) {
     die("run npm run build first (missing dist/cli/index.js)");
   }
 }
 
-function gapmanArgs() {
-  return ["node", GAPMAN_CLI];
+function gantryArgs() {
+  return ["node", GANTRY_CLI];
 }
 
 function teacherEnv() {
@@ -325,7 +325,7 @@ function runGantryPath(runId) {
   const t0 = nowNs();
 
   const initResult = run(
-    [...gapmanArgs(), "init", "--yes", "--no-ci", "--no-hooks"],
+    [...gantryArgs(), "init", "--yes", "--no-ci", "--no-hooks"],
     sandbox,
     env,
   );
@@ -340,7 +340,7 @@ function runGantryPath(runId) {
   const t2 = nowNs();
   const legislateResult = run(
     [
-      ...gapmanArgs(),
+      ...gantryArgs(),
       "legislate",
       "benchmark task",
       "--msn",
@@ -405,7 +405,7 @@ function runGantryPath(runId) {
 
   const t4 = nowNs();
   const verifyResult = run(
-    [...gapmanArgs(), "verify", "--mission", missionRel],
+    [...gantryArgs(), "verify", "--mission", missionRel],
     sandbox,
     env,
   );

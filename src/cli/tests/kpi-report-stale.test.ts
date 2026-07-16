@@ -17,13 +17,13 @@ function gitCommitAll(dest: string, subject: string): void {
 function writeMiniRepoWithKpi(dest: string, ogRoot: string): void {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: {
+    gantry: {
       trust_threshold: "Tier-2",
       tmvc_roots: ["src/app/"],
       forbidden_zones: [],
     },
   });
-  writeSkillsForManifest(dest, ["gapman"]);
+  writeSkillsForManifest(dest, ["gantry"]);
   fs.mkdirSync(path.join(dest, "src", "app"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "kpi"), { recursive: true });
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
@@ -55,7 +55,7 @@ test("verifyKpiReportFreshness: no TMVC drift after attestation passes", () => {
   writeMiniRepoWithKpi(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
   const manifest = loadManifest(dest);
-  const result = verifyKpiReportFreshness(dest, manifest, "gapman", ".gitagent/kpi/MSN-0099.json");
+  const result = verifyKpiReportFreshness(dest, manifest, "gantry", ".gitagent/kpi/MSN-0099.json");
   assert.equal(result.stale, false);
   assert.equal(result.advisoryOnly, false);
 });
@@ -71,7 +71,7 @@ test("verifyKpiReportFreshness: partial KPI refresh uses latest report commit at
   fs.writeFileSync(kpiPath, JSON.stringify(raw, null, 2) + "\n", "utf8");
   gitCommitAll(dest, "[MSN-0999] refresh generated_at only");
   const manifest = loadManifest(dest);
-  const result = verifyKpiReportFreshness(dest, manifest, "gapman", ".gitagent/kpi/MSN-0099.json");
+  const result = verifyKpiReportFreshness(dest, manifest, "gantry", ".gitagent/kpi/MSN-0099.json");
   assert.equal(result.stale, false);
   assert.ok(result.attestationCommit);
 });
@@ -83,7 +83,7 @@ test("verifyKpiReportFreshness: uncommitted TMVC drift is advisory only", () => 
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 2;\n", "utf8");
   const manifest = loadManifest(dest);
-  const result = verifyKpiReportFreshness(dest, manifest, "gapman", ".gitagent/kpi/MSN-0099.json", {
+  const result = verifyKpiReportFreshness(dest, manifest, "gantry", ".gitagent/kpi/MSN-0099.json", {
     strictStale: false,
   });
   assert.equal(result.stale, false);
@@ -99,7 +99,7 @@ test("verifyKpiReportFreshness: committed TMVC drift fails strict stale", () => 
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 3;\n", "utf8");
   gitCommitAll(dest, "[MSN-0999] tmvc drift without rescan");
   const manifest = loadManifest(dest);
-  const result = verifyKpiReportFreshness(dest, manifest, "gapman", ".gitagent/kpi/MSN-0099.json", {
+  const result = verifyKpiReportFreshness(dest, manifest, "gantry", ".gitagent/kpi/MSN-0099.json", {
     strictStale: true,
   });
   assert.equal(result.stale, true);

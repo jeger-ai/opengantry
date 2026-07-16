@@ -36,7 +36,7 @@ test("mcp legislation: draft does not write mission file", () => {
     const draft = handleDraftLegislation({
       title: "Add button hover",
       msn_id: "MSN-0201",
-      skill_key: "gapman",
+      skill_key: "gantry",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -58,7 +58,7 @@ test("mcp legislation: execute writes mission and returns pending_signature", ()
     const draft = handleDraftLegislation({
       title: "Add button hover",
       msn_id: "MSN-0202",
-      skill_key: "gapman",
+      skill_key: "gantry",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -84,13 +84,13 @@ test("mcp legislation: execute writes mission and returns pending_signature", ()
 test("mcp legislation: check_signature valid after planner commit", () => {
   const dest = scaffoldRepo();
   const prevCwd = process.cwd();
-  process.env.GAPMAN_PLANNER_EMAILS = "teacher@example.com";
+  process.env.GANTRY_PLANNER_EMAILS = "teacher@example.com";
   process.chdir(dest);
   try {
     const draft = handleDraftLegislation({
       title: "Signed mission",
       msn_id: "MSN-0203",
-      skill_key: "gapman",
+      skill_key: "gantry",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });
@@ -120,7 +120,7 @@ test("mcp legislation: execute does not mutate process.exitCode on failure", () 
     const draft = handleDraftLegislation({
       title: "Exit code leak guard",
       msn_id: "MSN-0204",
-      skill_key: "gapman",
+      skill_key: "gantry",
       gate_command: "echo OK",
       gate_success_substring: "OK",
     });

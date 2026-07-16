@@ -12,7 +12,7 @@ test("mcp orchestration: typed ok result", () => {
   const result = handleStartOrchestration({
     intent: "gantry verify helper",
     msn_id: "MSN-9999",
-    skill_key: "gapman",
+    skill_key: "gantry",
     gate_command: "echo OK",
     write_mission: false,
   });
@@ -28,7 +28,7 @@ test("mcp orchestration: invalid msn_id fails with exit_code 2 and no mission pa
   const result = handleStartOrchestration({
     intent: "gantry verify helper",
     msn_id: "MSN-BAD",
-    skill_key: "gapman",
+    skill_key: "gantry",
     gate_command: "echo OK",
     write_mission: false,
   });

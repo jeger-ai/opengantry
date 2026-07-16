@@ -65,8 +65,8 @@ test("collectDoctorReport: drift behind sets nextStep gantry upgrade", () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent/foreman/MANIFEST.json"), "utf8"),
   ) as Manifest;
-  const prevTeachers = process.env.GAPMAN_PLANNER_EMAILS;
-  process.env.GAPMAN_PLANNER_EMAILS = PLANNER_EMAIL;
+  const prevTeachers = process.env.GANTRY_PLANNER_EMAILS;
+  process.env.GANTRY_PLANNER_EMAILS = PLANNER_EMAIL;
   try {
     const report = collectDoctorReport(dest, manifest);
     assert.ok(report.lines.some((l) => l.message.includes("behind bundled gantry")));
@@ -74,8 +74,8 @@ test("collectDoctorReport: drift behind sets nextStep gantry upgrade", () => {
     const driftOnly = runSubstrateDriftDoctorChecks(dest, resolveTemplateRootFromModule());
     assert.equal(driftOnly.nextStep, "gantry upgrade");
   } finally {
-    if (prevTeachers === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prevTeachers;
+    if (prevTeachers === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prevTeachers;
   }
 });
 
@@ -86,8 +86,8 @@ test("runDoctor --json: drift warn keeps exit_code 0", () => {
   gitInitCommit(dest, "[MSN-0999] init", PLANNER_EMAIL);
   writeSubstrateVersionFile(dest, "0.8.1", "test");
   const prevCwd = process.cwd();
-  const prevTeachers = process.env.GAPMAN_PLANNER_EMAILS;
-  process.env.GAPMAN_PLANNER_EMAILS = PLANNER_EMAIL;
+  const prevTeachers = process.env.GANTRY_PLANNER_EMAILS;
+  process.env.GANTRY_PLANNER_EMAILS = PLANNER_EMAIL;
   let captured = "";
   const origLog = console.log;
   try {
@@ -108,7 +108,7 @@ test("runDoctor --json: drift warn keeps exit_code 0", () => {
     console.log = origLog;
     process.chdir(prevCwd);
     process.exitCode = undefined;
-    if (prevTeachers === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prevTeachers;
+    if (prevTeachers === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prevTeachers;
   }
 });

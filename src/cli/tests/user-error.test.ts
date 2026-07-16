@@ -66,7 +66,7 @@ test("reportUserFacingError: plain Error has no stack unless GANTRY_DEBUG", () =
   const prevExit = process.exitCode;
   const prevDebug = process.env.GANTRY_DEBUG;
   delete process.env.GANTRY_DEBUG;
-  delete process.env.GAPMAN_DEBUG;
+  delete process.env.GANTRY_DEBUG;
   try {
     const err = new Error("unexpected internal");
     err.stack = "Error: unexpected internal\n    at fakeFn (fake.ts:1:1)";

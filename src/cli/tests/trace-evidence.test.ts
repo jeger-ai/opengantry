@@ -23,13 +23,13 @@ function gitCommitAll(dest: string, subject: string): void {
 function writeMiniRepoWithTmvc(dest: string, ogRoot: string): void {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: {
+    gantry: {
       trust_threshold: "Tier-2",
       tmvc_roots: ["src/app/"],
       forbidden_zones: [],
     },
   });
-  writeSkillsForManifest(dest, ["gapman"]);
+  writeSkillsForManifest(dest, ["gantry"]);
   fs.mkdirSync(path.join(dest, "src", "app"), { recursive: true });
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "initial\n", "utf8");
@@ -92,7 +92,7 @@ test("verifyTraceEvidenceFreshness: committed quote with no TMVC drift passes", 
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
-    "gapman",
+    "gantry",
     path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
@@ -128,7 +128,7 @@ test("verifyTraceEvidenceFreshness: TMVC edit after attestation is STALE", () =>
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
-    "gapman",
+    "gantry",
     path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
@@ -152,7 +152,7 @@ test("verifyTraceEvidenceFreshness: uncommitted quote line skips stale check", (
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
-    "gapman",
+    "gantry",
     path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );
@@ -176,7 +176,7 @@ test("verifyTraceEvidenceFreshness: skipStaleEvidence bypasses drift", () => {
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
-    "gapman",
+    "gantry",
     path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
     { skipStaleEvidence: true },
@@ -189,9 +189,9 @@ test("verifyTraceEvidenceFreshness: empty tmvc_roots passes", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stale-empty-"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: { trust_threshold: "Tier-2", tmvc_roots: [], forbidden_zones: [] },
+    gantry: { trust_threshold: "Tier-2", tmvc_roots: [], forbidden_zones: [] },
   });
-  writeSkillsForManifest(dest, ["gapman"]);
+  writeSkillsForManifest(dest, ["gantry"]);
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), "quote\n", "utf8");
   gitInitCommit(dest, "[MSN-0999] init", TEACHER);
   const manifest = JSON.parse(
@@ -202,7 +202,7 @@ test("verifyTraceEvidenceFreshness: empty tmvc_roots passes", () => {
   const result = verifyTraceEvidenceFreshness(
     dest,
     manifest,
-    "gapman",
+    "gantry",
     path.join(dest, "EXECUTOR_LOG.md"),
     resolved,
   );

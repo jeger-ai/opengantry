@@ -64,12 +64,12 @@ test("evaluateKpiPhase: missing report fails", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-phase-"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
-  writeManifest(root, { gapman: { tmvc_roots: ["src/cli/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
+  writeManifest(root, { gantry: { tmvc_roots: ["src/cli/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
   const kpiGate: KpiGateSpec = {
     reportPath: ".gitagent/kpi/MSN-0099.json",
     thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
   };
-  const result = evaluateKpiPhase(root, { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] }, "gapman", kpiGate, {}, "/tmp/EXECUTOR_LOG.md");
+  const result = evaluateKpiPhase(root, { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] }, "gantry", kpiGate, {}, "/tmp/EXECUTOR_LOG.md");
   assert.equal(result?.kind, "fail");
   assert.equal(result?.failure.phase, "kpi");
   assert.equal(result?.failure.kpiKind, "missing");
@@ -79,7 +79,7 @@ test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
   const ogRoot = getRepoRoot();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-phase-skip-"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
-  writeManifest(root, { gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
+  writeManifest(root, { gantry: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" } });
   fs.mkdirSync(path.join(root, "src", "app"), { recursive: true });
   fs.mkdirSync(path.join(root, ".gitagent", "kpi"), { recursive: true });
   fs.writeFileSync(path.join(root, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
@@ -98,6 +98,6 @@ test("evaluateKpiPhase: skipStaleEvidence bypasses stale checks", () => {
     reportPath: ".gitagent/kpi/MSN-0099.json",
     thresholds: [{ metric: "security_flaws", op: "==", value: 0 }],
   };
-  const result = evaluateKpiPhase(root, manifest, "gapman", kpiGate, { skipStaleEvidence: true }, "EXECUTOR_LOG.md");
+  const result = evaluateKpiPhase(root, manifest, "gantry", kpiGate, { skipStaleEvidence: true }, "EXECUTOR_LOG.md");
   assert.ok(result === null || (result.kind === "ok" && Array.isArray(result.warnings)));
 });

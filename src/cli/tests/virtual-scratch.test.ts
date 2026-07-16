@@ -54,13 +54,13 @@ trace_rows:
 function setupVirtualVerifyRepo(dest: string, ogRoot: string, missionOpts: Parameters<typeof writeVirtualMission>[1]): void {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: {
+    gantry: {
       trust_threshold: "Tier-2",
       tmvc_roots: ["src/cli/"],
       forbidden_zones: [],
     },
   });
-  writeSkillsForManifest(dest, ["gapman"]);
+  writeSkillsForManifest(dest, ["gantry"]);
   writeVirtualMission(dest, missionOpts);
 }
 
@@ -107,13 +107,13 @@ test("verifyKpiReportFreshness: virtual scratch report skips stale binding", () 
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-kpi-virtual-"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: {
+    gantry: {
       trust_threshold: "Tier-2",
       tmvc_roots: ["src/cli/"],
       forbidden_zones: [],
     },
   });
-  writeSkillsForManifest(dest, ["gapman"]);
+  writeSkillsForManifest(dest, ["gantry"]);
   fs.mkdirSync(path.join(dest, "src", "cli"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "virtual", "flight-a"), { recursive: true });
   const reportPath = ".gitagent/virtual/flight-a/kpi.json";
@@ -138,7 +138,7 @@ test("verifyKpiReportFreshness: virtual scratch report skips stale binding", () 
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   ) as Manifest;
-  const result = verifyKpiReportFreshness(dest, manifest, "gapman", reportPath, {
+  const result = verifyKpiReportFreshness(dest, manifest, "gantry", reportPath, {
     strictStale: true,
   });
   assert.equal(result.stale, false);

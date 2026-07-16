@@ -18,7 +18,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - For every claimed verifier **PASS**, the Verifier MUST provide a **Trace Reference**: a verbatim substring copied from `EXECUTOR_LOG.md` and an anchor (**line number** or **timestamp**) that ties the quote to the execution trace.
 - Verifiers MUST NOT use source-code quotations as the sole or primary evidence for PASS; code may supplement only after a valid trace reference exists.
 - If the quoted substring does **not** appear in `EXECUTOR_LOG.md`, or no valid trace reference is provided for a claimed PASS → **Evidence Tampering** → the mission MUST auto-fail (no merge).
-- **`gapman verify` stale-evidence (v1.1+):** for committed PASS quote lines, verify binds the line's attestation commit (`git blame` on `EXECUTOR_LOG.md`) to the mission skill's full `tmvc_roots` via `git diff --name-only`; TMVC drift after attestation → **STALE** (`GXT_TRACE_STALE`). Uncommitted quote lines skip stale check until committed.
+- **`gantry verify` stale-evidence (v1.1+):** for committed PASS quote lines, verify binds the line's attestation commit (`git blame` on `EXECUTOR_LOG.md`) to the mission skill's full `tmvc_roots` via `git diff --name-only`; TMVC drift after attestation → **STALE** (`GXT_TRACE_STALE`). Uncommitted quote lines skip stale check until committed.
 
 ## 4. Dynamic TMVC (roots + context requests)
 
@@ -37,20 +37,20 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - Every mission-related commit message MUST start with **`[MSN-XXXX]`** (four digits, e.g. `MSN-0007`) so history is greppable: `git log --grep='MSN-0007'`.
 - No tracked synthetic mission-history index file is required in the repository; git history is the index.
 
-## 6.1 Planner legislation proof (`gapman verify` v0.6.2)
+## 6.1 Planner legislation proof (`gantry verify` v0.6.2)
 
-- Missions verified by **`gapman verify`** MUST live under **`.gitagent/missions/`** (repo-relative).
-- Before the deterministic gate runs, **`gapman verify`** requires **native Git evidence** that the Planner legislated this mission for its MSN:
-  - Among the last **200** commits (configurable later), the **newest** commit whose subject begins with **`[MSN-XXXX]`** (matching the mission’s MSN) and whose **author email** is listed in **`GAPMAN_PLANNER_EMAILS`** (comma-separated allowlist) is the **Planner stamp**.
+- Missions verified by **`gantry verify`** MUST live under **`.gitagent/missions/`** (repo-relative).
+- Before the deterministic gate runs, **`gantry verify`** requires **native Git evidence** that the Planner legislated this mission for its MSN:
+  - Among the last **200** commits (configurable later), the **newest** commit whose subject begins with **`[MSN-XXXX]`** (matching the mission’s MSN) and whose **author email** is listed in **`GANTRY_PLANNER_EMAILS`** (comma-separated allowlist; silent legacy fallback: `GAPMAN_PLANNER_EMAILS`) is the **Planner stamp**.
   - That stamp commit MUST **modify** the mission file passed to `--mission`.
-- Architectural ADRs under [`.gitagent/out-of-scope/`](../out-of-scope/) are the record of prior decisions. **Planner** MUST review relevant ADRs when authoring or amending missions. **`gapman triage`** MAY emit non-binding `adr_hints` when ADR `match_terms` overlap intent; those hints do **not** change Foreman routing (still manifest-only binary).
+- Architectural ADRs under [`.gitagent/out-of-scope/`](../out-of-scope/) are the record of prior decisions. **Planner** MUST review relevant ADRs when authoring or amending missions. **`gantry triage`** MAY emit non-binding `adr_hints` when ADR `match_terms` overlap intent; those hints do **not** change Foreman routing (still manifest-only binary).
 
-## 6.2 Break-glass (`gapman verify` v0.8.0)
+## 6.2 Break-glass (`gantry verify` v0.8.0)
 
 - Emergency bypass MUST NOT rely on forgeable commit-subject strings alone. Authorization requires **`GXT_BYPASS_SECRET`** matching the SHA-256 anchor in [`.gitagent/foreman/BYPASS.sha256`](../foreman/BYPASS.sha256) (never commit the plaintext secret).
-- **`gapman verify --break-glass --reason "<text>"`** skips git-proof, gate, and trace when authorized; it MUST write a forensic record as a **`refs/notes/gxt-bypass`** git note (or `--audit-commit` when notes cannot be pushed).
+- **`gantry verify --break-glass --reason "<text>"`** skips git-proof, gate, and trace when authorized; it MUST write a forensic record as a **`refs/notes/gxt-bypass`** git note (or `--audit-commit` when notes cannot be pushed).
 - PR CI accepts GXT-touched commits that either have a normal **`[MSN-XXXX]`** subject or a valid **gxt-bypass** note on that commit. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
-- Break-glass does **not** disable **`gapman runtime exec`** forbidden-zone enforcement. Planner MUST review bypass usage post-incident.
+- Break-glass does **not** disable **`gantry runtime exec`** forbidden-zone enforcement. Planner MUST review bypass usage post-incident.
 
 ## 7. Local history (no bloat)
 

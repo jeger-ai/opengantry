@@ -59,13 +59,13 @@ test("git-proof: PLANNER_IDENTITY_UNCONFIGURED", () => {
   execSync("git config --unset user.email", { cwd: dest, stdio: "pipe" });
   execSync("git config --unset user.name", { cwd: dest, stdio: "pipe" });
   const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
-  const prev = process.env.GAPMAN_PLANNER_EMAILS;
-  delete process.env.GAPMAN_PLANNER_EMAILS;
+  const prev = process.env.GANTRY_PLANNER_EMAILS;
+  delete process.env.GANTRY_PLANNER_EMAILS;
   try {
     assert.throws(() => assertPlannerMissionProof(dest, missionAbs), /PLANNER_IDENTITY_UNCONFIGURED/);
   } finally {
-    if (prev === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prev;
+    if (prev === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prev;
   }
 });
 

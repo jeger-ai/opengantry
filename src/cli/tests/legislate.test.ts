@@ -36,7 +36,7 @@ trace_rows: []
     const result = runLegislate({
       intent: "Add gantry verify helper",
       msn: "MSN-0989",
-      skillKey: "gapman",
+      skillKey: "gantry",
     });
     assert.equal(result.ok, true);
     assert.equal(process.exitCode, undefined);
@@ -96,7 +96,7 @@ test("legislate: rejects missing msn", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    const result = runLegislate({ intent: "ui adjust spacing", skillKey: "gapman" });
+    const result = runLegislate({ intent: "ui adjust spacing", skillKey: "gantry" });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.exitCode, 2);
     assert.equal(process.exitCode, undefined);
@@ -125,7 +125,7 @@ test("legislate: rejects malformed msn", () => {
     const result = runLegislate({
       intent: "ui adjust spacing",
       msn: "msn-0043",
-      skillKey: "gapman",
+      skillKey: "gantry",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.exitCode, 2);
@@ -161,7 +161,7 @@ test("legislate: duplicate msn fails closed by default", () => {
     const result = runLegislate({
       intent: "ui adjust spacing",
       msn: "MSN-0999",
-      skillKey: "gapman",
+      skillKey: "gantry",
     });
     assert.equal(result.ok, false);
     if (!result.ok) assert.equal(result.exitCode, 2);
@@ -197,7 +197,7 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
     const result = runLegislate({
       intent: "ui add hover state",
       msn: "MSN-0999",
-      skillKey: "gapman",
+      skillKey: "gantry",
       allowDuplicate: true,
     });
     assert.equal(result.ok, true);
@@ -225,7 +225,7 @@ test("legislate: emits PENDING stub trace row", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({ intent: "ui tweak padding", msn: "MSN-0777", skillKey: "gapman" });
+    runLegislate({ intent: "ui tweak padding", msn: "MSN-0777", skillKey: "gantry" });
     const created = fs
       .readdirSync(path.join(dest, ".gitagent", "missions"))
       .find((f) => f.startsWith("MSN-0777.") && f.endsWith(".yaml"))!;
@@ -256,7 +256,7 @@ test("legislate: --gate-command preserves spaces in complex command", () => {
     runLegislate({
       intent: "ui timeline card padding",
       msn: "MSN-0778",
-      skillKey: "gapman",
+      skillKey: "gantry",
       gateCommand: gateCmd,
       gateSuccessSubstring: "Tests:",
     });

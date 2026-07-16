@@ -12,7 +12,7 @@ test("captureStartState: records head and manifest hash", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-start-snapshot-"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" },
+    gantry: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" },
   });
   fs.mkdirSync(path.join(dest, "src", "app"), { recursive: true });
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
@@ -21,7 +21,7 @@ test("captureStartState: records head and manifest hash", () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const snapshot = captureStartState(dest, manifest, "gapman");
+  const snapshot = captureStartState(dest, manifest, "gantry");
 
   assert.ok(snapshot.head_sha.length >= 7);
   assert.equal(snapshot.dirty, false);
@@ -34,7 +34,7 @@ test("captureStartState: dirty flag when working tree has changes", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-start-snapshot-dirty-"));
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" },
+    gantry: { tmvc_roots: ["src/app/"], forbidden_zones: [], trust_threshold: "Tier-2" },
   });
   fs.mkdirSync(path.join(dest, "src", "app"), { recursive: true });
   fs.writeFileSync(path.join(dest, "src", "app", "main.ts"), "export const v = 1;\n", "utf8");
@@ -44,6 +44,6 @@ test("captureStartState: dirty flag when working tree has changes", () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), "utf8"),
   );
-  const snapshot = captureStartState(dest, manifest, "gapman");
+  const snapshot = captureStartState(dest, manifest, "gantry");
   assert.equal(snapshot.dirty, true);
 });

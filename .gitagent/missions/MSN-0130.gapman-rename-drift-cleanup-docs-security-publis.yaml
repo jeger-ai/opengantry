@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gapman rename drift cleanup: docs SECURITY publish, planner narrative refresh, cosmetic GAPMAN shell vars, delete PROJECT_OUTLINE_ANALYSIS, gapman drift guard
+msn_id: MSN-0130
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0130: docs/SECURITY.md published; planner narrative gantry refresh; PROJECT_OUTLINE_ANALYSIS removed; assert-no-stale-cli-naming guard wired; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1"
+    status: PASS
+gate_success_substring: dev-validate-core OK

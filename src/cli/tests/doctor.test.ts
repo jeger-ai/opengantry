@@ -15,8 +15,8 @@ test("runDoctor: implicit git user.email satisfies planner check", () => {
   writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "[MSN-0999] init", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  const prevTeachers = process.env.GAPMAN_PLANNER_EMAILS;
-  delete process.env.GAPMAN_PLANNER_EMAILS;
+  const prevTeachers = process.env.GANTRY_PLANNER_EMAILS;
+  delete process.env.GANTRY_PLANNER_EMAILS;
   try {
     process.chdir(dest);
     process.exitCode = undefined;
@@ -25,8 +25,8 @@ test("runDoctor: implicit git user.email satisfies planner check", () => {
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
-    if (prevTeachers === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prevTeachers;
+    if (prevTeachers === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prevTeachers;
   }
 });
 
@@ -38,8 +38,8 @@ test("runDoctor: invalid architecture pointer exits 1", () => {
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "ARCHITECTURE.pointer.json"), "{ not json", "utf8");
   const prevCwd = process.cwd();
-  const prevTeachers = process.env.GAPMAN_PLANNER_EMAILS;
-  process.env.GAPMAN_PLANNER_EMAILS = PLANNER_EMAIL;
+  const prevTeachers = process.env.GANTRY_PLANNER_EMAILS;
+  process.env.GANTRY_PLANNER_EMAILS = PLANNER_EMAIL;
   try {
     process.chdir(dest);
     process.exitCode = undefined;
@@ -48,8 +48,8 @@ test("runDoctor: invalid architecture pointer exits 1", () => {
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;
-    if (prevTeachers === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prevTeachers;
+    if (prevTeachers === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prevTeachers;
   }
 });
 

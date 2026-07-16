@@ -60,6 +60,7 @@ OpenGantry docs answer three questions: **how** to use it, **what** it helps wit
 
 | Doc | When to read |
 |-----|--------------|
+| [`SECURITY.md`](SECURITY.md) | Supported versions, reporting vulnerabilities, break-glass runbook |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history and upgrade notes |
 | [`ADR-EPHEMERAL-VIRTUALIZATION.md`](ADR-EPHEMERAL-VIRTUALIZATION.md) | Virtual scratch contract (design record) |
 | [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) | Planner ADRs (deep design rationale) |

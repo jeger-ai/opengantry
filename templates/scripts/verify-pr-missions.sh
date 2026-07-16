@@ -56,9 +56,9 @@ if [[ ${#UNIQUE_MSNS[@]} -gt 1 ]]; then
 fi
 
 if [[ -f dist/cli/index.js ]]; then
-  GAPMAN=(node dist/cli/index.js)
+  GANTRY=(node dist/cli/index.js)
 elif command -v gantry >/dev/null 2>&1; then
-  GAPMAN=(gantry)
+  GANTRY=(gantry)
 else
   echo "verify-pr-missions: build gantry first (npm run build)" >&2
   exit 1
@@ -141,7 +141,7 @@ fi
 
 for mission in "${CHANGED_MISSIONS[@]}"; do
   echo "verify-pr-missions: gantry verify --mission ${mission}" >&2
-  "${GAPMAN[@]}" verify --mission "$mission" --audience verifier || exit 1
+  "${GANTRY[@]}" verify --mission "$mission" --audience verifier || exit 1
 done
 
 echo "verify-pr-missions OK (${#CHANGED_MISSIONS[@]} mission(s))"

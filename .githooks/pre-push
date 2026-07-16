@@ -5,9 +5,9 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 if [[ -f dist/cli/index.js ]]; then
-  GAPMAN=(node dist/cli/index.js)
+  GANTRY=(node dist/cli/index.js)
 elif command -v gantry >/dev/null 2>&1; then
-  GAPMAN=(gantry)
+  GANTRY=(gantry)
 else
   echo "pre-push: gantry not found — run: npm run build" >&2
   exit 1
@@ -35,17 +35,17 @@ for mission in "${missions[@]}"; do
   [[ -n "$mission" ]] || continue
   [[ -f "$mission" ]] || continue
   echo "pre-push: gantry verify --mission ${mission} (--pre-push)" >&2
-  "${GAPMAN[@]}" verify --mission "$mission" --pre-push || exit 1
+  "${GANTRY[@]}" verify --mission "$mission" --pre-push || exit 1
 done
 
 if git diff --name-only "${base}..HEAD" | grep -qE '^\.gitagent/foreman/MANIFEST\.json$|^\.gitagent/planner/RULES\.md$|\.gxt-skill\.yaml$'; then
   echo "pre-push: gantry perimeter (advisory)" >&2
-  "${GAPMAN[@]}" perimeter --base-ref "$base" || true
+  "${GANTRY[@]}" perimeter --base-ref "$base" || true
 fi
 
 if git diff --name-only "${base}..HEAD" | grep -qE '^\.gitagent/foreman/MANIFEST\.json$|^skills/'; then
   echo "pre-push: gantry check (manifest / skills changed)" >&2
-  "${GAPMAN[@]}" check || exit 1
+  "${GANTRY[@]}" check || exit 1
 fi
 
 if git diff --name-only "${base}..HEAD" -- 'src/cli/**/*.ts' | grep -q .; then

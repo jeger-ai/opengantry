@@ -1,4 +1,4 @@
-# YAML mission file (validated by `gapman mission validate` against MISSION.schema.yaml)
+# YAML mission file (validated by `gantry mission validate` against MISSION.schema.yaml)
 # Example — copy and edit for a real run. Use `msn_id` or `msnId` (same MSN-NNNN pattern).
 msn_id: MSN-0000
 skill_key: logic

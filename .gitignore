@@ -3,12 +3,12 @@
 .gitagent/.upgrade-tmp/
 .gitagent/missions/.active-mission
 
-# gapman / Node build
+# gantry / Node build
 node_modules/
 dist/
 src/cli/lib/version.gen.ts
 
-# OpenGantry (gapman init)
+# OpenGantry (gantry init)
 .gitagent/foreman/PLANNER.allowlist.local
 .gitagent/history/credentials/
 .gitagent/history/.ignored-last-error.json

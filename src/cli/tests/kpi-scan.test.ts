@@ -20,7 +20,7 @@ echo '{"metrics":{"complexity_score":3},"exit_code":0}'
   fs.chmodSync(scriptPath, 0o755);
   return {
     msnId: "MSN-0030",
-    skillKey: "gapman",
+    skillKey: "gantry",
     gate: { command: "echo OK", successSubstring: null },
     kpiGate: { reportPath: ".gitagent/kpi/MSN-0030.json", thresholds: [] },
     virtualCapture: false,
@@ -86,7 +86,7 @@ printf '{"metrics":{"complexity_score":5},"exit_code":0}\\n\\n'
   fs.chmodSync(scriptPath, 0o755);
   const mission: ParsedMission = {
     msnId: "MSN-0031",
-    skillKey: "gapman",
+    skillKey: "gantry",
     gate: { command: "echo OK", successSubstring: null },
     kpiGate: { reportPath: ".gitagent/kpi/MSN-0031.json", thresholds: [] },
     virtualCapture: false,

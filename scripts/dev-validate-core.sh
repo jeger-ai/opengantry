@@ -23,16 +23,19 @@ echo "dev-validate-core: build"
 npm run build
 
 if [[ -f dist/cli/index.js ]]; then
-  GAPMAN=(node dist/cli/index.js)
+  GANTRY=(node dist/cli/index.js)
 elif command -v gantry >/dev/null 2>&1; then
-  GAPMAN=(gantry)
+  GANTRY=(gantry)
 else
   echo "dev-validate-core: gantry unavailable after build (missing dist/cli/index.js)" >&2
   exit 1
 fi
 
+echo "dev-validate-core: assert no stale CLI naming drift"
+./scripts/assert-no-stale-cli-naming.sh
+
 echo "dev-validate-core: gantry check (Rule 4.4)"
-"${GAPMAN[@]}" check
+"${GANTRY[@]}" check
 
 echo "dev-validate-core: Foreman MANIFEST (Node parity)"
 ./scripts/validate-gxt.sh manifest
@@ -47,7 +50,7 @@ echo "dev-validate-core: MCP dogfood flow"
 ./scripts/validate-mcp-dogfood.sh
 
 echo "dev-validate-core: gantry doctor"
-"${GAPMAN[@]}" doctor
+"${GANTRY[@]}" doctor
 
 echo "dev-validate-core: changed-code quality (${BASE_REF}..${HEAD_REF})"
 ./scripts/check-changed-code.sh "${BASE_REF}" "${HEAD_REF}"

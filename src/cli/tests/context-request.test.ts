@@ -33,7 +33,7 @@ function initGitRepo(dest: string): void {
 function writeWave3Repo(dest: string, ogRoot: string): { missionRel: string } {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
-    gapman: {
+    gantry: {
       trust_threshold: "Tier-2",
       tmvc_roots: ["src/cli/"],
       forbidden_zones: [".gitagent/foreman/"],
@@ -134,7 +134,7 @@ test("staged-tmvc-guard: governance files never violate", () => {
   const result = evaluateStagedTmvcGuard({
     repoRoot: dest,
     manifest,
-    skillKey: "gapman",
+    skillKey: "gantry",
   });
   assert.equal(result.violations.length, 1);
   assert.equal(result.violations[0]!.path, "README.md");
