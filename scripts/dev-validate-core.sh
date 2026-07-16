@@ -31,7 +31,10 @@ else
   exit 1
 fi
 
-echo "dev-validate-core: assert no stale CLI naming drift"
+echo "dev-validate-core: assert documentation deterministic metrics"
+./scripts/assert-docs-deterministic.sh
+
+echo "dev-validate-core: assert no stale CLI naming drift (implementation paths)"
 ./scripts/assert-no-stale-cli-naming.sh
 
 echo "dev-validate-core: gantry check (Rule 4.4)"

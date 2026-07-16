@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: docs deterministic metrics: inventory, link integrity, doc-surface naming drift guard
+msn_id: MSN-0131
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0131: assert-docs-deterministic.sh — published doc inventory, docs/index.md link integrity, doc-surface naming drift; assert-no-stale-cli-naming scoped to implementation paths; dev-validate-core OK"
+    anchor: "1"
+    status: PASS
+gate_success_substring: dev-validate-core OK

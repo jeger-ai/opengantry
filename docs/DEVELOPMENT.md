@@ -262,6 +262,11 @@ Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` 
 
 PRs run `./scripts/check-changed-code.sh <base> <head>` (also `npm run check:changed` locally against `origin/main`).
 
+Deterministic **documentation** gates (repo-wide, not diff-scoped) run in `dev-validate-core`:
+
+- `./scripts/assert-docs-deterministic.sh` — published doc inventory, `docs/index.md` link integrity, doc-surface legacy naming drift
+- `./scripts/assert-no-stale-cli-naming.sh` — implementation-path legacy naming drift (`src/`, `scripts/`, hooks, examples)
+
 - ESLint complexity and function length on touched `src/cli/**/*.ts`
 - Import layer rules (`lib` must not import `commands`, etc.)
 - File line budgets for non-grandfathered paths (see [docs/ARCHITECTURE.md](ARCHITECTURE.md))
