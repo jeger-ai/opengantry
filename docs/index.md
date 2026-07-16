@@ -12,7 +12,7 @@ OpenGantry docs answer three questions: **how** to use it, **what** it helps wit
 |----------|---------|
 | **This folder (`docs/`)** | Adopter runbooks, feature insights, integration guides, contributor docs |
 | **`.gitagent/`** | GXT substrate law, missions, manifest, planner skills |
-| **Root [`README.md`](../README.md)** | Product pitch, feature tour, quick links |
+| **Root `README.md`** | Product pitch, feature tour, quick links |
 
 ---
 
@@ -62,5 +62,4 @@ OpenGantry docs answer three questions: **how** to use it, **what** it helps wit
 |-----|--------------|
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history and upgrade notes |
 | [`ADR-EPHEMERAL-VIRTUALIZATION.md`](ADR-EPHEMERAL-VIRTUALIZATION.md) | Virtual scratch contract (design record) |
-| [`archive/`](archive/) | Historical backlog and release proposals |
 | [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) | Planner ADRs (deep design rationale) |
