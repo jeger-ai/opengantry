@@ -8,9 +8,9 @@ Deep design records: [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) ADR
 
 ## Mission loop (GXT)
 
-**Why:** Agent work without a declared contract drifts — scope expands, governance files get edited silently, and "done" means whatever the last chat said.
+**Why:** Agent work without a declared mission YAML drifts — scope expands, substrate files get edited silently, and "done" means whatever the last chat said.
 
-**What it does:** Everything revolves around a **mission** (`.gitagent/missions/MSN-XXXX.yaml`): declared intent, TMVC scope, `gate_command`, trace rows. Three roles — **Planner** legislates, **Executor** works in scope, **Verifier** runs `gantry verify` — enforce segregation of duties.
+**What it does:** Everything revolves around a **mission** (`.gitagent/missions/MSN-XXXX.yaml`): declared intent, TMVC scope, `gate_command`, trace rows. Three roles — **Planner** commits the mission (`gantry legislate`), **Executor** works in scope, **Verifier** runs `gantry verify` — enforce segregation of duties.
 
 **When to use:** Any substantive agent-assisted change you want merge-ready evidence for.
 
@@ -54,7 +54,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 **Why:** The mission/verify loop is domain-neutral; enforcement rules are not. TypeScript needs import layers; marketing copy needs regex disclaimers.
 
-**What it does:** Built-in adapters plug deterministic discovery, blueprint, and perimeter into the same loop. **Court-of-law principle:** enforcement is binary — content discovery uses exact-match boilerplate, not statistical inference that flips on unrelated edits.
+**What it does:** Built-in adapters plug deterministic discovery, blueprint, and perimeter into the same loop. **Binary enforcement:** pass/fail only — content discovery uses exact-match boilerplate, not statistical inference that flips on unrelated edits.
 
 **When to use:** `code` for TS/JS repos; `content` for brand/compliance corpora. Custom domains use `gate_command` + TMVC globs until you add a custom adapter.
 
@@ -64,7 +64,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## `gantry verify` and `findings[]`
 
-**Why:** Autonomous agents cannot reliably parse human terminal output. Merge gates need deterministic pass/fail, not LLM opinions.
+**Why:** Autonomous agents choke on unstructured stderr — stack traces, ANSI codes, and multi-line test output are unreliable retry input. Models hallucinate fixes and loop. Merge gates still need deterministic pass/fail, not LLM opinions.
 
 **What it does:** Runs shell `gate_command`, trace mapping, git-proof (Planner legislation commit), and optional KPI/stale-evidence checks. On failure, emits structured `findings[]` with `failed_gate`, `offending_file`, `line`, `resolution_hint`. Same shape on `--json`, SARIF, JUnit, and MCP `gxt_verify`.
 

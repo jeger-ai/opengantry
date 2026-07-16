@@ -6,11 +6,42 @@
 
 ## The one-line pitch
 
-**OpenGantry is a local-first, Git-native governance layer for autonomous agents.** It does not write your code or content for you. It negotiates the contract before work starts, enforces deterministic boundaries during execution, and emits machine-readable verdicts when something fails.
+**OpenGantry is a local-first CLI that scopes agent edits, runs your shell gates, and returns structured failure JSON so agents can retry without a human watching the terminal.** It does not write your code or content for you. It replaces humans babysitting AI coding assistants — not your tests, not your CI, not your code review.
 
-Think of it as a **court of law** for agentic work: binary rules, reproducible checks, audit trail in Git.
+> **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native agent enforcement in your repository, not a hosted observability dashboard. Product home: [opengantry.ai](https://opengantry.ai).
 
-> **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native governance in your repository, not a hosted observability dashboard. Product home: [opengantry.ai](https://opengantry.ai).
+---
+
+## In plain English
+
+OpenGantry uses product terms that sound abstract. Here is what the CLI actually runs:
+
+| Term you will see | What it actually is |
+|-------------------|---------------------|
+| **Contract** | Mission YAML under `.gitagent/missions/` — allowed paths, forbidden paths, and a required `gate_command` (shell) |
+| **Legislate** | `gantry legislate` / Mission Architect writes that YAML; a Planner commit locks it in Git before work |
+| **Governance** | Hooks + `gantry verify` that fail closed if scope or gates are violated — not a process committee |
+| **Verdict** | Deterministic pass/fail from shell gates + trace checks; on fail, a `findings[]` JSON envelope |
+
+**"Contract" is not design-by-contract (DbC).** It is not pre/post conditions in source code. It is the Git-locked work order that tells the agent where it may edit and which shell command must pass before merge.
+
+---
+
+## Why not just TDD and CI?
+
+You already have `npm test` and GitHub Actions. OpenGantry does not replace them — it makes them usable when an **AI agent** runs the loop.
+
+| Who runs the loop | What happens on failure |
+|-------------------|-------------------------|
+| **Human developer** | Reads stderr, parses the stack trace, rewrites code |
+| **AI agent + raw TDD/CI** | Chokes on unstructured stderr, hallucinates fixes, spins in retry loops — a senior still babysits |
+| **AI agent + OpenGantry** | Same gates you already trust; `gantry verify --json` returns `findings[]` with file, line, and hint so the agent can self-correct |
+
+| Already have | Still missing for autonomous agents | OpenGantry adds |
+|--------------|-------------------------------------|-----------------|
+| `npm test` / GH Actions | Structured failure for model retry | `findings[]` envelope |
+| PR CI | Declared edit blast radius | TMVC + forbidden zones in mission YAML |
+| Code review | Proof the agent stayed in scope | Git mission + `EXECUTOR_LOG.md` quotes |
 
 ---
 
@@ -23,7 +54,7 @@ Most AI agent tooling optimizes for *speed of generation*. OpenGantry optimizes 
 - **Forensic trace:** every mission ties to `[MSN-XXXX]` commits and verbatim quotes in `EXECUTOR_LOG.md`
 - **Domain-agnostic:** the same loop governs TypeScript imports *and* brand/compliance copy
 
-The long-term bet: external executors (Cursor agents, Hermes, CI bots) do the work; **OpenGantry owns the contract and the verdict**. That separation is what makes agentic delivery auditable in regulated or security-sensitive environments.
+The long-term bet: external executors (Cursor agents, Hermes, CI bots) do the work; **OpenGantry owns the mission YAML and the verify output**. That separation is what makes agentic delivery auditable in regulated or security-sensitive environments.
 
 ---
 
@@ -47,7 +78,7 @@ Everything revolves around a **mission**:
 
 ```mermaid
 flowchart LR
-    A[Planner legislates MSN-XXXX] --> B[Executor works in TMVC scope]
+    A[Planner commits mission YAML] --> B[Executor works in TMVC scope]
     B --> C[Trace in EXECUTOR_LOG.md]
     C --> D[gantry verify]
     D -->|fail| E[findings JSON → agent retries]
@@ -56,7 +87,7 @@ flowchart LR
 
 **Roles:**
 
-- **Planner:** human (or Mission Architect in chat) approves mission YAML before execution
+- **Planner:** human (or Mission Architect in chat) commits mission YAML via `gantry legislate` before execution
 - **Executor:** agent or developer edits within TMVC roots; forbidden zones respected
 - **Verifier:** `gantry verify` checks gate output and trace mapping
 
@@ -74,7 +105,7 @@ flowchart LR
 
 ## Three phases, any domain
 
-OpenGantry is a **universal governance layer**, not just a TypeScript linter:
+OpenGantry is a **domain-neutral verify loop**, not just a TypeScript linter:
 
 | Phase | Command | Output |
 |-------|---------|--------|
@@ -91,7 +122,7 @@ OpenGantry is a **universal governance layer**, not just a TypeScript linter:
 
 List them: `gantry domains`
 
-**Court-of-law principle:** enforcement is always binary. Content discovery uses exact-match boilerplate only; it does not infer "dominant terminology" from statistics that would flip on unrelated edits.
+**Binary enforcement:** pass/fail only — no LLM opinions at the gate. Content discovery uses exact-match boilerplate only; it does not infer "dominant terminology" from statistics that would flip on unrelated edits.
 
 See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md) for external executor integration.
 
@@ -119,7 +150,7 @@ Emits a proposal with evidence-anchored conventions and anomalies (`file:line` s
 
 **Speed:** the discovery scanner uses streaming regex per file, not a whole-repo AST. It is budgeted to finish a **5,000-file monorepo in under five seconds** (pinned in CI). OpenGantry ingests repository context in seconds without loading the tree into a heavy compiler graph or spiking RAM. Enterprise teams do not have to wait minutes for a governance tool to "understand" the repo before the agent loop starts.
 
-### 3. Blueprint: negotiate the contract
+### 3. Blueprint: lock rules and gate commands
 
 ```bash
 gantry blueprint --domain content --yes
@@ -196,7 +227,7 @@ See [`examples/content-governance/`](examples/content-governance/). Ad copy with
 ## Mental model for adopters
 
 ```
-OpenGantry = contract negotiator + court + audit log
+OpenGantry = scoped work order + shell gates + structured verify output
 Executor agent = worker (Cursor, Hermes, human dev)
 ```
 

@@ -1,6 +1,6 @@
 # Autonomous agent loop integration
 
-OpenGantry is the **governance layer** for external autonomous agents (e.g. Hermes). OpenGantry writes contracts and verdicts; the executor agent implements code, builds skills, and retries.
+OpenGantry is the **CLI contract + verify envelope** for external autonomous agents (e.g. Hermes). **Contract** = mission YAML (scope + `gate_command`); **verdict** = `gantry verify` pass/fail with `findings[]` on failure. The executor agent implements code, builds skills, and retries — it does not parse raw terminal output.
 
 All docs: [`index.md`](index.md) · Use cases: [`USE-CASES.md`](USE-CASES.md)
 

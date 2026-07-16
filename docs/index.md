@@ -12,7 +12,7 @@ OpenGantry docs answer three questions: **how** to use it, **what** it helps wit
 |----------|---------|
 | **This folder (`docs/`)** | Adopter runbooks, feature insights, integration guides, contributor docs |
 | **`.gitagent/`** | GXT substrate law, missions, manifest, planner skills |
-| **Root `README.md`** | Product pitch, feature tour, quick links |
+| **Root `README.md`** | Product pitch, feature tour, quick links — start with [In plain English](../README.md#in-plain-english) and [Why not just TDD and CI?](../README.md#why-not-just-tdd-and-ci) |
 
 ---
 

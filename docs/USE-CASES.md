@@ -11,7 +11,7 @@ All docs: [`index.md`](index.md)
 You adopt OpenGantry when agent velocity is valuable but **unreviewed scope creep, silent governance edits, or unverifiable "it works" claims** are unacceptable.
 
 ```
-OpenGantry = contract negotiator + court + audit log
+OpenGantry = scoped work order + shell gates + structured verify output
 Executor agent = worker (Cursor, Hermes, human dev)
 ```
 
@@ -27,7 +27,28 @@ Typical triggers:
 
 ---
 
+## vs TDD + GitHub Actions
+
+You already have tests and CI. The friction is not "do we have gates?" — it is **who reads the failure output**.
+
+Human TDD works because a developer parses stderr and fixes code. When an IDE agent runs the same loop, unstructured terminal output causes hallucinated fixes and infinite retries; someone senior still babysits.
+
+OpenGantry keeps your existing `gate_command` (e.g. `npm test`) and adds:
+
+- **Mission YAML** — declared edit paths before the agent touches files
+- **`findings[]`** — machine-readable failure envelope (`file`, `line`, `resolution_hint`) from `gantry verify --json`
+
+Vocabulary and the full contrast table: [README § In plain English](../README.md#in-plain-english) and [README § Why not just TDD and CI?](../README.md#why-not-just-tdd-and-ci).
+
+---
+
 ## Personas
+
+### Teams already doing TDD who still babysit IDE agents
+
+Your test suite and CI are solid. Cursor or Copilot still edits outside the intended blast radius, and when a gate fails the model misreads stderr. You need the same gates with **structured retry input** and **Git-locked scope** — not another test framework.
+
+See [README § Why not just TDD and CI?](../README.md#why-not-just-tdd-and-ci) and [`FEATURES.md`](FEATURES.md) § `gantry verify`.
 
 ### Regulated engineering (fintech, health, critical infrastructure)
 

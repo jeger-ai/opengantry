@@ -4,7 +4,7 @@ Product home: [https://opengantry.ai](https://opengantry.ai) · All docs: [`inde
 
 This runbook is the operational path for adopters using `gantry` locally. Product positioning and use cases: [README](../README.md) · [`USE-CASES.md`](USE-CASES.md).
 
-**Open Source Gantry** is **vendor-neutral**, **local-first**, **git-native governance** — the **Gantry CLI** plus **Gantry Git hook** enforcement in your repository, not a hosted agent dashboard.
+**Open Source Gantry** is **vendor-neutral**, **local-first**, **git-native** — the **`gantry` CLI** plus Git hooks and `gantry verify` over mission YAML (scope + `gate_command`), not a hosted agent dashboard.
 
 **First mission practice:** [`KATA.md`](KATA.md) (~15 min, headless-friendly).
 
