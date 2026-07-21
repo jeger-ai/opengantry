@@ -330,6 +330,50 @@ export type KpiPhaseOutcome =
   | { kind: "fail"; failure: KpiFailure }
   | null;
 
+function exitCodeFailure(
+  reportRel: string,
+  executorLogPath: string,
+  exitCode: number,
+): KpiFailure {
+  return {
+    ok: false,
+    phase: "kpi",
+    message: `KPI report exit_code=${String(exitCode)} (expected 0)`,
+    exitCode: 1,
+    executorLogPath,
+    kpiReportPath: reportRel,
+    kpiKind: "exit_code",
+    kpiReason: `report exit_code=${String(exitCode)}`,
+  };
+}
+
+function collectAdvisoryRubricWarnings(findings: readonly KpiFinding[] | undefined): {
+  warnings: string[];
+  advisoryFindings?: KpiFinding[];
+} {
+  const warnings: string[] = [];
+  for (const finding of findings ?? []) {
+    const id = finding.id?.trim() || "finding";
+    const severity = finding.severity?.trim() || "info";
+    const message = finding.message?.trim() || "(no message)";
+    warnings.push(`gantry verify: advisory rubric [${severity}] ${id}: ${message}`);
+  }
+  const advisoryFindings = findings && findings.length > 0 ? [...findings] : undefined;
+  return { warnings, advisoryFindings };
+}
+
+function advisoryKpiPhaseOutcome(
+  warnings: string[],
+  advisoryFindings?: KpiFinding[],
+): KpiPhaseOutcome {
+  if (warnings.length === 0 && !advisoryFindings) return null;
+  return {
+    kind: "ok",
+    warnings,
+    ...(advisoryFindings ? { advisoryFindings } : {}),
+  };
+}
+
 export function evaluateKpiPhase(
   root: string,
   manifest: Manifest,
@@ -360,32 +404,10 @@ export function evaluateKpiPhase(
   }
 
   if (report.exit_code !== 0) {
-    return {
-      kind: "fail",
-      failure: {
-        ok: false,
-        phase: "kpi",
-        message: `KPI report exit_code=${String(report.exit_code)} (expected 0)`,
-        exitCode: 1,
-        executorLogPath,
-        kpiReportPath: reportRel,
-        kpiKind: "exit_code",
-        kpiReason: `report exit_code=${String(report.exit_code)}`,
-      },
-    };
+    return { kind: "fail", failure: exitCodeFailure(reportRel, executorLogPath, report.exit_code) };
   }
 
-  for (const finding of report.findings ?? []) {
-    const id = finding.id?.trim() || "finding";
-    const severity = finding.severity?.trim() || "info";
-    const message = finding.message?.trim() || "(no message)";
-    warnings.push(`gantry verify: advisory rubric [${severity}] ${id}: ${message}`);
-  }
-
-  const advisoryFindings =
-    report.findings && report.findings.length > 0 ? report.findings : undefined;
-  if (warnings.length > 0 || advisoryFindings) {
-    return { kind: "ok", warnings, ...(advisoryFindings ? { advisoryFindings } : {}) };
-  }
-  return null;
+  const rubric = collectAdvisoryRubricWarnings(report.findings);
+  warnings.push(...rubric.warnings);
+  return advisoryKpiPhaseOutcome(warnings, rubric.advisoryFindings);
 }
