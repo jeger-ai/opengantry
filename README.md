@@ -6,13 +6,21 @@
 
 ## The one-line pitch
 
-**OpenGantry is a local-first CLI that scopes agent edits, runs your shell gates, and returns structured failure JSON so agents can retry without a human watching the terminal.** It does not write your code or content for you. It replaces humans babysitting AI coding assistants — not your tests, not your CI, not your code review.
+**OpenGantry is the deterministic runtime and governance engine for AI agents.** It is a local-first CLI that scopes agent edits, runs your shell gates, and returns structured failure JSON so agents can retry without a human watching the terminal. It does not write your code or content for you. It replaces humans babysitting AI coding assistants — not your tests, not your CI, not your code review.
 
 > **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native agent enforcement in your repository, not a hosted observability dashboard. Product home: [opengantry.ai](https://opengantry.ai).
 
-### Start the audit trail now
+### Local control, unmonitored loops, tamper-evident proof
 
-Agent velocity without a declared mission trail means you reverse-engineer years of edits when auditors ask. OpenGantry is the tool you run **today** so continuous, Git-native mission traces and attestation receipts already exist. Same loop that keeps local agents from thrashing VRAM on unstructured stderr or wandering outside declared paths: 100% local, fast, and offline. No cloud required for verify.
+Three engineering problems show up today, calendar or no calendar:
+
+| Problem | What goes wrong | OpenGantry answer |
+|---------|-----------------|-------------------|
+| **Local developer control** | Source and credentials leave the machine for a vendor console to "govern" agents | Execution stays on-machine; verify is offline; optional future hub is digests only |
+| **Unmonitored agent loops** | Agents thrash on unstructured stderr, wander outside declared paths, or keep retrying without a structured verdict | Mission YAML + TMVC + `findings[]` so the loop is scoped and machine-readable |
+| **Tamper-evident auditability** | "It passed locally" with no citeable trail | Planner stamps, `EXECUTOR_LOG.md` quotes, optional SSH/GPG attestation receipts |
+
+**Hybrid model:** free local CLI (spoke) for developers; optional metadata plane (hub) later for team-wide audit aggregation. Source trees and gate stdout never leave via GXT export paths.
 
 Deep dive: [`docs/SECURITY.md`](docs/SECURITY.md) · [`docs/FEATURES.md`](docs/FEATURES.md) · [opengantry.ai](https://opengantry.ai)
 

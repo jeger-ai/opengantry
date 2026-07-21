@@ -604,3 +604,9 @@ DoD 1 MSN-0137: README "Start the audit trail now" — local offline Git-native 
 DoD 2 MSN-0137: docs/SECURITY.md Art.12/14 capability mapping + OpenGantry vs standalone security proxy
 DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; no Dec 2027 deadline copy
 DoD 4 MSN-0137: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+[CONTEXT-REQUEST] path=README.md,docs/SECURITY.md,docs/FEATURES.md reason=MSN-0137 hybrid hub positioning docs: README and enterprise governance framing outside empty substrate tmvc_roots proposed=README.md,docs/SECURITY.md,docs/FEATURES.md | msn=MSN-0137
+- Context Request ACCEPTED: `README.md`, `docs/SECURITY.md`, `docs/FEATURES.md` — MSN-0137 follow-up local-governance framing
+DoD 1 MSN-0137: README local control / unmonitored loops / tamper-evident proof + hybrid spoke-hub framing
+DoD 2 MSN-0137: docs/SECURITY.md automatic record-keeping, signed vs unsigned receipts, human oversight cages
+DoD 3 MSN-0137: docs/FEATURES.md spoke vs hub + defense-in-depth security proxy; no calendar deadline copy
+DoD 4 MSN-0137: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
