@@ -20,12 +20,13 @@ import {
 import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
 import { runExecutorLogIntegrityDoctorChecks } from "./executor-log-integrity.js";
-import { loadGxtConfig, resolvePlannerSignatureTier } from "./gxt-config.js";
+import { loadGxtConfig, resolvePlannerSignatureTier, resolveReceiptSignatureTier } from "./gxt-config.js";
 import { gitCommitSignatureStatus, isGoodGitSignatureStatus } from "./planner-signature.js";
 import { gitRunOk } from "./git.js";
 import { runTargetArchitectureDoctorChecks } from "./arch/cage/target-architecture-doctor.js";
 import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift-doctor.js";
-import { runFlightTelemetryDoctorChecks, runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
+import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
+import { runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -85,6 +86,11 @@ function appendPlannerSignatureChecks(root: string, lines: DoctorLine[]): void {
       ? "HEAD Planner stamp: signed"
       : `HEAD Planner stamp: unsigned (git %G?=${status})`,
   });
+}
+
+function appendReceiptSignatureChecks(root: string, lines: DoctorLine[]): void {
+  const tier = resolveReceiptSignatureTier(loadGxtConfig(root));
+  lines.push({ level: "ok", message: `receipt_signature tier: ${tier}` });
 }
 
 function appendBypassChecks(root: string, lines: DoctorLine[]): void {
@@ -170,6 +176,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   nextStep = plannerResult.nextStep;
   plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
   appendPlannerSignatureChecks(root, lines);
+  appendReceiptSignatureChecks(root, lines);
   appendBypassChecks(root, lines);
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);

@@ -14,6 +14,7 @@ export interface AttestMissionOptions {
 }
 
 export interface AttestMissionResult {
+  repo_root: string;
   receipt: AttestationReceipt;
   receipt_path: string;
 }
@@ -33,5 +34,5 @@ export function attestMission(options: AttestMissionOptions): AttestMissionResul
     sign: options.sign === true,
   });
   const receipt_path = writeAttestationReceipt(root, receipt, options.out);
-  return { receipt, receipt_path };
+  return { repo_root: root, receipt, receipt_path };
 }

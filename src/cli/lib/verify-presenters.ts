@@ -9,7 +9,7 @@ import { isGantryUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
 import { loadWorkspace } from "./workspace.js";
 import type { VerifyOptions } from "./verify-options.js";
-import type { VerifyPhaseResult } from "./verify-engine.js";
+import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
 import {
@@ -194,33 +194,17 @@ export async function presentFix(
   options: VerifyOptions,
   result: VerifyPhaseResult,
   nonInteractive: boolean,
-  manifest: Manifest,
-  rerunVerify: (options: VerifyOptions) => Promise<{ ok: boolean; exitCode: number }>,
+  _manifest: Manifest,
 ): Promise<VerifyPresentResult> {
   if (result.ok) {
     return presentHuman(root, mission, missionArg, options, result);
-  }
-
-  const failure = result as VerifyPhaseFailure;
-  const surgeonRerun = await trySurgeonAndRerunVerify(
-    {
-      root,
-      mission,
-      missionArg,
-      options,
-      manifest,
-      failure,
-    },
-    rerunVerify,
-  );
-  if (surgeonRerun) {
-    return surgeonRerun;
   }
 
   if (nonInteractive) {
     return presentHuman(root, mission, missionArg, options, result);
   }
 
+  const failure = result as VerifyPhaseFailure;
   const reporter = reporterFor(options);
   const remediation = hintsForVerifyPhase(failure, {
     missionPath: missionArg,
@@ -259,30 +243,30 @@ export function emitVerifyJson(payload: VerifyResultPayload, options: VerifyOpti
   reporterFor(options).emitJsonPayload(payload);
 }
 
-async function trySurgeonAndRerunVerify(
-  input: {
-    root: string;
-    mission: ParsedMission;
-    missionArg: string;
-    options: VerifyOptions;
-    manifest: Manifest;
-    failure: VerifyPhaseFailure;
-  },
-  rerunVerify: (options: VerifyOptions) => Promise<{ ok: boolean; exitCode: number }>,
-): Promise<VerifyPresentResult | null> {
-  if (input.options.fix !== true) return null;
-  if (input.failure.phase !== "gate") return null;
+/** One surgeon mutation pass + phase re-eval only (no nested runVerifyCore). */
+export async function maybeApplySurgeonAndReevaluate(input: {
+  root: string;
+  mission: ParsedMission;
+  options: VerifyOptions;
+  manifest: Manifest;
+  result: VerifyPhaseResult;
+}): Promise<VerifyPhaseResult> {
+  if (input.result.ok) return input.result;
+  if (input.options.fix !== true) return input.result;
 
-  const errorCode = resolveSurgeonErrorCode(input.failure);
-  if (!errorCode) return null;
+  const failure = input.result as VerifyPhaseFailure;
+  if (failure.phase !== "gate") return input.result;
+
+  const errorCode = resolveSurgeonErrorCode(failure);
+  if (!errorCode) return input.result;
 
   const surgeon = getSurgeonForErrorCode(errorCode);
-  if (!surgeon) return null;
+  if (!surgeon) return input.result;
 
-  const executorLogPath = input.failure.executorLogPath;
+  const executorLogPath = failure.executorLogPath;
   const context: SurgeonContext = {
     root: input.root,
-    failure: input.failure,
+    failure,
     manifest: input.manifest,
     executorLogPath,
     errorCode,
@@ -292,15 +276,17 @@ async function trySurgeonAndRerunVerify(
   const mutation = await surgeon.applyMutation(context);
   if (!mutation.mutated) {
     logInfo(`${CLI_NAME} verify: [Surgeon] no mutation applied (${mutation.summary})`);
-    return null;
+    return input.result;
   }
 
   appendSurgeonMutationLog(executorLogPath, mutation.summary);
-  logInfo(`${CLI_NAME} verify: [Surgeon] mutation logged; rerunning full verify (fix disabled)`);
+  logInfo(`${CLI_NAME} verify: [Surgeon] mutation logged; re-evaluating verify phases (fix disabled)`);
 
-  return rerunVerify({
+  const reevalOptions: VerifyOptions = {
     ...input.options,
     fix: false,
     fixNonInteractive: false,
-  });
+    receipt: undefined,
+  };
+  return evaluateVerifyPhases(input.root, input.mission, reevalOptions, input.manifest);
 }
