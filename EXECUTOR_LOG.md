@@ -593,3 +593,14 @@ DoD 4 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, 
 [CONTEXT-REQUEST] path=scripts/npm-pack-check.sh reason=fix CI flake: pipefail+SIGPIPE false missing package/dist/cli/index.js proposed=scripts/npm-pack-check.sh
 DoD 4 MSN-0134: npm-pack-check uses grep here-string to avoid pipefail SIGPIPE false negatives
 DoD 5 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+- Context Request PENDING: `README.md`, `docs/SECURITY.md`, `docs/FEATURES.md` — MSN-0137 hybrid hub positioning docs: README and enterprise compliance framing outside empty substrate tmvc_roots | proposed: `README.md`, `docs/SECURITY.md`, `docs/FEATURES.md` | msn=MSN-0137
+## MSN-0137 hybrid hub positioning and 2027 runway docs
+- Context Request ACCEPTED: `README.md`, `docs/SECURITY.md`, `docs/FEATURES.md` — MSN-0137 mission-authorized docs framing
+DoD 1 MSN-0137: README 2027 runway section — local offline Git-native architectural logging before Dec 2027 deadline
+DoD 2 MSN-0137: docs/SECURITY.md Art.12/14 capability mapping + OpenGantry vs standalone security proxy
+DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; not an MCP firewall
+DoD 4 MSN-0137: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+DoD 1 MSN-0137: README "Start the audit trail now" — local offline Git-native logging without calendar deadline
+DoD 2 MSN-0137: docs/SECURITY.md Art.12/14 capability mapping + OpenGantry vs standalone security proxy
+DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; no Dec 2027 deadline copy
+DoD 4 MSN-0137: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

@@ -10,6 +10,12 @@
 
 > **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native agent enforcement in your repository, not a hosted observability dashboard. Product home: [opengantry.ai](https://opengantry.ai).
 
+### Start the audit trail now
+
+Agent velocity without a declared mission trail means you reverse-engineer years of edits when auditors ask. OpenGantry is the tool you run **today** so continuous, Git-native mission traces and attestation receipts already exist. Same loop that keeps local agents from thrashing VRAM on unstructured stderr or wandering outside declared paths: 100% local, fast, and offline. No cloud required for verify.
+
+Deep dive: [`docs/SECURITY.md`](docs/SECURITY.md) · [`docs/FEATURES.md`](docs/FEATURES.md) · [opengantry.ai](https://opengantry.ai)
+
 ---
 
 ## In plain English
