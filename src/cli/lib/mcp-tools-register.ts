@@ -9,6 +9,7 @@ import { handleResolveMission } from "./mcp-resolve-mission.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleRuntimeEnv, handleRuntimeExec, handleScan, handleVerify } from "./mcp-runtime.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
+import { handleAttest } from "./mcp-attest.js";
 
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
   return {
@@ -58,6 +59,26 @@ function registerLegislationTools(server: McpServer): void {
   );
 }
 
+function registerAttestTool(server: McpServer): void {
+  server.tool(
+    "gxt_attest",
+    "Emit local attestation receipt JSON (digests only; optional SSH/GPG signature).",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      out: z.string().optional().describe("Receipt output path override"),
+      sign: z.boolean().optional().describe("Detach-sign receipt with local SSH/GPG key"),
+    },
+    async (args) =>
+      jsonText(
+        handleAttest({
+          mission_file_path: args.mission_file_path,
+          out: args.out,
+          sign: args.sign,
+        }),
+      ),
+  );
+}
+
 function registerRuntimeTools(server: McpServer): void {
   server.tool(
     "gxt_runtime_env",
@@ -79,6 +100,8 @@ function registerRuntimeTools(server: McpServer): void {
     },
     async (args) => jsonText(handleVerify(args.mission_file_path, args.pre_push === true, args.skip_stale_evidence === true, args.ci === true)),
   );
+
+  registerAttestTool(server);
 
   server.tool(
     "gxt_scan",

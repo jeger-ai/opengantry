@@ -1,0 +1,22 @@
+# Hybrid hub/spoke local engine readiness — hash-only telemetry, attestation receipts, doctor policy digests.
+msn_id: MSN-0133
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0133: flight_telemetry.body_mode hash_only default — runtime exec omits chunk_b64; ADR-0034 hybrid metadata plane boundary"
+    anchor: "MSN-0133"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0133: gantry attest + verify --receipt + gxt_attest — SSH/GPG receipt signing with local verify_status"
+    anchor: "MSN-0133"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0133: gantry doctor --policy expected-digests drift check + FEATURES/SECURITY/ADOPTION/CHANGELOG hybrid repositioning"
+    anchor: "MSN-0133"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0133: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0133"
+    status: PASS

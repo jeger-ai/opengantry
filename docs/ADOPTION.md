@@ -4,7 +4,7 @@ Product home: [https://opengantry.ai](https://opengantry.ai) · All docs: [`inde
 
 This runbook is the operational path for adopters using `gantry` locally. Product positioning and use cases: [README](../README.md) · [`USE-CASES.md`](USE-CASES.md).
 
-**Open Source Gantry** is **vendor-neutral**, **local-first**, **git-native** — the **`gantry` CLI** plus Git hooks and `gantry verify` over mission YAML (scope + `gate_command`), not a hosted agent dashboard.
+**Open Source Gantry** is **vendor-neutral**, **local-first**, **git-native** — the **`gantry` CLI** plus Git hooks and `gantry verify` over mission YAML (scope + `gate_command`). Execution never requires a hosted agent dashboard; optional future **metadata hub** integrations consume **digest-only attestation receipts** (`gantry attest`, `gantry verify --receipt`) — see [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
 
 **First mission practice:** [`KATA.md`](KATA.md) (~15 min, headless-friendly).
 
@@ -78,16 +78,21 @@ PR CI (this specimen): commits touching `.gitagent/`, `EXECUTOR_LOG.md`, hooks, 
 
 ### Trusted automation policy
 
-Low-risk ecosystem bot maintenance (for example Dependabot workflow version pins) can bypass manual mission authoring when **all** constraints in a committed policy rule pass:
+Low-risk ecosystem bot maintenance can bypass manual mission authoring when **all** constraints in a committed policy rule pass. Each rule declares **exactly one** `allowed_structural_changes` kind (mixing kinds on a single rule is rejected at config load).
 
 | Constraint | Meaning |
 |------------|---------|
-| `allowed_actors` | Commit author email must match an entry you legislated (no hardcoded platform strings in the engine) |
-| `allowed_paths` | Every changed file must match a glob in the rule (e.g. `.github/workflows/**`) |
-| `allowed_structural_changes` | Only `workflow_version_pin` is supported — YAML structure unchanged; only existing `uses:` version segments may differ |
-| `max_net_loc` | Total diff churn (additions + deletions) per evaluation; hard engine cap **`<= 5`** |
+| `allowed_actors` | Commit author email (`git log -1 --format=%ae`) must match an entry you legislated — no hardcoded vendor strings in the engine |
+| `allowed_paths` | Every MSN-enforced changed file must match a glob in the rule |
+| `allowed_structural_changes` | Structural kind — see table below (one kind per rule) |
+| `max_net_loc` | Total diff churn (additions + deletions) per evaluation; must be ≤ the hard cap for that kind |
 
-Example (specimen repo):
+| Kind | Use case | Hard `max_net_loc` cap | Structural checks |
+|------|----------|------------------------|-------------------|
+| `workflow_version_pin` | Dependabot workflow `uses:` version bumps | **5** | YAML structure unchanged; only existing `uses:` version segments may differ |
+| `bounded_content` | Security autofix bots (code scanning, Snyk, similar) | **100** | Content changes allowed inside `allowed_paths`; engine **hard-rejects** any touch under `.gitagent/**` or MANIFEST `perimeter_protected` even if listed in `allowed_paths` |
+
+Example — workflow pins (this specimen repo):
 
 ```json
 {
@@ -104,6 +109,27 @@ Example (specimen repo):
   }
 }
 ```
+
+#### Ecosystem autofix bots
+
+GitHub code scanning agentic autofix, Copilot SWE agent, Snyk fix PRs, and similar tools commit application-source changes without a `[MSN-NNNN]` subject. To let those PRs pass MSN CI **without** break-glass, add a separate `bounded_content` rule — opt-in per repository:
+
+```json
+{
+  "id": "security-autofix-bots",
+  "allowed_actors": [
+    "223556219+Copilot@users.noreply.github.com",
+    "snyk-bot@snyk.io"
+  ],
+  "allowed_paths": ["src/**", "package.json", "package-lock.json"],
+  "allowed_structural_changes": ["bounded_content"],
+  "max_net_loc": 80
+}
+```
+
+**Actor discovery:** when CI fails MSN check on a bot PR, inspect the commit author on the failing commit (`git log -1 --format=%ae <sha>`) and add that exact email to `allowed_actors`. GitHub noreply formats vary by account; Snyk private-repo fix PRs may be opened on behalf of a human collaborator — those commits will **not** match `snyk-bot@snyk.io` unless you configure Snyk’s fixed GitHub account or add the collaborator email explicitly.
+
+**Not for break-glass:** routine autofixes belong in `trusted_automation`. Reserve [`gantry verify --break-glass`](SECURITY.md) for production emergencies only (secret-gated, Planner post-incident review).
 
 Evaluation is **git-derived only** (`gxt-manifest-lib.mjs eval-commit` / `eval-range`) — not CI environment variables. Missing or invalid config → full MSN/mission workflow remains enforced.
 

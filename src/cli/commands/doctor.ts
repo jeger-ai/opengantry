@@ -13,6 +13,12 @@ export interface DoctorReport {
   exit_code: number;
 }
 
+export interface DoctorOptions {
+  json?: boolean;
+  audience?: OutputAudience;
+  policy?: string;
+}
+
 function emitDoctor(
   lines: DoctorLine[],
   nextStep: string | null,
@@ -42,10 +48,10 @@ function emitDoctor(
   if (hasFail) setExitCode(1);
 }
 
-export function runDoctor(options: { json?: boolean; audience?: OutputAudience } = {}): void {
+export function runDoctor(options: DoctorOptions = {}): void {
   try {
     const { root, manifest } = loadWorkspace();
-    const report = collectDoctorReport(root, manifest);
+    const report = collectDoctorReport(root, manifest, undefined, options.policy);
     emitDoctor(
       report.lines,
       report.nextStep,

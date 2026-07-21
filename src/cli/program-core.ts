@@ -49,11 +49,22 @@ export function registerCoreCommands(program: Command): void {
   program
     .command("doctor")
     .description("Active GXT readiness check (warnings do not fail exit)")
+    .argument("[policy]", "Expected digests JSON; alias for --policy when npm run swallows flags")
     .option("--json", "Emit structured report")
+    .option("--policy <file>", "Compare working-tree digests to expected-digests JSON (offline)")
     .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
-    .action((opts: { json?: boolean; audience?: string }) => {
-      runDoctor({ json: opts.json, audience: getOutputAudience() });
-    });
+    .action(
+      (
+        policyPositional: string | undefined,
+        opts: { json?: boolean; audience?: string; policy?: string },
+      ) => {
+        runDoctor({
+          json: opts.json,
+          audience: getOutputAudience(),
+          policy: opts.policy ?? policyPositional,
+        });
+      },
+    );
 
   addInitOptions(
     program.command("init").description("Bootstrap OpenGantry substrate assets into current git repository"),

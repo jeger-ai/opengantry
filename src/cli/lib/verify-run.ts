@@ -20,6 +20,7 @@ import {
   presentJsonFromResult,
   presentJsonInitFailure,
 } from "./verify-presenters.js";
+import { maybeWriteVerifyReceipt } from "./verify-receipt.js";
 
 export interface VerifyRunResult {
   ok: boolean;
@@ -59,10 +60,26 @@ function evaluateOrInitFailure(
   }
 }
 
+function writeReceiptIfRequested(
+  ctx: LoadedVerifyContext,
+  phaseResult: VerifyPhaseResult | null,
+): void {
+  if (!phaseResult || ctx.options.receipt === undefined) return;
+  maybeWriteVerifyReceipt({
+    root: ctx.root,
+    mission: ctx.mission,
+    missionArg: ctx.missionArg,
+    options: ctx.options,
+    result: phaseResult,
+  });
+}
+
 /** Unified verify orchestration: load once, evaluate once, present by sink. */
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
   const ctx = loadVerifyContext(options);
   const sink = resolveVerifySink(options);
+  let presentation: VerifyRunResult;
+  let phaseResult: VerifyPhaseResult | null = null;
 
   switch (sink) {
     case "break_glass_json":
@@ -74,7 +91,8 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
       if (!evaluated.ok) {
         return presentJsonInitFailure(options, evaluated.error);
       }
-      return presentJsonFromResult(
+      phaseResult = evaluated.result;
+      presentation = await presentJsonFromResult(
         ctx.root,
         ctx.mission,
         ctx.missionArg,
@@ -82,6 +100,7 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
         ctx.manifest,
         evaluated.result,
       );
+      break;
     }
     case "fix_interactive":
     case "fix_noninteractive":
@@ -92,8 +111,9 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
         return presentHumanInitFailure(options, e);
       }
       const result = evaluateVerifyPhases(ctx.root, ctx.mission, options, ctx.manifest);
+      phaseResult = result;
       if (sink === "fix_interactive") {
-        return presentFix(
+        presentation = await presentFix(
           ctx.root,
           ctx.mission,
           ctx.missionArg,
@@ -103,9 +123,10 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
           ctx.manifest,
           runVerifyCore,
         );
+        break;
       }
       if (sink === "fix_noninteractive") {
-        return presentFix(
+        presentation = await presentFix(
           ctx.root,
           ctx.mission,
           ctx.missionArg,
@@ -115,14 +136,19 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
           ctx.manifest,
           runVerifyCore,
         );
+        break;
       }
-      return presentHuman(ctx.root, ctx.mission, ctx.missionArg, options, result);
+      presentation = presentHuman(ctx.root, ctx.mission, ctx.missionArg, options, result);
+      break;
     }
     default: {
       const _exhaustive: never = sink;
       return _exhaustive;
     }
   }
+
+  writeReceiptIfRequested(ctx, phaseResult);
+  return presentation;
 }
 
 export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): VerifyResultPayload {

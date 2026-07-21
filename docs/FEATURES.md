@@ -114,9 +114,9 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## Trusted automation policy
 
-**Why:** Low-risk bot maintenance (e.g. Dependabot workflow pin bumps) should not require a full mission per pin when constraints are narrow and git-derived.
+**Why:** Low-risk bot maintenance (e.g. Dependabot workflow pin bumps, security autofix PRs) should not require a full mission per bot commit when constraints are narrow and git-derived.
 
-**What it does:** Declarative rules in `.gitagent/config.json` — `allowed_actors`, `allowed_paths`, `allowed_structural_changes`, `max_net_loc`. Evaluation is **git-derived only**; missing config → full MSN workflow.
+**What it does:** Declarative rules in `.gitagent/config.json` — `allowed_actors`, `allowed_paths`, one `allowed_structural_changes` kind per rule (`workflow_version_pin` or `bounded_content`), `max_net_loc` with per-kind hard caps. Evaluation is **git-derived only**; missing config → full MSN workflow.
 
 **When to use:** Committed automation you can bound with strict path and churn limits.
 
@@ -178,10 +178,30 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ---
 
+## Hybrid hub and spoke (metadata plane)
+
+**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only.
+
+**What it does:**
+
+| Capability | Command / config | Notes |
+|------------|------------------|-------|
+| Hash-only flight telemetry | `flight_telemetry.body_mode` in `.gitagent/config.json` (default `hash_only`) | Stream events keep `chunk_sha256` + `bytes`; omit `chunk_b64` unless `full` |
+| Attestation receipts | `gantry attest`, `gantry verify --receipt` | JSON under `.gitagent/history/receipts/` (git-ignored); digests + outcomes only |
+| Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
+| Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
+
+**When to use:** Preparing for a future optional cloud control plane, EU AI Act audit exports, or CISO dashboards — without changing the local enforcement model.
+
+**How:** [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md) · [`SECURITY.md`](SECURITY.md)
+
+---
+
 ## What OpenGantry is not
 
 - **Not an agent** — it does not chat, plan features, or generate PRs
-- **Not Gantry.io** — no hosted observability dashboard
+- **Not a hosted execution console** — gates and cages run on your machine/CI; no source upload for verify
+- **Not Gantry.io** — no bundled hosted observability dashboard (optional future metadata hub is digest-only)
 - **Not an LLM judge for merge** — gates stay deterministic; LLM evidence is optional and committed separately
 
 For product positioning and a hands-on tour, see [README](../README.md).

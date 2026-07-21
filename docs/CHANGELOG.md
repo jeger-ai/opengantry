@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.0.2** (unreleased) | Hybrid hub/spoke readiness — default `flight_telemetry.body_mode: hash_only`, `gantry attest` + `gantry verify --receipt` (optional SSH/GPG signatures), `gantry doctor --policy` digest drift (ADR-0034); `trusted_automation` **`bounded_content`** kind for ecosystem autofix bots |
 | **v3.0.1** | Docs cleanup + thermo remediation; discovery scanner hardening; npm **3.0.1** |
 | **v3.0.0** | Domain-agnostic governance layer — `gantry init --discover`, `gantry blueprint`, `gantry perimeter check`, content adapter (regex perimeter), standardized `findings[]` failure envelope for external executors |
 | **v2.7.0** | Quality & governance consolidation — audit-severity net_loc verify bugfix, discriminated `VerifyPhaseFailure` union, typed trace failure kinds, verify pipeline collapse, shared command error boundary, `GantryUserError` naming (deprecated `Gapman*` aliases), governance backfill + release-squash policy |
