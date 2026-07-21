@@ -6,7 +6,7 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0137: README 2027 runway section — local offline Git-native architectural logging before Dec 2027 deadline"
+    trace_quote: "DoD 1 MSN-0137: README \"Start the audit trail now\" — local offline Git-native logging without calendar deadline"
     anchor: "MSN-0137"
     status: PASS
   - dod_id: "2"
@@ -14,7 +14,7 @@ trace_rows:
     anchor: "MSN-0137"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; not an MCP firewall"
+    trace_quote: "DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; no Dec 2027 deadline copy"
     anchor: "MSN-0137"
     status: PASS
   - dod_id: "4"

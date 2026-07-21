@@ -180,7 +180,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## Hybrid hub and spoke (metadata plane)
 
-**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only. The December 2027 EU AI Act high-risk deadline makes starting Git-native logging now cheaper than a late scramble.
+**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only. Starting Git-native logging now is cheaper than reconstructing agent history later.
 
 **What it does:**
 

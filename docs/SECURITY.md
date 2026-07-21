@@ -74,7 +74,7 @@ OpenGantry does **not** certify legal compliance. It produces Git-native artifac
 
 Signed receipts (`gantry attest --sign`) turn a digest checksum into a **local attestation proof** of verify outcome, mission identity, and policy digests — without uploading source. Unsigned receipts remain checksums only.
 
-December 2027 is a runway, not a reason to wait. Start the mission loop now so the log already exists when the deadline arrives.
+Start the mission loop now so the log already exists when someone asks for evidence.
 
 ## OpenGantry vs a standalone security proxy
 
