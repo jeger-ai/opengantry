@@ -14,13 +14,14 @@ for path in \
   package/templates/integrations/compatibility.json \
   package/LICENSE \
   package/README.md; do
-  if ! printf '%s\n' "$listing" | grep -qxF "$path"; then
+  # Avoid printf|grep SIGPIPE under pipefail (false "missing" when grep exits early on match).
+  if ! grep -qxF -- "$path" <<<"$listing"; then
     echo "npm-pack-check: missing $path in $TARBALL" >&2
     exit 1
   fi
 done
 
-if printf '%s\n' "$listing" | grep -q 'package/dist/cli/tests/'; then
+if grep -q 'package/dist/cli/tests/' <<<"$listing"; then
   echo "npm-pack-check: unexpected test files in tarball" >&2
   exit 1
 fi

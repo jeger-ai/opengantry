@@ -17,6 +17,10 @@ trace_rows:
     anchor: "MSN-0134"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    trace_quote: "DoD 4 MSN-0134: npm-pack-check uses grep here-string to avoid pipefail SIGPIPE false negatives"
+    anchor: "MSN-0134"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "MSN-0134"
     status: PASS
