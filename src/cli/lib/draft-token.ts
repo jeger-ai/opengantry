@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
+import { canonicalJson } from "./canonical-json.js";
 import { gitRun } from "./git.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
@@ -51,18 +52,7 @@ function base64UrlDecode(raw: string): Buffer {
   return Buffer.from(raw, "base64url");
 }
 
-/** Deterministic JSON with sorted object keys (recursive). */
-export function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== "object") {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map((v) => canonicalJson(v)).join(",")}]`;
-  }
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
-  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`).join(",")}}`;
-}
+export { canonicalJson } from "./canonical-json.js";
 
 export function computeRepoFingerprint(root: string): string {
   const absRoot = path.resolve(root);

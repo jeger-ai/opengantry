@@ -25,6 +25,7 @@ import { gitCommitSignatureStatus, isGoodGitSignatureStatus } from "./planner-si
 import { gitRunOk } from "./git.js";
 import { runTargetArchitectureDoctorChecks } from "./arch/cage/target-architecture-doctor.js";
 import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift-doctor.js";
+import { runFlightTelemetryDoctorChecks, runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -186,12 +187,27 @@ export function collectDoctorReport(
   root: string,
   manifest: Manifest,
   templatesRoot?: string,
+  policyPath?: string,
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
-  let lines = [...result.lines, ...runArchitecturePointerDoctorChecks(root)];
+  let lines = [...result.lines, ...runFlightTelemetryDoctorChecks(root)];
+  lines = [...lines, ...runArchitecturePointerDoctorChecks(root)];
   lines = [...lines, ...runTargetArchitectureDoctorChecks(root)];
   lines = [...lines, ...runArchitectureDriftDoctorChecks(root)];
   lines = [...lines, ...runExecutorLogIntegrityDoctorChecks(root)];
+  if (policyPath?.trim()) {
+    try {
+      lines = [...lines, ...runPolicyDigestDoctorChecks(root, policyPath.trim())];
+    } catch (e) {
+      lines = [
+        ...lines,
+        {
+          level: "fail",
+          message: `policy digest check failed: ${e instanceof Error ? e.message : String(e)}`,
+        },
+      ];
+    }
+  }
   let nextStep = result.nextStep;
   try {
     const tpl = templatesRoot ?? resolveTemplateRootFromModule();

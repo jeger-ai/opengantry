@@ -178,6 +178,24 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ---
 
+## Hybrid hub and spoke (metadata plane)
+
+**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only.
+
+**What it does:**
+
+| Capability | Command / config | Notes |
+|------------|------------------|-------|
+| Hash-only flight telemetry | `flight_telemetry.body_mode` in `.gitagent/config.json` (default `hash_only`) | Stream events keep `chunk_sha256` + `bytes`; omit `chunk_b64` unless `full` |
+| Attestation receipts | `gantry attest`, `gantry verify --receipt` | JSON under `.gitagent/history/receipts/` (git-ignored); digests + outcomes only |
+| Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
+| Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
+
+**When to use:** Preparing for a future optional cloud control plane, EU AI Act audit exports, or CISO dashboards — without changing the local enforcement model.
+
+**How:** [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md) · [`SECURITY.md`](SECURITY.md)
+
+---
 
 ## What OpenGantry is not
 

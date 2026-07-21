@@ -1,4 +1,7 @@
 {
+  "flight_telemetry": {
+    "body_mode": "hash_only"
+  },
   "trusted_automation": {
     "rules": [
       {

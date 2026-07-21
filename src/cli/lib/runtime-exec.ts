@@ -6,6 +6,7 @@ import { buildForbiddenBaseline, detectForbiddenViolations, type ForbiddenViolat
 import { createTelemetryWriter } from "./telemetry-log.js";
 import { resolvedRuntimeEnvToJsonPayload, resolveRuntimeEnv } from "./runtime-env.js";
 import { hashProcessChunk, spawnWithStreamCapture } from "./runtime-exec-process.js";
+import { loadGxtConfig, resolveFlightTelemetryBodyMode } from "./gxt-config.js";
 import type { Workspace } from "./workspace.js";
 
 export interface RuntimeExecResult {
@@ -94,7 +95,24 @@ export async function captureWorkerProcess(input: {
   streamOutput: boolean;
   timeoutMs?: number;
   writer: TelemetryWriter;
+  telemetryBodyMode?: "hash_only" | "full";
 }): Promise<WorkerCaptureResult> {
+  const includeStreamBodies = input.telemetryBodyMode === "full";
+
+  const emitStreamChunk = (stream: "stdout" | "stderr", chunk: Buffer, seq: number): void => {
+    const event: Record<string, unknown> = {
+      type: "stream",
+      stream,
+      seq,
+      chunk_sha256: hashProcessChunk(chunk),
+      bytes: chunk.byteLength,
+    };
+    if (includeStreamBodies) {
+      event.chunk_b64 = chunk.toString("base64");
+    }
+    input.writer.logEvent(event);
+  };
+
   const exit = await spawnWithStreamCapture({
     command: input.command,
     argv: input.argv,
@@ -112,24 +130,10 @@ export async function captureWorkerProcess(input: {
       });
     },
     onStdout: (chunk, seq) => {
-      input.writer.logEvent({
-        type: "stream",
-        stream: "stdout",
-        seq,
-        chunk_b64: chunk.toString("base64"),
-        chunk_sha256: hashProcessChunk(chunk),
-        bytes: chunk.byteLength,
-      });
+      emitStreamChunk("stdout", chunk, seq);
     },
     onStderr: (chunk, seq) => {
-      input.writer.logEvent({
-        type: "stream",
-        stream: "stderr",
-        seq,
-        chunk_b64: chunk.toString("base64"),
-        chunk_sha256: hashProcessChunk(chunk),
-        bytes: chunk.byteLength,
-      });
+      emitStreamChunk("stderr", chunk, seq);
     },
     onRuntimeError: (message, errno) => {
       input.writer.logEvent({
@@ -199,10 +203,12 @@ function beginRuntimeFlight(
   streamOutput: boolean;
   baseline: ReturnType<typeof buildForbiddenBaseline>;
   writer: ReturnType<typeof createTelemetryWriter>;
+  telemetryBodyMode: "hash_only" | "full";
 } {
   const resolved = resolveRuntimeEnv(workspace, options.mission);
   const envPayload = resolvedRuntimeEnvToJsonPayload(resolved);
   const repoRoot = resolved.repo_root;
+  const telemetryBodyMode = resolveFlightTelemetryBodyMode(loadGxtConfig(repoRoot));
   const forbiddenZones = parseJoinedLines(resolved.forbidden_zones_joined);
   const executorLogPath = options.executorLog
     ? path.resolve(repoRoot, options.executorLog)
@@ -241,6 +247,7 @@ function beginRuntimeFlight(
     streamOutput,
     baseline,
     writer,
+    telemetryBodyMode,
   };
 }
 
@@ -263,6 +270,7 @@ export async function runRuntimeExec(
     streamOutput,
     baseline,
     writer,
+    telemetryBodyMode,
   } = beginRuntimeFlight(workspace, options);
 
   const timeoutMs = options.timeoutMs;
@@ -277,6 +285,7 @@ export async function runRuntimeExec(
       streamOutput,
       timeoutMs,
       writer,
+      telemetryBodyMode,
     });
 
     if (exit.timedOut) {
