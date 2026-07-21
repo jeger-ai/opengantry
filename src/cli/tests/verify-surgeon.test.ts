@@ -85,7 +85,7 @@ test("runVerify: --fix quarantines banned import, logs mutation, reruns verify",
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START/);
       assert.match(executorLog, /\[SURGEON-MUTATION\] banned-import quarantined: src\/bad\.ts:1 -> RULE-BANNED-IMPORT/);
-      assert.match(combined, /\[Surgeon\] mutation logged; rerunning full verify \(fix disabled\)/);
+      assert.match(combined, /\[Surgeon\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {
       process.chdir(prevCwd);
@@ -236,7 +236,7 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START \[RULE-IMPORT-LAYER\]/);
       assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/lib\/bad\.ts/);
-      assert.match(combined, /\[Surgeon\] mutation logged; rerunning full verify \(fix disabled\)/);
+      assert.match(combined, /\[Surgeon\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {
       process.chdir(prevCwd);
