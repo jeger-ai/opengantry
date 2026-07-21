@@ -89,6 +89,33 @@ test("runtime exec: captures stream telemetry and succeeds", async () => {
   assert.match(body, /"type":"flight_start"/);
   assert.match(body, /"type":"stream"/);
   assert.match(body, /"type":"flight_end"/);
+  assert.doesNotMatch(body, /"chunk_b64"/);
+  assert.match(body, /"chunk_sha256"/);
+});
+
+
+test("runtime exec: full telemetry mode includes chunk_b64", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-exec-full-"));
+  writeRuntimeExecRepo(dest, ogRoot, []);
+  fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "config.json"),
+    JSON.stringify({ flight_telemetry: { body_mode: "full" } }, null, 2),
+    "utf8",
+  );
+  const manifest = loadManifest(dest);
+  const result = await runRuntimeExec(
+    { root: dest, manifest },
+    {
+      mission: ".gitagent/missions/runtime.yaml",
+      workerCommand: ["node", "-e", "process.stdout.write('OUT');"],
+      streamOutput: false,
+    },
+  );
+  assert.equal(result.status, "success");
+  const body = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
+  assert.match(body, /"chunk_b64"/);
 });
 
 

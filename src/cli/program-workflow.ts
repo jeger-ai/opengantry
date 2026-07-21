@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
@@ -39,6 +40,8 @@ interface VerifyCliOptions {
   format?: string;
   audience?: string;
   scanDepth?: string;
+  receipt?: string | boolean;
+  signReceipt?: boolean;
 }
 
 function parseVerifyExportFormat(raw?: string): VerifyExportFormat | undefined {
@@ -73,6 +76,8 @@ function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     breakGlassCommit: opts.commit,
     fixNonInteractive: opts.nonInteractive,
     audience: getOutputAudience(),
+    receipt: opts.receipt,
+    signReceipt: opts.signReceipt,
   };
 }
 
@@ -106,6 +111,28 @@ export function registerWorkflowCommands(program: Command): void {
     });
 
   program
+    .command("attest")
+    .description("Emit local attestation receipt (digests only; optional SSH/GPG signature)")
+    .argument("[mission]", "Mission file (.md or .yaml); alias for --mission when npm run swallows flags")
+    .option("--mission <path>", "Mission file (.md or .yaml)")
+    .option("--out <file>", "Receipt output path (default .gitagent/history/receipts/)")
+    .option("--sign", "Detach-sign receipt with local SSH/GPG key")
+    .option("--json", "Emit structured JSON including receipt_path")
+    .action(
+      (
+        missionPositional: string | undefined,
+        opts: { mission?: string; out?: string; sign?: boolean; json?: boolean },
+      ) => {
+        runAttest({
+          mission: opts.mission ?? missionPositional ?? "",
+          out: opts.out,
+          sign: opts.sign,
+          json: opts.json,
+        });
+      },
+    );
+
+  program
     .command("verify")
     .description(
       "Git-proof (Planner + MSN) + deterministic gate + hard-stop trace mapping vs EXECUTOR_LOG.md",
@@ -132,6 +159,8 @@ export function registerWorkflowCommands(program: Command): void {
       "--scan-depth <number>",
       "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",
     )
+    .option("--receipt [file]", "Write attestation receipt JSON after verify (default history path)")
+    .option("--sign-receipt", "Detach-sign receipt with local SSH/GPG key")
     .option("--audience <role>", "Tailor output: executor|planner|verifier|platform")
     .action(async (opts: VerifyCliOptions) => {
       await runVerify(verifyOptionsFromCli(opts));

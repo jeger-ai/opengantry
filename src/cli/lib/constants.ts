@@ -13,6 +13,8 @@ export const REL_KPI_REPORT_SCHEMA = ".gitagent/planner/KPI-REPORT.schema.yaml" 
 export const DEFAULT_KPI_REPORT_DIR = ".gitagent/kpi" as const;
 export const REL_MISSION_TEMPLATE = ".gitagent/planner/MISSION.template.md" as const;
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
+/** Git-ignored attestation receipts for optional hub ingestion. */
+export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
 /** Git-ignored machine-readable runtime error (see templates/.gitignore.gxt). */
 export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json" as const;
 /** Git-ignored verify failure remediation feed for IDE/agent loops (atomic swap writes). */

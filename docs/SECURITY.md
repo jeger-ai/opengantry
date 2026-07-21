@@ -52,6 +52,17 @@ We aim to acknowledge reports within **5 business days** and to coordinate discl
 2. Run `gantry upgrade plan`, review `.gitagent/.upgrade-tmp/`, Planner-commit the upgrade mission, then `gantry upgrade apply --mission …`.
 3. Run `gantry doctor` and your usual `gantry verify` / CI checks.
 
+## Hybrid hub and spoke boundary
+
+OpenGantry separates **local execution** (CLI, cages, verify) from an optional future **metadata control plane**:
+
+- **Default:** `flight_telemetry.body_mode` is `hash_only` — gate stream bodies are not written to `EXECUTOR_LOG.md` (`chunk_b64` omitted).
+- **Receipts:** `gantry attest` / `gantry verify --receipt` write digest-only JSON under `.gitagent/history/receipts/` (git-ignored). Unsigned `receipt_sha256` is a checksum; SSH/GPG signatures (`receipt_signature` tier) make a receipt an attestation proof.
+- **Policy drift:** `gantry doctor --policy <expected-digests.json>` compares working-tree digests offline — no network I/O in doctor.
+- **Never via GXT export:** source trees, gate stdout bodies, credentials, draft-token keys, or bypass secrets.
+
+See [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
+
 ## Break-glass (emergency verify bypass)
 
 When a production hotfix cannot wait for full git-proof + trace mapping:

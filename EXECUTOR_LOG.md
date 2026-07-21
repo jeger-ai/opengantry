@@ -578,3 +578,9 @@ DoD 1 MSN-0132: bounded_content structural kind in trusted-automation.mjs — pe
 DoD 2 MSN-0132: trusted-automation.test.ts — bounded_content allow/deny, substrate reject, mixed-kind load error
 DoD 3 MSN-0132: ADOPTION/FEATURES/SECURITY/CHANGELOG — ecosystem autofix bot configuration guidance
 DoD 4 MSN-0132: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0133 hybrid hub-spoke local engine readiness
+DoD 1 MSN-0133: flight_telemetry.body_mode hash_only default — runtime exec omits chunk_b64; ADR-0034 hybrid metadata plane boundary
+DoD 2 MSN-0133: gantry attest + verify --receipt + gxt_attest — SSH/GPG receipt signing with local verify_status
+DoD 3 MSN-0133: gantry doctor --policy expected-digests drift check + FEATURES/SECURITY/ADOPTION/CHANGELOG hybrid repositioning
+DoD 4 MSN-0133: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

@@ -36,6 +36,10 @@ export interface VerifyOptions {
   ci?: boolean;
   /** Max commits to scan for Planner [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
   scanDepth?: number;
+  /** Write attestation receipt after verify (optional path; default .gitagent/history/receipts/). */
+  receipt?: boolean | string;
+  /** Detach-sign receipt with local SSH/GPG key (also when receipt_signature tier is warn/require). */
+  signReceipt?: boolean;
 }
 
 /** Resolve the primary verify mode from CLI flags (single discriminant for sinks). */
