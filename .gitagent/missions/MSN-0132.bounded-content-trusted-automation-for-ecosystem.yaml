@@ -21,3 +21,5 @@ trace_rows:
     trace_quote: "DoD 4 MSN-0132: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "MSN-0132"
     status: PASS
+
+# Close-out stamp: docs + EXECUTOR_LOG traces included in branch.
