@@ -1,0 +1,19 @@
+# Complete regex escaping for VERSION in smoke test and test-fixtures (code scanning alerts 9 and 3).
+# Legislated intent: Complete regex escaping for VERSION in smoke test and test-fixtures (code scanning alerts 9 and 3)
+msn_id: MSN-0135
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0135: complete regex metachar escape for VERSION in examples/gantry-minimal smoke test"
+    anchor: "MSN-0135"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0135: spawnSync argv for git config/commit in test-fixtures — no shell-interpolated subjects"
+    anchor: "MSN-0135"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0135: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0135"
+    status: PASS

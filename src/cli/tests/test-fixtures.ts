@@ -129,10 +129,16 @@ body
 
 export function gitInitCommit(dest: string, subject: string, email: string): void {
   execSync("git init", { cwd: dest, stdio: "pipe" });
-  execSync(`git config user.email "${email}"`, { cwd: dest, stdio: "pipe" });
+  {
+    const r = spawnSync("git", ["-C", dest, "config", "user.email", email], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error(r.stderr || "git config user.email failed");
+  }
   execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync("git add -A", { cwd: dest, stdio: "pipe" });
-  execSync(`git commit -m "${subject.replace(/"/g, '\\"')}"`, { cwd: dest, stdio: "pipe" });
+  {
+    const r = spawnSync("git", ["-C", dest, "commit", "-m", subject], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error(r.stderr || "git commit failed");
+  }
 }
 
 export function gitInitCommitWithBody(dest: string, subject: string, body: string, email: string): void {
@@ -147,9 +153,15 @@ export function gitInitCommitWithBody(dest: string, subject: string, body: strin
 }
 
 export function gitCommit(dest: string, subject: string, email?: string): void {
-  if (email) execSync(`git config user.email "${email}"`, { cwd: dest, stdio: "pipe" });
+  if (email) {
+    const r = spawnSync("git", ["-C", dest, "config", "user.email", email], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error(r.stderr || "git config user.email failed");
+  }
   execSync("git add -A", { cwd: dest, stdio: "pipe" });
-  execSync(`git commit -m "${subject.replace(/"/g, '\\"')}"`, { cwd: dest, stdio: "pipe" });
+  {
+    const r = spawnSync("git", ["-C", dest, "commit", "-m", subject], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error(r.stderr || "git commit failed");
+  }
 }
 
 export function writeBypassAnchor(dest: string, secret: string): void {
