@@ -1,13 +1,8 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { TARGET_ARCHITECTURE_FILENAME } from "./arch/cage/target-architecture.js";
-import { canonicalJson } from "./canonical-json.js";
-import { REL_MANIFEST } from "./constants.js";
 import type { DoctorLine } from "./doctor-types.js";
-import { loadGxtConfig, resolveFlightTelemetryBodyMode } from "./gxt-config.js";
-import { isDefensiveProfilePresetName } from "./defensive-profile-presets.js";
+import { computeWorkingDigests } from "./working-digests.js";
 
 export const EXPECTED_DIGESTS_SCHEMA_VERSION = "0.1.0" as const;
 
@@ -16,27 +11,6 @@ export interface ExpectedDigestsFile {
   manifest_sha256?: string;
   target_architecture_sha256?: string | null;
   config_sha256?: string | null;
-}
-
-function sha256File(absPath: string): string {
-  return crypto.createHash("sha256").update(fs.readFileSync(absPath)).digest("hex");
-}
-
-function sha256FileOrNull(absPath: string): string | null {
-  if (!fs.existsSync(absPath)) return null;
-  return sha256File(absPath);
-}
-
-export function computeWorkingDigests(root: string): {
-  manifest_sha256: string | null;
-  target_architecture_sha256: string | null;
-  config_sha256: string | null;
-} {
-  return {
-    manifest_sha256: sha256FileOrNull(path.join(root, REL_MANIFEST)),
-    target_architecture_sha256: sha256FileOrNull(path.join(root, TARGET_ARCHITECTURE_FILENAME)),
-    config_sha256: sha256FileOrNull(path.join(root, ".gitagent", "config.json")),
-  };
 }
 
 export function loadExpectedDigestsFile(policyPath: string): ExpectedDigestsFile {
@@ -84,38 +58,4 @@ export function runPolicyDigestDoctorChecks(root: string, policyPath: string): D
   }
 
   return lines;
-}
-
-export function runFlightTelemetryDoctorChecks(root: string): DoctorLine[] {
-  const lines: DoctorLine[] = [];
-  const config = loadGxtConfig(root);
-  const mode = resolveFlightTelemetryBodyMode(config);
-  const rawMode = config.flight_telemetry?.body_mode;
-  if (rawMode && rawMode !== "hash_only" && rawMode !== "full") {
-    lines.push({
-      level: "fail",
-      message: `flight_telemetry.body_mode invalid (${rawMode}); use hash_only or full`,
-    });
-    return lines;
-  }
-
-  lines.push({ level: "ok", message: `flight_telemetry.body_mode: ${mode}` });
-
-  const preset = config.defensive_profile?.preset;
-  if (isDefensiveProfilePresetName(preset ?? "") && preset === "strict_enterprise" && mode === "full") {
-    lines.push({
-      level: "warn",
-      message:
-        "strict_enterprise preset with flight_telemetry.body_mode=full stores gate stream bodies in EXECUTOR_LOG",
-    });
-  }
-
-  const receiptTier = config.receipt_signature ?? "off";
-  lines.push({ level: "ok", message: `receipt_signature tier: ${receiptTier}` });
-
-  return lines;
-}
-
-export function canonicalExpectedDigests(digests: ExpectedDigestsFile): string {
-  return canonicalJson(digests);
 }
