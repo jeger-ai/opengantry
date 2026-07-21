@@ -584,3 +584,12 @@ DoD 1 MSN-0133: flight_telemetry.body_mode hash_only default — runtime exec om
 DoD 2 MSN-0133: gantry attest + verify --receipt + gxt_attest — SSH/GPG receipt signing with local verify_status
 DoD 3 MSN-0133: gantry doctor --policy expected-digests drift check + FEATURES/SECURITY/ADOPTION/CHANGELOG hybrid repositioning
 DoD 4 MSN-0133: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0134 thermo hardening working digests single-shot receipt
+DoD 1 MSN-0134: working-digests.ts shared module; attestation-receipt fails closed when MANIFEST.json missing
+DoD 2 MSN-0134: verify-run single-shot receipt before present; one surgeon mutation pass; fix+receipt tests
+DoD 3 MSN-0134: flight-telemetry-doctor split from policy-digest-doctor; receipt_signature tier in doctor-core
+DoD 4 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+[CONTEXT-REQUEST] path=scripts/npm-pack-check.sh reason=fix CI flake: pipefail+SIGPIPE false missing package/dist/cli/index.js proposed=scripts/npm-pack-check.sh
+DoD 4 MSN-0134: npm-pack-check uses grep here-string to avoid pipefail SIGPIPE false negatives
+DoD 5 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

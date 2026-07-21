@@ -2,9 +2,9 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { TARGET_ARCHITECTURE_FILENAME } from "./arch/cage/target-architecture.js";
 import { canonicalJson } from "./canonical-json.js";
-import { REL_MANIFEST, REL_RECEIPTS_DIR } from "./constants.js";
+import { logWarn } from "./cli-io.js";
+import { CLI_NAME, REL_RECEIPTS_DIR } from "./constants.js";
 import { GantryUserError } from "./errors.js";
 import {
   listMsnSubjectCommits,
@@ -21,6 +21,7 @@ import {
   type ReceiptSignatureVerifyStatus,
 } from "./receipt-signing.js";
 import type { ParsedMission } from "./types.js";
+import { computeWorkingDigests } from "./working-digests.js";
 
 export const ATTESTATION_RECEIPT_SCHEMA_VERSION = "0.1.0" as const;
 
@@ -37,7 +38,7 @@ export interface AttestationReceipt {
   msn_id: string;
   mission_rel: string;
   mission_sha256: string;
-  manifest_sha256: string;
+  manifest_sha256: string | null;
   target_architecture_sha256: string | null;
   config_sha256: string | null;
   git_head: string;
@@ -60,11 +61,6 @@ export interface BuildAttestationReceiptInput {
 
 function sha256Bytes(buf: Buffer): string {
   return crypto.createHash("sha256").update(buf).digest("hex");
-}
-
-function sha256FileOrNull(absPath: string): string | null {
-  if (!fs.existsSync(absPath)) return null;
-  return sha256Bytes(fs.readFileSync(absPath));
 }
 
 function isPlannerStamp(row: MsnCommitRow, plannerEmails: string[]): boolean {
@@ -108,14 +104,24 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
     throw new GantryUserError("INVALID_ARGUMENT", "mission is missing msn_id", undefined, 2);
   }
 
+  const digests = computeWorkingDigests(input.root);
+  if (digests.manifest_sha256 === null) {
+    throw new GantryUserError(
+      "MANIFEST_MISSING",
+      "attestation receipt requires .gitagent/foreman/MANIFEST.json",
+      "run gantry init or restore MANIFEST.json",
+      2,
+    );
+  }
+
   const base: Omit<AttestationReceipt, "receipt_sha256" | "signature"> = {
     schema_version: ATTESTATION_RECEIPT_SCHEMA_VERSION,
     msn_id: msnId,
     mission_rel: missionRel,
     mission_sha256: sha256Bytes(fs.readFileSync(missionAbs)),
-    manifest_sha256: sha256FileOrNull(path.join(input.root, REL_MANIFEST)) ?? "",
-    target_architecture_sha256: sha256FileOrNull(path.join(input.root, TARGET_ARCHITECTURE_FILENAME)),
-    config_sha256: sha256FileOrNull(path.join(input.root, ".gitagent", "config.json")),
+    manifest_sha256: digests.manifest_sha256,
+    target_architecture_sha256: digests.target_architecture_sha256,
+    config_sha256: digests.config_sha256,
     git_head: gitRevParse(input.root, "HEAD") ?? "no-head",
     planner_stamp: resolvePlannerStampForReceipt(input.root, msnId),
     verify_status: input.verifyStatus,
@@ -143,10 +149,18 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
         2,
       );
     }
+    if (tier === "warn") {
+      logWarn(
+        `${CLI_NAME} attest: receipt unsigned — no local SSH/GPG signing key is configured`,
+      );
+    }
     return receipt;
   }
 
   const verifyStatus = verifyReceiptSignature(input.root, receipt_sha256, signature);
+  if (tier === "warn" && verifyStatus !== "good") {
+    logWarn(`${CLI_NAME} attest: receipt signature verify_status=${verifyStatus}`);
+  }
   return {
     ...receipt,
     signature: {
@@ -172,10 +186,6 @@ export function writeAttestationReceipt(
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
   return target;
-}
-
-export function receiptSignatureIsGood(signature?: ReceiptSignature): boolean {
-  return signature?.verify_status === "good";
 }
 
 export type { ReceiptSignatureVerifyStatus };

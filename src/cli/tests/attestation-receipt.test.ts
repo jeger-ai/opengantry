@@ -9,6 +9,8 @@ import {
   buildAttestationReceipt,
   computeReceiptSha256,
 } from "../lib/attestation-receipt.js";
+import { REL_MANIFEST } from "../lib/constants.js";
+import { GantryUserError } from "../lib/errors.js";
 import { getRepoRoot } from "../lib/git.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { writeRuntimeExecRepo } from "./test-fixtures.js";
@@ -39,6 +41,30 @@ test("attestation receipt: stable receipt_sha256 and no stream bodies", () => {
   assert.equal(receipt.signature, undefined);
   const serialized = JSON.stringify(receipt);
   assert.doesNotMatch(serialized, /chunk_b64/);
+});
+
+test("attestation receipt: rejects missing MANIFEST with GantryUserError", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-no-manifest-"));
+  writeRuntimeExecRepo(dest, ogRoot, []);
+  fs.rmSync(path.join(dest, REL_MANIFEST), { force: true });
+  const missionArg = ".gitagent/missions/runtime.yaml";
+  const mission = parseMissionFile(dest, missionArg);
+  assert.throws(
+    () =>
+      buildAttestationReceipt({
+        root: dest,
+        mission,
+        missionArg,
+        verifyStatus: "attest_only",
+      }),
+    (err: unknown) => {
+      assert.ok(err instanceof GantryUserError);
+      assert.equal(err.code, "MANIFEST_MISSING");
+      assert.equal(err.exitCode, 2);
+      return true;
+    },
+  );
 });
 
 test("attestation receipt: verify mapping uses failed status", () => {

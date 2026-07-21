@@ -1,0 +1,26 @@
+# Thermo hardening: working digests, single-shot receipt finalize, doctor split.
+msn_id: MSN-0134
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0134: working-digests.ts shared module; attestation-receipt fails closed when MANIFEST.json missing"
+    anchor: "MSN-0134"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0134: verify-run single-shot receipt before present; one surgeon mutation pass; fix+receipt tests"
+    anchor: "MSN-0134"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0134: flight-telemetry-doctor split from policy-digest-doctor; receipt_signature tier in doctor-core"
+    anchor: "MSN-0134"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0134: npm-pack-check uses grep here-string to avoid pipefail SIGPIPE false negatives"
+    anchor: "MSN-0134"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0134: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0134"
+    status: PASS
