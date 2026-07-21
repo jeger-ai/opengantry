@@ -63,6 +63,30 @@ OpenGantry separates **local execution** (CLI, cages, verify) from an optional f
 
 See [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
 
+## EU AI Act Articles 12 and 14 (capability mapping)
+
+OpenGantry does **not** certify legal compliance. It produces Git-native artifacts that map cleanly onto common high-risk expectations around **automatic event logging** and **human oversight records**. Teams still need counsel for their own classification and residual obligations.
+
+| Obligation theme | What OpenGantry produces | How |
+|------------------|--------------------------|-----|
+| **Art. 12 — logging / record-keeping** | Mission YAML, `[MSN-XXXX]` commits, verbatim `EXECUTOR_LOG.md` quotes, optional attestation receipts | Continuous architectural logging in Git; digests of MANIFEST / architecture / config; `gantry attest` / `gantry verify --receipt` |
+| **Art. 14 — human oversight** | Planner legislation stamp, SOD (Planner ≠ Executor ≠ Verifier), signed receipt proofs | Humans legislate before execution; `gantry attest --sign` (or `receipt_signature` warn/require) attaches local SSH/GPG proof over `receipt_sha256` |
+
+Signed receipts (`gantry attest --sign`) turn a digest checksum into a **local attestation proof** of verify outcome, mission identity, and policy digests — without uploading source. Unsigned receipts remain checksums only.
+
+December 2027 is a runway, not a reason to wait. Start the mission loop now so the log already exists when the deadline arrives.
+
+## OpenGantry vs a standalone security proxy
+
+Keep the roles distinct:
+
+| Layer | Owns | Does not own |
+|-------|------|--------------|
+| **OpenGantry (this project)** | Deterministic DAG routing of work (missions, TMVC, forbidden zones), architecture cage (`TARGET_ARCHITECTURE.yaml` / perimeter), shell gates, forensic verify, attestation receipts | Runtime sandboxing of MCP tool binaries, skill-pack hash quarantine at invoke time, network egress firewalls for tool calls |
+| **Execution firewall / skill sandbox (complement)** | Process isolation for untrusted tools, hash-pinning of MCP/skill payloads, tool-poisoning defenses | Mission legislation, Git-native architectural logging, Planner git-proof |
+
+Use OpenGantry when you need **declared edit blast radius and citeable verify evidence**. Pair it with a standalone sandbox/hash-check proxy when the threat model is **tool poisoning or untrusted MCP execution**. They compose; neither replaces the other.
+
 ## Break-glass (emergency verify bypass)
 
 When a production hotfix cannot wait for full git-proof + trace mapping:

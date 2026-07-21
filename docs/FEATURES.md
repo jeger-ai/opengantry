@@ -180,7 +180,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## Hybrid hub and spoke (metadata plane)
 
-**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only.
+**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only. The December 2027 EU AI Act high-risk deadline makes starting Git-native logging now cheaper than a late scramble.
 
 **What it does:**
 
@@ -191,9 +191,23 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 | Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
 | Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
 
+**EU AI Act mapping (not legal advice):** signed receipts and mission traces support **Art. 12**-style automatic event logging and **Art. 14**-style human oversight records (Planner stamp + SOD). Details: [`SECURITY.md`](SECURITY.md).
+
 **When to use:** Preparing for a future optional cloud control plane, EU AI Act audit exports, or CISO dashboards — without changing the local enforcement model.
 
 **How:** [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md) · [`SECURITY.md`](SECURITY.md)
+
+---
+
+## OpenGantry vs execution firewall
+
+**Why:** Tool-poisoning and MCP skill-hash concerns are real, but they are a different problem from architectural scope and verify evidence.
+
+**What it does:** OpenGantry is the **deterministic routing engine and architecture cage** (missions, TMVC, perimeter, verify, receipts). A **standalone security proxy** sandboxes MCP tools and verifies skill hashes at invoke time. Pair them when you need both citeable Git evidence and runtime isolation.
+
+**When to use:** Always use OpenGantry for mission/verify. Add a sandbox proxy when untrusted tools are on the critical path.
+
+**How:** [`SECURITY.md`](SECURITY.md) § OpenGantry vs a standalone security proxy
 
 ---
 
@@ -203,5 +217,6 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 - **Not a hosted execution console** — gates and cages run on your machine/CI; no source upload for verify
 - **Not Gantry.io** — no bundled hosted observability dashboard (optional future metadata hub is digest-only)
 - **Not an LLM judge for merge** — gates stay deterministic; LLM evidence is optional and committed separately
+- **Not an MCP execution firewall** — sandboxing and skill-hash checks belong to a complementary proxy layer
 
 For product positioning and a hands-on tour, see [README](../README.md).

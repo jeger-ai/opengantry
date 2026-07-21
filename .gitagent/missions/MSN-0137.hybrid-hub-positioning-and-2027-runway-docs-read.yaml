@@ -1,11 +1,23 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Hybrid hub positioning and 2027 runway docs: README, SECURITY, FEATURES.
 # Legislated intent: hybrid hub positioning and 2027 runway docs: README, SECURITY, FEATURES
 msn_id: MSN-0137
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "DoD 1 MSN-0137: README 2027 runway section — local offline Git-native architectural logging before Dec 2027 deadline"
+    anchor: "MSN-0137"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0137: docs/SECURITY.md Art.12/14 capability mapping + OpenGantry vs standalone security proxy"
+    anchor: "MSN-0137"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; not an MCP firewall"
+    anchor: "MSN-0137"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0137: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0137"
+    status: PASS
