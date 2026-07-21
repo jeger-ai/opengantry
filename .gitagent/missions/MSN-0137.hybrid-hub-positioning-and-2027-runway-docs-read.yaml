@@ -1,4 +1,4 @@
-# Hybrid hub positioning and 2027 runway docs: README, SECURITY, FEATURES.
+# Hybrid hub positioning and local-first governance docs: README, SECURITY, FEATURES.
 # Legislated intent: hybrid hub positioning and 2027 runway docs: README, SECURITY, FEATURES
 msn_id: MSN-0137
 skill_key: substrate
@@ -6,15 +6,15 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0137: README \"Start the audit trail now\" — local offline Git-native logging without calendar deadline"
+    trace_quote: "DoD 1 MSN-0137: README local control / unmonitored loops / tamper-evident proof + hybrid spoke-hub framing"
     anchor: "MSN-0137"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0137: docs/SECURITY.md Art.12/14 capability mapping + OpenGantry vs standalone security proxy"
+    trace_quote: "DoD 2 MSN-0137: docs/SECURITY.md automatic record-keeping, signed vs unsigned receipts, human oversight cages"
     anchor: "MSN-0137"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0137: docs/FEATURES.md hybrid hub + execution firewall complement; no Dec 2027 deadline copy"
+    trace_quote: "DoD 3 MSN-0137: docs/FEATURES.md spoke vs hub + defense-in-depth security proxy; no calendar deadline copy"
     anchor: "MSN-0137"
     status: PASS
   - dod_id: "4"

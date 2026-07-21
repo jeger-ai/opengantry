@@ -180,9 +180,14 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## Hybrid hub and spoke (metadata plane)
 
-**Why:** Enterprise teams need org-wide governance visibility without uploading source trees or gate stdout to a vendor cloud. Execution stays local; compliance metadata can leave the machine as digests only. Starting Git-native logging now is cheaper than reconstructing agent history later.
+**Why:** Teams need local developer control and org-wide auditability without uploading source trees or gate stdout to a vendor cloud. Execution stays on the spoke; optional hub metadata is digests only.
 
 **What it does:**
+
+| Layer | Owns | Notes |
+|-------|------|-------|
+| **Spoke (local engine)** | Missions, TMVC, cages, shell gates, offline `gantry verify`, doctor | Runs on the workstation/CI; no cloud required |
+| **Hub (optional metadata plane)** | Future aggregation of receipts / policy digests | Digest-only; no source upload via GXT export paths |
 
 | Capability | Command / config | Notes |
 |------------|------------------|-------|
@@ -191,9 +196,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 | Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
 | Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
 
-**EU AI Act mapping (not legal advice):** signed receipts and mission traces support **Art. 12**-style automatic event logging and **Art. 14**-style human oversight records (Planner stamp + SOD). Details: [`SECURITY.md`](SECURITY.md).
-
-**When to use:** Preparing for a future optional cloud control plane, EU AI Act audit exports, or CISO dashboards — without changing the local enforcement model.
+**When to use:** Local-first agent governance today; preparing CISO dashboards or a future optional cloud control plane without changing the local enforcement model.
 
 **How:** [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md) · [`SECURITY.md`](SECURITY.md)
 
@@ -201,11 +204,11 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## OpenGantry vs execution firewall
 
-**Why:** Tool-poisoning and MCP skill-hash concerns are real, but they are a different problem from architectural scope and verify evidence.
+**Why:** Unmonitored tool calls and tool-poisoning are real, but they are a different problem from architectural scope and verify evidence. Defense in depth means both layers.
 
 **What it does:** OpenGantry is the **deterministic routing engine and architecture cage** (missions, TMVC, perimeter, verify, receipts). A **standalone security proxy** sandboxes MCP tools and verifies skill hashes at invoke time. Pair them when you need both citeable Git evidence and runtime isolation.
 
-**When to use:** Always use OpenGantry for mission/verify. Add a sandbox proxy when untrusted tools are on the critical path.
+**When to use:** Always use OpenGantry for mission/verify and tamper-evident trails. Add a sandbox proxy when untrusted tools are on the critical path.
 
 **How:** [`SECURITY.md`](SECURITY.md) § OpenGantry vs a standalone security proxy
 
@@ -218,5 +221,6 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 - **Not Gantry.io** — no bundled hosted observability dashboard (optional future metadata hub is digest-only)
 - **Not an LLM judge for merge** — gates stay deterministic; LLM evidence is optional and committed separately
 - **Not an MCP execution firewall** — sandboxing and skill-hash checks belong to a complementary proxy layer
+- **Not a full prompt/diff recorder by default** — `hash_only` telemetry and digest receipts prove outcomes without shipping raw corpora
 
 For product positioning and a hands-on tour, see [README](../README.md).

@@ -56,33 +56,54 @@ We aim to acknowledge reports within **5 business days** and to coordinate discl
 
 OpenGantry separates **local execution** (CLI, cages, verify) from an optional future **metadata control plane**:
 
-- **Default:** `flight_telemetry.body_mode` is `hash_only` — gate stream bodies are not written to `EXECUTOR_LOG.md` (`chunk_b64` omitted).
+- **Default:** `flight_telemetry.body_mode` is `hash_only` — gate stream bodies are not written to `EXECUTOR_LOG.md` (`chunk_b64` omitted). Events keep `chunk_sha256` + `bytes` so you can prove what ran without storing raw stdout.
 - **Receipts:** `gantry attest` / `gantry verify --receipt` write digest-only JSON under `.gitagent/history/receipts/` (git-ignored). Unsigned `receipt_sha256` is a checksum; SSH/GPG signatures (`receipt_signature` tier) make a receipt an attestation proof.
 - **Policy drift:** `gantry doctor --policy <expected-digests.json>` compares working-tree digests offline — no network I/O in doctor.
 - **Never via GXT export:** source trees, gate stdout bodies, credentials, draft-token keys, or bypass secrets.
 
 See [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
 
-## EU AI Act Articles 12 and 14 (capability mapping)
+## Automatic record-keeping and human oversight
 
-OpenGantry does **not** certify legal compliance. It produces Git-native artifacts that map cleanly onto common high-risk expectations around **automatic event logging** and **human oversight records**. Teams still need counsel for their own classification and residual obligations.
+OpenGantry does **not** certify legal compliance. It produces Git-native artifacts for **automatic record-keeping** and **human oversight** of agent work. Teams still need counsel for their own obligations.
 
-| Obligation theme | What OpenGantry produces | How |
-|------------------|--------------------------|-----|
-| **Art. 12 — logging / record-keeping** | Mission YAML, `[MSN-XXXX]` commits, verbatim `EXECUTOR_LOG.md` quotes, optional attestation receipts | Continuous architectural logging in Git; digests of MANIFEST / architecture / config; `gantry attest` / `gantry verify --receipt` |
-| **Art. 14 — human oversight** | Planner legislation stamp, SOD (Planner ≠ Executor ≠ Verifier), signed receipt proofs | Humans legislate before execution; `gantry attest --sign` (or `receipt_signature` warn/require) attaches local SSH/GPG proof over `receipt_sha256` |
+### Automatic record-keeping
 
-Signed receipts (`gantry attest --sign`) turn a digest checksum into a **local attestation proof** of verify outcome, mission identity, and policy digests — without uploading source. Unsigned receipts remain checksums only.
+| Artifact | What it records | What it deliberately omits |
+|----------|-----------------|----------------------------|
+| Mission YAML + `[MSN-XXXX]` commits | Declared scope, gate command, Planner legislation | Application secrets; free-form chat transcripts |
+| `EXECUTOR_LOG.md` quotes | Verbatim gate/trace evidence verifiers must cite | By default, full gate stream bodies (`hash_only`) |
+| Hash-only flight telemetry | `chunk_sha256` + byte counts for gate streams | Raw prompt corpora, file bodies, `chunk_b64` stdout |
+| Attestation receipts | Mission identity, policy digests, verify outcome | Source trees |
 
-Start the mission loop now so the log already exists when someone asks for evidence.
+### Cryptographic attestation
+
+| Mode | Meaning |
+|------|---------|
+| **Unsigned receipt** | Local checksum envelope over digests + outcome — useful, not a signature proof |
+| **Signed receipt** (`gantry attest --sign`, or `receipt_signature` warn/require) | SSH/GPG detach-sign over `receipt_sha256` — verified proof of that receipt hash on this machine |
+
+### Human oversight cages
+
+Oversight is structural, not a chat approval checkbox:
+
+| Control | Role |
+|---------|------|
+| **Planner legislation** | A human (allowlisted email) commits mission YAML before execution |
+| **SOD** | Planner ≠ Executor ≠ Verifier |
+| **TMVC + forbidden zones + hooks** | Agents cannot silently edit substrate or leave declared roots |
+| **`gantry verify`** | Deterministic fail-closed gate + trace mapping before merge |
+| **`gantry doctor --policy`** | Offline digest drift check against expected MANIFEST / architecture / config |
+
+Start the mission loop now so the trail already exists when someone asks for evidence.
 
 ## OpenGantry vs a standalone security proxy
 
-Keep the roles distinct:
+Keep the roles distinct — defense in depth, not product overlap:
 
 | Layer | Owns | Does not own |
 |-------|------|--------------|
-| **OpenGantry (this project)** | Deterministic DAG routing of work (missions, TMVC, forbidden zones), architecture cage (`TARGET_ARCHITECTURE.yaml` / perimeter), shell gates, forensic verify, attestation receipts | Runtime sandboxing of MCP tool binaries, skill-pack hash quarantine at invoke time, network egress firewalls for tool calls |
+| **OpenGantry (this project)** | Deterministic routing of work (missions, TMVC, forbidden zones), architecture cage (`TARGET_ARCHITECTURE.yaml` / perimeter), shell gates, forensic verify, attestation receipts | Runtime sandboxing of MCP tool binaries, skill-pack hash quarantine at invoke time, network egress firewalls for tool calls |
 | **Execution firewall / skill sandbox (complement)** | Process isolation for untrusted tools, hash-pinning of MCP/skill payloads, tool-poisoning defenses | Mission legislation, Git-native architectural logging, Planner git-proof |
 
 Use OpenGantry when you need **declared edit blast radius and citeable verify evidence**. Pair it with a standalone sandbox/hash-check proxy when the threat model is **tool poisoning or untrusted MCP execution**. They compose; neither replaces the other.
