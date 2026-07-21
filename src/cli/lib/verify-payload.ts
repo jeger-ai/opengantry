@@ -19,6 +19,7 @@ import { persistRemediationSnapshot } from "./context-feed-remediation.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import type { VerifyFinding, VerifyFailedGate } from "./verify-finding.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "./verify-finding.js";
+import { kpiFindingsToAdvisoryVerifyFindings } from "./kpi-advisory-findings.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;
@@ -38,6 +39,7 @@ export interface VerifyPassedPayload {
   trace_warnings?: VerifyTraceWarningJson[];
   git_proof_warnings?: string[];
   kpi_warnings?: string[];
+  findings?: VerifyFinding[];
   defensive_warnings?: string[];
   defensive_audits?: string[];
   trace_evidence_skipped_uncommitted?: number;
@@ -161,6 +163,9 @@ function successPayload(
       : {}),
     ...(result.kpiWarnings && result.kpiWarnings.length > 0
       ? { kpi_warnings: result.kpiWarnings }
+      : {}),
+    ...(result.kpiAdvisoryFindings && result.kpiAdvisoryFindings.length > 0
+      ? { findings: kpiFindingsToAdvisoryVerifyFindings(result.kpiAdvisoryFindings) }
       : {}),
     ...(result.defensiveWarnings && result.defensiveWarnings.length > 0
       ? { defensive_warnings: result.defensiveWarnings }

@@ -52,5 +52,5 @@ Extend `VerifyFailedPayload` with:
 
 ## Consequences
 
-- AI judge (#62) deferred to v3.1; judge findings will reuse this envelope when shipped.
+- AI judge (#62) shipped in v3.1.0; judge findings reuse this envelope when surfaced on verify PASS.
 - Adopter doc: `docs/AGENT-LOOP.md` describes Hermes integration surface.

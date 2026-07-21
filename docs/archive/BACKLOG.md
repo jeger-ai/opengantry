@@ -46,7 +46,7 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **Perimeter schema 0.3.0 + `gantry perimeter check`** | **Done** | MSN-0117 |
 | **Content governance example + `docs/DOMAINS.md`** | **Done** | MSN-0119 |
 | **3.0.0 re-tag + publish** | **Done** | MSN-0120 |
-| **AI performance judge (#62)** | **Deferred v3.1** | — |
+| **AI performance judge (#62)** | **Done (v3.1.0)** | ADR-0035 · [`examples/performance-judge/`](../examples/performance-judge/) |
 
 Context ingestion → rules of engagement → standardized audit API. Not just software: brand/compliance content uses the same loop. See [`docs/DOMAINS.md`](DOMAINS.md) and [`examples/content-governance/`](../examples/content-governance/).
 
@@ -449,7 +449,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 | Item | Status | Issue |
 |------|--------|-------|
 | **Self-learning auto-discovery engine** — `gantry init` static-analysis pass (module boundaries, dependency graph, stack detection) synthesizes baseline `TARGET_ARCHITECTURE.yaml` + MANIFEST draft. Anti-trap: emits an **Architecture Proposal** (conventions + flagged anomalies) requiring one-time human confirmation before entering the cryptographic baseline — never codifies legacy spaghetti as law. Automated front-end to `ARCHITECTURE-DISCOVERY.md`; feeds [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#61](https://github.com/jeger-ai/opengantry/issues/61) |
-| **AI performance judge against docs** — judge ingests `PERFORMANCE.md` / specs / ADRs and audits mission diffs for structural performance violations (pooling, blocking I/O in async paths, dropped memoization). Anti-trap: judges **strategies only, never empirical metrics**; runtime thresholds come from a deterministic benchmark gate; verdicts are ADVISORY_ONLY and cannot flip gate PASS/FAIL. Extends [#16](https://github.com/jeger-ai/opengantry/issues/16) | Open | [#62](https://github.com/jeger-ai/opengantry/issues/62) |
+| **AI performance judge against docs** — judge ingests `PERFORMANCE.md` / specs / ADRs and audits mission diffs for structural performance violations (pooling, blocking I/O in async paths, dropped memoization). Anti-trap: judges **strategies only, never empirical metrics**; runtime thresholds come from a deterministic benchmark gate; verdicts are ADVISORY_ONLY and cannot flip gate PASS/FAIL. Extends [#16](https://github.com/jeger-ai/opengantry/issues/16) | **Done (v3.1.0)** | [#62](https://github.com/jeger-ai/opengantry/issues/62) · ADR-0035 |
 | **`gantry blueprint` — interactive documentation scaffolding** — closes the governance cold-start hole (no docs = no semantic cage). Forensic discovery pass (reuses #61 scanner) → evidence-anchored terminal interview (every question cites file:line findings) → emits synchronized `ARCHITECTURE.md` (human spec) + `TARGET_ARCHITECTURE.yaml` (machine spec) with shared rule IDs; `gantry doctor` flags MD/YAML drift. Anti-trap: **context-anchored guidance only** — no rule without an on-disk evidence anchor, no generic best-practices fluff. Enforcement split: YAML is the sole deterministic-engine input; MD aligns humans + feeds #62 judge as advisory corpus. Depends on [#61](https://github.com/jeger-ai/opengantry/issues/61); feeds [#62](https://github.com/jeger-ai/opengantry/issues/62), [#15](https://github.com/jeger-ai/opengantry/issues/15) | Open | [#63](https://github.com/jeger-ai/opengantry/issues/63) |
 
 **v2.0 paradigm shift (target):**
@@ -468,7 +468,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v3.1 AI performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)); v3.0.1 shipped (docs/discovery + thermo remediation, MSN-0121–MSN-0129, npm **3.0.1**).
+**Current focus:** v3.1.0 shipped — hybrid hub/attest (MSN-0132–0137) + AI performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|

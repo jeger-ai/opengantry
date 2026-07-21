@@ -9,7 +9,7 @@ import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import { isVirtualScratchPath } from "./virtual-scratch-store.js";
-import type { KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
+import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
 import type { VerifyOptions } from "./verify-options.js";
 import type { KpiFailure } from "./verify-failure.js";
 
@@ -326,7 +326,7 @@ function thresholdFailure(
 }
 
 export type KpiPhaseOutcome =
-  | { kind: "ok"; warnings: string[] }
+  | { kind: "ok"; warnings: string[]; advisoryFindings?: KpiFinding[] }
   | { kind: "fail"; failure: KpiFailure }
   | null;
 
@@ -382,5 +382,10 @@ export function evaluateKpiPhase(
     warnings.push(`gantry verify: advisory rubric [${severity}] ${id}: ${message}`);
   }
 
-  return warnings.length > 0 ? { kind: "ok", warnings } : null;
+  const advisoryFindings =
+    report.findings && report.findings.length > 0 ? report.findings : undefined;
+  if (warnings.length > 0 || advisoryFindings) {
+    return { kind: "ok", warnings, ...(advisoryFindings ? { advisoryFindings } : {}) };
+  }
+  return null;
 }

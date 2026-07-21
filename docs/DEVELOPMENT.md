@@ -196,8 +196,9 @@ Nondeterministic LLM checks produce **committed evidence**; merge stays determin
    - failed optional verifiers set `{id}::__verifier_ok: false` in the committed report; required verifiers fail the scan when the contract is not met
 3. **`gantry verify`** runs shell `gate_command`, then evaluates `kpi_gate.thresholds` against [`.gitagent/kpi/MSN-NNNN.json`](../.gitagent/planner/KPI-REPORT.schema.yaml), then trace mapping.
 4. KPI stale binding mirrors trace evidence: local warnings only; **`--pre-push`** / **`--ci`** fail-closed when TMVC drifts after the report commit.
-5. **`gantry register <dir>`** proposes skills from AST footprints; Planner still owns manifest edits (Rule 4.4).
-6. **`gantry perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
+5. **Advisory rubric findings** (`ARCHITECTURE_RUBRIC`, `PERFORMANCE_RUBRIC`) surface as `kpi_warnings` and structured `findings[]` on verify **PASS** — they never flip FAIL→PASS. See [ADR-0025](../.gitagent/out-of-scope/ADR-0025-architecture-rubric-judge.md) and [ADR-0035](../.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md). Example stub: [`examples/performance-judge/`](../examples/performance-judge/).
+6. **`gantry register <dir>`** proposes skills from AST footprints; Planner still owns manifest edits (Rule 4.4).
+7. **`gantry perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 

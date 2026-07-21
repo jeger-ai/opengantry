@@ -49,4 +49,4 @@ On blueprint completion (human sign-off), emit three synchronized artifacts:
 ## Consequences
 
 - Blueprint depends on ADR-0030 scanner.
-- AI judge (#62) deferred to v3.1; contract schema is forward-compatible with judge findings envelope (ADR-0032).
+- AI judge (#62) shipped in v3.1.0 (ADR-0035); contract schema is forward-compatible with judge findings envelope (ADR-0032).

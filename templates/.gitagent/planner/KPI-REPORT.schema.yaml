@@ -36,6 +36,10 @@ properties:
         - path
         - message
       properties:
+        id:
+          type: string
+        doc_anchor:
+          type: string
         severity:
           type: string
           enum: [info, warn, error]

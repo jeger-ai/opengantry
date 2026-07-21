@@ -11,7 +11,7 @@ import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./g
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { isLegislativeStub } from "./missions/formatter.js";
-import type { GateSpec, Manifest, ParsedMission } from "./types.js";
+import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "./types.js";
 import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceVerifyWarning } from "./trace.js";
 import type {
   DefensiveFailure,
@@ -65,6 +65,7 @@ export interface VerifyPhaseSuccess {
   traceWarnings: TraceVerifyWarning[];
   gitProofWarnings?: string[];
   kpiWarnings?: string[];
+  kpiAdvisoryFindings?: KpiFinding[];
   defensiveWarnings?: string[];
   defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
@@ -243,6 +244,7 @@ function recordVirtualGateCapture(
 
 interface PostGateWarnings {
   kpiWarnings?: string[];
+  kpiAdvisoryFindings?: KpiFinding[];
   defensiveWarnings?: string[];
   defensiveAudits?: string[];
 }
@@ -259,6 +261,7 @@ function collectDefensiveAndKpiOutcomes(
   executorLogPath: string,
 ): PostGateOutcome {
   let kpiWarnings: string[] | undefined;
+  let kpiAdvisoryFindings: KpiFinding[] | undefined;
   let defensiveWarnings: string[] | undefined;
   let defensiveAudits: string[] | undefined;
 
@@ -284,10 +287,18 @@ function collectDefensiveAndKpiOutcomes(
       executorLogPath,
     );
     if (kpiOutcome?.kind === "fail") return { kind: "fail", failure: kpiOutcome.failure };
-    if (kpiOutcome?.kind === "ok") kpiWarnings = kpiOutcome.warnings;
+    if (kpiOutcome?.kind === "ok") {
+      kpiWarnings = kpiOutcome.warnings;
+      if (kpiOutcome.advisoryFindings && kpiOutcome.advisoryFindings.length > 0) {
+        kpiAdvisoryFindings = kpiOutcome.advisoryFindings;
+      }
+    }
   }
 
-  return { kind: "ok", warnings: { kpiWarnings, defensiveWarnings, defensiveAudits } };
+  return {
+    kind: "ok",
+    warnings: { kpiWarnings, kpiAdvisoryFindings, defensiveWarnings, defensiveAudits },
+  };
 }
 
 function buildFullVerifySuccess(
@@ -305,6 +316,9 @@ function buildFullVerifySuccess(
     traceWarnings: trace.warnings,
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     ...(extras.kpiWarnings && extras.kpiWarnings.length > 0 ? { kpiWarnings: extras.kpiWarnings } : {}),
+    ...(extras.kpiAdvisoryFindings && extras.kpiAdvisoryFindings.length > 0
+      ? { kpiAdvisoryFindings: extras.kpiAdvisoryFindings }
+      : {}),
     ...(extras.defensiveWarnings && extras.defensiveWarnings.length > 0
       ? { defensiveWarnings: extras.defensiveWarnings }
       : {}),

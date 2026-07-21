@@ -77,6 +77,7 @@ export interface LlmVerifierSpec {
 
 export interface KpiFinding {
   id?: string;
+  doc_anchor?: string;
   severity: "info" | "warn" | "error";
   path: string;
   line?: number;

@@ -79,6 +79,5 @@ Full content loop fixture: [`examples/content-governance/`](../examples/content-
 ## Roadmap (not yet shipped)
 
 - Runtime-loaded adapter plugins (npm packages registered in config)
-- AI judge gate ([#62](https://github.com/jeger-ai/opengantry/issues/62))
 
-See [`CHANGELOG.md`](CHANGELOG.md) for shipped releases.
+See [`CHANGELOG.md`](CHANGELOG.md) for shipped releases (including advisory performance judge [#62](https://github.com/jeger-ai/opengantry/issues/62) in v3.1.0).

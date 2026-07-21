@@ -10,7 +10,8 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
-| **v3.0.2** (unreleased) | Hybrid hub/spoke readiness — default `flight_telemetry.body_mode: hash_only`, `gantry attest` + `gantry verify --receipt` (optional SSH/GPG signatures), `gantry doctor --policy` digest drift (ADR-0034); `trusted_automation` **`bounded_content`** kind for ecosystem autofix bots || **v3.0.1** | Docs cleanup + thermo remediation; discovery scanner hardening; npm **3.0.1** |
+| **v3.1.0** | Hybrid hub/spoke readiness — `flight_telemetry` `hash_only`, `gantry attest` / `verify --receipt`, `doctor --policy` (ADR-0034); `bounded_content` trusted automation; advisory **performance judge** ([#62](https://github.com/jeger-ai/opengantry/issues/62)) via `PERFORMANCE_RUBRIC` + BYO `llm_verifiers` (ADR-0035); structured advisory `findings[]` on verify PASS |
+| **v3.0.1** | Docs cleanup + thermo remediation; discovery scanner hardening; npm **3.0.1** |
 | **v3.0.0** | Domain-agnostic governance layer — `gantry init --discover`, `gantry blueprint`, `gantry perimeter check`, content adapter (regex perimeter), standardized `findings[]` failure envelope for external executors |
 | **v2.7.0** | Quality & governance consolidation — audit-severity net_loc verify bugfix, discriminated `VerifyPhaseFailure` union, typed trace failure kinds, verify pipeline collapse, shared command error boundary, `GantryUserError` naming (deprecated `Gapman*` aliases), governance backfill + release-squash policy |
 | **v2.6.0** | Defensive profile completion — presets + severity tiers, file-scope / churn / test-to-code guards ([#88](https://github.com/jeger-ai/opengantry/issues/88)–[#91](https://github.com/jeger-ai/opengantry/issues/91)), `gantry init` profile onboarding ([#86](https://github.com/jeger-ai/opengantry/issues/86)) |
@@ -32,7 +33,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.0.1** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.1.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).

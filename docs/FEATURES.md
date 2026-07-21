@@ -202,6 +202,25 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ---
 
+## Advisory performance judge
+
+**Why:** Deterministic gates cannot evaluate code against documented performance strategies (pooling, blocking I/O, memoization) in `PERFORMANCE.md` or ADRs.
+
+**What it does:**
+
+| Piece | Role |
+|-------|------|
+| `PERFORMANCE.md` | Human strategies corpus (no empirical SLAs unless a benchmark gate enforces them) |
+| `PERFORMANCE_RUBRIC.md` | Rule IDs ↔ review questions for BYO `llm_verifiers` |
+| `gantry scan` | Runs verifier; writes KPI `findings[]` to `.gitagent/kpi/MSN-*.json` |
+| `gantry verify` | Surfaces advisory warnings + structured `findings[]` on PASS — never flips FAIL→PASS |
+
+**When to use:** After architecture rubric (#16); when missions touch hot paths and you want semantic performance sanity checks alongside deterministic gates.
+
+**How:** [ADR-0035](../.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md) · [`examples/performance-judge/`](../examples/performance-judge/)
+
+---
+
 ## OpenGantry vs execution firewall
 
 **Why:** Unmonitored tool calls and tool-poisoning are real, but they are a different problem from architectural scope and verify evidence. Defense in depth means both layers.
