@@ -561,3 +561,9 @@ DoD 1 MSN-0130: docs/SECURITY.md published; planner narrative gantry refresh; PR
 
 ## MSN-0131 docs deterministic metrics
 DoD 1 MSN-0131: assert-docs-deterministic.sh — published doc inventory, docs/index.md link integrity, doc-surface naming drift; assert-no-stale-cli-naming scoped to implementation paths; dev-validate-core OK
+
+## MSN-0135 complete regex escaping (code scanning alerts 9 and 3)
+DoD 1 MSN-0135: complete regex metachar escape for VERSION in examples/gantry-minimal smoke test
+DoD 2 MSN-0135: spawnSync argv for git config/commit in test-fixtures — no shell-interpolated subjects
+DoD 3 MSN-0135: mission_verify CI installs ripgrep so assert-docs-deterministic gate can run on ubuntu runners
+DoD 4 MSN-0135: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
