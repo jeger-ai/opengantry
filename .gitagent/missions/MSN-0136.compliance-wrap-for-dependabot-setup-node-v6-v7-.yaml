@@ -1,0 +1,19 @@
+# Compliance wrap for Dependabot setup-node v6→v7 workflow bump.
+# Legislated intent: Compliance wrap for Dependabot setup-node v6→v7 workflow bump
+msn_id: MSN-0136
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0136: actions/setup-node bumped v6→v7 in gxt-validate and npm-publish workflows"
+    anchor: "MSN-0136"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0136: template gxt-validate.yml setup-node pins match dogfood root workflow"
+    anchor: "MSN-0136"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0136: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0136"
+    status: PASS

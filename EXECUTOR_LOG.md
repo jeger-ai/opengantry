@@ -567,3 +567,8 @@ DoD 1 MSN-0135: complete regex metachar escape for VERSION in examples/gantry-mi
 DoD 2 MSN-0135: spawnSync argv for git config/commit in test-fixtures — no shell-interpolated subjects
 DoD 3 MSN-0135: mission_verify CI installs ripgrep so assert-docs-deterministic gate can run on ubuntu runners
 DoD 4 MSN-0135: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0136 Dependabot setup-node v7 compliance
+DoD 1 MSN-0136: actions/setup-node bumped v6→v7 in gxt-validate and npm-publish workflows
+DoD 2 MSN-0136: template gxt-validate.yml setup-node pins match dogfood root workflow
+DoD 3 MSN-0136: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
