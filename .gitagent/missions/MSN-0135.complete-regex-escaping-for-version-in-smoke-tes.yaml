@@ -14,6 +14,10 @@ trace_rows:
     anchor: "MSN-0135"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0135: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    trace_quote: "DoD 3 MSN-0135: mission_verify CI installs ripgrep so assert-docs-deterministic gate can run on ubuntu runners"
+    anchor: "MSN-0135"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0135: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "MSN-0135"
     status: PASS
