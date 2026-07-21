@@ -610,3 +610,10 @@ DoD 1 MSN-0137: README local control / unmonitored loops / tamper-evident proof 
 DoD 2 MSN-0137: docs/SECURITY.md automatic record-keeping, signed vs unsigned receipts, human oversight cages
 DoD 3 MSN-0137: docs/FEATURES.md spoke vs hub + defense-in-depth security proxy; no calendar deadline copy
 DoD 4 MSN-0137: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## v3.1.0 release — performance judge (#62) + hybrid hub surface
+
+DoD 1 v3.1.0: ADR-0035 PERFORMANCE_RUBRIC advisory judge + PERFORMANCE.md templates
+DoD 2 v3.1.0: KPI schema id/doc_anchor; advisory findings[] on verify PASS
+DoD 3 v3.1.0: examples/performance-judge deterministic stub + 3 hazard fixtures; 486 tests green
+DoD 4 v3.1.0: npm 3.1.0 — hybrid hub/attest (MSN-0132–0137) + #62; dev-validate OK
