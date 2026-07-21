@@ -3,11 +3,14 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { pathMatchesAllowed } from "./glob-match.mjs";
-import { isMsnEnforcedPath, listMsnEnforcedPrefixes } from "./manifest-validate.mjs";
+import { matchGlob, pathMatchesAllowed } from "./glob-match.mjs";
+import { isMsnEnforcedPath, listMsnEnforcedPrefixes, readManifest } from "./manifest-validate.mjs";
 
-const HARD_MAX_NET_LOC = 5;
-const ALLOWED_STRUCTURAL_CHANGES = new Set(["workflow_version_pin"]);
+const STRUCTURAL_KIND_HARD_MAX_NET_LOC = {
+  workflow_version_pin: 5,
+  bounded_content: 100,
+};
+const ALLOWED_STRUCTURAL_CHANGES = new Set(Object.keys(STRUCTURAL_KIND_HARD_MAX_NET_LOC));
 const CONFIG_REL = ".gitagent/config.json";
 
 function normalizePath(p) {
@@ -75,11 +78,18 @@ export function loadTrustedAutomationRules(repoRoot) {
         throw new Error(`gxt-manifest-lib: rule ${rule.id} has unsupported structural change: ${change}`);
       }
     }
+    if (rule.allowed_structural_changes.length !== 1) {
+      throw new Error(
+        `gxt-manifest-lib: rule ${rule.id} must declare exactly one allowed_structural_changes kind`,
+      );
+    }
+    const structuralKind = rule.allowed_structural_changes[0];
+    const hardCap = STRUCTURAL_KIND_HARD_MAX_NET_LOC[structuralKind];
     if (typeof rule.max_net_loc !== "number" || !Number.isInteger(rule.max_net_loc) || rule.max_net_loc < 1) {
       throw new Error(`gxt-manifest-lib: rule ${rule.id} max_net_loc must be a positive integer`);
     }
-    if (rule.max_net_loc > HARD_MAX_NET_LOC) {
-      throw new Error(`gxt-manifest-lib: rule ${rule.id} max_net_loc exceeds hard cap ${HARD_MAX_NET_LOC}`);
+    if (rule.max_net_loc > hardCap) {
+      throw new Error(`gxt-manifest-lib: rule ${rule.id} max_net_loc exceeds hard cap ${hardCap} for ${structuralKind}`);
     }
     rules.push({
       id: rule.id,
@@ -213,10 +223,36 @@ function readBlobAt(repoRoot, commitSha, filePath) {
   }
 }
 
-function validateStructuralChanges(repoRoot, files, rule, baseSha, headSha, mode) {
-  if (!rule.allowed_structural_changes.has("workflow_version_pin")) {
-    return { ok: false, reason: `rule ${rule.id}: no matching structural change policy` };
+function listPerimeterProtectedGlobs(repoRoot) {
+  const manifest = readManifest(repoRoot);
+  if (!Array.isArray(manifest.perimeter_protected)) {
+    return [];
   }
+  return manifest.perimeter_protected.map((g) => normalizePath(String(g)));
+}
+
+function isSubstrateHardDeniedPath(filePath, perimeterGlobs) {
+  const p = normalizePath(filePath);
+  if (p === ".gitagent" || p.startsWith(".gitagent/")) {
+    return true;
+  }
+  return perimeterGlobs.some((g) => matchGlob(g, p));
+}
+
+function validateBoundedContentStructural(repoRoot, files, rule) {
+  const perimeterGlobs = listPerimeterProtectedGlobs(repoRoot);
+  for (const file of files) {
+    if (isSubstrateHardDeniedPath(file, perimeterGlobs)) {
+      return {
+        ok: false,
+        reason: `rule ${rule.id}: substrate hard-deny path not allowed (${file})`,
+      };
+    }
+  }
+  return { ok: true, reason: "" };
+}
+
+function validateWorkflowVersionPinStructural(repoRoot, files, rule, baseSha, headSha, mode) {
   const yaml = resolveYamlParser(repoRoot);
   const workflowFiles = files.filter((f) => /\.ya?ml$/i.test(f));
   for (const file of workflowFiles) {
@@ -239,6 +275,17 @@ function validateStructuralChanges(repoRoot, files, rule, baseSha, headSha, mode
     }
   }
   return { ok: true, reason: "" };
+}
+
+function validateStructuralChanges(repoRoot, files, rule, baseSha, headSha, mode) {
+  const kind = [...rule.allowed_structural_changes][0];
+  if (kind === "bounded_content") {
+    return validateBoundedContentStructural(repoRoot, files, rule);
+  }
+  if (kind === "workflow_version_pin") {
+    return validateWorkflowVersionPinStructural(repoRoot, files, rule, baseSha, headSha, mode);
+  }
+  return { ok: false, reason: `rule ${rule.id}: no matching structural change policy` };
 }
 
 function findMatchingRule(rules, actorEmail) {

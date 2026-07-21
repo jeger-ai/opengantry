@@ -1,0 +1,23 @@
+# bounded_content trusted_automation for ecosystem autofix bots (GH code scanning, Snyk, etc.).
+# Scope outside gantry TMVC: scripts/, templates/, docs/, src/cli/tests/ — mission-authorized.
+msn_id: MSN-0132
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0132: bounded_content structural kind in trusted-automation.mjs — per-kind hard caps, substrate hard-deny, mixed-kind load rejection"
+    anchor: "MSN-0132"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0132: trusted-automation.test.ts — bounded_content allow/deny, substrate reject, mixed-kind load error"
+    anchor: "MSN-0132"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0132: ADOPTION/FEATURES/SECURITY/CHANGELOG — ecosystem autofix bot configuration guidance"
+    anchor: "MSN-0132"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0132: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0132"
+    status: PASS
