@@ -186,14 +186,15 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 | Layer | Owns | Notes |
 |-------|------|-------|
-| **Spoke (local engine)** | Missions, TMVC, cages, shell gates, offline `gantry verify`, doctor | Runs on the workstation/CI; no cloud required |
-| **Hub (optional metadata plane)** | Future aggregation of receipts / policy digests | Digest-only; no source upload via GXT export paths |
+| **Spoke (local engine)** | Missions, TMVC, cages, shell gates, offline `gantry verify`, doctor, receipt export vectors | **Sole fail-closed enforcer**; no cloud required |
+| **Hub (optional metadata plane)** | Cross-repo dashboards, hash→human resolve, advisory status checks, PDF, expected-digest distribution | Consumer/aggregator/reporter only — separate repo; never overrides spoke verify |
 
 | Capability | Command / config | Notes |
 |------------|------------------|-------|
 | Hash-only flight telemetry | `flight_telemetry.body_mode` in `.gitagent/config.json` (default `hash_only`) | Stream events keep `chunk_sha256` + `bytes`; omit `chunk_b64` unless `full` |
 | Attestation receipts | `gantry attest`, `gantry verify --receipt` | JSON under `.gitagent/history/receipts/` (git-ignored); digests + outcomes only |
 | Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
+| Hub ingestion export | CI artifact / PR attach / optional future `--git-note` | Spoke-owned export path; not a tracked receipt tree by default |
 | Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
 
 **When to use:** Local-first agent governance today; preparing CISO dashboards or a future optional cloud control plane without changing the local enforcement model.

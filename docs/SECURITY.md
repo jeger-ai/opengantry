@@ -56,9 +56,12 @@ We aim to acknowledge reports within **5 business days** and to coordinate discl
 
 OpenGantry separates **local execution** (CLI, cages, verify) from an optional future **metadata control plane**:
 
+- **Sole enforcer:** `gantry verify` on the spoke is fail-closed. Hub never overrides local outcomes.
 - **Default:** `flight_telemetry.body_mode` is `hash_only` — gate stream bodies are not written to `EXECUTOR_LOG.md` (`chunk_b64` omitted). Events keep `chunk_sha256` + `bytes` so you can prove what ran without storing raw stdout.
-- **Receipts:** `gantry attest` / `gantry verify --receipt` write digest-only JSON under `.gitagent/history/receipts/` (git-ignored). Unsigned `receipt_sha256` is a checksum; SSH/GPG signatures (`receipt_signature` tier) make a receipt an attestation proof.
+- **Receipts:** `gantry attest` / `gantry verify --receipt` write digest-only JSON under `.gitagent/history/receipts/` (git-ignored). Unsigned `receipt_sha256` is a checksum; SSH/GPG signatures (`receipt_signature` tier) make a receipt an attestation proof. Do not treat tracked-tree receipt paths as the default.
+- **Export for Hub:** CI artifacts, PR attachments, or an optional future git-note export — not committed receipt trees in every clone.
 - **Policy drift:** `gantry doctor --policy <expected-digests.json>` compares working-tree digests offline — no network I/O in doctor.
+- **Hub role:** consumer / aggregator / reporter (dashboards, hash→human resolve, advisory status checks, PDF). SaaS/webhook backends belong in a separate Hub repo, not this CLI.
 - **Never via GXT export:** source trees, gate stdout bodies, credentials, draft-token keys, or bypass secrets.
 
 See [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).

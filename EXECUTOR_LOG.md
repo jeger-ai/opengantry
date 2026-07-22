@@ -617,3 +617,10 @@ DoD 1 v3.1.0: ADR-0035 PERFORMANCE_RUBRIC advisory judge + PERFORMANCE.md templa
 DoD 2 v3.1.0: KPI schema id/doc_anchor; advisory findings[] on verify PASS
 DoD 3 v3.1.0: examples/performance-judge deterministic stub + 3 hazard fixtures; 486 tests green
 DoD 4 v3.1.0: npm 3.1.0 — hybrid hub/attest (MSN-0132–0137) + #62; dev-validate OK
+
+## MSN-0139 pin spoke/Hub boundary (ADR-0034 amend)
+[CONTEXT-REQUEST] path=.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md,docs/SECURITY.md,docs/FEATURES.md reason=MSN-0139 pin sole-enforcer/gitignored-receipt/Hub-consumer boundary; empty substrate tmvc_roots proposed=.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md,docs/SECURITY.md,docs/FEATURES.md | msn=MSN-0139
+- Context Request ACCEPTED: ADR-0034 + SECURITY/FEATURES — MSN-0139 mission-authorized boundary pin
+DoD 1 MSN-0139: ADR-0034 sole fail-closed enforcer=CLI; receipts gitignored; Hub=consumer/aggregator/reporter; no Hub SaaS in opengantry
+DoD 2 MSN-0139: docs/SECURITY.md + docs/FEATURES.md ownership callouts synced to ADR-0034 (export vectors; Hub advisory only)
+DoD 3 MSN-0139: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

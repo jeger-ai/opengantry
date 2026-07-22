@@ -1,11 +1,19 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Pin spoke/Hub boundary: amend ADR-0034 sole-enforcer + SECURITY/FEATURES sync.
 # Legislated intent: Pin spoke/Hub boundary: amend ADR-0034 (sole fail-closed enforcer=CLI; receipts stay gitignored under .gitagent/history/receipts/; Hub=consumer/aggregator/reporter via CI artifact or optional git-note export; no Hub SaaS in this repo) + sync SECURITY/FEATURES ownership callouts
 msn_id: MSN-0139
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
+    trace_quote: "DoD 1 MSN-0139: ADR-0034 sole fail-closed enforcer=CLI; receipts gitignored; Hub=consumer/aggregator/reporter; no Hub SaaS in opengantry"
+    anchor: "MSN-0139"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0139: docs/SECURITY.md + docs/FEATURES.md ownership callouts synced to ADR-0034 (export vectors; Hub advisory only)"
+    anchor: "MSN-0139"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0139: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0139"
+    status: PASS
