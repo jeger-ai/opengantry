@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.1.1** | Local DX — flag→pin mission defaults (`gantry pin` / `unpin`), active-mission banner, `gantry receipt list\|show`, verify `--receipt` path feedback; thermo cleanups (verify context, command boundary) |
 | **v3.1.0** | Hybrid hub/spoke readiness — `flight_telemetry` `hash_only`, `gantry attest` / `verify --receipt`, `doctor --policy` (ADR-0034); `bounded_content` trusted automation; advisory **performance judge** ([#62](https://github.com/jeger-ai/opengantry/issues/62)) via `PERFORMANCE_RUBRIC` + BYO `llm_verifiers` (ADR-0035); structured advisory `findings[]` on verify PASS |
 | **v3.0.1** | Docs cleanup + thermo remediation; discovery scanner hardening; npm **3.0.1** |
 | **v3.0.0** | Domain-agnostic governance layer — `gantry init --discover`, `gantry blueprint`, `gantry perimeter check`, content adapter (regex perimeter), standardized `findings[]` failure envelope for external executors |
@@ -33,7 +34,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.1.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.1.1** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).

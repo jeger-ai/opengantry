@@ -636,3 +636,9 @@ DoD 1 MSN-0140 fresh: flag→pin mission resolution; gantry pin/unpin; active-mi
 DoD 2 MSN-0140 fresh: verify --receipt path feedback + gantry receipt list|show local inspect
 DoD 3 MSN-0140 fresh: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 DoD 4 MSN-0140 fresh: thermo-nuclear review fixes — verify context, command boundary, pin/attest inversion, cage 0.3.0 guardrails, dogfood sync
+
+## MSN-0141 v3.1.1 release
+[CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0141 release version parity and docs outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0141
+- Context Request ACCEPTED: version parity + CHANGELOG/BACKLOG — MSN-0141 v3.1.1 release
+DoD 1 MSN-0141: v3.1.1 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG/BACKLOG synced; MSN-0140 local DX in release notes
+DoD 2 MSN-0141: npm 3.1.1 — local DX pin defaults + receipts (MSN-0140); dev-validate-core OK
