@@ -632,3 +632,7 @@ DoD 1 MSN-0140: flag→pin mission resolution; gantry pin/unpin; active-mission 
 DoD 2 MSN-0140: verify --receipt path feedback + gantry receipt list|show local inspect
 DoD 3 MSN-0140: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 DoD 4 MSN-0140: thermo-nuclear review fixes — verify context, command boundary, pin/attest inversion, cage 0.3.0 guardrails, dogfood sync
+DoD 1 MSN-0140 fresh: flag→pin mission resolution; gantry pin/unpin; active-mission banner on verify/scan/attest
+DoD 2 MSN-0140 fresh: verify --receipt path feedback + gantry receipt list|show local inspect
+DoD 3 MSN-0140 fresh: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+DoD 4 MSN-0140 fresh: thermo-nuclear review fixes — verify context, command boundary, pin/attest inversion, cage 0.3.0 guardrails, dogfood sync
