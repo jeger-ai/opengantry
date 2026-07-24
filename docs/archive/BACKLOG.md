@@ -468,7 +468,7 @@ Crossing the chasm from rigid validation to zero-trust autonomy: kill the manual
 
 ## Sprint guidance
 
-**Current focus:** v3.1.0 shipped — hybrid hub/attest (MSN-0132–0137) + AI performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)).
+**Current focus:** v3.1.1 shipped — local DX pin defaults + receipts (MSN-0140); prior v3.1.0 hybrid hub/attest + performance judge ([#62](https://github.com/jeger-ai/opengantry/issues/62)).
 
 | Priority | Issues | Notes |
 |----------|--------|-------|
