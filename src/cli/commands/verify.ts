@@ -1,4 +1,4 @@
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logInfo, setExitCode } from "../lib/cli-io.js";
 import { gitRevParse } from "../lib/git.js";
 import { initFailurePayload } from "../lib/verify-payload.js";
 import { emitVerifyJson } from "../lib/verify-presenters.js";

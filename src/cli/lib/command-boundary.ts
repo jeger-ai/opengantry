@@ -1,7 +1,7 @@
 import { CLI_NAME } from "./constants.js";
 import { errorMessage, logError, setExitCode } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
-import { GantryUserError, isGantryUserError, reportUserFacingError, userFacingErrorToJson } from "./errors.js";
+import { isGantryUserError, reportUserFacingError, userFacingErrorToJson } from "./errors.js";
 
 /**
  * Command-boundary error helpers: commands resolve their repo root and report

@@ -19,7 +19,7 @@ export function handlePinMission(missionFilePath: string): PinMissionResult | { 
       mission_file_path: rel,
       message: `Pinned active mission: ${rel}`,
     };
-  } catch (e) {
+  } catch {
     return mcpError("MISSION_NOT_FOUND", `mission file not found: ${missionFilePath}`, true);
   }
 }
