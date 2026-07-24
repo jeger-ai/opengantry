@@ -5,6 +5,8 @@ import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
 import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
+import { runPin, runUnpin } from "./commands/pin.js";
+import { runReceiptList, runReceiptShow } from "./commands/receipt.js";
 import { runContextFeed } from "./commands/context-feed.js";
 import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
@@ -44,6 +46,38 @@ export function registerCoreCommands(program: Command): void {
         verbose: opts.verbose,
         audience: getOutputAudience(),
       });
+    });
+
+  program
+    .command("pin")
+    .description("Pin active mission for verify/scan/runtime (no args = show current pin)")
+    .argument("[mission]", "Mission file (.md or .yaml)")
+    .action((mission: string | undefined) => {
+      runPin({ mission });
+    });
+
+  program.command("unpin").description("Clear active mission pin").action(() => {
+    runUnpin();
+  });
+
+  const receipt = program.command("receipt").description("Inspect local attestation receipts (gitignored history)");
+
+  receipt
+    .command("list")
+    .description("List receipts under .gitagent/history/receipts/")
+    .option("--msn <id>", "Filter by MSN id prefix")
+    .option("--json", "Emit structured JSON")
+    .action((opts: { msn?: string; json?: boolean }) => {
+      runReceiptList(opts);
+    });
+
+  receipt
+    .command("show")
+    .description("Show receipt by path, MSN id (latest), or most recent when omitted")
+    .argument("[target]", "Receipt path or MSN-NNNN")
+    .option("--json", "Emit structured JSON")
+    .action((target: string | undefined, opts: { json?: boolean }) => {
+      runReceiptShow({ target, json: opts.json });
     });
 
   program

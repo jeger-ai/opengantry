@@ -117,6 +117,28 @@ export function pinMissionFile(repoRoot: string, missionAbs: string): string {
   return rel;
 }
 
+/** Resolve mission path, assert it exists, and pin as the active mission. */
+export function pinActiveMission(repoRoot: string, missionPathOrAbs: string): string {
+  const abs = resolveMissionFilePath(repoRoot, missionPathOrAbs);
+  if (!fs.existsSync(abs)) {
+    throw new GantryUserError(
+      "MISSION_NOT_FOUND",
+      `gantry pin: mission file not found: ${missionPathOrAbs}`,
+      undefined,
+      2,
+    );
+  }
+  return pinMissionFile(repoRoot, abs);
+}
+
+/** Clear `.gitagent/missions/.active-mission`. Returns true if a pin was removed. */
+export function clearActiveMissionPin(repoRoot: string): boolean {
+  const pinPath = path.join(repoRoot, ".gitagent", "missions", ".active-mission");
+  if (!fs.existsSync(pinPath)) return false;
+  fs.unlinkSync(pinPath);
+  return true;
+}
+
 export function resolveMissionFromCandidates(repoRoot: string, candidates: string[]): string | null {
   for (const c of candidates) {
     const trimmed = c.trim();

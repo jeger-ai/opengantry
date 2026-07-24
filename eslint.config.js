@@ -19,6 +19,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ["src/cli/lib/verify-*.ts"],
+    rules: {
+      "max-params": ["error", 4],
+    },
+  },
+  {
     files: ["src/cli/tests/**/*.ts"],
     rules: {
       complexity: ["error", { max: 25 }],

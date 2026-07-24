@@ -1,4 +1,5 @@
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logInfo } from "../lib/cli-io.js";
+import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import {
   clearRemediationSnapshot,
   readRemediationSnapshot,
@@ -11,13 +12,13 @@ export interface ContextFeedOptions {
 }
 
 export function runContextFeed(options: ContextFeedOptions = {}): void {
-  try {
+  runUserCommand({ json: options.json }, () => {
     const { root } = loadWorkspace();
 
     if (options.clear) {
       clearRemediationSnapshot(root);
       if (options.json) {
-        logInfo(JSON.stringify({ status: "cleared", path: ".gitagent/tmp/NEXT_REMEDIATION.json" }, null, 2));
+        emitCliJson({ status: "cleared", path: ".gitagent/tmp/NEXT_REMEDIATION.json" });
       } else {
         logInfo("context-feed: cleared");
       }
@@ -27,7 +28,7 @@ export function runContextFeed(options: ContextFeedOptions = {}): void {
     const snapshot = readRemediationSnapshot(root);
     if (!snapshot) {
       if (options.json) {
-        logInfo(JSON.stringify({ status: "empty", snapshot: null }, null, 2));
+        emitCliJson({ status: "empty", snapshot: null });
       } else {
         logInfo("context-feed: (no active remediation)");
       }
@@ -35,7 +36,7 @@ export function runContextFeed(options: ContextFeedOptions = {}): void {
     }
 
     if (options.json) {
-      logInfo(JSON.stringify({ status: "ok", snapshot }, null, 2));
+      emitCliJson({ status: "ok", snapshot });
       return;
     }
 
@@ -47,8 +48,5 @@ export function runContextFeed(options: ContextFeedOptions = {}): void {
       logInfo("  fix_hints:");
       for (const hint of snapshot.fix_hints) logInfo(`    - ${hint}`);
     }
-  } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
-    setExitCode(2);
-  }
+  });
 }

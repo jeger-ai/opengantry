@@ -98,6 +98,10 @@ export function agentErrorAbsolutePath(repoRoot: string): string {
   return path.join(repoRoot, REL_AGENT_ERROR_FILE);
 }
 
+export function serializeAgentErrorPayload(payload: AgentErrorPayload): string {
+  return JSON.stringify(payload);
+}
+
 function buildSummary(result: RuntimeExecResult): string {
   switch (result.status) {
     case "forbidden_zone_violation":

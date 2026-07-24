@@ -22,6 +22,10 @@ fi
 echo "dev-validate-core: build"
 npm run build
 
+echo "dev-validate-core: assert dogfood script sync"
+chmod +x ./scripts/assert-dogfood-sync.sh
+./scripts/assert-dogfood-sync.sh
+
 if [[ -f dist/cli/index.js ]]; then
   GANTRY=(node dist/cli/index.js)
 elif command -v gantry >/dev/null 2>&1; then

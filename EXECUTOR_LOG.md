@@ -624,3 +624,11 @@ DoD 4 v3.1.0: npm 3.1.0 — hybrid hub/attest (MSN-0132–0137) + #62; dev-valid
 DoD 1 MSN-0139: ADR-0034 sole fail-closed enforcer=CLI; receipts gitignored; Hub=consumer/aggregator/reporter; no Hub SaaS in opengantry
 DoD 2 MSN-0139: docs/SECURITY.md + docs/FEATURES.md ownership callouts synced to ADR-0034 (export vectors; Hub advisory only)
 DoD 3 MSN-0139: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0140 local DX (pin defaults + receipts + scan feedback)
+[CONTEXT-REQUEST] path=docs/DEVELOPMENT.md,docs/ADOPTION.md,docs/FEATURES.md reason=MSN-0140 pin-default and receipt inspect docs outside src/cli tmvc_roots proposed=docs/DEVELOPMENT.md,docs/ADOPTION.md,docs/FEATURES.md | msn=MSN-0140
+- Context Request ACCEPTED: docs/DEVELOPMENT.md, docs/ADOPTION.md, docs/FEATURES.md — MSN-0140 day-one DX loop
+DoD 1 MSN-0140: flag→pin mission resolution; gantry pin/unpin; active-mission banner on verify/scan/attest
+DoD 2 MSN-0140: verify --receipt path feedback + gantry receipt list|show local inspect
+DoD 3 MSN-0140: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+DoD 4 MSN-0140: thermo-nuclear review fixes — verify context, command boundary, pin/attest inversion, cage 0.3.0 guardrails, dogfood sync

@@ -112,23 +112,24 @@ test("context-feed command: json empty and clear", () => {
 
   const prev = process.cwd();
   process.chdir(root);
-  const logs: string[] = [];
-  const orig = console.log;
-  console.log = (...args: unknown[]) => {
-    logs.push(args.map(String).join(" "));
-  };
+  const chunks: string[] = [];
+  const origWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((chunk: string | Uint8Array, ...args: unknown[]) => {
+    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+    return origWrite(chunk as never, ...(args as never[]));
+  }) as typeof process.stdout.write;
   try {
     resetOutputContext();
     setJsonOutputMode(true);
     runContextFeed({ json: true });
-    assert.match(logs.at(-1) ?? "", /"status": "empty"/);
+    assert.match(chunks.at(-1) ?? "", /"status": "empty"/);
     writeRemediationSnapshot(root, sampleSnapshot({ message: "from cmd" }));
     runContextFeed({ json: true });
-    assert.match(logs.at(-1) ?? "", /from cmd/);
+    assert.match(chunks.at(-1) ?? "", /from cmd/);
     runContextFeed({ clear: true, json: true });
-    assert.match(logs.at(-1) ?? "", /"status": "cleared"/);
+    assert.match(chunks.at(-1) ?? "", /"status": "cleared"/);
   } finally {
-    console.log = orig;
+    process.stdout.write = origWrite;
     process.chdir(prev);
   }
 });

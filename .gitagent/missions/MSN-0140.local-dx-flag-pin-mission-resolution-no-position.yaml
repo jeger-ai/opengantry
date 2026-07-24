@@ -5,7 +5,15 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0140: flag→pin mission resolution; gantry pin/unpin; active-mission banner on verify/scan/attest"
+    anchor: "MSN-0140"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0140: verify --receipt path feedback + gantry receipt list|show local inspect"
+    anchor: "MSN-0140"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0140: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0140"
+    status: PASS
 gate_success_substring: dev-validate-core OK

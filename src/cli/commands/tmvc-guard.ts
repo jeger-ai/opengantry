@@ -1,4 +1,5 @@
-import { logError, logWarn, setExitCode, errorMessage } from "../lib/cli-io.js";
+import { logWarn, setExitCode } from "../lib/cli-io.js";
+import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { resolvePinnedMission } from "../lib/missions/parser.js";
 import {
@@ -20,16 +21,14 @@ function advisoryToStderr(lines: readonly string[]): void {
 }
 
 export function runTmvcGuard(options: TmvcGuardCliOptions): void {
-  try {
+  runUserCommand({ json: options.json }, () => {
     const workspace = loadWorkspace();
     const missionRel = options.mission?.trim() || resolvePinnedMission(workspace.root) || null;
 
     if (!missionRel) {
       const msg = "tmvc guard: no pinned mission — skipping TMVC check (advisory)";
       if (options.json) {
-        process.stdout.write(
-          `${JSON.stringify({ ok: true, skipped: true, skip_reason: "no pinned mission" }, null, 2)}\n`,
-        );
+        emitCliJson({ ok: true, skipped: true, skip_reason: "no pinned mission" });
         return;
       }
       advisoryToStderr([msg]);
@@ -46,40 +45,26 @@ export function runTmvcGuard(options: TmvcGuardCliOptions): void {
     const strict = options.strict === true || process.env.GXT_TMVC_GUARD_STRICT === "1";
 
     if (options.json) {
-      process.stdout.write(
-        `${JSON.stringify(
-          {
-            ok: result.ok,
-            skipped: result.skipped,
-            skip_reason: result.skipReason ?? "",
-            strict,
-            violations: result.violations,
-            staged_paths: result.stagedPaths,
-            tmvc_roots: result.tmvcRoots,
-            forbidden_zones: result.forbiddenZones,
-            mission: resolved.mission_file,
-            skill_key: resolved.skill_key,
-          },
-          null,
-          2,
-        )}\n`,
-      );
+      emitCliJson({
+        ok: result.ok,
+        skipped: result.skipped,
+        skip_reason: result.skipReason ?? "",
+        strict,
+        violations: result.violations,
+        staged_paths: result.stagedPaths,
+        tmvc_roots: result.tmvcRoots,
+        forbidden_zones: result.forbiddenZones,
+        mission: resolved.mission_file,
+        skill_key: resolved.skill_key,
+      });
       if (strict && !result.ok && !result.skipped) setExitCode(1);
       return;
     }
 
     const lines = formatStagedTmvcAdvisory(result);
-    if (result.skipped || result.ok) {
-      advisoryToStderr(lines);
-      return;
-    }
-
     advisoryToStderr(lines);
-    if (strict) {
+    if (!result.skipped && !result.ok && strict) {
       setExitCode(1);
     }
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-  }
+  });
 }

@@ -89,12 +89,6 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
     return;
   }
 
-  if (!options.mission) {
-    logError("gantry verify: --mission is required (or use --changed-missions)");
-    setExitCode(2);
-    return;
-  }
-
   try {
     const result = await runVerifyCore(options);
     if (!result.ok) {

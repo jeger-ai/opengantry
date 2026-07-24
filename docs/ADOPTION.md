@@ -26,6 +26,8 @@ gantry init
 gantry onboarding      # same strict checks as production
 gantry planner set "$(git config user.email)"
 gantry doctor
+gantry pin .gitagent/missions/example.verify.yaml   # optional; enables verify/scan without --mission
+gantry verify                                       # uses pin when set
 ```
 
 ## Standard change loop (review → run → audit)
@@ -37,12 +39,13 @@ gantry start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "n
 git add .gitagent/missions/MSN-0001.<slug>.yaml
 git commit -m "[MSN-0001] legislate mission"
 
-# 2. Executor runs inside approved scope
-eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml)"
+# 2. Pin + executor env (pin optional but recommended for day-one DX)
+gantry pin .gitagent/missions/MSN-0001.<slug>.yaml
+eval "$(gantry runtime env)"
 
 # 3. Audit evidence: verify + grep
-gantry verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --fix
-gantry verify --mission .gitagent/missions/MSN-0001.<slug>.yaml --json | jq -r '.error_code // "passed"'
+gantry verify --fix
+gantry verify --json | jq -r '.error_code // "passed"'
 git log --grep='MSN-0001' --oneline
 gantry status --json --verbose
 ```
