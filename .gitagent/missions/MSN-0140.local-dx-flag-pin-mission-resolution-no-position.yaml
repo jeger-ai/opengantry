@@ -16,4 +16,8 @@ trace_rows:
     trace_quote: "DoD 3 MSN-0140: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "MSN-0140"
     status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0140: thermo-nuclear review fixes — verify context, command boundary, pin/attest inversion, cage 0.3.0 guardrails, dogfood sync"
+    anchor: "MSN-0140"
+    status: PASS
 gate_success_substring: dev-validate-core OK
