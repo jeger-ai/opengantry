@@ -89,23 +89,24 @@ test("runDoctor --json: drift warn keeps exit_code 0", () => {
   const prevTeachers = process.env.GANTRY_PLANNER_EMAILS;
   process.env.GANTRY_PLANNER_EMAILS = PLANNER_EMAIL;
   let captured = "";
-  const origLog = console.log;
+  const origWrite = process.stdout.write.bind(process.stdout);
   try {
     process.chdir(dest);
-    console.log = (msg: string) => {
-      captured += msg;
-    };
+    process.stdout.write = ((chunk: string | Uint8Array, ...args: unknown[]) => {
+      captured += typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8");
+      return origWrite(chunk as never, ...(args as never[]));
+    }) as typeof process.stdout.write;
     process.exitCode = undefined;
     runDoctor({ json: true });
     assert.equal(process.exitCode, undefined);
-    const parsed = JSON.parse(captured) as {
+    const parsed = JSON.parse(captured.trim()) as {
       lines: { level: string; message: string }[];
       exit_code: number;
     };
     assert.equal(parsed.exit_code, 0);
     assert.ok(parsed.lines.some((l) => l.level === "warn" && l.message.includes("behind bundled")));
   } finally {
-    console.log = origLog;
+    process.stdout.write = origWrite;
     process.chdir(prevCwd);
     process.exitCode = undefined;
     if (prevTeachers === undefined) delete process.env.GANTRY_PLANNER_EMAILS;

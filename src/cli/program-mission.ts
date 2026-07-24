@@ -86,10 +86,10 @@ export function registerMissionCommands(program: Command): void {
   runtime
     .command("env")
     .description("Print exportable env for executors (skill TMVC roots, EXECUTOR_LOG path)")
-    .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
+    .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
     .option("--json", "Emit JSON payload instead of shell exports")
     .option("--format <mode>", "`shell` (default POSIX exports) or `text` KEY=value lines", "shell")
-    .action((opts: { mission: string; json?: boolean; format?: string }) => {
+    .action((opts: { mission?: string; json?: boolean; format?: string }) => {
       if (opts.json === true) {
         runRuntimeEnv({ mission: opts.mission, json: true });
         return;

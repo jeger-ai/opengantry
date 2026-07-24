@@ -34,6 +34,8 @@ export interface VerifyPassedPayload {
   exit_code: 0;
   msn_id?: string;
   mission_file_path?: string;
+  mission_source?: "flag" | "pin";
+  receipt_path?: string;
   message?: string;
   audit_commit?: string;
   trace_warnings?: VerifyTraceWarningJson[];
@@ -55,6 +57,9 @@ export interface VerifyFailedPayload {
   exit_code: number;
   envelope_schema_version: typeof VERIFY_ENVELOPE_SCHEMA_VERSION;
   findings: VerifyFinding[];
+  mission_file_path?: string;
+  mission_source?: "flag" | "pin";
+  receipt_path?: string;
   stdout?: string;
   stderr?: string;
   failures?: string[];
@@ -206,9 +211,7 @@ export function initFailurePayload(e: unknown): VerifyFailedPayload {
 export function buildVerifyResultPayloadFromPhaseResult(
   root: string,
   mission: ParsedMission,
-  missionArg: string,
   options: VerifyOptions,
-  _manifest: Manifest,
   result: VerifyPhaseResult,
 ): VerifyResultPayload {
   const missionRel = missionRelPath(root, mission);
@@ -232,16 +235,8 @@ export function buildVerifyResultPayload(
   root: string,
   manifest: Manifest,
   mission: ParsedMission,
-  missionArg: string,
   options: VerifyOptions,
 ): VerifyResultPayload {
   const result = evaluateVerifyPhases(root, mission, options, manifest);
-  return buildVerifyResultPayloadFromPhaseResult(
-    root,
-    mission,
-    missionArg,
-    options,
-    manifest,
-    result,
-  );
+  return buildVerifyResultPayloadFromPhaseResult(root, mission, options, result);
 }

@@ -124,7 +124,7 @@ export function registerWorkflowCommands(program: Command): void {
         opts: { mission?: string; out?: string; sign?: boolean; json?: boolean },
       ) => {
         runAttest({
-          mission: opts.mission ?? missionPositional ?? "",
+          mission: opts.mission ?? missionPositional,
           out: opts.out,
           sign: opts.sign,
           json: opts.json,
@@ -168,11 +168,13 @@ export function registerWorkflowCommands(program: Command): void {
 
   program
     .command("scan")
-    .description("Run llm_verifiers and write committed KPI report JSON for verify kpi_gate")
-    .requiredOption("--mission <path>", "Mission file with llm_verifiers configured")
+    .description(
+      "Run llm_verifiers and write committed KPI report JSON for verify kpi_gate (see examples/performance-judge/)",
+    )
+    .option("--mission <path>", "Mission file with llm_verifiers configured (defaults to pinned mission)")
     .option("--cwd <dir>", "Working directory for verifier commands")
     .option("--json", "Emit structured JSON")
-    .action((opts: { mission: string; cwd?: string; json?: boolean }) => {
+    .action((opts: { mission?: string; cwd?: string; json?: boolean }) => {
       runScan(opts);
     });
 

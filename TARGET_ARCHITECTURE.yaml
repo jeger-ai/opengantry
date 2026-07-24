@@ -1,4 +1,5 @@
-schema_version: "0.2.0"
+schema_version: "0.3.0"
+domain: code
 scan_roots:
   - src/cli/**
 languages:
@@ -25,3 +26,45 @@ rules:
   - id: RULE-COMMAND-RUNTIME-EXEC-PROCESS
     from_layer: command
     forbid_resolved_path_substring: runtime-exec-process
+  - id: RULE-COMMAND-NO-EXITCODE-LADDER
+    from_layer: command
+    applies_to:
+      - src/cli/commands/pin.ts
+      - src/cli/commands/scan.ts
+      - src/cli/commands/receipt.ts
+      - src/cli/commands/attest.ts
+      - src/cli/commands/metrics.ts
+      - src/cli/commands/tmvc-guard.ts
+      - src/cli/commands/context-feed.ts
+      - src/cli/commands/check-imports.ts
+      - src/cli/commands/doctor.ts
+      - src/cli/commands/runtime.ts
+    forbid_pattern: "setExitCode\\(e instanceof GantryUserError"
+  - id: RULE-COMMAND-NO-JSON-STRINGIFY
+    from_layer: command
+    applies_to:
+      - src/cli/commands/pin.ts
+      - src/cli/commands/scan.ts
+      - src/cli/commands/receipt.ts
+      - src/cli/commands/attest.ts
+      - src/cli/commands/metrics.ts
+      - src/cli/commands/tmvc-guard.ts
+      - src/cli/commands/context-feed.ts
+      - src/cli/commands/check-imports.ts
+      - src/cli/commands/doctor.ts
+      - src/cli/commands/runtime.ts
+    forbid_pattern: "JSON\\.stringify\\("
+  - id: RULE-COMMAND-NO-PROCESS-EXIT
+    from_layer: command
+    applies_to:
+      - src/cli/commands/pin.ts
+      - src/cli/commands/scan.ts
+      - src/cli/commands/receipt.ts
+      - src/cli/commands/attest.ts
+      - src/cli/commands/metrics.ts
+      - src/cli/commands/tmvc-guard.ts
+      - src/cli/commands/context-feed.ts
+      - src/cli/commands/check-imports.ts
+      - src/cli/commands/doctor.ts
+      - src/cli/commands/runtime.ts
+    forbid_pattern: "process\\.exit\\("

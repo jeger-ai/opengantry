@@ -1,5 +1,6 @@
+import { logInfo } from "../lib/cli-io.js";
+import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { collectGitMetrics, formatGitMetricsHuman } from "../lib/git-metrics.js";
-import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface MetricsOptions {
@@ -8,17 +9,14 @@ export interface MetricsOptions {
 }
 
 export function runMetrics(options: MetricsOptions): void {
-  try {
+  runUserCommand({ json: options.json }, () => {
     const { root } = loadWorkspace();
     const ref = options.ref?.trim() || "HEAD";
     const report = collectGitMetrics(root, ref);
     if (options.json === true) {
-      logInfo(JSON.stringify(report, null, 2));
+      emitCliJson(report);
       return;
     }
     logInfo(formatGitMetricsHuman(report));
-  } catch (e) {
-    logError(errorMessage(e));
-    setExitCode(2);
-  }
+  });
 }

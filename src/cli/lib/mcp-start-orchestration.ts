@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { handleRuntimeEnv } from "./mcp-runtime.js";
 import {
   resolveGuardedMissionAbs,
@@ -6,7 +5,7 @@ import {
   type StartOrchestrationMcpResult,
 } from "./mcp-governance-shared.js";
 import { handleResolveMission } from "./mcp-resolve-mission.js";
-import { pinMissionFile } from "./missions/parser.js";
+import { pinActiveMission } from "./missions/parser.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -49,8 +48,12 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
   if (input.pin_if_needed === true && result.mission_file_path) {
     const { root } = loadWorkspace();
     const resolution = resolveGuardedMissionAbs(root, result.mission_file_path);
-    if (resolution.kind === "resolved" && fs.existsSync(resolution.missionAbs)) {
-      payload.pinned_mission = pinMissionFile(root, resolution.missionAbs);
+    if (resolution.kind === "resolved") {
+      try {
+        payload.pinned_mission = pinActiveMission(root, resolution.missionAbs);
+      } catch {
+        // pin is best-effort when mission path is missing on disk
+      }
     }
   }
 

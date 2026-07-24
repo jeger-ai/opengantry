@@ -1,0 +1,23 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Local DX: flag→pin mission resolution (no positional on verify/scan); active-mission banner; gantry pin/unpin; verify --receipt path feedback; gantry receipt list|show; scan pin default + commit-next + Fix codes; docs DEVELOPMENT/ADOPTION/FEATURES
+msn_id: MSN-0140
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0140 fresh: flag→pin mission resolution; gantry pin/unpin; active-mission banner on verify/scan/attest"
+    anchor: "MSN-0140"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0140 fresh: verify --receipt path feedback + gantry receipt list|show local inspect"
+    anchor: "MSN-0140"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0140 fresh: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "MSN-0140"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0140 fresh: thermo-nuclear review fixes — verify context, command boundary, pin/attest inversion, cage 0.3.0 guardrails, dogfood sync"
+    anchor: "MSN-0140"
+    status: PASS
+gate_success_substring: dev-validate-core OK

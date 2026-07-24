@@ -1,4 +1,4 @@
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logInfo, setExitCode } from "../lib/cli-io.js";
 import { gitRevParse } from "../lib/git.js";
 import { initFailurePayload } from "../lib/verify-payload.js";
 import { emitVerifyJson } from "../lib/verify-presenters.js";
@@ -86,12 +86,6 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
     } catch (e) {
       reportVerifyBoundaryError(e, options);
     }
-    return;
-  }
-
-  if (!options.mission) {
-    logError("gantry verify: --mission is required (or use --changed-missions)");
-    setExitCode(2);
     return;
   }
 

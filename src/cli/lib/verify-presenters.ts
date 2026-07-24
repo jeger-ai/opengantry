@@ -4,11 +4,9 @@ import { errorMessage, logInfo, logWarn } from "./cli-io.js";
 import { CommandReporter } from "./command-reporter.js";
 import { logFixHint } from "./fix-hints.js";
 import { loadPrompts } from "./prompts-loader.js";
-import type { Manifest, ParsedMission } from "./types.js";
 import { isGantryUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
-import { loadWorkspace } from "./workspace.js";
-import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyPresentContext } from "./verify-context.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
@@ -43,13 +41,19 @@ export type VerifySink =
   | "human";
 
 /** Structured export format for verify output (json default when --json). */
-export function resolveVerifyExportFormat(options: VerifyOptions): VerifyExportFormat | undefined {
+export function resolveVerifyExportFormat(options: { format?: VerifyExportFormat; json?: boolean }): VerifyExportFormat | undefined {
   if (options.format) return options.format;
   if (options.json === true) return "json";
   return undefined;
 }
 
-export function resolveVerifySink(options: VerifyOptions): VerifySink {
+export function resolveVerifySink(options: {
+  breakGlass?: boolean;
+  format?: VerifyExportFormat;
+  json?: boolean;
+  fix?: boolean;
+  fixNonInteractive?: boolean;
+}): VerifySink {
   if (options.breakGlass === true) {
     return options.json || options.format ? "break_glass_json" : "break_glass_human";
   }
@@ -65,27 +69,19 @@ export interface VerifyPresentResult {
   exitCode: number;
 }
 
-function reporterFor(options: VerifyOptions): CommandReporter {
-  return CommandReporter.forVerify(options);
+function reporterFor(ctx: VerifyPresentContext): CommandReporter {
+  return CommandReporter.forVerify(ctx.options);
 }
 
-export function presentBreakGlassJson(
-  root: string,
-  mission: ParsedMission,
-  options: VerifyOptions,
-): VerifyPresentResult {
-  const payload = buildBreakGlassPayload(root, mission, options);
-  emitStructuredPayload(payload, options);
+export function presentBreakGlassJson(ctx: VerifyPresentContext): VerifyPresentResult {
+  const payload = buildBreakGlassPayload(ctx.root, ctx.mission, ctx.options);
+  emitStructuredPayload(payload, ctx.options);
   return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
 }
 
-export function presentBreakGlassHuman(
-  root: string,
-  mission: ParsedMission,
-  options: VerifyOptions,
-): VerifyPresentResult {
-  const reporter = reporterFor(options);
-  const outcome = runBreakGlassAuditFlow(root, mission, options);
+export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresentResult {
+  const reporter = reporterFor(ctx);
+  const outcome = runBreakGlassAuditFlow(ctx.root, ctx.mission, ctx.options);
   if (outcome.kind === "fail") {
     reporter.emitError(errorMessage(outcome.error));
     return { ok: false, exitCode: 2 };
@@ -101,55 +97,58 @@ export function presentBreakGlassHuman(
   return { ok: true, exitCode: 0 };
 }
 
-function emitStructuredPayload(payload: VerifyResultPayload, options: VerifyOptions): void {
+function emitStructuredPayload(payload: VerifyResultPayload, options: VerifyPresentContext["options"]): void {
   const format: VerifyExportFormat = resolveVerifyExportFormat(options) ?? "json";
   logInfo(buildVerifyExportDocument(payload, format));
 }
 
+/** Attach resolved mission + receipt path from the loaded verify context. */
+function withContextFields<T extends VerifyResultPayload>(
+  payload: T,
+  ctx: VerifyPresentContext,
+): T {
+  return {
+    ...payload,
+    mission_file_path: ctx.resolved.missionRel,
+    mission_source: ctx.resolved.source,
+    ...(ctx.receiptPath ? { receipt_path: ctx.receiptPath } : {}),
+  };
+}
+
 export function presentJsonFromResult(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
-  manifest: Manifest,
+  ctx: VerifyPresentContext,
   result: VerifyPhaseResult,
 ): VerifyPresentResult {
-  const payload = buildVerifyResultPayloadFromPhaseResult(
-    root,
-    mission,
-    missionArg,
-    options,
-    manifest,
-    result,
+  const payload = withContextFields(
+    buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, ctx.options, result),
+    ctx,
   );
-  emitStructuredPayload(payload, options);
+  emitStructuredPayload(payload, ctx.options);
   return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
 }
 
 export function presentJsonInitFailure(
-  options: VerifyOptions,
+  ctx: VerifyPresentContext,
   error: unknown,
 ): VerifyPresentResult {
-  const payload = initFailurePayload(error);
+  const payload = withContextFields(initFailurePayload(error), ctx);
   try {
-    const { root } = loadWorkspace();
-    persistRemediationFromFailedPayload(root, null, options.mission, payload);
+    persistRemediationFromFailedPayload(ctx.root, null, ctx.options.mission, payload);
   } catch {
     // best-effort remediation feed
   }
-  emitStructuredPayload(payload, options);
+  emitStructuredPayload(payload, ctx.options);
   return { ok: false, exitCode: payload.exit_code };
 }
 
 export function presentHumanInitFailure(
-  options: VerifyOptions,
+  ctx: VerifyPresentContext,
   error: unknown,
 ): VerifyPresentResult {
-  const reporter = reporterFor(options);
-  const payload = initFailurePayload(error);
+  const reporter = reporterFor(ctx);
+  const payload = withContextFields(initFailurePayload(error), ctx);
   try {
-    const { root } = loadWorkspace();
-    persistRemediationFromFailedPayload(root, null, options.mission, payload);
+    persistRemediationFromFailedPayload(ctx.root, null, ctx.options.mission, payload);
   } catch {
     // best-effort remediation feed
   }
@@ -163,53 +162,44 @@ export function presentHumanInitFailure(
 }
 
 export function presentHuman(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
+  ctx: VerifyPresentContext,
   result: VerifyPhaseResult,
 ): VerifyPresentResult {
-  const reporter = reporterFor(options);
+  const reporter = reporterFor(ctx);
   if (result.ok) {
-    reporter.emitVerifySuccess(result, missionArg);
+    reporter.emitVerifySuccess(result, ctx.resolved.missionRel);
+    if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
     return { ok: true, exitCode: 0 };
   }
+  if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
   const normalized = normalizeVerifyPhaseFailure({
     failure: result,
-    missionArg,
-    options,
-    root,
-    msnId: mission.msnId ?? undefined,
-    mission,
+    missionArg: ctx.resolved.missionRel,
+    options: ctx.options,
+    root: ctx.root,
+    msnId: ctx.mission.msnId ?? undefined,
+    mission: ctx.mission,
   });
-  persistRemediationSnapshot(root, toRemediationSnapshot(normalized));
+  persistRemediationSnapshot(ctx.root, toRemediationSnapshot(normalized));
   reporter.emitFailurePresentation(toFailurePresentation(normalized));
   return { ok: false, exitCode: normalized.exit_code };
 }
 
 export async function presentFix(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
+  ctx: VerifyPresentContext,
   result: VerifyPhaseResult,
   nonInteractive: boolean,
-  _manifest: Manifest,
 ): Promise<VerifyPresentResult> {
-  if (result.ok) {
-    return presentHuman(root, mission, missionArg, options, result);
-  }
-
-  if (nonInteractive) {
-    return presentHuman(root, mission, missionArg, options, result);
+  if (result.ok || nonInteractive) {
+    return presentHuman(ctx, result);
   }
 
   const failure = result as VerifyPhaseFailure;
-  const reporter = reporterFor(options);
+  const reporter = reporterFor(ctx);
   const remediation = hintsForVerifyPhase(failure, {
-    missionPath: missionArg,
-    root,
-    msnId: mission.msnId ?? undefined,
+    missionPath: ctx.resolved.missionRel,
+    root: ctx.root,
+    msnId: ctx.mission.msnId ?? undefined,
   });
 
   reporter.emitError(`[${remediation.error_code}] verify failed at phase: ${failure.phase}`);
@@ -239,16 +229,16 @@ export async function presentFix(
   return { ok: false, exitCode: failure.exitCode };
 }
 
-export function emitVerifyJson(payload: VerifyResultPayload, options: VerifyOptions): void {
-  reporterFor(options).emitJsonPayload(payload);
+export function emitVerifyJson(payload: VerifyResultPayload, options: VerifyPresentContext["options"]): void {
+  CommandReporter.forVerify(options).emitJsonPayload(payload);
 }
 
 /** One surgeon mutation pass + phase re-eval only (no nested runVerifyCore). */
 export async function maybeApplySurgeonAndReevaluate(input: {
   root: string;
-  mission: ParsedMission;
-  options: VerifyOptions;
-  manifest: Manifest;
+  mission: VerifyPresentContext["mission"];
+  options: VerifyPresentContext["options"];
+  manifest: VerifyPresentContext["manifest"];
   result: VerifyPhaseResult;
 }): Promise<VerifyPhaseResult> {
   if (input.result.ok) return input.result;
@@ -282,7 +272,7 @@ export async function maybeApplySurgeonAndReevaluate(input: {
   appendSurgeonMutationLog(executorLogPath, mutation.summary);
   logInfo(`${CLI_NAME} verify: [Surgeon] mutation logged; re-evaluating verify phases (fix disabled)`);
 
-  const reevalOptions: VerifyOptions = {
+  const reevalOptions: VerifyPresentContext["options"] = {
     ...input.options,
     fix: false,
     fixNonInteractive: false,

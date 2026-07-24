@@ -42,11 +42,3 @@ export interface VerifyOptions {
   signReceipt?: boolean;
 }
 
-/** Resolve the primary verify mode from CLI flags (single discriminant for sinks). */
-export function resolveVerifyMode(options: VerifyOptions): VerifyMode {
-  if (options.breakGlass === true) return "break_glass";
-  if (options.prePush === true) return "pre_push";
-  if (options.json === true || options.format !== undefined) return "json";
-  if (options.fix === true) return "fix";
-  return "normal";
-}

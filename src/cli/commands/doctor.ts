@@ -1,4 +1,5 @@
 import { logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
+import { emitCliJson } from "../lib/command-boundary.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
@@ -28,7 +29,7 @@ function emitDoctor(
 ): void {
   const exitCode = hasFail ? 1 : 0;
   if (json) {
-    logInfo(JSON.stringify({ lines, next_step: nextStep, exit_code: exitCode }, null, 2));
+    emitCliJson({ lines, next_step: nextStep, exit_code: exitCode });
   } else {
     for (const line of lines) {
       logInfo(`${line.level}: ${line.message}`);

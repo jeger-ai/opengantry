@@ -1,4 +1,5 @@
 import type { AgentErrorPayload } from "./errors.js";
+import { userFacingErrorToJson } from "./errors.js";
 import type { RuntimeEnvMcpResult } from "./mcp-runtime.js";
 import type { TriageResult } from "./types.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
@@ -108,6 +109,16 @@ export interface StartOrchestrationInput {
 
 export function mcpError(code: string, message: string, retryable: boolean): { status: "error"; error: McpErrorBody } {
   return { status: "error", error: { code, message, retryable } };
+}
+
+/** Map unknown errors to the shared MCP failure envelope (aligned with CLI --json). */
+export function toMcpError(e: unknown): McpErrorBody {
+  const json = userFacingErrorToJson(e);
+  return {
+    code: json.error_code,
+    message: json.hint ? `${json.message} (${json.hint})` : json.message,
+    retryable: json.exit_code !== 2,
+  };
 }
 
 export function mcpWriteDenied(err: McpWriteDeniedError): { status: "error"; error: McpErrorBody } {

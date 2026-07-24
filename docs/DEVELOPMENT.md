@@ -60,9 +60,10 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 1. **Triage** — `gantry triage "<intent>"` (escalation → Planner legislates).
 2. **Legislate** — `gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry` (or `substrate` for substrate-only).
 3. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
-4. **Executor scope** — `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml` (or `eval "$(gantry runtime env --mission …)"`) before agent/shell work.
-5. **Trace** — append PASS quotes to repo-root `EXECUTOR_LOG.md` (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
-6. **Verify** — `gantry verify --mission .gitagent/missions/<file>.yaml`.
+4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml` (or `scripts/gxt-pin-mission.sh …`). When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
+5. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
+6. **Trace** — append PASS quotes to repo-root `EXECUTOR_LOG.md` (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
+7. **Verify** — `gantry verify` (pinned) or `gantry verify --mission .gitagent/missions/<file>.yaml`. Optional: `gantry verify --receipt` then `gantry receipt show`.
 
 ## Cursor session (this repo)
 
@@ -99,13 +100,15 @@ gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry   # or substrate
 # Planner: git commit -m "[MSN-NNNN] legislate …" including mission file
 
 scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml
+# or: gantry pin .gitagent/missions/MSN-NNNN.<slug>.yaml
 # New Agent chat → sessionStart injects GXT_TMVC_* + mission context automatically
 
 source scripts/gxt-runtime-env.sh   # integrated terminal (same pinned mission)
 # … Cursor Agent work in src/cli/ or legislated scope …
 # Append gate evidence to EXECUTOR_LOG.md
 
-gantry verify --mission .gitagent/missions/MSN-NNNN.<slug>.yaml
+gantry verify            # uses pin; prints [gantry] Using pinned mission: …
+gantry verify --receipt  # optional attestation receipt (gantry receipt show)
 npm run validate
 git push   # pre-push: gantry verify --pre-push on branch-changed missions
 ```

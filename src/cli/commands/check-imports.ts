@@ -1,5 +1,6 @@
 import { findBannedImportsInFolder } from "../lib/ast-discovery.js";
 import { logError, setExitCode } from "../lib/cli-io.js";
+import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface CheckImportsOptions {
@@ -15,14 +16,12 @@ export function runCheckImports(options: CheckImportsOptions): void {
     return;
   }
 
-  try {
+  runUserCommand({ json: options.json }, () => {
     const { root } = loadWorkspace();
     const violations = findBannedImportsInFolder(root, options.dir, options.ban);
 
     if (options.json) {
-      process.stdout.write(
-        `${JSON.stringify({ ok: violations.length === 0, violations }, null, 2)}\n`,
-      );
+      emitCliJson({ ok: violations.length === 0, violations });
       if (violations.length > 0) setExitCode(1);
       return;
     }
@@ -36,8 +35,5 @@ export function runCheckImports(options: CheckImportsOptions): void {
       process.stderr.write(`${v.file}: banned import "${v.specifier}"\n`);
     }
     setExitCode(1);
-  } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
-    setExitCode(1);
-  }
+  });
 }

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_KPI_REPORT_DIR } from "./constants.js";
+import { GantryUserError } from "./errors.js";
 import { runGate } from "./gate.js";
 import { assertKpiReportSchemaValid } from "./kpi-engine.js";
 import { resolveGateWorkDir } from "./gate.js";
@@ -100,12 +101,22 @@ export function runKpiScan(
 ): KpiScanResult {
   const msnId = mission.msnId;
   if (!msnId) {
-    throw new Error("gantry scan: mission missing msn_id");
+    throw new GantryUserError(
+      "MISSION_SCHEMA_INVALID",
+      "gantry scan: mission missing msn_id",
+      "Add msn_id to the mission YAML",
+      2,
+    );
   }
 
   const verifiers = mission.llmVerifiers;
   if (verifiers.length === 0) {
-    throw new Error("gantry scan: mission has no llm_verifiers configured");
+    throw new GantryUserError(
+      "KPI_REPORT_MISSING",
+      "gantry scan: mission has no llm_verifiers configured",
+      "Add llm_verifiers to the mission or see examples/performance-judge/",
+      2,
+    );
   }
 
   const reportPath =
@@ -120,8 +131,11 @@ export function runKpiScan(
   for (const verifier of verifiers) {
     const outcome = runSingleVerifier(workDir, verifier);
     if (outcome.failed && verifier.required) {
-      throw new Error(
+      throw new GantryUserError(
+        "KPI_GATE_FAILED",
         `gantry scan: required verifier "${verifier.id}" failed (exit ${String(outcome.exitCode)})`,
+        `Fix verifier command or set required: false — see examples/performance-judge/`,
+        1,
       );
     }
     if (outcome.failed) {

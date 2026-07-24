@@ -191,8 +191,10 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 | Capability | Command / config | Notes |
 |------------|------------------|-------|
+| Active mission pin | `gantry pin [file]`, `gantry unpin` | No args = show pin; verify/scan/attest/runtime env default to pinned mission |
+| Receipt inspect | `gantry receipt list`, `gantry receipt show [MSN\|path]` | Read-only local view of `.gitagent/history/receipts/` |
 | Hash-only flight telemetry | `flight_telemetry.body_mode` in `.gitagent/config.json` (default `hash_only`) | Stream events keep `chunk_sha256` + `bytes`; omit `chunk_b64` unless `full` |
-| Attestation receipts | `gantry attest`, `gantry verify --receipt` | JSON under `.gitagent/history/receipts/` (git-ignored); digests + outcomes only |
+| Attestation receipts | `gantry attest`, `gantry verify --receipt` | JSON under `.gitagent/history/receipts/` (git-ignored); digests + outcomes only; verify prints `wrote <path>` |
 | Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
 | Hub ingestion export | CI artifact / PR attach / optional future `--git-note` | Spoke-owned export path; not a tracked receipt tree by default |
 | Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
@@ -213,7 +215,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 |-------|------|
 | `PERFORMANCE.md` | Human strategies corpus (no empirical SLAs unless a benchmark gate enforces them) |
 | `PERFORMANCE_RUBRIC.md` | Rule IDs ↔ review questions for BYO `llm_verifiers` |
-| `gantry scan` | Runs verifier; writes KPI `findings[]` to `.gitagent/kpi/MSN-*.json` |
+| `gantry scan` | Runs verifier; writes KPI `findings[]` to `.gitagent/kpi/MSN-*.json` (defaults to pinned mission; see `examples/performance-judge/`) |
 | `gantry verify` | Surfaces advisory warnings + structured `findings[]` on PASS — never flips FAIL→PASS |
 
 **When to use:** After architecture rubric (#16); when missions touch hot paths and you want semantic performance sanity checks alongside deterministic gates.

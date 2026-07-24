@@ -1,6 +1,8 @@
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { logInfo } from "../lib/cli-io.js";
+import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { runKpiScan } from "../lib/kpi-scan.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.js";
+import { parseMissionFile } from "../lib/missions/parser.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface ScanOptions {
@@ -10,28 +12,26 @@ export interface ScanOptions {
 }
 
 export function runScan(options: ScanOptions): void {
-  if (!options.mission) {
-    logError("gantry scan: --mission is required");
-    setExitCode(2);
-    return;
-  }
-
-  try {
+  runUserCommand({ json: options.json }, () => {
     const { root } = loadWorkspace();
-    const mission = parseMissionFile(root, options.mission);
+    const resolved = resolveMissionArg(root, options.mission);
+    emitPinnedMissionBanner(resolved, { json: options.json });
+    const mission = parseMissionFile(root, resolved.missionRel);
     const result = runKpiScan(root, mission, { cwd: options.cwd });
 
     if (options.json) {
-      process.stdout.write(
-        `${JSON.stringify({ status: "ok", report_path: result.reportPath, report: result.report }, null, 2)}\n`,
-      );
+      emitCliJson({
+        status: "ok",
+        report_path: result.reportPath,
+        mission_file_path: resolved.missionRel,
+        mission_source: resolved.source,
+        report: result.report,
+      });
       return;
     }
 
     logInfo(`gantry scan: wrote ${result.reportPath}`);
     logInfo(`metrics: ${Object.keys(result.report.metrics).length}`);
-  } catch (e) {
-    logError(e instanceof Error ? e.message : String(e));
-    setExitCode(1);
-  }
+    logInfo(`next: git add ${result.reportPath} && git commit -m "[${mission.msnId}] KPI report"  # then gantry verify`);
+  });
 }
