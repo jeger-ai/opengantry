@@ -10,18 +10,10 @@ cd "$ROOT"
 
 node scripts/gen-dogfood.mjs
 
-mismatch=0
-while IFS= read -r -d '' rel; do
-  src="templates/scripts/${rel}"
-  dst="scripts/${rel}"
-  if [[ ! -f "$dst" ]] || ! cmp -s "$src" "$dst"; then
-    echo "assert-dogfood-sync: out of sync: scripts/${rel}" >&2
-    mismatch=1
-  fi
-done < <(find templates/scripts -type f -printf '%P\0')
-
-if [[ "$mismatch" -ne 0 ]]; then
+if ! git diff --exit-code -- scripts/ templates/scripts/ >/dev/null; then
+  echo "assert-dogfood-sync: scripts/ or templates/scripts/ drifted after gen-dogfood" >&2
   echo "assert-dogfood-sync: run npm run gen:dogfood and commit scripts/ copies" >&2
+  git diff --stat -- scripts/ templates/scripts/ >&2 || true
   exit 1
 fi
 

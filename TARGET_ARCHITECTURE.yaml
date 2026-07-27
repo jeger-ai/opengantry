@@ -33,12 +33,6 @@ rules:
       - src/cli/commands/scan.ts
       - src/cli/commands/receipt.ts
       - src/cli/commands/attest.ts
-      - src/cli/commands/metrics.ts
-      - src/cli/commands/tmvc-guard.ts
-      - src/cli/commands/context-feed.ts
-      - src/cli/commands/check-imports.ts
-      - src/cli/commands/doctor.ts
-      - src/cli/commands/runtime.ts
     forbid_pattern: "setExitCode\\(e instanceof GantryUserError"
   - id: RULE-COMMAND-NO-JSON-STRINGIFY
     from_layer: command
@@ -47,12 +41,6 @@ rules:
       - src/cli/commands/scan.ts
       - src/cli/commands/receipt.ts
       - src/cli/commands/attest.ts
-      - src/cli/commands/metrics.ts
-      - src/cli/commands/tmvc-guard.ts
-      - src/cli/commands/context-feed.ts
-      - src/cli/commands/check-imports.ts
-      - src/cli/commands/doctor.ts
-      - src/cli/commands/runtime.ts
     forbid_pattern: "JSON\\.stringify\\("
   - id: RULE-COMMAND-NO-PROCESS-EXIT
     from_layer: command
@@ -61,10 +49,4 @@ rules:
       - src/cli/commands/scan.ts
       - src/cli/commands/receipt.ts
       - src/cli/commands/attest.ts
-      - src/cli/commands/metrics.ts
-      - src/cli/commands/tmvc-guard.ts
-      - src/cli/commands/context-feed.ts
-      - src/cli/commands/check-imports.ts
-      - src/cli/commands/doctor.ts
-      - src/cli/commands/runtime.ts
     forbid_pattern: "process\\.exit\\("

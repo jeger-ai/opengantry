@@ -642,3 +642,9 @@ DoD 4 MSN-0140 fresh: thermo-nuclear review fixes — verify context, command bo
 - Context Request ACCEPTED: version parity + CHANGELOG/BACKLOG — MSN-0141 v3.1.1 release
 DoD 1 MSN-0141: v3.1.1 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG/BACKLOG synced; MSN-0140 local DX in release notes
 DoD 2 MSN-0141: npm 3.1.1 — local DX pin defaults + receipts (MSN-0140); dev-validate-core OK
+
+## MSN-0142 Phase 2/3 housekeeping
+[CONTEXT-REQUEST] path=TARGET_ARCHITECTURE.yaml,.gitagent/planner/ARCHITECTURE_RUBRIC.md,scripts/assert-dogfood-sync.sh reason=MSN-0142 narrow command cage applies_to, portable dogfood assert, rubric wording (mission-authorized, non-TMVC) proposed=TARGET_ARCHITECTURE.yaml,.gitagent/planner/ARCHITECTURE_RUBRIC.md,scripts/assert-dogfood-sync.sh | msn=MSN-0142
+- Context Request ACCEPTED: TARGET_ARCHITECTURE.yaml, ARCHITECTURE_RUBRIC.md, assert-dogfood-sync.sh — MSN-0142 housekeeping
+DoD 1 MSN-0142: RULE-COMMAND-* applies_to narrowed to pin/scan/receipt/attest; rubric ARCH-CTX/BND/DUP wording tightened; assert-dogfood-sync uses git diff (no GNU find -printf)
+DoD 2 MSN-0142: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
