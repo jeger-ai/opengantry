@@ -1,0 +1,72 @@
+name: GXT attest ingest
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  attest_ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci && npm run build
+
+      - name: Resolve attribution identity
+        run: |
+          echo "GANTRY_SIGNER_PRINCIPAL=github:${{ github.event.pull_request.user.id }}:${{ github.event.pull_request.user.login }}" >> "$GITHUB_ENV"
+          echo "GANTRY_SIGNER_PRINCIPAL_KIND=github_actor" >> "$GITHUB_ENV"
+          echo "GANTRY_BRANCH_NAME=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
+
+      - name: Resolve changed mission
+        id: mission
+        run: |
+          m="$(git diff --name-only --diff-filter=ACMRT \
+                "${{ github.event.pull_request.base.sha }}...HEAD" \
+                -- '.gitagent/missions/*.yaml' | head -n1)"
+          echo "path=$m" >> "$GITHUB_OUTPUT"
+
+      - name: Verify and export envelope
+        id: verify
+        if: steps.mission.outputs.path != ''
+        continue-on-error: true
+        env:
+          GANTRY_ORG_ID: ${{ vars.GANTRY_ORG_ID }}
+          GANTRY_ORG_PEPPER: ${{ secrets.GANTRY_ORG_PEPPER }}
+          GANTRY_ORG_PEPPER_VERSION: ${{ vars.GANTRY_ORG_PEPPER_VERSION || '1' }}
+        run: |
+          node dist/cli/index.js verify \
+            --mission "${{ steps.mission.outputs.path }}" \
+            --audience verifier \
+            --ci \
+            --base-ref "${{ github.event.pull_request.base.sha }}" \
+            --export envelope.json
+
+      - name: Ingest to control plane
+        if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != ''
+        env:
+          PLANE_INGEST_URL: ${{ vars.PLANE_INGEST_URL }}
+          PLANE_INGEST_TOKEN: ${{ secrets.PLANE_INGEST_TOKEN }}
+        run: |
+          code="$(curl -sS -o response.json -w '%{http_code}' \
+            -X POST "$PLANE_INGEST_URL/api/v1/attestations/ingest" \
+            -H "Authorization: Bearer $PLANE_INGEST_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --retry 3 --retry-connrefused --max-time 30 \
+            --data-binary @envelope.json)"
+          cat response.json
+          [ "$code" = "202" ] || { echo "ingest failed: HTTP $code" >&2; exit 1; }
+
+      - name: Propagate verify outcome
+        if: steps.verify.outcome == 'failure'
+        run: exit 1

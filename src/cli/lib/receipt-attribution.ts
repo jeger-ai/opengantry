@@ -14,13 +14,32 @@ export interface AttestationAgentState {
   harness_mode: AttestationHarnessMode;
 }
 
+export type SignerPrincipalKind = "email" | "github_actor";
+
 export function hmacSha256Hex(pepper: string, message: string): string {
   return crypto.createHmac("sha256", pepper).update(message, "utf8").digest("hex");
 }
 
+function canonicalizeRepositoryIdentifier(raw: string): string {
+  let id = raw.trim().toLowerCase();
+  if (!id) return id;
+  if (id.startsWith("git@")) {
+    const colon = id.indexOf(":");
+    if (colon >= 0) {
+      id = `${id.slice(4, colon)}/${id.slice(colon + 1)}`;
+    }
+  } else {
+    id = id.replace(/^https?:\/\//, "");
+  }
+  id = id.replace(/\.git$/, "");
+  return id;
+}
+
 function resolveRepositoryIdentifier(repoRoot: string): string {
+  const override = process.env.GANTRY_REPO_ID?.trim();
+  if (override) return canonicalizeRepositoryIdentifier(override);
   const remote = gitConfigGet(repoRoot, "remote.origin.url");
-  if (remote) return remote.trim().toLowerCase();
+  if (remote) return canonicalizeRepositoryIdentifier(remote);
   return path.basename(repoRoot).toLowerCase();
 }
 
@@ -29,6 +48,8 @@ export function resolveRepositoryHash(repoRoot: string, org: OrgExportConfig): s
 }
 
 export function gitCurrentBranch(repoRoot: string): string {
+  const override = process.env.GANTRY_BRANCH_NAME?.trim();
+  if (override) return override;
   const r = gitRunOk(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"]);
   const branch = r.ok ? r.stdout.trim() : "";
   if (!branch || branch === "HEAD") return "detached";
@@ -64,6 +85,16 @@ export function resolveBranchHmac(repoRoot: string, org: OrgExportConfig): {
   branch_class: BranchClass;
 } {
   const current = gitCurrentBranch(repoRoot);
+  if (current === "detached") {
+    const branchOverride = process.env.GANTRY_BRANCH_NAME?.trim();
+    if (branchOverride) {
+      return {
+        branch_hmac: hmacSha256Hex(org.pepper, branchOverride),
+        branch_class: resolveBranchClass(repoRoot, branchOverride),
+      };
+    }
+    return { branch_hmac: hmacSha256Hex(org.pepper, "detached"), branch_class: "non_default" };
+  }
   return {
     branch_hmac: hmacSha256Hex(org.pepper, current),
     branch_class: resolveBranchClass(repoRoot, current),

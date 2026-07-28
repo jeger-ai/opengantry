@@ -40,5 +40,7 @@ export interface VerifyOptions {
   receipt?: boolean | string;
   /** Detach-sign receipt with local SSH/GPG key (also when receipt_signature tier is warn/require). */
   signReceipt?: boolean;
+  /** Write hub export envelope after verify (payload_b64 + signature). */
+  exportPath?: string;
 }
 

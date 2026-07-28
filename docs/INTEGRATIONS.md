@@ -78,6 +78,43 @@ Enterprise async pattern:
 
 Unlegislated mission files (no Planner `[MSN-NNNN]` stamp) still **fail** pre-push.
 
+## CI receipt ingestion (GitHub Actions)
+
+M1 control-plane ingestion uses `gantry verify --export` to emit a hub envelope after verify completes (pass **or** fail). The workflow ingests the envelope **before** failing the job so failed gates still land in the ledger (ADR-0037).
+
+**Copy** [`templates/.github/workflows/gxt-attest-ingest.yml`](../templates/.github/workflows/gxt-attest-ingest.yml) to `.github/workflows/` in your spoke repo.
+
+### Repository settings
+
+| Name | Type | Purpose |
+|------|------|---------|
+| `GANTRY_ORG_ID` | variable | Must match the plane ingestion token org |
+| `GANTRY_ORG_PEPPER` | secret | Customer-held pepper (never sent to the plane) |
+| `GANTRY_ORG_PEPPER_VERSION` | variable | Optional; default `1` |
+| `PLANE_INGEST_URL` | variable | Public HTTPS base of the control plane |
+| `PLANE_INGEST_TOKEN` | secret | From `planectl token-create` on the plane |
+
+### Execution order (critical)
+
+1. Checkout PR head with `fetch-depth: 0` (git-proof + planner stamp need history).
+2. Set runner-verified identity — **never** `git log` committer email:
+   - `GANTRY_SIGNER_PRINCIPAL=github:<user_id>:<login>` from `github.event.pull_request.user`
+   - `GANTRY_SIGNER_PRINCIPAL_KIND=github_actor`
+   - `GANTRY_BRANCH_NAME` from `github.event.pull_request.head.ref`
+3. `gantry verify --mission … --ci --export envelope.json` with `continue-on-error: true`
+4. `POST $PLANE_INGEST_URL/api/v1/attestations/ingest` with Bearer token
+5. Fail the job if verify failed (ingestion already recorded)
+
+### Local export (debug)
+
+```bash
+export GANTRY_ORG_ID=org-example
+export GANTRY_ORG_PEPPER='<secret>'
+gantry verify --mission .gitagent/missions/MSN-NNNN.<slug>.yaml --export /tmp/envelope.json
+```
+
+See [opengantry-plane `docs/DEPLOYMENT.md`](https://github.com/jeger-ai/opengantry-plane/blob/main/docs/DEPLOYMENT.md) for plane provisioning.
+
 ## Canonical context files
 
 Point every tool at the same GXT law — do not duplicate prose:

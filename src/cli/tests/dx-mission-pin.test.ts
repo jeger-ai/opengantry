@@ -88,6 +88,7 @@ test("receipt list/show latest by MSN", () => {
     agent: { name: "test", version: "0.0.0", harness_mode: "cli" },
     planner_stamp: null,
     signer_principal_hmac: null,
+    signer_principal_kind: null,
     verify_status: "passed",
     issued_at: "2026-01-01T00:00:00.000Z",
     receipt_sha256: "b".repeat(64),

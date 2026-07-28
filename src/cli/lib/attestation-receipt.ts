@@ -19,9 +19,11 @@ import {
   resolveAttestationAgent,
   resolveBranchHmac,
   resolveRepositoryHash,
+  hmacSha256Hex,
   type AttestationAgentState,
   type AttestationHarnessMode,
   type BranchClass,
+  type SignerPrincipalKind,
 } from "./receipt-attribution.js";
 import {
   canonicalReceiptUtf8,
@@ -60,6 +62,7 @@ export interface AttestationReceipt {
   agent: AttestationAgentState;
   planner_stamp: PlannerStampReceipt | null;
   signer_principal_hmac: string | null;
+  signer_principal_kind: SignerPrincipalKind | null;
   verify_status: AttestationVerifyStatus;
   error_code?: string;
   issued_at: string;
@@ -114,10 +117,32 @@ export function computeReceiptSha256(
     .digest("hex");
 }
 
-function resolveSignerPrincipalHmac(root: string, orgPepper: string): string | null {
+function parseSignerPrincipalKind(raw: string | undefined): SignerPrincipalKind | null {
+  const trimmed = raw?.trim().toLowerCase();
+  if (trimmed === "email" || trimmed === "github_actor") return trimmed;
+  return null;
+}
+
+function resolveSignerPrincipal(
+  root: string,
+  orgPepper: string,
+): { hmac: string; kind: SignerPrincipalKind } | null {
+  const envPrincipal = process.env.GANTRY_SIGNER_PRINCIPAL?.trim();
+  const envKind = parseSignerPrincipalKind(process.env.GANTRY_SIGNER_PRINCIPAL_KIND);
+  if (envPrincipal) {
+    const kind = envKind ?? "github_actor";
+    return {
+      hmac: hmacSha256Hex(orgPepper, envPrincipal),
+      kind,
+    };
+  }
+
   const email = gitConfigGet(root, "user.email");
   if (!email?.trim()) return null;
-  return pseudonymizeEmail(email, { org_id: "", pepper: orgPepper, pepper_version: 1 });
+  return {
+    hmac: pseudonymizeEmail(email, { org_id: "", pepper: orgPepper, pepper_version: 1 }),
+    kind: "email",
+  };
 }
 
 function attachReceiptSignature(
@@ -185,6 +210,7 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
 
   const branch = resolveBranchHmac(input.root, org);
   const gitTree = gitRevParse(input.root, "HEAD^{tree}");
+  const signer = resolveSignerPrincipal(input.root, org.pepper);
 
   const base: Omit<AttestationReceipt, "receipt_sha256" | "signature"> = {
     schema_version: ATTESTATION_RECEIPT_SCHEMA_VERSION,
@@ -202,7 +228,8 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
     git_tree_sha: gitTree ?? "no-tree",
     agent: resolveAttestationAgent(input.harnessMode),
     planner_stamp: resolvePlannerStampForReceipt(input.root, msnId, org.pepper),
-    signer_principal_hmac: resolveSignerPrincipalHmac(input.root, org.pepper),
+    signer_principal_hmac: signer?.hmac ?? null,
+    signer_principal_kind: signer?.kind ?? null,
     verify_status: input.verifyStatus,
     issued_at: new Date().toISOString(),
   };

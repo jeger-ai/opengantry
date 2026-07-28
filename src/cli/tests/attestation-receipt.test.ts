@@ -48,6 +48,8 @@ test("attestation receipt v0.2.0: stable receipt_sha256 and no stream bodies", (
   assert.equal(receipt.receipt_sha256, computeReceiptSha256(receipt));
   assert.equal(receipt.signature, undefined);
   assert.match(receipt.branch_hmac, /^[a-f0-9]{64}$/);
+  assert.equal(receipt.signer_principal_kind, "email");
+  assert.match(receipt.signer_principal_hmac ?? "", /^[a-f0-9]{64}$/);
   assert.ok(["default", "non_default"].includes(receipt.branch_class));
   const serialized = JSON.stringify(receipt);
   assert.doesNotMatch(serialized, /chunk_b64/);

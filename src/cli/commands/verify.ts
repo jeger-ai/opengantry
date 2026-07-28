@@ -30,6 +30,14 @@ function assertVerifyOptionsCompatible(options: VerifyOptions): void {
       2,
     );
   }
+  if (options.changedMissions === true && options.exportPath?.trim()) {
+    throw new GantryUserError(
+      "INVALID_ARGUMENT",
+      "gantry verify --export cannot be used with --changed-missions (one envelope per mission file).",
+      undefined,
+      2,
+    );
+  }
   if (options.changedMissions === true && !options.mission) {
     return;
   }

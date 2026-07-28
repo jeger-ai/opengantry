@@ -42,6 +42,7 @@ interface VerifyCliOptions {
   scanDepth?: string;
   receipt?: string | boolean;
   signReceipt?: boolean;
+  export?: string;
 }
 
 function parseVerifyExportFormat(raw?: string): VerifyExportFormat | undefined {
@@ -78,6 +79,7 @@ function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     audience: getOutputAudience(),
     receipt: opts.receipt,
     signReceipt: opts.signReceipt,
+    exportPath: opts.export,
   };
 }
 
@@ -163,6 +165,7 @@ export function registerWorkflowCommands(program: Command): void {
     )
     .option("--receipt [file]", "Write attestation receipt JSON after verify (default history path)")
     .option("--sign-receipt", "Detach-sign receipt with local SSH/GPG key")
+    .option("--export <file>", "Write hub export envelope after verify (payload_b64 + signature)")
     .option("--audience <role>", "Tailor output: executor|planner|verifier|platform")
     .action(async (opts: VerifyCliOptions) => {
       await runVerify(verifyOptionsFromCli(opts));

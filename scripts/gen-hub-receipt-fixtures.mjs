@@ -47,6 +47,7 @@ function baseReceipt(overrides = {}) {
     agent: { name: "fixture-generator", version: "0.0.0", harness_mode: "cli" },
     planner_stamp: null,
     signer_principal_hmac: hmac(FIXTURE_ORG.pepper, "signer@example.com"),
+    signer_principal_kind: "email",
     verify_status: "passed",
     issued_at: "2026-07-28T12:00:00.000Z",
     ...overrides,

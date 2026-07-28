@@ -1,7 +1,7 @@
 import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "./mission-arg.js";
 import { loadWorkspace } from "./workspace.js";
-import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
+import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-options.js";
 import {
   buildVerifyResultPayload,
@@ -52,23 +52,43 @@ function evaluateOrInitFailure(
   }
 }
 
+function breakGlassPhaseStub(ctx: VerifyPresentContext): VerifyPhaseSuccess {
+  return {
+    ok: true,
+    outcome: "full",
+    proofMsnId: ctx.mission.msnId ?? "MSN-0000",
+    executorLogPath: resolveExecutorLogPath(ctx.root, ctx.options),
+    traceWarnings: [],
+  };
+}
+
 function tryWriteReceiptIfRequested(
   ctx: VerifyPresentContext,
   phaseResult: VerifyPhaseResult,
-): { ok: true; receiptPath?: string } | { ok: false; error: unknown } {
-  if (ctx.options.receipt === undefined) return { ok: true };
+  breakGlass = false,
+): { ok: true; receiptPath?: string; exportPath?: string } | { ok: false; error: unknown } {
+  if (!wantsReceiptOrExport(ctx.options)) return { ok: true };
   try {
-    const receiptPath = maybeWriteVerifyReceipt({
+    const written = maybeWriteVerifyReceipt({
       root: ctx.root,
       mission: ctx.mission,
       missionArg: ctx.resolved.missionRel,
       options: ctx.options,
       result: phaseResult,
+      breakGlass,
     });
-    return { ok: true, receiptPath: receiptPath ?? undefined };
+    return {
+      ok: true,
+      receiptPath: written.receiptPath ?? undefined,
+      exportPath: written.exportPath ?? undefined,
+    };
   } catch (e) {
     return { ok: false, error: e };
   }
+}
+
+function wantsReceiptOrExport(options: VerifyOptions): boolean {
+  return options.receipt !== undefined || !!options.exportPath?.trim();
 }
 
 async function resolveFinalPhaseResult(
@@ -116,10 +136,22 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
   emitMissionBinding(ctx, sink);
 
   switch (sink) {
-    case "break_glass_json":
+    case "break_glass_json": {
+      const receiptWrite = tryWriteReceiptIfRequested(ctx, breakGlassPhaseStub(ctx), true);
+      if (!receiptWrite.ok) {
+        return presentJsonInitFailure(ctx, receiptWrite.error);
+      }
+      ctx.receiptPath = receiptWrite.receiptPath;
       return presentBreakGlassJson(ctx);
-    case "break_glass_human":
+    }
+    case "break_glass_human": {
+      const receiptWrite = tryWriteReceiptIfRequested(ctx, breakGlassPhaseStub(ctx), true);
+      if (!receiptWrite.ok) {
+        return presentHumanInitFailure(ctx, receiptWrite.error);
+      }
+      ctx.receiptPath = receiptWrite.receiptPath;
       return presentBreakGlassHuman(ctx);
+    }
     case "json": {
       const evaluated = evaluateOrInitFailure(ctx);
       if (!evaluated.ok) {

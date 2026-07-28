@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: M1 CI verify --export, typed signer principal, GitHub Actions ingest recipe (ADR-0037)
+msn_id: MSN-0145
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0145: gantry verify --export emits ingestible envelope on pass/fail/break-glass; signer_principal_kind + CI attribution; gxt-attest-ingest workflow; dev-validate-core OK"
+    anchor: "MSN-0145"
+    status: PASS
+gate_success_substring: dev-validate-core OK
