@@ -16,7 +16,6 @@ import { getRepoRoot } from "../lib/git.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import {
   canonicalReceiptUtf8,
-  signReceiptMessage,
   verifyReceiptAgainstCanonical,
 } from "../lib/receipt-signing.js";
 import { writeRuntimeExecRepo, writeOrgExportConfig, gitInitCommit } from "./test-fixtures.js";

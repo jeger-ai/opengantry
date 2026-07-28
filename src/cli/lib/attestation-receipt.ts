@@ -120,6 +120,51 @@ function resolveSignerPrincipalHmac(root: string, orgPepper: string): string | n
   return pseudonymizeEmail(email, { org_id: "", pepper: orgPepper, pepper_version: 1 });
 }
 
+function attachReceiptSignature(
+  root: string,
+  receipt: AttestationReceipt,
+  tier: ReturnType<typeof resolveReceiptSignatureTier>,
+  sign?: boolean,
+): AttestationReceipt {
+  const shouldSign = sign === true || tier === "require" || tier === "warn";
+  if (!shouldSign) return receipt;
+
+  const canonicalUtf8 = canonicalReceiptUtf8(receipt);
+  const signature = signReceiptMessage(root, canonicalUtf8, "canonical_json_utf8");
+  if (!signature) {
+    if (tier === "require") {
+      throw new GantryUserError(
+        "RECEIPT_SIGNATURE_REQUIRED",
+        "receipt_signature=require but no local SSH/GPG signing key is configured",
+        "configure user.signingkey and gpg.format, or pass receipt_signature off",
+        2,
+      );
+    }
+    if (tier === "warn") {
+      logWarn(
+        `${CLI_NAME} attest: receipt unsigned — no local SSH/GPG signing key is configured`,
+      );
+    }
+    return receipt;
+  }
+
+  const verifyStatus = verifyReceiptAgainstCanonical(
+    root,
+    { ...receipt, signature },
+    canonicalUtf8,
+  );
+  if (tier === "warn" && verifyStatus !== "good") {
+    logWarn(`${CLI_NAME} attest: receipt signature verify_status=${verifyStatus}`);
+  }
+  return {
+    ...receipt,
+    signature: {
+      ...signature,
+      verify_status: verifyStatus,
+    },
+  };
+}
+
 export function buildAttestationReceipt(input: BuildAttestationReceiptInput): AttestationReceipt {
   const missionAbs = path.resolve(input.root, input.missionArg);
   const msnId = input.mission.msnId;
@@ -169,44 +214,7 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
   const receipt: AttestationReceipt = { ...base, receipt_sha256 };
 
   const config = loadGxtConfig(input.root);
-  const tier = resolveReceiptSignatureTier(config);
-  const shouldSign = input.sign === true || tier === "require" || tier === "warn";
-  if (!shouldSign) return receipt;
-
-  const canonicalUtf8 = canonicalReceiptUtf8(receipt);
-  const signature = signReceiptMessage(input.root, canonicalUtf8, "canonical_json_utf8");
-  if (!signature) {
-    if (tier === "require") {
-      throw new GantryUserError(
-        "RECEIPT_SIGNATURE_REQUIRED",
-        "receipt_signature=require but no local SSH/GPG signing key is configured",
-        "configure user.signingkey and gpg.format, or pass receipt_signature off",
-        2,
-      );
-    }
-    if (tier === "warn") {
-      logWarn(
-        `${CLI_NAME} attest: receipt unsigned — no local SSH/GPG signing key is configured`,
-      );
-    }
-    return receipt;
-  }
-
-  const verifyStatus = verifyReceiptAgainstCanonical(
-    input.root,
-    { ...receipt, signature },
-    canonicalUtf8,
-  );
-  if (tier === "warn" && verifyStatus !== "good") {
-    logWarn(`${CLI_NAME} attest: receipt signature verify_status=${verifyStatus}`);
-  }
-  return {
-    ...receipt,
-    signature: {
-      ...signature,
-      verify_status: verifyStatus,
-    },
-  };
+  return attachReceiptSignature(input.root, receipt, resolveReceiptSignatureTier(config), input.sign);
 }
 
 export function defaultReceiptPath(root: string, msnId: string, receiptSha256: string): string {

@@ -98,7 +98,6 @@ export function signReceiptMessage(
   if (resolveSigningFormat(repoRoot) === "ssh") {
     const keyPath = sshPrivateKeyPath(signingKey);
     const pubPath = sshPublicKeyPath(signingKey);
-    const principal = resolveSshSignerPrincipal(repoRoot);
     const messagePath = path.join(os.tmpdir(), `gxt-receipt-${process.pid}-${Date.now()}.txt`);
     const sigPath = `${messagePath}.sig`;
     try {
