@@ -122,8 +122,9 @@ export interface ReceiptShowSummary {
   msn_id: string;
   verify_status: string;
   receipt_sha256: string;
-  mission_rel: string;
+  org_id: string;
   git_head: string;
+  git_tree_sha: string;
   issued_at: string;
   error_code?: string;
   signature_verify_status?: string;
@@ -135,8 +136,9 @@ export function summarizeReceipt(relPath: string, receipt: AttestationReceipt): 
     msn_id: receipt.msn_id,
     verify_status: receipt.verify_status,
     receipt_sha256: receipt.receipt_sha256,
-    mission_rel: receipt.mission_rel,
+    org_id: receipt.org_id,
     git_head: receipt.git_head,
+    git_tree_sha: receipt.git_tree_sha,
     issued_at: receipt.issued_at,
     ...(receipt.error_code ? { error_code: receipt.error_code } : {}),
     ...(receipt.signature?.verify_status

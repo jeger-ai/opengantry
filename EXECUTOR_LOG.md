@@ -648,3 +648,6 @@ DoD 2 MSN-0141: npm 3.1.1 — local DX pin defaults + receipts (MSN-0140); dev-v
 - Context Request ACCEPTED: TARGET_ARCHITECTURE.yaml, ARCHITECTURE_RUBRIC.md, assert-dogfood-sync.sh — MSN-0142 housekeeping
 DoD 1 MSN-0142: RULE-COMMAND-* applies_to narrowed to pin/scan/receipt/attest; rubric ARCH-CTX/BND/DUP wording tightened; assert-dogfood-sync uses git diff (no GNU find -printf)
 DoD 2 MSN-0142: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0143 Attestation receipt v0.2.0
+DoD 1 MSN-0143: dev-validate-core OK — receipt v0.2.0 signed attribution, export envelope, org pepper pseudonymization (ADR-0036)

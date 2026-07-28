@@ -8,41 +8,58 @@ import { CLI_NAME, REL_RECEIPTS_DIR } from "./constants.js";
 import { GantryUserError } from "./errors.js";
 import {
   listMsnSubjectCommits,
-  missionPathRepoRelative,
   type MsnCommitRow,
 } from "./git-proof.js";
-import { gitRevParse } from "./git.js";
+import { gitConfigGet, gitRevParse } from "./git.js";
 import { loadGxtConfig, resolveReceiptSignatureTier } from "./gxt-config.js";
+import { resolveOrgExportConfig } from "./org-export-config.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import {
-  signReceiptHash,
-  verifyReceiptSignature,
+  pseudonymizeEmail,
+  resolveAttestationAgent,
+  resolveBranchHmac,
+  resolveRepositoryHash,
+  type AttestationAgentState,
+  type AttestationHarnessMode,
+  type BranchClass,
+} from "./receipt-attribution.js";
+import {
+  canonicalReceiptUtf8,
+  signReceiptMessage,
+  unsignedReceiptPayload,
+  verifyReceiptAgainstCanonical,
   type ReceiptSignature,
   type ReceiptSignatureVerifyStatus,
 } from "./receipt-signing.js";
 import type { ParsedMission } from "./types.js";
 import { computeWorkingDigests } from "./working-digests.js";
 
-export const ATTESTATION_RECEIPT_SCHEMA_VERSION = "0.1.0" as const;
+export const ATTESTATION_RECEIPT_SCHEMA_VERSION = "0.2.0" as const;
 
 export type AttestationVerifyStatus = "passed" | "failed" | "attest_only";
 
 export interface PlannerStampReceipt {
   commit: string;
-  subject: string;
-  author_email: string;
+  author_email_hmac: string;
 }
 
 export interface AttestationReceipt {
   schema_version: typeof ATTESTATION_RECEIPT_SCHEMA_VERSION;
+  org_id: string;
+  pepper_version: number;
+  repository_hash: string;
+  branch_hmac: string;
+  branch_class: BranchClass;
   msn_id: string;
-  mission_rel: string;
   mission_sha256: string;
   manifest_sha256: string | null;
   target_architecture_sha256: string | null;
   config_sha256: string | null;
   git_head: string;
+  git_tree_sha: string;
+  agent: AttestationAgentState;
   planner_stamp: PlannerStampReceipt | null;
+  signer_principal_hmac: string | null;
   verify_status: AttestationVerifyStatus;
   error_code?: string;
   issued_at: string;
@@ -57,6 +74,7 @@ export interface BuildAttestationReceiptInput {
   verifyStatus: AttestationVerifyStatus;
   errorCode?: string;
   sign?: boolean;
+  harnessMode?: AttestationHarnessMode;
 }
 
 function sha256Bytes(buf: Buffer): string {
@@ -70,6 +88,7 @@ function isPlannerStamp(row: MsnCommitRow, plannerEmails: string[]): boolean {
 export function resolvePlannerStampForReceipt(
   root: string,
   msnId: string,
+  orgPepper: string,
 ): PlannerStampReceipt | null {
   const plannerEmails = resolvePlannerEmails(root).emails;
   if (plannerEmails.length === 0) return null;
@@ -78,32 +97,37 @@ export function resolvePlannerStampForReceipt(
   if (!stamp) return null;
   return {
     commit: stamp.hash,
-    subject: stamp.subject,
-    author_email: stamp.authorEmail,
+    author_email_hmac: pseudonymizeEmail(stamp.authorEmail, {
+      org_id: "",
+      pepper: orgPepper,
+      pepper_version: 1,
+    }),
   };
-}
-
-function unsignedReceiptPayload(
-  input: AttestationReceipt | Omit<AttestationReceipt, "receipt_sha256" | "signature">,
-): Record<string, unknown> {
-  const { receipt_sha256: _receiptSha, signature: _signature, ...rest } = input as AttestationReceipt;
-  return { ...rest };
 }
 
 export function computeReceiptSha256(
   payload: Omit<AttestationReceipt, "receipt_sha256" | "signature">,
 ): string {
-  return crypto.createHash("sha256").update(canonicalJson(unsignedReceiptPayload(payload)), "utf8").digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(canonicalJson(unsignedReceiptPayload(payload)), "utf8")
+    .digest("hex");
+}
+
+function resolveSignerPrincipalHmac(root: string, orgPepper: string): string | null {
+  const email = gitConfigGet(root, "user.email");
+  if (!email?.trim()) return null;
+  return pseudonymizeEmail(email, { org_id: "", pepper: orgPepper, pepper_version: 1 });
 }
 
 export function buildAttestationReceipt(input: BuildAttestationReceiptInput): AttestationReceipt {
   const missionAbs = path.resolve(input.root, input.missionArg);
-  const missionRel = missionPathRepoRelative(input.root, missionAbs);
   const msnId = input.mission.msnId;
   if (!msnId) {
     throw new GantryUserError("INVALID_ARGUMENT", "mission is missing msn_id", undefined, 2);
   }
 
+  const org = resolveOrgExportConfig(input.root);
   const digests = computeWorkingDigests(input.root);
   if (digests.manifest_sha256 === null) {
     throw new GantryUserError(
@@ -114,16 +138,26 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
     );
   }
 
+  const branch = resolveBranchHmac(input.root, org);
+  const gitTree = gitRevParse(input.root, "HEAD^{tree}");
+
   const base: Omit<AttestationReceipt, "receipt_sha256" | "signature"> = {
     schema_version: ATTESTATION_RECEIPT_SCHEMA_VERSION,
+    org_id: org.org_id,
+    pepper_version: org.pepper_version,
+    repository_hash: resolveRepositoryHash(input.root, org),
+    branch_hmac: branch.branch_hmac,
+    branch_class: branch.branch_class,
     msn_id: msnId,
-    mission_rel: missionRel,
     mission_sha256: sha256Bytes(fs.readFileSync(missionAbs)),
     manifest_sha256: digests.manifest_sha256,
     target_architecture_sha256: digests.target_architecture_sha256,
     config_sha256: digests.config_sha256,
     git_head: gitRevParse(input.root, "HEAD") ?? "no-head",
-    planner_stamp: resolvePlannerStampForReceipt(input.root, msnId),
+    git_tree_sha: gitTree ?? "no-tree",
+    agent: resolveAttestationAgent(input.harnessMode),
+    planner_stamp: resolvePlannerStampForReceipt(input.root, msnId, org.pepper),
+    signer_principal_hmac: resolveSignerPrincipalHmac(input.root, org.pepper),
     verify_status: input.verifyStatus,
     issued_at: new Date().toISOString(),
   };
@@ -139,7 +173,8 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
   const shouldSign = input.sign === true || tier === "require" || tier === "warn";
   if (!shouldSign) return receipt;
 
-  const signature = signReceiptHash(input.root, receipt_sha256);
+  const canonicalUtf8 = canonicalReceiptUtf8(receipt);
+  const signature = signReceiptMessage(input.root, canonicalUtf8, "canonical_json_utf8");
   if (!signature) {
     if (tier === "require") {
       throw new GantryUserError(
@@ -157,7 +192,11 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): At
     return receipt;
   }
 
-  const verifyStatus = verifyReceiptSignature(input.root, receipt_sha256, signature);
+  const verifyStatus = verifyReceiptAgainstCanonical(
+    input.root,
+    { ...receipt, signature },
+    canonicalUtf8,
+  );
   if (tier === "warn" && verifyStatus !== "good") {
     logWarn(`${CLI_NAME} attest: receipt signature verify_status=${verifyStatus}`);
   }

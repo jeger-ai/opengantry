@@ -48,8 +48,9 @@ export function runReceiptShow(options: ReceiptShowOptions): void {
     logInfo(`  msn_id: ${summary.msn_id}`);
     logInfo(`  verify_status: ${summary.verify_status}`);
     logInfo(`  receipt_sha256: ${summary.receipt_sha256}`);
-    logInfo(`  mission_rel: ${summary.mission_rel}`);
+    logInfo(`  org_id: ${summary.org_id}`);
     logInfo(`  git_head: ${summary.git_head}`);
+    logInfo(`  git_tree_sha: ${summary.git_tree_sha}`);
     logInfo(`  issued_at: ${summary.issued_at}`);
     if (summary.error_code) logInfo(`  error_code: ${summary.error_code}`);
     if (summary.signature_verify_status) {

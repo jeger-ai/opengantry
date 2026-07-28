@@ -13,6 +13,7 @@ import {
   writeMiniGantryMission,
   writeMiniGantryRepo,
   writeSkillsForManifest,
+  writeOrgExportConfig,
 } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
@@ -53,6 +54,7 @@ trace_rows:
     "utf8",
   );
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), `${traceQuote}\n`, "utf8");
+  writeOrgExportConfig(dest);
   return missionRel;
 }
 

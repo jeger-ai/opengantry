@@ -3,14 +3,17 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import { canonicalJson } from "./canonical-json.js";
 import { gitConfigGet } from "./git.js";
 
 export type ReceiptSignatureKind = "ssh" | "gpg" | "none";
 export type ReceiptSignatureVerifyStatus = "good" | "bad" | "unknown";
+export type ReceiptPayloadEncoding = "receipt_sha256_hex" | "canonical_json_utf8";
 
 export interface ReceiptSignature {
   kind: ReceiptSignatureKind;
   signature_b64: string;
+  payload_encoding?: ReceiptPayloadEncoding;
   key_fingerprint?: string;
   signer_principal?: string;
   verify_status?: ReceiptSignatureVerifyStatus;
@@ -62,7 +65,33 @@ function writeAllowedSignersFile(pubPath: string, principal: string, outPath: st
   fs.writeFileSync(outPath, `${principal} ${pubLine}\n`, "utf8");
 }
 
-export function signReceiptHash(repoRoot: string, receiptSha256: string): ReceiptSignature | null {
+export function unsignedReceiptPayload(
+  input: Record<string, unknown> & { receipt_sha256?: string; signature?: unknown },
+): Record<string, unknown> {
+  const { receipt_sha256: _receiptSha, signature: _signature, ...rest } = input;
+  return { ...rest };
+}
+
+/** Canonical UTF-8 JSON of receipt body (includes receipt_sha256; excludes signature). */
+export function canonicalReceiptUtf8<T extends { signature?: unknown }>(receipt: T): string {
+  const { signature: _signature, ...body } = receipt;
+  return canonicalJson(body);
+}
+
+export function resolveSignatureMessage(
+  receiptSha256: string,
+  canonicalUtf8: string,
+  encoding: ReceiptPayloadEncoding | undefined,
+): string {
+  if (encoding === "canonical_json_utf8") return canonicalUtf8;
+  return receiptSha256;
+}
+
+export function signReceiptMessage(
+  repoRoot: string,
+  message: string,
+  payloadEncoding: ReceiptPayloadEncoding,
+): ReceiptSignature | null {
   const signingKey = resolveSigningKey(repoRoot);
   if (!signingKey) return null;
 
@@ -73,7 +102,7 @@ export function signReceiptHash(repoRoot: string, receiptSha256: string): Receip
     const messagePath = path.join(os.tmpdir(), `gxt-receipt-${process.pid}-${Date.now()}.txt`);
     const sigPath = `${messagePath}.sig`;
     try {
-      fs.writeFileSync(messagePath, receiptSha256, "utf8");
+      fs.writeFileSync(messagePath, message, "utf8");
       const result = spawnSync(
         "ssh-keygen",
         ["-Y", "sign", "-f", keyPath, "-n", RECEIPT_SIGN_NAMESPACE, messagePath],
@@ -83,8 +112,8 @@ export function signReceiptHash(repoRoot: string, receiptSha256: string): Receip
       return {
         kind: "ssh",
         signature_b64: fs.readFileSync(sigPath).toString("base64"),
+        payload_encoding: payloadEncoding,
         key_fingerprint: sshKeyFingerprint(pubPath) ?? path.basename(keyPath),
-        signer_principal: principal,
         verify_status: "unknown",
       };
     } finally {
@@ -104,21 +133,27 @@ export function signReceiptHash(repoRoot: string, receiptSha256: string): Receip
   const result = spawnSync(
     "gpg",
     ["--detach-sign", "--armor", "--local-user", signingKey, "--output", "-"],
-    { input: receiptSha256, encoding: "utf8" },
+    { input: message, encoding: "utf8" },
   );
   const stdout = typeof result.stdout === "string" ? result.stdout.trim() : "";
   if (result.status !== 0 || !stdout) return null;
   return {
     kind: "gpg",
     signature_b64: Buffer.from(stdout, "utf8").toString("base64"),
+    payload_encoding: payloadEncoding,
     key_fingerprint: signingKey,
     verify_status: "unknown",
   };
 }
 
+/** @deprecated v0.1.0 — signs receipt_sha256 hex only. */
+export function signReceiptHash(repoRoot: string, receiptSha256: string): ReceiptSignature | null {
+  return signReceiptMessage(repoRoot, receiptSha256, "receipt_sha256_hex");
+}
+
 export function verifyReceiptSignature(
   repoRoot: string,
-  receiptSha256: string,
+  message: string,
   signature: ReceiptSignature,
 ): ReceiptSignatureVerifyStatus {
   if (signature.kind === "none") return "unknown";
@@ -127,7 +162,8 @@ export function verifyReceiptSignature(
     const signingKey = resolveSigningKey(repoRoot);
     if (!signingKey) return "unknown";
     const pubPath = sshPublicKeyPath(signingKey);
-    const principal = signature.signer_principal ?? resolveSshSignerPrincipal(repoRoot);
+    const principal =
+      signature.signer_principal ?? resolveSshSignerPrincipal(repoRoot);
     const allowedSignersPath = path.join(
       os.tmpdir(),
       `gxt-receipt-allowed-${process.pid}-${Date.now()}.txt`,
@@ -150,7 +186,7 @@ export function verifyReceiptSignature(
           "-s",
           sigPath,
         ],
-        { input: receiptSha256, encoding: "utf8" },
+        { input: message, encoding: "utf8" },
       );
       return result.status === 0 ? "good" : "bad";
     } finally {
@@ -168,7 +204,7 @@ export function verifyReceiptSignature(
   try {
     fs.writeFileSync(sigPath, Buffer.from(signature.signature_b64, "base64"));
     const result = spawnSync("gpg", ["--verify", sigPath, "-"], {
-      input: receiptSha256,
+      input: message,
       encoding: "utf8",
     });
     return result.status === 0 ? "good" : "bad";
@@ -179,4 +215,15 @@ export function verifyReceiptSignature(
       /* best effort */
     }
   }
+}
+
+export function verifyReceiptAgainstCanonical(
+  repoRoot: string,
+  receipt: { receipt_sha256: string; signature?: ReceiptSignature },
+  canonicalUtf8: string,
+): ReceiptSignatureVerifyStatus {
+  if (!receipt.signature) return "unknown";
+  const encoding = receipt.signature.payload_encoding ?? "receipt_sha256_hex";
+  const message = resolveSignatureMessage(receipt.receipt_sha256, canonicalUtf8, encoding);
+  return verifyReceiptSignature(repoRoot, message, receipt.signature);
 }

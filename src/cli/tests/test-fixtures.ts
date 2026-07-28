@@ -202,6 +202,21 @@ export function writeIntegrationFixtureState(dest: string, state: IntegrationFix
   );
 }
 
+export function writeOrgExportConfig(
+  destRoot: string,
+  orgId = "org-test-fixture",
+  pepper = "test-pepper-secret",
+  pepperVersion = 1,
+): void {
+  const foremanDir = path.join(destRoot, ".gitagent", "foreman");
+  fs.mkdirSync(foremanDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(foremanDir, "ORG.export.local"),
+    `${JSON.stringify({ org_id: orgId, pepper, pepper_version: pepperVersion }, null, 2)}\n`,
+    "utf8",
+  );
+}
+
 export function writeRuntimeExecRepo(
   dest: string,
   ogRoot: string,

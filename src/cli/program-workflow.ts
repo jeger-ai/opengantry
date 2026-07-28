@@ -116,16 +116,18 @@ export function registerWorkflowCommands(program: Command): void {
     .argument("[mission]", "Mission file (.md or .yaml); alias for --mission when npm run swallows flags")
     .option("--mission <path>", "Mission file (.md or .yaml)")
     .option("--out <file>", "Receipt output path (default .gitagent/history/receipts/)")
+    .option("--export <file>", "Write hub export envelope (payload_b64 + signature)")
     .option("--sign", "Detach-sign receipt with local SSH/GPG key")
     .option("--json", "Emit structured JSON including receipt_path")
     .action(
       (
         missionPositional: string | undefined,
-        opts: { mission?: string; out?: string; sign?: boolean; json?: boolean },
+        opts: { mission?: string; out?: string; export?: string; sign?: boolean; json?: boolean },
       ) => {
         runAttest({
           mission: opts.mission ?? missionPositional,
           out: opts.out,
+          exportPath: opts.export,
           sign: opts.sign,
           json: opts.json,
         });

@@ -1,0 +1,11 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Attestation receipt v0.2.0 signed attribution, hub export envelope, org pepper pseudonymization (ADR-0036)
+msn_id: MSN-0143
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0143: dev-validate-core OK — receipt v0.2.0 signed attribution, export envelope, org pepper pseudonymization (ADR-0036)"
+    anchor: "MSN-0143"
+    status: PASS
+gate_success_substring: dev-validate-core OK
