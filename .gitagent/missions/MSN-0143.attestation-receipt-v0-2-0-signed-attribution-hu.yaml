@@ -5,7 +5,7 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0143: dev-validate-core OK — receipt v0.2.0 signed attribution, export envelope, org pepper pseudonymization (ADR-0036)"
+    trace_quote: "DoD 1 MSN-0143 fresh: dev-validate-core OK — lint-clean signing helper; golden fixtures ed25519/rsa/gpg; gantry verify gate pass"
     anchor: "MSN-0143"
     status: PASS
 gate_success_substring: dev-validate-core OK

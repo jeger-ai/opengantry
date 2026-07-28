@@ -651,3 +651,4 @@ DoD 2 MSN-0142: dev-validate-core OK — stack: check, manifest, tests, doctor, 
 
 ## MSN-0143 Attestation receipt v0.2.0
 DoD 1 MSN-0143: dev-validate-core OK — receipt v0.2.0 signed attribution, export envelope, org pepper pseudonymization (ADR-0036)
+DoD 1 MSN-0143 fresh: dev-validate-core OK — lint-clean signing helper; golden fixtures ed25519/rsa/gpg; gantry verify gate pass
