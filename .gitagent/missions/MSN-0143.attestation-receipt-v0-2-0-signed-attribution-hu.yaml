@@ -9,3 +9,4 @@ trace_rows:
     anchor: "MSN-0143"
     status: PASS
 gate_success_substring: dev-validate-core OK
+# Planner stamp: lint follow-up included in MSN-0143 commit range
