@@ -217,6 +217,33 @@ export function writeOrgExportConfig(
   );
 }
 
+const ORG_ATTRIBUTION_ENV_KEYS = [
+  "GANTRY_ORG_ID",
+  "GANTRY_ORG_PEPPER",
+  "GANTRY_ORG_PEPPER_VERSION",
+  "GANTRY_SIGNER_PRINCIPAL",
+  "GANTRY_SIGNER_PRINCIPAL_KIND",
+  "GANTRY_BRANCH_NAME",
+  "GANTRY_REPO_ID",
+] as const;
+
+/** Clear GANTRY_ORG_* / attribution env so tests use repo-local ORG.export.local only. */
+export function isolateOrgAttributionEnv<T>(fn: () => T): T {
+  const saved: Record<string, string | undefined> = {};
+  for (const key of ORG_ATTRIBUTION_ENV_KEYS) {
+    saved[key] = process.env[key];
+    delete process.env[key];
+  }
+  try {
+    return fn();
+  } finally {
+    for (const key of ORG_ATTRIBUTION_ENV_KEYS) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+  }
+}
+
 export function writeRuntimeExecRepo(
   dest: string,
   ogRoot: string,

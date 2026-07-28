@@ -18,7 +18,7 @@ import {
   canonicalReceiptUtf8,
   verifyReceiptAgainstCanonical,
 } from "../lib/receipt-signing.js";
-import { writeRuntimeExecRepo, writeOrgExportConfig, gitInitCommit } from "./test-fixtures.js";
+import { writeRuntimeExecRepo, writeOrgExportConfig, gitInitCommit, isolateOrgAttributionEnv } from "./test-fixtures.js";
 import { signReceiptHash, verifyReceiptSignature } from "../lib/receipt-signing.js";
 import { gitConfigGet } from "../lib/git.js";
 
@@ -29,6 +29,7 @@ test("canonicalJson: deterministic key order", () => {
 });
 
 test("attestation receipt v0.2.0: stable receipt_sha256 and no stream bodies", () => {
+  isolateOrgAttributionEnv(() => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-"));
   writeRuntimeExecRepo(dest, ogRoot, []);
@@ -54,9 +55,11 @@ test("attestation receipt v0.2.0: stable receipt_sha256 and no stream bodies", (
   const serialized = JSON.stringify(receipt);
   assert.doesNotMatch(serialized, /chunk_b64/);
   assert.doesNotMatch(serialized, /mission_rel/);
+  });
 });
 
 test("attestation export envelope: payload_b64 matches canonical signed bytes", () => {
+  isolateOrgAttributionEnv(() => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-export-"));
   writeRuntimeExecRepo(dest, ogRoot, []);
@@ -73,9 +76,11 @@ test("attestation export envelope: payload_b64 matches canonical signed bytes", 
   const envelope = buildAttestationExportEnvelope(receipt);
   const decoded = Buffer.from(envelope.payload_b64, "base64").toString("utf8");
   assert.equal(decoded, canonicalReceiptUtf8(receipt));
+  });
 });
 
 test("attestation receipt: rejects missing MANIFEST with GantryUserError", () => {
+  isolateOrgAttributionEnv(() => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-no-manifest-"));
   writeRuntimeExecRepo(dest, ogRoot, []);
@@ -98,9 +103,11 @@ test("attestation receipt: rejects missing MANIFEST with GantryUserError", () =>
       return true;
     },
   );
+  });
 });
 
 test("attestation receipt: rejects missing org export config", () => {
+  isolateOrgAttributionEnv(() => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-no-org-"));
   writeRuntimeExecRepo(dest, ogRoot, []);
@@ -120,9 +127,11 @@ test("attestation receipt: rejects missing org export config", () => {
       return true;
     },
   );
+  });
 });
 
 test("attestation receipt: verify mapping uses failed status", () => {
+  isolateOrgAttributionEnv(() => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-fail-"));
   writeRuntimeExecRepo(dest, ogRoot, []);
@@ -139,9 +148,11 @@ test("attestation receipt: verify mapping uses failed status", () => {
   });
   assert.equal(receipt.verify_status, "failed");
   assert.equal(receipt.error_code, "GATE_FAILED");
+  });
 });
 
 test("receipt signing v0.2.0: canonical byte round-trip when local signing key is configured", () => {
+  isolateOrgAttributionEnv(() => {
   const ogRoot = getRepoRoot();
   if (gitConfigGet(ogRoot, "gpg.format") !== "ssh") return;
   if (!gitConfigGet(ogRoot, "user.signingkey")) return;
@@ -166,6 +177,7 @@ test("receipt signing v0.2.0: canonical byte round-trip when local signing key i
     verifyReceiptAgainstCanonical(ogRoot, receipt, canonicalUtf8),
     "good",
   );
+  });
 });
 
 test("receipt signing v0.1.0 hash mode: SSH round-trip when local signing key is configured", () => {
