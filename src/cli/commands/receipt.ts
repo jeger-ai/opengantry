@@ -1,5 +1,6 @@
 import { logInfo } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
+import { runPrincipalHmac, type PrincipalHmacOptions } from "../lib/principal-hmac.js";
 import {
   listReceipts,
   resolveReceiptPath,
@@ -32,6 +33,12 @@ export function runReceiptList(options: ReceiptListOptions): void {
     for (const e of entries) {
       logInfo(`${e.path}  ${e.msn_id}  ${e.verify_status}  ${e.receipt_sha256.slice(0, 12)}`);
     }
+  });
+}
+
+export function runReceiptPrincipalHmac(options: PrincipalHmacOptions): void {
+  runUserCommand({ json: options.json }, () => {
+    runPrincipalHmac(options);
   });
 }
 

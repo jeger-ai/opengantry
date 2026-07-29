@@ -20,7 +20,7 @@ export function hmacSha256Hex(pepper: string, message: string): string {
   return crypto.createHmac("sha256", pepper).update(message, "utf8").digest("hex");
 }
 
-function canonicalizeRepositoryIdentifier(raw: string): string {
+export function canonicalizeRepositoryIdentifier(raw: string): string {
   let id = raw.trim().toLowerCase();
   if (!id) return id;
   if (id.startsWith("git@")) {

@@ -1,0 +1,47 @@
+{
+  "pepper": "test-pepper-do-not-use-in-production",
+  "vectors": [
+    {
+      "field": "email",
+      "input": "Signer@Example.COM",
+      "canonical_input": "signer@example.com",
+      "hmac": "e286dccbc92831708a5ee5879a406e497e48f7f439be4d6812ec444365b30e2a"
+    },
+    {
+      "field": "github_actor",
+      "input": "github:12345:OctoCat",
+      "canonical_input": "github:12345:OctoCat",
+      "hmac": "7176122c7dbde43e5a37852295a57c87f8ccdfe2103d63dc228c89e4c3894740"
+    },
+    {
+      "field": "repo",
+      "input": "https://github.com/example/golden-repo.git",
+      "canonical_input": "github.com/example/golden-repo",
+      "hmac": "ddee97684961ca609532d8a04b802551b161fd55f44c447daa25ba1ab7227aee"
+    },
+    {
+      "field": "repo",
+      "input": "git@github.com:commitly/core.git",
+      "canonical_input": "github.com/commitly/core",
+      "hmac": "8b5b211bfe939c01ae5021cbb135e086122847656e0fc8e0f0b22ff6cb42b716"
+    },
+    {
+      "field": "branch",
+      "input": "main",
+      "canonical_input": "main",
+      "hmac": "4d9aec8613353e9d671577385b794ba17e5ffe0bb47a74ab930af17e27c851a0"
+    },
+    {
+      "field": "branch",
+      "input": "feature/foo",
+      "canonical_input": "feature/foo",
+      "hmac": "9f7a25242aabf55c3cd36cf3e1c949cdfbf12e1a5b458f7bdd931452df19db1e"
+    },
+    {
+      "field": "branch",
+      "input": "detached",
+      "canonical_input": "detached",
+      "hmac": "1d63fb967492e0a68cf7c1d7de78d8f35b29559fdd4d70b1aa02ec2a78197966"
+    }
+  ]
+}

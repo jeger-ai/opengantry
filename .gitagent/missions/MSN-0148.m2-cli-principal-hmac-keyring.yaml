@@ -1,0 +1,10 @@
+# OpenGantry mission — M2 CLI pepper keyring and principal-hmac
+msn_id: MSN-0148
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0148: pepper-keyring loader; gantry receipt principal-hmac multi-epoch; attribution-vectors.json; fixture canonicalization"
+    anchor: "MSN-0148"
+    status: PASS
+gate_success_substring: "pass"

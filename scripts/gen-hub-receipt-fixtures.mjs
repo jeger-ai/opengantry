@@ -29,12 +29,28 @@ function hmac(pepper, msg) {
   return crypto.createHmac("sha256", pepper).update(msg, "utf8").digest("hex");
 }
 
+function canonicalizeRepositoryIdentifier(raw) {
+  let id = raw.trim().toLowerCase();
+  if (!id) return id;
+  if (id.startsWith("git@")) {
+    const colon = id.indexOf(":");
+    if (colon >= 0) {
+      id = `${id.slice(4, colon)}/${id.slice(colon + 1)}`;
+    }
+  } else {
+    id = id.replace(/^https?:\/\//, "");
+  }
+  id = id.replace(/\.git$/, "");
+  return id;
+}
+
 function baseReceipt(overrides = {}) {
+  const repoCanonical = canonicalizeRepositoryIdentifier("https://github.com/example/golden-repo.git");
   const body = {
     schema_version: "0.2.0",
     org_id: FIXTURE_ORG.org_id,
     pepper_version: FIXTURE_ORG.pepper_version,
-    repository_hash: hmac(FIXTURE_ORG.pepper, "https://github.com/example/golden-repo.git"),
+    repository_hash: hmac(FIXTURE_ORG.pepper, repoCanonical),
     branch_hmac: hmac(FIXTURE_ORG.pepper, "main"),
     branch_class: "default",
     msn_id: "MSN-9999",

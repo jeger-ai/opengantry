@@ -6,7 +6,8 @@ import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
 import { runPin, runUnpin } from "./commands/pin.js";
-import { runReceiptList, runReceiptShow } from "./commands/receipt.js";
+import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
+import type { PrincipalHmacOptions } from "./lib/principal-hmac.js";
 import { runContextFeed } from "./commands/context-feed.js";
 import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
@@ -79,6 +80,43 @@ export function registerCoreCommands(program: Command): void {
     .action((target: string | undefined, opts: { json?: boolean }) => {
       runReceiptShow({ target, json: opts.json });
     });
+
+  receipt
+    .command("principal-hmac")
+    .description("Compute attribution HMACs from the auditor pepper keyring (no git workspace required)")
+    .argument("[value]", "Principal value when using --kind")
+    .option("--org <id>", "Organization id (or GANTRY_ORG_ID)")
+    .option("--keyring <path>", "Pepper keyring path (or GANTRY_PEPPER_KEYRING)")
+    .option("--kind <kind>", "Principal kind: email|github_actor")
+    .option("--repo <url>", "Repository URL to hash")
+    .option("--branch <name>", "Branch name to hash")
+    .option("--epochs <spec>", "Pepper epochs: current|all|N,N", "current")
+    .option("--json", "Emit structured JSON")
+    .action(
+      (
+        value: string | undefined,
+        opts: {
+          org?: string;
+          keyring?: string;
+          kind?: string;
+          repo?: string;
+          branch?: string;
+          epochs?: string;
+          json?: boolean;
+        },
+      ) => {
+        runReceiptPrincipalHmac({
+          org: opts.org,
+          keyring: opts.keyring,
+          kind: opts.kind as PrincipalHmacOptions["kind"],
+          value,
+          repo: opts.repo,
+          branch: opts.branch,
+          epochs: opts.epochs,
+          json: opts.json,
+        });
+      },
+    );
 
   program
     .command("doctor")

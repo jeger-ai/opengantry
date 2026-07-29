@@ -655,3 +655,6 @@ DoD 1 MSN-0143 fresh: dev-validate-core OK — lint-clean signing helper; golden
 
 ## MSN-0145 M1 CI verify export + ingest
 DoD 1 MSN-0145: gantry verify --export emits ingestible envelope on pass/fail/break-glass; signer_principal_kind + CI attribution; gxt-attest-ingest workflow; dev-validate-core OK
+
+## MSN-0148 CLI pepper keyring + principal-hmac
+DoD 1 MSN-0148: pepper-keyring loader; gantry receipt principal-hmac multi-epoch; attribution-vectors.json; fixture canonicalization — npm test 505 pass, 0 fail
