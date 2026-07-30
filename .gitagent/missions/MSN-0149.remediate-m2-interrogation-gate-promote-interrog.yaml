@@ -1,0 +1,58 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Remediate M2 interrogation gate: promote interrogation to a first-class verify phase, collapse legislate gap resolution, delete dead interrogate helpers, fix broken CLI flags, unify interrogation row model
+msn_id: MSN-0149
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: pass
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key=gantry, TMVC narrowed to src/cli/ — deletions are
+      confined to unreachable helpers in src/cli/lib/interrogate/ and
+      src/cli/lib/mcp-interrogate.ts; no substrate paths.
+    adr_refs:
+      - ADR-0039
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: ADR-0027 accepted as binding and is the governing rationale for
+      this mission. ADR-0027 requires SARIF ruleId to use stable GXT_* codes
+      from failed payloads and JUnit to group testcases by verify phase. Because
+      verify-engine.ts returns interrogation failures through gitProofFailure(),
+      the five GXT_INTERROGATION_* codes are unreachable in SARIF and JUnit
+      misfiles them under git_proof. Promoting interrogation to a first-class
+      verify phase is therefore required for ADR-0027 compliance, not merely a
+      cleanliness refactor.
+    adr_refs:
+      - ADR-0027
+      - ADR-0039
+  - finding_id: 67ac2be17ab4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0039. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0039 before
+      legislation proceeds.
+    operator_answer: "ADR-0039 accepted as binding with no amendment in this
+      mission. The remediation preserves every ADR-0039 decision
+      (single-hypothesis halt, draft token v:2 binding, interrogation_sha256 as
+      checksum rather than seal) and closes the gap between the ADR and the
+      code: ADR-0039 states declared_paths enables post-hoc
+      GXT_INTERROGATION_PATH_DRIFT, but the dead --path CLI flag means
+      CLI-legislated missions always carry declared_paths: []. Any ADR text
+      change is a separate substrate mission, keeping this mission inside
+      src/cli/."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: b29673788522d810bc4600b79a009775a449894b0171f889a4737a665f5eb143
