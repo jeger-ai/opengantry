@@ -14,7 +14,8 @@ import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
 import { readStdinIfEmpty } from "./lib/cli-io.js";
 import type { InitOptions } from "./commands/init.js";
-import { addInitOptions } from "./program-init-options.js";
+import { runBlueprintCommand } from "./commands/blueprint.js";
+import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
@@ -26,6 +27,38 @@ type TriageCliOptions = Omit<TriageRunOptions, "text">;
 type StartCliOptions = Omit<StartOptions, "intent" | "writeMission" | "audience" | "silent"> & {
   write?: boolean;
 };
+
+/** Shared `gantry init` Commander flags (used by init command registration). */
+function addInitOptions(cmd: Command): Command {
+  return cmd
+    .option("--force", "Overwrite managed assets on conflict without prompting")
+    .option("--yes", "Use default profile without interactive wizard")
+    .option("--dry-run", "Print planned writes without applying")
+    .option("--ides <csv>", "Comma-separated IDE keys (cursor, claude-code, …)")
+    .option("--docs-path <path>", "Repo-relative integrations doc path")
+    .option("--skills <preset>", "Skills preset: minimal | specimen")
+    .option("--hooks", "Install git hooks")
+    .option("--no-hooks", "Skip git hooks")
+    .option("--ci", "Install CI workflow")
+    .option("--no-ci", "Skip CI workflow")
+    .option("--arch-source <kind>", "Architecture source: unset | file | directory | external")
+    .option("--arch-location <path>", "Architecture file path, folder, or external URL")
+    .option(
+      "--defensive-profile <preset>",
+      "Defensive profile preset: strict_enterprise | balanced_partner | lean_scratchpad",
+    )
+    .option("--no-defensive-profile", "Skip defensive profile preset (template defaults)")
+    .option(
+      "--discover",
+      "Run fast-path architecture discovery (emits proposal only until confirmed)",
+    )
+    .option("--discover-stdout", "Emit discovery proposal JSON to stdout (implies --discover)")
+    .option("--domain <key>", "Domain adapter for discovery (code | content)", "code")
+    .option(
+      "--tutorial",
+      "After init, run guided first mission loop (Planner stamp + verify walkthrough)",
+    );
+}
 
 export function registerCoreCommands(program: Command): void {
   program
@@ -251,5 +284,34 @@ export function registerCoreCommands(program: Command): void {
         strict: opts.strict,
         workspace: opts.workspace,
       });
+    });
+
+  program
+    .command("blueprint")
+    .description(
+      "Co-author ARCHITECTURE.md, TARGET_ARCHITECTURE.yaml, and verification_plan.json from discovery interview",
+    )
+    .option("--yes", "Accept defaults without interactive prompts")
+    .option("--domain <key>", "Domain adapter (code | content)", "code")
+    .action(async (opts: { yes?: boolean; domain?: string }) => {
+      await runBlueprintCommand({ yes: opts.yes, domain: opts.domain });
+    });
+
+  const planner = program.command("planner").description("Repo-local Planner identity (git-proof allowlist)");
+
+  planner
+    .command("show")
+    .description("Show resolved Planner emails and source for this repository")
+    .option("--json", "Emit structured JSON")
+    .action((opts: { json?: boolean }) => {
+      runPlannerShow({ json: opts.json });
+    });
+
+  planner
+    .command("set")
+    .description(`Write ${".gitagent/foreman/PLANNER.allowlist.local"} (gitignored, per-repo)`)
+    .argument("<emails...>", "One or more Planner emails (comma-separated ok)")
+    .action((emails: string[]) => {
+      runPlannerSet({ emails });
     });
 }

@@ -15,11 +15,14 @@ import {
   type NormalizedVerifyFailure,
 } from "./verify-failure-normalize.js";
 import { persistRemediationSnapshot } from "./context-feed-remediation.js";
-
 import type { GxtErrorCode } from "./gxt-error-codes.js";
-import type { VerifyFinding, VerifyFailedGate } from "./verify-finding.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "./verify-finding.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "./kpi-advisory-findings.js";
+import {
+  VERIFY_ENVELOPE_SCHEMA_VERSION,
+  verifyFinding,
+  type VerifyFinding,
+  type VerifyFailedGate,
+} from "./verify-finding.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;

@@ -5,13 +5,18 @@ import { handleCheckSignature } from "./mcp-check-signature.js";
 import { handleDraftLegislation } from "./mcp-draft-legislation.js";
 import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
 import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
-import { handleLastError } from "./mcp-last-error.js";
-import { handlePinMission } from "./mcp-pin-mission.js";
-import { handleResolveMission } from "./mcp-resolve-mission.js";
+import {
+  handleAttest,
+  handleLastError,
+  handlePinMission,
+  handleResolveMission,
+  handleRuntimeEnv,
+  handleRuntimeExec,
+  handleScan,
+  handleVerify,
+} from "./mcp-runtime.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
-import { handleRuntimeEnv, handleRuntimeExec, handleScan, handleVerify } from "./mcp-runtime.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
-import { handleAttest } from "./mcp-attest.js";
 
 const interrogationRowSchema = z.object({
   finding_id: z.string(),

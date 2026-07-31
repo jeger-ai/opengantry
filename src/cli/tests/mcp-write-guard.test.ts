@@ -11,7 +11,7 @@ import {
   McpWriteDeniedError,
 } from "../lib/mcp-write-guard.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { handlePinMission } from "../lib/mcp-pin-mission.js";
+import { handlePinMission } from "../lib/mcp-runtime.js";
 import { getRepoRoot } from "../lib/git.js";
 import { loadManifest } from "../lib/manifest.js";
 

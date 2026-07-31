@@ -4,7 +4,7 @@ import {
   type StartOrchestrationInput,
   type StartOrchestrationMcpResult,
 } from "./mcp-governance-shared.js";
-import { handleResolveMission } from "./mcp-resolve-mission.js";
+import { handleResolveMission } from "./mcp-runtime.js";
 import { pinActiveMission } from "./missions/parser.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";

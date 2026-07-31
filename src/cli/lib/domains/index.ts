@@ -40,7 +40,6 @@ export function listDomainKeys(): DomainKey[] {
 
 export {
   isDomainFile,
-  registerDomainAdapter,
   type DomainAdapter,
   type DomainKey,
   type DomainBlueprintQuestion,

@@ -6,8 +6,6 @@ import { registerArchCommands } from "./program-arch.js";
 import { registerMissionCommands } from "./program-mission.js";
 import { registerWorkflowCommands } from "./program-workflow.js";
 import { registerMcpCommands } from "./program-mcp.js";
-import { registerBlueprintCommands } from "./program-blueprint.js";
-import { registerPlannerCommands } from "./program-planner.js";
 import { registerBuiltinDomains } from "./lib/domains/index.js";
 
 export { CLI_VERSION } from "./lib/constants.js";
@@ -28,8 +26,6 @@ export function buildProgram(): Command {
   registerMissionCommands(program);
   registerWorkflowCommands(program);
   registerMcpCommands(program);
-  registerBlueprintCommands(program);
-  registerPlannerCommands(program);
 
   return program;
 }

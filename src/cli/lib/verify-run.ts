@@ -1,14 +1,22 @@
+import path from "node:path";
 import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "./mission-arg.js";
 import { loadWorkspace } from "./workspace.js";
 import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-options.js";
+import type { ParsedMission } from "./types.js";
+import {
+  buildAttestationReceipt,
+  writeAttestationReceipt,
+} from "./attestation-receipt.js";
+import { writeAttestationExportEnvelope } from "./attestation-export.js";
+import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
+import type { VerifyPhaseFailure } from "./verify-failure.js";
 import {
   buildVerifyResultPayload,
   initFailurePayload,
   type VerifyResultPayload,
 } from "./verify-payload.js";
-import type { VerifyPresentContext } from "./verify-context.js";
 import {
   resolveVerifySink,
   maybeApplySurgeonAndReevaluate,
@@ -20,9 +28,74 @@ import {
   presentJsonFromResult,
   presentJsonInitFailure,
 } from "./verify-presenters.js";
-import { maybeWriteVerifyReceipt } from "./verify-receipt.js";
+import type { VerifyPresentContext } from "./verify-presenters.js";
 
-export type { VerifyPresentContext } from "./verify-context.js";
+/** Shared verify orchestration context (load once, present by sink). */
+export type { VerifyPresentContext } from "./verify-presenters.js";
+
+function resolveReceiptOutPath(options: VerifyOptions): string | undefined {
+  if (options.receipt === undefined) return undefined;
+  if (typeof options.receipt === "string" && options.receipt.trim()) {
+    return options.receipt.trim();
+  }
+  return undefined;
+}
+
+export function maybeWriteVerifyReceipt(input: {
+  root: string;
+  mission: ParsedMission;
+  missionArg: string;
+  options: VerifyOptions;
+  result: VerifyPhaseResult;
+  breakGlass?: boolean;
+}): { receiptPath: string | null; exportPath: string | null } {
+  if (!wantsReceiptOrExport(input.options)) {
+    return { receiptPath: null, exportPath: null };
+  }
+
+  const verifyStatus = input.breakGlass === true ? "failed" : input.result.ok ? "passed" : "failed";
+  let errorCode: string | undefined;
+  if (input.breakGlass === true) {
+    errorCode = "BREAK_GLASS";
+    if (input.options.breakGlassReason?.trim()) {
+      errorCode = `BREAK_GLASS:${input.options.breakGlassReason.trim().slice(0, 120)}`;
+    }
+  } else if (!input.result.ok) {
+    const normalized = normalizeVerifyPhaseFailure({
+      failure: input.result as VerifyPhaseFailure,
+      missionArg: input.missionArg,
+      options: input.options,
+      root: input.root,
+      msnId: input.mission.msnId ?? undefined,
+      mission: input.mission,
+    });
+    errorCode = normalized.error_code;
+  }
+
+  const receipt = buildAttestationReceipt({
+    root: input.root,
+    mission: input.mission,
+    missionArg: input.missionArg,
+    verifyStatus,
+    errorCode,
+    sign: input.options.signReceipt === true,
+  });
+
+  let receiptPath: string | null = null;
+  if (input.options.receipt !== undefined) {
+    const explicitOut = resolveReceiptOutPath(input.options);
+    const written = writeAttestationReceipt(input.root, receipt, explicitOut);
+    receiptPath = path.resolve(input.root, written);
+  }
+
+  let exportPath: string | null = null;
+  const exportOut = input.options.exportPath?.trim();
+  if (exportOut) {
+    exportPath = writeAttestationExportEnvelope(input.root, receipt, exportOut);
+  }
+
+  return { receiptPath, exportPath };
+}
 
 export interface VerifyRunResult {
   ok: boolean;

@@ -1,3 +1,6 @@
+import type { ResolvedMissionArg } from "./mission-arg.js";
+import type { Manifest, ParsedMission } from "./types.js";
+import type { VerifyOptions } from "./verify-options.js";
 import { CLI_NAME } from "./constants.js";
 import { runBreakGlassAuditFlow } from "./break-glass.js";
 import { errorMessage, logInfo, logWarn } from "./cli-io.js";
@@ -6,7 +9,6 @@ import { logFixHint } from "./fix-hints.js";
 import { loadPrompts } from "./prompts-loader.js";
 import { isGantryUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
-import type { VerifyPresentContext } from "./verify-context.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
@@ -31,6 +33,18 @@ import {
   persistRemediationFromFailedPayload,
   persistRemediationSnapshot,
 } from "./context-feed-remediation.js";
+
+/** Shared verify orchestration context (load once, present by sink). */
+export interface VerifyPresentContext {
+  root: string;
+  manifest: Manifest;
+  mission: ParsedMission;
+  /** Flag vs pin resolution — single source for mission_source in payloads. */
+  resolved: ResolvedMissionArg;
+  options: VerifyOptions;
+  /** Set after tryWriteReceiptIfRequested when --receipt was requested. */
+  receiptPath?: string;
+}
 
 export type VerifySink =
   | "break_glass_json"
