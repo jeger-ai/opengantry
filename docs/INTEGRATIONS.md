@@ -28,7 +28,8 @@ On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented
 
 | Tool | Purpose |
 |------|---------|
-| `gxt_draft_legislation` / `gxt_execute_legislation` | Two-step mission legislation with chat approval |
+| `gxt_interrogate` | Deterministic gap analysis; returns `halt` (one question) or `clear` + `interrogation_sha256` |
+| `gxt_draft_legislation` / `gxt_execute_legislation` | Two-step mission legislation with chat approval (requires complete interrogation) |
 | `gxt_check_signature` / `gxt_pin_mission` | Planner stamp check + pin active mission |
 | `gxt_start_orchestration` | Goal-first flow: triage → legislate stub → optional pin/runtime env |
 | `gxt_runtime_env` / `gxt_runtime_exec` | Executor bootstrap + process-boundary enforcement |
@@ -187,7 +188,7 @@ Vendor CLIs change; the **wrap line** and **context files** do not.
 - **Context injection:** [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) (`alwaysApply: true`); [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` mission scope + `beforeShellExecution` fallback guard.
 - **MCP bridge:** [`.cursor/mcp.json`](../.cursor/mcp.json) — `gantry mcp serve` exposes `gxt_*` tools for zero-copy-paste legislation.
 - **Mission Architect:** `/gantry` macro (do not use `/plan` — Cursor native Plan Mode); implicit activation when user asks to **write/edit code** with no pinned mission. Follow [`.gitagent/planner/MISSION-ARCHITECT.md`](../.gitagent/planner/MISSION-ARCHITECT.md).
-- **Two-step legislation (Yolo-safe):** `gxt_draft_legislation` → human chat approval (semantic yes/no) → `gxt_execute_legislation` → Planner `git commit` → `gxt_check_signature` → `gxt_pin_mission`.
+- **Two-step legislation (Yolo-safe):** `gxt_interrogate` → operator answers in chat → `gxt_draft_legislation` (server recomputes gaps) → human chat approval → `gxt_execute_legislation` → Planner `git commit` → `gxt_check_signature` → `gxt_pin_mission`. `gxt_start_orchestration` halts with `INTERROGATION_REQUIRED` until interrogation is complete (see `GXT_LAST_ERROR_FILE`).
 - **Host tool policy:** Cursor may require approval per tool call or auto-run all tools (“Yolo mode”). MCP draft/execute is the primary governance gate — not host settings alone.
 - **Session bootstrap:**
 

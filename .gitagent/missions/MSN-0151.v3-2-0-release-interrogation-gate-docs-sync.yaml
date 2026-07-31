@@ -1,0 +1,15 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v3.2.0 release — interrogation gate (MSN-0149/0150), receipt/export (0143–0148), version bump, adopter docs, validate, tag
+msn_id: MSN-0151
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0151: v3.2.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG interrogation gate + receipt/export headlines"
+    anchor: "MSN-0151"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0151: npm 3.2.0 — interrogation gate + receipt v0.2 + CI export; dev-validate-core OK"
+    anchor: "MSN-0151"
+    status: PASS

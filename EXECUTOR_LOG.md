@@ -666,3 +666,8 @@ DoD 1 MSN-0149: ADR-0039 integrity amendments (fail-closed missing digest, stamp
 ## MSN-0150 — Interrogation gate substrate law
 DoD 1 MSN-0150: optional interrogation/interrogation_sha256 in MISSION.schema (live+templates parity); ADR-0039; RULES §4.5; MANIFEST gate_commands for gantry and substrate
 DoD 2 MSN-0150: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0151 — v3.2.0 release
+[CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json,scripts/validate-mcp-dogfood.mjs reason=MSN-0151 release version parity and adopter docs outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json,scripts/validate-mcp-dogfood.mjs | msn=MSN-0151
+DoD 1 MSN-0151: v3.2.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG interrogation gate + receipt/export headlines
+DoD 2 MSN-0151: npm 3.2.0 — interrogation gate + receipt v0.2 + CI export; dev-validate-core OK
