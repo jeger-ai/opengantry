@@ -10,7 +10,7 @@ Deep design records: [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) ADR
 
 **Why:** Agent work without a declared mission YAML drifts — scope expands, substrate files get edited silently, and "done" means whatever the last chat said.
 
-**What it does:** Everything revolves around a **mission** (`.gitagent/missions/MSN-XXXX.yaml`): declared intent, TMVC scope, `gate_command`, **interrogation** record (operator answers to deterministic gap findings), trace rows. Three roles — **Planner** commits the mission (`gantry legislate` after `gantry interrogate`), **Executor** works in scope, **Verifier** runs `gantry verify` — enforce segregation of duties.
+**What it does:** Everything revolves around a **mission** (`.gitagent/missions/MSN-XXXX.yaml`): declared intent, TMVC scope, `gate_command`, **interrogation** record (operator answers to deterministic gap findings), trace rows. Three roles — **Planner** commits the mission (`gantry legislate` runs gap analysis and writes mission law), **Executor** works in scope, **Verifier** runs `gantry verify` — enforce segregation of duties.
 
 **When to use:** Any substantive agent-assisted change you want merge-ready evidence for.
 

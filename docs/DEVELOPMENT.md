@@ -58,8 +58,7 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 ## Mission loop (required for substantive work)
 
 1. **Triage** — `gantry triage "<intent>"` (escalation → Planner legislates).
-2. **Interrogate** — `gantry interrogate "<intent>" --msn MSN-NNNN --skill-key gantry` (one question at a time with `--next`; or MCP `gxt_interrogate`). Operator answers are quoted verbatim — never fabricated by agents.
-3. **Legislate** — `gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry --interrogation-file answers.json` (or MCP `gxt_draft_legislation` with complete `interrogation[]`).
+2. **Legislate** — `gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry` (runs gap analysis internally; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file` and re-run `legislate`; or MCP `gxt_draft_legislation` with complete `interrogation[]`). Operator answers are quoted verbatim — never fabricated by agents.
 3. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
 4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml` (or `scripts/gxt-pin-mission.sh …`). When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
 5. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.

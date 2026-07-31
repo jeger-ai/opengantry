@@ -10,7 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
-| **v3.2.0** | Interrogation gate (ADR-0039 / MSN-0149) — `gantry interrogate` / `gxt_interrogate` before legislate; first-class verify interrogation phase (`GXT_INTERROGATION_*` SARIF/JUnit); receipt v0.2.0 signed attribution + CI export (MSN-0143–0145); auditor pepper keyring (MSN-0148); MANIFEST `gate_commands` allowlists |
+| **v3.2.0** | Interrogation gate (ADR-0039 / MSN-0149) — gap analysis built into `gantry legislate` (`gxt_interrogate` for multi-turn halt); first-class verify interrogation phase (`GXT_INTERROGATION_*` SARIF/JUnit); receipt v0.2.0 signed attribution + CI export (MSN-0143–0145); auditor pepper keyring (MSN-0148); MANIFEST `gate_commands` allowlists |
 | **v3.1.1** | Local DX — flag→pin mission defaults (`gantry pin` / `unpin`), active-mission banner, `gantry receipt list\|show`, verify `--receipt` path feedback; thermo cleanups (verify context, command boundary) |
 | **v3.1.0** | Hybrid hub/spoke readiness — `flight_telemetry` `hash_only`, `gantry attest` / `verify --receipt`, `doctor --policy` (ADR-0034); `bounded_content` trusted automation; advisory **performance judge** ([#62](https://github.com/jeger-ai/opengantry/issues/62)) via `PERFORMANCE_RUBRIC` + BYO `llm_verifiers` (ADR-0035); structured advisory `findings[]` on verify PASS |
 | **v3.0.1** | Docs cleanup + thermo remediation; discovery scanner hardening; npm **3.0.1** |
