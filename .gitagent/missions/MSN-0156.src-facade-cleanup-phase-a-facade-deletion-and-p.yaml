@@ -5,6 +5,54 @@ skill_key: gantry
 gate_command: npm run build && npm test
 declared_paths:
   - .gitagent/missions/MSN-0156.src-facade-cleanup-phase-a-facade-deletion-and-p.yaml
+  - src/cli/commands/doctor.ts
+  - src/cli/commands/triage.ts
+  - src/cli/commands/verify.ts
+  - src/cli/lib/doctor.ts
+  - src/cli/lib/domains/index.ts
+  - src/cli/lib/draft-token.ts
+  - src/cli/lib/git-metrics.ts
+  - src/cli/lib/git-proof.ts
+  - src/cli/lib/legislate-forbidden-zone.ts
+  - src/cli/lib/mcp-attest.ts
+  - src/cli/lib/mcp-governance.ts
+  - src/cli/lib/mcp-last-error.ts
+  - src/cli/lib/mcp-pin-mission.ts
+  - src/cli/lib/mcp-resolve-mission.ts
+  - src/cli/lib/mcp-runtime.ts
+  - src/cli/lib/mcp-start-orchestration.ts
+  - src/cli/lib/mcp-tools-register.ts
+  - src/cli/lib/mcp-upgrade.ts
+  - src/cli/lib/perimeter.ts
+  - src/cli/lib/program-stdin.ts
+  - src/cli/lib/status-report.ts
+  - src/cli/lib/upgrade-apply.ts
+  - src/cli/lib/upgrade-plan-types.ts
+  - src/cli/lib/upgrade-plan.ts
+  - src/cli/lib/verify-context.ts
+  - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-payload.ts
+  - src/cli/lib/verify-presenters.ts
+  - src/cli/lib/verify-receipt.ts
+  - src/cli/lib/verify-run.ts
+  - src/cli/program-blueprint.ts
+  - src/cli/program-core.ts
+  - src/cli/program-init-options.ts
+  - src/cli/program-planner.ts
+  - src/cli/program-workflow.ts
+  - src/cli/program.ts
+  - src/cli/tests/doctor-substrate-drift.test.ts
+  - src/cli/tests/draft-token.test.ts
+  - src/cli/tests/init-profile.test.ts
+  - src/cli/tests/manifest-parity.test.ts
+  - src/cli/tests/mcp-legislation.test.ts
+  - src/cli/tests/mcp-orchestration.test.ts
+  - src/cli/tests/mcp-write-guard.test.ts
+  - src/cli/tests/perimeter.test.ts
+  - src/cli/tests/start.test.ts
+  - src/cli/tests/template-parity.test.ts
+  - src/cli/tests/upgrade.test.ts
+  - src/cli/tests/verify-interrogation-phase.test.ts
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0156: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass"
