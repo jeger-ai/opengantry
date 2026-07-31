@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
 import { evaluateDefensiveGuards } from "../lib/defensive-guard.js";
-import { evaluateDefensiveGuardPhase } from "../lib/verify-engine.js";
+import { evaluateDefensiveGuardPhase } from "../lib/verify-defensive-phase.js";
 import { buildDefensiveProfileFromPreset } from "../lib/defensive-profile-presets.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";

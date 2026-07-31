@@ -9,7 +9,7 @@ import { gitRunOk } from "./git.js";
 import { assertPlannerMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
 import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./gate.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
-import { evaluateDefensiveGuards, type DefensiveFinding } from "./defensive-guard.js";
+import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import { formatRepoRelative } from "./cli-io.js";
 import { evaluateInterrogationPhase } from "./verify-interrogation.js";
@@ -255,64 +255,6 @@ interface PostGateWarnings {
 type PostGateOutcome =
   | { kind: "ok"; warnings: PostGateWarnings }
   | { kind: "fail"; failure: DefensiveFailure | KpiFailure };
-
-interface DefensivePhaseOutcome {
-  failure: DefensiveFailure | null;
-  warnings: string[];
-  audits: string[];
-}
-
-function defensiveFindingMessages(findings: readonly DefensiveFinding[]): string[] {
-  return findings.map((f) => `[${f.guard}/${f.severity}] ${f.message}`);
-}
-
-export function evaluateDefensiveGuardPhase(
-  root: string,
-  manifest: Manifest,
-  skillKey: string,
-  executorLogPath: string,
-): DefensivePhaseOutcome {
-  const result = evaluateDefensiveGuards(root, manifest, skillKey);
-  const warnings = defensiveFindingMessages(result.warnings);
-  const audits = defensiveFindingMessages(result.audits);
-
-  if (result.error) {
-    return {
-      failure: {
-        ok: false,
-        phase: "defensive",
-        message: result.error,
-        exitCode: 1,
-        executorLogPath,
-        defensiveReason: result.error,
-      },
-      warnings,
-      audits,
-    };
-  }
-
-  if (!result.ok) {
-    const reason = result.blocked[0]?.message ?? "DEFENSIVE GUARD FAILED";
-    return {
-      failure: {
-        ok: false,
-        phase: "defensive",
-        message: reason,
-        exitCode: 1,
-        executorLogPath,
-        defensiveReason: reason,
-        defensiveNetLoc: result.net_loc,
-        defensiveMaxNetLoc: result.max_net_loc,
-        ...(warnings.length > 0 ? { defensiveWarnings: warnings } : {}),
-        ...(audits.length > 0 ? { defensiveAudits: audits } : {}),
-      },
-      warnings,
-      audits,
-    };
-  }
-
-  return { failure: null, warnings, audits };
-}
 
 interface PostGateInput {
   root: string;
