@@ -2,7 +2,7 @@
 
 This directory holds the **GXT substrate**: Foreman routing map, Planner law, work-order schema, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
 
-Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gantry` v1.1.1** CLI covers `init`, `check`, `doctor`, `triage`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, `metrics`, and `verify` — see [README § gantry](../README.md#gantry-cli).
+Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gantry` v1.1.1** CLI covers `init`, `check`, `doctor`, `triage`, `interrogate`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, `metrics`, and `verify` — see [README § gantry](../README.md#gantry-cli).
 
 ## Forensic Truth (what v0.6.2 adds on v0.5.0)
 

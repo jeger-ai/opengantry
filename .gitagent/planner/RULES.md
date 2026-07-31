@@ -27,6 +27,13 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - Any access **outside** the effective TMVC boundary MUST be preceded by a **Context Request** recorded in `EXECUTOR_LOG.md` (path, reason, proposed files). The Verifier MUST accept or reject before such access proceeds.
 - Expansion into any **forbidden_zones** path (per manifest) MUST NOT proceed; escalate to Planner or fail closed per mission.
 
+## 4.5 Interrogation record (legislation gate)
+
+- Before legislation, **`gantry interrogate`** / **`gxt_interrogate`** MUST compute gap findings from manifest, `TARGET_ARCHITECTURE.yaml`, and ADR hints. A Planner MUST NOT legislate while any computed finding lacks a documented `operator_answer` in the mission `interrogation` block.
+- The `interrogation` block in mission YAML is the authoritative operator rationale for computed gaps. Placeholder or fabricated answers are **Evidence Tampering** under §3.
+- `interrogation_sha256` is a checksum for schema consistency, not a cryptographic seal; the Planner stamp commit is the seal on mission bytes (§6.1).
+- Tier-3 gap findings SHOULD reference ADRs (`adr_refs`) rather than inline prose alone.
+
 ## 5. Rule 4.4 — Planner-driven manifest sync
 
 - Any change that adds, removes, or renames a skill entry or materially edits per-skill fields in `MANIFEST.json` MUST include those manifest edits in the **same commit set** as the skill definition change.

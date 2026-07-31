@@ -4,6 +4,15 @@ msn_id: MSN-0000
 skill_key: logic
 gate_command: "echo ok"
 gate_success_substring: "ok"
+interrogation:
+  - finding_id: "a1b2c3d4e5f6"
+    kind: missing_test_criteria
+    question: "Non-allowlisted gate requires Planner authorization on the record."
+    hypothesis: "gate_command echo ok is acceptable for this trivial example mission."
+    operator_answer: "Approved for template example only."
+declared_paths:
+  - src/example/
+interrogation_sha256: "35324f784b52c83b4d8436073a8ac30aa7f8c0d41514bf416669c01a4ac4c87d"
 trace_rows:
   - dod_id: "1"
     trace_quote: "executor completed step A"

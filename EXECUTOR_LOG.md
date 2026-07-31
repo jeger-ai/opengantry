@@ -658,3 +658,11 @@ DoD 1 MSN-0145: gantry verify --export emits ingestible envelope on pass/fail/br
 
 ## MSN-0148 CLI pepper keyring + principal-hmac
 DoD 1 MSN-0148: pepper-keyring loader; gantry receipt principal-hmac multi-epoch; attribution-vectors.json; fixture canonicalization — npm test 505 pass, 0 fail
+
+## MSN-0149 — Interrogation gate remediation
+DoD 1 MSN-0149: interrogation promoted to first-class verify phase (GXT_INTERROGATION_* SARIF/JUnit); path drift two-axis stamp exclusion; legislate single runInterrogate; dead interrogate helpers removed; CLI --path/--answers/--stage-worker-log fixed — npm test 529 pass, 0 fail
+DoD 1 MSN-0149: ADR-0039 integrity amendments (fail-closed missing digest, stamped-blob matrix, exact stub placeholders) deferred to substrate follow-up per operator interrogation record
+
+## MSN-0150 — Interrogation gate substrate law
+DoD 1 MSN-0150: optional interrogation/interrogation_sha256 in MISSION.schema (live+templates parity); ADR-0039; RULES §4.5; MANIFEST gate_commands for gantry and substrate
+DoD 2 MSN-0150: dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

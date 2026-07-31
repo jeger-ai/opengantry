@@ -19,6 +19,7 @@ Example: `[MSN-0042] Fix Button hover state in settings panel`
 [VERIFIER_MODE]: HIGH_CONFIDENCE | ADVISORY_ONLY
 [TASK_BRANCH]: <branch name for full EXECUTOR_LOG / CI links>
 [AUDITOR]: <verifier id> | HUMAN_AUDIT_REQUIRED | [HUMAN_OVERRIDE] <reason>
+[INTERROGATION]: <optional mirror of mission interrogation Q&A for commit-body audit>
 ```
 
 - **ADVISORY_ONLY** (single-provider): Tier-2+ requires human audit of trace lines before merge (see RULES).

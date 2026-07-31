@@ -28,6 +28,15 @@ Before proposing legislation, read (do not lecture the user):
 
 **Do not** run `gantry triage` in chat. Reason from manifest + architecture directly.
 
+## Phase 1.5 — Interrogation (gap analysis)
+
+Before legislation handoff, run **`gxt_interrogate`** (MCP) or **`gantry interrogate`** (CLI) until `status: "clear"`.
+
+- The tool returns **exactly one** unanswered finding per call (`halt`). Do not batch questions.
+- Record operator answers verbatim; never fabricate `operator_answer` values.
+- Fast-path (§ below) is allowed only when interrogation returns `clear` with zero unanswered findings.
+- Pass the accumulated `interrogation` array into **`gxt_draft_legislation`**; the substrate recomputes gaps and refuses a draft token when incomplete.
+
 ## Fast-path vs full interview
 
 ### Fast-path (trivial work)
@@ -56,7 +65,7 @@ Use for new features, multi-file scope, forbidden-zone proximity, path_risks/ris
 
 When the OpenGantry MCP server is configured (`.cursor/mcp.json`):
 
-1. Call **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`.
+1. Call **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`, and **`interrogation`** (from clear `gxt_interrogate`).
 2. Present the returned `chat_message_to_user` to the human.
 3. Wait for clear approval intent in chat (`yes`, `approve`, `looks good`, `do it`) or rejection (`no`, `deny`, `stop`). If ambiguous, ask one short clarification.
 4. On approval only, call **`gxt_execute_legislation`** with the `draft_token`.
