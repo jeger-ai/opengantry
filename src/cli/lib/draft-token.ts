@@ -12,8 +12,10 @@ export const DRAFT_TOKEN_TTL_SECONDS_MAX = 1800;
 export const DRAFT_TOKEN_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
 export const DRAFT_TOKEN_REPLAY_REL = ".gitagent/history/.draft-token-replay.json";
 
+import type { InterrogationRow } from "./interrogate/findings.js";
+
 export interface DraftLegislationPayload {
-  v: 1;
+  v: 2;
   draft_id: string;
   iat: number;
   exp: number;
@@ -23,6 +25,9 @@ export interface DraftLegislationPayload {
   skill_key: string;
   gate_command: string;
   gate_success_substring?: string;
+  interrogation: InterrogationRow[];
+  interrogation_sha256: string;
+  declared_paths: string[];
 }
 
 export type DraftTokenErrorCode =
@@ -126,7 +131,7 @@ export function createDraftToken(
   );
   const now = Math.floor(Date.now() / 1000);
   const payload: DraftLegislationPayload = {
-    v: 1,
+    v: 2,
     draft_id: crypto.randomUUID(),
     iat: now,
     exp: now + ttl,
@@ -135,6 +140,9 @@ export function createDraftToken(
     msn_id: input.msn_id.trim(),
     skill_key: input.skill_key.trim(),
     gate_command: input.gate_command.trim(),
+    interrogation: input.interrogation,
+    interrogation_sha256: input.interrogation_sha256,
+    declared_paths: input.declared_paths,
   };
   if (input.gate_success_substring?.trim()) {
     payload.gate_success_substring = input.gate_success_substring.trim();
@@ -148,6 +156,28 @@ export function createDraftToken(
     payload,
     expires_at: new Date(payload.exp * 1000).toISOString(),
   };
+}
+
+const SHA256_HEX = /^[a-f0-9]{64}$/;
+
+function assertDraftPayloadShape(payload: DraftLegislationPayload): void {
+  if (!SHA256_HEX.test(payload.interrogation_sha256)) {
+    throw new DraftTokenError(
+      "TOKEN_MALFORMED",
+      `${CLI_NAME} draft token interrogation_sha256 must be 64 hex chars`,
+      false,
+    );
+  }
+  if (!Array.isArray(payload.interrogation)) {
+    throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token interrogation must be an array`, false);
+  }
+  if (!Array.isArray(payload.declared_paths)) {
+    throw new DraftTokenError(
+      "TOKEN_MALFORMED",
+      `${CLI_NAME} draft token declared_paths must be an array`,
+      false,
+    );
+  }
 }
 
 export function verifyDraftToken(root: string, draftToken: string, options?: { consume?: boolean }): DraftLegislationPayload {
@@ -170,9 +200,11 @@ export function verifyDraftToken(root: string, draftToken: string, options?: { c
     throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token payload JSON invalid`, true);
   }
 
-  if (payload.v !== 1) {
-    throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token version unsupported`, false);
+  if (payload.v !== 2) {
+    throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token version unsupported (require v2)`, false);
   }
+
+  assertDraftPayloadShape(payload);
 
   const keyPath = draftTokenKeyPath(root);
   if (!fs.existsSync(keyPath)) {

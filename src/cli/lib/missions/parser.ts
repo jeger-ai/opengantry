@@ -7,6 +7,11 @@ import { formatRepoRelative } from "../cli-io.js";
 import { GantryUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
 import { normalizeTraceStatus } from "../trace.js";
+import {
+  INTERROGATION_FINDING_KINDS,
+  type InterrogationFindingKind,
+  type InterrogationRow,
+} from "../interrogate/findings.js";
 import type {
   KpiAggregator,
   KpiAggregatorOp,
@@ -223,6 +228,27 @@ function parsedAggregatorsFromYaml(data: YamlMission): KpiAggregator[] {
   }));
 }
 
+function parseInterrogationRows(rows: NonNullable<YamlMission["interrogation"]>): InterrogationRow[] {
+  return rows.map((r) => {
+    if (!INTERROGATION_FINDING_KINDS.includes(r.kind as InterrogationFindingKind)) {
+      throw new GantryUserError(
+        "MISSION_SCHEMA_INVALID",
+        `interrogation row kind must be one of: ${INTERROGATION_FINDING_KINDS.join(", ")}`,
+        undefined,
+        2,
+      );
+    }
+    return {
+      finding_id: r.finding_id,
+      kind: r.kind as InterrogationFindingKind,
+      question: r.question,
+      hypothesis: r.hypothesis,
+      operator_answer: r.operator_answer,
+      ...(r.adr_refs && r.adr_refs.length > 0 ? { adr_refs: [...r.adr_refs] } : {}),
+    };
+  });
+}
+
 function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMission {
   const traceRows: TraceRow[] = (data.trace_rows ?? []).map((r) => ({
     dodId: r.dod_id,
@@ -231,6 +257,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     status: normalizeTraceStatus(r.status),
   }));
   const msnId = (data.msn_id ?? data.msnId)!;
+  const interrogation = parseInterrogationRows(data.interrogation ?? []);
   return {
     msnId,
     skillKey: data.skill_key,
@@ -243,6 +270,9 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     llmVerifiers: parsedLlmVerifiersFromYaml(data),
     aggregators: parsedAggregatorsFromYaml(data),
     traceRows,
+    interrogation,
+    interrogationSha256: data.interrogation_sha256 ?? null,
+    declaredPaths: data.declared_paths ?? [],
     rawPath: absPath,
   };
 }

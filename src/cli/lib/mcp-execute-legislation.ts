@@ -31,6 +31,12 @@ export function handleExecuteLegislation(
     skillKey: payload.skill_key,
     gateCommand: payload.gate_command,
     gateSuccessSubstring: payload.gate_success_substring,
+    paths: payload.declared_paths,
+    interrogation: {
+      source: "draft_token",
+      rows: payload.interrogation,
+      sha256: payload.interrogation_sha256,
+    },
   };
 
   const result = runLegislate(legislateOpts);

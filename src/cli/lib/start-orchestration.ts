@@ -1,4 +1,9 @@
-import { runLegislate, isTriageEscalated } from "./legislate.js";
+import { runLegislate } from "./legislate.js";
+import { isTriageEscalated } from "./triage-logic.js";
+import { writeInterrogationRequiredError } from "./errors.js";
+import { GXT_ERROR } from "./gxt-error-codes.js";
+import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
+import { runInterrogate } from "./interrogate/run.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { allocateMsn } from "./msn-allocate.js";
@@ -38,6 +43,7 @@ export interface StartResult {
   mission_file_path: string | null;
   next_steps: string[];
   exit_code: number;
+  error_code?: string;
 }
 
 function suppressStartOutput(options: StartOptions): boolean {
@@ -90,6 +96,7 @@ function createStartFailure(
   msnId: string | null,
   skillKey: string,
   nextSteps: AudienceNextStep[],
+  errorCode?: string,
 ): StartFailureResult {
   return {
     ok: false,
@@ -100,6 +107,7 @@ function createStartFailure(
     mission_file_path: null,
     next_steps: formatTaggedStepsForAudience(nextSteps, undefined),
     exit_code: 2,
+    ...(errorCode ? { error_code: errorCode } : {}),
   };
 }
 
@@ -122,8 +130,42 @@ function startEscalationFailure(
   ]);
 }
 
+function startInterrogationHaltResult(
+  root: string,
+  options: StartOptions,
+  triage: TriageResult,
+  msnId: string,
+  resolvedSkillKey: string,
+  interrogate: Extract<ReturnType<typeof runInterrogate>, { status: "halt" }>,
+): StartResult {
+  const quiet = suppressStartOutput(options);
+  writeInterrogationRequiredError(root, {
+    msn_id: msnId,
+    skill_key: resolvedSkillKey,
+    finding_id: interrogate.next_question.finding_id,
+    question: interrogate.next_question.question,
+    remediation: [
+      `Run gxt_interrogate or gantry interrogate with operator answers before legislation.`,
+      `Next finding: ${interrogate.next_question.finding_id}`,
+      interrogate.next_question.question,
+    ],
+  });
+  if (!quiet) {
+    logError(
+      `${CLI_NAME} start: ${GXT_ERROR.INTERROGATION_REQUIRED} — ${interrogate.next_question.finding_id}`,
+    );
+  }
+  return createStartFailure(triage, msnId, resolvedSkillKey, [
+    {
+      audience: "planner",
+      step: `gantry interrogate "${options.intent}" --msn ${msnId} --skill-key ${resolvedSkillKey}`,
+    },
+  ], GXT_ERROR.INTERROGATION_REQUIRED);
+}
+
 function scaffoldStartMission(
   root: string,
+  manifest: import("./types.js").Manifest,
   options: StartOptions,
   msnId: string,
   resolvedSkillKey: string,
@@ -137,14 +179,46 @@ function scaffoldStartMission(
     return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
   }
 
+  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions({
+    gateCommand: options.gateCommand,
+    gateSuccessSubstring: options.gateSuccessSubstring,
+  });
+
+  const interrogate = runInterrogate({
+    root,
+    manifest,
+    intent: options.intent,
+    skillKey: resolvedSkillKey,
+    gateCommand,
+    gateSuccessSubstring,
+    paths: [],
+    interrogation: [],
+  });
+
+  if (interrogate.status === "halt") {
+    return startInterrogationHaltResult(
+      root,
+      options,
+      triage,
+      msnId,
+      resolvedSkillKey,
+      interrogate,
+    );
+  }
+
   const result = runLegislate({
     intent: options.intent,
     msn: msnId,
     skillKey: resolvedSkillKey,
     gateCommand: options.gateCommand,
     gateSuccessSubstring: options.gateSuccessSubstring,
+    paths: [],
     allowDuplicate: options.allowDuplicate,
     silent: quiet,
+    interrogation: {
+      source: "operator_file",
+      rows: interrogate.interrogation,
+    },
   });
 
   if (result.ok) {
@@ -192,7 +266,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
     return createStartFailure(triage, null, triage.skill_key, []);
   }
 
-  const scaffold = scaffoldStartMission(root, options, msnId, resolvedSkillKey, triage);
+  const scaffold = scaffoldStartMission(root, manifest, options, msnId, resolvedSkillKey, triage);
   if ("ok" in scaffold) return scaffold;
 
   const audience = options.audience ?? getOutputAudience();

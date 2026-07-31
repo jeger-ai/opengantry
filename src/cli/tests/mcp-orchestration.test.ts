@@ -49,10 +49,10 @@ test("mcp orchestration: duplicate MSN scaffold fails with fresh-MSN next action
   try {
     // m.yaml in the fixture already occupies MSN-0999.
     const result = handleStartOrchestration({
-      intent: "duplicate mission attempt",
+      intent: "fix ui button component duplicate",
       msn_id: "MSN-0999",
       skill_key: "ui",
-      gate_command: "echo OK",
+      gate_command: "npm test",
       write_mission: true,
     });
     assert.equal(result.status, "failed");

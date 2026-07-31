@@ -11,12 +11,64 @@ import { runCheckImports } from "./commands/check-imports.js";
 import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
 import { listDomainKeys } from "./lib/domains/index.js";
+import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
+import type { InterrogationRow } from "./lib/interrogate/findings.js";
+import fs from "node:fs";
 import { readStdinIfEmpty } from "./lib/program-stdin.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
-type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent">;
+type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths"> & {
+  path?: string[];
+  interrogationFile?: string;
+};
+
+/** Commander maps --path to `path` and --answers to `answers`. */
+export type InterrogateCommanderOptions = Omit<
+  InterrogateCliOptions,
+  "intent" | "paths" | "answersFile"
+> & {
+  path?: string[];
+  answers?: string;
+};
+
+export function mapInterrogateCommanderOptions(
+  options: InterrogateCommanderOptions,
+  intent: string,
+): InterrogateCliOptions {
+  return {
+    intent,
+    msn: options.msn,
+    skillKey: options.skillKey,
+    gateCommand: options.gateCommand,
+    gateSuccessSubstring: options.gateSuccessSubstring,
+    paths: options.path ?? [],
+    answersFile: options.answers,
+    json: options.json,
+  };
+}
+
+export function mapLegislateCommanderOptions(
+  options: LegislateCliOptions,
+  intent: string,
+): LegislateOptions {
+  let interrogation: LegislateOptions["interrogation"] | undefined;
+  if (options.interrogationFile?.trim()) {
+    const raw = fs.readFileSync(options.interrogationFile.trim(), "utf8");
+    const rows = JSON.parse(raw) as InterrogationRow[];
+    interrogation = {
+      source: "operator_file",
+      rows,
+    };
+  }
+  return {
+    ...options,
+    intent,
+    paths: options.path ?? [],
+    interrogation,
+  };
+}
 
 /** Commander-parsed verify flags (before name/coercion adapter). */
 interface VerifyCliOptions {
@@ -29,6 +81,7 @@ interface VerifyCliOptions {
   strictTrace?: boolean;
   skipStaleEvidence?: boolean;
   ci?: boolean;
+  requireInterrogation?: boolean;
   prePush?: boolean;
   breakGlass?: boolean;
   reason?: string;
@@ -52,7 +105,7 @@ function parseVerifyExportFormat(raw?: string): VerifyExportFormat | undefined {
   throw new Error(`gantry verify: --format must be json, sarif, or junit (got ${raw})`);
 }
 
-function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
+export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
   const scanDepth =
     opts.scanDepth !== undefined ? Number.parseInt(opts.scanDepth, 10) : undefined;
   const format = opts.format ? parseVerifyExportFormat(opts.format) : undefined;
@@ -80,6 +133,10 @@ function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     receipt: opts.receipt,
     signReceipt: opts.signReceipt,
     exportPath: opts.export,
+    requireInterrogation:
+      opts.requireInterrogation === true ||
+      opts.ci === true ||
+      process.env.GXT_REQUIRE_INTERROGATION === "1",
   };
 }
 
@@ -100,6 +157,8 @@ export function registerWorkflowCommands(program: Command): void {
       "--gate-success-substring <text>",
       "Optional substring required in combined gate stdout/stderr",
     )
+    .option("--path <paths...>", "Declared paths for gap analysis (repeatable)")
+    .option("--interrogation-file <file>", "JSON file with interrogation answers (token-less path)")
     .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
@@ -108,8 +167,30 @@ export function registerWorkflowCommands(program: Command): void {
         setExitCode(2);
         return;
       }
-      const result = runLegislate({ ...options, intent: text });
+      const result = runLegislate(mapLegislateCommanderOptions(options, text));
       if (!result.ok) setExitCode(result.exitCode);
+    });
+
+  program
+    .command("interrogate")
+    .description("Deterministic gap analysis before legislation (one question at a time)")
+    .argument("[intent...]", "Planner intent summary")
+    .option("--msn <id>", "Mission id (advisory label)")
+    .option("--skill-key <key>", "Manifest skill_key")
+    .option("--gate-command <cmd>", "Proposed gate command")
+    .option("--gate-success-substring <text>", "Proposed gate success substring")
+    .option("--path <paths...>", "Declared paths for boundary analysis")
+    .option("--answers <file>", "JSON file with accumulated interrogation answers")
+    .option("--json", "Structured JSON output")
+    .action(async (intentParts: string[], options: InterrogateCommanderOptions) => {
+      let text = intentParts.join(" ").trim();
+      text = await readStdinIfEmpty(text);
+      if (!text) {
+        logError("interrogate: provide intent text or pipe stdin");
+        setExitCode(2);
+        return;
+      }
+      runInterrogateCommand(mapInterrogateCommanderOptions(options, text));
     });
 
   program
@@ -150,6 +231,7 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
     .option("--skip-stale-evidence", "Skip TMVC stale-evidence binding for committed PASS trace lines")
     .option("--ci", "Authoritative mode: fail-closed on KPI report stale evidence (use in CI)")
+    .option("--require-interrogation", "Require interrogation block on mission (also default when --ci)")
     .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
     .option("--break-glass", "Skip all verify gates when GXT_BYPASS_SECRET is authorized")
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
@@ -185,7 +267,7 @@ export function registerWorkflowCommands(program: Command): void {
 
   program
     .command("register")
-    .description("AST discovery: propose skill scope from folder imports/exports (does not mutate MANIFEST)")
+    .description("Import/export discovery (regex scan): propose skill scope from folder (does not mutate MANIFEST)")
     .argument("<dir>", "Repo-relative directory to analyze")
     .option("--skill-key <key>", "Override suggested skill_key")
     .option("--json", "Emit proposal JSON")
@@ -195,7 +277,7 @@ export function registerWorkflowCommands(program: Command): void {
 
   program
     .command("check-imports")
-    .description("Deterministic AST import ban check for a folder (usable as gate_command)")
+    .description("Deterministic import ban check for a folder (usable as gate_command)")
     .argument("<dir>", "Repo-relative directory to scan")
     .requiredOption("--ban <specifier...>", "Banned import specifier (repeatable)")
     .option("--json", "Emit structured JSON")

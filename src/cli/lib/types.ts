@@ -1,4 +1,5 @@
 import type { NormalizedTraceStatus } from "./trace.js";
+import type { InterrogationRow } from "./interrogate/findings.js";
 
 export type TrustThreshold = "Tier-1" | "Tier-2" | "Tier-3" | string;
 
@@ -7,6 +8,8 @@ export interface SkillEntry {
   trust_threshold: TrustThreshold;
   tmvc_roots: string[];
   forbidden_zones: string[];
+  /** Planner-approved deterministic gate commands (optional allowlist). */
+  gate_commands?: string[];
 }
 
 export interface Manifest {
@@ -109,6 +112,9 @@ export interface ParsedMission {
   llmVerifiers: LlmVerifierSpec[];
   aggregators: KpiAggregator[];
   traceRows: TraceRow[];
+  interrogation: InterrogationRow[];
+  interrogationSha256: string | null;
+  declaredPaths: string[];
   rawPath: string;
 }
 
@@ -137,4 +143,14 @@ export interface YamlMission {
     anchor: string;
     status: string;
   }>;
+  interrogation?: Array<{
+    finding_id: string;
+    kind: string;
+    question: string;
+    hypothesis: string;
+    operator_answer: string;
+    adr_refs?: string[];
+  }>;
+  interrogation_sha256?: string;
+  declared_paths?: string[];
 }

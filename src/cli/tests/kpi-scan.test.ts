@@ -6,7 +6,7 @@ import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { runKpiScan, verifierOutputSucceeded } from "../lib/kpi-scan.js";
 import type { ParsedMission } from "../lib/types.js";
-import { copyMissionSchema } from "./test-fixtures.js";
+import { copyMissionSchema, emptyInterrogationMissionFields } from "./test-fixtures.js";
 
 function missionWithVerifiers(root: string): ParsedMission {
   const scriptPath = path.join(root, "verifier-a.sh");
@@ -28,6 +28,7 @@ echo '{"metrics":{"complexity_score":3},"exit_code":0}'
     aggregators: [{ key: "security_flaws", op: "max", sources: ["anthropic::complexity_score"] }],
     traceRows: [],
     rawPath: path.join(root, ".gitagent/missions/m.yaml"),
+    ...emptyInterrogationMissionFields(),
   };
 }
 
@@ -94,6 +95,7 @@ printf '{"metrics":{"complexity_score":5},"exit_code":0}\\n\\n'
     aggregators: [],
     traceRows: [],
     rawPath: path.join(root, ".gitagent/missions/m.yaml"),
+    ...emptyInterrogationMissionFields(),
   };
   const result = runKpiScan(root, mission);
   assert.equal(result.report.metrics["trim::complexity_score"], 5);

@@ -44,6 +44,7 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     assert.match(name, /^gxt_/);
   }
   const expected = [
+    "gxt_interrogate",
     "gxt_draft_legislation",
     "gxt_execute_legislation",
     "gxt_check_signature",
@@ -81,10 +82,11 @@ test("mcp-tools-register: gxt_draft_legislation handler round-trips through json
   process.chdir(dest);
   try {
     const result = (await draft.handler({
-      title: "smoke test mission",
+      title: "fix ui button component",
       msn_id: "MSN-0001",
       skill_key: "ui",
-      gate_command: "echo OK",
+      gate_command: "npm test",
+      interrogation: [],
     })) as { content: Array<{ type: string; text: string }> };
     assert.equal(result.content[0]?.type, "text");
     const payload = JSON.parse(result.content[0].text) as Record<string, unknown>;

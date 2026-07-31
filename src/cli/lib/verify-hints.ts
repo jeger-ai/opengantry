@@ -15,6 +15,7 @@ import type {
   DefensiveFailure,
   GateFailure,
   GitProofFailure,
+  InterrogationFailure,
   KpiFailure,
   KpiFailureKind,
   TraceFailure,
@@ -186,6 +187,22 @@ function hintsForTracePhase(failure: TraceFailure, meta: VerifyHintMeta): Verify
   };
 }
 
+function hintsForInterrogationPhase(failure: InterrogationFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const verifyCmdStr = verifyCmd(meta.missionPath);
+  return {
+    error_code: failure.interrogationCode,
+    fix_hints: [failure.message, "re-run gantry interrogate and update mission interrogation block on record"],
+    next_actions: [
+      `gantry interrogate "<intent>" --msn ${meta.msnId ?? "MSN-NNNN"} --skill-key gantry`,
+      verifyCmdStr,
+    ],
+    tagged_steps: [
+      tagStep("planner", "quote operator answers verbatim in mission interrogation block"),
+      tagStep("verifier", verifyCmdStr),
+    ],
+  };
+}
+
 export function hintsForVerifyPhase(
   failure: VerifyPhaseFailure,
   meta: VerifyHintMeta,
@@ -203,6 +220,8 @@ export function hintsForVerifyPhase(
       return hintsForTracePendingPhase(failure, meta);
     case "trace":
       return hintsForTracePhase(failure, meta);
+    case "interrogation":
+      return hintsForInterrogationPhase(failure, meta);
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;

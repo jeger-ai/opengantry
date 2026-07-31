@@ -11,6 +11,8 @@ import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./g
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { isLegislativeStub } from "./missions/formatter.js";
+import { formatRepoRelative } from "./cli-io.js";
+import { evaluateInterrogationPhase } from "./verify-interrogation.js";
 import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "./types.js";
 import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceVerifyWarning } from "./trace.js";
 import type {
@@ -144,13 +146,16 @@ function evaluateGatePhase(
   };
 }
 
-function evaluateTracePhase(
-  root: string,
-  manifest: Manifest,
-  mission: ParsedMission,
-  options: VerifyOptions,
-  executorLogPath: string,
-): TracePhaseOutcome {
+interface TracePhaseInput {
+  root: string;
+  manifest: Manifest;
+  mission: ParsedMission;
+  options: VerifyOptions;
+  executorLogPath: string;
+}
+
+function evaluateTracePhase(input: TracePhaseInput): TracePhaseOutcome {
+  const { root, manifest, mission, options, executorLogPath } = input;
   const hasPending = mission.traceRows.some((row) => isPendingStatus(row.status));
   if (hasPending) {
     return {
@@ -253,13 +258,16 @@ type PostGateOutcome =
   | { kind: "ok"; warnings: PostGateWarnings }
   | { kind: "fail"; failure: DefensiveFailure | KpiFailure };
 
-function collectDefensiveAndKpiOutcomes(
-  root: string,
-  manifest: Manifest,
-  mission: ParsedMission,
-  options: VerifyOptions,
-  executorLogPath: string,
-): PostGateOutcome {
+interface PostGateInput {
+  root: string;
+  manifest: Manifest;
+  mission: ParsedMission;
+  options: VerifyOptions;
+  executorLogPath: string;
+}
+
+function collectDefensiveAndKpiOutcomes(input: PostGateInput): PostGateOutcome {
+  const { root, manifest, mission, options, executorLogPath } = input;
   let kpiWarnings: string[] | undefined;
   let kpiAdvisoryFindings: KpiFinding[] | undefined;
   let defensiveWarnings: string[] | undefined;
@@ -301,13 +309,16 @@ function collectDefensiveAndKpiOutcomes(
   };
 }
 
-function buildFullVerifySuccess(
-  proofMsnId: string,
-  executorLogPath: string,
-  trace: Extract<TracePhaseOutcome, { kind: "ok" }>,
-  gitProofWarnings: string[],
-  extras: PostGateWarnings,
-): VerifyPhaseSuccess {
+interface FullVerifySuccessInput {
+  proofMsnId: string;
+  executorLogPath: string;
+  trace: Extract<TracePhaseOutcome, { kind: "ok" }>;
+  gitProofWarnings: string[];
+  extras: PostGateWarnings;
+}
+
+function buildFullVerifySuccess(input: FullVerifySuccessInput): VerifyPhaseSuccess {
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, extras } = input;
   return {
     ok: true,
     outcome: "full",
@@ -341,7 +352,20 @@ export function evaluateVerifyPhases(
 
   const proof = evaluateGitProof(root, mission, options, executorLogPath);
   if (proof.kind === "fail") return proof.failure;
-  const { proofMsnId, warnings: gitProofWarnings } = proof;
+  const { proofMsnId, warnings: proofWarnings } = proof;
+
+  const missionRel = formatRepoRelative(root, mission.rawPath);
+  const interrogation = evaluateInterrogationPhase({
+    root,
+    manifest,
+    mission,
+    missionRel,
+    options,
+    proofMsnId,
+    executorLogPath,
+  });
+  if (interrogation.failure) return interrogation.failure;
+  const gitProofWarnings = [...proofWarnings, ...interrogation.warnings];
 
   if (options.prePush === true && isLegislativeStub(mission)) {
     return {
@@ -372,15 +396,27 @@ export function evaluateVerifyPhases(
 
   if (gateOutcome.failure) return gateOutcome.failure;
 
-  const postGate = collectDefensiveAndKpiOutcomes(root, manifest, mission, options, executorLogPath);
+  const postGate = collectDefensiveAndKpiOutcomes({
+    root,
+    manifest,
+    mission,
+    options,
+    executorLogPath,
+  });
   if (postGate.kind === "fail") return postGate.failure;
 
-  const trace = evaluateTracePhase(root, manifest, mission, options, executorLogPath);
+  const trace = evaluateTracePhase({ root, manifest, mission, options, executorLogPath });
   if (trace.kind === "fail") return trace.failure;
 
   if (virtualFlightId) {
     purgeVirtualFlightDir(root, virtualFlightId);
   }
 
-  return buildFullVerifySuccess(proofMsnId, executorLogPath, trace, gitProofWarnings, postGate.warnings);
+  return buildFullVerifySuccess({
+    proofMsnId,
+    executorLogPath,
+    trace,
+    gitProofWarnings,
+    extras: postGate.warnings,
+  });
 }

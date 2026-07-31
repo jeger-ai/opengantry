@@ -37,7 +37,7 @@ export type ChangedPathsResult =
   | { ok: true; paths: string[] }
   | { ok: false; code: string; reason: string };
 
-const SHALLOW_HISTORY_HINT =
+export const SHALLOW_HISTORY_HINT =
   "Configure CI checkout with fetch-depth: 0 or fetch the base ref explicitly before running gantry perimeter --ci.";
 
 function perimeterGlobs(manifest: Manifest): string[] {

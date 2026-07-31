@@ -15,6 +15,9 @@ function mission(traceRows: ParsedMission["traceRows"]): ParsedMission {
     aggregators: [],
     traceRows,
     rawPath: "/tmp/m.yaml",
+    interrogation: [],
+    interrogationSha256: null,
+    declaredPaths: [],
   };
 }
 

@@ -116,7 +116,7 @@ export function registerMissionCommands(program: Command): void {
         mission?: string;
         path?: string[];
         proposed?: string[];
-        stageExecutorLog?: boolean;
+        stageWorkerLog?: boolean;
         executorLog?: string;
         json?: boolean;
       }) => {
@@ -125,7 +125,7 @@ export function registerMissionCommands(program: Command): void {
           paths: opts.path ?? [],
           reason: opts.reason,
           proposed: opts.proposed,
-          stageExecutorLog: opts.stageExecutorLog,
+          stageExecutorLog: opts.stageWorkerLog,
           executorLog: opts.executorLog,
           json: opts.json,
         });

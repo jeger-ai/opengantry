@@ -30,6 +30,7 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
       mission_file_path: result.mission_file_path,
       next_actions: result.next_steps,
       exit_code: result.exit_code,
+      ...(result.error_code ? { error_code: result.error_code } : {}),
     };
   }
 

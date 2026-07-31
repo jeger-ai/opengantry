@@ -5,6 +5,7 @@ import type { TriageResult } from "./types.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { assertMcpMissionWritePath, McpWriteDeniedError } from "./mcp-write-guard.js";
 import { resolveMissionFilePath } from "./missions/parser.js";
+import type { InterrogationRow } from "./interrogate/findings.js";
 
 export type McpToolStatus =
   | "awaiting_human_approval"
@@ -25,6 +26,10 @@ export interface DraftLegislationInput {
   skill_key: string;
   gate_command: string;
   gate_success_substring?: string;
+  paths?: string[];
+  interrogation: InterrogationRow[];
+  interrogation_sha256?: string;
+  declared_paths?: string[];
 }
 
 export interface DraftLegislationResult {

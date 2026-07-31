@@ -13,6 +13,7 @@ import {
 import type {
   DefensiveFailure,
   GateFailure,
+  InterrogationFailure,
   KpiFailure,
   TraceFailure,
   TracePendingFailure,
@@ -149,6 +150,22 @@ function normalizeKpiPhase(
   };
 }
 
+function normalizeInterrogationPhase(
+  base: NormalizedVerifyFailureBase,
+  failure: InterrogationFailure,
+): NormalizedVerifyFailure {
+  return {
+    ...base,
+    error_code: failure.interrogationCode,
+    headline: "verify: INTERROGATION GATE FAILED",
+    detail_lines: [
+      failure.message,
+      ...(failure.interrogationWarnings ?? []),
+    ],
+    failures: [failure.message],
+  };
+}
+
 function normalizeTracePendingPhase(
   base: NormalizedVerifyFailureBase,
   failure: TracePendingFailure,
@@ -219,6 +236,8 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       return normalizeTracePendingPhase(base, failure);
     case "trace":
       return normalizeTracePhase(base, failure);
+    case "interrogation":
+      return normalizeInterrogationPhase(base, failure);
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;

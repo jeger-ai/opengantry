@@ -1,7 +1,9 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { INTERROGATION_FINDING_KINDS } from "./interrogate/findings.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { handleCheckSignature } from "./mcp-check-signature.js";
 import { handleDraftLegislation } from "./mcp-draft-legislation.js";
+import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
 import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
 import { handleLastError } from "./mcp-last-error.js";
 import { handlePinMission } from "./mcp-pin-mission.js";
@@ -11,6 +13,15 @@ import { handleRuntimeEnv, handleRuntimeExec, handleScan, handleVerify } from ".
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 import { handleAttest } from "./mcp-attest.js";
 
+const interrogationRowSchema = z.object({
+  finding_id: z.string(),
+  kind: z.enum(INTERROGATION_FINDING_KINDS),
+  question: z.string(),
+  hypothesis: z.string(),
+  operator_answer: z.string().describe("Quoted verbatim from operator — never fabricated"),
+  adr_refs: z.array(z.string()).optional(),
+});
+
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
   return {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
@@ -19,14 +30,31 @@ function jsonText(payload: unknown): { content: Array<{ type: "text"; text: stri
 
 function registerLegislationTools(server: McpServer): void {
   server.tool(
+    "gxt_interrogate",
+    "Deterministic gap analysis before legislation. Returns one next_question (halt) or clear with interrogation_sha256. Do not fabricate operator_answer — quote operator chat verbatim.",
+    {
+      intent: z.string().describe("Planner intent summary"),
+      msn_id: z.string().describe("Mission id advisory label, e.g. MSN-0149"),
+      skill_key: z.string().optional().describe("Manifest skill key (default gantry)"),
+      gate_command: z.string().optional().describe("Proposed gate command"),
+      gate_success_substring: z.string().optional().describe("Proposed gate success substring"),
+      paths: z.array(z.string()).optional().describe("Declared paths for boundary analysis"),
+      interrogation: z.array(interrogationRowSchema).optional().describe("Accumulated operator answers"),
+    },
+    async (args) => jsonText(handleInterrogate(args as InterrogateMcpInput)),
+  );
+
+  server.tool(
     "gxt_draft_legislation",
-    "Preview proposed mission law without writing files. Returns draft_token for gxt_execute_legislation after human chat approval.",
+    "Preview proposed mission law without writing files. Requires complete interrogation (server recomputes). Returns draft_token for gxt_execute_legislation after human chat approval. Never fabricate operator_answer.",
     {
       title: z.string().describe("Concise summary of the proposed law"),
       msn_id: z.string().describe('Mission id, e.g. "MSN-0010"'),
       skill_key: z.string().describe("Manifest skill key (e.g. gantry, ui, logic)"),
       gate_command: z.string().describe("Deterministic verification command"),
       gate_success_substring: z.string().optional().describe("Optional gate success substring"),
+      paths: z.array(z.string()).optional().describe("Declared paths for gap analysis"),
+      interrogation: z.array(interrogationRowSchema).describe("Complete interrogation answers for all findings"),
     },
     async (args) => jsonText(handleDraftLegislation(args)),
   );

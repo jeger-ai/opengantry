@@ -72,6 +72,10 @@ function matchingSkillKeys(intentNorm: string, manifest: Manifest): string[] {
   return keys.filter((key) => skillMentionedInIntent(intentNorm, key));
 }
 
+export function isTriageEscalated(triage: TriageResult): boolean {
+  return triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
+}
+
 /**
  * Foreman-style triage (manifest-only routing), aligned with .gitagent/foreman/SOUL.md.
  * May attach non-binding `adr_hints` from `.gitagent/out-of-scope/` when ADR `match_terms`

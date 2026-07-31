@@ -165,7 +165,7 @@ function resolveArchLanguages(spec: TargetArchitectureSpec): string[] {
   return ["typescript"];
 }
 
-function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string[]): boolean {
+export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string[]): boolean {
   const norm = normalizeRepoRelativePath(repoRel);
   return scanRoots.some((root) => globMatches(norm, root));
 }

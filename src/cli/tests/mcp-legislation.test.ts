@@ -10,6 +10,37 @@ import {
   handleCheckSignature,
 } from "../lib/mcp-governance.js";
 import { getRepoRoot } from "../lib/git.js";
+import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
+
+function mcpLegislationDraftInput(
+  overrides: Partial<import("../lib/mcp-governance-shared.js").DraftLegislationInput> = {},
+): import("../lib/mcp-governance-shared.js").DraftLegislationInput {
+  return {
+    title: "Add gantry verify helper",
+    msn_id: "MSN-0201",
+    skill_key: "gantry",
+    gate_command: "npm test",
+    interrogation: [],
+    ...overrides,
+  };
+}
+
+function echoOkInterrogation(gateCommand = "echo OK") {
+  const finding_id = stableFindingId("missing_test_criteria", `gate:${gateCommand}`);
+  const rows = [
+    {
+      finding_id,
+      kind: "missing_test_criteria" as const,
+      question: "Gate not allowlisted",
+      hypothesis: "echo OK acceptable for test",
+      operator_answer: "Approved for MCP legislation test fixture.",
+    },
+  ];
+  return {
+    interrogation: rows,
+    interrogation_sha256: interrogationSha256(rows),
+  };
+}
 
 function scaffoldRepo(): string {
   const ogRoot = getRepoRoot();
@@ -33,13 +64,7 @@ test("mcp legislation: draft does not write mission file", () => {
   const prevCwd = process.cwd();
   process.chdir(dest);
   try {
-    const draft = handleDraftLegislation({
-      title: "Add button hover",
-      msn_id: "MSN-0201",
-      skill_key: "gantry",
-      gate_command: "echo OK",
-      gate_success_substring: "OK",
-    });
+    const draft = handleDraftLegislation(mcpLegislationDraftInput({ msn_id: "MSN-0201" }));
     assert.equal(draft.status, "awaiting_human_approval");
     if (draft.status !== "awaiting_human_approval") return;
     assert.ok(draft.draft_token.includes("."));
@@ -55,13 +80,7 @@ test("mcp legislation: execute writes mission and returns pending_signature", ()
   const prevCwd = process.cwd();
   process.chdir(dest);
   try {
-    const draft = handleDraftLegislation({
-      title: "Add button hover",
-      msn_id: "MSN-0202",
-      skill_key: "gantry",
-      gate_command: "echo OK",
-      gate_success_substring: "OK",
-    });
+    const draft = handleDraftLegislation(mcpLegislationDraftInput({ msn_id: "MSN-0202" }));
     if (draft.status !== "awaiting_human_approval") {
       assert.fail("expected draft");
       return;
@@ -87,13 +106,12 @@ test("mcp legislation: check_signature valid after planner commit", () => {
   process.env.GANTRY_PLANNER_EMAILS = "teacher@example.com";
   process.chdir(dest);
   try {
-    const draft = handleDraftLegislation({
-      title: "Signed mission",
-      msn_id: "MSN-0203",
-      skill_key: "gantry",
-      gate_command: "echo OK",
-      gate_success_substring: "OK",
-    });
+    const draft = handleDraftLegislation(
+      mcpLegislationDraftInput({
+        title: "Signed mission",
+        msn_id: "MSN-0203",
+      }),
+    );
     if (draft.status !== "awaiting_human_approval") return;
     const executed = handleExecuteLegislation(draft.draft_token);
     if (executed.status !== "pending_signature") return;
@@ -117,13 +135,15 @@ test("mcp legislation: execute does not mutate process.exitCode on failure", () 
   const prevExitCode = process.exitCode;
   process.chdir(dest);
   try {
-    const draft = handleDraftLegislation({
-      title: "Exit code leak guard",
-      msn_id: "MSN-0204",
-      skill_key: "gantry",
-      gate_command: "echo OK",
-      gate_success_substring: "OK",
-    });
+    const draft = handleDraftLegislation(
+      mcpLegislationDraftInput({
+        title: "Exit code leak guard gantry",
+        msn_id: "MSN-0204",
+        gate_command: "echo OK",
+        gate_success_substring: "OK",
+        ...echoOkInterrogation(),
+      }),
+    );
     if (draft.status !== "awaiting_human_approval") {
       assert.fail("expected draft");
       return;

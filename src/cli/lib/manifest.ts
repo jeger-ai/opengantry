@@ -39,6 +39,16 @@ function validateSkillEntry(k: string, s: unknown): void {
   if (!Array.isArray(sk.forbidden_zones)) {
     throw new Error(`MANIFEST: skills.${k}.forbidden_zones must be array`);
   }
+  if (sk.gate_commands !== undefined) {
+    if (!Array.isArray(sk.gate_commands)) {
+      throw new Error(`MANIFEST: skills.${k}.gate_commands must be an array when present`);
+    }
+    for (const cmd of sk.gate_commands) {
+      if (typeof cmd !== "string" || cmd.trim().length === 0) {
+        throw new Error(`MANIFEST: skills.${k}.gate_commands items must be non-empty strings`);
+      }
+    }
+  }
 }
 
 /** Mirrors scripts/validate-gxt.sh manifest checks (parity: manifest-parity.test.ts + manifest-validate.mjs). */

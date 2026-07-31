@@ -31,6 +31,7 @@ test("runStartOrchestration: scaffolds mission for gantry skill intent", () => {
       intent: "fix ui button component",
       msn: "MSN-0100",
       skillKey: "ui",
+      gateCommand: "npm test",
     });
     assert.equal(result.ok, true);
     assert.ok(result.mission_file_path?.includes("MSN-0100"));
@@ -45,6 +46,7 @@ test("runStartOrchestration: --no-write skips mission file", () => {
       intent: "fix ui button component",
       msn: "MSN-0101",
       skillKey: "ui",
+      gateCommand: "npm test",
       writeMission: false,
       silent: true,
     });
@@ -67,6 +69,7 @@ test("runStart: --json emits a single parseable JSON document", () => {
         intent: "fix ui button component",
         msn: "MSN-0102",
         skillKey: "ui",
+        gateCommand: "npm test",
         json: true,
       });
     } finally {
@@ -94,6 +97,7 @@ test("handleStartOrchestration: does not write to stdout", () => {
         intent: "fix ui button component",
         msn_id: "MSN-0103",
         skill_key: "ui",
+        gate_command: "npm test",
       });
       assert.equal(result.status, "ok");
       assert.ok(typeof result.triage === "object");
@@ -139,6 +143,7 @@ test("runStartOrchestration: duplicate msn without allowDuplicate fails", () => 
       intent: "fix ui button component",
       msn: "MSN-0105",
       skillKey: "ui",
+      gateCommand: "npm test",
       silent: true,
     });
     assert.equal(first.ok, true);
@@ -146,12 +151,37 @@ test("runStartOrchestration: duplicate msn without allowDuplicate fails", () => 
       intent: "fix ui button component",
       msn: "MSN-0105",
       skillKey: "ui",
+      gateCommand: "npm test",
       silent: true,
     });
     assert.equal(second.ok, false);
     assert.equal(second.exit_code, 2);
     assert.ok(second.next_steps.some((s) => s.includes("allow-duplicate")));
     assert.ok(fs.existsSync(path.join(dest, first.mission_file_path!)));
+  });
+});
+
+test("runStartOrchestration: interrogation halt blocks mission write twice", () => {
+  withTempRepo((dest) => {
+    const missionsBefore = fs.readdirSync(path.join(dest, ".gitagent", "missions"));
+    const first = runStartOrchestration({
+      intent: "fix ui button component",
+      msn: "MSN-0107",
+      skillKey: "ui",
+      silent: true,
+    });
+    assert.equal(first.ok, false);
+    assert.equal(first.error_code, "GXT_INTERROGATION_REQUIRED");
+    const second = runStartOrchestration({
+      intent: "fix ui button component",
+      msn: "MSN-0107",
+      skillKey: "ui",
+      silent: true,
+    });
+    assert.equal(second.ok, false);
+    assert.equal(second.error_code, "GXT_INTERROGATION_REQUIRED");
+    const missionsAfter = fs.readdirSync(path.join(dest, ".gitagent", "missions"));
+    assert.deepEqual(missionsAfter, missionsBefore);
   });
 });
 

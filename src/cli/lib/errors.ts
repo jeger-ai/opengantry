@@ -3,7 +3,7 @@ import { readEnvWithLegacy } from "./config-namespace.js";
 import path from "node:path";
 import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
-import { gxtCodeFromGantryUserError } from "./gxt-error-codes.js";
+import { gxtCodeFromGantryUserError, GXT_ERROR } from "./gxt-error-codes.js";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
 import type { ForbiddenViolation } from "./forbidden-scan.js";
 import type { RuntimeExecResult } from "./runtime-exec.js";
@@ -82,7 +82,7 @@ export function userFacingErrorToJson(e: unknown): UserFacingErrorJson {
 export interface AgentErrorPayload {
   v: 1;
   ts: string;
-  status: RuntimeExecResult["status"];
+  status: RuntimeExecResult["status"] | "interrogation_required";
   exit_code: number;
   flight_id: string;
   msn_id: string;
@@ -92,6 +92,22 @@ export interface AgentErrorPayload {
   violations: ForbiddenViolation[];
   summary: string;
   remediation: string[];
+}
+
+function writeAgentErrorFile(
+  repoRoot: string,
+  fields: Omit<AgentErrorPayload, "v" | "ts" | "error_file">,
+): AgentErrorPayload {
+  const errorFile = agentErrorAbsolutePath(repoRoot);
+  fs.mkdirSync(path.dirname(errorFile), { recursive: true });
+  const payload: AgentErrorPayload = {
+    v: 1,
+    ts: new Date().toISOString(),
+    error_file: errorFile,
+    ...fields,
+  };
+  fs.writeFileSync(errorFile, JSON.stringify(payload, null, 2), "utf8");
+  return payload;
 }
 
 export function agentErrorAbsolutePath(repoRoot: string): string {
@@ -143,22 +159,38 @@ export function writeAgentErrorPayload(
   resolved: ResolvedRuntimeEnv,
   result: RuntimeExecResult,
 ): AgentErrorPayload {
-  const errorFile = agentErrorAbsolutePath(repoRoot);
-  fs.mkdirSync(path.dirname(errorFile), { recursive: true });
-  const payload: AgentErrorPayload = {
-    v: 1,
-    ts: new Date().toISOString(),
+  return writeAgentErrorFile(repoRoot, {
     status: result.status,
     exit_code: result.exitCode,
     flight_id: result.flightId,
     msn_id: resolved.msn_id,
     mission_file: resolved.mission_file,
     skill_key: resolved.skill_key,
-    error_file: errorFile,
     violations: result.violations,
     summary: buildSummary(result),
     remediation: buildRemediation(result, resolved),
-  };
-  fs.writeFileSync(errorFile, JSON.stringify(payload, null, 2), "utf8");
-  return payload;
+  });
+}
+
+export function writeInterrogationRequiredError(
+  repoRoot: string,
+  input: {
+    msn_id: string;
+    skill_key: string;
+    finding_id: string;
+    question: string;
+    remediation: string[];
+  },
+): AgentErrorPayload {
+  return writeAgentErrorFile(repoRoot, {
+    status: "interrogation_required",
+    exit_code: 2,
+    flight_id: "",
+    msn_id: input.msn_id,
+    mission_file: "",
+    skill_key: input.skill_key,
+    violations: [],
+    summary: `${GXT_ERROR.INTERROGATION_REQUIRED}: ${input.finding_id} — ${input.question}`,
+    remediation: input.remediation,
+  });
 }

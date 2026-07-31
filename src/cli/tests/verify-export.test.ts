@@ -66,6 +66,55 @@ test("verify-export: JUnit fail includes failure element", () => {
   assert.match(xml, /name="trace"/);
 });
 
+test("verify-export: interrogation phase SARIF uses GXT_INTERROGATION ruleId", () => {
+  const sarif = buildSarifDocument({
+    status: "failed",
+    phase: "interrogation",
+    message: "interrogation mismatch",
+    error_code: GXT_ERROR.INTERROGATION_MISMATCH,
+    fix_hints: ["re-interrogate"],
+    next_actions: ["gantry interrogate"],
+    exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [
+      {
+        failed_gate: "interrogation",
+        offending_file: ".gitagent/missions/MSN-0001.yaml",
+        line: 0,
+        severity: "error",
+        resolution_hint: "fix interrogation block",
+      },
+    ],
+  });
+  const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
+  const results = run.results as Record<string, unknown>[];
+  assert.equal(results[0]?.ruleId, "interrogation");
+});
+
+test("verify-export: interrogation phase JUnit names interrogation testcase", () => {
+  const xml = buildJUnitXml({
+    status: "failed",
+    phase: "interrogation",
+    message: "path drift",
+    error_code: GXT_ERROR.INTERROGATION_PATH_DRIFT,
+    fix_hints: [],
+    next_actions: [],
+    exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [
+      {
+        failed_gate: "interrogation",
+        offending_file: "",
+        line: 0,
+        severity: "error",
+        resolution_hint: "declare paths",
+      },
+    ],
+  });
+  assert.match(xml, /name="interrogation"/);
+  assert.match(xml, /<failure/);
+});
+
 test("verify-export: json format round-trips payload", () => {
   const payload = { status: "passed" as const, phase: "full" as const, exit_code: 0 as const };
   const doc = buildVerifyExportDocument(payload, "json");

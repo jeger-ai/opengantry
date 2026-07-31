@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
@@ -51,7 +52,8 @@ test("check-import-layers: full-tree lib scan has zero command imports (#43)", (
   })
     .trim()
     .split("\n")
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((f) => fs.existsSync(path.join(repoRoot, f)));
   const result = runImportLayersCheck(repoRoot, ...files);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /import-layers OK/);

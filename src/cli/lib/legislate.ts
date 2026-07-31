@@ -14,14 +14,31 @@ import {
   logWarn,
   toPosixRel,
 } from "./cli-io.js";
-import { triageIntent } from "./triage-logic.js";
+import { triageIntent, isTriageEscalated } from "./triage-logic.js";
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import type { Manifest, TriageResult } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
+import type { InterrogationRow } from "./interrogate/findings.js";
+import { runInterrogate } from "./interrogate/run.js";
+import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
 
-export function isTriageEscalated(triage: TriageResult): boolean {
-  return triage.action !== "DIRECT_EXECUTION" || triage.skill_key === "NONE";
+export type LegislateInterrogation =
+  | { source: "draft_token"; rows: InterrogationRow[]; sha256: string }
+  | { source: "operator_file"; rows: InterrogationRow[] };
+
+export interface LegislateOptions {
+  intent: string;
+  msn?: string;
+  skillKey?: string;
+  out?: string;
+  allowDuplicate?: boolean;
+  gateCommand?: string;
+  gateSuccessSubstring?: string;
+  paths?: string[];
+  interrogation?: LegislateInterrogation;
+  /** When true, skip stdout info messages (MCP / structured JSON callers). */
+  silent?: boolean;
 }
 
 export type ResolveSkillKeyResult =
@@ -65,18 +82,6 @@ export function resolveSkillKeyForLegislation(opts: {
   };
 }
 
-export interface LegislateOptions {
-  intent: string;
-  msn?: string;
-  skillKey?: string;
-  out?: string;
-  allowDuplicate?: boolean;
-  gateCommand?: string;
-  gateSuccessSubstring?: string;
-  /** When true, skip stdout info messages (MCP / structured JSON callers). */
-  silent?: boolean;
-}
-
 export type LegislateResult =
   | { ok: true; missionAbs: string; missionRel: string }
   | { ok: false; exitCode: 2 };
@@ -97,6 +102,9 @@ function buildYamlMissionBody(opts: {
   intent: string;
   gate_command: string;
   gate_success_substring: string | null;
+  interrogation?: InterrogationRow[];
+  interrogation_sha256?: string;
+  declared_paths?: string[];
 }): string {
   const doc: Record<string, unknown> = {
     msn_id: opts.msn_id,
@@ -107,12 +115,66 @@ function buildYamlMissionBody(opts: {
   if (opts.gate_success_substring !== null) {
     doc.gate_success_substring = opts.gate_success_substring;
   }
+  if (opts.interrogation && opts.interrogation.length > 0) {
+    doc.interrogation = opts.interrogation;
+    if (opts.interrogation_sha256) {
+      doc.interrogation_sha256 = opts.interrogation_sha256;
+    }
+    if (opts.declared_paths && opts.declared_paths.length > 0) {
+      doc.declared_paths = opts.declared_paths;
+    }
+  }
   return buildMissionYamlScaffold({
     header:
       `# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).\n` +
       `# Legislated intent: ${opts.intent.trim().replace(/\n/g, " ")}\n`,
     doc,
   });
+}
+
+function resolveInterrogationForLegislate(
+  root: string,
+  manifest: Manifest,
+  options: LegislateOptions,
+  skillKey: string,
+  gateCommand: string,
+  gateSuccessSubstring: string | null,
+): { ok: true; rows: InterrogationRow[]; declaredPaths: string[]; interrogationSha256?: string } | { ok: false } {
+  const paths = options.paths ?? [];
+  const interrogation = runInterrogate({
+    root,
+    manifest,
+    intent: options.intent,
+    skillKey,
+    gateCommand,
+    gateSuccessSubstring,
+    paths,
+    interrogation: options.interrogation?.rows ?? [],
+  });
+
+  if (interrogation.status === "halt") {
+    logError(
+      `legislate: interrogation required — run gantry interrogate and pass --interrogation-file (finding ${interrogation.next_question.finding_id})`,
+    );
+    return { ok: false };
+  }
+
+  if (
+    options.interrogation?.source === "draft_token" &&
+    options.interrogation.sha256 !== interrogation.interrogation_sha256
+  ) {
+    logError("legislate: interrogation_sha256 mismatch vs draft token payload");
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    rows: interrogation.interrogation,
+    declaredPaths: interrogation.declared_paths,
+    ...(interrogation.interrogation.length > 0
+      ? { interrogationSha256: interrogation.interrogation_sha256 }
+      : {}),
+  };
 }
 
 function resolveLegislateSkillKey(
@@ -200,19 +262,17 @@ function assertLegislateDuplicatePolicy(
   return false;
 }
 
-function resolveLegislateGateOptions(options: LegislateOptions): {
+function resolveLegislateGateOptionsFromLegislate(options: LegislateOptions): {
   gateCommand: string;
   gateSuccessSubstring: string | null;
 } {
-  const gateCommand = options.gateCommand?.trim() || "echo OK";
-  const gateSuccessSubstring =
-    options.gateSuccessSubstring !== undefined
-      ? options.gateSuccessSubstring.trim() || null
-      : gateCommand === "echo OK"
-        ? "OK"
-        : null;
-  return { gateCommand, gateSuccessSubstring };
+  return resolveLegislateGateOptions({
+    gateCommand: options.gateCommand,
+    gateSuccessSubstring: options.gateSuccessSubstring,
+  });
 }
+
+export { resolveLegislateGateOptions } from "./legislate-gate-options.js";
 
 export function runLegislate(options: LegislateOptions): LegislateResult {
   const { root, manifest } = loadWorkspace();
@@ -239,13 +299,33 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
     return { ok: false, exitCode: 2 };
   }
 
-  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions(options);
+  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptionsFromLegislate(options);
+  const interrogationResolved = resolveInterrogationForLegislate(
+    root,
+    manifest,
+    options,
+    skill_key,
+    gateCommand,
+    gateSuccessSubstring,
+  );
+  if (!interrogationResolved.ok) return { ok: false, exitCode: 2 };
+
+  const src = interrogationResolved;
+  const interrogationSha = src.interrogationSha256;
+
   const body = buildYamlMissionBody({
     msn_id: msnId,
     skill_key,
     intent: options.intent,
     gate_command: gateCommand,
     gate_success_substring: gateSuccessSubstring,
+    ...(src.rows.length > 0
+      ? {
+          interrogation: src.rows,
+          interrogation_sha256: interrogationSha,
+          declared_paths: src.declaredPaths,
+        }
+      : {}),
   });
 
   fs.mkdirSync(path.dirname(absolute), { recursive: true });

@@ -11,6 +11,7 @@ import {
   DraftTokenError,
 } from "../lib/draft-token.js";
 import { getRepoRoot } from "../lib/git.js";
+import { emptyDraftTokenInterrogationFields } from "./test-fixtures.js";
 
 test("draft-token: stateless sign/verify roundtrip", () => {
   const ogRoot = getRepoRoot();
@@ -32,8 +33,9 @@ test("draft-token: stateless sign/verify roundtrip", () => {
     const created = createDraftToken(dest, {
       title: "Add hover state",
       msn_id: "MSN-0101",
-      skill_key: "ui",
+      skill_key: "gantry",
       gate_command: "npm test",
+      ...emptyDraftTokenInterrogationFields(),
     });
     const verified = verifyDraftToken(dest, created.draft_token, { consume: false });
     assert.equal(verified.msn_id, "MSN-0101");
@@ -63,8 +65,9 @@ test("draft-token: replay rejected on second consume", () => {
     const created = createDraftToken(dest, {
       title: "Replay test",
       msn_id: "MSN-0102",
-      skill_key: "ui",
-      gate_command: "echo OK",
+      skill_key: "gantry",
+      gate_command: "npm test",
+      ...emptyDraftTokenInterrogationFields(),
     });
     verifyDraftToken(dest, created.draft_token, { consume: true });
     assert.throws(
@@ -80,4 +83,42 @@ test("draft-token: canonicalJson is deterministic", () => {
   const a = canonicalJson({ b: 2, a: 1, nested: { z: 1, y: 2 } });
   const b = canonicalJson({ nested: { y: 2, z: 1 }, a: 1, b: 2 });
   assert.equal(a, b);
+});
+
+test("draft-token: v1 token rejected", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-draft-v1-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+  execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
+  execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
+  execSync("git add .", { cwd: dest, stdio: "pipe" });
+  execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    const created = createDraftToken(dest, {
+      title: "v1 reject",
+      msn_id: "MSN-0103",
+      skill_key: "gantry",
+      gate_command: "npm test",
+      ...emptyDraftTokenInterrogationFields(),
+    });
+    const parts = created.draft_token.split(".");
+    const payloadRaw = Buffer.from(parts[0], "base64url").toString("utf8");
+    const payload = JSON.parse(payloadRaw) as Record<string, unknown>;
+    payload.v = 1;
+    const v1Token = `${Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")}.${parts[1]}`;
+    assert.throws(
+      () => verifyDraftToken(dest, v1Token, { consume: false }),
+      (e: unknown) => e instanceof DraftTokenError && e.code === "TOKEN_MALFORMED",
+    );
+  } finally {
+    process.chdir(prevCwd);
+  }
 });

@@ -8,6 +8,8 @@ import { getRepoRoot } from "../lib/git.js";
 import { execSync } from "node:child_process";
 import { findForbiddenZoneHits } from "../lib/legislate-forbidden-zone.js";
 import { loadManifest } from "../lib/manifest.js";
+import { stableFindingId } from "../lib/interrogate/findings.js";
+import { echoOkInterrogation } from "./test-fixtures.js";
 test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-"));
@@ -37,6 +39,9 @@ trace_rows: []
       intent: "Add gantry verify helper",
       msn: "MSN-0989",
       skillKey: "gantry",
+      gateCommand: "echo OK",
+      gateSuccessSubstring: "OK",
+      interrogation: echoOkInterrogation(),
     });
     assert.equal(result.ok, true);
     assert.equal(process.exitCode, undefined);
@@ -195,10 +200,13 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   try {
     process.exitCode = undefined;
     const result = runLegislate({
-      intent: "ui add hover state",
+      intent: "gantry add hover state duplicate",
       msn: "MSN-0999",
       skillKey: "gantry",
       allowDuplicate: true,
+      gateCommand: "echo OK",
+      gateSuccessSubstring: "OK",
+      interrogation: echoOkInterrogation(),
     });
     assert.equal(result.ok, true);
     assert.equal(process.exitCode, undefined);
@@ -225,7 +233,14 @@ test("legislate: emits PENDING stub trace row", () => {
   process.chdir(dest);
   try {
     process.exitCode = undefined;
-    runLegislate({ intent: "ui tweak padding", msn: "MSN-0777", skillKey: "gantry" });
+    runLegislate({
+      intent: "gantry tweak padding",
+      msn: "MSN-0777",
+      skillKey: "gantry",
+      gateCommand: "echo OK",
+      gateSuccessSubstring: "OK",
+      interrogation: echoOkInterrogation(),
+    });
     const created = fs
       .readdirSync(path.join(dest, ".gitagent", "missions"))
       .find((f) => f.startsWith("MSN-0777.") && f.endsWith(".yaml"))!;
@@ -249,16 +264,29 @@ test("legislate: --gate-command preserves spaces in complex command", () => {
   execSync("git init", { cwd: dest, stdio: "pipe" });
 
   const gateCmd = "npm run test:ui -- --watchAll=false";
+  const findingId = stableFindingId("missing_test_criteria", `gate:${gateCmd}`);
   const prevCwd = process.cwd();
   process.chdir(dest);
   try {
     process.exitCode = undefined;
     runLegislate({
-      intent: "ui timeline card padding",
+      intent: "gantry ui timeline card padding",
       msn: "MSN-0778",
       skillKey: "gantry",
       gateCommand: gateCmd,
       gateSuccessSubstring: "Tests:",
+      interrogation: {
+        source: "operator_file",
+        rows: [
+          {
+            finding_id: findingId,
+            kind: "missing_test_criteria",
+            question: "Gate not allowlisted",
+            hypothesis: "Custom ui test gate authorized for this mission",
+            operator_answer: "Authorized for legislate gate spacing test.",
+          },
+        ],
+      },
     });
     const created = fs
       .readdirSync(path.join(dest, ".gitagent", "missions"))

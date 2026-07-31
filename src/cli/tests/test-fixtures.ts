@@ -1,15 +1,41 @@
-/**
- * Shared temp-repo helpers for deterministic tests (avoid live checkout manifest coupling).
- */
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
+import type { InterrogationRow } from "../lib/interrogate/findings.js";
+import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
+import type { ParsedMission } from "../lib/types.js";
+
+export const EMPTY_INTERROGATION_SHA256 = interrogationSha256([]);
+
+export function emptyInterrogationMissionFields(): Pick<
+  ParsedMission,
+  "interrogation" | "interrogationSha256" | "declaredPaths"
+> {
+  return {
+    interrogation: [],
+    interrogationSha256: null,
+    declaredPaths: [],
+  };
+}
+
+export function emptyDraftTokenInterrogationFields(): {
+  interrogation: [];
+  interrogation_sha256: string;
+  declared_paths: [];
+} {
+  return {
+    interrogation: [],
+    interrogation_sha256: EMPTY_INTERROGATION_SHA256,
+    declared_paths: [],
+  };
+}
 
 export interface MiniManifestSkill {
   trust_threshold?: string;
   tmvc_roots: string[];
   forbidden_zones: string[];
+  gate_commands?: string[];
 }
 
 const MANIFEST_LIB_FILES = [
@@ -94,13 +120,40 @@ export function writeSkillsForManifest(dest: string, skillKeys: string[]): void 
   }
 }
 
+export function operatorFileInterrogationForGate(gateCommand: string): {
+  source: "operator_file";
+  rows: InterrogationRow[];
+} {
+  const finding_id = stableFindingId("missing_test_criteria", `gate:${gateCommand}`);
+  return {
+    source: "operator_file",
+    rows: [
+      {
+        finding_id,
+        kind: "missing_test_criteria",
+        question: "Gate not allowlisted",
+        hypothesis: "Custom gate authorized for test fixture",
+        operator_answer: "Authorized for legislate test fixture.",
+      },
+    ],
+  };
+}
+
+export function echoOkInterrogation(): {
+  source: "operator_file";
+  rows: InterrogationRow[];
+} {
+  return operatorFileInterrogationForGate("echo OK");
+}
+
 export function writeMiniGantryRepo(dest: string, ogRoot: string): string {
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     "ui": {
       trust_threshold: "Tier-1",
-      tmvc_roots: [],
+      tmvc_roots: ["src/components/"],
       forbidden_zones: [],
+      gate_commands: ["npm test"],
     },
   });
   writeSkillsForManifest(dest, ["ui"]);

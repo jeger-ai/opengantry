@@ -69,3 +69,27 @@ test("mission schema: example.verify.yaml passes validateYamlMission", () => {
   const parsed = validateYamlMission(ogRoot, rel, body);
   assert.equal(parsed.skillKey, "logic");
 });
+
+test("mission schema: interrogation requires interrogation_sha256", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-interrogate-"));
+  const ogRoot = getRepoRoot();
+  fs.mkdirSync(path.join(root, ".gitagent", "planner"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(root, ".gitagent", "planner", "MISSION.schema.yaml"),
+  );
+  const body = `msn_id: MSN-0992
+skill_key: gantry
+gate_command: echo OK
+interrogation:
+  - finding_id: abc
+    kind: missing_test_criteria
+    question: q
+    hypothesis: h
+    operator_answer: ok
+trace_rows: []
+`;
+  const file = path.join(root, "bad-interrogate.yaml");
+  fs.writeFileSync(file, body, "utf8");
+  assert.throws(() => validateYamlMission(root, file, body), /GXT_MISSION_SCHEMA_INVALID/);
+});

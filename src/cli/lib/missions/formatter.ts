@@ -44,6 +44,9 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
     llmVerifiers: [],
     aggregators: [],
     traceRows: parseTraceTable(body),
+    interrogation: [],
+    interrogationSha256: null,
+    declaredPaths: [],
     rawPath: filePath,
   };
 }

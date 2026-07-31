@@ -42,5 +42,7 @@ export interface VerifyOptions {
   signReceipt?: boolean;
   /** Write hub export envelope after verify (payload_b64 + signature). */
   exportPath?: string;
+  /** Require interrogation block on mission (CI hard mode). */
+  requireInterrogation?: boolean;
 }
 

@@ -9,7 +9,8 @@ export type VerifyFailedGate =
   | "defensive"
   | "kpi"
   | "init"
-  | "arch";
+  | "arch"
+  | "interrogation";
 
 export interface VerifyFinding {
   failed_gate: VerifyFailedGate;
