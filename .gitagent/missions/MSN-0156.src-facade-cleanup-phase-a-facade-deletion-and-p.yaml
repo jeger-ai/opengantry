@@ -39,4 +39,4 @@ interrogation:
       documented success substring for verify.
     operator_answer: "Authorized: gate_command npm run build && npm test; success
       when build completes and all node tests pass (exit 0)."
-interrogation_sha256: 01f2474ba70a398c98a3c8219d4439a69f2c709b41a371b2c13bbda2b3412644
+interrogation_sha256: 5c54f6a67b094b244673afb296cded145177ed0e7ccdb29e2584d9d96529cbd8
