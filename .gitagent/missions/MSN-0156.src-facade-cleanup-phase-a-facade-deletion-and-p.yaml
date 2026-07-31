@@ -3,6 +3,8 @@
 msn_id: MSN-0156
 skill_key: gantry
 gate_command: npm run build && npm test
+declared_paths:
+  - .gitagent/missions/MSN-0156.src-facade-cleanup-phase-a-facade-deletion-and-p.yaml
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0156: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass"
