@@ -671,3 +671,8 @@ DoD 2 MSN-0150: dev-validate-core OK — stack: check, manifest, tests, doctor, 
 [CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json,scripts/validate-mcp-dogfood.mjs reason=MSN-0151 release version parity and adopter docs outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json,scripts/validate-mcp-dogfood.mjs | msn=MSN-0151
 DoD 1 MSN-0151: v3.2.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG interrogation gate + receipt/export headlines
 DoD 2 MSN-0151: npm 3.2.0 — interrogation gate + receipt v0.2 + CI export; dev-validate-core OK
+
+## MSN-0152 — v3.2.1 docs release
+[CONTEXT-REQUEST] path=docs/CHANGELOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0152 docs patch version parity outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0152
+DoD 1 MSN-0152: v3.2.1 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG docs-only legislate entry-point fix
+DoD 2 MSN-0152: npm 3.2.1 — docs legislate-as-entry-point; dev-validate-core OK

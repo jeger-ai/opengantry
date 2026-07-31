@@ -1,0 +1,15 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v3.2.1 docs patch — legislate single entry point messaging; version bump; tag
+msn_id: MSN-0152
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0152: v3.2.1 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG docs-only legislate entry-point fix"
+    anchor: "MSN-0152"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0152: npm 3.2.1 — docs legislate-as-entry-point; dev-validate-core OK"
+    anchor: "MSN-0152"
+    status: PASS

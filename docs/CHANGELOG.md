@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.2.1** | Docs — `gantry legislate` as single entry point (gap analysis built in); `gxt_interrogate` documented for multi-turn halt only |
 | **v3.2.0** | Interrogation gate (ADR-0039 / MSN-0149) — gap analysis built into `gantry legislate` (`gxt_interrogate` for multi-turn halt); first-class verify interrogation phase (`GXT_INTERROGATION_*` SARIF/JUnit); receipt v0.2.0 signed attribution + CI export (MSN-0143–0145); auditor pepper keyring (MSN-0148); MANIFEST `gate_commands` allowlists |
 | **v3.1.1** | Local DX — flag→pin mission defaults (`gantry pin` / `unpin`), active-mission banner, `gantry receipt list\|show`, verify `--receipt` path feedback; thermo cleanups (verify context, command boundary) |
 | **v3.1.0** | Hybrid hub/spoke readiness — `flight_telemetry` `hash_only`, `gantry attest` / `verify --receipt`, `doctor --policy` (ADR-0034); `bounded_content` trusted automation; advisory **performance judge** ([#62](https://github.com/jeger-ai/opengantry/issues/62)) via `PERFORMANCE_RUBRIC` + BYO `llm_verifiers` (ADR-0035); structured advisory `findings[]` on verify PASS |
@@ -35,7 +36,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.2.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.2.1** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
