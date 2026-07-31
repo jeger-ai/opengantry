@@ -5,7 +5,8 @@ import {
   filterTaggedStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
-import { doctorLinesHasFail, collectDoctorReport, type DoctorLine } from "../lib/doctor.js";
+import { collectDoctorReport } from "../lib/doctor-core.js";
+import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor-types.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface DoctorReport {

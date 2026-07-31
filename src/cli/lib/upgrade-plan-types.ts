@@ -1,5 +1,4 @@
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
-export { UPGRADE_MSN_BAND_MIN, UPGRADE_MSN_BAND_MAX } from "./msn-allocate.js";
 
 export interface UpgradeFileChange {
   path: string;

@@ -12,7 +12,7 @@ import { runContextFeed } from "./commands/context-feed.js";
 import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
-import { readStdinIfEmpty } from "./lib/program-stdin.js";
+import { readStdinIfEmpty } from "./lib/cli-io.js";
 import type { InitOptions } from "./commands/init.js";
 import { addInitOptions } from "./program-init-options.js";
 import type { StartOptions } from "./lib/start-orchestration.js";

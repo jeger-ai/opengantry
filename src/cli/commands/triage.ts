@@ -44,5 +44,3 @@ export function runTriage(options: TriageRunOptions): void {
   });
   logInfo(`Wrote ${formatRepoRelative(root, outputPath)}`);
 }
-
-export { readStdinIfEmpty } from "../lib/program-stdin.js";

@@ -35,28 +35,12 @@ import {
   type UpgradePlanResult,
 } from "./upgrade-plan-types.js";
 
-export {
-  REL_UPGRADE_TMP,
-  UPGRADE_MSN_BAND_MIN,
-  UPGRADE_MSN_BAND_MAX,
-  type UpgradeFileChange,
-  type UpgradePayload,
-  type UpgradePlanResult,
-  type RunUpgradePlanOptions,
+export type {
+  UpgradeFileChange,
+  UpgradePayload,
+  UpgradePlanResult,
+  RunUpgradePlanOptions,
 } from "./upgrade-plan-types.js";
-export {
-  upgradeEligibleAssets,
-  allUpgradeEligibleFromCatalog,
-  inferInitProfileFromRepo,
-  buildUpgradeFileChanges,
-  groupUpgradeChangesByCategory,
-} from "./upgrade-plan-catalog.js";
-export {
-  pickNextUpgradeMsn,
-  resolveUpgradeMsn,
-  buildUpgradeMissionYaml,
-  parseUpgradePayloadFromMissionBody,
-} from "./upgrade-plan-scaffold.js";
 
 function resolveUpgradeVersionGate(
   installed: ReturnType<typeof readInstalledSubstrateVersion>,

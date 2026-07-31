@@ -4,11 +4,9 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import {
-  handleDraftLegislation,
-  handleExecuteLegislation,
-  handleCheckSignature,
-} from "../lib/mcp-governance.js";
+import { handleDraftLegislation } from "../lib/mcp-draft-legislation.js";
+import { handleExecuteLegislation } from "../lib/mcp-execute-legislation.js";
+import { handleCheckSignature } from "../lib/mcp-check-signature.js";
 import { getRepoRoot } from "../lib/git.js";
 import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
 

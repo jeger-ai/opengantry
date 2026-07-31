@@ -1,8 +1,8 @@
 import { codeDomainAdapter } from "./domain-code.js";
 import { contentDomainAdapter } from "./domain-content.js";
 import {
-  getDomainAdapter,
-  listDomainKeys,
+  getDomainAdapter as getDomainAdapterRaw,
+  listDomainKeys as listDomainKeysRaw,
   isDomainFile,
   registerDomainAdapter,
   type DomainAdapter,
@@ -13,19 +13,32 @@ import {
   type DomainEvidenceResult,
 } from "./domain-adapter.js";
 
-let registered = false;
+let builtinsRegistered = false;
 
-/** Register built-in domain adapters (explicit bootstrap — no import side effects). */
-export function registerBuiltinDomains(): void {
-  if (registered) return;
+/** Idempotent built-in adapter registration (safe to call explicitly). */
+export function ensureBuiltinDomains(): void {
+  if (builtinsRegistered) return;
   registerDomainAdapter(codeDomainAdapter);
   registerDomainAdapter(contentDomainAdapter);
-  registered = true;
+  builtinsRegistered = true;
+}
+
+/** @deprecated Prefer implicit ensure on getDomainAdapter/listDomainKeys; kept for explicit bootstrap. */
+export function registerBuiltinDomains(): void {
+  ensureBuiltinDomains();
+}
+
+export function getDomainAdapter(key: string): DomainAdapter {
+  ensureBuiltinDomains();
+  return getDomainAdapterRaw(key);
+}
+
+export function listDomainKeys(): DomainKey[] {
+  ensureBuiltinDomains();
+  return listDomainKeysRaw();
 }
 
 export {
-  getDomainAdapter,
-  listDomainKeys,
   isDomainFile,
   registerDomainAdapter,
   type DomainAdapter,
@@ -35,6 +48,3 @@ export {
   type DomainFileRecord,
   type DomainEvidenceResult,
 };
-
-/** Eager init for library/test consumers; idempotent with buildProgram bootstrap. */
-registerBuiltinDomains();

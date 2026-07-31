@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git.js";
 import { loadManifest, validateManifestShape } from "../lib/manifest.js";
-import { pathMatchesPerimeterGlob } from "../lib/perimeter.js";
+import { pathMatchesPerimeterGlob } from "../lib/path-glob.js";
 import { copyManifestLibScripts } from "./test-fixtures.js";
 
 test("manifest parity: TS validateManifestShape accepts repo MANIFEST", () => {

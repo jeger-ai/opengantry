@@ -3,7 +3,7 @@ import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
-import type { VerifyOptions } from "./lib/verify-engine.js";
+import type { VerifyOptions } from "./lib/verify-options.js";
 import type { VerifyExportFormat } from "./lib/verify-export.js";
 import { runScan } from "./commands/scan.js";
 import { runRegister } from "./commands/register.js";
@@ -14,7 +14,7 @@ import { listDomainKeys } from "./lib/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "./lib/interrogate/findings.js";
 import fs from "node:fs";
-import { readStdinIfEmpty } from "./lib/program-stdin.js";
+import { readStdinIfEmpty } from "./lib/cli-io.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 

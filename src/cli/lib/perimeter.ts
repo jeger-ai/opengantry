@@ -11,9 +11,6 @@ import {
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "./types.js";
 import { pathMatchesPerimeterGlob } from "./path-glob.js";
-
-export { pathMatchesPerimeterGlob } from "./path-glob.js";
-
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",
   ".gitagent/foreman/MANIFEST.json",

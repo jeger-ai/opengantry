@@ -7,9 +7,9 @@ import { execSync } from "node:child_process";
 import {
   checkPerimeter,
   listCommitsTouchingPathInRange,
-  pathMatchesPerimeterGlob,
   DEFAULT_PERIMETER_PROTECTED,
 } from "../lib/perimeter.js";
+import { pathMatchesPerimeterGlob } from "../lib/path-glob.js";
 import type { Manifest } from "../lib/types.js";
 import { gitCommit, gitInitCommit } from "./test-fixtures.js";
 

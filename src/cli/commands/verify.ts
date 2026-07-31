@@ -2,13 +2,13 @@ import { logInfo, setExitCode } from "../lib/cli-io.js";
 import { gitRevParse } from "../lib/git.js";
 import { initFailurePayload } from "../lib/verify-payload.js";
 import { emitVerifyJson } from "../lib/verify-presenters.js";
-import type { VerifyOptions } from "../lib/verify-engine.js";
+import type { VerifyOptions } from "../lib/verify-options.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify-run.js";
 
-export type { VerifyOptions } from "../lib/verify-engine.js";
+export type { VerifyOptions } from "../lib/verify-options.js";
 
 /** Single verify boundary reporter: JSON payload when --json, canonical human error otherwise. */
 function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {

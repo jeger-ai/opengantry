@@ -9,7 +9,7 @@ import { runInit } from "../commands/init.js";
 import { runUpgradePlan } from "../lib/upgrade-plan.js";
 import { loadIntegrationCompat } from "../lib/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
-import { upgradeEligibleAssets } from "../lib/upgrade-plan.js";
+import { upgradeEligibleAssets } from "../lib/upgrade-plan-catalog.js";
 import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
 import { defaultInitProfile } from "../lib/init-profile.js";
 import { copyMissionSchema, gitInitCommit } from "./test-fixtures.js";

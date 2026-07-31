@@ -56,9 +56,6 @@ function base64UrlEncode(buf: Buffer): string {
 function base64UrlDecode(raw: string): Buffer {
   return Buffer.from(raw, "base64url");
 }
-
-export { canonicalJson } from "./canonical-json.js";
-
 export function computeRepoFingerprint(root: string): string {
   const absRoot = path.resolve(root);
   const head = gitRun(absRoot, ["rev-parse", "HEAD"]);

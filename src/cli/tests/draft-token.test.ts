@@ -5,11 +5,11 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
 import {
-  canonicalJson,
   createDraftToken,
   verifyDraftToken,
   DraftTokenError,
 } from "../lib/draft-token.js";
+import { canonicalJson } from "../lib/canonical-json.js";
 import { getRepoRoot } from "../lib/git.js";
 import { emptyDraftTokenInterrogationFields } from "./test-fixtures.js";
 

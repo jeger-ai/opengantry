@@ -1,4 +1,4 @@
-import { pathMatchesPerimeterGlob } from "./perimeter.js";
+import { pathMatchesPerimeterGlob } from "./path-glob.js";
 import type { Manifest } from "./types.js";
 
 /** Path-like tokens in intent text (repo-relative). */

@@ -73,8 +73,6 @@ export interface VerifyPhaseSuccess {
   traceEvidenceSkippedUncommitted?: number;
 }
 
-export type { VerifyOptions, VerifyMode } from "./verify-options.js";
-
 export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
 
 type GitProofOutcome =

@@ -26,9 +26,6 @@ function throwGitProofError(
 
 /** Missions verified by `gantry verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
-
-export { ENV_PLANNER_EMAILS, parsePlannerEmailsFromEnv } from "./planner-identity.js";
-
 export const ENV_MSN_SCAN_DEPTH = "GXT_MSN_SCAN_DEPTH" as const;
 export const DEFAULT_MSN_SCAN_DEPTH = 200;
 

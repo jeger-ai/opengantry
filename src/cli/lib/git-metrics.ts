@@ -1,7 +1,8 @@
 import YAML from "yaml";
 import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
 import { MSN_ID_PATTERN, EXECUTOR_LOG_FILENAME } from "./constants.js";
-import { parsePlannerEmailsFromEnv, commitSubjectHasMsnPrefix } from "./git-proof.js";
+import { commitSubjectHasMsnPrefix } from "./git-proof.js";
+import { parsePlannerEmailsFromEnv } from "./planner-identity.js";
 import { gitRevParse, gitRunOk } from "./git.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
