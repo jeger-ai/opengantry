@@ -676,3 +676,24 @@ DoD 2 MSN-0151: npm 3.2.0 — interrogation gate + receipt v0.2 + CI export; dev
 [CONTEXT-REQUEST] path=docs/CHANGELOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0152 docs patch version parity outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0152
 DoD 1 MSN-0152: v3.2.1 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG docs-only legislate entry-point fix
 DoD 2 MSN-0152: npm 3.2.1 — docs legislate-as-entry-point; dev-validate-core OK
+
+## MSN-0153 — Widen gantry TMVC (package.json)
+DoD 1 MSN-0153: MANIFEST skills.gantry.tmvc_roots includes package.json; iii-integration skill registered; npm run validate pass
+
+## MSN-0154 — Kernel library surface
+DoD 1 MSN-0154: src/cli/kernel.ts exports evaluateScope, verifyMission, verifyVerdictToken
+DoD 2 MSN-0154: package.json exports . and ./kernel; version 4.0.0; kernel-exports.test.ts
+DoD 3 MSN-0154: verdict-token.ts HMAC mint/verify with timingSafeEqual
+DoD 4 MSN-0154: GIT_OPTIONAL_LOCKS=0 in gitRun and getRepoRoot
+DoD 5 MSN-0154: receipt-signing random temp suffixes
+
+## MSN-0155 — iii.dev integration prototype
+DoD 1 MSN-0155: examples/iii-integration scaffold (config, workers, target-repo, README)
+DoD 2 MSN-0155: soft mode gantry::* via @jeger-ai/opengantry/kernel; gantry::verdict trigger type
+DoD 3 MSN-0155: strict mode middleware, RBAC hooks, lease tokens, tombstone lifecycle
+DoD 4 MSN-0155: demo.mjs + loadtest.mjs — rogue scenarios and concurrency harness pass
+
+## MSN-0156 — src facade cleanup
+DoD 1 MSN-0156: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass
+DoD 2 MSN-0156: Phase B — merged verify context/receipt into verify-run, thin MCP into mcp-runtime, folded program registrars; lib-cycles OK (160 files)
+DoD 3 MSN-0156: npm run validate OK — build, test, doctor, changed-code, MSN subjects

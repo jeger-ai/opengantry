@@ -5,9 +5,17 @@ skill_key: gantry
 gate_command: npm run build && npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0156: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass"
     anchor: "1"
-    status: PENDING
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0156: Phase B — merged verify context/receipt into verify-run, thin MCP into mcp-runtime, folded program registrars; lib-cycles OK (160 files)"
+    anchor: "2"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0156: npm run validate OK — build, test, doctor, changed-code, MSN subjects"
+    anchor: "3"
+    status: PASS
 interrogation:
   - finding_id: d585ecf2924b
     kind: risk_escalation
