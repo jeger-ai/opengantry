@@ -1,0 +1,22 @@
+workers:
+  - name: iii-worker-manager
+    config:
+      host: 127.0.0.1
+      port: 49134
+
+  - name: iii-worker-manager
+    config:
+      host: 0.0.0.0
+      port: 49135
+      middleware_function_id: gantry::middleware
+      rbac:
+        # Admission is NOT OpenGantry — replace session::auth with your IdP worker.
+        auth_function_id: session::auth
+        on_function_registration_function_id: gantry::on-function-registration
+        on_trigger_registration_function_id: gantry::on-trigger-registration
+        on_trigger_type_registration_function_id: gantry::on-trigger-type-registration
+        expose_functions:
+          - match("demo::*")
+
+  - name: session-auth
+  - name: opengantry

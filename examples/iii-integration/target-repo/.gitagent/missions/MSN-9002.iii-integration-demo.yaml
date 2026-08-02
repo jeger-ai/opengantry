@@ -1,0 +1,14 @@
+# OpenGantry iii integration demo mission
+msn_id: MSN-9002
+skill_key: logic
+gate_command: npm test
+gate_success_substring: pass
+declared_paths:
+  - src/
+  - test/
+  - package.json
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "iii integration target-repo smoke test passes"
+    anchor: "MSN-9002"
+    status: PASS

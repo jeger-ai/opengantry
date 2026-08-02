@@ -1,0 +1,25 @@
+# OpenGantry mission — iii.dev integration prototype (examples/iii-integration)
+msn_id: MSN-0155
+skill_key: iii-integration
+gate_command: node examples/iii-integration/demo.mjs
+gate_success_substring: all checks passed
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0155: examples/iii-integration scaffold (config, workers, target-repo, README)"
+    anchor: "MSN-0155"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0155: soft mode gantry::* via @jeger-ai/opengantry/kernel; gantry::verdict trigger type"
+    anchor: "MSN-0155"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0155: strict mode middleware, RBAC hooks, lease tokens, tombstone lifecycle"
+    anchor: "MSN-0155"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0155: demo.mjs + loadtest.mjs — rogue scenarios and concurrency harness pass"
+    anchor: "MSN-0155"
+    status: PASS
+declared_paths:
+  - examples/iii-integration/
+  - skills/iii-integration.md

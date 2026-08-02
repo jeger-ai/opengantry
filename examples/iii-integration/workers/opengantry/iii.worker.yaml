@@ -1,0 +1,7 @@
+name: opengantry
+description: OpenGantry governance control plane for iii orchestration loops.
+runtime:
+  base_image: docker.io/iiidev/node:latest
+scripts:
+  install: "npm install"
+  start: "node src/index.js"
