@@ -5,23 +5,23 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0154: src/cli/kernel.ts exports evaluateScope, verifyMission, verifyVerdictToken"
+    trace_quote: "DoD 1 MSN-0154 re-attest: src/cli/kernel.ts exports evaluateScope, verifyMission, verifyVerdictToken — dev-validate-core OK"
     anchor: "MSN-0154"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0154: package.json exports . and ./kernel; version 4.0.0; kernel-exports.test.ts"
+    trace_quote: "DoD 2 MSN-0154 re-attest: package.json exports . and ./kernel; version 4.0.0; kernel-exports.test.ts — dev-validate-core OK"
     anchor: "MSN-0154"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0154: verdict-token.ts HMAC mint/verify with timingSafeEqual"
+    trace_quote: "DoD 3 MSN-0154 re-attest: verdict-token.ts HMAC mint/verify with timingSafeEqual — dev-validate-core OK"
     anchor: "MSN-0154"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0154: GIT_OPTIONAL_LOCKS=0 in gitRun and getRepoRoot"
+    trace_quote: "DoD 4 MSN-0154 re-attest: GIT_OPTIONAL_LOCKS=0 in gitRun and getRepoRoot — dev-validate-core OK"
     anchor: "MSN-0154"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0154: receipt-signing random temp suffixes"
+    trace_quote: "DoD 5 MSN-0154 re-attest: receipt-signing random temp suffixes — dev-validate-core OK"
     anchor: "MSN-0154"
     status: PASS
 declared_paths:

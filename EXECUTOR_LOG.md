@@ -681,17 +681,17 @@ DoD 2 MSN-0152: npm 3.2.1 — docs legislate-as-entry-point; dev-validate-core O
 DoD 1 MSN-0153: MANIFEST skills.gantry.tmvc_roots includes package.json; iii-integration skill registered; npm run validate pass
 
 ## MSN-0154 — Kernel library surface
-DoD 1 MSN-0154: src/cli/kernel.ts exports evaluateScope, verifyMission, verifyVerdictToken
-DoD 2 MSN-0154: package.json exports . and ./kernel; version 4.0.0; kernel-exports.test.ts
-DoD 3 MSN-0154: verdict-token.ts HMAC mint/verify with timingSafeEqual
-DoD 4 MSN-0154: GIT_OPTIONAL_LOCKS=0 in gitRun and getRepoRoot
-DoD 5 MSN-0154: receipt-signing random temp suffixes
+DoD 1 MSN-0154 re-attest: src/cli/kernel.ts exports evaluateScope, verifyMission, verifyVerdictToken — dev-validate-core OK
+DoD 2 MSN-0154 re-attest: package.json exports . and ./kernel; version 4.0.0; kernel-exports.test.ts — dev-validate-core OK
+DoD 3 MSN-0154 re-attest: verdict-token.ts HMAC mint/verify with timingSafeEqual — dev-validate-core OK
+DoD 4 MSN-0154 re-attest: GIT_OPTIONAL_LOCKS=0 in gitRun and getRepoRoot — dev-validate-core OK
+DoD 5 MSN-0154 re-attest: receipt-signing random temp suffixes — dev-validate-core OK
 
 ## MSN-0155 — iii.dev integration prototype
-DoD 1 MSN-0155: examples/iii-integration scaffold (config, workers, target-repo, README)
-DoD 2 MSN-0155: soft mode gantry::* via @jeger-ai/opengantry/kernel; gantry::verdict trigger type
-DoD 3 MSN-0155: strict mode middleware, RBAC hooks, lease tokens, tombstone lifecycle
-DoD 4 MSN-0155: demo.mjs + loadtest.mjs — rogue scenarios and concurrency harness pass
+DoD 1 MSN-0155 re-attest: examples/iii-integration scaffold (config, workers, target-repo, README) — demo.mjs all checks passed
+DoD 2 MSN-0155 re-attest: soft mode gantry::* via @jeger-ai/opengantry/kernel; gantry::verdict trigger type — demo.mjs all checks passed
+DoD 3 MSN-0155 re-attest: strict mode middleware, RBAC hooks, lease tokens, tombstone lifecycle — demo.mjs all checks passed
+DoD 4 MSN-0155 re-attest: demo.mjs + loadtest.mjs — rogue scenarios and concurrency harness pass — demo.mjs all checks passed
 
 ## MSN-0157 — v4.0.0 release
 [CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/INTEGRATIONS.md,docs/SECURITY.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0157 release version parity and adopter docs outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/INTEGRATIONS.md,docs/SECURITY.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0157
