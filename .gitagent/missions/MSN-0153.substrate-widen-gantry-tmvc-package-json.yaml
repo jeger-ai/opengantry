@@ -1,0 +1,12 @@
+# OpenGantry mission — widen gantry skill TMVC to include package.json for kernel exports
+msn_id: MSN-0153
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0153: MANIFEST skills.gantry.tmvc_roots includes package.json; iii-integration skill registered; npm run validate pass"
+    anchor: "MSN-0153"
+    status: PASS
+declared_paths:
+  - .gitagent/foreman/MANIFEST.json

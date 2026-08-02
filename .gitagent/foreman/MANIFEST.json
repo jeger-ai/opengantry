@@ -4,7 +4,7 @@
     "gantry": {
       "desc": "gantry CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
       "trust_threshold": "Tier-2",
-      "tmvc_roots": ["src/cli/"],
+      "tmvc_roots": ["src/cli/", "package.json"],
       "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md"],
       "gate_commands": [
         "npm test",
@@ -20,6 +20,16 @@
       "forbidden_zones": [],
       "gate_commands": [
         "./scripts/dev-validate-core.sh",
+        "npm run validate"
+      ]
+    },
+    "iii-integration": {
+      "desc": "iii.dev worker integration prototype under examples/iii-integration/.",
+      "trust_threshold": "Tier-2",
+      "tmvc_roots": ["examples/iii-integration/"],
+      "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md"],
+      "gate_commands": [
+        "node examples/iii-integration/demo.mjs",
         "npm run validate"
       ]
     }
