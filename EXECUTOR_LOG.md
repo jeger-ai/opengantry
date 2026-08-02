@@ -699,6 +699,6 @@ DoD 1 MSN-0157: v4.0.0 version parity — package.json, compatibility.json, SUBS
 DoD 2 MSN-0157: npm 4.0.0 — kernel exports + MSN-0153–0156 squashed; dev-validate-core OK; pack:check OK
 
 ## MSN-0156 — src facade cleanup
-DoD 1 MSN-0156: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass
-DoD 2 MSN-0156: Phase B — merged verify context/receipt into verify-run, thin MCP into mcp-runtime, folded program registrars; lib-cycles OK (160 files)
-DoD 3 MSN-0156: npm run validate OK — build, test, doctor, changed-code, MSN subjects
+DoD 1 MSN-0156 re-attest: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass
+DoD 2 MSN-0156 re-attest: Phase B — merged verify context/receipt into verify-run, thin MCP into mcp-runtime, folded program registrars; lib-cycles OK (160 files)
+DoD 3 MSN-0156 re-attest: npm run validate OK — build, test, doctor, changed-code, MSN subjects
