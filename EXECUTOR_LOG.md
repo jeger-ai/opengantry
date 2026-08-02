@@ -693,6 +693,11 @@ DoD 2 MSN-0155: soft mode gantry::* via @jeger-ai/opengantry/kernel; gantry::ver
 DoD 3 MSN-0155: strict mode middleware, RBAC hooks, lease tokens, tombstone lifecycle
 DoD 4 MSN-0155: demo.mjs + loadtest.mjs — rogue scenarios and concurrency harness pass
 
+## MSN-0157 — v4.0.0 release
+[CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/INTEGRATIONS.md,docs/SECURITY.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0157 release version parity and adopter docs outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/INTEGRATIONS.md,docs/SECURITY.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0157
+DoD 1 MSN-0157: v4.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG kernel breaking change + upgrade notes; SECURITY 4.x support
+DoD 2 MSN-0157: npm 4.0.0 — kernel exports + MSN-0153–0156 squashed; dev-validate-core OK; pack:check OK
+
 ## MSN-0156 — src facade cleanup
 DoD 1 MSN-0156: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass
 DoD 2 MSN-0156: Phase B — merged verify context/receipt into verify-run, thin MCP into mcp-runtime, folded program registrars; lib-cycles OK (160 files)

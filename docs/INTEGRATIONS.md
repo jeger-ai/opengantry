@@ -36,6 +36,27 @@ On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented
 | `gxt_verify` | Structured verify phases with `fix_hints` on failure |
 | `gxt_resolve_mission` / `gxt_last_error` | Mission resolution + last runtime exec error |
 
+## Kernel library (v4.0+)
+
+External runtimes (iii workers, daemons, custom middleware) can call OpenGantry **in-process** without deep-importing `dist/cli/lib/*`:
+
+```javascript
+import {
+  evaluateScope,
+  verifyMission,
+  mintVerdictToken,
+  verifyVerdictToken,
+} from "@jeger-ai/opengantry/kernel";
+```
+
+| Export | Purpose |
+|--------|---------|
+| `evaluateScope` | TMVC + forbidden-zone check for a repo-relative path |
+| `verifyMission` | Full verify phases → structured JSON payload |
+| `mintVerdictToken` / `verifyVerdictToken` | HMAC verdict tokens (pepper keyring) for hot-path promotion gates |
+
+**Breaking in v4.0.0:** only `.` (CLI) and `./kernel` resolve from the package. Migrate any deep imports before upgrading. Reference integration: [`examples/iii-integration/`](../examples/iii-integration/).
+
 ## Enforcement boundary (where the cage is ironclad)
 
 | Tier | Mechanism | What it actually traps |

@@ -1,0 +1,15 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: v4.0.0 release — kernel exports (MSN-0154), facade cleanup (MSN-0156), version parity, adopter docs, validate, tag (no npm publish in this mission)
+msn_id: MSN-0157
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0157: v4.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG kernel breaking change + upgrade notes; SECURITY 4.x support"
+    anchor: "MSN-0157"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0157: npm 4.0.0 — kernel exports + MSN-0153–0156 squashed; dev-validate-core OK; pack:check OK"
+    anchor: "MSN-0157"
+    status: PASS
