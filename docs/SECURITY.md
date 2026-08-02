@@ -44,11 +44,11 @@ cat .gitagent/foreman/SUBSTRATE.version.json   # after gantry init / upgrade
 
 Include: affected component and version, reproduction steps, impact, and any suggested fix.
 
-We aim to acknowledge reports within **5 business days** and to coordinate disclosure after a fix is available (typically via a GitHub Security Advisory and a patched **3.x** release).
+We aim to acknowledge reports within **5 business days** and to coordinate disclosure after a fix is available (typically via a GitHub Security Advisory and a patched **4.x** release).
 
 ## Upgrading for security fixes
 
-1. Update gantry to the latest **3.x** (e.g. `npm install @jeger-ai/opengantry@latest` or rebuild from an updated clone of this repo).
+1. Update gantry to the latest **4.x** (e.g. `npm install @jeger-ai/opengantry@latest` or rebuild from an updated clone of this repo).
 2. Run `gantry upgrade plan`, review `.gitagent/.upgrade-tmp/`, Planner-commit the upgrade mission, then `gantry upgrade apply --mission …`.
 3. Run `gantry doctor` and your usual `gantry verify` / CI checks.
 
