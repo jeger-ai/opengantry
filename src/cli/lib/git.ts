@@ -3,12 +3,15 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "./constants.js";
 
+const GIT_CHILD_ENV = { ...process.env, GIT_OPTIONAL_LOCKS: "0" };
+
 export function getRepoRoot(cwd = process.cwd()): string {
   try {
     const out = execSync("git rev-parse --show-toplevel", {
       cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
+      env: GIT_CHILD_ENV,
     }).trim();
     if (!out) throw new Error("empty root");
     return path.resolve(cwd, out);
@@ -29,6 +32,7 @@ export function gitRun(repoRoot: string, args: string[], maxBuffer = 32 * 1024 *
   const r = spawnSync("git", ["-C", repoRoot, ...args], {
     encoding: "utf8",
     maxBuffer,
+    env: GIT_CHILD_ENV,
   });
   return {
     ok: r.status === 0,

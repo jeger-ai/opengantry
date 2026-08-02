@@ -1,0 +1,35 @@
+# OpenGantry mission — kernel library surface and concurrency hardening
+msn_id: MSN-0154
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0154: src/cli/kernel.ts exports evaluateScope, verifyMission, verifyVerdictToken"
+    anchor: "MSN-0154"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0154: package.json exports . and ./kernel; version 4.0.0; kernel-exports.test.ts"
+    anchor: "MSN-0154"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0154: verdict-token.ts HMAC mint/verify with timingSafeEqual"
+    anchor: "MSN-0154"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0154: GIT_OPTIONAL_LOCKS=0 in gitRun and getRepoRoot"
+    anchor: "MSN-0154"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0154: receipt-signing random temp suffixes"
+    anchor: "MSN-0154"
+    status: PASS
+declared_paths:
+  - src/cli/kernel.ts
+  - src/cli/lib/kernel-evaluate-scope.ts
+  - src/cli/lib/verdict-token.ts
+  - src/cli/lib/git.ts
+  - src/cli/lib/receipt-signing.ts
+  - src/cli/tests/kernel-exports.test.ts
+  - package.json
+  - docs/CHANGELOG.md

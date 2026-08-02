@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -20,6 +21,10 @@ export interface ReceiptSignature {
 }
 
 const RECEIPT_SIGN_NAMESPACE = "gxt";
+
+function randomTempSuffix(): string {
+  return crypto.randomBytes(8).toString("hex");
+}
 
 function expandHome(value: string): string {
   if (value.startsWith("~/")) {
@@ -98,7 +103,7 @@ export function signReceiptMessage(
   if (resolveSigningFormat(repoRoot) === "ssh") {
     const keyPath = sshPrivateKeyPath(signingKey);
     const pubPath = sshPublicKeyPath(signingKey);
-    const messagePath = path.join(os.tmpdir(), `gxt-receipt-${process.pid}-${Date.now()}.txt`);
+    const messagePath = path.join(os.tmpdir(), `gxt-receipt-${randomTempSuffix()}.txt`);
     const sigPath = `${messagePath}.sig`;
     try {
       fs.writeFileSync(messagePath, message, "utf8");
@@ -163,11 +168,8 @@ export function verifyReceiptSignature(
     const pubPath = sshPublicKeyPath(signingKey);
     const principal =
       signature.signer_principal ?? resolveSshSignerPrincipal(repoRoot);
-    const allowedSignersPath = path.join(
-      os.tmpdir(),
-      `gxt-receipt-allowed-${process.pid}-${Date.now()}.txt`,
-    );
-    const sigPath = path.join(os.tmpdir(), `gxt-receipt-verify-${process.pid}-${Date.now()}.sig`);
+    const allowedSignersPath = path.join(os.tmpdir(), `gxt-receipt-allowed-${randomTempSuffix()}.txt`);
+    const sigPath = path.join(os.tmpdir(), `gxt-receipt-verify-${randomTempSuffix()}.sig`);
     try {
       writeAllowedSignersFile(pubPath, principal, allowedSignersPath);
       fs.writeFileSync(sigPath, Buffer.from(signature.signature_b64, "base64"));
@@ -199,7 +201,7 @@ export function verifyReceiptSignature(
     }
   }
 
-  const sigPath = path.join(os.tmpdir(), `gxt-receipt-gpg-${process.pid}-${Date.now()}.asc`);
+  const sigPath = path.join(os.tmpdir(), `gxt-receipt-gpg-${randomTempSuffix()}.asc`);
   try {
     fs.writeFileSync(sigPath, Buffer.from(signature.signature_b64, "base64"));
     const result = spawnSync("gpg", ["--verify", sigPath, "-"], {

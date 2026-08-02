@@ -1,11 +1,15 @@
 {
   "name": "@jeger-ai/opengantry",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "Open Source Gantry — vendor-neutral GXT substrate and Gantry CLI for local git-native agent governance",
   "type": "module",
   "bin": {
     "gantry": "dist/cli/index.js",
     "gapman": "dist/cli/index.js"
+  },
+  "exports": {
+    ".": "./dist/cli/index.js",
+    "./kernel": "./dist/cli/kernel.js"
   },
   "files": [
     "dist",
