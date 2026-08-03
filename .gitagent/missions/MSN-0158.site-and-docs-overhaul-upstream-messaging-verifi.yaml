@@ -62,3 +62,4 @@ declared_paths:
   - README.md
   - docs/
   - templates/
+  - .gitagent/missions/MSN-0158.site-and-docs-overhaul-upstream-messaging-verifi.yaml
