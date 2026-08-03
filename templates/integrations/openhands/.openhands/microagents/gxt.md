@@ -3,6 +3,7 @@
 Before planning or editing code, read:
 
 - `AGENTS.md`
+- `.gitagent/planner/AGENT-SETUP.md` (when bootstrapping OpenGantry)
 - `.gitagent/planner/RULES.md`
 - `.gitagent/foreman/MANIFEST.json`
 

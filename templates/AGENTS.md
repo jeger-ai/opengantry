@@ -7,6 +7,12 @@ Before planning, editing code, or running substantive commands in this repositor
 
 Treat these as the **law + routing contract** for agent work. Before editing application code, read **`.gitagent/ARCHITECTURE.pointer.json`**. If **`kind` is `unset`**, or docs are stub/missing, read **`.gitagent/planner/ARCHITECTURE-DISCOVERY.md`** and ask the user — do not invent architecture. When `access.required` is true, read **`.gitagent/planner/ARCHITECTURE-ACCESS.md`**. For GXT workflow orientation, see **`.gitagent/README.md`**.
 
+## Bootstrap OpenGantry (one-shot setup)
+
+When the user asks to **set up, install, initialize, adopt, or onboard OpenGantry**, read and execute **`.gitagent/planner/AGENT-SETUP.md`** — harness-agnostic steps for Cursor, Claude Code, Cline, Codex CLI, OpenCode, Junie, Antigravity, Aider, and OpenHands.
+
+If the substrate is not present yet, that file is created by `gantry init`; use the pre-init commands in the Cursor skill at `.cursor/skills/setup-opengantry/SKILL.md` or run `gantry init --yes --ides <harness-keys>` per the table in `AGENT-SETUP.md`.
+
 ## Mission Architect (IDE chat)
 
 **Activation macro:**

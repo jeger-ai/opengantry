@@ -7,3 +7,5 @@ Before planning, editing code, or running substantive commands:
 3. Read **`.gitagent/foreman/MANIFEST.json`** — routing map (TMVC roots, forbidden zones).
 
 Do not duplicate full RULES here. For code architecture read `.gitagent/ARCHITECTURE.pointer.json` first (follow `read_hint`). For GXT workflow see `.gitagent/README.md`.
+
+**Set up OpenGantry:** read `.gitagent/planner/AGENT-SETUP.md` when the user asks to bootstrap or adopt OpenGantry (harness-agnostic).
