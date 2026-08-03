@@ -702,3 +702,6 @@ DoD 2 MSN-0157: npm 4.0.0 — kernel exports + MSN-0153–0156 squashed; dev-val
 DoD 1 MSN-0156 re-attest: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass
 DoD 2 MSN-0156 re-attest: Phase B — merged verify context/receipt into verify-run, thin MCP into mcp-runtime, folded program registrars; lib-cycles OK (160 files)
 DoD 3 MSN-0156 re-attest: npm run validate OK — build, test, doctor, changed-code, MSN subjects
+
+## MSN-0158 — Site and docs overhaul upstream messaging
+DoD 1 MSN-0158: README + docs/index, FEATURES, DOMAINS verification-pipeline messaging — assert-docs-deterministic OK

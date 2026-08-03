@@ -2,25 +2,19 @@
   <a href="https://opengantry.ai"><img src="docs/assets/opengantry-logo.svg" alt="OpenGantry logo" width="96" height="96"></a>
 </p>
 
-# OpenGantry: What It Is, Why It Exists, and How to Use It
+# OpenGantry
 
-## The one-line pitch
+## Deterministic CI/CD and Governance for Autonomous Agents
 
-**OpenGantry is the deterministic runtime and governance engine for AI agents.** It is a local-first CLI that scopes agent edits, runs your shell gates, and returns structured failure JSON so agents can retry without a human watching the terminal. It does not write your code or content for you. It replaces humans babysitting AI coding assistants — not your tests, not your CI, not your code review.
+OpenGantry is a local verification kernel that wraps AI agents in a strict execution cage. It scopes edits, enforces architectural boundaries, and runs your traditional SDLC gates before allowing a single line of code to be merged.
 
 > **Not [Gantry.io](https://gantry.io)?** OpenGantry is the open-source **`gantry` CLI** for local-first, Git-native agent enforcement in your repository, not a hosted observability dashboard. Product home: [opengantry.ai](https://opengantry.ai).
 
-### Local control, unmonitored loops, tamper-evident proof
+### The Verification Pipeline
 
-Three engineering problems show up today, calendar or no calendar:
-
-| Problem | What goes wrong | OpenGantry answer |
-|---------|-----------------|-------------------|
-| **Local developer control** | Source and credentials leave the machine for a vendor console to "govern" agents | Execution stays on-machine; verify is offline; optional future hub is digests only |
-| **Unmonitored agent loops** | Agents thrash on unstructured stderr, wander outside declared paths, or keep retrying without a structured verdict | Mission YAML + TMVC + `findings[]` so the loop is scoped and machine-readable |
-| **Tamper-evident auditability** | "It passed locally" with no citeable trail | Planner stamps, `EXECUTOR_LOG.md` quotes, optional SSH/GPG attestation receipts |
-
-**Hybrid model:** free local CLI (spoke) for developers; optional metadata plane (hub) later for team-wide audit aggregation. Source trees and gate stdout never leave via GXT export paths.
+* **Scope Enforcement (TMVC):** Restrict agent file mutations to explicitly authorized directories and paths.
+* **Architectural Boundaries:** Prevent unauthorized public exports and structural violations via `TARGET_ARCHITECTURE.yaml` import layers and perimeter checks.
+* **Execution Gates & Remediation:** Run standard build and test commands within the agent harness. If a gate fails, OpenGantry returns a deterministic JSON `findings[]` payload, allowing the agent to self-correct without human intervention.
 
 Deep dive: [`docs/SECURITY.md`](docs/SECURITY.md) · [`docs/FEATURES.md`](docs/FEATURES.md) · [opengantry.ai](https://opengantry.ai)
 

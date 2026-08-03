@@ -6,13 +6,15 @@
 
 > Product home: [https://opengantry.ai](https://opengantry.ai) · Source: [https://github.com/jeger-ai/opengantry](https://github.com/jeger-ai/opengantry)
 
-OpenGantry docs answer three questions: **how** to use it, **what** it helps with, and **why** its features exist. Version history lives in one place: [`CHANGELOG.md`](CHANGELOG.md).
+OpenGantry docs map the **verification pipeline** — scope enforcement → architectural boundaries → static analysis → execution gates with `findings[]` remediation — then how to adopt it in your repository. Version history lives in one place: [`CHANGELOG.md`](CHANGELOG.md).
 
 | Location | Purpose |
 |----------|---------|
 | **This folder (`docs/`)** | Adopter runbooks, feature insights, integration guides, contributor docs |
 | **`.gitagent/`** | GXT substrate law, missions, manifest, planner skills |
-| **Root `README.md`** | Product pitch, feature tour, quick links — start with [In plain English](../README.md#in-plain-english) and [Why not just TDD and CI?](../README.md#why-not-just-tdd-and-ci) |
+| **Root `README.md`** | Product pitch and verification pipeline — start with [The Verification Pipeline](../README.md#the-verification-pipeline) and [In plain English](../README.md#in-plain-english) |
+
+**Pipeline quick links:** [`FEATURES.md`](FEATURES.md) (core capabilities) · [`DOMAINS.md`](DOMAINS.md) (architectural boundaries) · [`ADOPTION.md`](ADOPTION.md) (legislate → verify)
 
 ---
 
@@ -23,7 +25,7 @@ OpenGantry docs answer three questions: **how** to use it, **what** it helps wit
 | [`ADOPTION.md`](ADOPTION.md) | Install, mission loop, troubleshooting, hooks |
 | [`KATA.md`](KATA.md) | 15-minute first mission practice |
 | [`INTEGRATIONS.md`](INTEGRATIONS.md) | Wire Cursor / Claude / Codex / CI |
-| [`DOMAINS.md`](DOMAINS.md) | Code vs content domain adapters |
+| [`DOMAINS.md`](DOMAINS.md) | Architectural boundaries (code/content) — not full-repo AST |
 | [`AGENT-LOOP.md`](AGENT-LOOP.md) | External executor (Hermes-style) integration |
 
 ---
@@ -42,7 +44,7 @@ OpenGantry docs answer three questions: **how** to use it, **what** it helps wit
 
 | Doc | When to read |
 |-----|--------------|
-| [`FEATURES.md`](FEATURES.md) | Why missions, TMVC, discover/blueprint/perimeter, verify, hooks exist |
+| [`FEATURES.md`](FEATURES.md) | Core capabilities: TMVC, perimeters, static gates, deterministic feedback |
 | [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) | ISO 27001 / 42001 artifact mapping for regulated teams |
 
 ---

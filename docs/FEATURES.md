@@ -1,10 +1,54 @@
-# OpenGantry features — why they exist
+# Core Capabilities
 
 This page explains **why** OpenGantry's capabilities exist and **when** to use them. For commands and step-by-step flows, see [`index.md`](index.md) (How section) — especially [`ADOPTION.md`](ADOPTION.md) and [`DOMAINS.md`](DOMAINS.md).
 
 Deep design records: [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) ADRs.
 
 ---
+
+## Scope Enforcement
+
+Agents operate within a Target Mission Verification Context (TMVC). OpenGantry physically drops mutations attempted outside these declared file boundaries.
+
+**When to use:** Always — init scaffolds defaults; Planner narrows per mission.
+
+**How:** `gantry context-request` · [`ADOPTION.md`](ADOPTION.md) § Prevent unreviewed edits · [TMVC and forbidden zones](#tmvc-and-forbidden-zones) below
+
+---
+
+## Architectural Perimeters
+
+OpenGantry enforces your project's `TARGET_ARCHITECTURE.yaml`. It acts as a strict architectural gateway for import layers and content rules, ensuring agents do not introduce unauthorized public surface area.
+
+**When to use:** New repo bootstrap, after major structural change, or when onboarding an external executor.
+
+**How:** [`DOMAINS.md`](DOMAINS.md) · [Discover → blueprint → perimeter](#discover--blueprint--perimeter) below
+
+---
+
+## Static Analysis
+
+Mission `gate_command` hooks seamlessly wire into your existing linters and type checkers to enforce standard code hygiene automatically.
+
+**When to use:** Before merge, in CI, and inside autonomous retry loops.
+
+**How:** [`ADOPTION.md`](ADOPTION.md) § Standard change loop
+
+---
+
+## Deterministic Feedback Loops
+
+We do not just block bad commits. When an Execution Gate fails, OpenGantry parses the output and returns structured JSON `findings[]` containing the exact file, line, and resolution hint — so agents can self-correct without human intervention.
+
+**When to use:** Autonomous agent loops and headless orchestrators that need machine-readable retry input.
+
+**How:** [`ADOPTION.md`](ADOPTION.md) § Verify troubleshooting · [`AGENT-LOOP.md`](AGENT-LOOP.md)
+
+---
+
+## Feature reference
+
+The sections below expand on the verification pipeline with GXT loop detail, domain adapters, and integration patterns.
 
 ## Mission loop (GXT)
 

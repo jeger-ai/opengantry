@@ -4,6 +4,10 @@ OpenGantry is a **domain-agnostic governance layer for autonomous agents**. The 
 
 All docs: [`index.md`](index.md) · Why features exist: [`FEATURES.md`](FEATURES.md)
 
+## Architectural Boundaries vs. Full-Repo AST
+
+*Note: OpenGantry enforces architectural perimeters (such as import layers and regex content rules) rather than acting as a general, full-repo AST scanner. While Code Surgeon is utilized for TypeScript AST registration, the primary verification gate relies on strict architectural boundary compliance.*
+
 ## Universal framing
 
 | Phase | OpenGantry surface | What it does |
