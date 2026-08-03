@@ -61,3 +61,4 @@ interrogation_sha256: 0d30ae85102dbe2c10f94e2486d4390afac351960f866bc44b9c5ef146
 declared_paths:
   - README.md
   - docs/
+  - templates/
