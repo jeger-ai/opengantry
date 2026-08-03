@@ -8,6 +8,10 @@ trace_rows:
     trace_quote: "DoD 1 MSN-0158: README + docs/index, FEATURES, DOMAINS verification-pipeline messaging — assert-docs-deterministic OK"
     anchor: "MSN-0158"
     status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0158: AGENT-SETUP scaffold and integration template wiring shipped in templates/"
+    anchor: "MSN-0158"
+    status: PASS
 gate_success_substring: assert-docs-deterministic
 interrogation:
   - finding_id: 25f6f42f070e
