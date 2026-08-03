@@ -1,0 +1,59 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Site and docs overhaul: upstream messaging — verification-pipeline framing, accurate architectural boundaries, findings remediation
+msn_id: MSN-0158
+skill_key: substrate
+gate_command: ./scripts/assert-docs-deterministic.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: assert-docs-deterministic
+interrogation:
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0024 applicability for accurate
+      architectural-boundary messaging in docs; no TARGET_ARCHITECTURE.yaml
+      edits in this mission.
+    adr_refs:
+      - ADR-0024-target-architecture-yaml
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key: substrate. TMVC scope: docs/ and README.md only —
+      verification-pipeline messaging rewrite; no src/cli/ or manifest changes."
+    adr_refs:
+      - ADR-0039-interrogation-gate
+  - finding_id: d911bc1fd62d
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command
+      "./scripts/assert-docs-deterministic.sh" with documented success substring
+      for verify.
+    operator_answer: Authorize ./scripts/assert-docs-deterministic.sh with
+      gate_success_substring assert-docs-deterministic for docs inventory and
+      link integrity.
+    adr_refs:
+      - ADR-0039-interrogation-gate
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: Mission authorizes docs/ and README.md only for upstream
+      messaging alignment with verification-pipeline positioning.
+    adr_refs:
+      - ADR-0024-target-architecture-yaml
+interrogation_sha256: ebae5d9c0627678bbd0670fb6f003214141a1dd8d1dc537a3bac35703dca7b0b
+declared_paths:
+  - README.md
+  - docs/
