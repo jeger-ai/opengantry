@@ -10,7 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
-| **v4.0.0** | **Breaking:** `package.json` `exports` map — public entrypoints `.` (CLI) and `./kernel` only; deep `dist/cli/lib/*` imports no longer resolve. Kernel library (`evaluateScope`, `verifyMission`, `verifyVerdictToken`); verdict HMAC tokens; `GIT_OPTIONAL_LOCKS=0` on git spawns; receipt-signing temp path collision fix |
+| **v3.2.2** | **Breaking:** `package.json` `exports` map — public entrypoints `.` (CLI) and `./kernel` only; deep `dist/cli/lib/*` imports no longer resolve. Kernel library (`evaluateScope`, `verifyMission`, `verifyVerdictToken`); verdict HMAC tokens; `GIT_OPTIONAL_LOCKS=0` on git spawns; receipt-signing temp path collision fix |
 | **v3.2.1** | Docs — `gantry legislate` as single entry point (gap analysis built in); `gxt_interrogate` documented for multi-turn halt only |
 | **v3.2.0** | Interrogation gate (ADR-0039 / MSN-0149) — gap analysis built into `gantry legislate` (`gxt_interrogate` for multi-turn halt); first-class verify interrogation phase (`GXT_INTERROGATION_*` SARIF/JUnit); receipt v0.2.0 signed attribution + CI export (MSN-0143–0145); auditor pepper keyring (MSN-0148); MANIFEST `gate_commands` allowlists |
 | **v3.1.1** | Local DX — flag→pin mission defaults (`gantry pin` / `unpin`), active-mission banner, `gantry receipt list\|show`, verify `--receipt` path feedback; thermo cleanups (verify context, command boundary) |
@@ -37,7 +37,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **4.0.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.2.2** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
@@ -46,10 +46,10 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### From v3.x (breaking kernel exports — v4.0.0)
+### From v3.2.1 (breaking kernel exports — v3.2.2)
 
 ```bash
-npm install @jeger-ai/opengantry@4.0.0
+npm install @jeger-ai/opengantry@3.2.2
 gantry upgrade apply   # or gantry init --force for managed CI assets
 ```
 

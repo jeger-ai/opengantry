@@ -6,11 +6,11 @@ OpenGantry ships the **gantry** CLI and the **GXT substrate** (law, Foreman mani
 
 ## Supported versions
 
-Security fixes are provided **only for the latest release in the 4.x line** (current patch included). Older lines do not receive backports unless noted in a GitHub Security Advisory.
+Security fixes are provided **only for the latest release in the 3.x line** (current patch included). Older lines do not receive backports unless noted in a GitHub Security Advisory.
 
 | Component | Supported | Unsupported |
 |-----------|-----------|-------------|
-| **gantry CLI** (`@jeger-ai/opengantry`, `package.json` version) | **4.x** (latest patch) | **3.x** and earlier |
+| **gantry CLI** (`@jeger-ai/opengantry`, `package.json` version) | **3.x** (latest patch) | **2.x** and earlier |
 | **Bundled substrate** (`opengantry_version` in `.gitagent/foreman/SUBSTRATE.version.json`, matching the gantry you installed) | Same as the **supported gantry** you run | Substrate older than the version bundled in your installed gantry (upgrade the package, then `gantry upgrade`) |
 | **GXT law schema** (`MANIFEST.json` → `schema_version`) | **0.5.0** (current) | Earlier schema versions (migrate via supported gantry + `gantry upgrade`) |
 | **Node.js runtime** (see `package.json` `engines`) | **24.x** and newer within `>=24` | Node 22 and below |
@@ -44,11 +44,11 @@ cat .gitagent/foreman/SUBSTRATE.version.json   # after gantry init / upgrade
 
 Include: affected component and version, reproduction steps, impact, and any suggested fix.
 
-We aim to acknowledge reports within **5 business days** and to coordinate disclosure after a fix is available (typically via a GitHub Security Advisory and a patched **4.x** release).
+We aim to acknowledge reports within **5 business days** and to coordinate disclosure after a fix is available (typically via a GitHub Security Advisory and a patched **3.x** release).
 
 ## Upgrading for security fixes
 
-1. Update gantry to the latest **4.x** (e.g. `npm install @jeger-ai/opengantry@latest` or rebuild from an updated clone of this repo).
+1. Update gantry to the latest **3.x** (e.g. `npm install @jeger-ai/opengantry@latest` or rebuild from an updated clone of this repo).
 2. Run `gantry upgrade plan`, review `.gitagent/.upgrade-tmp/`, Planner-commit the upgrade mission, then `gantry upgrade apply --mission …`.
 3. Run `gantry doctor` and your usual `gantry verify` / CI checks.
 

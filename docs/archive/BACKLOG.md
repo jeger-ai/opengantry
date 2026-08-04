@@ -9,11 +9,11 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-08-02 (v4.0.0 prep — kernel exports, facade cleanup, iii integration example)
+**Last synced:** 2026-08-04 (v3.2.2 — kernel exports on 3.2 line, not 4.0.0)
 
 ---
 
-## v4.0.0 — Kernel library + export boundary (release prep)
+## v3.2.2 — Kernel library + export boundary (3.2 line, not 4.0.0)
 
 | Item | Status | MSN |
 |------|--------|-----|
@@ -21,8 +21,8 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **Kernel entry (`@jeger-ai/opengantry/kernel`)** | **Done** | MSN-0154 |
 | **iii.dev integration prototype** | **Done** | MSN-0155 |
 | **src facade cleanup (Phase A/B)** | **Done** | MSN-0156 |
-| **4.0.0 version parity + adopter docs** | **Done** | MSN-0157 |
-| **4.0.0 npm publish** | **Open** | tag + `release-gate-publish.sh` after operator sign-off |
+| **4.0.0 version parity + adopter docs** | **Cancelled** | shipped on **3.2.2** instead |
+| **4.0.0 npm publish** | **Cancelled** | use **v3.2.2** tag |
 
 ---
 
