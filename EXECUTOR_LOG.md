@@ -697,6 +697,8 @@ DoD 4 MSN-0155 re-attest: demo.mjs + loadtest.mjs — rogue scenarios and concur
 [CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/INTEGRATIONS.md,docs/SECURITY.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0157 release version parity and adopter docs outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/INTEGRATIONS.md,docs/SECURITY.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0157
 DoD 1 MSN-0157: v4.0.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG kernel breaking change + upgrade notes; SECURITY 4.x support
 DoD 2 MSN-0157: npm 4.0.0 — kernel exports + MSN-0153–0156 squashed; dev-validate-core OK; pack:check OK
+DoD 1 MSN-0157: v3.2.2 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG kernel breaking change on 3.2 line; SECURITY 3.x support
+DoD 2 MSN-0157: npm 3.2.2 — kernel exports + MSN-0153–0156 squashed; dev-validate-core OK; pack:check OK
 
 ## MSN-0156 — src facade cleanup
 DoD 1 MSN-0156 re-attest: Phase A — deleted mcp-governance, program-stdin, doctor barrel; lazy domain registry; VerifyOptions single home; npm test 533 pass
