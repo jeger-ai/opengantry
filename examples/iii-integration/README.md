@@ -108,7 +108,7 @@ node -e "import {mintSessionAdmissionToken} from './workers/session-auth/src/adm
 
 ## Kernel
 
-Uses `@jeger-ai/opengantry/kernel` (v4+): `evaluateScope`, `verifyMission`, `mintVerdictToken`, `verifyVerdictToken`. No deep `dist/cli/lib/*` imports.
+Uses `@jeger-ai/opengantry/kernel` (v3.2.2+): `evaluateScope`, `verifyMission`, `mintVerdictToken`, `verifyVerdictToken`. No deep `dist/cli/lib/*` imports.
 
 ## Out of scope (documented gaps)
 
