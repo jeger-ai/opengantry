@@ -1,5 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: v3.2.2 release — kernel exports (MSN-0154), facade cleanup (MSN-0156), version parity on 3.2 line (not 4.0.0), adopter docs, validate, tag
+# Legislated intent: v3.2.2 release — kernel exports (MSN-0154), facade cleanup (MSN-0156), 3.2 line publish (not 4.0.0), adopter docs, validate, tag
 msn_id: MSN-0157
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
