@@ -44,6 +44,11 @@ The worker ships with `@jeger-ai/opengantry` via `file:` for fast iteration befo
 | `lib/trace-shards.js` | Demo-only trace shard merge helper |
 | `target-repo/` | Fixture repo for `gantry::verify` |
 | `demo.mjs` | Offline gate (MSN-0159) |
+| `TEST-PLAN.md` | Tiered test plan (offline CI → live iii) |
+
+## Test plan
+
+See [TEST-PLAN.md](./TEST-PLAN.md) for tiered coverage: offline CI gate (`demo.mjs`), worker install, live engine triggers, governed port, and security regressions.
 
 ## Quick start (offline — primary)
 
