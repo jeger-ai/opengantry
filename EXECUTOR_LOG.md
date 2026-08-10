@@ -708,3 +708,6 @@ DoD 3 MSN-0156 re-attest: npm run validate OK — build, test, doctor, changed-c
 ## MSN-0158 — Site and docs overhaul upstream messaging
 DoD 1 MSN-0158: README + docs/index, FEATURES, DOMAINS verification-pipeline messaging — assert-docs-deterministic OK
 DoD 2 MSN-0158: AGENT-SETUP scaffold and integration template wiring shipped in templates/
+
+## MSN-0159 — Productize iii OpenGantry worker (track A)
+DoD 1 MSN-0159: self-contained workers/opengantry with iii worker add path, publish metadata, fail-closed middleware — demo.mjs all checks passed

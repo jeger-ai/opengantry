@@ -1,13 +1,12 @@
 import {
   evaluateFunctionScope,
   isPromoteClassFunctionId,
-  verifyMission,
-  mintVerdictToken,
   verifyVerdictToken,
-  evaluateScope,
 } from "@jeger-ai/opengantry/kernel";
 
-import { LEASE_STATES } from "./lease-store.js";
+import { isBypassMode } from "./bypass.js";
+import { LEASE_STATES, LeaseStore } from "./lease-store.js";
+import { defaultLeaseStorePath, resolveRepoRootFromContext } from "./repo-path.js";
 
 const RESERVED_PREFIXES = ["gantry::", "opengantry::"];
 const RESERVED_SUFFIXES = ["::verify", "::attest", "::promote"];
@@ -20,8 +19,16 @@ export function isReservedGovernanceFunctionId(functionId, sessionIsControlPlane
   return false;
 }
 
-function ensureLease(state, msnId, worktreePath) {
-  let lease = state.leases.get(msnId);
+function getLeaseStore(state, repoRoot) {
+  state.leaseStores ??= new Map();
+  if (!state.leaseStores.has(repoRoot)) {
+    state.leaseStores.set(repoRoot, new LeaseStore(defaultLeaseStorePath(repoRoot)));
+  }
+  return state.leaseStores.get(repoRoot);
+}
+
+function ensureLease(leases, msnId, worktreePath) {
+  let lease = leases.get(msnId);
   if (!lease) {
     lease = {
       msn_id: msnId,
@@ -29,7 +36,7 @@ function ensureLease(state, msnId, worktreePath) {
       state: LEASE_STATES.active,
       session_refs: {},
     };
-    state.leases.upsert(lease);
+    leases.upsert(lease);
   }
   return lease;
 }
@@ -37,15 +44,22 @@ function ensureLease(state, msnId, worktreePath) {
 export function createMiddlewareHandler(state) {
   return async function gantryMiddleware(input) {
     const { function_id, payload, context } = input;
+
+    if (isBypassMode()) {
+      return state.forwardTrigger(function_id, payload);
+    }
+
+    const repoRoot = resolveRepoRootFromContext(context);
+    const leases = getLeaseStore(state, repoRoot);
     const msnId = context?.msn_id;
     const holderId = context?.holder_id;
 
     if (msnId && holderId) {
-      ensureLease(state, msnId, context?.worktree_path);
-      state.leases.acquireSession(msnId, holderId);
+      ensureLease(leases, msnId, context?.worktree_path ?? context?.repo_root);
+      leases.acquireSession(msnId, holderId);
     }
 
-    const lease = msnId ? state.leases.get(msnId) : null;
+    const lease = msnId ? leases.get(msnId) : null;
 
     if (lease?.state === "dirty_rewritten" && isPromoteClassFunctionId(function_id)) {
       return {
@@ -57,8 +71,7 @@ export function createMiddlewareHandler(state) {
     if (isPromoteClassFunctionId(function_id)) {
       const token = context?.verdict_token ?? payload?.verdict_token;
       const expected = context?.verdict_expected ?? payload?.verdict_expected;
-      const keyringPath =
-        context?.verdict_keyring_path ?? payload?.verdict_keyring_path;
+      const keyringPath = context?.verdict_keyring_path ?? payload?.verdict_keyring_path;
       if (
         !token ||
         !expected ||
@@ -75,7 +88,7 @@ export function createMiddlewareHandler(state) {
       }
       if (lease) {
         lease.state = LEASE_STATES.promoting;
-        state.leases.upsert(lease);
+        leases.upsert(lease);
       }
     }
 
@@ -92,16 +105,10 @@ export function createMiddlewareHandler(state) {
     const result = await state.forwardTrigger(function_id, payload);
     if (lease?.state === LEASE_STATES.promoting) {
       lease.state = LEASE_STATES.active;
-      state.leases.upsert(lease);
+      leases.upsert(lease);
     }
     return result;
   };
 }
 
-export {
-  evaluateScope,
-  verifyMission,
-  mintVerdictToken,
-  verifyVerdictToken,
-  isPromoteClassFunctionId,
-};
+export { defaultLeaseStorePath, resolveRepoRootFromContext };

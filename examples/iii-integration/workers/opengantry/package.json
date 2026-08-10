@@ -1,0 +1,13 @@
+{
+  "name": "@jeger-ai/opengantry-iii-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@jeger-ai/opengantry": "file:../../../../",
+    "iii-sdk": "^0.22.0"
+  }
+}

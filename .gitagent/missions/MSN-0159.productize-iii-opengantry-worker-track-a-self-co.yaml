@@ -1,0 +1,38 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Productize iii OpenGantry worker track A: self-contained publishable in-repo worker. Governance always fail-closed unless GANTRY_BYPASS_MODE=true. Never treat missing GXT files as unlock. Repo root only from context.worktree_path or context.repo_root — no process.cwd() fallback; missing path is hard error. Lease store at repo_root/.gitagent/leases.json.
+msn_id: MSN-0159
+skill_key: iii-integration
+gate_command: node examples/iii-integration/demo.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0159: self-contained workers/opengantry with iii worker add path, publish metadata, fail-closed middleware — demo.mjs all checks passed"
+    anchor: "MSN-0159"
+    status: PASS
+gate_success_substring: all checks passed
+interrogation:
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0021 applicability. GANTRY_BYPASS_MODE is explicit
+      operator-opt-in escape hatch only; default remains fail-closed.
+    adr_refs:
+      - ADR-0021
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key: iii-integration. TMVC: examples/iii-integration/
+      and skills/iii-integration.md only. Runtime lease file path
+      .gitagent/leases.json is written inside adopters repo at runtime, not
+      editing substrate .gitagent/ in this repo."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 192b736711b9bcc9cfae7969efbebba8e11dbc7bd5d939b80e7a4c430fd01112
+declared_paths:
+  - examples/iii-integration/
+  - skills/iii-integration.md

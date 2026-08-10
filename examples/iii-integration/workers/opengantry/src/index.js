@@ -1,7 +1,3 @@
-import path from "node:path";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
-
 import {
   evaluateScope,
   verifyMission,
@@ -10,53 +6,16 @@ import {
   isPromoteClassFunctionId,
 } from "@jeger-ai/opengantry/kernel";
 
-import { LeaseStore } from "../../../lib/lease-store.js";
 import {
   createMiddlewareHandler,
   isReservedGovernanceFunctionId,
-} from "../../../lib/middleware.js";
-import { VerifyCoalescer } from "../../../lib/verify-coalescer.js";
-import { opengantryWorkerOptions } from "../../../lib/worker-init.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const INTEGRATION_ROOT = path.resolve(__dirname, "../../..");
-const DEFAULT_TARGET_REPO = path.join(INTEGRATION_ROOT, "target-repo");
-const STORE_PATH = path.join(INTEGRATION_ROOT, ".runtime/leases.json");
-
-function hasGxtSubstrate(root) {
-  return fs.existsSync(path.join(root, ".gitagent/foreman/MANIFEST.json"));
-}
-
-function resolveRepoRoot(repoRoot) {
-  if (!repoRoot || typeof repoRoot !== "string") {
-    throw new Error("gantry::verify: repo_root required");
-  }
-  if (path.isAbsolute(repoRoot)) {
-    if (!hasGxtSubstrate(repoRoot)) {
-      throw new Error(`gantry::verify: missing GXT substrate under ${repoRoot}`);
-    }
-    return repoRoot;
-  }
-
-  const candidates = [
-    path.resolve(INTEGRATION_ROOT, repoRoot),
-    path.resolve(process.cwd(), repoRoot),
-  ];
-  if (repoRoot === "." || repoRoot === "target-repo") {
-    candidates.push(DEFAULT_TARGET_REPO);
-  }
-
-  for (const candidate of candidates) {
-    if (hasGxtSubstrate(candidate)) return candidate;
-  }
-
-  throw new Error(
-    `gantry::verify: no .gitagent/foreman/MANIFEST.json for repo_root=${repoRoot} (try target-repo or an absolute path)`,
-  );
-}
+} from "./lib/middleware.js";
+import { VerifyCoalescer } from "./lib/verify-coalescer.js";
+import { opengantryWorkerOptions } from "./lib/worker-init.js";
+import { resolveVerifyRepoRoot } from "./lib/repo-path.js";
 
 const state = {
-  leases: new LeaseStore(STORE_PATH),
+  leaseStores: new Map(),
   coalescer: new VerifyCoalescer(),
   forwardTrigger: async (function_id, payload) => ({ ok: true, function_id, payload }),
 };
@@ -79,7 +38,7 @@ async function startWorker() {
   worker.registerFunction("gantry::middleware", middleware);
 
   worker.registerFunction("gantry::verify", async (data) => {
-    const repoRoot = resolveRepoRoot(data.repo_root);
+    const repoRoot = resolveVerifyRepoRoot(data.repo_root);
     const key = `${repoRoot}:${data.msn_id}`;
     return state.coalescer.run(key, async () =>
       verifyMission({
@@ -112,9 +71,6 @@ async function startWorker() {
     id: "gantry::verdict",
     description: "Emitted when gantry verify completes",
   });
-
-  // Fixture target for middleware promote-gate demos (not part of gantry:: namespace).
-  worker.registerFunction("demo::promote", async (data) => ({ promoted: true, ...data }));
 
   console.log(`opengantry worker registered (verify, middleware, RBAC hooks) → ${url}`);
 }

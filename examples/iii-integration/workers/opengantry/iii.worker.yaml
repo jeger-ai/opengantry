@@ -1,5 +1,14 @@
+iii: v1
 name: opengantry
 description: OpenGantry governance control plane for iii orchestration loops.
+deploy: image
+manifest: package.json
+tags:
+  - governance
+  - verify
+  - policy
+  - gxt
+  - opengantry
 runtime:
   base_image: docker.io/iiidev/node:latest
 scripts:

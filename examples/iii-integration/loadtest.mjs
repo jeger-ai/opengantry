@@ -1,19 +1,19 @@
 import assert from "node:assert/strict";
-
-import { VerifyCoalescer } from "./lib/verify-coalescer.js";
-import {
-  createMiddlewareHandler,
-} from "./lib/middleware.js";
-import { LeaseStore } from "./lib/lease-store.js";
-import { mintVerdictToken, verifyVerdictToken } from "@jeger-ai/opengantry/kernel";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+
+import { VerifyCoalescer } from "./workers/opengantry/src/lib/verify-coalescer.js";
+import { createMiddlewareHandler } from "./workers/opengantry/src/lib/middleware.js";
+import { LeaseStore } from "./workers/opengantry/src/lib/lease-store.js";
+import { defaultLeaseStorePath } from "./workers/opengantry/src/lib/repo-path.js";
+import { mintVerdictToken, verifyVerdictToken } from "@jeger-ai/opengantry/kernel";
 
 const N = 50;
 const latencies = [];
 
 async function runLoad() {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-load-repo-"));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-load-"));
   const keyring = path.join(dir, "pepper-keyring.json");
   fs.writeFileSync(
@@ -29,10 +29,10 @@ async function runLoad() {
     org_id: "load-org",
   };
   const token = mintVerdictToken({ ...expected, keyringPath: keyring });
-  const storePath = path.join(dir, "leases.json");
+  const storePath = defaultLeaseStorePath(repoRoot);
   const leases = new LeaseStore(storePath);
   const state = {
-    leases,
+    leaseStores: new Map([[repoRoot, leases]]),
     forwardTrigger: async (fid) => ({ ok: true, fid }),
   };
   const middleware = createMiddlewareHandler(state);
@@ -47,11 +47,12 @@ async function runLoad() {
         i % 5 === 0
           ? {
               msn_id: "MSN-LOAD",
+              worktree_path: repoRoot,
               verdict_token: token,
               verdict_expected: expected,
               verdict_keyring_path: keyring,
             }
-          : { msn_id: "MSN-LOAD" },
+          : { msn_id: "MSN-LOAD", worktree_path: repoRoot },
     });
     latencies.push(performance.now() - start);
     assert.equal(result.ok, true);

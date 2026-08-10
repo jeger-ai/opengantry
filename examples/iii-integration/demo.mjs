@@ -11,16 +11,19 @@ import {
   isPromoteClassFunctionId,
 } from "@jeger-ai/opengantry/kernel";
 
-import { LeaseStore, LEASE_STATES } from "./lib/lease-store.js";
+import { LeaseStore, LEASE_STATES } from "./workers/opengantry/src/lib/lease-store.js";
 import {
   createMiddlewareHandler,
   isReservedGovernanceFunctionId,
-} from "./lib/middleware.js";
-import { VerifyCoalescer } from "./lib/verify-coalescer.js";
+  defaultLeaseStorePath,
+} from "./workers/opengantry/src/lib/middleware.js";
+import { VerifyCoalescer } from "./workers/opengantry/src/lib/verify-coalescer.js";
+import { resolveVerifyRepoRoot } from "./workers/opengantry/src/lib/repo-path.js";
 import { appendShardRecord, mergeShardsToExecutorLog } from "./lib/trace-shards.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../../");
+const TARGET_REPO = path.join(__dirname, "target-repo");
 
 function pass(label) {
   console.log(`PASS ${label}`);
@@ -60,23 +63,23 @@ function testReservedNamespace() {
 }
 
 async function testMiddlewarePromoteDenied() {
-  const storePath = path.join(os.tmpdir(), `leases-${Date.now()}.json`);
-  const leases = new LeaseStore(storePath);
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-repo-"));
   const state = {
-    leases,
+    leaseStores: new Map(),
     forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
   };
   const middleware = createMiddlewareHandler(state);
   const result = await middleware({
     function_id: "demo::promote",
     payload: {},
-    context: { msn_id: "MSN-0155" },
+    context: { msn_id: "MSN-0155", worktree_path: repoRoot },
   });
   assert.equal(result.status, "failed");
-  pass("middleware denies promote without verdict");
+  pass("middleware denies promote without verdict (fail-closed, no GXT)");
 }
 
 async function testMiddlewarePromoteAllowed() {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-repo2-"));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-vt2-"));
   const keyring = path.join(dir, "pepper-keyring.json");
   fs.writeFileSync(
@@ -92,10 +95,8 @@ async function testMiddlewarePromoteAllowed() {
     org_id: "demo-org",
   };
   const token = mintVerdictToken({ ...expected, keyringPath: keyring });
-  const storePath = path.join(os.tmpdir(), `leases-${Date.now()}-2.json`);
-  const leases = new LeaseStore(storePath);
   const state = {
-    leases,
+    leaseStores: new Map(),
     forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
   };
   const middleware = createMiddlewareHandler(state);
@@ -104,6 +105,7 @@ async function testMiddlewarePromoteAllowed() {
     payload: { branch: "gxt/msn-0155" },
     context: {
       msn_id: "MSN-0155",
+      worktree_path: repoRoot,
       verdict_token: token,
       verdict_expected: expected,
       verdict_keyring_path: keyring,
@@ -111,6 +113,71 @@ async function testMiddlewarePromoteAllowed() {
   });
   assert.equal(result.ok, true);
   pass("middleware allows promote with verdict token");
+}
+
+async function testMiddlewareMissingPathThrows() {
+  const state = {
+    leaseStores: new Map(),
+    forwardTrigger: async () => ({ ok: true }),
+  };
+  const middleware = createMiddlewareHandler(state);
+  await assert.rejects(
+    () =>
+      middleware({
+        function_id: "demo::work",
+        payload: {},
+        context: { msn_id: "MSN-0155" },
+      }),
+    /worktree_path or context\.repo_root required/,
+  );
+  pass("middleware throws when repo path missing");
+}
+
+async function testBypassMode() {
+  const prev = process.env.GANTRY_BYPASS_MODE;
+  process.env.GANTRY_BYPASS_MODE = "true";
+  try {
+    const state = {
+      leaseStores: new Map(),
+      forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
+    };
+    const middleware = createMiddlewareHandler(state);
+    const result = await middleware({
+      function_id: "demo::promote",
+      payload: {},
+      context: { msn_id: "MSN-0155" },
+    });
+    assert.equal(result.ok, true);
+    pass("GANTRY_BYPASS_MODE forwards without verdict");
+  } finally {
+    if (prev === undefined) delete process.env.GANTRY_BYPASS_MODE;
+    else process.env.GANTRY_BYPASS_MODE = prev;
+  }
+}
+
+function testDurableLeaseStorePath() {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-lease-"));
+  const storePath = defaultLeaseStorePath(repoRoot);
+  assert.equal(storePath, path.join(repoRoot, ".gitagent", "leases.json"));
+  const leases = new LeaseStore(storePath);
+  leases.upsert({
+    msn_id: "MSN-0159",
+    branch: "gxt/msn-0159",
+    state: LEASE_STATES.active,
+    session_refs: {},
+  });
+  assert.ok(fs.existsSync(storePath));
+  pass("lease store persists under .gitagent/leases.json");
+}
+
+function testVerifyRequiresAbsoluteRepoRoot() {
+  assert.throws(
+    () => resolveVerifyRepoRoot("target-repo"),
+    /repo_root must be an absolute path/,
+  );
+  assert.throws(() => resolveVerifyRepoRoot(undefined), /repo_root required/);
+  assert.equal(resolveVerifyRepoRoot(TARGET_REPO), TARGET_REPO);
+  pass("verify requires absolute repo_root with GXT substrate");
 }
 
 function testTraceWatermark() {
@@ -156,7 +223,8 @@ function testPromoteClassDetection() {
 }
 
 function testTombstoneState() {
-  const storePath = path.join(os.tmpdir(), `leases-tomb-${Date.now()}.json`);
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-tomb-"));
+  const storePath = defaultLeaseStorePath(repoRoot);
   const leases = new LeaseStore(storePath);
   leases.upsert({
     msn_id: "MSN-0155",
@@ -183,6 +251,10 @@ async function main() {
   testReservedNamespace();
   await testMiddlewarePromoteDenied();
   await testMiddlewarePromoteAllowed();
+  await testMiddlewareMissingPathThrows();
+  await testBypassMode();
+  testDurableLeaseStorePath();
+  testVerifyRequiresAbsoluteRepoRoot();
   testTraceWatermark();
   await testVerifyCoalescing();
   testPromoteClassDetection();

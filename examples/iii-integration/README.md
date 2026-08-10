@@ -1,8 +1,18 @@
 # OpenGantry × iii.dev
 
-Minimal example of **what OpenGantry owns** on the iii bus: cold-path verify, hot-path middleware, verdict-gated promotion, and governance RBAC hooks.
+Product worker for **deterministic governance** on the iii bus: cold-path verify, hot-path middleware, verdict-gated promotion, and RBAC hooks.
 
 **Not OpenGantry:** session admission (`session::auth`), agent workers, git push transport, worktree automation. Adopters plug those in separately.
+
+## Install (local staging)
+
+From this directory:
+
+```bash
+iii worker add ./workers/opengantry
+```
+
+The worker ships with `@jeger-ai/opengantry` via `file:` for fast iteration before upstream registry publish.
 
 ## What OpenGantry registers
 
@@ -15,17 +25,25 @@ Minimal example of **what OpenGantry owns** on the iii bus: cold-path verify, ho
 | `gantry::on-trigger-type-registration` | Deny trigger-type registration on governed port |
 | `gantry::verdict` | Trigger type (emit after verify) |
 
+## Fail-closed defaults
+
+| Rule | Behavior |
+|------|----------|
+| Promote without verdict | `status: "failed"` — always, including when GXT files are absent |
+| Repo path | `context.worktree_path` or `context.repo_root` required; no `process.cwd()` fallback |
+| `gantry::verify` | `repo_root` must be an **absolute** path with GXT substrate |
+| Lease store | `<repo_root>/.gitagent/leases.json` (override: `GANTRY_III_LEASE_STORE`) |
+| Bypass | `GANTRY_BYPASS_MODE=true` only — operator-opt-in, unsafe for production |
+
 ## Layout
 
 | Path | Owner |
 |------|--------|
-| `workers/opengantry/` | OpenGantry control-plane worker |
+| `workers/opengantry/` | Self-contained product worker (`iii worker add` target) |
 | `workers/session-auth/` | **Example** admission worker (`session::auth`) — replace with your IdP |
-| `lib/middleware.js` | Middleware + namespace guards |
-| `lib/lease-store.js` | Mission session lifecycle for middleware (not auth) |
-| `lib/verify-coalescer.js` | Single-flight verify |
+| `lib/trace-shards.js` | Demo-only trace shard merge helper |
 | `target-repo/` | Fixture repo for `gantry::verify` |
-| `demo.mjs` | Offline gate (MSN-0155) |
+| `demo.mjs` | Offline gate (MSN-0159) |
 
 ## Quick start (offline — primary)
 
@@ -35,7 +53,7 @@ npm install
 node demo.mjs
 ```
 
-## Live with iii (OpenGantry only)
+## Live with iii
 
 **Terminal 1 — iii engine** (from this directory):
 
@@ -48,20 +66,18 @@ iii --no-update-check
 ```bash
 export III_URL=ws://127.0.0.1:49134
 export OTEL_ENABLED=false
-node workers/opengantry/src/index.js
+cd workers/opengantry && npm install && npm start
 ```
 
-**Trigger verify** against the fixture repo:
+**Trigger verify** against the fixture repo (absolute `repo_root`):
 
 ```bash
-iii trigger gantry::verify --json '{
-  "repo_root": "target-repo",
-  "msn_id": "MSN-9002",
-  "mission_rel_path": ".gitagent/missions/MSN-9002.iii-integration-demo.yaml"
-}'
+iii trigger gantry::verify --json "{
+  \"repo_root\": \"$(pwd)/target-repo\",
+  \"msn_id\": \"MSN-9002\",
+  \"mission_rel_path\": \".gitagent/missions/MSN-9002.iii-integration-demo.yaml\"
+}"
 ```
-
-Run from `examples/iii-integration/` (or pass an absolute `repo_root`). The fixture includes minimal GXT substrate (`MANIFEST.json`, `MISSION.schema.yaml`, `EXECUTOR_LOG.md`).
 
 **One-time** (git-proof for live verify):
 
@@ -69,17 +85,7 @@ Run from `examples/iii-integration/` (or pass an absolute `repo_root`). The fixt
 bash scripts/init-target-repo-git.sh
 ```
 
-Then restart the opengantry worker if it was already running, and trigger (from `examples/iii-integration/`):
-
-```bash
-iii trigger gantry::verify --json '{
-  "repo_root": "target-repo",
-  "msn_id": "MSN-9002",
-  "mission_rel_path": ".gitagent/missions/MSN-9002.iii-integration-demo.yaml"
-}'
-```
-
-If your shell is already inside `target-repo/`, `"repo_root": "."` works after you **restart the opengantry worker** (path resolution runs in the worker process). Prefer `target-repo` from `examples/iii-integration/` for clarity.
+Admission context for governed calls must include `worktree_path` or `repo_root` (absolute path to the adopters' repo).
 
 ## Governed listener (49135)
 
@@ -90,21 +96,6 @@ Typical production layout:
 1. Your **auth worker** validates identity and returns `context` (`msn_id`, `holder_id`, `worktree_path`).
 2. **OpenGantry** middleware enforces verify verdicts on promote-class calls.
 3. Agents register `holder_id::…` functions; cannot squat `gantry::`.
-
-To try the example admission path:
-
-```bash
-# Terminal 3 — example session-auth on 49135
-export III_URL=ws://127.0.0.1:49135
-export OTEL_ENABLED=false
-node workers/session-auth/src/index.js
-```
-
-Session tokens are minted by the orchestrator (example admission worker), not by OpenGantry:
-
-```bash
-node -e "import {mintSessionAdmissionToken} from './workers/session-auth/src/admission.js'; console.log(mintSessionAdmissionToken({msn_id:'MSN-0155',holder_id:'coder-1',worktree_path:'gxt/msn-0155'}))"
-```
 
 ## Kernel
 
