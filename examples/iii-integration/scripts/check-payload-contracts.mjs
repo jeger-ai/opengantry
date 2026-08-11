@@ -1,0 +1,177 @@
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+import {
+  PARSE_EXTS,
+  listWorkerRoots,
+  walkFiles,
+  parseFile,
+  loadAcorn,
+  moduleStringConsts,
+  resolveStringExpr,
+  schemaFileName,
+} from "./lib/scan-workers.mjs";
+
+const require = createRequire(import.meta.url);
+const COMPOSITION_KEYS = new Set([
+  "allOf",
+  "oneOf",
+  "anyOf",
+  "$ref",
+  "unevaluatedProperties",
+]);
+
+function walkSchemaObject(node, pathLabel, findings, file) {
+  if (!node || typeof node !== "object" || Array.isArray(node)) return;
+  for (const key of Object.keys(node)) {
+    if (COMPOSITION_KEYS.has(key)) {
+      findings.push({
+        rule_id: "payload/schema-composition",
+        file,
+        line: 1,
+        message: `schema composition keyword banned at ${pathLabel}: ${key}`,
+      });
+    }
+  }
+  if (node.type === "object" || (!node.type && node.properties)) {
+    if (node.additionalProperties !== false) {
+      findings.push({
+        rule_id: "payload/additionalProperties",
+        file,
+        line: 1,
+        message: `object schema at ${pathLabel} requires additionalProperties: false`,
+      });
+    }
+    const props = node.properties;
+    if (!props || typeof props !== "object" || Object.keys(props).length === 0) {
+      if (pathLabel === "$" || node.type === "object") {
+        findings.push({
+          rule_id: "payload/properties",
+          file,
+          line: 1,
+          message: `object schema at ${pathLabel} must declare at least one named property`,
+        });
+      }
+    } else {
+      for (const [name, prop] of Object.entries(props)) {
+        if (!prop || typeof prop !== "object" || !prop.type) {
+          findings.push({
+            rule_id: "payload/property-type",
+            file,
+            line: 1,
+            message: `property ${pathLabel}.${name} must have type`,
+          });
+        }
+        walkSchemaObject(prop, `${pathLabel}.${name}`, findings, file);
+      }
+    }
+  }
+  if (Array.isArray(node.items)) {
+    node.items.forEach((it, i) => walkSchemaObject(it, `${pathLabel}.items[${i}]`, findings, file));
+  } else if (node.items) {
+    walkSchemaObject(node.items, `${pathLabel}.items`, findings, file);
+  }
+}
+
+function validateSchemaFile(Ajv, schemaPath, relSchema, findings) {
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
+  } catch (e) {
+    findings.push({
+      rule_id: "payload/schema-parse",
+      file: relSchema,
+      line: 1,
+      message: `invalid JSON schema: ${e.message}`,
+    });
+    return;
+  }
+  if (raw.$schema !== "http://json-schema.org/draft-07/schema#") {
+    findings.push({
+      rule_id: "payload/schema-draft",
+      file: relSchema,
+      line: 1,
+      message: 'schema must set "$schema": "http://json-schema.org/draft-07/schema#"',
+    });
+  }
+  const ajv = new Ajv({ strict: false, allErrors: true });
+  try {
+    ajv.compile(raw);
+  } catch (e) {
+    findings.push({
+      rule_id: "payload/schema-meta",
+      file: relSchema,
+      line: 1,
+      message: `ajv rejected schema: ${e.message}`,
+    });
+  }
+  walkSchemaObject(raw, "$", findings, relSchema);
+}
+
+function isRegisterFunctionCall(node) {
+  const c = node.callee;
+  if (c.type === "MemberExpression" && !c.computed && c.property.type === "Identifier") {
+    return c.property.name === "registerFunction";
+  }
+  if (c.type === "Identifier") return c.name === "registerFunction";
+  return false;
+}
+
+export async function checkPayloadContracts(scanRoot) {
+  const { acorn, walk } = await loadAcorn();
+  const Ajv = require("ajv");
+  const findings = [];
+
+  for (const workerDir of listWorkerRoots(scanRoot)) {
+    const workerRel = path.basename(workerDir);
+    for (const file of walkFiles(workerDir)) {
+      if (!PARSE_EXTS.has(path.extname(file))) continue;
+      let parsed;
+      try {
+        parsed = parseFile(acorn, file);
+      } catch (e) {
+        findings.push({
+          rule_id: "payload/parse",
+          file: path.relative(scanRoot, file),
+          line: 1,
+          message: `parse error: ${e.message}`,
+        });
+        continue;
+      }
+      const constMap = moduleStringConsts(parsed.ast);
+      const rel = path.relative(scanRoot, file);
+
+      walk.simple(parsed.ast, {
+        CallExpression(node) {
+          if (!isRegisterFunctionCall(node)) return;
+          const idArg = node.arguments[0];
+          const resolved = resolveStringExpr(idArg, constMap);
+          if (resolved == null) {
+            findings.push({
+              rule_id: "payload/register-id",
+              file: rel,
+              line: node.loc?.start?.line ?? 1,
+              message:
+                "registerFunction id must be a string literal or module-scope const string (imported bindings fail)",
+            });
+            return;
+          }
+          const schemaName = schemaFileName(resolved);
+          const schemaPath = path.join(workerDir, "schemas", schemaName);
+          const relSchema = path.join(workerRel, "schemas", schemaName);
+          if (!fs.existsSync(schemaPath)) {
+            findings.push({
+              rule_id: "payload/missing-schema",
+              file: rel,
+              line: node.loc?.start?.line ?? 1,
+              message: `missing schema for ${resolved}: expected ${relSchema}`,
+            });
+            return;
+          }
+          validateSchemaFile(Ajv, schemaPath, relSchema, findings);
+        },
+      });
+    }
+  }
+  return findings;
+}

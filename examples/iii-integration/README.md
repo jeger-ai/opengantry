@@ -43,8 +43,20 @@ The worker ships with `@jeger-ai/opengantry` via `file:` for fast iteration befo
 | `workers/session-auth/` | **Example** admission worker (`session::auth`) — replace with your IdP |
 | `lib/trace-shards.js` | Demo-only trace shard merge helper |
 | `target-repo/` | Fixture repo for `gantry::verify` |
-| `demo.mjs` | Offline gate (MSN-0159) |
+| `demo.mjs` | Offline gate (MSN-0159 runtime) |
+| `scripts/run-iii-architecture.mjs` | Cold-path lint profile gate (MSN-0160) |
+| `BEST-PRACTICES.md` | Hot vs cold path, exit-code semantics |
 | `TEST-PLAN.md` | Tiered test plan (offline CI → live iii) |
+
+## Lint profile (cold path)
+
+```bash
+npm install
+node scripts/run-iii-architecture.mjs   # exit 0 = clean (gantry verify)
+npm run test:iii-architecture         # fixture self-test
+```
+
+See [BEST-PRACTICES.md](./BEST-PRACTICES.md). AST lint is a speed bump; runtime promote still uses the OpenGantry worker.
 
 ## Test plan
 

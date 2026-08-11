@@ -1,0 +1,84 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0160 iii-architecture lint profile under examples/iii-integration only: four Node scanners, strict 2>1>0 exit codes for operators (gantry verify sees exit 0 only; no gate_success_substring), absolute HTTP ban, fail-closed extensions and computed dynamic ids/imports (allow string literal import()). Resolve module-scope single-assign string consts only. Split durable-state into sub-rules; reject bad/forbidden exempt ids at load; global-process un-exemptible. ajv draft-07; ban schema composition; recursive additionalProperties false. Worker = child dir with package.json. Inert fixtures. DoD: exit-1 violation revert; exit-2 via GANTRY_III_ARCH_FORCE_FATAL.
+msn_id: MSN-0160
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/run-iii-architecture.mjs
+trace_rows:
+- dod_id: '1'
+  trace_quote: 'DoD 1 MSN-0160: run-iii-architecture.mjs exit 0 on workers; schemas + session-auth
+    package.json; BEST-PRACTICES — [iii-architecture: exit 0]'
+  anchor: MSN-0160
+  status: PASS
+- dod_id: '2'
+  trace_quote: 'DoD 2 MSN-0160: deliberate fetch violation → exit 1 then revert → exit 0;
+    GANTRY_III_ARCH_FORCE_FATAL=1 → FATAL EXIT 2 on stderr'
+  anchor: MSN-0160
+  status: PASS
+- dod_id: '3'
+  trace_quote: 'DoD 3 MSN-0160: npm run test:iii-architecture self-test PASS (fetch, missing
+    package.json, imported register id, ts, global)'
+  anchor: MSN-0160
+  status: PASS
+interrogation:
+- finding_id: 1362fca0b3bc
+  kind: risk_escalation
+  question: 'Triage escalated: Intent contains risk_keyword: schema. Which skill_key and TMVC
+    scope authorize this work?'
+  hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission after operator
+    confirmation.
+  operator_answer: 'skill_key: iii-integration. TMVC: examples/iii-integration/ and skills/iii-integration.md
+    only. No MANIFEST.json or middleware changes.'
+  adr_refs:
+  - ADR-0039
+- finding_id: 1a4b88b71538
+  kind: adr_conflict
+  question: Intent may relate to ADR-0001. Accept ADR decision, reject applicability, or cite
+    superseding rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before legislation proceeds.
+  operator_answer: Reject ADR applicability for this lint-profile mission under examples/iii-integration/;
+    no verify-export or unrelated ADR changes.
+  adr_refs:
+  - ADR-0001
+- finding_id: 6f9d4d2bf647
+  kind: adr_conflict
+  question: Intent may relate to ADR-0030. Accept ADR decision, reject applicability, or cite
+    superseding rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0030 before legislation proceeds.
+  operator_answer: Reject ADR applicability for this lint-profile mission under examples/iii-integration/;
+    no verify-export or unrelated ADR changes.
+  adr_refs:
+  - ADR-0030
+- finding_id: 9b42a6bc8d96
+  kind: adr_conflict
+  question: Intent may relate to ADR-0026. Accept ADR decision, reject applicability, or cite
+    superseding rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before legislation proceeds.
+  operator_answer: Reject ADR applicability for this lint-profile mission under examples/iii-integration/;
+    no verify-export or unrelated ADR changes.
+  adr_refs:
+  - ADR-0026
+- finding_id: 9ecdd9a8e878
+  kind: adr_conflict
+  question: Intent may relate to ADR-0027. Accept ADR decision, reject applicability, or cite
+    superseding rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before legislation proceeds.
+  operator_answer: Reject ADR applicability for this lint-profile mission under examples/iii-integration/;
+    no verify-export or unrelated ADR changes.
+  adr_refs:
+  - ADR-0027
+- finding_id: e9fbdffbbb52
+  kind: missing_test_criteria
+  question: Gate command is not on the skill allowlist. Authorize this gate and its success
+    criteria on the record.
+  hypothesis: Planner accepts gate_command "node examples/iii-integration/scripts/run-iii-architecture.mjs"
+    with documented success substring for verify.
+  operator_answer: Authorize gate_command node examples/iii-integration/scripts/run-iii-architecture.mjs;
+    pass = exit code 0 only (no gate_success_substring).
+  adr_refs:
+  - ADR-0039
+interrogation_sha256: 3ee5d728963ac8c9ce8f65058b063dd718eee1bb4e6ac3f776903c37098aafbe
+declared_paths:
+- examples/iii-integration/
+- skills/iii-integration.md
+- .gitagent/missions/MSN-0160.msn-0160-iii-architecture-lint-profile-under-exa.yaml
+- EXECUTOR_LOG.md

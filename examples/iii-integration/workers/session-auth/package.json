@@ -1,16 +1,12 @@
 {
-  "name": "@jeger-ai/opengantry-iii-worker",
+  "name": "iii-session-auth-example",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "iii_architecture": {
-    "exempt": ["durable-state/module-bags"]
-  },
   "scripts": {
     "start": "node src/index.js"
   },
   "dependencies": {
-    "@jeger-ai/opengantry": "file:../../../../",
     "iii-sdk": "^0.22.0"
   }
 }

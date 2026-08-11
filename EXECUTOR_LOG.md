@@ -711,3 +711,8 @@ DoD 2 MSN-0158: AGENT-SETUP scaffold and integration template wiring shipped in 
 
 ## MSN-0159 — Productize iii OpenGantry worker (track A)
 DoD 1 MSN-0159: self-contained workers/opengantry with iii worker add path, publish metadata, fail-closed middleware — demo.mjs all checks passed
+
+## MSN-0160 — iii-architecture lint profile
+DoD 1 MSN-0160: run-iii-architecture.mjs exit 0 on workers; schemas + session-auth package.json; BEST-PRACTICES — [iii-architecture: exit 0]
+DoD 2 MSN-0160: deliberate fetch violation → exit 1 then revert → exit 0; GANTRY_III_ARCH_FORCE_FATAL=1 → FATAL EXIT 2 on stderr
+DoD 3 MSN-0160: npm run test:iii-architecture self-test PASS (fetch, missing package.json, imported register id, ts, global)

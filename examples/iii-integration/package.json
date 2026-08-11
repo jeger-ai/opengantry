@@ -5,11 +5,15 @@
   "scripts": {
     "demo": "node demo.mjs",
     "loadtest": "node loadtest.mjs",
+    "test:iii-architecture": "node scripts/run-iii-architecture.mjs --self-test",
     "worker:opengantry": "node workers/opengantry/src/index.js",
     "worker:session-auth": "node workers/session-auth/src/index.js"
   },
   "dependencies": {
     "@jeger-ai/opengantry": "file:../../",
+    "acorn": "8.14.1",
+    "acorn-walk": "8.3.4",
+    "ajv": "8.17.1",
     "iii-sdk": "^0.22.0"
   }
 }

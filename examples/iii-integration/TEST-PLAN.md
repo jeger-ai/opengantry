@@ -33,11 +33,24 @@ node loadtest.mjs      # optional concurrency smoke
 | T1-11 | Leases | Tombstone | Promoting + last session release → `tombstoned` |
 | T1-12 | Package | Kernel export map | `./kernel` only; no `./*` wildcard |
 
-**Mission verify:**
+### T1-A — iii-architecture lint (MSN-0160)
 
 ```bash
-gantry verify --mission .gitagent/missions/MSN-0159.productize-iii-opengantry-worker-track-a-self-co.yaml
+cd examples/iii-integration
+npm install
+node scripts/run-iii-architecture.mjs          # exit 0
+npm run test:iii-architecture                  # fixtures + clean workers
+GANTRY_III_ARCH_FORCE_FATAL=1 node scripts/run-iii-architecture.mjs  # exit 2 + FATAL on stderr
 ```
+
+| ID | Check | Pass criteria |
+|----|-------|---------------|
+| T1-A01 | Clean workers | exit 0, stdout contains `[iii-architecture: exit 0]` |
+| T1-A02 | Self-test fixtures | fetch, missing package.json, imported register id, `.ts`, global assign |
+| T1-A03 | Force fatal | exit 2, stderr explains scanner could not run (not a code violation) |
+| T1-A04 | Deliberate violate | temporary bad file → exit 1 → revert → exit 0 |
+
+**Mission verify:** exit code 0 only (`gantry verify` does not see 1 vs 2).
 
 ## Tier 2 — Worker install (manual, pre-publish)
 
