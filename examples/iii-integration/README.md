@@ -1,6 +1,6 @@
 # OpenGantry × iii.dev
 
-Product worker for **deterministic governance** on the iii bus: cold-path verify, hot-path middleware, verdict-gated promotion, and RBAC hooks.
+Product worker for **deterministic governance** on the iii bus: when you add OpenGantry, **cold-path lint and hot-path verify stay on the critical path** so AI-driven worker edits cannot silently diverge from iii’s bus model or OpenGantry’s promote/verify contract.
 
 **Not OpenGantry:** session admission (`session::auth`), agent workers, git push transport, worktree automation. Adopters plug those in separately.
 
@@ -13,6 +13,24 @@ iii worker add ./workers/opengantry
 ```
 
 The worker ships with `@jeger-ai/opengantry` via `file:` for fast iteration before upstream registry publish.
+
+## After add worker (activation)
+
+Run the advisory checklist (prints gate line, governed-port snippet, mission hints — does not edit `.gitagent/` law):
+
+```bash
+node scripts/activate-opengantry-iii.mjs
+```
+
+Optional: `node scripts/activate-opengantry-iii.mjs --write-activation-md` writes `ACTIVATION.md` for review.
+
+**Adopter contract:**
+
+1. Bind **cold lint** to worker-touching missions and CI: `node scripts/run-iii-architecture.mjs` (exit 0 only).
+2. Wire the **governed listener** to `gantry::middleware` + OpenGantry RBAC hooks (see `config.yaml` port 49135).
+3. Run cold lint before hot promote; promote-class triggers require a verdict token.
+
+See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-tree baseline.
 
 ## What OpenGantry registers
 
@@ -44,7 +62,8 @@ The worker ships with `@jeger-ai/opengantry` via `file:` for fast iteration befo
 | `lib/trace-shards.js` | Demo-only trace shard merge helper |
 | `target-repo/` | Fixture repo for `gantry::verify` |
 | `demo.mjs` | Offline gate (MSN-0159 runtime) |
-| `scripts/run-iii-architecture.mjs` | Cold-path lint profile gate (MSN-0160) |
+| `scripts/run-iii-architecture.mjs` | Cold-path lint profile gate (MSN-0160+) |
+| `scripts/activate-opengantry-iii.mjs` | Advisory activation checklist (MSN-0162) |
 | `BEST-PRACTICES.md` | Hot vs cold path, exit-code semantics |
 | `TEST-PLAN.md` | Tiered test plan (offline CI → live iii) |
 

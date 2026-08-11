@@ -727,3 +727,8 @@ DoD 3 MSN-0160: npm run test:iii-architecture self-test PASS (fetch, missing pac
 
 DoD 1 MSN-0161: MANIFEST skill iii-architecture + planner allowlist `.gitagent/planner/iii-architecture.allowlist.json` + pragma ratchet in check-async-boundaries — [iii-architecture: exit 0]
 DoD 2 MSN-0161: self-test PASS pragma-without-allowlist + pragma-with-allowlist override; npm run test:iii-architecture
+
+## MSN-0162 — default activation (advisory glue)
+
+DoD 1 MSN-0162: activate-opengantry-iii.mjs dry-run prints gate line + governed snippet; README/BEST-PRACTICES after-add-worker contract
+DoD 2 MSN-0162: node scripts/run-iii-architecture.mjs exit 0 — [iii-architecture: exit 0]

@@ -1,0 +1,58 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0162 default activation: advisory activate-opengantry-iii.mjs + README/BEST-PRACTICES after-add-worker contract
+msn_id: MSN-0162
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/run-iii-architecture.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0162: activate-opengantry-iii.mjs dry-run prints gate line + governed snippet; README/BEST-PRACTICES after-add-worker contract"
+    anchor: "1"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0162: node scripts/run-iii-architecture.mjs exit 0 — [iii-architecture: exit 0]"
+    anchor: "2"
+    status: PASS
+interrogation:
+  - finding_id: 9643d0bc591b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0025. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0025 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0162 is activation glue only.
+    adr_refs:
+      - ADR-0039
+  - finding_id: c6b28db36628
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key iii-integration; TMVC examples/iii-integration/.
+    adr_refs:
+      - ADR-0039
+  - finding_id: e2a17b81b981
+    kind: adr_conflict
+    question: Intent may relate to ADR-0035. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0035 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0162 is activation glue only.
+    adr_refs:
+      - ADR-0039
+  - finding_id: e9fbdffbbb52
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "node
+      examples/iii-integration/scripts/run-iii-architecture.mjs" with documented
+      success substring for verify.
+    operator_answer: "Gate: node
+      examples/iii-integration/scripts/run-iii-architecture.mjs exit 0;
+      activation script dry-run in EXECUTOR_LOG."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 2b36cb9b5097e38b4037f0357a9d9ed4368170cbf250a45786b4003de7ae8145
+declared_paths:
+  - examples/iii-integration/
