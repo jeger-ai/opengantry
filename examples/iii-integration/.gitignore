@@ -1,4 +1,3 @@
 .runtime/
 node_modules/
-package-lock.json
 target-repo/.git/
