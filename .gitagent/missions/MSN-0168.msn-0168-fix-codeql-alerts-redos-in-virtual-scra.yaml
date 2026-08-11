@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0168: linear trimTrailingSlashes in isVirtualScratchPath (CodeQL #10); execFileSync for git in mcp-legislation.test.ts (CodeQL #4); npm test 533 pass"
     anchor: "1"
-    status: PENDING
+    status: PASS
 interrogation:
   - finding_id: 02e5626f01ee
     kind: undefined_boundary

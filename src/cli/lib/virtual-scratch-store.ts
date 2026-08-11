@@ -25,10 +25,23 @@ export function createVirtualFlightId(): string {
   return crypto.randomUUID();
 }
 
+function normalizeRepoRelSlashes(repoRelPath: string): string {
+  return repoRelPath.replace(/\\/g, "/");
+}
+
+/** Trim trailing `/` without regex (avoids ReDoS on long slash runs). */
+function trimTrailingSlashes(s: string): string {
+  let end = s.length;
+  while (end > 0 && s[end - 1] === "/") {
+    end -= 1;
+  }
+  return end === s.length ? s : s.slice(0, end);
+}
+
 /** True when repo-relative path lives under `.gitagent/virtual/`. */
 export function isVirtualScratchPath(repoRelPath: string): boolean {
-  const norm = repoRelPath.replace(/\\/g, "/").replace(/\/+$/, "");
-  const root = REL_VIRTUAL_SCRATCH.replace(/\\/g, "/").replace(/\/+$/, "");
+  const norm = trimTrailingSlashes(normalizeRepoRelSlashes(repoRelPath));
+  const root = trimTrailingSlashes(normalizeRepoRelSlashes(REL_VIRTUAL_SCRATCH));
   return norm === root || norm.startsWith(`${root}/`);
 }
 

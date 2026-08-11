@@ -754,3 +754,7 @@ DoD 1 MSN-0166: @modelcontextprotocol/sdk 1.30.0 + @hono/node-server 2.1.0; npm 
 ## MSN-0167 — iii-integration Dependabot lockfile refresh
 
 DoD 1 MSN-0167: iii-integration lockfile hoisted snapshot refresh (MCP SDK 1.30.0, hono 4.13.1, fast-uri 3.1.5, ip-address 10.5.0); 11 OTel alerts remain blocked on iii-sdk upstream; validate-offline PASS
+
+## MSN-0168 — CodeQL remediation
+
+DoD 1 MSN-0168: linear trimTrailingSlashes in isVirtualScratchPath (CodeQL #10); execFileSync for git in mcp-legislation.test.ts (CodeQL #4); npm test 533 pass

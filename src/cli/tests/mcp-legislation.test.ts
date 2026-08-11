@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { handleDraftLegislation } from "../lib/mcp-draft-legislation.js";
 import { handleExecuteLegislation } from "../lib/mcp-execute-legislation.js";
 import { handleCheckSignature } from "../lib/mcp-check-signature.js";
@@ -114,8 +114,8 @@ test("mcp legislation: check_signature valid after planner commit", () => {
     const executed = handleExecuteLegislation(draft.draft_token);
     if (executed.status !== "pending_signature") return;
 
-    execSync(`git add ${executed.mission_file_path}`, { cwd: dest, stdio: "pipe" });
-    execSync(`git commit -m "${executed.commit_message}"`, { cwd: dest, stdio: "pipe" });
+    execFileSync("git", ["add", executed.mission_file_path], { cwd: dest, stdio: "pipe" });
+    execFileSync("git", ["commit", "-m", executed.commit_message], { cwd: dest, stdio: "pipe" });
 
     const check = handleCheckSignature(executed.mission_file_path);
     assert.equal(check.status, "signature_valid");
