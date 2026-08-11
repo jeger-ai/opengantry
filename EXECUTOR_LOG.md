@@ -745,7 +745,7 @@ DoD 2 MSN-0164: dev-validate-core OK + validate-offline OK — substrate wiring 
 
 ## MSN-0165 — E2E governance automation (Tier 4/5)
 
-DoD 1 MSN-0165: scripts/test-e2e.mjs + npm run test:e2e — governed gantry::verify forbidden; AUTH_ERROR without/invalid token; authorized demo::work 200; clean SIGTERM teardown
+DoD 1 MSN-0165 (re-attest): node examples/iii-integration/scripts/test-e2e.mjs exit 0 after lockfile refresh — governed gantry::verify forbidden; AUTH_ERROR without/invalid token; authorized demo::work 200; clean SIGTERM teardown
 
 ## MSN-0166 — root MCP dependency bump
 

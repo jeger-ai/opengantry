@@ -5,7 +5,7 @@ skill_key: iii-integration
 gate_command: node examples/iii-integration/scripts/test-e2e.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0165: scripts/test-e2e.mjs + npm run test:e2e — governed gantry::verify forbidden; AUTH_ERROR without/invalid token; authorized demo::work 200; clean SIGTERM teardown"
+    trace_quote: "DoD 1 MSN-0165 (re-attest): node examples/iii-integration/scripts/test-e2e.mjs exit 0 after lockfile refresh — governed gantry::verify forbidden; AUTH_ERROR without/invalid token; authorized demo::work 200; clean SIGTERM teardown"
     anchor: "1"
     status: PASS
 interrogation:
