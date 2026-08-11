@@ -5,9 +5,9 @@ skill_key: iii-integration
 gate_command: node examples/iii-integration/scripts/validate-offline.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0167: iii-integration lockfile hoisted snapshot refresh (MCP SDK 1.30.0, hono 4.13.1, fast-uri 3.1.5, ip-address 10.5.0); 11 OTel alerts remain blocked on iii-sdk upstream; validate-offline PASS"
     anchor: "1"
-    status: PENDING
+    status: PASS
 interrogation:
   - finding_id: a7bb97b7d55a
     kind: adr_conflict
