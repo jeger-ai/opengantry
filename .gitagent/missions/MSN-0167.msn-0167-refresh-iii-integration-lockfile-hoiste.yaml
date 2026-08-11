@@ -1,0 +1,27 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0167: Refresh iii-integration lockfile hoisted root snapshot and OTel npm overrides to clear Dependabot alerts
+msn_id: MSN-0167
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: db4a881ab72c
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: still — clear remaining Dependabot alerts in
+      examples/iii-integration; skill_key iii-integration; paths package.json
+      and package-lock.json only.
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: c4b4e02ba35705200600f2c86422797e15232bd316dbb52111de51dd133800d7
+declared_paths:
+  - examples/iii-integration/package-lock.json
+  - examples/iii-integration/package.json
