@@ -750,3 +750,7 @@ DoD 1 MSN-0165: scripts/test-e2e.mjs + npm run test:e2e — governed gantry::ver
 ## MSN-0166 — root MCP dependency bump
 
 DoD 1 MSN-0166: @modelcontextprotocol/sdk 1.30.0 + @hono/node-server 2.1.0; npm audit 0 vulnerabilities at root; npm test 533 pass
+
+## MSN-0167 — iii-integration Dependabot lockfile refresh
+
+DoD 1 MSN-0167: iii-integration lockfile hoisted snapshot refresh (MCP SDK 1.30.0, hono 4.13.1, fast-uri 3.1.5, ip-address 10.5.0); 11 OTel alerts remain blocked on iii-sdk upstream; validate-offline PASS

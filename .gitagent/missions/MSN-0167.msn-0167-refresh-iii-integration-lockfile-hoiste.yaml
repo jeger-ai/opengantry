@@ -5,10 +5,19 @@ skill_key: iii-integration
 gate_command: node examples/iii-integration/scripts/validate-offline.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    trace_quote: "DoD 1 MSN-0167: iii-integration lockfile hoisted snapshot refresh (MCP SDK 1.30.0, hono 4.13.1, fast-uri 3.1.5, ip-address 10.5.0); 11 OTel alerts remain blocked on iii-sdk upstream; validate-offline PASS"
     anchor: "1"
-    status: PENDING
+    status: PASS
 interrogation:
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Proceed — lockfile refresh only; ADR-0022 not applicable.
+    adr_refs:
+      - ADR-0022
   - finding_id: db4a881ab72c
     kind: risk_escalation
     question: "Triage escalated: Multiple skill matches: iii-integration,
@@ -16,12 +25,12 @@ interrogation:
       authorize this work?"
     hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
       after operator confirmation.
-    operator_answer: still — clear remaining Dependabot alerts in
-      examples/iii-integration; skill_key iii-integration; paths package.json
-      and package-lock.json only.
+    operator_answer: skill_key iii-integration; refresh package-lock.json hoisted
+      snapshot only; OTel overrides rejected (break iii-sdk e2e).
     adr_refs:
       - ADR-0039
-interrogation_sha256: c4b4e02ba35705200600f2c86422797e15232bd316dbb52111de51dd133800d7
+interrogation_sha256: 9cc44772cf80b7b296d6c672338566575f3a9dcc7dbc2e979e73e6b15c174a77
 declared_paths:
+  - .gitagent/missions/MSN-0167.msn-0167-refresh-iii-integration-lockfile-hoiste.yaml
+  - EXECUTOR_LOG.md
   - examples/iii-integration/package-lock.json
-  - examples/iii-integration/package.json

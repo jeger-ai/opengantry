@@ -2,22 +2,13 @@
 # Legislated intent: MSN-0165: Automate Tier 4 (Governed Port) and Tier 5 (Security) manual checklists. Build scripts/test-e2e.mjs to spawn the iii engine as a child process using the integration config.yaml. The script must assert that unauthorized requests to port 49135 fail (session::auth interception), authorized requests succeed, and that governed actions cannot be triggered via port 49134. Ensure clean child process teardown (no zombie processes). Add npm run test:e2e and update TEST-PLAN.md to reflect the automation.
 msn_id: MSN-0165
 skill_key: iii-integration
-gate_command: npm run test:e2e
+gate_command: node examples/iii-integration/scripts/test-e2e.mjs
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0165: scripts/test-e2e.mjs + npm run test:e2e — governed gantry::verify forbidden; AUTH_ERROR without/invalid token; authorized demo::work 200; clean SIGTERM teardown"
     anchor: "1"
     status: PASS
 interrogation:
-  - finding_id: 313a4636938e
-    kind: missing_test_criteria
-    question: Gate command is not on the skill allowlist. Authorize this gate and
-      its success criteria on the record.
-    hypothesis: Planner accepts gate_command "npm run test:e2e" with documented
-      success substring for verify.
-    operator_answer: "Gate: npm run test:e2e (from examples/iii-integration/) exit 0
-      only. Asserts internal-port bleed rejection, unauthorized 401/403 on
-      49135, authorized 200 on 49135, and clean SIGTERM teardown."
   - finding_id: 3e483990523c
     kind: risk_escalation
     question: "Triage escalated: Intent contains risk_keyword: security. Which
@@ -29,6 +20,19 @@ interrogation:
       not a new security skill.
     adr_refs:
       - ADR-0039
-interrogation_sha256: 0c2eeee650c4e98bf3229b65b9138d4b4ec0271ef4d81a684b141ef3adae6ab3
+  - finding_id: 4798fb686a46
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "node
+      examples/iii-integration/scripts/test-e2e.mjs" with documented success
+      substring for verify.
+    operator_answer: "Gate: node examples/iii-integration/scripts/test-e2e.mjs exit
+      0 only. Asserts internal-port bleed rejection, unauthorized 401/403 on
+      49135, authorized 200 on 49135, and clean SIGTERM teardown."
+interrogation_sha256: d8905c80a8c3acafcee191e51336d03639e730d8d4a0933c8d00a1bf5c0adc82
 declared_paths:
+  - .gitagent/missions/MSN-0165.msn-0165-automate-tier-4-governed-port-and-tier-.yaml
+  - .gitagent/missions/MSN-0167.msn-0167-refresh-iii-integration-lockfile-hoiste.yaml
+  - EXECUTOR_LOG.md
   - examples/iii-integration/
