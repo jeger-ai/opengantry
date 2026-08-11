@@ -716,3 +716,14 @@ DoD 1 MSN-0159: self-contained workers/opengantry with iii worker add path, publ
 DoD 1 MSN-0160: run-iii-architecture.mjs exit 0 on workers; schemas + session-auth package.json; BEST-PRACTICES — [iii-architecture: exit 0]
 DoD 2 MSN-0160: deliberate fetch violation → exit 1 then revert → exit 0; GANTRY_III_ARCH_FORCE_FATAL=1 → FATAL EXIT 2 on stderr
 DoD 3 MSN-0160: npm run test:iii-architecture self-test PASS (fetch, missing package.json, imported register id, ts, global)
+
+## MSN-0161 — substrate lock (iii-architecture skill + HTTP pragma ratchet)
+
+### Soft blocker (iii-hq/workers wild tree)
+
+- Clone: shallow `https://github.com/iii-hq/workers` → `/tmp/opengantry-soft-blocker/iii-hq-workers`
+- Scan: `node examples/iii-integration/scripts/run-iii-architecture.mjs --root /tmp/opengantry-soft-blocker/iii-hq-workers` → **exit 1** (1144 violations), **not exit 2**
+- Triage by rule_id: worker/js-only ~1070, payload/missing-schema ~42, worker/package-json ~18, durable-state/fs-writes ~10, durable-state/module-bags ~3, durable-state/global-process ~1
+
+DoD 1 MSN-0161: MANIFEST skill iii-architecture + planner allowlist `.gitagent/planner/iii-architecture.allowlist.json` + pragma ratchet in check-async-boundaries — [iii-architecture: exit 0]
+DoD 2 MSN-0161: self-test PASS pragma-without-allowlist + pragma-with-allowlist override; npm run test:iii-architecture

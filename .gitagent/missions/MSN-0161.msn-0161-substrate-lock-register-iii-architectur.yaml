@@ -1,0 +1,89 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0161 substrate lock: register iii-architecture MANIFEST skill, planner iii-architecture.allowlist.json for http_connector_workers, pragma ratchet in check-async-boundaries, skills/iii-architecture.md
+msn_id: MSN-0161
+skill_key: substrate
+gate_command: node examples/iii-integration/scripts/run-iii-architecture.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0161: MANIFEST skill iii-architecture + planner allowlist `.gitagent/planner/iii-architecture.allowlist.json` + pragma ratchet in check-async-boundaries — [iii-architecture: exit 0]"
+    anchor: "1"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0161: self-test PASS pragma-without-allowlist + pragma-with-allowlist override; npm run test:iii-architecture"
+    anchor: "2"
+    status: PASS
+interrogation:
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0161 is substrate skill
+      registration and planner allowlist only.
+    adr_refs:
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0161 is substrate skill
+      registration and planner allowlist only.
+    adr_refs:
+      - ADR-0023
+  - finding_id: 5d28690ccf7e
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: substrate, iii-integration
+      — escalate to Teacher. Which skill_key and TMVC scope authorize this
+      work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key: substrate. TMVC: MANIFEST.json,
+      .gitagent/planner/iii-architecture.allowlist.json,
+      examples/iii-integration/scripts/, skills/iii-architecture.md,
+      skills/iii-integration.md cross-link only."
+    adr_refs:
+      - ADR-0039
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0161 is substrate skill
+      registration and planner allowlist only.
+    adr_refs:
+      - ADR-0026
+  - finding_id: e9fbdffbbb52
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "node
+      examples/iii-integration/scripts/run-iii-architecture.mjs" with documented
+      success substring for verify.
+    operator_answer: "skill_key: substrate. TMVC: MANIFEST.json,
+      .gitagent/planner/iii-architecture.allowlist.json,
+      examples/iii-integration/scripts/, skills/iii-architecture.md,
+      skills/iii-integration.md cross-link only."
+    adr_refs:
+      - ADR-0026
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "skill_key: substrate. TMVC: MANIFEST.json,
+      .gitagent/planner/iii-architecture.allowlist.json,
+      examples/iii-integration/scripts/, skills/iii-architecture.md,
+      skills/iii-integration.md cross-link only."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 7a146cacf49f769a76e433aef8212264d03357211f92bef86058a7ff20bdbb56
+declared_paths:
+  - .gitagent/foreman/MANIFEST.json
+  - .gitagent/planner/iii-architecture.allowlist.json
+  - examples/iii-integration/
+  - skills/

@@ -32,6 +32,15 @@
         "node examples/iii-integration/demo.mjs",
         "npm run validate"
       ]
+    },
+    "iii-architecture": {
+      "desc": "iii worker architecture lint profile (cold path) under examples/iii-integration/.",
+      "trust_threshold": "Tier-2",
+      "tmvc_roots": ["examples/iii-integration/"],
+      "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md"],
+      "gate_commands": [
+        "node examples/iii-integration/scripts/run-iii-architecture.mjs"
+      ]
     }
   },
   "path_risks": {
