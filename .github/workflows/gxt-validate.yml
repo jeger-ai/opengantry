@@ -52,6 +52,12 @@ jobs:
       - name: Build gantry
         run: npm run build
 
+      - name: iii integration offline validate
+        run: |
+          cd examples/iii-integration
+          npm ci
+          node scripts/validate-offline.mjs
+
       - name: gantry check (MANIFEST + Rule 4.4 skills sync)
         run: node dist/cli/index.js check
 

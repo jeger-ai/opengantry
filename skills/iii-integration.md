@@ -4,7 +4,9 @@ Manifest key `iii-integration`. Product iii.dev worker for **OpenGantry governan
 
 Install locally: `iii worker add ./workers/opengantry` from `examples/iii-integration/`.
 
-**Cold-path lint (MSN-0160+):** `node examples/iii-integration/scripts/run-iii-architecture.mjs` — structural lint profile (not a bulletproof cage). See `BEST-PRACTICES.md`. MANIFEST skill: [`iii-architecture`](./iii-architecture.md) (pragma + planner allowlist, MSN-0161).
+**Offline gate (MANIFEST):** `node examples/iii-integration/scripts/validate-offline.mjs` — atomic composite of hot path (`demo.mjs`), cold lint (`run-iii-architecture.mjs`), and fixture self-test. Exit 0 only. Local alias: `npm run validate` from `examples/iii-integration/`.
+
+**Cold-path lint:** [`iii-architecture`](./iii-architecture.md) — structural AST profile, planner HTTP allowlist (MSN-0161). See `examples/iii-integration/BEST-PRACTICES.md`.
 
 **Fail-closed:** promote-class calls require a valid verdict token. Missing GXT files do not unlock governance. Escape hatch: `GANTRY_BYPASS_MODE=true` (operator-opt-in only).
 

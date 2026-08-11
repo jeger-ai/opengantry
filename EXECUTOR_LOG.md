@@ -737,3 +737,8 @@ DoD 2 MSN-0162: node scripts/run-iii-architecture.mjs exit 0 — [iii-architectu
 
 DoD 1 MSN-0163: validate-offline.mjs chains demo + cold lint + self-test — [iii-integration: offline validate OK]
 DoD 2 MSN-0163: --root workers/opengantry exit 0; single-worker-scan-root self-test PASS
+
+## MSN-0164 — substrate lock (MANIFEST + CI)
+
+DoD 1 MSN-0164: MANIFEST iii-integration gate_command validate-offline.mjs; gxt-validate manifest job runs offline validate; skills/iii-integration.md Rule 4.4 sync
+DoD 2 MSN-0164: dev-validate-core OK + validate-offline OK — substrate wiring verified (mission gate dev-validate-core avoids verify-pr-missions recursion with npm run validate)

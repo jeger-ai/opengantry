@@ -130,10 +130,14 @@ Admission context must include `msn_id`, `holder_id`, `worktree_path` (absolute 
 - workers.iii.dev registry publish (track B)
 - Upstream harness default install
 
-## CI (MSN-0164 — planned substrate lock)
+## CI (MSN-0164)
 
-Phase 1 (MSN-0163) ships the composite gate locally. Phase 2 (MSN-0164) wires `npm run validate` into `.github/workflows/gxt-validate.yml` and promotes it to the `iii-integration` MANIFEST `gate_command`.
+The `manifest` job in `.github/workflows/gxt-validate.yml` runs:
 
-Until MSN-0164 lands, run `npm run validate` manually on every change under `examples/iii-integration/`.
+```bash
+cd examples/iii-integration && npm ci && node scripts/validate-offline.mjs
+```
+
+MANIFEST `iii-integration` `gate_command`: `node examples/iii-integration/scripts/validate-offline.mjs` (exit 0 only).
 
 Optional nightly or pre-release job: Tier 2 + Tier 3 on a runner with `iii` installed.

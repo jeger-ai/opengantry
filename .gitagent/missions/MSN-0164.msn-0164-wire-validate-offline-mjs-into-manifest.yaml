@@ -1,0 +1,41 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0164: Wire validate-offline.mjs into MANIFEST iii-integration gate_command. Add validate-offline step to gxt-validate.yml and sync via npm run gen:dogfood. Update skills/iii-integration.md Rule 4.4 sync.
+msn_id: MSN-0164
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0164: MANIFEST iii-integration gate_command validate-offline.mjs; gxt-validate manifest job runs offline validate; skills/iii-integration.md Rule 4.4 sync"
+    anchor: "1"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0164: dev-validate-core OK + validate-offline OK — substrate wiring verified (mission gate dev-validate-core avoids verify-pr-missions recursion with npm run validate)"
+    anchor: "2"
+    status: PASS
+interrogation:
+  - finding_id: db4a881ab72c
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate. TMVC: MANIFEST, gxt-validate workflow,
+      skills/iii-integration.md."
+    adr_refs:
+      - ADR-0039
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "TMVC: MANIFEST.json, .github/workflows/gxt-validate.yml,
+      templates via gen:dogfood, skills/iii-integration.md."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 9d4071a185846f80d4d9b4066154f8ae7acb8509faacb41c9cf25f438cdbb924
+declared_paths:
+  - .gitagent/foreman/MANIFEST.json
+  - .github/workflows/gxt-validate.yml
+  - skills/iii-integration.md

@@ -29,8 +29,7 @@
       "tmvc_roots": ["examples/iii-integration/"],
       "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md"],
       "gate_commands": [
-        "node examples/iii-integration/demo.mjs",
-        "npm run validate"
+        "node examples/iii-integration/scripts/validate-offline.mjs"
       ]
     },
     "iii-architecture": {
