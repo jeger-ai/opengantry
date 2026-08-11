@@ -1,0 +1,57 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0163-A: Create validate-offline.mjs composite gate (runs demo, architecture lint, and self-test; strict exit codes). Fix scan-root logic to support single-worker directories. Update BEST-PRACTICES, README, and TEST-PLAN. No MANIFEST or root CI changes.
+msn_id: MSN-0163
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0163: validate-offline.mjs chains demo + cold lint + self-test — [iii-integration: offline validate OK]"
+    anchor: "1"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0163: --root workers/opengantry exit 0; single-worker-scan-root self-test PASS"
+    anchor: "2"
+    status: PASS
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0163-A is integration wiring only.
+    adr_refs:
+      - ADR-0039
+  - finding_id: 32bce3dabee6
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "node
+      examples/iii-integration/scripts/validate-offline.mjs" with documented
+      success substring for verify.
+    operator_answer: "Gate: node
+      examples/iii-integration/scripts/validate-offline.mjs exit 0 only; chains
+      demo.mjs, run-iii-architecture.mjs, and --self-test."
+    adr_refs:
+      - ADR-0039
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Reject ADR applicability; MSN-0163-A is integration wiring only.
+    adr_refs:
+      - ADR-0039
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key iii-integration; TMVC examples/iii-integration/.
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 0ac15d2b4bfc16dbccde65e6d12d999e8a6a1eadff7701ae4d9ec6b062f9d7ba
+declared_paths:
+  - examples/iii-integration/

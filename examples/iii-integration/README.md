@@ -26,7 +26,7 @@ Optional: `node scripts/activate-opengantry-iii.mjs --write-activation-md` write
 
 **Adopter contract:**
 
-1. Bind **cold lint** to worker-touching missions and CI: `node scripts/run-iii-architecture.mjs` (exit 0 only).
+1. Bind **offline validate** to worker-touching missions and CI: `npm run validate` (chains demo + cold lint + self-test; exit 0 only).
 2. Wire the **governed listener** to `gantry::middleware` + OpenGantry RBAC hooks (see `config.yaml` port 49135).
 3. Run cold lint before hot promote; promote-class triggers require a verdict token.
 
@@ -63,16 +63,19 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 | `target-repo/` | Fixture repo for `gantry::verify` |
 | `demo.mjs` | Offline gate (MSN-0159 runtime) |
 | `scripts/run-iii-architecture.mjs` | Cold-path lint profile gate (MSN-0160+) |
+| `scripts/validate-offline.mjs` | Composite offline gate: demo + cold lint + self-test (MSN-0163) |
 | `scripts/activate-opengantry-iii.mjs` | Advisory activation checklist (MSN-0162) |
 | `BEST-PRACTICES.md` | Hot vs cold path, exit-code semantics |
 | `TEST-PLAN.md` | Tiered test plan (offline CI → live iii) |
 
-## Lint profile (cold path)
+## Offline validate (hot + cold)
 
 ```bash
 npm install
-node scripts/run-iii-architecture.mjs   # exit 0 = clean (gantry verify)
-npm run test:iii-architecture         # fixture self-test
+npm run validate                        # composite gate (recommended)
+node scripts/run-iii-architecture.mjs   # cold lint only; default scan root workers/
+node scripts/run-iii-architecture.mjs --root workers/opengantry  # single-worker scan root
+npm run test:iii-architecture           # fixture self-test only
 ```
 
 See [BEST-PRACTICES.md](./BEST-PRACTICES.md). AST lint is a speed bump; runtime promote still uses the OpenGantry worker.
@@ -86,7 +89,7 @@ See [TEST-PLAN.md](./TEST-PLAN.md) for tiered coverage: offline CI gate (`demo.m
 ```bash
 cd examples/iii-integration
 npm install
-node demo.mjs
+npm run validate
 ```
 
 ## Live with iii

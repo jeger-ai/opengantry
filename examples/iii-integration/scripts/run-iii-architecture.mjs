@@ -192,6 +192,22 @@ export async function go() { await fetch('https://x'); }
     });
   }
 
+  // single-worker scan root (package.json at --root)
+  {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "iii-arch-single-root-"));
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "solo", private: true, type: "module" }),
+    );
+    fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "src", "index.js"), "export const ok = 1;\n");
+    const findings = await scanWorkersTree(dir, scanOpts);
+    cases.push({
+      name: "single-worker-scan-root",
+      ok: !findings.some((f) => f.rule_id === "worker/package-json"),
+    });
+  }
+
   let failed = 0;
   for (const c of cases) {
     if (!c.ok) {

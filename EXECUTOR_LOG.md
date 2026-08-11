@@ -732,3 +732,8 @@ DoD 2 MSN-0161: self-test PASS pragma-without-allowlist + pragma-with-allowlist 
 
 DoD 1 MSN-0162: activate-opengantry-iii.mjs dry-run prints gate line + governed snippet; README/BEST-PRACTICES after-add-worker contract
 DoD 2 MSN-0162: node scripts/run-iii-architecture.mjs exit 0 — [iii-architecture: exit 0]
+
+## MSN-0163-A — composite offline gate + scan-root ergonomics
+
+DoD 1 MSN-0163: validate-offline.mjs chains demo + cold lint + self-test — [iii-integration: offline validate OK]
+DoD 2 MSN-0163: --root workers/opengantry exit 0; single-worker-scan-root self-test PASS

@@ -32,11 +32,25 @@ Optional human token on stdout when clean: `[iii-architecture: exit 0]`.
 ```bash
 cd examples/iii-integration
 npm install
-node scripts/run-iii-architecture.mjs          # mission gate
-npm run test:iii-architecture                 # fixture self-test + clean workers
+npm run validate                              # composite: demo + cold lint + self-test
+node scripts/run-iii-architecture.mjs          # cold lint only (default scan root: workers/)
+npm run test:iii-architecture                 # fixture self-test
 ```
 
 MANIFEST skill: `iii-architecture` (see `skills/iii-architecture.md`).
+
+## Scan root
+
+| Layout | `--root` | Example |
+|--------|----------|---------|
+| Multi-worker (default) | Directory containing worker subdirs | `workers/` (each child has `package.json`) |
+| Single worker | Worker directory itself | `workers/opengantry/` when `package.json` is at that path |
+
+If `--root` has a top-level `package.json`, the scanner treats it as **one worker** (no orphan `src/` false positives). Do **not** point `--root` at `workers/opengantry/src/`.
+
+## Dogfood note (opengantry worker)
+
+`lease-store.js` writes `<repo_root>/.gitagent/leases.json` by design. Paths are resolved at runtime (not string literals in the write call); the scanner allows this when the worker references `.gitagent` and uses dynamic paths — intentional for the product worker.
 
 ## Rules (summary)
 

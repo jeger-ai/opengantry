@@ -14,8 +14,10 @@ Run from `examples/iii-integration/`:
 
 ```bash
 npm install
-node demo.mjs          # gate: must print "demo.mjs: all checks passed"
-node loadtest.mjs      # optional concurrency smoke
+npm run validate                               # composite: demo + cold lint + self-test
+node demo.mjs                                  # hot path only
+node scripts/run-iii-architecture.mjs          # cold lint only
+npm run test:iii-architecture                  # fixtures only
 ```
 
 | ID | Area | Check | Pass criteria |
@@ -128,13 +130,10 @@ Admission context must include `msn_id`, `holder_id`, `worktree_path` (absolute 
 - workers.iii.dev registry publish (track B)
 - Upstream harness default install
 
-## CI recommendation
+## CI (MSN-0164 — planned substrate lock)
 
-Add to `iii-integration` skill gate (already):
+Phase 1 (MSN-0163) ships the composite gate locally. Phase 2 (MSN-0164) wires `npm run validate` into `.github/workflows/gxt-validate.yml` and promotes it to the `iii-integration` MANIFEST `gate_command`.
 
-```yaml
-gate_command: node examples/iii-integration/demo.mjs
-gate_success_substring: all checks passed
-```
+Until MSN-0164 lands, run `npm run validate` manually on every change under `examples/iii-integration/`.
 
 Optional nightly or pre-release job: Tier 2 + Tier 3 on a runner with `iii` installed.

@@ -51,8 +51,13 @@ export async function loadAcorn() {
   return { acorn, walk };
 }
 
+export function isSingleWorkerScanRoot(scanRoot) {
+  return fs.existsSync(path.join(scanRoot, "package.json"));
+}
+
 export function listWorkerRoots(scanRoot) {
   if (!fs.existsSync(scanRoot)) return [];
+  if (isSingleWorkerScanRoot(scanRoot)) return [scanRoot];
   return fs
     .readdirSync(scanRoot, { withFileTypes: true })
     .filter((d) => d.isDirectory())
@@ -63,6 +68,7 @@ export function listWorkerRoots(scanRoot) {
 export function findOrphanSourceDirs(scanRoot) {
   const findings = [];
   if (!fs.existsSync(scanRoot)) return findings;
+  if (isSingleWorkerScanRoot(scanRoot)) return findings;
   for (const ent of fs.readdirSync(scanRoot, { withFileTypes: true })) {
     if (!ent.isDirectory()) continue;
     const dir = path.join(scanRoot, ent.name);
@@ -198,6 +204,7 @@ export function readWorkerExempt(workerDir) {
 }
 
 export function workerNameOf(file, scanRoot) {
+  if (isSingleWorkerScanRoot(scanRoot)) return path.basename(scanRoot);
   const rel = path.relative(scanRoot, file);
   const top = rel.split(path.sep)[0];
   return top;
