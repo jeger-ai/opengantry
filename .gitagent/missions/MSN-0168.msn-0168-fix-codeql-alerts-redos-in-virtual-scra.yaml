@@ -39,5 +39,7 @@ interrogation:
       - ADR-0039
 interrogation_sha256: b68caff61361558a1f570de48096fbc8bdc4b143c82c056ec04a078977ead31a
 declared_paths:
+  - .gitagent/missions/MSN-0168.msn-0168-fix-codeql-alerts-redos-in-virtual-scra.yaml
+  - EXECUTOR_LOG.md
   - src/cli/lib/virtual-scratch-store.ts
   - src/cli/tests/mcp-legislation.test.ts
