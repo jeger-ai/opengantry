@@ -1,0 +1,34 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0165: Automate Tier 4 (Governed Port) and Tier 5 (Security) manual checklists. Build scripts/test-e2e.mjs to spawn the iii engine as a child process using the integration config.yaml. The script must assert that unauthorized requests to port 49135 fail (session::auth interception), authorized requests succeed, and that governed actions cannot be triggered via port 49134. Ensure clean child process teardown (no zombie processes). Add npm run test:e2e and update TEST-PLAN.md to reflect the automation.
+msn_id: MSN-0165
+skill_key: iii-integration
+gate_command: npm run test:e2e
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 313a4636938e
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "npm run test:e2e" with documented
+      success substring for verify.
+    operator_answer: "Gate: npm run test:e2e (from examples/iii-integration/) exit 0
+      only. Asserts internal-port bleed rejection, unauthorized 401/403 on
+      49135, authorized 200 on 49135, and clean SIGTERM teardown."
+  - finding_id: 3e483990523c
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: security. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key iii-integration; TMVC examples/iii-integration/.
+      Security keywords refer to automated Tier 4/5 governance regression tests,
+      not a new security skill.
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 0c2eeee650c4e98bf3229b65b9138d4b4ec0271ef4d81a684b141ef3adae6ab3
+declared_paths:
+  - examples/iii-integration/
