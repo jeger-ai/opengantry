@@ -1,0 +1,33 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0166: Bump @modelcontextprotocol/sdk to 1.30.0 and npm audit fix root lockfile (MCP @hono/node-server GHSA-frvp-7c67-39w9, brace-expansion). npm test gate.
+msn_id: MSN-0166
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0166: @modelcontextprotocol/sdk 1.30.0 + @hono/node-server 2.1.0; npm audit 0 vulnerabilities at root; npm test 533 pass"
+    anchor: "1"
+    status: PASS
+interrogation:
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Proceed under gantry scope for dependency bump MSN-0166.
+    adr_refs:
+      - ADR-0039
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key gantry; TMVC package.json + package-lock.json.
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 847d8bbf258770b7ba2bb8cc2325753064f088ce37cb34cd60c9c04af2ac92c8
+declared_paths:
+  - package-lock.json
+  - package.json
