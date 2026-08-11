@@ -64,6 +64,7 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 | `demo.mjs` | Offline gate (MSN-0159 runtime) |
 | `scripts/run-iii-architecture.mjs` | Cold-path lint profile gate (MSN-0160+) |
 | `scripts/validate-offline.mjs` | Composite offline gate: demo + cold lint + self-test (MSN-0163) |
+| `scripts/test-e2e.mjs` | Live dual-port governance E2E (MSN-0165): `npm run test:e2e` |
 | `scripts/activate-opengantry-iii.mjs` | Advisory activation checklist (MSN-0162) |
 | `BEST-PRACTICES.md` | Hot vs cold path, exit-code semantics |
 | `TEST-PLAN.md` | Tiered test plan (offline CI → live iii) |

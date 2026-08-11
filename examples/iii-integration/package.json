@@ -6,6 +6,7 @@
     "demo": "node demo.mjs",
     "loadtest": "node loadtest.mjs",
     "validate": "node scripts/validate-offline.mjs",
+    "test:e2e": "node scripts/test-e2e.mjs",
     "test:iii-architecture": "node scripts/run-iii-architecture.mjs --self-test",
     "worker:opengantry": "node workers/opengantry/src/index.js",
     "worker:session-auth": "node workers/session-auth/src/index.js"

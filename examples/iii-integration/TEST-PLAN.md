@@ -101,27 +101,27 @@ iii trigger gantry::verify --json "{
 }"
 ```
 
-## Tier 4 — Governed port (manual, end-to-end)
+## Tier 4 + Tier 5 — Governed port + security (automated, MSN-0165)
 
-Uses `config.yaml` listener **49135** (`middleware_function_id: gantry::middleware`).
+~~Manual Tier 4 / Tier 5 checklists retired.~~ Run from `examples/iii-integration/` (ports **49134** / **49135** must be free):
 
-| ID | Step | Pass criteria |
-|----|------|---------------|
-| T4-01 | Start `session-auth` worker on 49135 | `session::auth` responds |
-| T4-02 | Promote-class call without verdict on governed port | Blocked by middleware |
-| T4-03 | Promote-class call with valid verdict token in context | Forwarded to target function |
-| T4-04 | Call without `worktree_path` in context | Hard error from middleware |
+```bash
+npm run test:e2e
+```
+
+`scripts/test-e2e.mjs` spawns `iii` with `config.yaml`, starts host `opengantry` + `session-auth`, then asserts:
+
+| ID | Check | Pass criteria |
+|----|-------|---------------|
+| T4-01 | Engine bind | Listeners on **49134** (internal) and **49135** (governed) |
+| T4-02 / T5-gov | Governed hook isolation | `gantry::verify` via **49135** → forbidden / not allowed (not in `expose_functions`) |
+| T5-01 | Unauthorized governed | No / invalid Bearer on **49135** → `session::auth` rejection (AUTH / 401/403 class) |
+| T5-02 | Authorized governed | Valid session admission token → `demo::work` succeeds (middleware handoff) |
+| T5-03 | Teardown | `SIGTERM` children; ports free; no zombie `iii` listeners |
+
+Trusted internal path still serves `gantry::verify` on **49134** for host workers. Network policy must keep sandboxes off **49134** (documented gap; not simulated here).
 
 Admission context must include `msn_id`, `holder_id`, `worktree_path` (absolute repo path).
-
-## Tier 5 — Security regression (manual, release checklist)
-
-| ID | Scenario | Expected |
-|----|----------|----------|
-| T5-01 | No GXT files in repo; promote without verdict | Fail-closed (not passthrough) |
-| T5-02 | `GANTRY_BYPASS_MODE` unset in production-like env | No bypass |
-| T5-03 | Lease file after promote cycle | Persists at `.gitagent/leases.json` under adopters' repo |
-| T5-04 | Internal port 49134 from sandbox network | Unreachable (network policy) |
 
 ## Not in scope (documented gaps)
 

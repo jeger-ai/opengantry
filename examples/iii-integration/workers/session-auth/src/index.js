@@ -7,7 +7,8 @@ import {
   verifySessionAdmissionToken,
 } from "./admission.js";
 
-const url = process.env.III_URL ?? "ws://127.0.0.1:49135";
+// Auth workers connect to the trusted bus; the governed listener calls session::auth.
+const url = process.env.III_URL ?? "ws://127.0.0.1:49134";
 
 const { registerWorker } = await import("iii-sdk");
 const worker = registerWorker(url, {
