@@ -11,6 +11,6 @@
   },
   "dependencies": {
     "@jeger-ai/opengantry": "file:../../../../",
-    "iii-sdk": "^0.22.0"
+    "iii-sdk": "^0.22.1"
   }
 }

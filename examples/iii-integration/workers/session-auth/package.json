@@ -7,6 +7,6 @@
     "start": "node src/index.js"
   },
   "dependencies": {
-    "iii-sdk": "^0.22.0"
+    "iii-sdk": "^0.22.1"
   }
 }

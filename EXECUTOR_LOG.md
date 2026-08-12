@@ -758,3 +758,7 @@ DoD 1 MSN-0167: iii-integration lockfile hoisted snapshot refresh (MCP SDK 1.30.
 ## MSN-0168 — CodeQL remediation
 
 DoD 1 MSN-0168: linear trimTrailingSlashes in isVirtualScratchPath (CodeQL #10); execFileSync for git in mcp-legislation.test.ts (CodeQL #4); npm test 533 pass
+
+## MSN-0169 — iii-sdk 0.22.1 bump
+
+DoD 1 MSN-0169: iii-sdk ^0.22.1 in integration + worker lockfiles; validate-offline PASS
