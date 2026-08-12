@@ -58,9 +58,9 @@ process.stdout.write(JSON.stringify({
     `- Forbidden: ${forbidden.join(", ") || "(none)"}`,
     `- Trace sink: ${payload.GXT_EXECUTOR_LOG || "EXECUTOR_LOG.md"}`,
     "",
-    "Executor loop: edit within TMVC → append PASS quotes to EXECUTOR_LOG.md → gantry verify --mission … → npm run validate",
+    "Executor graph: edit within TMVC → append PASS quotes to EXECUTOR_LOG.md → gantry verify --mission … → npm run validate",
     "MCP tools: gxt_draft_legislation, gxt_execute_legislation, gxt_check_signature, gxt_pin_mission, gxt_runtime_env, gxt_verify (see .cursor/mcp.json).",
-    "IDE Agent edits are advisory TMVC; shell substrate writes are hook-guarded. Full loop: docs/DEVELOPMENT.md",
+    "IDE Agent edits are advisory TMVC; shell substrate writes are hook-guarded. Full graph: docs/DEVELOPMENT.md",
   ].join("\n"),
 }));
 ' "$MISSION" "$RUNTIME_JSON"
