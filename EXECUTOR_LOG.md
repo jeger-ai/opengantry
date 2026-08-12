@@ -763,6 +763,10 @@ DoD 1 MSN-0168: linear trimTrailingSlashes in isVirtualScratchPath (CodeQL #10);
 
 DoD 1 MSN-0169: iii-sdk ^0.22.1 in integration + worker lockfiles; validate-offline PASS
 
+## MSN-0170 — North Star Manifesto
+
+DoD 1 MSN-0170: docs/MANIFESTO.md verbatim; docs/index.md Why + README Vision pointer — assert-docs-deterministic OK
+
 ## MSN-0172 — Loop to graph terminology sweep
 
 DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates/CLI UX — assert-docs-deterministic OK
@@ -772,11 +776,3 @@ DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates
 DoD 1 MSN-0174: v3.2.3 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG manifesto + loop-to-graph; BACKLOG synced; dev-validate-core OK
 DoD 2 MSN-0174: npm 3.2.3 — MSN-0170/0172 squashed; dev-validate-core OK; pack:check OK
 DoD 3 MSN-0174: assert-no-stale-cli-naming excludes example package-lock.json (gapman bin alias); dev-validate-core OK
-
-## MSN-0170 — North Star Manifesto
-
-DoD 1 MSN-0170: docs/MANIFESTO.md verbatim; docs/index.md Why + README Vision pointer — assert-docs-deterministic OK
-
-## MSN-0172 — Loop to graph terminology sweep
-
-DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates/CLI UX — assert-docs-deterministic OK
