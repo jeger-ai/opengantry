@@ -3,56 +3,9 @@
 msn_id: MSN-0170
 skill_key: substrate
 gate_command: ./scripts/assert-docs-deterministic.sh
+gate_success_substring: assert-docs-deterministic
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0170: docs/MANIFESTO.md verbatim; docs/index.md Why + README Vision pointer — assert-docs-deterministic OK"
     anchor: "1"
     status: PASS
-gate_success_substring: assert-docs-deterministic
-interrogation:
-  - finding_id: 9b42a6bc8d96
-    kind: adr_conflict
-    question: Intent may relate to ADR-0026. Accept ADR decision, reject
-      applicability, or cite superseding rationale?
-    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
-      legislation proceeds.
-    operator_answer: Reject ADR-0026 applicability — this mission adds
-      docs/MANIFESTO.md only; no arch fetch or CLI changes.
-    adr_refs:
-      - ADR-0026
-  - finding_id: d585ecf2924b
-    kind: risk_escalation
-    question: "Triage escalated: No confident skill_key match in intent (ambiguous
-      or missing). Which skill_key and TMVC scope authorize this work?"
-    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
-      after operator confirmation.
-    operator_answer: "skill_key: substrate. TMVC scope: docs/ and README.md only —
-      publish North Star Manifesto verbatim; no src/cli/ or manifest changes."
-    adr_refs:
-      - ADR-0039
-  - finding_id: d911bc1fd62d
-    kind: missing_test_criteria
-    question: Gate command is not on the skill allowlist. Authorize this gate and
-      its success criteria on the record.
-    hypothesis: Planner accepts gate_command
-      "./scripts/assert-docs-deterministic.sh" with documented success substring
-      for verify.
-    operator_answer: Authorize ./scripts/assert-docs-deterministic.sh with
-      gate_success_substring assert-docs-deterministic for docs inventory and
-      link integrity.
-    adr_refs:
-      - ADR-0039
-  - finding_id: f5d6a4d5f4da
-    kind: undefined_boundary
-    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
-      mission authorize?
-    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
-      declared roots.
-    operator_answer: Mission authorizes docs/ and README.md only for North Star
-      Manifesto publication.
-    adr_refs:
-      - ADR-0024
-interrogation_sha256: 50524077577344d8df1d125f76adc28873bb86f230433b20338090387b687663
-declared_paths:
-  - README.md
-  - docs/

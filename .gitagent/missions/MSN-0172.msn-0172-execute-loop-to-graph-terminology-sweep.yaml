@@ -3,80 +3,9 @@
 msn_id: MSN-0172
 skill_key: substrate
 gate_command: ./scripts/assert-docs-deterministic.sh
+gate_success_substring: assert-docs-deterministic
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates/CLI UX — assert-docs-deterministic OK"
     anchor: "1"
     status: PASS
-gate_success_substring: assert-docs-deterministic
-interrogation:
-  - finding_id: 0aab8fc3443c
-    kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: Authorize src/cli/ user-facing UX string edits only
-      (onboarding, init --tutorial, program descriptions); no logic changes to
-      evaluateWithFixLoop or verify internals.
-    adr_refs:
-      - ADR-0039
-  - finding_id: 2121e0ae69d9
-    kind: adr_conflict
-    question: Intent may relate to ADR-0037. Accept ADR decision, reject
-      applicability, or cite superseding rationale?
-    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
-      legislation proceeds.
-    operator_answer: Reject ADR-0037 applicability — docs terminology only; no plane
-      deployment or CI ingestion changes.
-    adr_refs:
-      - ADR-0037
-  - finding_id: 9ecdd9a8e878
-    kind: adr_conflict
-    question: Intent may relate to ADR-0027. Accept ADR decision, reject
-      applicability, or cite superseding rationale?
-    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
-      legislation proceeds.
-    operator_answer: Reject ADR-0027 applicability — docs terminology sweep and
-      AGENT-GRAPH rename only; no CLI command surface changes.
-    adr_refs:
-      - ADR-0027
-  - finding_id: d585ecf2924b
-    kind: risk_escalation
-    question: "Triage escalated: No confident skill_key match in intent (ambiguous
-      or missing). Which skill_key and TMVC scope authorize this work?"
-    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
-      after operator confirmation.
-    operator_answer: "skill_key: substrate. TMVC scope: docs/, README.md,
-      templates/, src/cli/ — loop-to-graph terminology sweep and AGENT-GRAPH
-      rename only; no manifest or foreman changes."
-    adr_refs:
-      - ADR-0039
-  - finding_id: d911bc1fd62d
-    kind: missing_test_criteria
-    question: Gate command is not on the skill allowlist. Authorize this gate and
-      its success criteria on the record.
-    hypothesis: Planner accepts gate_command
-      "./scripts/assert-docs-deterministic.sh" with documented success substring
-      for verify.
-    operator_answer: Authorize ./scripts/assert-docs-deterministic.sh with
-      gate_success_substring assert-docs-deterministic for docs inventory and
-      link integrity.
-    adr_refs:
-      - ADR-0039
-  - finding_id: f5d6a4d5f4da
-    kind: undefined_boundary
-    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
-      mission authorize?
-    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
-      declared roots.
-    operator_answer: Mission authorizes docs/, README.md, templates/, src/cli/ for
-      loop-to-graph terminology and AGENT-GRAPH rename.
-    adr_refs:
-      - ADR-0024
-interrogation_sha256: 87882c37dc9cd5d8a7b023afe101a2e87b0197b2084dcfb03cc53177f4a00097
-declared_paths:
-  - README.md
-  - docs/
-  - src/cli/
-  - templates/
