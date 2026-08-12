@@ -766,3 +766,8 @@ DoD 1 MSN-0169: iii-sdk ^0.22.1 in integration + worker lockfiles; validate-offl
 ## MSN-0172 — Loop to graph terminology sweep
 
 DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates/CLI UX — assert-docs-deterministic OK
+
+## MSN-0174 — v3.2.3 release
+[CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0174 release version parity outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0174
+DoD 1 MSN-0174: v3.2.3 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG manifesto + loop-to-graph; BACKLOG synced; dev-validate-core OK
+DoD 2 MSN-0174: npm 3.2.3 — MSN-0170/0172 squashed; dev-validate-core OK; pack:check OK

@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.2.3** | Docs — North Star [`MANIFESTO.md`](MANIFESTO.md); loop→graph terminology (`AGENT-GRAPH.md` rename, mission/verify graph language, retry edges); CLI onboarding UX strings |
 | **v3.2.2** | **Breaking:** `package.json` `exports` map — public entrypoints `.` (CLI) and `./kernel` only; deep `dist/cli/lib/*` imports no longer resolve. Kernel library (`evaluateScope`, `verifyMission`, `verifyVerdictToken`); verdict HMAC tokens; `GIT_OPTIONAL_LOCKS=0` on git spawns; receipt-signing temp path collision fix |
 | **v3.2.1** | Docs — `gantry legislate` as single entry point (gap analysis built in); `gxt_interrogate` documented for multi-turn halt only |
 | **v3.2.0** | Interrogation gate (ADR-0039 / MSN-0149) — gap analysis built into `gantry legislate` (`gxt_interrogate` for multi-turn halt); first-class verify interrogation phase (`GXT_INTERROGATION_*` SARIF/JUnit); receipt v0.2.0 signed attribution + CI export (MSN-0143–0145); auditor pepper keyring (MSN-0148); MANIFEST `gate_commands` allowlists |
@@ -37,7 +38,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.2.2** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.2.3** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
@@ -45,6 +46,15 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ---
 
 ## Upgrade notes
+
+### From v3.2.2 (docs — v3.2.3)
+
+```bash
+npm install @jeger-ai/opengantry@3.2.3
+```
+
+- **Docs:** [`MANIFESTO.md`](MANIFESTO.md) (North Star positioning); [`AGENT-LOOP.md`](AGENT-GRAPH.md) renamed to [`AGENT-GRAPH.md`](AGENT-GRAPH.md) — update inbound links and site slugs (`agent-graph`).
+- **Terminology:** user-facing copy uses mission/verify **graph** and **retry edge**; manifesto **Inner/Outer Loop** titles unchanged (DevEx locus only).
 
 ### From v3.2.1 (breaking kernel exports — v3.2.2)
 

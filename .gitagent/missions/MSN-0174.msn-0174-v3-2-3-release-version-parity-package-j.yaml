@@ -3,29 +3,13 @@
 msn_id: MSN-0174
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
-gate_success_substring: dev-validate-core OK
-interrogation:
-  - finding_id: 35f551fb4fe5
-    kind: missing_test_criteria
-    question: Gate command is not on the skill allowlist. Authorize this gate and
-      its success criteria on the record.
-    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
-      documented success substring for verify.
-    operator_answer: Authorize ./scripts/dev-validate-core.sh with
-      gate_success_substring dev-validate-core OK for v3.2.3 release validation.
-    adr_refs:
-      - ADR-0039
-interrogation_sha256: d8d9b7a7eade2692ab1428f7eafb706ab1678dbf7acac68aa65c361eabca9b05
-declared_paths:
-  - .gitagent/foreman/SUBSTRATE.version.json
-  - docs/CHANGELOG.md
-  - docs/archive/BACKLOG.md
-  - package-lock.json
-  - package.json
-  - templates/.gitagent/foreman/SUBSTRATE.version.json
-  - templates/integrations/compatibility.json
+    trace_quote: "DoD 1 MSN-0174: v3.2.3 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG manifesto + loop-to-graph; BACKLOG synced; dev-validate-core OK"
+    anchor: "MSN-0174"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0174: npm 3.2.3 — MSN-0170/0172 squashed; dev-validate-core OK; pack:check OK"
+    anchor: "MSN-0174"
+    status: PASS

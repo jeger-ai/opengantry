@@ -9,7 +9,17 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-08-04 (v3.2.2 — kernel exports on 3.2 line, not 4.0.0)
+**Last synced:** 2026-08-12 (v3.2.3 — manifesto + loop-to-graph docs)
+
+---
+
+## v3.2.3 — Manifesto + loop-to-graph docs
+
+| Item | Status | MSN |
+|------|--------|-----|
+| **North Star Manifesto (`docs/MANIFESTO.md`)** | **Done** | MSN-0170 |
+| **Loop→graph terminology + `AGENT-GRAPH.md` rename** | **Done** | MSN-0172 |
+| **v3.2.3 version parity + npm publish** | **Done** | MSN-0174 |
 
 ---
 
