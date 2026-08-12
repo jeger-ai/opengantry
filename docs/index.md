@@ -22,11 +22,11 @@ OpenGantry docs map the **verification pipeline** — scope enforcement → arch
 
 | Doc | When to read |
 |-----|--------------|
-| [`ADOPTION.md`](ADOPTION.md) | Install, mission loop, troubleshooting, hooks |
+| [`ADOPTION.md`](ADOPTION.md) | Install, mission graph, troubleshooting, hooks |
 | [`KATA.md`](KATA.md) | 15-minute first mission practice |
 | [`INTEGRATIONS.md`](INTEGRATIONS.md) | Wire Cursor / Claude / Codex / CI |
 | [`DOMAINS.md`](DOMAINS.md) | Architectural boundaries (code/content) — not full-repo AST |
-| [`AGENT-LOOP.md`](AGENT-LOOP.md) | External executor (Hermes-style) integration |
+| [`AGENT-GRAPH.md`](AGENT-GRAPH.md) | External executor (Hermes-style) integration |
 
 ---
 
@@ -44,6 +44,7 @@ OpenGantry docs map the **verification pipeline** — scope enforcement → arch
 
 | Doc | When to read |
 |-----|--------------|
+| [`MANIFESTO.md`](MANIFESTO.md) | North Star positioning — outer-loop trap vs inner-loop referee |
 | [`FEATURES.md`](FEATURES.md) | Core capabilities: TMVC, perimeters, static gates, deterministic feedback |
 | [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) | ISO 27001 / 42001 artifact mapping for regulated teams |
 
@@ -53,7 +54,7 @@ OpenGantry docs map the **verification pipeline** — scope enforcement → arch
 
 | Doc | When to read |
 |-----|--------------|
-| [`DEVELOPMENT.md`](DEVELOPMENT.md) | Dogfood loop, missions, `npm run validate` |
+| [`DEVELOPMENT.md`](DEVELOPMENT.md) | Dogfood graph, missions, `npm run validate` |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Layer rules for `src/cli/` |
 
 ---

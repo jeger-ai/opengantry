@@ -37,12 +37,12 @@ OpenGantry uses product terms that sound abstract. Here is what the CLI actually
 
 ## Why not just TDD and CI?
 
-You already have `npm test` and GitHub Actions. OpenGantry does not replace them — it makes them usable when an **AI agent** runs the loop.
+You already have `npm test` and GitHub Actions. OpenGantry does not replace them — it makes them usable when an **AI agent** runs the graph.
 
-| Who runs the loop | What happens on failure |
+| Who runs the graph | What happens on failure |
 |-------------------|-------------------------|
 | **Human developer** | Reads stderr, parses the stack trace, rewrites code |
-| **AI agent + raw TDD/CI** | Chokes on unstructured stderr, hallucinates fixes, spins in retry loops — a senior still babysits |
+| **AI agent + raw TDD/CI** | Chokes on unstructured stderr, hallucinates fixes, spins on retry edges — a senior still babysits |
 | **AI agent + OpenGantry** | Same gates you already trust; `gantry verify --json` returns `findings[]` with file, line, and hint so the agent can self-correct |
 
 | Already have | Still missing for autonomous agents | OpenGantry adds |
@@ -55,12 +55,14 @@ You already have `npm test` and GitHub Actions. OpenGantry does not replace them
 
 ## Vision
 
+North Star: [The Post-PR Software Factory](docs/MANIFESTO.md) ([opengantry.ai/docs/manifesto/](https://opengantry.ai/docs/manifesto/)).
+
 Most AI agent tooling optimizes for *speed of generation*. OpenGantry optimizes for **trust at scale**:
 
 - **Scope before execution:** no silent edits to governance files, no wandering outside approved paths
 - **Deterministic verification:** gates are shell commands with pass/fail outcomes, not LLM opinions
 - **Forensic trace:** every mission ties to `[MSN-XXXX]` commits and verbatim quotes in `EXECUTOR_LOG.md`
-- **Domain-agnostic:** the same loop governs TypeScript imports *and* brand/compliance copy
+- **Domain-agnostic:** the same graph governs TypeScript imports *and* brand/compliance copy
 
 The long-term bet: external executors (Cursor agents, Hermes, CI bots) do the work; **OpenGantry owns the mission YAML and the verify output**. That separation is what makes agentic delivery auditable in regulated or security-sensitive environments.
 
@@ -75,12 +77,12 @@ Without governance glue, agent-assisted repos tend toward:
 | Agents edit `.gitagent/` or manifest silently | Git hooks + `gantry verify` fail closed |
 | "It passed locally" with no proof | `gate_command` + trace quotes verifiers must cite |
 | Architecture drift | `TARGET_ARCHITECTURE.yaml` + `gantry arch check` / `gantry perimeter check` |
-| Opaque failures for retry loops | `findings[]` JSON envelope (file, line, hint); no terminal log parsing |
+| Opaque failures for retry edges | `findings[]` JSON envelope (file, line, hint); no terminal log parsing |
 | One-off policy per repo | `gantry init` scaffolds the same GXT substrate everywhere |
 
 ---
 
-## The core loop (GXT)
+## The core graph (GXT)
 
 Everything revolves around a **mission**:
 
@@ -113,7 +115,7 @@ flowchart LR
 
 ## Three phases, any domain
 
-OpenGantry is a **domain-neutral verify loop**, not just a TypeScript linter:
+OpenGantry is a **domain-neutral verify graph**, not just a TypeScript linter:
 
 | Phase | Command | Output |
 |-------|---------|--------|
@@ -132,7 +134,7 @@ List them: `gantry domains`
 
 **Binary enforcement:** pass/fail only — no LLM opinions at the gate. Content discovery uses exact-match boilerplate only; it does not infer "dominant terminology" from statistics that would flip on unrelated edits.
 
-See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md) for external executor integration.
+See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GRAPH.md`](docs/AGENT-GRAPH.md) for external executor integration.
 
 ---
 
@@ -145,7 +147,7 @@ npm install -g @jeger-ai/opengantry
 gantry init --tutorial
 ```
 
-Scaffolds `.gitagent/`, hooks, manifest, and walks you through the first mission loop.
+Scaffolds `.gitagent/`, hooks, manifest, and walks you through the first mission graph.
 
 ### 2. Fast-path discovery
 
@@ -156,7 +158,7 @@ gantry init --discover --domain content   # scan markdown corpora
 
 Emits a proposal with evidence-anchored conventions and anomalies (`file:line` snippets). Nothing becomes law until a human confirms or runs blueprint.
 
-**Speed:** the discovery scanner uses streaming regex per file, not a whole-repo AST. It is budgeted to finish a **5,000-file monorepo in under five seconds** (pinned in CI). OpenGantry ingests repository context in seconds without loading the tree into a heavy compiler graph or spiking RAM. Enterprise teams do not have to wait minutes for a governance tool to "understand" the repo before the agent loop starts.
+**Speed:** the discovery scanner uses streaming regex per file, not a whole-repo AST. It is budgeted to finish a **5,000-file monorepo in under five seconds** (pinned in CI). OpenGantry ingests repository context in seconds without loading the tree into a heavy compiler graph or spiking RAM. Enterprise teams do not have to wait minutes for a governance tool to "understand" the repo before the agent graph starts.
 
 ### 3. Blueprint: lock rules and gate commands
 
@@ -210,11 +212,11 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
-**No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry loops: each item names the gate, file, line, severity, and a resolution hint. Same payload on `--json`, SARIF, and MCP `gxt_verify`.
+**No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry edges: each item names the gate, file, line, severity, and a resolution hint. Same payload on `--json`, SARIF, and MCP `gxt_verify`.
 
 ### 6. Content governance example
 
-See [`examples/content-governance/`](examples/content-governance/). Ad copy with seeded violations (forbidden claim, missing disclaimer, wrong brand hex). Same loop as code; different adapter.
+See [`examples/content-governance/`](examples/content-governance/). Ad copy with seeded violations (forbidden claim, missing disclaimer, wrong brand hex). Same graph as code; different adapter.
 
 ### 7. IDE integration
 
@@ -257,6 +259,6 @@ Full doc index: [`docs/index.md`](docs/index.md) — organized by **how**, **wha
 | Adoption runbook | [`docs/ADOPTION.md`](docs/ADOPTION.md) |
 | Release history | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) |
 | Domain adapters | [`docs/DOMAINS.md`](docs/DOMAINS.md) |
-| External agent integration | [`docs/AGENT-LOOP.md`](docs/AGENT-LOOP.md) |
+| External agent integration | [`docs/AGENT-GRAPH.md`](docs/AGENT-GRAPH.md) |
 | Contributing / dogfooding this repo | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | Content walkthrough | [`examples/content-governance/`](examples/content-governance/) |

@@ -762,3 +762,7 @@ DoD 1 MSN-0168: linear trimTrailingSlashes in isVirtualScratchPath (CodeQL #10);
 ## MSN-0169 — iii-sdk 0.22.1 bump
 
 DoD 1 MSN-0169: iii-sdk ^0.22.1 in integration + worker lockfiles; validate-offline PASS
+
+## MSN-0172 — Loop to graph terminology sweep
+
+DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates/CLI UX — assert-docs-deterministic OK
