@@ -98,7 +98,7 @@ Oversight is structural, not a chat approval checkbox:
 | **`gantry verify`** | Deterministic fail-closed gate + trace mapping before merge |
 | **`gantry doctor --policy`** | Offline digest drift check against expected MANIFEST / architecture / config |
 
-Start the mission loop now so the trail already exists when someone asks for evidence.
+Start the mission graph now so the trail already exists when someone asks for evidence.
 
 ## OpenGantry vs a standalone security proxy
 

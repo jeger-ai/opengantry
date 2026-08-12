@@ -1,6 +1,6 @@
 ---
 
-## Closed-loop checklist
+## Closed-graph checklist
 
 1. `gantry init` + `export GANTRY_PLANNER_EMAILS="$(git config user.email)"` + `gantry doctor`
 2. `gantry legislate "<intent>" --msn MSN-NNNN --skill-key <key>` → Planner `[MSN-NNNN]` commit

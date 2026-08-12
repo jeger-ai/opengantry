@@ -1,6 +1,6 @@
 # Agent Integrations (GXT wrapper)
 
-OpenGantry is **tool-agnostic** and **vendor-neutral** — any agent that can run shell commands can participate in the GXT loop. Governance is **local-first**: missions, gates, and **Gantry Git hook** enforcement run in your repository, not through a hosted agent dashboard.
+OpenGantry is **tool-agnostic** and **vendor-neutral** — any agent that can run shell commands can participate in the GXT graph. Governance is **local-first**: missions, gates, and **Gantry Git hook** enforcement run in your repository, not through a hosted agent dashboard.
 
 **Audience:** adopters wiring agents into their own repos. For contributing to OpenGantry itself, see [`docs/DEVELOPMENT.md`](DEVELOPMENT.md).
 
@@ -22,7 +22,7 @@ source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
 gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml --json
 ```
 
-On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. **`gxt_verify`** returns structured `error_code`, `fix_hints`, and `next_actions` for IDE agents. After **`gantry verify`** failures, consume **`gantry context-feed --json`** (or read `.gitagent/tmp/NEXT_REMEDIATION.json` directly) for the latest structured remediation snapshot — atomic swap writes; eventual consistency under concurrent repair loops. See [`.gitagent/planner/RUNTIME.md`](../.gitagent/planner/RUNTIME.md).
+On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented remediation. **`gxt_verify`** returns structured `error_code`, `fix_hints`, and `next_actions` for IDE agents. After **`gantry verify`** failures, consume **`gantry context-feed --json`** (or read `.gitagent/tmp/NEXT_REMEDIATION.json` directly) for the latest structured remediation snapshot — atomic swap writes; eventual consistency under concurrent repair hops. See [`.gitagent/planner/RUNTIME.md`](../.gitagent/planner/RUNTIME.md).
 
 ## MCP tools (Cursor and other MCP clients)
 
@@ -159,7 +159,7 @@ Point every tool at the same GXT law — do not duplicate prose:
 
 Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with a stderr notice.
 
-## Closed-loop checklist (all tools)
+## Closed-graph checklist (all tools)
 
 1. `gantry init` + `export GANTRY_PLANNER_EMAILS="$(git config user.email)"` + `gantry doctor`
 2. `gantry legislate "<intent>" --msn MSN-NNNN --skill-key <key>` → Planner `[MSN-NNNN]` commit
@@ -168,7 +168,7 @@ Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with
 5. `gantry verify --mission .gitagent/missions/<file>.yaml`
 6. `git push` (pre-push uses `--pre-push` handoff semantics)
 
-## Diagnostic context feed (verify repair loops)
+## Diagnostic context feed (verify repair hops)
 
 When `gantry verify` fails, OpenGantry writes a machine-readable snapshot to **`.gitagent/tmp/NEXT_REMEDIATION.json`** (gitignored). IDE wrappers and agent rules can read this before the next prompt cycle:
 
@@ -177,7 +177,7 @@ gantry context-feed --json    # latest failure payload (empty when none)
 gantry context-feed --clear   # atomic tombstone clear after remediation
 ```
 
-Writes use temp-file + rename swap to avoid read/write races during automated test-and-repair loops.
+Writes use temp-file + rename swap to avoid read/write races during automated test-and-repair hops.
 
 ## Compatibility matrix
 
@@ -202,7 +202,7 @@ Vendor CLIs change; the **wrap line** and **context files** do not.
 
 ---
 
-## Per-tool closed loop
+## Per-tool closed graph
 
 ### Cursor
 

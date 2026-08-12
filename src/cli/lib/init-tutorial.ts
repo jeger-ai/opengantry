@@ -157,7 +157,7 @@ export async function runInitTutorial(): Promise<void> {
     return;
   }
 
-  p.intro(`${CLI_NAME} init --tutorial — first mission loop (~3 min)`);
+  p.intro(`${CLI_NAME} init --tutorial — first mission graph (~3 min)`);
   const confirm = await p.confirm({
     message: "Walk through scaffold → Planner stamp → trace → verify (strict checks)?",
     initialValue: true,

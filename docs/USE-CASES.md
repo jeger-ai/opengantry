@@ -22,7 +22,7 @@ Typical triggers:
 | IDE agents edit anywhere | Implicit scope; `.gitagent/` drift | Declared **tmvc_roots** + **forbidden zones** in mission + manifest |
 | "It passed locally" | Chat logs or ad-hoc JSON | **Git-native:** mission YAML, gate output, verbatim **`EXECUTOR_LOG.md`** quotes |
 | Architecture or copy drift | Manual review only | `TARGET_ARCHITECTURE.yaml` + `gantry arch check` / `gantry perimeter check` |
-| Autonomous retry loops | Parse terminal stderr | Stable **`findings[]`** envelope with file, line, hint |
+| Autonomous retry edges | Parse terminal stderr | Stable **`findings[]`** envelope with file, line, hint |
 | One-off policy per repo | Reinvent orchestration each time | `gantry init` scaffolds the same GXT substrate everywhere |
 
 ---
@@ -31,7 +31,7 @@ Typical triggers:
 
 You already have tests and CI. The friction is not "do we have gates?" — it is **who reads the failure output**.
 
-Human TDD works because a developer parses stderr and fixes code. When an IDE agent runs the same loop, unstructured terminal output causes hallucinated fixes and infinite retries; someone senior still babysits.
+Human TDD works because a developer parses stderr and fixes code. When an IDE agent runs the same graph, unstructured terminal output causes hallucinated fixes and infinite repair hops; someone senior still babysits.
 
 OpenGantry keeps your existing `gate_command` (e.g. `npm test`) and adds:
 
@@ -54,7 +54,7 @@ See [README § Why not just TDD and CI?](../README.md#why-not-just-tdd-and-ci) a
 
 Auditors ask how AI-assisted coding fits your ISMS or AI management system — not how good your prompts are. OpenGantry produces **operational records**: Planner `[MSN-XXXX]` commits, mission scope, executor trace, verify output.
 
-See [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) for ISO 27001 / 42001 mapping and [`ADOPTION.md`](ADOPTION.md) for the standard change loop.
+See [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) for ISO 27001 / 42001 mapping and [`ADOPTION.md`](ADOPTION.md) for the standard change graph.
 
 ### Platform / platform-security teams
 
@@ -66,11 +66,11 @@ See [`FEATURES.md`](FEATURES.md) § Enforcement boundary and [`INTEGRATIONS.md`]
 
 External executors implement code; OpenGantry owns **contract and verdict**. On verify failure, ingest structured `findings[]` — no terminal log scraping.
 
-See [`AGENT-LOOP.md`](AGENT-LOOP.md).
+See [`AGENT-GRAPH.md`](AGENT-GRAPH.md).
 
 ### Content and brand compliance
 
-The same mission/verify loop governs TypeScript imports **and** marketing copy: regex perimeter rules (`forbid_pattern`, `require_pattern`) with `file` + `line` in the failure envelope.
+The same mission/verify graph governs TypeScript imports **and** marketing copy: regex perimeter rules (`forbid_pattern`, `require_pattern`) with `file` + `line` in the failure envelope.
 
 Walkthrough: [`examples/content-governance/`](../examples/content-governance/). Adapter details: [`DOMAINS.md`](DOMAINS.md).
 
@@ -117,7 +117,7 @@ Machine-readable: `npm run examples:benchmark -- --json`.
 
 ## Custom domains without built-in adapters
 
-Accounting, legal, or proprietary corpora: use `gate_command` scripts and TMVC path globs. Document patterns in your repo's `ARCHITECTURE.md`. Built-in adapters cover `code` and `content`; everything else follows the same mission loop.
+Accounting, legal, or proprietary corpora: use `gate_command` scripts and TMVC path globs. Document patterns in your repo's `ARCHITECTURE.md`. Built-in adapters cover `code` and `content`; everything else follows the same mission graph.
 
 See [`DOMAINS.md`](DOMAINS.md) § Recipes without built-in adapters.
 
@@ -127,7 +127,7 @@ See [`DOMAINS.md`](DOMAINS.md) § Recipes without built-in adapters.
 
 | Goal | Doc |
 |------|-----|
-| Install and daily loop | [`ADOPTION.md`](ADOPTION.md) |
+| Install and daily graph | [`ADOPTION.md`](ADOPTION.md) |
 | First mission practice | [`KATA.md`](KATA.md) |
 | Why each feature exists | [`FEATURES.md`](FEATURES.md) |
 | Wire your IDE | [`INTEGRATIONS.md`](INTEGRATIONS.md) |

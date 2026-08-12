@@ -1,6 +1,6 @@
 # Agent Integrations (GXT wrapper)
 
-OpenGantry is **tool-agnostic** and **vendor-neutral** — any agent that can run shell commands can participate in the GXT loop. Governance is **local-first**: missions, gates, and **Gantry Git hook** enforcement run in your repository, not through a hosted agent dashboard.
+OpenGantry is **tool-agnostic** and **vendor-neutral** — any agent that can run shell commands can participate in the GXT graph. Governance is **local-first**: missions, gates, and **Gantry Git hook** enforcement run in your repository, not through a hosted agent dashboard.
 
 ## Universal rule
 
@@ -44,4 +44,4 @@ IDE agent file edits are not TMVC-trapped unless the tool runs inside `runtime e
 
 ---
 
-## Per-tool closed loop
+## Per-tool closed graph

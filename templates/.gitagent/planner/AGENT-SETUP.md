@@ -60,7 +60,7 @@ gantry init --discover --domain code    # or content
 gantry blueprint --domain code --yes
 ```
 
-## Optional: first mission loop
+## Optional: first mission graph
 
 ```bash
 gantry init --tutorial

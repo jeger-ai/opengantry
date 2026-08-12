@@ -56,7 +56,7 @@ function addInitOptions(cmd: Command): Command {
     .option("--domain <key>", "Domain adapter for discovery (code | content)", "code")
     .option(
       "--tutorial",
-      "After init, run guided first mission loop (Planner stamp + verify walkthrough)",
+      "After init, run guided first mission graph (Planner stamp + verify walkthrough)",
     );
 }
 
@@ -257,7 +257,7 @@ export function registerCoreCommands(program: Command): void {
 
   program
     .command("onboarding")
-    .description("Interactive walkthrough of the strict GXT mission loop")
+    .description("Interactive walkthrough of the strict GXT mission graph")
     .option("--force", "Continue despite integration health blockers on configured (broken) state")
     .action(async (opts: { force?: boolean }) => {
       await runOnboarding({ force: opts.force });
@@ -265,7 +265,7 @@ export function registerCoreCommands(program: Command): void {
 
   program
     .command("context-feed")
-    .description("Read or clear the latest verify remediation snapshot for IDE/agent loops")
+    .description("Read or clear the latest verify remediation snapshot for IDE/agent graphs")
     .option("--json", "Emit structured remediation payload")
     .option("--clear", "Atomically clear remediation feed (tombstone swap)")
     .action((opts: { json?: boolean; clear?: boolean }) => {

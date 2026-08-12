@@ -20,7 +20,7 @@ npm install -g @jeger-ai/opengantry
 ```
 
 ```bash
-gantry init --tutorial   # guided loop after scaffold (~3 min)
+gantry init --tutorial   # guided graph after scaffold (~3 min)
 # or:
 gantry init
 gantry onboarding      # same strict checks as production
@@ -30,7 +30,7 @@ gantry pin .gitagent/missions/example.verify.yaml   # optional; enables verify/s
 gantry verify                                       # uses pin when set
 ```
 
-## Standard change loop (review → run → audit)
+## Standard change graph (review → run → audit)
 
 ```bash
 # 1. Human reviews mission BEFORE executor (Planner commit required)
@@ -184,7 +184,7 @@ Init and parse failures use **`status: "failed"`, `phase: "init"`** — not lega
 | **Deterministic hook** | Cursor `beforeShellExecution`, pre-push verify | Governance path writes require mission + verify |
 | **Advisory** | IDE rules, `AGENTS.md`, sessionStart context | IDE suggestions alone do not count as approval |
 
-Per-tool closed-loop recipes: [`INTEGRATIONS.md`](INTEGRATIONS.md).
+Per-tool closed-graph recipes: [`INTEGRATIONS.md`](INTEGRATIONS.md).
 
 ## Hooks (fast, scoped)
 

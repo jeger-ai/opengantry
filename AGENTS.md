@@ -92,4 +92,4 @@ gantry planner set "$(git config user.email)"
 | Readiness | `gantry doctor` |
 | MCP dogfood (no Cursor) | `./scripts/validate-mcp-dogfood.sh` |
 
-See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the mission loop and Cursor MCP handoff.
+See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the mission graph and Cursor MCP handoff.

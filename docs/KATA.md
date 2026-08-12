@@ -1,6 +1,6 @@
 # First-5-minute kata
 
-~15 minutes to complete your first scoped mission loop. Every step has a **headless** variant for CI and IDE agents.
+~15 minutes to complete your first scoped mission graph. Every step has a **headless** variant for CI and IDE agents.
 
 Prerequisites: Node.js 24+, empty Git repository (or use a throwaway branch).
 

@@ -131,13 +131,13 @@ Compliance claims must match what your deployment actually enforces:
 
 Teams that legislate missions but skip `runtime exec` and merge-time verify retain **audit artifacts** but weaken **blast-radius guarantees**. Document which tier you operate at for assessors.
 
-Recommended adoption loop for regulated teams: [`docs/ADOPTION.md`](ADOPTION.md) § Standard change loop.
+Recommended adoption graph for regulated teams: [`docs/ADOPTION.md`](ADOPTION.md) § Standard change graph.
 
 ---
 
 ## Example: fintech (COMMITLY-style) adoption narrative
 
-For platforms where **auditability and change management are non-negotiable**, OpenGantry turns abstract AI governance policies into **fail-closed engineering gates** when the full loop is adopted:
+For platforms where **auditability and change management are non-negotiable**, OpenGantry turns abstract AI governance policies into **fail-closed engineering gates** when the full graph is adopted:
 
 1. **Intent** — Product/engineering defines change; Foreman routes to skill + risk tier.
 2. **Legislation** — Planner reviews mission scope, gates, and TMVC; commits `[MSN-XXXX]`.
@@ -173,6 +173,6 @@ Include your **enforcement tier** statement (advisory IDE vs `runtime exec` + me
 
 ## Related docs
 
-- [Adoption runbook](ADOPTION.md) — ordered legislate → execute → verify loop
+- [Adoption runbook](ADOPTION.md) — ordered legislate → execute → verify graph
 - [Integrations — enforcement boundary](INTEGRATIONS.md#enforcement-boundary-where-the-cage-is-ironclad)
 - [RULES](../.gitagent/planner/RULES.md) — normative SOD, trace mapping, TMVC, break-glass

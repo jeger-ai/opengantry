@@ -75,7 +75,7 @@ async function maybeRunExampleVerify(
 export async function runOnboarding(options: OnboardingOptions = {}): Promise<void> {
   const p = await import("@clack/prompts");
 
-  p.intro(`${CLI_NAME} onboarding — guided first mission loop`);
+  p.intro(`${CLI_NAME} onboarding — guided first mission graph`);
 
   const { root } = loadWorkspace();
   const manifestPath = path.join(root, ".gitagent", "foreman", "MANIFEST.json");
@@ -101,7 +101,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   }
 
   const confirmContinue = await p.confirm({
-    message: "This walkthrough runs the full strict GXT loop. Continue?",
+    message: "This walkthrough runs the full strict GXT graph. Continue?",
     initialValue: true,
   });
   if (p.isCancel(confirmContinue) || !confirmContinue) {

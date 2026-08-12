@@ -55,7 +55,7 @@ Commander `.action()` handlers MUST extract options from the **typed callback pa
 
 Numeric or transformed flags MUST coerce in `.option()` parsers or the command adapter — never blind pass-through. See `verifyOptionsFromCli` in `program-workflow.ts`.
 
-## Mission loop (required for substantive work)
+## Mission graph (required for substantive work)
 
 1. **Triage** — `gantry triage "<intent>"` (escalation → Planner legislates).
 2. **Legislate** — `gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry` (runs gap analysis internally; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file` and re-run `legislate`; or MCP `gxt_draft_legislation` with complete `interrogation[]`). Operator answers are quoted verbatim — never fabricated by agents.
@@ -84,7 +84,7 @@ gantry doctor
 
 Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 
-### Per-feature closed loop
+### Per-feature closed graph
 
 **Cursor MCP (preferred):**
 
@@ -115,7 +115,7 @@ git push   # pre-push: gantry verify --pre-push on branch-changed missions
 
 Validate MCP flow locally: `./scripts/validate-mcp-dogfood.sh`
 
-### Substrate upgrade loop (adopters + dogfood)
+### Substrate upgrade graph (adopters + dogfood)
 
 Tier-3 lifecycle updates use the installed `gantry` package only (no remote fetch):
 

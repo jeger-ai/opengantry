@@ -1,6 +1,6 @@
 # Content governance example
 
-Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates the same agent loop as code governance — discovery, blueprint, perimeter check, verify — over marketing copy instead of TypeScript imports.
+Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates the same agent graph as code governance — discovery, blueprint, perimeter check, verify — over marketing copy instead of TypeScript imports.
 
 ## Fixture layout
 
@@ -25,4 +25,4 @@ node dist/cli/index.js perimeter check --cwd examples/content-governance
 # Expect violations — fix files, rerun until OK
 ```
 
-See [`docs/AGENT-LOOP.md`](../../docs/AGENT-LOOP.md) and [`docs/DOMAINS.md`](../../docs/DOMAINS.md).
+See [`docs/AGENT-GRAPH.md`](../../docs/AGENT-GRAPH.md) and [`docs/DOMAINS.md`](../../docs/DOMAINS.md).

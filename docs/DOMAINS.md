@@ -1,6 +1,6 @@
 # Domain adapters
 
-OpenGantry is a **domain-agnostic governance layer for autonomous agents**. The mission/verify loop, trace mapping, failure envelope, and `gate_command` shell gates are domain-neutral. **Domain adapters** plug deterministic discovery, blueprint, and perimeter checks into that loop.
+OpenGantry is a **domain-agnostic governance layer for autonomous agents**. The mission/verify graph, trace mapping, failure envelope, and `gate_command` shell gates are domain-neutral. **Domain adapters** plug deterministic discovery, blueprint, and perimeter checks into that graph.
 
 All docs: [`index.md`](index.md) · Why features exist: [`FEATURES.md`](FEATURES.md)
 
@@ -61,7 +61,7 @@ Check: `gantry perimeter check` (domain-neutral alias of `gantry arch check`).
 
 Schemas **0.1.0** and **0.2.0** remain supported for code-only adopters.
 
-## Mission loop is domain-agnostic
+## Mission graph is domain-agnostic
 
 Regardless of domain:
 
@@ -70,7 +70,7 @@ Regardless of domain:
 3. Trace rows land in `EXECUTOR_LOG.md`.
 4. `gantry verify` runs gates and emits `findings[]` on failure.
 
-See [`AGENT-LOOP.md`](AGENT-LOOP.md) for Hermes-style executor integration.
+See [`AGENT-GRAPH.md`](AGENT-GRAPH.md) for Hermes-style executor integration.
 
 ## Recipes without built-in adapters
 
@@ -78,7 +78,7 @@ See [`AGENT-LOOP.md`](AGENT-LOOP.md) for Hermes-style executor integration.
 
 ## Example
 
-Full content loop fixture: [`examples/content-governance/`](../examples/content-governance/)
+Full content graph fixture: [`examples/content-governance/`](../examples/content-governance/)
 
 ## Roadmap (not yet shipped)
 

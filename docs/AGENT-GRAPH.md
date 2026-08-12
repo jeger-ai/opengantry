@@ -1,4 +1,4 @@
-# Autonomous agent loop integration
+# Autonomous agent graph integration
 
 OpenGantry is the **CLI contract + verify envelope** for external autonomous agents (e.g. Hermes). **Contract** = mission YAML (scope + `gate_command`); **verdict** = `gantry verify` pass/fail with `findings[]` on failure. The executor agent implements code, builds skills, and retries — it does not parse raw terminal output.
 
@@ -28,7 +28,7 @@ All docs: [`index.md`](index.md) · Use cases: [`USE-CASES.md`](USE-CASES.md)
 }
 ```
 
-6. **Retry loop** — executor maps each finding to a fix task until verify passes.
+6. **Retry edge** — route each finding back to the Executor node as a repair hop until verify returns Exit 0.
 
 ## Surfaces
 
@@ -42,4 +42,4 @@ See [ADR-0032](../.gitagent/out-of-scope/ADR-0032-failure-envelope.md).
 
 ## Content domain example
 
-Brand/compliance ad copy uses the same loop with `--domain content` and `gantry perimeter check` (regex rules in schema 0.3.0). Walkthrough fixture: [`examples/content-governance/`](../examples/content-governance/). See [`DOMAINS.md`](DOMAINS.md).
+Brand/compliance ad copy uses the same graph with `--domain content` and `gantry perimeter check` (regex rules in schema 0.3.0). Walkthrough fixture: [`examples/content-governance/`](../examples/content-governance/). See [`DOMAINS.md`](DOMAINS.md).
