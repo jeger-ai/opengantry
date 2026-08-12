@@ -1,0 +1,40 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0169: Bump iii-sdk to 0.22.1 in examples/iii-integration and worker lockfiles
+msn_id: MSN-0169
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Proceed — dependency bump only; ADR-0001 not applicable.
+    adr_refs:
+      - ADR-0001
+  - finding_id: db4a881ab72c
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: we've updated our iii-sdk dependency to latest version.. please
+      push to origin — skill_key iii-integration; TMVC examples/iii-integration
+      package.json/lockfiles and workers.
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: cff643354228757724c02f7308cc9336061a1eebcd9d91f601c9356a147618bf
+declared_paths:
+  - examples/iii-integration/package-lock.json
+  - examples/iii-integration/package.json
+  - examples/iii-integration/workers/opengantry/package-lock.json
+  - examples/iii-integration/workers/opengantry/package.json
+  - examples/iii-integration/workers/session-auth/package-lock.json
+  - examples/iii-integration/workers/session-auth/package.json
