@@ -29,6 +29,7 @@ mapfile -t hits < <(
   rg -i 'gapman|GAPMAN' "${CODE_PATHS[@]}" \
     --glob '!node_modules/**' \
     --glob '!package.json' \
+    --glob '!examples/**/package-lock.json' \
     --glob '!src/cli/lib/config-namespace.ts' \
     --glob '!src/cli/lib/skill-key.ts' \
     --glob '!src/cli/lib/constants.ts' \
