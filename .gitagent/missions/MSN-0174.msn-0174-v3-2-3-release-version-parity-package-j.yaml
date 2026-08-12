@@ -1,5 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Release: v3.2.3 — manifesto + loop-to-graph docs (MSN-0170/0172).
+# Release: v3.2.3 — manifesto + loop-to-graph docs (MSN-0170/0172); pushed tag v3.2.3.
 # Legislated intent: MSN-0174: v3.2.3 release — version parity, CHANGELOG/BACKLOG, validate, tag v3.2.3
 msn_id: MSN-0174
 skill_key: gantry
