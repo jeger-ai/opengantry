@@ -32,6 +32,8 @@ interrogation:
       - ADR-0039
 interrogation_sha256: cff643354228757724c02f7308cc9336061a1eebcd9d91f601c9356a147618bf
 declared_paths:
+  - .gitagent/missions/MSN-0169.msn-0169-bump-iii-sdk-to-0-22-1-in-examples-iii-.yaml
+  - EXECUTOR_LOG.md
   - examples/iii-integration/package-lock.json
   - examples/iii-integration/package.json
   - examples/iii-integration/workers/opengantry/package-lock.json
