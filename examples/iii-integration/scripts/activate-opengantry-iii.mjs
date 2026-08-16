@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 /**
- * Advisory activation checklist after `iii worker add opengantry`.
- * Does not mutate adopter .gitagent/ law or config.yaml unless --write-activation-md.
+ * Host-side OpenGantry × iii activation.
+ * --write-activation-md stays advisory.
+ * --bootstrap writes a default mission for a Planner commit. The worker
+ * process never writes .gitagent/.
  */
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXAMPLE_ROOT = path.resolve(__dirname, "..");
+const MISSION_REL = ".gitagent/missions/MSN-0001.iii-local-workers.yaml";
+
 function relFromCwd(p) {
   const rel = path.relative(process.cwd(), p);
   return rel.startsWith("..") ? p : rel || ".";
@@ -19,6 +24,32 @@ function readConfigWorkers(configPath) {
   const text = fs.readFileSync(configPath, "utf8");
   const hasOpengantry = /^\s*-\s*name:\s*opengantry\s*$/m.test(text);
   return { exists: true, hasOpengantry, text };
+}
+
+function isOpenGantryCheckout(root) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+    return pkg.name === "@jeger-ai/opengantry";
+  } catch {
+    return false;
+  }
+}
+
+function defaultMissionYaml(gateLine) {
+  return `# Draft OpenGantry iii gate. Planner must commit this file with a
+# [MSN-0001] subject before gantry verify will accept it as law.
+# Do not edit this from a sandboxed worker.
+msn_id: MSN-0001
+skill_key: gantry
+gate_command: ${gateLine}
+declared_paths:
+  - workers/
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+`;
 }
 
 function activationMarkdown({ configPath, gateLine, validateLine, governedSnippet }) {
@@ -53,7 +84,7 @@ Cold lint only:
 ${gateLine}
 \`\`\`
 
-## 3. Governed listener (hot path)
+## 3. Governed listener
 
 On the port agents use, wire middleware + RBAC hooks:
 
@@ -71,18 +102,76 @@ declared_paths:
   - workers/
 \`\`\`
 
-Planner must legislate; do not copy raw YAML into \`.gitagent/missions/\` without \`gantry legislate\`.
+Planner must legislate and commit. The worker process does not write \`.gitagent/\`.
 
 ## 5. Order of operations
 
 1. Cold lint clean on \`workers/\`
 2. Hot verify (\`gantry::verify\`) with absolute \`repo_root\`
-3. Promote-class triggers only after verdict token
+3. Promote-class triggers only after verify passes
 `;
+}
+
+function bootstrap(targetRoot) {
+  if (isOpenGantryCheckout(targetRoot)) {
+    console.error(
+      "Refusing to write a mission into the OpenGantry checkout. Pass --repo-root <adopter-repo>.",
+    );
+    process.exit(1);
+  }
+
+  const gitagent = path.join(targetRoot, ".gitagent");
+  if (!fs.existsSync(gitagent)) {
+    if (process.argv.includes("--init")) {
+      const r = spawnSync("gantry", ["init"], { cwd: targetRoot, stdio: "inherit" });
+      if (r.status !== 0) {
+        console.error("gantry init failed. Install gantry or run it yourself, then retry --bootstrap.");
+        process.exit(r.status ?? 1);
+      }
+    } else {
+      console.error(
+        `No .gitagent under ${targetRoot}. Run gantry init (or pass --init), then retry --bootstrap.`,
+      );
+      process.exit(1);
+    }
+  }
+
+  const missionPath = path.join(targetRoot, MISSION_REL);
+  if (fs.existsSync(missionPath)) {
+    console.error(`Mission already exists: ${missionPath}`);
+    process.exit(1);
+  }
+
+  const scanScript = path.join(
+    EXAMPLE_ROOT,
+    "workers/opengantry/scripts/scan-local.mjs",
+  );
+  const gateLine = fs.existsSync(path.join(targetRoot, "workers/opengantry/scripts/scan-local.mjs"))
+    ? "node workers/opengantry/scripts/scan-local.mjs"
+    : `node ${relFromCwd(scanScript)}`;
+
+  fs.mkdirSync(path.dirname(missionPath), { recursive: true });
+  fs.writeFileSync(missionPath, defaultMissionYaml(gateLine));
+  console.log(`Wrote ${missionPath}`);
+  console.log("Planner must commit this file before verify will accept it:");
+  console.log(`  git add ${MISSION_REL}`);
+  console.log('  git commit -m "[MSN-0001] Legislate iii local workers gate"');
 }
 
 function main() {
   const writeMd = process.argv.includes("--write-activation-md");
+  const doBootstrap = process.argv.includes("--bootstrap");
+  const rootIdx = process.argv.indexOf("--repo-root");
+  const targetRoot =
+    rootIdx >= 0 && process.argv[rootIdx + 1]
+      ? path.resolve(process.argv[rootIdx + 1])
+      : process.cwd();
+
+  if (doBootstrap) {
+    bootstrap(targetRoot);
+    return;
+  }
+
   const configPath = path.join(EXAMPLE_ROOT, "config.yaml");
   const cfg = readConfigWorkers(configPath);
   const gateAbs = path.join(EXAMPLE_ROOT, "scripts/run-iii-architecture.mjs");
@@ -122,9 +211,10 @@ function main() {
 
   console.log("\n4) Suggested mission gate_command (Planner legislates; no silent .gitagent edits):");
   console.log(`   gate_command: ${validateLine}`);
+  console.log("   To write a draft mission for Planner commit: --bootstrap --repo-root <adopter-repo>");
 
-  console.log("\n5) Order: cold lint exit 0 → gantry::verify → promote with verdict token");
-  console.log("   See BEST-PRACTICES.md for exit-code semantics and wild-tree baseline.\n");
+  console.log("\n5) Order: cold lint exit 0 → gantry::verify → promote after verify passes");
+  console.log("   See BEST-PRACTICES.md for exit-code semantics and historical JS-only baseline.\n");
 
   if (writeMd) {
     const outPath = path.join(EXAMPLE_ROOT, "ACTIVATION.md");

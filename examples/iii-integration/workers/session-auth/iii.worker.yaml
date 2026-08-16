@@ -1,0 +1,13 @@
+iii: v1
+name: session-auth
+language: javascript
+deploy: image
+manifest: package.json
+tags:
+  - auth
+  - example
+description: Example iii admission worker. Replace with your IdP in production.
+runtime:
+  base_image: docker.io/iiidev/node:latest
+scripts:
+  start: node src/index.js

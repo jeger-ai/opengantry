@@ -48,7 +48,7 @@ GANTRY_III_ARCH_FORCE_FATAL=1 node scripts/run-iii-architecture.mjs  # exit 2 + 
 | ID | Check | Pass criteria |
 |----|-------|---------------|
 | T1-A01 | Clean workers | exit 0, stdout contains `[iii-architecture: exit 0]` |
-| T1-A02 | Self-test fixtures | fetch, missing package.json, imported register id, `.ts`, global assign |
+| T1-A02 | Self-test fixtures | fetch, missing package.json, imported register id, TypeScript allowed, missing formats, bundle yaml, global assign |
 | T1-A03 | Force fatal | exit 2, stderr explains scanner could not run (not a code violation) |
 | T1-A04 | Deliberate violate | temporary bad file → exit 1 → revert → exit 0 |
 
@@ -60,9 +60,10 @@ Prerequisites: `iii` CLI, Node 24+, built `@jeger-ai/opengantry` at repo root (`
 
 | ID | Step | Pass criteria |
 |----|------|---------------|
-| T2-01 | `iii worker add ./workers/opengantry` from `examples/iii-integration/` | Worker listed in iii config; `npm install` in worker dir succeeds |
-| T2-02 | `cd workers/opengantry && npm start` with `III_URL` set | Log: `opengantry worker registered` |
-| T2-03 | Worker manifest | `iii.worker.yaml` has `iii`, `deploy`, `manifest`, `tags` |
+| T2-01 | `npm run build:bundle && cp sandbox.mjs index.mjs` then `iii worker add ./workers/opengantry` from `examples/iii-integration/` | Worker listed with `worker_path`; status `registered` |
+| T2-02 | Sandbox logs | `opengantry worker registered` |
+| T2-03 | Worker manifest | `iii.worker.yaml` has `language: javascript`, `deploy: bundle`, `scripts.start: node ./index.mjs`; no `scripts.install`, no `license` (engine 0.22 rejects unknown keys) |
+| T2-04 | libkrun mounts | `iii worker exec opengantry -- ls /workspace` succeeds; host `repo_root` (e.g. `target-repo`) is **not** visible. Documented: host `npm start` until extra mounts exist |
 
 ## Tier 3 — Live engine (manual, integration)
 
@@ -86,8 +87,10 @@ cd workers/opengantry && npm install && npm start
 
 | ID | Trigger | Pass criteria |
 |----|---------|---------------|
-| T3-01 | `gantry::verify` with absolute `repo_root` to `target-repo`, MSN-9002 mission | `status: "passed"` or structured gate output (after `bash scripts/init-target-repo-git.sh`) |
+| T3-01 | `gantry::verify` with absolute `repo_root` to `target-repo`, MSN-9002 mission, **host** worker | `status: "passed"` (after `bash scripts/init-target-repo-git.sh`) |
 | T3-02 | `gantry::verify` with relative `repo_root` | Error: absolute path required |
+| T3-05 | Host `gantry::verify` while `target-repo/workers/plain` omits `request_format` | `status: "failed"`, `phase: "iii-practices"`; after adding formats → `passed` |
+| T3-06 | Same verify through a **sandboxed** `iii worker add` worker | Fails: host `repo_root` is not mounted (only `/workspace`). Not a silent skip. |
 | T3-03 | Register function `gantry::evil` via governed port | Registration rejected (RBAC hook) |
 | T3-04 | Register `holder::work` on governed port | Succeeds after `session::auth` admission |
 
@@ -127,7 +130,7 @@ Admission context must include `msn_id`, `holder_id`, `worktree_path` (absolute 
 
 - Git push / receive-pack transport
 - Worktree provisioning automation
-- workers.iii.dev registry publish (track B)
+- workers.iii.dev named install (`iii worker add opengantry`) until iii-hq lists the worker
 - Upstream harness default install
 
 ## CI (MSN-0164)

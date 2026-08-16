@@ -12,7 +12,9 @@ From this directory:
 iii worker add ./workers/opengantry
 ```
 
-The worker ships with `@jeger-ai/opengantry` via `file:` for fast iteration before upstream registry publish.
+Before sandboxed add, build the single-file bundle and copy it over `index.mjs` (`dist/` is empty inside the VM). See `workers/opengantry/README.md` (sandbox mounts). Host `npm start` is the path that can read an absolute `repo_root`.
+
+The worker ships with `@jeger-ai/opengantry@^3.2.3`. This example overrides that dependency to `file:../../` so dogfood uses the local kernel.
 
 ## After add worker (activation)
 
@@ -23,6 +25,14 @@ node scripts/activate-opengantry-iii.mjs
 ```
 
 Optional: `node scripts/activate-opengantry-iii.mjs --write-activation-md` writes `ACTIVATION.md` for review.
+
+Draft mission for a Planner commit (host only, never from the worker process):
+
+```bash
+node scripts/activate-opengantry-iii.mjs --bootstrap --repo-root /absolute/path/to/adopter-repo
+```
+
+Requires `gantry init` first (or pass `--init`). Refuses to write into this OpenGantry checkout.
 
 **Adopter contract:**
 
@@ -36,7 +46,7 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 
 | Function | Role |
 |----------|------|
-| `gantry::verify` | Cold path — `verifyMission` (gates, trace) |
+| `gantry::verify` | Scan local `workers/`, then `verifyMission` (gates, trace) |
 | `gantry::middleware` | Hot path — verdict HMAC, promote-class gate, scope (when manifest bound) |
 | `gantry::on-function-registration` | Block `gantry::*` namespace squatting |
 | `gantry::on-trigger-registration` | Block triggers bound to `gantry::` |
@@ -47,9 +57,9 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 
 | Rule | Behavior |
 |------|----------|
-| Promote without verdict | `status: "failed"` — always, including when GXT files are absent |
+| Promote without verify pass | `status: "failed"` — always, including when `.gitagent` is absent |
 | Repo path | `context.worktree_path` or `context.repo_root` required; no `process.cwd()` fallback |
-| `gantry::verify` | `repo_root` must be an **absolute** path with GXT substrate |
+| `gantry::verify` | `repo_root` must be an **absolute** path; local `workers/` scan runs first; missing `.gitagent` fails with an init/bootstrap hint. A **sandboxed** `iii worker add` worker cannot see host `repo_root` (only `/workspace`). Use host `npm start` until iii grows extra mounts. |
 | Lease store | `<repo_root>/.gitagent/leases.json` (override: `GANTRY_III_LEASE_STORE`) |
 | Bypass | `GANTRY_BYPASS_MODE=true` only — operator-opt-in, unsafe for production |
 
@@ -62,7 +72,7 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 | `lib/trace-shards.js` | Demo-only trace shard merge helper |
 | `target-repo/` | Fixture repo for `gantry::verify` |
 | `demo.mjs` | Offline gate (MSN-0159 runtime) |
-| `scripts/run-iii-architecture.mjs` | Cold-path lint profile gate (MSN-0160+) |
+| `scripts/run-iii-architecture.mjs` | Cold-path lint (wrapper around worker iii-practices scanner) |
 | `scripts/validate-offline.mjs` | Composite offline gate: demo + cold lint + self-test (MSN-0163) |
 | `scripts/test-e2e.mjs` | Live dual-port governance E2E (MSN-0165): `npm run test:e2e` |
 | `scripts/activate-opengantry-iii.mjs` | Advisory activation checklist (MSN-0162) |

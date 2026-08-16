@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "allowed_functions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbidden_functions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allow_trigger_type_registration": {
+      "type": "boolean"
+    },
+    "allow_function_registration": {
+      "type": "boolean"
+    },
+    "function_registration_prefix": {
+      "type": "string"
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "msn_id": {
+          "type": "string"
+        },
+        "holder_id": {
+          "type": "string"
+        },
+        "worktree_path": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "allow_function_registration"
+  ]
+}

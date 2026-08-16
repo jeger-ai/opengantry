@@ -1,6 +1,8 @@
 # Skill: iii-architecture
 
-Manifest key `iii-architecture`. **Cold-path** structural lint for iii workers — AST scanners that keep worker layout aligned with iii’s bus model (triggers, schemas, isolation) before OpenGantry hot-path verify runs.
+Manifest key `iii-architecture`. **Cold-path** structural lint for local iii `workers/` — the same iii-aligned profile bundled in the OpenGantry worker (`gantry::verify` runs it before `verifyMission`).
+
+Implementation lives in `examples/iii-integration/workers/opengantry/src/lib/iii-practices/`. This CLI is a thin wrapper so the MANIFEST gate stays stable.
 
 ## Gate
 
@@ -14,9 +16,12 @@ Exit **0** only = pass (`gantry verify`). Exit **1** = violations; exit **2** = 
 
 | Path | Role |
 |------|------|
-| `examples/iii-integration/scripts/` | Orchestrator + rule scanners |
-| `examples/iii-integration/workers/` | Default scan root (fixture workers) |
+| `examples/iii-integration/workers/opengantry/src/lib/iii-practices/` | Scanner implementation |
+| `examples/iii-integration/scripts/run-iii-architecture.mjs` | CLI wrapper + `--self-test` |
+| `examples/iii-integration/workers/` | Default scan root (local workers only) |
 | `.gitagent/planner/iii-architecture.allowlist.json` | Planner-only HTTP connector allowlist (agents cannot edit) |
+
+TypeScript is allowed. Every `registerFunction` must pass `request_format` and `response_format`. Bundle `iii.worker.yaml` must not set `scripts.install` or `runtime.base_image`.
 
 ## HTTP pragma ratchet (MSN-0161)
 

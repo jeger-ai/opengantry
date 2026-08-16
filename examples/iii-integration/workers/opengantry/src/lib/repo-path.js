@@ -22,8 +22,15 @@ export function resolveVerifyRepoRoot(repoRoot) {
   if (!path.isAbsolute(repoRoot)) {
     throw new Error("gantry::verify: repo_root must be an absolute path");
   }
+  if (!fs.existsSync(repoRoot)) {
+    throw new Error(
+      `gantry::verify: repo_root ${repoRoot} is not visible from this worker. A sandboxed iii worker only mounts its own folder at /workspace, not the host git repo. Run the worker on the host (npm start with III_URL), or pass a path that exists inside the mounted workspace.`,
+    );
+  }
   if (!hasGxtSubstrate(repoRoot)) {
-    throw new Error(`gantry::verify: missing GXT substrate under ${repoRoot}`);
+    throw new Error(
+      `gantry::verify: missing .gitagent under ${repoRoot}. Run gantry init, then node scripts/activate-opengantry-iii.mjs --bootstrap`,
+    );
   }
   return repoRoot;
 }

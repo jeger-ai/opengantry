@@ -5,9 +5,9 @@ skill_key: iii-integration
 gate_command: node examples/iii-integration/scripts/validate-offline.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0175: Track B iii-practices scanner in worker bundle; TypeScript allowed; gantry::verify scans local workers/ then verifyMission; [iii-integration: offline validate OK]"
+    anchor: "782"
+    status: PASS
 interrogation:
   - finding_id: 5c3ad2b2a9a3
     kind: adr_conflict

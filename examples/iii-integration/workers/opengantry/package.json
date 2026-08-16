@@ -1,16 +1,29 @@
 {
-  "name": "@jeger-ai/opengantry-iii-worker",
+  "name": "opengantry",
   "private": true,
   "version": "0.1.0",
+  "description": "OpenGantry governance worker for iii: local workers/ scan plus gantry::verify.",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "iii_architecture": {
     "exempt": ["durable-state/module-bags"]
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node ./index.mjs",
+    "test": "node --test tests/middleware.test.mjs && node tests/iii-practices.self-test.mjs",
+    "build:bundle": "node scripts/build-bundle.mjs"
   },
   "dependencies": {
-    "@jeger-ai/opengantry": "file:../../../../",
-    "iii-sdk": "^0.22.1"
+    "@jeger-ai/opengantry": "^3.2.3",
+    "acorn": "8.14.1",
+    "acorn-walk": "8.3.4",
+    "ajv": "8.20.0",
+    "iii-sdk": "^0.22.1",
+    "typescript": "^5.7.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   }
 }

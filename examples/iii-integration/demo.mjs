@@ -177,7 +177,7 @@ function testVerifyRequiresAbsoluteRepoRoot() {
   );
   assert.throws(() => resolveVerifyRepoRoot(undefined), /repo_root required/);
   assert.equal(resolveVerifyRepoRoot(TARGET_REPO), TARGET_REPO);
-  pass("verify requires absolute repo_root with GXT substrate");
+  pass("verify requires absolute repo_root with .gitagent present");
 }
 
 function testTraceWatermark() {

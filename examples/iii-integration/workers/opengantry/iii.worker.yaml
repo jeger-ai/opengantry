@@ -1,7 +1,7 @@
 iii: v1
 name: opengantry
-description: OpenGantry governance control plane for iii orchestration loops.
-deploy: image
+language: javascript
+deploy: bundle
 manifest: package.json
 tags:
   - governance
@@ -9,8 +9,6 @@ tags:
   - policy
   - gxt
   - opengantry
-runtime:
-  base_image: docker.io/iiidev/node:latest
+description: OpenGantry governance for iii. Scans local workers/ then runs gantry verify before promote-class calls.
 scripts:
-  install: "npm install"
-  start: "node src/index.js"
+  start: node ./index.mjs

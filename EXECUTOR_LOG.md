@@ -776,3 +776,11 @@ DoD 1 MSN-0172: AGENT-GRAPH rename + glossary sweep across docs/README/templates
 DoD 1 MSN-0174: v3.2.3 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG manifesto + loop-to-graph; BACKLOG synced; dev-validate-core OK
 DoD 2 MSN-0174: npm 3.2.3 — MSN-0170/0172 squashed; dev-validate-core OK; pack:check OK
 DoD 3 MSN-0174: assert-no-stale-cli-naming excludes example package-lock.json (gapman bin alias); dev-validate-core OK
+
+## MSN-0175 — Track B iii-worker bundle
+[CONTEXT-REQUEST] path=.gitagent/missions/MSN-0175.msn-0175-implement-track-b-iii-worker-bundle-wit.yaml reason=fill trace_quote and PASS after validate-offline; placeholder from legislate cannot bind evidence proposed=.gitagent/missions/MSN-0175.msn-0175-implement-track-b-iii-worker-bundle-wit.yaml | msn=MSN-0175
+DoD 1 MSN-0175: Track B iii-practices scanner in worker bundle; TypeScript allowed; gantry::verify scans local workers/ then verifyMission; [iii-integration: offline validate OK]
+T2 MSN-0175: iii worker add ./workers/opengantry registered in libkrun after bundle copy to index.mjs
+T3 MSN-0175: sandboxed verify cannot see host repo_root (only /workspace); host gantry::verify failed on missing request_format then passed after fix
+
+

@@ -25,6 +25,7 @@ function runStep(label, args, cwd = EXAMPLE_ROOT) {
 runStep("hot path (demo.mjs)", ["demo.mjs"]);
 runStep("cold lint (workers/)", ["scripts/run-iii-architecture.mjs"]);
 runStep("architecture self-test", ["scripts/run-iii-architecture.mjs", "--self-test"]);
+runStep("opengantry worker tests", ["--test", "tests/middleware.test.mjs"], path.join(EXAMPLE_ROOT, "workers/opengantry"));
 
 console.log("[iii-integration: offline validate OK]");
 process.exit(0);
