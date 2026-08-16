@@ -1,0 +1,71 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: MSN-0175: Implement Track B iii-worker bundle with built-in iii-aligned scanner. Move the iii-architecture scanner into the worker bundle (workers/opengantry/src/lib/iii-practices/), refactoring to allow TypeScript, enforce request/response_formats on registerFunction, and check iii.worker.yaml bundle rules according to the iii-hq SOP. Update the worker's gantry::verify tool to execute this scan against local workers/ before calling verifyMission. Update activate-opengantry-iii.mjs to support --bootstrap, writing a default mission that requires a Planner commit (the worker itself never writes law). Update the worker package to deploy: bundle, depend on @jeger-ai/opengantry@^3.2.3, and include registry SOP files (README, SKILL.md, iii-permissions.yaml).
+msn_id: MSN-0175
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0023 applicability. This mission productizes the iii
+      worker and iii-aligned scanner; it does not change planner stamp signing.
+      Planner commit is required for the default mission the activate script
+      writes; the worker itself never writes law.
+    adr_refs:
+      - ADR-0023
+  - finding_id: 6f9d4d2bf647
+    kind: adr_conflict
+    question: Intent may relate to ADR-0030. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0030 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0030 applicability. This mission does not change
+      gantry init --discover. The iii-practices scanner is the worker-bundled
+      cold path for local workers/, not the init discovery scanner.
+    adr_refs:
+      - ADR-0030
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0026 applicability. This mission does not change
+      gantry arch fetch or architecture pointers. HTTP remains banned in the
+      iii-practices scanner except the existing Planner allowlist ratchet.
+    adr_refs:
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0027 applicability. This mission does not change
+      gantry verify SARIF/JUnit export formats. gantry::verify on the iii worker
+      runs the bundled iii-practices scan then verifyMission.
+    adr_refs:
+      - ADR-0027
+  - finding_id: d2b453f54b2d
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: refactor. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key iii-integration; TMVC examples/iii-integration/,
+      skills/iii-integration.md, skills/iii-architecture.md
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 0d392d065eea4c5e3781d673b01e9e6c9261cbb54b082d08f68fb6d630f54471
+declared_paths:
+  - examples/iii-integration/
+  - skills/iii-architecture.md
+  - skills/iii-integration.md
