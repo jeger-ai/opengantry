@@ -69,3 +69,4 @@ declared_paths:
   - examples/iii-integration/
   - skills/iii-architecture.md
   - skills/iii-integration.md
+  - .gitagent/missions/MSN-0175.msn-0175-implement-track-b-iii-worker-bundle-wit.yaml
