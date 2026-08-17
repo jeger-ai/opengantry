@@ -19,6 +19,7 @@ import {
 } from "./workers/opengantry/src/lib/middleware.js";
 import { VerifyCoalescer } from "./workers/opengantry/src/lib/verify-coalescer.js";
 import { resolveVerifyRepoRoot } from "./workers/opengantry/src/lib/repo-path.js";
+import { bindVerdictLease } from "./workers/opengantry/tests/helpers/lease-fixtures.mjs";
 import { appendShardRecord, mergeShardsToExecutorLog } from "./lib/trace-shards.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -95,24 +96,32 @@ async function testMiddlewarePromoteAllowed() {
     org_id: "demo-org",
   };
   const token = mintVerdictToken({ ...expected, keyringPath: keyring });
+  const prevKeyring = process.env.GANTRY_VERDICT_KEYRING;
+  process.env.GANTRY_VERDICT_KEYRING = keyring;
+  const storePath = defaultLeaseStorePath(repoRoot);
+  const leases = new LeaseStore(storePath);
+  bindVerdictLease(leases, "MSN-0155", expected);
   const state = {
-    leaseStores: new Map(),
+    leaseStores: new Map([[repoRoot, leases]]),
     forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
   };
   const middleware = createMiddlewareHandler(state);
-  const result = await middleware({
-    function_id: "demo::promote",
-    payload: { branch: "gxt/msn-0155" },
-    context: {
-      msn_id: "MSN-0155",
-      worktree_path: repoRoot,
-      verdict_token: token,
-      verdict_expected: expected,
-      verdict_keyring_path: keyring,
-    },
-  });
-  assert.equal(result.ok, true);
-  pass("middleware allows promote with verdict token");
+  try {
+    const result = await middleware({
+      function_id: "demo::promote",
+      payload: { branch: "gxt/msn-0155" },
+      context: {
+        msn_id: "MSN-0155",
+        worktree_path: repoRoot,
+        verdict_token: token,
+      },
+    });
+    assert.equal(result.ok, true);
+    pass("middleware allows promote with verdict token");
+  } finally {
+    if (prevKeyring === undefined) delete process.env.GANTRY_VERDICT_KEYRING;
+    else process.env.GANTRY_VERDICT_KEYRING = prevKeyring;
+  }
 }
 
 async function testMiddlewareMissingPathThrows() {

@@ -1,3 +1,6 @@
+/**
+ * Required runtime order for promote-class calls: verify pass → bind lease → promote.
+ */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -7,6 +10,7 @@ import { VerifyCoalescer } from "./workers/opengantry/src/lib/verify-coalescer.j
 import { createMiddlewareHandler } from "./workers/opengantry/src/lib/middleware.js";
 import { LeaseStore } from "./workers/opengantry/src/lib/lease-store.js";
 import { defaultLeaseStorePath } from "./workers/opengantry/src/lib/repo-path.js";
+import { bindVerdictLease } from "./workers/opengantry/tests/helpers/lease-fixtures.mjs";
 import { mintVerdictToken, verifyVerdictToken } from "@jeger-ai/opengantry/kernel";
 
 const N = 50;
@@ -29,8 +33,11 @@ async function runLoad() {
     org_id: "load-org",
   };
   const token = mintVerdictToken({ ...expected, keyringPath: keyring });
+  const prevKeyring = process.env.GANTRY_VERDICT_KEYRING;
+  process.env.GANTRY_VERDICT_KEYRING = keyring;
   const storePath = defaultLeaseStorePath(repoRoot);
   const leases = new LeaseStore(storePath);
+  bindVerdictLease(leases, "MSN-LOAD", expected);
   const state = {
     leaseStores: new Map([[repoRoot, leases]]),
     forwardTrigger: async (fid) => ({ ok: true, fid }),
@@ -38,6 +45,7 @@ async function runLoad() {
   const middleware = createMiddlewareHandler(state);
   const coalescer = new VerifyCoalescer();
 
+  try {
   const tasks = Array.from({ length: N }, (_, i) => async () => {
     const start = performance.now();
     const result = await middleware({
@@ -49,8 +57,6 @@ async function runLoad() {
               msn_id: "MSN-LOAD",
               worktree_path: repoRoot,
               verdict_token: token,
-              verdict_expected: expected,
-              verdict_keyring_path: keyring,
             }
           : { msn_id: "MSN-LOAD", worktree_path: repoRoot },
     });
@@ -76,6 +82,10 @@ async function runLoad() {
   const p99 = sorted[Math.floor(sorted.length * 0.99)];
   assert.ok(p99 < 500, `p99 latency ${p99}ms too high`);
   console.log(`loadtest: ${N} middleware invocations, p99=${p99.toFixed(2)}ms, verify coalesced to 1 run`);
+  } finally {
+    if (prevKeyring === undefined) delete process.env.GANTRY_VERDICT_KEYRING;
+    else process.env.GANTRY_VERDICT_KEYRING = prevKeyring;
+  }
 }
 
 runLoad().catch((err) => {

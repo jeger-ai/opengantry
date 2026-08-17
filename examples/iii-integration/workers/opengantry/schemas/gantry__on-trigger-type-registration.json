@@ -7,7 +7,5 @@
       "type": "string"
     }
   },
-  "required": [
-    "type_id"
-  ]
+  "required": ["type_id"]
 }

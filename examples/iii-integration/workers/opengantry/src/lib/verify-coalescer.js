@@ -12,12 +12,12 @@ export class VerifyCoalescer {
     }
     if (this.queueDepth >= this.maxQueue) {
       return {
-        status: "failed",
-        error_code: "GXT_VERIFY_SATURATED",
+        status: 'failed',
+        error_code: 'GXT_VERIFY_SATURATED',
         findings: [
           {
-            failed_gate: "gate",
-            resolution_hint: "verify queue saturated; retry later",
+            failed_gate: 'gate',
+            resolution_hint: 'verify queue saturated; retry later',
           },
         ],
       };

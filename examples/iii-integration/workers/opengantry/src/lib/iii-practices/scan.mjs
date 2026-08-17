@@ -1,11 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
-import { findOrphanSourceDirs } from "./scan-workers.mjs";
-import { checkAsyncBoundaries } from "./check-async-boundaries.mjs";
-import { checkPayloadContracts } from "./check-payload-contracts.mjs";
-import { checkDurableState } from "./check-durable-state.mjs";
-import { checkWorkerIsolation } from "./check-worker-isolation.mjs";
-import { checkWorkerManifest } from "./check-manifest.mjs";
+import fs from 'node:fs';
+import path from 'node:path';
+import { findOrphanSourceDirs } from './scan-workers.mjs';
+import { checkAsyncBoundaries } from './check-async-boundaries.mjs';
+import { checkPayloadContracts } from './check-payload-contracts.mjs';
+import { checkDurableState } from './check-durable-state.mjs';
+import { checkWorkerIsolation } from './check-worker-isolation.mjs';
+import { checkWorkerManifest } from './check-manifest.mjs';
 
 export async function scanWorkersTree(scanRoot, options = {}) {
   const findings = [];
@@ -20,7 +20,7 @@ export async function scanWorkersTree(scanRoot, options = {}) {
 }
 
 export function localWorkersRoot(repoRoot) {
-  return path.join(repoRoot, "workers");
+  return path.join(repoRoot, 'workers');
 }
 
 /**
@@ -38,8 +38,8 @@ export async function scanLocalWorkers(repoRoot, options = {}) {
     return {
       findings: [
         {
-          rule_id: "scan/unreadable",
-          file: "workers",
+          rule_id: 'scan/unreadable',
+          file: 'workers',
           line: 1,
           message: `local workers/ exists but is unreadable: ${e.message}`,
         },
@@ -47,21 +47,35 @@ export async function scanLocalWorkers(repoRoot, options = {}) {
       logs: [],
     };
   }
-  return scanWorkersTree(scanRoot, options);
+  try {
+    return await scanWorkersTree(scanRoot, options);
+  } catch (e) {
+    return {
+      findings: [
+        {
+          rule_id: 'scan/unreadable',
+          file: 'workers',
+          line: 1,
+          message: `local workers/ scan aborted: ${e.message}`,
+        },
+      ],
+      logs: [],
+    };
+  }
 }
 
 export function practicesFailedPayload(findings) {
   return {
-    status: "failed",
-    phase: "iii-practices",
-    message: "iii-practices scan failed on local workers/",
-    error_code: "GXT_GATE_FAILED",
+    status: 'failed',
+    phase: 'iii-practices',
+    message: 'iii-practices scan failed on local workers/',
+    error_code: 'GXT_GATE_FAILED',
     exit_code: 1,
     findings: findings.map((f) => ({
-      failed_gate: "iii-practices",
+      failed_gate: 'iii-practices',
       resolution_hint: `[${f.rule_id}] ${f.file}:${f.line} ${f.message}`,
     })),
     fix_hints: findings.map((f) => `[${f.rule_id}] ${f.file}:${f.line} ${f.message}`),
-    next_actions: ["Fix local workers/ to match iii worker contracts, then re-run gantry::verify"],
+    next_actions: ['Fix local workers/ to match iii worker contracts, then re-run gantry::verify'],
   };
 }

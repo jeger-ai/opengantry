@@ -13,7 +13,5 @@
       "type": "string"
     }
   },
-  "required": [
-    "repo_root"
-  ]
+  "required": ["repo_root"]
 }

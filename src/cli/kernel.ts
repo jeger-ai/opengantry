@@ -19,6 +19,11 @@ export {
   type MintVerdictTokenInput,
   type VerifyVerdictTokenInput,
 } from "./lib/verdict-token.js";
+export {
+  buildVerdictExpectedClaims,
+  PASSED_FINDINGS_DIGEST,
+  type VerdictExpectedClaims,
+} from "./lib/verdict-expected.js";
 export type { VerifyOptions } from "./lib/verify-options.js";
 export type { VerifyResultPayload } from "./lib/verify-payload.js";
 export { buildVerifyResultPayload } from "./lib/verify-payload.js";
@@ -42,6 +47,14 @@ export function verifyMission(input: VerifyMissionInput): VerifyResultPayload {
   const mission = parseMissionFile(input.repoRoot, input.missionRelPath);
   const options = input.options ?? {};
   return buildVerifyResultPayload(input.repoRoot, manifest, mission, options);
+}
+
+/** Load manifest + mission for middleware scope checks (no verify run). */
+export function loadGovernanceBundle(repoRoot: string, missionRelPath: string) {
+  return {
+    manifest: loadManifest(repoRoot),
+    mission: parseMissionFile(repoRoot, missionRelPath),
+  };
 }
 
 export type { Manifest, ParsedMission };

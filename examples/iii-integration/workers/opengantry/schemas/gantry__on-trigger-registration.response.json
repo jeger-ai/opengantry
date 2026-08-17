@@ -7,7 +7,5 @@
       "type": "string"
     }
   },
-  "required": [
-    "function_id"
-  ]
+  "required": ["function_id"]
 }
