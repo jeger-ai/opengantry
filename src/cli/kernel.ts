@@ -21,9 +21,12 @@ export {
 } from "./lib/verdict-token.js";
 export {
   buildVerdictExpectedClaims,
+  verdictClaimsFor,
+  clearVerdictClaimsCache,
   PASSED_FINDINGS_DIGEST,
   type VerdictExpectedClaims,
 } from "./lib/verdict-expected.js";
+export { resolveOrgId } from "./lib/org-export-config.js";
 export type { VerifyOptions } from "./lib/verify-options.js";
 export type { VerifyResultPayload } from "./lib/verify-payload.js";
 export { buildVerifyResultPayload } from "./lib/verify-payload.js";

@@ -25,12 +25,16 @@ test("kernel exports: package subpaths resolve after build", () => {
     verifyVerdictToken: typeof verifyVerdictToken;
     loadGovernanceBundle: (repoRoot: string, missionRelPath: string) => unknown;
     buildVerdictExpectedClaims: (repoRoot: string, missionRelPath: string) => unknown;
+    verdictClaimsFor: (repoRoot: string, missionRelPath: string) => unknown;
+    resolveOrgId: (repoRoot: string) => string;
   };
   assert.equal(typeof kernel.evaluateScope, "function");
   assert.equal(typeof kernel.verifyMission, "function");
   assert.equal(typeof kernel.verifyVerdictToken, "function");
   assert.equal(typeof kernel.loadGovernanceBundle, "function");
   assert.equal(typeof kernel.buildVerdictExpectedClaims, "function");
+  assert.equal(typeof kernel.verdictClaimsFor, "function");
+  assert.equal(typeof kernel.resolveOrgId, "function");
 });
 
 test("evaluateScope: inside tmvc allowed", () => {

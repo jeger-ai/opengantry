@@ -5,21 +5,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  evaluateScope,
   mintVerdictToken,
   verifyVerdictToken,
+  verdictClaimsFor,
   isPromoteClassFunctionId,
 } from "@jeger-ai/opengantry/kernel";
 
+import { GantryDenied } from "./workers/opengantry/src/lib/denied.js";
 import { LeaseStore, LEASE_STATES } from "./workers/opengantry/src/lib/lease-store.js";
-import {
-  createMiddlewareHandler,
-  isReservedGovernanceFunctionId,
-  defaultLeaseStorePath,
-} from "./workers/opengantry/src/lib/middleware.js";
+import { createMiddlewareHandler, isReservedGovernanceFunctionId } from "./workers/opengantry/src/lib/middleware.js";
 import { VerifyCoalescer } from "./workers/opengantry/src/lib/verify-coalescer.js";
-import { resolveVerifyRepoRoot } from "./workers/opengantry/src/lib/repo-path.js";
-import { bindVerdictLease } from "./workers/opengantry/tests/helpers/lease-fixtures.mjs";
+import { defaultLeaseStorePath, resolveVerifyRepoRoot } from "./workers/opengantry/src/lib/repo-path.js";
 import { appendShardRecord, mergeShardsToExecutorLog } from "./lib/trace-shards.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,7 +27,7 @@ function pass(label) {
 }
 
 function testKernelExports() {
-  assert.equal(typeof evaluateScope, "function");
+  assert.equal(typeof verdictClaimsFor, "function");
   assert.equal(typeof mintVerdictToken, "function");
   assert.equal(typeof verifyVerdictToken, "function");
   pass("kernel exports");
@@ -70,13 +66,16 @@ async function testMiddlewarePromoteDenied() {
     forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
   };
   const middleware = createMiddlewareHandler(state);
-  const result = await middleware({
-    function_id: "demo::promote",
-    payload: {},
-    context: { msn_id: "MSN-0155", worktree_path: repoRoot },
-  });
-  assert.equal(result.status, "failed");
-  pass("middleware denies promote without verdict (fail-closed, no GXT)");
+  await assert.rejects(
+    () =>
+      middleware({
+        function_id: "src::promote",
+        payload: {},
+        context: { msn_id: "MSN-0155", worktree_path: repoRoot },
+      }),
+    (err) => err instanceof GantryDenied,
+  );
+  pass("middleware throws on promote without verdict (fail-closed)");
 }
 
 async function testMiddlewarePromoteAllowed() {
@@ -88,19 +87,46 @@ async function testMiddlewarePromoteAllowed() {
     JSON.stringify([{ org_id: "demo-org", pepper_version: 1, pepper: "demo-pepper" }]),
     { mode: 0o600 },
   );
-  const expected = {
-    msn_id: "MSN-0155",
-    mission_sha256: "sha",
-    findings_digest: "dig",
-    gate_command: "npm test",
-    org_id: "demo-org",
-  };
+  const schemaSrc = path.join(REPO_ROOT, ".gitagent/planner/MISSION.schema.yaml");
+  fs.mkdirSync(path.join(repoRoot, ".gitagent/planner"), { recursive: true });
+  fs.copyFileSync(schemaSrc, path.join(repoRoot, ".gitagent/planner/MISSION.schema.yaml"));
+  fs.mkdirSync(path.join(repoRoot, ".gitagent/foreman"), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, ".gitagent/missions"), { recursive: true });
+  const missionRel = ".gitagent/missions/MSN-0155.yaml";
+  fs.writeFileSync(
+    path.join(repoRoot, missionRel),
+    "msn_id: MSN-0155\nskill_key: gantry\ngate_command: npm test\ntrace_rows: []\n",
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".gitagent/foreman/MANIFEST.json"),
+    JSON.stringify({
+      schema_version: "0.5.0",
+      skills: {
+        gantry: {
+          desc: "t",
+          trust_threshold: "Tier-2",
+          tmvc_roots: ["src/"],
+          forbidden_zones: [],
+          gate_commands: ["npm test"],
+        },
+      },
+      path_risks: {},
+      risk_keywords: [],
+      perimeter_protected: [],
+    }),
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, ".gitagent/foreman/ORG.export.local"),
+    JSON.stringify({ org_id: "demo-org" }),
+    { mode: 0o600 },
+  );
+  const expected = verdictClaimsFor(repoRoot, missionRel);
   const token = mintVerdictToken({ ...expected, keyringPath: keyring });
   const prevKeyring = process.env.GANTRY_VERDICT_KEYRING;
   process.env.GANTRY_VERDICT_KEYRING = keyring;
   const storePath = defaultLeaseStorePath(repoRoot);
   const leases = new LeaseStore(storePath);
-  bindVerdictLease(leases, "MSN-0155", expected);
+  leases.bindMissionRel("MSN-0155", missionRel);
   const state = {
     leaseStores: new Map([[repoRoot, leases]]),
     forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
@@ -108,7 +134,7 @@ async function testMiddlewarePromoteAllowed() {
   const middleware = createMiddlewareHandler(state);
   try {
     const result = await middleware({
-      function_id: "demo::promote",
+      function_id: "src::promote",
       payload: { branch: "gxt/msn-0155" },
       context: {
         msn_id: "MSN-0155",
@@ -239,8 +265,9 @@ function testTombstoneState() {
     msn_id: "MSN-0155",
     branch: "gxt/msn-0155",
     state: LEASE_STATES.promoting,
-    session_refs: { rogue: 1 },
+    session_refs: Object.create(null),
   });
+  leases.acquireSession("MSN-0155", "rogue");
   leases.releaseSession("MSN-0155", "rogue");
   const lease = leases.get("MSN-0155");
   assert.equal(lease.state, LEASE_STATES.tombstoned);

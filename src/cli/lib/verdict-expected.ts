@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { GantryUserError } from "./errors.js";
 import { parseMissionFile, assertMissionGatePresent } from "./missions/parser.js";
-import { resolveOrgExportConfig } from "./org-export-config.js";
+import { REL_ORG_EXPORT_LOCAL, resolveOrgId } from "./org-export-config.js";
 
 /** Canonical digest for a passed verify with zero advisory findings. */
 export const PASSED_FINDINGS_DIGEST = crypto
@@ -28,7 +28,28 @@ function missionAbsPath(repoRoot: string, missionRelPath: string): string {
   return path.isAbsolute(missionRelPath) ? missionRelPath : path.join(repoRoot, missionRelPath);
 }
 
-/** Build server-side verdict claims after a successful gantry::verify pass. */
+function orgExportMtimeMs(repoRoot: string): number | undefined {
+  const abs = path.join(repoRoot, REL_ORG_EXPORT_LOCAL);
+  try {
+    return fs.statSync(abs).mtimeMs;
+  } catch {
+    return undefined;
+  }
+}
+
+const claimsCache = new Map<string, VerdictExpectedClaims>();
+
+function cacheKey(
+  repoRoot: string,
+  missionRelPath: string,
+  missionMtimeMs: number,
+  missionSize: number,
+  orgMtimeMs: number | undefined,
+): string {
+  return `${repoRoot}\0${missionRelPath}\0${missionMtimeMs}\0${missionSize}\0${orgMtimeMs ?? ""}`;
+}
+
+/** Build server-side verdict claims (uncached primitive). */
 export function buildVerdictExpectedClaims(
   repoRoot: string,
   missionRelPath: string,
@@ -45,17 +66,7 @@ export function buildVerdictExpectedClaims(
       2,
     );
   }
-  let org_id: string;
-  try {
-    org_id = resolveOrgExportConfig(repoRoot).org_id;
-  } catch (e) {
-    throw new GantryUserError(
-      "ORG_EXPORT_CONFIG_MISSING",
-      "buildVerdictExpectedClaims requires org export config (GANTRY_ORG_ID + GANTRY_ORG_PEPPER or ORG.export.local)",
-      e instanceof Error ? e.message : String(e),
-      2,
-    );
-  }
+  const org_id = resolveOrgId(repoRoot);
   return {
     msn_id: msnId,
     mission_sha256: sha256File(missionAbs),
@@ -63,4 +74,31 @@ export function buildVerdictExpectedClaims(
     gate_command: mission.gate!.command.trim(),
     org_id,
   };
+}
+
+/** Memoized promote-path entry: recomputes when mission or org export file changes. */
+export function verdictClaimsFor(
+  repoRoot: string,
+  missionRelPath: string,
+): VerdictExpectedClaims {
+  const missionAbs = missionAbsPath(repoRoot, missionRelPath);
+  const missionStat = fs.statSync(missionAbs);
+  const orgMtime = orgExportMtimeMs(repoRoot);
+  const key = cacheKey(
+    repoRoot,
+    missionRelPath,
+    missionStat.mtimeMs,
+    missionStat.size,
+    orgMtime,
+  );
+  const hit = claimsCache.get(key);
+  if (hit) return hit;
+  const claims = buildVerdictExpectedClaims(repoRoot, missionRelPath);
+  claimsCache.set(key, claims);
+  return claims;
+}
+
+/** Test-only: clear memoization between cases. */
+export function clearVerdictClaimsCache(): void {
+  claimsCache.clear();
 }

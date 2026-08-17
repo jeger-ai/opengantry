@@ -52,16 +52,31 @@ function loadOrgExportLocal(root: string): Partial<OrgExportConfig> {
   }
 }
 
+/** Resolve org_id from env (preferred) or ORG.export.local — no pepper required. */
+export function resolveOrgId(root: string): string {
+  const local = loadOrgExportLocal(root);
+  const org_id = process.env.GANTRY_ORG_ID?.trim() || local.org_id;
+  if (!org_id) {
+    throw new GantryUserError(
+      "ORG_ID_MISSING",
+      "org_id required (GANTRY_ORG_ID or ORG.export.local org_id)",
+      `create ${REL_ORG_EXPORT_LOCAL} or set GANTRY_ORG_ID`,
+      2,
+    );
+  }
+  return org_id;
+}
+
 /** Resolve org export config from env (preferred) or gitignored local file. */
 export function resolveOrgExportConfig(root: string): OrgExportConfig {
   const local = loadOrgExportLocal(root);
-  const org_id = process.env.GANTRY_ORG_ID?.trim() || local.org_id;
+  const org_id = resolveOrgId(root);
   const pepper = process.env.GANTRY_ORG_PEPPER?.trim() || local.pepper;
   const pepper_version = parsePepperVersion(
     process.env.GANTRY_ORG_PEPPER_VERSION ?? String(local.pepper_version ?? 1),
   );
 
-  if (!org_id || !pepper) {
+  if (!pepper) {
     throw new GantryUserError(
       "ORG_EXPORT_CONFIG_MISSING",
       "attestation receipt v0.2.0 requires org export config (GANTRY_ORG_ID + GANTRY_ORG_PEPPER or ORG.export.local)",

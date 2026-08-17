@@ -123,7 +123,7 @@ test("attestation receipt: rejects missing org export config", () => {
       }),
     (err: unknown) => {
       assert.ok(err instanceof GantryUserError);
-      assert.equal(err.code, "ORG_EXPORT_CONFIG_MISSING");
+      assert.equal(err.code, "ORG_ID_MISSING");
       return true;
     },
   );
