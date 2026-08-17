@@ -66,6 +66,32 @@ jobs:
             --data-binary @envelope.json)"
           cat response.json
           [ "$code" = "202" ] || { echo "ingest failed: HTTP $code" >&2; exit 1; }
+          request_id="$(sed -n 's/.*"request_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' response.json)"
+          [ -n "$request_id" ] || { echo "missing request_id in 202 response" >&2; exit 1; }
+          for _ in $(seq 1 120); do
+            status_body="$(curl -sS -H "Authorization: Bearer $PLANE_INGEST_TOKEN" \
+              "$PLANE_INGEST_URL/api/v1/ingest/requests/$request_id")"
+            echo "$status_body"
+            case "$status_body" in
+              *'"status":"chained"'*|*'"status": "chained"'*) exit 0 ;;
+              *'"status":"rejected"'*|*'"status": "rejected"'*)
+                echo "ingest rejected (request_id=$request_id)" >&2
+                exit 1
+                ;;
+            esac
+            sleep 0.5
+          done
+          echo "ingest poll timeout (request_id=$request_id)" >&2
+          exit 1
+
+      - name: Push pre-commit agent events
+        if: steps.mission.outputs.path != ''
+        continue-on-error: true
+        env:
+          PLANE_INGEST_URL: ${{ vars.PLANE_INGEST_URL }}
+          PLANE_INGEST_TOKEN: ${{ secrets.PLANE_INGEST_TOKEN }}
+        run: |
+          node dist/cli/index.js events push --json || true
 
       - name: Propagate verify outcome
         if: steps.verify.outcome == 'failure'

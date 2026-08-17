@@ -7,6 +7,11 @@ import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify-run.js";
+import { appendEventSpool } from "../lib/event-spool.js";
+import { resolveOrgExportConfig } from "../lib/org-export-config.js";
+import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
+import { resolveMissionArg } from "../lib/mission-arg.js";
+import { parseMissionFile } from "../lib/missions/parser.js";
 
 export type { VerifyOptions } from "../lib/verify-options.js";
 
@@ -80,6 +85,26 @@ async function runVerifyChangedMissions(options: VerifyOptions): Promise<void> {
   }
 }
 
+function recordVerifyAttempt(root: string, options: VerifyOptions, ok: boolean, exitCode: number): void {
+  try {
+    if (!options.mission) return;
+    const resolved = resolveMissionArg(root, options.mission);
+    const mission = parseMissionFile(root, resolved.missionRel);
+    const org = resolveOrgExportConfig(root);
+    appendEventSpool(root, {
+      event_type: "verify_attempt",
+      repository_hash: resolveRepositoryHash(root, org),
+      msn_id: mission.msnId ?? undefined,
+      payload: {
+        status: ok ? "passed" : "failed",
+        exit_code: exitCode,
+      },
+    });
+  } catch {
+    // best-effort spool
+  }
+}
+
 export async function runVerify(options: VerifyOptions): Promise<void> {
   try {
     assertVerifyOptionsCompatible(options);
@@ -99,6 +124,8 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
 
   try {
     const result = await runVerifyCore(options);
+    const { root } = loadWorkspace();
+    recordVerifyAttempt(root, options, result.ok, result.exitCode);
     if (!result.ok) {
       setExitCode(result.exitCode);
     }

@@ -124,8 +124,9 @@ M1 control-plane ingestion uses `gantry verify --export` to emit a hub envelope 
    - `GANTRY_SIGNER_PRINCIPAL_KIND=github_actor`
    - `GANTRY_BRANCH_NAME` from `github.event.pull_request.head.ref`
 3. `gantry verify --mission … --ci --export envelope.json` with `continue-on-error: true`
-4. `POST $PLANE_INGEST_URL/api/v1/attestations/ingest` with Bearer token
-5. Fail the job if verify failed (ingestion already recorded)
+4. `POST $PLANE_INGEST_URL/api/v1/attestations/ingest` with Bearer token → **202** + `request_id`
+5. Poll `GET $PLANE_INGEST_URL/api/v1/ingest/requests/:request_id` until `status=chained` (fail on `rejected` or timeout). **HTTP 202 alone is not cryptographic success.**
+6. Fail the job if verify failed (ingestion may still be recorded)
 
 ### Local export (debug)
 

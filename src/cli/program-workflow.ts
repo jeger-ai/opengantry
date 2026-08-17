@@ -6,6 +6,7 @@ import { runVerify } from "./commands/verify.js";
 import type { VerifyOptions } from "./lib/verify-options.js";
 import type { VerifyExportFormat } from "./lib/verify-export.js";
 import { runScan } from "./commands/scan.js";
+import { runEventsPush } from "./commands/events-push.js";
 import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
 import { runPerimeter } from "./commands/perimeter.js";
@@ -263,6 +264,20 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--json", "Emit structured JSON")
     .action((opts: { mission?: string; cwd?: string; json?: boolean }) => {
       runScan(opts);
+    });
+
+  const eventsCmd = program.command("events").description("Pre-commit agent event spool and plane push");
+
+  eventsCmd
+    .command("push")
+    .description("Push spooled pre-commit events to opengantry-plane")
+    .option("--url <url>", "Plane ingest base URL (default PLANE_INGEST_URL)")
+    .option("--token <token>", "Ingest bearer token (default PLANE_INGEST_TOKEN)")
+    .option("--dry-run", "Print batch envelope without sending")
+    .option("--json", "Emit structured JSON")
+    .option("--cwd <dir>", "Working directory")
+    .action(async (opts: { url?: string; token?: string; dryRun?: boolean; json?: boolean; cwd?: string }) => {
+      await runEventsPush(opts);
     });
 
   program

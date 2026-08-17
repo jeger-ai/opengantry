@@ -7,6 +7,9 @@ import {
   formatStagedTmvcAdvisory,
 } from "../lib/staged-tmvc-guard.js";
 import { loadWorkspace } from "../lib/workspace.js";
+import { appendEventSpool } from "../lib/event-spool.js";
+import { resolveOrgExportConfig } from "../lib/org-export-config.js";
+import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
 
 export interface TmvcGuardCliOptions {
   mission?: string;
@@ -63,6 +66,22 @@ export function runTmvcGuard(options: TmvcGuardCliOptions): void {
 
     const lines = formatStagedTmvcAdvisory(result);
     advisoryToStderr(lines);
+    try {
+      const org = resolveOrgExportConfig(workspace.root);
+      appendEventSpool(workspace.root, {
+        event_type: "guard_result",
+        repository_hash: resolveRepositoryHash(workspace.root, org),
+        msn_id: resolved.msn_id || undefined,
+        payload: {
+          allowed: result.ok || result.skipped,
+          strict,
+          violation_count: result.violations.length,
+          source: "tmvc_guard",
+        },
+      });
+    } catch {
+      // best-effort spool
+    }
     if (!result.skipped && !result.ok && strict) {
       setExitCode(1);
     }
