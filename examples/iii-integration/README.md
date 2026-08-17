@@ -6,13 +6,14 @@ Product worker for **deterministic governance** on the iii bus: when you add Ope
 
 ## Install (local staging)
 
-From this directory:
+From the iii workers checkout or registry:
 
 ```bash
-iii worker add ./workers/opengantry
+iii worker add opengantry
+# or: iii worker add /path/to/iii-hq/workers/opengantry
 ```
 
-Before sandboxed add, build the single-file bundle and copy it over `index.mjs` (`dist/` is empty inside the VM). See `workers/opengantry/README.md` (sandbox mounts). Host `npm start` is the path that can read an absolute `repo_root`.
+Before sandboxed add, build the single-file bundle and copy it over `index.mjs` (`dist/` is empty inside the VM). See `workers/opengantry/README.md` in iii-hq. Host `npm start` is the path that can read an absolute `repo_root`.
 
 The worker ships with `@jeger-ai/opengantry@^3.2.3`. This example overrides that dependency to `file:../../` so dogfood uses the local kernel.
 
@@ -36,7 +37,7 @@ Requires `gantry init` first (or pass `--init`). Refuses to write into this Open
 
 **Adopter contract:**
 
-1. Bind **offline validate** to worker-touching missions and CI: `npm run validate` (chains demo + cold lint + self-test; exit 0 only).
+1. Bind **offline validate** to worker-touching missions and CI: `npm run validate` (cold lint + self-test; exit 0 only).
 2. Wire the **governed listener** to `gantry::middleware` + OpenGantry RBAC hooks (see `config.yaml` port 49135).
 3. Run cold lint before hot promote; promote-class triggers require a verdict token.
 
@@ -46,7 +47,7 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 
 | Function | Role |
 |----------|------|
-| `gantry::verify` | Scan local `workers/`, then `verifyMission` (gates, trace) |
+| `gantry::verify` | Kernel `verifyMission` (gates, trace) |
 | `gantry::middleware` | Hot path — verdict HMAC, promote-class gate, scope (when manifest bound) |
 | `gantry::on-function-registration` | Block `gantry::*` namespace squatting |
 | `gantry::on-trigger-registration` | Block triggers bound to `gantry::` |
@@ -59,21 +60,18 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 |------|----------|
 | Promote without verify pass | `status: "failed"` — always, including when `.gitagent` is absent |
 | Repo path | `context.worktree_path` or `context.repo_root` required; no `process.cwd()` fallback |
-| `gantry::verify` | `repo_root` must be an **absolute** path; local `workers/` scan runs first; missing `.gitagent` fails with an init/bootstrap hint. A **sandboxed** `iii worker add` worker cannot see host `repo_root` (only `/workspace`). Use host `npm start` until iii grows extra mounts. |
+| `gantry::verify` | `repo_root` must be an **absolute** path; missing `.gitagent` fails with an init/bootstrap hint. A **sandboxed** `iii worker add` worker cannot see host `repo_root` (only `/workspace`). Use host `npm start` until iii grows extra mounts. |
 | Lease store | `<repo_root>/.gitagent/leases.json` (override: `GANTRY_III_LEASE_STORE`) |
-| Bypass | `GANTRY_BYPASS_MODE=true` only — operator-opt-in, unsafe for production |
 
 ## Layout
 
 | Path | Owner |
 |------|--------|
-| `workers/opengantry/` | Self-contained product worker (`iii worker add` target) |
 | `workers/session-auth/` | **Example** admission worker (`session::auth`) — replace with your IdP |
-| `lib/trace-shards.js` | Demo-only trace shard merge helper |
+| `scripts/iii-practices/` | Cold-path architecture scanner |
 | `target-repo/` | Fixture repo for `gantry::verify` |
-| `demo.mjs` | Offline gate (MSN-0159 runtime) |
-| `scripts/run-iii-architecture.mjs` | Cold-path lint (wrapper around worker iii-practices scanner) |
-| `scripts/validate-offline.mjs` | Composite offline gate: demo + cold lint + self-test (MSN-0163) |
+| `scripts/run-iii-architecture.mjs` | Cold-path lint CLI |
+| `scripts/validate-offline.mjs` | Composite offline gate: cold lint + self-test |
 | `scripts/test-e2e.mjs` | Live dual-port governance E2E (MSN-0165): `npm run test:e2e` |
 | `scripts/activate-opengantry-iii.mjs` | Advisory activation checklist (MSN-0162) |
 | `BEST-PRACTICES.md` | Hot vs cold path, exit-code semantics |
@@ -85,15 +83,14 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 npm install
 npm run validate                        # composite gate (recommended)
 node scripts/run-iii-architecture.mjs   # cold lint only; default scan root workers/
-node scripts/run-iii-architecture.mjs --root workers/opengantry  # single-worker scan root
 npm run test:iii-architecture           # fixture self-test only
 ```
 
-See [BEST-PRACTICES.md](./BEST-PRACTICES.md). AST lint is a speed bump; runtime promote still uses the OpenGantry worker.
+Worker runtime tests (`npm test`, `npm run demo`) live in `iii-hq/workers/opengantry`.
 
 ## Test plan
 
-See [TEST-PLAN.md](./TEST-PLAN.md) for tiered coverage: offline CI gate (`demo.mjs`), worker install, live engine triggers, governed port, and security regressions.
+See [TEST-PLAN.md](./TEST-PLAN.md) for tiered coverage: offline CI gate, worker install, live engine triggers, governed port, and security regressions.
 
 ## Quick start (offline — primary)
 
@@ -116,7 +113,7 @@ iii --no-update-check
 ```bash
 export III_URL=ws://127.0.0.1:49134
 export OTEL_ENABLED=false
-cd workers/opengantry && npm install && npm start
+cd /path/to/iii-hq/workers/opengantry && npm install && npm start
 ```
 
 **Trigger verify** against the fixture repo (absolute `repo_root`):
@@ -157,4 +154,4 @@ Uses `@jeger-ai/opengantry/kernel` (v3.2.2+): `evaluateScope`, `verifyMission`, 
 - **Worktree automation** — orchestrator responsibility.
 - **Network isolation** — sandboxes must not reach internal port `49134`.
 
-Run `node loadtest.mjs` for offline middleware concurrency checks.
+Run `npm run demo` in `iii-hq/workers/opengantry` for offline middleware concurrency checks.

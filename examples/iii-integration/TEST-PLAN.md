@@ -1,6 +1,6 @@
 # iii integration test plan
 
-OpenGantry × iii.dev — verification tiers for the product worker under `workers/opengantry/`.
+OpenGantry × iii.dev — verification tiers. Product worker: `iii-hq/workers/opengantry`. Cold-path lint: this example tree.
 
 ## Goals
 
@@ -14,22 +14,22 @@ Run from `examples/iii-integration/`:
 
 ```bash
 npm install
-npm run validate                               # composite: demo + cold lint + self-test
-node demo.mjs                                  # hot path only
+npm run validate                               # composite: cold lint + self-test
 node scripts/run-iii-architecture.mjs          # cold lint only
 npm run test:iii-architecture                  # fixtures only
 ```
+
+Worker hot-path tests (`npm test`, `npm run demo`, `npm run loadtest`) run from `iii-hq/workers/opengantry`.
 
 | ID | Area | Check | Pass criteria |
 |----|------|-------|---------------|
 | T1-01 | Kernel | `@jeger-ai/opengantry/kernel` exports | `evaluateScope`, `mintVerdictToken`, `verifyVerdictToken` callable |
 | T1-02 | Verdict | HMAC round-trip | `mintVerdictToken` + `verifyVerdictToken` with keyring |
 | T1-03 | Namespace | Reserved `gantry::*` | `isReservedGovernanceFunctionId("gantry::verify")` true; `demo::work` false |
-| T1-04 | Middleware | Fail-closed promote | `demo::promote` without verdict → `status: "failed"` (no GXT present) |
+| T1-04 | Middleware | Fail-closed promote | `src::promote` without verdict → throws `GantryDenied` |
 | T1-05 | Middleware | Promote with verdict | Valid token + `worktree_path` → forward succeeds |
 | T1-06 | Paths | Missing repo path | No `worktree_path` / `repo_root` → throws hard error |
-| T1-07 | Bypass | `GANTRY_BYPASS_MODE=true` | Promote without verdict forwards (env unset after test) |
-| T1-08 | Leases | Durable store | Upsert writes `<repo>/.gitagent/leases.json` |
+| T1-07 | Leases | Durable store | Upsert writes `<repo>/.gitagent/leases.json` |
 | T1-09 | Verify | Absolute `repo_root` | Relative path rejected; `target-repo` absolute path accepted |
 | T1-10 | Coalescer | Single-flight verify | Concurrent same-key verify runs once |
 | T1-11 | Leases | Tombstone | Promoting + last session release → `tombstoned` |
@@ -60,7 +60,7 @@ Prerequisites: `iii` CLI, Node 24+, built `@jeger-ai/opengantry` at repo root (`
 
 | ID | Step | Pass criteria |
 |----|------|---------------|
-| T2-01 | `npm run build:bundle && cp sandbox.mjs index.mjs` then `iii worker add ./workers/opengantry` from `examples/iii-integration/` | Worker listed with `worker_path`; status `registered` |
+| T2-01 | `npm run build:bundle && cp sandbox.mjs index.mjs` then `iii worker add` from workers checkout | Worker listed with `worker_path`; status `registered` |
 | T2-02 | Sandbox logs | `opengantry worker registered` |
 | T2-03 | Worker manifest | `iii.worker.yaml` has `language: javascript`, `deploy: bundle`, `scripts.start: node ./index.mjs`; no `scripts.install`, no `license` (engine 0.22 rejects unknown keys) |
 | T2-04 | libkrun mounts | `iii worker exec opengantry -- ls /workspace` succeeds; host `repo_root` (e.g. `target-repo`) is **not** visible. Documented: host `npm start` until extra mounts exist |
@@ -80,7 +80,7 @@ iii --no-update-check
 ```bash
 export III_URL=ws://127.0.0.1:49134
 export OTEL_ENABLED=false
-cd workers/opengantry && npm install && npm start
+cd /path/to/iii-hq/workers/opengantry && npm install && npm start
 ```
 
 **Terminal 3 — triggers**
@@ -89,7 +89,7 @@ cd workers/opengantry && npm install && npm start
 |----|---------|---------------|
 | T3-01 | `gantry::verify` with absolute `repo_root` to `target-repo`, MSN-9002 mission, **host** worker | `status: "passed"` (after `bash scripts/init-target-repo-git.sh`) |
 | T3-02 | `gantry::verify` with relative `repo_root` | Error: absolute path required |
-| T3-05 | Host `gantry::verify` while `target-repo/workers/plain` omits `request_format` | `status: "failed"`, `phase: "iii-practices"`; after adding formats → `passed` |
+| T3-05 | Run `run-iii-architecture.mjs` while `target-repo/workers/plain` omits `request_format` | exit 1 architecture violations; after adding formats → exit 0 |
 | T3-06 | Same verify through a **sandboxed** `iii worker add` worker | Fails: host `repo_root` is not mounted (only `/workspace`). Not a silent skip. |
 | T3-03 | Register function `gantry::evil` via governed port | Registration rejected (RBAC hook) |
 | T3-04 | Register `holder::work` on governed port | Succeeds after `session::auth` admission |

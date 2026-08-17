@@ -11,4 +11,4 @@ export {
   resolveStringExpr,
   schemaFileName,
   readWorkerExempt,
-} from "../../workers/opengantry/src/lib/iii-practices/scan-workers.mjs";
+} from "../iii-practices/scan-workers.mjs";

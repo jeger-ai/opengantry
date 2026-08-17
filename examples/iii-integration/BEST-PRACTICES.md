@@ -2,16 +2,16 @@
 
 ## Product goal
 
-When you add the OpenGantry worker to an iii project, **cold-path lint and hot-path verify stay on the critical path** for AI-driven worker edits. The scanner now follows iii's own worker contracts (TypeScript allowed, `request_format` / `response_format` required, `iii.worker.yaml` checked). It is not a JS-only overlay.
+When you add the OpenGantry worker to an iii project, **cold-path lint and hot-path verify stay on the critical path** for AI-driven worker edits. The scanner follows iii's worker contracts (TypeScript allowed, `request_format` / `response_format` required, `iii.worker.yaml` checked).
 
-`gantry::verify` runs that scan against the project's local `workers/` tree **before** `verifyMission`. A clean GXT mission does not hide a dirty local worker.
+Run cold-path lint in CI **before** hot verify. `gantry::verify` is kernel `verifyMission` only — architecture lint is separate (`run-iii-architecture.mjs`).
 
 ## Hot path vs cold path
 
 | Path | What | Where |
 |------|------|--------|
-| **Hot** | Verify, explicit repo paths, durable leases | `workers/opengantry` + `gantry::middleware` / `gantry::verify` |
-| **Cold** | Structural lint (same rules as the bundled scan) | `scripts/run-iii-architecture.mjs` |
+| **Hot** | Verify, explicit repo paths, durable leases | iii-hq `workers/opengantry` + `gantry::middleware` / `gantry::verify` |
+| **Cold** | Structural lint | `scripts/run-iii-architecture.mjs` |
 
 AST lint is a speed bump, not a proof. Planner HTTP allowlists and runtime verify close the high-value holes.
 
@@ -34,7 +34,7 @@ Optional human token on stdout when clean: `[iii-architecture: exit 0]`.
 ```bash
 cd examples/iii-integration
 npm install
-npm run validate                              # composite: demo + cold lint + self-test
+npm run validate                              # composite: cold lint + self-test
 node scripts/run-iii-architecture.mjs          # cold lint only (default scan root: workers/)
 npm run test:iii-architecture                 # fixture self-test
 ```
@@ -46,9 +46,9 @@ MANIFEST skill: `iii-architecture` (see `skills/iii-architecture.md`).
 | Layout | `--root` | Example |
 |--------|----------|---------|
 | Multi-worker (default) | Directory containing worker subdirs | `workers/` (each child has `package.json`) |
-| Single worker | Worker directory itself | `workers/opengantry/` when `package.json` is at that path |
+| Single worker | Worker directory itself | Path to a worker checkout with `package.json` at root |
 
-If `--root` has a top-level `package.json`, the scanner treats it as **one worker**. Do **not** point `--root` at `workers/opengantry/src/`. Registry-installed workers outside this tree (`state`, `http`, `~/.iii/workers-bundle/`) are not scanned.
+If `--root` has a top-level `package.json`, the scanner treats it as **one worker**. Do **not** point `--root` at a worker's `src/`. Registry-installed workers outside this tree (`state`, `http`, `~/.iii/workers-bundle/`) are not scanned.
 
 ## Dogfood note (opengantry worker)
 

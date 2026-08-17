@@ -1,8 +1,8 @@
 # Skill: iii-architecture
 
-Manifest key `iii-architecture`. **Cold-path** structural lint for local iii `workers/` — the same iii-aligned profile bundled in the OpenGantry worker (`gantry::verify` runs it before `verifyMission`).
+Manifest key `iii-architecture`. **Cold-path** structural lint for local iii `workers/`.
 
-Implementation lives in `examples/iii-integration/workers/opengantry/src/lib/iii-practices/`. This CLI is a thin wrapper so the MANIFEST gate stays stable.
+Implementation lives in `examples/iii-integration/scripts/iii-practices/`. `run-iii-architecture.mjs` is the MANIFEST gate wrapper.
 
 ## Gate
 
@@ -16,7 +16,7 @@ Exit **0** only = pass (`gantry verify`). Exit **1** = violations; exit **2** = 
 
 | Path | Role |
 |------|------|
-| `examples/iii-integration/workers/opengantry/src/lib/iii-practices/` | Scanner implementation |
+| `examples/iii-integration/scripts/iii-practices/` | Scanner implementation |
 | `examples/iii-integration/scripts/run-iii-architecture.mjs` | CLI wrapper + `--self-test` |
 | `examples/iii-integration/workers/` | Default scan root (local workers only) |
 | `.gitagent/planner/iii-architecture.allowlist.json` | Planner-only HTTP connector allowlist (agents cannot edit) |

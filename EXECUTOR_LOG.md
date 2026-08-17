@@ -783,4 +783,6 @@ DoD 1 MSN-0175: Track B iii-practices scanner in worker bundle; TypeScript allow
 T2 MSN-0175: iii worker add ./workers/opengantry registered in libkrun after bundle copy to index.mjs
 T3 MSN-0175: sandboxed verify cannot see host repo_root (only /workspace); host gantry::verify failed on missing request_format then passed after fix
 
+## MSN-0176 — Align worker with peer JS workers
+DoD 1 MSN-0176: iii-practices moved to examples cold-path CLI; gantry::verify kernel-only; vendored workers/opengantry rsync deleted; worker flat src/ with Zod formats; [iii-integration: offline validate OK]
 

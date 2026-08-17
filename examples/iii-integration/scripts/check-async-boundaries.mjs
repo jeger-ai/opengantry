@@ -1,1 +1,1 @@
-export { checkAsyncBoundaries } from "../workers/opengantry/src/lib/iii-practices/check-async-boundaries.mjs";
+export { checkAsyncBoundaries } from "./iii-practices/check-async-boundaries.mjs";

@@ -3,11 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { fileURLToPath } from 'node:url';
-import { scanWorkersTree } from '../src/lib/iii-practices/scan.mjs';
+import { scanWorkersTree } from './iii-practices/scan.mjs';
 import {
   loadHttpConnectorAllowlist,
   resolveRepoRoot,
-} from '../src/lib/iii-practices/allowlist.mjs';
+} from './iii-practices/allowlist.mjs';
 
 function materializeFixture(fixtureName) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), `iii-arch-${fixtureName}-`));

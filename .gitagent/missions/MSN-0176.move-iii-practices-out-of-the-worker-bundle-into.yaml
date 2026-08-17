@@ -1,0 +1,46 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Move iii-practices out of the worker bundle into the examples cold-path CLI; gantry::verify is kernel bind only; delete the examples/iii-integration/workers/opengantry rsync copy
+msn_id: MSN-0176
+skill_key: iii-integration
+gate_command: node examples/iii-integration/scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0176: iii-practices moved to examples cold-path CLI; gantry::verify kernel-only; vendored workers/opengantry rsync deleted; worker flat src/ with Zod formats; [iii-integration: offline validate OK]"
+    anchor: "786"
+    status: PASS
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key iii-integration; TMVC examples/iii-integration/ plus
+      skills/iii-architecture.md and skills/iii-integration.md; delete only the
+      vendored examples/iii-integration/workers/opengantry rsync mirror, not
+      session-auth
+    adr_refs:
+      - ADR-0039
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0001 applicability. This is an example placeholder
+      ADR; mission reverses MSN-0175 Track B by moving scanner to cold-path CLI
+      only.
+    adr_refs:
+      - ADR-0001
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0027 applicability. Mission does not change verify
+      export formats; only relocates iii-practices scanner and simplifies worker
+      layout.
+    adr_refs:
+      - ADR-0027
+interrogation_sha256: 6ffd1027745ea649a11b2528834aa29e424d46a27903b6c06fedfc243064d1ae

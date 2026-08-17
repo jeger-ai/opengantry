@@ -1,1 +1,1 @@
-export { checkDurableState } from "../workers/opengantry/src/lib/iii-practices/check-durable-state.mjs";
+export { checkDurableState } from "./iii-practices/check-durable-state.mjs";

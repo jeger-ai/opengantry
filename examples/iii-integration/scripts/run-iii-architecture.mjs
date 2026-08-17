@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /**
- * Cold-path iii-practices gate. Implementation lives in the opengantry worker
- * so `gantry::verify` and this CLI share one scanner.
+ * Cold-path iii-practices gate. Implementation lives under examples/iii-integration/scripts/.
  * Exit: 0 clean, 1 architecture violations, 2 fatal (scanner could not run).
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { preflightDeps } from "../workers/opengantry/src/lib/iii-practices/scan-workers.mjs";
-import { scanWorkersTree } from "../workers/opengantry/src/lib/iii-practices/scan.mjs";
+import { preflightDeps } from "./iii-practices/scan-workers.mjs";
+import { scanWorkersTree } from "./iii-practices/scan.mjs";
 import {
   resolveRepoRoot,
   loadHttpConnectorAllowlist,
-} from "../workers/opengantry/src/lib/iii-practices/allowlist.mjs";
-import { runSelfTest } from "../workers/opengantry/tests/iii-practices.self-test.mjs";
+} from "./iii-practices/allowlist.mjs";
+import { runSelfTest } from "./iii-practices.self-test.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXAMPLE_ROOT = path.resolve(__dirname, "..");

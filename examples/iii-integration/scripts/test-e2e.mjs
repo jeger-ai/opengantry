@@ -14,6 +14,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
+const OPENGANTRY_WORKER_ROOT =
+  process.env.OPENGANTRY_WORKER_ROOT?.trim() ||
+  path.resolve(ROOT, "../../../workers/opengantry");
 const INTERNAL_PORT = 49134;
 const GOVERNED_PORT = 49135;
 const BOOT_TIMEOUT_MS = 60_000;
@@ -420,11 +423,17 @@ async function main() {
     OTEL_ENABLED: "false",
   };
 
+  if (!fs.existsSync(OPENGANTRY_WORKER_ROOT)) {
+    fail(
+      `opengantry worker not found at ${OPENGANTRY_WORKER_ROOT}. Set OPENGANTRY_WORKER_ROOT to iii-hq/workers/opengantry checkout.`,
+    );
+  }
+
   log("spawning opengantry host worker");
   spawnLogged(
     "npm",
     ["start"],
-    { cwd: path.join(ROOT, "workers/opengantry"), env: envWorkers },
+    { cwd: OPENGANTRY_WORKER_ROOT, env: envWorkers },
     "opengantry",
   );
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Composite offline gate for iii-integration: hot path + cold lint + fixture self-test.
+ * Composite offline gate for iii-integration: cold-path architecture lint + self-test.
+ * Worker runtime tests live in iii-hq/workers/opengantry (`npm test` there).
  * Exit 0 only. No gate_success_substring — missions use exit code.
  */
 import { spawnSync } from "node:child_process";
@@ -22,10 +23,8 @@ function runStep(label, args, cwd = EXAMPLE_ROOT) {
   console.log(`validate-offline PASS: ${label}`);
 }
 
-runStep("hot path (demo.mjs)", ["demo.mjs"]);
 runStep("cold lint (workers/)", ["scripts/run-iii-architecture.mjs"]);
 runStep("architecture self-test", ["scripts/run-iii-architecture.mjs", "--self-test"]);
-runStep("opengantry worker tests", ["--test", "tests/middleware.test.mjs"], path.join(EXAMPLE_ROOT, "workers/opengantry"));
 
 console.log("[iii-integration: offline validate OK]");
 process.exit(0);
