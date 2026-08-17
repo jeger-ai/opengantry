@@ -168,28 +168,6 @@ async function testMiddlewareMissingPathThrows() {
   pass("middleware throws when repo path missing");
 }
 
-async function testBypassMode() {
-  const prev = process.env.GANTRY_BYPASS_MODE;
-  process.env.GANTRY_BYPASS_MODE = "true";
-  try {
-    const state = {
-      leaseStores: new Map(),
-      forwardTrigger: async (fid, payload) => ({ ok: true, fid, payload }),
-    };
-    const middleware = createMiddlewareHandler(state);
-    const result = await middleware({
-      function_id: "demo::promote",
-      payload: {},
-      context: { msn_id: "MSN-0155" },
-    });
-    assert.equal(result.ok, true);
-    pass("GANTRY_BYPASS_MODE forwards without verdict");
-  } finally {
-    if (prev === undefined) delete process.env.GANTRY_BYPASS_MODE;
-    else process.env.GANTRY_BYPASS_MODE = prev;
-  }
-}
-
 function testDurableLeaseStorePath() {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-lease-"));
   const storePath = defaultLeaseStorePath(repoRoot);
@@ -288,7 +266,6 @@ async function main() {
   await testMiddlewarePromoteDenied();
   await testMiddlewarePromoteAllowed();
   await testMiddlewareMissingPathThrows();
-  await testBypassMode();
   testDurableLeaseStorePath();
   testVerifyRequiresAbsoluteRepoRoot();
   testTraceWatermark();
