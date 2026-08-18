@@ -1,0 +1,47 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Add pluggable gateExecAdapter to kernel verifyMission for shell delegation
+msn_id: MSN-0177
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 9e9907731c7e
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed — gantry skill src/cli/ TMVC; kernel.ts is the public
+      verifyMission export surface; verify-gate-exec-adapter.test.ts is
+      co-located gate coverage for the exec adapter seam.
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0027 applicability. Kernel exec adapter is a
+      verify-engine seam only; no worker bundle change in this mission.
+    adr_refs:
+      - ADR-0027
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key gantry; TMVC src/cli/lib/verify-options.ts,
+      src/cli/lib/verify-engine.ts, src/cli/kernel.ts,
+      src/cli/tests/verify-gate-exec-adapter.test.ts
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: bf793149453fb46886d7221f275c5960c92189ab3c7ae6f88e7fb0b778b64a6e
+declared_paths:
+  - src/cli/kernel.ts
+  - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-options.ts
+  - src/cli/tests/verify-gate-exec-adapter.test.ts
