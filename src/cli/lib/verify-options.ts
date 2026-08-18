@@ -44,5 +44,23 @@ export interface VerifyOptions {
   exportPath?: string;
   /** Require interrogation block on mission (CI hard mode). */
   requireInterrogation?: boolean;
+  /** Override gate subprocess execution (default: in-process spawn via runGate). */
+  gateExecAdapter?: GateExecAdapter;
 }
+
+/** Input passed to a custom gate executor. */
+export interface GateExecInput {
+  workingDirectory: string;
+  command: string;
+}
+
+/** Result from gate subprocess execution. */
+export interface GateExecResult {
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+}
+
+/** Pluggable gate runner — default uses in-process spawnSync. */
+export type GateExecAdapter = (input: GateExecInput) => GateExecResult;
 

@@ -31,7 +31,7 @@ import {
   scavengeStaleVirtualFlights,
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
-import type { VerifyOptions } from "./verify-options.js";
+import type { GateExecInput, VerifyOptions } from "./verify-options.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -120,14 +120,31 @@ function evaluateGitProof(
   }
 }
 
+function defaultGateExecAdapter(input: GateExecInput): GateRunResult {
+  return runGate(input.workingDirectory, {
+    command: input.command,
+    successSubstring: null,
+  });
+}
+
 function evaluateGatePhase(
   root: string,
   gate: GateSpec,
   options: VerifyOptions,
   executorLogPath: string,
-): { failure: GateFailure | null; gateResult?: ReturnType<typeof runGate> } {
-  const gateResult = runGate(resolveGateWorkDir(root, options), gate);
-  if (gatePassed(gateResult, gate.successSubstring)) return { failure: null, gateResult };
+): { failure: GateFailure | null; gateResult?: GateRunResult } {
+  const exec = options.gateExecAdapter ?? defaultGateExecAdapter;
+  const gateResult = exec({
+    workingDirectory: resolveGateWorkDir(root, options),
+    command: gate.command,
+  });
+  const normalized: GateRunResult = {
+    exitCode: gateResult.exitCode,
+    stdout: gateResult.stdout,
+    stderr: gateResult.stderr,
+    combined: `${gateResult.stdout}\n${gateResult.stderr}`,
+  };
+  if (gatePassed(normalized, gate.successSubstring)) return { failure: null, gateResult: normalized };
   return {
     failure: {
       ok: false,
@@ -136,11 +153,11 @@ function evaluateGatePhase(
       exitCode: 1,
       executorLogPath,
       gateCommand: gate.command,
-      gateStdout: gateResult.stdout,
-      gateStderr: gateResult.stderr,
-      gateExitCode: gateResult.exitCode ?? undefined,
+      gateStdout: normalized.stdout,
+      gateStderr: normalized.stderr,
+      gateExitCode: normalized.exitCode ?? undefined,
     },
-    gateResult,
+    gateResult: normalized,
   };
 }
 

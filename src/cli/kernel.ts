@@ -27,7 +27,7 @@ export {
   type VerdictExpectedClaims,
 } from "./lib/verdict-expected.js";
 export { resolveOrgId } from "./lib/org-export-config.js";
-export type { VerifyOptions } from "./lib/verify-options.js";
+export type { VerifyOptions, GateExecAdapter, GateExecInput, GateExecResult } from "./lib/verify-options.js";
 export type { VerifyResultPayload } from "./lib/verify-payload.js";
 export { buildVerifyResultPayload } from "./lib/verify-payload.js";
 

@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0177: options.gateExecAdapter seam on verifyMission; default in-process spawn preserved; verify-gate-exec-adapter.test.ts; npm test 537 pass"
+    anchor: "790"
+    status: PASS
 interrogation:
   - finding_id: 9e9907731c7e
     kind: undefined_boundary
@@ -41,6 +41,8 @@ interrogation:
       - ADR-0039
 interrogation_sha256: bf793149453fb46886d7221f275c5960c92189ab3c7ae6f88e7fb0b778b64a6e
 declared_paths:
+  - .gitagent/missions/MSN-0177.add-pluggable-gateexecadapter-to-kernel-verifymi.yaml
+  - EXECUTOR_LOG.md
   - src/cli/kernel.ts
   - src/cli/lib/verify-engine.ts
   - src/cli/lib/verify-options.ts

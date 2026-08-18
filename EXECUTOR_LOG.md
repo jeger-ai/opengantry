@@ -786,3 +786,6 @@ T3 MSN-0175: sandboxed verify cannot see host repo_root (only /workspace); host 
 ## MSN-0176 — Align worker with peer JS workers
 DoD 1 MSN-0176: iii-practices moved to examples cold-path CLI; gantry::verify kernel-only; vendored workers/opengantry rsync deleted; worker flat src/ with Zod formats; [iii-integration: offline validate OK]
 
+## MSN-0177 — Pluggable gateExecAdapter for verifyMission
+DoD 1 MSN-0177: options.gateExecAdapter seam on verifyMission; default in-process spawn preserved; verify-gate-exec-adapter.test.ts; npm test 537 pass
+
