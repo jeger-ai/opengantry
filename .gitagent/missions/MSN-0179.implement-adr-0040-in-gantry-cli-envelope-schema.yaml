@@ -77,7 +77,9 @@ interrogation:
       contract.
 interrogation_sha256: 64834c4d2cd37976a6ae5b6370739289ca0b5e32161cd36c14ccafc9bda19bc5
 declared_paths:
+  - .gitagent/missions/MSN-0178.legislate-adr-0040-only-findings-blame-schema-v3.yaml
   - .gitagent/missions/MSN-0179.implement-adr-0040-in-gantry-cli-envelope-schema.yaml
+  - EXECUTOR_LOG.md
   - README.md
   - docs/AGENT-GRAPH.md
   - docs/FEATURES.md
@@ -86,11 +88,17 @@ declared_paths:
   - src/cli/lib/banned-import-violation.ts
   - src/cli/lib/context-feed-remediation.ts
   - src/cli/lib/context-feed-store.ts
+  - src/cli/lib/gate-log-writer.ts
   - src/cli/lib/gxt-error-codes.ts
   - src/cli/lib/surgeon.ts
+  - src/cli/lib/verify-engine.ts
   - src/cli/lib/verify-export.ts
   - src/cli/lib/verify-failure.ts
+  - src/cli/lib/verify-finding-fingerprint.ts
+  - src/cli/lib/verify-finding-gate-projector.ts
   - src/cli/lib/verify-finding.ts
   - src/cli/lib/verify-payload.ts
+  - src/cli/lib/verify-presenters.ts
+  - src/cli/lib/verify-remediation-pipeline.ts
   - src/cli/lib/verify-run.ts
   - src/cli/tests/
