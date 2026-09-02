@@ -9,7 +9,19 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-08-12 (v3.2.3 — manifesto + loop-to-graph docs)
+**Last synced:** 2026-09-02 (v3.2.6 — gantry report + ADR-0040)
+
+---
+
+## v3.2.6 — Gantry report + ADR-0040 findings blame
+
+| Item | Status | MSN |
+|------|--------|-----|
+| **`gantry report` localhost inspection dashboard** | **Done** | MSN-0181 |
+| **ADR-0040 findings blame schema v3 in CLI** | **Done** | MSN-0179 |
+| **Pluggable `gateExecAdapter` on `verifyMission`** | **Done** | MSN-0177 |
+| **iii-practices cold-path CLI alignment** | **Done** | MSN-0176 |
+| **v3.2.6 version parity + npm publish** | **Done** | MSN-0182 |
 
 ---
 

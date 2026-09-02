@@ -807,3 +807,8 @@ DoD 1 MSN-0180: verify-last.json persist on PASS/FAIL with phase timings; gantry
 DoD 1 MSN-0181: gantry report overview (git metrics + status + mission timeline + capped 20-run verify ring), HEAD-mtime cache, resilient ring reads, strict 404, /verify drill-down with back link; npm test 571 pass
 
 DoD 1 MSN-0181: gantry report remediation (index-less verify ring, persist in runVerifyCore, phase clock truth, template escaping, demo overlay isolation); npm test 590 pass
+
+## MSN-0182 — v3.2.6 release
+[CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0182 release version parity outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0182
+DoD 1 MSN-0182: v3.2.6 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG gantry report + ADR-0040; BACKLOG synced; dev-validate-core OK
+DoD 2 MSN-0182: npm 3.2.6 — MSN-0177–0181 squashed; dev-validate-core OK; pack:check OK
