@@ -1,0 +1,65 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry report project overview with git metrics, status, mission timeline, and capped verify-run ring
+msn_id: MSN-0181
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0181: gantry report remediation (index-less verify ring, persist in runVerifyCore, phase clock truth, template escaping, demo overlay isolation); npm test 590 pass"
+    anchor: "1"
+    status: PASS
+gate_success_substring: pass 5
+interrogation:
+  - finding_id: 93d020f2b1d7
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed — gantry skill src/cli/ TMVC; report overview,
+      verify-run ring, projector, localhost server, and tests under src/cli/.
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject applicability — ADR-0027 is verify SARIF/JUnit CI export
+      formats; this mission is a local gantry report overview UI and does not
+      add SARIF/JUnit or change gantry verify --format.
+    adr_refs:
+      - ADR-0027
+interrogation_sha256: 8d70b00e333481728b424d5152363e7a147abe93153a81c89b8e87e3f7dfce66
+declared_paths:
+  - src/cli/commands/report.ts
+  - src/cli/lib/atomic-fs.ts
+  - src/cli/lib/constants.ts
+  - src/cli/lib/context-feed-store.ts
+  - src/cli/lib/git-metrics.ts
+  - src/cli/lib/report-demo-fixtures.ts
+  - src/cli/lib/report-demo-mode.ts
+  - src/cli/lib/report-overview-projector.ts
+  - src/cli/lib/report-projector.ts
+  - src/cli/lib/report-server.ts
+  - src/cli/lib/report-template-css.ts
+  - src/cli/lib/report-template-html.ts
+  - src/cli/lib/report-template-overview.ts
+  - src/cli/lib/report-template-shared.ts
+  - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-phase-clock.ts
+  - src/cli/lib/verify-phase-steps.ts
+  - src/cli/lib/verify-payload.ts
+  - src/cli/lib/verify-presenters.ts
+  - src/cli/lib/verify-remediation-pipeline.ts
+  - src/cli/lib/verify-run-ring.ts
+  - src/cli/lib/verify-run.ts
+  - src/cli/lib/virtual-scratch-store.ts
+  - src/cli/program-core.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/report-demo-mode.test.ts
+  - src/cli/tests/report-overview-projector.test.ts
+  - src/cli/tests/report-projector.test.ts
+  - src/cli/tests/report-server.test.ts
+  - src/cli/tests/report-template-shared.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts
+  - src/cli/tests/verify-run-ring.test.ts
