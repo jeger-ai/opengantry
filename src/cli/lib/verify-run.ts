@@ -21,6 +21,7 @@ import {
 } from "./verify-payload.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { persistFailedVerifyRemediation } from "./verify-remediation-pipeline.js";
+import { recordVerifyRunBestEffort } from "./verify-run-ring.js";
 import {
   resolveVerifySink,
   maybeApplySurgeonAndReevaluate,
@@ -33,6 +34,7 @@ import {
   presentJsonInitFailure,
 } from "./verify-presenters.js";
 import type { VerifyPresentContext } from "./verify-presenters.js";
+import type { VerifyPresentResult } from "./verify-presenters.js";
 
 /** Shared verify orchestration context (load once, present by sink). */
 export type { VerifyPresentContext } from "./verify-presenters.js";
@@ -136,6 +138,7 @@ function breakGlassPhaseStub(ctx: VerifyPresentContext): VerifyPhaseSuccess {
     proofMsnId: ctx.mission.msnId ?? "MSN-0000",
     executorLogPath: resolveExecutorLogPath(ctx.root, ctx.options),
     traceWarnings: [],
+    phaseTimings: [],
   };
 }
 
@@ -203,7 +206,7 @@ async function evaluateWithFixLoop(
       mission: ctx.mission,
     });
     const findings = buildFindingsForFailure(ctx.root, normalized, failure);
-    const payload = persistFailedVerifyRemediation({
+    const { payload } = persistFailedVerifyRemediation({
       root: ctx.root,
       mission: ctx.mission,
       missionRel: ctx.resolved.missionRel,
@@ -258,7 +261,9 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
         return presentJsonInitFailure(ctx, receiptWrite.error);
       }
       ctx.receiptPath = receiptWrite.receiptPath;
-      return presentJsonFromResult(ctx, evaluated.result);
+      const presented = presentJsonFromResult(ctx, evaluated.result);
+      recordVerifyRunBestEffort(ctx.root, evaluated.result, presented.remediation ?? null);
+      return presented;
     }
     case "fix_interactive":
     case "fix_noninteractive":
@@ -275,13 +280,16 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
         return presentHumanInitFailure(ctx, receiptWrite.error);
       }
       ctx.receiptPath = receiptWrite.receiptPath;
+      let presented: VerifyPresentResult;
       if (sink === "fix_interactive") {
-        return presentFix(ctx, finalPhase, false);
+        presented = await presentFix(ctx, finalPhase, false);
+      } else if (sink === "fix_noninteractive") {
+        presented = await presentFix(ctx, finalPhase, true);
+      } else {
+        presented = presentHuman(ctx, finalPhase);
       }
-      if (sink === "fix_noninteractive") {
-        return presentFix(ctx, finalPhase, true);
-      }
-      return presentHuman(ctx, finalPhase);
+      recordVerifyRunBestEffort(ctx.root, finalPhase, presented.remediation ?? null);
+      return presented;
     }
     default: {
       const _exhaustive: never = sink;

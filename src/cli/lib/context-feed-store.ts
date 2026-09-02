@@ -1,7 +1,7 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { REL_NEXT_REMEDIATION } from "./constants.js";
+import { writeJsonAtomicSync } from "./atomic-fs.js";
 import type { VerifyFinding } from "./verify-finding.js";
 
 export const REMEDIATION_SCHEMA_VERSION = 2 as const;
@@ -46,15 +46,6 @@ function remediationPath(repoRoot: string): string {
   return path.join(repoRoot, REL_NEXT_REMEDIATION);
 }
 
-function tempRemediationPath(repoRoot: string): string {
-  const nonce = crypto.randomBytes(4).toString("hex");
-  return path.join(remediationDir(repoRoot), `${TMP_PREFIX}${process.pid}.${Date.now()}.${nonce}`);
-}
-
-function ensureRemediationDir(repoRoot: string): void {
-  fs.mkdirSync(remediationDir(repoRoot), { recursive: true });
-}
-
 /** Remove abandoned temp files older than maxAgeMs (optional scavenger — not on hot write path). */
 export function scavengerStaleRemediationTemps(repoRoot: string, maxAgeMs = 300_000): void {
   const dir = remediationDir(repoRoot);
@@ -76,21 +67,7 @@ export function scavengerStaleRemediationTemps(repoRoot: string, maxAgeMs = 300_
 
 /** Atomic replace: write temp file in same directory, then rename onto target. */
 export function writeRemediationSnapshot(repoRoot: string, snapshot: RemediationSnapshot): void {
-  ensureRemediationDir(repoRoot);
-  const target = remediationPath(repoRoot);
-  const temp = tempRemediationPath(repoRoot);
-  const body = `${JSON.stringify(snapshot, null, 2)}\n`;
-  try {
-    fs.writeFileSync(temp, body, { encoding: "utf8", flag: "wx" });
-    fs.renameSync(temp, target);
-  } catch (e) {
-    try {
-      if (fs.existsSync(temp)) fs.unlinkSync(temp);
-    } catch {
-      // ignore cleanup failure
-    }
-    throw e;
-  }
+  writeJsonAtomicSync(remediationPath(repoRoot), snapshot);
 }
 
 function readFileWithRetry(absPath: string, attempts = 3): string | null {

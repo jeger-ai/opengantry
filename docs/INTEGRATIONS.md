@@ -180,6 +180,16 @@ gantry context-feed --clear   # atomic tombstone clear after remediation
 
 Use `gantry verify --json` or MCP `gxt_verify` when you need the full debug payload including inline stdout/stderr.
 
+For human triage, **`gantry report`** serves a read-only localhost dashboard: project overview (metrics, mission timeline, local verify-run ring) plus per-run and per-mission drill-down. Verify snapshots live only in the capped ring under `.gitagent/tmp/verify-runs/` (one JSON file per run; no separate index). Routes: `/` overview, `/verify` last run, `/run/:id` ring entry, `/mission/:msn_id` latest local verify for that mission. It binds `127.0.0.1` only, makes no writes, and exits on Ctrl+C — not a hosted or persistent service.
+
+```bash
+gantry report              # overview at http://127.0.0.1:3134/
+gantry report --last       # open /verify drill-down
+gantry report --no-open    # headless / CI-friendly
+gantry report --json       # overview view model
+gantry report --json --last  # last-verify view model
+```
+
 ## Compatibility matrix
 
 | Tool | Context injection | Wrap / bootstrap |

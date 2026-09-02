@@ -212,7 +212,7 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
-**No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry edges: each item names the gate, `offending_file`, line, severity, and a resolution hint. Use `gantry context-feed --json` for compact model re-entry; read `gate_log_path` on disk for full stack traces. Same payload on `--json`, SARIF, and MCP `gxt_verify`.
+**No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry edges: each item names the gate, `offending_file`, line, severity, and a resolution hint. Use `gantry context-feed --json` for compact model re-entry; read `gate_log_path` on disk for full stack traces. Humans can run **`gantry report`** — a localhost overview of repo metrics, mission history, and the last verify (drill-down at `/verify`). Same payload on `--json`, SARIF, and MCP `gxt_verify`.
 
 ### 6. Content governance example
 

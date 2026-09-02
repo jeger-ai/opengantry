@@ -247,8 +247,40 @@ export function computeTurnaround(
   return { mean: sum / deltas.length, median: median(deltas), samples: deltas.length };
 }
 
-/** Stable key order for cross-clone identical JSON. */
-export function collectGitMetrics(root: string, refName: string): GitMetricsReport {
+export const MISSION_TIMELINE_LIMIT = 15;
+
+export interface MissionTimelineEntry {
+  msn_id: string;
+  first_seen_ms: number | null;
+  last_seen_ms: number | null;
+}
+
+export interface GitMetricsBundle {
+  report: GitMetricsReport;
+  timeline: MissionTimelineEntry[];
+}
+
+function buildTimeline(
+  missionIds: string[],
+  firstSeen: Map<string, number>,
+  lastSeen: Map<string, number>,
+): MissionTimelineEntry[] {
+  const rows: MissionTimelineEntry[] = missionIds.map((msn_id) => ({
+    msn_id,
+    first_seen_ms: firstSeen.get(msn_id) ?? null,
+    last_seen_ms: lastSeen.get(msn_id) ?? null,
+  }));
+  rows.sort((a, b) => {
+    const aLast = a.last_seen_ms ?? a.first_seen_ms ?? 0;
+    const bLast = b.last_seen_ms ?? b.first_seen_ms ?? 0;
+    if (bLast !== aLast) return bLast - aLast;
+    return a.msn_id.localeCompare(b.msn_id);
+  });
+  return rows.slice(0, MISSION_TIMELINE_LIMIT);
+}
+
+/** One git log pass: metrics JSON plus mission first/last seen for the report overview. */
+export function collectGitMetricsBundle(root: string, refName: string): GitMetricsBundle {
   clearMetricsDiffCache();
   const ref = gitRevParse(root, refName);
   if (!ref) throw new Error(`gantry metrics: invalid ref ${refName}`);
@@ -258,16 +290,24 @@ export function collectGitMetrics(root: string, refName: string): GitMetricsRepo
   const missionIds = [...new Set([...fromMissions, ...stream.missionIdsFromLog])].sort();
 
   return {
-    ref,
-    missions_completed: missionIds.length,
-    bypass_count: countBypassNotes(root),
-    bypass_audit_commits: stream.bypass_audit,
-    legislative_commits: stream.legislative,
-    worker_trace_commits: stream.worker_trace,
-    turnaround_seconds: computeTurnaround(stream.firstSeen, stream.lastSeen),
-    mission_ids: missionIds,
-    gxt_extension_metadata: buildGxtExtensionMetadata(),
+    report: {
+      ref,
+      missions_completed: missionIds.length,
+      bypass_count: countBypassNotes(root),
+      bypass_audit_commits: stream.bypass_audit,
+      legislative_commits: stream.legislative,
+      worker_trace_commits: stream.worker_trace,
+      turnaround_seconds: computeTurnaround(stream.firstSeen, stream.lastSeen),
+      mission_ids: missionIds,
+      gxt_extension_metadata: buildGxtExtensionMetadata(),
+    },
+    timeline: buildTimeline(missionIds, stream.firstSeen, stream.lastSeen),
   };
+}
+
+/** Stable key order for cross-clone identical JSON. */
+export function collectGitMetrics(root: string, refName: string): GitMetricsReport {
+  return collectGitMetricsBundle(root, refName).report;
 }
 
 export function formatGitMetricsHuman(report: GitMetricsReport): string {

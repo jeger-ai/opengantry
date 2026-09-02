@@ -1,3 +1,6 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { copyFile, rename, unlink } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -63,5 +66,40 @@ export async function promoteFileAtomic(
     await unlink(stagedPath);
   } catch {
     // staged copy promoted; staging leak is acceptable
+  }
+}
+
+/** Atomic JSON write: temp file in target dir, wx, rename. */
+export function writeJsonAtomicSync(targetAbs: string, value: unknown): void {
+  const dir = path.dirname(targetAbs);
+  fs.mkdirSync(dir, { recursive: true });
+  const base = path.basename(targetAbs);
+  const nonce = crypto.randomBytes(4).toString("hex");
+  const temp = path.join(dir, `${base}.tmp.${process.pid}.${Date.now()}.${nonce}`);
+  const body = `${JSON.stringify(value, null, 2)}\n`;
+  try {
+    fs.writeFileSync(temp, body, { encoding: "utf8", flag: "wx" });
+    fs.renameSync(temp, targetAbs);
+  } catch (e) {
+    try {
+      if (fs.existsSync(temp)) fs.unlinkSync(temp);
+    } catch {
+      // ignore cleanup failure
+    }
+    throw e;
+  }
+}
+
+export function readJsonOrNull<T>(
+  absPath: string,
+  validate?: (parsed: unknown) => parsed is T,
+): T | null {
+  if (!fs.existsSync(absPath)) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(absPath, "utf8")) as unknown;
+    if (validate && !validate(parsed)) return null;
+    return parsed as T;
+  } catch {
+    return null;
   }
 }

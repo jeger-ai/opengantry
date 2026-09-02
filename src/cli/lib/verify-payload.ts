@@ -13,10 +13,6 @@ import {
   normalizeVerifyPhaseFailure,
   type NormalizedVerifyFailure,
 } from "./verify-failure-normalize.js";
-import {
-  persistFailedVerifyRemediation,
-  tombstoneRemediationSnapshot,
-} from "./verify-remediation-pipeline.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "./kpi-advisory-findings.js";
 import { projectGateFindings } from "./verify-finding-gate-projector.js";
@@ -221,31 +217,23 @@ export function initFailurePayload(e: unknown): VerifyFailedPayload {
 export function buildVerifyResultPayloadFromPhaseResult(
   root: string,
   mission: ParsedMission,
-  options: VerifyOptions,
+  _options: VerifyOptions,
   result: VerifyPhaseResult,
 ): VerifyResultPayload {
   const missionRel = missionRelPath(root, mission);
   if (result.ok) {
-    tombstoneRemediationSnapshot(root);
     return successPayload(root, mission, result);
   }
   const normalized = normalizeVerifyPhaseFailure({
     failure: result,
     missionArg: missionRel,
-    options,
+    options: _options,
     root,
     msnId: mission.msnId ?? undefined,
     mission,
   });
   const findings = buildFindingsForFailure(root, normalized, result);
-  const basePayload = toVerifyFailedPayload(normalized, result, findings);
-  return persistFailedVerifyRemediation({
-    root,
-    mission,
-    missionRel,
-    payload: basePayload,
-    findings,
-  });
+  return toVerifyFailedPayload(normalized, result, findings);
 }
 
 export function buildVerifyResultPayload(

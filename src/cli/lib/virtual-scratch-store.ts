@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { writeJsonAtomicSync } from "./atomic-fs.js";
 import { promoteFileAtomic } from "./atomic-fs.js";
 import { REL_VIRTUAL_SCRATCH } from "./constants.js";
 
@@ -90,19 +91,7 @@ export function writeVirtualJsonAtomicSync(
   const flightDir = virtualFlightDirAbs(repoRoot, flightId);
   fs.mkdirSync(flightDir, { recursive: true });
   const target = path.join(flightDir, fileName);
-  const staged = stagedPathInFlight(flightDir, fileName);
-  const body = `${JSON.stringify(payload, null, 2)}\n`;
-  try {
-    fs.writeFileSync(staged, body, { encoding: "utf8", flag: "wx" });
-    fs.renameSync(staged, target);
-  } catch (e) {
-    try {
-      if (fs.existsSync(staged)) fs.unlinkSync(staged);
-    } catch {
-      // ignore cleanup failure
-    }
-    throw e;
-  }
+  writeJsonAtomicSync(target, payload);
   return target;
 }
 

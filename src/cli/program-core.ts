@@ -9,6 +9,7 @@ import { runPin, runUnpin } from "./commands/pin.js";
 import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
 import type { PrincipalHmacOptions } from "./lib/principal-hmac.js";
 import { runContextFeed } from "./commands/context-feed.js";
+import { runReport } from "./commands/report.js";
 import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
@@ -270,6 +271,24 @@ export function registerCoreCommands(program: Command): void {
     .option("--clear", "Atomically clear remediation feed (tombstone swap)")
     .action((opts: { json?: boolean; clear?: boolean }) => {
       runContextFeed({ json: opts.json, clear: opts.clear });
+    });
+
+  program
+    .command("report")
+    .description("Localhost project overview (metrics, missions, verify ring) plus last-verify drill-down")
+    .option("--port <n>", "Listen port (default 3134; walks +1..+10 on EADDRINUSE)")
+    .option("--no-open", "Do not open a browser tab")
+    .option("--last", "Open last-verify drill-down (/verify) instead of overview")
+    .option("--json", "Emit overview view model JSON (use with --last for last-verify model)")
+    .action(async (opts: { port?: string; noOpen?: boolean; json?: boolean; last?: boolean }) => {
+      const port =
+        opts.port !== undefined ? Number.parseInt(opts.port, 10) : undefined;
+      await runReport({
+        port: port !== undefined && Number.isFinite(port) ? port : undefined,
+        noOpen: opts.noOpen,
+        json: opts.json,
+        last: opts.last,
+      });
     });
 
   program

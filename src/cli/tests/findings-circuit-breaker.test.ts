@@ -60,6 +60,7 @@ function successPhase(msnId: string): VerifyPhaseSuccess {
     proofMsnId: msnId,
     executorLogPath: "EXECUTOR_LOG.md",
     traceWarnings: [],
+    phaseTimings: [],
   };
 }
 
@@ -118,7 +119,7 @@ describe("findings circuit breaker", () => {
     assert.deepEqual(loadPriorDigestRing(root, "MSN-0001"), []);
   });
 
-  it("PASS via buildVerifyResultPayloadFromPhaseResult tombstones digest ring", () => {
+  it("PASS payload build leaves remediation to presenter tombstone", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-ring-pass-"));
     const msnId = "MSN-0001";
     writeRemediationSnapshot(root, {
@@ -141,6 +142,8 @@ describe("findings circuit breaker", () => {
       successPhase(msnId),
     );
     assert.equal(payload.status, "passed");
+    assert.ok(readRemediationSnapshot(root));
+    tombstoneRemediationSnapshot(root);
     assert.equal(readRemediationSnapshot(root), null);
   });
 
@@ -148,7 +151,7 @@ describe("findings circuit breaker", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-ring-single-"));
     const finding = verifyFinding("gate", "fix");
     const mission = minimalMission(root, "MSN-0099");
-    const payload = persistFailedVerifyRemediation({
+    const { payload } = persistFailedVerifyRemediation({
       root,
       mission,
       missionRel: ".gitagent/missions/m.yaml",
@@ -173,7 +176,7 @@ describe("findings circuit breaker", () => {
       payload: base,
       findings: [finding],
     });
-    const payload2 = persistFailedVerifyRemediation({
+    const { payload: payload2 } = persistFailedVerifyRemediation({
       root,
       mission,
       missionRel: ".gitagent/missions/m.yaml",

@@ -19,6 +19,8 @@ export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
 export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json" as const;
 /** Git-ignored verify failure remediation feed for IDE/agent loops (atomic swap writes). */
 export const REL_NEXT_REMEDIATION = ".gitagent/tmp/NEXT_REMEDIATION.json" as const;
+/** Default localhost port for `gantry report` (walks +1..+10 on EADDRINUSE when unset). */
+export const DEFAULT_REPORT_PORT = 3134;
 /** Ephemeral runtime snapshot scratch (gitignored; see docs/ADR-EPHEMERAL-VIRTUALIZATION.md). */
 export const REL_VIRTUAL_SCRATCH = ".gitagent/virtual/" as const;
 /** ADR markdown (optional `match_terms` in frontmatter) — Foreman may emit non-binding hints only. */

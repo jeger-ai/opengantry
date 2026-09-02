@@ -190,6 +190,16 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ---
 
+## Inspection dashboard (`gantry report`)
+
+**Why:** A last-fail JSON dump does not answer “what work has happened in this repo?” Humans need git-native history, substrate readiness, and a way to drill into the latest verify without a hosted console.
+
+**What it does:** Spins up a read-only HTTP server on `127.0.0.1` (default port `3134`, walks `+1..+10` on `EADDRINUSE` when `--port` is omitted). **Home (`/`)** is a project overview: `gantry status` readiness, `gantry metrics` KPIs, a mission timeline from git, and a capped local 20-run verify ring (`.gitagent/tmp/verify-runs/`, gitignored; one atomic JSON file per run, sorted by filename). **Drill-down:** `/verify` is the last run; `/run/:id` is any ring entry; `/mission/:msn_id` is the latest local verify for that mission. Each view shows PASS/FAIL/ABORT, circuit-breaker ring, phase bars, findings, and a streamed gate log (`/log?run=:id` when scoped). Git metrics are recomputed per request. Writes nothing from the HTTP server; exits on Ctrl+C.
+
+**How:** `gantry report` · `gantry report --last` · `gantry report --no-open` · `gantry report --json` (overview) · `gantry report --json --last` (last-verify model)
+
+---
+
 ## Defensive profiles and architecture cage
 
 **Why:** Missions can authorize scope; they should not authorize unbounded churn or architecture violations.

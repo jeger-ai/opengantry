@@ -799,3 +799,11 @@ DoD 1 MSN-0179: envelope_schema_version 3 with exact/semantic fingerprints, byte
 DoD 2 MSN-0179: unified remediation persist (PASS tombstone all sinks, --fix single persist, recurrence overlay on human); doc honesty + ring tests; npm test 555 pass
 DoD 3 MSN-0179: persistFailedVerifyRemediation object args + expanded declared_paths; fresh TMVC attestation after lint fix; npm test 555 pass
 
+## MSN-0180 — gantry report localhost inspection dashboard
+DoD 1 MSN-0180: verify-last.json persist on PASS/FAIL with phase timings; gantry report read-only 127.0.0.1 server (Host/CSP/log guards), projector + split HTML/CSS templates, in-dashboard how-to-read strip; report-projector + report-server tests; npm test 564 pass
+
+## MSN-0181 — gantry report project overview
+[CONTEXT-REQUEST] path=README.md,docs/FEATURES.md,docs/INTEGRATIONS.md,src/cli/lib/report-template-css.ts,src/cli/tests/report-projector.test.ts,EXECUTOR_LOG.md,scripts/fixtures/gantry-report-screenshots reason=overview copy for gantry report plus nav-link CSS and back-link assertion; trace sink for MSN-0181; demo seed fixture for report screenshots proposed=README.md,docs/FEATURES.md,docs/INTEGRATIONS.md,src/cli/lib/report-template-css.ts,src/cli/tests/report-projector.test.ts,EXECUTOR_LOG.md,scripts/fixtures/gantry-report-screenshots | msn=MSN-0181
+DoD 1 MSN-0181: gantry report overview (git metrics + status + mission timeline + capped 20-run verify ring), HEAD-mtime cache, resilient ring reads, strict 404, /verify drill-down with back link; npm test 571 pass
+
+DoD 1 MSN-0181: gantry report remediation (index-less verify ring, persist in runVerifyCore, phase clock truth, template escaping, demo overlay isolation); npm test 590 pass

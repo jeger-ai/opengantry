@@ -4,41 +4,36 @@
  * verify-hints (remediation) → verify-presenters (sinks) → verify-run (orchestration).
  */
 import path from "node:path";
-import { toPosixRel } from "./cli-io.js";
+import { formatRepoRelative, toPosixRel } from "./cli-io.js";
 import { gitRunOk } from "./git.js";
-import { assertPlannerMissionProof, REL_MISSIONS_PREFIX } from "./git-proof.js";
-import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./gate.js";
-import { evaluateKpiPhase } from "./kpi-engine.js";
-import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
+import { REL_MISSIONS_PREFIX } from "./git-proof.js";
 import { isLegislativeStub } from "./missions/formatter.js";
-import { formatRepoRelative } from "./cli-io.js";
-import { evaluateInterrogationPhase } from "./verify-interrogation.js";
+import { defaultExecutorLogPath } from "./trace.js";
 import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "./types.js";
-import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows, defaultExecutorLogPath, type TraceVerifyWarning } from "./trace.js";
-import type {
-  DefensiveFailure,
-  GateFailure,
-  GitProofFailure,
-  KpiFailure,
-  TraceFailure,
-  TracePendingFailure,
-  VerifyPhaseFailure,
-} from "./verify-failure.js";
-import { errorMessage } from "./cli-io.js";
+import type { GateRunResult } from "./gate.js";
+import type { VerifyFailurePhase, VerifyPhaseFailure } from "./verify-failure.js";
+import type { TraceVerifyWarning } from "./trace.js";
 import {
   createVirtualFlightId,
   purgeVirtualFlightDir,
   scavengeStaleVirtualFlights,
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
-import type { GateExecInput, VerifyOptions } from "./verify-options.js";
+import type { VerifyOptions } from "./verify-options.js";
+import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./verify-phase-clock.js";
+import { evaluateInterrogationPhase } from "./verify-interrogation.js";
+import {
+  evaluateDefensivePhase,
+  evaluateGatePhase,
+  evaluateGitProof,
+  evaluateKpiGatePhase,
+  evaluateTracePhase,
+  type DefensiveOutcome,
+  type KpiOutcome,
+  type TracePhaseOutcome,
+} from "./verify-phase-steps.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
-
-function parseDeclaredAnchorLine(anchor: string): number {
-  const n = Number.parseInt(anchor.trim(), 10);
-  return Number.isFinite(n) && n > 0 ? n : 0;
-}
 
 function isMissionFile(repoRel: string): boolean {
   const norm = repoRel.replace(/\\/g, "/");
@@ -76,175 +71,15 @@ export interface VerifyPhaseSuccess {
   defensiveWarnings?: string[];
   defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
+  phaseTimings: VerifyPhaseTiming[];
 }
 
-export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
-
-type GitProofOutcome =
-  | { kind: "ok"; proofMsnId: string; warnings: string[] }
-  | { kind: "fail"; failure: GitProofFailure };
-
-type TracePhaseOutcome =
-  | { kind: "ok"; warnings: TraceVerifyWarning[]; skippedUncommitted: number }
-  | { kind: "fail"; failure: TracePendingFailure | TraceFailure };
-
-function gitProofFailure(
-  executorLogPath: string,
-  message: string,
-): GitProofFailure {
-  return {
-    ok: false,
-    phase: "git_proof",
-    message,
-    exitCode: 1,
-    executorLogPath,
-    gitProofMessage: message,
-  };
-}
+export type VerifyPhaseResult =
+  | (VerifyPhaseFailure & { phaseTimings: VerifyPhaseTiming[] })
+  | VerifyPhaseSuccess;
 
 export function resolveExecutorLogPath(root: string, options: VerifyOptions): string {
   return options.executorLog ? path.resolve(root, options.executorLog) : defaultExecutorLogPath(root);
-}
-
-function evaluateGitProof(
-  root: string,
-  mission: ParsedMission,
-  options: VerifyOptions,
-  executorLogPath: string,
-): GitProofOutcome {
-  try {
-    const gitProofWarnings: string[] = [];
-    const proofMsnId = assertPlannerMissionProof(root, mission.rawPath, {
-      msnId: mission.msnId ?? undefined,
-      scanDepth: options.scanDepth,
-      warnings: gitProofWarnings,
-    });
-    return { kind: "ok", proofMsnId, warnings: gitProofWarnings };
-  } catch (e) {
-    return { kind: "fail", failure: gitProofFailure(executorLogPath, errorMessage(e)) };
-  }
-}
-
-function defaultGateExecAdapter(input: GateExecInput): GateRunResult {
-  return runGate(input.workingDirectory, {
-    command: input.command,
-    successSubstring: null,
-  });
-}
-
-function evaluateGatePhase(
-  root: string,
-  gate: GateSpec,
-  options: VerifyOptions,
-  executorLogPath: string,
-): { failure: GateFailure | null; gateResult?: GateRunResult } {
-  const exec = options.gateExecAdapter ?? defaultGateExecAdapter;
-  const gateResult = exec({
-    workingDirectory: resolveGateWorkDir(root, options),
-    command: gate.command,
-  });
-  const normalized: GateRunResult = {
-    exitCode: gateResult.exitCode,
-    stdout: gateResult.stdout,
-    stderr: gateResult.stderr,
-    combined: `${gateResult.stdout}\n${gateResult.stderr}`,
-  };
-  if (gatePassed(normalized, gate.successSubstring)) return { failure: null, gateResult: normalized };
-  return {
-    failure: {
-      ok: false,
-      phase: "gate",
-      message: "GATE FAILED",
-      exitCode: 1,
-      executorLogPath,
-      gateCommand: gate.command,
-      gateStdout: normalized.stdout,
-      gateStderr: normalized.stderr,
-      gateExitCode: normalized.exitCode ?? undefined,
-    },
-    gateResult: normalized,
-  };
-}
-
-interface TracePhaseInput {
-  root: string;
-  manifest: Manifest;
-  mission: ParsedMission;
-  options: VerifyOptions;
-  executorLogPath: string;
-}
-
-function evaluateTracePhase(input: TracePhaseInput): TracePhaseOutcome {
-  const { root, manifest, mission, options, executorLogPath } = input;
-  const hasPending = mission.traceRows.some((row) => isPendingStatus(row.status));
-  if (hasPending) {
-    return {
-      kind: "fail",
-      failure: {
-        ok: false,
-        phase: "trace_pending",
-        message:
-          "Trace rows still PENDING — executor must execute, update mission trace row, then verify",
-        exitCode: 1,
-        executorLogPath,
-        gateCommand: mission.gate?.command,
-      },
-    };
-  }
-
-  const traceResult = verifyTraceRows(executorLogPath, mission.traceRows, {
-    fuzzyNumericAnchor: options.fuzzyTrace === true,
-    strictTrace: options.strictTrace === true,
-  });
-
-  if (traceResult.failures.length > 0) {
-    const first = traceResult.failures[0]!;
-    return {
-      kind: "fail",
-      failure: {
-        ok: false,
-        phase: "trace",
-        message: first.reason,
-        exitCode: 1,
-        executorLogPath,
-        traceKind: first.kind,
-        traceQuote: first.row.traceQuote,
-        traceReason: first.reason,
-        declaredLine: parseDeclaredAnchorLine(first.row.anchor),
-      },
-    };
-  }
-
-  const evidence = verifyTraceEvidenceFreshness(
-    root,
-    manifest,
-    mission.skillKey,
-    executorLogPath,
-    traceResult.resolvedLines,
-    { skipStaleEvidence: options.skipStaleEvidence === true },
-  );
-
-  if (evidence.failures.length > 0) {
-    const first = evidence.failures[0]!;
-    return {
-      kind: "fail",
-      failure: {
-        ok: false,
-        phase: "trace",
-        message: first.reason,
-        exitCode: 1,
-        executorLogPath,
-        traceKind: "stale_evidence",
-        traceQuote: first.row.traceQuote,
-        traceReason: first.reason,
-        declaredLine: parseDeclaredAnchorLine(first.row.anchor),
-        attestationCommit: first.attestationCommit,
-        stalePaths: first.stalePaths,
-      },
-    };
-  }
-
-  return { kind: "ok", warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
 }
 
 function beginVirtualCapture(root: string, mission: ParsedMission): string | null {
@@ -269,95 +104,56 @@ function recordVirtualGateCapture(
   });
 }
 
-interface PostGateWarnings {
-  kpiWarnings?: string[];
-  kpiAdvisoryFindings?: KpiFinding[];
-  defensiveWarnings?: string[];
-  defensiveAudits?: string[];
-}
-
-type PostGateOutcome =
-  | { kind: "ok"; warnings: PostGateWarnings }
-  | { kind: "fail"; failure: DefensiveFailure | KpiFailure };
-
-interface PostGateInput {
-  root: string;
-  manifest: Manifest;
-  mission: ParsedMission;
-  options: VerifyOptions;
-  executorLogPath: string;
-}
-
-function collectDefensiveAndKpiOutcomes(input: PostGateInput): PostGateOutcome {
-  const { root, manifest, mission, options, executorLogPath } = input;
-  let kpiWarnings: string[] | undefined;
-  let kpiAdvisoryFindings: KpiFinding[] | undefined;
-  let defensiveWarnings: string[] | undefined;
-  let defensiveAudits: string[] | undefined;
-
-  if (mission.skillKey) {
-    const defensiveOutcome = evaluateDefensiveGuardPhase(
-      root,
-      manifest,
-      mission.skillKey,
-      executorLogPath,
-    );
-    if (defensiveOutcome.failure) return { kind: "fail", failure: defensiveOutcome.failure };
-    if (defensiveOutcome.warnings.length > 0) defensiveWarnings = defensiveOutcome.warnings;
-    if (defensiveOutcome.audits.length > 0) defensiveAudits = defensiveOutcome.audits;
-  }
-
-  if (mission.kpiGate) {
-    const kpiOutcome = evaluateKpiPhase(
-      root,
-      manifest,
-      mission.skillKey,
-      mission.kpiGate,
-      options,
-      executorLogPath,
-    );
-    if (kpiOutcome?.kind === "fail") return { kind: "fail", failure: kpiOutcome.failure };
-    if (kpiOutcome?.kind === "ok") {
-      kpiWarnings = kpiOutcome.warnings;
-      if (kpiOutcome.advisoryFindings && kpiOutcome.advisoryFindings.length > 0) {
-        kpiAdvisoryFindings = kpiOutcome.advisoryFindings;
-      }
+function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
+  switch (phase) {
+    case "git_proof":
+      return "git_proof";
+    case "interrogation":
+      return "interrogation";
+    case "gate":
+      return "gate";
+    case "defensive":
+      return "defensive";
+    case "kpi":
+      return "kpi";
+    case "trace":
+    case "trace_pending":
+      return "trace";
+    default: {
+      const _exhaustive: never = phase;
+      return _exhaustive;
     }
   }
-
-  return {
-    kind: "ok",
-    warnings: { kpiWarnings, kpiAdvisoryFindings, defensiveWarnings, defensiveAudits },
-  };
 }
 
-interface FullVerifySuccessInput {
+function failWithTimings(failure: VerifyPhaseFailure, clock: VerifyPhaseClock): VerifyPhaseResult {
+  clock.markFailed(failurePhaseToClockId(failure.phase));
+  return { ...failure, phaseTimings: clock.finalize() };
+}
+
+function buildFullVerifySuccess(input: {
   proofMsnId: string;
   executorLogPath: string;
   trace: Extract<TracePhaseOutcome, { kind: "ok" }>;
   gitProofWarnings: string[];
-  extras: PostGateWarnings;
-}
-
-function buildFullVerifySuccess(input: FullVerifySuccessInput): VerifyPhaseSuccess {
-  const { proofMsnId, executorLogPath, trace, gitProofWarnings, extras } = input;
+  defensive: Extract<DefensiveOutcome, { kind: "ok" }>;
+  kpi: Extract<KpiOutcome, { kind: "ok" }>;
+  phaseTimings: VerifyPhaseTiming[];
+}): VerifyPhaseSuccess {
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, defensive, kpi, phaseTimings } =
+    input;
   return {
     ok: true,
     outcome: "full",
     proofMsnId,
     executorLogPath,
     traceWarnings: trace.warnings,
+    phaseTimings,
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
-    ...(extras.kpiWarnings && extras.kpiWarnings.length > 0 ? { kpiWarnings: extras.kpiWarnings } : {}),
-    ...(extras.kpiAdvisoryFindings && extras.kpiAdvisoryFindings.length > 0
-      ? { kpiAdvisoryFindings: extras.kpiAdvisoryFindings }
-      : {}),
-    ...(extras.defensiveWarnings && extras.defensiveWarnings.length > 0
-      ? { defensiveWarnings: extras.defensiveWarnings }
-      : {}),
-    ...(extras.defensiveAudits && extras.defensiveAudits.length > 0
-      ? { defensiveAudits: extras.defensiveAudits }
-      : {}),
+    ...(kpi.warnings.length > 0 ? { kpiWarnings: kpi.warnings } : {}),
+    ...(kpi.advisoryFindings.length > 0 ? { kpiAdvisoryFindings: kpi.advisoryFindings } : {}),
+    ...(defensive.warnings.length > 0 ? { defensiveWarnings: defensive.warnings } : {}),
+    ...(defensive.audits.length > 0 ? { defensiveAudits: defensive.audits } : {}),
     traceEvidenceSkippedUncommitted:
       trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
   };
@@ -370,23 +166,28 @@ export function evaluateVerifyPhases(
   options: VerifyOptions,
   manifest: Manifest,
 ): VerifyPhaseResult {
+  const clock = new VerifyPhaseClock();
   const executorLogPath = resolveExecutorLogPath(root, options);
 
-  const proof = evaluateGitProof(root, mission, options, executorLogPath);
-  if (proof.kind === "fail") return proof.failure;
+  const proof = clock.timed("git_proof", () =>
+    evaluateGitProof(root, mission, options, executorLogPath),
+  );
+  if (proof.kind === "fail") return failWithTimings(proof.failure, clock);
   const { proofMsnId, warnings: proofWarnings } = proof;
 
   const missionRel = formatRepoRelative(root, mission.rawPath);
-  const interrogation = evaluateInterrogationPhase({
-    root,
-    manifest,
-    mission,
-    missionRel,
-    options,
-    proofMsnId,
-    executorLogPath,
-  });
-  if (interrogation.failure) return interrogation.failure;
+  const interrogation = clock.timed("interrogation", () =>
+    evaluateInterrogationPhase({
+      root,
+      manifest,
+      mission,
+      missionRel,
+      options,
+      proofMsnId,
+      executorLogPath,
+    }),
+  );
+  if (interrogation.failure) return failWithTimings(interrogation.failure, clock);
   const gitProofWarnings = [...proofWarnings, ...interrogation.warnings];
 
   if (options.prePush === true && isLegislativeStub(mission)) {
@@ -396,49 +197,52 @@ export function evaluateVerifyPhases(
       proofMsnId,
       executorLogPath,
       traceWarnings: [],
+      phaseTimings: clock.finalize(),
       ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     };
   }
 
   const gate = mission.gate;
   if (!gate) {
-    return {
-      ok: false,
-      phase: "gate",
-      message: "Mission has no gate_command",
-      exitCode: 1,
-      executorLogPath,
-    };
+    return failWithTimings(
+      {
+        ok: false,
+        phase: "gate",
+        message: "Mission has no gate_command",
+        exitCode: 1,
+        executorLogPath,
+      },
+      clock,
+    );
   }
 
   const virtualFlightId = beginVirtualCapture(root, mission);
+  const phaseCtx = { root, manifest, mission, options, executorLogPath };
 
-  const gateOutcome = evaluateGatePhase(root, gate, options, executorLogPath);
+  const gateOutcome = clock.timed("gate", () =>
+    evaluateGatePhase(root, gate, options, executorLogPath),
+  );
   recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome.gateResult);
+  if (gateOutcome.failure) return failWithTimings(gateOutcome.failure, clock);
 
-  if (gateOutcome.failure) return gateOutcome.failure;
+  const defensive = clock.timed("defensive", () => evaluateDefensivePhase(phaseCtx));
+  if (defensive.kind === "fail") return failWithTimings(defensive.failure, clock);
 
-  const postGate = collectDefensiveAndKpiOutcomes({
-    root,
-    manifest,
-    mission,
-    options,
-    executorLogPath,
-  });
-  if (postGate.kind === "fail") return postGate.failure;
+  const kpi = clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
+  if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
 
-  const trace = evaluateTracePhase({ root, manifest, mission, options, executorLogPath });
-  if (trace.kind === "fail") return trace.failure;
+  const trace = clock.timed("trace", () => evaluateTracePhase(phaseCtx));
+  if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
 
-  if (virtualFlightId) {
-    purgeVirtualFlightDir(root, virtualFlightId);
-  }
+  if (virtualFlightId) purgeVirtualFlightDir(root, virtualFlightId);
 
   return buildFullVerifySuccess({
     proofMsnId,
     executorLogPath,
     trace,
     gitProofWarnings,
-    extras: postGate.warnings,
+    defensive,
+    kpi,
+    phaseTimings: clock.finalize(),
   });
 }

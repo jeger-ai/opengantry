@@ -103,7 +103,7 @@ export function persistFailedVerifyRemediation(input: {
   missionRel: string | undefined;
   payload: VerifyFailedPayload;
   findings: VerifyFinding[];
-}): VerifyFailedPayload {
+}): { payload: VerifyFailedPayload; snapshot: RemediationSnapshot } {
   const { root, mission, missionRel, payload, findings } = input;
   const msnId = mission?.msnId ?? undefined;
   const priorRing = loadPriorDigestRing(root, msnId);
@@ -122,16 +122,14 @@ export function persistFailedVerifyRemediation(input: {
     : missionRel
       ? { mission_file_path: missionRel }
       : {};
-  persistRemediationSnapshotBestEffort(
-    root,
-    buildCompactRemediationSnapshot({
-      payload: nextPayload,
-      meta,
-      findings,
-      findingsDigest: digest,
-      digestRing: recurred ? priorRing : digestRing,
-      gateLogPath,
-    }),
-  );
-  return nextPayload;
+  const snapshot = buildCompactRemediationSnapshot({
+    payload: nextPayload,
+    meta,
+    findings,
+    findingsDigest: digest,
+    digestRing: recurred ? priorRing : digestRing,
+    gateLogPath,
+  });
+  persistRemediationSnapshotBestEffort(root, snapshot);
+  return { payload: nextPayload, snapshot };
 }

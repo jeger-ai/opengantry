@@ -36,7 +36,7 @@ import {
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,
 } from "./verify-remediation-pipeline.js";
-import { readRemediationSnapshot } from "./context-feed-store.js";
+import { readRemediationSnapshot, type RemediationSnapshot } from "./context-feed-store.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 
 /** Shared verify orchestration context (load once, present by sink). */
@@ -86,6 +86,7 @@ export function resolveVerifySink(options: {
 export interface VerifyPresentResult {
   ok: boolean;
   exitCode: number;
+  remediation?: RemediationSnapshot | null;
 }
 
 function reporterFor(ctx: VerifyPresentContext): CommandReporter {
@@ -166,12 +167,35 @@ export function presentJsonFromResult(
   ctx: VerifyPresentContext,
   result: VerifyPhaseResult,
 ): VerifyPresentResult {
-  const payload = withContextFields(
-    buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, ctx.options, result),
-    ctx,
-  );
-  emitStructuredPayload(payload, ctx.options);
-  return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
+  if (result.ok) {
+    tombstoneRemediationSnapshot(ctx.root);
+    const payload = withContextFields(
+      buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, ctx.options, result),
+      ctx,
+    );
+    emitStructuredPayload(payload, ctx.options);
+    return { ok: true, exitCode: 0, remediation: null };
+  }
+  const failure = result as VerifyPhaseFailure;
+  const normalized = normalizeVerifyPhaseFailure({
+    failure,
+    missionArg: ctx.resolved.missionRel,
+    options: ctx.options,
+    root: ctx.root,
+    msnId: ctx.mission.msnId ?? undefined,
+    mission: ctx.mission,
+  });
+  const findings = buildFindingsForFailure(ctx.root, normalized, failure);
+  const { payload, snapshot } = persistFailedVerifyRemediation({
+    root: ctx.root,
+    mission: ctx.mission,
+    missionRel: ctx.resolved.missionRel,
+    payload: toVerifyFailedPayload(normalized, failure, findings),
+    findings,
+  });
+  const fullPayload = withContextFields(payload, ctx);
+  emitStructuredPayload(fullPayload, ctx.options);
+  return { ok: false, exitCode: payload.exit_code, remediation: snapshot };
 }
 
 export function presentJsonInitFailure(
@@ -217,7 +241,7 @@ export function presentHuman(
     tombstoneRemediationSnapshot(ctx.root);
     reporter.emitVerifySuccess(result, ctx.resolved.missionRel);
     if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
-    return { ok: true, exitCode: 0 };
+    return { ok: true, exitCode: 0, remediation: null };
   }
   if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
   const normalized = normalizeVerifyPhaseFailure({
@@ -232,6 +256,7 @@ export function presentHuman(
   const msnId = ctx.mission.msnId ?? undefined;
   let presentation = basePresentation;
 
+  let remediation: RemediationSnapshot | undefined;
   if (ctx.options.fix === true) {
     presentation = presentationFromPersistedSnapshot(ctx.root, msnId, basePresentation);
   } else {
@@ -244,11 +269,12 @@ export function presentHuman(
       payload: toVerifyFailedPayload(normalized, failure, findings),
       findings,
     });
-    presentation = overlayFailurePresentation(basePresentation, persisted);
+    remediation = persisted.snapshot;
+    presentation = overlayFailurePresentation(basePresentation, persisted.payload);
   }
 
   reporter.emitFailurePresentation(presentation);
-  return { ok: false, exitCode: presentation.exit_code };
+  return { ok: false, exitCode: presentation.exit_code, remediation: remediation ?? null };
 }
 
 export async function presentFix(
