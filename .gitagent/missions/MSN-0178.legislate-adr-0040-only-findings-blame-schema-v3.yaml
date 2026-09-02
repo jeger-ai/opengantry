@@ -44,4 +44,5 @@ interrogation:
       - ADR-0032
 interrogation_sha256: 88937e769959703af6c33fa77ef98204f00bbe4a249e68ec6889478b5ed63724
 declared_paths:
+  - .gitagent/missions/MSN-0178.legislate-adr-0040-only-findings-blame-schema-v3.yaml
   - .gitagent/out-of-scope/ADR-0040-findings-blame-reentry.md
