@@ -11,12 +11,15 @@ import type { VerifyPhaseFailure } from "./verify-failure.js";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
-  toRemediationSnapshot,
   type NormalizedVerifyFailure,
 } from "./verify-failure-normalize.js";
-import { persistRemediationSnapshot } from "./context-feed-remediation.js";
+import {
+  persistFailedVerifyRemediation,
+  tombstoneRemediationSnapshot,
+} from "./verify-remediation-pipeline.js";
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "./kpi-advisory-findings.js";
+import { projectGateFindings } from "./verify-finding-gate-projector.js";
 import {
   VERIFY_ENVELOPE_SCHEMA_VERSION,
   verifyFinding,
@@ -60,6 +63,7 @@ export interface VerifyFailedPayload {
   exit_code: number;
   envelope_schema_version: typeof VERIFY_ENVELOPE_SCHEMA_VERSION;
   findings: VerifyFinding[];
+  findings_digest?: string;
   mission_file_path?: string;
   mission_source?: "flag" | "pin";
   receipt_path?: string;
@@ -71,6 +75,7 @@ export interface VerifyFailedPayload {
 export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
 
 export function buildFindingsForFailure(
+  root: string,
   normalized: NormalizedVerifyFailure,
   failure?: VerifyPhaseFailure,
 ): VerifyFinding[] {
@@ -81,7 +86,7 @@ export function buildFindingsForFailure(
     return [
       verifyFinding("trace", hint, {
         offending_file: failure.executorLogPath,
-        line: 0,
+        line: failure.declaredLine ?? 0,
       }),
     ];
   }
@@ -93,7 +98,7 @@ export function buildFindingsForFailure(
     ];
   }
   if (failure?.phase === "gate") {
-    return [verifyFinding("gate", hint)];
+    return projectGateFindings(root, failure, hint);
   }
   if (failure?.phase === "defensive") {
     return [verifyFinding("defensive", failure.defensiveReason || hint)];
@@ -111,9 +116,9 @@ export function buildFindingsForFailure(
 
 export function toVerifyFailedPayload(
   normalized: NormalizedVerifyFailure,
-  failure?: VerifyPhaseFailure,
+  failure: VerifyPhaseFailure | undefined,
+  findings: VerifyFinding[],
 ): VerifyFailedPayload {
-  const findings = buildFindingsForFailure(normalized, failure);
   return {
     status: "failed",
     phase: normalized.phase,
@@ -208,7 +213,9 @@ export function buildBreakGlassPayload(
 }
 
 export function initFailurePayload(e: unknown): VerifyFailedPayload {
-  return toVerifyFailedPayload(normalizeInitFailure(e));
+  const normalized = normalizeInitFailure(e);
+  const findings = buildFindingsForFailure("", normalized);
+  return toVerifyFailedPayload(normalized, undefined, findings);
 }
 
 export function buildVerifyResultPayloadFromPhaseResult(
@@ -219,6 +226,7 @@ export function buildVerifyResultPayloadFromPhaseResult(
 ): VerifyResultPayload {
   const missionRel = missionRelPath(root, mission);
   if (result.ok) {
+    tombstoneRemediationSnapshot(root);
     return successPayload(root, mission, result);
   }
   const normalized = normalizeVerifyPhaseFailure({
@@ -229,9 +237,15 @@ export function buildVerifyResultPayloadFromPhaseResult(
     msnId: mission.msnId ?? undefined,
     mission,
   });
-  const payload = toVerifyFailedPayload(normalized, result);
-  persistRemediationSnapshot(root, toRemediationSnapshot(normalized));
-  return payload;
+  const findings = buildFindingsForFailure(root, normalized, result);
+  const basePayload = toVerifyFailedPayload(normalized, result, findings);
+  return persistFailedVerifyRemediation(
+    root,
+    mission,
+    missionRel,
+    basePayload,
+    findings,
+  );
 }
 
 export function buildVerifyResultPayload(

@@ -22,7 +22,7 @@ Typical triggers:
 | IDE agents edit anywhere | Implicit scope; `.gitagent/` drift | Declared **tmvc_roots** + **forbidden zones** in mission + manifest |
 | "It passed locally" | Chat logs or ad-hoc JSON | **Git-native:** mission YAML, gate output, verbatim **`EXECUTOR_LOG.md`** quotes |
 | Architecture or copy drift | Manual review only | `TARGET_ARCHITECTURE.yaml` + `gantry arch check` / `gantry perimeter check` |
-| Autonomous retry edges | Parse terminal stderr | Stable **`findings[]`** envelope with file, line, hint |
+| Autonomous retry edges | Parse terminal stderr | Stable **`findings[]`** envelope with `offending_file`, line, hint |
 | One-off policy per repo | Reinvent orchestration each time | `gantry init` scaffolds the same GXT substrate everywhere |
 
 ---
@@ -36,7 +36,7 @@ Human TDD works because a developer parses stderr and fixes code. When an IDE ag
 OpenGantry keeps your existing `gate_command` (e.g. `npm test`) and adds:
 
 - **Mission YAML** — declared edit paths before the agent touches files
-- **`findings[]`** — machine-readable failure envelope (`file`, `line`, `resolution_hint`) from `gantry verify --json`
+- **`findings[]`** — machine-readable failure envelope (`offending_file`, `line`, `resolution_hint`, optional `rule_id` / `evidence` in envelope v3) from `gantry verify --json`
 
 Vocabulary and the full contrast table: [README § In plain English](../README.md#in-plain-english) and [README § Why not just TDD and CI?](../README.md#why-not-just-tdd-and-ci).
 

@@ -7,7 +7,7 @@ import {
   toFailurePresentation,
   toRemediationSnapshot,
 } from "../lib/verify-failure-normalize.js";
-import { toVerifyFailedPayload } from "../lib/verify-payload.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "../lib/verify-payload.js";
 import { REMEDIATION_SCHEMA_VERSION } from "../lib/context-feed-store.js";
 
 const missionArg = ".gitagent/missions/MSN-0001.yaml";
@@ -27,12 +27,14 @@ function gateFailure(): VerifyPhaseFailure {
 }
 
 test("normalizeVerifyPhaseFailure: gate parity across sinks", () => {
+  const failure = gateFailure();
   const normalized = normalizeVerifyPhaseFailure({
-    failure: gateFailure(),
+    failure,
     missionArg,
     options: {},
   });
-  const payload = toVerifyFailedPayload(normalized);
+  const findings = buildFindingsForFailure("", normalized, failure);
+  const payload = toVerifyFailedPayload(normalized, failure, findings);
   const presentation = toFailurePresentation(normalized);
   const remediation = toRemediationSnapshot(normalized);
 
@@ -64,7 +66,8 @@ test("normalizeVerifyPhaseFailure: kpi includes snapshot kpi block", () => {
     kpiReportPath: ".gitagent/kpi/MSN-0001.json",
   };
   const normalized = normalizeVerifyPhaseFailure({ failure, missionArg, options: {} });
-  const payload = toVerifyFailedPayload(normalized);
+  const findings = buildFindingsForFailure("", normalized, failure);
+  const payload = toVerifyFailedPayload(normalized, failure, findings);
   const remediation = toRemediationSnapshot(normalized);
 
   assert.deepEqual(payload.failures, ["threshold miss"]);
@@ -83,9 +86,11 @@ test("normalizeVerifyPhaseFailure: trace failures aligned", () => {
     traceKind: "ambiguous",
     traceReason: "Ambiguous match",
     traceQuote: "DoD 1 MSN-0001: quote",
+    declaredLine: 42,
   };
   const normalized = normalizeVerifyPhaseFailure({ failure, missionArg, options: {} });
-  const payload = toVerifyFailedPayload(normalized);
+  const findings = buildFindingsForFailure("", normalized, failure);
+  const payload = toVerifyFailedPayload(normalized, failure, findings);
   const presentation = toFailurePresentation(normalized);
   const remediation = toRemediationSnapshot(normalized);
 

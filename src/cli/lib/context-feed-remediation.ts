@@ -3,38 +3,40 @@ import type { ParsedMission } from "./types.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { toPosixRel } from "./cli-io.js";
+import { writeRemediationSnapshot, type RemediationSnapshot } from "./context-feed-store.js";
+import { writeGateLog } from "./gate-log-writer.js";
 import {
-  readRemediationSnapshot,
-  writeRemediationSnapshot,
-  REMEDIATION_SCHEMA_VERSION,
-  type RemediationSnapshot,
-} from "./context-feed-store.js";
-import { normalizeVerifyPhaseFailure, toRemediationSnapshot } from "./verify-failure-normalize.js";
+  buildCompactRemediationSnapshot,
+  loadPriorDigestRing,
+  applyFindingsRecurrence,
+} from "./verify-remediation-pipeline.js";
+import { computeFindingsDigest } from "./verify-finding-fingerprint.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "./verify-payload.js";
+import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
 
-function remediationSnapshotFromFailedPayload(
+function remediationFromPayload(
+  root: string,
   payload: VerifyFailedPayload,
   meta: { mission_file_path?: string; msn_id?: string },
+  findings = payload.findings,
 ): RemediationSnapshot {
-  return {
-    schema_version: REMEDIATION_SCHEMA_VERSION,
-    written_at: new Date().toISOString(),
-    source: "gantry verify",
-    phase: payload.phase,
-    error_code: payload.error_code,
-    message: payload.message,
-    ...meta,
-    fix_hints: payload.fix_hints,
-    next_actions: payload.next_actions,
-    ...(payload.failures ? { failures: payload.failures } : {}),
-    ...(payload.stdout !== undefined || payload.stderr !== undefined
-      ? {
-          gate: {
-            ...(payload.stdout !== undefined ? { stdout: payload.stdout } : {}),
-            ...(payload.stderr !== undefined ? { stderr: payload.stderr } : {}),
-          },
-        }
-      : {}),
-  };
+  const msnId = meta.msn_id;
+  const priorRing = loadPriorDigestRing(root, msnId);
+  const { payload: nextPayload, digestRing } = applyFindingsRecurrence(
+    payload,
+    findings,
+    priorRing,
+  );
+  const digest = computeFindingsDigest(findings);
+  const gateLogPath = writeGateLog(root, msnId, nextPayload.stdout, nextPayload.stderr);
+  return buildCompactRemediationSnapshot({
+    payload: nextPayload,
+    meta,
+    findings,
+    findingsDigest: digest,
+    digestRing,
+    gateLogPath,
+  });
 }
 
 export function remediationFromFailedPayload(
@@ -51,7 +53,7 @@ export function remediationFromFailedPayload(
     : missionArg
       ? { mission_file_path: missionArg }
       : {};
-  return remediationSnapshotFromFailedPayload(payload, meta);
+  return remediationFromPayload(root, payload, meta);
 }
 
 export function remediationFromPhaseFailure(
@@ -69,7 +71,17 @@ export function remediationFromPhaseFailure(
     msnId: mission.msnId ?? undefined,
     mission,
   });
-  return toRemediationSnapshot(normalized);
+  const findings = buildFindingsForFailure(root, normalized, failure);
+  const payload = toVerifyFailedPayload(normalized, failure, findings);
+  return remediationFromPayload(
+    root,
+    payload,
+    {
+      mission_file_path: missionArg,
+      ...(mission.msnId ? { msn_id: mission.msnId } : {}),
+    },
+    findings,
+  );
 }
 
 export function persistRemediationSnapshot(root: string, snapshot: RemediationSnapshot): void {
@@ -102,4 +114,4 @@ export function persistRemediationFromPhaseFailure(
   );
 }
 
-export { readRemediationSnapshot };
+export { readRemediationSnapshot } from "./context-feed-store.js";

@@ -35,6 +35,11 @@ import type { GateExecInput, VerifyOptions } from "./verify-options.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
+function parseDeclaredAnchorLine(anchor: string): number {
+  const n = Number.parseInt(anchor.trim(), 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 function isMissionFile(repoRel: string): boolean {
   const norm = repoRel.replace(/\\/g, "/");
   if (!norm.startsWith(REL_MISSIONS_PREFIX)) return false;
@@ -205,6 +210,7 @@ function evaluateTracePhase(input: TracePhaseInput): TracePhaseOutcome {
         traceKind: first.kind,
         traceQuote: first.row.traceQuote,
         traceReason: first.reason,
+        declaredLine: parseDeclaredAnchorLine(first.row.anchor),
       },
     };
   }
@@ -231,6 +237,7 @@ function evaluateTracePhase(input: TracePhaseInput): TracePhaseOutcome {
         traceKind: "stale_evidence",
         traceQuote: first.row.traceQuote,
         traceReason: first.reason,
+        declaredLine: parseDeclaredAnchorLine(first.row.anchor),
         attestationCommit: first.attestationCommit,
         stalePaths: first.stalePaths,
       },

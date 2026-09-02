@@ -43,7 +43,7 @@ You already have `npm test` and GitHub Actions. OpenGantry does not replace them
 |-------------------|-------------------------|
 | **Human developer** | Reads stderr, parses the stack trace, rewrites code |
 | **AI agent + raw TDD/CI** | Chokes on unstructured stderr, hallucinates fixes, spins on retry edges — a senior still babysits |
-| **AI agent + OpenGantry** | Same gates you already trust; `gantry verify --json` returns `findings[]` with file, line, and hint so the agent can self-correct |
+| **AI agent + OpenGantry** | Same gates you already trust; `gantry context-feed --json` returns compact `findings[]` with `offending_file`, line, and hint |
 
 | Already have | Still missing for autonomous agents | OpenGantry adds |
 |--------------|-------------------------------------|-----------------|
@@ -77,7 +77,7 @@ Without governance glue, agent-assisted repos tend toward:
 | Agents edit `.gitagent/` or manifest silently | Git hooks + `gantry verify` fail closed |
 | "It passed locally" with no proof | `gate_command` + trace quotes verifiers must cite |
 | Architecture drift | `TARGET_ARCHITECTURE.yaml` + `gantry arch check` / `gantry perimeter check` |
-| Opaque failures for retry edges | `findings[]` JSON envelope (file, line, hint); no terminal log parsing |
+| Opaque failures for retry edges | `findings[]` JSON envelope (`offending_file`, line, hint); no terminal log parsing |
 | One-off policy per repo | `gantry init` scaffolds the same GXT substrate everywhere |
 
 ---
@@ -212,7 +212,7 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
-**No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry edges: each item names the gate, file, line, severity, and a resolution hint. Same payload on `--json`, SARIF, and MCP `gxt_verify`.
+**No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry edges: each item names the gate, `offending_file`, line, severity, and a resolution hint. Use `gantry context-feed --json` for compact model re-entry; read `gate_log_path` on disk for full stack traces. Same payload on `--json`, SARIF, and MCP `gxt_verify`.
 
 ### 6. Content governance example
 

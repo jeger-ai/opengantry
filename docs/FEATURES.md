@@ -38,7 +38,7 @@ Mission `gate_command` hooks seamlessly wire into your existing linters and type
 
 ## Deterministic feedback edges
 
-We do not just block bad commits. When an Execution Gate fails, OpenGantry parses the output and returns structured JSON `findings[]` containing the exact file, line, and resolution hint — so agents can self-correct without human intervention.
+We do not just block bad commits. When an Execution Gate fails, OpenGantry returns structured JSON `findings[]` with `offending_file`, line, and resolution hint when a structured producer supplies them; generic gates emit a coarse row and `gate_log_path` on the context-feed — so agents can self-correct without human intervention.
 
 **When to use:** Autonomous agent graphs and headless orchestrators that need machine-readable retry input.
 
@@ -110,7 +110,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 **Why:** Autonomous agents choke on unstructured stderr — stack traces, ANSI codes, and multi-line test output are unreliable retry input. Models hallucinate fixes and loop. Merge gates still need deterministic pass/fail, not LLM opinions.
 
-**What it does:** Runs shell `gate_command`, trace mapping, git-proof (Planner legislation commit), and optional KPI/stale-evidence checks. On failure, emits structured `findings[]` with `failed_gate`, `offending_file`, `line`, `resolution_hint`. Same shape on `--json`, SARIF, JUnit, and MCP `gxt_verify`.
+**What it does:** Runs shell `gate_command`, trace mapping, git-proof (Planner legislation commit), and optional KPI/stale-evidence checks. On failure, emits structured `findings[]` with `failed_gate`, `offending_file`, `line`, `resolution_hint`, and (v3) optional `rule_id`, `evidence`, and fingerprints. Structured gate producers (import-layer JSON, banned-import stderr) populate file/line; generic gates emit a coarse row plus `gate_log_path` on the context-feed. Same shape on `--json`, SARIF, JUnit, and MCP `gxt_verify`.
 
 **When to use:** Before merge, in CI, and on autonomous retry edges.
 

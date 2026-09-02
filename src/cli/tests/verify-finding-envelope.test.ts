@@ -4,9 +4,10 @@ import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
 } from "../lib/verify-failure-normalize.js";
-import { toVerifyFailedPayload } from "../lib/verify-payload.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "../lib/verify-payload.js";
 import { buildSarifDocument } from "../lib/verify-export.js";
 import { GantryUserError } from "../lib/errors.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "../lib/verify-finding.js";
 
 describe("verify failure envelope", () => {
   const phases = [
@@ -35,6 +36,7 @@ describe("verify failure envelope", () => {
         traceKind: "quote_missing" as const,
         traceReason: "missing quote",
         traceQuote: "DoD 1",
+        declaredLine: 7,
       },
     },
     {
@@ -81,12 +83,18 @@ describe("verify failure envelope", () => {
         missionArg: ".gitagent/missions/MSN-0001.yaml",
         options: {},
       });
-      const payload = toVerifyFailedPayload(normalized, failure);
-      assert.equal(payload.envelope_schema_version, 2);
+      const findings = buildFindingsForFailure("", normalized, failure);
+      const payload = toVerifyFailedPayload(normalized, failure, findings);
+      assert.equal(payload.envelope_schema_version, VERIFY_ENVELOPE_SCHEMA_VERSION);
       assert.ok(payload.findings.length >= 1);
       const finding = payload.findings[0]!;
       assert.equal(finding.failed_gate, name);
       assert.ok(finding.resolution_hint.length > 0);
+      assert.ok(finding.fingerprint.length > 0);
+      assert.ok(finding.semantic_fingerprint.length > 0);
+      if (name === "trace") {
+        assert.equal(finding.line, 7);
+      }
       const roundTrip = JSON.parse(JSON.stringify(payload));
       assert.ok(roundTrip.findings[0].failed_gate);
     });
@@ -94,17 +102,20 @@ describe("verify failure envelope", () => {
 
   it("emits init finding", () => {
     const normalized = normalizeInitFailure(new GantryUserError("PARSE", "bad mission"));
-    const payload = toVerifyFailedPayload(normalized);
+    const findings = buildFindingsForFailure("", normalized);
+    const payload = toVerifyFailedPayload(normalized, undefined, findings);
     assert.equal(payload.findings[0]!.failed_gate, "init");
   });
 
-  it("maps findings to SARIF results", () => {
+  it("maps findings to SARIF results with rule_id", () => {
+    const failure = phases[0]!.failure;
     const normalized = normalizeVerifyPhaseFailure({
-      failure: phases[0]!.failure,
+      failure,
       missionArg: "m.yaml",
       options: {},
     });
-    const payload = toVerifyFailedPayload(normalized, phases[0]!.failure);
+    const findings = buildFindingsForFailure("", normalized, failure);
+    const payload = toVerifyFailedPayload(normalized, failure, findings);
     const sarif = buildSarifDocument(payload);
     const results = (sarif.runs as Array<{ results: Array<{ properties: { resolution_hint: string } }> }>)[0]!
       .results;

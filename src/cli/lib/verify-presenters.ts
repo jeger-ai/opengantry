@@ -13,26 +13,31 @@ import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
 import {
-  buildBreakGlassPayload,
+  buildFindingsForFailure,
   buildVerifyResultPayloadFromPhaseResult,
+  buildBreakGlassPayload,
   initFailurePayload,
+  toVerifyFailedPayload,
   type VerifyResultPayload,
 } from "./verify-payload.js";
 import { hintsForVerifyPhase } from "./verify-hints.js";
 import {
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
-  toRemediationSnapshot,
+  type VerifyFailurePresentation,
 } from "./verify-failure-normalize.js";
 import {
   getSurgeonForErrorCode,
   resolveSurgeonErrorCode,
   type SurgeonContext,
 } from "./surgeons/registry.js";
+import { persistRemediationFromFailedPayload } from "./context-feed-remediation.js";
 import {
-  persistRemediationFromFailedPayload,
-  persistRemediationSnapshot,
-} from "./context-feed-remediation.js";
+  persistFailedVerifyRemediation,
+  tombstoneRemediationSnapshot,
+} from "./verify-remediation-pipeline.js";
+import { readRemediationSnapshot } from "./context-feed-store.js";
+import type { GxtErrorCode } from "./gxt-error-codes.js";
 
 /** Shared verify orchestration context (load once, present by sink). */
 export interface VerifyPresentContext {
@@ -85,6 +90,34 @@ export interface VerifyPresentResult {
 
 function reporterFor(ctx: VerifyPresentContext): CommandReporter {
   return CommandReporter.forVerify(ctx.options);
+}
+
+function overlayFailurePresentation(
+  base: VerifyFailurePresentation,
+  overlay: { error_code: GxtErrorCode; fix_hints: string[]; next_actions: string[] },
+): VerifyFailurePresentation {
+  return {
+    ...base,
+    error_code: overlay.error_code,
+    fix_hints: overlay.fix_hints,
+    next_actions: overlay.next_actions,
+  };
+}
+
+function presentationFromPersistedSnapshot(
+  root: string,
+  msnId: string | undefined,
+  base: VerifyFailurePresentation,
+): VerifyFailurePresentation {
+  const snapshot = readRemediationSnapshot(root);
+  if (!snapshot || (msnId !== undefined && snapshot.msn_id !== msnId)) {
+    return base;
+  }
+  return overlayFailurePresentation(base, {
+    error_code: snapshot.error_code as GxtErrorCode,
+    fix_hints: snapshot.fix_hints,
+    next_actions: snapshot.next_actions,
+  });
 }
 
 export function presentBreakGlassJson(ctx: VerifyPresentContext): VerifyPresentResult {
@@ -181,6 +214,7 @@ export function presentHuman(
 ): VerifyPresentResult {
   const reporter = reporterFor(ctx);
   if (result.ok) {
+    tombstoneRemediationSnapshot(ctx.root);
     reporter.emitVerifySuccess(result, ctx.resolved.missionRel);
     if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
     return { ok: true, exitCode: 0 };
@@ -194,9 +228,27 @@ export function presentHuman(
     msnId: ctx.mission.msnId ?? undefined,
     mission: ctx.mission,
   });
-  persistRemediationSnapshot(ctx.root, toRemediationSnapshot(normalized));
-  reporter.emitFailurePresentation(toFailurePresentation(normalized));
-  return { ok: false, exitCode: normalized.exit_code };
+  const basePresentation = toFailurePresentation(normalized);
+  const msnId = ctx.mission.msnId ?? undefined;
+  let presentation = basePresentation;
+
+  if (ctx.options.fix === true) {
+    presentation = presentationFromPersistedSnapshot(ctx.root, msnId, basePresentation);
+  } else {
+    const failure = result as VerifyPhaseFailure;
+    const findings = buildFindingsForFailure(ctx.root, normalized, failure);
+    const persisted = persistFailedVerifyRemediation(
+      ctx.root,
+      ctx.mission,
+      ctx.resolved.missionRel,
+      toVerifyFailedPayload(normalized, failure, findings),
+      findings,
+    );
+    presentation = overlayFailurePresentation(basePresentation, persisted);
+  }
+
+  reporter.emitFailurePresentation(presentation);
+  return { ok: false, exitCode: presentation.exit_code };
 }
 
 export async function presentFix(
@@ -210,13 +262,26 @@ export async function presentFix(
 
   const failure = result as VerifyPhaseFailure;
   const reporter = reporterFor(ctx);
+  const normalized = normalizeVerifyPhaseFailure({
+    failure,
+    missionArg: ctx.resolved.missionRel,
+    options: ctx.options,
+    root: ctx.root,
+    msnId: ctx.mission.msnId ?? undefined,
+    mission: ctx.mission,
+  });
+  const presentation = presentationFromPersistedSnapshot(
+    ctx.root,
+    ctx.mission.msnId ?? undefined,
+    toFailurePresentation(normalized),
+  );
   const remediation = hintsForVerifyPhase(failure, {
     missionPath: ctx.resolved.missionRel,
     root: ctx.root,
     msnId: ctx.mission.msnId ?? undefined,
   });
 
-  reporter.emitError(`[${remediation.error_code}] verify failed at phase: ${failure.phase}`);
+  reporter.emitError(`[${presentation.error_code}] verify failed at phase: ${failure.phase}`);
 
   const p = await loadPrompts();
   const choices = remediation.fix_hints.map((hint, i) => ({
@@ -232,14 +297,14 @@ export async function presentFix(
   });
 
   if (p.isCancel(selected) || selected === "quit") {
-    reporter.emitNextSteps(remediation.next_actions, remediation.tagged_steps);
+    reporter.emitNextSteps(presentation.next_actions, remediation.tagged_steps);
     return { ok: false, exitCode: failure.exitCode };
   }
 
   const idx = Number.parseInt(String(selected), 10);
-  const hint = remediation.fix_hints[idx];
+  const hint = presentation.fix_hints[idx];
   if (hint) reporter.emitFixHint(hint);
-  reporter.emitNextSteps(remediation.next_actions, remediation.tagged_steps);
+  reporter.emitNextSteps(presentation.next_actions, remediation.tagged_steps);
   return { ok: false, exitCode: failure.exitCode };
 }
 

@@ -2,7 +2,37 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildJUnitXml, buildSarifDocument, buildVerifyExportDocument } from "../lib/verify-export.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "../lib/verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "../lib/verify-finding.js";
+
+test("verify-export: SARIF uses rule_id and span columns", () => {
+  const sarif = buildSarifDocument({
+    status: "failed",
+    phase: "gate",
+    message: "GATE FAILED",
+    error_code: GXT_ERROR.GATE_FAILED,
+    fix_hints: [],
+    next_actions: [],
+    exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [
+      verifyFinding("gate", "fix import", {
+        offending_file: "src/foo.ts",
+        line: 10,
+        start_column: 3,
+        rule_id: "import-layer",
+      }),
+    ],
+  });
+  const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
+  const results = run.results as Array<Record<string, unknown>>;
+  assert.equal(results[0]?.ruleId, "import-layer");
+  const region = (
+    (results[0]?.locations as Array<Record<string, unknown>>)[0] as Record<string, unknown>
+  ).physicalLocation as Record<string, unknown>;
+  const r = region.region as Record<string, number>;
+  assert.equal(r.startLine, 10);
+  assert.equal(r.startColumn, 3);
+});
 
 test("verify-export: SARIF failure uses finding failed_gate as ruleId", () => {
   const sarif = buildSarifDocument({
@@ -14,15 +44,7 @@ test("verify-export: SARIF failure uses finding failed_gate as ruleId", () => {
     next_actions: ["gantry verify"],
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
-    findings: [
-      {
-        failed_gate: "gate",
-        offending_file: "",
-        line: 0,
-        severity: "error",
-        resolution_hint: "re-run gate",
-      },
-    ],
+    findings: [verifyFinding("gate", "re-run gate")],
   });
   const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
   const results = run.results as Record<string, unknown>[];
@@ -53,13 +75,9 @@ test("verify-export: JUnit fail includes failure element", () => {
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
     findings: [
-      {
-        failed_gate: "trace",
+      verifyFinding("trace", "append trace evidence", {
         offending_file: "EXECUTOR_LOG.md",
-        line: 0,
-        severity: "error",
-        resolution_hint: "append trace evidence",
-      },
+      }),
     ],
   });
   assert.match(xml, /<failure/);
@@ -77,13 +95,9 @@ test("verify-export: interrogation phase SARIF uses GXT_INTERROGATION ruleId", (
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
     findings: [
-      {
-        failed_gate: "interrogation",
+      verifyFinding("interrogation", "fix interrogation block", {
         offending_file: ".gitagent/missions/MSN-0001.yaml",
-        line: 0,
-        severity: "error",
-        resolution_hint: "fix interrogation block",
-      },
+      }),
     ],
   });
   const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
@@ -101,15 +115,7 @@ test("verify-export: interrogation phase JUnit names interrogation testcase", ()
     next_actions: [],
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
-    findings: [
-      {
-        failed_gate: "interrogation",
-        offending_file: "",
-        line: 0,
-        severity: "error",
-        resolution_hint: "declare paths",
-      },
-    ],
+    findings: [verifyFinding("interrogation", "declare paths")],
   });
   assert.match(xml, /name="interrogation"/);
   assert.match(xml, /<failure/);

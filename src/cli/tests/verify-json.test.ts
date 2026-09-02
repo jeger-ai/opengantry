@@ -6,6 +6,7 @@ import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { handleVerify } from "../lib/mcp-runtime.js";
+import { clearRemediationSnapshot } from "../lib/context-feed-store.js";
 import { runVerify } from "../commands/verify.js";
 import {
   writeMiniGantryRepo,
@@ -146,6 +147,7 @@ test("runVerify --json gate failure matches handleVerify field subset", async ()
     process.chdir(dest);
     try {
       const mcp = handleVerify(".gitagent/missions/m.yaml") as VerifyFailedPayload;
+      clearRemediationSnapshot(dest);
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
         await runVerify({

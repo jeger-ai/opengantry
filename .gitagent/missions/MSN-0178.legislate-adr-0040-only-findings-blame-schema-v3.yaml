@@ -5,9 +5,9 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0178: ADR-0040 findings blame schema v3 (semantic fingerprint + 4-slot ring, byte-safe evidence truncation, gate_log_path re-entry); extends ADR-0032; no CLI code; dev-validate-core OK"
+    anchor: "795"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1362fca0b3bc

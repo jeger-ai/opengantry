@@ -2,11 +2,13 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { REL_NEXT_REMEDIATION } from "./constants.js";
+import type { VerifyFinding } from "./verify-finding.js";
 
-export const REMEDIATION_SCHEMA_VERSION = 1 as const;
+export const REMEDIATION_SCHEMA_VERSION = 2 as const;
+export const REMEDIATION_SCHEMA_VERSION_LEGACY = 1 as const;
 
 export interface RemediationSnapshot {
-  schema_version: typeof REMEDIATION_SCHEMA_VERSION;
+  schema_version: typeof REMEDIATION_SCHEMA_VERSION | typeof REMEDIATION_SCHEMA_VERSION_LEGACY;
   written_at: string;
   source: "gantry verify";
   cleared?: true;
@@ -18,6 +20,7 @@ export interface RemediationSnapshot {
   fix_hints: string[];
   next_actions: string[];
   failures?: string[];
+  /** v1 only — omitted on v2 writes (use gate_log_path). */
   gate?: { stdout?: string; stderr?: string; exit_code?: number };
   kpi?: {
     metric?: string;
@@ -26,6 +29,11 @@ export interface RemediationSnapshot {
     actual?: number | boolean;
     report_path?: string;
   };
+  /** v2: compact model re-entry packet (ADR-0040). */
+  findings?: VerifyFinding[];
+  findings_digest?: string;
+  digest_ring?: string[];
+  gate_log_path?: string;
 }
 
 const TMP_PREFIX = "NEXT_REMEDIATION.json.tmp.";
@@ -102,12 +110,16 @@ function readFileWithRetry(absPath: string, attempts = 3): string | null {
   return null;
 }
 
+function isRemediationSchemaVersion(v: unknown): v is RemediationSnapshot["schema_version"] {
+  return v === REMEDIATION_SCHEMA_VERSION || v === REMEDIATION_SCHEMA_VERSION_LEGACY;
+}
+
 export function readRemediationSnapshot(repoRoot: string): RemediationSnapshot | null {
   const raw = readFileWithRetry(remediationPath(repoRoot));
   if (raw === null) return null;
   try {
     const parsed = JSON.parse(raw) as RemediationSnapshot;
-    if (parsed.schema_version !== REMEDIATION_SCHEMA_VERSION) return null;
+    if (!isRemediationSchemaVersion(parsed.schema_version)) return null;
     if (parsed.cleared === true) return null;
     return parsed;
   } catch {

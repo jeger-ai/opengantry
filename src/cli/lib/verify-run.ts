@@ -13,10 +13,14 @@ import { writeAttestationExportEnvelope } from "./attestation-export.js";
 import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import {
+  buildFindingsForFailure,
   buildVerifyResultPayload,
   initFailurePayload,
+  toVerifyFailedPayload,
   type VerifyResultPayload,
 } from "./verify-payload.js";
+import { GXT_ERROR } from "./gxt-error-codes.js";
+import { persistFailedVerifyRemediation } from "./verify-remediation-pipeline.js";
 import {
   resolveVerifySink,
   maybeApplySurgeonAndReevaluate,
@@ -189,6 +193,25 @@ async function evaluateWithFixLoop(
   if (!ctx.options.fix) return result;
 
   while (!result.ok) {
+    const failure = result as VerifyPhaseFailure;
+    const normalized = normalizeVerifyPhaseFailure({
+      failure,
+      missionArg: ctx.resolved.missionRel,
+      options: ctx.options,
+      root: ctx.root,
+      msnId: ctx.mission.msnId ?? undefined,
+      mission: ctx.mission,
+    });
+    const findings = buildFindingsForFailure(ctx.root, normalized, failure);
+    const payload = persistFailedVerifyRemediation(
+      ctx.root,
+      ctx.mission,
+      ctx.resolved.missionRel,
+      toVerifyFailedPayload(normalized, failure, findings),
+      findings,
+    );
+    if (payload.error_code === GXT_ERROR.FINDINGS_RECURRED) break;
+
     const next = await maybeApplySurgeonAndReevaluate({
       root: ctx.root,
       mission: ctx.mission,

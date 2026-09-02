@@ -33,13 +33,35 @@ export function buildVerifyExportDocument(
   }
 }
 
+function sarifRegionForFinding(finding: {
+  line: number;
+  end_line?: number;
+  start_column?: number;
+  end_column?: number;
+}): Record<string, number> {
+  const region: Record<string, number> = {
+    startLine: finding.line > 0 ? finding.line : 1,
+  };
+  if (finding.end_line !== undefined && finding.end_line > 0) {
+    region.endLine = finding.end_line;
+  }
+  if (finding.start_column !== undefined && finding.start_column > 0) {
+    region.startColumn = finding.start_column;
+  }
+  if (finding.end_column !== undefined && finding.end_column > 0) {
+    region.endColumn = finding.end_column;
+  }
+  return region;
+}
+
 export function buildSarifDocument(payload: VerifyResultPayload): Record<string, unknown> {
   const results: Record<string, unknown>[] = [];
 
   if (payload.status === "failed") {
     for (const finding of payload.findings ?? []) {
+      const ruleId = finding.rule_id ?? finding.failed_gate;
       results.push({
-        ruleId: finding.failed_gate,
+        ruleId,
         level: finding.severity === "warning" ? "warning" : "error",
         message: { text: finding.resolution_hint },
         ...(finding.offending_file
@@ -48,7 +70,7 @@ export function buildSarifDocument(payload: VerifyResultPayload): Record<string,
                 {
                   physicalLocation: {
                     artifactLocation: { uri: finding.offending_file },
-                    region: { startLine: finding.line > 0 ? finding.line : 1 },
+                    region: sarifRegionForFinding(finding),
                   },
                 },
               ],

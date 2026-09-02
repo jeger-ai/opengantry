@@ -65,6 +65,8 @@ export interface TraceFailure extends VerifyFailureBase {
   traceKind: TraceFailureKind;
   traceReason: string;
   traceQuote: string;
+  /** 1-based declared line from mission trace anchor when numeric; else 0. */
+  declaredLine?: number;
   attestationCommit?: string;
   stalePaths?: string[];
 }

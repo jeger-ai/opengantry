@@ -88,6 +88,38 @@ test("context-feed store: sequential microtask writes do not throw", async () =>
   assert.match(final!.message, /^worker-/);
 });
 
+test("context-feed store: v2 snapshot carries findings without gate streams", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-cf-v2-"));
+  const finding = {
+    failed_gate: "gate" as const,
+    offending_file: "src/a.ts",
+    line: 1,
+    severity: "error" as const,
+    resolution_hint: "fix",
+    fingerprint: "fp",
+    semantic_fingerprint: "sfp",
+  };
+  writeRemediationSnapshot(root, {
+    schema_version: REMEDIATION_SCHEMA_VERSION,
+    written_at: new Date().toISOString(),
+    source: "gantry verify",
+    phase: "gate",
+    error_code: "GXT_GATE_FAILED",
+    message: "gate failed",
+    fix_hints: [],
+    next_actions: [],
+    findings: [finding],
+    findings_digest: "digest",
+    digest_ring: ["digest"],
+    gate_log_path: ".gitagent/tmp/gate-logs/MSN-0179.last.log",
+  });
+  const read = readRemediationSnapshot(root);
+  assert.ok(read);
+  assert.equal(read!.findings?.length, 1);
+  assert.equal(read!.gate_log_path, ".gitagent/tmp/gate-logs/MSN-0179.last.log");
+  assert.equal(read!.gate, undefined);
+});
+
 test("context-feed store: read tolerates ENOENT", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-cf-missing-"));
   assert.equal(readRemediationSnapshot(root), null);

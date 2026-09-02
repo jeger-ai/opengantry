@@ -171,14 +171,14 @@ Deprecated compat: `scripts/gxt-cursor-env.sh` sources `gxt-runtime-env.sh` with
 
 ## Diagnostic context feed (verify repair hops)
 
-When `gantry verify` fails, OpenGantry writes a machine-readable snapshot to **`.gitagent/tmp/NEXT_REMEDIATION.json`** (gitignored). IDE wrappers and agent rules can read this before the next prompt cycle:
+When `gantry verify` fails, OpenGantry writes a compact machine-readable snapshot to **`.gitagent/tmp/NEXT_REMEDIATION.json`** (gitignored). The feed includes `findings[]`, semantic `findings_digest`, and `gate_log_path` (full stdout/stderr at `.gitagent/tmp/gate-logs/<msn_id>.last.log`) — **not** raw gate streams in the JSON packet.
 
 ```bash
 gantry context-feed --json    # latest failure payload (empty when none)
 gantry context-feed --clear   # atomic tombstone clear after remediation
 ```
 
-Writes use temp-file + rename swap to avoid read/write races during automated test-and-repair hops.
+Use `gantry verify --json` or MCP `gxt_verify` when you need the full debug payload including inline stdout/stderr.
 
 ## Compatibility matrix
 
