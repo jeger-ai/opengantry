@@ -789,3 +789,8 @@ DoD 1 MSN-0176: iii-practices moved to examples cold-path CLI; gantry::verify ke
 ## MSN-0177 — Pluggable gateExecAdapter for verifyMission
 DoD 1 MSN-0177: options.gateExecAdapter seam on verifyMission; default in-process spawn preserved; verify-gate-exec-adapter.test.ts; npm test 537 pass
 
+## MSN-0178 — ADR-0040 findings blame schema v3 (law only)
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md reason=trace sink for MSN-0178 substrate ADR-0040 execution proposed=EXECUTOR_LOG.md | msn=MSN-0178
+[CONTEXT-REQUEST] path=.gitagent/missions/MSN-0178.legislate-adr-0040-only-findings-blame-schema-v3.yaml reason=fill trace_quote and PASS after ADR write proposed=.gitagent/missions/MSN-0178.legislate-adr-0040-only-findings-blame-schema-v3.yaml | msn=MSN-0178
+DoD 1 MSN-0178: ADR-0040 findings blame schema v3 (semantic fingerprint + 4-slot ring, byte-safe evidence truncation, gate_log_path re-entry); extends ADR-0032; no CLI code; dev-validate-core OK
+
