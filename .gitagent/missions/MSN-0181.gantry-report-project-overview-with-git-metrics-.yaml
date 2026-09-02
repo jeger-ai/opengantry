@@ -63,3 +63,4 @@ declared_paths:
   - src/cli/tests/report-template-shared.test.ts
   - src/cli/tests/verify-phase-clock.test.ts
   - src/cli/tests/verify-run-ring.test.ts
+  - scripts/fixtures/gantry-report-screenshots/seed-demo-state.mjs
