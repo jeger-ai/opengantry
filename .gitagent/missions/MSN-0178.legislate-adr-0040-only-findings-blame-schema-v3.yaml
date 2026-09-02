@@ -1,0 +1,46 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Legislate ADR-0040 only: findings[] blame schema v3, semantic vs exact fingerprints, byte-safe evidence truncation, 4-slot semantic digest ring breaker (GXT_FINDINGS_RECURRED), compact re-entry packet with gate_log_path. Extends ADR-0032; no CLI code in this mission.
+msn_id: MSN-0178
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Split: substrate mission for ADR-0040 only, then gantry
+      mission for the CLI implementation"
+    adr_refs:
+      - ADR-0032
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Reject ADR-0022 applicability — spurious match on
+      GXT_FINDINGS_RECURRED vs gxt_; this mission only writes an ADR under
+      out-of-scope, not MCP tool write paths
+    adr_refs:
+      - ADR-0022
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: TMVC root .gitagent/out-of-scope/ — ADR-0040 lives there;
+      substrate forbidden_zones are empty
+    adr_refs:
+      - ADR-0032
+interrogation_sha256: 88937e769959703af6c33fa77ef98204f00bbe4a249e68ec6889478b5ed63724
+declared_paths:
+  - .gitagent/out-of-scope/ADR-0040-findings-blame-reentry.md
