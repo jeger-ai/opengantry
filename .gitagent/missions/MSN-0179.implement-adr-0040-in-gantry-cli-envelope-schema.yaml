@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0179: envelope_schema_version 3 with exact/semantic fingerprints, byte-safe evidence truncation, import-layer and banned-import gate projection, compact NEXT_REMEDIATION v2 with findings and gate_log_path, 4-slot semantic digest ring aborting GXT_FINDINGS_RECURRED, SARIF rule_id/span mapping, offending_file doc alignment; npm test 551 pass"
-    anchor: "799"
+    trace_quote: "DoD 3 MSN-0179: persistFailedVerifyRemediation object args + expanded declared_paths; fresh TMVC attestation after lint fix; npm test 555 pass"
+    anchor: "801"
     status: PASS
 interrogation:
   - finding_id: 1362fca0b3bc

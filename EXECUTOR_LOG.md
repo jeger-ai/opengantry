@@ -797,4 +797,5 @@ DoD 1 MSN-0178: ADR-0040 findings blame schema v3 (semantic fingerprint + 4-slot
 ## MSN-0179 — Implement ADR-0040 in gantry CLI
 DoD 1 MSN-0179: envelope_schema_version 3 with exact/semantic fingerprints, byte-safe evidence truncation, import-layer and banned-import gate projection, compact NEXT_REMEDIATION v2 with findings and gate_log_path, 4-slot semantic digest ring aborting GXT_FINDINGS_RECURRED, SARIF rule_id/span mapping, offending_file doc alignment; npm test 551 pass
 DoD 2 MSN-0179: unified remediation persist (PASS tombstone all sinks, --fix single persist, recurrence overlay on human); doc honesty + ring tests; npm test 555 pass
+DoD 3 MSN-0179: persistFailedVerifyRemediation object args + expanded declared_paths; fresh TMVC attestation after lint fix; npm test 555 pass
 
