@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Legislate ADR-0040 only: findings[] blame schema v3, semantic vs exact fingerprints, byte-safe evidence truncation, 4-slot semantic digest ring breaker (GXT_FINDINGS_RECURRED), compact re-entry packet with gate_log_path. Extends ADR-0032; no CLI code in this mission.
+# Trace PASS recorded after ADR write (Planner stamp includes this mission file).
 msn_id: MSN-0178
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
