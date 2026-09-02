@@ -1,0 +1,37 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Release: v3.2.6 — gantry report + ADR-0040 + gateExecAdapter (MSN-0177–0181 since v3.2.5).
+# Legislated intent: gantry CLI v3.2.6 patch release — version parity, CHANGELOG for MSN-0177–0181, tag v3.2.6
+msn_id: MSN-0182
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0182: v3.2.6 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG gantry report + ADR-0040; BACKLOG synced; dev-validate-core OK"
+    anchor: "MSN-0182"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0182: npm 3.2.6 — MSN-0177–0181 squashed; dev-validate-core OK; pack:check OK"
+    anchor: "MSN-0182"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: Authorized — release mission MSN-0182 uses
+      ./scripts/dev-validate-core.sh with gate_success_substring
+      dev-validate-core OK per MSN-0174/MSN-0141 release precedent.
+interrogation_sha256: 0690781818b5f83b6c51ad12b0cf8284e040dc3f0df327a5a062283e2a63b0b5
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0182.gantry-cli-v3-2-6-patch-release-version-parity-c.yaml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/archive/BACKLOG.md
+  - package-lock.json
+  - package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
