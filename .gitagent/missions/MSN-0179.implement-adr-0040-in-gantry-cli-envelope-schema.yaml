@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Implement ADR-0040 in gantry CLI: envelope_schema_version 3 with exact and semantic fingerprints, byte-safe evidence truncation, ENOENT-safe blame projection from import-layer and banned-import parsers, compact NEXT_REMEDIATION.json with findings and gate_log_path, 4-slot semantic digest ring circuit breaker aborting with GXT_FINDINGS_RECURRED, SARIF region mapping, fix offending_file doc drift.
+# Planner stamp includes this mission file after persist-hook lint fix.
 msn_id: MSN-0179
 skill_key: gantry
 gate_command: npm test
