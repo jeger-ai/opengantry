@@ -31,6 +31,7 @@ interrogation:
       - ADR-0027
 interrogation_sha256: 8d70b00e333481728b424d5152363e7a147abe93153a81c89b8e87e3f7dfce66
 declared_paths:
+  - .gitagent/missions/MSN-0181.gantry-report-project-overview-with-git-metrics-.yaml
   - src/cli/commands/report.ts
   - src/cli/lib/atomic-fs.ts
   - src/cli/lib/constants.ts
