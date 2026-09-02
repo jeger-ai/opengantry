@@ -203,13 +203,13 @@ async function evaluateWithFixLoop(
       mission: ctx.mission,
     });
     const findings = buildFindingsForFailure(ctx.root, normalized, failure);
-    const payload = persistFailedVerifyRemediation(
-      ctx.root,
-      ctx.mission,
-      ctx.resolved.missionRel,
-      toVerifyFailedPayload(normalized, failure, findings),
+    const payload = persistFailedVerifyRemediation({
+      root: ctx.root,
+      mission: ctx.mission,
+      missionRel: ctx.resolved.missionRel,
+      payload: toVerifyFailedPayload(normalized, failure, findings),
       findings,
-    );
+    });
     if (payload.error_code === GXT_ERROR.FINDINGS_RECURRED) break;
 
     const next = await maybeApplySurgeonAndReevaluate({

@@ -237,13 +237,13 @@ export function presentHuman(
   } else {
     const failure = result as VerifyPhaseFailure;
     const findings = buildFindingsForFailure(ctx.root, normalized, failure);
-    const persisted = persistFailedVerifyRemediation(
-      ctx.root,
-      ctx.mission,
-      ctx.resolved.missionRel,
-      toVerifyFailedPayload(normalized, failure, findings),
+    const persisted = persistFailedVerifyRemediation({
+      root: ctx.root,
+      mission: ctx.mission,
+      missionRel: ctx.resolved.missionRel,
+      payload: toVerifyFailedPayload(normalized, failure, findings),
       findings,
-    );
+    });
     presentation = overlayFailurePresentation(basePresentation, persisted);
   }
 

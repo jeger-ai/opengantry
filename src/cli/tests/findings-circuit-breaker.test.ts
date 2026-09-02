@@ -148,13 +148,13 @@ describe("findings circuit breaker", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-ring-single-"));
     const finding = verifyFinding("gate", "fix");
     const mission = minimalMission(root, "MSN-0099");
-    const payload = persistFailedVerifyRemediation(
+    const payload = persistFailedVerifyRemediation({
       root,
       mission,
-      ".gitagent/missions/m.yaml",
-      sampleFailedPayload([finding]),
-      [finding],
-    );
+      missionRel: ".gitagent/missions/m.yaml",
+      payload: sampleFailedPayload([finding]),
+      findings: [finding],
+    });
     assert.equal(payload.error_code, GXT_ERROR.GATE_FAILED);
     assert.equal(loadPriorDigestRing(root, "MSN-0099").length, 1);
     const snapshot = readRemediationSnapshot(root);
@@ -166,20 +166,20 @@ describe("findings circuit breaker", () => {
     const finding = verifyFinding("gate", "fix");
     const mission = minimalMission(root, "MSN-0099");
     const base = sampleFailedPayload([finding]);
-    persistFailedVerifyRemediation(
+    persistFailedVerifyRemediation({
       root,
       mission,
-      ".gitagent/missions/m.yaml",
-      base,
-      [finding],
-    );
-    const payload2 = persistFailedVerifyRemediation(
+      missionRel: ".gitagent/missions/m.yaml",
+      payload: base,
+      findings: [finding],
+    });
+    const payload2 = persistFailedVerifyRemediation({
       root,
       mission,
-      ".gitagent/missions/m.yaml",
-      base,
-      [finding],
-    );
+      missionRel: ".gitagent/missions/m.yaml",
+      payload: base,
+      findings: [finding],
+    });
     assert.equal(payload2.error_code, GXT_ERROR.FINDINGS_RECURRED);
   });
 });

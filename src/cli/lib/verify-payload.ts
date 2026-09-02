@@ -239,13 +239,13 @@ export function buildVerifyResultPayloadFromPhaseResult(
   });
   const findings = buildFindingsForFailure(root, normalized, result);
   const basePayload = toVerifyFailedPayload(normalized, result, findings);
-  return persistFailedVerifyRemediation(
+  return persistFailedVerifyRemediation({
     root,
     mission,
     missionRel,
-    basePayload,
+    payload: basePayload,
     findings,
-  );
+  });
 }
 
 export function buildVerifyResultPayload(

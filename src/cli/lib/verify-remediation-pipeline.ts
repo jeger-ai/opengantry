@@ -97,13 +97,14 @@ function persistRemediationSnapshotBestEffort(root: string, snapshot: Remediatio
   }
 }
 
-export function persistFailedVerifyRemediation(
-  root: string,
-  mission: ParsedMission | null,
-  missionRel: string | undefined,
-  payload: VerifyFailedPayload,
-  findings: VerifyFinding[],
-): VerifyFailedPayload {
+export function persistFailedVerifyRemediation(input: {
+  root: string;
+  mission: ParsedMission | null;
+  missionRel: string | undefined;
+  payload: VerifyFailedPayload;
+  findings: VerifyFinding[];
+}): VerifyFailedPayload {
+  const { root, mission, missionRel, payload, findings } = input;
   const msnId = mission?.msnId ?? undefined;
   const priorRing = loadPriorDigestRing(root, msnId);
   const { payload: nextPayload, digestRing, recurred } = applyFindingsRecurrence(
