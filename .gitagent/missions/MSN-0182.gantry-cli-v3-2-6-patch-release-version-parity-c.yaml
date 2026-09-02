@@ -1,5 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Release: v3.2.6 — gantry report + ADR-0040 + gateExecAdapter (MSN-0177–0181 since v3.2.5).
+# Release: v3.2.6 — gantry report + ADR-0040 + gateExecAdapter (MSN-0177–0181 since v3.2.5); tagged v3.2.6.
 # Legislated intent: gantry CLI v3.2.6 patch release — version parity, CHANGELOG for MSN-0177–0181, tag v3.2.6
 msn_id: MSN-0182
 skill_key: gantry
