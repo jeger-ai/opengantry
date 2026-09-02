@@ -76,6 +76,7 @@ interrogation:
       contract.
 interrogation_sha256: 64834c4d2cd37976a6ae5b6370739289ca0b5e32161cd36c14ccafc9bda19bc5
 declared_paths:
+  - .gitagent/missions/MSN-0179.implement-adr-0040-in-gantry-cli-envelope-schema.yaml
   - README.md
   - docs/AGENT-GRAPH.md
   - docs/FEATURES.md
