@@ -1,0 +1,117 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Implement explicit gate adapter routing in the gantry CLI per ADR-0041: GateAdapterId type and GateSpec.adapter parsed from mission gate_adapter (default generic); spawn-stream-core with bounded stdout capture and truncation flag; ESLint JSON adapter and tsc diagnostics adapter emitting envelope v3 findings with offending_file, line, columns, rule_id, evidence; adapter registry wired into evaluateGatePhase; --gate-adapter flag on legislate plus MCP draft/execute/start_orchestration plumbing through the signed draft token; unit and verify-json tests. Code and tests under src/cli only.
+msn_id: MSN-0190
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: pass
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability — ADR-0037 governs the control-plane
+      ingest envelope and receipt v0.2.0; gate adapters change how gate output
+      becomes findings, not receipts, envelopes, or CI ingestion.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 588760f511be
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. program-core.ts / program-workflow.ts are
+      CLI-delivery flag registration (commander options only, no policy);
+      src/cli/tests/** are node:test suites. All within gantry TMVC src/cli/;
+      import-layer rules in docs/ARCHITECTURE.md apply.
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0027 as-is. No export format changes; adapter
+      findings flow through the existing VerifyResultPayload so SARIF picks up
+      rule_id per ADR-0040 with no new builder code.
+    adr_refs:
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0022. gate_adapter is added as an input field on
+      gxt_draft_legislation / gxt_execute_legislation / gxt_start_orchestration
+      and carried inside the signed draft token; no new write paths, containment
+      boundaries unchanged.
+    adr_refs:
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: gantry (Tier-2). TMVC: src/cli/, package.json per
+      MANIFEST tmvc_roots. Gate: npm test, success substring pass. Adapter
+      modules under src/cli/lib/gate-adapters/ only; no .gitagent, templates, or
+      docs edits."
+    adr_refs:
+      - ADR-0041
+      - ADR-0039
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0041. This mission is its CLI implementation:
+      explicit gate_adapter routing only, no command sniffing, adapters emit
+      envelope v3 findings, adapter modules import only lower layers, truncation
+      reported as a dedicated finding."
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: 3e950021d10c387f8411d0f8d4bab9409dc0895c8c801516319f9ec622f40e4d
+declared_paths:
+  - .gitagent/missions/MSN-0190.implement-explicit-gate-adapter-routing-in-the-g.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/commands/interrogate.ts
+  - src/cli/lib/draft-token.ts
+  - src/cli/lib/gate-adapters/eslint-json-adapter.ts
+  - src/cli/lib/gate-adapters/gate-adapter-types.ts
+  - src/cli/lib/gate-adapters/generic-spawn-adapter.ts
+  - src/cli/lib/gate-adapters/registry.ts
+  - src/cli/lib/gate-adapters/spawn-stream-core.ts
+  - src/cli/lib/gate-adapters/tsc-adapter.ts
+  - src/cli/lib/legislate-gate-options.ts
+  - src/cli/lib/legislate.ts
+  - src/cli/lib/mcp-draft-legislation.ts
+  - src/cli/lib/mcp-execute-legislation.ts
+  - src/cli/lib/mcp-governance-shared.ts
+  - src/cli/lib/mcp-start-orchestration.ts
+  - src/cli/lib/mcp-tools-register.ts
+  - src/cli/lib/missions/formatter.ts
+  - src/cli/lib/missions/parser.ts
+  - src/cli/lib/types.ts
+  - src/cli/lib/upgrade-plan-scaffold.ts
+  - src/cli/lib/verify-evidence-snippet.ts
+  - src/cli/lib/verify-finding-gate-projector.ts
+  - src/cli/lib/verify-phase-steps.ts
+  - src/cli/program-core.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/draft-token.test.ts
+  - src/cli/tests/eslint-json-adapter.test.ts
+  - src/cli/tests/gate-adapter-registry.test.ts
+  - src/cli/tests/generic-spawn-adapter.test.ts
+  - src/cli/tests/legislate.test.ts
+  - src/cli/tests/missions/mission-parser.test.ts
+  - src/cli/tests/tsc-adapter.test.ts
+  - src/cli/tests/verify-json.test.ts
