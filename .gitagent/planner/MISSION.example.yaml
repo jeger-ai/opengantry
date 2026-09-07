@@ -4,6 +4,9 @@ msn_id: MSN-0000
 skill_key: logic
 gate_command: "echo ok"
 gate_success_substring: "ok"
+# Optional explicit output parser (ADR-0041): generic (default) | eslint | tsc.
+# eslint requires `eslint --format json` in gate_command; tsc requires plain tsc diagnostics.
+# gate_adapter: eslint
 interrogation:
   - finding_id: "a1b2c3d4e5f6"
     kind: missing_test_criteria

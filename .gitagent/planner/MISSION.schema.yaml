@@ -35,6 +35,16 @@ properties:
     minLength: 1
   gate_success_substring:
     type: ["string", "null"]
+  gate_adapter:
+    type: string
+    enum: [generic, eslint, tsc]
+    default: generic
+    description: >-
+      Explicit gate output parser (ADR-0041). generic: exit code + optional
+      success substring only. eslint: gate_command must emit `eslint --format
+      json`; tsc: gate_command must emit plain tsc diagnostics. Adapters map
+      tool output to envelope v3 findings with offending_file/line/rule_id.
+      Routing is never inferred from gate_command text.
   virtual_capture:
     type: boolean
     default: false

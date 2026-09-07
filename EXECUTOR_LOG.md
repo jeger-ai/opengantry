@@ -817,3 +817,6 @@ DoD 2 MSN-0182: npm 3.2.6 — MSN-0177–0181 squashed; dev-validate-core OK; pa
 DoD 1 MSN-0188: GenericSpawnAdapter streams gate I/O to gate_log_path; timedAsync gate phase; verifyMissionAsync in-process; sync verifyMission CLI --json-out shim with stdio ignore and try/finally unlink; N-1 successSubstring scan; generic-spawn-adapter + verify-phase-clock tests; npm test 601 pass
 
 DoD 2 MSN-0188: thermo fixes — findings own pass/fail; bounded 20MiB gate log tail read; gate-log-writer canonical path; fix-loop log clobber guard; kernel shim forwards cwd/prePush/ci/skipStaleEvidence; unified phase clock; npm test 608 pass
+
+## MSN-0189 — gate_adapter substrate law
+DoD 1 MSN-0189: gate_adapter enum (generic|eslint|tsc) added to MISSION.schema.yaml and mirrored byte-identically to templates + iii-integration example; MISSION.example.yaml note; ADR-0041 gate-adapter-routing (explicit routing, no command sniffing, v3 findings contract); DEVELOPMENT.md + README gate_adapter docs; mission gate amended to dev-validate-core.sh to avoid verify recursion; dev-validate-core OK, npm test 608 pass
