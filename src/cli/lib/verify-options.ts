@@ -1,5 +1,6 @@
 import type { OutputAudience } from "./audience-output.js";
 import type { VerifyExportFormat } from "./verify-export.js";
+import type { GateExecAdapter } from "./gate-adapters/gate-adapter-types.js";
 
 /** High-level verify execution mode — sinks derive from this + export format. */
 export type VerifyMode = "normal" | "pre_push" | "break_glass" | "fix" | "json";
@@ -26,6 +27,8 @@ export interface VerifyOptions {
   skipStaleEvidence?: boolean;
   /** Emit a single structured JSON document on stdout (no human logs). */
   json?: boolean;
+  /** Write structured JSON payload to a file (pipe-safe; used by kernel sync shim). */
+  jsonOut?: string;
   /** Structured export format (json default when --json). */
   format?: VerifyExportFormat;
   /** Verify every mission file changed vs base ref on current branch. */
@@ -44,23 +47,9 @@ export interface VerifyOptions {
   exportPath?: string;
   /** Require interrogation block on mission (CI hard mode). */
   requireInterrogation?: boolean;
-  /** Override gate subprocess execution (default: in-process spawn via runGate). */
+  /** Override gate subprocess execution (default: GenericSpawnAdapter). */
   gateExecAdapter?: GateExecAdapter;
 }
 
-/** Input passed to a custom gate executor. */
-export interface GateExecInput {
-  workingDirectory: string;
-  command: string;
-}
-
-/** Result from gate subprocess execution. */
-export interface GateExecResult {
-  exitCode: number | null;
-  stdout: string;
-  stderr: string;
-}
-
-/** Pluggable gate runner — default uses in-process spawnSync. */
-export type GateExecAdapter = (input: GateExecInput) => GateExecResult;
+export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "./gate-adapters/gate-adapter-types.js";
 

@@ -13,7 +13,7 @@ import {
   writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnv, withPlannerEnvAsync } from "./test-shared.js";
+import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 import type { VerifyFailedPayload } from "../lib/verify-payload.js";
 
 function parseStdoutJson(stdout: string): Record<string, unknown> {
@@ -146,7 +146,7 @@ test("runVerify --json gate failure matches handleVerify field subset", async ()
   await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
-      const mcp = handleVerify(".gitagent/missions/m.yaml") as VerifyFailedPayload;
+      const mcp = (await handleVerify(".gitagent/missions/m.yaml")) as VerifyFailedPayload;
       clearRemediationSnapshot(dest);
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
@@ -199,16 +199,16 @@ test("runVerify --json --fix: rejects with GXT_INVALID_ARGUMENT", async () => {
   });
 });
 
-test("handleVerify: missing mission uses flat init failure envelope", () => {
+test("handleVerify: missing mission uses flat init failure envelope", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-mcp-verify-init-"));
   writeMiniGantryRepo(dest, ogRoot);
   gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  withPlannerEnv(() => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
-      const result = handleVerify(".gitagent/missions/missing.yaml") as VerifyFailedPayload;
+      const result = (await handleVerify(".gitagent/missions/missing.yaml")) as VerifyFailedPayload;
       assert.equal(result.status, "failed");
       assert.equal(result.phase, "init");
       assert.equal(result.error_code, GXT_ERROR.PARSE_ERROR);
@@ -217,4 +217,30 @@ test("handleVerify: missing mission uses flat init failure envelope", () => {
       process.chdir(prevCwd);
     }
   });
+});
+
+test("runVerify --json-out writes parseable JSON to file", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-out-"));
+  writeMiniGantryRepo(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
+  const out = path.join(dest, "verify-out.json");
+  const prevCwd = process.cwd();
+  await withPlannerEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      process.exitCode = undefined;
+      await runVerify({
+        mission: ".gitagent/missions/m.yaml",
+        executorLog: "EXECUTOR_LOG.md",
+        jsonOut: out,
+      });
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
+  const payload = JSON.parse(fs.readFileSync(out, "utf8")) as Record<string, unknown>;
+  assert.equal(typeof payload.status, "string");
+  assert.ok(payload.status === "passed" || payload.status === "failed");
 });

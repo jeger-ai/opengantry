@@ -5,13 +5,43 @@ import os from "node:os";
 import path from "node:path";
 import { getRepoRoot } from "../lib/git.js";
 import { evaluateVerifyPhases } from "../lib/verify-engine.js";
-import { listVerifyRuns, recordVerifyRunBestEffort } from "../lib/verify-run-ring.js";
+import { listVerifyRuns, recordVerifyRunBestEffort, readLatestVerifyRunSnapshot } from "../lib/verify-run-ring.js";
 import { presentHuman } from "../lib/verify-presenters.js";
 import { VerifyPhaseClock } from "../lib/verify-phase-clock.js";
 import { loadManifest } from "../lib/manifest.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
-import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
+import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
+import { buildVerifyResultPayload } from "../lib/verify-payload.js";
+import { evaluateGatePhase } from "../lib/verify-phase-steps.js";
+import type { GateExecAdapter } from "../lib/verify-options.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "../lib/verify-finding.js";
+
+test("VerifyPhaseClock timed records failed status and rethrows", () => {
+  const clock = new VerifyPhaseClock();
+  assert.throws(
+    () =>
+      clock.timed("gate", () => {
+        throw new Error("sync boom");
+      }),
+    /sync boom/,
+  );
+  const timings = clock.finalize();
+  assert.equal(timings.find((p) => p.id === "gate")?.status, "failed");
+});
+
+test("VerifyPhaseClock timedAsync records failed status and rethrows", async () => {
+  const clock = new VerifyPhaseClock();
+  await assert.rejects(
+    () =>
+      clock.timedAsync("gate", async () => {
+        throw new Error("adapter boom");
+      }),
+    /adapter boom/,
+  );
+  const timings = clock.finalize();
+  assert.equal(timings.find((p) => p.id === "gate")?.status, "failed");
+});
 
 test("VerifyPhaseClock markFailed records failed status", () => {
   const clock = new VerifyPhaseClock();
@@ -23,7 +53,7 @@ test("VerifyPhaseClock markFailed records failed status", () => {
   assert.equal(timings.find((p) => p.id === "defensive")?.status, "skipped");
 });
 
-test("evaluateVerifyPhases marks failed gate phase as failed in timings", () => {
+test("evaluateVerifyPhases marks failed gate phase as failed in timings", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-phase-clock-"));
   writeMiniGantryRepo(dest, ogRoot);
@@ -47,7 +77,9 @@ test("evaluateVerifyPhases marks failed gate phase as failed in timings", () => 
   gitInitCommit(dest, "[MSN-0100] legislate mission", PLANNER_EMAIL);
   const manifest = loadManifest(dest);
   const mission = parseMissionFile(dest, missionRel);
-  const result = withPlannerEnv(() => evaluateVerifyPhases(dest, mission, { mission: missionRel }, manifest));
+  const result = await withPlannerEnvAsync(async () =>
+    evaluateVerifyPhases(dest, mission, { mission: missionRel }, manifest),
+  );
   assert.equal(result.ok, false);
   if (result.ok) return;
   const gate = result.phaseTimings.find((p) => p.id === "gate");
@@ -56,7 +88,7 @@ test("evaluateVerifyPhases marks failed gate phase as failed in timings", () => 
   assert.equal(defensive?.status, "skipped");
 });
 
-test("recordVerifyRunBestEffort appends ring entry after human present failure", () => {
+test("recordVerifyRunBestEffort appends ring entry after human present failure", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ring-record-"));
   writeMiniGantryRepo(dest, ogRoot);
@@ -80,7 +112,9 @@ test("recordVerifyRunBestEffort appends ring entry after human present failure",
   gitInitCommit(dest, "[MSN-0100] legislate mission", PLANNER_EMAIL);
   const manifest = loadManifest(dest);
   const mission = parseMissionFile(dest, missionRel);
-  const result = withPlannerEnv(() => evaluateVerifyPhases(dest, mission, { mission: missionRel }, manifest));
+  const result = await withPlannerEnvAsync(async () =>
+    evaluateVerifyPhases(dest, mission, { mission: missionRel }, manifest),
+  );
   assert.equal(result.ok, false);
   const presented = presentHuman(
     {
@@ -99,4 +133,67 @@ test("recordVerifyRunBestEffort appends ring entry after human present failure",
   recordVerifyRunBestEffort(dest, result, presented.remediation ?? null);
   assert.equal(listVerifyRuns(dest).length, 1);
   assert.equal(listVerifyRuns(dest)[0]?.outcome, "FAIL");
+  const snap = readLatestVerifyRunSnapshot(dest);
+  assert.ok(snap?.gate_log_path);
+  assert.ok(Array.isArray(snap?.findings));
+  assert.ok(Array.isArray(snap?.phases));
+  assert.equal(snap?.outcome, "FAIL");
+});
+
+test("buildVerifyResultPayload maps adapter rejection to v3 failed envelope", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-adapter-reject-"));
+  writeMiniGantryRepo(dest, ogRoot);
+  const missionRel = ".gitagent/missions/m.yaml";
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
+  const manifest = loadManifest(dest);
+  const mission = parseMissionFile(dest, missionRel);
+  const boom: GateExecAdapter = {
+    adapter_id: "boom",
+    async execute() {
+      throw new Error("adapter boom");
+    },
+  };
+  const payload = await withPlannerEnvAsync(() =>
+    buildVerifyResultPayload(dest, manifest, mission, {
+      mission: missionRel,
+      gateExecAdapter: boom,
+    }),
+  );
+  assert.equal(payload.status, "failed");
+  if (payload.status !== "failed") return;
+  assert.equal(payload.envelope_schema_version, VERIFY_ENVELOPE_SCHEMA_VERSION);
+  assert.ok(Array.isArray(payload.findings));
+  assert.ok(payload.findings.length > 0);
+  assert.match(payload.message, /adapter boom/);
+});
+
+test("evaluateGatePhase fails when adapter returns findings despite exitCode 0", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-adapter-findings-"));
+  writeMiniGantryRepo(dest, ogRoot);
+  const missionRel = ".gitagent/missions/m.yaml";
+  const mission = parseMissionFile(dest, missionRel);
+  const lying: GateExecAdapter = {
+    adapter_id: "lying",
+    async execute() {
+      return {
+        exitCode: 0,
+        adapter_id: "lying",
+        findings: [verifyFinding("gate", "policy failed")],
+      };
+    },
+  };
+  const outcome = await evaluateGatePhase(
+    {
+      root: dest,
+      manifest: loadManifest(dest),
+      mission,
+      options: { mission: missionRel, gateExecAdapter: lying },
+      executorLogPath: "EXECUTOR_LOG.md",
+    },
+    mission.gate!,
+  );
+  assert.ok(outcome.failure);
+  assert.equal(outcome.failure?.phase, "gate");
 });

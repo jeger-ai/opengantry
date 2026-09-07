@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import type { GateSpec } from "./types.js";
 
-const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
+export const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
 
 export interface GateWorkDirOptions {
   cwd?: string;
@@ -20,7 +20,7 @@ export interface GateRunResult {
   combined: string;
 }
 
-function shellForPlatform(): boolean | string {
+export function shellForPlatform(): boolean | string {
   return process.platform === "win32" ? true : "/bin/sh";
 }
 

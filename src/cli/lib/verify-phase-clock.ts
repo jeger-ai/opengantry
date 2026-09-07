@@ -20,15 +20,36 @@ export interface VerifyPhaseTiming {
 export class VerifyPhaseClock {
   private readonly rows = new Map<VerifyPhaseId, VerifyPhaseTiming>();
 
-  timed<T>(id: VerifyPhaseId, fn: () => T): T {
-    const start = performance.now();
-    const result = fn();
+  private record(id: VerifyPhaseId, start: number, status: VerifyPhaseTimingStatus): void {
     this.rows.set(id, {
       id,
       duration_ms: Math.round(performance.now() - start),
-      status: "passed",
+      status,
     });
-    return result;
+  }
+
+  timed<T>(id: VerifyPhaseId, fn: () => T): T {
+    const start = performance.now();
+    try {
+      const result = fn();
+      this.record(id, start, "passed");
+      return result;
+    } catch (e) {
+      this.record(id, start, "failed");
+      throw e;
+    }
+  }
+
+  async timedAsync<T>(id: VerifyPhaseId, fn: () => Promise<T>): Promise<T> {
+    const start = performance.now();
+    try {
+      const result = await fn();
+      this.record(id, start, "passed");
+      return result;
+    } catch (e) {
+      this.record(id, start, "failed");
+      throw e;
+    }
   }
 
   markFailed(id: VerifyPhaseId): void {

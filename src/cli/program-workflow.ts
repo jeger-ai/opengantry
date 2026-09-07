@@ -91,6 +91,7 @@ interface VerifyCliOptions {
   fix?: boolean;
   nonInteractive?: boolean;
   json?: boolean;
+  jsonOut?: string;
   format?: string;
   audience?: string;
   scanDepth?: string;
@@ -125,6 +126,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     auditCommit: opts.auditCommit,
     fix: opts.fix,
     json: opts.json,
+    jsonOut: opts.jsonOut,
     format,
     scanDepth: Number.isFinite(scanDepth) && scanDepth! > 0 ? scanDepth : undefined,
     breakGlassReason: opts.reason,
@@ -241,6 +243,7 @@ export function registerWorkflowCommands(program: Command): void {
     .option("--fix", "Interactive remediation on failure (human output only; cannot combine with --json)")
     .option("--non-interactive", "With --fix: print structured hints without prompts")
     .option("--json", "Emit structured JSON (alias for --format json). Incompatible with --fix.")
+    .option("--json-out <path>", "Write structured JSON payload to file (pipe-safe; no stdout JSON)")
     .option("--format <fmt>", "Export format: json | sarif | junit")
     .option(
       "--scan-depth <number>",

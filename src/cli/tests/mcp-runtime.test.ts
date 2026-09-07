@@ -6,19 +6,19 @@ import os from "node:os";
 import { getRepoRoot } from "../lib/git.js";
 import { handleVerify } from "../lib/mcp-runtime.js";
 import { writeMiniGantryRepo, writeMiniGantryMission, gitInitCommit } from "./test-fixtures.js";
-import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
+import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
-test("handleVerify: gate failure includes fix_hints and error_code", () => {
+test("handleVerify: gate failure includes fix_hints and error_code", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-mcp-verify-"));
   writeMiniGantryRepo(dest, ogRoot);
   writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
-  withPlannerEnv(() => {
+  await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
-      const result = handleVerify(".gitagent/missions/m.yaml");
+      const result = await handleVerify(".gitagent/missions/m.yaml");
       assert.equal(result.status, "failed");
       assert.equal(result.phase, "gate");
       assert.equal(result.error_code, "GXT_GATE_FAILED");

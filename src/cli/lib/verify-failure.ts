@@ -1,6 +1,7 @@
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import type { KpiThresholdOp } from "./types.js";
 import type { TraceFailureKind } from "./trace.js";
+import type { VerifyFinding } from "./verify-finding.js";
 
 export type VerifyFailurePhase =
   | "git_proof"
@@ -32,6 +33,10 @@ export interface GateFailure extends VerifyFailureBase {
   gateStdout?: string;
   gateStderr?: string;
   gateExitCode?: number;
+  /** Repo-relative path when gate log was streamed to disk. */
+  gateLogPath?: string;
+  /** Coarse adapter findings when gate subprocess policy failed. */
+  adapterFindings?: VerifyFinding[];
 }
 
 export interface DefensiveFailure extends VerifyFailureBase {

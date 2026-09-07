@@ -812,3 +812,8 @@ DoD 1 MSN-0181: gantry report remediation (index-less verify ring, persist in ru
 [CONTEXT-REQUEST] path=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json reason=MSN-0182 release version parity outside src/cli tmvc_roots proposed=docs/CHANGELOG.md,docs/archive/BACKLOG.md,package.json,package-lock.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,templates/integrations/compatibility.json | msn=MSN-0182
 DoD 1 MSN-0182: v3.2.6 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG gantry report + ADR-0040; BACKLOG synced; dev-validate-core OK
 DoD 2 MSN-0182: npm 3.2.6 — MSN-0177–0181 squashed; dev-validate-core OK; pack:check OK
+
+## MSN-0188 — Async GateExecAdapter engine
+DoD 1 MSN-0188: GenericSpawnAdapter streams gate I/O to gate_log_path; timedAsync gate phase; verifyMissionAsync in-process; sync verifyMission CLI --json-out shim with stdio ignore and try/finally unlink; N-1 successSubstring scan; generic-spawn-adapter + verify-phase-clock tests; npm test 601 pass
+
+DoD 2 MSN-0188: thermo fixes — findings own pass/fail; bounded 20MiB gate log tail read; gate-log-writer canonical path; fix-loop log clobber guard; kernel shim forwards cwd/prePush/ci/skipStaleEvidence; unified phase clock; npm test 608 pass

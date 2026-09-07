@@ -7,7 +7,7 @@ import {
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-options.js";
-import type { VerifyPhaseFailure } from "./verify-failure.js";
+import type { VerifyPhaseFailure, GateFailure } from "./verify-failure.js";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
@@ -70,6 +70,17 @@ export interface VerifyFailedPayload {
 
 export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
 
+function buildGateFindings(root: string, failure: GateFailure, hint: string): VerifyFinding[] {
+  const projected = projectGateFindings(root, failure, hint);
+  const adapterFindings = failure.adapterFindings;
+  const genericOnly =
+    projected.length === 1 &&
+    projected[0]!.resolution_hint === hint &&
+    adapterFindings !== undefined &&
+    adapterFindings.length > 0;
+  return genericOnly ? adapterFindings : projected;
+}
+
 export function buildFindingsForFailure(
   root: string,
   normalized: NormalizedVerifyFailure,
@@ -94,7 +105,7 @@ export function buildFindingsForFailure(
     ];
   }
   if (failure?.phase === "gate") {
-    return projectGateFindings(root, failure, hint);
+    return buildGateFindings(root, failure, hint);
   }
   if (failure?.phase === "defensive") {
     return [verifyFinding("defensive", failure.defensiveReason || hint)];
@@ -236,12 +247,16 @@ export function buildVerifyResultPayloadFromPhaseResult(
   return toVerifyFailedPayload(normalized, result, findings);
 }
 
-export function buildVerifyResultPayload(
+export async function buildVerifyResultPayload(
   root: string,
   manifest: Manifest,
   mission: ParsedMission,
   options: VerifyOptions,
-): VerifyResultPayload {
-  const result = evaluateVerifyPhases(root, mission, options, manifest);
-  return buildVerifyResultPayloadFromPhaseResult(root, mission, options, result);
+): Promise<VerifyResultPayload> {
+  try {
+    const result = await evaluateVerifyPhases(root, mission, options, manifest);
+    return buildVerifyResultPayloadFromPhaseResult(root, mission, options, result);
+  } catch (e) {
+    return initFailurePayload(e);
+  }
 }

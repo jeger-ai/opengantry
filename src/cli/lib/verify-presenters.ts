@@ -12,6 +12,8 @@ import { appendSurgeonMutationLog } from "./surgeon.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
+import fs from "node:fs";
+import path from "node:path";
 import {
   buildFindingsForFailure,
   buildVerifyResultPayloadFromPhaseResult,
@@ -70,13 +72,14 @@ export function resolveVerifySink(options: {
   breakGlass?: boolean;
   format?: VerifyExportFormat;
   json?: boolean;
+  jsonOut?: string;
   fix?: boolean;
   fixNonInteractive?: boolean;
 }): VerifySink {
   if (options.breakGlass === true) {
-    return options.json || options.format ? "break_glass_json" : "break_glass_human";
+    return options.json || options.format || options.jsonOut?.trim() ? "break_glass_json" : "break_glass_human";
   }
-  if (resolveVerifyExportFormat(options)) return "json";
+  if (resolveVerifyExportFormat(options) || options.jsonOut?.trim()) return "json";
   if (options.fix === true) {
     return options.fixNonInteractive ? "fix_noninteractive" : "fix_interactive";
   }
@@ -147,7 +150,14 @@ export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresent
 
 function emitStructuredPayload(payload: VerifyResultPayload, options: VerifyPresentContext["options"]): void {
   const format: VerifyExportFormat = resolveVerifyExportFormat(options) ?? "json";
-  logInfo(buildVerifyExportDocument(payload, format));
+  const doc = buildVerifyExportDocument(payload, format);
+  const jsonOut = options.jsonOut?.trim();
+  if (jsonOut) {
+    fs.mkdirSync(path.dirname(jsonOut), { recursive: true });
+    fs.writeFileSync(jsonOut, `${doc}\n`, "utf8");
+    return;
+  }
+  logInfo(doc);
 }
 
 /** Attach resolved mission + receipt path from the loaded verify context. */
@@ -192,6 +202,7 @@ export function presentJsonFromResult(
     missionRel: ctx.resolved.missionRel,
     payload: toVerifyFailedPayload(normalized, failure, findings),
     findings,
+    failure,
   });
   const fullPayload = withContextFields(payload, ctx);
   emitStructuredPayload(fullPayload, ctx.options);
@@ -268,6 +279,7 @@ export function presentHuman(
       missionRel: ctx.resolved.missionRel,
       payload: toVerifyFailedPayload(normalized, failure, findings),
       findings,
+      failure,
     });
     remediation = persisted.snapshot;
     presentation = overlayFailurePresentation(basePresentation, persisted.payload);
@@ -383,5 +395,5 @@ export async function maybeApplySurgeonAndReevaluate(input: {
     fixNonInteractive: false,
     receipt: undefined,
   };
-  return evaluateVerifyPhases(input.root, input.mission, reevalOptions, input.manifest);
+  return await evaluateVerifyPhases(input.root, input.mission, reevalOptions, input.manifest);
 }

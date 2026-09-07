@@ -10,7 +10,6 @@ import { REL_MISSIONS_PREFIX } from "./git-proof.js";
 import { isLegislativeStub } from "./missions/formatter.js";
 import { defaultExecutorLogPath } from "./trace.js";
 import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "./types.js";
-import type { GateRunResult } from "./gate.js";
 import type { VerifyFailurePhase, VerifyPhaseFailure } from "./verify-failure.js";
 import type { TraceVerifyWarning } from "./trace.js";
 import {
@@ -19,6 +18,7 @@ import {
   scavengeStaleVirtualFlights,
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
+import { readGateLogText } from "./gate-log-writer.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./verify-phase-clock.js";
 import { evaluateInterrogationPhase } from "./verify-interrogation.js";
@@ -93,14 +93,15 @@ function recordVirtualGateCapture(
   root: string,
   flightId: string | null,
   gate: GateSpec,
-  gateResult: GateRunResult | undefined,
+  outcome: { exitCode: number | null; gateLogPath?: string } | undefined,
 ): void {
-  if (!flightId || !gateResult) return;
+  if (!flightId || !outcome?.gateLogPath) return;
+  const logText = readGateLogText(root, outcome.gateLogPath);
   writeGateCaptureSync(root, flightId, {
     gate_command: gate.command,
-    exit_code: gateResult.exitCode,
-    stdout: gateResult.stdout,
-    stderr: gateResult.stderr,
+    exit_code: outcome.exitCode,
+    stdout: logText,
+    stderr: "",
   });
 }
 
@@ -160,12 +161,12 @@ function buildFullVerifySuccess(input: {
 }
 
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
-export function evaluateVerifyPhases(
+export async function evaluateVerifyPhases(
   root: string,
   mission: ParsedMission,
   options: VerifyOptions,
   manifest: Manifest,
-): VerifyPhaseResult {
+): Promise<VerifyPhaseResult> {
   const clock = new VerifyPhaseClock();
   const executorLogPath = resolveExecutorLogPath(root, options);
 
@@ -202,8 +203,7 @@ export function evaluateVerifyPhases(
     };
   }
 
-  const gate = mission.gate;
-  if (!gate) {
+  if (!mission.gate) {
     return failWithTimings(
       {
         ok: false,
@@ -219,10 +219,10 @@ export function evaluateVerifyPhases(
   const virtualFlightId = beginVirtualCapture(root, mission);
   const phaseCtx = { root, manifest, mission, options, executorLogPath };
 
-  const gateOutcome = clock.timed("gate", () =>
-    evaluateGatePhase(root, gate, options, executorLogPath),
+  const gateOutcome = await clock.timedAsync("gate", () =>
+    evaluateGatePhase(phaseCtx, mission.gate!),
   );
-  recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome.gateResult);
+  recordVirtualGateCapture(root, virtualFlightId, mission.gate!, gateOutcome);
   if (gateOutcome.failure) return failWithTimings(gateOutcome.failure, clock);
 
   const defensive = clock.timed("defensive", () => evaluateDefensivePhase(phaseCtx));

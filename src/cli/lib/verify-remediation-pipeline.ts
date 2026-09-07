@@ -1,4 +1,5 @@
 import type { ParsedMission } from "./types.js";
+import type { VerifyPhaseFailure } from "./verify-failure.js";
 import type { VerifyFinding } from "./verify-finding.js";
 import type { VerifyFailedPayload } from "./verify-payload.js";
 import {
@@ -8,7 +9,7 @@ import {
   type RemediationSnapshot,
   REMEDIATION_SCHEMA_VERSION,
 } from "./context-feed-store.js";
-import { writeGateLog } from "./gate-log-writer.js";
+import { resolveRemediationGateLog } from "./gate-log-writer.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import {
   appendDigestToRing,
@@ -103,8 +104,9 @@ export function persistFailedVerifyRemediation(input: {
   missionRel: string | undefined;
   payload: VerifyFailedPayload;
   findings: VerifyFinding[];
+  failure?: VerifyPhaseFailure;
 }): { payload: VerifyFailedPayload; snapshot: RemediationSnapshot } {
-  const { root, mission, missionRel, payload, findings } = input;
+  const { root, mission, missionRel, payload, findings, failure } = input;
   const msnId = mission?.msnId ?? undefined;
   const priorRing = loadPriorDigestRing(root, msnId);
   const { payload: nextPayload, digestRing, recurred } = applyFindingsRecurrence(
@@ -113,7 +115,14 @@ export function persistFailedVerifyRemediation(input: {
     priorRing,
   );
   const digest = computeFindingsDigest(findings);
-  const gateLogPath = writeGateLog(root, msnId, nextPayload.stdout, nextPayload.stderr);
+  const existingRel = failure?.phase === "gate" ? failure.gateLogPath : undefined;
+  const gateLogPath = resolveRemediationGateLog(
+    root,
+    msnId,
+    existingRel,
+    nextPayload.stdout,
+    nextPayload.stderr,
+  );
   const meta = mission
     ? {
         mission_file_path: missionRel,

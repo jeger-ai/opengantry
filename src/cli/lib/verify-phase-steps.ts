@@ -1,6 +1,6 @@
 import { errorMessage } from "./cli-io.js";
 import { assertPlannerMissionProof } from "./git-proof.js";
-import { gatePassed, runGate, resolveGateWorkDir, type GateRunResult } from "./gate.js";
+import { resolveGateWorkDir } from "./gate.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "./types.js";
@@ -13,8 +13,10 @@ import type {
   TraceFailure,
   TracePendingFailure,
 } from "./verify-failure.js";
-import type { GateExecInput, VerifyOptions } from "./verify-options.js";
+import type { VerifyOptions } from "./verify-options.js";
 import type { TraceVerifyWarning } from "./trace.js";
+import { defaultGenericSpawnAdapter } from "./gate-adapters/generic-spawn-adapter.js";
+import { readGateLogText, resolveGateLogPaths } from "./gate-log-writer.js";
 
 function parseDeclaredAnchorLine(anchor: string): number {
   const n = Number.parseInt(anchor.trim(), 10);
@@ -55,31 +57,39 @@ export function evaluateGitProof(
   }
 }
 
-export function defaultGateExecAdapter(input: GateExecInput): GateRunResult {
-  return runGate(input.workingDirectory, {
-    command: input.command,
-    successSubstring: null,
-  });
+export interface GatePhaseOutcome {
+  failure: GateFailure | null;
+  gateLogPath?: string;
+  exitCode: number | null;
 }
 
-export function evaluateGatePhase(
-  root: string,
+export async function evaluateGatePhase(
+  input: PhaseContext,
   gate: GateSpec,
-  options: VerifyOptions,
-  executorLogPath: string,
-): { failure: GateFailure | null; gateResult?: GateRunResult } {
-  const exec = options.gateExecAdapter ?? defaultGateExecAdapter;
-  const gateResult = exec({
-    workingDirectory: resolveGateWorkDir(root, options),
-    command: gate.command,
+): Promise<GatePhaseOutcome> {
+  const { root, mission, options, executorLogPath } = input;
+  const msnId = mission.msnId ?? "MSN-0000";
+  const { abs: gateLogAbs, rel: gateLogRel } = resolveGateLogPaths(root, msnId);
+  const adapter = options.gateExecAdapter ?? defaultGenericSpawnAdapter;
+  const cwd = resolveGateWorkDir(root, options);
+
+  const result = await adapter.execute(gate.command, {
+    msn_id: msnId,
+    gate_log_path: gateLogAbs,
+    cwd,
+    successSubstring: gate.successSubstring,
   });
-  const normalized: GateRunResult = {
-    exitCode: gateResult.exitCode,
-    stdout: gateResult.stdout,
-    stderr: gateResult.stderr,
-    combined: `${gateResult.stdout}\n${gateResult.stderr}`,
-  };
-  if (gatePassed(normalized, gate.successSubstring)) return { failure: null, gateResult: normalized };
+
+  if (result.findings.length === 0) {
+    return {
+      failure: null,
+      gateLogPath: gateLogRel,
+      exitCode: result.exitCode,
+    };
+  }
+
+  const logText = readGateLogText(root, gateLogRel);
+
   return {
     failure: {
       ok: false,
@@ -88,11 +98,14 @@ export function evaluateGatePhase(
       exitCode: 1,
       executorLogPath,
       gateCommand: gate.command,
-      gateStdout: normalized.stdout,
-      gateStderr: normalized.stderr,
-      gateExitCode: normalized.exitCode ?? undefined,
+      gateStdout: logText,
+      gateStderr: "",
+      gateExitCode: result.exitCode ?? undefined,
+      gateLogPath: gateLogRel,
+      adapterFindings: result.findings,
     },
-    gateResult: normalized,
+    gateLogPath: gateLogRel,
+    exitCode: result.exitCode,
   };
 }
 

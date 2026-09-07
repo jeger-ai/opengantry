@@ -27,7 +27,12 @@ export {
   type VerdictExpectedClaims,
 } from "./lib/verdict-expected.js";
 export { resolveOrgId } from "./lib/org-export-config.js";
-export type { VerifyOptions, GateExecAdapter, GateExecInput, GateExecResult } from "./lib/verify-options.js";
+export type {
+  VerifyOptions,
+  GateExecAdapter,
+  GateExecContext,
+  GateExecutionResult,
+} from "./lib/verify-options.js";
 export type { VerifyResultPayload } from "./lib/verify-payload.js";
 export { buildVerifyResultPayload } from "./lib/verify-payload.js";
 
@@ -37,6 +42,7 @@ import { loadManifest } from "./lib/manifest.js";
 import type { VerifyOptions } from "./lib/verify-options.js";
 import type { VerifyResultPayload } from "./lib/verify-payload.js";
 import { buildVerifyResultPayload } from "./lib/verify-payload.js";
+import { runVerifyMissionViaCli } from "./lib/kernel-verify-cli-shim.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;
@@ -44,12 +50,24 @@ export interface VerifyMissionInput {
   options?: VerifyOptions;
 }
 
-/** Run full verify phases and return structured JSON payload. */
-export function verifyMission(input: VerifyMissionInput): VerifyResultPayload {
+/** Run full verify phases in-process and return structured JSON payload. */
+export async function verifyMissionAsync(input: VerifyMissionInput): Promise<VerifyResultPayload> {
   const manifest = loadManifest(input.repoRoot);
   const mission = parseMissionFile(input.repoRoot, input.missionRelPath);
   const options = input.options ?? {};
   return buildVerifyResultPayload(input.repoRoot, manifest, mission, options);
+}
+
+/**
+ * Legacy sync API for iii workers — subprocesses `gantry verify --json-out`.
+ * Custom gateExecAdapter is not supported across the process boundary; use verifyMissionAsync.
+ */
+export function verifyMission(input: VerifyMissionInput): VerifyResultPayload {
+  return runVerifyMissionViaCli({
+    repoRoot: input.repoRoot,
+    missionRelPath: input.missionRelPath,
+    options: input.options,
+  });
 }
 
 /** Load manifest + mission for middleware scope checks (no verify run). */

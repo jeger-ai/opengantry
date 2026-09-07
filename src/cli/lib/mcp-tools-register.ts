@@ -112,6 +112,28 @@ function registerAttestTool(server: McpServer): void {
   );
 }
 
+function registerVerifyTool(server: McpServer): void {
+  server.tool(
+    "gxt_verify",
+    "Run gantry verify phases for a mission and return structured result.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
+      skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
+      ci: z.boolean().optional().describe("Authoritative CI mode for KPI stale binding"),
+    },
+    async (args) =>
+      jsonText(
+        await handleVerify(
+          args.mission_file_path,
+          args.pre_push === true,
+          args.skip_stale_evidence === true,
+          args.ci === true,
+        ),
+      ),
+  );
+}
+
 function registerRuntimeTools(server: McpServer): void {
   server.tool(
     "gxt_runtime_env",
@@ -122,17 +144,7 @@ function registerRuntimeTools(server: McpServer): void {
     async (args) => jsonText(handleRuntimeEnv(args.mission_file_path)),
   );
 
-  server.tool(
-    "gxt_verify",
-    "Run gantry verify phases for a mission and return structured result.",
-    {
-      mission_file_path: z.string().describe("Repo-relative mission path"),
-      pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
-      skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
-      ci: z.boolean().optional().describe("Authoritative CI mode for KPI stale binding"),
-    },
-    async (args) => jsonText(handleVerify(args.mission_file_path, args.pre_push === true, args.skip_stale_evidence === true, args.ci === true)),
-  );
+  registerVerifyTool(server);
 
   registerAttestTool(server);
 

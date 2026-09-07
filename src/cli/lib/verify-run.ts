@@ -120,12 +120,13 @@ function loadVerifyContext(options: VerifyOptions): VerifyPresentContext {
   };
 }
 
-function evaluateOrInitFailure(
+async function evaluateOrInitFailure(
   ctx: VerifyPresentContext,
-): { ok: true; result: VerifyPhaseResult } | { ok: false; error: unknown } {
+): Promise<{ ok: true; result: VerifyPhaseResult } | { ok: false; error: unknown }> {
   try {
     assertMissionGatePresent(ctx.mission);
-    return { ok: true, result: evaluateVerifyPhases(ctx.root, ctx.mission, ctx.options, ctx.manifest) };
+    const result = await evaluateVerifyPhases(ctx.root, ctx.mission, ctx.options, ctx.manifest);
+    return { ok: true, result };
   } catch (e) {
     return { ok: false, error: e };
   }
@@ -212,6 +213,7 @@ async function evaluateWithFixLoop(
       missionRel: ctx.resolved.missionRel,
       payload: toVerifyFailedPayload(normalized, failure, findings),
       findings,
+      failure,
     });
     if (payload.error_code === GXT_ERROR.FINDINGS_RECURRED) break;
 
@@ -252,7 +254,7 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
       return presentBreakGlassHuman(ctx);
     }
     case "json": {
-      const evaluated = evaluateOrInitFailure(ctx);
+      const evaluated = await evaluateOrInitFailure(ctx);
       if (!evaluated.ok) {
         return presentJsonInitFailure(ctx, evaluated.error);
       }
@@ -268,13 +270,11 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
     case "fix_interactive":
     case "fix_noninteractive":
     case "human": {
-      try {
-        assertMissionGatePresent(ctx.mission);
-      } catch (e) {
-        return presentHumanInitFailure(ctx, e);
+      const evaluated = await evaluateOrInitFailure(ctx);
+      if (!evaluated.ok) {
+        return presentHumanInitFailure(ctx, evaluated.error);
       }
-      const initial = evaluateVerifyPhases(ctx.root, ctx.mission, ctx.options, ctx.manifest);
-      const finalPhase = await resolveFinalPhaseResult(ctx, sink, initial);
+      const finalPhase = await resolveFinalPhaseResult(ctx, sink, evaluated.result);
       const receiptWrite = tryWriteReceiptIfRequested(ctx, finalPhase);
       if (!receiptWrite.ok) {
         return presentHumanInitFailure(ctx, receiptWrite.error);
@@ -298,13 +298,13 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
   }
 }
 
-export function buildVerifyResultPayloadFromOptions(options: VerifyOptions): VerifyResultPayload {
+export async function buildVerifyResultPayloadFromOptions(options: VerifyOptions): Promise<VerifyResultPayload> {
   try {
     const { root, manifest } = loadWorkspace();
     const resolved = resolveMissionArg(root, options.mission);
     const mission = parseMissionFile(root, resolved.missionRel);
     assertMissionGatePresent(mission);
-    const payload = buildVerifyResultPayload(root, manifest, mission, {
+    const payload = await buildVerifyResultPayload(root, manifest, mission, {
       ...options,
       mission: resolved.missionRel,
     });

@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0188: thermo fixes — findings own pass/fail; bounded 20MiB gate log tail read; gate-log-writer canonical path; fix-loop log clobber guard; kernel shim forwards cwd/prePush/ci/skipStaleEvidence; unified phase clock; npm test 608 pass"
+    anchor: "819"
+    status: PASS
 gate_success_substring: pass
 interrogation:
   - finding_id: 9b42a6bc8d96
@@ -58,12 +58,21 @@ interrogation:
       - ADR-0039
 interrogation_sha256: 1ce166795e0aa11225392c4288c4a52c4b20dddb0e51b5439512b935d1e886e4
 declared_paths:
+  - .gitagent/missions/MSN-0188.upgrade-the-verify-engine-from-spawnsync-to-an-a.yaml
+  - EXECUTOR_LOG.md
   - package.json
   - src/cli/commands/verify.ts
   - src/cli/kernel.ts
-  - src/cli/lib/gate-adapters/
+  - src/cli/lib/gate-adapters/gate-adapter-types.ts
+  - src/cli/lib/gate-adapters/generic-spawn-adapter.ts
+  - src/cli/lib/gate-adapters/substring-stream-scan.ts
   - src/cli/lib/gate.ts
+  - src/cli/lib/gate-log-writer.ts
+  - src/cli/lib/kernel-verify-cli-shim.ts
+  - src/cli/lib/mcp-runtime.ts
+  - src/cli/lib/mcp-tools-register.ts
   - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-failure.ts
   - src/cli/lib/verify-options.ts
   - src/cli/lib/verify-payload.ts
   - src/cli/lib/verify-phase-clock.ts
@@ -72,7 +81,11 @@ declared_paths:
   - src/cli/lib/verify-remediation-pipeline.ts
   - src/cli/lib/verify-run.ts
   - src/cli/program-workflow.ts
+  - src/cli/tests/gate-log-writer.test.ts
   - src/cli/tests/generic-spawn-adapter.test.ts
   - src/cli/tests/kernel-exports.test.ts
+  - src/cli/tests/kernel-verify-cli-shim.test.ts
+  - src/cli/tests/mcp-runtime.test.ts
   - src/cli/tests/verify-gate-exec-adapter.test.ts
+  - src/cli/tests/verify-json.test.ts
   - src/cli/tests/verify-phase-clock.test.ts

@@ -22,6 +22,7 @@ test("kernel exports: package subpaths resolve after build", () => {
   const kernel = require(kernelPath) as {
     evaluateScope: typeof evaluateScope;
     verifyMission: (input: { repoRoot: string; missionRelPath: string }) => unknown;
+    verifyMissionAsync: (input: { repoRoot: string; missionRelPath: string }) => Promise<unknown>;
     verifyVerdictToken: typeof verifyVerdictToken;
     loadGovernanceBundle: (repoRoot: string, missionRelPath: string) => unknown;
     buildVerdictExpectedClaims: (repoRoot: string, missionRelPath: string) => unknown;
@@ -30,6 +31,7 @@ test("kernel exports: package subpaths resolve after build", () => {
   };
   assert.equal(typeof kernel.evaluateScope, "function");
   assert.equal(typeof kernel.verifyMission, "function");
+  assert.equal(typeof kernel.verifyMissionAsync, "function");
   assert.equal(typeof kernel.verifyVerdictToken, "function");
   assert.equal(typeof kernel.loadGovernanceBundle, "function");
   assert.equal(typeof kernel.buildVerdictExpectedClaims, "function");

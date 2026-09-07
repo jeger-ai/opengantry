@@ -65,12 +65,12 @@ export function handleRuntimeEnv(missionFilePath: string): RuntimeEnvMcpResult {
   }
 }
 
-export function handleVerify(
+export async function handleVerify(
   missionFilePath: string,
   prePush = false,
   skipStaleEvidence = false,
   ci = false,
-): VerifyResultPayload {
+): Promise<VerifyResultPayload> {
   return buildVerifyResultPayloadFromOptions({
     mission: missionFilePath,
     prePush,
