@@ -5,6 +5,7 @@ import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
 import { canonicalJson } from "./canonical-json.js";
 import { gitRun } from "./git.js";
+import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId } from "./types.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
 export const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;
@@ -25,6 +26,8 @@ export interface DraftLegislationPayload {
   skill_key: string;
   gate_command: string;
   gate_success_substring?: string;
+  /** Present only when not `generic` (ADR-0041). */
+  gate_adapter?: GateAdapterId;
   interrogation: InterrogationRow[];
   interrogation_sha256: string;
   declared_paths: string[];
@@ -144,6 +147,9 @@ export function createDraftToken(
   if (input.gate_success_substring?.trim()) {
     payload.gate_success_substring = input.gate_success_substring.trim();
   }
+  if (input.gate_adapter !== undefined && input.gate_adapter !== DEFAULT_GATE_ADAPTER) {
+    payload.gate_adapter = input.gate_adapter;
+  }
 
   const key = ensureDraftTokenKey(root);
   const encoded = base64UrlEncode(Buffer.from(canonicalJson(payload), "utf8"));
@@ -172,6 +178,13 @@ function assertDraftPayloadShape(payload: DraftLegislationPayload): void {
     throw new DraftTokenError(
       "TOKEN_MALFORMED",
       `${CLI_NAME} draft token declared_paths must be an array`,
+      false,
+    );
+  }
+  if (payload.gate_adapter !== undefined && !isGateAdapterId(payload.gate_adapter)) {
+    throw new DraftTokenError(
+      "TOKEN_MALFORMED",
+      `${CLI_NAME} draft token gate_adapter must be generic|eslint|tsc`,
       false,
     );
   }

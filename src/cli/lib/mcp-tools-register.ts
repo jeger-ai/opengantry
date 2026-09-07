@@ -27,6 +27,13 @@ const interrogationRowSchema = z.object({
   adr_refs: z.array(z.string()).optional(),
 });
 
+const gateAdapterSchema = z
+  .enum(["generic", "eslint", "tsc"])
+  .optional()
+  .describe(
+    "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc",
+  );
+
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
   return {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
@@ -58,6 +65,7 @@ function registerLegislationTools(server: McpServer): void {
       skill_key: z.string().describe("Manifest skill key (e.g. gantry, ui, logic)"),
       gate_command: z.string().describe("Deterministic verification command"),
       gate_success_substring: z.string().optional().describe("Optional gate success substring"),
+      gate_adapter: gateAdapterSchema,
       paths: z.array(z.string()).optional().describe("Declared paths for gap analysis"),
       interrogation: z.array(interrogationRowSchema).describe("Complete interrogation answers for all findings"),
     },
@@ -203,6 +211,7 @@ function registerRuntimeTools(server: McpServer): void {
       skill_key: z.string().optional().describe("Override manifest skill_key"),
       gate_command: z.string().optional().describe("Deterministic gate command"),
       gate_success_substring: z.string().optional().describe("Gate success substring"),
+      gate_adapter: gateAdapterSchema,
       pin_if_needed: z.boolean().optional().describe("Pin mission after scaffold"),
       emit_runtime_env: z.boolean().optional().describe("Include gxt_runtime_env payload"),
       write_mission: z.boolean().optional().describe("Write mission YAML (default true)"),

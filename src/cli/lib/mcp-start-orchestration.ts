@@ -16,6 +16,7 @@ export function handleStartOrchestration(input: StartOrchestrationInput): StartO
     skillKey: input.skill_key,
     gateCommand: input.gate_command,
     gateSuccessSubstring: input.gate_success_substring,
+    gateAdapter: input.gate_adapter,
     writeMission: input.write_mission !== false,
     silent: true,
   });

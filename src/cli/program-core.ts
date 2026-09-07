@@ -18,6 +18,7 @@ import type { InitOptions } from "./commands/init.js";
 import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
+import { parseGateAdapterOption } from "./lib/legislate-gate-options.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
@@ -25,8 +26,13 @@ import { logError, setExitCode } from "./lib/cli-io.js";
 type TriageCliOptions = Omit<TriageRunOptions, "text">;
 
 /** Commander `--no-write` maps to `write`; start adapter maps to `writeMission`. */
-type StartCliOptions = Omit<StartOptions, "intent" | "writeMission" | "audience" | "silent"> & {
+type StartCliOptions = Omit<
+  StartOptions,
+  "intent" | "writeMission" | "audience" | "silent" | "gateAdapter"
+> & {
   write?: boolean;
+  /** Raw `--gate-adapter` text; validated by parseGateAdapterOption. */
+  gateAdapter?: string;
 };
 
 /** Shared `gantry init` Commander flags (used by init command registration). */
@@ -234,6 +240,7 @@ export function registerCoreCommands(program: Command): void {
     .option("--skill-key <key>", "Override Foreman skill_key")
     .option("--gate-command <cmd>", "Deterministic gate command")
     .option("--gate-success-substring <text>", "Gate success substring")
+    .option("--gate-adapter <id>", "Explicit gate output parser: generic (default) | eslint | tsc")
     .option("--no-write", "Skip writing mission file (preview only)")
     .option("--allow-duplicate", "Allow duplicate msn_id (branch migration only)")
     .option("--json", "Emit structured JSON on success")
@@ -246,10 +253,17 @@ export function registerCoreCommands(program: Command): void {
         setExitCode(2);
         return;
       }
-      const { write, ...startFlags } = options;
+      const { write, gateAdapter: gateAdapterRaw, ...startFlags } = options;
+      const gateAdapter = parseGateAdapterOption(gateAdapterRaw);
+      if (!gateAdapter.ok) {
+        logError(`start: ${gateAdapter.message}`);
+        setExitCode(2);
+        return;
+      }
       // Adapter: Commander --no-write → writeMission; audience from output context (not CLI flag).
       runStart({
         ...startFlags,
+        gateAdapter: gateAdapter.adapter,
         intent: text,
         writeMission: write !== false,
         audience: getOutputAudience(),

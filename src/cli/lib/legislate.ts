@@ -16,7 +16,12 @@ import {
 } from "./cli-io.js";
 import { triageIntent, isTriageEscalated } from "./triage-logic.js";
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
-import type { Manifest, TriageResult } from "./types.js";
+import {
+  DEFAULT_GATE_ADAPTER,
+  type GateAdapterId,
+  type Manifest,
+  type TriageResult,
+} from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
 import type { InterrogationRow } from "./interrogate/findings.js";
@@ -35,6 +40,8 @@ export interface LegislateOptions {
   allowDuplicate?: boolean;
   gateCommand?: string;
   gateSuccessSubstring?: string;
+  /** Explicit gate output parser (ADR-0041); omitted/generic is not written. */
+  gateAdapter?: GateAdapterId;
   paths?: string[];
   interrogation?: LegislateInterrogation;
   /** When true, skip stdout info messages (MCP / structured JSON callers). */
@@ -102,6 +109,7 @@ function buildYamlMissionBody(opts: {
   intent: string;
   gate_command: string;
   gate_success_substring: string | null;
+  gate_adapter?: GateAdapterId;
   interrogation?: InterrogationRow[];
   interrogation_sha256?: string;
   declared_paths?: string[];
@@ -114,6 +122,9 @@ function buildYamlMissionBody(opts: {
   };
   if (opts.gate_success_substring !== null) {
     doc.gate_success_substring = opts.gate_success_substring;
+  }
+  if (opts.gate_adapter !== undefined && opts.gate_adapter !== DEFAULT_GATE_ADAPTER) {
+    doc.gate_adapter = opts.gate_adapter;
   }
   if (opts.interrogation && opts.interrogation.length > 0) {
     doc.interrogation = opts.interrogation;
@@ -319,6 +330,7 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
     intent: options.intent,
     gate_command: gateCommand,
     gate_success_substring: gateSuccessSubstring,
+    gate_adapter: options.gateAdapter,
     ...(src.rows.length > 0
       ? {
           interrogation: src.rows,

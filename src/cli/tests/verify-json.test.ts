@@ -244,3 +244,51 @@ test("runVerify --json-out writes parseable JSON to file", async () => {
   assert.equal(typeof payload.status, "string");
   assert.ok(payload.status === "passed" || payload.status === "failed");
 });
+
+test("runVerify --json: gate_adapter tsc populates line-level findings with a stable digest", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-tsc-adapter-"));
+  writeMiniGantryRepo(dest, ogRoot);
+  fs.mkdirSync(path.join(dest, "src"), { recursive: true });
+  fs.writeFileSync(path.join(dest, "src", "a.ts"), "export {};\nlet n: number = 'x';\n", "utf8");
+  fs.writeFileSync(
+    path.join(dest, "fake-tsc.cjs"),
+    "console.log('(node:1) ExperimentalWarning: noise');\n" +
+      "console.log(\"src/a.ts(2,5): error TS2322: Type 'string' is not assignable to type 'number'.\");\n" +
+      "console.log('Found 1 error in 1 file.');\nprocess.exit(2);\n",
+    "utf8",
+  );
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "missions", "m.yaml"),
+    [
+      "msn_id: MSN-0999",
+      "skill_key: ui",
+      "gate_command: node fake-tsc.cjs",
+      "gate_adapter: tsc",
+      "trace_rows:",
+      '  - dod_id: "1"',
+      '    trace_quote: "evidence A"',
+      '    anchor: "1"',
+      "    status: PASS",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
+
+  const first = await runVerifyJsonInRepo(dest, ".gitagent/missions/m.yaml", { executorLog: "EXECUTOR_LOG.md" });
+  clearRemediationSnapshot(dest);
+  const second = await runVerifyJsonInRepo(dest, ".gitagent/missions/m.yaml", { executorLog: "EXECUTOR_LOG.md" });
+
+  assert.equal(first.payload.status, "failed");
+  assert.equal(first.payload.phase, "gate");
+  const findings = first.payload.findings as Array<Record<string, unknown>>;
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0]!.offending_file, "src/a.ts");
+  assert.equal(findings[0]!.line, 2);
+  assert.equal(findings[0]!.start_column, 5);
+  assert.equal(findings[0]!.rule_id, "TS2322");
+  assert.equal(findings[0]!.evidence, "n: number = 'x';");
+  assert.equal(typeof first.payload.findings_digest, "string");
+  assert.equal(first.payload.findings_digest, second.payload.findings_digest);
+});

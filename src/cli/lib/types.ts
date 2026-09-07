@@ -45,9 +45,22 @@ export interface TriageResult {
   adr_hints?: AdrHint[];
 }
 
+/** Explicit gate output parser (ADR-0041). Never inferred from gate_command text. */
+export type GateAdapterId = "generic" | "eslint" | "tsc";
+
+export const GATE_ADAPTER_IDS: readonly GateAdapterId[] = ["generic", "eslint", "tsc"];
+
+export const DEFAULT_GATE_ADAPTER: GateAdapterId = "generic";
+
+export function isGateAdapterId(value: unknown): value is GateAdapterId {
+  return typeof value === "string" && (GATE_ADAPTER_IDS as readonly string[]).includes(value);
+}
+
 export interface GateSpec {
   command: string;
   successSubstring: string | null;
+  /** Omitted means `generic`. */
+  adapter?: GateAdapterId;
 }
 
 export type KpiThresholdOp = "<=" | ">=" | "==" | "<" | ">";
@@ -125,6 +138,7 @@ export interface YamlMission {
   skill_key: string;
   gate_command: string;
   gate_success_substring?: string | null;
+  gate_adapter?: GateAdapterId;
   virtual_capture?: boolean;
   kpi_gate?: {
     report_path?: string;

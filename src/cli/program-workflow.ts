@@ -16,13 +16,19 @@ import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/in
 import type { InterrogationRow } from "./lib/interrogate/findings.js";
 import fs from "node:fs";
 import { readStdinIfEmpty } from "./lib/cli-io.js";
+import { parseGateAdapterOption } from "./lib/legislate-gate-options.js";
 import { getOutputAudience } from "./lib/output-context.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
-type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths"> & {
+type LegislateCliOptions = Omit<
+  LegislateOptions,
+  "intent" | "silent" | "interrogation" | "paths" | "gateAdapter"
+> & {
   path?: string[];
   interrogationFile?: string;
+  /** Raw `--gate-adapter` text; validated by parseGateAdapterOption. */
+  gateAdapter?: string;
 };
 
 /** Commander maps --path to `path` and --answers to `answers`. */
@@ -63,11 +69,14 @@ export function mapLegislateCommanderOptions(
       rows,
     };
   }
+  const gateAdapter = parseGateAdapterOption(options.gateAdapter);
+  if (!gateAdapter.ok) throw new Error(`legislate: ${gateAdapter.message}`);
   return {
     ...options,
     intent,
     paths: options.path ?? [],
     interrogation,
+    gateAdapter: gateAdapter.adapter,
   };
 }
 
@@ -160,6 +169,10 @@ export function registerWorkflowCommands(program: Command): void {
       "--gate-success-substring <text>",
       "Optional substring required in combined gate stdout/stderr",
     )
+    .option(
+      "--gate-adapter <id>",
+      "Explicit gate output parser: generic (default) | eslint (gate must emit --format json) | tsc",
+    )
     .option("--path <paths...>", "Declared paths for gap analysis (repeatable)")
     .option("--interrogation-file <file>", "JSON file with interrogation answers (token-less path)")
     .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
@@ -167,6 +180,12 @@ export function registerWorkflowCommands(program: Command): void {
       text = await readStdinIfEmpty(text);
       if (!text) {
         logError("legislate: provide intent text or pipe stdin");
+        setExitCode(2);
+        return;
+      }
+      const gateAdapter = parseGateAdapterOption(options.gateAdapter);
+      if (!gateAdapter.ok) {
+        logError(`legislate: ${gateAdapter.message}`);
         setExitCode(2);
         return;
       }

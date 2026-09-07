@@ -5,6 +5,8 @@ export interface GateExecContext {
   /** Absolute path for streaming gate subprocess I/O. */
   gate_log_path: string;
   cwd: string;
+  /** Repository root for repo-relative `offending_file`; defaults to `cwd`. */
+  repo_root?: string;
   successSubstring?: string | null;
 }
 

@@ -122,3 +122,53 @@ test("draft-token: v1 token rejected", () => {
     process.chdir(prevCwd);
   }
 });
+
+test("draft-token: gate_adapter round-trips through the signed payload; generic is omitted", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-draft-adapter-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+  execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
+  execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
+  execSync("git add .", { cwd: dest, stdio: "pipe" });
+  execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
+
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    const eslint = createDraftToken(dest, {
+      title: "Lint gate",
+      msn_id: "MSN-0104",
+      skill_key: "gantry",
+      gate_command: "npx eslint --format json src",
+      gate_adapter: "eslint",
+      ...emptyDraftTokenInterrogationFields(),
+    });
+    assert.equal(verifyDraftToken(dest, eslint.draft_token, { consume: false }).gate_adapter, "eslint");
+
+    const generic = createDraftToken(dest, {
+      title: "Generic gate",
+      msn_id: "MSN-0105",
+      skill_key: "gantry",
+      gate_command: "npm test",
+      gate_adapter: "generic",
+      ...emptyDraftTokenInterrogationFields(),
+    });
+    assert.equal("gate_adapter" in generic.payload, false);
+
+    const parts = eslint.draft_token.split(".");
+    const payload = JSON.parse(Buffer.from(parts[0]!, "base64url").toString("utf8")) as Record<string, unknown>;
+    payload.gate_adapter = "jest";
+    const tampered = `${Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")}.${parts[1]}`;
+    assert.throws(
+      () => verifyDraftToken(dest, tampered, { consume: false }),
+      (e: unknown) => e instanceof DraftTokenError && e.code === "TOKEN_MALFORMED",
+    );
+  } finally {
+    process.chdir(prevCwd);
+  }
+});

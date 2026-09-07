@@ -820,3 +820,6 @@ DoD 2 MSN-0188: thermo fixes — findings own pass/fail; bounded 20MiB gate log 
 
 ## MSN-0189 — gate_adapter substrate law
 DoD 1 MSN-0189: gate_adapter enum (generic|eslint|tsc) added to MISSION.schema.yaml and mirrored byte-identically to templates + iii-integration example; MISSION.example.yaml note; ADR-0041 gate-adapter-routing (explicit routing, no command sniffing, v3 findings contract); DEVELOPMENT.md + README gate_adapter docs; mission gate amended to dev-validate-core.sh to avoid verify recursion; dev-validate-core OK, npm test 608 pass
+
+## MSN-0190 — gate_adapter gantry CLI implementation
+DoD 1 MSN-0190: GateAdapterId type and GateSpec.adapter parsed from gate_adapter (default generic); spawn-stream-core with bounded 20MiB stdout capture + stdoutTruncated flag; ESLint JSON adapter and tsc diagnostics adapter emitting envelope v3 findings with offending_file, line, columns, rule_id, evidence; exhaustive adapter registry wired into evaluateGatePhase; readEvidenceSnippet moved to verify-evidence-snippet.ts; --gate-adapter flag on legislate/start plus MCP draft/execute/start_orchestration plumbing through the signed draft token; madge: no cycles in gate-adapters (17 pre-existing engine cycles unchanged); lint clean; npm test 636 pass

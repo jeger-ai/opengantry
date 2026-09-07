@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0190: GateAdapterId type and GateSpec.adapter parsed from gate_adapter (default generic); spawn-stream-core with bounded 20MiB stdout capture + stdoutTruncated flag; ESLint JSON adapter and tsc diagnostics adapter emitting envelope v3 findings with offending_file, line, columns, rule_id, evidence; exhaustive adapter registry wired into evaluateGatePhase; readEvidenceSnippet moved to verify-evidence-snippet.ts; --gate-adapter flag on legislate/start plus MCP draft/execute/start_orchestration plumbing through the signed draft token; madge: no cycles in gate-adapters (17 pre-existing engine cycles unchanged); lint clean; npm test 636 pass"
+    anchor: "825"
+    status: PASS
 gate_success_substring: pass
 interrogation:
   - finding_id: 2121e0ae69d9

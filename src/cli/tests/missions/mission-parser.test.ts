@@ -77,3 +77,37 @@ trace_rows: []
   assert.equal(parsed.msnId, "MSN-0555");
 });
 
+function writeGateAdapterFixture(adapterLine: string): string {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gate-adapter-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(dest, ".gitagent", "planner", "MISSION.schema.yaml"),
+  );
+  fs.writeFileSync(
+    path.join(dest, ".gitagent", "missions", "ga.yaml"),
+    `msn_id: MSN-0556\nskill_key: ui\ngate_command: "npx tsc --pretty false"\n${adapterLine}trace_rows: []\n`,
+    "utf8",
+  );
+  return dest;
+}
+
+test("parseMissionFile: gate_adapter parsed into GateSpec.adapter", () => {
+  const dest = writeGateAdapterFixture("gate_adapter: tsc\n");
+  const parsed = parseMissionFile(dest, ".gitagent/missions/ga.yaml");
+  assert.equal(parsed.gate?.adapter, "tsc");
+});
+
+test("parseMissionFile: gate_adapter defaults to generic when omitted", () => {
+  const dest = writeGateAdapterFixture("");
+  const parsed = parseMissionFile(dest, ".gitagent/missions/ga.yaml");
+  assert.equal(parsed.gate?.adapter, "generic");
+});
+
+test("parseMissionFile: unknown gate_adapter rejected by schema", () => {
+  const dest = writeGateAdapterFixture("gate_adapter: jest\n");
+  assert.throws(() => parseMissionFile(dest, ".gitagent/missions/ga.yaml"), /gate_adapter|enum|schema/i);
+});
+

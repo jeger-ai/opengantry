@@ -310,3 +310,48 @@ test("findForbiddenZoneHits: flags intent paths in skill forbidden_zones", () =>
   assert.ok(hits.some((z) => z.includes("RULES.md")));
 });
 
+function legislateWithAdapter(tag: string, gateAdapter: "generic" | "eslint" | "tsc" | undefined): string {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), `og-leg-adapter-${tag}-`));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    const result = runLegislate({
+      intent: "gantry lint gate with adapter",
+      msn: "MSN-0778",
+      skillKey: "gantry",
+      gateCommand: "echo OK",
+      gateSuccessSubstring: "OK",
+      gateAdapter,
+      interrogation: echoOkInterrogation(),
+      silent: true,
+    });
+    assert.equal(result.ok, true);
+    const created = fs
+      .readdirSync(path.join(dest, ".gitagent", "missions"))
+      .find((f) => f.startsWith("MSN-0778.") && f.endsWith(".yaml"))!;
+    return fs.readFileSync(path.join(dest, ".gitagent", "missions", created), "utf8");
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+}
+
+test("legislate: --gate-adapter eslint lands in mission YAML", () => {
+  const body = legislateWithAdapter("eslint", "eslint");
+  assert.ok(body.includes("gate_adapter: eslint"), body);
+});
+
+test("legislate: generic / omitted gate adapter is not written (schema default)", () => {
+  assert.ok(!legislateWithAdapter("generic", "generic").includes("gate_adapter"));
+  assert.ok(!legislateWithAdapter("omitted", undefined).includes("gate_adapter"));
+});
+

@@ -12,16 +12,17 @@ import {
   type InterrogationFindingKind,
   type InterrogationRow,
 } from "../interrogate/findings.js";
-import type {
-  KpiAggregator,
-  KpiAggregatorOp,
-  KpiGateSpec,
-  KpiThreshold,
-  KpiThresholdOp,
-  LlmVerifierSpec,
-  ParsedMission,
-  TraceRow,
-  YamlMission,
+import {
+  DEFAULT_GATE_ADAPTER,
+  type KpiAggregator,
+  type KpiAggregatorOp,
+  type KpiGateSpec,
+  type KpiThreshold,
+  type KpiThresholdOp,
+  type LlmVerifierSpec,
+  type ParsedMission,
+  type TraceRow,
+  type YamlMission,
 } from "../types.js";
 import { assertMissionSchemaValid } from "./validator.js";
 import {
@@ -264,6 +265,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     gate: {
       command: data.gate_command,
       successSubstring: data.gate_success_substring ?? null,
+      adapter: data.gate_adapter ?? DEFAULT_GATE_ADAPTER,
     },
     kpiGate: parsedKpiGateFromYaml(data, msnId),
     virtualCapture: data.virtual_capture === true,

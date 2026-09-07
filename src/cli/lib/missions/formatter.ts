@@ -6,7 +6,7 @@ import {
   REL_MISSION_TEMPLATE,
 } from "../constants.js";
 import { isPassStatus, isPendingStatus, normalizeTraceStatus } from "../trace.js";
-import type { ParsedMission, TraceRow } from "../types.js";
+import { DEFAULT_GATE_ADAPTER, type ParsedMission, type TraceRow } from "../types.js";
 
 const TRACE_SECTION_MARKER = "## 4. Verification trace";
 
@@ -37,6 +37,7 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
         ? {
             command: gateCommand,
             successSubstring: gateFromMarkdown(successRaw),
+            adapter: DEFAULT_GATE_ADAPTER,
           }
         : null,
     kpiGate: null,

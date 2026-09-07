@@ -9,6 +9,7 @@ import {
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
 import { runInterrogate } from "./interrogate/run.js";
+import { DEFAULT_GATE_ADAPTER, isGateAdapterId } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 
 function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?: string): string {
@@ -24,6 +25,9 @@ function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?:
   ];
   if (input.gate_success_substring?.trim()) {
     lines.push(`- **Gate success substring:** \`${input.gate_success_substring.trim()}\``);
+  }
+  if (input.gate_adapter !== undefined && input.gate_adapter !== DEFAULT_GATE_ADAPTER) {
+    lines.push(`- **Gate adapter:** \`${input.gate_adapter}\` (ADR-0041 explicit routing)`);
   }
   if (manifestSkillDesc) {
     lines.push(`- **Skill scope:** ${manifestSkillDesc}`);
@@ -67,6 +71,9 @@ function validateDraftInput(input: DraftLegislationInput): McpErrorBody | null {
   }
   if (!Array.isArray(input.interrogation)) {
     return { code: "VALIDATION_ERROR", message: "interrogation array is required", retryable: true };
+  }
+  if (input.gate_adapter !== undefined && !isGateAdapterId(input.gate_adapter)) {
+    return { code: "VALIDATION_ERROR", message: "gate_adapter must be generic|eslint|tsc", retryable: true };
   }
   return null;
 }
@@ -118,6 +125,7 @@ export function handleDraftLegislation(
     skill_key: skillKey,
     gate_command: gateCommand,
     gate_success_substring: gateSuccessSubstring ?? undefined,
+    gate_adapter: input.gate_adapter,
     interrogation: interrogate.interrogation,
     interrogation_sha256: interrogate.interrogation_sha256,
     declared_paths: interrogate.declared_paths,

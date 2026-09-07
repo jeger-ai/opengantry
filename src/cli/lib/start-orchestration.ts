@@ -9,7 +9,7 @@ import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { allocateMsn } from "./msn-allocate.js";
 import { isValidMsnId } from "./missions/parser.js";
 import { formatTriageHuman, triageIntent } from "./triage-logic.js";
-import type { TriageResult } from "./types.js";
+import type { GateAdapterId, TriageResult } from "./types.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
@@ -26,6 +26,7 @@ export interface StartOptions {
   skillKey?: string;
   gateCommand?: string;
   gateSuccessSubstring?: string;
+  gateAdapter?: GateAdapterId;
   writeMission?: boolean;
   allowDuplicate?: boolean;
   json?: boolean;
@@ -212,6 +213,7 @@ function scaffoldStartMission(
     skillKey: resolvedSkillKey,
     gateCommand: options.gateCommand,
     gateSuccessSubstring: options.gateSuccessSubstring,
+    gateAdapter: options.gateAdapter,
     paths: [],
     allowDuplicate: options.allowDuplicate,
     silent: quiet,
