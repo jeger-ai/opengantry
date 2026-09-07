@@ -1,0 +1,79 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Substrate law for explicit gate adapter routing: add optional gate_adapter enum (generic|eslint|tsc, default generic) to MISSION.schema.yaml, mirrored to the templates and iii-integration example copies; author ADR-0041 gate-adapter-routing (explicit YAML contract, no command sniffing, adapters emit ADR-0040 v3 findings); document gate_adapter in docs/DEVELOPMENT.md and README. Schema, ADR, and docs only; CLI implementation follows in a separate gantry-skill mission.
+msn_id: MSN-0189
+skill_key: substrate
+gate_command: npm run validate
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: substrate (Tier-3). TMVC: declared_paths only —
+      .gitagent/planner/MISSION.schema.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml,
+      examples/iii-integration/target-repo/.gitagent/planner/MISSION.schema.yam\
+      l, .gitagent/planner/MISSION.example.yaml,
+      .gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md,
+      docs/DEVELOPMENT.md, README.md. Gate: npm run validate. Planner mission +
+      [MSN-0189] commits required; single-provider verify → mandatory human
+      audit per RULES §1 Tier-3."
+    adr_refs:
+      - ADR-0040
+      - ADR-0039
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability — ADR-0001 is the scaffold placeholder;
+      match on the word 'example' refers to the examples/iii-integration schema
+      mirror, not a decision.
+    adr_refs:
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability — ADR-0037 governs the control-plane
+      ingest envelope and receipt v0.2.0; gate_adapter is a mission YAML field
+      and does not change receipts, envelopes, or CI ingestion.
+    adr_refs:
+      - ADR-0037
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "TMVC is the mission declared_paths, file-exact, no directory
+      roots: .gitagent/planner/MISSION.schema.yaml,
+      .gitagent/planner/MISSION.example.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml,
+      examples/iii-integration/target-repo/.gitagent/planner/MISSION.schema.yam\
+      l, .gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md,
+      docs/DEVELOPMENT.md, README.md, EXECUTOR_LOG.md. forbidden_zones untouched
+      (.gitagent/foreman/, RULES.md). Any other path requires a
+      [CONTEXT-REQUEST] in EXECUTOR_LOG.md."
+    adr_refs:
+      - ADR-0040
+      - ADR-0039
+interrogation_sha256: d9b71b54f10187d6a34f0089f34e69874c2543ee23de32b32afa13f7eac53989
+declared_paths:
+  - .gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md
+  - .gitagent/planner/MISSION.example.yaml
+  - .gitagent/planner/MISSION.schema.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/DEVELOPMENT.md
+  - examples/iii-integration/target-repo/.gitagent/planner/MISSION.schema.yaml
+  - templates/.gitagent/planner/MISSION.schema.yaml
