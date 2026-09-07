@@ -69,6 +69,7 @@ interrogation:
       - ADR-0039
 interrogation_sha256: d9b71b54f10187d6a34f0089f34e69874c2543ee23de32b32afa13f7eac53989
 declared_paths:
+  - .gitagent/missions/MSN-0189.substrate-law-for-explicit-gate-adapter-routing-.yaml
   - .gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md
   - .gitagent/planner/MISSION.example.yaml
   - .gitagent/planner/MISSION.schema.yaml
