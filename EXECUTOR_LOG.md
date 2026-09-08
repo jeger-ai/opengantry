@@ -841,3 +841,5 @@ DoD 1 MSN-0192 re-attest: eslint adapter dogfood still holds after MSN-0191 sent
 [CONTEXT-REQUEST] path=docs/DEVELOPMENT.md reason=Document one-adapter-per-mission tsc vs eslint recipes outside gantry TMVC (src/cli/ + package.json); operator authorized Context Request at legislation proposed=docs/DEVELOPMENT.md
 [CONTEXT-REQUEST] path=README.md reason=Point tool-native findings paragraph at lint:json and the one-adapter-per-mission rule proposed=README.md
 DoD 1 MSN-0193: split registerCoreCommands/registerWorkflowCommands/registerMissionCommands into local helpers under 80 lines (no new modules); npm run lint:json added; whole-tree eslint src/cli/**/*.ts green; npm test 636 pass; DEVELOPMENT.md feature-mission adapter recipes (one adapter per mission, no tsc+eslint concat); CI stays changed-file lint
+DoD 1 MSN-0192 re-attest after MSN-0193 TMVC drift: interrogation authorization aligned to fixture gate; npx eslint --format json src/cli/tests/fixtures/dogfood-eslint-adapter.ts green
+DoD 1 MSN-0191 re-attest after MSN-0193 TMVC drift: npx tsc --noEmit --pretty false green
