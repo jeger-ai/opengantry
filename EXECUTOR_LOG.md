@@ -843,3 +843,10 @@ Live context-feed v3 finding: offending_file=src/cli/tests/fixtures/dogfood-esli
 DoD 1 MSN-0192: live eslint adapter dogfood — committed unused-var dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-eslint-adapter.ts line=3 start_column=7 rule_id=@typescript-eslint/no-unused-vars; context-feed omitted gate streams; executor repaired from those coordinates only
 DoD 1 MSN-0192 re-attest: eslint adapter dogfood still holds after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/; fixture eslint JSON gate green
 DoD 1 MSN-0192 re-attest v2: eslint adapter dogfood still holds after MSN-0191 tsc sentinel under src/cli/tests/fixtures/; fixture eslint JSON gate green
+
+## MSN-0193 — registrar max-lines split and lint:json gate
+[CONTEXT-REQUEST] path=docs/DEVELOPMENT.md reason=Document one-adapter-per-mission tsc vs eslint recipes outside gantry TMVC (src/cli/ + package.json); operator authorized Context Request at legislation proposed=docs/DEVELOPMENT.md
+[CONTEXT-REQUEST] path=README.md reason=Point tool-native findings paragraph at lint:json and the one-adapter-per-mission rule proposed=README.md
+DoD 1 MSN-0193: split registerCoreCommands/registerWorkflowCommands/registerMissionCommands into local helpers under 80 lines (no new modules); npm run lint:json added; whole-tree eslint src/cli/**/*.ts green; npm test 636 pass; DEVELOPMENT.md feature-mission adapter recipes (one adapter per mission, no tsc+eslint concat); CI stays changed-file lint
+DoD 1 MSN-0193 re-attest: whole-tree lint:json still green after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/
+DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/0192 dogfood fixtures under src/cli/tests/fixtures/

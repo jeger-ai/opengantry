@@ -1,0 +1,84 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Clear max-lines-per-function debt in program-core.ts, program-workflow.ts, and program-mission.ts by splitting register*Commands into local helpers in the same files (no new modules). Add npm run lint:json (eslint --format json src/cli/**/*.ts). Document one-adapter-per-mission tsc vs eslint recipes in docs/DEVELOPMENT.md via Context Request (docs outside gantry TMVC). Do not concatenate tsc and eslint in one gate_command. Do not change CI changed-file lint. Out of scope: Jest/Vitest, ADR-0041 enum expansion, live iii bus.
+msn_id: MSN-0193
+skill_key: gantry
+gate_command: npm run lint:json
+gate_adapter: eslint
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/0192 dogfood fixtures under src/cli/tests/fixtures/"
+    anchor: "852"
+    status: PASS
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability — no receipt/envelope/CI ingest changes
+    adr_refs:
+      - ADR-0037
+  - finding_id: 835752208e7c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "CLI delivery layer (ARCHITECTURE.md): Commander registrars
+      under src/cli/program-*.ts imported by program.ts. Operator confirmed
+      Budget Management: Splitting the registrars into local helpers within the
+      same files prevents unnecessary module proliferation while keeping the
+      files under the 450-line budget. No new modules. package.json script
+      lint:json is gantry TMVC. docs/DEVELOPMENT.md is Context Request only, not
+      a new architecture layer."
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: gantry. TMVC: src/cli/ and package.json. Context
+      Request for docs/DEVELOPMENT.md (outside gantry TMVC) so the documentation
+      update stays cohesive with the CLI changes. Split register*Commands in
+      program-core.ts, program-workflow.ts, and program-mission.ts into local
+      helpers in the same files; add npm run lint:json; document
+      one-adapter-per-mission tsc vs eslint recipes. The operator confirmed:
+      Including a Context Request for docs/DEVELOPMENT.md correctly respects the
+      Tier-2 src/cli/ TMVC boundary."
+    adr_refs:
+      - ADR-0041
+  - finding_id: e743bf9ecf4a
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "npm run lint:json" with documented
+      success substring for verify.
+    operator_answer: "Authorize gate_command npm run lint:json (eslint --format json
+      src/cli/**/*.ts). Success is exit code 0 only; no gate_success_substring
+      because ESLint JSON is an array on success. npm run lint is not --format
+      json so it cannot exercise the eslint adapter. CI stays changed-file
+      linting. Operator confirmed: Leaving the CI pipeline scoped strictly to
+      changed-file linting prevents scope creep."
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0041. Explicitly documenting the prohibition
+      against concatenating tsc and eslint in a single gate_command protects the
+      explicit one-adapter-per-mission constraint established in ADR-0041. Gate
+      is npm run lint:json (eslint --format json) with gate_adapter: eslint. No
+      command sniffing. No Jest/Vitest; no ADR-0041 enum expansion."
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: ca6c406a38f2a4e667c0accd8a0eda738311f97ce51ce3e407f2e9ab4e4db5db
+declared_paths:
+  - .gitagent/missions/MSN-0193.clear-max-lines-per-function-debt-in-program-cor.yaml
+  - docs/DEVELOPMENT.md
+  - EXECUTOR_LOG.md
+  - package.json
+  - src/cli/program-core.ts
+  - src/cli/program-mission.ts
+  - src/cli/program-workflow.ts

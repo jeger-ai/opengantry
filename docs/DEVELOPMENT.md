@@ -159,6 +159,19 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
 | Trace mapping | verify | Verbatim quotes from `EXECUTOR_LOG.md` for mission PASS rows |
 
+### Feature-mission adapter gates (ADR-0041)
+
+After MSN-0193, whole-tree `src/cli` ESLint is green. Standard **gantry** feature missions MAY use a **single** explicit adapter for autonomous repair via `gantry context-feed --json`:
+
+| Work | `gate_adapter` | `gate_command` |
+|------|----------------|----------------|
+| Types | `tsc` | `npx tsc --noEmit --pretty false` |
+| Lint | `eslint` | `npm run lint:json` (`eslint --format json src/cli/**/*.ts`) |
+
+Do **not** concatenate `tsc` and `eslint` in one `gate_command`. Routing is never inferred from the command string; one mission has one adapter. `npm run lint` stays the human-readable formatter and is **not** adapter input.
+
+PR CI remains **changed-file** ESLint (`scripts/check-changed-code.sh`). Whole-tree `lint:json` is a **mission** gate, not a validate/CI change. Jest/Vitest adapters require an ADR-0041 amendment before any CLI parser.
+
 External IDE skill packs are **edge-only** (local, gitignored). They must not be wired into `.gitagent/` or shipped integration templates. Optional `[SKILL-EXEC]` lines in `EXECUTOR_LOG.md` are human triage context only — not verify evidence. See [`AGENTS.md`](../AGENTS.md) and [`.gitagent/planner/RUNTIME.md`](../.gitagent/planner/RUNTIME.md).
 
 ## Before push / PR
