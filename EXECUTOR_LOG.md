@@ -853,4 +853,4 @@ DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/019
 
 ## MSN-0196 — gantry doctor adapter preflight
 [CONTEXT-REQUEST] path=docs/DEVELOPMENT.md,docs/FEATURES.md reason=Document gantry doctor tsc/eslint adapter preflight before pinning typed-adapter missions proposed=docs/DEVELOPMENT.md,docs/FEATURES.md
-DoD 1 MSN-0196: gantry doctor preflights declared tsc/eslint adapters (npx, repo packages, tsconfig parse, eslint config, lint:json --format json); --gate-adapter force; --adapter-baseline warn-only; skip when no typed missions; DEVELOPMENT + FEATURES; npm test 681 pass
+DoD 1 MSN-0196: gantry doctor preflights declared tsc/eslint adapters (npx, repo packages, tsconfig parse, eslint config, lint:json --format json); --gate-adapter force; --adapter-baseline warn-only; skip when no typed missions; DEVELOPMENT + FEATURES; npm test 648 pass
