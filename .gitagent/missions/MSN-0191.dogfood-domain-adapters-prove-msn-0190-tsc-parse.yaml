@@ -6,9 +6,9 @@ skill_key: gantry
 gate_command: npx tsc --noEmit --pretty false
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0191: live tsc adapter dogfood — committed TS2322 dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-gate-adapter.ts line=3 start_column=7 rule_id=TS2322; context-feed omitted gate streams; executor repaired from those coordinates only; subsequent tsc green"
+    anchor: "830"
+    status: PASS
 gate_adapter: tsc
 interrogation:
   - finding_id: 2121e0ae69d9
