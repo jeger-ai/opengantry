@@ -836,3 +836,10 @@ Live context-feed v3 finding: offending_file=src/cli/tests/fixtures/dogfood-gate
 DoD 1 MSN-0191: live tsc adapter dogfood — committed TS2322 dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-gate-adapter.ts line=3 start_column=7 rule_id=TS2322; context-feed omitted gate streams; executor repaired from those coordinates only; subsequent tsc green
 DoD 1 MSN-0191 re-attest v3: sentinel unused binding renamed to _n so changed-code eslint PASSes; tsc still green
 DoD 1 MSN-0191 re-attest v4: tsc adapter dogfood still holds after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/; npx tsc --noEmit --pretty false green
+
+## MSN-0192 — live eslint adapter dogfood
+[CONTEXT-REQUEST] path=.gitagent/missions/MSN-0192.dogfood-eslint-json-adapter-live-msn-0192-after-.yaml reason=Narrow gate to dummy fixture (whole-tree eslint not green: grandfathered max-lines on program-*.ts); update trace_rows after live gate proposed=mission yaml
+Live context-feed v3 finding: offending_file=src/cli/tests/fixtures/dogfood-eslint-adapter.ts line=3 start_column=7 end_column=19 rule_id=@typescript-eslint/no-unused-vars evidence=dogfoodBreak = 1; feed schema 2 omitted gate streams. Surgical fix applied at that span only (identifier prefixed to match ^_).
+DoD 1 MSN-0192: live eslint adapter dogfood — committed unused-var dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-eslint-adapter.ts line=3 start_column=7 rule_id=@typescript-eslint/no-unused-vars; context-feed omitted gate streams; executor repaired from those coordinates only
+DoD 1 MSN-0192 re-attest: eslint adapter dogfood still holds after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/; fixture eslint JSON gate green
+DoD 1 MSN-0192 re-attest v2: eslint adapter dogfood still holds after MSN-0191 tsc sentinel under src/cli/tests/fixtures/; fixture eslint JSON gate green
