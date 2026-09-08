@@ -170,6 +170,8 @@ After MSN-0193, whole-tree `src/cli` ESLint is green. Standard **gantry** featur
 
 Do **not** concatenate `tsc` and `eslint` in one `gate_command`. Routing is never inferred from the command string; one mission has one adapter. `npm run lint` stays the human-readable formatter and is **not** adapter input.
 
+Before pinning a `tsc` or `eslint` mission, run `gantry doctor` (and `gantry doctor --adapter-baseline` for pre-existing debt). Preflight checks `npx` plus local `typescript`/`eslint` packages, `tsconfig.json` parseability, ESLint config, and that `lint:json` / the mission `gate_command` emit `eslint --format json`. Selection uses declared `gate_adapter` (or `--gate-adapter`); doctor never sniffs `gate_command`.
+
 PR CI remains **changed-file** ESLint (`scripts/check-changed-code.sh`). Whole-tree `lint:json` is a **mission** gate, not a validate/CI change. Jest/Vitest adapters require an ADR-0041 amendment before any CLI parser.
 
 External IDE skill packs are **edge-only** (local, gitignored). They must not be wired into `.gitagent/` or shipped integration templates. Optional `[SKILL-EXEC]` lines in `EXECUTOR_LOG.md` are human triage context only — not verify evidence. See [`AGENTS.md`](../AGENTS.md) and [`.gitagent/planner/RUNTIME.md`](../.gitagent/planner/RUNTIME.md).

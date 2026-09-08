@@ -850,3 +850,7 @@ DoD 1 MSN-0192 re-attest v2: eslint adapter dogfood still holds after MSN-0191 t
 DoD 1 MSN-0193: split registerCoreCommands/registerWorkflowCommands/registerMissionCommands into local helpers under 80 lines (no new modules); npm run lint:json added; whole-tree eslint src/cli/**/*.ts green; npm test 636 pass; DEVELOPMENT.md feature-mission adapter recipes (one adapter per mission, no tsc+eslint concat); CI stays changed-file lint
 DoD 1 MSN-0193 re-attest: whole-tree lint:json still green after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/
 DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/0192 dogfood fixtures under src/cli/tests/fixtures/
+
+## MSN-0196 — gantry doctor adapter preflight
+[CONTEXT-REQUEST] path=docs/DEVELOPMENT.md,docs/FEATURES.md reason=Document gantry doctor tsc/eslint adapter preflight before pinning typed-adapter missions proposed=docs/DEVELOPMENT.md,docs/FEATURES.md
+DoD 1 MSN-0196: gantry doctor preflights declared tsc/eslint adapters (npx, repo packages, tsconfig parse, eslint config, lint:json --format json); --gate-adapter force; --adapter-baseline warn-only; skip when no typed missions; DEVELOPMENT + FEATURES; npm test 681 pass

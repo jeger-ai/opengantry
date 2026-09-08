@@ -168,15 +168,25 @@ function registerDoctorInitUpgradeCommands(program: Command): void {
     .option("--json", "Emit structured report")
     .option("--policy <file>", "Compare working-tree digests to expected-digests JSON (offline)")
     .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
+    .option("--gate-adapter <id>", "Force tsc|eslint adapter preflight")
+    .option("--adapter-baseline", "Run whole-project tsc/eslint baseline (slow, warn-only)")
     .action(
       (
         policyPositional: string | undefined,
-        opts: { json?: boolean; audience?: string; policy?: string },
+        opts: {
+          json?: boolean;
+          audience?: string;
+          policy?: string;
+          gateAdapter?: string;
+          adapterBaseline?: boolean;
+        },
       ) => {
         runDoctor({
           json: opts.json,
           audience: getOutputAudience(),
           policy: opts.policy ?? policyPositional,
+          gateAdapter: opts.gateAdapter,
+          adapterBaseline: opts.adapterBaseline,
         });
       },
     );
