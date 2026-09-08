@@ -6,8 +6,8 @@ gate_command: npm run lint:json
 gate_adapter: eslint
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0193 re-attest: whole-tree lint:json still green after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/"
-    anchor: "837"
+    trace_quote: "DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/0192 dogfood fixtures under src/cli/tests/fixtures/"
+    anchor: "852"
     status: PASS
 interrogation:
   - finding_id: 2121e0ae69d9
