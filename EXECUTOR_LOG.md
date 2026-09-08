@@ -823,3 +823,8 @@ DoD 1 MSN-0189: gate_adapter enum (generic|eslint|tsc) added to MISSION.schema.y
 
 ## MSN-0190 — gate_adapter gantry CLI implementation
 DoD 1 MSN-0190: GateAdapterId type and GateSpec.adapter parsed from gate_adapter (default generic); spawn-stream-core with bounded 20MiB stdout capture + stdoutTruncated flag; ESLint JSON adapter and tsc diagnostics adapter emitting envelope v3 findings with offending_file, line, columns, rule_id, evidence; exhaustive adapter registry wired into evaluateGatePhase; readEvidenceSnippet moved to verify-evidence-snippet.ts; --gate-adapter flag on legislate/start plus MCP draft/execute/start_orchestration plumbing through the signed draft token; madge: no cycles in gate-adapters (17 pre-existing engine cycles unchanged); lint clean; npm test 636 pass
+
+## MSN-0192 — live eslint adapter dogfood
+[CONTEXT-REQUEST] path=.gitagent/missions/MSN-0192.dogfood-eslint-json-adapter-live-msn-0192-after-.yaml reason=Narrow gate to dummy fixture (whole-tree eslint not green: grandfathered max-lines on program-*.ts); update trace_rows after live gate proposed=mission yaml
+Live context-feed v3 finding: offending_file=src/cli/tests/fixtures/dogfood-eslint-adapter.ts line=3 start_column=7 end_column=19 rule_id=@typescript-eslint/no-unused-vars evidence=dogfoodBreak = 1; feed schema 2 omitted gate streams. Surgical fix applied at that span only (identifier prefixed to match ^_).
+DoD 1 MSN-0192: live eslint adapter dogfood — committed unused-var dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-eslint-adapter.ts line=3 start_column=7 rule_id=@typescript-eslint/no-unused-vars; context-feed omitted gate streams; executor repaired from those coordinates only
