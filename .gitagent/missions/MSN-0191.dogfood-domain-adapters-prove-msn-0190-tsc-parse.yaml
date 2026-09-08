@@ -1,0 +1,91 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Dogfood Domain Adapters: prove MSN-0190 tsc parser works in the wild before ESLint (MSN-0192) or Jest/Vitest. Commit an isolated dummy under src/cli/tests/fixtures/dogfood-gate-adapter.ts containing a single TS2322 to the mission branch, then run gantry verify with explicit gate_adapter: tsc and gate_command npx tsc --noEmit --pretty false (whole-project tsconfig, no success substring). Precheck: src tree must be tsc-green on HEAD before the dummy exists. Dummy must not be named *.test.ts so node --test cannot emit a second failure. Cursor executor simulates iii worker by ingesting gantry context-feed --json v3 findings only. Success: surgical fix from those coordinates and a subsequent verify PASS. Hard stop: if the adapter fails to extract precise file/line/column, halt and repair the parser. Out of scope: live iii bus, ESLint this mission, Jest/Vitest.
+msn_id: MSN-0191
+skill_key: gantry
+gate_command: npx tsc --noEmit --pretty false
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_adapter: tsc
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability — ADR-0037 governs the control-plane
+      ingest envelope and receipt v0.2.0; this mission dogfoods gate_adapter tsc
+      findings into context-feed and does not change receipts, envelopes, or CI
+      ingestion.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 3b0f840552ac
+    kind: adr_conflict
+    question: Intent may relate to ADR-0033. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0033 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0033 zero-heuristics mandate; reject applicability
+      of discovery/blueprint/perimeter domain-adapter work. This mission is
+      verify-loop dogfood with explicit gate_adapter: tsc (ADR-0041). Routing is
+      never inferred from the command string."
+    adr_refs:
+      - ADR-0033
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0027. Implement the plan as specified: live tsc
+      dogfood uses gantry verify --json and context-feed --json. No SARIF/JUnit
+      export builders; findings remain on the existing VerifyResultPayload."
+    adr_refs:
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: gantry. TMVC: isolated dummy under src/cli/tests/ plus
+      EXECUTOR_LOG.md. The mission architecture correctly isolates the
+      verification contract. Simulating the iii worker consumption loop through
+      Cursor reading the JSON context feed validates the v3 envelope without
+      cross repository integration overhead. Commit the dummy file containing
+      the TS2322 violation to the mission branch before initiating the
+      verification gate. If the adapter fails to extract precise file, line, and
+      column coordinates, halt execution to repair the parser instead of
+      allowing the executor to scrape unstructured output."
+    adr_refs:
+      - ADR-0041
+  - finding_id: d6fd818a2c18
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "npx tsc --noEmit --pretty false" with
+      documented success substring for verify.
+    operator_answer: Authorize gate_command npx tsc --noEmit --pretty false.
+      Whole-project tsc is intentional. Success is exit code 0 only — no
+      gate_success_substring because tsc is silent on success. Do not use npm
+      test or npm run lint; they do not emit the tsc adapter contract.
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0041. Implement the plan as specified: explicit
+      gate_adapter: tsc, no command sniffing, live compiler output, context-feed
+      v3 findings with file/line/column. Hard stop if the adapter fails to
+      extract precise coordinates; do not scrape unstructured output."
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: a54eafb246f2b7e757dd4f0399dc7b158b91a84a16b399d08973bc3f763324da
+declared_paths:
+  - .gitagent/missions/MSN-0191.dogfood-domain-adapters-prove-msn-0190-tsc-parse.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/tests/fixtures/dogfood-gate-adapter.ts
