@@ -17,7 +17,6 @@ export interface CommandSpec {
   args?: string[];
   cwd: string;
   timeout: number;
-  shell?: boolean;
 }
 
 export type CommandRunner = (spec: CommandSpec) => CommandRunResult;
@@ -53,18 +52,11 @@ export type NpmScriptResolution =
 export type TsconfigCheck = { ok: true } | { ok: false; reason: string };
 
 export function defaultCommandRunner(spec: CommandSpec): CommandRunResult {
-  const r = spec.shell
-    ? spawnSync(spec.command, {
-        encoding: "utf8",
-        cwd: spec.cwd,
-        timeout: spec.timeout,
-        shell: true,
-      })
-    : spawnSync(spec.command, spec.args ?? [], {
-        encoding: "utf8",
-        cwd: spec.cwd,
-        timeout: spec.timeout,
-      });
+  const r = spawnSync(spec.command, spec.args ?? [], {
+    encoding: "utf8",
+    cwd: spec.cwd,
+    timeout: spec.timeout,
+  });
   return { status: r.status, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
 }
 
@@ -118,9 +110,35 @@ export function findEslintConfig(root: string): EslintConfigKind {
 }
 
 export function resolveNpmScript(command: string, scripts: Record<string, string>): NpmScriptResolution {
-  const match = /^npm run (\S+)/.exec(command.trim());
-  if (match) return { kind: "script", name: match[1]!, body: scripts[match[1]!] };
-  return { kind: "direct", command };
+  const trimmed = command.trim();
+  const match = /^npm run (\S+)(.*)$/.exec(trimmed);
+  if (!match) return { kind: "direct", command };
+  const name = match[1]!;
+  const rest = match[2] ?? "";
+  const forwarded = rest.replace(/^\s*--\s*/, " ").trim();
+  const body = scripts[name];
+  if (body === undefined) return { kind: "script", name, body: undefined };
+  return { kind: "script", name, body: forwarded.length > 0 ? `${body} ${forwarded}` : body };
+}
+
+const BASELINE_BINS = new Set(["npm", "npx", "node"]);
+
+/** Split a gate command into argv. Null when the binary is not npm/npx/node. */
+export function argvForGateCommand(command: string): { command: string; args: string[] } | null {
+  const parts = command.trim().split(/\s+/).filter((p) => p.length > 0);
+  const bin = parts[0];
+  if (bin === undefined || !BASELINE_BINS.has(bin)) return null;
+  return { command: bin, args: parts.slice(1) };
+}
+
+export function eslintGateUsesNpx(commands: string[], scripts: Record<string, string>): boolean {
+  for (const command of commands) {
+    if (/^\s*npx\b/.test(command)) return true;
+    const resolved = resolveNpmScript(command, scripts);
+    const effective = resolved.kind === "script" ? (resolved.body ?? "") : resolved.command;
+    if (/^\s*npx\b/.test(effective)) return true;
+  }
+  return false;
 }
 
 export function hasEslintJsonFormat(cmd: string): boolean {
@@ -166,7 +184,16 @@ export function runEslintBaseline(
   gateCommand: string,
   runCommand: CommandRunner,
 ): DoctorLine[] {
-  const run = runCommand({ command: gateCommand, cwd: root, timeout: 120_000, shell: true });
+  const argv = argvForGateCommand(gateCommand);
+  if (argv === null) {
+    return [
+      {
+        level: "warn",
+        message: "baseline eslint skipped: gate_command is not a direct npm/npx/node invocation",
+      },
+    ];
+  }
+  const run = runCommand({ command: argv.command, args: argv.args, cwd: root, timeout: 120_000 });
   const parsed = parseEslintJsonOutput(run.stdout);
   if (!parsed.ok) {
     return [{ level: "warn", message: `baseline eslint: unparseable output (${parsed.reason})` }];

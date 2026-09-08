@@ -72,6 +72,11 @@ test("resolveNpmScript and hasEslintJsonFormat", () => {
     name: "lint:json",
     body: "eslint --format json src",
   });
+  assert.deepEqual(resolveNpmScript("npm run lint -- --format json", scripts), {
+    kind: "script",
+    name: "lint",
+    body: "eslint src --format json",
+  });
   assert.deepEqual(resolveNpmScript("npm run missing", scripts), {
     kind: "script",
     name: "missing",
@@ -147,6 +152,33 @@ test("eslint mission script without --format json fails", () => {
   assert.equal(hasLine(r.lines, "fail", "must run eslint --format json"), true);
 });
 
+test("eslint npm run lint -- --format json concatenates onto script body", () => {
+  const { dest, ogRoot } = miniRepo();
+  writeAdapterMission(dest, "eslint", "npm run lint -- --format json");
+  linkPackage(dest, ogRoot, "eslint");
+  writeJson(dest, "package.json", { scripts: { lint: "eslint src", "lint:json": "eslint --format json src" } });
+  fs.writeFileSync(path.join(dest, "eslint.config.js"), "export default [];\n", "utf8");
+  const r = runAdapterPreflightDoctorChecks(dest);
+  assert.equal(r.lines.some((l) => l.level === "fail" && l.message.includes("must run eslint --format json")), false);
+  assert.equal(r.lines.some((l) => l.level === "fail"), false);
+});
+
+test("eslint npx gate_command fails when npx is missing", () => {
+  const { dest, ogRoot } = miniRepo();
+  writeAdapterMission(dest, "eslint", "npx eslint --format json src");
+  linkPackage(dest, ogRoot, "eslint");
+  writeJson(dest, "package.json", { scripts: { "lint:json": "eslint --format json src" } });
+  fs.writeFileSync(path.join(dest, "eslint.config.js"), "export default [];\n", "utf8");
+  const runCommand: CommandRunner = (spec) => {
+    if (spec.command === "npx" && spec.args?.[0] === "--version") {
+      return { status: 1, stdout: "", stderr: "npx: not found" };
+    }
+    return { status: 0, stdout: "10.0.0\n", stderr: "" };
+  };
+  const r = runAdapterPreflightDoctorChecks(dest, { runCommand });
+  assert.equal(hasLine(r.lines, "fail", "npx not available on PATH"), true);
+});
+
 test("eslint mission with lint:json and flat config is ok", () => {
   const { dest, ogRoot } = miniRepo();
   writeAdapterMission(dest, "eslint", "npm run lint:json");
@@ -211,6 +243,17 @@ test("baseline tsc warns with injected runner and keeps no fail", () => {
   assert.equal(r.lines.some((l) => l.level === "fail"), false);
 });
 
+test("baseline eslint skips non-npm/npx/node gate_command without shell", () => {
+  const { dest, ogRoot } = miniRepo();
+  writeAdapterMission(dest, "eslint", "eslint --format json src");
+  linkPackage(dest, ogRoot, "eslint");
+  writeJson(dest, "package.json", { scripts: { "lint:json": "eslint --format json src" } });
+  fs.writeFileSync(path.join(dest, "eslint.config.js"), "export default [];\n", "utf8");
+  const r = runAdapterPreflightDoctorChecks(dest, { baseline: true });
+  assert.equal(hasLine(r.lines, "warn", "baseline eslint skipped"), true);
+  assert.equal(r.lines.some((l) => l.level === "fail"), false);
+});
+
 test("baseline eslint warns from canned json and stays warn-only", () => {
   const { dest, ogRoot } = miniRepo();
   writeAdapterMission(dest, "eslint", "npm run lint:json");
@@ -218,7 +261,7 @@ test("baseline eslint warns from canned json and stays warn-only", () => {
   writeJson(dest, "package.json", { scripts: { "lint:json": "eslint --format json src" } });
   fs.writeFileSync(path.join(dest, "eslint.config.js"), "export default [];\n", "utf8");
   const runCommand: CommandRunner = (spec) => {
-    if (spec.shell === true) {
+    if (spec.command === "npm" && spec.args?.[0] === "run") {
       return {
         status: 1,
         stdout: JSON.stringify([

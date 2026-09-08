@@ -5,6 +5,7 @@ import {
   defaultCommandRunner,
   eslintConfigLines,
   eslintGateCommandLines,
+  eslintGateUsesNpx,
   lintJsonScriptLines,
   loadRepoTypescript,
   probeNpx,
@@ -162,6 +163,14 @@ function eslintPreflightLines(
   const config = eslintConfigLines(root);
   lines.push(...config);
   const scripts = readPackageScripts(root);
+  if (eslintGateUsesNpx(commands, scripts)) {
+    const npx = probeNpx(runCommand);
+    lines.push(
+      npx
+        ? { level: "ok", message: `npx available (${npx})` }
+        : { level: "fail", message: "npx not available on PATH" },
+    );
+  }
   const lintJson = lintJsonScriptLines(scripts);
   lines.push(...lintJson);
   if (lintJson.some((l) => l.level === "warn")) {
