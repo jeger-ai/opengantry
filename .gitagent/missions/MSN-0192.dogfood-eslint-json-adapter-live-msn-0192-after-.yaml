@@ -27,10 +27,14 @@ interrogation:
     question: Gate command is not on the skill allowlist. Authorize this gate and
       its success criteria on the record.
     hypothesis: Planner accepts gate_command "npx eslint --format json
-      "src/cli/**/*.ts"" with documented success substring for verify.
+      src/cli/tests/fixtures/dogfood-eslint-adapter.ts" with documented success
+      criteria for verify.
     operator_answer: Authorize gate_command npx eslint --format json
-      src/cli/**/*.ts. npm run lint is not --format json so it cannot exercise
-      the adapter. Success is exit code 0 only; no gate_success_substring.
+      src/cli/tests/fixtures/dogfood-eslint-adapter.ts. npm run lint is not
+      --format json so it cannot exercise the adapter. Success is exit code 0
+      only; no gate_success_substring. Whole-tree src/cli/**/*.ts was the
+      original proposal; the live gate was narrowed to this fixture so the
+      adapter saw a single finding (registrar max-lines debt).
   - finding_id: 9ecdd9a8e878
     kind: adr_conflict
     question: Intent may relate to ADR-0027. Accept ADR decision, reject
@@ -66,7 +70,7 @@ interrogation:
       unstructured output."
     adr_refs:
       - ADR-0041
-interrogation_sha256: b05b962443cb3afadcef4e560bf968d0dd842389f374da2014e4b262e60c820d
+interrogation_sha256: ba122085879ea7ab259c73b4fe5e96465a2089cf144c106d425449108f46355d
 declared_paths:
   - .gitagent/missions/MSN-0192.dogfood-eslint-json-adapter-live-msn-0192-after-.yaml
   - EXECUTOR_LOG.md
