@@ -59,6 +59,40 @@ function attachRuntimeExec(cmd: Command): void {
     );
 }
 
+function attachContextRequest(program: Command): void {
+  program
+    .command("context-request")
+    .description("Append a PENDING Context Request to EXECUTOR_LOG.md (RULES §4 TMVC expansion)")
+    .requiredOption("--reason <text>", "Why access outside TMVC is needed")
+    .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
+    .option("--path <paths...>", "Repo-relative path(s) requiring expansion")
+    .option("--proposed <files...>", "Proposed file(s) to touch after approval")
+    .option("--stage-worker-log", "Stage EXECUTOR_LOG.md after append (opt-in)")
+    .option("--executor-log <path>", "Override EXECUTOR_LOG.md path")
+    .option("--json", "Emit result as JSON on stdout")
+    .action(
+      (opts: {
+        reason: string;
+        mission?: string;
+        path?: string[];
+        proposed?: string[];
+        stageWorkerLog?: boolean;
+        executorLog?: string;
+        json?: boolean;
+      }) => {
+        runContextRequest({
+          mission: opts.mission,
+          paths: opts.path ?? [],
+          reason: opts.reason,
+          proposed: opts.proposed,
+          stageExecutorLog: opts.stageWorkerLog,
+          executorLog: opts.executorLog,
+          json: opts.json,
+        });
+      },
+    );
+}
+
 export function registerMissionCommands(program: Command): void {
   const mission = program.command("mission").description("Mission validation + integrity snapshot");
 
@@ -99,38 +133,7 @@ export function registerMissionCommands(program: Command): void {
     });
 
   attachRuntimeExec(runtime);
-
-  program
-    .command("context-request")
-    .description("Append a PENDING Context Request to EXECUTOR_LOG.md (RULES §4 TMVC expansion)")
-    .requiredOption("--reason <text>", "Why access outside TMVC is needed")
-    .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
-    .option("--path <paths...>", "Repo-relative path(s) requiring expansion")
-    .option("--proposed <files...>", "Proposed file(s) to touch after approval")
-    .option("--stage-worker-log", "Stage EXECUTOR_LOG.md after append (opt-in)")
-    .option("--executor-log <path>", "Override EXECUTOR_LOG.md path")
-    .option("--json", "Emit result as JSON on stdout")
-    .action(
-      (opts: {
-        reason: string;
-        mission?: string;
-        path?: string[];
-        proposed?: string[];
-        stageWorkerLog?: boolean;
-        executorLog?: string;
-        json?: boolean;
-      }) => {
-        runContextRequest({
-          mission: opts.mission,
-          paths: opts.path ?? [],
-          reason: opts.reason,
-          proposed: opts.proposed,
-          stageExecutorLog: opts.stageWorkerLog,
-          executorLog: opts.executorLog,
-          json: opts.json,
-        });
-      },
-    );
+  attachContextRequest(program);
 
   const tmvc = program.command("tmvc").description("TMVC boundary checks (staged index)");
 

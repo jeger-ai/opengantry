@@ -26,6 +26,7 @@
     "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc",
     "gapman": "node dist/cli/index.js",
     "lint": "eslint src/cli/**/*.ts",
+    "lint:json": "eslint --format json src/cli/**/*.ts",
     "check:changed": "./scripts/check-changed-code.sh",
     "validate": "./scripts/dev-validate.sh",
     "prepublishOnly": "npm run build && npm test",
