@@ -1,0 +1,73 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Dogfood ESLint JSON adapter live (MSN-0192) after MSN-0191 tsc dogfood PASSed. Intentionally introduce an isolated ESLint error in src/cli/tests/fixtures/dogfood-eslint-adapter.ts (not *.test.ts). Legislate with explicit gate_adapter: eslint and gate_command that emits eslint --format json over src/cli TypeScript. Precheck lint-green on HEAD; commit the dummy on the mission branch before gantry verify. Cursor executor ingests context-feed --json v3 findings (offending_file, line, columns, rule_id) and applies a surgical fix. Hard stop if coordinates are missing. Out of scope: Jest/Vitest, live iii bus, tsc adapter changes.
+msn_id: MSN-0192
+skill_key: gantry
+gate_command: npx eslint --format json "src/cli/**/*.ts"
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_adapter: eslint
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability — ADR-0037 governs the control-plane
+      ingest envelope and receipt v0.2.0; this mission dogfoods gate_adapter
+      eslint findings into context-feed and does not change receipts, envelopes,
+      or CI ingestion.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 558469c1e536
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "npx eslint --format json
+      "src/cli/**/*.ts"" with documented success substring for verify.
+    operator_answer: Authorize gate_command npx eslint --format json
+      src/cli/**/*.ts. npm run lint is not --format json so it cannot exercise
+      the adapter. Success is exit code 0 only; no gate_success_substring.
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0027. No export format changes; ESLint adapter
+      findings flow through the existing VerifyResultPayload so SARIF picks up
+      rule_id per ADR-0040 with no new builder code.
+    adr_refs:
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: gantry. TMVC: isolated dummy under
+      src/cli/tests/fixtures/ plus EXECUTOR_LOG.md. Implement the plan as
+      specified: tsc in MSN-0191 then ESLint as MSN-0192. Adapter modules
+      read-only unless the live loop proves the envelope is flawed."
+    adr_refs:
+      - ADR-0041
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0041. Explicit gate_adapter: eslint only, no
+      command sniffing. Gate must emit eslint --format json. Hard stop if the
+      adapter fails to extract precise file/line/column; do not scrape
+      unstructured output."
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: b05b962443cb3afadcef4e560bf968d0dd842389f374da2014e4b262e60c820d
+declared_paths:
+  - .gitagent/missions/MSN-0192.dogfood-eslint-json-adapter-live-msn-0192-after-.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/tests/fixtures/dogfood-eslint-adapter.ts
