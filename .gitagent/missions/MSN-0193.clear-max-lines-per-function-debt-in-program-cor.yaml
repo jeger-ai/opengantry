@@ -75,7 +75,9 @@ interrogation:
       - ADR-0041
 interrogation_sha256: ca6c406a38f2a4e667c0accd8a0eda738311f97ce51ce3e407f2e9ab4e4db5db
 declared_paths:
+  - .gitagent/missions/MSN-0193.clear-max-lines-per-function-debt-in-program-cor.yaml
   - docs/DEVELOPMENT.md
+  - EXECUTOR_LOG.md
   - package.json
   - src/cli/program-core.ts
   - src/cli/program-mission.ts
