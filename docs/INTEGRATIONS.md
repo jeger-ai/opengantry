@@ -34,6 +34,7 @@ On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented
 | `gxt_start_orchestration` | Goal-first flow: triage → legislate stub → optional pin/runtime env |
 | `gxt_runtime_env` / `gxt_runtime_exec` | Executor bootstrap + process-boundary enforcement |
 | `gxt_verify` | Structured verify phases with `fix_hints` on failure |
+| `gxt_doctor` | Read-only environment readiness + tsc/eslint adapter preflight (ADR-0041; never sniffs `gate_command`) |
 | `gxt_resolve_mission` / `gxt_last_error` | Mission resolution + last runtime exec error |
 
 ## Kernel library (v3.2.2+)

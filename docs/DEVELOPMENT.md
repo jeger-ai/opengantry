@@ -88,9 +88,10 @@ Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 
 **Cursor MCP (preferred):**
 
-1. Agent: `gxt_interrogate` (answer findings) → `gxt_draft_legislation` with complete `interrogation[]` → human approves → `gxt_execute_legislation`.
-2. Planner: run returned `suggested_human_action` (`git commit …`).
-3. Agent: `gxt_check_signature` → `gxt_pin_mission` → executor edits → `gxt_verify`.
+1. For `gate_adapter: tsc|eslint` missions, Agent: `gxt_doctor` (optional `gate_adapter`, `adapter_baseline`) before legislation.
+2. Agent: `gxt_interrogate` (answer findings) → `gxt_draft_legislation` with complete `interrogation[]` → human approves → `gxt_execute_legislation`.
+3. Planner: run returned `suggested_human_action` (`git commit …`).
+4. Agent: `gxt_check_signature` → `gxt_pin_mission` → executor edits → `gxt_verify`.
 
 **CLI fallback:**
 
@@ -170,7 +171,7 @@ After MSN-0193, whole-tree `src/cli` ESLint is green. Standard **gantry** featur
 
 Do **not** concatenate `tsc` and `eslint` in one `gate_command`. Routing is never inferred from the command string; one mission has one adapter. `npm run lint` stays the human-readable formatter and is **not** adapter input.
 
-Before pinning a `tsc` or `eslint` mission, run `gantry doctor` (and `gantry doctor --adapter-baseline` for pre-existing debt). Preflight checks `npx` plus local `typescript`/`eslint` packages, `tsconfig.json` parseability, ESLint config, and that `lint:json` / the mission `gate_command` emit `eslint --format json`. Selection uses declared `gate_adapter` (or `--gate-adapter`); doctor never sniffs `gate_command`.
+Before pinning a `tsc` or `eslint` mission, run `gantry doctor` or MCP `gxt_doctor` (`gate_adapter`, `adapter_baseline`) (and `gantry doctor --adapter-baseline` / `adapter_baseline: true` for pre-existing debt). Preflight checks `npx` plus local `typescript`/`eslint` packages, `tsconfig.json` parseability, ESLint config, and that `lint:json` / the mission `gate_command` emit `eslint --format json`. Selection uses declared `gate_adapter` (or `--gate-adapter` / the MCP `gate_adapter` arg); doctor never sniffs `gate_command`.
 
 PR CI remains **changed-file** ESLint (`scripts/check-changed-code.sh`). Whole-tree `lint:json` is a **mission** gate, not a validate/CI change. Jest/Vitest adapters require an ADR-0041 amendment before any CLI parser.
 

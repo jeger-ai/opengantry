@@ -15,6 +15,7 @@ import {
   handleScan,
   handleVerify,
 } from "./mcp-runtime.js";
+import { handleDoctor } from "./mcp-doctor.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 
@@ -31,7 +32,14 @@ const gateAdapterSchema = z
   .enum(["generic", "eslint", "tsc"])
   .optional()
   .describe(
-    "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc",
+    "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc. Run gxt_doctor first for tsc|eslint.",
+  );
+
+const typedDoctorAdapterSchema = z
+  .enum(["tsc", "eslint"])
+  .optional()
+  .describe(
+    "Force tsc or eslint adapter preflight even when no typed missions are declared (ADR-0041). Never sniffs gate_command.",
   );
 
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
@@ -97,6 +105,22 @@ function registerLegislationTools(server: McpServer): void {
       mission_file_path: z.string().describe("Repo-relative mission YAML path"),
     },
     async (args) => jsonText(handlePinMission(args.mission_file_path)),
+  );
+}
+
+function registerDoctorTool(server: McpServer): void {
+  server.tool(
+    "gxt_doctor",
+    "Environment readiness for GXT + explicit gate adapters (ADR-0041). Run before legislating/pinning a `gate_adapter: tsc|eslint` mission. Selection uses declared gate_adapter or explicit override; never sniffs gate_command. Read-only.",
+    {
+      gate_adapter: typedDoctorAdapterSchema,
+      adapter_baseline: z
+        .boolean()
+        .optional()
+        .describe("Opt-in: spawn tsc/eslint for pre-existing debt warnings. Default off."),
+      policy_path: z.string().optional().describe("Optional expected policy digest JSON path (gantry doctor --policy)."),
+    },
+    async (args) => jsonText(handleDoctor(args)),
   );
 }
 
@@ -194,6 +218,8 @@ function registerRuntimeTools(server: McpServer): void {
     },
     async (args) => jsonText(handleResolveMission(args.mission_file_path)),
   );
+
+  registerDoctorTool(server);
 
   server.tool(
     "gxt_last_error",

@@ -28,7 +28,7 @@ OpenGantry enforces your project's `TARGET_ARCHITECTURE.yaml`. It acts as a stri
 
 ## Static Analysis
 
-Mission `gate_command` hooks seamlessly wire into your existing linters and type checkers to enforce standard code hygiene automatically. For tool-native `findings[]` (file, line, `rule_id`), set `gate_adapter: eslint` with `npm run lint:json` (`eslint --format json`) or `gate_adapter: tsc` with `npx tsc --noEmit --pretty false`. One adapter per mission — do not concatenate tools in `gate_command` (ADR-0041). `gantry doctor` preflights typed adapters (binaries, config, `lint:json`) before a verification gate spawns; `gantry doctor --adapter-baseline` warns about pre-existing `tsc`/`eslint` debt.
+Mission `gate_command` hooks seamlessly wire into your existing linters and type checkers to enforce standard code hygiene automatically. For tool-native `findings[]` (file, line, `rule_id`), set `gate_adapter: eslint` with `npm run lint:json` (`eslint --format json`) or `gate_adapter: tsc` with `npx tsc --noEmit --pretty false`. One adapter per mission — do not concatenate tools in `gate_command` (ADR-0041). `gantry doctor` and MCP `gxt_doctor` preflight typed adapters (binaries, config, `lint:json`) before a verification gate spawns; `gantry doctor --adapter-baseline` / `gxt_doctor` `adapter_baseline` warn about pre-existing `tsc`/`eslint` debt.
 
 **When to use:** Before merge, in CI, and on autonomous retry edges.
 
