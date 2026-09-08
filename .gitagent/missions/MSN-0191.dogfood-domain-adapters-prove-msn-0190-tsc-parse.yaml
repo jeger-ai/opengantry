@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npx tsc --noEmit --pretty false
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0191 re-attest: tsc adapter dogfood still holds after MSN-0192 fixture under src/cli/tests/fixtures/; npx tsc --noEmit --pretty false green"
-    anchor: "836"
+    trace_quote: "DoD 1 MSN-0191 re-attest v3: sentinel unused binding renamed to _n so changed-code eslint PASSes; tsc still green"
+    anchor: "837"
     status: PASS
 gate_adapter: tsc
 interrogation:
