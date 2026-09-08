@@ -45,12 +45,18 @@ jobs:
           GANTRY_ORG_PEPPER: ${{ secrets.GANTRY_ORG_PEPPER }}
           GANTRY_ORG_PEPPER_VERSION: ${{ vars.GANTRY_ORG_PEPPER_VERSION || '1' }}
         run: |
+          extra=()
+          if [ -n "${GANTRY_ORG_ID}" ] && [ -n "${GANTRY_ORG_PEPPER}" ]; then
+            extra+=(--export envelope.json)
+          else
+            echo "Skipping envelope export: GANTRY_ORG_ID or GANTRY_ORG_PEPPER not configured"
+          fi
           node dist/cli/index.js verify \
             --mission "${{ steps.mission.outputs.path }}" \
             --audience verifier \
             --ci \
             --base-ref "${{ github.event.pull_request.base.sha }}" \
-            --export envelope.json
+            "${extra[@]}"
 
       - name: Ingest to control plane
         if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != ''
@@ -58,6 +64,10 @@ jobs:
           PLANE_INGEST_URL: ${{ vars.PLANE_INGEST_URL }}
           PLANE_INGEST_TOKEN: ${{ secrets.PLANE_INGEST_TOKEN }}
         run: |
+          if [ -z "${PLANE_INGEST_URL}" ] || [ -z "${PLANE_INGEST_TOKEN}" ]; then
+            echo "Skipping plane ingest: PLANE_INGEST_URL or PLANE_INGEST_TOKEN not configured"
+            exit 0
+          fi
           code="$(curl -sS -o response.json -w '%{http_code}' \
             -X POST "$PLANE_INGEST_URL/api/v1/attestations/ingest" \
             -H "Authorization: Bearer $PLANE_INGEST_TOKEN" \
