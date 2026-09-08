@@ -1,0 +1,53 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Adapter hardening before v3.3.0: tsc/eslint parser self-diagnostics, fail-closed compound-command guard, lint:json docs
+msn_id: MSN-0195
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0195: adapter-parser-self-diagnostic tests for tsc/eslint raw stdout (malformed, unexpected paths, empty arrays); fail-closed GATE_ADAPTER_COMPOUND_COMMAND / GXT_GATE_ADAPTER_MISCONFIG on typed adapters with unquoted && || ; ; README YAML lint:json recipe; DEVELOPMENT fail-closed sentence; FEATURES Static Analysis adapter mention; npm test 667 pass"
+    anchor: "855"
+    status: PASS
+interrogation:
+  - finding_id: 0aab8fc3443c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Boundary is gantry CLI under src/cli/ (docs/ARCHITECTURE.md
+      layers). Docs expansion is file-exact: README.md, docs/DEVELOPMENT.md,
+      docs/FEATURES.md, EXECUTOR_LOG.md. Forbidden zones untouched
+      (.gitagent/foreman/, RULES.md)."
+    adr_refs:
+      - ADR-0041
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: gantry (Tier-2). TMVC: src/cli/ plus expansion for
+      README.md, docs/DEVELOPMENT.md, docs/FEATURES.md, EXECUTOR_LOG.md. Gate:
+      npm test. Do not edit MANIFEST.json / RULES.md."
+    adr_refs:
+      - ADR-0041
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0041. Explicit gate_adapter routing only, no command
+      sniffing. Fail-closed combinator guard is YAML-law enforcement of the
+      existing single-adapter rule, not inferred routing. Parser tests prove
+      tsc/eslint fail safely. No ADR amendment.
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: 2799799997e6e41f0800b52033370ae97eb27370ed8db803e480f20f7a4f50b0
+declared_paths:
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/DEVELOPMENT.md
+  - docs/FEATURES.md
+  - src/cli/

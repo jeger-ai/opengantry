@@ -850,3 +850,6 @@ DoD 1 MSN-0192 re-attest v2: eslint adapter dogfood still holds after MSN-0191 t
 DoD 1 MSN-0193: split registerCoreCommands/registerWorkflowCommands/registerMissionCommands into local helpers under 80 lines (no new modules); npm run lint:json added; whole-tree eslint src/cli/**/*.ts green; npm test 636 pass; DEVELOPMENT.md feature-mission adapter recipes (one adapter per mission, no tsc+eslint concat); CI stays changed-file lint
 DoD 1 MSN-0193 re-attest: whole-tree lint:json still green after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/
 DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/0192 dogfood fixtures under src/cli/tests/fixtures/
+
+## MSN-0195 — adapter hardening before v3.3.0
+DoD 1 MSN-0195: adapter-parser-self-diagnostic tests for tsc/eslint raw stdout (malformed, unexpected paths, empty arrays); fail-closed GATE_ADAPTER_COMPOUND_COMMAND / GXT_GATE_ADAPTER_MISCONFIG on typed adapters with unquoted && || ; ; README YAML lint:json recipe; DEVELOPMENT fail-closed sentence; FEATURES Static Analysis adapter mention; npm test 667 pass

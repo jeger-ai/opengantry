@@ -28,11 +28,11 @@ OpenGantry enforces your project's `TARGET_ARCHITECTURE.yaml`. It acts as a stri
 
 ## Static Analysis
 
-Mission `gate_command` hooks seamlessly wire into your existing linters and type checkers to enforce standard code hygiene automatically.
+Mission `gate_command` hooks seamlessly wire into your existing linters and type checkers to enforce standard code hygiene automatically. For tool-native `findings[]` (file, line, `rule_id`), set `gate_adapter: eslint` with `npm run lint:json` (`eslint --format json`) or `gate_adapter: tsc` with `npx tsc --noEmit --pretty false`. One adapter per mission — do not concatenate tools in `gate_command` (ADR-0041).
 
 **When to use:** Before merge, in CI, and on autonomous retry edges.
 
-**How:** [`ADOPTION.md`](ADOPTION.md) § Standard change graph
+**How:** [`ADOPTION.md`](ADOPTION.md) § Standard change graph · [`DEVELOPMENT.md`](DEVELOPMENT.md) § Feature-mission adapter gates
 
 ---
 

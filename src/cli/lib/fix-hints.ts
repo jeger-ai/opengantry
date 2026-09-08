@@ -44,6 +44,14 @@ export function hintMissionNoGate(missionPath: string): string {
   ].join("; ");
 }
 
+export function hintTypedAdapterCompoundCommand(): string {
+  return [
+    "typed adapters (tsc, eslint) require one process whose stdout is that tool's format",
+    "use `npx tsc --noEmit --pretty false` or `npm run lint:json`",
+    "wrap sequences in a script, or set gate_adapter: generic",
+  ].join("; ");
+}
+
 export function hintGitProof(code: string, ctx: GitProofHintContext): string {
   const mission = ctx.missionPath ?? "<mission>";
   const verifyCmd = `gantry verify --mission ${mission}`;

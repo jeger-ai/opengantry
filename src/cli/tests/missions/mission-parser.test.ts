@@ -4,7 +4,12 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "../../lib/git.js";
-import { isMarkdownTableSeparatorRow, parseMarkdownMission, parseMissionFile } from "../../lib/missions/parser.js";
+import {
+  assertMissionGatePresent,
+  isMarkdownTableSeparatorRow,
+  parseMarkdownMission,
+  parseMissionFile,
+} from "../../lib/missions/parser.js";
 import { extractMsnIdFromMissionPath } from "../../lib/missions/parser.js";
 
 test("parseMarkdownMission: Success alias maps substring", () => {
@@ -77,7 +82,10 @@ trace_rows: []
   assert.equal(parsed.msnId, "MSN-0555");
 });
 
-function writeGateAdapterFixture(adapterLine: string): string {
+function writeGateAdapterFixture(
+  adapterLine: string,
+  gateCommand = "npx tsc --pretty false",
+): string {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gate-adapter-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
@@ -88,7 +96,7 @@ function writeGateAdapterFixture(adapterLine: string): string {
   );
   fs.writeFileSync(
     path.join(dest, ".gitagent", "missions", "ga.yaml"),
-    `msn_id: MSN-0556\nskill_key: ui\ngate_command: "npx tsc --pretty false"\n${adapterLine}trace_rows: []\n`,
+    `msn_id: MSN-0556\nskill_key: ui\ngate_command: ${JSON.stringify(gateCommand)}\n${adapterLine}trace_rows: []\n`,
     "utf8",
   );
   return dest;
@@ -109,5 +117,23 @@ test("parseMissionFile: gate_adapter defaults to generic when omitted", () => {
 test("parseMissionFile: unknown gate_adapter rejected by schema", () => {
   const dest = writeGateAdapterFixture("gate_adapter: jest\n");
   assert.throws(() => parseMissionFile(dest, ".gitagent/missions/ga.yaml"), /gate_adapter|enum|schema/i);
+});
+
+test("assertMissionGatePresent: tsc + && fails closed before spawn", () => {
+  const dest = writeGateAdapterFixture("gate_adapter: tsc\n", "npx tsc --noEmit && npm run lint:json");
+  const parsed = parseMissionFile(dest, ".gitagent/missions/ga.yaml");
+  assert.throws(() => assertMissionGatePresent(parsed), /GATE_ADAPTER_COMPOUND_COMMAND/);
+});
+
+test("assertMissionGatePresent: generic + && is allowed", () => {
+  const dest = writeGateAdapterFixture("", "npm run build && npm test");
+  const parsed = parseMissionFile(dest, ".gitagent/missions/ga.yaml");
+  assert.doesNotThrow(() => assertMissionGatePresent(parsed));
+});
+
+test("assertMissionGatePresent: eslint piped json is allowed", () => {
+  const dest = writeGateAdapterFixture("gate_adapter: eslint\n", "eslint --format json | tee out.json");
+  const parsed = parseMissionFile(dest, ".gitagent/missions/ga.yaml");
+  assert.doesNotThrow(() => assertMissionGatePresent(parsed));
 });
 

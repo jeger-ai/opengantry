@@ -6,6 +6,7 @@ import { readEnvWithLegacy } from "../config-namespace.js";
 import { formatRepoRelative } from "../cli-io.js";
 import { GantryUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
+import { assertTypedAdapterSingleCommand } from "./adapter-command-guard.js";
 import { normalizeTraceStatus } from "../trace.js";
 import {
   INTERROGATION_FINDING_KINDS,
@@ -309,6 +310,7 @@ export function assertMissionGatePresent(mission: ParsedMission): void {
       hintMissionNoGate(mission.rawPath),
     );
   }
+  assertTypedAdapterSingleCommand(mission.gate.adapter, mission.gate.command);
 }
 
 export type MissionResolutionProfile = "full" | "status" | "upgrade_apply";

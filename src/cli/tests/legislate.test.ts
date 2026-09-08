@@ -355,3 +355,38 @@ test("legislate: generic / omitted gate adapter is not written (schema default)"
   assert.ok(!legislateWithAdapter("omitted", undefined).includes("gate_adapter"));
 });
 
+test("legislate: typed adapter with compound gate_command is rejected", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-compound-"));
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
+  fs.copyFileSync(
+    path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(dest, ".gitagent", "planner", "MISSION.schema.yaml"),
+  );
+  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
+  execSync("git init", { cwd: dest, stdio: "pipe" });
+  const prevCwd = process.cwd();
+  process.chdir(dest);
+  try {
+    process.exitCode = undefined;
+    const result = runLegislate({
+      intent: "gantry lint gate with adapter",
+      msn: "MSN-0779",
+      skillKey: "gantry",
+      gateCommand: "npx tsc --noEmit && npm run lint:json",
+      gateAdapter: "tsc",
+      interrogation: echoOkInterrogation(),
+      silent: true,
+    });
+    assert.equal(result.ok, false);
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = undefined;
+  }
+});
+
