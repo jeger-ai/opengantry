@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: gantry doctor adapter preflight for tsc/eslint missions
+# Review follow-up: npm-run forwarded args, argv-only eslint baseline, npx probe for eslint gates.
 msn_id: MSN-0196
 skill_key: gantry
 gate_command: npm test
