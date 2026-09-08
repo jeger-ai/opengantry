@@ -1,0 +1,40 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry doctor adapter preflight for tsc/eslint missions
+# Review follow-up: npm-run forwarded args, argv-only eslint baseline, npx probe for eslint gates.
+msn_id: MSN-0196
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0196 re-attest: PR review — npm run lint -- forwarded args concatenated onto script body; baseline eslint argv-only (no shell); npx probed when eslint gate uses npx; npm test 651 pass"
+    anchor: "857"
+    status: PASS
+interrogation:
+  - finding_id: 0aab8fc3443c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Boundary is gantry CLI under src/cli/ (docs/ARCHITECTURE.md
+      layers). Docs expansion is file-exact: docs/DEVELOPMENT.md,
+      docs/FEATURES.md, EXECUTOR_LOG.md. Forbidden zones untouched
+      (.gitagent/foreman/, RULES.md)."
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0041. Explicit gate_adapter routing only, no command
+      sniffing. Doctor reads mission gate_adapter to decide which preflight to
+      run; never infers adapter from gate_command. No ADR amendment.
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: 2dde5adce96c7637b67c48a690456828bfa656aac16ca4245f163212f1e30085
+declared_paths:
+  - .gitagent/missions/MSN-0196.gantry-doctor-adapter-preflight-for-tsc-eslint-m.yaml
+  - EXECUTOR_LOG.md
+  - docs/DEVELOPMENT.md
+  - docs/FEATURES.md
+  - src/cli/

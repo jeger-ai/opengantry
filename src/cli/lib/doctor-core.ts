@@ -27,6 +27,10 @@ import { runTargetArchitectureDoctorChecks } from "./arch/cage/target-architectu
 import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift-doctor.js";
 import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
 import { runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
+import {
+  runAdapterPreflightDoctorChecks,
+  type AdapterPreflightOptions,
+} from "./doctor-adapter-preflight.js";
 
 function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
   const p = path.join(repoRoot, REL_BYPASS_SHA256);
@@ -195,6 +199,7 @@ export function collectDoctorReport(
   manifest: Manifest,
   templatesRoot?: string,
   policyPath?: string,
+  adapterPreflight?: AdapterPreflightOptions,
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
   let lines = [...result.lines, ...runFlightTelemetryDoctorChecks(root)];
@@ -202,6 +207,8 @@ export function collectDoctorReport(
   lines = [...lines, ...runTargetArchitectureDoctorChecks(root)];
   lines = [...lines, ...runArchitectureDriftDoctorChecks(root)];
   lines = [...lines, ...runExecutorLogIntegrityDoctorChecks(root)];
+  const preflight = runAdapterPreflightDoctorChecks(root, adapterPreflight ?? {});
+  lines = [...lines, ...preflight.lines];
   if (policyPath?.trim()) {
     try {
       lines = [...lines, ...runPolicyDigestDoctorChecks(root, policyPath.trim())];
@@ -216,6 +223,7 @@ export function collectDoctorReport(
     }
   }
   let nextStep = result.nextStep;
+  if (preflight.nextStep) nextStep = pickNextStep(nextStep, preflight.nextStep);
   try {
     const tpl = templatesRoot ?? resolveTemplateRootFromModule();
     lines = [...lines, ...runIntegrationDoctorChecks(root, tpl)];
