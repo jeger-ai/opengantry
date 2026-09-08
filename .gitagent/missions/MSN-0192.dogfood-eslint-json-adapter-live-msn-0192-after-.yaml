@@ -1,8 +1,8 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Dummy-only eslint gate: whole-tree `src/cli/**/*.ts` is not green (grandfathered max-lines-per-function on program-*.ts). Isolated fixture keeps a single failure signal.
 # Legislated intent: Dogfood ESLint JSON adapter live (MSN-0192) after MSN-0191 tsc dogfood PASSed. Intentionally introduce an isolated ESLint error in src/cli/tests/fixtures/dogfood-eslint-adapter.ts (not *.test.ts). Legislate with explicit gate_adapter: eslint and gate_command that emits eslint --format json over src/cli TypeScript. Precheck lint-green on HEAD; commit the dummy on the mission branch before gantry verify. Cursor executor ingests context-feed --json v3 findings (offending_file, line, columns, rule_id) and applies a surgical fix. Hard stop if coordinates are missing. Out of scope: Jest/Vitest, live iii bus, tsc adapter changes.
 msn_id: MSN-0192
 skill_key: gantry
-gate_command: npx eslint --format json "src/cli/**/*.ts"
+gate_command: npx eslint --format json src/cli/tests/fixtures/dogfood-eslint-adapter.ts
 trace_rows:
   - dod_id: "1"
     trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
