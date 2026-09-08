@@ -1,4 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Dummy fixture committed on this branch before the live tsc gate (git-proof restamp).
 # Legislated intent: Dogfood Domain Adapters: prove MSN-0190 tsc parser works in the wild before ESLint (MSN-0192) or Jest/Vitest. Commit an isolated dummy under src/cli/tests/fixtures/dogfood-gate-adapter.ts containing a single TS2322 to the mission branch, then run gantry verify with explicit gate_adapter: tsc and gate_command npx tsc --noEmit --pretty false (whole-project tsconfig, no success substring). Precheck: src tree must be tsc-green on HEAD before the dummy exists. Dummy must not be named *.test.ts so node --test cannot emit a second failure. Cursor executor simulates iii worker by ingesting gantry context-feed --json v3 findings only. Success: surgical fix from those coordinates and a subsequent verify PASS. Hard stop: if the adapter fails to extract precise file/line/column, halt and repair the parser. Out of scope: live iii bus, ESLint this mission, Jest/Vitest.
 msn_id: MSN-0191
 skill_key: gantry
