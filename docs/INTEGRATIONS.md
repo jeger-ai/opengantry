@@ -116,6 +116,8 @@ M1 control-plane ingestion uses `gantry verify --export` to emit a hub envelope 
 | `PLANE_INGEST_URL` | variable | Public HTTPS base of the control plane |
 | `PLANE_INGEST_TOKEN` | secret | From `planectl token-create` on the plane |
 
+When **`GANTRY_ORG_ID` or `GANTRY_ORG_PEPPER` is unset**, the workflow still runs `gantry verify` but **skips `--export`**. When **`PLANE_INGEST_URL` or `PLANE_INGEST_TOKEN` is unset**, ingest is skipped. Missing optional hub config is not a PR failure. Configured spokes keep the export → ingest → poll-`chained` path (ADR-0037).
+
 ### Execution order (critical)
 
 1. Checkout PR head with `fetch-depth: 0` (git-proof + planner stamp need history).

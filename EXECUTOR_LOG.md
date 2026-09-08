@@ -824,7 +824,14 @@ DoD 1 MSN-0189: gate_adapter enum (generic|eslint|tsc) added to MISSION.schema.y
 ## MSN-0190 — gate_adapter gantry CLI implementation
 DoD 1 MSN-0190: GateAdapterId type and GateSpec.adapter parsed from gate_adapter (default generic); spawn-stream-core with bounded 20MiB stdout capture + stdoutTruncated flag; ESLint JSON adapter and tsc diagnostics adapter emitting envelope v3 findings with offending_file, line, columns, rule_id, evidence; exhaustive adapter registry wired into evaluateGatePhase; readEvidenceSnippet moved to verify-evidence-snippet.ts; --gate-adapter flag on legislate/start plus MCP draft/execute/start_orchestration plumbing through the signed draft token; madge: no cycles in gate-adapters (17 pre-existing engine cycles unchanged); lint clean; npm test 636 pass
 
+## MSN-0194 — skip attest-ingest export when plane vars unset
+[CONTEXT-REQUEST] path=.github/workflows/gxt-attest-ingest.yml reason=Skip --export/ingest when optional control-plane GitHub vars are unset; outside gantry TMVC proposed=.github/workflows/gxt-attest-ingest.yml
+[CONTEXT-REQUEST] path=templates/.github/workflows/gxt-attest-ingest.yml reason=Keep spoke template in parity with dogfood attest-ingest skip proposed=templates/.github/workflows/gxt-attest-ingest.yml
+[CONTEXT-REQUEST] path=docs/INTEGRATIONS.md reason=Document skip-when-unconfigured attest-ingest behavior outside gantry TMVC proposed=docs/INTEGRATIONS.md
+DoD 1 MSN-0194: gxt-attest-ingest skips --export when GANTRY_ORG_ID or GANTRY_ORG_PEPPER unset and skips ingest when PLANE_INGEST_URL or PLANE_INGEST_TOKEN unset; verify still runs; configured path unchanged; template mirrored; INTEGRATIONS.md documents skip; npm test 637 pass
+
 ## MSN-0193 — registrar max-lines split and lint:json gate
 [CONTEXT-REQUEST] path=docs/DEVELOPMENT.md reason=Document one-adapter-per-mission tsc vs eslint recipes outside gantry TMVC (src/cli/ + package.json); operator authorized Context Request at legislation proposed=docs/DEVELOPMENT.md
 [CONTEXT-REQUEST] path=README.md reason=Point tool-native findings paragraph at lint:json and the one-adapter-per-mission rule proposed=README.md
 DoD 1 MSN-0193: split registerCoreCommands/registerWorkflowCommands/registerMissionCommands into local helpers under 80 lines (no new modules); npm run lint:json added; whole-tree eslint src/cli/**/*.ts green; npm test 636 pass; DEVELOPMENT.md feature-mission adapter recipes (one adapter per mission, no tsc+eslint concat); CI stays changed-file lint
+DoD 1 MSN-0193 re-attest: whole-tree lint:json still green after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/
