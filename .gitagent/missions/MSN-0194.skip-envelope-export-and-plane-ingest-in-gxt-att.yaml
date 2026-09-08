@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0194: gxt-attest-ingest skips --export when GANTRY_ORG_ID or GANTRY_ORG_PEPPER unset and skips ingest when PLANE_INGEST_URL or PLANE_INGEST_TOKEN unset; verify still runs; configured path unchanged; template mirrored; INTEGRATIONS.md documents skip; npm test 637 pass"
+    anchor: "831"
+    status: PASS
 interrogation:
   - finding_id: 2121e0ae69d9
     kind: adr_conflict
@@ -68,6 +68,8 @@ interrogation:
 interrogation_sha256: 48ca6b7304f01e75e2aa225b99bfb43f6fc5a980e3e5e89c3c5c8d749f21ab64
 declared_paths:
   - .github/workflows/gxt-attest-ingest.yml
+  - .gitagent/missions/MSN-0194.skip-envelope-export-and-plane-ingest-in-gxt-att.yaml
   - docs/INTEGRATIONS.md
+  - EXECUTOR_LOG.md
   - src/cli/tests/attest-ingest-workflow.test.ts
   - templates/.github/workflows/gxt-attest-ingest.yml
