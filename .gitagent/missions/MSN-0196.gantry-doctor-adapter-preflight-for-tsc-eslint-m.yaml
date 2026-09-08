@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0196: gantry doctor preflights declared tsc/eslint adapters (npx, repo packages, tsconfig parse, eslint config, lint:json --format json); --gate-adapter force; --adapter-baseline warn-only; skip when no typed missions; DEVELOPMENT + FEATURES; npm test 648 pass"
-    anchor: "856"
+    trace_quote: "DoD 1 MSN-0196 re-attest: PR review — npm run lint -- forwarded args concatenated onto script body; baseline eslint argv-only (no shell); npx probed when eslint gate uses npx; npm test 651 pass"
+    anchor: "857"
     status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
