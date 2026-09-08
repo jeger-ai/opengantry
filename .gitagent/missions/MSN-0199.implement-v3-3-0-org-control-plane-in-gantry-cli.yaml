@@ -1,0 +1,100 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Planner restamp: include mission file in newest [MSN-0199] commit for git-proof.
+# Legislated intent: Implement v3.3.0 org control plane in gantry CLI: policy pull/status/diff with tighten-only merge and offline verify policy phase; ledger append/verify/export/push/fetch on refs/gxt/ledger with CAS retry; deps fetch/check/status and release check; MCP read-only tools; upgrade catalog; tests isolated to mkdtemp roots.
+msn_id: MSN-0199
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0199 CodeQL: drop test execSync git-fetch shells — npm test 680 pass"
+    anchor: "872"
+    status: PASS
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0043. CAS git update-ref with bounded retries and
+      jitter is a hard requirement. Explicit cwd on every git spawn.
+    adr_refs:
+      - ADR-0043
+  - finding_id: 0aab8fc3443c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Authorized: gantry skill TMVC src/cli/ (recursive) and
+      package.json. CLI delivery, application, domain, and tests under src/cli/
+      only. No .gitagent law edits. Operator approved the v3.3.0 control-plane
+      plan (policy, ledger, deps, MCP, upgrade catalog)."
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0037. Ingest envelope and verify_status wire values
+      unchanged. Ledger append is spoke-local beside existing export.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0042 as the law for this implementation:
+      tighten-only merge, explicit policy pull, doctor/verify offline."
+    adr_refs:
+      - ADR-0042
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0044. depends_on resolved offline from
+      refs/gxt/deps/<slug>; same-org proof via repository_hash and
+      GANTRY_ORG_PEPPER.
+    adr_refs:
+      - ADR-0044
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0027. New failed_gate values policy and dependencies
+      export through existing SARIF/JUnit/json envelope v3. ledger export
+      soc2-pack is a separate artifact, not a verify format.
+    adr_refs:
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0022. New MCP tools gxt_policy_status,
+      gxt_ledger_verify, gxt_deps_check are read-only. gxt_verify remains the
+      single mutating verify path.
+    adr_refs:
+      - ADR-0022
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0036. Receipt schema stays 0.2.0. Policy and
+      findings digests live in ledger entries.
+    adr_refs:
+      - ADR-0036
+interrogation_sha256: d0cd6bf5e4143c9d7f455192e9d61b9994e33a55e4687a362c477d9f7e1ae6db
+declared_paths:
+  - package.json
+  - src/cli/
+  - .gitagent/missions/MSN-0199.implement-v3-3-0-org-control-plane-in-gantry-cli.yaml

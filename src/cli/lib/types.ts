@@ -115,6 +115,18 @@ export interface TraceRow {
   status: NormalizedTraceStatus;
 }
 
+export interface MissionDependencySpec {
+  repo: string;
+  ref?: string;
+  msn_id: string;
+  require?: {
+    verify_status?: "passed";
+    signed?: boolean;
+    max_age_days?: number;
+  };
+  expected_repository_hash?: string;
+}
+
 export interface ParsedMission {
   msnId: string | null;
   skillKey: string | null;
@@ -128,6 +140,7 @@ export interface ParsedMission {
   interrogation: InterrogationRow[];
   interrogationSha256: string | null;
   declaredPaths: string[];
+  dependsOn: MissionDependencySpec[];
   rawPath: string;
 }
 
@@ -167,4 +180,5 @@ export interface YamlMission {
   }>;
   interrogation_sha256?: string;
   declared_paths?: string[];
+  depends_on?: MissionDependencySpec[];
 }

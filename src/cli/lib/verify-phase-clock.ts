@@ -1,6 +1,8 @@
 export const VERIFY_PHASE_IDS = [
   "git_proof",
   "interrogation",
+  "policy",
+  "dependencies",
   "gate",
   "defensive",
   "kpi",

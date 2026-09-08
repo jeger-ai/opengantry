@@ -13,6 +13,8 @@ export const STATIC_ASSETS = [
   { targetPath: "docs/ARCHITECTURE.md", mode: "scaffold_only", tags: ["core"] },
   { targetPath: "TARGET_ARCHITECTURE.yaml", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/planner/MISSION.schema.yaml", mode: "managed_strict", tags: ["core"] },
+  { targetPath: ".gitagent/planner/ORG-POLICY.schema.yaml", mode: "managed_strict", tags: ["core"] },
+  { targetPath: ".gitagent/foreman/POLICY.pointer.json", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/planner/KPI-REPORT.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/planner/EXECUTOR_LOG.template.md", mode: "managed_strict", tags: ["core"] },
   { targetPath: "scripts/validate-gxt.sh", mode: "managed_strict", executable: true, tags: ["core"] },

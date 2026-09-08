@@ -27,6 +27,8 @@ import { runTargetArchitectureDoctorChecks } from "./arch/cage/target-architectu
 import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift-doctor.js";
 import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
 import { runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
+import { runOrgPolicyDoctorChecks } from "./policy/policy-doctor.js";
+import { runLedgerDoctorChecks } from "./ledger/ledger-verify.js";
 import {
   runAdapterPreflightDoctorChecks,
   type AdapterPreflightOptions,
@@ -202,7 +204,12 @@ export function collectDoctorReport(
   adapterPreflight?: AdapterPreflightOptions,
 ): DoctorReport {
   const result = runDoctorChecks(root, manifest);
-  let lines = [...result.lines, ...runFlightTelemetryDoctorChecks(root)];
+  let lines = [
+    ...result.lines,
+    ...runFlightTelemetryDoctorChecks(root),
+    ...runOrgPolicyDoctorChecks(root),
+    ...runLedgerDoctorChecks(root),
+  ];
   lines = [...lines, ...runArchitecturePointerDoctorChecks(root)];
   lines = [...lines, ...runTargetArchitectureDoctorChecks(root)];
   lines = [...lines, ...runArchitectureDriftDoctorChecks(root)];

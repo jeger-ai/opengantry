@@ -24,6 +24,7 @@ import {
 } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
+import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
 import type { InterrogationRow } from "./interrogate/findings.js";
 import { runInterrogate } from "./interrogate/run.js";
 import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
@@ -301,6 +302,7 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
       `legislate: intent may touch forbidden zone ${zone} for skill ${skill_key} — narrow TMVC in mission or confirm Planner override`,
     );
   }
+  warnLegislatePolicyFloor(root);
 
   const absolute = resolveLegislateOutputPath(root, options, msnId);
   if (!absolute) return { ok: false, exitCode: 2 };

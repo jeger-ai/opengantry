@@ -252,8 +252,11 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 | Optional local proof | `receipt_signature` tier + `--sign` / `--sign-receipt` | SSH/GPG detach-sign over `receipt_sha256`; unsigned receipts are checksums, not proofs |
 | Hub ingestion export | CI artifact / PR attach / optional future `--git-note` | Spoke-owned export path; not a tracked receipt tree by default |
 | Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline compare of MANIFEST / TARGET_ARCHITECTURE / config digests |
+| Org policy floor (v3.3.0) | `gantry policy pull` / `status` / `diff`; `POLICY.pointer.json` | Tighten-only merge from a signed org git repo; doctor/verify stay offline ([ADR-0042](../.gitagent/out-of-scope/ADR-0042-org-policy-bundle.md)) |
+| Compliance ledger (v3.3.0) | `gantry ledger append` / `verify` / `export --format soc2-pack`; `refs/gxt/ledger` | Digest-only orphan commit chain; CAS append; unsigned = checksum not proof ([ADR-0043](../.gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md)) |
+| Cross-repo mission deps (v3.3.0) | `depends_on[]`; `gantry deps fetch` / `check`; `gantry release check` | Offline same-org proof via `repository_hash` + `GANTRY_ORG_PEPPER` ([ADR-0044](../.gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)) |
 
-**When to use:** Local-first agent governance today; preparing CISO dashboards or a future optional cloud control plane without changing the local enforcement model.
+**When to use:** Local-first agent governance today; git-native organization control plane (policy floor, ledger, cross-repo gates) without changing the spoke-enforces / hub-aggregates model.
 
 **How:** [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md) · [`SECURITY.md`](SECURITY.md)
 

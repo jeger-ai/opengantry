@@ -149,6 +149,30 @@ This is the process cage assessors expect: not "we trust the model," but "we can
 
 ---
 
+## Compliance ledger and SOC 2 pack (v3.3.0)
+
+When `.gitagent/config.json` `ledger.mode` is `local`, `gantry verify` / `attest` / break-glass append digest-only entries to **`refs/gxt/ledger`** ([ADR-0043](../.gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md)). Git parent linkage plus embedded `prev_entry_hash` is the hash chain. Unsigned entries are **checksums**, not cryptographic proofs (same honesty as receipts).
+
+```bash
+gantry ledger verify --json
+gantry ledger export --format soc2-pack --out /tmp/gxt-soc2-pack
+```
+
+The `soc2-pack` directory contains the chain JSON, referenced local receipts, and a control-mapping file covering:
+
+| Framework | Control | Ledger / artifact mapping |
+|-----------|---------|---------------------------|
+| ISO 27001 A.5.3 | Segregation of duties | Planner stamp + mission YAML + verify entry |
+| ISO 27001 A.8.15 | Logging and monitoring | `refs/gxt/ledger` entries + `EXECUTOR_LOG.md` quotes |
+| ISO 27001 A.8.28 | Secure development | TMVC + policy floor (`mandatory_gates`, `banned_imports`) |
+| ISO 42001 | AI boundaries / accountability | Mission `depends_on` + interrogation record |
+| SOC 2 CC7 | System operations / monitoring | Ledger chain verify + doctor ledger health |
+| SOC 2 CC8 | Change management | Planner git-proof + verify `receipt` / `verify_findings` entries |
+
+Org policy ([ADR-0042](../.gitagent/out-of-scope/ADR-0042-org-policy-bundle.md)) is a tighten-only floor. Cross-repo release gates ([ADR-0044](../.gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)) prove same-org via `repository_hash` without a SaaS hub.
+
+---
+
 ## What to hand an assessor
 
 Minimal evidence bundle for one agent-assisted change:

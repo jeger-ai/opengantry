@@ -15,6 +15,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -31,9 +34,30 @@ jobs:
       - name: Resolve changed mission
         id: mission
         run: |
-          m="$(git diff --name-only --diff-filter=ACMRT \
-                "${{ github.event.pull_request.base.sha }}...HEAD" \
-                -- '.gitagent/missions/*.yaml' | head -n1)"
+          base="${{ github.event.pull_request.base.sha }}"
+          mapfile -t unique_msns < <(
+            git log --no-merges --format=%s "${base}..HEAD" \
+              | grep -Eo '\[MSN-[0-9]{4}\]' | sort -u || true
+          )
+          mapfile -t changed < <(
+            git diff --name-only --diff-filter=ACMRT "${base}...HEAD" \
+              -- '.gitagent/missions/*.yaml' | sort || true
+          )
+          m=""
+          if [[ ${#unique_msns[@]} -eq 1 ]]; then
+            msn="${unique_msns[0]#[}"
+            msn="${msn%]}"
+            for candidate in "${changed[@]}"; do
+              base_name="$(basename "$candidate")"
+              if [[ "$base_name" == "${msn}."* ]]; then
+                m="$candidate"
+                break
+              fi
+            done
+          fi
+          if [[ -z "$m" && ${#changed[@]} -gt 0 ]]; then
+            m="${changed[0]}"
+          fi
           echo "path=$m" >> "$GITHUB_OUTPUT"
 
       - name: Verify and export envelope
@@ -93,6 +117,13 @@ jobs:
           done
           echo "ingest poll timeout (request_id=$request_id)" >&2
           exit 1
+
+      - name: Append compliance ledger and push ref
+        if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != ''
+        continue-on-error: true
+        run: |
+          node dist/cli/index.js ledger append --from-envelope envelope.json || true
+          git push origin refs/gxt/ledger || echo "ledger push skipped (ref absent or no permission)"
 
       - name: Push pre-commit agent events
         if: steps.mission.outputs.path != ''

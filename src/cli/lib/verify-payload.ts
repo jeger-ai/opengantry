@@ -81,6 +81,36 @@ function buildGateFindings(root: string, failure: GateFailure, hint: string): Ve
   return genericOnly ? adapterFindings : projected;
 }
 
+function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: string): VerifyFinding[] | null {
+  switch (failure.phase) {
+    case "trace":
+      return [
+        verifyFinding("trace", hint, {
+          offending_file: failure.executorLogPath,
+          line: failure.declaredLine ?? 0,
+        }),
+      ];
+    case "kpi":
+      return [verifyFinding("kpi", hint, { offending_file: failure.kpiReportPath })];
+    case "gate":
+      return buildGateFindings(root, failure, hint);
+    case "defensive":
+      return [verifyFinding("defensive", failure.defensiveReason || hint)];
+    case "git_proof":
+      return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
+    case "policy":
+    case "dependencies":
+      return failure.findings?.length ? failure.findings : null;
+    case "interrogation":
+    case "trace_pending":
+      return null;
+    default: {
+      const _exhaustive: never = failure;
+      return _exhaustive;
+    }
+  }
+}
+
 export function buildFindingsForFailure(
   root: string,
   normalized: NormalizedVerifyFailure,
@@ -88,36 +118,11 @@ export function buildFindingsForFailure(
 ): VerifyFinding[] {
   const hint = normalized.fix_hints[0] ?? normalized.message;
   const phaseGate = (normalized.phase === "trace_pending" ? "trace" : normalized.phase) as VerifyFailedGate;
-
-  if (failure?.phase === "trace") {
-    return [
-      verifyFinding("trace", hint, {
-        offending_file: failure.executorLogPath,
-        line: failure.declaredLine ?? 0,
-      }),
-    ];
-  }
-  if (failure?.phase === "kpi") {
-    return [
-      verifyFinding("kpi", hint, {
-        offending_file: failure.kpiReportPath,
-      }),
-    ];
-  }
-  if (failure?.phase === "gate") {
-    return buildGateFindings(root, failure, hint);
-  }
-  if (failure?.phase === "defensive") {
-    return [verifyFinding("defensive", failure.defensiveReason || hint)];
-  }
-  if (failure?.phase === "git_proof") {
-    return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
-  }
-
+  const fromPhase = failure ? findingsFromPhase(root, failure, hint) : null;
+  if (fromPhase) return fromPhase;
   if (normalized.failures && normalized.failures.length > 0) {
     return normalized.failures.map((f) => verifyFinding(phaseGate, f));
   }
-
   return [verifyFinding(phaseGate, hint)];
 }
 

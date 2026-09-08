@@ -33,11 +33,13 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 | [`teacher/ARCHITECTURE-DISCOVERY.md`](planner/ARCHITECTURE-DISCOVERY.md) | When architecture is **unset** or stub — ask user; never invent layout |
 | [`teacher/ARCHITECTURE-ACCESS.md`](planner/ARCHITECTURE-ACCESS.md) | Authenticated external architecture sources |
 | [`foreman/SOUL.md`](foreman/SOUL.md) | Foreman: manifest-only binary router |
-| [`teacher/RULES.md`](planner/RULES.md) | Law: SOD, trace rules, TMVC, Rule 4.4 manifest sync, tiers |
+| [`teacher/RULES.md`](planner/RULES.md) | Law: SOD, trace rules, TMVC, Rule 4.4, policy floor (§8), ledger (§9), deps (§10) |
 | [`teacher/RUNTIME.md`](planner/RUNTIME.md) | Executor Runtime Contract: env vars emitted by **`gantry runtime env`** |
 | [`teacher/MISSION.example.yaml`](planner/MISSION.example.yaml) | Primary structured mission example (YAML; `legislate` default) |
 | [`teacher/MISSION-ARCHITECT.md`](planner/MISSION-ARCHITECT.md) | IDE chat Planner-Assistant: fast-path + legislate-only handoff |
-| [`teacher/MISSION.schema.yaml`](planner/MISSION.schema.yaml) | Structured mission schema (YAML) for `gantry mission validate` |
+| [`teacher/MISSION.schema.yaml`](planner/MISSION.schema.yaml) | Structured mission schema (YAML) for `gantry mission validate`; optional `depends_on` (ADR-0044) |
+| [`teacher/ORG-POLICY.schema.yaml`](planner/ORG-POLICY.schema.yaml) | Org policy bundle schema (ADR-0042); pin via `foreman/POLICY.pointer.json` |
+| [`foreman/POLICY.pointer.json`](../templates/.gitagent/foreman/POLICY.pointer.json) | Tracked pin of an org policy git source (template; perimeter-protected) |
 | [`teacher/MISSION.template.md`](planner/MISSION.template.md) | Human-readable Markdown reference (verify accepts md+yaml) |
 | [`teacher/commit-template.md`](planner/commit-template.md) | Greppable commit receipt with `[MSN-XXXX]` |
 | [`teacher/EXECUTOR_LOG.template.md`](planner/EXECUTOR_LOG.template.md) | Empty scaffold for repo-root `EXECUTOR_LOG.md` (used by `.githooks/post-checkout`) |

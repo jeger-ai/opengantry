@@ -16,12 +16,21 @@ export interface FlightTelemetryConfig {
   body_mode?: FlightTelemetryBodyMode;
 }
 
+export type LedgerMode = "off" | "local";
+export const LEDGER_MODES: readonly LedgerMode[] = ["off", "local"];
+
+export interface LedgerConfig {
+  mode?: LedgerMode;
+  signature?: ReceiptSignatureTier;
+}
+
 export interface GxtConfig {
   planner_signature?: PlannerSignatureTier;
   receipt_signature?: ReceiptSignatureTier;
   flight_telemetry?: FlightTelemetryConfig;
   trusted_automation?: unknown;
   defensive_profile?: DefensiveProfileConfig;
+  ledger?: LedgerConfig;
 }
 
 export function loadGxtConfig(root: string): GxtConfig {
@@ -52,4 +61,17 @@ export function resolveReceiptSignatureTier(config: GxtConfig): ReceiptSignature
 export function resolveFlightTelemetryBodyMode(config: GxtConfig): FlightTelemetryBodyMode {
   const mode = config.flight_telemetry?.body_mode ?? "hash_only";
   return FLIGHT_TELEMETRY_BODY_MODES.includes(mode) ? mode : "hash_only";
+}
+
+export function resolveLedgerMode(config: GxtConfig): LedgerMode {
+  if (config.ledger?.mode !== undefined) {
+    return LEDGER_MODES.includes(config.ledger.mode) ? config.ledger.mode : "off";
+  }
+  if (config.defensive_profile?.preset === "strict_enterprise") return "local";
+  return "off";
+}
+
+export function resolveLedgerSignatureTier(config: GxtConfig): ReceiptSignatureTier {
+  const tier = config.ledger?.signature ?? "off";
+  return RECEIPT_SIGNATURE_TIERS.includes(tier) ? tier : "off";
 }

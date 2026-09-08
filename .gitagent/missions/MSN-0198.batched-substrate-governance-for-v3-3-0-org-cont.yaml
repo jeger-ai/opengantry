@@ -1,0 +1,152 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Batched substrate governance for v3.3.0 org control plane: author ADR-0042 org policy bundle (tighten-only floor, amends ADR-0034 gantry policy clause), ADR-0043 compliance ledger on refs/gxt/ledger (signed orphan commit chain, digest-only entries), ADR-0044 cross-repo mission dependencies (depends_on resolved offline from fetched ledger refs, same-org proof via repository_hash); add ORG-POLICY.schema.yaml and POLICY.pointer.json template; add depends_on to MISSION.schema.yaml mirrored to templates and iii-integration; RULES sections 8-10 (policy floor, ledger, dependencies); ledger config keys in config.json template; .gitignore.gxt policy cache; MANIFEST perimeter_protected POLICY.pointer.json; workflow template steps for ledger append and deps fetch; docs stubs. Law, schema, templates, and docs only; CLI implementation follows in separate gantry-skill missions.
+msn_id: MSN-0198
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0198: ADR-0042/0043/0044 authored; ORG-POLICY.schema.yaml + depends_on in MISSION.schema.yaml (templates + iii-integration mirrors); RULES §8–§10; POLICY.pointer.json template; MANIFEST perimeter_protected; ledger config keys; workflow template steps; docs stubs; CLI deferred; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "865"
+    status: PASS
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'Skill: substrate (Tier-3). Operator decision (chat,
+      2026-09-08): "Batch the Tier-3 substrate legislation. Consolidate Law A
+      (ADR-0042), Law B (ADR-0043), and Law C (ADR-0044) into a single
+      governance mission. The schema changes and RULES updates can be reviewed
+      in a single pass." Scope is law, schema, templates, and docs only; CLI
+      implementation follows in separate gantry-skill missions. TMVC is the
+      mission declared_paths, file-exact, no directory roots:
+      .gitagent/out-of-scope/ADR-0042-org-policy-bundle.md,
+      ADR-0043-compliance-ledger-git-ref.md,
+      ADR-0044-cross-repo-mission-dependencies.md; .gitagent/planner/RULES.md,
+      ORG-POLICY.schema.yaml, MISSION.schema.yaml, MISSION.example.yaml;
+      .gitagent/foreman/MANIFEST.json (perimeter_protected add only);
+      .gitagent/README.md; templates/.gitagent/planner/RULES.md,
+      ORG-POLICY.schema.yaml, MISSION.schema.yaml;
+      templates/.gitagent/foreman/MANIFEST.json, POLICY.pointer.json;
+      templates/.gitagent/config.json; templates/.gitignore.gxt;
+      templates/.github/workflows/gxt-attest-ingest.yml, gxt-validate.yml;
+      examples/iii-integration/target-repo/.gitagent/planner/MISSION.schema.yaml;
+      docs/DEVELOPMENT.md, docs/FEATURES.md, docs/COMPLIANCE-ISO.md; README.md;
+      EXECUTOR_LOG.md. Any other path requires a [CONTEXT-REQUEST] in
+      EXECUTOR_LOG.md. No src/cli changes in this mission. Gate:
+      ./scripts/dev-validate-core.sh (substrate allowlist). Single-provider
+      verify -> mandatory full human audit per RULES §1 Tier-3; Planner
+      [MSN-0198] commits required.'
+    adr_refs:
+      - ADR-0034
+      - ADR-0040
+      - ADR-0041
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0037 unchanged; this mission does not alter the
+      ingest wire contract, envelope 1.0.0, verify_status values, or pepper
+      custody. Plane-side endpoints (policy distribution, cross-repo status,
+      ledger import) are explicitly out of scope for v3.3.0 and deferred to
+      opengantry-plane. Workflow template additions (gantry ledger append
+      --from-envelope, git push refs/gxt/ledger, gantry deps fetch) are additive
+      steps beside the existing attest-ingest flow and keep the CI ordering:
+      verify -> export -> ingest -> fail job if verify failed. Break-glass
+      ingestibility is preserved: a bypass MUST also append a break_glass ledger
+      entry."
+    adr_refs:
+      - ADR-0037
+      - ADR-0034
+      - ADR-0021
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0026 as precedent: network access is an explicit,
+      separate command and doctor stays offline. ADR-0042 (gantry policy pull)
+      and ADR-0044 (gantry deps fetch) MUST follow the gantry arch fetch pattern
+      — explicit fetch commands, gitignored cache under .gitagent/history/,
+      credentials via the existing arch cred slot pattern, and gantry doctor /
+      gantry verify read only from disk and local git refs. No network I/O in
+      doctor or in verify phases."
+    adr_refs:
+      - ADR-0026
+      - ADR-0034
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: 'Accept ADR-0036 unchanged. Receipt schema stays 0.2.0 in
+      v3.3.0; no new receipt fields. Operator decision (chat): "Storing policy
+      digests inside the ledger entry rather than mutating the receipt schema
+      successfully navigates the ADR-0037 plane dependency." ADR-0043 ledger
+      entries carry policy_id/bundle_sha256 and findings digests as digest-only
+      payloads; receipts remain gitignored and the export envelope (1.0.0) is
+      untouched. Same-org proof for ADR-0044 reuses the ADR-0036 repository_hash
+      HMAC with the customer-held GANTRY_ORG_PEPPER.'
+    adr_refs:
+      - ADR-0036
+      - ADR-0034
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "TMVC is the mission declared_paths, file-exact, no directory
+      roots: .gitagent/out-of-scope/ADR-0042-org-policy-bundle.md,
+      ADR-0043-compliance-ledger-git-ref.md,
+      ADR-0044-cross-repo-mission-dependencies.md; .gitagent/planner/RULES.md,
+      ORG-POLICY.schema.yaml, MISSION.schema.yaml, MISSION.example.yaml;
+      .gitagent/foreman/MANIFEST.json (perimeter_protected add only);
+      .gitagent/README.md; templates/.gitagent/planner/RULES.md,
+      ORG-POLICY.schema.yaml, MISSION.schema.yaml;
+      templates/.gitagent/foreman/MANIFEST.json, POLICY.pointer.json;
+      templates/.gitagent/config.json; templates/.gitignore.gxt;
+      templates/.github/workflows/gxt-attest-ingest.yml, gxt-validate.yml;
+      examples/iii-integration/target-repo/.gitagent/planner/MISSION.schema.yam\
+      l; docs/DEVELOPMENT.md, docs/FEATURES.md, docs/COMPLIANCE-ISO.md;
+      README.md; EXECUTOR_LOG.md. Any other path requires a [CONTEXT-REQUEST] in
+      EXECUTOR_LOG.md. No src/cli changes in this mission. forbidden_zones for
+      substrate are empty by manifest; RULES.md and MANIFEST.json edits are
+      lawful only under this Planner-legislated Tier-3 mission and must land in
+      [MSN-0198] Planner commits (perimeter_protected)."
+    adr_refs:
+      - ADR-0034
+      - ADR-0041
+interrogation_sha256: 4de27d3f4da0d24da136b3acd1fba9dff40e452c8670f35f563cc7f82394be00
+declared_paths:
+  - .gitagent/missions/MSN-0198.batched-substrate-governance-for-v3-3-0-org-cont.yaml
+  - .gitagent/README.md
+  - .gitagent/foreman/MANIFEST.json
+  - .gitagent/out-of-scope/ADR-0042-org-policy-bundle.md
+  - .gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md
+  - .gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md
+  - .gitagent/planner/MISSION.example.yaml
+  - .gitagent/planner/MISSION.schema.yaml
+  - .gitagent/planner/ORG-POLICY.schema.yaml
+  - .gitagent/planner/RULES.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/COMPLIANCE-ISO.md
+  - docs/DEVELOPMENT.md
+  - docs/FEATURES.md
+  - examples/iii-integration/target-repo/.gitagent/planner/MISSION.schema.yaml
+  - templates/.gitagent/config.json
+  - templates/.gitagent/foreman/MANIFEST.json
+  - templates/.gitagent/foreman/POLICY.pointer.json
+  - templates/.gitagent/planner/MISSION.schema.yaml
+  - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+  - templates/.gitagent/planner/RULES.md
+  - templates/.github/workflows/gxt-attest-ingest.yml
+  - templates/.github/workflows/gxt-validate.yml
+  - templates/.gitignore.gxt

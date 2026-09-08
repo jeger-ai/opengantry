@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.3.0** | Git-native org control plane — tighten-only org policy floor (`gantry policy pull\|status\|diff`, ADR-0042); compliance ledger on `refs/gxt/ledger` with CAS append + `soc2-pack` export (ADR-0043); cross-repo `depends_on` + `gantry deps` / `release check` (ADR-0044). Receipt schema stays 0.2.0. Doctor/verify stay offline. |
 | **v3.2.6** | `gantry report` localhost inspection dashboard (overview git metrics, mission timeline, capped verify-run ring, `/verify` drill-down); ADR-0040 findings blame schema v3 in CLI (MSN-0179); pluggable `gateExecAdapter` on `verifyMission` (MSN-0177); verify-run ring persistence + phase-clock remediation (MSN-0181) |
 | **v3.2.3** | Docs — North Star [`MANIFESTO.md`](MANIFESTO.md); loop→graph terminology (`AGENT-GRAPH.md` rename, mission/verify graph language, retry edges); CLI onboarding UX strings |
 | **v3.2.2** | **Breaking:** `package.json` `exports` map — public entrypoints `.` (CLI) and `./kernel` only; deep `dist/cli/lib/*` imports no longer resolve. Kernel library (`evaluateScope`, `verifyMission`, `verifyVerdictToken`); verdict HMAC tokens; `GIT_OPTIONAL_LOCKS=0` on git spawns; receipt-signing temp path collision fix |
@@ -39,7 +40,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.2.6** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.3.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
@@ -47,6 +48,19 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ---
 
 ## Upgrade notes
+
+### From v3.2.6 (org control plane — v3.3.0)
+
+```bash
+npm install @jeger-ai/opengantry@3.3.0
+gantry upgrade   # pulls ORG-POLICY.schema.yaml (managed_strict) + POLICY.pointer.json scaffold
+```
+
+- **Opt-in policy floor:** add `.gitagent/foreman/POLICY.pointer.json`, then `gantry policy pull`. Doctor and verify never fetch. Merge is tighten-only (ADR-0042). Do not pin a pointer on a repo until the cache is populated or verify will fail closed.
+- **Opt-in ledger:** `.gitagent/config.json` `ledger.mode: local` (default remains `off`). `strict_enterprise` defensive preset defaults ledger mode to `local` when `ledger.mode` is unset. Unsigned entries are checksums, not proofs.
+- **Cross-repo deps:** add mission `depends_on[]`, run `gantry deps fetch` in CI before verify, then `gantry release check --tag <prev>`.
+- **Receipts:** schema stays **0.2.0**. Policy/findings digests live in ledger entries, not receipts (ADR-0036/0037).
+- **MCP:** read-only `gxt_policy_status`, `gxt_ledger_verify`, `gxt_deps_check`. `gxt_verify` remains the mutating verify path.
 
 ### From v3.2.5 (gantry report + ADR-0040 — v3.2.6)
 

@@ -1,0 +1,10 @@
+# Substrate upgrade mission — OpenGantry 3.3.0 org control plane assets.
+# Apply via `gantry upgrade` then Planner-commit this file (skill_key: substrate).
+msn_id: MSN-9002
+skill_key: substrate
+gate_command: "true"
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "MSN-9002: upgrade to v3.3.0 org control plane — ORG-POLICY.schema.yaml + POLICY.pointer.json scaffold"
+    anchor: "877"
+    status: PASS

@@ -67,8 +67,26 @@ jobs:
       - name: gantry unit tests
         run: node --test "dist/cli/tests/**/*.test.js"
 
+      - name: Fetch cross-repo mission dependencies
+        continue-on-error: true
+        env:
+          GANTRY_DEPS_TOKEN: ${{ secrets.GANTRY_DEPS_TOKEN }}
+        run: |
+          if [ ! -f .gitagent/missions/.active-mission ]; then
+            echo "No pinned mission; skipping gantry deps fetch"
+            exit 0
+          fi
+          node dist/cli/index.js deps fetch || echo "deps fetch skipped"
+
       - name: gantry doctor (readiness)
         run: node dist/cli/index.js doctor
+
+      - name: Configure SSH commit signature verification
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f .gitagent/foreman/PLANNER.signing.pub ]; then
+            git config gpg.ssh.allowedSignersFile .gitagent/foreman/PLANNER.signing.pub
+          fi
 
       - name: gantry perimeter (CI signature enforcement)
         if: github.event_name == 'pull_request'

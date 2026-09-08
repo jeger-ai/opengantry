@@ -1,0 +1,174 @@
+# ORG-POLICY.schema — JSON Schema (YAML encoding) for organization policy bundles
+# Consumed by gantry (Ajv). ADR-0042. Version label for docs only.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://opengantry.local/schemas/org-policy.v1.json
+title: OpenGantryOrgPolicy
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - org_id
+  - policy_id
+  - version
+properties:
+  schema_version:
+    type: string
+    const: "1.0.0"
+  org_id:
+    type: string
+    minLength: 1
+  policy_id:
+    type: string
+    minLength: 1
+  version:
+    type: string
+    minLength: 1
+    description: Semver or monotonic label for the bundle (not the CLI).
+  signers:
+    type: array
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - principal
+      properties:
+        principal:
+          type: string
+          minLength: 1
+          description: SSH or GPG principal allowed to sign the policy commit.
+        kind:
+          type: string
+          enum: [ssh, gpg]
+  mandatory_gates:
+    type: array
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - command
+      properties:
+        id:
+          type: string
+          minLength: 1
+        command:
+          type: string
+          minLength: 1
+        adapter:
+          type: string
+          enum: [generic, eslint, tsc]
+          default: generic
+        success_substring:
+          type: ["string", "null"]
+  banned_imports:
+    type: array
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - specifier
+      properties:
+        specifier:
+          type: string
+          minLength: 1
+        scope:
+          type: string
+          enum: [changed, all]
+          default: changed
+          description: changed = gantry check-imports on the mission diff; all = whole tree.
+  producers:
+    type: object
+    default: {}
+    additionalProperties:
+      type: string
+      minLength: 1
+    description: >-
+      Map of KPI metric name to producer command. kpi_thresholds[].metric MUST
+      name a key in this object (CLI/schema error otherwise).
+  kpi_thresholds:
+    type: array
+    default: []
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - op
+        - value
+      properties:
+        metric:
+          type: string
+          minLength: 1
+          description: MUST match a key in producers.
+        op:
+          type: string
+          enum: ["<=", ">=", "==", "<", ">"]
+        value:
+          type: number
+  config_floor:
+    type: object
+    additionalProperties: false
+    properties:
+      planner_signature:
+        type: string
+        enum: [off, warn, require]
+      receipt_signature:
+        type: string
+        enum: [off, warn, require]
+      ledger_signature:
+        type: string
+        enum: [off, warn, require]
+      ledger_mode:
+        type: string
+        enum: [off, local]
+      flight_telemetry:
+        type: object
+        additionalProperties: false
+        properties:
+          body_mode:
+            type: string
+            enum: [hash_only, full]
+      break_glass:
+        type: object
+        additionalProperties: false
+        properties:
+          require_ledger_entry:
+            type: boolean
+  manifest_constraints:
+    type: object
+    additionalProperties: false
+    properties:
+      forbidden_zones_add:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      path_risks_min:
+        type: object
+        additionalProperties:
+          type: string
+          enum: [Tier-1, Tier-2, Tier-3]
+      perimeter_protected_add:
+        type: array
+        items:
+          type: string
+          minLength: 1
+  expected_digests:
+    type: object
+    additionalProperties: false
+    properties:
+      schema_version:
+        type: string
+        const: "0.1.0"
+      manifest_sha256:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+      target_architecture_sha256:
+        type: ["string", "null"]
+        pattern: "^[0-9a-f]{64}$"
+      config_sha256:
+        type: ["string", "null"]
+        pattern: "^[0-9a-f]{64}$"

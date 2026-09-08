@@ -6,6 +6,7 @@ import { toPosixRel } from "./cli-io.js";
 import { gitHead, gitRevParse, gitRun } from "./git.js";
 import type { ParsedMission } from "./types.js";
 import type { VerifyOptions } from "./verify-options.js";
+import { tryAppendLedger } from "./ledger/ledger-hook.js";
 
 export const ENV_BYPASS_SECRET = "GXT_BYPASS_SECRET";
 export const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";
@@ -201,6 +202,10 @@ export function runBreakGlassAuditFlow(
       missionFile: missionRel,
       commit: options.breakGlassCommit,
       auditCommit: options.auditCommit === true,
+    });
+    tryAppendLedger(root, "break_glass", mission.msnId ?? "MSN-0000", {
+      reason_sha256: crypto.createHash("sha256").update(reason).digest("hex"),
+      error_code: "BREAK_GLASS",
     });
     return {
       kind: "ok",

@@ -1,0 +1,55 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Release: v3.3.0 — squashed MSN-0198..MSN-0200 + MSN-9002 upgrade (org control plane).
+# Legislated intent: Release OpenGantry v3.3.0 changelog version parity catalog and tag
+msn_id: MSN-0200
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0200: v3.3.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, CHANGELOG org control plane, catalog ORG-POLICY + POLICY.pointer; dogfood policy/ledger/soc2-pack; dev-validate-core OK"
+    anchor: "1"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: Authorized — release mission MSN-0200 uses
+      ./scripts/dev-validate-core.sh with gate_success_substring
+      dev-validate-core OK per MSN-0182 release precedent. Operator approved the
+      v3.3.0 plan (CHANGELOG, version parity, catalog, tag).
+interrogation_sha256: 899277a90e835a530c399a5c72a68553d02debd55a3abe77a34aa02ecf926d26
+declared_paths:
+  - .gitagent/foreman/MANIFEST.json
+  - .gitagent/foreman/PLANNER.signing.pub
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0198.batched-substrate-governance-for-v3-3-0-org-cont.yaml
+  - .gitagent/missions/MSN-0199.implement-v3-3-0-org-control-plane-in-gantry-cli.yaml
+  - .gitagent/missions/MSN-0200.release-opengantry-v3-3-0-changelog-version-pari.yaml
+  - .gitagent/missions/MSN-9002.upgrade-v3.3.0.yaml
+  - .gitagent/out-of-scope/ADR-0042-org-policy-bundle.md
+  - .gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md
+  - .gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md
+  - .gitagent/planner/MISSION.example.yaml
+  - .gitagent/planner/MISSION.schema.yaml
+  - .gitagent/planner/ORG-POLICY.schema.yaml
+  - .gitagent/planner/RULES.md
+  - .gitagent/README.md
+  - .github/workflows/gxt-validate.yml
+  - EXECUTOR_LOG.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/INTEGRATIONS.md
+  - docs/archive/BACKLOG.md
+  - examples/org-policy/ORG-POLICY.yaml
+  - package-lock.json
+  - package.json
+  - scripts/lib/asset-catalog-static.mjs
+  - scripts/release-gate-publish.sh
+  - src/cli/
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/asset-catalog.json
+  - templates/integrations/compatibility.json

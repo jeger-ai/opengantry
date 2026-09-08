@@ -218,3 +218,44 @@ properties:
     items:
       type: string
       minLength: 1
+  depends_on:
+    type: array
+    default: []
+    description: >-
+      Cross-repo mission dependencies (ADR-0044). Resolved offline from fetched
+      refs/gxt/deps/<slug> ledger chains. gantry deps fetch is the only network
+      path; verify/doctor/check read local refs only.
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - repo
+        - msn_id
+      properties:
+        repo:
+          type: string
+          minLength: 1
+          description: Canonical host/owner/repo or git URL.
+        ref:
+          type: string
+          default: refs/gxt/ledger
+        msn_id:
+          type: string
+          pattern: "^MSN-[0-9]{4}$"
+        require:
+          type: object
+          additionalProperties: false
+          properties:
+            verify_status:
+              type: string
+              enum: [passed]
+              default: passed
+            signed:
+              type: boolean
+              default: false
+            max_age_days:
+              type: number
+              exclusiveMinimum: 0
+        expected_repository_hash:
+          type: string
+          pattern: "^[0-9a-f]{64}$"

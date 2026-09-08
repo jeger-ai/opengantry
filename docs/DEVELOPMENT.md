@@ -150,7 +150,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 
 | Check | When | Mechanism |
 |-------|------|-----------|
-| Mission gate | `gantry verify` | Mission `gate_command` + optional `gate_success_substring` + optional `gate_adapter` (`generic` default, `eslint`, `tsc` — ADR-0041) |
+| Mission gate | `gantry verify` | Mission `gate_command` + optional `gate_success_substring` + optional `gate_adapter` (`generic` default, `eslint`, `tsc` — ADR-0041). Optional phases: `policy` (ADR-0042), `dependencies` (ADR-0044). |
 | Unit tests | gate / CI | `npm test` (`node:test`) |
 | Compile / types | build / CI | `npm run build` (`tsc`) |
 | Manifest shape | CI / pre-push | `gantry check`, `validate-gxt.sh manifest` |

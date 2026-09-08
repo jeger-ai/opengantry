@@ -1,0 +1,3 @@
+# Planner SSH commit-signing keys for CI perimeter verification (git gpg.ssh.allowedSignersFile).
+# Add one principal per line: email namespaces@domain ssh-ed25519 AAAA...
+jeger@commitly.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBm8mjfmPhb0UzD3obwNBWiajhQb0bKDdYXzgcWuUelI
