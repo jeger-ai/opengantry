@@ -835,3 +835,4 @@ Live context-feed v3 finding: offending_file=src/cli/tests/fixtures/dogfood-esli
 DoD 1 MSN-0192: live eslint adapter dogfood — committed unused-var dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-eslint-adapter.ts line=3 start_column=7 rule_id=@typescript-eslint/no-unused-vars; context-feed omitted gate streams; executor repaired from those coordinates only
 DoD 1 MSN-0191 re-attest: tsc adapter dogfood still holds after MSN-0192 fixture under src/cli/tests/fixtures/; npx tsc --noEmit --pretty false green
 DoD 1 MSN-0191 re-attest v3: sentinel unused binding renamed to _n so changed-code eslint PASSes; tsc still green
+DoD 1 MSN-0192 re-attest: eslint adapter dogfood still holds after MSN-0191 sentinel _n rename; fixture gate green
