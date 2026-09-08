@@ -1,3 +1,3 @@
-/** MSN-0192 live eslint adapter dogfood. Not a test file. */
+/** MSN-0192 live eslint adapter dogfood sentinel. Not a test file. */
 export {};
-const dogfoodBreak = 1;
+const _dogfoodOk = 1;
