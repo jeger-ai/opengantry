@@ -5,6 +5,7 @@ import { handleDraftLegislation } from "../dist/cli/lib/mcp-draft-legislation.js
 import { handleExecuteLegislation } from "../dist/cli/lib/mcp-execute-legislation.js";
 import { handleCheckSignature } from "../dist/cli/lib/mcp-check-signature.js";
 import { handlePinMission, handleRuntimeEnv } from "../dist/cli/lib/mcp-runtime.js";
+import { handleDoctor } from "../dist/cli/lib/mcp-doctor.js";
 
 const dest = process.env.GXT_DOGFOOD_TMP;
 if (!dest) throw new Error("GXT_DOGFOOD_TMP unset");
@@ -49,5 +50,9 @@ if (pinned.status !== "pinned") throw new Error("pin failed");
 
 const env = handleRuntimeEnv(executed.mission_file_path);
 if (env.status !== "ok") throw new Error(`runtime env failed: ${JSON.stringify(env)}`);
+
+const doctor = handleDoctor({});
+if (doctor.status === "error") throw new Error(`doctor failed: ${JSON.stringify(doctor)}`);
+if (!Array.isArray(doctor.lines)) throw new Error("doctor lines missing");
 
 console.log("OK: MCP dogfood flow passed");

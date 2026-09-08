@@ -855,3 +855,8 @@ DoD 1 MSN-0193 re-attest v2: whole-tree lint:json still green after MSN-0191/019
 [CONTEXT-REQUEST] path=docs/DEVELOPMENT.md,docs/FEATURES.md reason=Document gantry doctor tsc/eslint adapter preflight before pinning typed-adapter missions proposed=docs/DEVELOPMENT.md,docs/FEATURES.md
 DoD 1 MSN-0196: gantry doctor preflights declared tsc/eslint adapters (npx, repo packages, tsconfig parse, eslint config, lint:json --format json); --gate-adapter force; --adapter-baseline warn-only; skip when no typed missions; DEVELOPMENT + FEATURES; npm test 648 pass
 DoD 1 MSN-0196 re-attest: PR review — npm run lint -- forwarded args concatenated onto script body; baseline eslint argv-only (no shell); npx probed when eslint gate uses npx; npm test 651 pass
+
+## MSN-0197 — gxt_doctor MCP preflight
+[CONTEXT-REQUEST] path=docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,scripts/validate-mcp-dogfood.mjs reason=Document gxt_doctor MCP tool and dogfood handleDoctor; operator authorized file-exact expansion at legislation proposed=docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,scripts/validate-mcp-dogfood.mjs
+[CONTEXT-REQUEST] path=templates/scripts/validate-mcp-dogfood.mjs reason=scripts/validate-mcp-dogfood.mjs is overwritten by gen:dogfood from templates/scripts; dogfood handleDoctor must live in the template source of truth proposed=templates/scripts/validate-mcp-dogfood.mjs
+DoD 1 MSN-0197: gxt_doctor MCP tool wraps collectDoctorReport (gate_adapter tsc|eslint, adapter_baseline off by default, policy_path); skip when no typed missions; ADR-0041 no sniff; dogfood handleDoctor; DEVELOPMENT+FEATURES+INTEGRATIONS; npm test 655 pass

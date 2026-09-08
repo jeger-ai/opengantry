@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0197: gxt_doctor MCP tool wraps collectDoctorReport (gate_adapter tsc|eslint, adapter_baseline off by default, policy_path); skip when no typed missions; ADR-0041 no sniff; dogfood handleDoctor; DEVELOPMENT+FEATURES+INTEGRATIONS; npm test 655 pass"
+    anchor: "862"
+    status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
     kind: undefined_boundary

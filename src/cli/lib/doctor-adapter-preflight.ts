@@ -31,7 +31,7 @@ export interface AdapterPreflightResult {
   nextStep: string | null;
 }
 
-const SKIPPED_MESSAGE = "adapter preflight: no tsc/eslint missions declared (skipped)";
+export const SKIPPED_MESSAGE = "adapter preflight: no tsc/eslint missions declared (skipped)";
 
 function appendCommand(map: Map<GateAdapterId, string[]>, adapter: GateAdapterId, command: string): void {
   const existing = map.get(adapter) ?? [];
