@@ -212,7 +212,7 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
-**Tool-native findings:** set `gate_adapter: eslint` (gate must run `eslint --format json`) or `gate_adapter: tsc` (plain `tsc` diagnostics) in the mission YAML and `gantry verify` maps each lint or type error to its own finding with `offending_file`, `line`, columns, and `rule_id`. Routing is explicit — never inferred from the command string (ADR-0041). The default `generic` adapter keeps exit-code plus `gate_success_substring` semantics.
+**Tool-native findings:** set `gate_adapter: eslint` (gate must run `eslint --format json`, e.g. `npm run lint:json`) or `gate_adapter: tsc` (plain `tsc` diagnostics, e.g. `npx tsc --noEmit --pretty false`) in the mission YAML and `gantry verify` maps each lint or type error to its own finding with `offending_file`, `line`, columns, and `rule_id`. Routing is explicit — never inferred from the command string (ADR-0041). Do not concatenate `tsc` and `eslint` in one `gate_command`. The default `generic` adapter keeps exit-code plus `gate_success_substring` semantics.
 
 **No terminal vomit:** agents do not scrape unstructured stderr or guess which line failed. The `findings[]` envelope is a **predictable, structured audit API** built for autonomous retry edges: each item names the gate, `offending_file`, line, severity, and a resolution hint. Use `gantry context-feed --json` for compact model re-entry; read `gate_log_path` on disk for full stack traces. Humans can run **`gantry report`** — a localhost overview of repo metrics, mission history, and the last verify (drill-down at `/verify`). Same payload on `--json`, SARIF, and MCP `gxt_verify`.
 

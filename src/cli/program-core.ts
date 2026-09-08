@@ -13,14 +13,13 @@ import { runReport } from "./commands/report.js";
 import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
-import { readStdinIfEmpty } from "./lib/cli-io.js";
+import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
 import type { InitOptions } from "./commands/init.js";
 import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
 import { parseGateAdapterOption } from "./lib/legislate-gate-options.js";
 import { getOutputAudience } from "./lib/output-context.js";
-import { logError, setExitCode } from "./lib/cli-io.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */
 type TriageCliOptions = Omit<TriageRunOptions, "text">;
@@ -67,7 +66,7 @@ function addInitOptions(cmd: Command): Command {
     );
 }
 
-export function registerCoreCommands(program: Command): void {
+function registerCheckStatusPinCommands(program: Command): void {
   program
     .command("check")
     .description("Validate MANIFEST.json + Rule 4.4 skills/ sync")
@@ -100,7 +99,9 @@ export function registerCoreCommands(program: Command): void {
   program.command("unpin").description("Clear active mission pin").action(() => {
     runUnpin();
   });
+}
 
+function registerReceiptCommands(program: Command): void {
   const receipt = program.command("receipt").description("Inspect local attestation receipts (gitignored history)");
 
   receipt
@@ -157,7 +158,9 @@ export function registerCoreCommands(program: Command): void {
         });
       },
     );
+}
 
+function registerDoctorInitUpgradeCommands(program: Command): void {
   program
     .command("doctor")
     .description("Active GXT readiness check (warnings do not fail exit)")
@@ -206,7 +209,9 @@ export function registerCoreCommands(program: Command): void {
     .action((options: UpgradeOptions) => {
       runUpgrade({ ...options, apply: true });
     });
+}
 
+function registerTriageStartCommands(program: Command): void {
   program
     .command("triage")
     .description("Foreman-style triage from manifest (SOUL-aligned)")
@@ -269,7 +274,9 @@ export function registerCoreCommands(program: Command): void {
         audience: getOutputAudience(),
       });
     });
+}
 
+function registerOnboardingFeedReportCommands(program: Command): void {
   program
     .command("onboarding")
     .description("Interactive walkthrough of the strict GXT mission graph")
@@ -304,7 +311,9 @@ export function registerCoreCommands(program: Command): void {
         last: opts.last,
       });
     });
+}
 
+function registerAuditBlueprintPlannerCommands(program: Command): void {
   program
     .command("audit-rigor")
     .description("Meta-governance audit: compiler strictness, coverage artifacts, MANIFEST wildcards")
@@ -347,4 +356,13 @@ export function registerCoreCommands(program: Command): void {
     .action((emails: string[]) => {
       runPlannerSet({ emails });
     });
+}
+
+export function registerCoreCommands(program: Command): void {
+  registerCheckStatusPinCommands(program);
+  registerReceiptCommands(program);
+  registerDoctorInitUpgradeCommands(program);
+  registerTriageStartCommands(program);
+  registerOnboardingFeedReportCommands(program);
+  registerAuditBlueprintPlannerCommands(program);
 }

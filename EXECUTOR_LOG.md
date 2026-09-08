@@ -823,3 +823,8 @@ DoD 1 MSN-0189: gate_adapter enum (generic|eslint|tsc) added to MISSION.schema.y
 
 ## MSN-0190 — gate_adapter gantry CLI implementation
 DoD 1 MSN-0190: GateAdapterId type and GateSpec.adapter parsed from gate_adapter (default generic); spawn-stream-core with bounded 20MiB stdout capture + stdoutTruncated flag; ESLint JSON adapter and tsc diagnostics adapter emitting envelope v3 findings with offending_file, line, columns, rule_id, evidence; exhaustive adapter registry wired into evaluateGatePhase; readEvidenceSnippet moved to verify-evidence-snippet.ts; --gate-adapter flag on legislate/start plus MCP draft/execute/start_orchestration plumbing through the signed draft token; madge: no cycles in gate-adapters (17 pre-existing engine cycles unchanged); lint clean; npm test 636 pass
+
+## MSN-0193 — registrar max-lines split and lint:json gate
+[CONTEXT-REQUEST] path=docs/DEVELOPMENT.md reason=Document one-adapter-per-mission tsc vs eslint recipes outside gantry TMVC (src/cli/ + package.json); operator authorized Context Request at legislation proposed=docs/DEVELOPMENT.md
+[CONTEXT-REQUEST] path=README.md reason=Point tool-native findings paragraph at lint:json and the one-adapter-per-mission rule proposed=README.md
+DoD 1 MSN-0193: split registerCoreCommands/registerWorkflowCommands/registerMissionCommands into local helpers under 80 lines (no new modules); npm run lint:json added; whole-tree eslint src/cli/**/*.ts green; npm test 636 pass; DEVELOPMENT.md feature-mission adapter recipes (one adapter per mission, no tsc+eslint concat); CI stays changed-file lint

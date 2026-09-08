@@ -15,10 +15,9 @@ import { listDomainKeys } from "./lib/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "./lib/interrogate/findings.js";
 import fs from "node:fs";
-import { readStdinIfEmpty } from "./lib/cli-io.js";
+import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
 import { parseGateAdapterOption } from "./lib/legislate-gate-options.js";
 import { getOutputAudience } from "./lib/output-context.js";
-import { logError, setExitCode } from "./lib/cli-io.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
 type LegislateCliOptions = Omit<
@@ -152,7 +151,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
   };
 }
 
-export function registerWorkflowCommands(program: Command): void {
+function registerLegislateInterrogateCommands(program: Command): void {
   program
     .command("legislate")
     .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Planner still commits)")
@@ -214,7 +213,9 @@ export function registerWorkflowCommands(program: Command): void {
       }
       runInterrogateCommand(mapInterrogateCommanderOptions(options, text));
     });
+}
 
+function registerAttestCommand(program: Command): void {
   program
     .command("attest")
     .description("Emit local attestation receipt (digests only; optional SSH/GPG signature)")
@@ -238,7 +239,9 @@ export function registerWorkflowCommands(program: Command): void {
         });
       },
     );
+}
 
+function registerVerifyScanCommands(program: Command): void {
   program
     .command("verify")
     .description(
@@ -287,7 +290,9 @@ export function registerWorkflowCommands(program: Command): void {
     .action((opts: { mission?: string; cwd?: string; json?: boolean }) => {
       runScan(opts);
     });
+}
 
+function registerEventsRegisterCheckImportsCommands(program: Command): void {
   const eventsCmd = program.command("events").description("Pre-commit agent event spool and plane push");
 
   eventsCmd
@@ -321,7 +326,9 @@ export function registerWorkflowCommands(program: Command): void {
     .action((dir: string, opts: { ban: string[]; json?: boolean }) => {
       runCheckImports({ dir, ban: opts.ban, json: opts.json });
     });
+}
 
+function registerPerimeterDomainsMetricsCommands(program: Command): void {
   const perimeterCmd = program
     .command("perimeter")
     .description("Governance perimeter: protected-file guard (default) and TARGET_ARCHITECTURE checks");
@@ -360,4 +367,12 @@ export function registerWorkflowCommands(program: Command): void {
     .action((opts: { json?: boolean; ref?: string }) => {
       runMetrics({ json: opts.json, ref: opts.ref });
     });
+}
+
+export function registerWorkflowCommands(program: Command): void {
+  registerLegislateInterrogateCommands(program);
+  registerAttestCommand(program);
+  registerVerifyScanCommands(program);
+  registerEventsRegisterCheckImportsCommands(program);
+  registerPerimeterDomainsMetricsCommands(program);
 }
