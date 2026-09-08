@@ -32,6 +32,7 @@ interrogation:
       - ADR-0041
 interrogation_sha256: 2dde5adce96c7637b67c48a690456828bfa656aac16ca4245f163212f1e30085
 declared_paths:
+  - .gitagent/missions/MSN-0196.gantry-doctor-adapter-preflight-for-tsc-eslint-m.yaml
   - EXECUTOR_LOG.md
   - docs/DEVELOPMENT.md
   - docs/FEATURES.md
