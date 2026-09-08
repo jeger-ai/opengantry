@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npx eslint --format json src/cli/tests/fixtures/dogfood-eslint-adapter.ts
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0192 re-attest: eslint adapter dogfood still holds after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/; fixture eslint JSON gate green"
-    anchor: "837"
+    trace_quote: "DoD 1 MSN-0192 re-attest v2: eslint adapter dogfood still holds after MSN-0191 tsc sentinel under src/cli/tests/fixtures/; fixture eslint JSON gate green"
+    anchor: "845"
     status: PASS
 gate_adapter: eslint
 interrogation:
