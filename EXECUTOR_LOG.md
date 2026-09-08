@@ -829,3 +829,10 @@ DoD 1 MSN-0190: GateAdapterId type and GateSpec.adapter parsed from gate_adapter
 [CONTEXT-REQUEST] path=templates/.github/workflows/gxt-attest-ingest.yml reason=Keep spoke template in parity with dogfood attest-ingest skip proposed=templates/.github/workflows/gxt-attest-ingest.yml
 [CONTEXT-REQUEST] path=docs/INTEGRATIONS.md reason=Document skip-when-unconfigured attest-ingest behavior outside gantry TMVC proposed=docs/INTEGRATIONS.md
 DoD 1 MSN-0194: gxt-attest-ingest skips --export when GANTRY_ORG_ID or GANTRY_ORG_PEPPER unset and skips ingest when PLANE_INGEST_URL or PLANE_INGEST_TOKEN unset; verify still runs; configured path unchanged; template mirrored; INTEGRATIONS.md documents skip; npm test 637 pass
+
+## MSN-0191 — live tsc adapter dogfood
+[CONTEXT-REQUEST] path=.gitagent/missions/MSN-0191.dogfood-domain-adapters-prove-msn-0190-tsc-parse.yaml reason=Planner restamp after dummy commit so git-proof binds; update trace_rows after live gate proposed=mission yaml
+Live context-feed v3 finding: offending_file=src/cli/tests/fixtures/dogfood-gate-adapter.ts line=3 start_column=7 rule_id=TS2322 evidence=n: number = "dogfood-break"; feed schema 2 omitted gate streams. Surgical fix applied at that span only (string to number).
+DoD 1 MSN-0191: live tsc adapter dogfood — committed TS2322 dummy; gantry verify gate GXT_GATE_FAILED with v3 finding offending_file=src/cli/tests/fixtures/dogfood-gate-adapter.ts line=3 start_column=7 rule_id=TS2322; context-feed omitted gate streams; executor repaired from those coordinates only; subsequent tsc green
+DoD 1 MSN-0191 re-attest v3: sentinel unused binding renamed to _n so changed-code eslint PASSes; tsc still green
+DoD 1 MSN-0191 re-attest v4: tsc adapter dogfood still holds after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/; npx tsc --noEmit --pretty false green
