@@ -9,20 +9,15 @@ export function gateLogRelPath(msnId: string): string {
   return `${REL_GATE_LOGS_DIR}/${safe}.last.log`;
 }
 
-export function resolveGateLogPaths(
-  root: string,
-  msnId: string,
-): { abs: string; rel: string } {
+export function ensureGateLogPath(root: string, msnId: string): { abs: string; rel: string } {
   const rel = gateLogRelPath(msnId);
   const absDir = path.join(root, REL_GATE_LOGS_DIR);
   fs.mkdirSync(absDir, { recursive: true });
   return { abs: path.join(root, rel), rel: rel.replace(/\\/g, "/") };
 }
 
-/** Read gate log from disk; tail-capped at MAX_IO_BUFFER_BYTES to avoid V8 OOM. */
-export function readGateLogText(root: string, gateLogRel: string | undefined): string {
-  if (!gateLogRel) return "";
-  const absPath = path.join(root, gateLogRel);
+/** Read an absolute gate log; tail-capped at MAX_IO_BUFFER_BYTES to avoid V8 OOM. */
+export function readGateLogAbs(absPath: string): string {
   try {
     const stat = fs.statSync(absPath);
     if (stat.size <= MAX_IO_BUFFER_BYTES) {
@@ -40,6 +35,12 @@ export function readGateLogText(root: string, gateLogRel: string | undefined): s
   } catch {
     return "";
   }
+}
+
+/** Read gate log from disk; tail-capped at MAX_IO_BUFFER_BYTES to avoid V8 OOM. */
+export function readGateLogText(root: string, gateLogRel: string | undefined): string {
+  if (!gateLogRel) return "";
+  return readGateLogAbs(path.join(root, gateLogRel));
 }
 
 /** Write combined gate stdout/stderr; returns repo-relative POSIX path. */
@@ -68,14 +69,3 @@ export function writeGateLog(
   return rel.replace(/\\/g, "/");
 }
 
-/** Prefer streamed gate log; only write legacy format when no existing path. */
-export function resolveRemediationGateLog(
-  root: string,
-  msnId: string | undefined,
-  existingRel: string | undefined,
-  stdout: string | undefined,
-  stderr: string | undefined,
-): string | undefined {
-  if (existingRel?.trim()) return existingRel.replace(/\\/g, "/");
-  return writeGateLog(root, msnId, stdout, stderr);
-}

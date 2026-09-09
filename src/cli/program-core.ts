@@ -1,4 +1,4 @@
-import type { Command } from "commander";
+import { Option, type Command } from "commander";
 import { runCheck } from "./commands/check.js";
 import { runInit } from "./commands/init.js";
 import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
@@ -18,20 +18,15 @@ import type { InitOptions } from "./commands/init.js";
 import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
-import { parseGateAdapterOption } from "./lib/legislate-gate-options.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, type GateAdapterId, type TypedGateAdapterId } from "./lib/types.js";
 import { getOutputAudience } from "./lib/output-context.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */
 type TriageCliOptions = Omit<TriageRunOptions, "text">;
 
 /** Commander `--no-write` maps to `write`; start adapter maps to `writeMission`. */
-type StartCliOptions = Omit<
-  StartOptions,
-  "intent" | "writeMission" | "audience" | "silent" | "gateAdapter"
-> & {
+type StartCliOptions = Omit<StartOptions, "intent" | "writeMission" | "audience" | "silent"> & {
   write?: boolean;
-  /** Raw `--gate-adapter` text; validated by parseGateAdapterOption. */
-  gateAdapter?: string;
 };
 
 /** Shared `gantry init` Commander flags (used by init command registration). */
@@ -168,7 +163,11 @@ function registerDoctorInitUpgradeCommands(program: Command): void {
     .option("--json", "Emit structured report")
     .option("--policy <file>", "Compare working-tree digests to expected-digests JSON (offline)")
     .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
-    .option("--gate-adapter <id>", "Force tsc|eslint adapter preflight")
+    .addOption(
+      new Option("--gate-adapter <id>", "Force tsc|eslint adapter preflight").choices([
+        ...TYPED_GATE_ADAPTER_IDS,
+      ]),
+    )
     .option("--adapter-baseline", "Run whole-project tsc/eslint baseline (slow, warn-only)")
     .action(
       (
@@ -177,7 +176,7 @@ function registerDoctorInitUpgradeCommands(program: Command): void {
           json?: boolean;
           audience?: string;
           policy?: string;
-          gateAdapter?: string;
+          gateAdapter?: TypedGateAdapterId;
           adapterBaseline?: boolean;
         },
       ) => {
@@ -255,7 +254,12 @@ function registerTriageStartCommands(program: Command): void {
     .option("--skill-key <key>", "Override Foreman skill_key")
     .option("--gate-command <cmd>", "Deterministic gate command")
     .option("--gate-success-substring <text>", "Gate success substring")
-    .option("--gate-adapter <id>", "Explicit gate output parser: generic (default) | eslint | tsc")
+    .addOption(
+      new Option(
+        "--gate-adapter <id>",
+        "Explicit gate output parser: generic (default) | eslint | tsc",
+      ).choices([...GATE_ADAPTER_IDS]),
+    )
     .option("--no-write", "Skip writing mission file (preview only)")
     .option("--allow-duplicate", "Allow duplicate msn_id (branch migration only)")
     .option("--json", "Emit structured JSON on success")
@@ -268,17 +272,11 @@ function registerTriageStartCommands(program: Command): void {
         setExitCode(2);
         return;
       }
-      const { write, gateAdapter: gateAdapterRaw, ...startFlags } = options;
-      const gateAdapter = parseGateAdapterOption(gateAdapterRaw);
-      if (!gateAdapter.ok) {
-        logError(`start: ${gateAdapter.message}`);
-        setExitCode(2);
-        return;
-      }
+      const { write, gateAdapter, ...startFlags } = options;
       // Adapter: Commander --no-write → writeMission; audience from output context (not CLI flag).
       runStart({
         ...startFlags,
-        gateAdapter: gateAdapter.adapter,
+        gateAdapter: gateAdapter as GateAdapterId | undefined,
         intent: text,
         writeMission: write !== false,
         audience: getOutputAudience(),

@@ -3,19 +3,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { resolveGateExecAdapter } from "../lib/gate-adapters/registry.js";
+import { GATE_EXEC_ADAPTERS, resolveGateExecAdapter } from "../lib/gate-adapters/registry.js";
 import { getRepoRoot } from "../lib/git.js";
 import { GATE_ADAPTER_IDS, isGateAdapterId } from "../lib/types.js";
 
 describe("resolveGateExecAdapter", () => {
-  it("resolves every GateAdapterId to an adapter whose adapter_id matches", () => {
+  it("registers every GateAdapterId", () => {
+    assert.deepEqual((Object.keys(GATE_EXEC_ADAPTERS) as string[]).sort(), [...GATE_ADAPTER_IDS].sort());
     for (const id of GATE_ADAPTER_IDS) {
-      assert.equal(resolveGateExecAdapter(id).adapter_id, id);
+      assert.equal(typeof resolveGateExecAdapter(id), "function");
     }
   });
 
   it("undefined (mission without gate_adapter) resolves to generic", () => {
-    assert.equal(resolveGateExecAdapter(undefined).adapter_id, "generic");
+    assert.equal(resolveGateExecAdapter(undefined), GATE_EXEC_ADAPTERS.generic);
   });
 
   it("isGateAdapterId guards the enum", () => {

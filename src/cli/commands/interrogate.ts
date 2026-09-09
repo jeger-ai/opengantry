@@ -36,7 +36,7 @@ export function runInterrogateCommand(options: InterrogateCliOptions): void {
       throw new GantryUserError("INVALID_ARGUMENT", "interrogate: intent is required", undefined, 2);
     }
     const skillKey = resolveManifestSkillKey(manifest, options.skillKey?.trim() || "gantry");
-    const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions({
+    const gate = resolveLegislateGateOptions({
       gateCommand: options.gateCommand,
       gateSuccessSubstring: options.gateSuccessSubstring,
     });
@@ -47,8 +47,8 @@ export function runInterrogateCommand(options: InterrogateCliOptions): void {
       manifest,
       intent,
       skillKey,
-      gateCommand,
-      gateSuccessSubstring,
+      gateCommand: gate.command,
+      gateSuccessSubstring: gate.successSubstring,
       paths: options.paths ?? [],
       interrogation,
     });

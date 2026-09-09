@@ -8,7 +8,7 @@ function mission(traceRows: ParsedMission["traceRows"]): ParsedMission {
   return {
     msnId: "MSN-0001",
     skillKey: "ui",
-    gate: { command: "echo OK", successSubstring: "OK" },
+    gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
     kpiGate: null,
     virtualCapture: false,
     llmVerifiers: [],

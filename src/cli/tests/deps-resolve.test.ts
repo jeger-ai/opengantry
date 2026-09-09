@@ -168,7 +168,7 @@ test("deps-resolve: verify phase emits v3 finding and mapped code", () => {
       mission: {
         msnId: "MSN-0200",
         skillKey: "gantry",
-        gate: { command: "echo OK", successSubstring: "OK" },
+        gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
         kpiGate: null,
         virtualCapture: false,
         llmVerifiers: [],

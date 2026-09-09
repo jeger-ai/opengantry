@@ -8,7 +8,7 @@ import {
 import { collectDoctorReport } from "../lib/doctor-core.js";
 import type { AdapterPreflightOptions } from "../lib/doctor-adapter-preflight.js";
 import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor-types.js";
-import { isGateAdapterId, type GateAdapterId } from "../lib/types.js";
+import type { TypedGateAdapterId } from "../lib/types.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface DoctorReport {
@@ -21,26 +21,8 @@ export interface DoctorOptions {
   json?: boolean;
   audience?: OutputAudience;
   policy?: string;
-  gateAdapter?: string;
+  gateAdapter?: TypedGateAdapterId;
   adapterBaseline?: boolean;
-}
-
-function typedForceAdapter(raw: string | undefined): GateAdapterId | { fail: DoctorLine } | undefined {
-  if (raw === undefined) return undefined;
-  if (!isGateAdapterId(raw)) {
-    return { fail: { level: "fail", message: `unknown --gate-adapter ${raw} (use tsc or eslint)` } };
-  }
-  switch (raw) {
-    case "tsc":
-    case "eslint":
-      return raw;
-    case "generic":
-      return { fail: { level: "fail", message: "unknown --gate-adapter generic (use tsc or eslint)" } };
-    default: {
-      const unreachable: never = raw;
-      throw new Error(`unknown gate adapter: ${String(unreachable)}`);
-    }
-  }
 }
 
 function emitDoctor(
@@ -74,13 +56,8 @@ function emitDoctor(
 
 export function runDoctor(options: DoctorOptions = {}): void {
   try {
-    const forced = typedForceAdapter(options.gateAdapter);
-    if (forced !== undefined && typeof forced === "object") {
-      emitDoctor([forced.fail], null, true, options.json, options.audience);
-      return;
-    }
     const adapterPreflight: AdapterPreflightOptions = {
-      ...(forced !== undefined ? { forceAdapter: forced } : {}),
+      ...(options.gateAdapter !== undefined ? { forceAdapter: options.gateAdapter } : {}),
       ...(options.adapterBaseline === true ? { baseline: true } : {}),
     };
     const { root, manifest } = loadWorkspace();

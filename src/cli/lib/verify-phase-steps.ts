@@ -16,7 +16,7 @@ import type {
 import type { VerifyOptions } from "./verify-options.js";
 import type { TraceVerifyWarning } from "./trace.js";
 import { resolveGateExecAdapter } from "./gate-adapters/registry.js";
-import { readGateLogText, resolveGateLogPaths } from "./gate-log-writer.js";
+import { ensureGateLogPath, readGateLogText } from "./gate-log-writer.js";
 
 function parseDeclaredAnchorLine(anchor: string): number {
   const n = Number.parseInt(anchor.trim(), 10);
@@ -67,15 +67,14 @@ export async function evaluateGatePhase(
 ): Promise<GatePhaseOutcome> {
   const { root, mission, options, executorLogPath } = input;
   const msnId = mission.msnId ?? "MSN-0000";
-  const { abs: gateLogAbs, rel: gateLogRel } = resolveGateLogPaths(root, msnId);
+  const { abs: gateLogAbs, rel: gateLogRel } = ensureGateLogPath(root, msnId);
   const adapter = options.gateExecAdapter ?? resolveGateExecAdapter(gate.adapter);
   const cwd = resolveGateWorkDir(root, options);
 
-  const result = await adapter.execute(gate.command, {
-    msn_id: msnId,
-    gate_log_path: gateLogAbs,
+  const result = await adapter(gate.command, {
     cwd,
-    repo_root: root,
+    repoRoot: root,
+    gateLogPath: gateLogAbs,
     successSubstring: gate.successSubstring,
   });
 

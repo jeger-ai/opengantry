@@ -1,22 +1,22 @@
 import type { VerifyFinding } from "../verify-finding.js";
+import type { GateAdapterId } from "./gate-adapter-id.js";
 
 export interface GateExecContext {
-  msn_id: string;
-  /** Absolute path for streaming gate subprocess I/O. */
-  gate_log_path: string;
   cwd: string;
   /** Repository root for repo-relative `offending_file`; defaults to `cwd`. */
-  repo_root?: string;
-  successSubstring?: string | null;
+  repoRoot?: string;
+  /** Absolute path for streaming gate subprocess I/O. */
+  gateLogPath: string;
+  successSubstring: string | null;
 }
 
 export interface GateExecutionResult {
   exitCode: number | null;
-  adapter_id: string;
+  adapter_id: GateAdapterId | string;
   findings: VerifyFinding[];
 }
 
-export interface GateExecAdapter {
-  readonly adapter_id: string;
-  execute(command: string, ctx: GateExecContext): Promise<GateExecutionResult>;
-}
+export type GateExecAdapter = (
+  command: string,
+  ctx: GateExecContext,
+) => Promise<GateExecutionResult>;

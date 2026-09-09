@@ -11,8 +11,8 @@ import {
 } from "../lib/adapter-preflight-checks.js";
 import { runAdapterPreflightDoctorChecks } from "../lib/doctor-adapter-preflight.js";
 import { collectDoctorReport } from "../lib/doctor-core.js";
-import { runDoctor } from "../commands/doctor.js";
 import { getRepoRoot } from "../lib/git.js";
+import { buildProgram } from "../program.js";
 import type { Manifest } from "../lib/types.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
@@ -208,18 +208,15 @@ test("--gate-adapter tsc forces checks with no typed missions", () => {
   assert.equal(hasLine(r.lines, "fail", "typescript package not resolvable"), true);
 });
 
-test("runDoctor: invalid --gate-adapter exits 1", () => {
-  const { dest } = miniRepo();
-  const prevCwd = process.cwd();
-  try {
-    process.chdir(dest);
-    process.exitCode = undefined;
-    runDoctor({ gateAdapter: "nope" });
-    assert.equal(process.exitCode, 1);
-  } finally {
-    process.chdir(prevCwd);
-    process.exitCode = undefined;
-  }
+test("Commander --gate-adapter .choices() rejects unknown ids", () => {
+  const program = buildProgram();
+  process.exitCode = undefined;
+  assert.throws(
+    () => program.parse(["doctor", "--gate-adapter", "nope"], { from: "user" }),
+    (err: unknown) => err instanceof Error && /Allowed choices are tsc, eslint/.test(err.message),
+  );
+  assert.equal(process.exitCode, 2);
+  process.exitCode = undefined;
 });
 
 test("baseline tsc warns with injected runner and keeps no fail", () => {

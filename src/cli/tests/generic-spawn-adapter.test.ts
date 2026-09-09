@@ -4,31 +4,19 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { GenericSpawnAdapter, spawnOrDestroyStream } from "../lib/gate-adapters/generic-spawn-adapter.js";
-import { createSubstringStreamScanner } from "../lib/gate-adapters/substring-stream-scan.js";
+import { genericSpawnAdapter } from "../lib/gate-adapters/generic-spawn-adapter.js";
+import { spawnOrDestroyStream } from "../lib/gate-adapters/spawn-stream-core.js";
 import type { GateExecAdapter } from "../lib/verify-options.js";
 
-describe("substring stream scanner", () => {
-  it("matches needle split across chunk boundary", () => {
-    const scanner = createSubstringStreamScanner("PASS");
-    scanner.feed("PA");
-    assert.equal(scanner.matched(), false);
-    scanner.feed("SS");
-    assert.equal(scanner.matched(), true);
-  });
-});
+function ctx(dir: string, logPath: string, successSubstring: string | null = null) {
+  return { cwd: dir, gateLogPath: logPath, successSubstring };
+}
 
-describe("GenericSpawnAdapter", () => {
-  it("streams output to gate_log_path without buffering in result", async () => {
+describe("genericSpawnAdapter", () => {
+  it("streams output to gateLogPath without buffering in result", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-generic-spawn-"));
     const logPath = path.join(dir, "gate.log");
-    const adapter = new GenericSpawnAdapter();
-    const result = await adapter.execute(`bash -lc "echo noisy-output; exit 0"`, {
-      msn_id: "MSN-TEST",
-      gate_log_path: logPath,
-      cwd: dir,
-      successSubstring: null,
-    });
+    const result = await genericSpawnAdapter(`bash -lc "echo noisy-output; exit 0"`, ctx(dir, logPath));
     assert.equal(result.exitCode, 0);
     assert.equal(result.findings.length, 0);
     assert.ok(fs.readFileSync(logPath, "utf8").includes("noisy-output"));
@@ -38,8 +26,7 @@ describe("GenericSpawnAdapter", () => {
   it("closes write stream after execute resolves", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-generic-spawn-close-"));
     const logPath = path.join(dir, "gate.log");
-    const adapter = new GenericSpawnAdapter();
-    await adapter.execute("true", { msn_id: "MSN-TEST", gate_log_path: logPath, cwd: dir });
+    await genericSpawnAdapter("true", ctx(dir, logPath));
     const fd = fs.openSync(logPath, "r+");
     fs.closeSync(fd);
   });
@@ -47,29 +34,18 @@ describe("GenericSpawnAdapter", () => {
   it("non-zero exit yields one coarse finding", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-generic-spawn-fail-"));
     const logPath = path.join(dir, "gate.log");
-    const adapter = new GenericSpawnAdapter();
-    const result = await adapter.execute("false", {
-      msn_id: "MSN-TEST",
-      gate_log_path: logPath,
-      cwd: dir,
-    });
+    const result = await genericSpawnAdapter("false", ctx(dir, logPath));
     assert.notEqual(result.exitCode, 0);
     assert.equal(result.findings.length, 1);
     assert.equal(result.findings[0]!.failed_gate, "gate");
   });
 
-  it("successSubstring matches across streamed chunks", async () => {
+  it("successSubstring matches after close even when split across writes", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-generic-spawn-sub-"));
     const logPath = path.join(dir, "gate.log");
-    const adapter = new GenericSpawnAdapter();
-    const result = await adapter.execute(
+    const result = await genericSpawnAdapter(
       `node -e "process.stdout.write('PA'); process.stdout.write('SS');"`,
-      {
-        msn_id: "MSN-TEST",
-        gate_log_path: logPath,
-        cwd: dir,
-        successSubstring: "PASS",
-      },
+      ctx(dir, logPath, "PASS"),
     );
     assert.equal(result.exitCode, 0);
     assert.equal(result.findings.length, 0);
@@ -99,21 +75,18 @@ describe("GenericSpawnAdapter", () => {
 describe("gateExecAdapter", () => {
   it("custom adapter can replace generic spawn", async () => {
     let called = false;
-    const adapter: GateExecAdapter = {
-      adapter_id: "test",
-      async execute(_command, _ctx) {
-        called = true;
-        return {
-          exitCode: 0,
-          adapter_id: "test",
-          findings: [],
-        };
-      },
+    const adapter: GateExecAdapter = async (_command, _ctx) => {
+      called = true;
+      return {
+        exitCode: 0,
+        adapter_id: "test",
+        findings: [],
+      };
     };
-    const result = await adapter.execute("true", {
-      msn_id: "MSN-TEST",
-      gate_log_path: "/tmp/unused.log",
+    const result = await adapter("true", {
       cwd: process.cwd(),
+      gateLogPath: "/tmp/unused.log",
+      successSubstring: null,
     });
     assert.equal(called, true);
     assert.equal(result.exitCode, 0);

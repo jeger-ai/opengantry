@@ -19,6 +19,7 @@ import { handleDoctor } from "./mcp-doctor.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "./types.js";
 
 const interrogationRowSchema = z.object({
   finding_id: z.string(),
@@ -30,14 +31,14 @@ const interrogationRowSchema = z.object({
 });
 
 const gateAdapterSchema = z
-  .enum(["generic", "eslint", "tsc"])
+  .enum(GATE_ADAPTER_IDS)
   .optional()
   .describe(
     "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc. Run gxt_doctor first for tsc|eslint.",
   );
 
 const typedDoctorAdapterSchema = z
-  .enum(["tsc", "eslint"])
+  .enum(TYPED_GATE_ADAPTER_IDS)
   .optional()
   .describe(
     "Force tsc or eslint adapter preflight even when no typed missions are declared (ADR-0041). Never sniffs gate_command.",

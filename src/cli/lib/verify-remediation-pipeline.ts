@@ -9,7 +9,7 @@ import {
   type RemediationSnapshot,
   REMEDIATION_SCHEMA_VERSION,
 } from "./context-feed-store.js";
-import { resolveRemediationGateLog } from "./gate-log-writer.js";
+import { writeGateLog } from "./gate-log-writer.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import {
   appendDigestToRing,
@@ -116,13 +116,9 @@ export function persistFailedVerifyRemediation(input: {
   );
   const digest = computeFindingsDigest(findings);
   const existingRel = failure?.phase === "gate" ? failure.gateLogPath : undefined;
-  const gateLogPath = resolveRemediationGateLog(
-    root,
-    msnId,
-    existingRel,
-    nextPayload.stdout,
-    nextPayload.stderr,
-  );
+  const gateLogPath = existingRel?.trim()
+    ? existingRel.replace(/\\/g, "/")
+    : writeGateLog(root, msnId, nextPayload.stdout, nextPayload.stderr);
   const meta = mission
     ? {
         mission_file_path: missionRel,

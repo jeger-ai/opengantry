@@ -40,7 +40,7 @@ function minimalMission(root: string, msnId: string): ParsedMission {
   return {
     msnId,
     skillKey: "gantry",
-    gate: { command: "true", successSubstring: null },
+    gate: { command: "true", successSubstring: null, adapter: "generic" },
     kpiGate: null,
     virtualCapture: false,
     llmVerifiers: [],

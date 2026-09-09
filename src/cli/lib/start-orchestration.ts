@@ -180,9 +180,10 @@ function scaffoldStartMission(
     return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
   }
 
-  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions({
+  const gate = resolveLegislateGateOptions({
     gateCommand: options.gateCommand,
     gateSuccessSubstring: options.gateSuccessSubstring,
+    adapter: options.gateAdapter,
   });
 
   const interrogate = runInterrogate({
@@ -190,8 +191,8 @@ function scaffoldStartMission(
     manifest,
     intent: options.intent,
     skillKey: resolvedSkillKey,
-    gateCommand,
-    gateSuccessSubstring,
+    gateCommand: gate.command,
+    gateSuccessSubstring: gate.successSubstring,
     paths: [],
     interrogation: [],
   });

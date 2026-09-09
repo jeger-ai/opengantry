@@ -1,15 +1,16 @@
 /**
  * Shared subprocess core for gate adapters: spawn via shell, stream stdout+stderr
- * to `gate_log_path`, scan for the success substring, and optionally capture
- * stdout in memory (bounded by MAX_IO_BUFFER_BYTES, truncation flagged).
+ * to `gateLogPath`, and optionally capture stdout in memory (bounded by
+ * MAX_IO_BUFFER_BYTES, truncation flagged). Success-substring is checked after
+ * close against the written log (fixes multibyte chunk-split false negatives).
  *
- * Adapter-layer module: imports only gate.ts and sibling adapter helpers.
+ * Adapter-layer module: imports only gate.ts, gate-log-writer, and sibling types.
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import { MAX_IO_BUFFER_BYTES, shellForPlatform } from "../gate.js";
+import { readGateLogAbs } from "../gate-log-writer.js";
 import type { GateExecContext } from "./gate-adapter-types.js";
-import { createSubstringStreamScanner } from "./substring-stream-scan.js";
 
 export interface SpawnStreamOptions {
   /** Keep a bounded copy of stdout in memory for structured parsing. */
@@ -55,7 +56,7 @@ export function spawnOrDestroyStream(
   }
 }
 
-class BoundedStdoutCapture {
+export class BoundedStdoutCapture {
   private readonly chunks: Buffer[] = [];
   private bytes = 0;
   truncated = false;
@@ -92,9 +93,8 @@ export async function spawnGateStreaming(
   ctx: GateExecContext,
   options: SpawnStreamOptions = {},
 ): Promise<SpawnStreamResult> {
-  const scanner = createSubstringStreamScanner(ctx.successSubstring ?? "");
   const capture = new BoundedStdoutCapture(options.captureStdout === true, MAX_IO_BUFFER_BYTES);
-  const stream = fs.createWriteStream(ctx.gate_log_path, { flags: "w" });
+  const stream = fs.createWriteStream(ctx.gateLogPath, { flags: "w" });
 
   try {
     const child = spawnOrDestroyStream(spawn, stream, command, {
@@ -105,9 +105,7 @@ export async function spawnGateStreaming(
     });
 
     const forward = (chunk: Buffer | string): void => {
-      const buf = toBuffer(chunk);
-      scanner.feed(buf.toString("utf8"));
-      stream.write(buf);
+      stream.write(toBuffer(chunk));
     };
     child.stdout?.on("data", (chunk: Buffer | string) => {
       const buf = toBuffer(chunk);
@@ -119,9 +117,11 @@ export async function spawnGateStreaming(
     const { exitCode } = await waitForChildClose(child);
     await endWriteStream(stream);
 
+    const needle = ctx.successSubstring ?? "";
+    const logText = readGateLogAbs(ctx.gateLogPath);
     return {
       exitCode,
-      successSubstringMatched: scanner.matched(),
+      successSubstringMatched: needle.length === 0 || logText.includes(needle),
       stdout: capture.text(),
       stdoutTruncated: capture.truncated,
     };

@@ -8,19 +8,12 @@
  */
 import type { VerifyFinding } from "../verify-finding.js";
 import {
-  diagnosticsToFindings,
-  genericGateFailureFinding,
-  stdoutTruncatedFinding,
+  findingsFromRun,
+  type GateRunSnapshot,
   type ParsedDiagnostic,
 } from "./adapter-findings.js";
-import type {
-  GateExecAdapter,
-  GateExecContext,
-  GateExecutionResult,
-} from "./gate-adapter-types.js";
-import { spawnGateStreaming } from "./spawn-stream-core.js";
-
-export const TSC_ADAPTER_ID = "tsc";
+import type { GateExecContext } from "./gate-adapter-types.js";
+import { parsingAdapter } from "./parsing-adapter.js";
 
 /** `path(line,col): error TS1234: message` — greedy path, right-anchored tail. */
 const PAREN_DIAGNOSTIC = /^(.*)\((\d+),(\d+)\): (error|warning) (TS\d+): (.*)$/;
@@ -64,34 +57,11 @@ export function parseTscOutput(stdout: string): ParsedDiagnostic[] {
   return diagnostics;
 }
 
-export function tscFindingsFromRun(
-  ctx: GateExecContext,
-  run: { exitCode: number | null; successSubstringMatched: boolean; stdout: string; stdoutTruncated: boolean },
-): VerifyFinding[] {
-  if (run.exitCode === 0 && run.successSubstringMatched) return [];
-
-  const diagnostics = parseTscOutput(run.stdout);
-  const findings =
-    diagnostics.length > 0
-      ? diagnosticsToFindings(ctx, TSC_ADAPTER_ID, diagnostics)
-      : run.stdoutTruncated
-        ? []
-        : [genericGateFailureFinding(run.exitCode, run.successSubstringMatched)];
-  if (run.stdoutTruncated) findings.push(stdoutTruncatedFinding(TSC_ADAPTER_ID));
-  return findings;
+export function tscFindingsFromRun(ctx: GateExecContext, run: GateRunSnapshot): VerifyFinding[] {
+  return findingsFromRun("tsc", ctx, run, (stdout) => ({ ok: true, diagnostics: parseTscOutput(stdout) }));
 }
 
-export class TscAdapter implements GateExecAdapter {
-  readonly adapter_id = TSC_ADAPTER_ID;
-
-  async execute(command: string, ctx: GateExecContext): Promise<GateExecutionResult> {
-    const run = await spawnGateStreaming(command, ctx, { captureStdout: true });
-    return {
-      exitCode: run.exitCode,
-      adapter_id: this.adapter_id,
-      findings: tscFindingsFromRun(ctx, run),
-    };
-  }
-}
-
-export const defaultTscAdapter = new TscAdapter();
+export const tscAdapter = parsingAdapter("tsc", (stdout) => ({
+  ok: true,
+  diagnostics: parseTscOutput(stdout),
+}));

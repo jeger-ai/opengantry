@@ -3,21 +3,15 @@
  * Maps `results[].messages[]` to envelope v3 findings. Selected only via the
  * mission `gate_adapter: eslint` field, never inferred from the command text.
  */
-import { verifyFinding, type VerifyFinding } from "../verify-finding.js";
+import type { VerifyFinding } from "../verify-finding.js";
 import {
-  diagnosticsToFindings,
-  genericGateFailureFinding,
-  stdoutTruncatedFinding,
+  findingsFromRun,
+  type AdapterParseResult,
+  type GateRunSnapshot,
   type ParsedDiagnostic,
 } from "./adapter-findings.js";
-import type {
-  GateExecAdapter,
-  GateExecContext,
-  GateExecutionResult,
-} from "./gate-adapter-types.js";
-import { spawnGateStreaming } from "./spawn-stream-core.js";
-
-export const ESLINT_ADAPTER_ID = "eslint";
+import type { GateExecContext } from "./gate-adapter-types.js";
+import { parsingAdapter } from "./parsing-adapter.js";
 
 interface EslintMessage {
   ruleId?: string | null;
@@ -35,9 +29,7 @@ interface EslintResult {
   messages?: EslintMessage[];
 }
 
-export type EslintParseResult =
-  | { ok: true; diagnostics: ParsedDiagnostic[] }
-  | { ok: false; reason: string };
+export type EslintParseResult = AdapterParseResult;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
@@ -94,40 +86,8 @@ export function parseEslintJsonOutput(stdout: string): EslintParseResult {
   return { ok: true, diagnostics };
 }
 
-function unparseableFinding(reason: string): VerifyFinding {
-  return verifyFinding(
-    "gate",
-    `eslint adapter: ${reason}; gate_command must run eslint with --format json`,
-    { rule_id: "eslint/unparseable-output" },
-  );
+export function eslintFindingsFromRun(ctx: GateExecContext, run: GateRunSnapshot): VerifyFinding[] {
+  return findingsFromRun("eslint", ctx, run, parseEslintJsonOutput);
 }
 
-export function eslintFindingsFromRun(
-  ctx: GateExecContext,
-  run: { exitCode: number | null; successSubstringMatched: boolean; stdout: string; stdoutTruncated: boolean },
-): VerifyFinding[] {
-  if (run.exitCode === 0 && run.successSubstringMatched) return [];
-  if (run.stdoutTruncated) return [stdoutTruncatedFinding(ESLINT_ADAPTER_ID)];
-
-  const parsed = parseEslintJsonOutput(run.stdout);
-  if (!parsed.ok) return [unparseableFinding(parsed.reason)];
-  if (parsed.diagnostics.length === 0) {
-    return [genericGateFailureFinding(run.exitCode, run.successSubstringMatched)];
-  }
-  return diagnosticsToFindings(ctx, ESLINT_ADAPTER_ID, parsed.diagnostics);
-}
-
-export class EslintJsonAdapter implements GateExecAdapter {
-  readonly adapter_id = ESLINT_ADAPTER_ID;
-
-  async execute(command: string, ctx: GateExecContext): Promise<GateExecutionResult> {
-    const run = await spawnGateStreaming(command, ctx, { captureStdout: true });
-    return {
-      exitCode: run.exitCode,
-      adapter_id: this.adapter_id,
-      findings: eslintFindingsFromRun(ctx, run),
-    };
-  }
-}
-
-export const defaultEslintJsonAdapter = new EslintJsonAdapter();
+export const eslintJsonAdapter = parsingAdapter("eslint", parseEslintJsonOutput);

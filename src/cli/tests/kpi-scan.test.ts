@@ -21,7 +21,7 @@ echo '{"metrics":{"complexity_score":3},"exit_code":0}'
   return {
     msnId: "MSN-0030",
     skillKey: "gantry",
-    gate: { command: "echo OK", successSubstring: null },
+    gate: { command: "echo OK", successSubstring: null, adapter: "generic" },
     kpiGate: { reportPath: ".gitagent/kpi/MSN-0030.json", thresholds: [] },
     virtualCapture: false,
     llmVerifiers: [{ id: "anthropic", command: scriptPath, required: true }],
@@ -88,7 +88,7 @@ printf '{"metrics":{"complexity_score":5},"exit_code":0}\\n\\n'
   const mission: ParsedMission = {
     msnId: "MSN-0031",
     skillKey: "gantry",
-    gate: { command: "echo OK", successSubstring: null },
+    gate: { command: "echo OK", successSubstring: null, adapter: "generic" },
     kpiGate: { reportPath: ".gitagent/kpi/MSN-0031.json", thresholds: [] },
     virtualCapture: false,
     llmVerifiers: [{ id: "trim", command: scriptPath, required: true }],

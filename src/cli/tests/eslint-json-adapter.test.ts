@@ -5,18 +5,17 @@ import path from "node:path";
 import { describe, it } from "node:test";
 
 import {
-  EslintJsonAdapter,
   eslintFindingsFromRun,
+  eslintJsonAdapter,
   parseEslintJsonOutput,
 } from "../lib/gate-adapters/eslint-json-adapter.js";
 import type { GateExecContext } from "../lib/gate-adapters/gate-adapter-types.js";
 
 function ctxIn(dir: string, successSubstring: string | null = null): GateExecContext {
   return {
-    msn_id: "MSN-TEST",
-    gate_log_path: path.join(dir, "gate.log"),
     cwd: dir,
-    repo_root: dir,
+    repoRoot: dir,
+    gateLogPath: path.join(dir, "gate.log"),
     successSubstring,
   };
 }
@@ -143,7 +142,7 @@ describe("eslintFindingsFromRun", () => {
   });
 });
 
-describe("EslintJsonAdapter", () => {
+describe("eslintJsonAdapter", () => {
   it("captures stdout from a real subprocess and streams it to gate_log_path", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-eslint-spawn-"));
     fs.mkdirSync(path.join(dir, "src"));
@@ -152,8 +151,7 @@ describe("EslintJsonAdapter", () => {
       { filePath: path.join(dir, "src", "a.ts"), messages: [{ ruleId: "prefer-const", severity: 2, message: "use const", line: 1, column: 5 }] },
     ]);
     fs.writeFileSync(path.join(dir, "fake-eslint.cjs"), `process.stdout.write(${JSON.stringify(payload)}); process.exit(1);\n`);
-    const adapter = new EslintJsonAdapter();
-    const result = await adapter.execute("node fake-eslint.cjs", ctxIn(dir));
+    const result = await eslintJsonAdapter("node fake-eslint.cjs", ctxIn(dir));
     assert.equal(result.adapter_id, "eslint");
     assert.equal(result.exitCode, 1);
     assert.equal(result.findings.length, 1);

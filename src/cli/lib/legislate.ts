@@ -274,13 +274,11 @@ function assertLegislateDuplicatePolicy(
   return false;
 }
 
-function resolveLegislateGateOptionsFromLegislate(options: LegislateOptions): {
-  gateCommand: string;
-  gateSuccessSubstring: string | null;
-} {
+function resolveLegislateGateOptionsFromLegislate(options: LegislateOptions) {
   return resolveLegislateGateOptions({
     gateCommand: options.gateCommand,
     gateSuccessSubstring: options.gateSuccessSubstring,
+    adapter: options.gateAdapter,
   });
 }
 
@@ -312,14 +310,14 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
     return { ok: false, exitCode: 2 };
   }
 
-  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptionsFromLegislate(options);
+  const gate = resolveLegislateGateOptionsFromLegislate(options);
   const interrogationResolved = resolveInterrogationForLegislate(
     root,
     manifest,
     options,
     skill_key,
-    gateCommand,
-    gateSuccessSubstring,
+    gate.command,
+    gate.successSubstring,
   );
   if (!interrogationResolved.ok) return { ok: false, exitCode: 2 };
 
@@ -330,9 +328,9 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
     msn_id: msnId,
     skill_key,
     intent: options.intent,
-    gate_command: gateCommand,
-    gate_success_substring: gateSuccessSubstring,
-    gate_adapter: options.gateAdapter,
+    gate_command: gate.command,
+    gate_success_substring: gate.successSubstring,
+    gate_adapter: gate.adapter,
     ...(src.rows.length > 0
       ? {
           interrogation: src.rows,

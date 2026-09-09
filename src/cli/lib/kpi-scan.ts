@@ -177,7 +177,11 @@ function runSingleVerifier(
   workDir: string,
   verifier: LlmVerifierSpec,
 ): { failed: boolean; exitCode: number; fragment: KpiScanFragment } {
-  const result = runGate(workDir, { command: verifier.command, successSubstring: null });
+  const result = runGate(workDir, {
+    command: verifier.command,
+    successSubstring: null,
+    adapter: "generic",
+  });
   const exitCode = result.exitCode ?? 1;
   const fragment = parseVerifierStdout(result.stdout);
   const failed = !verifierOutputSucceeded(exitCode, fragment);

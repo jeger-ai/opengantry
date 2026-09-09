@@ -47,7 +47,7 @@ export interface VerifyOptions {
   exportPath?: string;
   /** Require interrogation block on mission (CI hard mode). */
   requireInterrogation?: boolean;
-  /** Override gate subprocess execution (default: GenericSpawnAdapter). */
+  /** Override gate subprocess execution (default: generic spawn adapter). */
   gateExecAdapter?: GateExecAdapter;
 }
 

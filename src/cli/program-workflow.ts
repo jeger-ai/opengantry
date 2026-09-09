@@ -1,4 +1,4 @@
-import type { Command } from "commander";
+import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runMetrics } from "./commands/metrics.js";
@@ -17,18 +17,13 @@ import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/in
 import type { InterrogationRow } from "./lib/interrogate/findings.js";
 import fs from "node:fs";
 import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
-import { parseGateAdapterOption } from "./lib/legislate-gate-options.js";
+import { GATE_ADAPTER_IDS, type GateAdapterId } from "./lib/types.js";
 import { getOutputAudience } from "./lib/output-context.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
-type LegislateCliOptions = Omit<
-  LegislateOptions,
-  "intent" | "silent" | "interrogation" | "paths" | "gateAdapter"
-> & {
+type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths"> & {
   path?: string[];
   interrogationFile?: string;
-  /** Raw `--gate-adapter` text; validated by parseGateAdapterOption. */
-  gateAdapter?: string;
 };
 
 /** Commander maps --path to `path` and --answers to `answers`. */
@@ -69,14 +64,12 @@ export function mapLegislateCommanderOptions(
       rows,
     };
   }
-  const gateAdapter = parseGateAdapterOption(options.gateAdapter);
-  if (!gateAdapter.ok) throw new Error(`legislate: ${gateAdapter.message}`);
   return {
     ...options,
     intent,
     paths: options.path ?? [],
     interrogation,
-    gateAdapter: gateAdapter.adapter,
+    gateAdapter: options.gateAdapter as GateAdapterId | undefined,
   };
 }
 
@@ -169,9 +162,11 @@ function registerLegislateInterrogateCommands(program: Command): void {
       "--gate-success-substring <text>",
       "Optional substring required in combined gate stdout/stderr",
     )
-    .option(
-      "--gate-adapter <id>",
-      "Explicit gate output parser: generic (default) | eslint (gate must emit --format json) | tsc",
+    .addOption(
+      new Option(
+        "--gate-adapter <id>",
+        "Explicit gate output parser: generic (default) | eslint (gate must emit --format json) | tsc",
+      ).choices([...GATE_ADAPTER_IDS]),
     )
     .option("--path <paths...>", "Declared paths for gap analysis (repeatable)")
     .option("--interrogation-file <file>", "JSON file with interrogation answers (token-less path)")
@@ -180,12 +175,6 @@ function registerLegislateInterrogateCommands(program: Command): void {
       text = await readStdinIfEmpty(text);
       if (!text) {
         logError("legislate: provide intent text or pipe stdin");
-        setExitCode(2);
-        return;
-      }
-      const gateAdapter = parseGateAdapterOption(options.gateAdapter);
-      if (!gateAdapter.ok) {
-        logError(`legislate: ${gateAdapter.message}`);
         setExitCode(2);
         return;
       }

@@ -176,7 +176,7 @@ test("evaluateInterrogationPhase: missing interrogation_sha256 fails closed", ()
   const mission: ParsedMission = {
     msnId: "MSN-0933",
     skillKey: "gantry",
-    gate: { command: "echo OK", successSubstring: "OK" },
+    gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
     kpiGate: null,
     virtualCapture: false,
     llmVerifiers: [],

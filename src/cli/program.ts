@@ -15,6 +15,15 @@ export function buildProgram(): Command {
   const program = new Command();
   program.enablePositionalOptions(true);
   program.name(CLI_NAME).description("OpenGantry GXT CLI").version(CLI_VERSION);
+  program.exitOverride((err) => {
+    if (err.code === "commander.helpDisplayed" || err.code === "commander.version") {
+      return;
+    }
+    if (err.code === "commander.invalidArgument") {
+      process.exitCode = 2;
+    }
+    throw err;
+  });
   program.option(
     "--audience <role>",
     "Tailor stdout/stderr: executor|planner|verifier|platform (also GXT_AUDIENCE env)",

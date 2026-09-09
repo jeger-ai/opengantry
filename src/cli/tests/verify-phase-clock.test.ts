@@ -148,11 +148,8 @@ test("buildVerifyResultPayload maps adapter rejection to v3 failed envelope", as
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const manifest = loadManifest(dest);
   const mission = parseMissionFile(dest, missionRel);
-  const boom: GateExecAdapter = {
-    adapter_id: "boom",
-    async execute() {
-      throw new Error("adapter boom");
-    },
+  const boom: GateExecAdapter = async () => {
+    throw new Error("adapter boom");
   };
   const payload = await withPlannerEnvAsync(() =>
     buildVerifyResultPayload(dest, manifest, mission, {
@@ -174,15 +171,12 @@ test("evaluateGatePhase fails when adapter returns findings despite exitCode 0",
   writeMiniGantryRepo(dest, ogRoot);
   const missionRel = ".gitagent/missions/m.yaml";
   const mission = parseMissionFile(dest, missionRel);
-  const lying: GateExecAdapter = {
-    adapter_id: "lying",
-    async execute() {
-      return {
-        exitCode: 0,
-        adapter_id: "lying",
-        findings: [verifyFinding("gate", "policy failed")],
-      };
-    },
+  const lying: GateExecAdapter = async () => {
+    return {
+      exitCode: 0,
+      adapter_id: "lying",
+      findings: [verifyFinding("gate", "policy failed")],
+    };
   };
   const outcome = await evaluateGatePhase(
     {

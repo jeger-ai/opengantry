@@ -9,7 +9,7 @@ import {
 import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
 import { runInterrogate } from "./interrogate/run.js";
-import { DEFAULT_GATE_ADAPTER, isGateAdapterId } from "./types.js";
+import { DEFAULT_GATE_ADAPTER } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 
 function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?: string): string {
@@ -72,9 +72,6 @@ function validateDraftInput(input: DraftLegislationInput): McpErrorBody | null {
   if (!Array.isArray(input.interrogation)) {
     return { code: "VALIDATION_ERROR", message: "interrogation array is required", retryable: true };
   }
-  if (input.gate_adapter !== undefined && !isGateAdapterId(input.gate_adapter)) {
-    return { code: "VALIDATION_ERROR", message: "gate_adapter must be generic|eslint|tsc", retryable: true };
-  }
   return null;
 }
 
@@ -94,10 +91,10 @@ export function handleDraftLegislation(
     );
   }
 
-  const gateCommand = input.gate_command.trim();
-  const { gateSuccessSubstring } = resolveLegislateGateOptions({
-    gateCommand,
+  const gate = resolveLegislateGateOptions({
+    gateCommand: input.gate_command.trim(),
     gateSuccessSubstring: input.gate_success_substring,
+    adapter: input.gate_adapter,
   });
 
   const interrogate = runInterrogate({
@@ -105,8 +102,8 @@ export function handleDraftLegislation(
     manifest,
     intent: input.title,
     skillKey,
-    gateCommand,
-    gateSuccessSubstring,
+    gateCommand: gate.command,
+    gateSuccessSubstring: gate.successSubstring,
     paths: input.paths ?? [],
     interrogation: input.interrogation,
   });
@@ -123,9 +120,9 @@ export function handleDraftLegislation(
     title: input.title,
     msn_id: input.msn_id.trim(),
     skill_key: skillKey,
-    gate_command: gateCommand,
-    gate_success_substring: gateSuccessSubstring ?? undefined,
-    gate_adapter: input.gate_adapter,
+    gate_command: gate.command,
+    gate_success_substring: gate.successSubstring ?? undefined,
+    gate_adapter: gate.adapter,
     interrogation: interrogate.interrogation,
     interrogation_sha256: interrogate.interrogation_sha256,
     declared_paths: interrogate.declared_paths,

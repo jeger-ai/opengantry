@@ -24,8 +24,8 @@ export interface ParsedDiagnostic {
   message: string;
 }
 
-export function findingsRoot(ctx: GateExecContext): string {
-  return ctx.repo_root ?? ctx.cwd;
+function findingsRoot(ctx: GateExecContext): string {
+  return ctx.repoRoot ?? ctx.cwd;
 }
 
 /** Repo-relative POSIX path from an absolute or cwd-relative tool path. */
@@ -95,4 +95,51 @@ export function genericGateFailureFinding(exitCode: number | null, matched: bool
     "gate",
     exitCode === 0 && !matched ? "gate success substring not found in output" : "gate command failed",
   );
+}
+
+export type AdapterParseResult =
+  | { ok: true; diagnostics: ParsedDiagnostic[] }
+  | { ok: false; reason: string };
+
+export interface GateRunSnapshot {
+  exitCode: number | null;
+  successSubstringMatched: boolean;
+  stdout: string;
+  stdoutTruncated: boolean;
+}
+
+/**
+ * Single findings policy for every adapter: success-substring short-circuit,
+ * then truncation (parse prefix when possible, never emit unparseable-on-truncation),
+ * then parse / generic fallback.
+ */
+export function findingsFromRun(
+  toolId: string,
+  ctx: GateExecContext,
+  run: GateRunSnapshot,
+  parse?: (stdout: string) => AdapterParseResult,
+): VerifyFinding[] {
+  if (run.exitCode === 0 && run.successSubstringMatched) return [];
+  if (run.stdoutTruncated) {
+    if (parse) {
+      const parsed = parse(run.stdout);
+      if (parsed.ok && parsed.diagnostics.length > 0) {
+        return [...diagnosticsToFindings(ctx, toolId, parsed.diagnostics), stdoutTruncatedFinding(toolId)];
+      }
+    }
+    return [stdoutTruncatedFinding(toolId)];
+  }
+  if (!parse) return [genericGateFailureFinding(run.exitCode, run.successSubstringMatched)];
+  const parsed = parse(run.stdout);
+  if (!parsed.ok) {
+    return [
+      verifyFinding("gate", `${toolId} adapter: ${parsed.reason}; gate_command must run ${toolId} with --format json`, {
+        rule_id: `${toolId}/unparseable-output`,
+      }),
+    ];
+  }
+  if (parsed.diagnostics.length === 0) {
+    return [genericGateFailureFinding(run.exitCode, run.successSubstringMatched)];
+  }
+  return diagnosticsToFindings(ctx, toolId, parsed.diagnostics);
 }

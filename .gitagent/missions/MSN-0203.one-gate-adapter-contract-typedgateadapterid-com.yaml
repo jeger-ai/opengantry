@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0203: TypedGateAdapterId + GATE_ADAPTER_IDS as const; Commander .choices() on legislate/start/doctor; GateSpec-shaped resolveLegislateGateOptions; function-typed adapters + one findingsFromRun; Record registry; substring-stream-scan deleted (post-close includes); npm test 680 pass"
+    anchor: "895"
+    status: PASS
 interrogation:
   - finding_id: 8ff287217765
     kind: undefined_boundary
@@ -29,9 +29,43 @@ interrogation:
       - ADR-0041
 interrogation_sha256: 91bffea5e845cab2a0a28c41571fb9176e917c88197a36953bc0c7a3dc2701d8
 declared_paths:
+  - .gitagent/missions/MSN-0203.one-gate-adapter-contract-typedgateadapterid-com.yaml
   - src/cli/commands/doctor.ts
+  - src/cli/commands/interrogate.ts
+  - src/cli/lib/doctor-adapter-preflight.ts
+  - src/cli/lib/gate-adapters/adapter-findings.ts
+  - src/cli/lib/gate-adapters/eslint-json-adapter.ts
+  - src/cli/lib/gate-adapters/gate-adapter-id.ts
+  - src/cli/lib/gate-adapters/gate-adapter-types.ts
+  - src/cli/lib/gate-adapters/generic-spawn-adapter.ts
+  - src/cli/lib/gate-adapters/parsing-adapter.ts
   - src/cli/lib/gate-adapters/registry.ts
+  - src/cli/lib/gate-adapters/spawn-stream-core.ts
+  - src/cli/lib/gate-adapters/substring-stream-scan.ts
+  - src/cli/lib/gate-adapters/tsc-adapter.ts
+  - src/cli/lib/gate-log-writer.ts
+  - src/cli/lib/kpi-scan.ts
   - src/cli/lib/legislate-gate-options.ts
+  - src/cli/lib/legislate.ts
+  - src/cli/lib/mcp-draft-legislation.ts
+  - src/cli/lib/mcp-interrogate.ts
+  - src/cli/lib/mcp-tools-register.ts
+  - src/cli/lib/start-orchestration.ts
   - src/cli/lib/types.ts
+  - src/cli/lib/verify-options.ts
+  - src/cli/lib/verify-phase-steps.ts
+  - src/cli/lib/verify-remediation-pipeline.ts
   - src/cli/program-core.ts
   - src/cli/program-workflow.ts
+  - src/cli/program.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/doctor-adapter-preflight.test.ts
+  - src/cli/tests/eslint-json-adapter.test.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/gate-adapter-registry.test.ts
+  - src/cli/tests/generic-spawn-adapter.test.ts
+  - src/cli/tests/kpi-scan.test.ts
+  - src/cli/tests/missions/mission-legislative-stub.test.ts
+  - src/cli/tests/tsc-adapter.test.ts
+  - src/cli/tests/verify-interrogation-phase.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts

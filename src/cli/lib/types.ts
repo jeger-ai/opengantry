@@ -1,5 +1,18 @@
 import type { NormalizedTraceStatus } from "./trace.js";
 import type { InterrogationRow } from "./interrogate/findings.js";
+import type { GateAdapterId } from "./gate-adapters/gate-adapter-id.js";
+
+export type {
+  GateAdapterId,
+  TypedGateAdapterId,
+} from "./gate-adapters/gate-adapter-id.js";
+export {
+  DEFAULT_GATE_ADAPTER,
+  GATE_ADAPTER_IDS,
+  TYPED_GATE_ADAPTER_IDS,
+  isGateAdapterId,
+  isTypedGateAdapterId,
+} from "./gate-adapters/gate-adapter-id.js";
 
 export type TrustThreshold = "Tier-1" | "Tier-2" | "Tier-3" | string;
 
@@ -45,22 +58,11 @@ export interface TriageResult {
   adr_hints?: AdrHint[];
 }
 
-/** Explicit gate output parser (ADR-0041). Never inferred from gate_command text. */
-export type GateAdapterId = "generic" | "eslint" | "tsc";
-
-export const GATE_ADAPTER_IDS: readonly GateAdapterId[] = ["generic", "eslint", "tsc"];
-
-export const DEFAULT_GATE_ADAPTER: GateAdapterId = "generic";
-
-export function isGateAdapterId(value: unknown): value is GateAdapterId {
-  return typeof value === "string" && (GATE_ADAPTER_IDS as readonly string[]).includes(value);
-}
-
 export interface GateSpec {
   command: string;
   successSubstring: string | null;
-  /** Omitted means `generic`. */
-  adapter?: GateAdapterId;
+  /** Always set in memory; YAML/token writers omit `generic`. */
+  adapter: GateAdapterId;
 }
 
 export type KpiThresholdOp = "<=" | ">=" | "==" | "<" | ">";

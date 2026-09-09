@@ -18,10 +18,10 @@ import {
 import type { DoctorLine } from "./doctor-types.js";
 import { pickNextStep } from "./doctor-types.js";
 import { parseMissionFile, readActiveMissionPin } from "./missions/parser.js";
-import { DEFAULT_GATE_ADAPTER, type GateAdapterId } from "./types.js";
+import { DEFAULT_GATE_ADAPTER, type GateAdapterId, type TypedGateAdapterId } from "./types.js";
 
 export interface AdapterPreflightOptions {
-  forceAdapter?: GateAdapterId;
+  forceAdapter?: TypedGateAdapterId;
   baseline?: boolean;
   runCommand?: CommandRunner;
 }
@@ -94,22 +94,12 @@ export function discoverDeclaredAdapters(root: string): Map<GateAdapterId, strin
 
 function unionForcedAdapter(
   declared: Map<GateAdapterId, string[]>,
-  force: GateAdapterId | undefined,
+  force: TypedGateAdapterId | undefined,
 ): Map<GateAdapterId, string[]> {
   const out = new Map(declared);
   if (force === undefined) return out;
-  switch (force) {
-    case "generic":
-      return out;
-    case "tsc":
-    case "eslint":
-      if (!out.has(force)) out.set(force, []);
-      return out;
-    default: {
-      const unreachable: never = force;
-      throw new Error(`unknown gate adapter: ${String(unreachable)}`);
-    }
-  }
+  if (!out.has(force)) out.set(force, []);
+  return out;
 }
 
 function tscPreflightLines(

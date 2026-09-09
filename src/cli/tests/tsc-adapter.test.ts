@@ -5,14 +5,13 @@ import path from "node:path";
 import { describe, it } from "node:test";
 
 import type { GateExecContext } from "../lib/gate-adapters/gate-adapter-types.js";
-import { TscAdapter, parseTscOutput, tscFindingsFromRun } from "../lib/gate-adapters/tsc-adapter.js";
+import { parseTscOutput, tscAdapter, tscFindingsFromRun } from "../lib/gate-adapters/tsc-adapter.js";
 
 function ctxIn(dir: string, successSubstring: string | null = null): GateExecContext {
   return {
-    msn_id: "MSN-TEST",
-    gate_log_path: path.join(dir, "gate.log"),
     cwd: dir,
-    repo_root: dir,
+    repoRoot: dir,
+    gateLogPath: path.join(dir, "gate.log"),
     successSubstring,
   };
 }
@@ -128,7 +127,7 @@ describe("tscFindingsFromRun", () => {
   });
 });
 
-describe("TscAdapter", () => {
+describe("tscAdapter", () => {
   it("runs a fake tsc subprocess and emits line-level findings", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-tsc-spawn-"));
     fs.mkdirSync(path.join(dir, "src"));
@@ -137,7 +136,7 @@ describe("TscAdapter", () => {
       path.join(dir, "fake-tsc.cjs"),
       "console.log(\"src/a.ts(1,5): error TS2322: Type 'string' is not assignable to type 'number'.\");\nconsole.log('Found 1 error in 1 file.');\nprocess.exit(2);\n",
     );
-    const result = await new TscAdapter().execute("node fake-tsc.cjs", ctxIn(dir));
+    const result = await tscAdapter("node fake-tsc.cjs", ctxIn(dir));
     assert.equal(result.adapter_id, "tsc");
     assert.equal(result.exitCode, 2);
     assert.equal(result.findings.length, 1);

@@ -25,7 +25,7 @@ export function handleInterrogate(input: InterrogateMcpInput): InterrogateMcpRes
   const { root, manifest } = loadWorkspace();
   const skillKeyRaw = input.skill_key?.trim() || "gantry";
   const skillKey = resolveManifestSkillKey(manifest, skillKeyRaw);
-  const { gateCommand, gateSuccessSubstring } = resolveLegislateGateOptions({
+  const gate = resolveLegislateGateOptions({
     gateCommand: input.gate_command,
     gateSuccessSubstring: input.gate_success_substring,
   });
@@ -35,8 +35,8 @@ export function handleInterrogate(input: InterrogateMcpInput): InterrogateMcpRes
     manifest,
     intent,
     skillKey,
-    gateCommand,
-    gateSuccessSubstring,
+    gateCommand: gate.command,
+    gateSuccessSubstring: gate.successSubstring,
     paths: input.paths ?? [],
     interrogation: input.interrogation,
   });
