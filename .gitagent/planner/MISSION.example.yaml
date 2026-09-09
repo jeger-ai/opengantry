@@ -7,6 +7,13 @@ gate_success_substring: "ok"
 # Optional explicit output parser (ADR-0041): generic (default) | eslint | tsc.
 # eslint requires `eslint --format json` in gate_command; tsc requires plain tsc diagnostics.
 # gate_adapter: eslint
+# Optional cross-repo gates (ADR-0044). Fetch with `gantry deps fetch` before verify.
+# depends_on:
+#   - repo: github.com/org/backend
+#     msn_id: MSN-0100
+#     require:
+#       verify_status: passed
+#       signed: true
 interrogation:
   - finding_id: "a1b2c3d4e5f6"
     kind: missing_test_criteria

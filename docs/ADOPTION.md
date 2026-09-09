@@ -8,6 +8,29 @@ This runbook is the operational path for adopters using `gantry` locally. Produc
 
 **First mission practice:** [`KATA.md`](KATA.md) (~15 min, headless-friendly).
 
+## Enterprise control plane (optional, v3.3.0)
+
+Git-native org floor, ledger, and cross-repo gates. The spoke still enforces; nothing here requires a hub.
+
+```bash
+# 1. Pin a signed org policy repo (network). Doctor/verify stay offline after this.
+gantry policy pull
+gantry policy status --json
+gantry policy diff
+
+# 2. Enable the compliance ledger in .gitagent/config.json
+#    { "ledger": { "mode": "local", "signature": "warn" } }
+gantry ledger verify --json
+gantry ledger export --format soc2-pack --out .gitagent/history/ledger-export
+
+# 3. Cross-repo gates — fetch foreign refs/gxt/ledger before verify
+gantry deps fetch --mission .gitagent/missions/MSN-0042.yaml
+gantry deps check --mission .gitagent/missions/MSN-0042.yaml --json
+gantry release check --tag v3.2.6
+```
+
+Do not commit a filled `POLICY.pointer.json` until `gantry policy pull` has populated `.gitagent/history/policy/` (gitignored). An unpinned or drifted pointer fails verify closed. See [FEATURES](FEATURES.md) and [COMPLIANCE-ISO](COMPLIANCE-ISO.md).
+
 See also: [`FEATURES.md`](FEATURES.md) · [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) · [`CHANGELOG.md`](CHANGELOG.md) (release history).
 
 ## First run (onboarding)
@@ -227,7 +250,7 @@ gantry metrics
 gantry metrics --json --ref main
 ```
 
-Git-native only (single streamed `git log` pass). No local event ledger.
+Git-native only (single streamed `git log` pass). Counters are not the compliance ledger — that lives on `refs/gxt/ledger` when `ledger.mode` is `local`.
 
 **Routing proxy caveat:** `legislative_commits` vs `worker_trace_commits` are path-touch heuristics, not historical `gantry triage` replay. JSON exposes this explicitly via `gxt_extension_metadata` (see below).
 

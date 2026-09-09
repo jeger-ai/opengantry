@@ -2,6 +2,10 @@
   "flight_telemetry": {
     "body_mode": "hash_only"
   },
+  "ledger": {
+    "mode": "off",
+    "signature": "off"
+  },
   "trusted_automation": {
     "rules": [
       {

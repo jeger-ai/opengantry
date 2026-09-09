@@ -1,4 +1,5 @@
 import type { GxtErrorCode } from "./gxt-error-codes.js";
+import type { DependencyCheckCode } from "./deps/deps-types.js";
 import type { KpiThresholdOp } from "./types.js";
 import type { TraceFailureKind } from "./trace.js";
 import type { VerifyFinding } from "./verify-finding.js";
@@ -10,7 +11,9 @@ export type VerifyFailurePhase =
   | "kpi"
   | "trace_pending"
   | "trace"
-  | "interrogation";
+  | "interrogation"
+  | "policy"
+  | "dependencies";
 
 export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
 
@@ -82,6 +85,18 @@ export interface InterrogationFailure extends VerifyFailureBase {
   interrogationWarnings?: string[];
 }
 
+export interface PolicyFailure extends VerifyFailureBase {
+  phase: "policy";
+  policyCode: GxtErrorCode;
+  findings?: VerifyFinding[];
+}
+
+export interface DependenciesFailure extends VerifyFailureBase {
+  phase: "dependencies";
+  dependencyCode: DependencyCheckCode;
+  findings?: VerifyFinding[];
+}
+
 /** Discriminated on `phase` — phase-specific fields exist only on their variant. */
 export type VerifyPhaseFailure =
   | GitProofFailure
@@ -90,4 +105,6 @@ export type VerifyPhaseFailure =
   | KpiFailure
   | TracePendingFailure
   | TraceFailure
-  | InterrogationFailure;
+  | InterrogationFailure
+  | PolicyFailure
+  | DependenciesFailure;

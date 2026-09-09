@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "git",
+    "url": "",
+    "ref": "refs/heads/main"
+  },
+  "bundle_path": "ORG-POLICY.yaml",
+  "pinned_commit": "",
+  "bundle_sha256": ""
+}

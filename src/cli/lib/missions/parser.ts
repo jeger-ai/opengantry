@@ -275,6 +275,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     interrogation,
     interrogationSha256: data.interrogation_sha256 ?? null,
     declaredPaths: data.declared_paths ?? [],
+    dependsOn: data.depends_on ?? [],
     rawPath: absPath,
   };
 }

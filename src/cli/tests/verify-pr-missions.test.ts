@@ -103,5 +103,8 @@ test("verify-pr-missions.sh: fails when changed mission file mismatches commit M
 
   const bad = spawnSync("bash", [script, baseSha, headSha], { cwd: dest, encoding: "utf8" });
   assert.notEqual(bad.status, 0);
-  assert.match((bad.stderr || "") + (bad.stdout || ""), /does not match commit MSN/i);
+  assert.match(
+    (bad.stderr || "") + (bad.stdout || ""),
+    /does not match commit MSN|no changed mission file matches commit MSN tag/i,
+  );
 });

@@ -10,6 +10,7 @@ import {
   writeAttestationReceipt,
 } from "./attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "./attestation-export.js";
+import { tryAppendLedger } from "./ledger/ledger-hook.js";
 import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import {
@@ -183,6 +184,18 @@ async function resolveFinalPhaseResult(
   return evaluateWithFixLoop(ctx, initial);
 }
 
+function appendVerifyOutcomeLedger(ctx: VerifyPresentContext, result: VerifyPhaseResult): void {
+  const msnId = ctx.mission.msnId ?? "MSN-0000";
+  if (result.ok) {
+    tryAppendLedger(ctx.root, "receipt", msnId, { verify_status: "passed" });
+    return;
+  }
+  tryAppendLedger(ctx.root, "verify_findings", msnId, {
+    failed_gate: result.phase,
+    message: result.message,
+  });
+}
+
 function emitMissionBinding(ctx: VerifyPresentContext, sink: ReturnType<typeof resolveVerifySink>): void {
   emitPinnedMissionBanner(ctx.resolved, {
     json: sink === "json" || sink === "break_glass_json",
@@ -263,6 +276,7 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
         return presentJsonInitFailure(ctx, receiptWrite.error);
       }
       ctx.receiptPath = receiptWrite.receiptPath;
+      appendVerifyOutcomeLedger(ctx, evaluated.result);
       const presented = presentJsonFromResult(ctx, evaluated.result);
       recordVerifyRunBestEffort(ctx.root, evaluated.result, presented.remediation ?? null);
       return presented;
@@ -280,6 +294,7 @@ export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunRe
         return presentHumanInitFailure(ctx, receiptWrite.error);
       }
       ctx.receiptPath = receiptWrite.receiptPath;
+      appendVerifyOutcomeLedger(ctx, finalPhase);
       let presented: VerifyPresentResult;
       if (sink === "fix_interactive") {
         presented = await presentFix(ctx, finalPhase, false);

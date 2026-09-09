@@ -2,6 +2,7 @@
 .gitagent/foreman/PLANNER.allowlist.local
 .gitagent/foreman/ORG.export.local
 .gitagent/history/
+.gitagent/history/policy/
 .gitagent/history/credentials/
 .gitagent/history/.ignored-last-error.json
 .gitagent/history/.draft-token-replay.json

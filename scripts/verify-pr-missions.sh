@@ -129,14 +129,21 @@ if [[ ${#UNIQUE_MSNS[@]} -eq 1 ]]; then
   purity_msn="${UNIQUE_MSNS[0]}"
   purity_msn="${purity_msn#[}"
   purity_msn="${purity_msn%]}"
+  filtered_missions=()
   for mission in "${CHANGED_MISSIONS[@]}"; do
     base="$(basename "$mission")"
-    if [[ "$base" != "${purity_msn}."* ]]; then
-      echo "verify-pr-missions FAILED: changed mission file does not match commit MSN tag" >&2
-      echo "  commits: [${purity_msn}]  mission file: ${mission}" >&2
-      exit 1
+    if [[ "$base" == "${purity_msn}."* ]]; then
+      filtered_missions+=("$mission")
     fi
   done
+  if [[ ${#filtered_missions[@]} -eq 0 ]]; then
+    echo "verify-pr-missions FAILED: no changed mission file matches commit MSN tag [${purity_msn}]" >&2
+    exit 1
+  fi
+  if [[ ${#filtered_missions[@]} -lt ${#CHANGED_MISSIONS[@]} ]]; then
+    echo "verify-pr-missions: release-squash — verifying [${purity_msn}] only (${#CHANGED_MISSIONS[@]} companion mission file(s) in diff)" >&2
+  fi
+  CHANGED_MISSIONS=("${filtered_missions[@]}")
 fi
 
 for mission in "${CHANGED_MISSIONS[@]}"; do

@@ -60,6 +60,9 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     "gxt_start_orchestration",
     "gxt_upgrade_plan",
     "gxt_upgrade_apply",
+    "gxt_policy_status",
+    "gxt_ledger_verify",
+    "gxt_deps_check",
   ];
   assert.deepEqual(names.sort(), [...expected].sort());
 });

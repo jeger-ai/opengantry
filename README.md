@@ -79,6 +79,7 @@ Without governance glue, agent-assisted repos tend toward:
 | Architecture drift | `TARGET_ARCHITECTURE.yaml` + `gantry arch check` / `gantry perimeter check` |
 | Opaque failures for retry edges | `findings[]` JSON envelope (`offending_file`, line, hint); no terminal log parsing |
 | One-off policy per repo | `gantry init` scaffolds the same GXT substrate everywhere |
+| No org-wide floor or audit chain | `gantry policy` (tighten-only bundle), `gantry ledger` (`refs/gxt/ledger`), `depends_on` (ADR-0042–0044) |
 
 ---
 
@@ -211,6 +212,8 @@ On failure, external agents ingest `findings[]`:
   "resolution_hint": "..."
 }
 ```
+
+**Org control plane (v3.3.0):** pin a signed org policy repo with `.gitagent/foreman/POLICY.pointer.json` and `gantry policy pull` (doctor/verify stay offline). Enable `ledger.mode: local` to append digest-only entries to `refs/gxt/ledger` (`gantry ledger verify` / `export --format soc2-pack`). Cross-repo gates use mission `depends_on[]` plus `gantry deps fetch` before verify ([ADR-0042](.gitagent/out-of-scope/ADR-0042-org-policy-bundle.md), [ADR-0043](.gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md), [ADR-0044](.gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)). Receipt schema stays 0.2.0.
 
 **Tool-native findings:** set `gate_adapter: eslint` (gate must run `eslint --format json`, e.g. `npm run lint:json`) or `gate_adapter: tsc` (plain `tsc` diagnostics, e.g. `npx tsc --noEmit --pretty false`) in the mission YAML and `gantry verify` maps each lint or type error to its own finding with `offending_file`, `line`, columns, and `rule_id`. Routing is explicit — never inferred from the command string (ADR-0041). Do not concatenate `tsc` and `eslint` in one `gate_command`. The default `generic` adapter keeps exit-code plus `gate_success_substring` semantics.
 

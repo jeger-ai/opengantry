@@ -15,6 +15,15 @@ export const REL_MISSION_TEMPLATE = ".gitagent/planner/MISSION.template.md" as c
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
 /** Git-ignored attestation receipts for optional hub ingestion. */
 export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
+/** Tracked pin of an org policy git source (ADR-0042). */
+export const REL_POLICY_POINTER = ".gitagent/foreman/POLICY.pointer.json" as const;
+/** Git-ignored org policy bundle cache (ADR-0042). */
+export const REL_POLICY_CACHE = ".gitagent/history/policy" as const;
+/** Orphan commit chain for digest-only compliance entries (ADR-0043). */
+export const LEDGER_REF = "refs/gxt/ledger" as const;
+/** Fetched foreign ledger refs (ADR-0044). */
+export const LEDGER_DEPS_REF_PREFIX = "refs/gxt/deps/" as const;
+export const LEDGER_GENESIS_HASH = "0".repeat(64);
 /** Git-ignored machine-readable runtime error (see templates/.gitignore.gxt). */
 export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json" as const;
 /** Git-ignored verify failure remediation feed for IDE/agent loops (atomic swap writes). */

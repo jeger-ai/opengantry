@@ -9,7 +9,17 @@ Canonical product backlog for OpenGantry. **GitHub Project** is the execution bo
 | **This file** | Tier definitions, acceptance notes, MSN cross-refs, done vs open |
 | **GitHub Issues** | One issue per open item; labels `backlog/v1.1.1`, `backlog/v1.1`, `backlog/tactical`, `backlog/adoption`, `backlog/v1.2` |
 
-**Last synced:** 2026-09-02 (v3.2.6 — gantry report + ADR-0040)
+**Last synced:** 2026-09-08 (v3.3.0 — org control plane)
+
+---
+
+## v3.3.0 — Org policy, compliance ledger, cross-repo deps
+
+| Item | Status | MSN |
+|------|--------|-----|
+| **ADR-0042/0043/0044 + substrate law** | **Done** | MSN-0198 |
+| **gantry CLI policy / ledger / deps / MCP** | **Done** | MSN-0199 |
+| **v3.3.0 version parity + changelog** | **Done** | MSN-0200 |
 
 ---
 

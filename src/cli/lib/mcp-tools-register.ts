@@ -18,6 +18,7 @@ import {
 import { handleDoctor } from "./mcp-doctor.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
+import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
 
 const interrogationRowSchema = z.object({
   finding_id: z.string(),
@@ -246,6 +247,31 @@ function registerRuntimeTools(server: McpServer): void {
   );
 }
 
+function registerOrgReadOnlyTools(server: McpServer): void {
+  server.tool(
+    "gxt_policy_status",
+    "Read-only effective org policy (pointer + cache). Never fetches. Use gantry policy pull for network.",
+    {},
+    async () => jsonText(handlePolicyStatus()),
+  );
+  server.tool(
+    "gxt_ledger_verify",
+    "Read-only verify of refs/gxt/ledger hash chain. Never fetches or appends.",
+    {
+      require_signatures: z.boolean().optional().describe("Fail when a ledger commit is unsigned"),
+    },
+    async (args) => jsonText(handleLedgerVerify(args.require_signatures === true)),
+  );
+  server.tool(
+    "gxt_deps_check",
+    "Read-only evaluate mission depends_on against fetched refs/gxt/deps/* . Never fetches.",
+    {
+      mission_file_path: z.string().optional().describe("Repo-relative mission YAML path"),
+    },
+    async (args) => jsonText(handleDepsCheck(args.mission_file_path)),
+  );
+}
+
 function registerUpgradeTools(server: McpServer): void {
   server.tool(
     "gxt_upgrade_plan",
@@ -271,5 +297,6 @@ function registerUpgradeTools(server: McpServer): void {
 export function registerGxtMcpTools(server: McpServer): void {
   registerLegislationTools(server);
   registerRuntimeTools(server);
+  registerOrgReadOnlyTools(server);
   registerUpgradeTools(server);
 }

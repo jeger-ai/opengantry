@@ -1,0 +1,57 @@
+# Specimen org policy floor (ADR-0042). Copy to a dedicated policy git repo
+# (e.g. org/opengantry-policy), sign the commit, then pin via
+# .gitagent/foreman/POLICY.pointer.json + `gantry policy pull`.
+schema_version: "1.0.0"
+org_id: jeger-ai
+policy_id: opengantry-floor
+version: "1.0.0"
+signers: []
+mandatory_gates:
+  - id: audit-high
+    command: npm audit --omit=dev --audit-level=high
+  - id: perimeter-ci
+    command: gantry perimeter check --ci
+banned_imports:
+  - specifier: request
+    scope: changed
+  - specifier: node-fetch
+    scope: changed
+  - specifier: axios
+    scope: changed
+  - specifier: execa
+    scope: changed
+  - specifier: shelljs
+    scope: changed
+  - specifier: moment
+    scope: changed
+  - specifier: lodash
+    scope: changed
+  - specifier: "@jeger-ai/opengantry/dist/*"
+    scope: changed
+producers:
+  security_vulnerabilities: npm audit --json
+kpi_thresholds:
+  - metric: security_vulnerabilities
+    op: "<="
+    value: 0
+config_floor:
+  planner_signature: warn
+  receipt_signature: warn
+  ledger_signature: warn
+  ledger_mode: local
+  flight_telemetry:
+    body_mode: hash_only
+  break_glass:
+    require_ledger_entry: true
+manifest_constraints:
+  path_risks_min:
+    ".github/workflows/": Tier-3
+    migrations/: Tier-3
+    src/auth/: Tier-3
+    src/db/schema/: Tier-3
+  perimeter_protected_add:
+    - .gitagent/foreman/POLICY.pointer.json
+    - .gitagent/foreman/BYPASS.sha256
+    - .github/workflows/npm-publish.yml
+  forbidden_zones_add:
+    - .gitagent/foreman/BYPASS.sha256

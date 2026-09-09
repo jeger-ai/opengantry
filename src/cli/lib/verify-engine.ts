@@ -32,6 +32,7 @@ import {
   type KpiOutcome,
   type TracePhaseOutcome,
 } from "./verify-phase-steps.js";
+import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./verify-org-phases.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -111,6 +112,10 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
       return "git_proof";
     case "interrogation":
       return "interrogation";
+    case "policy":
+      return "policy";
+    case "dependencies":
+      return "dependencies";
     case "gate":
       return "gate";
     case "defensive":
@@ -160,6 +165,20 @@ function buildFullVerifySuccess(input: {
   };
 }
 
+function evaluateOrgControlPhases(
+  clock: VerifyPhaseClock,
+  root: string,
+  mission: ParsedMission,
+  executorLogPath: string,
+): VerifyPhaseFailure | null {
+  const policy = clock.timed("policy", () => evaluatePolicyPhase({ root, executorLogPath }));
+  if (policy.kind === "fail") return policy.failure;
+  const deps = clock.timed("dependencies", () =>
+    evaluateDependenciesPhase({ root, mission, executorLogPath }),
+  );
+  return deps.kind === "fail" ? deps.failure : null;
+}
+
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
 export async function evaluateVerifyPhases(
   root: string,
@@ -190,6 +209,8 @@ export async function evaluateVerifyPhases(
   );
   if (interrogation.failure) return failWithTimings(interrogation.failure, clock);
   const gitProofWarnings = [...proofWarnings, ...interrogation.warnings];
+  const orgFail = evaluateOrgControlPhases(clock, root, mission, executorLogPath);
+  if (orgFail) return failWithTimings(orgFail, clock);
 
   if (options.prePush === true && isLegislativeStub(mission)) {
     return {

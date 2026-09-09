@@ -12,9 +12,11 @@ import {
 } from "./context-feed-store.js";
 import type {
   DefensiveFailure,
+  DependenciesFailure,
   GateFailure,
   InterrogationFailure,
   KpiFailure,
+  PolicyFailure,
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
@@ -238,6 +240,24 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       return normalizeTracePhase(base, failure);
     case "interrogation":
       return normalizeInterrogationPhase(base, failure);
+    case "policy":
+      return {
+        ...base,
+        error_code: (failure as PolicyFailure).policyCode,
+        headline: "verify: POLICY FLOOR FAILED",
+        detail_lines: [failure.message],
+        failures: [failure.message],
+      };
+    case "dependencies": {
+      const depCode = (failure as DependenciesFailure).dependencyCode;
+      return {
+        ...base,
+        error_code: depCode === "ok" ? GXT_ERROR.VERIFY_FAILED : depCode,
+        headline: "verify: DEPENDENCY GATE FAILED",
+        detail_lines: [failure.message],
+        failures: [failure.message],
+      };
+    }
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;

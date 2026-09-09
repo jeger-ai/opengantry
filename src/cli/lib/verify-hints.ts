@@ -222,6 +222,19 @@ export function hintsForVerifyPhase(
       return hintsForTracePhase(failure, meta);
     case "interrogation":
       return hintsForInterrogationPhase(failure, meta);
+    case "policy":
+      return {
+        error_code: failure.policyCode,
+        fix_hints: [failure.message, "gantry policy pull", "gantry policy status --json"],
+        next_actions: [`gantry policy pull`, verifyCmd(meta.missionPath)],
+      };
+    case "dependencies":
+      return {
+        error_code:
+          failure.dependencyCode === "ok" ? GXT_ERROR.VERIFY_FAILED : failure.dependencyCode,
+        fix_hints: [failure.message, "gantry deps fetch --mission <yaml>"],
+        next_actions: [`gantry deps fetch --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
+      };
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;

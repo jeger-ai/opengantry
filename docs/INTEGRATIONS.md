@@ -35,6 +35,9 @@ On failure, read `GXT_LAST_ERROR_FILE` (from `runtime env`) for machine-oriented
 | `gxt_runtime_env` / `gxt_runtime_exec` | Executor bootstrap + process-boundary enforcement |
 | `gxt_verify` | Structured verify phases with `fix_hints` on failure |
 | `gxt_doctor` | Read-only environment readiness + tsc/eslint adapter preflight (ADR-0041; never sniffs `gate_command`) |
+| `gxt_policy_status` | Read-only effective org policy (pointer + cache; never fetches) |
+| `gxt_ledger_verify` | Read-only `refs/gxt/ledger` chain verify |
+| `gxt_deps_check` | Read-only evaluate mission `depends_on` against fetched `refs/gxt/deps/*` |
 | `gxt_resolve_mission` / `gxt_last_error` | Mission resolution + last runtime exec error |
 
 ## Kernel library (v3.2.2+)

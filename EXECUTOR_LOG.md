@@ -860,3 +860,20 @@ DoD 1 MSN-0196 re-attest: PR review — npm run lint -- forwarded args concatena
 [CONTEXT-REQUEST] path=docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,scripts/validate-mcp-dogfood.mjs reason=Document gxt_doctor MCP tool and dogfood handleDoctor; operator authorized file-exact expansion at legislation proposed=docs/DEVELOPMENT.md,docs/FEATURES.md,docs/INTEGRATIONS.md,scripts/validate-mcp-dogfood.mjs
 [CONTEXT-REQUEST] path=templates/scripts/validate-mcp-dogfood.mjs reason=scripts/validate-mcp-dogfood.mjs is overwritten by gen:dogfood from templates/scripts; dogfood handleDoctor must live in the template source of truth proposed=templates/scripts/validate-mcp-dogfood.mjs
 DoD 1 MSN-0197: gxt_doctor MCP tool wraps collectDoctorReport (gate_adapter tsc|eslint, adapter_baseline off by default, policy_path); skip when no typed missions; ADR-0041 no sniff; dogfood handleDoctor; DEVELOPMENT+FEATURES+INTEGRATIONS; npm test 655 pass
+
+## MSN-0198 — Batched substrate governance (v3.3.0 org control plane)
+DoD 1 MSN-0198: ADR-0042/0043/0044 authored; ORG-POLICY.schema.yaml + depends_on in MISSION.schema.yaml (templates + iii-integration mirrors); RULES §8–§10; POLICY.pointer.json template; MANIFEST perimeter_protected; ledger config keys; workflow template steps; docs stubs; CLI deferred; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0199 — v3.3.0 org control plane in gantry CLI
+DoD 1 MSN-0199: gantry policy pull/status/diff tighten-only; ledger CAS refs/gxt/ledger; deps fetch/check + release check; verify policy+dependencies phases; MCP gxt_policy_status/gxt_ledger_verify/gxt_deps_check; upgrade catalog ORG-POLICY.schema.yaml; npm test 678 pass
+DoD 1 MSN-0199 dogfood: local policy repo pull pinned opengantry-floor@1.0.0; ledger verify ok (policy_pin + receipt); soc2-pack control-map matches COMPLIANCE-ISO A.5.3/A.8.15/A.8.28/ISO 42001/SOC 2 CC7/CC8; POLICY.pointer not pinned on origin opengantry repo
+DoD 1 MSN-0199 restamp: org control plane CLI still holds after Planner stamp — npm test 678 pass
+DoD 1 MSN-0199 CodeQL: allowlist deps slug/ref/url before git fetch — npm test 680 pass
+DoD 1 MSN-0199 CodeQL: drop test execSync git-fetch shells — npm test 680 pass
+
+## MSN-0200 — v3.3.0 release
+[CONTEXT-REQUEST] path=scripts/lib/asset-catalog-static.mjs,scripts/release-gate-publish.sh,.github/workflows/gxt-validate.yml,examples/org-policy/ORG-POLICY.yaml,.gitagent/missions/MSN-9002.upgrade-v3.3.0.yaml,templates/.gitagent/foreman/SUBSTRATE.version.json,package-lock.json reason=Release version parity, upgrade catalog, workflow deps fetch, specimen policy bundle proposed=those paths
+DoD 1 MSN-0200: v3.3.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, CHANGELOG org control plane, catalog ORG-POLICY + POLICY.pointer; dogfood policy/ledger/soc2-pack; dev-validate-core OK
+
+## MSN-9002 — upgrade to v3.3.0
+MSN-9002: upgrade to v3.3.0 org control plane — ORG-POLICY.schema.yaml + POLICY.pointer.json scaffold

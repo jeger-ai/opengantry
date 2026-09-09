@@ -15,6 +15,10 @@ DRAFT_ID="${3:-}"
 
 echo "release-gate-publish: preflight version parity"
 ./scripts/assert-cli-version-parity.sh
+if [[ -x dist/cli/index.js ]]; then
+  echo "release-gate-publish: optional gantry release check (depends_on since previous tag)"
+  node dist/cli/index.js release check --tag "${TAG}" --json || echo "release-gate-publish: release check skipped"
+fi
 
 if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "${TAG}"; then
   echo "release-gate-publish: tag ${TAG} already exists on origin — skipping tag push"

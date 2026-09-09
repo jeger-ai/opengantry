@@ -9,7 +9,7 @@ export const DEFENSIVE_PROFILE_PRESET_NAMES = [
 export type DefensiveProfilePresetName = (typeof DEFENSIVE_PROFILE_PRESET_NAMES)[number];
 
 export const DEFENSIVE_PROFILE_PRESET_LABELS: Record<DefensiveProfilePresetName, string> = {
-  strict_enterprise: "Strict Enterprise — block risky diffs",
+  strict_enterprise: "Strict Enterprise — block risky diffs (also defaults ledger.mode to local)",
   balanced_partner: "Balanced Partner — warn on risky diffs",
   lean_scratchpad: "Lean Scratchpad — audit telemetry only",
 };

@@ -11,6 +11,7 @@ import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
 import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
+import { registerOrgControlPlaneCommands } from "./program-org.js";
 import { listDomainKeys } from "./lib/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "./lib/interrogate/findings.js";
@@ -375,4 +376,5 @@ export function registerWorkflowCommands(program: Command): void {
   registerVerifyScanCommands(program);
   registerEventsRegisterCheckImportsCommands(program);
   registerPerimeterDomainsMetricsCommands(program);
+  registerOrgControlPlaneCommands(program);
 }

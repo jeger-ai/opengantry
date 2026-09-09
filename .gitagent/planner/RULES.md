@@ -62,3 +62,26 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 ## 7. Local history (no bloat)
 
 - Bulky traces live under `.gitagent/history/` (git-ignored). Optional local `MISSION_LOG.md` may be generated from `git log` when needed; it MUST NOT be required in-repo for v0.6.2.
+
+## 8. Organization policy floor (v3.3.0)
+
+- When `.gitagent/foreman/POLICY.pointer.json` is present, Executors and Verifiers MUST treat the cached org policy bundle as a **tighten-only floor** ([ADR-0042](../out-of-scope/ADR-0042-org-policy-bundle.md)): sets are unioned, risk tiers take the maximum, signature and telemetry tiers take the stricter value. Policy MUST NOT loosen local law.
+- **`gantry policy pull`** is the only network path for policy. **`gantry doctor`** and **`gantry verify`** MUST read the pointer plus `.gitagent/history/policy/` cache only — no sockets.
+- A present pointer with missing cache, sha mismatch, or invalid signer is fail-closed (`GXT_POLICY_*`). A missing pointer is opt-in (no failure).
+- `kpi_thresholds[].metric` MUST name a key in the bundle `producers` map.
+- Receipt schema stays **0.2.0**; policy digests belong in ledger entries ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)), not receipts.
+
+## 9. Compliance ledger (v3.3.0)
+
+- When `.gitagent/config.json` `ledger.mode` is `local`, verify, attest, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)).
+- Append MUST use compare-and-swap `git update-ref` with bounded retries and jitter. Exhaustion MUST fail closed (`GXT_LEDGER_CAS_EXHAUSTED`) so parallel CI jobs never fork the chain.
+- Unsigned ledger entries are checksums, not proofs. `ledger.signature` `require` demands `git commit -S`.
+- A break-glass bypass with no `break_glass` ledger row is a failed control ([ADR-0021](../out-of-scope/ADR-0021-break-glass-protocol.md)).
+- Ledger payloads MUST NOT contain source bodies or gate stdout.
+
+## 10. Cross-repository mission dependencies (v3.3.0)
+
+- Optional mission `depends_on[]` is resolved **offline** from fetched `refs/gxt/deps/<slug>` ([ADR-0044](../out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)).
+- **`gantry deps fetch`** is the only network path. Verify's `dependencies` phase, `gantry deps check`, and doctor MUST NOT fetch.
+- Same-org proof: recompute `repository_hash` for `depends_on.repo` with the consumer's `GANTRY_ORG_PEPPER` and require equality with the entry. Mismatch → `GXT_DEPENDENCY_ORG_MISMATCH`.
+- Unfetched, unsatisfied, unsigned (when required), or stale entries MUST fail closed (`GXT_DEPENDENCY_*`). Cross-repo *trigger* (workflow dispatch) is advisory glue, not enforcement.
