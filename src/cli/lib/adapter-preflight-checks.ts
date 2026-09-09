@@ -46,7 +46,8 @@ const ESLINT_JSON_FORMAT = /(?:^|\s)(?:--format(?:=|\s+)|-f(?:=|\s+))json(?:\s|$
 export type EslintConfigKind = "flat" | "legacy" | "missing";
 
 export type NpmScriptResolution =
-  | { kind: "script"; name: string; body: string | undefined }
+  | { kind: "script"; name: string; body: string }
+  | { kind: "missing"; name: string }
   | { kind: "direct"; command: string };
 
 export type TsconfigCheck = { ok: true } | { ok: false; reason: string };
@@ -82,13 +83,6 @@ export function loadRepoTypescript(root: string): TsModule | null {
   }
 }
 
-export function probeNpx(runCommand: CommandRunner = defaultCommandRunner): string | null {
-  const r = runCommand({ command: "npx", args: ["--version"], cwd: process.cwd(), timeout: 5000 });
-  if (r.status !== 0) return null;
-  const out = `${r.stdout}${r.stderr}`.trim();
-  return out.length > 0 ? out.split("\n")[0]!.trim() : null;
-}
-
 export function checkTsconfig(root: string, ts: TsModule): TsconfigCheck {
   const configPath = path.join(root, "tsconfig.json");
   if (!fs.existsSync(configPath)) return { ok: false, reason: "tsconfig.json missing" };
@@ -117,7 +111,7 @@ export function resolveNpmScript(command: string, scripts: Record<string, string
   const rest = match[2] ?? "";
   const forwarded = rest.replace(/^\s*--\s*/, " ").trim();
   const body = scripts[name];
-  if (body === undefined) return { kind: "script", name, body: undefined };
+  if (body === undefined) return { kind: "missing", name };
   return { kind: "script", name, body: forwarded.length > 0 ? `${body} ${forwarded}` : body };
 }
 
@@ -131,12 +125,24 @@ export function argvForGateCommand(command: string): { command: string; args: st
   return { command: bin, args: parts.slice(1) };
 }
 
-export function eslintGateUsesNpx(commands: string[], scripts: Record<string, string>): boolean {
+export function gateUsesNpx(commands: string[], scripts: Record<string, string>): boolean {
   for (const command of commands) {
     if (/^\s*npx\b/.test(command)) return true;
     const resolved = resolveNpmScript(command, scripts);
-    const effective = resolved.kind === "script" ? (resolved.body ?? "") : resolved.command;
-    if (/^\s*npx\b/.test(effective)) return true;
+    switch (resolved.kind) {
+      case "missing":
+        break;
+      case "script":
+        if (/^\s*npx\b/.test(resolved.body)) return true;
+        break;
+      case "direct":
+        if (/^\s*npx\b/.test(resolved.command)) return true;
+        break;
+      default: {
+        const unreachable: never = resolved;
+        throw new Error(`unknown npm script resolution: ${String(unreachable)}`);
+      }
+    }
   }
   return false;
 }
@@ -161,13 +167,21 @@ export function readPackageScripts(root: string): Record<string, string> {
   }
 }
 
-export function runTscBaseline(root: string, runCommand: CommandRunner): DoctorLine[] {
-  const run = runCommand({
-    command: "npx",
-    args: ["tsc", "--noEmit", "--pretty", "false"],
-    cwd: root,
-    timeout: 120_000,
-  });
+export function runTscBaseline(
+  root: string,
+  gateCommand: string,
+  runCommand: CommandRunner,
+): DoctorLine[] {
+  const argv = argvForGateCommand(gateCommand);
+  if (argv === null) {
+    return [
+      {
+        level: "warn",
+        message: "baseline tsc skipped: gate_command is not a direct npm/npx/node invocation",
+      },
+    ];
+  }
+  const run = runCommand({ command: argv.command, args: argv.args, cwd: root, timeout: 120_000 });
   const diagnostics = parseTscOutput(`${run.stdout}${run.stderr}`);
   if (diagnostics.length === 0) return [{ level: "ok", message: "baseline tsc green" }];
   const first = diagnostics[0]!;
@@ -246,7 +260,7 @@ export function lintJsonScriptLines(scripts: Record<string, string>): DoctorLine
   return [{ level: "ok", message: "lint:json maps to eslint --format json" }];
 }
 
-export function eslintGateCommandLines(
+export function missingNpmScriptLines(
   commands: string[],
   scripts: Record<string, string>,
 ): DoctorLine[] {
@@ -254,19 +268,47 @@ export function eslintGateCommandLines(
   for (const command of commands) {
     if (!command.trim()) continue;
     const resolved = resolveNpmScript(command, scripts);
-    if (resolved.kind === "script" && resolved.body === undefined) {
+    if (resolved.kind === "missing") {
       lines.push({
         level: "fail",
         message: `npm script ${resolved.name} is not defined in package.json`,
       });
-      continue;
     }
-    const effective = resolved.kind === "script" ? resolved.body! : resolved.command;
-    if (!hasEslintJsonFormat(effective)) {
-      lines.push({
-        level: "fail",
-        message: `eslint adapter gate_command must run eslint --format json (ADR-0041): ${command}`,
-      });
+  }
+  return lines;
+}
+
+export function eslintGateCommandLines(
+  commands: string[],
+  scripts: Record<string, string>,
+): DoctorLine[] {
+  const lines: DoctorLine[] = [...missingNpmScriptLines(commands, scripts)];
+  for (const command of commands) {
+    if (!command.trim()) continue;
+    const resolved = resolveNpmScript(command, scripts);
+    switch (resolved.kind) {
+      case "missing":
+        continue;
+      case "script":
+        if (!hasEslintJsonFormat(resolved.body)) {
+          lines.push({
+            level: "fail",
+            message: `eslint adapter gate_command must run eslint --format json (ADR-0041): ${command}`,
+          });
+        }
+        break;
+      case "direct":
+        if (!hasEslintJsonFormat(resolved.command)) {
+          lines.push({
+            level: "fail",
+            message: `eslint adapter gate_command must run eslint --format json (ADR-0041): ${command}`,
+          });
+        }
+        break;
+      default: {
+        const unreachable: never = resolved;
+        throw new Error(`unknown npm script resolution: ${String(unreachable)}`);
+      }
     }
   }
   return lines;

@@ -5,6 +5,11 @@ export interface DoctorLine {
   message: string;
 }
 
+export interface DoctorSection {
+  lines: DoctorLine[];
+  nextStep: string | null;
+}
+
 export interface DoctorCheckResult {
   lines: DoctorLine[];
   hasFail: boolean;
@@ -17,11 +22,6 @@ export interface DoctorReport {
   hasFail: boolean;
   nextStep: string | null;
   plannerAllowlistUnset: boolean;
-}
-
-export interface SubstrateDriftDoctorResult {
-  lines: DoctorLine[];
-  nextStep: string | null;
 }
 
 export function pickNextStep(current: string | null, candidate: string): string | null {

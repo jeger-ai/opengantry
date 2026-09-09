@@ -15,12 +15,12 @@ import {
 } from "./onboarding-flow.js";
 import { runStartOrchestration } from "./start-orchestration.js";
 import { loadWorkspace } from "./workspace.js";
+import { listMissionFiles } from "./missions/parser.js";
 import { runVerifyCore } from "./verify-run.js";
 
 function findExistingTutorialMission(repoRoot: string): string | null {
-  const missionsDir = path.join(repoRoot, ".gitagent", "missions");
-  if (!fs.existsSync(missionsDir)) return null;
-  for (const name of fs.readdirSync(missionsDir)) {
+  for (const abs of listMissionFiles(repoRoot)) {
+    const name = path.basename(abs);
     if (name.startsWith(`${TUTORIAL_MSN_ID}.`) && name.endsWith(".yaml")) {
       return `.gitagent/missions/${name}`;
     }

@@ -196,13 +196,20 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   return { lines, hasFail, nextStep, plannerAllowlistUnset };
 }
 
+export interface CollectDoctorReportOptions {
+  templatesRoot?: string;
+  policyPath?: string;
+  adapterPreflight?: AdapterPreflightOptions;
+}
+
 export function collectDoctorReport(
   root: string,
   manifest: Manifest,
-  templatesRoot?: string,
-  policyPath?: string,
-  adapterPreflight?: AdapterPreflightOptions,
+  options: CollectDoctorReportOptions = {},
 ): DoctorReport {
+  const templatesRoot = options.templatesRoot;
+  const policyPath = options.policyPath;
+  const adapterPreflight = options.adapterPreflight;
   const result = runDoctorChecks(root, manifest);
   let lines = [
     ...result.lines,

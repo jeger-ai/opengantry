@@ -6,6 +6,7 @@ import {
   buildMissionYamlScaffold,
   extractMsnIdFromMissionPath,
   isValidMsnId,
+  listMissionFiles,
 } from "./missions/parser.js";
 import {
   formatRepoRelative,
@@ -239,12 +240,7 @@ function resolveLegislateOutputPath(
 
 function findDuplicateMsnMissionPaths(root: string, msnId: string): string[] {
   const dupes: string[] = [];
-  const missionsDir = path.join(root, ".gitagent", "missions");
-  if (!fs.existsSync(missionsDir)) return dupes;
-
-  for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
-    if (!ent.isFile()) continue;
-    const abs = path.join(missionsDir, ent.name);
+  for (const abs of listMissionFiles(root)) {
     try {
       if (extractMsnIdFromMissionPath(abs) === msnId) {
         dupes.push(formatRepoRelative(root, abs));

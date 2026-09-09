@@ -8,6 +8,7 @@ import {
   loadIntegrationCompat,
   type IntegrationCompatManifest,
 } from "./integration-compat.js";
+import type { CommandRunner } from "./adapter-preflight-checks.js";
 import type { DoctorLine } from "./doctor-types.js";
 
 export type IntegrationProfileState = "uninitialized" | "configured";
@@ -30,8 +31,14 @@ function readCursorHooksVersion(repoRoot: string): number | null {
   }
 }
 
-function probeCliVersion(cmd: string, args: string[]): string | null {
-  const r = spawnSync(cmd, args, { encoding: "utf8", timeout: 5000 });
+export function probeCliVersion(
+  cmd: string,
+  args: string[],
+  runCommand?: CommandRunner,
+): string | null {
+  const r = runCommand
+    ? runCommand({ command: cmd, args, cwd: process.cwd(), timeout: 5000 })
+    : spawnSync(cmd, args, { encoding: "utf8", timeout: 5000 });
   if (r.status !== 0) return null;
   const out = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
   return out.length > 0 ? out.split("\n")[0]!.trim() : null;

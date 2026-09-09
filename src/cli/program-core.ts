@@ -61,14 +61,16 @@ function addInitOptions(cmd: Command): Command {
     );
 }
 
-function registerCheckStatusPinCommands(program: Command): void {
+function registerCheckCommand(program: Command): void {
   program
     .command("check")
     .description("Validate MANIFEST.json + Rule 4.4 skills/ sync")
     .action(() => {
       runCheck();
     });
+}
 
+function registerStatusCommand(program: Command): void {
   program
     .command("status")
     .description("Manifest sync + GXT readiness dashboard")
@@ -82,7 +84,9 @@ function registerCheckStatusPinCommands(program: Command): void {
         audience: getOutputAudience(),
       });
     });
+}
 
+function registerPinCommand(program: Command): void {
   program
     .command("pin")
     .description("Pin active mission for verify/scan/runtime (no args = show current pin)")
@@ -90,13 +94,15 @@ function registerCheckStatusPinCommands(program: Command): void {
     .action((mission: string | undefined) => {
       runPin({ mission });
     });
+}
 
+function registerUnpinCommand(program: Command): void {
   program.command("unpin").description("Clear active mission pin").action(() => {
     runUnpin();
   });
 }
 
-function registerReceiptCommands(program: Command): void {
+function registerReceiptCommand(program: Command): void {
   const receipt = program.command("receipt").description("Inspect local attestation receipts (gitignored history)");
 
   receipt
@@ -155,7 +161,7 @@ function registerReceiptCommands(program: Command): void {
     );
 }
 
-function registerDoctorInitUpgradeCommands(program: Command): void {
+function registerDoctorCommand(program: Command): void {
   program
     .command("doctor")
     .description("Active GXT readiness check (warnings do not fail exit)")
@@ -189,14 +195,18 @@ function registerDoctorInitUpgradeCommands(program: Command): void {
         });
       },
     );
+}
 
+function registerInitCommand(program: Command): void {
   addInitOptions(
     program.command("init").description("Bootstrap OpenGantry substrate assets into current git repository"),
   ).action(async (opts: InitOptions) => {
       const discover = opts.discover === true || opts.discoverStdout === true;
       await runInit({ ...opts, discover, discoverStdout: opts.discoverStdout });
     });
+}
 
+function registerUpgradeCommand(program: Command): void {
   const upgradeCmd = program
     .command("upgrade")
     .description("Plan or apply substrate upgrades from the installed gantry package (Tier-3)");
@@ -220,7 +230,7 @@ function registerDoctorInitUpgradeCommands(program: Command): void {
     });
 }
 
-function registerTriageStartCommands(program: Command): void {
+function registerTriageCommand(program: Command): void {
   program
     .command("triage")
     .description("Foreman-style triage from manifest (SOUL-aligned)")
@@ -245,7 +255,9 @@ function registerTriageStartCommands(program: Command): void {
       }
       runTriage({ ...options, text });
     });
+}
 
+function registerStartCommand(program: Command): void {
   program
     .command("start")
     .description("Goal-first orchestration: triage → legislate stub → runtime next steps")
@@ -284,7 +296,7 @@ function registerTriageStartCommands(program: Command): void {
     });
 }
 
-function registerOnboardingFeedReportCommands(program: Command): void {
+function registerOnboardingCommand(program: Command): void {
   program
     .command("onboarding")
     .description("Interactive walkthrough of the strict GXT mission graph")
@@ -292,7 +304,9 @@ function registerOnboardingFeedReportCommands(program: Command): void {
     .action(async (opts: { force?: boolean }) => {
       await runOnboarding({ force: opts.force });
     });
+}
 
+function registerContextFeedCommand(program: Command): void {
   program
     .command("context-feed")
     .description("Read or clear the latest verify remediation snapshot for IDE/agent graphs")
@@ -301,7 +315,9 @@ function registerOnboardingFeedReportCommands(program: Command): void {
     .action((opts: { json?: boolean; clear?: boolean }) => {
       runContextFeed({ json: opts.json, clear: opts.clear });
     });
+}
 
+function registerReportCommand(program: Command): void {
   program
     .command("report")
     .description("Localhost project overview (metrics, missions, verify ring) plus last-verify drill-down")
@@ -321,7 +337,7 @@ function registerOnboardingFeedReportCommands(program: Command): void {
     });
 }
 
-function registerAuditBlueprintPlannerCommands(program: Command): void {
+function registerAuditRigorCliCommand(program: Command): void {
   program
     .command("audit-rigor")
     .description("Meta-governance audit: compiler strictness, coverage artifacts, MANIFEST wildcards")
@@ -335,7 +351,9 @@ function registerAuditBlueprintPlannerCommands(program: Command): void {
         workspace: opts.workspace,
       });
     });
+}
 
+function registerBlueprintCommand(program: Command): void {
   program
     .command("blueprint")
     .description(
@@ -346,7 +364,9 @@ function registerAuditBlueprintPlannerCommands(program: Command): void {
     .action(async (opts: { yes?: boolean; domain?: string }) => {
       await runBlueprintCommand({ yes: opts.yes, domain: opts.domain });
     });
+}
 
+function registerPlannerCommand(program: Command): void {
   const planner = program.command("planner").description("Repo-local Planner identity (git-proof allowlist)");
 
   planner
@@ -367,10 +387,20 @@ function registerAuditBlueprintPlannerCommands(program: Command): void {
 }
 
 export function registerCoreCommands(program: Command): void {
-  registerCheckStatusPinCommands(program);
-  registerReceiptCommands(program);
-  registerDoctorInitUpgradeCommands(program);
-  registerTriageStartCommands(program);
-  registerOnboardingFeedReportCommands(program);
-  registerAuditBlueprintPlannerCommands(program);
+  registerCheckCommand(program);
+  registerStatusCommand(program);
+  registerPinCommand(program);
+  registerUnpinCommand(program);
+  registerReceiptCommand(program);
+  registerDoctorCommand(program);
+  registerInitCommand(program);
+  registerUpgradeCommand(program);
+  registerTriageCommand(program);
+  registerStartCommand(program);
+  registerOnboardingCommand(program);
+  registerContextFeedCommand(program);
+  registerReportCommand(program);
+  registerAuditRigorCliCommand(program);
+  registerBlueprintCommand(program);
+  registerPlannerCommand(program);
 }

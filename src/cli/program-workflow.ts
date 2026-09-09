@@ -144,7 +144,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
   };
 }
 
-function registerLegislateInterrogateCommands(program: Command): void {
+function registerLegislateCommand(program: Command): void {
   program
     .command("legislate")
     .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Planner still commits)")
@@ -180,7 +180,9 @@ function registerLegislateInterrogateCommands(program: Command): void {
       const result = runLegislate(mapLegislateCommanderOptions(options, text));
       if (!result.ok) setExitCode(result.exitCode);
     });
+}
 
+function registerInterrogateCommand(program: Command): void {
   program
     .command("interrogate")
     .description("Deterministic gap analysis before legislation (one question at a time)")
@@ -230,7 +232,7 @@ function registerAttestCommand(program: Command): void {
     );
 }
 
-function registerVerifyScanCommands(program: Command): void {
+function registerVerifyCommand(program: Command): void {
   program
     .command("verify")
     .description(
@@ -267,7 +269,9 @@ function registerVerifyScanCommands(program: Command): void {
     .action(async (opts: VerifyCliOptions) => {
       await runVerify(verifyOptionsFromCli(opts));
     });
+}
 
+function registerScanCommand(program: Command): void {
   program
     .command("scan")
     .description(
@@ -281,7 +285,7 @@ function registerVerifyScanCommands(program: Command): void {
     });
 }
 
-function registerEventsRegisterCheckImportsCommands(program: Command): void {
+function registerEventsCommand(program: Command): void {
   const eventsCmd = program.command("events").description("Pre-commit agent event spool and plane push");
 
   eventsCmd
@@ -295,7 +299,9 @@ function registerEventsRegisterCheckImportsCommands(program: Command): void {
     .action(async (opts: { url?: string; token?: string; dryRun?: boolean; json?: boolean; cwd?: string }) => {
       await runEventsPush(opts);
     });
+}
 
+function registerRegisterCommand(program: Command): void {
   program
     .command("register")
     .description("Import/export discovery (regex scan): propose skill scope from folder (does not mutate MANIFEST)")
@@ -305,7 +311,9 @@ function registerEventsRegisterCheckImportsCommands(program: Command): void {
     .action((dir: string, opts: { skillKey?: string; json?: boolean }) => {
       runRegister({ dir, skillKey: opts.skillKey, json: opts.json });
     });
+}
 
+function registerCheckImportsCommand(program: Command): void {
   program
     .command("check-imports")
     .description("Deterministic import ban check for a folder (usable as gate_command)")
@@ -317,7 +325,7 @@ function registerEventsRegisterCheckImportsCommands(program: Command): void {
     });
 }
 
-function registerPerimeterDomainsMetricsCommands(program: Command): void {
+function registerPerimeterCommand(program: Command): void {
   const perimeterCmd = program
     .command("perimeter")
     .description("Governance perimeter: protected-file guard (default) and TARGET_ARCHITECTURE checks");
@@ -338,14 +346,18 @@ function registerPerimeterDomainsMetricsCommands(program: Command): void {
     .action((opts: { baseRef?: string; ci?: boolean; json?: boolean }) => {
       runPerimeter(opts);
     });
+}
 
+function registerDomainsCommand(program: Command): void {
   program
     .command("domains")
     .description("List built-in domain adapters (code, content)")
     .action(() => {
       process.stdout.write(`${listDomainKeys().join("\n")}\n`);
     });
+}
 
+function registerMetricsCommand(program: Command): void {
   program
     .command("metrics")
     .description(
@@ -359,9 +371,15 @@ function registerPerimeterDomainsMetricsCommands(program: Command): void {
 }
 
 export function registerWorkflowCommands(program: Command): void {
-  registerLegislateInterrogateCommands(program);
+  registerLegislateCommand(program);
+  registerInterrogateCommand(program);
   registerAttestCommand(program);
-  registerVerifyScanCommands(program);
-  registerEventsRegisterCheckImportsCommands(program);
-  registerPerimeterDomainsMetricsCommands(program);
+  registerVerifyCommand(program);
+  registerScanCommand(program);
+  registerEventsCommand(program);
+  registerRegisterCommand(program);
+  registerCheckImportsCommand(program);
+  registerPerimeterCommand(program);
+  registerDomainsCommand(program);
+  registerMetricsCommand(program);
 }

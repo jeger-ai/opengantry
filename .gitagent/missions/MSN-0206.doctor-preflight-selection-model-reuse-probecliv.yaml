@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0206: selection model {tsc?:true; eslint?:{commands}}; probeCliVersion; listMissionFiles; DoctorSection; collectDoctorReport options; split doctor-preflight/{tsc,eslint}; flattened program-* and mcp-tools-register; npm test 697 pass"
+    anchor: "911"
+    status: PASS
 interrogation:
   - finding_id: 835752208e7c
     kind: undefined_boundary
@@ -40,8 +40,25 @@ interrogation:
       - ADR-0041
 interrogation_sha256: b2a1d6cd6bcb6448475f7c5709fbd1a0e698874907a2d6c91ea9f20327bfe2cb
 declared_paths:
+  - .gitagent/missions/MSN-0206.doctor-preflight-selection-model-reuse-probecliv.yaml
+  - src/cli/commands/doctor.ts
+  - src/cli/lib/adapter-preflight-checks.ts
   - src/cli/lib/doctor-adapter-preflight.ts
+  - src/cli/lib/doctor-core.ts
+  - src/cli/lib/doctor-integration.ts
+  - src/cli/lib/doctor-preflight/eslint.ts
+  - src/cli/lib/doctor-preflight/index.ts
+  - src/cli/lib/doctor-preflight/tsc.ts
+  - src/cli/lib/doctor-substrate.ts
+  - src/cli/lib/doctor-types.ts
+  - src/cli/lib/init-tutorial.ts
+  - src/cli/lib/legislate.ts
+  - src/cli/lib/mcp-doctor.ts
   - src/cli/lib/mcp-tools-register.ts
+  - src/cli/lib/missions/parser.ts
+  - src/cli/lib/msn-allocate.ts
   - src/cli/program-core.ts
   - src/cli/program-mission.ts
   - src/cli/program-workflow.ts
+  - src/cli/tests/doctor-adapter-preflight.test.ts
+  - src/cli/tests/mcp-doctor.test.ts

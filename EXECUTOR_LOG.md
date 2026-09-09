@@ -904,3 +904,8 @@ DoD 1 MSN-0204: gitRun({input,env}) stdin/mktree commit-tree; appendLedgerIfEnab
 ADR-0042 amendment note (3.3.0): only `config_floor` is enforced; mandatory_gates, banned_imports, and manifest_constraints are not merged into an effective policy. Recorded here; ADR file not edited.
 [SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/lib/policy/,src/cli/lib/verify-org-phases.ts,src/cli/lib/mcp-org.ts,src/cli/program.ts,src/cli/program-org.ts
 DoD 1 MSN-0205: resolveOrgPolicy ok|fail{code}; FLOOR_RULES + PolicyPointerState; pull via git init + fetch --depth 1 + show FETCH_HEAD; compareExpectedDigests; policy files 7→5; mcp-org toMcpError; presetConfigDefaults; upgradeEligibleAssets one-liner; program-org from program.ts; runUserCommand success JSON/human; msnIdOrDefault; npm test 697 pass
+
+## MSN-0206 — doctor preflight selection model
+[CONTEXT-REQUEST] path=src/cli/lib/doctor-preflight/,src/cli/lib/doctor-adapter-preflight.ts,src/cli/lib/doctor-core.ts,src/cli/lib/doctor-types.ts,src/cli/lib/missions/parser.ts,src/cli/program-core.ts,src/cli/program-workflow.ts,src/cli/program-mission.ts,src/cli/lib/mcp-tools-register.ts,src/cli/tests/,.gitagent/missions/MSN-0206.doctor-preflight-selection-model-reuse-probecliv.yaml reason=Doctor preflight split + registrar flatten + mission restamp proposed=those paths | msn=MSN-0206
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/
+DoD 1 MSN-0206: selection model {tsc?:true; eslint?:{commands}}; probeCliVersion; listMissionFiles; DoctorSection; collectDoctorReport options; split doctor-preflight/{tsc,eslint}; flattened program-* and mcp-tools-register; npm test 697 pass

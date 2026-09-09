@@ -1,8 +1,6 @@
-import fs from "node:fs";
 import path from "node:path";
-import { extractMsnIdFromMissionPath } from "./missions/parser.js";
+import { extractMsnIdFromMissionPath, isValidMsnId, listMissionFiles } from "./missions/parser.js";
 import { gitLogSubjects } from "./git.js";
-import { isValidMsnId } from "./missions/parser.js";
 
 export const WORK_MSN_BAND_MAX = 8999;
 export const UPGRADE_MSN_BAND_MIN = 9000;
@@ -49,25 +47,21 @@ function collectMsnIdsFromGitHistory(repoRoot: string, band: MsnBand | "all"): S
 export function collectUsedMsnIds(repoRoot: string, opts: CollectUsedMsnIdsOptions = {}): Set<string> {
   const band = opts.band ?? "all";
   const used = new Set<string>();
-  const missionsDir = path.join(repoRoot, ".gitagent", "missions");
-  if (fs.existsSync(missionsDir)) {
-    for (const ent of fs.readdirSync(missionsDir, { withFileTypes: true })) {
-      if (!ent.isFile()) continue;
-      const abs = path.join(missionsDir, ent.name);
-      const fromName = ent.name.match(/^(MSN-\d{4})/);
-      if (fromName && isValidMsnId(fromName[1]!)) {
-        const num = msnNumeric(fromName[1]!);
-        if (bandFilter(num, band)) used.add(fromName[1]!);
+  for (const abs of listMissionFiles(repoRoot)) {
+    const name = path.basename(abs);
+    const fromName = name.match(/^(MSN-\d{4})/);
+    if (fromName && isValidMsnId(fromName[1]!)) {
+      const num = msnNumeric(fromName[1]!);
+      if (bandFilter(num, band)) used.add(fromName[1]!);
+    }
+    try {
+      const fromContent = extractMsnIdFromMissionPath(abs);
+      if (fromContent && isValidMsnId(fromContent)) {
+        const num = msnNumeric(fromContent);
+        if (bandFilter(num, band)) used.add(fromContent);
       }
-      try {
-        const fromContent = extractMsnIdFromMissionPath(abs);
-        if (fromContent && isValidMsnId(fromContent)) {
-          const num = msnNumeric(fromContent);
-          if (bandFilter(num, band)) used.add(fromContent);
-        }
-      } catch {
-        // ignore malformed mission files
-      }
+    } catch {
+      // ignore malformed mission files
     }
   }
 

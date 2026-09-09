@@ -6,8 +6,46 @@ import { runTmvcGuard } from "./commands/tmvc-guard.js";
 import { parseOptionalTimeoutMs } from "./lib/cli-io.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 
-function attachRuntimeExec(cmd: Command): void {
-  cmd
+function registerMissionCommand(program: Command): void {
+  const mission = program.command("mission").description("Mission validation + integrity snapshot");
+
+  mission
+    .command("validate")
+    .description("Validate mission file (markdown or YAML) + schema")
+    .requiredOption("--file <path>", "Path to mission .md or .yaml")
+    .action((opts: { file: string }) => {
+      runMissionValidate(opts.file);
+    });
+
+  mission
+    .command("snapshot")
+    .description("Record start-state snapshot under .gitagent/history/")
+    .requiredOption("--file <path>", "Path to mission .md or .yaml")
+    .option("--msn <id>", "Override MSN id from file")
+    .action((opts: { file: string; msn?: string }) => {
+      runMissionSnapshot(opts.file, opts.msn);
+    });
+}
+
+function registerRuntimeEnvCommand(runtime: Command): void {
+  runtime
+    .command("env")
+    .description("Print exportable env for executors (skill TMVC roots, EXECUTOR_LOG path)")
+    .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
+    .option("--json", "Emit JSON payload instead of shell exports")
+    .option("--format <mode>", "`shell` (default POSIX exports) or `text` KEY=value lines", "shell")
+    .action((opts: { mission?: string; json?: boolean; format?: string }) => {
+      if (opts.json === true) {
+        runRuntimeEnv({ mission: opts.mission, json: true });
+        return;
+      }
+      const format = opts.format === "text" ? "text" : "shell";
+      runRuntimeEnv({ mission: opts.mission, format });
+    });
+}
+
+function registerRuntimeExecCommand(runtime: Command): void {
+  runtime
     .command("exec")
     .description("Run executor command with mission env + telemetry capture")
     .requiredOption("--mission <path>", "Mission path (.md or .yaml)")
@@ -59,7 +97,15 @@ function attachRuntimeExec(cmd: Command): void {
     );
 }
 
-function attachContextRequest(program: Command): void {
+function registerRuntimeCommand(program: Command): void {
+  const runtime = program
+    .command("runtime")
+    .description("Executor Runtime Contract bootstrap (`.gitagent/planner/RUNTIME.md`)");
+  registerRuntimeEnvCommand(runtime);
+  registerRuntimeExecCommand(runtime);
+}
+
+function registerContextRequestCommand(program: Command): void {
   program
     .command("context-request")
     .description("Append a PENDING Context Request to EXECUTOR_LOG.md (RULES §4 TMVC expansion)")
@@ -93,48 +139,7 @@ function attachContextRequest(program: Command): void {
     );
 }
 
-export function registerMissionCommands(program: Command): void {
-  const mission = program.command("mission").description("Mission validation + integrity snapshot");
-
-  mission
-    .command("validate")
-    .description("Validate mission file (markdown or YAML) + schema")
-    .requiredOption("--file <path>", "Path to mission .md or .yaml")
-    .action((opts: { file: string }) => {
-      runMissionValidate(opts.file);
-    });
-
-  mission
-    .command("snapshot")
-    .description("Record start-state snapshot under .gitagent/history/")
-    .requiredOption("--file <path>", "Path to mission .md or .yaml")
-    .option("--msn <id>", "Override MSN id from file")
-    .action((opts: { file: string; msn?: string }) => {
-      runMissionSnapshot(opts.file, opts.msn);
-    });
-
-  const runtime = program
-    .command("runtime")
-    .description("Executor Runtime Contract bootstrap (`.gitagent/planner/RUNTIME.md`)");
-
-  runtime
-    .command("env")
-    .description("Print exportable env for executors (skill TMVC roots, EXECUTOR_LOG path)")
-    .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
-    .option("--json", "Emit JSON payload instead of shell exports")
-    .option("--format <mode>", "`shell` (default POSIX exports) or `text` KEY=value lines", "shell")
-    .action((opts: { mission?: string; json?: boolean; format?: string }) => {
-      if (opts.json === true) {
-        runRuntimeEnv({ mission: opts.mission, json: true });
-        return;
-      }
-      const format = opts.format === "text" ? "text" : "shell";
-      runRuntimeEnv({ mission: opts.mission, format });
-    });
-
-  attachRuntimeExec(runtime);
-  attachContextRequest(program);
-
+function registerTmvcCommand(program: Command): void {
   const tmvc = program.command("tmvc").description("TMVC boundary checks (staged index)");
 
   tmvc
@@ -150,4 +155,11 @@ export function registerMissionCommands(program: Command): void {
         json: opts.json,
       });
     });
+}
+
+export function registerMissionCommands(program: Command): void {
+  registerMissionCommand(program);
+  registerRuntimeCommand(program);
+  registerContextRequestCommand(program);
+  registerTmvcCommand(program);
 }

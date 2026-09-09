@@ -78,9 +78,8 @@ test("resolveNpmScript and hasEslintJsonFormat", () => {
     body: "eslint src --format json",
   });
   assert.deepEqual(resolveNpmScript("npm run missing", scripts), {
-    kind: "script",
+    kind: "missing",
     name: "missing",
-    body: undefined,
   });
   assert.deepEqual(resolveNpmScript("npx eslint --format json", scripts), {
     kind: "direct",

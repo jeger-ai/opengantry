@@ -11,12 +11,6 @@ import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor-types.js";
 import type { TypedGateAdapterId } from "../lib/types.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
-export interface DoctorReport {
-  lines: DoctorLine[];
-  next_step: string | null;
-  exit_code: number;
-}
-
 export interface DoctorOptions {
   json?: boolean;
   audience?: OutputAudience;
@@ -61,7 +55,10 @@ export function runDoctor(options: DoctorOptions = {}): void {
       ...(options.adapterBaseline === true ? { baseline: true } : {}),
     };
     const { root, manifest } = loadWorkspace();
-    const report = collectDoctorReport(root, manifest, undefined, options.policy, adapterPreflight);
+    const report = collectDoctorReport(root, manifest, {
+      policyPath: options.policy,
+      adapterPreflight,
+    });
     emitDoctor(
       report.lines,
       report.nextStep,

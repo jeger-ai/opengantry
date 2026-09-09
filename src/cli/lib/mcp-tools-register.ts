@@ -50,7 +50,7 @@ function jsonText(payload: unknown): { content: Array<{ type: "text"; text: stri
   };
 }
 
-function registerLegislationTools(server: McpServer): void {
+function registerGxtInterrogateTool(server: McpServer): void {
   server.tool(
     "gxt_interrogate",
     "Deterministic gap analysis before legislation. Returns one next_question (halt) or clear with interrogation_sha256. Do not fabricate operator_answer — quote operator chat verbatim.",
@@ -65,7 +65,9 @@ function registerLegislationTools(server: McpServer): void {
     },
     async (args) => jsonText(handleInterrogate(args as InterrogateMcpInput)),
   );
+}
 
+function registerGxtDraftLegislationTool(server: McpServer): void {
   server.tool(
     "gxt_draft_legislation",
     "Preview proposed mission law without writing files. Requires complete interrogation (server recomputes). Returns draft_token for gxt_execute_legislation after human chat approval. Never fabricate operator_answer.",
@@ -81,7 +83,9 @@ function registerLegislationTools(server: McpServer): void {
     },
     async (args) => jsonText(handleDraftLegislation(args)),
   );
+}
 
+function registerGxtExecuteLegislationTool(server: McpServer): void {
   server.tool(
     "gxt_execute_legislation",
     "Execute gantry legislate using a valid draft_token after explicit human chat approval.",
@@ -90,7 +94,9 @@ function registerLegislationTools(server: McpServer): void {
     },
     async (args) => jsonText(handleExecuteLegislation(args.draft_token)),
   );
+}
 
+function registerGxtCheckSignatureTool(server: McpServer): void {
   server.tool(
     "gxt_check_signature",
     "Check whether Planner git signature exists for a mission file.",
@@ -99,7 +105,9 @@ function registerLegislationTools(server: McpServer): void {
     },
     async (args) => jsonText(handleCheckSignature(args.mission_file_path)),
   );
+}
 
+function registerGxtPinMissionTool(server: McpServer): void {
   server.tool(
     "gxt_pin_mission",
     "Pin active mission for runtime env and Cursor sessionStart hooks.",
@@ -110,43 +118,18 @@ function registerLegislationTools(server: McpServer): void {
   );
 }
 
-function registerDoctorTool(server: McpServer): void {
+function registerGxtRuntimeEnvTool(server: McpServer): void {
   server.tool(
-    "gxt_doctor",
-    "Environment readiness for GXT + explicit gate adapters (ADR-0041). Run before legislating/pinning a `gate_adapter: tsc|eslint` mission. Selection uses declared gate_adapter or explicit override; never sniffs gate_command. Read-only.",
-    {
-      gate_adapter: typedDoctorAdapterSchema,
-      adapter_baseline: z
-        .boolean()
-        .optional()
-        .describe("Opt-in: spawn tsc/eslint for pre-existing debt warnings. Default off."),
-      policy_path: z.string().optional().describe("Optional expected policy digest JSON path (gantry doctor --policy)."),
-    },
-    async (args) => jsonText(handleDoctor(args)),
-  );
-}
-
-function registerAttestTool(server: McpServer): void {
-  server.tool(
-    "gxt_attest",
-    "Emit local attestation receipt JSON (digests only; optional SSH/GPG signature).",
+    "gxt_runtime_env",
+    "Return GXT runtime env payload for a mission (GXT_* variables).",
     {
       mission_file_path: z.string().describe("Repo-relative mission path"),
-      out: z.string().optional().describe("Receipt output path override"),
-      sign: z.boolean().optional().describe("Detach-sign receipt with local SSH/GPG key"),
     },
-    async (args) =>
-      jsonText(
-        handleAttest({
-          mission_file_path: args.mission_file_path,
-          out: args.out,
-          sign: args.sign,
-        }),
-      ),
+    async (args) => jsonText(handleRuntimeEnv(args.mission_file_path)),
   );
 }
 
-function registerVerifyTool(server: McpServer): void {
+function registerGxtVerifyTool(server: McpServer): void {
   server.tool(
     "gxt_verify",
     "Run gantry verify phases for a mission and return structured result.",
@@ -168,20 +151,27 @@ function registerVerifyTool(server: McpServer): void {
   );
 }
 
-function registerRuntimeTools(server: McpServer): void {
+function registerGxtAttestTool(server: McpServer): void {
   server.tool(
-    "gxt_runtime_env",
-    "Return GXT runtime env payload for a mission (GXT_* variables).",
+    "gxt_attest",
+    "Emit local attestation receipt JSON (digests only; optional SSH/GPG signature).",
     {
       mission_file_path: z.string().describe("Repo-relative mission path"),
+      out: z.string().optional().describe("Receipt output path override"),
+      sign: z.boolean().optional().describe("Detach-sign receipt with local SSH/GPG key"),
     },
-    async (args) => jsonText(handleRuntimeEnv(args.mission_file_path)),
+    async (args) =>
+      jsonText(
+        handleAttest({
+          mission_file_path: args.mission_file_path,
+          out: args.out,
+          sign: args.sign,
+        }),
+      ),
   );
+}
 
-  registerVerifyTool(server);
-
-  registerAttestTool(server);
-
+function registerGxtScanTool(server: McpServer): void {
   server.tool(
     "gxt_scan",
     "Run gantry scan (llm_verifiers) and write KPI report for verify kpi_gate.",
@@ -191,7 +181,9 @@ function registerRuntimeTools(server: McpServer): void {
     },
     async (args) => jsonText(handleScan(args.mission_file_path, args.cwd)),
   );
+}
 
+function registerGxtRuntimeExecTool(server: McpServer): void {
   server.tool(
     "gxt_runtime_exec",
     "Run executor command with mission env + forbidden-zone enforcement.",
@@ -211,7 +203,9 @@ function registerRuntimeTools(server: McpServer): void {
         }),
       ),
   );
+}
 
+function registerGxtResolveMissionTool(server: McpServer): void {
   server.tool(
     "gxt_resolve_mission",
     "Resolve active mission using the same order as gxt-resolve-mission.sh.",
@@ -220,16 +214,34 @@ function registerRuntimeTools(server: McpServer): void {
     },
     async (args) => jsonText(handleResolveMission(args.mission_file_path)),
   );
+}
 
-  registerDoctorTool(server);
+function registerGxtDoctorTool(server: McpServer): void {
+  server.tool(
+    "gxt_doctor",
+    "Environment readiness for GXT + explicit gate adapters (ADR-0041). Run before legislating/pinning a `gate_adapter: tsc|eslint` mission. Selection uses declared gate_adapter or explicit override; never sniffs gate_command. Read-only.",
+    {
+      gate_adapter: typedDoctorAdapterSchema,
+      adapter_baseline: z
+        .boolean()
+        .optional()
+        .describe("Opt-in: spawn tsc/eslint for pre-existing debt warnings. Default off."),
+      policy_path: z.string().optional().describe("Optional expected policy digest JSON path (gantry doctor --policy)."),
+    },
+    async (args) => jsonText(handleDoctor(args)),
+  );
+}
 
+function registerGxtLastErrorTool(server: McpServer): void {
   server.tool(
     "gxt_last_error",
     "Read machine-oriented remediation from GXT_LAST_ERROR_FILE.",
     {},
     async () => jsonText(handleLastError()),
   );
+}
 
+function registerGxtStartOrchestrationTool(server: McpServer): void {
   server.tool(
     "gxt_start_orchestration",
     "Goal-first flow: triage → legislate stub → optional pin/runtime env hints.",
@@ -248,13 +260,16 @@ function registerRuntimeTools(server: McpServer): void {
   );
 }
 
-function registerOrgReadOnlyTools(server: McpServer): void {
+function registerGxtPolicyStatusTool(server: McpServer): void {
   server.tool(
     "gxt_policy_status",
     "Read-only effective org policy (pointer + cache). Never fetches. Use gantry policy pull for network.",
     {},
     async () => jsonText(handlePolicyStatus()),
   );
+}
+
+function registerGxtLedgerVerifyTool(server: McpServer): void {
   server.tool(
     "gxt_ledger_verify",
     "Read-only verify of refs/gxt/ledger hash chain. Never fetches or appends.",
@@ -263,6 +278,9 @@ function registerOrgReadOnlyTools(server: McpServer): void {
     },
     async (args) => jsonText(handleLedgerVerify(args.require_signatures === true)),
   );
+}
+
+function registerGxtDepsCheckTool(server: McpServer): void {
   server.tool(
     "gxt_deps_check",
     "Read-only evaluate mission depends_on against fetched refs/gxt/deps/* . Never fetches.",
@@ -273,7 +291,7 @@ function registerOrgReadOnlyTools(server: McpServer): void {
   );
 }
 
-function registerUpgradeTools(server: McpServer): void {
+function registerGxtUpgradePlanTool(server: McpServer): void {
   server.tool(
     "gxt_upgrade_plan",
     "Plan substrate upgrade preview (stable JSON schema_version 1). Set dry_run true to preview without staging.",
@@ -283,7 +301,9 @@ function registerUpgradeTools(server: McpServer): void {
     },
     async (args) => jsonText(handleUpgradePlan({ msn_id: args.msn_id, dry_run: args.dry_run })),
   );
+}
 
+function registerGxtUpgradeApplyTool(server: McpServer): void {
   server.tool(
     "gxt_upgrade_apply",
     "Apply Teacher-signed substrate upgrade after staged hash verification.",
@@ -296,8 +316,23 @@ function registerUpgradeTools(server: McpServer): void {
 
 /** Register all OpenGantry GXT MCP tools on the given server instance. */
 export function registerGxtMcpTools(server: McpServer): void {
-  registerLegislationTools(server);
-  registerRuntimeTools(server);
-  registerOrgReadOnlyTools(server);
-  registerUpgradeTools(server);
+  registerGxtInterrogateTool(server);
+  registerGxtDraftLegislationTool(server);
+  registerGxtExecuteLegislationTool(server);
+  registerGxtCheckSignatureTool(server);
+  registerGxtPinMissionTool(server);
+  registerGxtRuntimeEnvTool(server);
+  registerGxtVerifyTool(server);
+  registerGxtAttestTool(server);
+  registerGxtScanTool(server);
+  registerGxtRuntimeExecTool(server);
+  registerGxtResolveMissionTool(server);
+  registerGxtDoctorTool(server);
+  registerGxtLastErrorTool(server);
+  registerGxtStartOrchestrationTool(server);
+  registerGxtPolicyStatusTool(server);
+  registerGxtLedgerVerifyTool(server);
+  registerGxtDepsCheckTool(server);
+  registerGxtUpgradePlanTool(server);
+  registerGxtUpgradeApplyTool(server);
 }

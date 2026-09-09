@@ -115,6 +115,18 @@ export function resolveMissionFilePath(repoRoot: string, missionFilePath: string
     : path.join(repoRoot, missionFilePath.replace(/\\/g, path.sep));
 }
 
+/** Absolute paths of files under `.gitagent/missions/` (non-recursive). */
+export function listMissionFiles(root: string): string[] {
+  const dir = path.join(root, ".gitagent", "missions");
+  if (!fs.existsSync(dir)) return [];
+  const out: string[] = [];
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!ent.isFile()) continue;
+    out.push(path.join(dir, ent.name));
+  }
+  return out;
+}
+
 export function pinMissionFile(repoRoot: string, missionAbs: string): string {
   const rel = formatRepoRelative(repoRoot, missionAbs);
   const pinPath = path.join(repoRoot, ".gitagent", "missions", ".active-mission");

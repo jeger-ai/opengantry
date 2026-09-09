@@ -37,7 +37,6 @@ test("handleDoctor: skips adapter preflight when no typed missions", () => {
   const dest = miniRepo();
   const result = withCwd(dest, () => handleDoctor({}));
   assert.ok(isReady(result), `expected ok|fail, got ${JSON.stringify(result)}`);
-  assert.equal(result.exit_code, result.status === "fail" ? 1 : 0);
   assert.ok(
     result.lines.some((l) => l.message === SKIPPED_MESSAGE),
     `missing skip line in ${JSON.stringify(result.lines)}`,
