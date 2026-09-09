@@ -56,7 +56,7 @@ import {
 | Export | Purpose |
 |--------|---------|
 | `evaluateScope` | TMVC + forbidden-zone check for a repo-relative path |
-| `verifyMission` | Full verify phases → `Promise` of structured JSON payload (async since 3.3.0; `verifyMissionAsync` is a deprecated alias) |
+| `verifyMission` | Full verify phases → `Promise` of structured JSON payload (async since 3.3.0). Always `await`. `verifyMissionAsync` is a deprecated alias that emits one `DeprecationWarning` (`GXT_DEP_VERIFY_MISSION_ASYNC`) and will be removed in 4.0. |
 | `mintVerdictToken` / `verifyVerdictToken` | HMAC verdict tokens (pepper keyring) for hot-path promotion gates |
 
 **Breaking in v3.2.2:** only `.` (CLI) and `./kernel` resolve from the package. Migrate any deep imports before upgrading. Reference integration: [`examples/iii-integration/`](../examples/iii-integration/).

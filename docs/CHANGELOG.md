@@ -10,7 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
-| **v3.3.0** | Git-native org control plane — tighten-only org policy floor (`gantry policy pull\|status\|diff`, ADR-0042); compliance ledger on `refs/gxt/ledger` with CAS append + `soc2-pack` export (ADR-0043); cross-repo `depends_on` + `gantry deps` / `release check` (ADR-0044). Receipt schema stays 0.2.0. Doctor/verify stay offline. |
+| **v3.3.0** | **Breaking (kernel):** `verifyMission` is async. Git-native org control plane — tighten-only org policy floor (`gantry policy pull\|status\|diff`, ADR-0042); compliance ledger on `refs/gxt/ledger` with CAS append + `soc2-pack` export (ADR-0043); cross-repo `depends_on` + `gantry deps` / `release check` (ADR-0044). Receipt schema stays 0.2.0. Doctor/verify stay offline. |
 | **v3.2.6** | `gantry report` localhost inspection dashboard (overview git metrics, mission timeline, capped verify-run ring, `/verify` drill-down); ADR-0040 findings blame schema v3 in CLI (MSN-0179); pluggable `gateExecAdapter` on `verifyMission` (MSN-0177); verify-run ring persistence + phase-clock remediation (MSN-0181) |
 | **v3.2.3** | Docs — North Star [`MANIFESTO.md`](MANIFESTO.md); loop→graph terminology (`AGENT-GRAPH.md` rename, mission/verify graph language, retry edges); CLI onboarding UX strings |
 | **v3.2.2** | **Breaking:** `package.json` `exports` map — public entrypoints `.` (CLI) and `./kernel` only; deep `dist/cli/lib/*` imports no longer resolve. Kernel library (`evaluateScope`, `verifyMission`, `verifyVerdictToken`); verdict HMAC tokens; `GIT_OPTIONAL_LOCKS=0` on git spawns; receipt-signing temp path collision fix |
@@ -56,6 +56,10 @@ npm install @jeger-ai/opengantry@3.3.0
 gantry upgrade   # pulls ORG-POLICY.schema.yaml (managed_strict) + POLICY.pointer.json scaffold
 ```
 
+- **Breaking (kernel):** `verifyMission` now returns `Promise<VerifyResultPayload>`. TypeScript consumers fail at compile time until they `await`. A plain-JS sync caller cannot be warned at runtime. `verifyMissionAsync` remains as a `@deprecated` alias and emits one `DeprecationWarning` with code `GXT_DEP_VERIFY_MISSION_ASYNC` (honours `--no-deprecation` / `--throw-deprecation`; never writes to `--json` stdout). The alias will be removed in 4.0. CLI `--json-out` is **kept**.
+- **Adapters:** `GateSpec.adapter` is required in memory; Commander `--gate-adapter` uses `.choices()`. Success-substring is a post-close log `includes` check (no stream scanner).
+- **Ledger / deps:** ledger commits use `hash-object --stdin` + `mktree` + `commit-tree`. Unreadable tip is `GXT_LEDGER_CHAIN_BROKEN` (fail-closed). `gantry release check` exits non-zero on failed `depends_on`.
+- **Policy:** `resolveOrgPolicy` returns `ok | fail{code}`. Only `config_floor` is enforced in 3.3.0 (ADR-0042).
 - **Opt-in policy floor:** add `.gitagent/foreman/POLICY.pointer.json`, then `gantry policy pull`. Doctor and verify never fetch. Merge is tighten-only (ADR-0042). Do not pin a pointer on a repo until the cache is populated or verify will fail closed.
 - **Opt-in ledger:** `.gitagent/config.json` `ledger.mode: local` (default remains `off`). `strict_enterprise` defensive preset defaults ledger mode to `local` when `ledger.mode` is unset. Unsigned entries are checksums, not proofs.
 - **Cross-repo deps:** add mission `depends_on[]`, run `gantry deps fetch` in CI before verify, then `gantry release check --tag <prev>`.

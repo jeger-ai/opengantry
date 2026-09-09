@@ -4,7 +4,7 @@
 
 When you add the OpenGantry worker to an iii project, **cold-path lint and hot-path verify stay on the critical path** for AI-driven worker edits. The scanner follows iii's worker contracts (TypeScript allowed, `request_format` / `response_format` required, `iii.worker.yaml` checked).
 
-Run cold-path lint in CI **before** hot verify. `gantry::verify` is kernel `verifyMission` only — architecture lint is separate (`run-iii-architecture.mjs`).
+Run cold-path lint in CI **before** hot verify. `gantry::verify` is kernel `await verifyMission(...)` only (async since 3.3.0) — architecture lint is separate (`run-iii-architecture.mjs`).
 
 ## Hot path vs cold path
 
