@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0203: TypedGateAdapterId + GATE_ADAPTER_IDS as const; Commander .choices() on legislate/start/doctor; GateSpec-shaped resolveLegislateGateOptions; function-typed adapters + one findingsFromRun; Record registry; substring-stream-scan deleted (post-close includes); npm test 680 pass"
-    anchor: "895"
+    trace_quote: "DoD 1 MSN-0203 re-attest: TypedGateAdapterId, Commander .choices(), function adapters, post-close substring still hold after stacked 3.3.0 TMVC drift; npm test 704 pass"
+    anchor: "925"
     status: PASS
 interrogation:
   - finding_id: 8ff287217765
