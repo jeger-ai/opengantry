@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0204: gitRun({input,env}) stdin/mktree commit-tree; appendLedgerIfEnabled warns (no swallow); LEDGER_CHAIN_BROKEN fail-closed; typed LedgerPayload; checkMissionDependencies + failable release check; npm test 688 pass"
-    anchor: "900"
+    trace_quote: "DoD 1 MSN-0204 re-attest: stdin/mktree ledger, LEDGER_CHAIN_BROKEN fail-closed, failable release check still hold after stacked 3.3.0 TMVC drift; npm test 704 pass"
+    anchor: "926"
     status: PASS
 interrogation:
   - finding_id: 02e7d6b1f235
