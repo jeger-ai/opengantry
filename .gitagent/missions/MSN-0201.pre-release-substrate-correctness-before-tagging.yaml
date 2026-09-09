@@ -5,8 +5,8 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
+    trace_quote: "DoD 1 MSN-0201: template PLANNER.signing.pub is placeholder-only; dead gxt-validate deps-fetch step removed; gen-dogfood MIRRORED covers attest-ingest + planner schemas; attest-ingest-workflow.test.ts deleted; .gitignore already lists .gitagent/tmp/; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "884"
     status: PENDING
 interrogation:
   - finding_id: 02e7d6b1f235
