@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0205: resolveOrgPolicy ok|fail{code}; FLOOR_RULES + PolicyPointerState; pull via git init + fetch --depth 1 + show FETCH_HEAD; compareExpectedDigests; policy files 7→5; mcp-org toMcpError; presetConfigDefaults; upgradeEligibleAssets one-liner; program-org from program.ts; runUserCommand success JSON/human; msnIdOrDefault; npm test 697 pass"
-    anchor: "906"
+    trace_quote: "DoD 1 MSN-0205 re-attest: resolveOrgPolicy ok|fail{code}, FLOOR_RULES, fetch/show pull still hold after stacked 3.3.0 TMVC drift; npm test 704 pass"
+    anchor: "927"
     status: PASS
 interrogation:
   - finding_id: 9b42a6bc8d96
