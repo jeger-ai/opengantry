@@ -96,13 +96,11 @@ function normalizeGatePhase(
     ...base,
     headline: "verify: GATE FAILED",
     detail_lines: [
-      ...(failure.gateStdout !== undefined ? [`--- stdout ---\n${failure.gateStdout}`] : []),
-      ...(failure.gateStderr !== undefined ? [`--- stderr ---\n${failure.gateStderr}`] : []),
+      ...(failure.gateOutput !== undefined ? [`--- output ---\n${failure.gateOutput}`] : []),
       ...(failure.gateExitCode !== undefined ? [`exit code: ${String(failure.gateExitCode)}`] : []),
     ],
     gate: {
-      ...(failure.gateStdout !== undefined ? { stdout: failure.gateStdout } : {}),
-      ...(failure.gateStderr !== undefined ? { stderr: failure.gateStderr } : {}),
+      ...(failure.gateOutput !== undefined ? { stdout: failure.gateOutput } : {}),
       ...(failure.gateExitCode !== undefined ? { exit_code: failure.gateExitCode } : {}),
     },
   };

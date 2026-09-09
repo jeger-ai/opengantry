@@ -10,7 +10,7 @@ export const bannedImportSurgeon: CodeSurgeon = {
   errorCode: GXT_ERROR.BANNED_IMPORT_DETECTED,
 
   async applyMutation(context: SurgeonContext): Promise<SurgeonMutationResult> {
-    const combined = `${context.failure.gateStderr ?? ""}\n${context.failure.gateStdout ?? ""}`;
+    const combined = context.failure.gateOutput ?? "";
     const violations = parseBannedImportGateOutput(combined);
     if (violations.length === 0) {
       return { mutated: false, summary: "no banned-import violations parsed from gate output" };

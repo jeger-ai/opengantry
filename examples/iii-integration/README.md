@@ -146,7 +146,7 @@ Typical production layout:
 
 ## Kernel
 
-Uses `@jeger-ai/opengantry/kernel` (v3.2.2+): `evaluateScope`, `verifyMission`, `mintVerdictToken`, `verifyVerdictToken`. No deep `dist/cli/lib/*` imports.
+Uses `@jeger-ai/opengantry/kernel` (v3.3.0+): `evaluateScope`, `await verifyMission(...)`, `mintVerdictToken`, `verifyVerdictToken`. `verifyMission` returns a Promise. No deep `dist/cli/lib/*` imports.
 
 ## Out of scope (documented gaps)
 

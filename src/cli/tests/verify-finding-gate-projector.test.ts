@@ -29,11 +29,11 @@ describe("verify-finding-gate-projector", () => {
       message: "gate failed",
       exitCode: 1,
       executorLogPath: "EXECUTOR_LOG.md",
-      gateStdout: report,
-      gateStderr: "",
+      gateOutput: report,
       gateExitCode: 1,
     };
-    const findings = projectGateFindings(root, failure, "run gate");
+    const findings = projectGateFindings(root, failure);
+    assert.ok(findings);
     assert.equal(findings.length, 1);
     assert.equal(findings[0]!.offending_file, "src/cli/lib/foo.ts");
     assert.equal(findings[0]!.line, 3);
@@ -49,10 +49,11 @@ describe("verify-finding-gate-projector", () => {
       message: "gate failed",
       exitCode: 1,
       executorLogPath: "EXECUTOR_LOG.md",
-      gateStderr: 'src/bad.ts: banned import "fs"',
+      gateOutput: 'src/bad.ts: banned import "fs"',
       gateExitCode: 1,
     };
-    const findings = projectGateFindings(root, failure, "run gate");
+    const findings = projectGateFindings(root, failure);
+    assert.ok(findings);
     assert.equal(findings.length, 1);
     assert.equal(findings[0]!.offending_file, "src/bad.ts");
     assert.equal(findings[0]!.rule_id, "banned-import");
@@ -80,10 +81,11 @@ describe("verify-finding-gate-projector", () => {
       message: "gate failed",
       exitCode: 1,
       executorLogPath: "EXECUTOR_LOG.md",
-      gateStdout: report,
+      gateOutput: report,
       gateExitCode: 1,
     };
-    const findings = projectGateFindings(root, failure, "run gate");
+    const findings = projectGateFindings(root, failure);
+    assert.ok(findings);
     assert.equal(findings[0]!.evidence, undefined);
     assert.equal(findings[0]!.offending_file, "missing/deleted.ts");
   });

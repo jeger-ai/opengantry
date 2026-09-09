@@ -18,7 +18,6 @@ import {
   scavengeStaleVirtualFlights,
   writeGateCaptureSync,
 } from "./virtual-scratch-store.js";
-import { readGateLogText } from "./gate-log-writer.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./verify-phase-clock.js";
 import { evaluateInterrogationPhase } from "./verify-interrogation.js";
@@ -94,14 +93,13 @@ function recordVirtualGateCapture(
   root: string,
   flightId: string | null,
   gate: GateSpec,
-  outcome: { exitCode: number | null; gateLogPath?: string } | undefined,
+  outcome: { exitCode: number | null; logText: string },
 ): void {
-  if (!flightId || !outcome?.gateLogPath) return;
-  const logText = readGateLogText(root, outcome.gateLogPath);
+  if (!flightId) return;
   writeGateCaptureSync(root, flightId, {
     gate_command: gate.command,
     exit_code: outcome.exitCode,
-    stdout: logText,
+    stdout: outcome.logText,
     stderr: "",
   });
 }
@@ -165,15 +163,15 @@ function buildFullVerifySuccess(input: {
   };
 }
 
-function evaluateOrgControlPhases(
+async function evaluateOrgControlPhases(
   clock: VerifyPhaseClock,
   root: string,
   mission: ParsedMission,
   executorLogPath: string,
-): VerifyPhaseFailure | null {
-  const policy = clock.timed("policy", () => evaluatePolicyPhase({ root, executorLogPath }));
+): Promise<VerifyPhaseFailure | null> {
+  const policy = await clock.timed("policy", () => evaluatePolicyPhase({ root, executorLogPath }));
   if (policy.kind === "fail") return policy.failure;
-  const deps = clock.timed("dependencies", () =>
+  const deps = await clock.timed("dependencies", () =>
     evaluateDependenciesPhase({ root, mission, executorLogPath }),
   );
   return deps.kind === "fail" ? deps.failure : null;
@@ -189,14 +187,14 @@ export async function evaluateVerifyPhases(
   const clock = new VerifyPhaseClock();
   const executorLogPath = resolveExecutorLogPath(root, options);
 
-  const proof = clock.timed("git_proof", () =>
+  const proof = await clock.timed("git_proof", () =>
     evaluateGitProof(root, mission, options, executorLogPath),
   );
   if (proof.kind === "fail") return failWithTimings(proof.failure, clock);
   const { proofMsnId, warnings: proofWarnings } = proof;
 
   const missionRel = formatRepoRelative(root, mission.rawPath);
-  const interrogation = clock.timed("interrogation", () =>
+  const interrogation = await clock.timed("interrogation", () =>
     evaluateInterrogationPhase({
       root,
       manifest,
@@ -209,7 +207,7 @@ export async function evaluateVerifyPhases(
   );
   if (interrogation.failure) return failWithTimings(interrogation.failure, clock);
   const gitProofWarnings = [...proofWarnings, ...interrogation.warnings];
-  const orgFail = evaluateOrgControlPhases(clock, root, mission, executorLogPath);
+  const orgFail = await evaluateOrgControlPhases(clock, root, mission, executorLogPath);
   if (orgFail) return failWithTimings(orgFail, clock);
 
   if (options.prePush === true && isLegislativeStub(mission)) {
@@ -239,20 +237,19 @@ export async function evaluateVerifyPhases(
 
   const virtualFlightId = beginVirtualCapture(root, mission);
   const phaseCtx = { root, manifest, mission, options, executorLogPath };
+  const gate = mission.gate;
 
-  const gateOutcome = await clock.timedAsync("gate", () =>
-    evaluateGatePhase(phaseCtx, mission.gate!),
-  );
-  recordVirtualGateCapture(root, virtualFlightId, mission.gate!, gateOutcome);
-  if (gateOutcome.failure) return failWithTimings(gateOutcome.failure, clock);
+  const gateOutcome = await clock.timed("gate", () => evaluateGatePhase(phaseCtx, gate));
+  recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome);
+  if (gateOutcome.kind === "fail") return failWithTimings(gateOutcome.failure, clock);
 
-  const defensive = clock.timed("defensive", () => evaluateDefensivePhase(phaseCtx));
+  const defensive = await clock.timed("defensive", () => evaluateDefensivePhase(phaseCtx));
   if (defensive.kind === "fail") return failWithTimings(defensive.failure, clock);
 
-  const kpi = clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
+  const kpi = await clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
   if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
 
-  const trace = clock.timed("trace", () => evaluateTracePhase(phaseCtx));
+  const trace = await clock.timed("trace", () => evaluateTracePhase(phaseCtx));
   if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
 
   if (virtualFlightId) purgeVirtualFlightDir(root, virtualFlightId);

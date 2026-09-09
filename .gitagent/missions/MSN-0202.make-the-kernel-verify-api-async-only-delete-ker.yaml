@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0202: verifyMission is async; verifyMissionAsync emits one-shot GXT_DEP_VERIFY_MISSION_ASYNC; shim deleted; gateOutput + GatePhaseOutcome kind union; single timed(); projector returns null; npm test 681 pass"
+    anchor: "890"
+    status: PASS
 interrogation:
   - finding_id: 09266262993a
     kind: risk_escalation
@@ -51,12 +51,20 @@ interrogation:
       - ADR-0022
 interrogation_sha256: c217605ed4c00490b6562fe0de53c07b5ffda72674c404285a4c49f341832a5b
 declared_paths:
+  - .gitagent/missions/MSN-0202.make-the-kernel-verify-api-async-only-delete-ker.yaml
+  - docs/INTEGRATIONS.md
+  - examples/iii-integration/README.md
   - examples/iii-integration/scripts/test-e2e.mjs
   - src/cli/kernel.ts
   - src/cli/lib/kernel-verify-cli-shim.ts
+  - src/cli/lib/surgeons/banned-import.ts
+  - src/cli/lib/surgeons/import-layer.ts
+  - src/cli/lib/surgeons/registry.ts
   - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-failure-normalize.ts
   - src/cli/lib/verify-failure.ts
   - src/cli/lib/verify-finding-gate-projector.ts
+  - src/cli/lib/verify-hints.ts
   - src/cli/lib/verify-options.ts
   - src/cli/lib/verify-payload.ts
   - src/cli/lib/verify-phase-clock.ts
@@ -64,3 +72,11 @@ declared_paths:
   - src/cli/lib/verify-presenters.ts
   - src/cli/tests/kernel-exports.test.ts
   - src/cli/tests/kernel-verify-cli-shim.test.ts
+  - src/cli/tests/surgeons-import-layer.test.ts
+  - src/cli/tests/surgeons-registry.test.ts
+  - src/cli/tests/verify-failure-normalize.test.ts
+  - src/cli/tests/verify-failure-presentation.test.ts
+  - src/cli/tests/verify-finding-envelope.test.ts
+  - src/cli/tests/verify-finding-gate-projector.test.ts
+  - src/cli/tests/verify-hints.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts

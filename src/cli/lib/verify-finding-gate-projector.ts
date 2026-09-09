@@ -7,11 +7,10 @@ import type { GateFailure } from "./verify-failure.js";
 export function projectGateFindings(
   root: string,
   failure: GateFailure,
-  hint: string,
-): VerifyFinding[] {
-  const stdout = failure.gateStdout ?? "";
-  const stderr = failure.gateStderr ?? "";
-  const combined = `${stdout}\n${stderr}`;
+): VerifyFinding[] | null {
+  const combined = failure.gateOutput ?? "";
+  const stdout = combined;
+  const stderr = "";
 
   const importReport = extractImportLayerGateReport(stdout, stderr);
   if (importReport && importReport.ok === false && importReport.violations.length > 0) {
@@ -37,5 +36,5 @@ export function projectGateFindings(
     );
   }
 
-  return [verifyFinding("gate", hint)];
+  return null;
 }

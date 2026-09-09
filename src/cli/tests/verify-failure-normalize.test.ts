@@ -20,8 +20,7 @@ function gateFailure(): VerifyPhaseFailure {
     exitCode: 1,
     executorLogPath: "EXECUTOR_LOG.md",
     gateCommand: "npm test",
-    gateStdout: "fail out",
-    gateStderr: "fail err",
+    gateOutput: "fail out\nfail err",
     gateExitCode: 1,
   };
 }
@@ -41,12 +40,10 @@ test("normalizeVerifyPhaseFailure: gate parity across sinks", () => {
   assert.equal(payload.error_code, GXT_ERROR.GATE_FAILED);
   assert.equal(presentation.error_code, GXT_ERROR.GATE_FAILED);
   assert.equal(remediation.error_code, GXT_ERROR.GATE_FAILED);
-  assert.equal(payload.stdout, "fail out");
-  assert.equal(payload.stderr, "fail err");
-  assert.equal(remediation.gate?.stdout, "fail out");
-  assert.equal(remediation.gate?.stderr, "fail err");
+  assert.equal(payload.stdout, "fail out\nfail err");
+  assert.equal(remediation.gate?.stdout, "fail out\nfail err");
   assert.equal(remediation.gate?.exit_code, 1);
-  assert.equal(presentation.gate?.stdout, "fail out");
+  assert.equal(presentation.gate?.stdout, "fail out\nfail err");
   assert.equal(remediation.schema_version, REMEDIATION_SCHEMA_VERSION);
 });
 

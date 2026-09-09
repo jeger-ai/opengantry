@@ -57,10 +57,7 @@ export const importLayerSurgeon: CodeSurgeon = {
   errorCode: GXT_ERROR.IMPORT_LAYER_VIOLATION,
 
   async applyMutation(context: SurgeonContext): Promise<SurgeonMutationResult> {
-    const report = extractImportLayerGateReport(
-      context.failure.gateStdout ?? "",
-      context.failure.gateStderr ?? "",
-    );
+    const report = extractImportLayerGateReport(context.failure.gateOutput ?? "", "");
     if (!report || report.violations.length === 0) {
       return { mutated: false, summary: "no import-layer violations parsed from gate JSON" };
     }

@@ -45,7 +45,7 @@ test("hintsForVerifyPhase: gate detects import layer violation", () => {
       exitCode: 1,
       executorLogPath: "EXECUTOR_LOG.md",
       gateCommand: "npm test",
-      gateStdout: gateJson,
+      gateOutput: gateJson,
     },
     meta,
   );

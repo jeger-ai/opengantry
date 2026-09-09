@@ -325,7 +325,7 @@ async function assertInternalBleed(registerWorker, mintSessionAdmissionToken) {
     },
   });
   if (!verify || (verify.status !== "passed" && verify.ok !== true && !verify.mission)) {
-    // verifyMission returns a structured result; accept any non-throw as internal path live.
+    // verifyMission is async and returns a structured result; accept any non-throw as internal path live.
     log(`internal gantry::verify returned: ${JSON.stringify(verify).slice(0, 200)}`);
   }
   log("PASS internal port serves gantry::verify for trusted workers (middleware only on 49135)");

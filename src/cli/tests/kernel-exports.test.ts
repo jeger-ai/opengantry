@@ -21,8 +21,9 @@ test("kernel exports: package subpaths resolve after build", () => {
   assert.ok(fs.existsSync(kernelPath), "dist/cli/kernel.js must exist — run npm run build");
   const kernel = require(kernelPath) as {
     evaluateScope: typeof evaluateScope;
-    verifyMission: (input: { repoRoot: string; missionRelPath: string }) => unknown;
+    verifyMission: (input: { repoRoot: string; missionRelPath: string }) => Promise<unknown>;
     verifyMissionAsync: (input: { repoRoot: string; missionRelPath: string }) => Promise<unknown>;
+    resetVerifyMissionAsyncWarningForTests: () => void;
     verifyVerdictToken: typeof verifyVerdictToken;
     loadGovernanceBundle: (repoRoot: string, missionRelPath: string) => unknown;
     buildVerdictExpectedClaims: (repoRoot: string, missionRelPath: string) => unknown;
@@ -32,6 +33,7 @@ test("kernel exports: package subpaths resolve after build", () => {
   assert.equal(typeof kernel.evaluateScope, "function");
   assert.equal(typeof kernel.verifyMission, "function");
   assert.equal(typeof kernel.verifyMissionAsync, "function");
+  assert.equal(typeof kernel.resetVerifyMissionAsyncWarningForTests, "function");
   assert.equal(typeof kernel.verifyVerdictToken, "function");
   assert.equal(typeof kernel.loadGovernanceBundle, "function");
   assert.equal(typeof kernel.buildVerdictExpectedClaims, "function");
@@ -105,4 +107,31 @@ test("verdict-token: mint and verify round-trip", () => {
     }),
     false,
   );
+});
+
+test("verifyMissionAsync emits one GXT_DEP_VERIFY_MISSION_ASYNC warning per process", async () => {
+  const { verifyMissionAsync, resetVerifyMissionAsyncWarningForTests } = await import("../kernel.js");
+  resetVerifyMissionAsyncWarningForTests();
+  const codes: string[] = [];
+  const original = process.emitWarning.bind(process);
+  process.emitWarning = ((warning: string | Error, ...rest: unknown[]) => {
+    const opts = rest[0];
+    if (
+      opts &&
+      typeof opts === "object" &&
+      "code" in opts &&
+      (opts as { code?: string }).code === "GXT_DEP_VERIFY_MISSION_ASYNC"
+    ) {
+      codes.push("GXT_DEP_VERIFY_MISSION_ASYNC");
+    }
+    return original(warning, ...(rest as []));
+  }) as typeof process.emitWarning;
+  try {
+    await verifyMissionAsync({ repoRoot: "/", missionRelPath: "missing.yaml" }).catch(() => undefined);
+    await verifyMissionAsync({ repoRoot: "/", missionRelPath: "missing.yaml" }).catch(() => undefined);
+  } finally {
+    process.emitWarning = original;
+    resetVerifyMissionAsyncWarningForTests();
+  }
+  assert.equal(codes.length, 1);
 });

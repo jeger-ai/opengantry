@@ -71,14 +71,12 @@ export interface VerifyFailedPayload {
 export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
 
 function buildGateFindings(root: string, failure: GateFailure, hint: string): VerifyFinding[] {
-  const projected = projectGateFindings(root, failure, hint);
-  const adapterFindings = failure.adapterFindings;
-  const genericOnly =
-    projected.length === 1 &&
-    projected[0]!.resolution_hint === hint &&
-    adapterFindings !== undefined &&
-    adapterFindings.length > 0;
-  return genericOnly ? adapterFindings : projected;
+  if (failure.gateAdapter !== undefined && failure.gateAdapter !== "generic") {
+    return failure.adapterFindings?.length
+      ? failure.adapterFindings
+      : [verifyFinding("gate", hint)];
+  }
+  return projectGateFindings(root, failure) ?? failure.adapterFindings ?? [verifyFinding("gate", hint)];
 }
 
 function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: string): VerifyFinding[] | null {

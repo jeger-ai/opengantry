@@ -7,14 +7,14 @@ import {
   resolveSurgeonErrorCode,
 } from "../lib/surgeons/registry.js";
 
-function gateFailure(stderr: string): GateFailure {
+function gateFailure(output: string): GateFailure {
   return {
     ok: false,
     phase: "gate",
     message: "GATE FAILED",
     exitCode: 1,
     executorLogPath: "EXECUTOR_LOG.md",
-    gateStderr: stderr,
+    gateOutput: output,
   };
 }
 
@@ -62,10 +62,7 @@ test("resolveSurgeonErrorCode: maps import-layer gate JSON", () => {
   });
   const code = resolveSurgeonErrorCode(gateFailure(""));
   assert.equal(code, null);
-  const withStdout = resolveSurgeonErrorCode({
-    ...gateFailure(""),
-    gateStdout: json,
-  });
+  const withStdout = resolveSurgeonErrorCode(gateFailure(json));
   assert.equal(withStdout, GXT_ERROR.IMPORT_LAYER_VIOLATION);
 });
 

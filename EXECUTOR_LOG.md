@@ -883,3 +883,8 @@ MSN-9002: upgrade to v3.3.0 org control plane — ORG-POLICY.schema.yaml + POLIC
 [SKILL-EXEC] skill_key=substrate tool=cursor scope=templates/.gitagent/foreman/PLANNER.signing.pub,templates/.github/workflows/,.github/workflows/,scripts/gen-dogfood.mjs,scripts/assert-dogfood-sync.sh,src/cli/tests/attest-ingest-workflow.test.ts
 DoD 1 MSN-0201: template PLANNER.signing.pub is placeholder-only; dead gxt-validate deps-fetch step removed; gen-dogfood MIRRORED covers attest-ingest + planner schemas; attest-ingest-workflow.test.ts deleted; .gitignore already lists .gitagent/tmp/; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
 [CONTEXT-REQUEST] path=.gitagent/missions/MSN-0201.pre-release-substrate-correctness-before-tagging.yaml reason=Declare mission file on interrogation record so Planner restamp of trace_rows is not PATH_DRIFT proposed=.gitagent/missions/MSN-0201.pre-release-substrate-correctness-before-tagging.yaml | msn=MSN-0201
+
+## MSN-0202 — async-only kernel verify
+[CONTEXT-REQUEST] path=docs/INTEGRATIONS.md,examples/iii-integration/README.md,examples/iii-integration/scripts/test-e2e.mjs,.gitagent/missions/MSN-0202.make-the-kernel-verify-api-async-only-delete-ker.yaml reason=Document await verifyMission and bind mission file for restamp; e2e comment already on declared_paths proposed=those paths | msn=MSN-0202
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/kernel.ts,src/cli/lib/verify-*.ts,src/cli/lib/surgeons/
+DoD 1 MSN-0202: verifyMission is async; verifyMissionAsync emits one-shot GXT_DEP_VERIFY_MISSION_ASYNC; shim deleted; gateOutput + GatePhaseOutcome kind union; single timed(); projector returns null; npm test 681 pass

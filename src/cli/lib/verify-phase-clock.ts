@@ -30,19 +30,7 @@ export class VerifyPhaseClock {
     });
   }
 
-  timed<T>(id: VerifyPhaseId, fn: () => T): T {
-    const start = performance.now();
-    try {
-      const result = fn();
-      this.record(id, start, "passed");
-      return result;
-    } catch (e) {
-      this.record(id, start, "failed");
-      throw e;
-    }
-  }
-
-  async timedAsync<T>(id: VerifyPhaseId, fn: () => Promise<T>): Promise<T> {
+  async timed<T>(id: VerifyPhaseId, fn: () => T | Promise<T>): Promise<T> {
     const start = performance.now();
     try {
       const result = await fn();

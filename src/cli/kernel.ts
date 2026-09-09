@@ -42,7 +42,6 @@ import { loadManifest } from "./lib/manifest.js";
 import type { VerifyOptions } from "./lib/verify-options.js";
 import type { VerifyResultPayload } from "./lib/verify-payload.js";
 import { buildVerifyResultPayload } from "./lib/verify-payload.js";
-import { runVerifyMissionViaCli } from "./lib/kernel-verify-cli-shim.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;
@@ -51,23 +50,33 @@ export interface VerifyMissionInput {
 }
 
 /** Run full verify phases in-process and return structured JSON payload. */
-export async function verifyMissionAsync(input: VerifyMissionInput): Promise<VerifyResultPayload> {
+export async function verifyMission(input: VerifyMissionInput): Promise<VerifyResultPayload> {
   const manifest = loadManifest(input.repoRoot);
   const mission = parseMissionFile(input.repoRoot, input.missionRelPath);
   const options = input.options ?? {};
   return buildVerifyResultPayload(input.repoRoot, manifest, mission, options);
 }
 
+let verifyMissionAsyncWarned = false;
+
+/** Test-only: reset the one-shot DeprecationWarning latch. */
+export function resetVerifyMissionAsyncWarningForTests(): void {
+  verifyMissionAsyncWarned = false;
+}
+
 /**
- * Legacy sync API for iii workers — subprocesses `gantry verify --json-out`.
- * Custom gateExecAdapter is not supported across the process boundary; use verifyMissionAsync.
+ * @deprecated Use `verifyMission` (now async). Emits DeprecationWarning
+ * `GXT_DEP_VERIFY_MISSION_ASYNC` once per process. Removed in 4.0.
  */
-export function verifyMission(input: VerifyMissionInput): VerifyResultPayload {
-  return runVerifyMissionViaCli({
-    repoRoot: input.repoRoot,
-    missionRelPath: input.missionRelPath,
-    options: input.options,
-  });
+export async function verifyMissionAsync(input: VerifyMissionInput): Promise<VerifyResultPayload> {
+  if (!verifyMissionAsyncWarned) {
+    verifyMissionAsyncWarned = true;
+    process.emitWarning(
+      "verifyMissionAsync is deprecated; use verifyMission (now async). Will be removed in 4.0.",
+      { type: "DeprecationWarning", code: "GXT_DEP_VERIFY_MISSION_ASYNC" },
+    );
+  }
+  return verifyMission(input);
 }
 
 /** Load manifest + mission for middleware scope checks (no verify run). */

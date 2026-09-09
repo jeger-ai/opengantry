@@ -34,11 +34,9 @@ export function getSurgeonForErrorCode(code: GxtErrorCode): CodeSurgeon | undefi
 
 export function resolveSurgeonErrorCode(failure: VerifyPhaseFailure): GxtErrorCode | null {
   if (failure.phase !== "gate") return null;
-  const stdout = failure.gateStdout ?? "";
-  const stderr = failure.gateStderr ?? "";
-  const combined = `${stderr}\n${stdout}`;
+  const combined = failure.gateOutput ?? "";
 
-  if (gateOutputIndicatesImportLayer(stdout) || gateOutputIndicatesImportLayer(stderr)) {
+  if (gateOutputIndicatesImportLayer(combined)) {
     return GXT_ERROR.IMPORT_LAYER_VIOLATION;
   }
   if (gateOutputIndicatesBannedImport(combined) || /: banned import "/.test(combined)) {

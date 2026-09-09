@@ -84,9 +84,8 @@ function hintsForGatePhase(failure: GateFailure, meta: VerifyHintMeta): VerifyRe
   const mission = meta.missionPath;
   const verifyCmdStr = verifyCmd(mission);
   const gate = failure.gateCommand ?? "<gate>";
-  const combined = `${failure.gateStderr ?? ""}\n${failure.gateStdout ?? ""}`;
-  const errorCode = gateOutputIndicatesImportLayer(failure.gateStdout ?? "")
-    || gateOutputIndicatesImportLayer(failure.gateStderr ?? "")
+  const combined = failure.gateOutput ?? "";
+  const errorCode = gateOutputIndicatesImportLayer(combined)
     ? GXT_ERROR.IMPORT_LAYER_VIOLATION
     : gateOutputIndicatesBannedImport(combined)
       ? GXT_ERROR.BANNED_IMPORT_DETECTED

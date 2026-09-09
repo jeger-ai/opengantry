@@ -17,9 +17,9 @@ import { evaluateGatePhase } from "../lib/verify-phase-steps.js";
 import type { GateExecAdapter } from "../lib/verify-options.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "../lib/verify-finding.js";
 
-test("VerifyPhaseClock timed records failed status and rethrows", () => {
+test("VerifyPhaseClock timed records failed status and rethrows", async () => {
   const clock = new VerifyPhaseClock();
-  assert.throws(
+  await assert.rejects(
     () =>
       clock.timed("gate", () => {
         throw new Error("sync boom");
@@ -30,11 +30,11 @@ test("VerifyPhaseClock timed records failed status and rethrows", () => {
   assert.equal(timings.find((p) => p.id === "gate")?.status, "failed");
 });
 
-test("VerifyPhaseClock timedAsync records failed status and rethrows", async () => {
+test("VerifyPhaseClock timed records failed status and rethrows for async fn", async () => {
   const clock = new VerifyPhaseClock();
   await assert.rejects(
     () =>
-      clock.timedAsync("gate", async () => {
+      clock.timed("gate", async () => {
         throw new Error("adapter boom");
       }),
     /adapter boom/,
@@ -43,9 +43,9 @@ test("VerifyPhaseClock timedAsync records failed status and rethrows", async () 
   assert.equal(timings.find((p) => p.id === "gate")?.status, "failed");
 });
 
-test("VerifyPhaseClock markFailed records failed status", () => {
+test("VerifyPhaseClock markFailed records failed status", async () => {
   const clock = new VerifyPhaseClock();
-  clock.timed("gate", () => "ran");
+  await clock.timed("gate", () => "ran");
   clock.markFailed("gate");
   clock.markSkipped("defensive");
   const timings = clock.finalize();
@@ -194,6 +194,7 @@ test("evaluateGatePhase fails when adapter returns findings despite exitCode 0",
     },
     mission.gate!,
   );
-  assert.ok(outcome.failure);
-  assert.equal(outcome.failure?.phase, "gate");
+  assert.equal(outcome.kind, "fail");
+  if (outcome.kind !== "fail") return;
+  assert.equal(outcome.failure.phase, "gate");
 });

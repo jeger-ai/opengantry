@@ -47,8 +47,7 @@ test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", asyn
     message: "GATE FAILED",
     exitCode: 1,
     executorLogPath: path.join(dir, "EXECUTOR_LOG.md"),
-    gateStdout: gateJson,
-    gateStderr: "",
+    gateOutput: gateJson,
   };
 
   const context: SurgeonContext = {

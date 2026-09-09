@@ -56,7 +56,7 @@ import {
 | Export | Purpose |
 |--------|---------|
 | `evaluateScope` | TMVC + forbidden-zone check for a repo-relative path |
-| `verifyMission` | Full verify phases → structured JSON payload |
+| `verifyMission` | Full verify phases → `Promise` of structured JSON payload (async since 3.3.0; `verifyMissionAsync` is a deprecated alias) |
 | `mintVerdictToken` / `verifyVerdictToken` | HMAC verdict tokens (pepper keyring) for hot-path promotion gates |
 
 **Breaking in v3.2.2:** only `.` (CLI) and `./kernel` resolve from the package. Migrate any deep imports before upgrading. Reference integration: [`examples/iii-integration/`](../examples/iii-integration/).

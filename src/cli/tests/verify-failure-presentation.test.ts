@@ -20,8 +20,7 @@ test("verifyFailurePresentation: gate phase includes remediation", () => {
     exitCode: 1,
     executorLogPath: "EXECUTOR_LOG.md",
     gateCommand: "npm test",
-    gateStdout: "fail",
-    gateStderr: "err",
+    gateOutput: "fail\nerr",
     gateExitCode: 1,
   };
   const presentation = verifyFailurePresentation({

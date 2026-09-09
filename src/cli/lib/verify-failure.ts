@@ -1,6 +1,6 @@
 import type { GxtErrorCode } from "./gxt-error-codes.js";
 import type { DependencyCheckCode } from "./deps/deps-types.js";
-import type { KpiThresholdOp } from "./types.js";
+import type { GateAdapterId, KpiThresholdOp } from "./types.js";
 import type { TraceFailureKind } from "./trace.js";
 import type { VerifyFinding } from "./verify-finding.js";
 
@@ -33,8 +33,9 @@ export interface GateFailure extends VerifyFailureBase {
   phase: "gate";
   /** Absent only for the "mission has no gate_command" failure. */
   gateCommand?: string;
-  gateStdout?: string;
-  gateStderr?: string;
+  /** Combined gate log text (stdout+stderr as streamed to gate_log_path). */
+  gateOutput?: string;
+  gateAdapter?: GateAdapterId;
   gateExitCode?: number;
   /** Repo-relative path when gate log was streamed to disk. */
   gateLogPath?: string;

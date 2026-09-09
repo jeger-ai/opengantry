@@ -57,11 +57,9 @@ export function evaluateGitProof(
   }
 }
 
-export interface GatePhaseOutcome {
-  failure: GateFailure | null;
-  gateLogPath?: string;
-  exitCode: number | null;
-}
+export type GatePhaseOutcome =
+  | { kind: "ok"; exitCode: number | null; gateLogPath: string; logText: string }
+  | { kind: "fail"; exitCode: number | null; gateLogPath: string; logText: string; failure: GateFailure };
 
 export async function evaluateGatePhase(
   input: PhaseContext,
@@ -81,17 +79,22 @@ export async function evaluateGatePhase(
     successSubstring: gate.successSubstring,
   });
 
+  const logText = readGateLogText(root, gateLogRel);
+
   if (result.findings.length === 0) {
     return {
-      failure: null,
-      gateLogPath: gateLogRel,
+      kind: "ok",
       exitCode: result.exitCode,
+      gateLogPath: gateLogRel,
+      logText,
     };
   }
 
-  const logText = readGateLogText(root, gateLogRel);
-
   return {
+    kind: "fail",
+    exitCode: result.exitCode,
+    gateLogPath: gateLogRel,
+    logText,
     failure: {
       ok: false,
       phase: "gate",
@@ -99,14 +102,12 @@ export async function evaluateGatePhase(
       exitCode: 1,
       executorLogPath,
       gateCommand: gate.command,
-      gateStdout: logText,
-      gateStderr: "",
+      gateOutput: logText,
+      gateAdapter: gate.adapter,
       gateExitCode: result.exitCode ?? undefined,
       gateLogPath: gateLogRel,
       adapterFindings: result.findings,
     },
-    gateLogPath: gateLogRel,
-    exitCode: result.exitCode,
   };
 }
 
