@@ -1,0 +1,50 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.3.0: amend CHANGELOG Breaking (kernel) section, docs/README/iii snippets, pre-tag consumer checklist, parity gate, tag v3.3.0
+msn_id: MSN-0208
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: c6b28db36628
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key substrate; this is the 3.3.0 release mission.
+      Docs/CHANGELOG/README and remaining iii kernel snippets only; no CLI
+      behavior change. Empty substrate tmvc_roots; authorize docs/, README.md,
+      examples/iii-integration/, package.json, and scripts/ for parity + tag.
+    adr_refs:
+      - ADR-0042
+      - ADR-0043
+      - ADR-0044
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: skill_key substrate; empty tmvc_roots is the substrate
+      contract. This mission authorizes docs/, README.md,
+      examples/iii-integration/, package.json, and scripts/ for the 3.3.0
+      CHANGELOG, docs, parity gate, and tag.
+    adr_refs:
+      - ADR-0042
+interrogation_sha256: f3b3d07ff9feb1d5ab2f66c5e0c82a5d234450aa8de556dd06b35b6828f1d330
+declared_paths:
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/INTEGRATIONS.md
+  - examples/iii-integration/BEST-PRACTICES.md
+  - examples/iii-integration/README.md
+  - examples/iii-integration/scripts/test-e2e.mjs
+  - package.json
+  - scripts/assert-cli-version-parity.sh
+  - scripts/release-gate-publish.sh
