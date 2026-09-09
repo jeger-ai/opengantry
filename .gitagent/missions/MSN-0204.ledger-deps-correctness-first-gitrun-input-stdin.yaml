@@ -1,0 +1,61 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Ledger + deps correctness first: gitRun({input}) stdin/mktree plumbing, appendLedgerIfEnabled (warn, no swallow), LEDGER_CHAIN_BROKEN fail-closed, typed LedgerPayload, checkMissionDependencies + discriminated result, failable release check; tests land before any policy teardown.
+msn_id: MSN-0204
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: "Accept: keep refs/gxt/ledger orphan chain and entry.json;
+      replace temp-index write with hash-object/mktree/commit-tree; fail closed
+      on unreadable tip; sign on warn|require."
+    adr_refs:
+      - ADR-0043
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0037 is plane ingest/CI envelope.
+      This mission is spoke-local ledger write and deps check plumbing."
+    adr_refs:
+      - ADR-0037
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: "Accept: checkMissionDependencies is the shared spoke-local
+      check; release check must fail closed on unsatisfied deps."
+    adr_refs:
+      - ADR-0044
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key gantry; TMVC src/cli/ and package.json. Ledger and
+      deps CLI/lib only — no substrate/CI templates.
+    adr_refs:
+      - ADR-0043
+interrogation_sha256: f5bbdb073d1e3444aa4af07903ceb32197a12138433ed92b3f43708131bc4705
+declared_paths:
+  - src/cli/commands/deps.ts
+  - src/cli/commands/ledger.ts
+  - src/cli/lib/deps/deps-resolve.ts
+  - src/cli/lib/deps/deps-types.ts
+  - src/cli/lib/git.ts
+  - src/cli/lib/ledger/ledger-append.ts
+  - src/cli/lib/ledger/ledger-hook.ts
