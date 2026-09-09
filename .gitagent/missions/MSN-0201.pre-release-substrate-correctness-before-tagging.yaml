@@ -112,6 +112,7 @@ interrogation:
       - ADR-0037
 interrogation_sha256: daddcbf3fad738121e4ae0740f52c57dbf1fc6b5ea82c48884b908f3bd2562d3
 declared_paths:
+  - .gitagent/missions/MSN-0201.pre-release-substrate-correctness-before-tagging.yaml
   - .github/workflows/gxt-attest-ingest.yml
   - .github/workflows/gxt-validate.yml
   - .gitignore
