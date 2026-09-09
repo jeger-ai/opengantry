@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0206: selection model {tsc?:true; eslint?:{commands}}; probeCliVersion; listMissionFiles; DoctorSection; collectDoctorReport options; split doctor-preflight/{tsc,eslint}; flattened program-* and mcp-tools-register; npm test 697 pass"
-    anchor: "911"
+    trace_quote: "DoD 1 MSN-0206 re-attest: doctor preflight selection model and flat program/MCP registrars still hold after stacked 3.3.0 TMVC drift; npm test 704 pass"
+    anchor: "928"
     status: PASS
 interrogation:
   - finding_id: 835752208e7c
