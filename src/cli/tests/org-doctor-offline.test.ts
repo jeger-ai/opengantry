@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { getRepoRoot } from "../lib/git.js";
-import { runLedgerDoctorChecks } from "../lib/ledger/ledger-verify.js";
+import { runLedgerDoctorChecks } from "../lib/ledger/ledger-chain.js";
 import { runOrgPolicyDoctorChecks } from "../lib/policy/policy-doctor.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
@@ -15,7 +15,7 @@ test("org doctor sources never clone or fetch", () => {
   const files = [
     path.join(root, "policy/policy-doctor.ts"),
     path.join(root, "policy/policy-resolve.ts"),
-    path.join(root, "ledger/ledger-verify.ts"),
+    path.join(root, "ledger/ledger-chain.ts"),
     path.join(root, "doctor-core.ts"),
   ];
   for (const file of files) {

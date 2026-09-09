@@ -250,7 +250,7 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       const depCode = (failure as DependenciesFailure).dependencyCode;
       return {
         ...base,
-        error_code: depCode === "ok" ? GXT_ERROR.VERIFY_FAILED : depCode,
+        error_code: depCode,
         headline: "verify: DEPENDENCY GATE FAILED",
         detail_lines: [failure.message],
         failures: [failure.message],

@@ -1,7 +1,6 @@
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { REL_POLICY_POINTER } from "./constants.js";
-import { checkMissionDependency } from "./deps/deps-resolve.js";
-import { maybeAppendLedger } from "./ledger/ledger-append.js";
+import { checkMissionDependencies, type DependencyCheckResult } from "./deps/deps-resolve.js";
 import { floorViolations } from "./policy/policy-merge.js";
 import { resolveEffectivePolicy, localConfigFloor } from "./policy/policy-resolve.js";
 import type { ParsedMission } from "./types.js";
@@ -71,35 +70,24 @@ export function evaluateDependenciesPhase(input: {
   mission: ParsedMission;
   executorLogPath: string;
 }): DependenciesPhaseOutcome {
-  const deps = input.mission.dependsOn ?? [];
-  if (deps.length === 0) return { kind: "ok", warnings: [] };
-  for (const dep of deps) {
-    const result = checkMissionDependency(input.root, dep);
-    if (result.code === "ok") {
-      maybeAppendLedger(input.root, {
-        kind: "dependency_check",
-        msn_id: input.mission.msnId ?? "MSN-0000",
-        payload: { repo: result.repo, msn_id: result.msn_id, result: "ok" },
-      });
-      continue;
-    }
-    return {
-      kind: "fail",
-      failure: {
-        ok: false,
-        phase: "dependencies",
-        message: `${result.code}: ${result.message}`,
-        exitCode: 1,
-        executorLogPath: input.executorLogPath,
-        dependencyCode: result.code,
-        findings: [
-          verifyFinding("dependencies", result.message, {
-            offending_file: input.mission.rawPath,
-            rule_id: result.code,
-          }),
-        ],
-      },
-    };
-  }
-  return { kind: "ok", warnings: [] };
+  const results = checkMissionDependencies(input.root, input.mission);
+  const failed = results.find((r): r is Extract<DependencyCheckResult, { code: Exclude<DependencyCheckResult["code"], "ok"> }> => r.code !== "ok");
+  if (!failed) return { kind: "ok", warnings: [] };
+  return {
+    kind: "fail",
+    failure: {
+      ok: false,
+      phase: "dependencies",
+      message: `${failed.code}: ${failed.message}`,
+      exitCode: 1,
+      executorLogPath: input.executorLogPath,
+      dependencyCode: failed.code,
+      findings: [
+        verifyFinding("dependencies", failed.message, {
+          offending_file: input.mission.rawPath,
+          rule_id: failed.code,
+        }),
+      ],
+    },
+  };
 }

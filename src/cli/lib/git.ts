@@ -1,9 +1,16 @@
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "./constants.js";
 
-const GIT_CHILD_ENV = { ...process.env, GIT_OPTIONAL_LOCKS: "0" };
+function gitChildEnv(extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return { ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra };
+}
+
+export interface GitRunOptions {
+  maxBuffer?: number;
+  input?: string;
+  env?: NodeJS.ProcessEnv;
+}
 
 export function getRepoRoot(cwd = process.cwd()): string {
   try {
@@ -11,7 +18,7 @@ export function getRepoRoot(cwd = process.cwd()): string {
       cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
-      env: GIT_CHILD_ENV,
+      env: gitChildEnv(),
     }).trim();
     if (!out) throw new Error("empty root");
     return path.resolve(cwd, out);
@@ -27,12 +34,20 @@ export interface GitRunResult {
   status: number | null;
 }
 
-/** Run git in repository root (`git -C root ...args`). */
-export function gitRun(repoRoot: string, args: string[], maxBuffer = 32 * 1024 * 1024): GitRunResult {
+/** Run git in repository root (`git -C root ...args`). Third arg is maxBuffer or options. */
+export function gitRun(
+  repoRoot: string,
+  args: string[],
+  maxBufferOrOpts: number | GitRunOptions = 32 * 1024 * 1024,
+): GitRunResult {
+  const opts: GitRunOptions =
+    typeof maxBufferOrOpts === "number" ? { maxBuffer: maxBufferOrOpts } : maxBufferOrOpts;
+  const maxBuffer = opts.maxBuffer ?? 32 * 1024 * 1024;
   const r = spawnSync("git", ["-C", repoRoot, ...args], {
     encoding: "utf8",
     maxBuffer,
-    env: GIT_CHILD_ENV,
+    env: gitChildEnv(opts.env),
+    ...(opts.input !== undefined ? { input: opts.input } : {}),
   });
   return {
     ok: r.status === 0,

@@ -1,5 +1,5 @@
 import type { GxtErrorCode } from "./gxt-error-codes.js";
-import type { DependencyCheckCode } from "./deps/deps-types.js";
+import type { DependencyFailureCode } from "./deps/deps-resolve.js";
 import type { GateAdapterId, KpiThresholdOp } from "./types.js";
 import type { TraceFailureKind } from "./trace.js";
 import type { VerifyFinding } from "./verify-finding.js";
@@ -94,7 +94,7 @@ export interface PolicyFailure extends VerifyFailureBase {
 
 export interface DependenciesFailure extends VerifyFailureBase {
   phase: "dependencies";
-  dependencyCode: DependencyCheckCode;
+  dependencyCode: DependencyFailureCode;
   findings?: VerifyFinding[];
 }
 

@@ -1,7 +1,8 @@
 import path from "node:path";
+import { errorMessage, logWarn } from "../cli-io.js";
+import { GantryUserError, isGantryUserError } from "../errors.js";
 import { loadGxtConfig, resolveLedgerMode, resolveLedgerSignatureTier } from "../gxt-config.js";
 import { gitRevParse } from "../git.js";
-import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import { resolveOrgExportConfig } from "../org-export-config.js";
 import { resolveRepositoryHash } from "../receipt-attribution.js";
@@ -11,6 +12,7 @@ import {
   genesisPrevHash,
   type LedgerEntry,
   type LedgerEntryKind,
+  type LedgerPayloadFor,
 } from "./ledger-entry.js";
 import {
   casUpdateLedgerRef,
@@ -19,30 +21,41 @@ import {
   readLedgerEntryAt,
   readLedgerTip,
   sleepJitter,
-} from "./ledger-ref.js";
+} from "./ledger-chain.js";
 
-export function appendLedgerEntry(
+function ledgerSignRequested(root: string, explicit?: boolean): boolean {
+  if (explicit === true) return true;
+  const tier = resolveLedgerSignatureTier(loadGxtConfig(root));
+  return tier === "warn" || tier === "require";
+}
+
+export function appendLedgerEntry<K extends LedgerEntryKind>(
   root: string,
   input: {
-    kind: LedgerEntryKind;
+    kind: K;
     msn_id: string;
-    payload: Record<string, unknown>;
+    payload: LedgerPayloadFor<K>;
     sign?: boolean;
     issued_at?: string;
   },
-): LedgerEntry {
+): Extract<LedgerEntry, { entry_kind: K }> {
   const abs = path.resolve(root);
   const org = resolveOrgExportConfig(abs);
-  const sign =
-    input.sign === true || resolveLedgerSignatureTier(loadGxtConfig(abs)) === "require";
+  const sign = ledgerSignRequested(abs, input.sign);
   for (let attempt = 0; attempt < LEDGER_CAS_MAX_ATTEMPTS; attempt++) {
     const tip = readLedgerTip(abs);
     let prev = genesisPrevHash();
     if (tip) {
       try {
         prev = entryHash(readLedgerEntryAt(abs, tip));
-      } catch {
-        prev = tip;
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        throw new GantryUserError(
+          GXT_ERROR.LEDGER_CHAIN_BROKEN,
+          `ledger tip ${tip} is unreadable: ${detail}`,
+          undefined,
+          1,
+        );
       }
     }
     const entry = buildLedgerEntry({
@@ -69,10 +82,18 @@ export function appendLedgerEntry(
   );
 }
 
-export function maybeAppendLedger(
+export function appendLedgerIfEnabled<K extends LedgerEntryKind>(
   root: string,
-  input: { kind: LedgerEntryKind; msn_id: string; payload: Record<string, unknown> },
-): LedgerEntry | null {
+  kind: K,
+  msnId: string,
+  payload: LedgerPayloadFor<K>,
+): Extract<LedgerEntry, { entry_kind: K }> | null {
   if (resolveLedgerMode(loadGxtConfig(root)) !== "local") return null;
-  return appendLedgerEntry(root, input);
+  try {
+    return appendLedgerEntry(root, { kind, msn_id: msnId, payload });
+  } catch (e) {
+    const code = isGantryUserError(e) ? e.gxtCode : GXT_ERROR.LEDGER_CHAIN_BROKEN;
+    logWarn(`ledger append failed (${code}): ${errorMessage(e)}`);
+    return null;
+  }
 }

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { REL_RECEIPTS_DIR } from "../constants.js";
-import { verifyLedgerChain } from "./ledger-verify.js";
+import { verifyLedgerChain } from "./ledger-chain.js";
 
 export const SOC2_CONTROL_MAP = [
   { framework: "ISO 27001", control: "A.5.3", mapping: "Planner stamp + mission YAML + verify ledger entry" },

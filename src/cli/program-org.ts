@@ -8,7 +8,7 @@ import {
   runLedgerPush,
   runLedgerVerify,
 } from "./commands/ledger.js";
-import { runDepsCheck, runDepsFetch, runDepsStatus, runReleaseCheck } from "./commands/deps.js";
+import { runDepsCheck, runDepsFetch, runReleaseCheck } from "./commands/deps.js";
 
 function registerPolicyCommands(program: Command): void {
   const policy = program.command("policy").description("Org policy floor (ADR-0042)");
@@ -101,7 +101,7 @@ function registerDepsCommands(program: Command): void {
     .option("--mission <path>")
     .option("--json", "JSON")
     .action((o: { mission?: string; json?: boolean }) => {
-      runDepsStatus(o);
+      runDepsCheck(o);
     });
   program
     .command("release")

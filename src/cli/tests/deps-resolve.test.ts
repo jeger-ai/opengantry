@@ -4,13 +4,20 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { gitRun } from "../lib/git.js";
-import { checkMissionDependency } from "../lib/deps/deps-resolve.js";
+import { getRepoRoot, gitRun } from "../lib/git.js";
+import { checkMissionDependencies, checkMissionDependency } from "../lib/deps/deps-resolve.js";
 import { depsRefForRepo } from "../lib/deps/deps-slug.js";
 import { buildLedgerEntry, genesisPrevHash } from "../lib/ledger/ledger-entry.js";
-import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "../lib/ledger/ledger-ref.js";
+import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "../lib/ledger/ledger-chain.js";
 import { evaluateDependenciesPhase } from "../lib/verify-org-phases.js";
-import { gitInitCommit, isolateOrgAttributionEnv, writeOrgExportConfig } from "./test-fixtures.js";
+import { runReleaseCheck } from "../commands/deps.js";
+import {
+  copyMissionSchema,
+  gitInitCommit,
+  isolateOrgAttributionEnv,
+  writeManifest,
+  writeOrgExportConfig,
+} from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import {
   appendLedgerFixture,
@@ -48,7 +55,7 @@ function initPair(tmp: string): { producer: string; consumer: string } {
   return { producer, consumer };
 }
 
-function appendAsProducer(producer: string, payload: Record<string, unknown>, issuedAt?: string): void {
+function appendAsProducer(producer: string, payload: { verify_status?: string; signed?: boolean }, issuedAt?: string): void {
   const prev = process.env.GANTRY_REPO_ID;
   process.env.GANTRY_REPO_ID = PRODUCER_REPO_ID;
   try {
@@ -185,5 +192,114 @@ test("deps-resolve: verify phase emits v3 finding and mapped code", () => {
     if (outcome.kind !== "fail") return;
     assert.equal(outcome.failure.dependencyCode, GXT_ERROR.DEPENDENCY_UNFETCHED);
     assert.equal(outcome.failure.findings?.[0]?.rule_id, GXT_ERROR.DEPENDENCY_UNFETCHED);
+  });
+});
+
+function captureStdout<T>(fn: () => T): { result: T; stdout: string } {
+  const chunks: string[] = [];
+  const orig = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((chunk: string | Uint8Array) => {
+    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+    return true;
+  }) as typeof process.stdout.write;
+  try {
+    return { result: fn(), stdout: chunks.join("") };
+  } finally {
+    process.stdout.write = orig;
+  }
+}
+
+function stageReleaseMission(root: string, expectedHash?: string): void {
+  copyMissionSchema(path.join(getRepoRoot(), ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
+  writeManifest(root, {
+    gantry: { trust_threshold: "Tier-2", tmvc_roots: ["src/"], forbidden_zones: [] },
+  });
+  const rel = ".gitagent/missions/MSN-0204-dep.yaml";
+  fs.mkdirSync(path.join(root, ".gitagent", "missions"), { recursive: true });
+  const hashLine = expectedHash ? `    expected_repository_hash: "${expectedHash}"\n` : "";
+  fs.writeFileSync(
+    path.join(root, rel),
+    `msn_id: MSN-0204
+skill_key: gantry
+gate_command: "echo OK"
+gate_success_substring: "OK"
+trace_rows: []
+depends_on:
+  - repo: ${PRODUCER_REPO_ID}
+    msn_id: MSN-0100
+${hashLine}`,
+    "utf8",
+  );
+  const added = gitRun(root, ["add", "--", rel]);
+  assert.equal(added.ok, true, added.stderr);
+}
+
+test("deps-resolve: checkMissionDependencies aggregates ok results", () => {
+  isolateOrgAttributionEnv(() => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-agg-"));
+    const fx = writeTwoRepoDependencyFixture(tmp);
+    const results = checkMissionDependencies(fx.consumer, {
+      msnId: "MSN-0204",
+      skillKey: "gantry",
+      gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
+      kpiGate: null,
+      virtualCapture: false,
+      llmVerifiers: [],
+      aggregators: [],
+      traceRows: [],
+      interrogation: [],
+      interrogationSha256: null,
+      declaredPaths: [],
+      dependsOn: [dep({ expected_repository_hash: fx.expectedHash })],
+      rawPath: ".gitagent/missions/m.yaml",
+    });
+    assert.equal(results.length, 1);
+    assert.equal(results[0]?.code, "ok");
+  });
+});
+
+test("release check: failed outcome exits non-zero", () => {
+  isolateOrgAttributionEnv(() => {
+    const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-fail-"));
+    fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
+    gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
+    writeOrgExportConfig(dest, ORG_FIXTURE_ORG_ID);
+    stageReleaseMission(dest);
+    const prevCwd = process.cwd();
+    const prevExit = process.exitCode;
+    process.exitCode = undefined;
+    process.chdir(dest);
+    try {
+      const { stdout } = captureStdout(() => runReleaseCheck({ json: true }));
+      const body = JSON.parse(stdout) as { status: string; results: { code: string }[] };
+      assert.equal(body.status, "failed");
+      assert.ok(body.results.some((r) => r.code === GXT_ERROR.DEPENDENCY_UNFETCHED));
+      assert.equal(process.exitCode, 1);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = prevExit;
+    }
+  });
+});
+
+test("release check: ok outcome", () => {
+  isolateOrgAttributionEnv(() => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-ok-"));
+    const fx = writeTwoRepoDependencyFixture(tmp);
+    stageReleaseMission(fx.consumer, fx.expectedHash);
+    const prevCwd = process.cwd();
+    const prevExit = process.exitCode;
+    process.exitCode = undefined;
+    process.chdir(fx.consumer);
+    try {
+      const { stdout } = captureStdout(() => runReleaseCheck({ json: true }));
+      const body = JSON.parse(stdout) as { status: string; results: { code: string }[] };
+      assert.equal(body.status, "ok");
+      assert.ok(body.results.every((r) => r.code === "ok"));
+      assert.equal(process.exitCode, undefined);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = prevExit;
+    }
   });
 });

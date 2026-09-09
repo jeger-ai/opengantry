@@ -5,9 +5,9 @@ import { loadWorkspace } from "../lib/workspace.js";
 import { LEDGER_REF } from "../lib/constants.js";
 import { gitRun } from "../lib/git.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
+import { sha256Utf8, type ReceiptLedgerPayload } from "../lib/ledger/ledger-entry.js";
 import { exportLedgerJson, exportSoc2Pack } from "../lib/ledger/ledger-export.js";
-import { verifyLedgerChain } from "../lib/ledger/ledger-verify.js";
-import { walkLedger } from "../lib/ledger/ledger-ref.js";
+import { verifyLedgerChain } from "../lib/ledger/ledger-chain.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 
@@ -19,17 +19,16 @@ export function runLedgerAppend(opts: {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     let msnId = "MSN-0000";
-    let payload: Record<string, unknown> = { source: "manual", verify_status: "passed", signed: false };
+    let payload: ReceiptLedgerPayload = { source: "manual", verify_status: "passed", signed: false };
     if (opts.mission) {
       const resolved = resolveMissionArg(root, opts.mission);
       const mission = parseMissionFile(root, resolved.missionRel);
       msnId = mission.msnId ?? msnId;
     }
     if (opts.fromEnvelope) {
-      const raw = JSON.parse(fs.readFileSync(opts.fromEnvelope, "utf8")) as {
-        payload_b64?: string;
-      };
-      payload = { envelope_sha: opts.fromEnvelope, has_payload: Boolean(raw.payload_b64) };
+      const text = fs.readFileSync(opts.fromEnvelope, "utf8");
+      const raw = JSON.parse(text) as { payload_b64?: string };
+      payload = { envelope_sha: sha256Utf8(text), has_payload: Boolean(raw.payload_b64) };
     }
     const entry = appendLedgerEntry(root, { kind: "receipt", msn_id: msnId, payload });
     if (opts.json) {
@@ -58,7 +57,7 @@ export function runLedgerVerify(opts: { json?: boolean; requireSignatures?: bool
 export function runLedgerList(opts: { json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
-    const entries = walkLedger(root);
+    const entries = verifyLedgerChain(root).entries;
     if (opts.json) {
       emitCliJson({ status: "ok", entries });
       return;

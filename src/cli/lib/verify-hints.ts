@@ -229,8 +229,7 @@ export function hintsForVerifyPhase(
       };
     case "dependencies":
       return {
-        error_code:
-          failure.dependencyCode === "ok" ? GXT_ERROR.VERIFY_FAILED : failure.dependencyCode,
+        error_code: failure.dependencyCode,
         fix_hints: [failure.message, "gantry deps fetch --mission <yaml>"],
         next_actions: [`gantry deps fetch --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
       };

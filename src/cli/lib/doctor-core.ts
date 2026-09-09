@@ -28,7 +28,7 @@ import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift
 import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
 import { runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
 import { runOrgPolicyDoctorChecks } from "./policy/policy-doctor.js";
-import { runLedgerDoctorChecks } from "./ledger/ledger-verify.js";
+import { runLedgerDoctorChecks } from "./ledger/ledger-chain.js";
 import {
   runAdapterPreflightDoctorChecks,
   type AdapterPreflightOptions,

@@ -4,7 +4,7 @@ import path from "node:path";
 import { REL_POLICY_CACHE, REL_POLICY_POINTER } from "../lib/constants.js";
 import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "../lib/receipt-attribution.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
-import type { LedgerEntry, LedgerEntryKind } from "../lib/ledger/ledger-entry.js";
+import type { LedgerEntry, ReceiptLedgerPayload } from "../lib/ledger/ledger-entry.js";
 import { depsRefForRepo } from "../lib/deps/deps-slug.js";
 import { gitRun } from "../lib/git.js";
 import type { OrgPolicyBundle } from "../lib/policy/policy-types.js";
@@ -106,16 +106,15 @@ export function writeOrgPolicyRepo(
 export function appendLedgerFixture(
   root: string,
   input: {
-    kind?: LedgerEntryKind;
     msn_id?: string;
-    payload?: Record<string, unknown>;
+    payload?: ReceiptLedgerPayload;
     issued_at?: string;
   } = {},
 ): LedgerEntry {
   writeLedgerEnabledConfig(root);
   writeOrgExportConfig(root, ORG_FIXTURE_ORG_ID, ORG_FIXTURE_PEPPER);
   return appendLedgerEntry(root, {
-    kind: input.kind ?? "receipt",
+    kind: "receipt",
     msn_id: input.msn_id ?? "MSN-0100",
     payload: input.payload ?? { verify_status: "passed", signed: true },
     sign: false,
@@ -145,7 +144,6 @@ export function writeTwoRepoDependencyFixture(tmpBase: string): {
   process.env.GANTRY_REPO_ID = PRODUCER_REPO_ID;
   try {
     appendLedgerFixture(producer, {
-      kind: "receipt",
       msn_id: "MSN-0100",
       payload: { verify_status: "passed", signed: true },
     });

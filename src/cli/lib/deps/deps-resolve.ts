@@ -1,84 +1,88 @@
 import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "../receipt-attribution.js";
 import { resolveOrgExportConfig } from "../org-export-config.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
-import { readLedgerTip } from "../ledger/ledger-ref.js";
-import { verifyLedgerChain } from "../ledger/ledger-verify.js";
+import { appendLedgerIfEnabled } from "../ledger/ledger-append.js";
+import { readLedgerTip, verifyLedgerChain } from "../ledger/ledger-chain.js";
+import type { LedgerEntry } from "../ledger/ledger-entry.js";
+import type { MissionDependencySpec, ParsedMission } from "../types.js";
 import { depsRefForRepo } from "./deps-slug.js";
-import type { DependencyCheckResult, MissionDependency } from "./deps-types.js";
+
+export type DependencyFailureCode =
+  | typeof GXT_ERROR.DEPENDENCY_UNFETCHED
+  | typeof GXT_ERROR.DEPENDENCY_UNSATISFIED
+  | typeof GXT_ERROR.DEPENDENCY_UNSIGNED
+  | typeof GXT_ERROR.DEPENDENCY_STALE
+  | typeof GXT_ERROR.DEPENDENCY_ORG_MISMATCH;
+
+export type DependencyCheckResult =
+  | { code: "ok"; repo: string; msn_id: string }
+  | { code: DependencyFailureCode; repo: string; msn_id: string; message: string };
 
 function expectedRepoHash(root: string, repo: string): string {
   const org = resolveOrgExportConfig(root);
   return hmacSha256Hex(org.pepper, canonicalizeRepositoryIdentifier(repo));
 }
 
+function fail(
+  dep: MissionDependencySpec,
+  code: DependencyFailureCode,
+  message: string,
+): DependencyCheckResult {
+  return { repo: dep.repo, msn_id: dep.msn_id, code, message };
+}
+
 /** Offline: walk fetched refs/gxt/deps/<slug> only. */
-export function checkMissionDependency(root: string, dep: MissionDependency): DependencyCheckResult {
+export function checkMissionDependency(root: string, dep: MissionDependencySpec): DependencyCheckResult {
   const ref = depsRefForRepo(dep.repo);
   const tip = readLedgerTip(root, ref);
   if (!tip) {
-    return {
-      repo: dep.repo,
-      msn_id: dep.msn_id,
-      code: GXT_ERROR.DEPENDENCY_UNFETCHED,
-      message: `${ref} is not fetched`,
-    };
+    return fail(dep, GXT_ERROR.DEPENDENCY_UNFETCHED, `${ref} is not fetched`);
   }
   const chain = verifyLedgerChain(root, ref);
   if (!chain.ok) {
-    return {
-      repo: dep.repo,
-      msn_id: dep.msn_id,
-      code: GXT_ERROR.DEPENDENCY_UNSATISFIED,
-      message: chain.errors[0] ?? "dependency ledger chain broken",
-    };
+    return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, chain.errors[0] ?? "dependency ledger chain broken");
   }
-  const matches = [...chain.entries].reverse().filter((e) => e.msn_id === dep.msn_id && e.entry_kind === "receipt");
+  const matches = [...chain.entries]
+    .reverse()
+    .filter(
+      (e): e is Extract<LedgerEntry, { entry_kind: "receipt" }> =>
+        e.msn_id === dep.msn_id && e.entry_kind === "receipt",
+    );
   const newest = matches[0];
   if (!newest) {
-    return {
-      repo: dep.repo,
-      msn_id: dep.msn_id,
-      code: GXT_ERROR.DEPENDENCY_UNSATISFIED,
-      message: `no receipt entry for ${dep.msn_id}`,
-    };
+    return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, `no receipt entry for ${dep.msn_id}`);
   }
   const wantHash = dep.expected_repository_hash ?? expectedRepoHash(root, dep.repo);
   if (newest.repository_hash !== wantHash) {
-    return {
-      repo: dep.repo,
-      msn_id: dep.msn_id,
-      code: GXT_ERROR.DEPENDENCY_ORG_MISMATCH,
-      message: "repository_hash does not match consumer GANTRY_ORG_PEPPER",
-    };
+    return fail(dep, GXT_ERROR.DEPENDENCY_ORG_MISMATCH, "repository_hash does not match consumer GANTRY_ORG_PEPPER");
   }
   const status = newest.payload.verify_status;
   if ((dep.require?.verify_status ?? "passed") === "passed" && status !== "passed") {
-    return {
-      repo: dep.repo,
-      msn_id: dep.msn_id,
-      code: GXT_ERROR.DEPENDENCY_UNSATISFIED,
-      message: `verify_status is ${String(status)}`,
-    };
+    return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, `verify_status is ${String(status)}`);
   }
   if (dep.require?.signed === true && newest.payload.signed !== true) {
-    return {
-      repo: dep.repo,
-      msn_id: dep.msn_id,
-      code: GXT_ERROR.DEPENDENCY_UNSIGNED,
-      message: "require.signed but newest receipt entry is unsigned",
-    };
+    return fail(dep, GXT_ERROR.DEPENDENCY_UNSIGNED, "require.signed but newest receipt entry is unsigned");
   }
   if (dep.require?.max_age_days !== undefined) {
     const issued = Date.parse(newest.issued_at);
     const maxMs = dep.require.max_age_days * 86_400_000;
     if (!Number.isFinite(issued) || Date.now() - issued > maxMs) {
-      return {
-        repo: dep.repo,
-        msn_id: dep.msn_id,
-        code: GXT_ERROR.DEPENDENCY_STALE,
-        message: `entry older than ${dep.require.max_age_days} days`,
-      };
+      return fail(dep, GXT_ERROR.DEPENDENCY_STALE, `entry older than ${dep.require.max_age_days} days`);
     }
   }
-  return { repo: dep.repo, msn_id: dep.msn_id, code: "ok", message: "satisfied" };
+  return { repo: dep.repo, msn_id: dep.msn_id, code: "ok" };
+}
+
+/** Check every depends_on row and append one aggregated ok ledger entry. */
+export function checkMissionDependencies(root: string, mission: ParsedMission): DependencyCheckResult[] {
+  const results = mission.dependsOn.map((d) => checkMissionDependency(root, d));
+  const okResults = results.filter((r): r is Extract<DependencyCheckResult, { code: "ok" }> => r.code === "ok");
+  if (okResults.length > 0) {
+    appendLedgerIfEnabled(root, "dependency_check", mission.msnId ?? "MSN-0000", {
+      repo: okResults.map((r) => r.repo).join(","),
+      msn_id: mission.msnId ?? "MSN-0000",
+      result: "ok",
+    });
+  }
+  return results;
 }

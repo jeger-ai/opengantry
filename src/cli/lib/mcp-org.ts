@@ -1,6 +1,6 @@
 import { errorMessage } from "./cli-io.js";
-import { checkMissionDependency } from "./deps/deps-resolve.js";
-import { verifyLedgerChain } from "./ledger/ledger-verify.js";
+import { checkMissionDependencies } from "./deps/deps-resolve.js";
+import { verifyLedgerChain } from "./ledger/ledger-chain.js";
 import { parseMissionFile } from "./missions/parser.js";
 import { resolveMissionArg } from "./mission-arg.js";
 import { resolveEffectivePolicy } from "./policy/policy-resolve.js";
@@ -31,7 +31,7 @@ export function handleDepsCheck(missionFilePath?: string): OrgMcpResult {
     const { root } = loadWorkspace();
     const resolved = resolveMissionArg(root, missionFilePath);
     const mission = parseMissionFile(root, resolved.missionRel);
-    const results = (mission.dependsOn ?? []).map((d) => checkMissionDependency(root, d));
+    const results = checkMissionDependencies(root, mission);
     return { status: "ok", mission_file_path: resolved.missionRel, results };
   } catch (e) {
     return { status: "error", message: errorMessage(e) };

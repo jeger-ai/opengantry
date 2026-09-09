@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0204: gitRun({input,env}) stdin/mktree commit-tree; appendLedgerIfEnabled warns (no swallow); LEDGER_CHAIN_BROKEN fail-closed; typed LedgerPayload; checkMissionDependencies + failable release check; npm test 688 pass"
+    anchor: "900"
+    status: PASS
 interrogation:
   - finding_id: 02e7d6b1f235
     kind: adr_conflict
@@ -52,10 +52,32 @@ interrogation:
       - ADR-0043
 interrogation_sha256: f5bbdb073d1e3444aa4af07903ceb32197a12138433ed92b3f43708131bc4705
 declared_paths:
+  - .gitagent/missions/MSN-0204.ledger-deps-correctness-first-gitrun-input-stdin.yaml
   - src/cli/commands/deps.ts
   - src/cli/commands/ledger.ts
+  - src/cli/commands/policy.ts
+  - src/cli/lib/attest-mission.ts
+  - src/cli/lib/break-glass.ts
+  - src/cli/lib/deps/deps-fetch.ts
   - src/cli/lib/deps/deps-resolve.ts
   - src/cli/lib/deps/deps-types.ts
+  - src/cli/lib/doctor-core.ts
   - src/cli/lib/git.ts
   - src/cli/lib/ledger/ledger-append.ts
+  - src/cli/lib/ledger/ledger-chain.ts
+  - src/cli/lib/ledger/ledger-entry.ts
+  - src/cli/lib/ledger/ledger-export.ts
   - src/cli/lib/ledger/ledger-hook.ts
+  - src/cli/lib/ledger/ledger-ref.ts
+  - src/cli/lib/ledger/ledger-verify.ts
+  - src/cli/lib/mcp-org.ts
+  - src/cli/lib/verify-failure-normalize.ts
+  - src/cli/lib/verify-failure.ts
+  - src/cli/lib/verify-hints.ts
+  - src/cli/lib/verify-org-phases.ts
+  - src/cli/lib/verify-run.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/ledger-verify.test.ts
+  - src/cli/tests/org-doctor-offline.test.ts
+  - src/cli/tests/test-org-fixtures.ts

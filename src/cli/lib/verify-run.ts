@@ -10,7 +10,7 @@ import {
   writeAttestationReceipt,
 } from "./attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "./attestation-export.js";
-import { tryAppendLedger } from "./ledger/ledger-hook.js";
+import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
 import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import {
@@ -187,10 +187,10 @@ async function resolveFinalPhaseResult(
 function appendVerifyOutcomeLedger(ctx: VerifyPresentContext, result: VerifyPhaseResult): void {
   const msnId = ctx.mission.msnId ?? "MSN-0000";
   if (result.ok) {
-    tryAppendLedger(ctx.root, "receipt", msnId, { verify_status: "passed" });
+    appendLedgerIfEnabled(ctx.root, "receipt", msnId, { verify_status: "passed" });
     return;
   }
-  tryAppendLedger(ctx.root, "verify_findings", msnId, {
+  appendLedgerIfEnabled(ctx.root, "verify_findings", msnId, {
     failed_gate: result.phase,
     message: result.message,
   });
