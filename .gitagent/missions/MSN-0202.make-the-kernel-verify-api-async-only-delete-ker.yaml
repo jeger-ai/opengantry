@@ -1,0 +1,66 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Make the kernel verify API async-only: delete kernel-verify-cli-shim.ts and its test; rename verifyMissionAsync to verifyMission returning Promise; keep verifyMissionAsync as a deprecated alias that emits one-shot process.emitWarning DeprecationWarning GXT_DEP_VERIFY_MISSION_ASYNC. Remove jsonOut from VerifyOptions and resolveVerifySink. Replace GateFailure gateStdout/gateStderr with gateOutput. GatePhaseOutcome becomes kind ok|fail with a single log read. Collapse timed/timedAsync. projectGateFindings returns null instead of genericOnly sentinel; skip output-sniffing projector when gate.adapter is not generic. Update iii-integration e2e and docs to await verifyMission.
+msn_id: MSN-0202
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key gantry; TMVC src/cli/ and package.json. Delete means
+      remove the sync kernel-verify-cli-shim.ts and its test only — no other
+      deletions.
+    adr_refs:
+      - ADR-0041
+  - finding_id: 4c4decd3e24f
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed: kernel.ts and the two kernel tests live under
+      gantry TMVC src/cli/; they are the public kernel surface for the async
+      rename."
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept: remove jsonOut/--json-out shim destination; --json
+      structured export stays as ADR-0027."
+    adr_refs:
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0022 is MCP write containment. This
+      mission changes the in-process kernel verify API, not MCP write tools."
+    adr_refs:
+      - ADR-0022
+interrogation_sha256: c217605ed4c00490b6562fe0de53c07b5ffda72674c404285a4c49f341832a5b
+declared_paths:
+  - examples/iii-integration/scripts/test-e2e.mjs
+  - src/cli/kernel.ts
+  - src/cli/lib/kernel-verify-cli-shim.ts
+  - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-failure.ts
+  - src/cli/lib/verify-finding-gate-projector.ts
+  - src/cli/lib/verify-options.ts
+  - src/cli/lib/verify-payload.ts
+  - src/cli/lib/verify-phase-clock.ts
+  - src/cli/lib/verify-phase-steps.ts
+  - src/cli/lib/verify-presenters.ts
+  - src/cli/tests/kernel-exports.test.ts
+  - src/cli/tests/kernel-verify-cli-shim.test.ts
