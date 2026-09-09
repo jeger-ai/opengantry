@@ -1,0 +1,51 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Single-source PR mission discovery: gantry mission changed --json replaces bash mission discovery, allowedSignersFile into perimeter --ci, working deps fetch step, workflow skip idiom, template RULES numbering.
+msn_id: MSN-0207
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Accept: attest-ingest skip idiom and working deps fetch stay
+      on the spoke CI contract from ADR-0037."
+    adr_refs:
+      - ADR-0037
+  - finding_id: 6f9d4d2bf647
+    kind: adr_conflict
+    question: Intent may relate to ADR-0030. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0030 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0030 is the discovery scanner. This
+      mission replaces bash PR-mission listing with gantry mission changed
+      --json."
+    adr_refs:
+      - ADR-0030
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: skill_key substrate; empty tmvc_roots is the substrate
+      contract. This mission authorizes .github/, templates/, scripts/, and
+      src/cli/ for gantry mission changed --json plus CI mirrors.
+    adr_refs:
+      - ADR-0044
+interrogation_sha256: a59a3392a44d069f2aa3781da035b10183b8ac2b2eeae65b36952177af024aff
+declared_paths:
+  - .github/workflows/gxt-attest-ingest.yml
+  - .github/workflows/gxt-validate.yml
+  - scripts/verify-pr-missions.sh
+  - src/cli/commands/verify.ts
+  - templates/.github/workflows/gxt-attest-ingest.yml
+  - templates/.github/workflows/gxt-validate.yml
