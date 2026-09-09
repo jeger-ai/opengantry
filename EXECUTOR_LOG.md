@@ -921,3 +921,8 @@ Pre-tag checklist: grep @jeger-ai/opengantry/kernel outside opengantry, opengant
 Pre-tag checklist: assert-cli-version-parity OK at 3.3.0; examples/iii-integration validate-offline PASS; node --throw-deprecation scripts/test-e2e.mjs EXIT 0 (all e2e assertions passed; no GXT_DEP_VERIFY_MISSION_ASYNC).
 [SKILL-EXEC] skill_key=substrate tool=cursor scope=docs/CHANGELOG.md,docs/INTEGRATIONS.md,README.md,examples/iii-integration/
 DoD 1 MSN-0208: CHANGELOG 3.3.0 Breaking (kernel) documents async verifyMission, deprecated verifyMissionAsync GXT_DEP_VERIFY_MISSION_ASYNC, --json-out kept; README/INTEGRATIONS/iii snippets updated; pre-tag consumer grep + iii e2e --throw-deprecation PASS; parity 3.3.0
+DoD 1 MSN-0202 re-attest: async verifyMission + deprecated verifyMissionAsync GXT_DEP_VERIFY_MISSION_ASYNC still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
+DoD 1 MSN-0203 re-attest: TypedGateAdapterId, Commander .choices(), function adapters, post-close substring still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
+DoD 1 MSN-0204 re-attest: stdin/mktree ledger, LEDGER_CHAIN_BROKEN fail-closed, failable release check still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
+DoD 1 MSN-0205 re-attest: resolveOrgPolicy ok|fail{code}, FLOOR_RULES, fetch/show pull still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
+DoD 1 MSN-0206 re-attest: doctor preflight selection model and flat program/MCP registrars still hold after stacked 3.3.0 TMVC drift; npm test 704 pass

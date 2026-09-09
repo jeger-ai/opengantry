@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0202: verifyMission is async; verifyMissionAsync emits one-shot GXT_DEP_VERIFY_MISSION_ASYNC; shim deleted; gateOutput + GatePhaseOutcome kind union; single timed(); projector returns null; npm test 681 pass"
-    anchor: "890"
+    trace_quote: "DoD 1 MSN-0202 re-attest: async verifyMission + deprecated verifyMissionAsync GXT_DEP_VERIFY_MISSION_ASYNC still hold after stacked 3.3.0 TMVC drift; npm test 704 pass"
+    anchor: "924"
     status: PASS
 interrogation:
   - finding_id: 09266262993a
