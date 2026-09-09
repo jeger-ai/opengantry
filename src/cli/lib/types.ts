@@ -129,6 +129,11 @@ export interface MissionDependencySpec {
   expected_repository_hash?: string;
 }
 
+/** Fallback MSN when a mission has no id (CLI defaults, ledger rows). */
+export function msnIdOrDefault(mission: { msnId?: string | null } | null | undefined): string {
+  return mission?.msnId ?? "MSN-0000";
+}
+
 export interface ParsedMission {
   msnId: string | null;
   skillKey: string | null;

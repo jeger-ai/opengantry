@@ -4,7 +4,7 @@ import { emitPinnedMissionBanner, resolveMissionArg } from "./mission-arg.js";
 import { loadWorkspace } from "./workspace.js";
 import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-options.js";
-import type { ParsedMission } from "./types.js";
+import { msnIdOrDefault, type ParsedMission } from "./types.js";
 import {
   buildAttestationReceipt,
   writeAttestationReceipt,
@@ -137,7 +137,7 @@ function breakGlassPhaseStub(ctx: VerifyPresentContext): VerifyPhaseSuccess {
   return {
     ok: true,
     outcome: "full",
-    proofMsnId: ctx.mission.msnId ?? "MSN-0000",
+    proofMsnId: msnIdOrDefault(ctx.mission),
     executorLogPath: resolveExecutorLogPath(ctx.root, ctx.options),
     traceWarnings: [],
     phaseTimings: [],
@@ -185,7 +185,7 @@ async function resolveFinalPhaseResult(
 }
 
 function appendVerifyOutcomeLedger(ctx: VerifyPresentContext, result: VerifyPhaseResult): void {
-  const msnId = ctx.mission.msnId ?? "MSN-0000";
+  const msnId = msnIdOrDefault(ctx.mission);
   if (result.ok) {
     appendLedgerIfEnabled(ctx.root, "receipt", msnId, { verify_status: "passed" });
     return;

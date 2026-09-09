@@ -12,18 +12,9 @@ import { toPosixRel } from "./cli-io.js";
 import type { PlannedWrite } from "./init-plan.js";
 import type { UpgradeFileChange } from "./upgrade-plan-types.js";
 
-const V330_UPGRADE_ASSETS: InitAssetSpec[] = [
-  {
-    targetPath: ".gitagent/planner/ORG-POLICY.schema.yaml",
-    mode: "managed_strict",
-    tags: ["core"],
-  },
-];
-
 /** managed_strict substrate assets eligible for gantry upgrade (excludes user law / missions). */
 export function upgradeEligibleAssets(assets: InitAssetSpec[]): InitAssetSpec[] {
-  const extra = V330_UPGRADE_ASSETS.filter((e) => !assets.some((a) => a.targetPath === e.targetPath));
-  return [...assets, ...extra].filter((a) => a.mode === "managed_strict");
+  return assets.filter((a) => a.mode === "managed_strict");
 }
 
 export function allUpgradeEligibleFromCatalog(templatesRoot: string): InitAssetSpec[] {

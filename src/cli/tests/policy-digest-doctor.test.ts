@@ -6,7 +6,7 @@ import path from "node:path";
 
 import { computeWorkingDigests } from "../lib/working-digests.js";
 import { runFlightTelemetryDoctorChecks } from "../lib/flight-telemetry-doctor.js";
-import { runPolicyDigestDoctorChecks } from "../lib/policy-digest-doctor.js";
+import { compareExpectedDigests, runPolicyDigestDoctorChecks } from "../lib/policy-digest-doctor.js";
 import { getRepoRoot } from "../lib/git.js";
 import { writeRuntimeExecRepo } from "./test-fixtures.js";
 
@@ -41,4 +41,14 @@ test("policy digest doctor: reports drift", () => {
   const lines = runPolicyDigestDoctorChecks(dest, policyPath);
   assert.ok(lines.some((line) => line.level === "fail" && line.message.includes("manifest_sha256")));
   assert.ok(lines.some((line) => line.level === "ok" && line.message.includes("config_sha256")));
+  const fromObject = compareExpectedDigests(dest, {
+    schema_version: "0.1.0",
+    manifest_sha256: "deadbeef".repeat(8),
+    target_architecture_sha256: actual.target_architecture_sha256,
+    config_sha256: actual.config_sha256,
+  });
+  assert.deepEqual(
+    fromObject.map((l) => l.message),
+    lines.map((l) => l.message),
+  );
 });

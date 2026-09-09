@@ -2,6 +2,7 @@ import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-i
 import { isValidMsnId } from "../lib/missions/parser.js";
 import { emitActiveMissionFromTemplate } from "../lib/missions/formatter.js";
 import { formatTriageHuman, formatTriageJson, triageIntent } from "../lib/triage-logic.js";
+import { msnIdOrDefault } from "../lib/types.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface TriageRunOptions {
@@ -30,7 +31,7 @@ export function runTriage(options: TriageRunOptions): void {
     return;
   }
 
-  const msn = options.msn ?? "MSN-0000";
+  const msn = msnIdOrDefault({ msnId: options.msn });
   if (!isValidMsnId(msn)) {
     logError("triage: --msn must look like MSN-0007");
     setExitCode(1);

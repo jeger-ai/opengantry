@@ -95,3 +95,20 @@ export function buildDefensiveProfileFromPreset(
 export function presetDefaultSeverity(preset: DefensiveProfilePresetName): GuardSeverity {
   return PRESET_DEFAULTS[preset].severity;
 }
+
+/** Config keys a named defensive preset implies when the operator has not set them. */
+export function presetConfigDefaults(preset: DefensiveProfilePresetName): {
+  ledger?: { mode: "local" };
+} {
+  switch (preset) {
+    case "strict_enterprise":
+      return { ledger: { mode: "local" } };
+    case "balanced_partner":
+    case "lean_scratchpad":
+      return {};
+    default: {
+      const _never: never = preset;
+      return _never;
+    }
+  }
+}

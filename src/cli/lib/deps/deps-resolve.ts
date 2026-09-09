@@ -4,7 +4,7 @@ import { GXT_ERROR } from "../gxt-error-codes.js";
 import { appendLedgerIfEnabled } from "../ledger/ledger-append.js";
 import { readLedgerTip, verifyLedgerChain } from "../ledger/ledger-chain.js";
 import type { LedgerEntry } from "../ledger/ledger-entry.js";
-import type { MissionDependencySpec, ParsedMission } from "../types.js";
+import { msnIdOrDefault, type MissionDependencySpec, type ParsedMission } from "../types.js";
 import { depsRefForRepo } from "./deps-slug.js";
 
 export type DependencyFailureCode =
@@ -78,9 +78,9 @@ export function checkMissionDependencies(root: string, mission: ParsedMission): 
   const results = mission.dependsOn.map((d) => checkMissionDependency(root, d));
   const okResults = results.filter((r): r is Extract<DependencyCheckResult, { code: "ok" }> => r.code === "ok");
   if (okResults.length > 0) {
-    appendLedgerIfEnabled(root, "dependency_check", mission.msnId ?? "MSN-0000", {
+    appendLedgerIfEnabled(root, "dependency_check", msnIdOrDefault(mission), {
       repo: okResults.map((r) => r.repo).join(","),
-      msn_id: mission.msnId ?? "MSN-0000",
+      msn_id: msnIdOrDefault(mission),
       result: "ok",
     });
   }

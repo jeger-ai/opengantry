@@ -1,6 +1,4 @@
 import fs from "node:fs";
-import { logInfo } from "../lib/cli-io.js";
-import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { LEDGER_REF } from "../lib/constants.js";
 import { gitRun } from "../lib/git.js";
@@ -10,6 +8,8 @@ import { exportLedgerJson, exportSoc2Pack } from "../lib/ledger/ledger-export.js
 import { verifyLedgerChain } from "../lib/ledger/ledger-chain.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
+import { msnIdOrDefault } from "../lib/types.js";
+import { runUserCommand } from "../lib/command-boundary.js";
 
 export function runLedgerAppend(opts: {
   fromEnvelope?: string;
@@ -18,12 +18,12 @@ export function runLedgerAppend(opts: {
 }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
-    let msnId = "MSN-0000";
+    let msnId = msnIdOrDefault(undefined);
     let payload: ReceiptLedgerPayload = { source: "manual", verify_status: "passed", signed: false };
     if (opts.mission) {
       const resolved = resolveMissionArg(root, opts.mission);
       const mission = parseMissionFile(root, resolved.missionRel);
-      msnId = mission.msnId ?? msnId;
+      msnId = msnIdOrDefault(mission);
     }
     if (opts.fromEnvelope) {
       const text = fs.readFileSync(opts.fromEnvelope, "utf8");
@@ -31,11 +31,10 @@ export function runLedgerAppend(opts: {
       payload = { envelope_sha: sha256Utf8(text), has_payload: Boolean(raw.payload_b64) };
     }
     const entry = appendLedgerEntry(root, { kind: "receipt", msn_id: msnId, payload });
-    if (opts.json) {
-      emitCliJson({ status: "ok", entry });
-      return;
-    }
-    logInfo(`gantry ledger append: ${entry.entry_kind} ${entry.msn_id}`);
+    return {
+      json: { status: "ok", entry },
+      human: `gantry ledger append: ${entry.entry_kind} ${entry.msn_id}`,
+    };
   });
 }
 
@@ -45,12 +44,13 @@ export function runLedgerVerify(opts: { json?: boolean; requireSignatures?: bool
     const report = verifyLedgerChain(root, LEDGER_REF, {
       requireSignatures: opts.requireSignatures === true,
     });
-    if (opts.json) {
-      emitCliJson(report);
-      return;
-    }
-    logInfo(`gantry ledger verify: ${report.ok ? "ok" : "FAIL"} ${report.count} entries`);
-    for (const e of report.errors) logInfo(e);
+    return {
+      json: report,
+      human: [
+        `gantry ledger verify: ${report.ok ? "ok" : "FAIL"} ${report.count} entries`,
+        ...report.errors,
+      ],
+    };
   });
 }
 
@@ -58,11 +58,10 @@ export function runLedgerList(opts: { json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const entries = verifyLedgerChain(root).entries;
-    if (opts.json) {
-      emitCliJson({ status: "ok", entries });
-      return;
-    }
-    for (const e of entries) logInfo(`${e.issued_at} ${e.entry_kind} ${e.msn_id}`);
+    return {
+      json: { status: "ok", entries },
+      human: entries.map((e) => `${e.issued_at} ${e.entry_kind} ${e.msn_id}`),
+    };
   });
 }
 
@@ -71,11 +70,7 @@ export function runLedgerExport(opts: { format?: string; out?: string; json?: bo
     const { root } = loadWorkspace();
     const out = opts.out?.trim() || ".gitagent/history/ledger-export";
     const dest = opts.format === "soc2-pack" ? exportSoc2Pack(root, out) : exportLedgerJson(root, out);
-    if (opts.json) {
-      emitCliJson({ status: "ok", out: dest });
-      return;
-    }
-    logInfo(`gantry ledger export: ${dest}`);
+    return { json: { status: "ok", out: dest }, human: `gantry ledger export: ${dest}` };
   });
 }
 
@@ -83,11 +78,10 @@ export function runLedgerPush(opts: { json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const r = gitRun(root, ["push", "origin", LEDGER_REF]);
-    if (opts.json) {
-      emitCliJson({ status: r.ok ? "ok" : "error", stderr: r.stderr });
-      return;
-    }
-    logInfo(r.ok ? `gantry ledger push: ${LEDGER_REF}` : `gantry ledger push: ${r.stderr}`);
+    return {
+      json: { status: r.ok ? "ok" : "error", stderr: r.stderr },
+      human: r.ok ? `gantry ledger push: ${LEDGER_REF}` : `gantry ledger push: ${r.stderr}`,
+    };
   });
 }
 
@@ -95,10 +89,9 @@ export function runLedgerFetch(opts: { json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const r = gitRun(root, ["fetch", "origin", `${LEDGER_REF}:${LEDGER_REF}`]);
-    if (opts.json) {
-      emitCliJson({ status: r.ok ? "ok" : "error", stderr: r.stderr });
-      return;
-    }
-    logInfo(r.ok ? `gantry ledger fetch: ${LEDGER_REF}` : `gantry ledger fetch: ${r.stderr}`);
+    return {
+      json: { status: r.ok ? "ok" : "error", stderr: r.stderr },
+      human: r.ok ? `gantry ledger fetch: ${LEDGER_REF}` : `gantry ledger fetch: ${r.stderr}`,
+    };
   });
 }

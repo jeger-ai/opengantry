@@ -5,6 +5,7 @@ import { registerCoreCommands } from "./program-core.js";
 import { registerArchCommands } from "./program-arch.js";
 import { registerMissionCommands } from "./program-mission.js";
 import { registerWorkflowCommands } from "./program-workflow.js";
+import { registerOrgControlPlaneCommands } from "./program-org.js";
 import { registerMcpCommands } from "./program-mcp.js";
 import { registerBuiltinDomains } from "./lib/domains/index.js";
 
@@ -34,6 +35,7 @@ export function buildProgram(): Command {
   registerArchCommands(program);
   registerMissionCommands(program);
   registerWorkflowCommands(program);
+  registerOrgControlPlaneCommands(program);
   registerMcpCommands(program);
 
   return program;

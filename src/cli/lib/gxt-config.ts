@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { DefensiveProfileConfig } from "./defensive-profile.js";
 import { validateDefensiveProfile } from "./defensive-profile.js";
+import { isDefensiveProfilePresetName, presetConfigDefaults } from "./defensive-profile-presets.js";
 
 export type PlannerSignatureTier = "off" | "warn" | "require";
 export type ReceiptSignatureTier = PlannerSignatureTier;
@@ -67,7 +68,10 @@ export function resolveLedgerMode(config: GxtConfig): LedgerMode {
   if (config.ledger?.mode !== undefined) {
     return LEDGER_MODES.includes(config.ledger.mode) ? config.ledger.mode : "off";
   }
-  if (config.defensive_profile?.preset === "strict_enterprise") return "local";
+  const preset = config.defensive_profile?.preset;
+  if (preset && isDefensiveProfilePresetName(preset)) {
+    return presetConfigDefaults(preset).ledger?.mode ?? "off";
+  }
   return "off";
 }
 

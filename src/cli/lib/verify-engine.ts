@@ -29,6 +29,7 @@ import {
   evaluateTracePhase,
   type DefensiveOutcome,
   type KpiOutcome,
+  type PhaseContext,
   type TracePhaseOutcome,
 } from "./verify-phase-steps.js";
 import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./verify-org-phases.js";
@@ -165,15 +166,11 @@ function buildFullVerifySuccess(input: {
 
 async function evaluateOrgControlPhases(
   clock: VerifyPhaseClock,
-  root: string,
-  mission: ParsedMission,
-  executorLogPath: string,
+  ctx: PhaseContext,
 ): Promise<VerifyPhaseFailure | null> {
-  const policy = await clock.timed("policy", () => evaluatePolicyPhase({ root, executorLogPath }));
+  const policy = await clock.timed("policy", () => evaluatePolicyPhase(ctx));
   if (policy.kind === "fail") return policy.failure;
-  const deps = await clock.timed("dependencies", () =>
-    evaluateDependenciesPhase({ root, mission, executorLogPath }),
-  );
+  const deps = await clock.timed("dependencies", () => evaluateDependenciesPhase(ctx));
   return deps.kind === "fail" ? deps.failure : null;
 }
 
@@ -186,6 +183,7 @@ export async function evaluateVerifyPhases(
 ): Promise<VerifyPhaseResult> {
   const clock = new VerifyPhaseClock();
   const executorLogPath = resolveExecutorLogPath(root, options);
+  const phaseCtx: PhaseContext = { root, manifest, mission, options, executorLogPath };
 
   const proof = await clock.timed("git_proof", () =>
     evaluateGitProof(root, mission, options, executorLogPath),
@@ -207,7 +205,7 @@ export async function evaluateVerifyPhases(
   );
   if (interrogation.failure) return failWithTimings(interrogation.failure, clock);
   const gitProofWarnings = [...proofWarnings, ...interrogation.warnings];
-  const orgFail = await evaluateOrgControlPhases(clock, root, mission, executorLogPath);
+  const orgFail = await evaluateOrgControlPhases(clock, phaseCtx);
   if (orgFail) return failWithTimings(orgFail, clock);
 
   if (options.prePush === true && isLegislativeStub(mission)) {
@@ -236,7 +234,6 @@ export async function evaluateVerifyPhases(
   }
 
   const virtualFlightId = beginVirtualCapture(root, mission);
-  const phaseCtx = { root, manifest, mission, options, executorLogPath };
   const gate = mission.gate;
 
   const gateOutcome = await clock.timed("gate", () => evaluateGatePhase(phaseCtx, gate));

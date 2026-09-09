@@ -3,7 +3,7 @@ import { assertPlannerMissionProof } from "./git-proof.js";
 import { resolveGateWorkDir } from "./gate.js";
 import { evaluateKpiPhase } from "./kpi-engine.js";
 import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
-import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "./types.js";
+import { msnIdOrDefault, type GateSpec, type KpiFinding, type Manifest, type ParsedMission } from "./types.js";
 import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows } from "./trace.js";
 import type {
   DefensiveFailure,
@@ -66,7 +66,7 @@ export async function evaluateGatePhase(
   gate: GateSpec,
 ): Promise<GatePhaseOutcome> {
   const { root, mission, options, executorLogPath } = input;
-  const msnId = mission.msnId ?? "MSN-0000";
+  const msnId = msnIdOrDefault(mission);
   const { abs: gateLogAbs, rel: gateLogRel } = ensureGateLogPath(root, msnId);
   const adapter = options.gateExecAdapter ?? resolveGateExecAdapter(gate.adapter);
   const cwd = resolveGateWorkDir(root, options);

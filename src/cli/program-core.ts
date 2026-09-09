@@ -18,7 +18,7 @@ import type { InitOptions } from "./commands/init.js";
 import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
-import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, type GateAdapterId, type TypedGateAdapterId } from "./lib/types.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, msnIdOrDefault, type GateAdapterId, type TypedGateAdapterId } from "./lib/types.js";
 import { getOutputAudience } from "./lib/output-context.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */
@@ -230,7 +230,7 @@ function registerTriageStartCommands(program: Command): void {
       "--emit-mission",
       "Write .gitagent/missions/ACTIVE_MISSION.md from template (DIRECT_EXECUTION only)",
     )
-    .option("--msn <id>", "Mission id for --emit-mission", "MSN-0000")
+    .option("--msn <id>", "Mission id for --emit-mission", msnIdOrDefault(undefined))
     .option(
       "--out <file>",
       "Mission output path for --emit-mission (default .gitagent/missions/ACTIVE_MISSION.md; use under .gitagent/missions/ for gantry verify)",

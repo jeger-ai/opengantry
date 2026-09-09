@@ -172,6 +172,8 @@ test("deps-resolve: verify phase emits v3 finding and mapped code", () => {
     const outcome = evaluateDependenciesPhase({
       root: dest,
       executorLogPath: path.join(dest, "EXECUTOR_LOG.md"),
+      manifest: { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] },
+      options: {},
       mission: {
         msnId: "MSN-0200",
         skillKey: "gantry",

@@ -4,8 +4,9 @@ import { gitRun } from "../git.js";
 import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import { REL_POLICY_POINTER } from "../constants.js";
-import { loadPolicyPointer, pointerIsPinned, policyPointerPath } from "./policy-pointer.js";
-import { cachedBundlePath, parseOrgPolicyBundle, policyCacheDir, sha256File } from "./policy-bundle.js";
+import { sha256File } from "../working-digests.js";
+import { loadPolicyPointer, policyPointerPath } from "./policy-resolve.js";
+import { cachedBundlePath, parseOrgPolicyBundle } from "./policy-bundle.js";
 import type { PolicyPointer } from "./policy-types.js";
 
 export interface PolicyPullResult {
@@ -13,17 +14,6 @@ export interface PolicyPullResult {
   cache_path: string;
   bundle_sha256: string;
   pinned_commit: string;
-}
-
-function copyTree(src: string, dest: string): void {
-  fs.mkdirSync(dest, { recursive: true });
-  for (const ent of fs.readdirSync(src, { withFileTypes: true })) {
-    if (ent.name === ".git") continue;
-    const from = path.join(src, ent.name);
-    const to = path.join(dest, ent.name);
-    if (ent.isDirectory()) copyTree(from, to);
-    else fs.copyFileSync(from, to);
-  }
 }
 
 function verifySignedCommit(cloneRoot: string, commit: string, principals: string[]): void {
@@ -39,10 +29,17 @@ function verifySignedCommit(cloneRoot: string, commit: string, principals: strin
   }
 }
 
+function writeCachedBundle(root: string, pointer: PolicyPointer, commit: string, body: string): string {
+  const dest = cachedBundlePath(root, { ...pointer, pinned_commit: commit });
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, body);
+  return dest;
+}
+
 /** Explicit network path (ADR-0026 / ADR-0042). Doctor and verify MUST NOT call this. */
 export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult {
-  const pointer = loadPolicyPointer(root);
-  if (!pointer) {
+  const state = loadPolicyPointer(root);
+  if (state.kind === "absent") {
     throw new GantryUserError(
       GXT_ERROR.INVALID_ARGUMENT,
       `${REL_POLICY_POINTER} is missing`,
@@ -50,6 +47,7 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
       2,
     );
   }
+  const pointer = state.pointer;
   if (!pointer.source.url.trim()) {
     throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, "POLICY.pointer.json source.url is empty", undefined, 1);
   }
@@ -57,39 +55,32 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
   fs.mkdirSync(scratchParent, { recursive: true });
   const scratch = fs.mkdtempSync(path.join(scratchParent, "policy-pull-"));
   try {
-    const clone = gitRun(root, ["clone", "--depth", "1", "--branch", pointer.source.ref, pointer.source.url, scratch]);
-    if (!clone.ok) {
-      const fallback = gitRun(root, ["clone", pointer.source.url, scratch]);
-      if (!fallback.ok) {
-        throw new GantryUserError(
-          GXT_ERROR.POLICY_UNPINNED,
-          `gantry policy pull: git clone failed: ${clone.stderr || fallback.stderr}`,
-          undefined,
-          1,
-        );
-      }
-      if (pointer.source.ref) {
-        gitRun(scratch, ["checkout", pointer.pinned_commit || pointer.source.ref]);
-      }
+    const init = gitRun(scratch, ["init"]);
+    if (!init.ok) {
+      throw new GantryUserError(
+        GXT_ERROR.POLICY_UNPINNED,
+        `gantry policy pull: git init failed: ${init.stderr}`,
+        undefined,
+        1,
+      );
     }
-    const head = gitRun(scratch, ["rev-parse", "HEAD"]);
+    const spec = pointer.pinned_commit.trim() || pointer.source.ref;
+    const fetched = gitRun(scratch, ["fetch", "--depth", "1", pointer.source.url, spec]);
+    if (!fetched.ok) {
+      throw new GantryUserError(
+        GXT_ERROR.POLICY_UNPINNED,
+        `gantry policy pull: git fetch failed: ${fetched.stderr}`,
+        undefined,
+        1,
+      );
+    }
+    const head = gitRun(scratch, ["rev-parse", "FETCH_HEAD"]);
     if (!head.ok || !head.stdout.trim()) {
-      throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, "policy pull: cannot resolve HEAD", undefined, 1);
+      throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, "policy pull: cannot resolve FETCH_HEAD", undefined, 1);
     }
     const commit = pointer.pinned_commit.trim() || head.stdout.trim();
-    if (pointer.pinned_commit.trim() && pointer.pinned_commit.trim() !== head.stdout.trim()) {
-      const co = gitRun(scratch, ["checkout", pointer.pinned_commit.trim()]);
-      if (!co.ok) {
-        throw new GantryUserError(
-          GXT_ERROR.POLICY_UNPINNED,
-          `policy pull: cannot checkout pinned_commit ${pointer.pinned_commit}`,
-          undefined,
-          1,
-        );
-      }
-    }
-    const bundleAbs = path.join(scratch, pointer.bundle_path);
-    if (!fs.existsSync(bundleAbs)) {
+    const shown = gitRun(scratch, ["show", `FETCH_HEAD:${pointer.bundle_path}`]);
+    if (!shown.ok) {
       throw new GantryUserError(
         GXT_ERROR.POLICY_DRIFT,
         `bundle_path ${pointer.bundle_path} missing in policy repo`,
@@ -97,13 +88,11 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
         1,
       );
     }
-    const bundle = parseOrgPolicyBundle(root, fs.readFileSync(bundleAbs, "utf8"));
+    const bundle = parseOrgPolicyBundle(root, shown.stdout);
     const principals = (bundle.signers ?? []).map((s) => s.principal);
     verifySignedCommit(scratch, commit, principals);
-    const dest = policyCacheDir(root, commit);
-    fs.rmSync(dest, { recursive: true, force: true });
-    copyTree(scratch, dest);
-    const sha = sha256File(path.join(dest, pointer.bundle_path));
+    const dest = writeCachedBundle(root, pointer, commit, shown.stdout);
+    const sha = sha256File(dest);
     const next: PolicyPointer = {
       ...pointer,
       pinned_commit: commit,
@@ -112,22 +101,11 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
     fs.writeFileSync(policyPointerPath(root), `${JSON.stringify(next, null, 2)}\n`, "utf8");
     return {
       pointer: next,
-      cache_path: cachedBundlePath(root, next),
+      cache_path: dest,
       bundle_sha256: sha,
       pinned_commit: commit,
     };
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
-  }
-}
-
-export function assertPointerReady(pointer: PolicyPointer): void {
-  if (!pointerIsPinned(pointer)) {
-    throw new GantryUserError(
-      GXT_ERROR.POLICY_UNPINNED,
-      "POLICY.pointer.json is present but not pinned",
-      "gantry policy pull",
-      1,
-    );
   }
 }

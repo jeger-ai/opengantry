@@ -1,5 +1,5 @@
 import { CLI_NAME } from "./constants.js";
-import { errorMessage, logError, setExitCode } from "./cli-io.js";
+import { errorMessage, logError, logInfo, setExitCode } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
 import { isGantryUserError, reportUserFacingError, userFacingErrorToJson } from "./errors.js";
 
@@ -37,10 +37,28 @@ function exitCodeFor(e: unknown): number {
   return 1;
 }
 
-/** Run a sync command body with one JSON-aware error boundary. */
-export function runUserCommand(opts: { json?: boolean }, fn: () => void): void {
+export type CommandPresentation = {
+  json: unknown;
+  human?: string | readonly string[];
+};
+
+function presentCommand(opts: { json?: boolean }, view: CommandPresentation): void {
+  if (opts.json) {
+    emitCliJson(view.json);
+    return;
+  }
+  const raw = view.human;
+  const lines = raw === undefined ? [] : typeof raw === "string" ? [raw] : [...raw];
+  for (const line of lines) {
+    if (line.length > 0) logInfo(line);
+  }
+}
+
+/** Run a sync command body with one JSON-aware error and success boundary. */
+export function runUserCommand(opts: { json?: boolean }, fn: () => CommandPresentation | void): void {
   try {
-    fn();
+    const view = fn();
+    if (view !== undefined) presentCommand(opts, view);
   } catch (e) {
     if (opts.json) {
       emitCliJson(cliFailureEnvelope(e));
@@ -54,10 +72,11 @@ export function runUserCommand(opts: { json?: boolean }, fn: () => void): void {
 /** Async variant of {@link runUserCommand}. */
 export async function runUserCommandAsync(
   opts: { json?: boolean },
-  fn: () => Promise<void>,
+  fn: () => Promise<CommandPresentation | void>,
 ): Promise<void> {
   try {
-    await fn();
+    const view = await fn();
+    if (view !== undefined) presentCommand(opts, view);
   } catch (e) {
     if (opts.json) {
       emitCliJson(cliFailureEnvelope(e));

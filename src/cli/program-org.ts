@@ -39,6 +39,7 @@ function registerLedgerCommands(program: Command): void {
   const ledger = program.command("ledger").description("Compliance ledger on refs/gxt/ledger (ADR-0043)");
   ledger
     .command("append")
+    .description("Append a digest-only ledger entry")
     .option("--from-envelope <file>", "Hub export envelope")
     .option("--mission <path>", "Mission file")
     .option("--json", "JSON")
@@ -47,6 +48,7 @@ function registerLedgerCommands(program: Command): void {
     });
   ledger
     .command("verify")
+    .description("Verify the ledger hash chain")
     .option("--json", "JSON")
     .option("--require-signatures")
     .action((o: { json?: boolean; requireSignatures?: boolean }) => {
@@ -54,12 +56,14 @@ function registerLedgerCommands(program: Command): void {
     });
   ledger
     .command("list")
+    .description("List ledger entries")
     .option("--json", "JSON")
     .action((o: { json?: boolean }) => {
       runLedgerList(o);
     });
   ledger
     .command("export")
+    .description("Export ledger JSON or a SOC 2 pack")
     .option("--format <fmt>", "json|soc2-pack", "json")
     .option("--out <dir>", "Output directory")
     .option("--json", "JSON")
@@ -68,12 +72,14 @@ function registerLedgerCommands(program: Command): void {
     });
   ledger
     .command("push")
+    .description("Push refs/gxt/ledger to origin")
     .option("--json", "JSON")
     .action((o: { json?: boolean }) => {
       runLedgerPush(o);
     });
   ledger
     .command("fetch")
+    .description("Fetch refs/gxt/ledger from origin")
     .option("--json", "JSON")
     .action((o: { json?: boolean }) => {
       runLedgerFetch(o);
@@ -84,6 +90,7 @@ function registerDepsCommands(program: Command): void {
   const deps = program.command("deps").description("Cross-repo mission dependencies (ADR-0044)");
   deps
     .command("fetch")
+    .description("Fetch depends_on ledger refs")
     .option("--mission <path>")
     .option("--json", "JSON")
     .action((o: { mission?: string; json?: boolean }) => {
@@ -91,6 +98,7 @@ function registerDepsCommands(program: Command): void {
     });
   deps
     .command("check")
+    .description("Evaluate depends_on against fetched refs")
     .option("--mission <path>")
     .option("--json", "JSON")
     .action((o: { mission?: string; json?: boolean }) => {
@@ -98,6 +106,7 @@ function registerDepsCommands(program: Command): void {
     });
   deps
     .command("status")
+    .description("Alias for deps check")
     .option("--mission <path>")
     .option("--json", "JSON")
     .action((o: { mission?: string; json?: boolean }) => {

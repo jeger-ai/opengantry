@@ -64,15 +64,8 @@ export interface PolicyPointer {
   bundle_sha256: string;
 }
 
-export interface EffectivePolicy {
-  present: boolean;
-  pointer: PolicyPointer | null;
-  bundle: OrgPolicyBundle | null;
-  mandatory_gates: PolicyMandatoryGate[];
-  banned_imports: PolicyBannedImport[];
-  kpi_thresholds: KpiThreshold[];
-  config_floor: PolicyConfigFloor;
-  forbidden_zones_add: string[];
-  path_risks_min: Record<string, TrustThreshold>;
-  perimeter_protected_add: string[];
-}
+/** Offline pointer file state. `pinned` means url + hex commit; cache may still be missing. */
+export type PolicyPointerState =
+  | { kind: "absent" }
+  | { kind: "scaffold"; pointer: PolicyPointer }
+  | { kind: "pinned"; pointer: PolicyPointer };

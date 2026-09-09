@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { logInfo, setExitCode } from "../lib/cli-io.js";
-import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
+import { setExitCode } from "../lib/cli-io.js";
+import { runUserCommand, type CommandPresentation } from "../lib/command-boundary.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
@@ -20,17 +20,18 @@ function loadMissionDeps(root: string, missionArg?: string) {
 
 export function reportDependencyResults(
   results: DependencyCheckResult[],
-  opts: { json?: boolean; headline: string },
-): void {
+  opts: { headline: string },
+): CommandPresentation {
   const failed = results.filter((r) => r.code !== "ok");
-  if (opts.json) {
-    emitCliJson({ status: failed.length === 0 ? "ok" : "failed", results });
-  } else if (results.length === 0) {
-    logInfo(`${opts.headline}: 0 dependency check(s)`);
-  } else {
-    for (const r of results) logInfo(`${opts.headline}: ${r.repo} ${r.msn_id} ${r.code}`);
-  }
   if (failed.length > 0) setExitCode(1);
+  const human =
+    results.length === 0
+      ? `${opts.headline}: 0 dependency check(s)`
+      : results.map((r) => `${opts.headline}: ${r.repo} ${r.msn_id} ${r.code}`);
+  return {
+    json: { status: failed.length === 0 ? "ok" : "failed", results },
+    human,
+  };
 }
 
 export function runDepsFetch(opts: { mission?: string; json?: boolean }): void {
@@ -38,11 +39,7 @@ export function runDepsFetch(opts: { mission?: string; json?: boolean }): void {
     const { root } = loadWorkspace();
     const { mission } = loadMissionDeps(root, opts.mission);
     const refs = mission.dependsOn.map((d) => fetchMissionDependency(root, d));
-    if (opts.json) {
-      emitCliJson({ status: "ok", refs });
-      return;
-    }
-    logInfo(`gantry deps fetch: ${refs.length} ref(s)`);
+    return { json: { status: "ok", refs }, human: `gantry deps fetch: ${refs.length} ref(s)` };
   });
 }
 
@@ -50,8 +47,7 @@ export function runDepsCheck(opts: { mission?: string; json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const { mission } = loadMissionDeps(root, opts.mission);
-    reportDependencyResults(checkMissionDependencies(root, mission), {
-      json: opts.json,
+    return reportDependencyResults(checkMissionDependencies(root, mission), {
       headline: "gantry deps check",
     });
   });
@@ -71,6 +67,6 @@ export function runReleaseCheck(opts: { tag?: string; json?: boolean }): void {
       const mission = parseMissionFile(root, rel);
       results.push(...checkMissionDependencies(root, mission));
     }
-    reportDependencyResults(results, { json: opts.json, headline: "gantry release check" });
+    return reportDependencyResults(results, { headline: "gantry release check" });
   });
 }

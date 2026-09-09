@@ -8,6 +8,7 @@ import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { AttestationHarnessMode } from "./receipt-attribution.js";
 import { assertMissionGatePresent, parseMissionFile } from "./missions/parser.js";
 import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
+import { msnIdOrDefault } from "./types.js";
 
 export interface AttestMissionOptions {
   root: string;
@@ -44,7 +45,7 @@ export function attestMission(options: AttestMissionOptions): AttestMissionResul
   if (options.exportPath?.trim()) {
     export_path = writeAttestationExportEnvelope(root, receipt, options.exportPath.trim());
   }
-  appendLedgerIfEnabled(root, "receipt", mission.msnId ?? "MSN-0000", {
+  appendLedgerIfEnabled(root, "receipt", msnIdOrDefault(mission), {
     verify_status: "attest_only",
     receipt_sha256: receipt.receipt_sha256,
     signed: Boolean(receipt.signature),

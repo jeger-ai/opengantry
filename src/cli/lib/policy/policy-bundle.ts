@@ -1,35 +1,35 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import type { ValidateFunction } from "ajv";
 import YAML from "yaml";
 import { createSchemaValidator } from "../ajv-loader.js";
 import { REL_POLICY_CACHE } from "../constants.js";
 import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
+import { sha256File } from "../working-digests.js";
 import type { OrgPolicyBundle, PolicyPointer } from "./policy-types.js";
 
-let cachedValidate: ReturnType<typeof createSchemaValidator> | null = null;
+let compiledValidator: ValidateFunction | null = null;
+let compiledForRoot: string | null = null;
 
-function loadSchema(root: string): object {
-  const candidates = [
-    path.join(root, ".gitagent/planner/ORG-POLICY.schema.yaml"),
-    path.join(root, "templates/.gitagent/planner/ORG-POLICY.schema.yaml"),
-  ];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) {
-      return YAML.parse(fs.readFileSync(p, "utf8")) as object;
-    }
+function loadOrgPolicySchemaValidator(root: string): ValidateFunction {
+  if (compiledValidator && compiledForRoot === root) {
+    return compiledValidator;
   }
-  throw new GantryUserError(
-    GXT_ERROR.PARSE_ERROR,
-    "ORG-POLICY.schema.yaml not found",
-    "run gantry init or restore .gitagent/planner/ORG-POLICY.schema.yaml",
-    2,
-  );
-}
-
-export function sha256File(abs: string): string {
-  return crypto.createHash("sha256").update(fs.readFileSync(abs)).digest("hex");
+  const schemaPath = path.join(root, ".gitagent/planner/ORG-POLICY.schema.yaml");
+  if (!fs.existsSync(schemaPath)) {
+    throw new GantryUserError(
+      GXT_ERROR.PARSE_ERROR,
+      "ORG-POLICY.schema.yaml not found",
+      "run gantry init or restore .gitagent/planner/ORG-POLICY.schema.yaml",
+      2,
+    );
+  }
+  const schemaDoc = YAML.parse(fs.readFileSync(schemaPath, "utf8")) as Record<string, unknown>;
+  const validate = createSchemaValidator(schemaDoc);
+  compiledValidator = validate;
+  compiledForRoot = root;
+  return validate;
 }
 
 export function policyCacheDir(root: string, commit: string): string {
@@ -42,9 +42,9 @@ export function cachedBundlePath(root: string, pointer: PolicyPointer): string {
 
 export function parseOrgPolicyBundle(root: string, raw: string): OrgPolicyBundle {
   const data = YAML.parse(raw) as unknown;
-  cachedValidate ??= createSchemaValidator(loadSchema(root));
-  if (!cachedValidate(data)) {
-    const err = cachedValidate.errors?.[0];
+  const validate = loadOrgPolicySchemaValidator(root);
+  if (!validate(data)) {
+    const err = validate.errors?.[0];
     const msg = err ? `${err.instancePath} ${err.message}` : "invalid org policy bundle";
     throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `org policy bundle: ${msg}`, undefined, 1);
   }

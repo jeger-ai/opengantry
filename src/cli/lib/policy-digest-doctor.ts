@@ -24,9 +24,8 @@ export function loadExpectedDigestsFile(policyPath: string): ExpectedDigestsFile
   return parsed;
 }
 
-export function runPolicyDigestDoctorChecks(root: string, policyPath: string): DoctorLine[] {
+export function compareExpectedDigests(root: string, expected: ExpectedDigestsFile): DoctorLine[] {
   const lines: DoctorLine[] = [];
-  const expected = loadExpectedDigestsFile(policyPath);
   const actual = computeWorkingDigests(root);
 
   const compare = (
@@ -58,4 +57,8 @@ export function runPolicyDigestDoctorChecks(root: string, policyPath: string): D
   }
 
   return lines;
+}
+
+export function runPolicyDigestDoctorChecks(root: string, policyPath: string): DoctorLine[] {
+  return compareExpectedDigests(root, loadExpectedDigestsFile(policyPath));
 }

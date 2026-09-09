@@ -4,7 +4,7 @@ import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitHead, gitRevParse, gitRun } from "./git.js";
-import type { ParsedMission } from "./types.js";
+import { msnIdOrDefault, type ParsedMission } from "./types.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
 
@@ -203,7 +203,7 @@ export function runBreakGlassAuditFlow(
       commit: options.breakGlassCommit,
       auditCommit: options.auditCommit === true,
     });
-    appendLedgerIfEnabled(root, "break_glass", mission.msnId ?? "MSN-0000", {
+    appendLedgerIfEnabled(root, "break_glass", msnIdOrDefault(mission), {
       reason_sha256: crypto.createHash("sha256").update(reason).digest("hex"),
       error_code: "BREAK_GLASS",
     });
