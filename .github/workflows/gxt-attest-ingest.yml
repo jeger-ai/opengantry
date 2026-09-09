@@ -118,6 +118,22 @@ jobs:
           echo "ingest poll timeout (request_id=$request_id)" >&2
           exit 1
 
+      - name: Append compliance ledger and push ref
+        if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != ''
+        continue-on-error: true
+        run: |
+          node dist/cli/index.js ledger append --from-envelope envelope.json || true
+          git push origin refs/gxt/ledger || echo "ledger push skipped (ref absent or no permission)"
+
+      - name: Push pre-commit agent events
+        if: steps.mission.outputs.path != ''
+        continue-on-error: true
+        env:
+          PLANE_INGEST_URL: ${{ vars.PLANE_INGEST_URL }}
+          PLANE_INGEST_TOKEN: ${{ secrets.PLANE_INGEST_TOKEN }}
+        run: |
+          node dist/cli/index.js events push --json || true
+
       - name: Propagate verify outcome
         if: steps.verify.outcome == 'failure'
         run: exit 1

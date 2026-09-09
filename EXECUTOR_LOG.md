@@ -877,3 +877,7 @@ DoD 1 MSN-0200: v3.3.0 version parity — package.json, compatibility.json, SUBS
 
 ## MSN-9002 — upgrade to v3.3.0
 MSN-9002: upgrade to v3.3.0 org control plane — ORG-POLICY.schema.yaml + POLICY.pointer.json scaffold
+
+## MSN-0201 — pre-release substrate correctness
+[CONTEXT-REQUEST] path=templates/.gitagent/foreman/PLANNER.signing.pub,templates/.github/workflows/gxt-validate.yml,.github/workflows/gxt-validate.yml,templates/.github/workflows/gxt-attest-ingest.yml,.github/workflows/gxt-attest-ingest.yml,scripts/gen-dogfood.mjs,scripts/assert-dogfood-sync.sh,src/cli/tests/attest-ingest-workflow.test.ts,.gitignore reason=MSN-0201 declared_paths: scrub template Planner pubkey, drop dead deps-fetch CI step, extend dogfood MIRRORED list, delete regex mirror test; .gitignore already lists .gitagent/tmp/ proposed=those paths | msn=MSN-0201
+[SKILL-EXEC] skill_key=substrate tool=cursor scope=templates/.gitagent/foreman/PLANNER.signing.pub,templates/.github/workflows/,.github/workflows/,scripts/gen-dogfood.mjs,scripts/assert-dogfood-sync.sh,src/cli/tests/attest-ingest-workflow.test.ts
