@@ -9,6 +9,8 @@ import {
   listCommitsTouchingPathInRange,
   DEFAULT_PERIMETER_PROTECTED,
 } from "../lib/perimeter.js";
+import { REL_PLANNER_SIGNING_PUB } from "../lib/constants.js";
+import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
 import { pathMatchesPerimeterGlob } from "../lib/path-glob.js";
 import type { Manifest } from "../lib/types.js";
 import { gitCommit, gitInitCommit } from "./test-fixtures.js";
@@ -142,4 +144,29 @@ test("listCommitsTouchingPathInRange: returns all commits not just last", () => 
   if (range.ok) {
     assert.equal(range.commits.length, 2);
   }
+});
+
+test("ensurePlannerAllowedSignersFile: sets gpg.ssh.allowedSignersFile when pub file exists", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-perim-signers-"));
+  fs.mkdirSync(path.join(root, ".gitagent", "foreman"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, ".gitagent", "foreman", "MANIFEST.json"),
+    JSON.stringify(manifest, null, 2),
+    "utf8",
+  );
+  fs.writeFileSync(
+    path.join(root, ".gitagent", "foreman", "PLANNER.signing.pub"),
+    "# test allowed signers\n",
+    "utf8",
+  );
+  gitInitCommit(root, "init", "teacher@test.local");
+  const result = ensurePlannerAllowedSignersFile(root);
+  assert.equal(result.present, true);
+  assert.equal(result.configured, true);
+  assert.equal(result.path, REL_PLANNER_SIGNING_PUB);
+  const configured = execSync("git config --get gpg.ssh.allowedSignersFile", {
+    cwd: root,
+    encoding: "utf8",
+  }).trim();
+  assert.equal(configured, REL_PLANNER_SIGNING_PUB);
 });

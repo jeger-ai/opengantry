@@ -2,6 +2,7 @@ import { checkPerimeter } from "../lib/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary } from "../lib/command-boundary.js";
 import { gitRevParse } from "../lib/git.js";
+import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import type { PerimeterViolation } from "../lib/perimeter.js";
 
@@ -24,6 +25,9 @@ export function runPerimeter(options: PerimeterOptions): void {
   runAtCommandBoundary(1, () => {
     const { root, manifest } = loadWorkspace();
     const baseRef = resolveBaseRef(root, options.baseRef);
+    if (options.ci === true) {
+      ensurePlannerAllowedSignersFile(root);
+    }
     const result = checkPerimeter(root, manifest, { baseRef, ci: options.ci === true });
 
     if (options.json) {

@@ -42,19 +42,6 @@ else
   exit 2
 fi
 
-mapfile -t UNIQUE_MSNS < <(
-  git log --no-merges --format=%s "${BASE_SHA}..${HEAD_SHA}" \
-    | grep -Eo '\[MSN-[0-9]{4}\]' | sort -u || true
-)
-
-if [[ ${#UNIQUE_MSNS[@]} -gt 1 ]]; then
-  echo "verify-pr-missions FAILED: mission contamination detected" >&2
-  echo "  This PR contains commits from multiple missions:" >&2
-  printf '    %s\n' "${UNIQUE_MSNS[@]}" >&2
-  echo "  OpenGantry requires strict blast-radius isolation. Rebase this branch onto the integration branch (e.g. origin/main)." >&2
-  exit 1
-fi
-
 if [[ -f dist/cli/index.js ]]; then
   GANTRY=(node dist/cli/index.js)
 elif command -v gantry >/dev/null 2>&1; then
@@ -63,14 +50,6 @@ else
   echo "verify-pr-missions: build gantry first (npm run build)" >&2
   exit 1
 fi
-
-is_verifiable_mission() {
-  local p="$1"
-  [[ "$p" == "${MISSIONS_PREFIX}"* ]] || return 1
-  [[ "$p" =~ \.(ya?ml|md)$ ]] || return 1
-  [[ "$(basename "$p")" == "README.md" ]] && return 1
-  return 0
-}
 
 is_msn_enforced_path() {
   local p="$1"
@@ -99,14 +78,28 @@ for f in "${DIFF_FILES[@]}"; do
   fi
 done
 
+changed_json="$("${GANTRY[@]}" mission changed --base-ref "$BASE_SHA" --head-ref "$HEAD_SHA" --json)" || {
+  printf '%s\n' "$changed_json" >&2
+  exit 1
+}
 mapfile -t CHANGED_MISSIONS < <(
-  for f in "${DIFF_FILES[@]}"; do
-    [[ -n "$f" ]] || continue
-    if is_verifiable_mission "$f" && [[ -f "$f" ]]; then
-      echo "$f"
-    fi
-  done | sort -u
+  printf '%s' "$changed_json" | node -e '
+    let s = "";
+    process.stdin.setEncoding("utf8");
+    process.stdin.on("data", (c) => { s += c; });
+    process.stdin.on("end", () => {
+      const j = JSON.parse(s);
+      if (j.status !== "ok") {
+        console.error(j.message || "mission changed failed");
+        process.exit(1);
+      }
+      for (const m of j.missions || []) console.log(m);
+    });
+  '
 )
+if [[ ${#CHANGED_MISSIONS[@]} -eq 1 && -z "${CHANGED_MISSIONS[0]:-}" ]]; then
+  CHANGED_MISSIONS=()
+fi
 
 if [[ "$needs_mission" -eq 1 && ${#CHANGED_MISSIONS[@]} -eq 0 ]]; then
   if eval_out="$(node "$GXT_MANIFEST_LIB" eval-range "$ROOT" "$BASE_SHA" "$HEAD_SHA" 2>&1)"; then
@@ -123,27 +116,6 @@ fi
 if [[ ${#CHANGED_MISSIONS[@]} -eq 0 ]]; then
   echo "verify-pr-missions: no changed mission files (${BASE_SHA}...${HEAD_SHA})"
   exit 0
-fi
-
-if [[ ${#UNIQUE_MSNS[@]} -eq 1 ]]; then
-  purity_msn="${UNIQUE_MSNS[0]}"
-  purity_msn="${purity_msn#[}"
-  purity_msn="${purity_msn%]}"
-  filtered_missions=()
-  for mission in "${CHANGED_MISSIONS[@]}"; do
-    base="$(basename "$mission")"
-    if [[ "$base" == "${purity_msn}."* ]]; then
-      filtered_missions+=("$mission")
-    fi
-  done
-  if [[ ${#filtered_missions[@]} -eq 0 ]]; then
-    echo "verify-pr-missions FAILED: no changed mission file matches commit MSN tag [${purity_msn}]" >&2
-    exit 1
-  fi
-  if [[ ${#filtered_missions[@]} -lt ${#CHANGED_MISSIONS[@]} ]]; then
-    echo "verify-pr-missions: release-squash — verifying [${purity_msn}] only (${#CHANGED_MISSIONS[@]} companion mission file(s) in diff)" >&2
-  fi
-  CHANGED_MISSIONS=("${filtered_missions[@]}")
 fi
 
 for mission in "${CHANGED_MISSIONS[@]}"; do

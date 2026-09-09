@@ -5,7 +5,7 @@ import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "
 import { REL_AGENT_ERROR_FILE, REL_MANIFEST, CLI_NAME } from "./constants.js";
 import { ENV_PLANNER_EMAILS } from "./config-namespace.js";
 import { agentErrorAbsolutePath } from "./errors.js";
-import { gitConfigGet } from "./git.js";
+import { gitConfigGet, gitRunOk } from "./git.js";
 import { resolveTemplateRootFromModule } from "./integration-compat.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
@@ -21,8 +21,11 @@ import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
 import { runExecutorLogIntegrityDoctorChecks } from "./executor-log-integrity.js";
 import { loadGxtConfig, resolvePlannerSignatureTier, resolveReceiptSignatureTier } from "./gxt-config.js";
-import { gitCommitSignatureStatus, isGoodGitSignatureStatus } from "./planner-signature.js";
-import { gitRunOk } from "./git.js";
+import {
+  ensurePlannerAllowedSignersFile,
+  gitCommitSignatureStatus,
+  isGoodGitSignatureStatus,
+} from "./planner-signature.js";
 import { runTargetArchitectureDoctorChecks } from "./arch/cage/target-architecture-doctor.js";
 import { runArchitectureDriftDoctorChecks } from "./arch/cage/architecture-drift-doctor.js";
 import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
@@ -69,6 +72,22 @@ function appendPlannerAllowlistChecks(
   lines.push({ level: "warn", message: "Planner allowlist unset — verify git-proof will fail" });
   nextStep = pickNextStep(nextStep, `${CLI_NAME} planner set "$(git config user.email)"`);
   return { nextStep, plannerAllowlistUnset: true };
+}
+
+function appendAllowedSignersChecks(root: string, lines: DoctorLine[]): void {
+  const signers = ensurePlannerAllowedSignersFile(root);
+  if (!signers.present) return;
+  if (signers.configured && signers.path) {
+    lines.push({
+      level: "ok",
+      message: `gpg.ssh.allowedSignersFile=${signers.path}`,
+    });
+    return;
+  }
+  lines.push({
+    level: "warn",
+    message: "PLANNER.signing.pub present but gpg.ssh.allowedSignersFile could not be set",
+  });
 }
 
 function appendPlannerSignatureChecks(root: string, lines: DoctorLine[]): void {
@@ -181,6 +200,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const plannerResult = appendPlannerAllowlistChecks(root, lines, nextStep);
   nextStep = plannerResult.nextStep;
   plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
+  appendAllowedSignersChecks(root, lines);
   appendPlannerSignatureChecks(root, lines);
   appendReceiptSignatureChecks(root, lines);
   appendBypassChecks(root, lines);

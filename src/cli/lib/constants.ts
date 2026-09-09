@@ -15,6 +15,10 @@ export const REL_MISSION_TEMPLATE = ".gitagent/planner/MISSION.template.md" as c
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
 /** Git-ignored attestation receipts for optional hub ingestion. */
 export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
+/** Planner SSH allowed signers for `git log --format=%G?` / perimeter --ci. */
+export const REL_PLANNER_SIGNING_PUB = ".gitagent/foreman/PLANNER.signing.pub" as const;
+/** git config key set by doctor and `gantry perimeter --ci`. */
+export const GIT_CONFIG_ALLOWED_SIGNERS = "gpg.ssh.allowedSignersFile" as const;
 /** Tracked pin of an org policy git source (ADR-0042). */
 export const REL_POLICY_POINTER = ".gitagent/foreman/POLICY.pointer.json" as const;
 /** Git-ignored org policy bundle cache (ADR-0042). */

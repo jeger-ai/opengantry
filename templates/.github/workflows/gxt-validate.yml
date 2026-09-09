@@ -70,13 +70,6 @@ jobs:
       - name: gantry doctor (readiness)
         run: node dist/cli/index.js doctor
 
-      - name: Configure SSH commit signature verification
-        if: github.event_name == 'pull_request'
-        run: |
-          if [ -f .gitagent/foreman/PLANNER.signing.pub ]; then
-            git config gpg.ssh.allowedSignersFile .gitagent/foreman/PLANNER.signing.pub
-          fi
-
       - name: gantry perimeter (CI signature enforcement)
         if: github.event_name == 'pull_request'
         env:
@@ -168,6 +161,39 @@ jobs:
 
       - name: Build gantry
         run: npm run build
+
+      - name: Fetch cross-repo mission dependencies
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          json="$(node dist/cli/index.js mission changed --base-ref "$BASE_SHA" --head-ref "$HEAD_SHA" --json)" || {
+            echo "$json"
+            exit 1
+          }
+          mapfile -t missions < <(
+            printf '%s' "$json" | node -e '
+              let s = "";
+              process.stdin.setEncoding("utf8");
+              process.stdin.on("data", (c) => { s += c; });
+              process.stdin.on("end", () => {
+                const j = JSON.parse(s);
+                if (j.status !== "ok") process.exit(1);
+                for (const m of j.missions || []) console.log(m);
+              });
+            '
+          )
+          if [ ${#missions[@]} -eq 1 ] && [ -z "${missions[0]:-}" ]; then
+            missions=()
+          fi
+          if [ ${#missions[@]} -eq 0 ]; then
+            echo "deps fetch: no PR-changed missions"
+            exit 0
+          fi
+          for m in "${missions[@]}"; do
+            [ -n "$m" ] || continue
+            node dist/cli/index.js deps fetch --mission "$m"
+          done
 
       - name: Full verify on PR-changed missions
         env:

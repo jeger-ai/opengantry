@@ -24,29 +24,46 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - Access outside effective TMVC requires a context request recorded in `EXECUTOR_LOG.md`.
 - Access into forbidden zones MUST fail closed unless Planner policy explicitly allows it.
 
-## 5. Mission commit indexing
+## 4.5 Interrogation record (legislation gate)
+
+- Computed interrogation findings MUST have an `operator_answer` before legislation.
+- Placeholder or fabricated answers are evidence tampering under §3.
+
+## 5. Rule 4.4 — Planner-driven manifest sync
+
+- Adding, removing, or renaming a skill MUST update `MANIFEST.json` in the same commit set.
+
+## 6. Git-native mission index
 
 - Mission-related commits MUST begin with `[MSN-XXXX]` in the subject line.
 - Keep mission files for `gantry verify` under `.gitagent/missions/`.
 
-## 6. Break-glass (v0.8.0)
+## 6.1 Planner legislation proof
+
+- `gantry verify` requires a Planner stamp: a `[MSN-XXXX]` commit by an allowlisted author that modifies the mission file.
+
+## 6.2 Break-glass (v0.8.0)
 
 - Set `GXT_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256` (SHA-256 hex of the team secret).
 - Use `gantry verify --break-glass --reason "..."` only in emergencies; push `refs/notes/gxt-bypass` with the branch.
 - Forbidden-zone runtime policy is never bypassed.
 - A bypass MUST also append a `break_glass` ledger entry when `ledger.mode` is `local`.
 
-## 7. Organization policy floor (v3.3.0)
+## 7. Local history (no bloat)
+
+- Bulky traces live under `.gitagent/history/` (git-ignored). Do not commit large trace dumps.
+
+## 8. Organization policy floor (v3.3.0)
 
 - A present `POLICY.pointer.json` is a tighten-only floor: policy MUST NOT loosen local law.
 - `gantry policy pull` is the only network path; doctor and verify read disk/cache only.
 
-## 8. Compliance ledger (v3.3.0)
+## 9. Compliance ledger (v3.3.0)
 
 - `refs/gxt/ledger` is an orphan signed (optional) commit chain of digest-only entries.
 - Append uses CAS `git update-ref` with bounded retries; unsigned entries are checksums, not proofs.
 
-## 9. Cross-repository dependencies (v3.3.0)
+## 10. Cross-repository dependencies (v3.3.0)
 
 - Optional mission `depends_on[]` is resolved from fetched `refs/gxt/deps/<slug>`.
 - Same-org proof uses `repository_hash` + the consumer's `GANTRY_ORG_PEPPER`.

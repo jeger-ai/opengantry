@@ -88,6 +88,10 @@ export function gitConfigGet(repoRoot: string, key: string): string | null {
   return r.stdout.trim();
 }
 
+export function gitConfigSet(repoRoot: string, key: string, value: string): boolean {
+  return gitRunOk(repoRoot, ["config", key, value]).ok;
+}
+
 export type GitDiffSinceCommitResult =
   | { ok: true; paths: string[] }
   | { ok: false; stderr: string };

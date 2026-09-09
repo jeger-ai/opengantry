@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
-import { runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
+import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
 import { parseOptionalTimeoutMs } from "./lib/cli-io.js";
@@ -24,6 +24,16 @@ function registerMissionCommand(program: Command): void {
     .option("--msn <id>", "Override MSN id from file")
     .action((opts: { file: string; msn?: string }) => {
       runMissionSnapshot(opts.file, opts.msn);
+    });
+
+  mission
+    .command("changed")
+    .description("List MSN-purity-filtered mission files changed vs a base ref")
+    .option("--base-ref <ref>", "Base ref (default: origin/main, main, or HEAD~1)")
+    .option("--head-ref <ref>", "Head ref (default: HEAD)")
+    .option("--json", "Emit JSON payload")
+    .action((opts: { baseRef?: string; headRef?: string; json?: boolean }) => {
+      runMissionChanged(opts);
     });
 }
 

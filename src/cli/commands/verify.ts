@@ -1,8 +1,8 @@
 import { logInfo, setExitCode } from "../lib/cli-io.js";
-import { gitRevParse } from "../lib/git.js";
 import { initFailurePayload } from "../lib/verify-payload.js";
 import { emitVerifyJson } from "../lib/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify-options.js";
+import { resolveDefaultChangedBaseRef } from "../lib/mission-changed.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
@@ -56,17 +56,9 @@ function assertVerifyOptionsCompatible(options: VerifyOptions): void {
   }
 }
 
-function resolveChangedMissionsBaseRef(root: string, explicit?: string): string {
-  if (explicit?.trim()) return explicit.trim();
-  for (const candidate of ["origin/main", "origin/master", "main", "master"]) {
-    if (gitRevParse(root, candidate)) return candidate;
-  }
-  return "HEAD~1";
-}
-
 async function runVerifyChangedMissions(options: VerifyOptions): Promise<void> {
   const { root } = loadWorkspace();
-  const baseRef = resolveChangedMissionsBaseRef(root, options.baseRef);
+  const baseRef = options.baseRef?.trim() || resolveDefaultChangedBaseRef(root);
   const missions = discoverChangedMissionFiles(root, baseRef);
   if (missions.length === 0) {
     logInfo(`gantry verify: no changed mission files vs ${baseRef}`);
