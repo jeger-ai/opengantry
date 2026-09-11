@@ -1,0 +1,166 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Mission contracts substrate (WP-A): Planner-sealed contract block (tmvc_roots, forbidden_zones, allowed_imports, banned_imports, allow_dynamic_specifiers, strict_relative_imports) with contract_sha256 in MISSION.schema.yaml and templates mirror; ParsedMission contract; tighten-only effective scope with subset rule; canonical contract hash; import-site scanner covering static, dynamic import(), require(), export-from with relative and tsconfig alias resolution; runtime env and runtime exec enforce effective cage with GXT_ALLOWED_IMPORTS/GXT_BANNED_IMPORTS and contract_violation; staged tmvc guard uses effective scope; gantry verify contract phase (tamper check vs Planner stamp commit, import scan) with GXT_CONTRACT_* codes; gantry contract check command; contract-aware interrogation gaps; tests
+msn_id: MSN-0209
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key substrate. This mission authorizes
+      .gitagent/planner/MISSION.schema.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml, .githooks/pre-commit, and
+      src/cli/ (lib/contract/, missions/parser, runtime-env, runtime-exec,
+      staged-tmvc-guard, verify phases, commands/contract, tests). The schema
+      keyword refers to MISSION.schema.yaml, not a database schema.
+    adr_refs:
+      - ADR-0039
+      - ADR-0042
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0037 covers the plane and spoke CI
+      ingestion; this mission changes local verify and runtime enforcement
+      only."
+    adr_refs:
+      - ADR-0037
+  - finding_id: 3567ecaf6f57
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Authorized. program-workflow.ts is CLI delivery (registers the
+      contract command flags); src/cli/tests/contract-*.test.ts are node:test
+      suites under the existing tests tree. No TARGET_ARCHITECTURE layer change.
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: "Accept: mission contracts follow the same tighten-only rule;
+      effective forbidden zones and banned imports are the union of skill,
+      contract, and policy; contract.tmvc_roots must be a subset of skill
+      roots."
+    adr_refs:
+      - ADR-0042
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: "Accept: the contract tamper check anchors to the Planner stamp
+      commit resolved by assertPlannerMissionProof; signing stays optional and
+      unchanged."
+    adr_refs:
+      - ADR-0023
+  - finding_id: 67ac2be17ab4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0039. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0039 before
+      legislation proceeds.
+    operator_answer: "Accept: computeGaps becomes contract-aware (declared
+      contract.tmvc_roots satisfies the empty-roots boundary finding); finding
+      kinds and interrogation_sha256 semantics are unchanged."
+    adr_refs:
+      - ADR-0039
+  - finding_id: 6f9d4d2bf647
+    kind: adr_conflict
+    question: Intent may relate to ADR-0030. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0030 before
+      legislation proceeds.
+    operator_answer: "Accept: the import-site scanner extends the regex scanner
+      (static, import(), require(), export-from) with no new runtime dependency;
+      full TypeScript AST remains deferred per ADR-0030."
+    adr_refs:
+      - ADR-0030
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept: the new verify contract phase emits findings with
+      offending_file and line so existing SARIF and JUnit exporters project them
+      unchanged."
+    adr_refs:
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept: gantry contract check and the verify contract phase
+      are read-only; mission writes stay under .gitagent/missions/ via existing
+      legislate containment."
+    adr_refs:
+      - ADR-0022
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: skill_key substrate; empty tmvc_roots is the substrate
+      contract. This mission authorizes .gitagent/planner/MISSION.schema.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml, .githooks/pre-commit, and
+      src/cli/ for the mission contract block, effective-scope cage, import-site
+      scanner, verify contract phase, and tests.
+    adr_refs:
+      - ADR-0042
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: "Accept: contract enforcement is a verify phase, not a gate
+      adapter; gate_adapter routing and gate_command semantics are unchanged."
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: c70c8cfb1a9e0e74e6bdade3f982ead1258de20d578fb7c6d1ae33c79638c470
+declared_paths:
+  - .gitagent/planner/MISSION.schema.yaml
+  - .githooks/pre-commit
+  - src/cli/commands/contract.ts
+  - src/cli/commands/tmvc-guard.ts
+  - src/cli/lib/contract/contract-hash.ts
+  - src/cli/lib/contract/contract-scan.ts
+  - src/cli/lib/contract/contract-types.ts
+  - src/cli/lib/contract/effective-scope.ts
+  - src/cli/lib/contract/import-sites.ts
+  - src/cli/lib/contract/resolve-specifier.ts
+  - src/cli/lib/gxt-error-codes.ts
+  - src/cli/lib/interrogate/gaps.ts
+  - src/cli/lib/missions/parser.ts
+  - src/cli/lib/runtime-env.ts
+  - src/cli/lib/runtime-exec.ts
+  - src/cli/lib/staged-tmvc-guard.ts
+  - src/cli/lib/tmvc-path.ts
+  - src/cli/lib/types.ts
+  - src/cli/lib/verify-engine.ts
+  - src/cli/lib/verify-failure.ts
+  - src/cli/lib/verify-phase-steps.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/contract-hash.test.ts
+  - src/cli/tests/contract-runtime.test.ts
+  - src/cli/tests/contract-scan.test.ts
+  - src/cli/tests/contract-schema.test.ts
+  - src/cli/tests/contract-verify.test.ts
+  - templates/.gitagent/planner/MISSION.schema.yaml
