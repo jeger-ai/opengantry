@@ -65,4 +65,5 @@ declared_paths:
 contract:
   tmvc_roots:
     - src/cli/
-contract_sha256: db756657839a9c713fa9a89869109f1d244cc08bcd592bfdf8a87311019bafac
+  allow_dynamic_specifiers: true
+contract_sha256: 8bab7a6ec4acc93262b440b3ef8ee0472229a69f61be758ab71373be1aaa61c2
