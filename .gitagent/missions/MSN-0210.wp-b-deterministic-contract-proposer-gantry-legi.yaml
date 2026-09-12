@@ -42,6 +42,7 @@ interrogation:
       - ADR-0045
 interrogation_sha256: 3424c0cdb0959ef466cf084c8afd691d5ec1e6d8b2e615f2752c1aeb18e169a3
 declared_paths:
+  - .gitagent/missions/MSN-0210.wp-b-deterministic-contract-proposer-gantry-legi.yaml
   - src/cli/commands/contract.ts
   - src/cli/lib/contract/approve-prompt.ts
   - src/cli/lib/contract/format.ts
