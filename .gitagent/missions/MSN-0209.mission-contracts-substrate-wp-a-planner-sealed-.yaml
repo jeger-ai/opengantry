@@ -137,6 +137,7 @@ interrogation:
       - ADR-0041
 interrogation_sha256: c70c8cfb1a9e0e74e6bdade3f982ead1258de20d578fb7c6d1ae33c79638c470
 declared_paths:
+  - .gitagent/missions/MSN-0209.mission-contracts-substrate-wp-a-planner-sealed-.yaml
   - .gitagent/planner/MISSION.schema.yaml
   - .githooks/pre-commit
   - src/cli/commands/contract.ts
