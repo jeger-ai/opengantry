@@ -8,11 +8,11 @@ Deep design records: [`.gitagent/out-of-scope/`](../.gitagent/out-of-scope/) ADR
 
 ## Scope Enforcement
 
-Agents operate within a Target Mission Verification Context (TMVC). OpenGantry physically drops mutations attempted outside these declared file boundaries.
+Agents operate within a Target Mission Verification Context (TMVC). OpenGantry physically drops mutations attempted outside these declared file boundaries. The Planner may seal a per-mission **contract** (`tmvc_roots`, `forbidden_zones`, `allowed_imports`, `banned_imports`) that can only **tighten** the skill and org-policy floor ([ADR-0045](../.gitagent/out-of-scope/ADR-0045-mission-contracts.md)). `gantry verify` re-reads the contract from the Planner stamp commit (`GXT_CONTRACT_TAMPERED` on drift) and scans import sites (`import()`, `require()`, `export … from` included).
 
-**When to use:** Always — init scaffolds defaults; Planner narrows per mission.
+**When to use:** Always — init scaffolds defaults; Planner narrows per mission via `gantry legislate --from-intent` or `gxt_propose_contract`.
 
-**How:** `gantry context-request` · [`ADOPTION.md`](ADOPTION.md) § Prevent unreviewed edits · [TMVC and forbidden zones](#tmvc-and-forbidden-zones) below
+**How:** `gantry contract propose|check|show` · `gantry context-request` · [`ADOPTION.md`](ADOPTION.md) § Prevent unreviewed edits · [TMVC and forbidden zones](#tmvc-and-forbidden-zones) below
 
 ---
 

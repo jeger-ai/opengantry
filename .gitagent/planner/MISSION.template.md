@@ -12,8 +12,9 @@
 ## 2. Scope — TMVC roots (dynamic)
 
 - **Skill key:** [e.g. `ui` | `logic`]
-- **TMVC roots** (from manifest; Planner may narrow, not widen): [list roots]
-- **Forbidden zones** (from manifest; hard deny): [list or “per manifest”]
+- **TMVC roots** (from mission `contract.tmvc_roots` when present, else manifest; Planner may narrow, not widen): [list roots]
+- **Forbidden zones** (union of skill, contract, and org policy; hard deny): [list or “per manifest”]
+- **Allowed / banned imports** (optional `contract.allowed_imports` / `contract.banned_imports`): [list or “unset”]
 - **Recursive discovery:** allowed only under listed roots unless Planner states otherwise.
 - **Context requests:** any file outside effective TMVC MUST be requested in `EXECUTOR_LOG.md` before access (path, reason). Verifier MUST approve or reject each request in the log before work continues.
 - **Executor log file:** repo-root **`EXECUTOR_LOG.md`**. Optional: `git config core.hooksPath .githooks` creates an empty log on feature-branch checkout when missing ([`.githooks/post-checkout`](../../.githooks/post-checkout)).

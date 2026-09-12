@@ -7,7 +7,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 ## Goals
 
 1. **Single bootstrap command** — The executor obtains all scope and trace sinks from **`gantry runtime env`**.
-2. **Manifest truth** — `TMVC` roots and (by extension) **`GXT_FORBIDDEN_ZONES`** originate from **[`.gitagent/foreman/MANIFEST.json`](../foreman/MANIFEST.json)** for the mission’s **`skill_key`**. Executors MUST treat that manifest as authoritative for editable vs forbidden paths unless the Planner mission explicitly expands scope ([`RULES.md`](RULES.md) § Dynamic TMVC).
+2. **Manifest + contract truth** — `TMVC` roots and **`GXT_FORBIDDEN_ZONES`** start from **[`.gitagent/foreman/MANIFEST.json`](../foreman/MANIFEST.json)** for the mission’s **`skill_key`**, then tighten with the mission **`contract`** block when present ([`RULES.md`](RULES.md) §4, [ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)). Executors MUST treat the **effective** cage as authoritative. They MUST NOT widen scope.
 3. **Trace sink** — The canonical worker-authored trace path is **`EXECUTOR_LOG.md`** at the repository root unless overridden at verify time (`gantry verify --executor-log`).
 
 ## CLI: `gantry runtime env`
@@ -28,15 +28,17 @@ The `<path>` must be a **file that already exists** under the repo root (or abso
 | `GXT_MISSION_FILE` | Mission path **relative to repo root**, forward slashes. |
 | `GXT_MSN_ID` | Mission MSN (`MSN-NNNN`), or empty if not yet determinable from the mission file. |
 | `GXT_SKILL_KEY` | Skill key declared in the mission (must exist in manifest `skills`). |
-| `GXT_TMVC_ROOTS` | Absolute paths to TMVC roots, **newline-separated** (empty string if skill has no roots). Each path resolves `join(repo_root, root)` for each entry in `skills[skill_key].tmvc_roots`. |
-| `GXT_FORBIDDEN_ZONES` | Absolute paths forbidden for edits, newline-separated (`skills[skill_key].forbidden_zones`). Agents SHOULD refuse edits outside `GXT_TMVC_ROOTS` without a logged Context Request per [`RULES.md`](RULES.md). |
+| `GXT_TMVC_ROOTS` | Absolute paths to **effective** TMVC roots, **newline-separated** (empty string if none). `contract.tmvc_roots` when present, else `skills[skill_key].tmvc_roots`. |
+| `GXT_FORBIDDEN_ZONES` | Absolute paths forbidden for edits, newline-separated (union of skill, contract, and org-policy zones). Agents SHOULD refuse edits outside `GXT_TMVC_ROOTS` without a logged Context Request per [`RULES.md`](RULES.md). |
+| `GXT_ALLOWED_IMPORTS` | Bare specifiers allowed under the cage, newline-separated (empty = no allowlist). |
+| `GXT_BANNED_IMPORTS` | Bare specifiers banned under the cage, newline-separated (union of contract + org policy). |
 | `GXT_EXECUTOR_LOG` | Absolute path to **`EXECUTOR_LOG.md`** at repo root (same default as `gantry verify` without `--executor-log`). |
 | `GXT_LAST_ERROR_FILE` | Absolute path to **`.gitagent/history/.ignored-last-error.json`** when the last `runtime exec` failed; empty string otherwise. Orchestrators SHOULD feed this JSON back to the agent on the next turn. |
 
 **Invariants**
 
 - `GXT_REPO_ROOT` MUST be normalized with `path.resolve`.
-- `GXT_TMVC_ROOTS` / `GXT_FORBIDDEN_ZONES` MUST be resolved from manifest entries (repo-relative POSIX strings in manifest, joined against `GXT_REPO_ROOT`).
+- `GXT_TMVC_ROOTS` / `GXT_FORBIDDEN_ZONES` / `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS` MUST be resolved from the **effective** cage (skill ∪ contract ∪ policy), joined against `GXT_REPO_ROOT`.
 - The executor MUST append trace evidence required by **`gantry verify`** to the file referenced by **`GXT_EXECUTOR_LOG`** (or the path `--executor-log` if the verify step overrides it).
 
 ## Context Request scaffold (`gantry context-request`)

@@ -58,7 +58,7 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 ## Mission graph (required for substantive work)
 
 1. **Triage** — `gantry triage "<intent>"` (escalation → Planner legislates).
-2. **Legislate** — `gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry` (runs gap analysis internally; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file` and re-run `legislate`; or MCP `gxt_draft_legislation` with complete `interrogation[]`). Operator answers are quoted verbatim — never fabricated by agents.
+2. **Legislate** — `gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry` (proposes a tighten-only `contract`, prompts `[a]/[e]/[q]` or take `--yes`; runs gap analysis; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file`). MCP: `gxt_propose_contract` → `gxt_draft_legislation` with `interrogation[]` + `contract`. Operator answers are quoted verbatim — never fabricated by agents.
 3. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
 4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml` (or `scripts/gxt-pin-mission.sh …`). When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
 5. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
@@ -89,7 +89,7 @@ Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 **Cursor MCP (preferred):**
 
 1. For `gate_adapter: tsc|eslint` missions, Agent: `gxt_doctor` (optional `gate_adapter`, `adapter_baseline`) before legislation.
-2. Agent: `gxt_interrogate` (answer findings) → `gxt_draft_legislation` with complete `interrogation[]` → human approves → `gxt_execute_legislation`.
+2. Agent: `gxt_propose_contract` → `gxt_interrogate` (answer findings) → `gxt_draft_legislation` with complete `interrogation[]` and the approved `contract` → human approves → `gxt_execute_legislation`.
 3. Planner: run returned `suggested_human_action` (`git commit …`).
 4. Agent: `gxt_check_signature` → `gxt_pin_mission` → executor edits → `gxt_verify`.
 
@@ -97,7 +97,7 @@ Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 
 ```bash
 gantry triage "<intent>"
-gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry   # or substrate
+gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry   # or substrate
 # Planner: git commit -m "[MSN-NNNN] legislate …" including mission file
 
 scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml

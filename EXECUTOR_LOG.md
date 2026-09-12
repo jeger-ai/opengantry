@@ -926,3 +926,18 @@ DoD 1 MSN-0203 re-attest: TypedGateAdapterId, Commander .choices(), function ada
 DoD 1 MSN-0204 re-attest: stdin/mktree ledger, LEDGER_CHAIN_BROKEN fail-closed, failable release check still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
 DoD 1 MSN-0205 re-attest: resolveOrgPolicy ok|fail{code}, FLOOR_RULES, fetch/show pull still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
 DoD 1 MSN-0206 re-attest: doctor preflight selection model and flat program/MCP registrars still hold after stacked 3.3.0 TMVC drift; npm test 704 pass
+
+## MSN-0209 — Mission contracts substrate (WP-A)
+[CONTEXT-REQUEST] path=templates/.githooks/pre-commit reason=Template parity for advisory gantry contract check added to root .githooks/pre-commit (WP-A) proposed=templates/.githooks/pre-commit | msn=MSN-0209
+[SKILL-EXEC] skill_key=substrate tool=cursor scope=.gitagent/planner/MISSION.schema.yaml,templates/.gitagent/planner/MISSION.schema.yaml,.githooks/pre-commit,src/cli/lib/contract/,src/cli/lib/verify-contract.ts
+DoD 1 MSN-0209: Planner-sealed contract substrate — schema contract+contract_sha256, effective-scope cage, import-site scanner (import()/require()/export-from), verify contract phase, gantry contract check; npm test 746 pass
+
+## MSN-0210 — Deterministic proposer + --from-intent (WP-B)
+[CONTEXT-REQUEST] path=src/cli/tests/mcp-tools-register.test.ts reason=Register gxt_propose_contract on the expected MCP tool surface list proposed=src/cli/tests/mcp-tools-register.test.ts | msn=MSN-0210
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/lib/contract/propose.ts,src/cli/lib/legislate-from-intent.ts,src/cli/lib/draft-token.ts,src/cli/lib/mcp-propose-contract.ts
+DoD 1 MSN-0210: deterministic proposer + gantry legislate --from-intent + draft token v3 + gxt_propose_contract; first sealed contract tmvc_roots src/cli/; npm test 746 pass
+
+## MSN-0211 — ADR-0045 law and docs (WP-C)
+[CONTEXT-REQUEST] path=templates/.githooks/pre-commit,src/cli/tests/mcp-tools-register.test.ts reason=Stacked WP-A/B parity fixes while 0211 is pinned; docs/law stay under contract roots proposed=those paths | msn=MSN-0211
+[SKILL-EXEC] skill_key=substrate tool=cursor scope=.gitagent/out-of-scope/ADR-0045-mission-contracts.md,.gitagent/planner/,docs/,README.md,templates/.gitagent/planner/
+DoD 1 MSN-0211: ADR-0045 recorded; RULES §4 contract.tmvc_roots; MISSION-ARCHITECT Phase 1 gxt_propose_contract / --from-intent; first autoformalized mission contract; npm test 746 pass

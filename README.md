@@ -194,8 +194,9 @@ Violations carry `file` and `line` for the failure envelope.
 ### 5. Mission + verify
 
 ```bash
-gantry legislate "add feature X" --msn MSN-0042 --skill-key gantry
-# Planner commits [MSN-0042] mission YAML
+gantry legislate --from-intent "add feature X" --msn MSN-0042 --skill-key gantry
+# or: gantry contract propose "add feature X" --skill-key gantry
+# Planner commits [MSN-0042] mission YAML (seals contract + contract_sha256)
 eval "$(gantry runtime env --mission .gitagent/missions/MSN-0042.yaml)"
 # ... do work, append trace to EXECUTOR_LOG.md ...
 gantry verify --mission .gitagent/missions/MSN-0042.yaml --json

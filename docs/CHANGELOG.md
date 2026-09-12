@@ -6,6 +6,10 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ---
 
+## Unreleased
+
+- **Mission contracts (ADR-0045):** Planner-sealed inline `contract` + `contract_sha256` (tighten-only TMVC / forbidden / import cage). `gantry contract propose|check|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`, draft token v3. Verify `contract` phase (tamper + import sites including `import()` / `require()` / `export … from`). Runtime exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation`.
+
 ## Release highlights
 
 | Release | Highlights |

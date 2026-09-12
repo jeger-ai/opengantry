@@ -28,6 +28,15 @@ Before proposing legislation, read (do not lecture the user):
 
 **Do not** run `gantry triage` in chat. Reason from manifest + architecture directly.
 
+## Phase 1 — Contract (autoformalize the cage)
+
+Before interrogation handoff, call **`gxt_propose_contract`** (MCP) or **`gantry contract propose`** (CLI) with the intent, optional `skill_key`, and path hints.
+
+1. Present the returned compact block (Scope / Forbidden / Gate / Allowed Imports / Banned Imports) plus `rationale[]`.
+2. Apply operator tweaks (edit the `contract` object; do not invent roots outside the skill).
+3. Pass the (possibly edited) `contract` into **`gxt_draft_legislation`**. CLI fallback is `gantry legislate --from-intent "<story>" --msn MSN-NNNN` (TTY `[a]pprove / [e]dit / [q]uit`, or `--yes` / `--contract-file`).
+4. Declared `contract.tmvc_roots` satisfies the empty-skill-roots interrogation finding.
+
 ## Phase 1.5 — Interrogation (gap analysis)
 
 Before legislation handoff, run **`gxt_interrogate`** (MCP) or **`gantry interrogate`** (CLI) until `status: "clear"`.
@@ -65,7 +74,7 @@ Use for new features, multi-file scope, forbidden-zone proximity, path_risks/ris
 
 When the OpenGantry MCP server is configured (`.cursor/mcp.json`):
 
-1. Call **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`, and **`interrogation`** (from clear `gxt_interrogate`).
+1. Call **`gxt_propose_contract`**, then **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`, **`interrogation`** (from clear `gxt_interrogate`), and the approved **`contract`**.
 2. Present the returned `chat_message_to_user` to the human.
 3. Wait for clear approval intent in chat (`yes`, `approve`, `looks good`, `do it`) or rejection (`no`, `deny`, `stop`). If ambiguous, ask one short clarification.
 4. On approval only, call **`gxt_execute_legislation`** with the `draft_token`.
@@ -79,6 +88,8 @@ This two-step draft/execute gate prevents silent legislation even when Cursor ru
 One bash command the user copies into their terminal:
 
 ```bash
+gantry legislate --from-intent "<intent summary>" --msn MSN-NNNN --skill-key <key>
+# or, without autoformalize:
 gantry legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
   --gate-command "<deterministic gate shell command>" \
   --gate-success-substring "<optional substring>"

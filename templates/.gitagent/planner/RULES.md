@@ -1,70 +1,89 @@
-# OpenGantry Rules (template)
+# OpenGantry Rules (v0.6.2 — Forensic Truth)
 
 Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
-## 1. Governance and risk tiers
+## 1. Governance & risk tiers
 
-- **Tier 1 (SAFE)**: deterministic gate required; single-provider verifier is acceptable.
-- **Tier 2 (LOGIC)**: deterministic gate required; single-provider verifier output is advisory and a human audit is required before merge.
-- **Tier 3 (SUBSTRATE)**: strictest review path; human audit of trace-mapped evidence is mandatory.
+- **Tier 1 (SAFE)**: Routine work; deterministic gate required; single-provider automated verifier permitted when trace mapping is satisfied.
+- **Tier 2 (LOGIC)**: Deterministic gate required; single-provider verifier output is **ADVISORY_ONLY**; a human MUST audit trace references before merge.
+- **Tier 3 (SUBSTRATE)**: Multi-provider verification **SHOULD** be used when available; if only one provider exists, a **mandatory full human audit** of trace-mapped evidence and gate logs is required before merge.
 
-## 2. Segregation of duties
+## 2. Segregation of duties (SOD)
 
-- The agent executing the gate MUST NOT be the same actor declaring PASS.
-- Mission law is Planner-owned; executors MUST NOT silently rewrite mission law.
+- The agent that executes the gate command (Executor) MUST NOT be the same agent that declares the gate **PASS** (Verifier).
+- Mission law (work order) is Planner-owned; executors MUST NOT modify mission law during execution without Planner re-legislation.
 
-## 3. Trace-mapped verification
+## 3. Trace-mapped verification (anti-lie)
 
-- PASS claims MUST quote `EXECUTOR_LOG.md` with a valid anchor (line or timestamp).
-- Missing quotes/anchors for claimed PASS is evidence tampering and MUST fail verification.
+- For every claimed verifier **PASS**, the Verifier MUST provide a **Trace Reference**: a verbatim substring copied from `EXECUTOR_LOG.md` and an anchor (**line number** or **timestamp**) that ties the quote to the execution trace.
+- Verifiers MUST NOT use source-code quotations as the sole or primary evidence for PASS; code may supplement only after a valid trace reference exists.
+- If the quoted substring does **not** appear in `EXECUTOR_LOG.md`, or no valid trace reference is provided for a claimed PASS → **Evidence Tampering** → the mission MUST auto-fail (no merge).
+- **`gantry verify` stale-evidence (v1.1+):** for committed PASS quote lines, verify binds the line's attestation commit (`git blame` on `EXECUTOR_LOG.md`) to the mission skill's full `tmvc_roots` via `git diff --name-only`; TMVC drift after attestation → **STALE** (`GXT_TRACE_STALE`). Uncommitted quote lines skip stale check until committed.
 
-## 4. Dynamic TMVC
+## 4. Dynamic TMVC (roots + context requests)
 
-- Work is bounded to manifest roots unless explicit mission expansion is approved.
-- Access outside effective TMVC requires a context request recorded in `EXECUTOR_LOG.md`.
-- Access into forbidden zones MUST fail closed unless Planner policy explicitly allows it.
+- TMVC is anchored by **tmvc_roots** from [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) unless the Planner narrows scope further in the mission **`contract.tmvc_roots`** ([ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)).
+- The mission `contract` block is **Planner law** under §2. Executors MUST NOT edit `contract` or `contract_sha256`. Drift versus the Planner stamp commit is **Evidence Tampering** under §3 (`GXT_CONTRACT_TAMPERED`).
+- Effective TMVC = `contract.tmvc_roots` when present, else the skill roots. Effective forbidden zones and banned imports are the **union** of skill, contract, and org policy (tighten-only; §8). `contract.tmvc_roots` MUST be a subset of skill roots (empty skill roots accept Planner-declared roots).
+- Executors MAY discover and edit files only under the **effective** TMVC roots (recursive within each root) unless the mission explicitly allows expansion steps.
+- Any access **outside** the effective TMVC boundary MUST be preceded by a **Context Request** recorded in `EXECUTOR_LOG.md` (path, reason, proposed files). The Verifier MUST accept or reject before such access proceeds.
+- Expansion into any **effective forbidden_zones** path MUST NOT proceed; escalate to Planner or fail closed per mission.
 
 ## 4.5 Interrogation record (legislation gate)
 
-- Computed interrogation findings MUST have an `operator_answer` before legislation.
-- Placeholder or fabricated answers are evidence tampering under §3.
+- Before legislation, **`gantry interrogate`** / **`gxt_interrogate`** MUST compute gap findings from manifest, `TARGET_ARCHITECTURE.yaml`, and ADR hints. A Planner MUST NOT legislate while any computed finding lacks a documented `operator_answer` in the mission `interrogation` block.
+- The `interrogation` block in mission YAML is the authoritative operator rationale for computed gaps. Placeholder or fabricated answers are **Evidence Tampering** under §3.
+- `interrogation_sha256` is a checksum for schema consistency, not a cryptographic seal; the Planner stamp commit is the seal on mission bytes (§6.1).
+- Tier-3 gap findings SHOULD reference ADRs (`adr_refs`) rather than inline prose alone.
 
 ## 5. Rule 4.4 — Planner-driven manifest sync
 
-- Adding, removing, or renaming a skill MUST update `MANIFEST.json` in the same commit set.
+- Any change that adds, removes, or renames a skill entry or materially edits per-skill fields in `MANIFEST.json` MUST include those manifest edits in the **same commit set** as the skill definition change.
+- The Verifier MUST fail the mission if manifest state does not match the repository’s skill reality.
 
 ## 6. Git-native mission index
 
-- Mission-related commits MUST begin with `[MSN-XXXX]` in the subject line.
-- Keep mission files for `gantry verify` under `.gitagent/missions/`.
+- Every mission-related commit message MUST start with **`[MSN-XXXX]`** (four digits, e.g. `MSN-0007`) so history is greppable: `git log --grep='MSN-0007'`.
+- No tracked synthetic mission-history index file is required in the repository; git history is the index.
 
-## 6.1 Planner legislation proof
+## 6.1 Planner legislation proof (`gantry verify` v0.6.2)
 
-- `gantry verify` requires a Planner stamp: a `[MSN-XXXX]` commit by an allowlisted author that modifies the mission file.
+- Missions verified by **`gantry verify`** MUST live under **`.gitagent/missions/`** (repo-relative).
+- Before the deterministic gate runs, **`gantry verify`** requires **native Git evidence** that the Planner legislated this mission for its MSN:
+  - Among the last **200** commits (configurable later), the **newest** commit whose subject begins with **`[MSN-XXXX]`** (matching the mission’s MSN) and whose **author email** is listed in **`GANTRY_PLANNER_EMAILS`** (comma-separated allowlist; silent legacy fallback: `GAPMAN_PLANNER_EMAILS`) is the **Planner stamp**.
+  - That stamp commit MUST **modify** the mission file passed to `--mission`.
+- Architectural ADRs under [`.gitagent/out-of-scope/`](../out-of-scope/) are the record of prior decisions. **Planner** MUST review relevant ADRs when authoring or amending missions. **`gantry triage`** MAY emit non-binding `adr_hints` when ADR `match_terms` overlap intent; those hints do **not** change Foreman routing (still manifest-only binary).
 
-## 6.2 Break-glass (v0.8.0)
+## 6.2 Break-glass (`gantry verify` v0.8.0)
 
-- Set `GXT_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256` (SHA-256 hex of the team secret).
-- Use `gantry verify --break-glass --reason "..."` only in emergencies; push `refs/notes/gxt-bypass` with the branch.
-- Forbidden-zone runtime policy is never bypassed.
-- A bypass MUST also append a `break_glass` ledger entry when `ledger.mode` is `local`.
+- Emergency bypass MUST NOT rely on forgeable commit-subject strings alone. Authorization requires **`GXT_BYPASS_SECRET`** matching the SHA-256 anchor in [`.gitagent/foreman/BYPASS.sha256`](../foreman/BYPASS.sha256) (never commit the plaintext secret).
+- **`gantry verify --break-glass --reason "<text>"`** skips git-proof, gate, and trace when authorized; it MUST write a forensic record as a **`refs/notes/gxt-bypass`** git note (or `--audit-commit` when notes cannot be pushed).
+- PR CI accepts GXT-touched commits that either have a normal **`[MSN-XXXX]`** subject or a valid **gxt-bypass** note on that commit. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
+- Break-glass does **not** disable **`gantry runtime exec`** forbidden-zone enforcement. Planner MUST review bypass usage post-incident.
 
 ## 7. Local history (no bloat)
 
-- Bulky traces live under `.gitagent/history/` (git-ignored). Do not commit large trace dumps.
+- Bulky traces live under `.gitagent/history/` (git-ignored). Optional local `MISSION_LOG.md` may be generated from `git log` when needed; it MUST NOT be required in-repo for v0.6.2.
 
 ## 8. Organization policy floor (v3.3.0)
 
-- A present `POLICY.pointer.json` is a tighten-only floor: policy MUST NOT loosen local law.
-- `gantry policy pull` is the only network path; doctor and verify read disk/cache only.
+- When `.gitagent/foreman/POLICY.pointer.json` is present, Executors and Verifiers MUST treat the cached org policy bundle as a **tighten-only floor** ([ADR-0042](../out-of-scope/ADR-0042-org-policy-bundle.md)): sets are unioned, risk tiers take the maximum, signature and telemetry tiers take the stricter value. Policy MUST NOT loosen local law.
+- **`gantry policy pull`** is the only network path for policy. **`gantry doctor`** and **`gantry verify`** MUST read the pointer plus `.gitagent/history/policy/` cache only — no sockets.
+- A present pointer with missing cache, sha mismatch, or invalid signer is fail-closed (`GXT_POLICY_*`). A missing pointer is opt-in (no failure).
+- `kpi_thresholds[].metric` MUST name a key in the bundle `producers` map.
+- Receipt schema stays **0.2.0**; policy digests belong in ledger entries ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)), not receipts.
 
 ## 9. Compliance ledger (v3.3.0)
 
-- `refs/gxt/ledger` is an orphan signed (optional) commit chain of digest-only entries.
-- Append uses CAS `git update-ref` with bounded retries; unsigned entries are checksums, not proofs.
+- When `.gitagent/config.json` `ledger.mode` is `local`, verify, attest, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)).
+- Append MUST use compare-and-swap `git update-ref` with bounded retries and jitter. Exhaustion MUST fail closed (`GXT_LEDGER_CAS_EXHAUSTED`) so parallel CI jobs never fork the chain.
+- Unsigned ledger entries are checksums, not proofs. `ledger.signature` `require` demands `git commit -S`.
+- A break-glass bypass with no `break_glass` ledger row is a failed control ([ADR-0021](../out-of-scope/ADR-0021-break-glass-protocol.md)).
+- Ledger payloads MUST NOT contain source bodies or gate stdout.
 
-## 10. Cross-repository dependencies (v3.3.0)
+## 10. Cross-repository mission dependencies (v3.3.0)
 
-- Optional mission `depends_on[]` is resolved from fetched `refs/gxt/deps/<slug>`.
-- Same-org proof uses `repository_hash` + the consumer's `GANTRY_ORG_PEPPER`.
-- `gantry deps fetch` is the only network path.
+- Optional mission `depends_on[]` is resolved **offline** from fetched `refs/gxt/deps/<slug>` ([ADR-0044](../out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)).
+- **`gantry deps fetch`** is the only network path. Verify's `dependencies` phase, `gantry deps check`, and doctor MUST NOT fetch.
+- Same-org proof: recompute `repository_hash` for `depends_on.repo` with the consumer's `GANTRY_ORG_PEPPER` and require equality with the entry. Mismatch → `GXT_DEPENDENCY_ORG_MISMATCH`.
+- Unfetched, unsatisfied, unsigned (when required), or stale entries MUST fail closed (`GXT_DEPENDENCY_*`). Cross-repo *trigger* (workflow dispatch) is advisory glue, not enforcement.

@@ -22,10 +22,12 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 4. Dynamic TMVC (roots + context requests)
 
-- TMVC is anchored by **tmvc_roots** from [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) unless the Planner narrows scope further in the mission.
-- Executors MAY discover and edit files only under declared **tmvc_roots** (recursive within each root) unless the mission explicitly allows expansion steps.
+- TMVC is anchored by **tmvc_roots** from [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) unless the Planner narrows scope further in the mission **`contract.tmvc_roots`** ([ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)).
+- The mission `contract` block is **Planner law** under §2. Executors MUST NOT edit `contract` or `contract_sha256`. Drift versus the Planner stamp commit is **Evidence Tampering** under §3 (`GXT_CONTRACT_TAMPERED`).
+- Effective TMVC = `contract.tmvc_roots` when present, else the skill roots. Effective forbidden zones and banned imports are the **union** of skill, contract, and org policy (tighten-only; §8). `contract.tmvc_roots` MUST be a subset of skill roots (empty skill roots accept Planner-declared roots).
+- Executors MAY discover and edit files only under the **effective** TMVC roots (recursive within each root) unless the mission explicitly allows expansion steps.
 - Any access **outside** the effective TMVC boundary MUST be preceded by a **Context Request** recorded in `EXECUTOR_LOG.md` (path, reason, proposed files). The Verifier MUST accept or reject before such access proceeds.
-- Expansion into any **forbidden_zones** path (per manifest) MUST NOT proceed; escalate to Planner or fail closed per mission.
+- Expansion into any **effective forbidden_zones** path MUST NOT proceed; escalate to Planner or fail closed per mission.
 
 ## 4.5 Interrogation record (legislation gate)
 
