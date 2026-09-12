@@ -1,4 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Implementation stamp: WP-C ADR-0045 law and docs landed under this MSN.
 # Legislated intent: WP-C: ADR-0045 mission contracts, RULES section 4 amendment, MISSION-ARCHITECT contract phase, RUNTIME GXT import vars, FEATURES README DEVELOPMENT CHANGELOG, templates mirror for .gitagent/planner/ .gitagent/out-of-scope/ docs/ templates/.gitagent/planner/ README.md
 msn_id: MSN-0211
 skill_key: substrate
