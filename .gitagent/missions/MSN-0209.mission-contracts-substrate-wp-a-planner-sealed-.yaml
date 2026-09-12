@@ -1,4 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Implementation stamp: WP-A contract substrate landed under this MSN.
 # Legislated intent: Mission contracts substrate (WP-A): Planner-sealed contract block (tmvc_roots, forbidden_zones, allowed_imports, banned_imports, allow_dynamic_specifiers, strict_relative_imports) with contract_sha256 in MISSION.schema.yaml and templates mirror; ParsedMission contract; tighten-only effective scope with subset rule; canonical contract hash; import-site scanner covering static, dynamic import(), require(), export-from with relative and tsconfig alias resolution; runtime env and runtime exec enforce effective cage with GXT_ALLOWED_IMPORTS/GXT_BANNED_IMPORTS and contract_violation; staged tmvc guard uses effective scope; gantry verify contract phase (tamper check vs Planner stamp commit, import scan) with GXT_CONTRACT_* codes; gantry contract check command; contract-aware interrogation gaps; tests
 msn_id: MSN-0209
 skill_key: substrate
