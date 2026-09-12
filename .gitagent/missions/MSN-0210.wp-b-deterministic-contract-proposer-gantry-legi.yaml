@@ -2,12 +2,12 @@
 # Legislated intent: WP-B: deterministic contract proposer, gantry legislate --from-intent, gantry contract propose|show, gxt_propose_contract, draft token v3 with contract, execute forwards contract
 msn_id: MSN-0210
 skill_key: gantry
-gate_command: npm run validate
+gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0210: deterministic proposer + gantry legislate --from-intent + draft token v3 + gxt_propose_contract; first sealed contract tmvc_roots src/cli/; npm test 746 pass"
+    anchor: "938"
+    status: PASS
 interrogation:
   - finding_id: 5b8507ac3b17
     kind: undefined_boundary
