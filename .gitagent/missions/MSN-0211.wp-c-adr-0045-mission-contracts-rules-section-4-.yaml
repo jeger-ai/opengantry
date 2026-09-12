@@ -1,0 +1,64 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: WP-C: ADR-0045 mission contracts, RULES section 4 amendment, MISSION-ARCHITECT contract phase, RUNTIME GXT import vars, FEATURES README DEVELOPMENT CHANGELOG, templates mirror for .gitagent/planner/ .gitagent/out-of-scope/ docs/ templates/.gitagent/planner/ README.md
+msn_id: MSN-0211
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: WP-C records ADR-0045 and amends
+      RULES/docs; signing and Planner stamp semantics are unchanged."
+    adr_refs:
+      - ADR-0023
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate. This mission authorizes Planner law and
+      docs only: .gitagent/planner/, .gitagent/out-of-scope/,
+      templates/.gitagent/planner/, docs/, and README.md. No MANIFEST or runtime
+      cage edits."
+    adr_refs:
+      - ADR-0045
+      - ADR-0042
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept: this mission is the law and docs package that records
+      ADR-0045 and wires RULES, MISSION-ARCHITECT, RUNTIME, and adopter docs to
+      the sealed contract."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: ac8ed3a1c6711db0d87f4e02d5cc900596a417360708ed2ad7c71304ea0e34b0
+declared_paths:
+  - .gitagent/out-of-scope/
+  - .gitagent/planner/
+  - README.md
+  - docs/
+  - templates/.gitagent/planner/
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/
+    - .gitagent/planner/
+    - README.md
+    - docs/
+    - templates/.gitagent/planner/
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 2edde35d25be09a1f9fc838b142705d16dcb359e8e6a468b5e4211806dd858ca
