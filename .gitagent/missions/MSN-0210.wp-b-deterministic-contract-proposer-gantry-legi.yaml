@@ -1,4 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Implementation stamp: WP-B proposer / --from-intent / draft token v3 landed under this MSN.
 # Legislated intent: WP-B: deterministic contract proposer, gantry legislate --from-intent, gantry contract propose|show, gxt_propose_contract, draft token v3 with contract, execute forwards contract
 msn_id: MSN-0210
 skill_key: gantry
