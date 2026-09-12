@@ -46,11 +46,19 @@ interrogation:
       - ADR-0045
 interrogation_sha256: ac8ed3a1c6711db0d87f4e02d5cc900596a417360708ed2ad7c71304ea0e34b0
 declared_paths:
-  - .gitagent/out-of-scope/
-  - .gitagent/planner/
+  - .gitagent/missions/MSN-0211.wp-c-adr-0045-mission-contracts-rules-section-4-.yaml
+  - .gitagent/out-of-scope/ADR-0045-mission-contracts.md
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/planner/MISSION.example.yaml
+  - .gitagent/planner/MISSION.template.md
+  - .gitagent/planner/RULES.md
+  - .gitagent/planner/RUNTIME.md
   - README.md
-  - docs/
-  - templates/.gitagent/planner/
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/FEATURES.md
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - templates/.gitagent/planner/RULES.md
 contract:
   tmvc_roots:
     - .gitagent/out-of-scope/
