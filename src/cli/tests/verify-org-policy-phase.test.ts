@@ -28,6 +28,8 @@ function phaseCtx(root: string): PhaseContext {
       interrogation: [],
       interrogationSha256: null,
       declaredPaths: [],
+      contract: null,
+      contractSha256: null,
       dependsOn: [],
       rawPath: ".gitagent/missions/m.yaml",
     },

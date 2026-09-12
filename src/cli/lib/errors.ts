@@ -5,6 +5,7 @@ import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
 import { gxtCodeFromGantryUserError, GXT_ERROR } from "./gxt-error-codes.js";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
+import type { ContractImportViolation } from "./contract/contract-types.js";
 import type { ForbiddenViolation } from "./forbidden-scan.js";
 import type { RuntimeExecResult } from "./runtime-exec.js";
 import type { ResolvedRuntimeEnv } from "./runtime-env.js";
@@ -90,6 +91,7 @@ export interface AgentErrorPayload {
   skill_key: string;
   error_file: string;
   violations: ForbiddenViolation[];
+  contract_violations?: ContractImportViolation[];
   summary: string;
   remediation: string[];
 }
@@ -122,6 +124,8 @@ function buildSummary(result: RuntimeExecResult): string {
   switch (result.status) {
     case "forbidden_zone_violation":
       return `Forbidden-zone violation: ${String(result.violations.length)} path(s) changed outside policy.`;
+    case "contract_violation":
+      return `Mission contract violation: ${String(result.contractViolations.length)} import site(s) outside the sealed cage.`;
     case "timeout":
       return "Executor exceeded the configured timeout and was terminated.";
     case "worker_failed":
@@ -143,6 +147,12 @@ function buildRemediation(
       steps.push(`Revert or avoid changes to forbidden path: ${v.path} (${v.kind})`);
     }
     steps.push("Confine edits to GXT_TMVC_ROOTS unless a Context Request is approved in EXECUTOR_LOG.md");
+  }
+  if (result.status === "contract_violation") {
+    for (const v of result.contractViolations.slice(0, 5)) {
+      steps.push(`${v.file}:${String(v.line)} — ${v.detail}`);
+    }
+    steps.push("Use only GXT_ALLOWED_IMPORTS / avoid GXT_BANNED_IMPORTS; re-legislate the mission if the contract must widen");
   }
   if (result.status === "timeout") {
     steps.push("Increase --timeout-ms or reduce executor scope; retry with a smaller command");
@@ -167,6 +177,7 @@ export function writeAgentErrorPayload(
     mission_file: resolved.mission_file,
     skill_key: resolved.skill_key,
     violations: result.violations,
+    ...(result.contractViolations.length > 0 ? { contract_violations: result.contractViolations } : {}),
     summary: buildSummary(result),
     remediation: buildRemediation(result, resolved),
   });

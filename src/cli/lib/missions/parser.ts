@@ -4,8 +4,10 @@ import YAML from "yaml";
 import { CLI_NAME, DEFAULT_ACTIVE_MISSION, DEFAULT_KPI_REPORT_DIR, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_PATTERN, REL_MISSION_SCHEMA } from "../constants.js";
 import { readEnvWithLegacy } from "../config-namespace.js";
 import { formatRepoRelative } from "../cli-io.js";
+import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { GantryUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
+import { GXT_ERROR } from "../gxt-error-codes.js";
 import { normalizeTraceStatus } from "../trace.js";
 import {
   INTERROGATION_FINDING_KINDS,
@@ -262,6 +264,22 @@ function parseInterrogationRows(rows: NonNullable<YamlMission["interrogation"]>)
   });
 }
 
+/** Contract block must carry its own canonical hash; drift here means an unsealed edit. */
+function parseContractBlock(absPath: string, data: YamlMission): Pick<ParsedMission, "contract" | "contractSha256"> {
+  if (!data.contract) return { contract: null, contractSha256: data.contract_sha256 ?? null };
+  const contract = normalizeContract(data.contract);
+  const expected = contractSha256(contract);
+  if (data.contract_sha256 !== expected) {
+    throw new GantryUserError(
+      GXT_ERROR.CONTRACT_TAMPERED,
+      `${GXT_ERROR.CONTRACT_TAMPERED}: contract_sha256 does not match contract block in ${absPath} (expected ${expected})`,
+      "Do not hand-edit a sealed contract. Re-legislate the mission (gantry legislate --contract-file …) so the Planner stamps a new contract hash.",
+      2,
+    );
+  }
+  return { contract, contractSha256: expected };
+}
+
 function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMission {
   const traceRows: TraceRow[] = (data.trace_rows ?? []).map((r) => ({
     dodId: r.dod_id,
@@ -288,6 +306,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
     interrogationSha256: data.interrogation_sha256 ?? null,
     declaredPaths: data.declared_paths ?? [],
     dependsOn: data.depends_on ?? [],
+    ...parseContractBlock(absPath, data),
     rawPath: absPath,
   };
 }

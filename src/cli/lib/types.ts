@@ -129,6 +129,16 @@ export interface MissionDependencySpec {
   expected_repository_hash?: string;
 }
 
+/** Planner-sealed mission cage (ADR-0045). All fields optional; absent = inherit skill/policy. */
+export interface MissionContract {
+  tmvc_roots?: string[];
+  forbidden_zones?: string[];
+  allowed_imports?: string[];
+  banned_imports?: string[];
+  allow_dynamic_specifiers?: boolean;
+  strict_relative_imports?: boolean;
+}
+
 /** Fallback MSN when a mission has no id (CLI defaults, ledger rows). */
 export function msnIdOrDefault(mission: { msnId?: string | null } | null | undefined): string {
   return mission?.msnId ?? "MSN-0000";
@@ -148,6 +158,9 @@ export interface ParsedMission {
   interrogationSha256: string | null;
   declaredPaths: string[];
   dependsOn: MissionDependencySpec[];
+  /** Normalized contract block, or null when the mission declares none. */
+  contract: MissionContract | null;
+  contractSha256: string | null;
   rawPath: string;
 }
 
@@ -188,4 +201,6 @@ export interface YamlMission {
   interrogation_sha256?: string;
   declared_paths?: string[];
   depends_on?: MissionDependencySpec[];
+  contract?: MissionContract;
+  contract_sha256?: string;
 }

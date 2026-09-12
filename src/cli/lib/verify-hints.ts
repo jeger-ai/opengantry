@@ -233,6 +233,19 @@ export function hintsForVerifyPhase(
         fix_hints: [failure.message, "gantry deps fetch --mission <yaml>"],
         next_actions: [`gantry deps fetch --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
       };
+    case "contract":
+      return {
+        error_code: failure.contractCode,
+        fix_hints: [
+          failure.message,
+          "Edits must stay inside the Planner-sealed contract; do not hand-edit contract/contract_sha256 — re-legislate to widen scope",
+        ],
+        next_actions: [`gantry contract check --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
+        tagged_steps: [
+          tagStep("executor", `gantry contract check --mission ${meta.missionPath}`),
+          tagStep("planner", "re-legislate with a wider contract only if the escape is intended"),
+        ],
+      };
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;

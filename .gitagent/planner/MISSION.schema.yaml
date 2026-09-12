@@ -20,7 +20,59 @@ allOf:
       required: [interrogation]
     then:
       required: [interrogation_sha256]
+  - if:
+      required: [contract]
+    then:
+      required: [contract_sha256]
 properties:
+  contract:
+    type: object
+    additionalProperties: false
+    description: >-
+      Planner-sealed mission cage (ADR-0045). Tighten-only: tmvc_roots must be
+      a subset of the skill's manifest roots; forbidden_zones and banned_imports
+      are unioned with skill and org-policy sets. Allowed/banned lists match
+      bare specifiers (exact or prefix); relative and tsconfig-alias imports are
+      resolved to repo paths and checked against forbidden zones. gantry verify
+      re-reads this block from the Planner stamp commit and fails
+      GXT_CONTRACT_TAMPERED on drift.
+    properties:
+      tmvc_roots:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      forbidden_zones:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      allowed_imports:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      banned_imports:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      allow_dynamic_specifiers:
+        type: boolean
+        default: false
+        description: >-
+          When false, import(expr) / require(expr) with a non-literal argument
+          under effective TMVC roots fails GXT_CONTRACT_IMPORT_DYNAMIC.
+      strict_relative_imports:
+        type: boolean
+        default: false
+        description: >-
+          When true, relative or alias imports resolving outside effective TMVC
+          roots fail GXT_CONTRACT_SCOPE_ESCAPE (forbidden zones always fail).
+  contract_sha256:
+    type: string
+    pattern: "^[0-9a-f]{64}$"
+    description: SHA-256 of the canonical (normalized, sorted) contract block.
   msn_id:
     type: string
     pattern: "^MSN-[0-9]{4}$"

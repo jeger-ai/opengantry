@@ -1,6 +1,8 @@
 import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
+import { runLegislateFromIntent } from "./lib/legislate-from-intent.js";
+import { isGantryUserError } from "./lib/errors.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
 import type { VerifyOptions } from "./lib/verify-options.js";
@@ -15,14 +17,17 @@ import { listDomainKeys } from "./lib/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "./lib/interrogate/findings.js";
 import fs from "node:fs";
-import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
+import { errorMessage, logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
 import { GATE_ADAPTER_IDS, type GateAdapterId } from "./lib/types.js";
 import { getOutputAudience } from "./lib/output-context.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
-type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths"> & {
+type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths" | "contract"> & {
   path?: string[];
   interrogationFile?: string;
+  fromIntent?: boolean;
+  yes?: boolean;
+  contractFile?: string;
 };
 
 /** Commander maps --path to `path` and --answers to `answers`. */
@@ -169,6 +174,9 @@ function registerLegislateCommand(program: Command): void {
     )
     .option("--path <paths...>", "Declared paths for gap analysis (repeatable)")
     .option("--interrogation-file <file>", "JSON file with interrogation answers (token-less path)")
+    .option("--from-intent", "Propose a mission contract from intent + repo, then prompt for approval")
+    .option("--yes", "Approve the proposed contract without a TTY prompt (required for non-TTY --from-intent)")
+    .option("--contract-file <file>", "YAML file with a contract: block (skips propose prompt)")
     .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
@@ -177,8 +185,22 @@ function registerLegislateCommand(program: Command): void {
         setExitCode(2);
         return;
       }
-      const result = runLegislate(mapLegislateCommanderOptions(options, text));
-      if (!result.ok) setExitCode(result.exitCode);
+      const mapped = mapLegislateCommanderOptions(options, text);
+      try {
+        const result =
+          options.fromIntent === true || options.contractFile?.trim()
+            ? await runLegislateFromIntent({
+                ...mapped,
+                fromIntent: options.fromIntent === true,
+                yes: options.yes === true,
+                contractFile: options.contractFile,
+              })
+            : runLegislate(mapped);
+        if (!result.ok) setExitCode(result.exitCode);
+      } catch (e) {
+        logError(isGantryUserError(e) ? e.message : errorMessage(e));
+        setExitCode(isGantryUserError(e) ? e.exitCode : 2);
+      }
     });
 }
 

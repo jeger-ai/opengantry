@@ -1,7 +1,7 @@
 import { layerForFile, loadTargetArchitecture, resolveArchScanRoots, fileMatchesScanRoots } from "../arch/cage/target-architecture.js";
 import { findForbiddenZoneHits } from "../legislate-forbidden-zone.js";
 import { triageIntent, isTriageEscalated } from "../triage-logic.js";
-import type { Manifest } from "../types.js";
+import type { Manifest, MissionContract } from "../types.js";
 import { normalizeRepoRelativePath, pathRiskTier } from "../tmvc-path.js";
 import {
   compareFindingSeverity,
@@ -19,6 +19,8 @@ export interface ComputeGapsInput {
   gateCommand: string;
   gateSuccessSubstring: string | null;
   paths: string[];
+  /** Proposed mission contract; declared tmvc_roots satisfy the empty-skill-roots boundary finding. */
+  contract?: MissionContract | null;
 }
 
 function makeFinding(
@@ -100,10 +102,12 @@ function collectUndefinedBoundaryFindings(
   manifest: Manifest,
   skillKey: string,
   paths: string[],
+  contract: MissionContract | null,
 ): InterrogationFinding[] {
   const findings: InterrogationFinding[] = [];
   const skill = manifest.skills[skillKey];
-  if (skill && skill.tmvc_roots.length === 0) {
+  const contractDeclaresRoots = (contract?.tmvc_roots?.length ?? 0) > 0;
+  if (skill && skill.tmvc_roots.length === 0 && !contractDeclaresRoots) {
     findings.push(
       makeFinding(
         "undefined_boundary",
@@ -124,7 +128,7 @@ function collectUndefinedBoundaryFindings(
   }
 
   const tierBuckets = new Map<string, string[]>();
-  const tmvcRoots = manifest.skills[skillKey]?.tmvc_roots ?? [];
+  const tmvcRoots = contractDeclaresRoots ? contract!.tmvc_roots! : (manifest.skills[skillKey]?.tmvc_roots ?? []);
   const scanRoots = archSpec ? resolveArchScanRoots(archSpec, tmvcRoots) : [];
 
   for (const raw of paths) {
@@ -198,7 +202,7 @@ export function computeGaps(input: ComputeGapsInput): InterrogationFinding[] {
   if (risk) findings.push(risk);
   findings.push(...collectForbiddenZoneFindings(input.manifest, input.skillKey, input.intent));
   findings.push(
-    ...collectUndefinedBoundaryFindings(input.root, input.manifest, input.skillKey, input.paths),
+    ...collectUndefinedBoundaryFindings(input.root, input.manifest, input.skillKey, input.paths, input.contract ?? null),
   );
   const gateFinding = collectMissingTestCriteriaFinding(
     input.manifest,

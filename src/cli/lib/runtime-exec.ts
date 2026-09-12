@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 import path from "node:path";
 import { errorMessage } from "./cli-io.js";
+import { scanContractImports } from "./contract/contract-scan.js";
+import type { ContractImportViolation, EffectiveScope } from "./contract/contract-types.js";
 import { writeAgentErrorPayload } from "./errors.js";
 import { buildForbiddenBaseline, detectForbiddenViolations, type ForbiddenViolation } from "./forbidden-scan.js";
 import { createTelemetryWriter } from "./telemetry-log.js";
@@ -14,12 +16,15 @@ export interface RuntimeExecResult {
     | "success"
     | "worker_failed"
     | "forbidden_zone_violation"
+    | "contract_violation"
     | "runtime_error"
     | "timeout";
   exitCode: number;
   workerExitCode: number | null;
   workerSignal: NodeJS.Signals | null;
   violations: ForbiddenViolation[];
+  /** Import-site violations against the mission contract (post-worker scan). */
+  contractViolations: ContractImportViolation[];
   executorLogPath: string;
   flightId: string;
 }
@@ -31,6 +36,7 @@ export function emptyWorkerCommandResult(): RuntimeExecResult {
     workerExitCode: null,
     workerSignal: null,
     violations: [],
+    contractViolations: [],
     executorLogPath: "",
     flightId: "",
   };
@@ -38,6 +44,7 @@ export function emptyWorkerCommandResult(): RuntimeExecResult {
 
 export function buildRuntimeExecResult(input: {
   violations: ForbiddenViolation[];
+  contractViolations?: ContractImportViolation[];
   timedOut: boolean;
   exitCode: number | null;
   exitSignal: NodeJS.Signals | null;
@@ -48,12 +55,16 @@ export function buildRuntimeExecResult(input: {
     workerExitCode: input.exitCode,
     workerSignal: input.exitSignal,
     violations: input.violations,
+    contractViolations: input.contractViolations ?? [],
     executorLogPath: input.executorLogPath,
     flightId: input.flightId,
   };
 
   if (input.violations.length > 0) {
     return { ...base, status: "forbidden_zone_violation", exitCode: 3 };
+  }
+  if (base.contractViolations.length > 0) {
+    return { ...base, status: "contract_violation", exitCode: 3 };
   }
   if (input.timedOut) {
     return { ...base, status: "timeout", exitCode: 124 };
@@ -74,6 +85,7 @@ export function runtimeErrorResult(
     workerExitCode: null,
     workerSignal: null,
     violations: [],
+    contractViolations: [],
     executorLogPath,
     flightId,
   };
@@ -166,6 +178,18 @@ function parseJoinedLines(s: string): string[] {
     .split("\n")
     .map((x) => x.trim())
     .filter((x) => x.length > 0);
+}
+
+/** Contract import scan runs only for missions that sealed a contract block. */
+function scanContractAfterWorker(
+  repoRoot: string,
+  scope: EffectiveScope,
+  writer: TelemetryWriter,
+): ContractImportViolation[] {
+  if (!scope.hasContract) return [];
+  const violations = scanContractImports(repoRoot, scope);
+  writer.logEvent({ type: "contract_scan", violations, violation_count: violations.length });
+  return violations;
 }
 
 function chooseWorkingDirectory(repoRoot: string, cwd?: string): string {
@@ -307,8 +331,11 @@ export async function runRuntimeExec(
       violation_count: violations.length,
     });
 
+    const contractViolations = scanContractAfterWorker(repoRoot, resolved.scope, writer);
+
     const result = buildRuntimeExecResult({
       violations,
+      contractViolations,
       timedOut: exit.timedOut,
       exitCode: exit.code,
       exitSignal: exit.signal,
@@ -316,7 +343,7 @@ export async function runRuntimeExec(
       flightId,
     });
 
-    logFlightEnd(writer, result, violations.length);
+    logFlightEnd(writer, result, violations.length + contractViolations.length);
     if (result.exitCode !== 0) {
       writeAgentErrorPayload(repoRoot, resolved, result);
     }

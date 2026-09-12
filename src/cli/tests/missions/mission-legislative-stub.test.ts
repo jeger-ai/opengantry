@@ -18,6 +18,8 @@ function mission(traceRows: ParsedMission["traceRows"]): ParsedMission {
     interrogation: [],
     interrogationSha256: null,
     declaredPaths: [],
+    contract: null,
+    contractSha256: null,
     dependsOn: [],
   };
 }

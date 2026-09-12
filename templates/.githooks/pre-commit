@@ -23,4 +23,16 @@ fi
 
 echo "pre-commit: gantry tmvc guard --mission ${mission} (advisory default)" >&2
 "${GANTRY_CLI[@]}" tmvc guard --mission "$mission"
+
+# Advisory contract import scan over staged source files (mission contract cage, ADR-0045).
+staged_sources=()
+while IFS= read -r f; do
+  case "$f" in
+    *.ts|*.tsx|*.mts|*.cts|*.js|*.jsx|*.mjs|*.cjs) staged_sources+=("$f") ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+if [[ ${#staged_sources[@]} -gt 0 ]]; then
+  echo "pre-commit: gantry contract check --mission ${mission} (advisory, ${#staged_sources[@]} staged source file(s))" >&2
+  "${GANTRY_CLI[@]}" contract check --mission "$mission" --file "${staged_sources[@]}" >&2 || true
+fi
 exit 0

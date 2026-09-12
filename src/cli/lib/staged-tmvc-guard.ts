@@ -5,6 +5,7 @@ import {
   tmvcRootsForSkill,
   type TmvcPathClassification,
 } from "./tmvc-path.js";
+import type { EffectiveScope } from "./contract/contract-types.js";
 import { gitStagedNameOnly } from "./git-staged.js";
 import type { Manifest } from "./types.js";
 
@@ -29,6 +30,8 @@ export interface StagedTmvcGuardOptions {
   skillKey: string | null;
   /** When true, no mission/skill context — caller should treat as skip. */
   noMission?: boolean;
+  /** Effective cage (contract-narrowed); when absent falls back to manifest skill roots. */
+  scope?: Pick<EffectiveScope, "tmvcRoots" | "forbiddenZones">;
 }
 
 function toViolation(
@@ -55,8 +58,10 @@ export function evaluateStagedTmvcGuard(options: StagedTmvcGuardOptions): Staged
     };
   }
 
-  const tmvcRoots = tmvcRootsForSkill(options.manifest, options.skillKey);
-  const forbiddenZones = forbiddenZonesForSkill(options.manifest, options.skillKey);
+  const tmvcRoots = options.scope ? [...options.scope.tmvcRoots] : tmvcRootsForSkill(options.manifest, options.skillKey);
+  const forbiddenZones = options.scope
+    ? [...options.scope.forbiddenZones]
+    : forbiddenZonesForSkill(options.manifest, options.skillKey);
   const stagedPaths = gitStagedNameOnly(options.repoRoot).map(normalizeRepoRelativePath);
 
   const violations: StagedTmvcViolation[] = [];

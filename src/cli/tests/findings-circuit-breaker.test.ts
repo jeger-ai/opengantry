@@ -49,6 +49,8 @@ function minimalMission(root: string, msnId: string): ParsedMission {
     interrogation: [],
     interrogationSha256: null,
     declaredPaths: [],
+    contract: null,
+    contractSha256: null,
     dependsOn: [],
     rawPath: path.join(root, ".gitagent/missions/m.yaml"),
   };

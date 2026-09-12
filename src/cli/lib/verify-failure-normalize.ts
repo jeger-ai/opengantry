@@ -256,6 +256,18 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
         failures: [failure.message],
       };
     }
+    case "contract": {
+      const details = (failure.findings ?? []).map((f) =>
+        f.offending_file ? `${f.offending_file}:${String(f.line)} ${f.resolution_hint}` : f.resolution_hint,
+      );
+      return {
+        ...base,
+        error_code: failure.contractCode,
+        headline: "verify: MISSION CONTRACT FAILED",
+        detail_lines: details.length > 0 ? details : [failure.message],
+        failures: details.length > 0 ? details : [failure.message],
+      };
+    }
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;

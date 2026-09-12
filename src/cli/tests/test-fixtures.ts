@@ -10,12 +10,14 @@ export const EMPTY_INTERROGATION_SHA256 = interrogationSha256([]);
 
 export function emptyInterrogationMissionFields(): Pick<
   ParsedMission,
-  "interrogation" | "interrogationSha256" | "declaredPaths" | "dependsOn"
+  "interrogation" | "interrogationSha256" | "declaredPaths" | "dependsOn" | "contract" | "contractSha256"
 > {
   return {
     interrogation: [],
     interrogationSha256: null,
     declaredPaths: [],
+    contract: null,
+    contractSha256: null,
     dependsOn: [],
   };
 }

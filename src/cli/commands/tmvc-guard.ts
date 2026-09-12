@@ -43,6 +43,7 @@ export function runTmvcGuard(options: TmvcGuardCliOptions): void {
       repoRoot: workspace.root,
       manifest: workspace.manifest,
       skillKey: resolved.skill_key,
+      scope: resolved.scope,
     });
 
     const strict = options.strict === true || process.env.GXT_TMVC_GUARD_STRICT === "1";

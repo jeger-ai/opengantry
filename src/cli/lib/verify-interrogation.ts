@@ -39,7 +39,7 @@ function interrogationFailure(
   };
 }
 
-function readMissionAtCommit(root: string, commit: string, missionRel: string): string | null {
+export function readMissionAtCommit(root: string, commit: string, missionRel: string): string | null {
   if (!gitRevParse(root, commit)) return null;
   const r = gitRunOk(root, ["show", `${commit}:${missionRel}`]);
   if (!r.ok) return null;
@@ -97,7 +97,7 @@ function compareStampedDigest(
   return null;
 }
 
-function resolvePlannerStampHash(
+export function resolvePlannerStampHash(
   root: string,
   proofMsnId: string,
   scanDepth?: number,

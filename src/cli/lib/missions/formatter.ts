@@ -48,6 +48,8 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
     interrogation: [],
     interrogationSha256: null,
     declaredPaths: [],
+    contract: null,
+    contractSha256: null,
     dependsOn: [],
     rawPath: filePath,
   };

@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
+import type { EffectiveScope } from "./contract/contract-types.js";
+import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";
 import { resolveManifestSkillKey } from "./skill-key.js";
@@ -23,6 +25,8 @@ export interface ResolvedRuntimeEnv {
   forbidden_zones_joined: string;
   /** Absolute EXECUTOR_LOG path */
   executor_log: string;
+  /** Effective cage (skill ∪ contract ∪ policy, tighten-only). */
+  scope: EffectiveScope;
 }
 
 function toRepoRelativePosix(repoRoot: string, absolutePath: string): string {
@@ -65,8 +69,14 @@ export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: st
   const msnRaw = mission.msnId ?? "";
   const msn_id = /^MSN-\d{4}$/.test(msnRaw) ? msnRaw : "";
 
-  const tmvcAbs = resolvePaths(root, skill.tmvc_roots);
-  const fzAbs = resolvePaths(root, skill.forbidden_zones);
+  const scope = resolveEffectiveScope({
+    manifest,
+    skillKey: resolvedKey,
+    contract: mission.contract,
+    policy: loadPolicyBundleQuiet(root),
+  });
+  const tmvcAbs = resolvePaths(root, scope.tmvcRoots);
+  const fzAbs = resolvePaths(root, scope.forbiddenZones);
 
   return {
     repo_root: path.resolve(root),
@@ -77,6 +87,7 @@ export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: st
     tmvc_roots_joined: tmvcAbs.join("\n"),
     forbidden_zones_joined: fzAbs.join("\n"),
     executor_log: defaultExecutorLogPath(root),
+    scope,
   };
 }
 
@@ -93,6 +104,8 @@ export function resolvedRuntimeEnvToJsonPayload(r: ResolvedRuntimeEnv): Record<s
     GXT_SKILL_KEY: r.skill_key,
     GXT_TMVC_ROOTS: r.tmvc_roots_joined,
     GXT_FORBIDDEN_ZONES: r.forbidden_zones_joined,
+    GXT_ALLOWED_IMPORTS: r.scope.allowedImports.join("\n"),
+    GXT_BANNED_IMPORTS: r.scope.bannedImports.join("\n"),
     GXT_EXECUTOR_LOG: r.executor_log,
     GXT_LAST_ERROR_FILE: lastErrorFileForRepo(r.repo_root),
   };

@@ -13,7 +13,8 @@ export type VerifyFailurePhase =
   | "trace"
   | "interrogation"
   | "policy"
-  | "dependencies";
+  | "dependencies"
+  | "contract";
 
 export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
 
@@ -98,6 +99,12 @@ export interface DependenciesFailure extends VerifyFailureBase {
   findings?: VerifyFinding[];
 }
 
+export interface ContractFailure extends VerifyFailureBase {
+  phase: "contract";
+  contractCode: GxtErrorCode;
+  findings?: VerifyFinding[];
+}
+
 /** Discriminated on `phase` — phase-specific fields exist only on their variant. */
 export type VerifyPhaseFailure =
   | GitProofFailure
@@ -108,4 +115,5 @@ export type VerifyPhaseFailure =
   | TraceFailure
   | InterrogationFailure
   | PolicyFailure
-  | DependenciesFailure;
+  | DependenciesFailure
+  | ContractFailure;

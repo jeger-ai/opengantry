@@ -186,6 +186,8 @@ test("deps-resolve: verify phase emits v3 finding and mapped code", () => {
         interrogation: [],
         interrogationSha256: null,
         declaredPaths: [],
+        contract: null,
+        contractSha256: null,
         dependsOn: [dep()],
         rawPath: ".gitagent/missions/m.yaml",
       },
@@ -252,6 +254,8 @@ test("deps-resolve: checkMissionDependencies aggregates ok results", () => {
       interrogation: [],
       interrogationSha256: null,
       declaredPaths: [],
+      contract: null,
+      contractSha256: null,
       dependsOn: [dep({ expected_repository_hash: fx.expectedHash })],
       rawPath: ".gitagent/missions/m.yaml",
     });

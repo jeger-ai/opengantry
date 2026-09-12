@@ -14,7 +14,8 @@ export type VerifyFailedGate =
   | "arch"
   | "interrogation"
   | "policy"
-  | "dependencies";
+  | "dependencies"
+  | "contract";
 
 export interface VerifyFinding {
   failed_gate: VerifyFailedGate;

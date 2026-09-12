@@ -20,6 +20,7 @@ import {
 } from "./virtual-scratch-store.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./verify-phase-clock.js";
+import { evaluateContractPhase } from "./verify-contract.js";
 import { evaluateInterrogationPhase } from "./verify-interrogation.js";
 import {
   evaluateDefensivePhase,
@@ -115,6 +116,8 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
       return "policy";
     case "dependencies":
       return "dependencies";
+    case "contract":
+      return "contract";
     case "gate":
       return "gate";
     case "defensive":
@@ -192,6 +195,11 @@ export async function evaluateVerifyPhases(
   const { proofMsnId, warnings: proofWarnings } = proof;
 
   const missionRel = formatRepoRelative(root, mission.rawPath);
+  const contract = await clock.timed("contract", () =>
+    evaluateContractPhase({ ...phaseCtx, proofMsnId, missionRel }),
+  );
+  if (contract.kind === "fail") return failWithTimings(contract.failure, clock);
+
   const interrogation = await clock.timed("interrogation", () =>
     evaluateInterrogationPhase({
       root,

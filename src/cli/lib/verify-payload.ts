@@ -98,6 +98,7 @@ function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: stri
       return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
     case "policy":
     case "dependencies":
+    case "contract":
       return failure.findings?.length ? failure.findings : null;
     case "interrogation":
     case "trace_pending":

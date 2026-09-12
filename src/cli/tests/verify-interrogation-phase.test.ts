@@ -185,6 +185,8 @@ test("evaluateInterrogationPhase: missing interrogation_sha256 fails closed", ()
     interrogation: rows,
     interrogationSha256: null,
     declaredPaths: [],
+    contract: null,
+    contractSha256: null,
     dependsOn: [],
     rawPath: path.join(dest, missionRel),
   };
