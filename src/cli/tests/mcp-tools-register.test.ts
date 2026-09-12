@@ -46,6 +46,7 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
   const expected = [
     "gxt_interrogate",
     "gxt_draft_legislation",
+    "gxt_propose_contract",
     "gxt_execute_legislation",
     "gxt_check_signature",
     "gxt_pin_mission",

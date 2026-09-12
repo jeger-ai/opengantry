@@ -38,6 +38,7 @@ export function handleExecuteLegislation(
       rows: payload.interrogation,
       sha256: payload.interrogation_sha256,
     },
+    contract: payload.contract ?? null,
   };
 
   const result = runLegislate(legislateOpts);

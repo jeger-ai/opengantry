@@ -1,7 +1,7 @@
 import type { AgentErrorPayload } from "./errors.js";
 import { userFacingErrorToJson } from "./errors.js";
 import type { RuntimeEnvMcpResult } from "./mcp-runtime.js";
-import type { GateAdapterId, TriageResult } from "./types.js";
+import type { GateAdapterId, MissionContract, TriageResult } from "./types.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { assertMcpMissionWritePath, McpWriteDeniedError } from "./mcp-write-guard.js";
 import { resolveMissionFilePath } from "./missions/parser.js";
@@ -31,6 +31,7 @@ export interface DraftLegislationInput {
   interrogation: InterrogationRow[];
   interrogation_sha256?: string;
   declared_paths?: string[];
+  contract?: MissionContract;
 }
 
 export interface DraftLegislationResult {

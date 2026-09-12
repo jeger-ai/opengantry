@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
+import { runContractCheck, runContractPropose, runContractShow } from "./commands/contract.js";
 import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
@@ -167,9 +168,50 @@ function registerTmvcCommand(program: Command): void {
     });
 }
 
+function registerContractCommand(program: Command): void {
+  const contract = program.command("contract").description("Mission contract (Planner-sealed cage) tools");
+
+  contract
+    .command("check")
+    .description("Resolve the effective cage for a mission and scan import sites against it (read-only)")
+    .option("--mission <path>", "Mission path; defaults to pinned mission")
+    .option("--file <path...>", "Restrict the import scan to these repo-relative files")
+    .option("--json", "Emit result as JSON on stdout")
+    .action((opts: { mission?: string; file?: string[]; json?: boolean }) => {
+      runContractCheck({ mission: opts.mission, files: opts.file, json: opts.json });
+    });
+
+  contract
+    .command("propose")
+    .description("Deterministically propose a mission contract from intent + repo (no write)")
+    .argument("[intent...]", "Planner intent summary")
+    .option("--skill-key <key>", "Manifest skill_key")
+    .option("--path <paths...>", "Declared paths for TMVC hints")
+    .option("--json", "Emit result as JSON on stdout")
+    .action(async (intentParts: string[], opts: { skillKey?: string; path?: string[]; json?: boolean }) => {
+      const intent = intentParts.join(" ").trim();
+      if (!intent) {
+        logError("contract propose: provide intent text");
+        setExitCode(2);
+        return;
+      }
+      runContractPropose({ intent, skillKey: opts.skillKey, paths: opts.path, json: opts.json });
+    });
+
+  contract
+    .command("show")
+    .description("Print the sealed contract block for a mission")
+    .option("--mission <path>", "Mission path; defaults to pinned mission")
+    .option("--json", "Emit result as JSON on stdout")
+    .action((opts: { mission?: string; json?: boolean }) => {
+      runContractShow({ mission: opts.mission, json: opts.json });
+    });
+}
+
 export function registerMissionCommands(program: Command): void {
   registerMissionCommand(program);
   registerRuntimeCommand(program);
   registerContextRequestCommand(program);
   registerTmvcCommand(program);
+  registerContractCommand(program);
 }

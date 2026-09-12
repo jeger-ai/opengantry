@@ -21,8 +21,13 @@ import {
   DEFAULT_GATE_ADAPTER,
   type GateAdapterId,
   type Manifest,
+  type MissionContract,
   type TriageResult,
 } from "./types.js";
+import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
+import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
+import { errorMessage } from "./cli-io.js";
+import { isGantryUserError } from "./errors.js";
 import { loadWorkspace } from "./workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
 import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
@@ -48,6 +53,8 @@ export interface LegislateOptions {
   interrogation?: LegislateInterrogation;
   /** When true, skip stdout info messages (MCP / structured JSON callers). */
   silent?: boolean;
+  /** Planner-sealed cage; written as `contract` + `contract_sha256`. */
+  contract?: MissionContract | null;
 }
 
 export type ResolveSkillKeyResult =
@@ -115,6 +122,7 @@ function buildYamlMissionBody(opts: {
   interrogation?: InterrogationRow[];
   interrogation_sha256?: string;
   declared_paths?: string[];
+  contract?: MissionContract | null;
 }): string {
   const doc: Record<string, unknown> = {
     msn_id: opts.msn_id,
@@ -136,6 +144,11 @@ function buildYamlMissionBody(opts: {
     if (opts.declared_paths && opts.declared_paths.length > 0) {
       doc.declared_paths = opts.declared_paths;
     }
+  }
+  if (opts.contract) {
+    const contract = normalizeContract(opts.contract);
+    doc.contract = contract;
+    doc.contract_sha256 = contractSha256(contract);
   }
   return buildMissionYamlScaffold({
     header:
@@ -163,6 +176,7 @@ function resolveInterrogationForLegislate(
     gateSuccessSubstring,
     paths,
     interrogation: options.interrogation?.rows ?? [],
+    contract: options.contract ?? null,
   });
 
   if (interrogation.status === "halt") {
@@ -319,6 +333,19 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
 
   const src = interrogationResolved;
   const interrogationSha = src.interrogationSha256;
+  if (options.contract) {
+    try {
+      resolveEffectiveScope({
+        manifest,
+        skillKey: skill_key,
+        contract: options.contract,
+        policy: loadPolicyBundleQuiet(root),
+      });
+    } catch (e) {
+      logError(isGantryUserError(e) ? e.message : errorMessage(e));
+      return { ok: false, exitCode: 2 };
+    }
+  }
 
   const body = buildYamlMissionBody({
     msn_id: msnId,
@@ -327,6 +354,7 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
     gate_command: gate.command,
     gate_success_substring: gate.successSubstring,
     gate_adapter: gate.adapter,
+    contract: options.contract ?? null,
     ...(src.rows.length > 0
       ? {
           interrogation: src.rows,

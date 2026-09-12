@@ -3,6 +3,7 @@ import { INTERROGATION_FINDING_KINDS } from "./interrogate/findings.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { handleCheckSignature } from "./mcp-check-signature.js";
 import { handleDraftLegislation } from "./mcp-draft-legislation.js";
+import { handleProposeContract } from "./mcp-propose-contract.js";
 import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
 import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
 import {
@@ -29,6 +30,17 @@ const interrogationRowSchema = z.object({
   operator_answer: z.string().describe("Quoted verbatim from operator — never fabricated"),
   adr_refs: z.array(z.string()).optional(),
 });
+
+const missionContractSchema = z
+  .object({
+    tmvc_roots: z.array(z.string()).optional(),
+    forbidden_zones: z.array(z.string()).optional(),
+    allowed_imports: z.array(z.string()).optional(),
+    banned_imports: z.array(z.string()).optional(),
+    allow_dynamic_specifiers: z.boolean().optional(),
+    strict_relative_imports: z.boolean().optional(),
+  })
+  .optional();
 
 const gateAdapterSchema = z
   .enum(GATE_ADAPTER_IDS)
@@ -80,8 +92,22 @@ function registerGxtDraftLegislationTool(server: McpServer): void {
       gate_adapter: gateAdapterSchema,
       paths: z.array(z.string()).optional().describe("Declared paths for gap analysis"),
       interrogation: z.array(interrogationRowSchema).describe("Complete interrogation answers for all findings"),
+      contract: missionContractSchema.describe("Optional Planner-sealed mission cage (ADR-0045)"),
     },
     async (args) => jsonText(handleDraftLegislation(args)),
+  );
+}
+
+function registerGxtProposeContractTool(server: McpServer): void {
+  server.tool(
+    "gxt_propose_contract",
+    "Deterministically propose a mission contract from intent + repo (read-only). No LLM. Present the block to the operator, then pass the (possibly edited) contract to gxt_draft_legislation.",
+    {
+      intent: z.string().describe("Planner intent / story"),
+      skill_key: z.string().optional().describe("Manifest skill key"),
+      paths: z.array(z.string()).optional().describe("Declared path hints"),
+    },
+    async (args) => jsonText(handleProposeContract(args)),
   );
 }
 
@@ -317,6 +343,7 @@ function registerGxtUpgradeApplyTool(server: McpServer): void {
 /** Register all OpenGantry GXT MCP tools on the given server instance. */
 export function registerGxtMcpTools(server: McpServer): void {
   registerGxtInterrogateTool(server);
+  registerGxtProposeContractTool(server);
   registerGxtDraftLegislationTool(server);
   registerGxtExecuteLegislationTool(server);
   registerGxtCheckSignatureTool(server);

@@ -5,7 +5,8 @@ import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
 import { canonicalJson } from "./canonical-json.js";
 import { gitRun } from "./git.js";
-import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId } from "./types.js";
+import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId, type MissionContract } from "./types.js";
+import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
 export const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;
@@ -16,7 +17,7 @@ export const DRAFT_TOKEN_REPLAY_REL = ".gitagent/history/.draft-token-replay.jso
 import type { InterrogationRow } from "./interrogate/findings.js";
 
 export interface DraftLegislationPayload {
-  v: 2;
+  v: 2 | 3;
   draft_id: string;
   iat: number;
   exp: number;
@@ -31,6 +32,9 @@ export interface DraftLegislationPayload {
   interrogation: InterrogationRow[];
   interrogation_sha256: string;
   declared_paths: string[];
+  /** v3: Planner-sealed cage. */
+  contract?: MissionContract;
+  contract_sha256?: string;
 }
 
 export type DraftTokenErrorCode =
@@ -130,8 +134,9 @@ export function createDraftToken(
     Math.max(DRAFT_TOKEN_TTL_SECONDS_MIN, ttlRaw),
   );
   const now = Math.floor(Date.now() / 1000);
+  const contract = input.contract ? normalizeContract(input.contract) : undefined;
   const payload: DraftLegislationPayload = {
-    v: 2,
+    v: contract ? 3 : 2,
     draft_id: crypto.randomUUID(),
     iat: now,
     exp: now + ttl,
@@ -149,6 +154,10 @@ export function createDraftToken(
   }
   if (input.gate_adapter !== undefined && input.gate_adapter !== DEFAULT_GATE_ADAPTER) {
     payload.gate_adapter = input.gate_adapter;
+  }
+  if (contract) {
+    payload.contract = contract;
+    payload.contract_sha256 = contractSha256(contract);
   }
 
   const key = ensureDraftTokenKey(root);
@@ -188,6 +197,15 @@ function assertDraftPayloadShape(payload: DraftLegislationPayload): void {
       false,
     );
   }
+  if (payload.v === 2 && (payload.contract !== undefined || payload.contract_sha256 !== undefined)) {
+    throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token v2 cannot carry a contract (require v3)`, false);
+  }
+  if (payload.v === 3 && payload.contract) {
+    const expected = contractSha256(normalizeContract(payload.contract));
+    if (payload.contract_sha256 !== expected) {
+      throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token contract_sha256 does not match contract`, false);
+    }
+  }
 }
 
 export function verifyDraftToken(root: string, draftToken: string, options?: { consume?: boolean }): DraftLegislationPayload {
@@ -210,8 +228,8 @@ export function verifyDraftToken(root: string, draftToken: string, options?: { c
     throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token payload JSON invalid`, true);
   }
 
-  if (payload.v !== 2) {
-    throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token version unsupported (require v2)`, false);
+  if (payload.v !== 2 && payload.v !== 3) {
+    throw new DraftTokenError("TOKEN_MALFORMED", `${CLI_NAME} draft token version unsupported (require v2 or v3)`, false);
   }
 
   assertDraftPayloadShape(payload);
