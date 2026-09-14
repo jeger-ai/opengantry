@@ -1,0 +1,47 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Add one ADR-0045 sentence: empty effective TMVC roots scan git-dirty sources fail-closed on check/verify/runtime
+msn_id: MSN-0213
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: MSN-0213 is scoped to add the single
+      sentence to ADR-0045 regarding the fail-closed dirty-file scan for empty
+      roots; verify SARIF/JUnit export formats are unchanged."
+    adr_refs:
+      - ADR-0027
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Execute MSN-0213 (substrate): Once MSN-0212 is verified and
+      closed, legislate MSN-0213 to add the single sentence to ADR-0045
+      regarding the fail-closed dirty-file scan for empty roots. Expected cage:
+      skill_key=substrate, tmvc_roots: [.gitagent/out-of-scope/], gate
+      ./scripts/dev-validate-core.sh."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 6f78660302917652575da5b28b35276f623e521f9accd8a9d02b8573677a7df7
+declared_paths:
+  - .gitagent/missions/MSN-0213.adr-0045-empty-roots-dirty-scan-sentence.yaml
+  - .gitagent/out-of-scope/ADR-0045-mission-contracts.md
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 72892819f44b13b41f6ef9b6db15f4dbde5a977cb347c3655832aae9dfdee954
