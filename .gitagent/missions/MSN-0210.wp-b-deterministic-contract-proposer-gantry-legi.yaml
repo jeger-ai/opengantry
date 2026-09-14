@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0210: deterministic proposer + gantry legislate --from-intent + draft token v3 + gxt_propose_contract; first sealed contract tmvc_roots src/cli/; npm test 746 pass"
-    anchor: "938"
+    trace_quote: "DoD 1 MSN-0210 re-attest: deterministic proposer, legislate --from-intent, draft token v3 and gxt_propose_contract still hold after MSN-0212 folded the import-site engine into import-scanner; npm test 751 pass"
+    anchor: "954"
     status: PASS
 interrogation:
   - finding_id: 5b8507ac3b17

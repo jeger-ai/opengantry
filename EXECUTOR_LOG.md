@@ -949,3 +949,6 @@ DoD 1 MSN-0212: import-sites folded into import-scanner (string-aware blankComme
 ## MSN-0213 — ADR-0045 empty-roots dirty-file scan sentence
 [SKILL-EXEC] skill_key=substrate tool=cursor scope=.gitagent/out-of-scope/ADR-0045-mission-contracts.md
 DoD 1 MSN-0213: ADR-0045 Verify and runtime records the empty-roots policy (git-dirty scannable sources, deleted paths skipped, no-HEAD includes index and untracked); RULES.md untouched; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0210 — Re-attest after stacked MSN-0212 TMVC drift
+DoD 1 MSN-0210 re-attest: deterministic proposer, legislate --from-intent, draft token v3 and gxt_propose_contract still hold after MSN-0212 folded the import-site engine into import-scanner; npm test 751 pass
