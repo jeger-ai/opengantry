@@ -1,7 +1,9 @@
+import type { MissionContract } from "./contract/contract-types.js";
 import type { NormalizedTraceStatus } from "./trace.js";
 import type { InterrogationRow } from "./interrogate/findings.js";
 import type { GateAdapterId } from "./gate-adapters/gate-adapter-id.js";
 
+export type { MissionContract } from "./contract/contract-types.js";
 export type {
   GateAdapterId,
   TypedGateAdapterId,
@@ -127,16 +129,6 @@ export interface MissionDependencySpec {
     max_age_days?: number;
   };
   expected_repository_hash?: string;
-}
-
-/** Planner-sealed mission cage (ADR-0045). All fields optional; absent = inherit skill/policy. */
-export interface MissionContract {
-  tmvc_roots?: string[];
-  forbidden_zones?: string[];
-  allowed_imports?: string[];
-  banned_imports?: string[];
-  allow_dynamic_specifiers?: boolean;
-  strict_relative_imports?: boolean;
 }
 
 /** Fallback MSN when a mission has no id (CLI defaults, ledger rows). */

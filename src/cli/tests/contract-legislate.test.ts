@@ -51,22 +51,24 @@ test("draft token v3: contract round-trips; v2 with contract is rejected", () =>
   assert.equal(verified.v, 3);
   assert.deepEqual(verified.contract, contract);
 
-  const v2 = createDraftToken(dest, {
+  const v3empty = createDraftToken(dest, {
     title: "No cage",
     msn_id: "MSN-0961",
     skill_key: "ui",
     gate_command: "echo OK",
     ...emptyDraftTokenInterrogationFields(),
   });
-  assert.equal(v2.payload.v, 2);
-  const tampered = JSON.parse(Buffer.from(v2.draft_token.split(".")[0]!, "base64url").toString("utf8")) as {
+  assert.equal(v3empty.payload.v, 3);
+  assert.equal(v3empty.payload.contract, undefined);
+  const tampered = JSON.parse(Buffer.from(v3empty.draft_token.split(".")[0]!, "base64url").toString("utf8")) as {
     v: number;
     contract?: unknown;
     contract_sha256?: string;
   };
+  tampered.v = 2;
   tampered.contract = contract;
   tampered.contract_sha256 = contractSha256(contract);
-  const raw = `${Buffer.from(JSON.stringify(tampered)).toString("base64url")}.${v2.draft_token.split(".")[1]}`;
+  const raw = `${Buffer.from(JSON.stringify(tampered)).toString("base64url")}.${v3empty.draft_token.split(".")[1]}`;
   assert.throws(() => verifyDraftToken(dest, raw, { consume: false }), DraftTokenError);
 });
 

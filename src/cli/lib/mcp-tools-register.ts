@@ -104,7 +104,7 @@ function registerGxtProposeContractTool(server: McpServer): void {
     "Deterministically propose a mission contract from intent + repo (read-only). No LLM. Present the block to the operator, then pass the (possibly edited) contract to gxt_draft_legislation.",
     {
       intent: z.string().describe("Planner intent / story"),
-      skill_key: z.string().optional().describe("Manifest skill key"),
+      skill_key: z.string().describe("Manifest skill key"),
       paths: z.array(z.string()).optional().describe("Declared path hints"),
     },
     async (args) => jsonText(handleProposeContract(args)),

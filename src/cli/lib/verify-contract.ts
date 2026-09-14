@@ -1,11 +1,10 @@
 import YAML from "yaml";
 import { errorMessage } from "./cli-io.js";
 import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
-import { contractViolationCode, formatContractViolation, isScannableSource, scanContractImports } from "./contract/contract-scan.js";
+import { contractViolationCode, formatContractViolation, scanContractImports } from "./contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope, MissionContract } from "./contract/contract-types.js";
 import { resolveEffectiveScopeForMission } from "./contract/effective-scope.js";
 import { isGantryUserError } from "./errors.js";
-import { gitRunOk } from "./git.js";
 import { GXT_ERROR, type GxtErrorCode } from "./gxt-error-codes.js";
 import { SHALLOW_HISTORY_HINT } from "./perimeter.js";
 import type { ContractFailure } from "./verify-failure.js";
@@ -86,16 +85,6 @@ function checkSeal(input: ContractPhaseInput): ContractPhaseOutcome | null {
   return null;
 }
 
-/** With empty TMVC roots the scan falls back to files changed since HEAD (tracked + untracked). */
-function changedSourceFiles(root: string): string[] {
-  const out = new Set<string>();
-  const diff = gitRunOk(root, ["diff", "--name-only", "HEAD"]);
-  if (diff.ok) for (const line of diff.stdout.split(/\r?\n/)) if (line.trim()) out.add(line.trim());
-  const untracked = gitRunOk(root, ["ls-files", "--others", "--exclude-standard"]);
-  if (untracked.ok) for (const line of untracked.stdout.split(/\r?\n/)) if (line.trim()) out.add(line.trim());
-  return [...out].filter(isScannableSource).sort();
-}
-
 function violationFindings(violations: readonly ContractImportViolation[]): VerifyFinding[] {
   return violations.map((v) =>
     verifyFinding("contract", v.detail, {
@@ -109,10 +98,7 @@ function violationFindings(violations: readonly ContractImportViolation[]): Veri
 }
 
 function scanCage(input: ContractPhaseInput, scope: EffectiveScope): ContractPhaseOutcome | null {
-  const violations =
-    scope.tmvcRoots.length > 0
-      ? scanContractImports(input.root, scope)
-      : scanContractImports(input.root, scope, { files: changedSourceFiles(input.root) });
+  const violations = scanContractImports(input.root, scope);
   if (violations.length === 0) return null;
   const first = violations[0]!;
   return contractFailure(

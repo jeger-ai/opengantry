@@ -2,8 +2,8 @@ import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 import { resolveEffectiveScope } from "./contract/effective-scope.js";
 import { formatContractBlock } from "./contract/format.js";
 import { proposeContract } from "./contract/propose.js";
+import { resolveSkillKeyForLegislation } from "./legislate.js";
 import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
-import { manifestHasSkill, resolveManifestSkillKey } from "./skill-key.js";
 import type { MissionContract } from "./types.js";
 import { loadWorkspace } from "./workspace.js";
 
@@ -30,20 +30,20 @@ export function handleProposeContract(
   if (!input.intent?.trim()) {
     return mcpError("VALIDATION_ERROR", "intent is required", true);
   }
-  const { root, manifest } = loadWorkspace();
-  const skillKey = input.skill_key?.trim()
-    ? resolveManifestSkillKey(manifest, input.skill_key.trim())
-    : undefined;
-  if (skillKey && !manifestHasSkill(manifest, skillKey)) {
-    return mcpError(
-      "UNKNOWN_SKILL",
-      `unknown skill_key "${input.skill_key}" (manifest skills: ${Object.keys(manifest.skills).join(", ")})`,
-      true,
-    );
-  }
-  if (!skillKey) {
+  if (!input.skill_key?.trim()) {
     return mcpError("VALIDATION_ERROR", "skill_key is required for gxt_propose_contract", true);
   }
+  const { root, manifest } = loadWorkspace();
+  const resolved = resolveSkillKeyForLegislation({
+    root,
+    manifest,
+    intent: input.intent.trim(),
+    skillKey: input.skill_key.trim(),
+  });
+  if (!resolved.ok) {
+    return mcpError(resolved.kind === "unknown_skill" ? "UNKNOWN_SKILL" : "VALIDATION_ERROR", resolved.reason, true);
+  }
+  const skillKey = resolved.skillKey;
 
   const proposed = proposeContract({
     root,

@@ -167,6 +167,18 @@ function resolveInterrogationForLegislate(
   gateSuccessSubstring: string | null,
 ): { ok: true; rows: InterrogationRow[]; declaredPaths: string[]; interrogationSha256?: string } | { ok: false } {
   const paths = options.paths ?? [];
+  let tmvcRoots: string[];
+  try {
+    tmvcRoots = resolveEffectiveScope({
+      manifest,
+      skillKey,
+      contract: options.contract ?? null,
+      policy: loadPolicyBundleQuiet(root),
+    }).tmvcRoots;
+  } catch (e) {
+    logError(isGantryUserError(e) ? e.message : errorMessage(e));
+    return { ok: false };
+  }
   const interrogation = runInterrogate({
     root,
     manifest,
@@ -176,7 +188,7 @@ function resolveInterrogationForLegislate(
     gateSuccessSubstring,
     paths,
     interrogation: options.interrogation?.rows ?? [],
-    contract: options.contract ?? null,
+    tmvcRoots,
   });
 
   if (interrogation.status === "halt") {
@@ -333,19 +345,6 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
 
   const src = interrogationResolved;
   const interrogationSha = src.interrogationSha256;
-  if (options.contract) {
-    try {
-      resolveEffectiveScope({
-        manifest,
-        skillKey: skill_key,
-        contract: options.contract,
-        policy: loadPolicyBundleQuiet(root),
-      });
-    } catch (e) {
-      logError(isGantryUserError(e) ? e.message : errorMessage(e));
-      return { ok: false, exitCode: 2 };
-    }
-  }
 
   const body = buildYamlMissionBody({
     msn_id: msnId,

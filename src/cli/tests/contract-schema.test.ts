@@ -106,6 +106,6 @@ test("interrogation gaps: contract tmvc_roots satisfy the empty-skill-roots boun
   };
   const without = computeGaps(base);
   assert.ok(without.some((f) => f.kind === "undefined_boundary" && f.subject === "tmvc_roots:empty"));
-  const withContract = computeGaps({ ...base, contract: { tmvc_roots: ["src/cli/"] } });
+  const withContract = computeGaps({ ...base, tmvcRoots: ["src/cli/"] });
   assert.equal(withContract.some((f) => f.subject === "tmvc_roots:empty"), false);
 });

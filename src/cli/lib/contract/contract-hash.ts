@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
+import YAML from "yaml";
 import { canonicalJson } from "../canonical-json.js";
+import { GantryUserError } from "../errors.js";
 import { CONTRACT_ARRAY_KEYS, CONTRACT_BOOLEAN_KEYS, type MissionContract } from "./contract-types.js";
 
 /**
@@ -52,4 +54,14 @@ export function contractSha256(contract: MissionContract): string {
 /** True when the contract has no effective constraint at all. */
 export function isEmptyContract(contract: MissionContract): boolean {
   return Object.keys(normalizeContract(contract)).length === 0;
+}
+
+/** Accept a bare contract object or `{ contract: … }` YAML document. */
+export function parseContractYaml(body: string): MissionContract {
+  const doc = YAML.parse(body) as { contract?: MissionContract } | MissionContract | null;
+  if (!doc || typeof doc !== "object") {
+    throw new GantryUserError("INVALID_ARGUMENT", "contract YAML is not an object", undefined, 2);
+  }
+  const block = "contract" in doc && doc.contract ? doc.contract : (doc as MissionContract);
+  return normalizeContract(block);
 }

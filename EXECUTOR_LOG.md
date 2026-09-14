@@ -941,3 +941,7 @@ DoD 1 MSN-0210: deterministic proposer + gantry legislate --from-intent + draft 
 [CONTEXT-REQUEST] path=templates/.githooks/pre-commit,src/cli/tests/mcp-tools-register.test.ts reason=Stacked WP-A/B parity fixes while 0211 is pinned; docs/law stay under contract roots proposed=those paths | msn=MSN-0211
 [SKILL-EXEC] skill_key=substrate tool=cursor scope=.gitagent/out-of-scope/ADR-0045-mission-contracts.md,.gitagent/planner/,docs/,README.md,templates/.gitagent/planner/
 DoD 1 MSN-0211: ADR-0045 recorded; RULES §4 contract.tmvc_roots; MISSION-ARCHITECT Phase 1 gxt_propose_contract / --from-intent; first autoformalized mission contract; npm test 746 pass
+
+## MSN-0212 — Fold contract import-site engine into canonical import-scanner
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/lib/import-scanner.ts,src/cli/lib/contract/,src/cli/lib/interrogate/,src/cli/lib/draft-token.ts,src/cli/lib/legislate.ts
+DoD 1 MSN-0212: import-sites folded into import-scanner (string-aware blankComments); propose/check/verify/runtime share one walker and empty-roots=changed dirty-file policy (no-HEAD unions ls-files --cached, argv ends with --, existsSync drops deleted); gitChildEnv strips GIT_DIR/GIT_WORK_TREE on a copy; draft tokens always emit v3; gantry contract check: OK — no import-site violations; npm test: tests 751 pass 751 fail 0

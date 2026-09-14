@@ -1,4 +1,4 @@
-import type { Manifest, MissionContract } from "../types.js";
+import type { Manifest } from "../types.js";
 import { mergeInterrogationAnswers } from "./answers.js";
 import { computeGaps, type ComputeGapsInput } from "./gaps.js";
 import {
@@ -20,7 +20,7 @@ export interface RunInterrogateInput {
   gateSuccessSubstring: string | null;
   paths: string[];
   interrogation?: InterrogationRow[];
-  contract?: MissionContract | null;
+  tmvcRoots?: string[];
 }
 
 export type InterrogateResult =
@@ -56,7 +56,7 @@ export function runInterrogate(input: RunInterrogateInput): InterrogateResult {
     gateCommand: input.gateCommand,
     gateSuccessSubstring: input.gateSuccessSubstring,
     paths: input.paths,
-    contract: input.contract ?? null,
+    tmvcRoots: input.tmvcRoots,
   };
   const findings = computeGaps(gapsInput);
   const { complete, unanswered } = mergeInterrogationAnswers(

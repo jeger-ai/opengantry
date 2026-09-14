@@ -9,6 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getRepoRoot } from "../lib/git.js";
+import { handleProposeContract } from "../lib/mcp-propose-contract.js";
 import { registerGxtMcpTools } from "../lib/mcp-tools-register.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
@@ -66,6 +67,12 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     "gxt_deps_check",
   ];
   assert.deepEqual(names.sort(), [...expected].sort());
+});
+
+test("mcp-tools-register: gxt_propose_contract requires skill_key", () => {
+  const r = handleProposeContract({ intent: "fold scanner" });
+  assert.equal(r.status, "error");
+  if (r.status === "error") assert.match(r.error.message, /skill_key is required/);
 });
 
 test("mcp-tools-register: every tool has description, schema object, async handler", () => {

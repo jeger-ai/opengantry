@@ -2,10 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { importMatchesBan } from "../ast-discovery.js";
 import { toPosixRel } from "../cli-io.js";
+import { gitRunOk } from "../git.js";
 import { GXT_ERROR, type GxtErrorCode } from "../gxt-error-codes.js";
+import { extractImportSites, type ImportSite } from "../import-scanner.js";
 import { isPathUnderRoot, normalizeRepoRelativePath } from "../tmvc-path.js";
 import type { ContractImportViolation, ContractViolationKind, EffectiveScope } from "./contract-types.js";
-import { extractImportSites, type ImportSite } from "./import-sites.js";
 import { classifySpecifier, loadTsconfigPaths, type TsconfigPaths } from "./resolve-specifier.js";
 
 const SOURCE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]);
@@ -40,6 +41,29 @@ export function listSourcesUnderRoots(repoRoot: string, roots: readonly string[]
   const out: string[] = [];
   for (const root of roots) walkSources(repoRoot, path.join(repoRoot, root), out);
   return [...new Set(out)].sort();
+}
+
+function addGitNames(repoRoot: string, args: string[], out: Set<string>): boolean {
+  const r = gitRunOk(repoRoot, [...args, "--"]);
+  if (!r.ok) return false;
+  for (const line of r.stdout.split(/\r?\n/)) if (line.trim()) out.add(line.trim());
+  return true;
+}
+
+/**
+ * Dirty sources: `git diff --name-only HEAD` ∪ untracked. On an unborn branch (no HEAD) the
+ * index (`ls-files --cached`) stands in for the diff. Every argv ends with `--` so a path that
+ * looks like a flag is never parsed as one. Missing/deleted paths are dropped.
+ */
+export function listChangedSourceFiles(repoRoot: string): string[] {
+  const out = new Set<string>();
+  if (!addGitNames(repoRoot, ["diff", "--name-only", "HEAD"], out)) {
+    addGitNames(repoRoot, ["ls-files", "--cached"], out);
+  }
+  addGitNames(repoRoot, ["ls-files", "--others", "--exclude-standard"], out);
+  return [...out]
+    .filter((rel) => isScannableSource(rel) && fs.existsSync(path.join(repoRoot, rel)))
+    .sort();
 }
 
 export function contractViolationCode(kind: ContractViolationKind): GxtErrorCode {
@@ -156,7 +180,9 @@ export function scanContractImports(
 ): ContractImportViolation[] {
   const files = options.files
     ? [...new Set(options.files.map(normalizeRepoRelativePath))].filter(isScannableSource).sort()
-    : listSourcesUnderRoots(repoRoot, scope.tmvcRoots);
+    : scope.tmvcRoots.length > 0
+      ? listSourcesUnderRoots(repoRoot, scope.tmvcRoots)
+      : listChangedSourceFiles(repoRoot);
   const ts = loadTsconfigPaths(repoRoot);
   const out: ContractImportViolation[] = [];
   for (const file of files) out.push(...scanFileImports(repoRoot, file, scope, ts));

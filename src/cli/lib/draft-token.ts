@@ -136,7 +136,7 @@ export function createDraftToken(
   const now = Math.floor(Date.now() / 1000);
   const contract = input.contract ? normalizeContract(input.contract) : undefined;
   const payload: DraftLegislationPayload = {
-    v: contract ? 3 : 2,
+    v: 3,
     draft_id: crypto.randomUUID(),
     iat: now,
     exp: now + ttl,

@@ -108,10 +108,11 @@ export function handleDraftLegislation(
   });
 
   let sealed: MissionContract | undefined;
+  let tmvcRoots: string[] | undefined;
   if (input.contract) {
     sealed = normalizeContract(input.contract);
     try {
-      resolveEffectiveScope({ manifest, skillKey, contract: sealed });
+      tmvcRoots = resolveEffectiveScope({ manifest, skillKey, contract: sealed }).tmvcRoots;
     } catch (e) {
       return mcpError(
         "CONTRACT_SCOPE_ESCAPE",
@@ -130,7 +131,7 @@ export function handleDraftLegislation(
     gateSuccessSubstring: gate.successSubstring,
     paths: input.paths ?? [],
     interrogation: input.interrogation,
-    contract: sealed ?? null,
+    tmvcRoots,
   });
 
   if (interrogate.status === "halt") {

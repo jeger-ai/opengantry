@@ -132,8 +132,12 @@ function buildSummary(result: RuntimeExecResult): string {
       return `Executor exited with code ${String(result.workerExitCode ?? "unknown")}.`;
     case "runtime_error":
       return "Runtime orchestration failed before or during executor execution.";
-    default:
-      return `Flight ended with status ${result.status}.`;
+    case "success":
+      return "Flight succeeded.";
+    default: {
+      const _exhaustive: never = result.status;
+      return `Flight ended with status ${_exhaustive}`;
+    }
   }
 }
 

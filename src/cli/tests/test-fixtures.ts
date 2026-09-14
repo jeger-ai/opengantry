@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
+import { gitChildEnv } from "../lib/git.js";
 import type { InterrogationRow } from "../lib/interrogate/findings.js";
 import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
 import type { ParsedMission } from "../lib/types.js";
@@ -183,18 +184,27 @@ body
   );
 }
 
+/**
+ * Isolated `git init` + `git add -A` in a tmp sandbox with **no commit** (unborn branch).
+ * The child env is a sanitized copy (`GIT_DIR` / `GIT_WORK_TREE` removed) so the fixture can
+ * never resolve into the parent OpenGantry repository; `process.env` is not mutated.
+ */
+export function gitInitStaged(dest: string, email: string): void {
+  const env = gitChildEnv();
+  const run = (args: string[]): void => {
+    const r = spawnSync("git", ["-C", dest, ...args], { encoding: "utf8", env });
+    if (r.status !== 0) throw new Error(r.stderr || `git ${args[0]} failed`);
+  };
+  run(["init", "-q"]);
+  run(["config", "user.email", email]);
+  run(["config", "user.name", "Fixture"]);
+  run(["add", "-A", "--"]);
+}
+
 export function gitInitCommit(dest: string, subject: string, email: string): void {
-  execSync("git init", { cwd: dest, stdio: "pipe" });
-  {
-    const r = spawnSync("git", ["-C", dest, "config", "user.email", email], { encoding: "utf8" });
-    if (r.status !== 0) throw new Error(r.stderr || "git config user.email failed");
-  }
-  execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
-  execSync("git add -A", { cwd: dest, stdio: "pipe" });
-  {
-    const r = spawnSync("git", ["-C", dest, "commit", "-m", subject], { encoding: "utf8" });
-    if (r.status !== 0) throw new Error(r.stderr || "git commit failed");
-  }
+  gitInitStaged(dest, email);
+  const r = spawnSync("git", ["-C", dest, "commit", "-m", subject], { encoding: "utf8", env: gitChildEnv() });
+  if (r.status !== 0) throw new Error(r.stderr || "git commit failed");
 }
 
 export function gitInitCommitWithBody(dest: string, subject: string, body: string, email: string): void {

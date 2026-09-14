@@ -2,8 +2,16 @@ import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 
-function gitChildEnv(extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  return { ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra };
+/**
+ * Copy of the process env for a git child. `GIT_DIR` / `GIT_WORK_TREE` are removed from the
+ * copy only (never from `process.env`) so `git -C <root>` is authoritative and cannot resolve
+ * into a parent repository.
+ */
+export function gitChildEnv(extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra };
+  delete env.GIT_DIR;
+  delete env.GIT_WORK_TREE;
+  return env;
 }
 
 export interface GitRunOptions {

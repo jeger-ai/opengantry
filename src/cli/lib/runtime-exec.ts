@@ -44,7 +44,7 @@ export function emptyWorkerCommandResult(): RuntimeExecResult {
 
 export function buildRuntimeExecResult(input: {
   violations: ForbiddenViolation[];
-  contractViolations?: ContractImportViolation[];
+  contractViolations: ContractImportViolation[];
   timedOut: boolean;
   exitCode: number | null;
   exitSignal: NodeJS.Signals | null;
@@ -55,7 +55,7 @@ export function buildRuntimeExecResult(input: {
     workerExitCode: input.exitCode,
     workerSignal: input.exitSignal,
     violations: input.violations,
-    contractViolations: input.contractViolations ?? [],
+    contractViolations: input.contractViolations,
     executorLogPath: input.executorLogPath,
     flightId: input.flightId,
   };

@@ -1,6 +1,12 @@
-import type { MissionContract } from "../types.js";
-
-export type { MissionContract } from "../types.js";
+/** Planner-sealed mission cage (ADR-0045). All fields optional; absent = inherit skill/policy. */
+export interface MissionContract {
+  tmvc_roots?: string[];
+  forbidden_zones?: string[];
+  allowed_imports?: string[];
+  banned_imports?: string[];
+  allow_dynamic_specifiers?: boolean;
+  strict_relative_imports?: boolean;
+}
 
 /** Effective cage after merging skill roots, mission contract, and org policy (tighten-only). */
 export interface EffectiveScope {

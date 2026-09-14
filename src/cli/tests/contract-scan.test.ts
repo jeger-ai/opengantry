@@ -3,9 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { scanContractImports } from "../lib/contract/contract-scan.js";
+import { listChangedSourceFiles, scanContractImports } from "../lib/contract/contract-scan.js";
+import { gitInitCommit, gitInitStaged } from "./test-fixtures.js";
 import type { EffectiveScope } from "../lib/contract/contract-types.js";
-import { extractImportSites } from "../lib/contract/import-sites.js";
+import { extractImportSites } from "../lib/import-scanner.js";
 import { bareSpecifierPackage, classifySpecifier, loadTsconfigPaths } from "../lib/contract/resolve-specifier.js";
 
 function scope(overrides: Partial<EffectiveScope> = {}): EffectiveScope {
@@ -133,4 +134,42 @@ test("contract scan: explicit files option restricts scan and skips non-source f
   });
   const v = scanContractImports(dest, scope({ bannedImports: ["banned-pkg"] }), { files: ["src/ui/b.ts", "src/ui/c.md"] });
   assert.deepEqual(v.map((x) => x.file), ["src/ui/b.ts"]);
+});
+
+test("empty-roots scan: dirty sources only; deleted paths skipped; untracked ts included", () => {
+  const dest = tmpRepo({
+    "gone.ts": `import x from "banned-pkg";\n`,
+    "keep.md": "not source\n",
+  });
+  gitInitCommit(dest, "init", "planner@example.com");
+  fs.unlinkSync(path.join(dest, "gone.ts"));
+  fs.writeFileSync(path.join(dest, "dirty.ts"), `import y from "banned-pkg";\n`);
+  const changed = listChangedSourceFiles(dest);
+  assert.deepEqual(changed, ["dirty.ts"]);
+  const v = scanContractImports(dest, scope({ tmvcRoots: [], bannedImports: ["banned-pkg"] }));
+  assert.deepEqual(v.map((x) => x.file), ["dirty.ts"]);
+});
+
+test("empty-roots scan: fresh repo with no HEAD scans staged and untracked sources", () => {
+  const dest = tmpRepo({
+    "staged.ts": `import x from "banned-pkg";\n`,
+    "-h.ts": `import y from "banned-pkg";\n`,
+    "notes.md": "not source\n",
+  });
+  gitInitStaged(dest, "planner@example.com");
+  fs.writeFileSync(path.join(dest, "untracked.ts"), `import z from "banned-pkg";\n`);
+  assert.deepEqual(listChangedSourceFiles(dest), ["-h.ts", "staged.ts", "untracked.ts"]);
+  const v = scanContractImports(dest, scope({ tmvcRoots: [], bannedImports: ["banned-pkg"] }));
+  assert.deepEqual(v.map((x) => x.file), ["-h.ts", "staged.ts", "untracked.ts"]);
+});
+
+test("empty-roots scan: fresh repo staged-then-deleted path is dropped, not read", () => {
+  const dest = tmpRepo({
+    "gone.ts": `import x from "banned-pkg";\n`,
+    "kept.ts": `import y from "banned-pkg";\n`,
+  });
+  gitInitStaged(dest, "planner@example.com");
+  fs.unlinkSync(path.join(dest, "gone.ts"));
+  assert.deepEqual(listChangedSourceFiles(dest), ["kept.ts"]);
+  assert.doesNotThrow(() => scanContractImports(dest, scope({ tmvcRoots: [], bannedImports: ["banned-pkg"] })));
 });

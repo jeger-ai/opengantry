@@ -27,7 +27,10 @@ function fixtureRepo(): string {
   fs.mkdirSync(path.join(dest, "src", "billing"), { recursive: true });
   fs.mkdirSync(path.join(dest, "src", "db"), { recursive: true });
   fs.mkdirSync(path.join(dest, "infra"), { recursive: true });
-  fs.writeFileSync(path.join(dest, "src", "billing", "a.ts"), `import z from "zod";\nimport { x } from "./x.js";\n`);
+  fs.writeFileSync(
+    path.join(dest, "src", "billing", "a.ts"),
+    `import z from "zod";\nimport { x } from "./x.js";\nconst pg = require("pg");\n`,
+  );
   fs.writeFileSync(path.join(dest, "src", "billing", "x.ts"), `export const x = 1;\n`);
   fs.writeFileSync(path.join(dest, "src", "db", "client.ts"), `import { PrismaClient } from "prisma";\nexport const db = 1;\n`);
   fs.writeFileSync(
@@ -56,6 +59,7 @@ test("proposer: same input yields identical contract and rationale (sorted)", ()
   assert.ok(a.contract.forbidden_zones?.includes(".gitagent/foreman/"));
   assert.ok(a.contract.forbidden_zones?.includes("infra/"));
   assert.ok(a.contract.allowed_imports?.includes("zod"));
+  assert.ok(a.contract.allowed_imports?.includes("pg"));
   assert.ok(a.contract.banned_imports?.includes("prisma"));
   assert.ok(a.contract.forbidden_zones?.includes("packages/db/"));
   assert.equal(a.gate.command, "npm run test:billing");

@@ -6,7 +6,7 @@ import readline from "node:readline/promises";
 import YAML from "yaml";
 import { GantryUserError } from "../errors.js";
 import { formatContractBlock } from "./format.js";
-import { normalizeContract } from "./contract-hash.js";
+import { normalizeContract, parseContractYaml } from "./contract-hash.js";
 import type { MissionContract } from "./contract-types.js";
 import type { ProposedGate } from "./propose-gate.js";
 
@@ -24,12 +24,7 @@ export interface ApproveContractInput {
 }
 
 function parseEditedContract(body: string): MissionContract {
-  const doc = YAML.parse(body) as { contract?: MissionContract } | MissionContract | null;
-  if (!doc || typeof doc !== "object") {
-    throw new GantryUserError("INVALID_ARGUMENT", "edited contract YAML is not an object", undefined, 2);
-  }
-  const block = "contract" in doc && doc.contract ? doc.contract : (doc as MissionContract);
-  return normalizeContract(block);
+  return parseContractYaml(body);
 }
 
 function editInEditor(contract: MissionContract): MissionContract {

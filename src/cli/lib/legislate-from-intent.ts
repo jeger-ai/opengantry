@@ -1,7 +1,6 @@
 import fs from "node:fs";
-import YAML from "yaml";
 import { approveContractPrompt } from "./contract/approve-prompt.js";
-import { normalizeContract } from "./contract/contract-hash.js";
+import { normalizeContract, parseContractYaml } from "./contract/contract-hash.js";
 import { proposeContract } from "./contract/propose.js";
 import { GantryUserError } from "./errors.js";
 import { logInfo } from "./cli-io.js";
@@ -16,12 +15,7 @@ export interface FromIntentOptions extends LegislateOptions {
 }
 
 function loadContractFile(file: string): MissionContract {
-  const doc = YAML.parse(fs.readFileSync(file, "utf8")) as { contract?: MissionContract } | MissionContract;
-  if (!doc || typeof doc !== "object") {
-    throw new GantryUserError("INVALID_ARGUMENT", `contract file is not YAML: ${file}`, undefined, 2);
-  }
-  const block = "contract" in doc && doc.contract ? doc.contract : (doc as MissionContract);
-  return normalizeContract(block);
+  return parseContractYaml(fs.readFileSync(file, "utf8"));
 }
 
 /** Propose (or load) a contract, optionally prompt, then legislate. */

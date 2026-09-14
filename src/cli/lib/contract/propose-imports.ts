@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { discoverFolderSignature, importMatchesBan } from "../ast-discovery.js";
+import { importMatchesBan } from "../ast-discovery.js";
 import { layerForFile, loadTargetArchitecture, type TargetArchitectureSpec } from "../arch/cage/target-architecture.js";
+import { extractImportSites } from "../import-scanner.js";
 import { isBuiltinSpecifier } from "./resolve-specifier.js";
-import { extractImportSites } from "./import-sites.js";
 import { listSourcesUnderRoots } from "./contract-scan.js";
 import { normalizeRepoRelativePath } from "../tmvc-path.js";
 import type { OrgPolicyBundle } from "../policy/policy-types.js";
@@ -59,32 +59,25 @@ export function listWorkspacePackages(root: string): WorkspacePackage[] {
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function bareSpecifiersUnder(root: string, roots: readonly string[]): string[] {
+function collectBareSpecs(root: string, files: readonly string[]): string[] {
   const specs = new Set<string>();
-  for (const dir of roots) {
-    const abs = path.join(root, dir);
-    if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) continue;
-    try {
-      for (const spec of discoverFolderSignature(root, dir).imports) {
-        if (spec.startsWith(".") || spec.startsWith("/") || isBuiltinSpecifier(spec)) continue;
-        specs.add(spec);
-      }
-    } catch {
-      /* skip unreadable roots */
+  for (const file of files) {
+    const abs = path.join(root, file);
+    if (!fs.existsSync(abs)) continue;
+    for (const site of extractImportSites(fs.readFileSync(abs, "utf8"))) {
+      if (!site.spec || site.spec.startsWith(".") || site.spec.startsWith("/") || isBuiltinSpecifier(site.spec)) continue;
+      specs.add(site.spec);
     }
   }
   return [...specs].sort();
 }
 
+function bareSpecifiersUnder(root: string, roots: readonly string[]): string[] {
+  return collectBareSpecs(root, listSourcesUnderRoots(root, roots));
+}
+
 function specifiersInForbidden(root: string, forbidden: readonly string[]): string[] {
-  const specs = new Set<string>();
-  for (const file of listSourcesUnderRoots(root, forbidden)) {
-    for (const site of extractImportSites(fs.readFileSync(path.join(root, file), "utf8"))) {
-      if (!site.spec || site.spec.startsWith(".") || isBuiltinSpecifier(site.spec)) continue;
-      specs.add(site.spec);
-    }
-  }
-  return [...specs].sort();
+  return collectBareSpecs(root, listSourcesUnderRoots(root, forbidden));
 }
 
 function archBannedForRoots(root: string, proposedRoots: readonly string[]): string[] {

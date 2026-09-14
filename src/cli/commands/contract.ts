@@ -2,11 +2,11 @@ import { setExitCode } from "../lib/cli-io.js";
 import { runUserCommand, type CommandPresentation } from "../lib/command-boundary.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "../lib/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "../lib/contract/contract-types.js";
-import { resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
+import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
 import { GantryUserError } from "../lib/errors.js";
 import { parseMissionFile, resolvePinnedMission } from "../lib/missions/parser.js";
 import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
-import { formatContractBlock } from "../lib/contract/format.js";
+import { formatContractBlock, formatEffectiveScope } from "../lib/contract/format.js";
 import { proposeContract } from "../lib/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../lib/legislate.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -33,10 +33,7 @@ function scopeJson(scope: EffectiveScope): Record<string, unknown> {
 function humanLines(missionRel: string, scope: EffectiveScope, violations: readonly ContractImportViolation[]): string[] {
   const lines = [
     `contract check: ${missionRel}${scope.hasContract ? "" : " (no contract block — effective scope from skill/policy)"}`,
-    `  tmvc_roots: ${scope.tmvcRoots.join(", ") || "(none)"}`,
-    `  forbidden_zones: ${scope.forbiddenZones.join(", ") || "(none)"}`,
-    `  allowed_imports: ${scope.allowedImports.join(", ") || "(any)"}`,
-    `  banned_imports: ${scope.bannedImports.join(", ") || "(none)"}`,
+    formatEffectiveScope(scope),
   ];
   if (violations.length === 0) {
     lines.push("contract check: OK — no import-site violations");
@@ -109,6 +106,7 @@ export function runContractPropose(options: ContractProposeCliOptions): void {
       paths: options.paths,
     });
     const contract = normalizeContract(proposed.contract);
+    resolveEffectiveScope({ manifest: workspace.manifest, skillKey: resolved.skillKey, contract });
     return {
       json: {
         ok: true,
