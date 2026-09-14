@@ -1,0 +1,53 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.4.0 version parity CHANGELOG mission contracts ADR-0045 adopter docs and annotated tag
+msn_id: MSN-0214
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0045: v3.4.0 ships the already-verified
+      mission-contracts engine (MSN-0209..MSN-0213). This mission does not amend
+      the ADR; it versions, changelogs, and tags."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 61a4acceae4eefaa6fb1cc96d85181797540057270cb6eb7a1ec8a84886d005c
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0214.release-opengantry-v3-4-0-changelog-version-parity.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - package-lock.json
+  - package.json
+  - src/cli/lib/version.gen.ts
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - package-lock.json
+    - package.json
+    - src/cli/lib/version.gen.ts
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: ef00e3d4d85800cc5c602d42b5d8e729310ffe9d529d51092eaf749e4ec1583e
