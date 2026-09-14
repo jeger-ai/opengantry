@@ -48,7 +48,7 @@ contract_sha256: "<sha256 of normalizeContract(contract)>"
 
 ### Verify and runtime
 
-`gantry verify` runs a `contract` phase after `git_proof`. `gantry runtime env` exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`. `gantry runtime exec` post-scans effective TMVC roots and ends the flight as `contract_violation` (exit 3) on import-site breaches.
+`gantry verify` runs a `contract` phase after `git_proof`. `gantry runtime env` exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`. `gantry runtime exec` post-scans effective TMVC roots and ends the flight as `contract_violation` (exit 3) on import-site breaches. When effective TMVC roots are empty, check / verify / runtime scan git-dirty scannable sources (not the whole tree, not nothing); missing/deleted paths are skipped; a repo with no `HEAD` still includes the index and untracked files.
 
 ## Consequences
 
