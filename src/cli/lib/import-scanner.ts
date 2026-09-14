@@ -39,98 +39,129 @@ const REQUIRE_RE = /\brequire\s*\(\s*([^)]*?)\s*\)/g;
 const LITERAL_ARG_RE = /^(["'])([^"'\n]+)\1$/;
 const TEMPLATE_LITERAL_ARG_RE = /^`([^`$\n]+)`$/;
 
+type BlankMode = "code" | "sq" | "dq" | "tmpl" | "line" | "block";
+
+interface BlankState {
+  src: string;
+  out: string[];
+  i: number;
+  mode: BlankMode;
+  /** Open `{` depth inside the current `${ … }` template hole. */
+  brace: number;
+  /** Saved `brace` depths for enclosing template holes. */
+  tmplStack: number[];
+}
+
+/** Copy `count` chars verbatim (used for escapes and string bodies). */
+function keep(s: BlankState, count: number): void {
+  for (let k = 0; k < count; k += 1) s.out[s.i + k] = s.src[s.i + k]!;
+  s.i += count;
+}
+
+/** Blank `count` chars to spaces. */
+function blank(s: BlankState, count: number): void {
+  for (let k = 0; k < count; k += 1) s.out[s.i + k] = " ";
+  s.i += count;
+}
+
+function stepLineComment(s: BlankState, c: string): void {
+  if (c === "\n") {
+    s.mode = "code";
+    keep(s, 1);
+  } else blank(s, 1);
+}
+
+function stepBlockComment(s: BlankState, c: string, n1: string | undefined): void {
+  if (c === "*" && n1 === "/") {
+    blank(s, 2);
+    s.mode = "code";
+  } else if (c === "\n" || c === "\r") keep(s, 1);
+  else blank(s, 1);
+}
+
+function stepQuoted(s: BlankState, c: string, quote: string): void {
+  if (c === "\\" && s.i + 1 < s.src.length) {
+    keep(s, 2);
+    return;
+  }
+  if (c === quote) s.mode = "code";
+  keep(s, 1);
+}
+
+function stepTemplate(s: BlankState, c: string, n1: string | undefined): void {
+  if (c === "\\" && s.i + 1 < s.src.length) {
+    keep(s, 2);
+    return;
+  }
+  if (c === "$" && n1 === "{") {
+    keep(s, 2);
+    s.tmplStack.push(s.brace);
+    s.brace = 0;
+    s.mode = "code";
+    return;
+  }
+  if (c === "`") s.mode = "code";
+  keep(s, 1);
+}
+
+function stepCode(s: BlankState, c: string, n1: string | undefined): void {
+  if (c === "/" && (n1 === "/" || n1 === "*")) {
+    blank(s, 2);
+    s.mode = n1 === "/" ? "line" : "block";
+    return;
+  }
+  if (c === "'") s.mode = "sq";
+  else if (c === '"') s.mode = "dq";
+  else if (c === "`") s.mode = "tmpl";
+  else if (c === "{") s.brace += 1;
+  else if (c === "}" && s.tmplStack.length > 0) {
+    if (s.brace === 0) {
+      s.mode = "tmpl";
+      s.brace = s.tmplStack.pop()!;
+    } else s.brace -= 1;
+  }
+  keep(s, 1);
+}
+
 /** Blank real comments with same-length whitespace (newlines kept). Strings/templates are left intact. */
 export function blankComments(source: string): string {
-  const n = source.length;
-  const out: string[] = new Array(n);
-  let i = 0;
-  let mode: "code" | "sq" | "dq" | "tmpl" | "line" | "block" = "code";
-  let brace = 0;
-  const tmplStack: number[] = [];
-  while (i < n) {
-    const c = source[i]!;
-    const n1 = source[i + 1];
-    if (mode === "line") {
-      out[i] = c === "\n" ? ((mode = "code"), c) : " ";
-      i += 1;
-      continue;
-    }
-    if (mode === "block") {
-      if (c === "*" && n1 === "/") {
-        out[i] = " ";
-        out[i + 1] = " ";
-        i += 2;
-        mode = "code";
-        continue;
+  const s: BlankState = {
+    src: source,
+    out: new Array(source.length),
+    i: 0,
+    mode: "code",
+    brace: 0,
+    tmplStack: [],
+  };
+  while (s.i < source.length) {
+    const c = source[s.i]!;
+    const n1 = source[s.i + 1];
+    switch (s.mode) {
+      case "line":
+        stepLineComment(s, c);
+        break;
+      case "block":
+        stepBlockComment(s, c, n1);
+        break;
+      case "sq":
+        stepQuoted(s, c, "'");
+        break;
+      case "dq":
+        stepQuoted(s, c, '"');
+        break;
+      case "tmpl":
+        stepTemplate(s, c, n1);
+        break;
+      case "code":
+        stepCode(s, c, n1);
+        break;
+      default: {
+        const never: never = s.mode;
+        throw new Error(`blankComments: unknown mode ${String(never)}`);
       }
-      out[i] = c === "\n" || c === "\r" ? c : " ";
-      i += 1;
-      continue;
     }
-    if (mode === "sq" || mode === "dq") {
-      out[i] = c;
-      if (c === "\\") {
-        if (i + 1 < n) {
-          out[i + 1] = source[i + 1]!;
-          i += 2;
-          continue;
-        }
-      } else if (c === (mode === "sq" ? "'" : '"')) mode = "code";
-      i += 1;
-      continue;
-    }
-    if (mode === "tmpl") {
-      out[i] = c;
-      if (c === "\\") {
-        if (i + 1 < n) {
-          out[i + 1] = source[i + 1]!;
-          i += 2;
-          continue;
-        }
-      } else if (c === "`") mode = "code";
-      else if (c === "$" && n1 === "{") {
-        out[i + 1] = "{";
-        tmplStack.push(brace);
-        brace = 0;
-        mode = "code";
-        i += 2;
-        continue;
-      }
-      i += 1;
-      continue;
-    }
-    if (c === "/" && n1 === "/") {
-      out[i] = " ";
-      out[i + 1] = " ";
-      i += 2;
-      mode = "line";
-      continue;
-    }
-    if (c === "/" && n1 === "*") {
-      out[i] = " ";
-      out[i + 1] = " ";
-      i += 2;
-      mode = "block";
-      continue;
-    }
-    if (c === "'") mode = "sq";
-    else if (c === '"') mode = "dq";
-    else if (c === "`") mode = "tmpl";
-    else if (c === "{") brace += 1;
-    else if (c === "}" && tmplStack.length > 0) {
-      if (brace === 0) {
-        mode = "tmpl";
-        tmplStack.pop();
-        out[i] = c;
-        i += 1;
-        continue;
-      }
-      brace -= 1;
-    }
-    out[i] = c;
-    i += 1;
   }
-  return out.join("");
+  return s.out.join("");
 }
 
 function prepareSource(source: string, scrubQuarantine: boolean): string {
