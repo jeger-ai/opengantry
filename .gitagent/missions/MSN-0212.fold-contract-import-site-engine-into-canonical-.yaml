@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0212: import-sites folded into import-scanner (string-aware blankComments); propose/check/verify/runtime share one walker and empty-roots=changed dirty-file policy (no-HEAD unions ls-files --cached, argv ends with --, existsSync drops deleted); gitChildEnv strips GIT_DIR/GIT_WORK_TREE on a copy; draft tokens always emit v3; gantry contract check: OK — no import-site violations; npm test: tests 751 pass 751 fail 0"
+    anchor: "947"
+    status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
     kind: undefined_boundary
