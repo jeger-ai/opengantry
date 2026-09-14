@@ -952,3 +952,7 @@ DoD 1 MSN-0213: ADR-0045 Verify and runtime records the empty-roots policy (git-
 
 ## MSN-0210 — Re-attest after stacked MSN-0212 TMVC drift
 DoD 1 MSN-0210 re-attest: deterministic proposer, legislate --from-intent, draft token v3 and gxt_propose_contract still hold after MSN-0212 folded the import-site engine into import-scanner; npm test 751 pass
+
+## MSN-0214 — Release OpenGantry v3.4.0
+[SKILL-EXEC] skill_key=substrate tool=cursor scope=package.json,package-lock.json,src/cli/lib/version.gen.ts,docs/CHANGELOG.md,docs/FEATURES.md,README.md,templates/integrations/compatibility.json,templates/.gitagent/foreman/SUBSTRATE.version.json,.gitagent/foreman/SUBSTRATE.version.json
+DoD 1 MSN-0214: v3.4.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, version.gen.ts, CHANGELOG mission contracts (ADR-0045); assert-cli-version-parity OK — source + runtime at 3.4.0; doctor substrate version 3.4.0 matches bundled gantry; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

@@ -6,14 +6,11 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ---
 
-## Unreleased
-
-- **Mission contracts (ADR-0045):** Planner-sealed inline `contract` + `contract_sha256` (tighten-only TMVC / forbidden / import cage). `gantry contract propose|check|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`, draft token v3. Verify `contract` phase (tamper + import sites including `import()` / `require()` / `export … from`). Runtime exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation`.
-
 ## Release highlights
 
 | Release | Highlights |
 |---------|------------|
+| **v3.4.0** | **Mission contracts (ADR-0045):** Planner-sealed inline `contract` + `contract_sha256` (tighten-only TMVC / forbidden / import cage). `gantry contract propose\|check\|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`, draft token v3 (v2 still accepted). Verify `contract` phase (tamper + import sites including `import()` / `require()` / `export … from`). Runtime exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation`. Empty TMVC roots scan git-dirty sources (not the whole tree). |
 | **v3.3.0** | **Breaking (kernel):** `verifyMission` is async. Git-native org control plane — tighten-only org policy floor (`gantry policy pull\|status\|diff`, ADR-0042); compliance ledger on `refs/gxt/ledger` with CAS append + `soc2-pack` export (ADR-0043); cross-repo `depends_on` + `gantry deps` / `release check` (ADR-0044). Receipt schema stays 0.2.0. Doctor/verify stay offline. |
 | **v3.2.6** | `gantry report` localhost inspection dashboard (overview git metrics, mission timeline, capped verify-run ring, `/verify` drill-down); ADR-0040 findings blame schema v3 in CLI (MSN-0179); pluggable `gateExecAdapter` on `verifyMission` (MSN-0177); verify-run ring persistence + phase-clock remediation (MSN-0181) |
 | **v3.2.3** | Docs — North Star [`MANIFESTO.md`](MANIFESTO.md); loop→graph terminology (`AGENT-GRAPH.md` rename, mission/verify graph language, retry edges); CLI onboarding UX strings |
@@ -44,7 +41,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.3.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.4.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
@@ -52,6 +49,20 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ---
 
 ## Upgrade notes
+
+### From v3.3.0 (mission contracts — v3.4.0)
+
+```bash
+npm install @jeger-ai/opengantry@3.4.0
+gantry upgrade   # pulls MISSION.schema.yaml contract + contract_sha256 fields
+```
+
+- **Not breaking.** Draft token v2 remains accepted; v3 is required when the token carries a `contract` block. Live Cursor MCP servers that still reject `contract` on `gxt_draft_legislation` should use `gantry legislate --from-intent --yes --contract-file`.
+- **CLI:** `gantry contract propose|check|show`; `gantry legislate --from-intent` (optional `--contract-file`).
+- **MCP:** `gxt_propose_contract` (autoformalize the cage before draft).
+- **Verify:** new `contract` phase after `git_proof` — tamper (`GXT_CONTRACT_TAMPERED`) plus import-site scan (`GXT_CONTRACT_IMPORT_*`).
+- **Runtime:** `gantry runtime env` exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`. `gantry runtime exec` ends the flight as `contract_violation` (exit 3) on import-site breaches.
+- **Empty TMVC roots:** check / verify / runtime scan git-dirty scannable sources (not the whole tree, not nothing); missing/deleted paths are skipped; a repo with no `HEAD` still includes the index and untracked files.
 
 ### From v3.2.6 (org control plane — v3.3.0)
 

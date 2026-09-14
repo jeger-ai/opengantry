@@ -214,6 +214,8 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
+**Mission contracts (v3.4.0):** Planner-sealed inline `contract` + `contract_sha256` on the mission YAML (tighten-only TMVC / forbidden / import cage). `gantry contract propose|check|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`. Verify runs a `contract` phase after git-proof; `gantry runtime env` exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation` ([ADR-0045](.gitagent/out-of-scope/ADR-0045-mission-contracts.md)).
+
 **Org control plane (v3.3.0):** pin a signed org policy repo with `.gitagent/foreman/POLICY.pointer.json` and `gantry policy pull` (doctor/verify stay offline). Enable `ledger.mode: local` to append digest-only entries to `refs/gxt/ledger` (`gantry ledger verify` / `export --format soc2-pack`). Cross-repo gates use mission `depends_on[]` plus `gantry deps fetch` before verify ([ADR-0042](.gitagent/out-of-scope/ADR-0042-org-policy-bundle.md), [ADR-0043](.gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md), [ADR-0044](.gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)). Receipt schema stays 0.2.0.
 
 **Kernel (v3.3.0 breaking):** `import { verifyMission } from "@jeger-ai/opengantry/kernel"` now returns a Promise — always `await`. `verifyMissionAsync` is a deprecated alias (`DeprecationWarning` `GXT_DEP_VERIFY_MISSION_ASYNC`, removed in 4.0). CLI `--json-out` is unchanged.
