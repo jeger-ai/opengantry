@@ -58,6 +58,7 @@ interrogation:
       - ADR-0045
 interrogation_sha256: 93b55df83fccca7de80493c408cf8c0559c025ab4cddb3990614684bf52641b4
 declared_paths:
+  - .gitagent/missions/MSN-0212.fold-contract-import-site-engine-into-canonical-.yaml
   - src/cli/
 contract:
   tmvc_roots:
