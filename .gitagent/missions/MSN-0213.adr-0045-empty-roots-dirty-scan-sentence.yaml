@@ -5,9 +5,9 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0213: ADR-0045 Verify and runtime records the empty-roots policy (git-dirty scannable sources, deleted paths skipped, no-HEAD includes index and untracked); RULES.md untouched; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "951"
+    status: PASS
 interrogation:
   - finding_id: 9ecdd9a8e878
     kind: adr_conflict
