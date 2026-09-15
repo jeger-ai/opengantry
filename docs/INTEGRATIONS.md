@@ -224,9 +224,9 @@ Vendor CLIs change; the **wrap line** and **context files** do not.
 ### Cursor
 
 - **Context injection:** [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) (`alwaysApply: true`); [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` mission scope + `beforeShellExecution` fallback guard.
-- **MCP bridge:** [`.cursor/mcp.json`](../.cursor/mcp.json) — `gantry mcp serve` exposes `gxt_*` tools for zero-copy-paste legislation.
+- **MCP bridge:** [`.cursor/mcp.json`](../.cursor/mcp.json) — this specimen runs `node dist/cli/index.js mcp serve` (needs `npm run build`). Adopters keep `gantry mcp serve` after `@jeger-ai/opengantry@3.4.0+`. Reload MCP after `mcp.json` changes or upgrades so the catalog includes `gxt_propose_contract` and `gxt_draft_legislation` accepts `contract`.
 - **Mission Architect:** `/gantry` macro (do not use `/plan` — Cursor native Plan Mode); implicit activation when user asks to **write/edit code** with no pinned mission. Follow [`.gitagent/planner/MISSION-ARCHITECT.md`](../.gitagent/planner/MISSION-ARCHITECT.md).
-- **Two-step legislation (Yolo-safe):** `gxt_interrogate` → operator answers in chat → `gxt_draft_legislation` (server recomputes gaps) → human chat approval → `gxt_execute_legislation` → Planner `git commit` → `gxt_check_signature` → `gxt_pin_mission`. `gxt_start_orchestration` halts with `INTERROGATION_REQUIRED` until interrogation is complete (see `GXT_LAST_ERROR_FILE`).
+- **Two-step legislation (Yolo-safe):** `gxt_propose_contract` → `gxt_interrogate` → operator answers in chat → `gxt_draft_legislation` with approved `contract` (server recomputes gaps) → human chat approval → `gxt_execute_legislation` → Planner `git commit` → `gxt_check_signature` → `gxt_pin_mission`. `gxt_start_orchestration` halts with `INTERROGATION_REQUIRED` until interrogation is complete (see `GXT_LAST_ERROR_FILE`).
 - **Host tool policy:** Cursor may require approval per tool call or auto-run all tools (“Yolo mode”). MCP draft/execute is the primary governance gate — not host settings alone.
 - **Session bootstrap:**
 
@@ -236,7 +236,7 @@ source scripts/gxt-runtime-env.sh   # integrated terminal (uses pinned mission)
 ```
 
 - **Enforcement:** Advisory for Agent edits; MCP two-step gate for legislation; shell hook fallback for raw `gantry legislate` / law/manifest writes; use `runtime exec` for headless CLI/SDK runs.
-- **Gotcha:** Enable hooks **and** MCP in Cursor Settings; restart if they do not load (**Output → Hooks**). Pin a mission before starting Agent work — unpinned sessions get a legislate reminder only.
+- **Gotcha:** Enable hooks **and** MCP in Cursor Settings; reload MCP after `mcp.json` or package upgrades (**Settings → MCP**). Restart if hooks do not load (**Output → Hooks**). Pin a mission before starting Agent work — unpinned sessions get a legislate reminder only.
 
 **Substrate lifecycle:** After `npm install @jeger-ai/opengantry@latest`, run `gantry upgrade` → review `.gitagent/.upgrade-tmp/` → Planner-commit the upgrade mission YAML → `gantry upgrade --apply --mission …`. MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply`.
 

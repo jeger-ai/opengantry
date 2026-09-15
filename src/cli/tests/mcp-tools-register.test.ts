@@ -69,6 +69,15 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
   assert.deepEqual(names.sort(), [...expected].sort());
 });
 
+test("mcp-tools-register: gxt_draft_legislation schema includes contract", () => {
+  const tools = collectRegisteredTools();
+  const draft = tools.find((t) => t.name === "gxt_draft_legislation");
+  assert.ok(draft, "gxt_draft_legislation must be registered");
+  assert.ok("contract" in draft.schema, "v3 draft schema must accept contract");
+  const propose = tools.find((t) => t.name === "gxt_propose_contract");
+  assert.ok(propose, "gxt_propose_contract must be registered");
+});
+
 test("mcp-tools-register: gxt_propose_contract requires skill_key", () => {
   const r = handleProposeContract({ intent: "fold scanner" });
   assert.equal(r.status, "error");

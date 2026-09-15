@@ -18,14 +18,19 @@ const draft = handleDraftLegislation({
   gate_command: "npm test",
   gate_success_substring: "pass",
   interrogation: [],
+  contract: { tmvc_roots: ["src/cli/"] },
 });
-if (draft.status !== "awaiting_human_approval") throw new Error("draft failed");
+if (draft.status !== "awaiting_human_approval") throw new Error(`draft failed: ${JSON.stringify(draft)}`);
 
 const before = fs.readdirSync(path.join(dest, ".gitagent", "missions"));
 if (before.length !== 0) throw new Error("draft wrote files");
 
 const executed = handleExecuteLegislation(draft.draft_token);
-if (executed.status !== "pending_signature") throw new Error("execute failed");
+if (executed.status !== "pending_signature") throw new Error(`execute failed: ${JSON.stringify(executed)}`);
+const written = fs.readFileSync(path.join(dest, executed.mission_file_path), "utf8");
+if (!/^contract:/m.test(written) || !/^contract_sha256: [0-9a-f]{64}$/m.test(written)) {
+  throw new Error("dogfood wrote mission without contract/contract_sha256 (v2 false positive)");
+}
 
 const missing = handleCheckSignature(executed.mission_file_path);
 if (missing.status !== "signature_missing") throw new Error("expected missing signature");

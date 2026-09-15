@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "opengantry-gxt": {
-      "command": "gantry",
-      "args": ["mcp", "serve"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "serve"]
     }
   }
 }
