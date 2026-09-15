@@ -5,7 +5,7 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0213: ADR-0045 Verify and runtime records the empty-roots policy (git-dirty scannable sources, deleted paths skipped, no-HEAD includes index and untracked); RULES.md untouched; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    trace_quote: "DoD 1 MSN-0213: ADR-0045 Verify and runtime records the empty-roots policy (git-dirty scannable sources, deleted paths skipped, no-HEAD includes index and untracked); RULES.md untouched; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "951"
     status: PASS
 interrogation:
