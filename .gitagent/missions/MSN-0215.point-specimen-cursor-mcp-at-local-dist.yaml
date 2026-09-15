@@ -5,9 +5,9 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0215: specimen .cursor/mcp.json launches node dist/cli/index.js mcp serve; gxt_draft_legislation schema includes contract; dogfood passes contract into handleDraftLegislation and requires contract_sha256; OK: MCP dogfood flow passed; tests 752 pass 752 fail 0; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "964"
+    status: PASS
 interrogation:
   - finding_id: 1362fca0b3bc
     kind: risk_escalation
