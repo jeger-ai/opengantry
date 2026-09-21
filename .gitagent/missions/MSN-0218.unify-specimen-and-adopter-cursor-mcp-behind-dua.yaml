@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Unify specimen and adopter Cursor MCP behind dual-mode templates/scripts/mcp-launcher.sh. Catalog scripts/mcp-launcher.sh as managed_strict runtime. Make .cursor/mcp.json and templates/.cursor/mcp.json byte-identical with command ./scripts/mcp-launcher.sh. Update docs/DEVELOPMENT.md docs/INTEGRATIONS.md templates/integrations/recipes/cursor.md. Do not edit RULES.md or MANIFEST.json. Parity-test exemption stays until a follow-on gantry mission.
+# Gate evidence: EXECUTOR_LOG.md DoD 1 MSN-0218 (anchor 979).
 msn_id: MSN-0218
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
