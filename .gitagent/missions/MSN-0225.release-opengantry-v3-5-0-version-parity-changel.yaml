@@ -1,0 +1,29 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.5.0 version parity changelog and annotated tag
+msn_id: MSN-0225
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/INTEGRATIONS.md
+    - package-lock.json
+    - package.json
+    - src/cli/lib/version.gen.ts
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: ba609c804b6c04c521acae81dce4b0f02a17d84cefe3bac96edc4db178fb9ea9
