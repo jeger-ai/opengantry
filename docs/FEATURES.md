@@ -256,6 +256,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 | Compliance ledger (v3.3.0) | `gantry ledger append` / `verify` / `export --format soc2-pack`; `refs/gxt/ledger` | Digest-only orphan commit chain; CAS append; unsigned = checksum not proof ([ADR-0043](../.gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md)) |
 | Cross-repo mission deps (v3.3.0) | `depends_on[]`; `gantry deps fetch` / `check`; `gantry release check` | Offline same-org proof via `repository_hash` + `GANTRY_ORG_PEPPER` ([ADR-0044](../.gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)) |
 | Mission contracts (v3.4.0) | `gantry contract propose\|check\|show`; `gantry legislate --from-intent`; MCP `gxt_propose_contract`; mission `contract` + `contract_sha256` | Planner-sealed tighten-only TMVC / forbidden / import cage; verify `contract` phase; runtime import env + `contract_violation` ([ADR-0045](../.gitagent/out-of-scope/ADR-0045-mission-contracts.md)) |
+| Experimental contract preflight | `gantry contract preflight`; MCP `gxt_preflight_contract` | Advisory skill/`tmvc_roots` hints before propose; heuristic default; optional Jev fail-open ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)) |
 
 **When to use:** Local-first agent governance today; git-native organization control plane (policy floor, ledger, cross-repo gates) without changing the spoke-enforces / hub-aggregates model.
 

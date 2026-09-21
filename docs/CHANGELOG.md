@@ -44,6 +44,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 - Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.4.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged).
+- **Experimental contract preflight:** `gantry contract preflight` / MCP `gxt_preflight_contract` (heuristic default; optional Jev). Advisory only — does not seal a contract ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
 
 ---

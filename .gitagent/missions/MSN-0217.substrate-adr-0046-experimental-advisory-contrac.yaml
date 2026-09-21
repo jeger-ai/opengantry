@@ -1,0 +1,84 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate ADR-0046 experimental advisory contract preflight. Update MISSION-ARCHITECT Phase 1 and templates copy. examples/jev-preflight recorded fixtures. CHANGELOG and FEATURES notes. Do not edit RULES.md.
+msn_id: MSN-0217
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0217: ADR-0046 experimental advisory contract preflight recorded; MISSION-ARCHITECT Phase 1 optional preflight; examples/jev-preflight fixtures; CHANGELOG/FEATURES notes; RULES.md untouched; tests 764 pass 764 fail 0; OK: MCP dogfood flow passed; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "974"
+    status: PASS
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0001 is the example ADR template;
+      this mission records ADR-0046 for experimental contract preflight."
+    adr_refs:
+      - ADR-0001
+      - ADR-0046
+  - finding_id: 9643d0bc591b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0025. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0025 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0025 for propose/verify/doctor (no model on the
+      sealed path). Experimental preflight is an optional opt-in System One
+      call, advisory only, fail-open to heuristic, never mission law.
+    adr_refs:
+      - ADR-0025
+  - finding_id: b9b235d7d426
+    kind: adr_conflict
+    question: Intent may relate to ADR-0046. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0046 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0046: this mission records the experimental
+      advisory preflight ADR, Mission Architect Phase 1 note,
+      examples/jev-preflight fixtures, and CHANGELOG/FEATURES lines. Preflight
+      remains advisory; propose stays deterministic."
+    adr_refs:
+      - ADR-0046
+  - finding_id: e2a17b81b981
+    kind: adr_conflict
+    question: Intent may relate to ADR-0035. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0035 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0035 is the advisory performance
+      judge; this mission is ADR-0046 preflight docs, not PERFORMANCE_RUBRIC /
+      llm_verifiers."
+    adr_refs:
+      - ADR-0035
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0045: proposeContract / gxt_propose_contract stay
+      deterministic and LLM-free. Preflight is advisory in front of propose; it
+      does not write contract or contract_sha256."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 1064cf6989edb4290bcc546c981139a4e51d0ad33837a4442d7963cfc36a7cd9
+declared_paths:
+  - .gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - examples/jev-preflight/
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - examples/jev-preflight/
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+contract_sha256: 08a584cad4a4b185550c753ee523229511cb52352154395863300fd3d07d80d9

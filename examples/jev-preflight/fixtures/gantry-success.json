@@ -1,0 +1,14 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "skill": {
+      "type": "choice",
+      "choice": "gantry",
+      "confidence": 0.92,
+      "probabilities": { "gantry": 0.92, "ui": 0.08 }
+    },
+    "escalate": { "type": "noul", "noul": 0.05 },
+    "root:src/cli/": { "type": "noul", "noul": 0.91 },
+    "root:src/ui/": { "type": "noul", "noul": 0.04 }
+  }
+}
