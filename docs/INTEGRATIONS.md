@@ -144,6 +144,8 @@ gantry verify --mission .gitagent/missions/MSN-NNNN.<slug>.yaml --export /tmp/en
 
 See [opengantry-plane `docs/DEPLOYMENT.md`](https://github.com/jeger-ai/opengantry-plane/blob/main/docs/DEPLOYMENT.md) for plane provisioning.
 
+Enterprise code scanning and test reports use a different path: [`CI.md`](CI.md) (`gantry verify --format sarif` and `--format junit`). Receipt ingest above stays the plane envelope (`--export`).
+
 ## Canonical context files
 
 Point every tool at the same GXT law — do not duplicate prose:
@@ -224,7 +226,7 @@ Vendor CLIs change; the **wrap line** and **context files** do not.
 ### Cursor
 
 - **Context injection:** [`.cursor/rules/opengantry-gxt-substrate.mdc`](../.cursor/rules/opengantry-gxt-substrate.mdc) (`alwaysApply: true`); [`.cursor/hooks.json`](../.cursor/hooks.json) — `sessionStart` mission scope + `beforeShellExecution` fallback guard.
-- **MCP bridge:** [`.cursor/mcp.json`](../.cursor/mcp.json) — specimen and adopters share the same payload: `"command": "./scripts/mcp-launcher.sh"`. The launcher `exec`s `node dist/cli/index.js mcp serve` when `dist/cli/index.js` exists (this repo after `npm run build`); otherwise `gantry mcp serve` from `PATH` (`@jeger-ai/opengantry@3.4.0+`). Unix-like / WSL only. Reload MCP after `mcp.json`, launcher, or package upgrades so the catalog includes `gxt_propose_contract` and `gxt_draft_legislation` accepts `contract`.
+- **MCP bridge:** [`.cursor/mcp.json`](../.cursor/mcp.json) — specimen and adopters share one byte-identical payload. There is no parity exemption for this file. Set `"command"` to `./scripts/mcp-launcher.sh`. Do not point Cursor at a raw `node` binary. The launcher `exec`s `node dist/cli/index.js mcp serve` when `dist/cli/index.js` exists (this repo after `npm run build`); otherwise `gantry mcp serve` from `PATH` (`@jeger-ai/opengantry@3.4.0+`). Unix-like / WSL only. Reload MCP after `mcp.json`, launcher, or package upgrades.
 - **Mission Architect:** `/gantry` macro (do not use `/plan` — Cursor native Plan Mode); implicit activation when user asks to **write/edit code** with no pinned mission. Follow [`.gitagent/planner/MISSION-ARCHITECT.md`](../.gitagent/planner/MISSION-ARCHITECT.md).
 - **Two-step legislation (Yolo-safe):** `gxt_propose_contract` → `gxt_interrogate` → operator answers in chat → `gxt_draft_legislation` with approved `contract` (server recomputes gaps) → human chat approval → `gxt_execute_legislation` → Planner `git commit` → `gxt_check_signature` → `gxt_pin_mission`. `gxt_start_orchestration` halts with `INTERROGATION_REQUIRED` until interrogation is complete (see `GXT_LAST_ERROR_FILE`).
 - **Host tool policy:** Cursor may require approval per tool call or auto-run all tools (“Yolo mode”). MCP draft/execute is the primary governance gate — not host settings alone.

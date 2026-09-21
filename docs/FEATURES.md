@@ -114,7 +114,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 **When to use:** Before merge, in CI, and on autonomous retry edges.
 
-**How:** [`ADOPTION.md`](ADOPTION.md) § Verify troubleshooting · [`AGENT-GRAPH.md`](AGENT-GRAPH.md)
+**How:** [`ADOPTION.md`](ADOPTION.md) § Verify troubleshooting · [`AGENT-GRAPH.md`](AGENT-GRAPH.md) · [`CI.md`](CI.md) (`--format sarif` / `--format junit`)
 
 ---
 
@@ -256,11 +256,27 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 | Compliance ledger (v3.3.0) | `gantry ledger append` / `verify` / `export --format soc2-pack`; `refs/gxt/ledger` | Digest-only orphan commit chain; CAS append; unsigned = checksum not proof ([ADR-0043](../.gitagent/out-of-scope/ADR-0043-compliance-ledger-git-ref.md)) |
 | Cross-repo mission deps (v3.3.0) | `depends_on[]`; `gantry deps fetch` / `check`; `gantry release check` | Offline same-org proof via `repository_hash` + `GANTRY_ORG_PEPPER` ([ADR-0044](../.gitagent/out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)) |
 | Mission contracts (v3.4.0) | `gantry contract propose\|check\|show`; `gantry legislate --from-intent`; MCP `gxt_propose_contract`; mission `contract` + `contract_sha256` | Planner-sealed tighten-only TMVC / forbidden / import cage; verify `contract` phase; runtime import env + `contract_violation` ([ADR-0045](../.gitagent/out-of-scope/ADR-0045-mission-contracts.md)) |
-| Experimental contract preflight | `gantry contract preflight`; MCP `gxt_preflight_contract` | Advisory skill/`tmvc_roots` hints before propose; heuristic default; optional Jev fail-open ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)) |
+| Experimental contract preflight | `gantry contract preflight`; MCP `gxt_preflight_contract` | Advisory hints before propose. Jev reads `MANIFEST.json` and fails open. See below ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)) |
 
 **When to use:** Local-first agent governance today; git-native organization control plane (policy floor, ledger, cross-repo gates) without changing the spoke-enforces / hub-aggregates model.
 
 **How:** [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md) · [`SECURITY.md`](SECURITY.md)
+
+---
+
+## Experimental contract preflight
+
+**Why:** Mission Architect still spends a turn inferring `skill_key` and path hints before the deterministic proposer. A typed classifier can suggest those hints. It must not become mission law.
+
+**What it does:** `gantry contract preflight` and MCP `gxt_preflight_contract` are advisory and read-only. They do not write `contract` or `contract_sha256` ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)). The default provider is the offline heuristic. Optional provider `jev` calls TypeSafe System One when `TYPESAFE_API_KEY` is set.
+
+Jev builds its request from the live `.gitagent/foreman/MANIFEST.json`. Every skill is included (`desc` and `tmvc_roots`). There is no hard-coded skill list.
+
+Fail-open: the fetch limit is 2000ms. A timeout, or any non-OK HTTP status including 500, returns the offline heuristic with a `jev_fallback:` rationale. The agent loop is not thrown. A missing `TYPESAFE_API_KEY` is an explicit error before any fetch.
+
+**When to use:** Before `gxt_propose_contract`, when you want skill and `tmvc_roots` hints. Treat `jev_fallback:` as the heuristic payload and keep going.
+
+**How:** [`examples/jev-preflight/README.md`](../examples/jev-preflight/README.md) · [ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)
 
 ---
 

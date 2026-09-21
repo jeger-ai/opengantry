@@ -33,7 +33,7 @@ Treat these as the **law + routing contract** for agent work. For orientation an
 ## Cursor wiring
 
 - **Rules:** this file (`alwaysApply: true`) + root `AGENTS.md`.
-- **MCP:** `.cursor/mcp.json` — `gxt_*` tools via `gantry mcp serve`.
+- **MCP:** `.cursor/mcp.json` — `gxt_*` tools via `./scripts/mcp-launcher.sh` (byte-identical specimen and adopter command; no `mcp.json` parity exemption).
 - **Hooks:** `.cursor/hooks.json` (installed by `gantry init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths (fallback for non-MCP shell paths).
 - **Pin mission:** `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml` before Agent work.
 - **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission or explicit path).

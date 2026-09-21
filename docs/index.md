@@ -24,7 +24,8 @@ OpenGantry docs map the **verification pipeline** — scope enforcement → arch
 |-----|--------------|
 | [`ADOPTION.md`](ADOPTION.md) | Install, mission graph, troubleshooting, hooks |
 | [`KATA.md`](KATA.md) | 15-minute first mission practice |
-| [`INTEGRATIONS.md`](INTEGRATIONS.md) | Wire Cursor / Claude / Codex / CI |
+| [`INTEGRATIONS.md`](INTEGRATIONS.md) | Wire Cursor / Claude / Codex / CI receipt ingest |
+| [`CI.md`](CI.md) | `gantry verify --format sarif` and `--format junit` for GitHub Code Scanning and GitLab |
 | [`DOMAINS.md`](DOMAINS.md) | Architectural boundaries (code/content) — not full-repo AST |
 | [`AGENT-GRAPH.md`](AGENT-GRAPH.md) | External executor (Hermes-style) integration |
 

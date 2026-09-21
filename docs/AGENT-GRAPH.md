@@ -39,7 +39,10 @@ All docs: [`index.md`](index.md) · Use cases: [`USE-CASES.md`](USE-CASES.md)
 | `gantry context-feed --json` | Compact `RemediationSnapshot` with `findings[]`, semantic `findings_digest`, and `gate_log_path` (no stdout/stderr) |
 | `gantry verify --json` | `VerifyFailedPayload` with `findings[]` (full debug payload) |
 | `gantry verify --format sarif` | SARIF 2.1.0 with `properties.resolution_hint` |
+| `gantry verify --format junit` | JUnit XML (`testsuites` / `gantry-verify`) |
 | MCP `gxt_verify` | Same JSON payload as `--json` |
+
+With `--format json`, `sarif`, or `junit`, diagnostics go to stderr and the document is the only stdout payload. CI wiring: [`CI.md`](CI.md).
 
 See [ADR-0032](../.gitagent/out-of-scope/ADR-0032-failure-envelope.md) and [ADR-0040](../.gitagent/out-of-scope/ADR-0040-findings-blame-reentry.md).
 
