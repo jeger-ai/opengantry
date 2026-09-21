@@ -72,7 +72,7 @@ OpenGantry dogfoods GXT in Cursor. Other agents: [`docs/INTEGRATIONS.md`](INTEGR
 ### One-time Cursor enablement
 
 1. **Hooks on** — Cursor **Settings → Hooks** (project hooks from `.cursor/hooks.json` must be enabled).
-2. **MCP on** — Cursor **Settings → MCP** (project server from `.cursor/mcp.json` → `node dist/cli/index.js mcp serve` after `npm run build`). Reload the MCP server after changing `mcp.json` or upgrading gantry so the catalog is not a stale v2 snapshot (PATH `gantry` may lack `gxt_propose_contract` and reject `contract` on `gxt_draft_legislation`).
+2. **MCP on** — Cursor **Settings → MCP** (project server from `.cursor/mcp.json` → `./scripts/mcp-launcher.sh`). The launcher prefers `node dist/cli/index.js mcp serve` when `dist/cli/index.js` exists (run `npm run build` in this repo); otherwise it runs `gantry mcp serve` from `PATH`. Reload the MCP server after changing `mcp.json`, the launcher, or upgrading gantry so the catalog is not a stale v2 snapshot (PATH `gantry` may lack `gxt_propose_contract` and reject `contract` on `gxt_draft_legislation`).
 3. **Repo setup** (same as above):
 
 ```bash

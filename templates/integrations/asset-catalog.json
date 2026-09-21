@@ -44,6 +44,7 @@
     { "targetPath": "scripts/lib/glob-match.mjs", "mode": "managed_strict", "tags": ["core"] },
     { "targetPath": "scripts/lib/manifest-validate.mjs", "mode": "managed_strict", "tags": ["core"] },
     { "targetPath": "scripts/lib/trusted-automation.mjs", "mode": "managed_strict", "tags": ["core"] },
+    { "targetPath": "scripts/mcp-launcher.sh", "mode": "managed_strict", "executable": true, "tags": ["runtime"] },
     { "targetPath": "scripts/validate-gxt.sh", "mode": "managed_strict", "executable": true, "tags": ["core"] },
     { "targetPath": "scripts/verify-pr-missions.sh", "mode": "managed_strict", "executable": true, "tags": ["ci"] },
     { "targetPath": "skills/gantry.md", "mode": "scaffold_only", "tags": ["skill-specimen"] },

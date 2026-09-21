@@ -972,3 +972,13 @@ DoD 1 MSN-0216: gxt_preflight_contract + gantry contract preflight; heuristic de
 [CONTEXT-REQUEST] path=EXECUTOR_LOG.md reason=Trace-mapped DoD for verify must land in EXECUTOR_LOG.md; not in MSN-0217 contract.tmvc_roots proposed=EXECUTOR_LOG.md | msn=MSN-0217
 [SKILL-EXEC] skill_key=substrate tool=cursor scope=.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md,.gitagent/planner/MISSION-ARCHITECT.md,templates/.gitagent/planner/MISSION-ARCHITECT.md,examples/jev-preflight/,docs/CHANGELOG.md,docs/FEATURES.md
 DoD 1 MSN-0217: ADR-0046 experimental advisory contract preflight recorded; MISSION-ARCHITECT Phase 1 optional preflight; examples/jev-preflight fixtures; CHANGELOG/FEATURES notes; RULES.md untouched; tests 764 pass 764 fail 0; OK: MCP dogfood flow passed; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0218 — Dual-mode Cursor MCP launcher
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md,scripts/mcp-launcher.sh reason=Trace-mapped DoD must land in EXECUTOR_LOG.md; gen:dogfood copies templates/scripts/mcp-launcher.sh to scripts/mcp-launcher.sh proposed=EXECUTOR_LOG.md,scripts/mcp-launcher.sh | msn=MSN-0218
+[SKILL-EXEC] skill_key=substrate tool=cursor scope=templates/scripts/mcp-launcher.sh,scripts/lib/asset-catalog-static.mjs,templates/.cursor/mcp.json,.cursor/mcp.json,docs/DEVELOPMENT.md,docs/INTEGRATIONS.md,templates/integrations/recipes/cursor.md
+DoD 1 MSN-0218: dual-mode ./scripts/mcp-launcher.sh execs node dist/cli/index.js mcp serve when dist exists else gantry mcp serve; root and template .cursor/mcp.json byte-identical; tests 764 pass 764 fail 0; OK: MCP dogfood flow passed; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN
+
+## MSN-0219 — Fail-closed mcp.json template parity
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md reason=Trace-mapped DoD for verify must land in EXECUTOR_LOG.md; not in MSN-0219 contract.tmvc_roots proposed=EXECUTOR_LOG.md | msn=MSN-0219
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/tests/template-parity.test.ts
+DoD 1 MSN-0219: removed .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption comment; tests 764 pass 764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh

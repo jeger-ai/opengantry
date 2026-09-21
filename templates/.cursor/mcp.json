@@ -1,8 +1,7 @@
 {
   "mcpServers": {
     "opengantry-gxt": {
-      "command": "gantry",
-      "args": ["mcp", "serve"]
+      "command": "./scripts/mcp-launcher.sh"
     }
   }
 }

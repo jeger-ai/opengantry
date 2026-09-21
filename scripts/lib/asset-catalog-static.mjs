@@ -36,6 +36,7 @@ export const STATIC_ASSETS = [
   { targetPath: "scripts/gxt-pin-mission.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
   { targetPath: "scripts/gxt-cursor-env.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
   { targetPath: "scripts/gxt-shell-agent.sh", mode: "managed_strict", executable: true, tags: ["runtime", "claude-code", "codex-cli", "opencode"] },
+  { targetPath: "scripts/mcp-launcher.sh", mode: "managed_strict", executable: true, tags: ["runtime"] },
 ];
 
 /** Repo-only scripts — never ship via init catalog (OpenGantry specimen dev gates). */
