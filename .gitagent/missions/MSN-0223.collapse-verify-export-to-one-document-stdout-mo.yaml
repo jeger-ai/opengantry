@@ -37,6 +37,7 @@ interrogation:
       - ADR-0027
 interrogation_sha256: 56481274484f0e7d9b27b076e460c35a1eed8290fbd1202b22e734e9d0f2ccf3
 declared_paths:
+  - .gitagent/missions/MSN-0223.collapse-verify-export-to-one-document-stdout-mo.yaml
   - src/cli/
 contract:
   tmvc_roots:
