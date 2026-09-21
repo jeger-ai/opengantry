@@ -1,6 +1,7 @@
 import { logInfo, setExitCode } from "../lib/cli-io.js";
+import { setStructuredOutputMode } from "../lib/output-context.js";
 import { initFailurePayload } from "../lib/verify-payload.js";
-import { emitVerifyJson } from "../lib/verify-presenters.js";
+import { emitVerifyStructuredExport } from "../lib/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify-options.js";
 import { resolveDefaultChangedBaseRef } from "../lib/mission-changed.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
@@ -15,11 +16,15 @@ import { parseMissionFile } from "../lib/missions/parser.js";
 
 export type { VerifyOptions } from "../lib/verify-options.js";
 
-/** Single verify boundary reporter: JSON payload when --json, canonical human error otherwise. */
+function structuredVerifyOutput(options: VerifyOptions): boolean {
+  return options.json === true || options.format !== undefined;
+}
+
+/** Boundary reporter: structured document on stdout, human error otherwise. */
 function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
-  if (options.json) {
+  if (structuredVerifyOutput(options)) {
     const payload = initFailurePayload(e);
-    emitVerifyJson(payload, options);
+    emitVerifyStructuredExport(payload, options);
     setExitCode(payload.exit_code);
     return;
   }
@@ -27,10 +32,10 @@ function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
 }
 
 function assertVerifyOptionsCompatible(options: VerifyOptions): void {
-  if (options.json === true && options.fix === true) {
+  if (options.fix === true && structuredVerifyOutput(options)) {
     throw new GantryUserError(
       "INVALID_ARGUMENT",
-      "The --fix flag cannot be used with --json. Automated repair is not supported in structured output mode.",
+      "The --fix flag cannot be used with structured output (--json or --format json|sarif|junit). Automated repair is not supported in structured output mode.",
       undefined,
       2,
     );
@@ -98,30 +103,35 @@ function recordVerifyAttempt(root: string, options: VerifyOptions, ok: boolean, 
 }
 
 export async function runVerify(options: VerifyOptions): Promise<void> {
+  setStructuredOutputMode(structuredVerifyOutput(options));
   try {
-    assertVerifyOptionsCompatible(options);
-  } catch (e) {
-    reportVerifyBoundaryError(e, options);
-    return;
-  }
-
-  if (options.changedMissions) {
     try {
-      await runVerifyChangedMissions(options);
+      assertVerifyOptionsCompatible(options);
+    } catch (e) {
+      reportVerifyBoundaryError(e, options);
+      return;
+    }
+
+    if (options.changedMissions) {
+      try {
+        await runVerifyChangedMissions(options);
+      } catch (e) {
+        reportVerifyBoundaryError(e, options);
+      }
+      return;
+    }
+
+    try {
+      const result = await runVerifyCore(options);
+      const { root } = loadWorkspace();
+      recordVerifyAttempt(root, options, result.ok, result.exitCode);
+      if (!result.ok) {
+        setExitCode(result.exitCode);
+      }
     } catch (e) {
       reportVerifyBoundaryError(e, options);
     }
-    return;
-  }
-
-  try {
-    const result = await runVerifyCore(options);
-    const { root } = loadWorkspace();
-    recordVerifyAttempt(root, options, result.ok, result.exitCode);
-    if (!result.ok) {
-      setExitCode(result.exitCode);
-    }
-  } catch (e) {
-    reportVerifyBoundaryError(e, options);
+  } finally {
+    setStructuredOutputMode(false);
   }
 }

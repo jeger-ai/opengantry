@@ -109,8 +109,9 @@ interface VerifyCliOptions {
 function parseVerifyExportFormat(raw?: string): VerifyExportFormat | undefined {
   if (!raw?.trim()) return undefined;
   const v = raw.trim().toLowerCase();
+  if (v === "text") return undefined;
   if (v === "json" || v === "sarif" || v === "junit") return v;
-  throw new Error(`gantry verify: --format must be json, sarif, or junit (got ${raw})`);
+  throw new Error(`gantry verify: --format must be text, json, sarif, or junit (got ${raw})`);
 }
 
 export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
@@ -279,7 +280,7 @@ function registerVerifyCommand(program: Command): void {
     .option("--non-interactive", "With --fix: print structured hints without prompts")
     .option("--json", "Emit structured JSON (alias for --format json). Incompatible with --fix.")
     .option("--json-out <path>", "Write structured JSON payload to file (pipe-safe; no stdout JSON)")
-    .option("--format <fmt>", "Export format: json | sarif | junit")
+    .option("--format <fmt>", "Export format: text (default) | json | sarif | junit")
     .option(
       "--scan-depth <number>",
       "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",

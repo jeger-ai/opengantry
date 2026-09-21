@@ -1,6 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildJUnitXml, buildSarifDocument, buildVerifyExportDocument } from "../lib/verify-export.js";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {
+  buildJUnitXml,
+  buildSarifDocument,
+  buildVerifyExportDocument,
+  GENERIC_SARIF_FILE,
+  JUNIT_SUITE_NAME,
+} from "../lib/verify-export.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "../lib/verify-finding.js";
 
@@ -125,4 +134,120 @@ test("verify-export: json format round-trips payload", () => {
   const payload = { status: "passed" as const, phase: "full" as const, exit_code: 0 as const };
   const doc = buildVerifyExportDocument(payload, "json");
   assert.deepEqual(JSON.parse(doc), payload);
+});
+
+function sarifLocations(sarif: Record<string, unknown>): Array<Record<string, unknown>> {
+  const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
+  const results = run.results as Array<Record<string, unknown>>;
+  return (results[0]?.locations as Array<Record<string, unknown>>) ?? [];
+}
+
+test("verify-export: SARIF file finding keeps a line region", () => {
+  const sarif = buildSarifDocument({
+    status: "failed",
+    phase: "contract",
+    message: "import violation",
+    error_code: GXT_ERROR.GATE_FAILED,
+    fix_hints: [],
+    next_actions: [],
+    exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [verifyFinding("contract", "fix import", { offending_file: "src/foo.ts", line: 4 })],
+  });
+  const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
+  const artifact = physical.artifactLocation as Record<string, string>;
+  assert.equal(artifact.uri, "src/foo.ts");
+  assert.equal((physical.region as Record<string, number>).startLine, 4);
+});
+
+test("verify-export: SARIF omits region when offending_file is a directory", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-sarif-dir-"));
+  fs.mkdirSync(path.join(dest, "src", "new-module"), { recursive: true });
+  const base = {
+    status: "failed" as const,
+    phase: "contract",
+    message: "untracked directory",
+    error_code: GXT_ERROR.GATE_FAILED,
+    fix_hints: [],
+    next_actions: [],
+    exit_code: 1 as const,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+  };
+  for (const offending_file of ["src/new-module/", "src/new-module"]) {
+    const sarif = buildSarifDocument(
+      { ...base, findings: [verifyFinding("contract", "remove dir", { offending_file })] },
+      { root: dest },
+    );
+    const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
+    const artifact = physical.artifactLocation as Record<string, string>;
+    assert.equal(artifact.uri, offending_file);
+    assert.equal(physical.region, undefined);
+  }
+});
+
+test("verify-export: SARIF generic failure points at the mission file", () => {
+  const sarif = buildSarifDocument({
+    status: "failed",
+    phase: "git_proof",
+    message: "missing Planner stamp",
+    error_code: GXT_ERROR.GATE_FAILED,
+    fix_hints: [],
+    next_actions: [],
+    exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    mission_file_path: ".gitagent/missions/m.yaml",
+    findings: [verifyFinding("git_proof", "missing Planner stamp")],
+  });
+  const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
+  const artifact = physical.artifactLocation as Record<string, string>;
+  assert.equal(artifact.uri, ".gitagent/missions/m.yaml");
+  assert.equal((physical.region as Record<string, number>).startLine, 1);
+  assert.equal((sarif as { version: string }).version, "2.1.0");
+});
+
+test("verify-export: SARIF gateless failure falls back to MANIFEST.json", () => {
+  const sarif = buildSarifDocument({
+    status: "failed",
+    phase: "gate",
+    message: "GATE FAILED",
+    error_code: GXT_ERROR.GATE_FAILED,
+    fix_hints: [],
+    next_actions: [],
+    exit_code: 1,
+    envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+    findings: [],
+  });
+  const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
+  const artifact = physical.artifactLocation as Record<string, string>;
+  assert.equal(artifact.uri, GENERIC_SARIF_FILE);
+  assert.equal((physical.region as Record<string, number>).startLine, 1);
+});
+
+test("verify-export: JUnit phases use testsuites root and escape failure text", () => {
+  const raw = `a & b <c> "d" 'e'`;
+  const xml = buildJUnitXml(
+    {
+      status: "failed",
+      phase: "gate",
+      message: raw,
+      error_code: GXT_ERROR.GATE_FAILED,
+      fix_hints: [],
+      next_actions: [],
+      exit_code: 1,
+      envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+      findings: [],
+    },
+    [
+      { name: "git_proof", status: "passed" },
+      { name: "gate", status: "failed", failure: raw },
+      { name: "trace", status: "skipped" },
+    ],
+  );
+  assert.match(xml, /^<\?xml/);
+  assert.match(xml, /<testsuites /);
+  assert.match(xml, new RegExp(`<testsuite name="${JUNIT_SUITE_NAME}"`));
+  assert.match(xml, /name="git_proof"\/>/);
+  assert.match(xml, /name="trace"><skipped\/><\/testcase>/);
+  const escaped = "a &amp; b &lt;c&gt; &quot;d&quot; &apos;e&apos;";
+  assert.match(xml, new RegExp(`<failure message="${escaped}">${escaped}</failure>`));
 });

@@ -11,7 +11,12 @@ import { isGantryUserError } from "./errors.js";
 import { appendSurgeonMutationLog } from "./surgeon.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
-import { buildVerifyExportDocument, type VerifyExportFormat } from "./verify-export.js";
+import type { VerifyPhaseTiming } from "./verify-phase-clock.js";
+import {
+  buildVerifyExportDocument,
+  type JUnitPhaseCase,
+  type VerifyExportFormat,
+} from "./verify-export.js";
 import fs from "node:fs";
 import path from "node:path";
 import {
@@ -126,7 +131,7 @@ function presentationFromPersistedSnapshot(
 
 export function presentBreakGlassJson(ctx: VerifyPresentContext): VerifyPresentResult {
   const payload = buildBreakGlassPayload(ctx.root, ctx.mission, ctx.options);
-  emitStructuredPayload(payload, ctx.options);
+  emitStructuredPayload(payload, ctx.options, { root: ctx.root });
   return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
 }
 
@@ -148,16 +153,40 @@ export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresent
   return { ok: true, exitCode: 0 };
 }
 
-function emitStructuredPayload(payload: VerifyResultPayload, options: VerifyPresentContext["options"]): void {
+function junitPhasesFor(timings: VerifyPhaseTiming[], payload: VerifyResultPayload): JUnitPhaseCase[] {
+  const failureText = payload.status === "failed" ? payload.message : undefined;
+  return timings.map((row) => ({
+    name: row.id,
+    status: row.status,
+    ...(row.status === "failed" && failureText ? { failure: failureText } : {}),
+  }));
+}
+
+function emitStructuredPayload(
+  payload: VerifyResultPayload,
+  options: VerifyPresentContext["options"],
+  extras?: { root?: string; phases?: JUnitPhaseCase[] },
+): void {
   const format: VerifyExportFormat = resolveVerifyExportFormat(options) ?? "json";
-  const doc = buildVerifyExportDocument(payload, format);
+  const doc = buildVerifyExportDocument(payload, format, {
+    root: extras?.root,
+    junitPhases: extras?.phases,
+  });
   const jsonOut = options.jsonOut?.trim();
   if (jsonOut) {
     fs.mkdirSync(path.dirname(jsonOut), { recursive: true });
     fs.writeFileSync(jsonOut, `${doc}\n`, "utf8");
     return;
   }
-  logInfo(doc);
+  console.log(doc);
+}
+
+/** Structured verify document on stdout. Diagnostics stay on stderr via structured output mode. */
+export function emitVerifyStructuredExport(
+  payload: VerifyResultPayload,
+  options: VerifyPresentContext["options"],
+): void {
+  emitStructuredPayload(payload, options);
 }
 
 /** Attach resolved mission + receipt path from the loaded verify context. */
@@ -183,7 +212,10 @@ export function presentJsonFromResult(
       buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, ctx.options, result),
       ctx,
     );
-    emitStructuredPayload(payload, ctx.options);
+    emitStructuredPayload(payload, ctx.options, {
+      root: ctx.root,
+      phases: junitPhasesFor(result.phaseTimings, payload),
+    });
     return { ok: true, exitCode: 0, remediation: null };
   }
   const failure = result as VerifyPhaseFailure;
@@ -205,7 +237,10 @@ export function presentJsonFromResult(
     failure,
   });
   const fullPayload = withContextFields(payload, ctx);
-  emitStructuredPayload(fullPayload, ctx.options);
+  emitStructuredPayload(fullPayload, ctx.options, {
+    root: ctx.root,
+    phases: junitPhasesFor(result.phaseTimings, fullPayload),
+  });
   return { ok: false, exitCode: payload.exit_code, remediation: snapshot };
 }
 
@@ -219,7 +254,7 @@ export function presentJsonInitFailure(
   } catch {
     // best-effort remediation feed
   }
-  emitStructuredPayload(payload, ctx.options);
+  emitStructuredPayload(payload, ctx.options, { root: ctx.root });
   return { ok: false, exitCode: payload.exit_code };
 }
 

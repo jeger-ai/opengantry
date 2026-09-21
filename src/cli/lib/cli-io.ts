@@ -1,8 +1,12 @@
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
-import { shouldEmitError, shouldEmitInfo, shouldEmitWarn } from "./output-context.js";
+import { isStructuredOutputMode, shouldEmitError, shouldEmitInfo, shouldEmitWarn } from "./output-context.js";
 
 export function logInfo(message: string): void {
+  if (isStructuredOutputMode()) {
+    console.error(message);
+    return;
+  }
   if (!shouldEmitInfo()) return;
   console.log(message);
 }

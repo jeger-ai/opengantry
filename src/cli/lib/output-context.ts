@@ -3,6 +3,7 @@ import { resolveAudience } from "./audience-output.js";
 
 let activeAudience: OutputAudience | undefined;
 let jsonOutputMode = false;
+let structuredOutputMode = false;
 
 const GXT_ERROR_PREFIX_RE = /\[GXT_[A-Z0-9_]+\]/;
 
@@ -10,6 +11,7 @@ const GXT_ERROR_PREFIX_RE = /\[GXT_[A-Z0-9_]+\]/;
 export function resetOutputContext(): void {
   activeAudience = undefined;
   jsonOutputMode = false;
+  structuredOutputMode = false;
 }
 
 export function setOutputAudience(audience: OutputAudience | undefined): void {
@@ -26,6 +28,15 @@ export function setJsonOutputMode(enabled: boolean): void {
 
 export function isJsonOutputMode(): boolean {
   return jsonOutputMode;
+}
+
+/** Structured verify export: diagnostics go to stderr so stdout stays a pure document. */
+export function setStructuredOutputMode(enabled: boolean): void {
+  structuredOutputMode = enabled;
+}
+
+export function isStructuredOutputMode(): boolean {
+  return structuredOutputMode;
 }
 
 export function isVerifierAudience(): boolean {

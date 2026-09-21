@@ -15,12 +15,14 @@ import {
   writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
+import { logInfo } from "../lib/cli-io.js";
+import { resetOutputContext, setStructuredOutputMode } from "../lib/output-context.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 async function runVerifyFormatInRepo(
   dest: string,
   format: VerifyExportFormat,
-): Promise<{ stdout: string; exitCode: number | undefined }> {
+): Promise<{ stdout: string; stderr: string; exitCode: number | undefined }> {
   const prevCwd = process.cwd();
   return withPlannerEnvAsync(async () => {
     process.chdir(dest);
@@ -34,7 +36,7 @@ async function runVerifyFormatInRepo(
         });
       });
       const exitCode = typeof process.exitCode === "number" ? process.exitCode : undefined;
-      return { stdout: output.stdout.trim(), exitCode };
+      return { stdout: output.stdout.trim(), stderr: output.stderr, exitCode };
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;
@@ -42,11 +44,30 @@ async function runVerifyFormatInRepo(
   });
 }
 
+test("runVerify --format sarif: stdout is a document and diagnostics stay on stderr", async () => {
+  resetOutputContext();
+  setStructuredOutputMode(true);
+  try {
+    const { output } = await captureConsoleAsync(async () => {
+      logInfo("gantry verify: debug setup");
+      console.log('{"version":"2.1.0"}');
+    });
+    assert.equal(output.stdout.trim(), '{"version":"2.1.0"}');
+    assert.match(output.stderr, /gantry verify: debug setup/);
+    assert.doesNotMatch(output.stdout, /gantry verify:/);
+    assert.doesNotMatch(output.stdout, /gantry:/);
+  } finally {
+    resetOutputContext();
+  }
+});
+
 test("runVerify --format sarif: pass emits valid SARIF 2.1.0 document", async () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-sarif-pass-"));
   writeMiniGantryRepo(dest, getRepoRoot());
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const { stdout, exitCode } = await runVerifyFormatInRepo(dest, "sarif");
+  assert.doesNotMatch(stdout, /gantry verify:/);
+  assert.doesNotMatch(stdout, /gantry:/);
   const sarif = JSON.parse(stdout) as Record<string, unknown>;
   assert.equal(sarif.version, "2.1.0");
   const runs = sarif.runs as Record<string, unknown>[];
@@ -86,7 +107,34 @@ test("runVerify --format junit: gate failure includes failure element and exits 
   writeMiniGantryMission(dest, "MSN-0999", "evidence A", `bash -lc "exit 1"`, "DONE", "m.yaml");
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
   const { stdout, exitCode } = await runVerifyFormatInRepo(dest, "junit");
+  assert.match(stdout, /<testsuites/);
+  assert.match(stdout, /<testsuite name="gantry-verify"/);
   assert.match(stdout, /<failure/);
   assert.match(stdout, /name="gate"/);
   assert.equal(exitCode, 1);
+});
+
+test("runVerify without --format keeps the human git-proof line", async () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-text-"));
+  writeMiniGantryRepo(dest, getRepoRoot());
+  gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
+  const prevCwd = process.cwd();
+  const { stdout } = await withPlannerEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      const { output } = await captureConsoleAsync(async () => {
+        await runVerify({
+          mission: ".gitagent/missions/m.yaml",
+          executorLog: "EXECUTOR_LOG.md",
+        });
+      });
+      return { stdout: output.stdout };
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
+  assert.match(stdout, /git-proof OK/);
+  assert.doesNotMatch(stdout, /"version": "2.1.0"/);
+  assert.doesNotMatch(stdout, /<testsuites/);
 });

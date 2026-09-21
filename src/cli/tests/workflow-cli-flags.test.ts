@@ -87,6 +87,13 @@ test("verifyOptionsFromCli: requireInterrogation is false when unset (not undefi
   }
 });
 
+test("verifyOptionsFromCli: --format text is human output and sarif is kept", () => {
+  assert.equal(verifyOptionsFromCli({ format: "text" }).format, undefined);
+  assert.equal(verifyOptionsFromCli({ format: "sarif" }).format, "sarif");
+  assert.equal(verifyOptionsFromCli({ format: "junit" }).format, "junit");
+  assert.throws(() => verifyOptionsFromCli({ format: "html" }), /--format must be text, json, sarif, or junit/);
+});
+
 test("context-request commander maps --stage-worker-log to stageWorkerLog", () => {
   const cmd = new Command("context-request");
   cmd.requiredOption("--reason <text>", "reason");
