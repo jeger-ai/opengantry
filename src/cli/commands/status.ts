@@ -1,4 +1,4 @@
-import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, logWarn, setExitCode, writeStdout } from "../lib/cli-io.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
@@ -70,7 +70,7 @@ export function runStatus(options: StatusOptions = {}): void {
   const report = buildStatusReport(root, manifest);
 
   if (options.json) {
-    logInfo(JSON.stringify(report, null, 2));
+    writeStdout(JSON.stringify(report, null, 2));
     if (report.exit_code !== 0) setExitCode(report.exit_code);
     return;
   }

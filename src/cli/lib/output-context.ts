@@ -2,16 +2,14 @@ import type { OutputAudience } from "./audience-output.js";
 import { resolveAudience } from "./audience-output.js";
 
 let activeAudience: OutputAudience | undefined;
-let jsonOutputMode = false;
-let structuredOutputMode = false;
+let documentStdoutDepth = 0;
 
 const GXT_ERROR_PREFIX_RE = /\[GXT_[A-Z0-9_]+\]/;
 
 /** Reset per process invocation (tests may call multiple commands in one process). */
 export function resetOutputContext(): void {
   activeAudience = undefined;
-  jsonOutputMode = false;
-  structuredOutputMode = false;
+  documentStdoutDepth = 0;
 }
 
 export function setOutputAudience(audience: OutputAudience | undefined): void {
@@ -22,21 +20,20 @@ export function getOutputAudience(): OutputAudience | undefined {
   return activeAudience;
 }
 
-export function setJsonOutputMode(enabled: boolean): void {
-  jsonOutputMode = enabled;
+/**
+ * Document stdout depth. Diagnostics go to stderr while the count is above zero.
+ * Callers enter and leave in pairs so overlapping commands cannot clear each other.
+ */
+export function enterDocumentStdout(): void {
+  documentStdoutDepth += 1;
 }
 
-export function isJsonOutputMode(): boolean {
-  return jsonOutputMode;
+export function leaveDocumentStdout(): void {
+  if (documentStdoutDepth > 0) documentStdoutDepth -= 1;
 }
 
-/** Structured verify export: diagnostics go to stderr so stdout stays a pure document. */
-export function setStructuredOutputMode(enabled: boolean): void {
-  structuredOutputMode = enabled;
-}
-
-export function isStructuredOutputMode(): boolean {
-  return structuredOutputMode;
+export function isDocumentStdout(): boolean {
+  return documentStdoutDepth > 0;
 }
 
 export function isVerifierAudience(): boolean {
@@ -44,18 +41,18 @@ export function isVerifierAudience(): boolean {
 }
 
 export function shouldEmitInfo(): boolean {
-  if (jsonOutputMode) return true;
+  if (isDocumentStdout()) return true;
   return !isVerifierAudience();
 }
 
 export function shouldEmitWarn(): boolean {
-  if (jsonOutputMode) return true;
+  if (isDocumentStdout()) return true;
   return !isVerifierAudience();
 }
 
 /** Verifier mode: stderr only when message carries a stable GXT error code. */
 export function shouldEmitError(message: string): boolean {
-  if (jsonOutputMode) return true;
+  if (isDocumentStdout()) return true;
   if (!isVerifierAudience()) return true;
   return GXT_ERROR_PREFIX_RE.test(message);
 }

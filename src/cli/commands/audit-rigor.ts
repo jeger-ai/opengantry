@@ -1,5 +1,5 @@
 import path from "node:path";
-import { logInfo, setExitCode } from "../lib/cli-io.js";
+import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { runAuditRigorChecks } from "../lib/audit-rigor.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
@@ -18,7 +18,7 @@ export function runAuditRigorCommand(options: AuditRigorCliOptions = {}): void {
   const report = runAuditRigorChecks(workspaceRoot, { strict: options.strict });
 
   if (options.json) {
-    logInfo(JSON.stringify(report, null, 2));
+    writeStdout(JSON.stringify(report, null, 2));
   } else {
     logInfo(`audit-rigor: workspace=${report.workspace_root}`);
     for (const line of report.lines) {

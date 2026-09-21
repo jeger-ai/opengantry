@@ -10,7 +10,6 @@ import { CLI_NAME } from "./constants.js";
 import { logFixHint } from "./fix-hints.js";
 import type { VerifyPhaseSuccess } from "./verify-engine.js";
 import type { VerifyFailurePresentation } from "./verify-failure-normalize.js";
-import type { VerifyResultPayload } from "./verify-payload.js";
 import type { AudienceTaggedStep } from "./verify-hints.js";
 
 export type CommandReporterChannel = "human" | "json" | "silent";
@@ -56,11 +55,6 @@ export class CommandReporter {
   emitFixHint(hint: string): void {
     if (this.channel === "silent" || this.channel === "json") return;
     logFixHint(hint);
-  }
-
-  emitJsonPayload(payload: VerifyResultPayload): void {
-    if (this.channel === "silent") return;
-    logInfo(JSON.stringify(payload, null, 2));
   }
 
   emitVerifySuccess(result: VerifyPhaseSuccess, _missionArg: string): void {

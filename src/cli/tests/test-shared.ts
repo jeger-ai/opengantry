@@ -8,9 +8,11 @@ export interface CapturedConsole {
   stderr: string;
 }
 
-function swapCapturedConsole<T>(
-  run: () => T,
-): { result: T; output: CapturedConsole } {
+function installCapture(): {
+  stdoutChunks: string[];
+  stderrChunks: string[];
+  restore: () => void;
+} {
   const stdoutChunks: string[] = [];
   const stderrChunks: string[] = [];
   const origLog = console.log;
@@ -21,52 +23,48 @@ function swapCapturedConsole<T>(
   console.error = (...args: unknown[]) => {
     stderrChunks.push(args.map(String).join(" "));
   };
+  return {
+    stdoutChunks,
+    stderrChunks,
+    restore: () => {
+      console.log = origLog;
+      console.error = origError;
+    },
+  };
+}
+
+function capturedOutput(stdoutChunks: string[], stderrChunks: string[]): CapturedConsole {
+  return {
+    stdout: stdoutChunks.join("\n"),
+    stderr: stderrChunks.join("\n"),
+  };
+}
+
+function swapCapturedConsole<T>(
+  run: () => T,
+): { result: T; output: CapturedConsole } {
+  const cap = installCapture();
   try {
-    const result = run();
-    return {
-      result,
-      output: {
-        stdout: stdoutChunks.join("\n"),
-        stderr: stderrChunks.join("\n"),
-      },
-    };
+    return { result: run(), output: capturedOutput(cap.stdoutChunks, cap.stderrChunks) };
   } finally {
-    console.log = origLog;
-    console.error = origError;
+    cap.restore();
   }
 }
 
-/** Capture console.log / console.error for a synchronous callback. */
+/** Capture console and stdout payload writes for a synchronous callback. */
 export function captureConsole<T>(fn: () => T): { result: T; output: CapturedConsole } {
   return swapCapturedConsole(fn);
 }
 
-/** Capture console.log / console.error for an async callback. */
+/** Capture console and stdout payload writes for an async callback. */
 export async function captureConsoleAsync<T>(
   fn: () => Promise<T>,
 ): Promise<{ result: T; output: CapturedConsole }> {
-  const stdoutChunks: string[] = [];
-  const stderrChunks: string[] = [];
-  const origLog = console.log;
-  const origError = console.error;
-  console.log = (...args: unknown[]) => {
-    stdoutChunks.push(args.map(String).join(" "));
-  };
-  console.error = (...args: unknown[]) => {
-    stderrChunks.push(args.map(String).join(" "));
-  };
+  const cap = installCapture();
   try {
-    const result = await fn();
-    return {
-      result,
-      output: {
-        stdout: stdoutChunks.join("\n"),
-        stderr: stderrChunks.join("\n"),
-      },
-    };
+    return { result: await fn(), output: capturedOutput(cap.stdoutChunks, cap.stderrChunks) };
   } finally {
-    console.log = origLog;
-    console.error = origError;
+    cap.restore();
   }
 }
 

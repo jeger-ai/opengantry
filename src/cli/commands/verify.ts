@@ -1,7 +1,7 @@
 import { logInfo, setExitCode } from "../lib/cli-io.js";
-import { setStructuredOutputMode } from "../lib/output-context.js";
+import { enterDocumentStdout, leaveDocumentStdout } from "../lib/output-context.js";
 import { initFailurePayload } from "../lib/verify-payload.js";
-import { emitVerifyStructuredExport } from "../lib/verify-presenters.js";
+import { emitVerifyDocument } from "../lib/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify-options.js";
 import { resolveDefaultChangedBaseRef } from "../lib/mission-changed.js";
 import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
@@ -24,7 +24,13 @@ function structuredVerifyOutput(options: VerifyOptions): boolean {
 function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
   if (structuredVerifyOutput(options)) {
     const payload = initFailurePayload(e);
-    emitVerifyStructuredExport(payload, options);
+    let root: string | undefined;
+    try {
+      root = loadWorkspace().root;
+    } catch {
+      root = undefined;
+    }
+    emitVerifyDocument(payload, options, root === undefined ? {} : { root });
     setExitCode(payload.exit_code);
     return;
   }
@@ -103,7 +109,8 @@ function recordVerifyAttempt(root: string, options: VerifyOptions, ok: boolean, 
 }
 
 export async function runVerify(options: VerifyOptions): Promise<void> {
-  setStructuredOutputMode(structuredVerifyOutput(options));
+  const structured = structuredVerifyOutput(options);
+  if (structured) enterDocumentStdout();
   try {
     try {
       assertVerifyOptionsCompatible(options);
@@ -132,6 +139,6 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
       reportVerifyBoundaryError(e, options);
     }
   } finally {
-    setStructuredOutputMode(false);
+    if (structured) leaveDocumentStdout();
   }
 }

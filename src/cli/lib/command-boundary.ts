@@ -1,5 +1,5 @@
 import { CLI_NAME } from "./constants.js";
-import { errorMessage, logError, logInfo, setExitCode } from "./cli-io.js";
+import { errorMessage, logError, logInfo, setExitCode, writeStdout } from "./cli-io.js";
 import { getRepoRoot } from "./git.js";
 import { isGantryUserError, reportUserFacingError, userFacingErrorToJson } from "./errors.js";
 
@@ -18,7 +18,7 @@ export interface CliFailureEnvelope {
 
 /** Sole serializer for stdout JSON from commands (success and failure). */
 export function emitCliJson(payload: unknown): void {
-  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  writeStdout(JSON.stringify(payload, null, 2));
 }
 
 export function cliFailureEnvelope(e: unknown): CliFailureEnvelope {

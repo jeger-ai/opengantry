@@ -16,7 +16,7 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { logInfo } from "../lib/cli-io.js";
-import { resetOutputContext, setStructuredOutputMode } from "../lib/output-context.js";
+import { enterDocumentStdout, resetOutputContext } from "../lib/output-context.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 async function runVerifyFormatInRepo(
@@ -46,7 +46,7 @@ async function runVerifyFormatInRepo(
 
 test("runVerify --format sarif: stdout is a document and diagnostics stay on stderr", async () => {
   resetOutputContext();
-  setStructuredOutputMode(true);
+  enterDocumentStdout();
   try {
     const { output } = await captureConsoleAsync(async () => {
       logInfo("gantry verify: debug setup");

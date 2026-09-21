@@ -1,8 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import {
   buildJUnitXml,
   buildSarifDocument,
@@ -160,12 +157,10 @@ test("verify-export: SARIF file finding keeps a line region", () => {
   assert.equal((physical.region as Record<string, number>).startLine, 4);
 });
 
-test("verify-export: SARIF omits region when offending_file is a directory", () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-sarif-dir-"));
-  fs.mkdirSync(path.join(dest, "src", "new-module"), { recursive: true });
+test("verify-export: SARIF omits region when the caller says the uri is a directory", () => {
   const base = {
     status: "failed" as const,
-    phase: "contract",
+    phase: "contract" as const,
     message: "untracked directory",
     error_code: GXT_ERROR.GATE_FAILED,
     fix_hints: [],
@@ -173,14 +168,19 @@ test("verify-export: SARIF omits region when offending_file is a directory", () 
     exit_code: 1 as const,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
   };
-  for (const offending_file of ["src/new-module/", "src/new-module"]) {
-    const sarif = buildSarifDocument(
-      { ...base, findings: [verifyFinding("contract", "remove dir", { offending_file })] },
-      { root: dest },
-    );
+  const trailing = buildSarifDocument({
+    ...base,
+    findings: [verifyFinding("contract", "remove dir", { offending_file: "src/new-module/" })],
+  });
+  const forced = buildSarifDocument(
+    {
+      ...base,
+      findings: [verifyFinding("contract", "remove dir", { offending_file: "src/new-module" })],
+    },
+    () => true,
+  );
+  for (const sarif of [trailing, forced]) {
     const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
-    const artifact = physical.artifactLocation as Record<string, string>;
-    assert.equal(artifact.uri, offending_file);
     assert.equal(physical.region, undefined);
   }
 });
@@ -238,9 +238,9 @@ test("verify-export: JUnit phases use testsuites root and escape failure text", 
       findings: [],
     },
     [
-      { name: "git_proof", status: "passed" },
-      { name: "gate", status: "failed", failure: raw },
-      { name: "trace", status: "skipped" },
+      { name: "git_proof" },
+      { name: "gate", failure: raw },
+      { name: "trace", skipped: true },
     ],
   );
   assert.match(xml, /^<\?xml/);

@@ -1,9 +1,14 @@
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
-import { isStructuredOutputMode, shouldEmitError, shouldEmitInfo, shouldEmitWarn } from "./output-context.js";
+import { isDocumentStdout, shouldEmitError, shouldEmitInfo, shouldEmitWarn } from "./output-context.js";
+
+/** Pipeline payload. Uses `console.log` so it stays off the diagnostic `logInfo` path. */
+export function writeStdout(document: string): void {
+  console.log(document);
+}
 
 export function logInfo(message: string): void {
-  if (isStructuredOutputMode()) {
+  if (isDocumentStdout()) {
     console.error(message);
     return;
   }

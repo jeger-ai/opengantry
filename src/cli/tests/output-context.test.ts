@@ -2,10 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   applyAudienceFromArgv,
+  enterDocumentStdout,
+  isDocumentStdout,
+  leaveDocumentStdout,
   resetOutputContext,
   shouldEmitError,
   shouldEmitInfo,
-  setJsonOutputMode,
   setOutputAudience,
 } from "../lib/output-context.js";
 import { resolveAudience } from "../lib/audience-output.js";
@@ -29,12 +31,24 @@ test("verifier mode: suppress info and non-GXT errors", () => {
   assert.equal(shouldEmitError("[GXT_GATE_FAILED] verify failed"), true);
 });
 
-test("json mode: emits despite verifier audience", () => {
+test("document stdout: emits despite verifier audience", () => {
   resetOutputContext();
   setOutputAudience("verifier");
-  setJsonOutputMode(true);
+  enterDocumentStdout();
   assert.equal(shouldEmitInfo(), true);
   assert.equal(shouldEmitError("plain failure"), true);
+  resetOutputContext();
+});
+
+test("document stdout depth survives an inner leave", () => {
+  resetOutputContext();
+  enterDocumentStdout();
+  enterDocumentStdout();
+  assert.equal(isDocumentStdout(), true);
+  leaveDocumentStdout();
+  assert.equal(isDocumentStdout(), true);
+  leaveDocumentStdout();
+  assert.equal(isDocumentStdout(), false);
 });
 
 test("applyAudienceFromArgv: rejects invalid role", () => {

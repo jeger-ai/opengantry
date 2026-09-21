@@ -1,5 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
 import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "./constants.js";
 import { CLI_VERSION } from "./version.gen.js";
 import type { VerifyResultPayload } from "./verify-payload.js";
@@ -14,18 +12,17 @@ export const GENERIC_SARIF_FILE = ".gitagent/foreman/MANIFEST.json";
 
 export const JUNIT_SUITE_NAME = "gantry-verify";
 
-export interface JUnitPhaseCase {
+export interface JUnitCase {
   name: string;
-  status: "passed" | "failed" | "skipped";
-  /** Raw verify error. Used for the `<failure>` attribute and body when status is failed. */
   failure?: string;
+  skipped?: boolean;
 }
 
 export interface VerifyExportBuildOptions {
-  /** Repo root for `fs.statSync` directory checks on `offending_file`. */
-  root?: string;
+  /** Directory check supplied by the caller. Trailing-slash URIs are directories either way. */
+  isDirectory?: (uri: string) => boolean;
   /** One JUnit testcase per verify phase. Omit to keep the payload-derived phase list. */
-  junitPhases?: JUnitPhaseCase[];
+  junitCases?: JUnitCase[];
 }
 
 /** Escape text for both XML attributes and element bodies. */
@@ -47,9 +44,9 @@ export function buildVerifyExportDocument(
     case "json":
       return JSON.stringify(payload, null, 2);
     case "sarif":
-      return JSON.stringify(buildSarifDocument(payload, options), null, 2);
+      return JSON.stringify(buildSarifDocument(payload, options?.isDirectory), null, 2);
     case "junit":
-      return buildJUnitXml(payload, options?.junitPhases);
+      return buildJUnitXml(payload, options?.junitCases);
     default: {
       const _exhaustive: never = format;
       return _exhaustive;
@@ -78,19 +75,17 @@ function sarifRegionForFinding(finding: {
   return region;
 }
 
-function uriIsDirectory(uri: string, root?: string): boolean {
+function directoryUri(uri: string, isDirectory?: (uri: string) => boolean): boolean {
   if (uri.endsWith("/")) return true;
-  const abs = root ? path.resolve(root, uri) : path.resolve(uri);
-  try {
-    return fs.existsSync(abs) && fs.statSync(abs).isDirectory();
-  } catch {
-    return false;
-  }
+  return isDirectory?.(uri) ?? false;
 }
 
-function genericArtifactUri(payload: VerifyResultPayload, root?: string): string {
+function genericArtifactUri(
+  payload: VerifyResultPayload,
+  isDirectory?: (uri: string) => boolean,
+): string {
   const mission = payload.mission_file_path?.trim();
-  if (mission && !uriIsDirectory(mission, root)) return mission;
+  if (mission && !directoryUri(mission, isDirectory)) return mission;
   return GENERIC_SARIF_FILE;
 }
 
@@ -104,17 +99,16 @@ function sarifLocation(uri: string, region: Record<string, number> | undefined):
 
 export function buildSarifDocument(
   payload: VerifyResultPayload,
-  options?: VerifyExportBuildOptions,
+  isDirectory?: (uri: string) => boolean,
 ): Record<string, unknown> {
-  const root = options?.root;
   const results: Record<string, unknown>[] = [];
 
   if (payload.status === "failed") {
     for (const finding of payload.findings ?? []) {
       const ruleId = finding.rule_id ?? finding.failed_gate;
       const file = finding.offending_file.trim();
-      const uri = file.length > 0 ? file : genericArtifactUri(payload, root);
-      const region = uriIsDirectory(uri, root) ? undefined : sarifRegionForFinding(finding);
+      const uri = file.length > 0 ? file : genericArtifactUri(payload, isDirectory);
+      const region = directoryUri(uri, isDirectory) ? undefined : sarifRegionForFinding(finding);
       results.push({
         ruleId,
         level: finding.severity === "warning" ? "warning" : "error",
@@ -124,8 +118,8 @@ export function buildSarifDocument(
       });
     }
     if (results.length === 0) {
-      const uri = genericArtifactUri(payload, root);
-      const region = uriIsDirectory(uri, root) ? undefined : { startLine: 1 };
+      const uri = genericArtifactUri(payload, isDirectory);
+      const region = directoryUri(uri, isDirectory) ? undefined : { startLine: 1 };
       results.push({
         ruleId: payload.error_code,
         level: "error",
@@ -163,12 +157,6 @@ export function buildSarifDocument(
   };
 }
 
-interface JUnitCase {
-  name: string;
-  failure?: string;
-  skipped?: boolean;
-}
-
 function phaseTestcases(payload: VerifyResultPayload): JUnitCase[] {
   if (payload.status === "passed") {
     const phases =
@@ -187,17 +175,8 @@ function phaseTestcases(payload: VerifyResultPayload): JUnitCase[] {
   return [{ name: phase, failure: detail }];
 }
 
-function casesFromPhases(payload: VerifyResultPayload, phases: JUnitPhaseCase[]): JUnitCase[] {
-  const fallback = payload.status === "failed" ? payload.message : "failed";
-  return phases.map((phase) => {
-    if (phase.status === "skipped") return { name: phase.name, skipped: true };
-    if (phase.status === "failed") return { name: phase.name, failure: phase.failure ?? fallback };
-    return { name: phase.name };
-  });
-}
-
-export function buildJUnitXml(payload: VerifyResultPayload, phases?: JUnitPhaseCase[]): string {
-  const cases = phases && phases.length > 0 ? casesFromPhases(payload, phases) : phaseTestcases(payload);
+export function buildJUnitXml(payload: VerifyResultPayload, casesInput?: JUnitCase[]): string {
+  const cases = casesInput && casesInput.length > 0 ? casesInput : phaseTestcases(payload);
   const failures = cases.filter((c) => c.failure).length;
   const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',

@@ -1,4 +1,4 @@
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import {
   reportCommandError,
   resolveRepoRootAtBoundary,
@@ -114,7 +114,7 @@ export async function runArchFetch(options: ArchFetchOptions = {}): Promise<void
   await runAtCommandBoundaryAsync(2, async () => {
     const result = await fetchExternalArchitecture({ repoRoot });
     if (options.json) {
-      logInfo(JSON.stringify(result, null, 2));
+      writeStdout(JSON.stringify(result, null, 2));
     } else if (result.status === "fetched" && result.body !== undefined) {
       process.stdout.write(result.body);
       if (!result.body.endsWith("\n")) process.stdout.write("\n");
@@ -152,7 +152,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     const manifestTmvcRoots = skill?.tmvc_roots;
     const result = runArchCheck(repoRoot, files, { manifestTmvcRoots });
     if (options.json) {
-      logInfo(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations }, null, 2));
+      writeStdout(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations }, null, 2));
     } else {
       logInfo(formatArchCheckHuman(result, label));
     }
