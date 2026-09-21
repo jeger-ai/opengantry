@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
-import { runContractCheck, runContractPropose, runContractShow } from "./commands/contract.js";
+import { runContractCheck, runContractPreflight, runContractPropose, runContractShow } from "./commands/contract.js";
 import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
@@ -205,6 +205,22 @@ function registerContractCommand(program: Command): void {
     .option("--json", "Emit result as JSON on stdout")
     .action((opts: { mission?: string; json?: boolean }) => {
       runContractShow({ mission: opts.mission, json: opts.json });
+    });
+
+  contract
+    .command("preflight")
+    .description("Advisory skill/path classifier before propose (JSON only; optional Jev)")
+    .argument("[intent...]", "Planner intent summary")
+    .option("--path <paths...>", "Declared path hints")
+    .option("--provider <id>", "heuristic (default) or jev", "heuristic")
+    .action(async (intentParts: string[], opts: { path?: string[]; provider?: string }) => {
+      const intent = intentParts.join(" ").trim();
+      if (!intent) {
+        logError("contract preflight: provide intent text");
+        setExitCode(2);
+        return;
+      }
+      await runContractPreflight({ intent, paths: opts.path, provider: opts.provider });
     });
 }
 

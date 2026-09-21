@@ -1,0 +1,96 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Experimental advisory gxt_preflight_contract and gantry contract preflight under src/cli/. Heuristic default. Optional Jev System One provider via native fetch. Fail open to heuristic on malformed Jev JSON, unexpected category keys, or transport errors. Extract shared intentPathTokens. Do not call Jev from proposeContract.
+msn_id: MSN-0216
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0216: gxt_preflight_contract + gantry contract preflight; heuristic default; Jev fail-open on malformed JSON/unexpected_choice/transport; proposeContract untouched; npm test: tests 764 pass 764 fail 0"
+    anchor: "969"
+    status: PASS
+interrogation:
+  - finding_id: 55e9003ad404
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Authorized. program-mission.ts registers gantry contract
+      preflight; contract-preflight.test.ts and mcp-tools-register.test.ts are
+      node:test suites under src/cli/tests/. No TARGET_ARCHITECTURE layer
+      change.
+  - finding_id: 9643d0bc591b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0025. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0025 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0025 for propose/verify/doctor (no model on the
+      sealed path). Experimental preflight is an optional opt-in System One
+      call, advisory only, fail-open to heuristic, never mission law.
+    adr_refs:
+      - ADR-0025
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0022: gxt_preflight_contract / gantry contract
+      preflight are read-only; mission writes stay under existing legislate
+      containment."
+    adr_refs:
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key gantry; narrow TMVC to src/cli/lib/contract/,
+      src/cli/commands/contract.ts, src/cli/lib/mcp-tools-register.ts, and
+      matching tests only
+    adr_refs:
+      - ADR-0045
+      - ADR-0025
+  - finding_id: e2a17b81b981
+    kind: adr_conflict
+    question: Intent may relate to ADR-0035. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0035 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: ADR-0035 is the advisory performance
+      judge; this mission is preflight classification in front of propose, not
+      PERFORMANCE_RUBRIC / llm_verifiers."
+    adr_refs:
+      - ADR-0035
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0045: proposeContract / gxt_propose_contract stay
+      deterministic and LLM-free. Preflight is advisory in front of propose; it
+      does not write contract or contract_sha256."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 97e5dbc68ea12838c12c36aafcdd5393f466ff63614c42e2b6d239a2f389fb93
+declared_paths:
+  - src/cli/commands/contract.ts
+  - src/cli/lib/contract/
+  - src/cli/lib/mcp-preflight-contract.ts
+  - src/cli/lib/mcp-tools-register.ts
+  - src/cli/program-mission.ts
+  - src/cli/tests/contract-preflight.test.ts
+  - src/cli/tests/mcp-tools-register.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/commands/contract.ts
+    - src/cli/lib/contract/
+    - src/cli/lib/mcp-preflight-contract.ts
+    - src/cli/lib/mcp-tools-register.ts
+    - src/cli/program-mission.ts
+    - src/cli/tests/contract-preflight.test.ts
+    - src/cli/tests/mcp-tools-register.test.ts
+contract_sha256: 0679a877a57cb5b9f4672943ef786d63fddec07b4641bef4afb68dd56cfe837e

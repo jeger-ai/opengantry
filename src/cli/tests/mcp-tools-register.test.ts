@@ -48,6 +48,7 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     "gxt_interrogate",
     "gxt_draft_legislation",
     "gxt_propose_contract",
+    "gxt_preflight_contract",
     "gxt_execute_legislation",
     "gxt_check_signature",
     "gxt_pin_mission",
@@ -76,6 +77,8 @@ test("mcp-tools-register: gxt_draft_legislation schema includes contract", () =>
   assert.ok("contract" in draft.schema, "v3 draft schema must accept contract");
   const propose = tools.find((t) => t.name === "gxt_propose_contract");
   assert.ok(propose, "gxt_propose_contract must be registered");
+  const preflight = tools.find((t) => t.name === "gxt_preflight_contract");
+  assert.ok(preflight, "gxt_preflight_contract must be registered");
 });
 
 test("mcp-tools-register: gxt_propose_contract requires skill_key", () => {

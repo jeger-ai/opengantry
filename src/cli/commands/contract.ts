@@ -1,5 +1,5 @@
 import { setExitCode } from "../lib/cli-io.js";
-import { runUserCommand, type CommandPresentation } from "../lib/command-boundary.js";
+import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../lib/command-boundary.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "../lib/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "../lib/contract/contract-types.js";
 import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
@@ -7,6 +7,8 @@ import { GantryUserError } from "../lib/errors.js";
 import { parseMissionFile, resolvePinnedMission } from "../lib/missions/parser.js";
 import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
 import { formatContractBlock, formatEffectiveScope } from "../lib/contract/format.js";
+import { TYPESAFE_API_KEY_ENV } from "../lib/contract/preflight-jev.js";
+import { isPreflightProvider, runPreflight } from "../lib/contract/preflight.js";
 import { proposeContract } from "../lib/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../lib/legislate.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -140,5 +142,36 @@ export function runContractShow(options: ContractShowCliOptions): void {
       json: { ok: true, mission: missionRel, msn_id: mission.msnId, contract, contract_sha256: mission.contractSha256 },
       human: formatContractBlock(contract, mission.gate ? { command: mission.gate.command, successSubstring: mission.gate.successSubstring } : null),
     };
+  });
+}
+
+export interface ContractPreflightCliOptions {
+  intent: string;
+  paths?: string[];
+  provider?: string;
+}
+
+/** JSON-only advisory classifier. Always writes structured stdout. */
+export async function runContractPreflight(options: ContractPreflightCliOptions): Promise<void> {
+  await runUserCommandAsync({ json: true }, async (): Promise<CommandPresentation> => {
+    const provider = options.provider ?? "heuristic";
+    if (!isPreflightProvider(provider)) {
+      throw new GantryUserError(
+        "INVALID_ARGUMENT",
+        `contract preflight: unknown provider ${provider}`,
+        "Use heuristic or jev",
+        2,
+      );
+    }
+    const workspace = loadWorkspace();
+    const result = await runPreflight({
+      root: workspace.root,
+      manifest: workspace.manifest,
+      intent: options.intent,
+      paths: options.paths,
+      provider,
+      apiKey: process.env[TYPESAFE_API_KEY_ENV],
+    });
+    return { json: { status: "ok", ...result } };
   });
 }

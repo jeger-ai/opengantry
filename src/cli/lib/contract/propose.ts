@@ -1,8 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
 import { loadPolicyBundleQuiet } from "./effective-scope.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
 import type { MissionContract } from "./contract-types.js";
+import { existingHintedPaths } from "./intent-path-tokens.js";
 import { proposeGate, type ProposedGate } from "./propose-gate.js";
 import { proposeImports } from "./propose-imports.js";
 import { isPathUnderRoot } from "../tmvc-path.js";
@@ -27,30 +26,8 @@ export interface ProposeContractResult {
   rationale: string[];
 }
 
-const PATH_TOKEN_RE = /(?:\.{0,2}\/)?[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@-]+)+\/?/g;
-
-function existsRepoPath(root: string, rel: string): boolean {
-  return fs.existsSync(path.join(root, rel));
-}
-
-function intentPathTokens(intent: string): string[] {
-  const out: string[] = [];
-  for (const m of intent.matchAll(PATH_TOKEN_RE)) {
-    const norm = normalizeContractPath(m[0]!);
-    if (norm && !norm.includes("://")) out.push(norm);
-  }
-  return out;
-}
-
-function intersectWithSkillRoots(candidates: readonly string[], skillRoots: readonly string[]): string[] {
-  if (skillRoots.length === 0) return [...candidates];
-  return candidates.filter((c) => skillRoots.some((s) => isPathUnderRoot(c, s)));
-}
-
 function proposeTmvcRoots(input: ProposeContractInput, skillRoots: readonly string[]): { roots: string[]; rationale: string } {
-  const hinted = [...intentPathTokens(input.intent), ...(input.paths ?? []).map(normalizeContractPath)];
-  const existing = [...new Set(hinted)].filter((p) => existsRepoPath(input.root, p.replace(/\/$/, ""))).sort();
-  const narrowed = intersectWithSkillRoots(existing, skillRoots);
+  const narrowed = existingHintedPaths(input.root, input.intent, input.paths, skillRoots);
   if (narrowed.length > 0) {
     return {
       roots: narrowed,

@@ -4,6 +4,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { handleCheckSignature } from "./mcp-check-signature.js";
 import { handleDraftLegislation } from "./mcp-draft-legislation.js";
 import { handleProposeContract } from "./mcp-propose-contract.js";
+import { handlePreflightContract } from "./mcp-preflight-contract.js";
 import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
 import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
 import {
@@ -108,6 +109,19 @@ function registerGxtProposeContractTool(server: McpServer): void {
       paths: z.array(z.string()).optional().describe("Declared path hints"),
     },
     async (args) => jsonText(handleProposeContract(args)),
+  );
+}
+
+function registerGxtPreflightContractTool(server: McpServer): void {
+  server.tool(
+    "gxt_preflight_contract",
+    "Experimental advisory classifier (heuristic default; optional Jev). Returns skill_key hints and tmvc_root_candidates. Never writes a contract. Call gxt_propose_contract next.",
+    {
+      intent: z.string().describe("Planner intent / story"),
+      paths: z.array(z.string()).optional().describe("Declared path hints"),
+      provider: z.enum(["heuristic", "jev"]).optional().describe("heuristic (default, offline) or jev (requires TYPESAFE_API_KEY)"),
+    },
+    async (args) => jsonText(await handlePreflightContract(args)),
   );
 }
 
@@ -344,6 +358,7 @@ function registerGxtUpgradeApplyTool(server: McpServer): void {
 export function registerGxtMcpTools(server: McpServer): void {
   registerGxtInterrogateTool(server);
   registerGxtProposeContractTool(server);
+  registerGxtPreflightContractTool(server);
   registerGxtDraftLegislationTool(server);
   registerGxtExecuteLegislationTool(server);
   registerGxtCheckSignatureTool(server);
