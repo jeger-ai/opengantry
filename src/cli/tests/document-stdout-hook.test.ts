@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Command } from "commander";
 import { logInfo } from "../lib/cli-io.js";
 import { isDocumentStdout, resetOutputContext } from "../lib/output-context.js";
-import { registerAudiencePreActionHook } from "../lib/program-audience-hook.js";
+import { registerAudiencePreActionHook } from "../program-audience-hook.js";
 import { captureConsoleAsync } from "./test-shared.js";
 
 function programWithSpeak(): Command {

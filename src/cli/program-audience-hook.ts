@@ -1,8 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { Command } from "commander";
-import { CLI_NAME } from "./constants.js";
-import { applyAudienceFromArgv, enterDocumentStdout, leaveDocumentStdout } from "./output-context.js";
-import { logError, setExitCode } from "./cli-io.js";
+import { CLI_NAME } from "./lib/constants.js";
+import { applyAudienceFromArgv, enterDocumentStdout, leaveDocumentStdout } from "./lib/output-context.js";
+import { logError, setExitCode } from "./lib/cli-io.js";
 
 interface HookScope {
   entered: boolean;
