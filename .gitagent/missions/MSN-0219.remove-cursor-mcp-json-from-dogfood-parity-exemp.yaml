@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Remove .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT in src/cli/tests/template-parity.test.ts and delete the MSN-0215 exemption comment. Fail closed if root and template mcp.json drift.
+# Gate evidence: EXECUTOR_LOG.md DoD 1 MSN-0219 (anchor 984).
 msn_id: MSN-0219
 skill_key: gantry
 gate_command: npm test
