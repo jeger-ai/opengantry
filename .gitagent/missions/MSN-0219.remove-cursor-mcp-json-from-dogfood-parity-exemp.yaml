@@ -45,6 +45,7 @@ interrogation:
       - ADR-0045
 interrogation_sha256: d4a38b04b44644f5229f4721a61253f078134834a9ba74d6746077e19863746f
 declared_paths:
+  - .gitagent/missions/MSN-0219.remove-cursor-mcp-json-from-dogfood-parity-exemp.yaml
   - src/cli/tests/
 contract:
   tmvc_roots:
