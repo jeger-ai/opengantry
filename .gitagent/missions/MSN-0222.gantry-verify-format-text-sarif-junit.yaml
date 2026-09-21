@@ -28,6 +28,7 @@ interrogation:
       - ADR-0027
 interrogation_sha256: c31e620c88666332787bc04161997792e8f1e8fd5ee06bd67247c2ed0d8e3968
 declared_paths:
+  - .gitagent/missions/MSN-0222.gantry-verify-format-text-sarif-junit.yaml
   - src/cli/commands/verify.ts
   - src/cli/lib/cli-io.ts
   - src/cli/lib/output-context.ts
@@ -37,6 +38,7 @@ declared_paths:
   - src/cli/program-workflow.ts
   - src/cli/tests/verify-export.test.ts
   - src/cli/tests/verify-format-cli.test.ts
+  - src/cli/tests/workflow-cli-flags.test.ts
 contract:
   tmvc_roots:
     - src/cli/
