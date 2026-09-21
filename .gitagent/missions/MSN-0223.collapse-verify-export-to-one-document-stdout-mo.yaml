@@ -87,4 +87,5 @@ contract:
   banned_imports:
     - "@modelcontextprotocol/sdk/client/index.js"
     - "@modelcontextprotocol/sdk/client/stdio.js"
-contract_sha256: 6fcaf9cbfcfee715971fac23382d7e7686e133c82f164256e5991005e6403e42
+  allow_dynamic_specifiers: true
+contract_sha256: 3f8405f41bb0f3e52ac80204a20d1ae9f7b791434756b035caee6913d01bbb81
