@@ -8,8 +8,6 @@ import { templatePathForAsset } from "../lib/init-asset-catalog.js";
 
 const DOGFOOD_PARITY_EXEMPT = new Set([
   ".cursor/rules/opengantry-gxt-substrate.mdc",
-  // Specimen Cursor MCP dogfoods dist/cli; adopter template keeps PATH gantry mcp serve.
-  ".cursor/mcp.json",
 ]);
 
 test("template parity: managed_strict root assets match templates/", () => {
