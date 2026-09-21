@@ -3,10 +3,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0219: removed .cursor/mcp.json from
-      DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption comment; tests 764 pass
-      764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh"
-    anchor: "984"
+    trace_quote: "DoD 1 MSN-0219: fail-closed template parity after exemption removal; tests 764 pass 764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh"
+    anchor: "985"
     status: PASS
 interrogation:
   - finding_id: a7bb97b7d55a
