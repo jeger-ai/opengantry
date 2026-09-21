@@ -1,0 +1,58 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Remove .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT in src/cli/tests/template-parity.test.ts and delete the MSN-0215 exemption comment. Fail closed if root and template mcp.json drift.
+msn_id: MSN-0219
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0219: removed .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption comment; tests 764 pass 764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh"
+    anchor: "984"
+    status: PASS
+interrogation:
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0022: MCP write-containment stays in force. This
+      gantry mission only edits template-parity.test.ts; it does not edit
+      mcp-write-guard.ts or widen gxt_* writes."
+    adr_refs:
+      - ADR-0022
+  - finding_id: c2f468809c0c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Authorize src/cli/tests/template-parity.test.ts only. Remove
+      .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption
+      comment. No CLI handler edits. Gate npm test after the substrate launcher
+      mission has unified mcp.json.
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key=gantry. Authorize only src/cli/tests/. Legislate a
+      quick gantry mission to remove .cursor/mcp.json from
+      DOGFOOD_PARITY_EXEMPT. Gate npm test. Execute only after the substrate
+      mission has made the two mcp.json files identical.
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: d4a38b04b44644f5229f4721a61253f078134834a9ba74d6746077e19863746f
+declared_paths:
+  - src/cli/tests/
+contract:
+  tmvc_roots:
+    - src/cli/tests/
+  forbidden_zones:
+    - .gitagent
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 57eadab936b87780701f9d6210bd1eb02ec3277531387090be68b79eb973a550
