@@ -1,0 +1,65 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Harden experimental Jev pre-flight classifier: 2000ms fetch timeout, strict response schema validation, fail-open to heuristic on network, HTTP, timeout, or malformed payloads. Tests in src/cli/tests/contract-preflight.test.ts.
+msn_id: MSN-0220
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0220: Jev preflight fail-open — 2000ms AbortController+Promise.race timeout, mapped skill_key/skill_confidence/tmvc_root_candidates schema guard, logWarn on fallback; HTTP 500/timeout/malformed JSON return heuristic payloads; npm test: tests 766 pass 766 fail 0; OK: MCP dogfood flow passed; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "990"
+    status: PASS
+interrogation:
+  - finding_id: 17b1813a0fa9
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Authorized. Work stays in src/cli/lib/contract/ and
+      src/cli/tests/contract-preflight.test.ts. Tests live under src/cli/tests/;
+      no TARGET_ARCHITECTURE layer change.
+  - finding_id: b9b235d7d426
+    kind: adr_conflict
+    question: Intent may relate to ADR-0046. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0046 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0046: Jev remains experimental advisory preflight.
+      Timeouts, HTTP errors, and schema validation failures fail open to the
+      offline heuristic; MCP must not throw. Preflight still does not write
+      contract or become mission law."
+    adr_refs:
+      - ADR-0046
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: Legislate MSN-0220 immediately under skill gantry, lock the
+      TMVC scope to src/cli/lib/contract/ and
+      src/cli/tests/contract-preflight.test.ts, and run npm test as the gate.
+    adr_refs:
+      - ADR-0046
+      - ADR-0045
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0045: proposeContract / gxt_propose_contract stay
+      deterministic and LLM-free. This mission only hardens Jev preflight
+      fail-open (timeout, schema guard, heuristic fallback); it does not write
+      contract or contract_sha256."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: e4aa1e03c7b994064157303754e7fc0b5bfd4bed4261ee4c8a7ccf9c50c1ec5f
+declared_paths:
+  - src/cli/lib/contract/
+  - src/cli/tests/contract-preflight.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/lib/contract/
+    - src/cli/tests/contract-preflight.test.ts
+contract_sha256: cf41d98819031ebb9691a476e163e2df5017041776abdd2170aa0e18d32138da

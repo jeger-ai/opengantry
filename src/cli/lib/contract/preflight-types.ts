@@ -7,6 +7,7 @@ export type JevFallbackReason =
   | "malformed_response"
   | "unexpected_choice"
   | "transport_error"
+  | "timeout"
   | "invalid_probability";
 
 export interface TmvcRootCandidate {

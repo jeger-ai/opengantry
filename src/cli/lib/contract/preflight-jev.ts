@@ -7,12 +7,14 @@ import {
   type PreflightResult,
   type TmvcRootCandidate,
 } from "./preflight-types.js";
+import { logWarn } from "../cli-io.js";
 import { GantryUserError } from "../errors.js";
 import type { Manifest } from "../types.js";
 
 export const JEV_SYSTEM_ONE_URL = "https://api.typesafe.ai/v1/systemone";
 export const JEV_MODEL = "jev-latest";
 export const TYPESAFE_API_KEY_ENV = "TYPESAFE_API_KEY";
+export const JEV_FETCH_TIMEOUT_MS = 2000;
 
 const SKILL_Q = "skill";
 const ESCALATE_Q = "escalate";
@@ -25,6 +27,8 @@ export interface JevPreflightInput {
   paths?: string[];
   apiKey: string;
   fetchImpl?: typeof fetch;
+  /** Override fetch timeout (ms). Production default is `JEV_FETCH_TIMEOUT_MS`. */
+  timeoutMs?: number;
 }
 
 export interface JevQuestionSpec {
@@ -97,6 +101,7 @@ export function buildJevRequest(input: {
 }
 
 function fallback(input: JevPreflightInput, reason: JevFallbackReason): PreflightResult {
+  logWarn(`jev_preflight fallback reason=${reason}`);
   const heuristic = runHeuristicPreflight({
     root: input.root,
     manifest: input.manifest,
@@ -210,6 +215,50 @@ function emitFromParsed(parsed: JevParsed): PreflightResult {
   };
 }
 
+function isMappedPreflightValid(result: PreflightResult): boolean {
+  if (result.skill_key !== null && typeof result.skill_key !== "string") return false;
+  if (!isUnit(result.skill_confidence)) return false;
+  if (!Array.isArray(result.tmvc_root_candidates)) return false;
+  for (const candidate of result.tmvc_root_candidates) {
+    if (!candidate || typeof candidate !== "object") return false;
+    if (typeof candidate.path !== "string" || !isUnit(candidate.score)) return false;
+  }
+  return true;
+}
+
+function isTimeoutFailure(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function resolveFetchTimeoutMs(timeoutMs: number | undefined): number {
+  if (typeof timeoutMs === "number" && Number.isFinite(timeoutMs) && timeoutMs > 0) return timeoutMs;
+  return JEV_FETCH_TIMEOUT_MS;
+}
+
+async function fetchWithTimeout(
+  fetchImpl: typeof fetch,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      const err = new Error("jev_timeout");
+      err.name = "AbortError";
+      reject(err);
+    }, timeoutMs);
+  });
+  try {
+    const request = fetchImpl(JEV_SYSTEM_ONE_URL, { ...init, signal: controller.signal });
+    void request.catch(() => undefined);
+    return await Promise.race([request, timedOut]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 export async function runJevPreflight(input: JevPreflightInput): Promise<PreflightResult> {
   if (!input.apiKey.trim()) {
     throw new GantryUserError(
@@ -223,16 +272,20 @@ export async function runJevPreflight(input: JevPreflightInput): Promise<Preflig
   const payload = buildJevRequest(input);
   let response: Response;
   try {
-    response = await fetchImpl(JEV_SYSTEM_ONE_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${input.apiKey}`,
-        "Content-Type": "application/json",
+    response = await fetchWithTimeout(
+      fetchImpl,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${input.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    });
-  } catch {
-    return fallback(input, "transport_error");
+      resolveFetchTimeoutMs(input.timeoutMs),
+    );
+  } catch (error) {
+    return fallback(input, isTimeoutFailure(error) ? "timeout" : "transport_error");
   }
   if (!response.ok) return fallback(input, "transport_error");
   let body: unknown;
@@ -243,5 +296,7 @@ export async function runJevPreflight(input: JevPreflightInput): Promise<Preflig
   }
   const parsed = parseJevAnswers(body, input.manifest);
   if (!parsed.ok) return fallback(input, parsed.reason);
-  return emitFromParsed(parsed.value);
+  const emitted = emitFromParsed(parsed.value);
+  if (!isMappedPreflightValid(emitted)) return fallback(input, "malformed_response");
+  return emitted;
 }

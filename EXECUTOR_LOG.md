@@ -983,3 +983,8 @@ DoD 1 MSN-0218: dual-mode ./scripts/mcp-launcher.sh execs node dist/cli/index.js
 [SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/tests/template-parity.test.ts
 DoD 1 MSN-0219: removed .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption comment; tests 764 pass 764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh
 DoD 1 MSN-0219: fail-closed template parity after exemption removal; tests 764 pass 764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh
+
+## MSN-0220 — Jev preflight timeout, schema guard, fail-open
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md reason=Trace-mapped DoD for verify must land in EXECUTOR_LOG.md; not in MSN-0220 contract.tmvc_roots proposed=EXECUTOR_LOG.md | msn=MSN-0220
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/lib/contract/,src/cli/tests/contract-preflight.test.ts
+DoD 1 MSN-0220: Jev preflight fail-open — 2000ms AbortController+Promise.race timeout, mapped skill_key/skill_confidence/tmvc_root_candidates schema guard, logWarn on fallback; HTTP 500/timeout/malformed JSON return heuristic payloads; npm test: tests 766 pass 766 fail 0; OK: MCP dogfood flow passed; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN

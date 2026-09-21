@@ -5,12 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { runHeuristicPreflight } from "../lib/contract/preflight-heuristic.js";
 import {
+  JEV_FETCH_TIMEOUT_MS,
   JEV_SYSTEM_ONE_URL,
   parseJevAnswers,
   runJevPreflight,
 } from "../lib/contract/preflight-jev.js";
 import { runPreflight } from "../lib/contract/preflight.js";
-import { jevFallbackRationale } from "../lib/contract/preflight-types.js";
+import { jevFallbackRationale, type JevFallbackReason, type PreflightResult } from "../lib/contract/preflight-types.js";
 import { handlePreflightContract } from "../lib/mcp-preflight-contract.js";
 import { getRepoRoot } from "../lib/git.js";
 import { loadManifest } from "../lib/manifest.js";
@@ -59,6 +60,20 @@ function jsonFetch(body: unknown, status = 200): typeof fetch {
 
 function textFetch(text: string, status = 200): typeof fetch {
   return async () => new Response(text, { status, headers: { "Content-Type": "text/plain" } });
+}
+
+function assertHeuristicFailOpen(result: PreflightResult, reason: JevFallbackReason): void {
+  assert.equal(result.provider, "heuristic");
+  assert.equal(result.rationale[0], jevFallbackRationale(reason));
+  assert.equal(result.skill_key, "gantry");
+  assert.equal(typeof result.skill_confidence, "number");
+  assert.ok(Number.isFinite(result.skill_confidence));
+  assert.ok(Array.isArray(result.tmvc_root_candidates));
+  assert.ok(result.tmvc_root_candidates.length > 0);
+  for (const candidate of result.tmvc_root_candidates) {
+    assert.equal(typeof candidate.path, "string");
+    assert.equal(typeof candidate.score, "number");
+  }
 }
 
 test("heuristic: names gantry and ranks existing src/cli/lib/contract/ hint", () => {
@@ -126,9 +141,7 @@ test("jev: malformed JSON fail-opens to heuristic", async () => {
     apiKey: "ts-test",
     fetchImpl: textFetch("{not-json"),
   });
-  assert.equal(result.provider, "heuristic");
-  assert.ok(result.rationale[0] === jevFallbackRationale("malformed_response"));
-  assert.equal(result.skill_key, "gantry");
+  assertHeuristicFailOpen(result, "malformed_response");
 });
 
 test("jev: unknown choice fail-opens", async () => {
@@ -174,7 +187,24 @@ test("jev: HTTP 500 fail-opens as transport_error", async () => {
     apiKey: "ts-test",
     fetchImpl: jsonFetch({ error: "nope" }, 500),
   });
-  assert.equal(result.rationale[0], jevFallbackRationale("transport_error"));
+  assertHeuristicFailOpen(result, "transport_error");
+});
+
+test("jev: fetch timeout fail-opens to heuristic", async () => {
+  const dest = fixtureRepo();
+  const result = await runJevPreflight({
+    root: dest,
+    manifest: loadManifest(dest),
+    intent: "gantry contract preflight under src/cli/lib/contract/",
+    apiKey: "ts-test",
+    timeoutMs: 25,
+    fetchImpl: () => new Promise<Response>(() => {}),
+  });
+  assertHeuristicFailOpen(result, "timeout");
+});
+
+test("jev: default fetch timeout is 2000ms", () => {
+  assert.equal(JEV_FETCH_TIMEOUT_MS, 2000);
 });
 
 test("jev: confidence outside [0,1] is invalid_probability", () => {
