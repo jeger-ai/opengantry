@@ -67,6 +67,7 @@ interrogation:
 interrogation_sha256: a2ba5edf857dde3d91866eefa6fdcb03c7567ce70ffe8488509150a768186d74
 declared_paths:
   - .cursor/rules/opengantry-gxt-substrate.mdc
+  - .gitagent/missions/MSN-0224.document-mcp-launcher-sarif-and-junit-ci-exporte.yaml
   - docs/
   - docs/AGENT-GRAPH.md
   - docs/CHANGELOG.md
