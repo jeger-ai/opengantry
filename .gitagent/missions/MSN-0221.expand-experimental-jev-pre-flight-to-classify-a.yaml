@@ -20,6 +20,17 @@ interrogation:
       only under os.tmpdir() and are removed in afterAll; never create src/api/
       or src/ui/ at the repository root. Tests live under src/cli/tests/; no
       TARGET_ARCHITECTURE layer change.
+  - finding_id: 67ac2be17ab4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0039. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0039 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0039: declare .gitagent/missions/MSN-0221.expand-experimental-jev-pre-flight-to-classify-a.yaml
+      on the interrogation path record so executor trace_rows updates are not
+      GXT_INTERROGATION_PATH_DRIFT."
+    adr_refs:
+      - ADR-0039
   - finding_id: 9643d0bc591b
     kind: adr_conflict
     question: Intent may relate to ADR-0025. Accept ADR decision, reject
@@ -83,8 +94,9 @@ interrogation:
       contract_sha256."
     adr_refs:
       - ADR-0045
-interrogation_sha256: 7612652088003d9d50ce779bf7434980aac7ae511fff5518a6da80b0c7e79032
+interrogation_sha256: e714a1433af936ce75f1e955b2b67491f023936830f9ea223b16748cb97df132
 declared_paths:
+  - .gitagent/missions/MSN-0221.expand-experimental-jev-pre-flight-to-classify-a.yaml
   - src/cli/lib/contract/
   - src/cli/tests/contract-preflight.test.ts
 contract:
