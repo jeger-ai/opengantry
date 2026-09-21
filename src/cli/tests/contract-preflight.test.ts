@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -7,6 +7,7 @@ import { runHeuristicPreflight } from "../lib/contract/preflight-heuristic.js";
 import {
   JEV_FETCH_TIMEOUT_MS,
   JEV_SYSTEM_ONE_URL,
+  buildJevRequest,
   parseJevAnswers,
   runJevPreflight,
 } from "../lib/contract/preflight-jev.js";
@@ -18,8 +19,21 @@ import { loadManifest } from "../lib/manifest.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
+const tempRoots: string[] = [];
+
+after(() => {
+  for (const dest of tempRoots) {
+    fs.rmSync(dest, { recursive: true, force: true });
+  }
+});
+
+function trackTemp(dest: string): string {
+  tempRoots.push(dest);
+  return dest;
+}
+
 function fixtureRepo(): string {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-preflight-"));
+  const dest = trackTemp(fs.mkdtempSync(path.join(os.tmpdir(), "og-preflight-")));
   copyMissionSchema(path.join(getRepoRoot(), ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, {
     gantry: {
@@ -41,6 +55,42 @@ function fixtureRepo(): string {
   return dest;
 }
 
+function multiSkillFixtureRepo(): string {
+  const dest = trackTemp(fs.mkdtempSync(path.join(os.tmpdir(), "og-preflight-multi-")));
+  copyMissionSchema(path.join(getRepoRoot(), ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
+  writeManifest(dest, {
+    gantry: {
+      trust_threshold: "Tier-2",
+      tmvc_roots: ["src/cli/"],
+      forbidden_zones: [".gitagent/foreman/"],
+      gate_commands: ["npm test"],
+    },
+    substrate: {
+      trust_threshold: "Tier-3",
+      tmvc_roots: [".gitagent/planner/"],
+      forbidden_zones: [],
+      gate_commands: ["npm test"],
+    },
+    api: {
+      trust_threshold: "Tier-2",
+      tmvc_roots: ["src/api/"],
+      forbidden_zones: [],
+      gate_commands: ["npm test"],
+    },
+    frontend: {
+      trust_threshold: "Tier-1",
+      tmvc_roots: ["src/ui/"],
+      forbidden_zones: [],
+      gate_commands: ["npm test"],
+    },
+  });
+  fs.mkdirSync(path.join(dest, "src", "cli"), { recursive: true });
+  fs.mkdirSync(path.join(dest, "src", "api"), { recursive: true });
+  fs.mkdirSync(path.join(dest, "src", "ui"), { recursive: true });
+  fs.writeFileSync(path.join(dest, "src", "api", "handler.ts"), "export const handler = 1;\n");
+  return dest;
+}
+
 function gantrySuccessBody(): unknown {
   return {
     model: "jev-1.13.0",
@@ -53,6 +103,18 @@ function gantrySuccessBody(): unknown {
   };
 }
 
+function skillSuccessBody(skillKey: string, chosenRoot: string, otherRoots: readonly string[]): unknown {
+  const answers: Record<string, unknown> = {
+    skill: { type: "choice", choice: skillKey, confidence: 0.91 },
+    escalate: { type: "noul", noul: 0.04 },
+    [`root:${chosenRoot}`]: { type: "noul", noul: 0.88 },
+  };
+  for (const root of otherRoots) {
+    answers[`root:${root}`] = { type: "noul", noul: 0.03 };
+  }
+  return { model: "jev-1.13.0", answers };
+}
+
 function jsonFetch(body: unknown, status = 200): typeof fetch {
   return async () =>
     new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -62,10 +124,14 @@ function textFetch(text: string, status = 200): typeof fetch {
   return async () => new Response(text, { status, headers: { "Content-Type": "text/plain" } });
 }
 
-function assertHeuristicFailOpen(result: PreflightResult, reason: JevFallbackReason): void {
+function assertHeuristicFailOpen(
+  result: PreflightResult,
+  reason: JevFallbackReason,
+  expectedSkill = "gantry",
+): void {
   assert.equal(result.provider, "heuristic");
   assert.equal(result.rationale[0], jevFallbackRationale(reason));
-  assert.equal(result.skill_key, "gantry");
+  assert.equal(result.skill_key, expectedSkill);
   assert.equal(typeof result.skill_confidence, "number");
   assert.ok(Number.isFinite(result.skill_confidence));
   assert.ok(Array.isArray(result.tmvc_root_candidates));
@@ -278,4 +344,96 @@ test("runPreflight heuristic path never calls fetch", async () => {
     },
   });
   assert.equal(result.provider, "heuristic");
+});
+
+test("buildJevRequest catalogs every live MANIFEST skill including empty-root substrate", () => {
+  const manifest = loadManifest(getRepoRoot());
+  const req = buildJevRequest({ intent: "classify live catalog", manifest });
+  const keys = Object.keys(manifest.skills).sort();
+  assert.deepEqual(Object.keys(req.state.skills).sort(), keys);
+  const skillQ = req.questions.skill;
+  assert.equal(skillQ?.type, "choice");
+  assert.deepEqual(Object.keys(skillQ?.criteria ?? {}).sort(), keys);
+  assert.ok(keys.includes("substrate"));
+  assert.deepEqual(req.state.skills.substrate?.tmvc_roots, []);
+  assert.equal("root:" in req.questions, false);
+  const emittedRoots = Object.keys(req.questions)
+    .filter((k) => k.startsWith("root:"))
+    .map((k) => k.slice("root:".length));
+  for (const root of emittedRoots) {
+    assert.ok(root.length > 0);
+  }
+});
+
+test("buildJevRequest fixture catalog includes gantry substrate api frontend roots", () => {
+  const dest = multiSkillFixtureRepo();
+  const req = buildJevRequest({ intent: "multi-skill catalog", manifest: loadManifest(dest) });
+  assert.deepEqual(Object.keys(req.state.skills).sort(), ["api", "frontend", "gantry", "substrate"]);
+  const skillQ = req.questions.skill;
+  assert.equal(skillQ?.type, "choice");
+  assert.deepEqual(Object.keys(skillQ?.criteria ?? {}).sort(), ["api", "frontend", "gantry", "substrate"]);
+  for (const root of ["src/cli/", ".gitagent/planner/", "src/api/", "src/ui/"]) {
+    const q = req.questions[`root:${root}`];
+    assert.equal(q?.type, "noul");
+  }
+});
+
+test("jev: fixture classifies substrate and ranks planner root", async () => {
+  const dest = multiSkillFixtureRepo();
+  const result = await runJevPreflight({
+    root: dest,
+    manifest: loadManifest(dest),
+    intent: "substrate planner mission",
+    apiKey: "ts-test",
+    fetchImpl: jsonFetch(
+      skillSuccessBody("substrate", ".gitagent/planner/", ["src/cli/", "src/api/", "src/ui/"]),
+    ),
+  });
+  assert.equal(result.provider, "jev");
+  assert.equal(result.skill_key, "substrate");
+  const planner = result.tmvc_root_candidates.find((c) => c.path === ".gitagent/planner/");
+  assert.ok(planner);
+  assert.ok(planner.score > 0.5);
+  assert.equal(
+    result.tmvc_root_candidates.find((c) => c.path === "src/cli/"),
+    undefined,
+  );
+  assert.equal(
+    result.tmvc_root_candidates.find((c) => c.path === "src/api/"),
+    undefined,
+  );
+});
+
+test("jev: fixture classifies api and ranks src/api/", async () => {
+  const dest = multiSkillFixtureRepo();
+  const result = await runJevPreflight({
+    root: dest,
+    manifest: loadManifest(dest),
+    intent: "api handler under src/api/",
+    apiKey: "ts-test",
+    fetchImpl: jsonFetch(skillSuccessBody("api", "src/api/", ["src/cli/", ".gitagent/planner/", "src/ui/"])),
+  });
+  assert.equal(result.provider, "jev");
+  assert.equal(result.skill_key, "api");
+  const apiRoot = result.tmvc_root_candidates.find((c) => c.path === "src/api/");
+  assert.ok(apiRoot);
+  assert.ok(apiRoot.score > 0.5);
+  assert.equal(
+    result.tmvc_root_candidates.find((c) => c.path === "src/cli/"),
+    undefined,
+  );
+});
+
+test("jev: timeout fail-opens to api heuristic not gantry", async () => {
+  const dest = multiSkillFixtureRepo();
+  const result = await runJevPreflight({
+    root: dest,
+    manifest: loadManifest(dest),
+    intent: "api handler under src/api/",
+    apiKey: "ts-test",
+    timeoutMs: 25,
+    fetchImpl: () => new Promise<Response>(() => {}),
+  });
+  assertHeuristicFailOpen(result, "timeout", "api");
+  assert.ok(result.tmvc_root_candidates.some((c) => c.path === "src/api/"));
 });
