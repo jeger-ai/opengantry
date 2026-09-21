@@ -72,7 +72,7 @@ OpenGantry dogfoods GXT in Cursor. Other agents: [`docs/INTEGRATIONS.md`](INTEGR
 ### One-time Cursor enablement
 
 1. **Hooks on** — Cursor **Settings → Hooks** (project hooks from `.cursor/hooks.json` must be enabled).
-2. **MCP on** — Cursor **Settings → MCP**. `.cursor/mcp.json` is byte-identical for this specimen and for adopters. The `command` is `./scripts/mcp-launcher.sh`. There is no parity exemption for that file. Do not point Cursor at a raw `node` binary. The launcher runs `node dist/cli/index.js mcp serve` when `dist/cli/index.js` exists (run `npm run build` in this repo); otherwise it runs `gantry mcp serve` from `PATH` (`@jeger-ai/opengantry@3.4.0+`). Reload MCP after changing `mcp.json`, the launcher, or the package.
+2. **MCP on** — Cursor **Settings → MCP**. `.cursor/mcp.json` is byte-identical for this specimen and for adopters. The `command` is `./scripts/mcp-launcher.sh`. There is no parity exemption for that file. Do not point Cursor at a raw `node` binary. The launcher runs `node dist/cli/index.js mcp serve` when `dist/cli/index.js` exists (run `npm run build` in this repo); otherwise it runs `gantry mcp serve` from `PATH` (`@jeger-ai/opengantry@3.5.0+`). Reload MCP after changing `mcp.json`, the launcher, or the package.
 3. **Repo setup** (same as above):
 
 ```bash
