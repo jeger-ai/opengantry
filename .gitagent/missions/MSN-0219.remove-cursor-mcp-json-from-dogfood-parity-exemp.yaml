@@ -1,12 +1,11 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: Remove .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT in src/cli/tests/template-parity.test.ts and delete the MSN-0215 exemption comment. Fail closed if root and template mcp.json drift.
-# Gate evidence: EXECUTOR_LOG.md DoD 1 MSN-0219 (anchor 984).
 msn_id: MSN-0219
 skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0219: removed .cursor/mcp.json from DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption comment; tests 764 pass 764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh"
+    trace_quote: "DoD 1 MSN-0219: removed .cursor/mcp.json from
+      DOGFOOD_PARITY_EXEMPT and the MSN-0215 exemption comment; tests 764 pass
+      764 fail 0; smoke: tools/list OK via ./scripts/mcp-launcher.sh"
     anchor: "984"
     status: PASS
 interrogation:
@@ -46,10 +45,10 @@ interrogation:
 interrogation_sha256: d4a38b04b44644f5229f4721a61253f078134834a9ba74d6746077e19863746f
 declared_paths:
   - .gitagent/missions/MSN-0219.remove-cursor-mcp-json-from-dogfood-parity-exemp.yaml
-  - src/cli/tests/
+  - src/cli/tests/template-parity.test.ts
 contract:
   tmvc_roots:
-    - src/cli/tests/
+    - src/cli/tests/template-parity.test.ts
   forbidden_zones:
     - .gitagent
     - .gitagent/foreman/
@@ -57,4 +56,4 @@ contract:
     - src/auth/
     - src/core/
     - src/db/schema/
-contract_sha256: 57eadab936b87780701f9d6210bd1eb02ec3277531387090be68b79eb973a550
+contract_sha256: 1cafb6a6ed53dbc395101e37ab8823259ba7c29d0e866ad827412149f993680c
