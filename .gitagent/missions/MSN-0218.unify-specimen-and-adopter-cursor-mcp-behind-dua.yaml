@@ -1,0 +1,58 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Unify specimen and adopter Cursor MCP behind dual-mode templates/scripts/mcp-launcher.sh. Catalog scripts/mcp-launcher.sh as managed_strict runtime. Make .cursor/mcp.json and templates/.cursor/mcp.json byte-identical with command ./scripts/mcp-launcher.sh. Update docs/DEVELOPMENT.md docs/INTEGRATIONS.md templates/integrations/recipes/cursor.md. Do not edit RULES.md or MANIFEST.json. Parity-test exemption stays until a follow-on gantry mission.
+msn_id: MSN-0218
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0218: dual-mode ./scripts/mcp-launcher.sh execs node dist/cli/index.js mcp serve when dist exists else gantry mcp serve; root and template .cursor/mcp.json byte-identical; tests 764 pass 764 fail 0; OK: MCP dogfood flow passed; ok: substrate version: 3.4.0 (matches bundled gantry); check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "979"
+    status: PASS
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: this mission does not change Plane
+      deployment or CI ingestion. It unifies Cursor MCP registration behind a
+      local stdio launcher."
+    adr_refs:
+      - ADR-0037
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0022: MCP write-containment stays in force. This
+      mission adds a stdio launcher that execs mcp serve; it does not edit
+      mcp-write-guard.ts or widen gxt_* writes."
+    adr_refs:
+      - ADR-0022
+interrogation_sha256: 7169fdca75c940cdfb5b5464ed8d8032accab17b5b270a4d2e7abe8464608e46
+declared_paths:
+  - .cursor/
+  - docs/
+  - scripts/lib/
+  - templates/.cursor/
+  - templates/integrations/
+  - templates/scripts/
+contract:
+  tmvc_roots:
+    - .cursor
+    - docs/
+    - scripts/lib/
+    - templates/.cursor
+    - templates/integrations/
+    - templates/scripts/
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+  banned_imports:
+    - "@modelcontextprotocol/sdk/client/index.js"
+    - "@modelcontextprotocol/sdk/client/stdio.js"
+contract_sha256: bbf01d902c2515f352f76922dd9cdb307f53d5d4e8bdcb3213085ab277d476cd
