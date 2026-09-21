@@ -35,6 +35,7 @@ interrogation:
 interrogation_sha256: 7169fdca75c940cdfb5b5464ed8d8032accab17b5b270a4d2e7abe8464608e46
 declared_paths:
   - .cursor/
+  - .gitagent/missions/MSN-0218.unify-specimen-and-adopter-cursor-mcp-behind-dua.yaml
   - docs/
   - scripts/lib/
   - templates/.cursor/
