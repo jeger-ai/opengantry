@@ -61,6 +61,7 @@ interrogation:
       - ADR-0045
 interrogation_sha256: 6c72e56209aa4ca1f6802d2542a69c91d922e0716c47f42ad60837df8e394c40
 declared_paths:
+  - .gitagent/missions/MSN-0226.add-an-optional-local-sqlite-vec-contract-index-.yaml
   - .gitignore
   - package-lock.json
   - package.json
