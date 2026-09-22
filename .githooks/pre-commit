@@ -21,8 +21,15 @@ else
   exit 0
 fi
 
-echo "pre-commit: gantry tmvc guard --mission ${mission} (advisory default)" >&2
-"${GANTRY_CLI[@]}" tmvc guard --mission "$mission"
+guard_args=(tmvc guard --mission "$mission")
+strict_cfg="$(git config --get gxt.tmvcGuardStrict 2>/dev/null || true)"
+if [[ "$strict_cfg" == "true" || "${GXT_TMVC_GUARD_STRICT:-}" == "1" ]]; then
+  guard_args+=(--strict)
+  echo "pre-commit: gantry tmvc guard --strict (commit blocked on TMVC drift; bypass: git commit --no-verify)" >&2
+else
+  echo "pre-commit: gantry tmvc guard --mission ${mission} (advisory default)" >&2
+fi
+"${GANTRY_CLI[@]}" "${guard_args[@]}"
 
 # Advisory contract import scan over staged source files (mission contract cage, ADR-0045).
 staged_sources=()

@@ -29,6 +29,7 @@ The `<path>` must be a **file that already exists** under the repo root (or abso
 | `GXT_MSN_ID` | Mission MSN (`MSN-NNNN`), or empty if not yet determinable from the mission file. |
 | `GXT_SKILL_KEY` | Skill key declared in the mission (must exist in manifest `skills`). |
 | `GXT_TMVC_ROOTS` | Absolute paths to **effective** TMVC roots, **newline-separated** (empty string if none). `contract.tmvc_roots` when present, else `skills[skill_key].tmvc_roots`. |
+| `GANTRY_TMVC_ROOTS` | The same effective roots as **repo-relative** paths, **space-separated**, for terminal harnesses (`pi` and others) that read one environment variable at startup. |
 | `GXT_FORBIDDEN_ZONES` | Absolute paths forbidden for edits, newline-separated (union of skill, contract, and org-policy zones). Agents SHOULD refuse edits outside `GXT_TMVC_ROOTS` without a logged Context Request per [`RULES.md`](RULES.md). |
 | `GXT_ALLOWED_IMPORTS` | Bare specifiers allowed under the cage, newline-separated (empty = no allowlist). |
 | `GXT_BANNED_IMPORTS` | Bare specifiers banned under the cage, newline-separated (union of contract + org policy). |
@@ -62,7 +63,8 @@ gantry tmvc guard --mission <pinned>
 
 - **Advisory default:** warnings on `stderr`, exit `0`.
 - **`--strict`** or **`GXT_TMVC_GUARD_STRICT=1`:** block commit on staged paths outside TMVC roots.
-- **No pinned mission:** warn and skip.
+- **`gantry hooks install`** sets local git config `gxt.tmvcGuardStrict=true` so this hook passes `--strict`. `gantry hooks uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
+- **No pinned mission:** warn and skip, even when strict is armed.
 - `EXECUTOR_LOG.md` and `.gitagent/missions/.active-mission` are governance transport — never TMVC drift violations.
 
 ## Relationship to verification

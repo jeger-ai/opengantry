@@ -103,6 +103,7 @@ export function resolvedRuntimeEnvToJsonPayload(r: ResolvedRuntimeEnv): Record<s
     GXT_MSN_ID: r.msn_id,
     GXT_SKILL_KEY: r.skill_key,
     GXT_TMVC_ROOTS: r.tmvc_roots_joined,
+    GANTRY_TMVC_ROOTS: r.scope.tmvcRoots.map((root) => root.replace(/\\/g, "/")).join(" "),
     GXT_FORBIDDEN_ZONES: r.forbidden_zones_joined,
     GXT_ALLOWED_IMPORTS: r.scope.allowedImports.join("\n"),
     GXT_BANNED_IMPORTS: r.scope.bannedImports.join("\n"),

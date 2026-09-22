@@ -1008,3 +1008,8 @@ DoD 1 MSN-0225: version parity 3.5.0 across package.json, version.gen.ts, compat
 [CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/MSN-0226.add-an-optional-local-sqlite-vec-contract-index-.yaml,.gitignore,package-lock.json reason=Trace sink, mission trace_rows, lockfile, and gitignore sit outside contract.tmvc_roots proposed=EXECUTOR_LOG.md,.gitagent/missions/MSN-0226.add-an-optional-local-sqlite-vec-contract-index-.yaml,.gitignore,package-lock.json | msn=MSN-0226
 [SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/lib/contract/,src/cli/tests/sqlite-vector.test.ts
 DoD 1 MSN-0226: optional sqlite-vec contract index; host-supplied float[1536]; proposeContract stays pure; npm test: tests 790 pass 790 fail 0
+
+## MSN-0227 — Terminal agent TMVC enforcement
+- Context Request PENDING: `.githooks/pre-commit`, `templates/.githooks/pre-commit`, `.gitagent/planner/RUNTIME.md`, `docs/INTEGRATIONS.md`, `templates/integrations/recipes/aider.md` — These paths are outside src/cli/ and need a context request before the tracked hook, runtime contract row, and Aider integration notes are edited. | msn=MSN-0227
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/,.githooks/pre-commit,templates/.githooks/pre-commit
+DoD 1 MSN-0227: gantry hooks install arms local gxt.tmvcGuardStrict so tracked .githooks/pre-commit runs gantry tmvc guard --strict; git commit --no-verify is the only bypass; GANTRY_TMVC_ROOTS is space-separated and repo-relative; runtime env --aider writes .gitagent/tmp/aider-tmvc-scope.md; npm test: tests 806 pass 806 fail 0

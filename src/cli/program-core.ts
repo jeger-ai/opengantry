@@ -16,6 +16,7 @@ import { runTriage, type TriageRunOptions } from "./commands/triage.js";
 import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
 import type { InitOptions } from "./commands/init.js";
 import { runBlueprintCommand } from "./commands/blueprint.js";
+import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/hooks.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
 import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, msnIdOrDefault, type GateAdapterId, type TypedGateAdapterId } from "./lib/types.js";
@@ -386,6 +387,31 @@ function registerPlannerCommand(program: Command): void {
     });
 }
 
+function registerHooksCommand(program: Command): void {
+  const hooks = program.command("hooks").description("Tracked git hook controls for the TMVC pre-commit gate");
+
+  hooks
+    .command("install")
+    .description("Arm pre-commit gantry tmvc guard --strict via local git config")
+    .action(() => {
+      runHooksInstall();
+    });
+
+  hooks
+    .command("uninstall")
+    .description("Clear local gxt.tmvcGuardStrict; leave core.hooksPath unchanged")
+    .action(() => {
+      runHooksUninstall();
+    });
+
+  hooks
+    .command("status")
+    .description("Show whether strict TMVC pre-commit is armed and which hooks path Git uses")
+    .action(() => {
+      runHooksStatus();
+    });
+}
+
 export function registerCoreCommands(program: Command): void {
   registerCheckCommand(program);
   registerStatusCommand(program);
@@ -403,4 +429,5 @@ export function registerCoreCommands(program: Command): void {
   registerAuditRigorCliCommand(program);
   registerBlueprintCommand(program);
   registerPlannerCommand(program);
+  registerHooksCommand(program);
 }

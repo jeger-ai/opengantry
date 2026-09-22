@@ -151,6 +151,8 @@ test("staged-tmvc-guard: advisory formatting", () => {
     forbiddenZones: [],
   });
   assert.match(lines.join("\n"), /OUTSIDE_TMVC/);
+  assert.match(lines.join("\n"), /Effective TMVC roots: src\/cli\//);
+  assert.match(lines.join("\n"), /Unstage or revert those paths/);
 });
 
 test("runTmvcGuard: advisory exits 0 with stderr warnings", () => {

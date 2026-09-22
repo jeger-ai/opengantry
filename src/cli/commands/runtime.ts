@@ -2,9 +2,10 @@ import fs from "node:fs";
 import type { AgentErrorPayload } from "../lib/errors.js";
 import { agentErrorAbsolutePath, serializeAgentErrorPayload } from "../lib/errors.js";
 import { hintForbiddenZone, hintRuntimeHumanSummary, logFixHint } from "../lib/fix-hints.js";
+import { writeAiderTmvcScope } from "../lib/aider-scope.js";
+import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand, runUserCommandAsync } from "../lib/command-boundary.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -14,6 +15,8 @@ export interface RuntimeEnvCliOptions {
   json?: boolean;
   /** `shell`: POSIX `export VAR='...'` lines; `text`: labeled lines */
   format?: "shell" | "text";
+  /** Write a gitignored Aider scope note and patch an existing `.aider.conf.yml` `read:` list. */
+  aider?: boolean;
 }
 
 export interface RuntimeExecCliOptions {
@@ -37,12 +40,17 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
     const resolved = resolveMissionArg(workspace.root, options.mission);
     const resolvedEnv = resolveRuntimeEnv(workspace, resolved.missionRel);
     const payload = resolvedRuntimeEnvToJsonPayload(resolvedEnv);
+    const aiderScope = options.aider
+      ? writeAiderTmvcScope(workspace.root, resolvedEnv.scope.tmvcRoots).scopeFile
+      : "";
+    if (aiderScope) console.error(`runtime env: wrote ${aiderScope}`);
 
     if (options.json) {
       emitCliJson({
         ...payload,
         mission_file_path: resolved.missionRel,
         mission_source: resolved.source,
+        ...(aiderScope ? { aider_scope_file: aiderScope } : {}),
       });
       return;
     }

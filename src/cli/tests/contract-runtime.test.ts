@@ -58,9 +58,20 @@ test("runtime env: effective scope narrows GXT_TMVC_ROOTS and exports GXT_ALLOWE
   assert.deepEqual(r.scope.forbiddenZones, [".gitagent/foreman/", "src/db/"]);
   const payload = resolvedRuntimeEnvToJsonPayload(r);
   assert.equal(payload.GXT_TMVC_ROOTS, path.join(dest, "src", "ui"));
+  assert.equal(payload.GANTRY_TMVC_ROOTS, "src/ui/");
   assert.ok(payload.GXT_FORBIDDEN_ZONES!.includes(path.join(dest, "src", "db")));
   assert.equal(payload.GXT_ALLOWED_IMPORTS, "react\nzod");
   assert.equal(payload.GXT_BANNED_IMPORTS, "prisma");
+});
+
+test("runtime env: GANTRY_TMVC_ROOTS joins repo-relative roots with spaces", () => {
+  const dest = scaffold({ tmvc_roots: ["src/ui/", "src/cli/"] });
+  const payload = resolvedRuntimeEnvToJsonPayload(
+    resolveRuntimeEnv({ root: dest, manifest: loadManifest(dest) }, MISSION_REL),
+  );
+  assert.equal(payload.GANTRY_TMVC_ROOTS, "src/cli/ src/ui/");
+  assert.equal(payload.GANTRY_TMVC_ROOTS.includes("\n"), false);
+  assert.equal(payload.GANTRY_TMVC_ROOTS.includes(dest), false);
 });
 
 test("runtime env: contract widening beyond skill roots fails GXT_CONTRACT_SCOPE_ESCAPE", () => {

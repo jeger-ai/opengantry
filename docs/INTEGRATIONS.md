@@ -333,7 +333,8 @@ read:
 gantry runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- aider --message "<task>"
 ```
 
-- **Enforcement:** **Process-boundary** when wrapped — strongest TMVC trap among common IDE-adjacent tools.
+- **Enforcement:** **Process-boundary** when wrapped — strongest TMVC trap among common IDE-adjacent tools. `gantry hooks install` arms the tracked pre-commit hook so `gantry tmvc guard --strict` rejects staged paths outside the mission. Bypass is `git commit --no-verify` only.
+- **Scope note:** `gantry runtime env --aider` writes `.gitagent/tmp/aider-tmvc-scope.md` and, when `.aider.conf.yml` already exists, adds that path under `read:` once. Aider has no directory allowlist; the pre-commit gate is what stops the commit. Harnesses such as `pi` read space-separated `GANTRY_TMVC_ROOTS` from `gantry runtime env`.
 - **Gotcha:** Run from repo root; `read:` paths resolve from CWD.
 
 ### OpenHands

@@ -45,13 +45,14 @@ function registerRuntimeEnvCommand(runtime: Command): void {
     .option("--mission <path>", "Mission path (.md or .yaml); defaults to pinned mission")
     .option("--json", "Emit JSON payload instead of shell exports")
     .option("--format <mode>", "`shell` (default POSIX exports) or `text` KEY=value lines", "shell")
-    .action((opts: { mission?: string; json?: boolean; format?: string }) => {
+    .option("--aider", "Write .gitagent/tmp/aider-tmvc-scope.md and patch an existing .aider.conf.yml read: list")
+    .action((opts: { mission?: string; json?: boolean; format?: string; aider?: boolean }) => {
       if (opts.json === true) {
-        runRuntimeEnv({ mission: opts.mission, json: true });
+        runRuntimeEnv({ mission: opts.mission, json: true, aider: opts.aider === true });
         return;
       }
       const format = opts.format === "text" ? "text" : "shell";
-      runRuntimeEnv({ mission: opts.mission, format });
+      runRuntimeEnv({ mission: opts.mission, format, aider: opts.aider === true });
     });
 }
 
