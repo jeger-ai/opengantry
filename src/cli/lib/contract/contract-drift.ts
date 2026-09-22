@@ -67,17 +67,16 @@ export function formatDriftWarning(hit: SimilarityHit): string {
 export function indexProposedContract(input: {
   root: string;
   contractSha256: string;
-  embeddingFile: string;
+  host: HostEmbedding;
 }): string[] {
-  const host = readHostEmbedding(input.embeddingFile);
   const store = openContractVectorStore(input.root);
   try {
-    const hits = store.querySimilarity(host.embedding, DRIFT_NEIGHBOR_K);
+    const hits = store.querySimilarity(input.host.embedding, DRIFT_NEIGHBOR_K);
     store.upsert({
       contractSha256: input.contractSha256,
-      embedding: host.embedding,
-      msnId: host.msnId,
-      summary: host.summary,
+      embedding: input.host.embedding,
+      msnId: input.host.msnId,
+      summary: input.host.summary,
     });
     return hits.map(formatDriftWarning);
   } finally {

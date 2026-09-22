@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import { approveContractPrompt } from "./contract/approve-prompt.js";
 import { contractSha256, normalizeContract, parseContractYaml } from "./contract/contract-hash.js";
+import type { HostEmbedding } from "./contract/contract-drift.js";
+import { OpenAiEmbeddingProvider } from "./contract/embedding-provider.js";
 import { proposeContract } from "./contract/propose.js";
 import { GantryUserError } from "./errors.js";
 import { logInfo } from "./cli-io.js";
@@ -13,10 +15,46 @@ export interface FromIntentOptions extends LegislateOptions {
   yes?: boolean;
   contractFile?: string;
   embeddingFile?: string;
+  autoEmbed?: boolean;
 }
 
 function loadContractFile(file: string): MissionContract {
   return parseContractYaml(fs.readFileSync(file, "utf8"));
+}
+
+async function embedIntent(options: FromIntentOptions): Promise<HostEmbedding> {
+  const embedding = await new OpenAiEmbeddingProvider().generateEmbedding(options.intent);
+  const msnId = options.msn?.trim();
+  const summary = options.intent.trim();
+  return msnId ? { embedding, summary, msnId } : { embedding, summary };
+}
+
+/**
+ * `--embedding-file` reads disk here. `--auto-embed` passes the provider array.
+ * sqlite-vec loads only when the index actually runs.
+ */
+async function applyDriftIndex(root: string, contractSha256Value: string, options: FromIntentOptions): Promise<void> {
+  const embeddingFile = options.embeddingFile?.trim();
+  if (embeddingFile && options.autoEmbed === true) {
+    throw new GantryUserError(
+      "INVALID_ARGUMENT",
+      "legislate: --auto-embed and --embedding-file are mutually exclusive",
+      undefined,
+      2,
+    );
+  }
+  const generated = !embeddingFile && options.autoEmbed === true ? await embedIntent(options) : undefined;
+  if (!embeddingFile && !generated) return;
+
+  const drift = await import("./contract/contract-drift.js");
+  const host = embeddingFile ? drift.readHostEmbedding(embeddingFile) : generated;
+  if (!host) return;
+  const warnings = drift.indexProposedContract({
+    root,
+    contractSha256: contractSha256Value,
+    host,
+  });
+  for (const line of warnings) logInfo(line);
 }
 
 /** Propose (or load) a contract, optionally prompt, then legislate. */
@@ -48,17 +86,7 @@ export async function runLegislateFromIntent(options: FromIntentOptions): Promis
       ? normalizeContract(options.contract)
       : proposed.contract;
 
-  const embeddingFile = options.embeddingFile?.trim();
-  if (embeddingFile) {
-    // Same lazy load as contract propose: native sqlite-vec stays off the CLI startup path.
-    const { indexProposedContract } = await import("./contract/contract-drift.js");
-    const warnings = indexProposedContract({
-      root,
-      contractSha256: contractSha256(normalizeContract(contract)),
-      embeddingFile,
-    });
-    for (const line of warnings) logInfo(line);
-  }
+  await applyDriftIndex(root, contractSha256(normalizeContract(contract)), options);
 
   if (options.fromIntent === true && !options.contractFile?.trim()) {
     const decision = await approveContractPrompt({

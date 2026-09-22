@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
-import { runContractCheck, runContractPreflight, runContractPropose, runContractShow } from "./commands/contract.js";
+import { runContractCheck, runContractEmbed, runContractPreflight, runContractPropose, runContractShow } from "./commands/contract.js";
 import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
@@ -205,6 +205,8 @@ function registerContractCommand(program: Command): void {
       });
     });
 
+  registerContractEmbedCommand(contract);
+
   contract
     .command("show")
     .description("Print the sealed contract block for a mission")
@@ -228,6 +230,31 @@ function registerContractCommand(program: Command): void {
         return;
       }
       await runContractPreflight({ intent, paths: opts.path, provider: opts.provider });
+    });
+}
+
+function registerContractEmbedCommand(contract: Command): void {
+  contract
+    .command("embed")
+    .description("Write a host float[1536] JSON file from intent text via OpenAI")
+    .argument("[intent...]", "Text to embed")
+    .option("--output <path>", "JSON file to write")
+    .option("--msn <id>", "Mission id stored as msn_id")
+    .option("--summary <text>", "Summary stored beside the vector (defaults to the intent)")
+    .action(async (intentParts: string[], opts: { output?: string; msn?: string; summary?: string }) => {
+      const intent = intentParts.join(" ").trim();
+      if (!intent) {
+        logError("contract embed: provide intent text");
+        setExitCode(2);
+        return;
+      }
+      const output = opts.output?.trim();
+      if (!output) {
+        logError("contract embed: --output is required");
+        setExitCode(2);
+        return;
+      }
+      await runContractEmbed({ intent, output, msn: opts.msn, summary: opts.summary });
     });
 }
 

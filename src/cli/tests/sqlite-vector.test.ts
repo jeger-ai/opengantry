@@ -26,12 +26,6 @@ function embedding(hot: number, scale = 1): number[] {
   return values;
 }
 
-function writeEmbedding(dir: string, name: string, body: { msn_id?: string; summary?: string; embedding: number[] }): string {
-  const file = path.join(dir, name);
-  fs.writeFileSync(file, JSON.stringify(body));
-  return file;
-}
-
 test("sqlite-vec loads and creates contract_embeddings", () => {
   const root = tempRoot();
   const store = openContractVectorStore(root);
@@ -87,22 +81,20 @@ test("proposeContract is unchanged when no embedding file is used", () => {
 
 test("drift warning names the historical MSN and leaves the proposed contract hash stable", () => {
   const root = tempRoot();
-  const historical = writeEmbedding(root, "hist.json", {
-    msn_id: "MSN-0100",
-    summary: "billing cage",
-    embedding: embedding(0),
-  });
   assert.deepEqual(
-    indexProposedContract({ root, contractSha256: "a".repeat(64), embeddingFile: historical }),
+    indexProposedContract({
+      root,
+      contractSha256: "a".repeat(64),
+      host: { msnId: "MSN-0100", summary: "billing cage", embedding: embedding(0) },
+    }),
     [],
   );
 
-  const next = writeEmbedding(root, "next.json", {
-    msn_id: "MSN-0101",
-    summary: "billing cage again",
-    embedding: embedding(0, 0.95),
+  const warnings = indexProposedContract({
+    root,
+    contractSha256: "b".repeat(64),
+    host: { msnId: "MSN-0101", summary: "billing cage again", embedding: embedding(0, 0.95) },
   });
-  const warnings = indexProposedContract({ root, contractSha256: "b".repeat(64), embeddingFile: next });
   assert.equal(
     warnings[0],
     "Warning: The proposed intent matches past contract [MSN-0100]. Review prior constraints to prevent architectural drift.",
@@ -126,10 +118,12 @@ test("drift warning names the historical MSN and leaves the proposed contract ha
 test("drift warning falls back to contract_sha256 when msn_id is absent", () => {
   const root = tempRoot();
   const sha = "c".repeat(64);
-  const historical = writeEmbedding(root, "hist.json", { embedding: embedding(1) });
-  indexProposedContract({ root, contractSha256: sha, embeddingFile: historical });
-  const next = writeEmbedding(root, "next.json", { msn_id: "MSN-0102", embedding: embedding(1) });
-  const warnings = indexProposedContract({ root, contractSha256: "d".repeat(64), embeddingFile: next });
+  indexProposedContract({ root, contractSha256: sha, host: { embedding: embedding(1) } });
+  const warnings = indexProposedContract({
+    root,
+    contractSha256: "d".repeat(64),
+    host: { msnId: "MSN-0102", embedding: embedding(1) },
+  });
   assert.equal(
     warnings[0],
     `Warning: The proposed intent matches past contract [${sha}]. Review prior constraints to prevent architectural drift.`,

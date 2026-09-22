@@ -4,7 +4,7 @@ import Database from "better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
 import { GantryUserError } from "../errors.js";
 
-/** OpenAI-sized host vector. The CLI never generates this; the host supplies it. */
+/** OpenAI-sized host vector. The index accepts this array in memory; `gantry contract embed` generates it. */
 export const EMBEDDING_DIMENSIONS = 1536;
 
 /** Local index beside the planner tree. Gitignored; not mission law. */

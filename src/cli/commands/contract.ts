@@ -9,6 +9,7 @@ import { contractSha256, normalizeContract } from "../lib/contract/contract-hash
 import { formatContractBlock, formatEffectiveScope } from "../lib/contract/format.js";
 import { TYPESAFE_API_KEY_ENV } from "../lib/contract/preflight-jev.js";
 import { isPreflightProvider, runPreflight } from "../lib/contract/preflight.js";
+import { OpenAiEmbeddingProvider, writeHostEmbeddingFile } from "../lib/contract/embedding-provider.js";
 import { proposeContract } from "../lib/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../lib/legislate.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -114,13 +115,15 @@ export async function runContractPropose(options: ContractProposeCliOptions): Pr
     const sha = contractSha256(contract);
     const embeddingFile = options.embeddingFile?.trim();
     // Load sqlite-vec only for this side path so other commands (including packed init) stay free of the native module.
-    const driftWarnings = embeddingFile
-      ? (await import("../lib/contract/contract-drift.js")).indexProposedContract({
-          root: workspace.root,
-          contractSha256: sha,
-          embeddingFile,
-        })
-      : undefined;
+    let driftWarnings: string[] | undefined;
+    if (embeddingFile) {
+      const drift = await import("../lib/contract/contract-drift.js");
+      driftWarnings = drift.indexProposedContract({
+        root: workspace.root,
+        contractSha256: sha,
+        host: drift.readHostEmbedding(embeddingFile),
+      });
+    }
     const human = [formatContractBlock(contract, proposed.gate), "", "Rationale:", ...proposed.rationale.map((r) => `  - ${r}`)];
     if (driftWarnings && driftWarnings.length > 0) human.push("", ...driftWarnings);
     return {
@@ -135,6 +138,34 @@ export async function runContractPropose(options: ContractProposeCliOptions): Pr
         ...(driftWarnings ? { drift_warnings: driftWarnings } : {}),
       },
       human,
+    };
+  });
+}
+
+export interface ContractEmbedCliOptions {
+  intent: string;
+  output: string;
+  msn?: string;
+  summary?: string;
+}
+
+/** Write a host embedding JSON file. Does not open the vector index. */
+export async function runContractEmbed(options: ContractEmbedCliOptions): Promise<void> {
+  await runUserCommandAsync({}, async (): Promise<CommandPresentation> => {
+    const output = options.output.trim();
+    if (!output) {
+      throw new GantryUserError("INVALID_ARGUMENT", "contract embed: --output is required", undefined, 2);
+    }
+    const embedding = await new OpenAiEmbeddingProvider().generateEmbedding(options.intent);
+    const msnId = options.msn?.trim();
+    writeHostEmbeddingFile(output, {
+      summary: options.summary?.trim() || options.intent.trim(),
+      embedding,
+      ...(msnId ? { msn_id: msnId } : {}),
+    });
+    return {
+      json: { ok: true, output },
+      human: [`contract embed: wrote ${output}`],
     };
   });
 }
