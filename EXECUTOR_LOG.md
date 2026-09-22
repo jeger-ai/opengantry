@@ -1003,3 +1003,8 @@ DoD 1 MSN-0224: docs CI.md SARIF continue-on-error and JUnit when always; MCP la
 [CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/MSN-0225.release-opengantry-v3-5-0-version-parity-changel.yaml reason=Trace-mapped DoD for verify must land in EXECUTOR_LOG.md; mission trace_rows live outside contract.tmvc_roots proposed=EXECUTOR_LOG.md,.gitagent/missions/MSN-0225.release-opengantry-v3-5-0-version-parity-changel.yaml | msn=MSN-0225
 [SKILL-EXEC] skill_key=substrate tool=cursor scope=package.json,package-lock.json,src/cli/lib/version.gen.ts,templates/integrations/compatibility.json,.gitagent/foreman/SUBSTRATE.version.json,templates/.gitagent/foreman/SUBSTRATE.version.json,docs/CHANGELOG.md,docs/DEVELOPMENT.md,docs/INTEGRATIONS.md,README.md
 DoD 1 MSN-0225: version parity 3.5.0 across package.json, version.gen.ts, compatibility.json, and both SUBSTRATE.version.json files; changelog highlights and From v3.4.0 upgrade notes; launcher docs @3.5.0+
+
+## MSN-0226 — Local sqlite-vec contract drift index
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/MSN-0226.add-an-optional-local-sqlite-vec-contract-index-.yaml,.gitignore,package-lock.json reason=Trace sink, mission trace_rows, lockfile, and gitignore sit outside contract.tmvc_roots proposed=EXECUTOR_LOG.md,.gitagent/missions/MSN-0226.add-an-optional-local-sqlite-vec-contract-index-.yaml,.gitignore,package-lock.json | msn=MSN-0226
+[SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/lib/contract/,src/cli/tests/sqlite-vector.test.ts
+DoD 1 MSN-0226: optional sqlite-vec contract index; host-supplied float[1536]; proposeContract stays pure; npm test: tests 790 pass 790 fail 0
