@@ -1,11 +1,11 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: Add an optional local sqlite-vec contract index behind VectorStoreAdapter. Host supplies float[1536] via --embedding-file. Advisory drift warnings only. proposeContract stays pure.
 msn_id: MSN-0226
 skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0226: optional sqlite-vec contract index; host-supplied float[1536]; proposeContract stays pure; npm test: tests 790 pass 790 fail 0"
+    trace_quote: "DoD 1 MSN-0226: optional sqlite-vec contract index; host-supplied
+      float[1536]; proposeContract stays pure; npm test: tests 790 pass 790 fail
+      0"
     anchor: "1010"
     status: PASS
 interrogation:
@@ -117,4 +117,5 @@ contract:
   banned_imports:
     - "@modelcontextprotocol/sdk/client/index.js"
     - "@modelcontextprotocol/sdk/client/stdio.js"
-contract_sha256: 811e26c02e61dd103a4df566a95929f8a31ad9edae737631b6cc595b70bc8d4c
+  allow_dynamic_specifiers: true
+contract_sha256: 34e7ce60fa6b5dc5ecad4b8033a8fc5ebc16de8ca7bef72283c931a49effd996
