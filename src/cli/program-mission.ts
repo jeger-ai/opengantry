@@ -183,19 +183,26 @@ function registerContractCommand(program: Command): void {
 
   contract
     .command("propose")
-    .description("Deterministically propose a mission contract from intent + repo (no write)")
+    .description("Deterministically propose a mission contract from intent + repo (mission YAML is not written)")
     .argument("[intent...]", "Planner intent summary")
     .option("--skill-key <key>", "Manifest skill_key")
     .option("--path <paths...>", "Declared paths for TMVC hints")
+    .option("--embedding-file <path>", "Host-supplied float[1536] JSON; updates the local vector index and prints advisory drift warnings")
     .option("--json", "Emit result as JSON on stdout")
-    .action(async (intentParts: string[], opts: { skillKey?: string; path?: string[]; json?: boolean }) => {
+    .action(async (intentParts: string[], opts: { skillKey?: string; path?: string[]; json?: boolean; embeddingFile?: string }) => {
       const intent = intentParts.join(" ").trim();
       if (!intent) {
         logError("contract propose: provide intent text");
         setExitCode(2);
         return;
       }
-      runContractPropose({ intent, skillKey: opts.skillKey, paths: opts.path, json: opts.json });
+      await runContractPropose({
+        intent,
+        skillKey: opts.skillKey,
+        paths: opts.path,
+        json: opts.json,
+        embeddingFile: opts.embeddingFile,
+      });
     });
 
   contract

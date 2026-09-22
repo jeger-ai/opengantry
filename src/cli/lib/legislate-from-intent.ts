@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { approveContractPrompt } from "./contract/approve-prompt.js";
-import { normalizeContract, parseContractYaml } from "./contract/contract-hash.js";
+import { contractSha256, normalizeContract, parseContractYaml } from "./contract/contract-hash.js";
 import { proposeContract } from "./contract/propose.js";
 import { GantryUserError } from "./errors.js";
 import { logInfo } from "./cli-io.js";
@@ -12,6 +12,7 @@ export interface FromIntentOptions extends LegislateOptions {
   fromIntent?: boolean;
   yes?: boolean;
   contractFile?: string;
+  embeddingFile?: string;
 }
 
 function loadContractFile(file: string): MissionContract {
@@ -46,6 +47,18 @@ export async function runLegislateFromIntent(options: FromIntentOptions): Promis
     : options.contract
       ? normalizeContract(options.contract)
       : proposed.contract;
+
+  const embeddingFile = options.embeddingFile?.trim();
+  if (embeddingFile) {
+    // Same lazy load as contract propose: native sqlite-vec stays off the CLI startup path.
+    const { indexProposedContract } = await import("./contract/contract-drift.js");
+    const warnings = indexProposedContract({
+      root,
+      contractSha256: contractSha256(normalizeContract(contract)),
+      embeddingFile,
+    });
+    for (const line of warnings) logInfo(line);
+  }
 
   if (options.fromIntent === true && !options.contractFile?.trim()) {
     const decision = await approveContractPrompt({

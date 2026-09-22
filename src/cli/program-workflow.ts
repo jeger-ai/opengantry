@@ -28,6 +28,7 @@ type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interro
   fromIntent?: boolean;
   yes?: boolean;
   contractFile?: string;
+  embeddingFile?: string;
 };
 
 /** Commander maps --path to `path` and --answers to `answers`. */
@@ -178,6 +179,7 @@ function registerLegislateCommand(program: Command): void {
     .option("--from-intent", "Propose a mission contract from intent + repo, then prompt for approval")
     .option("--yes", "Approve the proposed contract without a TTY prompt (required for non-TTY --from-intent)")
     .option("--contract-file <file>", "YAML file with a contract: block (skips propose prompt)")
+    .option("--embedding-file <path>", "Host-supplied float[1536] JSON; advisory drift warnings before approval (--from-intent)")
     .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
@@ -187,16 +189,22 @@ function registerLegislateCommand(program: Command): void {
         return;
       }
       const mapped = mapLegislateCommanderOptions(options, text);
+      const fromIntent = options.fromIntent === true || Boolean(options.contractFile?.trim());
+      if (options.embeddingFile?.trim() && !fromIntent) {
+        logError("legislate: --embedding-file requires --from-intent");
+        setExitCode(2);
+        return;
+      }
       try {
-        const result =
-          options.fromIntent === true || options.contractFile?.trim()
-            ? await runLegislateFromIntent({
-                ...mapped,
-                fromIntent: options.fromIntent === true,
-                yes: options.yes === true,
-                contractFile: options.contractFile,
-              })
-            : runLegislate(mapped);
+        const result = fromIntent
+          ? await runLegislateFromIntent({
+              ...mapped,
+              fromIntent: options.fromIntent === true,
+              yes: options.yes === true,
+              contractFile: options.contractFile,
+              embeddingFile: options.embeddingFile,
+            })
+          : runLegislate(mapped);
         if (!result.ok) setExitCode(result.exitCode);
       } catch (e) {
         logError(isGantryUserError(e) ? e.message : errorMessage(e));

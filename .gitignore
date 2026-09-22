@@ -18,6 +18,11 @@ src/cli/lib/version.gen.ts
 .gitagent/tmp/
 .gitagent/virtual/
 
+# Local contract vector index (sqlite-vec). Not mission law.
+.gitagent/planner/contracts.sqlite
+.gitagent/planner/contracts.sqlite-wal
+.gitagent/planner/contracts.sqlite-shm
+
 # Local IDE edge — external agent skills (not GXT law)
 .cursor/external-skills.local.mdc
 .cursorrules.local

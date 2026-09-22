@@ -86,10 +86,12 @@ export interface ContractProposeCliOptions {
   skillKey?: string;
   paths?: string[];
   json?: boolean;
+  /** Host-supplied float[1536] JSON. Absent: propose stays a pure read. */
+  embeddingFile?: string;
 }
 
-export function runContractPropose(options: ContractProposeCliOptions): void {
-  runUserCommand({ json: options.json }, (): CommandPresentation => {
+export async function runContractPropose(options: ContractProposeCliOptions): Promise<void> {
+  await runUserCommandAsync({ json: options.json }, async (): Promise<CommandPresentation> => {
     const workspace = loadWorkspace();
     const resolved = resolveSkillKeyForLegislation({
       root: workspace.root,
@@ -109,17 +111,30 @@ export function runContractPropose(options: ContractProposeCliOptions): void {
     });
     const contract = normalizeContract(proposed.contract);
     resolveEffectiveScope({ manifest: workspace.manifest, skillKey: resolved.skillKey, contract });
+    const sha = contractSha256(contract);
+    const embeddingFile = options.embeddingFile?.trim();
+    // Load sqlite-vec only for this side path so other commands (including packed init) stay free of the native module.
+    const driftWarnings = embeddingFile
+      ? (await import("../lib/contract/contract-drift.js")).indexProposedContract({
+          root: workspace.root,
+          contractSha256: sha,
+          embeddingFile,
+        })
+      : undefined;
+    const human = [formatContractBlock(contract, proposed.gate), "", "Rationale:", ...proposed.rationale.map((r) => `  - ${r}`)];
+    if (driftWarnings && driftWarnings.length > 0) human.push("", ...driftWarnings);
     return {
       json: {
         ok: true,
         skill_key: resolved.skillKey,
         contract,
-        contract_sha256: contractSha256(contract),
+        contract_sha256: sha,
         gate: proposed.gate,
         rationale: proposed.rationale,
         block: formatContractBlock(contract, proposed.gate),
+        ...(driftWarnings ? { drift_warnings: driftWarnings } : {}),
       },
-      human: [formatContractBlock(contract, proposed.gate), "", "Rationale:", ...proposed.rationale.map((r) => `  - ${r}`)],
+      human,
     };
   });
 }
