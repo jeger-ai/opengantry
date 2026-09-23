@@ -30,4 +30,5 @@ contract:
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
-contract_sha256: 1355b3a948d152c029e0776c4858d419ba74ff711d25b8b0cbc1e505a3637a97
+  allow_dynamic_specifiers: true
+contract_sha256: 42973c41b2e4781bf9afeee61cd3be5ef3590c5ac1eed4eab0bc334f26217552
