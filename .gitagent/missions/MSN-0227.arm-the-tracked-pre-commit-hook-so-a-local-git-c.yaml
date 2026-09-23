@@ -18,6 +18,7 @@ interrogation:
     operator_answer: Skill gantry (Tier-2) covers src/cli/.
 interrogation_sha256: fadd30dfa8fda6fbc9089de74446ce21ba122848139fe56b0b01a763b00a6691
 declared_paths:
+  - .gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml
   - .gitagent/planner/RUNTIME.md
   - .githooks/pre-commit
   - docs/INTEGRATIONS.md
