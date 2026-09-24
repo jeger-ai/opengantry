@@ -269,8 +269,8 @@ function parseArchRule(rule: unknown, index: number): ArchRuleSpec {
   const forbidResolved = presentString(r.forbid_resolved_path_substring);
   const forbidPattern = presentString(r.forbid_pattern);
   const requirePattern = presentString(r.require_pattern);
-  const importRule = forbidImportLayer != null || forbidSpecifier != null || forbidResolved != null;
-  const patternRule = forbidPattern != null || requirePattern != null;
+  const importRule = [forbidImportLayer, forbidSpecifier, forbidResolved].some((value) => value != null);
+  const patternRule = [forbidPattern, requirePattern].some((value) => value != null);
   if (importRule && patternRule) {
     throw new Error(
       `TARGET_ARCHITECTURE.yaml: rules[${String(index)}] "${id}" sets both import fields and pattern fields. Split this mixed rule into two distinct YAML entries, one import rule and one pattern rule.`,

@@ -1,5 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: Restructure gantry CLI: fold lib prefixes into directories with git mv, split mission pin resolution out of the parser, and make architecture rules a discriminated union. applies_to is a selector on both import and pattern rules, not a kind.
+# Legislated intent: Restructure gantry CLI: fold lib prefixes into directories with git mv, split mission pin resolution out of the parser, and make architecture rules a discriminated union. applies_to is a selector on both import and pattern rules, not a kind. The architecture parser stays inside the changed-file line and complexity budgets.
 msn_id: MSN-0228
 skill_key: gantry
 gate_command: npm test
