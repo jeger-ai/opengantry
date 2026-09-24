@@ -33,7 +33,6 @@ export interface ArchLayerSpec {
 interface ArchRuleBase {
   id: string;
   from_layer: string;
-  /** Selector. Valid on import and pattern rules; not an enforcement action. */
   applies_to?: string[];
 }
 
@@ -54,11 +53,8 @@ export type ArchRuleSpec = ArchImportRule | ArchPatternRule;
 
 export interface TargetArchitectureSpec {
   schema_version: TargetArchitectureSchemaVersion;
-  /** Schema 0.3.0: domain adapter key (code | content). */
   domain?: string;
-  /** Explicit scan roots (schema 0.2.0+). When absent, derived from layer globs. */
   scan_roots?: string[];
-  /** Supported languages for boundary checks (default: typescript). */
   languages?: string[];
   layers: ArchLayerSpec[];
   rules: ArchRuleSpec[];
@@ -101,9 +97,7 @@ function resolveImportPath(file: string, spec: string): string | null {
     target = normalized.slice(0, -3) + ".ts";
   } else if (!normalized.endsWith(".ts")) {
     target = `${normalized}.ts`;
-  } else {
-    target = normalized;
-  }
+  } else target = normalized;
   return target.replace(/\\/g, "/");
 }
 
@@ -111,11 +105,7 @@ function parseSchemaVersion(raw: unknown): TargetArchitectureSchemaVersion {
   if (typeof raw !== "string") {
     throw new Error("TARGET_ARCHITECTURE.yaml: schema_version must be a string");
   }
-  if (
-    !SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS.includes(
-      raw as TargetArchitectureSchemaVersion,
-    )
-  ) {
+  if (!SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS.includes(raw as TargetArchitectureSchemaVersion)) {
     throw new Error(
       `TARGET_ARCHITECTURE.yaml: unsupported schema_version (supported: ${SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS.join(", ")})`,
     );
@@ -147,7 +137,6 @@ export function targetArchitectureMigrationHint(version: string): string | null 
   return `TARGET_ARCHITECTURE.yaml schema ${version} is legacy — add scan_roots (schema ${TARGET_ARCHITECTURE_SCHEMA_VERSION}) for explicit adopter roots`;
 }
 
-/** Derive scan roots from spec layers or optional manifest TMVC fallback. */
 export function resolveArchScanRoots(
   spec: TargetArchitectureSpec,
   manifestTmvcRoots?: readonly string[],
@@ -180,13 +169,14 @@ export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string
   return scanRoots.some((root) => globMatches(norm, root));
 }
 
-function fileMatchesAppliesTo(repoRel: string, appliesTo: readonly string[] | undefined, scanRoots: readonly string[]): boolean {
-  if (appliesTo && appliesTo.length > 0) {
-    return appliesTo.some((g) => globMatches(repoRel, g));
-  }
+function fileMatchesAppliesTo(
+  repoRel: string,
+  appliesTo: readonly string[] | undefined,
+  scanRoots: readonly string[],
+): boolean {
+  if (appliesTo && appliesTo.length > 0) return appliesTo.some((g) => globMatches(repoRel, g));
   return fileMatchesScanRoots(repoRel, scanRoots);
 }
-
 
 function adapterSupportsImportRules(spec: TargetArchitectureSpec): boolean {
   const domain = spec.domain?.trim().toLowerCase();
@@ -444,12 +434,9 @@ export function formatArchCheckHuman(result: ArchCheckResult, label: "arch" | "p
   const lines = result.violations.map(
     (v) => `${v.file}:${String(v.line)}:${String(v.column)} ${v.rule_id} ${v.module_specifier}`,
   );
-  return [`${CLI_NAME} ${label} check: ${String(result.violations.length)} violation(s)`, ...lines].join(
-    "\n",
-  );
+  return [`${CLI_NAME} ${label} check: ${String(result.violations.length)} violation(s)`, ...lines].join("\n");
 }
 
-/** Walk all files under scan_roots for the spec's domain. */
 export function walkPerimeterFiles(repoRoot: string, spec: TargetArchitectureSpec): string[] {
   const domain = spec.domain?.toLowerCase() ?? "code";
   const adapter = getDomainAdapter(domain);
