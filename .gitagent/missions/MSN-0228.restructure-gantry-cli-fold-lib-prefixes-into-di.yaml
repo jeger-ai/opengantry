@@ -29,6 +29,7 @@ interrogation:
 interrogation_sha256: f111f130af6ecd972cf4b0a7463b9d74c6fb0f3c12fc547a3be3657383f5f39d
 declared_paths:
   - .gitagent/missions/MSN-0228.restructure-gantry-cli-fold-lib-prefixes-into-di.yaml
+  - TARGET_ARCHITECTURE.yaml
   - src/cli/
 contract:
   tmvc_roots:
