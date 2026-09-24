@@ -6,7 +6,7 @@ import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "../lib/receipt-
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
 import type { LedgerEntry, ReceiptLedgerPayload } from "../lib/ledger/ledger-entry.js";
 import { depsRefForRepo } from "../lib/deps/deps-slug.js";
-import { gitRun } from "../lib/git.js";
+import { gitRun } from "../lib/git/git.js";
 import type { OrgPolicyBundle } from "../lib/policy/policy-types.js";
 import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   checkArchBoundariesForFiles,
   layerForFile,
@@ -90,6 +90,54 @@ test("loadTargetArchitecture: loads repository dogfood file", () => {
   assert.equal(spec.schema_version, "0.3.0");
   assert.ok(spec.rules.some((r) => r.id === "RULE-LIB-TO-COMMAND"));
   assert.ok(spec.rules.some((r) => r.id === "RULE-COMMAND-NO-JSON-STRINGIFY"));
+});
+
+test("validateTargetArchitecture: applies_to on an import rule is not mixed", () => {
+  const spec = validateTargetArchitecture({
+    schema_version: "0.3.0",
+    layers: [{ id: "app", globs: ["src/ui/**"] }],
+    rules: [
+      {
+        id: "RULE-UI-DB",
+        from_layer: "app",
+        applies_to: ["src/ui/**"],
+        forbid_import_layer: "database",
+      },
+    ],
+  });
+  assert.equal(spec.rules[0]?.kind, "import");
+  assert.deepEqual(spec.rules[0]?.applies_to, ["src/ui/**"]);
+});
+
+test("validateTargetArchitecture: mixed enforcement fields name the split", () => {
+  assert.throws(
+    () =>
+      validateTargetArchitecture({
+        schema_version: "0.3.0",
+        layers: [{ id: "app", globs: ["src/**"] }],
+        rules: [
+          {
+            id: "RULE-MIXED",
+            from_layer: "app",
+            forbid_import_layer: "database",
+            forbid_pattern: "secret",
+          },
+        ],
+      }),
+    /TARGET_ARCHITECTURE\.yaml: rules\[0\] "RULE-MIXED" sets both import fields and pattern fields\. Split this mixed rule into two distinct YAML entries, one import rule and one pattern rule\./,
+  );
+});
+
+test("validateTargetArchitecture: applies_to alone is an empty rule", () => {
+  assert.throws(
+    () =>
+      validateTargetArchitecture({
+        schema_version: "0.3.0",
+        layers: [{ id: "app", globs: ["src/**"] }],
+        rules: [{ id: "RULE-EMPTY", from_layer: "app", applies_to: ["src/ui/**"] }],
+      }),
+    /TARGET_ARCHITECTURE\.yaml: rules\[0\] "RULE-EMPTY" sets neither import fields \(forbid_import_layer, forbid_specifier_substring, forbid_resolved_path_substring\) nor pattern fields \(forbid_pattern, require_pattern\)\./,
+  );
 });
 
 test("targetArchitectureMigrationHint: warns on legacy schema", () => {

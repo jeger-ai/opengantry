@@ -9,8 +9,8 @@ import { GantryUserError } from "./errors.js";
 import {
   listMsnSubjectCommits,
   type MsnCommitRow,
-} from "./git-proof.js";
-import { gitConfigGet, gitRevParse } from "./git.js";
+} from "./git/git-proof.js";
+import { gitConfigGet, gitRevParse } from "./git/git.js";
 import { loadGxtConfig, resolveReceiptSignatureTier } from "./gxt-config.js";
 import { resolveOrgExportConfig } from "./org-export-config.js";
 import { resolvePlannerEmails } from "./planner-identity.js";

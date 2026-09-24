@@ -1,0 +1,380 @@
+import { z } from "zod";
+import { INTERROGATION_FINDING_KINDS } from "../interrogate/findings.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { handleCheckSignature } from "./mcp-check-signature.js";
+import { handleDraftLegislation } from "./mcp-draft-legislation.js";
+import { handleProposeContract } from "./mcp-propose-contract.js";
+import { handlePreflightContract } from "./mcp-preflight-contract.js";
+import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
+import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
+import {
+  handleAttest,
+  handleLastError,
+  handlePinMission,
+  handleResolveMission,
+  handleRuntimeEnv,
+  handleRuntimeExec,
+  handleScan,
+  handleVerify,
+} from "./mcp-runtime.js";
+import { handleDoctor } from "./mcp-doctor.js";
+import { handleStartOrchestration } from "./mcp-start-orchestration.js";
+import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
+import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "../types.js";
+
+const interrogationRowSchema = z.object({
+  finding_id: z.string(),
+  kind: z.enum(INTERROGATION_FINDING_KINDS),
+  question: z.string(),
+  hypothesis: z.string(),
+  operator_answer: z.string().describe("Quoted verbatim from operator — never fabricated"),
+  adr_refs: z.array(z.string()).optional(),
+});
+
+const missionContractSchema = z
+  .object({
+    tmvc_roots: z.array(z.string()).optional(),
+    forbidden_zones: z.array(z.string()).optional(),
+    allowed_imports: z.array(z.string()).optional(),
+    banned_imports: z.array(z.string()).optional(),
+    allow_dynamic_specifiers: z.boolean().optional(),
+    strict_relative_imports: z.boolean().optional(),
+  })
+  .optional();
+
+const gateAdapterSchema = z
+  .enum(GATE_ADAPTER_IDS)
+  .optional()
+  .describe(
+    "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc. Run gxt_doctor first for tsc|eslint.",
+  );
+
+const typedDoctorAdapterSchema = z
+  .enum(TYPED_GATE_ADAPTER_IDS)
+  .optional()
+  .describe(
+    "Force tsc or eslint adapter preflight even when no typed missions are declared (ADR-0041). Never sniffs gate_command.",
+  );
+
+function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
+  return {
+    content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+  };
+}
+
+function registerGxtInterrogateTool(server: McpServer): void {
+  server.tool(
+    "gxt_interrogate",
+    "Deterministic gap analysis before legislation. Returns one next_question (halt) or clear with interrogation_sha256. Do not fabricate operator_answer — quote operator chat verbatim.",
+    {
+      intent: z.string().describe("Planner intent summary"),
+      msn_id: z.string().describe("Mission id advisory label, e.g. MSN-0149"),
+      skill_key: z.string().optional().describe("Manifest skill key (default gantry)"),
+      gate_command: z.string().optional().describe("Proposed gate command"),
+      gate_success_substring: z.string().optional().describe("Proposed gate success substring"),
+      paths: z.array(z.string()).optional().describe("Declared paths for boundary analysis"),
+      interrogation: z.array(interrogationRowSchema).optional().describe("Accumulated operator answers"),
+    },
+    async (args) => jsonText(handleInterrogate(args as InterrogateMcpInput)),
+  );
+}
+
+function registerGxtDraftLegislationTool(server: McpServer): void {
+  server.tool(
+    "gxt_draft_legislation",
+    "Preview proposed mission law without writing files. Requires complete interrogation (server recomputes). Returns draft_token for gxt_execute_legislation after human chat approval. Never fabricate operator_answer.",
+    {
+      title: z.string().describe("Concise summary of the proposed law"),
+      msn_id: z.string().describe('Mission id, e.g. "MSN-0010"'),
+      skill_key: z.string().describe("Manifest skill key (e.g. gantry, ui, logic)"),
+      gate_command: z.string().describe("Deterministic verification command"),
+      gate_success_substring: z.string().optional().describe("Optional gate success substring"),
+      gate_adapter: gateAdapterSchema,
+      paths: z.array(z.string()).optional().describe("Declared paths for gap analysis"),
+      interrogation: z.array(interrogationRowSchema).describe("Complete interrogation answers for all findings"),
+      contract: missionContractSchema.describe("Optional Planner-sealed mission cage (ADR-0045)"),
+    },
+    async (args) => jsonText(handleDraftLegislation(args)),
+  );
+}
+
+function registerGxtProposeContractTool(server: McpServer): void {
+  server.tool(
+    "gxt_propose_contract",
+    "Deterministically propose a mission contract from intent + repo (read-only). No LLM. Present the block to the operator, then pass the (possibly edited) contract to gxt_draft_legislation.",
+    {
+      intent: z.string().describe("Planner intent / story"),
+      skill_key: z.string().describe("Manifest skill key"),
+      paths: z.array(z.string()).optional().describe("Declared path hints"),
+    },
+    async (args) => jsonText(handleProposeContract(args)),
+  );
+}
+
+function registerGxtPreflightContractTool(server: McpServer): void {
+  server.tool(
+    "gxt_preflight_contract",
+    "Experimental advisory classifier (heuristic default; optional Jev). Returns skill_key hints and tmvc_root_candidates. Never writes a contract. Call gxt_propose_contract next.",
+    {
+      intent: z.string().describe("Planner intent / story"),
+      paths: z.array(z.string()).optional().describe("Declared path hints"),
+      provider: z.enum(["heuristic", "jev"]).optional().describe("heuristic (default, offline) or jev (requires TYPESAFE_API_KEY)"),
+    },
+    async (args) => jsonText(await handlePreflightContract(args)),
+  );
+}
+
+function registerGxtExecuteLegislationTool(server: McpServer): void {
+  server.tool(
+    "gxt_execute_legislation",
+    "Execute gantry legislate using a valid draft_token after explicit human chat approval.",
+    {
+      draft_token: z.string().describe("Token from gxt_draft_legislation"),
+    },
+    async (args) => jsonText(handleExecuteLegislation(args.draft_token)),
+  );
+}
+
+function registerGxtCheckSignatureTool(server: McpServer): void {
+  server.tool(
+    "gxt_check_signature",
+    "Check whether Planner git signature exists for a mission file.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission YAML path"),
+    },
+    async (args) => jsonText(handleCheckSignature(args.mission_file_path)),
+  );
+}
+
+function registerGxtPinMissionTool(server: McpServer): void {
+  server.tool(
+    "gxt_pin_mission",
+    "Pin active mission for runtime env and Cursor sessionStart hooks.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission YAML path"),
+    },
+    async (args) => jsonText(handlePinMission(args.mission_file_path)),
+  );
+}
+
+function registerGxtRuntimeEnvTool(server: McpServer): void {
+  server.tool(
+    "gxt_runtime_env",
+    "Return GXT runtime env payload for a mission (GXT_* variables).",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+    },
+    async (args) => jsonText(handleRuntimeEnv(args.mission_file_path)),
+  );
+}
+
+function registerGxtVerifyTool(server: McpServer): void {
+  server.tool(
+    "gxt_verify",
+    "Run gantry verify phases for a mission and return structured result.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
+      skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
+      ci: z.boolean().optional().describe("Authoritative CI mode for KPI stale binding"),
+    },
+    async (args) =>
+      jsonText(
+        await handleVerify(
+          args.mission_file_path,
+          args.pre_push === true,
+          args.skip_stale_evidence === true,
+          args.ci === true,
+        ),
+      ),
+  );
+}
+
+function registerGxtAttestTool(server: McpServer): void {
+  server.tool(
+    "gxt_attest",
+    "Emit local attestation receipt JSON (digests only; optional SSH/GPG signature).",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      out: z.string().optional().describe("Receipt output path override"),
+      sign: z.boolean().optional().describe("Detach-sign receipt with local SSH/GPG key"),
+    },
+    async (args) =>
+      jsonText(
+        handleAttest({
+          mission_file_path: args.mission_file_path,
+          out: args.out,
+          sign: args.sign,
+        }),
+      ),
+  );
+}
+
+function registerGxtScanTool(server: McpServer): void {
+  server.tool(
+    "gxt_scan",
+    "Run gantry scan (llm_verifiers) and write KPI report for verify kpi_gate.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      cwd: z.string().optional().describe("Working directory for verifier commands"),
+    },
+    async (args) => jsonText(handleScan(args.mission_file_path, args.cwd)),
+  );
+}
+
+function registerGxtRuntimeExecTool(server: McpServer): void {
+  server.tool(
+    "gxt_runtime_exec",
+    "Run executor command with mission env + forbidden-zone enforcement.",
+    {
+      mission_file_path: z.string().describe("Repo-relative mission path"),
+      command: z.array(z.string()).describe("Executor argv (after --)"),
+      cwd: z.string().optional(),
+      timeout_ms: z.number().int().positive().optional(),
+    },
+    async (args) =>
+      jsonText(
+        await handleRuntimeExec({
+          mission: args.mission_file_path,
+          command: args.command,
+          cwd: args.cwd,
+          timeout_ms: args.timeout_ms,
+        }),
+      ),
+  );
+}
+
+function registerGxtResolveMissionTool(server: McpServer): void {
+  server.tool(
+    "gxt_resolve_mission",
+    "Resolve active mission using the same order as gxt-resolve-mission.sh.",
+    {
+      mission_file_path: z.string().optional().describe("Optional explicit mission path override"),
+    },
+    async (args) => jsonText(handleResolveMission(args.mission_file_path)),
+  );
+}
+
+function registerGxtDoctorTool(server: McpServer): void {
+  server.tool(
+    "gxt_doctor",
+    "Environment readiness for GXT + explicit gate adapters (ADR-0041). Run before legislating/pinning a `gate_adapter: tsc|eslint` mission. Selection uses declared gate_adapter or explicit override; never sniffs gate_command. Read-only.",
+    {
+      gate_adapter: typedDoctorAdapterSchema,
+      adapter_baseline: z
+        .boolean()
+        .optional()
+        .describe("Opt-in: spawn tsc/eslint for pre-existing debt warnings. Default off."),
+      policy_path: z.string().optional().describe("Optional expected policy digest JSON path (gantry doctor --policy)."),
+    },
+    async (args) => jsonText(handleDoctor(args)),
+  );
+}
+
+function registerGxtLastErrorTool(server: McpServer): void {
+  server.tool(
+    "gxt_last_error",
+    "Read machine-oriented remediation from GXT_LAST_ERROR_FILE.",
+    {},
+    async () => jsonText(handleLastError()),
+  );
+}
+
+function registerGxtStartOrchestrationTool(server: McpServer): void {
+  server.tool(
+    "gxt_start_orchestration",
+    "Goal-first flow: triage → legislate stub → optional pin/runtime env hints.",
+    {
+      intent: z.string().describe("What the developer wants to build"),
+      msn_id: z.string().optional().describe("Mission id (auto-suggested when omitted)"),
+      skill_key: z.string().optional().describe("Override manifest skill_key"),
+      gate_command: z.string().optional().describe("Deterministic gate command"),
+      gate_success_substring: z.string().optional().describe("Gate success substring"),
+      gate_adapter: gateAdapterSchema,
+      pin_if_needed: z.boolean().optional().describe("Pin mission after scaffold"),
+      emit_runtime_env: z.boolean().optional().describe("Include gxt_runtime_env payload"),
+      write_mission: z.boolean().optional().describe("Write mission YAML (default true)"),
+    },
+    async (args) => jsonText(handleStartOrchestration(args)),
+  );
+}
+
+function registerGxtPolicyStatusTool(server: McpServer): void {
+  server.tool(
+    "gxt_policy_status",
+    "Read-only effective org policy (pointer + cache). Never fetches. Use gantry policy pull for network.",
+    {},
+    async () => jsonText(handlePolicyStatus()),
+  );
+}
+
+function registerGxtLedgerVerifyTool(server: McpServer): void {
+  server.tool(
+    "gxt_ledger_verify",
+    "Read-only verify of refs/gxt/ledger hash chain. Never fetches or appends.",
+    {
+      require_signatures: z.boolean().optional().describe("Fail when a ledger commit is unsigned"),
+    },
+    async (args) => jsonText(handleLedgerVerify(args.require_signatures === true)),
+  );
+}
+
+function registerGxtDepsCheckTool(server: McpServer): void {
+  server.tool(
+    "gxt_deps_check",
+    "Read-only evaluate mission depends_on against fetched refs/gxt/deps/* . Never fetches.",
+    {
+      mission_file_path: z.string().optional().describe("Repo-relative mission YAML path"),
+    },
+    async (args) => jsonText(handleDepsCheck(args.mission_file_path)),
+  );
+}
+
+function registerGxtUpgradePlanTool(server: McpServer): void {
+  server.tool(
+    "gxt_upgrade_plan",
+    "Plan substrate upgrade preview (stable JSON schema_version 1). Set dry_run true to preview without staging.",
+    {
+      msn_id: z.string().optional().describe("Optional MSN-NNNN in upgrade band (9000-9099)"),
+      dry_run: z.boolean().optional().describe("Preview plan without writing files"),
+    },
+    async (args) => jsonText(handleUpgradePlan({ msn_id: args.msn_id, dry_run: args.dry_run })),
+  );
+}
+
+function registerGxtUpgradeApplyTool(server: McpServer): void {
+  server.tool(
+    "gxt_upgrade_apply",
+    "Apply Teacher-signed substrate upgrade after staged hash verification.",
+    {
+      mission_file_path: z.string().optional().describe("Signed upgrade mission YAML path"),
+    },
+    async (args) => jsonText(await handleUpgradeApply(args.mission_file_path)),
+  );
+}
+
+/** Register all OpenGantry GXT MCP tools on the given server instance. */
+export function registerGxtMcpTools(server: McpServer): void {
+  registerGxtInterrogateTool(server);
+  registerGxtProposeContractTool(server);
+  registerGxtPreflightContractTool(server);
+  registerGxtDraftLegislationTool(server);
+  registerGxtExecuteLegislationTool(server);
+  registerGxtCheckSignatureTool(server);
+  registerGxtPinMissionTool(server);
+  registerGxtRuntimeEnvTool(server);
+  registerGxtVerifyTool(server);
+  registerGxtAttestTool(server);
+  registerGxtScanTool(server);
+  registerGxtRuntimeExecTool(server);
+  registerGxtResolveMissionTool(server);
+  registerGxtDoctorTool(server);
+  registerGxtLastErrorTool(server);
+  registerGxtStartOrchestrationTool(server);
+  registerGxtPolicyStatusTool(server);
+  registerGxtLedgerVerifyTool(server);
+  registerGxtDepsCheckTool(server);
+  registerGxtUpgradePlanTool(server);
+  registerGxtUpgradeApplyTool(server);
+}

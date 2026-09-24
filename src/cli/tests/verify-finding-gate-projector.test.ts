@@ -3,8 +3,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { projectGateFindings } from "../lib/verify-finding-gate-projector.js";
-import type { GateFailure } from "../lib/verify-failure.js";
+import { projectGateFindings } from "../lib/verify/verify-finding-gate-projector.js";
+import type { GateFailure } from "../lib/verify/verify-failure.js";
 
 describe("verify-finding-gate-projector", () => {
   it("projects import-layer JSON violations", () => {

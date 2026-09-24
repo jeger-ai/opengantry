@@ -1,11 +1,7 @@
 import { logInfo } from "../lib/cli-io.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 import { GantryUserError } from "../lib/errors.js";
-import {
-  clearActiveMissionPin,
-  pinActiveMission,
-  readActiveMissionPin,
-} from "../lib/missions/parser.js";
+import { clearActiveMissionPin, pinActiveMission, readActiveMissionPin } from "../lib/missions/resolution.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface PinOptions {

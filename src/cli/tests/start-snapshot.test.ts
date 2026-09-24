@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { captureStartState } from "../lib/start-snapshot.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 

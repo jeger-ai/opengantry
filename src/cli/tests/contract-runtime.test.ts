@@ -6,7 +6,7 @@ import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
 import { agentErrorAbsolutePath } from "../lib/errors.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { loadManifest } from "../lib/manifest.js";
 import { resolvedRuntimeEnvToJsonPayload, resolveRuntimeEnv } from "../lib/runtime-env.js";

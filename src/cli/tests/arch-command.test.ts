@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { runArchCheckCommand } from "../commands/arch.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { captureConsole, PLANNER_EMAIL } from "./test-shared.js";

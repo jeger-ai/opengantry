@@ -1,8 +1,8 @@
-import { runLegislate } from "./legislate.js";
+import { runLegislate } from "./legislate/legislate.js";
 import { isTriageEscalated } from "./triage-logic.js";
 import { writeInterrogationRequiredError } from "./errors.js";
 import { GXT_ERROR } from "./gxt-error-codes.js";
-import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
+import { resolveLegislateGateOptions } from "./legislate/legislate-gate-options.js";
 import { runInterrogate } from "./interrogate/run.js";
 import { CLI_NAME } from "./constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";

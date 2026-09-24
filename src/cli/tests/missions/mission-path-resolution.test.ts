@@ -4,12 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { DEFAULT_ACTIVE_MISSION } from "../../lib/constants.js";
-import {
-  buildMissionResolutionCandidates,
-  readActiveMissionPin,
-  resolvePinnedMission,
-} from "../../lib/missions/parser.js";
-import { pinMissionFile } from "../../lib/missions/parser.js";
+import { buildMissionResolutionCandidates, readActiveMissionPin, resolvePinnedMission } from "../../lib/missions/resolution.js";
+import { pinMissionFile } from "../../lib/missions/resolution.js";
 
 test("buildMissionResolutionCandidates: GANTRY_MISSION wins over GAPMAN_MISSION", () => {
   const candidates = buildMissionResolutionCandidates("/repo", {

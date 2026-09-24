@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   formatVerifyRunDuration,
   formatVerifyRunWhen,
   projectOverviewViewModel,
-} from "../lib/report-overview-projector.js";
-import { appendVerifyRunRing } from "../lib/verify-run-ring.js";
-import { renderOverviewHtml } from "../lib/report-template-overview.js";
+} from "../lib/report/report-overview-projector.js";
+import { appendVerifyRunRing } from "../lib/verify/verify-run-ring.js";
+import { renderOverviewHtml } from "../lib/report/report-template-overview.js";
 import { gitCommit, gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 

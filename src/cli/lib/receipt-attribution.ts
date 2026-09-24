@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 
 import { CLI_VERSION } from "./constants.js";
-import { gitConfigGet, gitRevParse, gitRunOk } from "./git.js";
+import { gitConfigGet, gitRevParse, gitRunOk } from "./git/git.js";
 import type { OrgExportConfig } from "./org-export-config.js";
 
 export type BranchClass = "default" | "non_default";

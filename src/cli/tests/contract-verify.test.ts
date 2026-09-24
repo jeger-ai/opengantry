@@ -5,13 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { loadManifest } from "../lib/manifest.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { REL_PLANNER_ALLOWLIST } from "../lib/planner-identity.js";
 import type { MissionContract } from "../lib/types.js";
-import { evaluateContractPhase, stampedContractDigest } from "../lib/verify-contract.js";
+import { evaluateContractPhase, stampedContractDigest } from "../lib/verify/verify-contract.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 
 const PLANNER = "planner@example.com";

@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   classifyIntegrationProfileState,
   integrationOnboardingBlockers,
   runIntegrationDoctorChecks,
-} from "../lib/doctor-integration.js";
+} from "../lib/doctor/doctor-integration.js";
 import { loadIntegrationCompat } from "../lib/integration-compat.js";
 import { writeIntegrationFixtureState } from "./test-fixtures.js";
 

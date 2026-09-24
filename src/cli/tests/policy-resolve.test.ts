@@ -12,7 +12,7 @@ import {
 import { pullOrgPolicy } from "../lib/policy/policy-fetch.js";
 import type { PolicyConfigFloor } from "../lib/policy/policy-types.js";
 import { REL_POLICY_POINTER } from "../lib/constants.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import { sampleOrgPolicyYaml } from "./test-org-fixtures.js";

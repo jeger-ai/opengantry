@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { runLedgerDoctorChecks } from "../lib/ledger/ledger-chain.js";
 import { runOrgPolicyDoctorChecks } from "../lib/policy/policy-doctor.js";
 import { gitInitCommit } from "./test-fixtures.js";
@@ -16,7 +16,7 @@ test("org doctor sources never clone or fetch", () => {
     path.join(root, "policy/policy-doctor.ts"),
     path.join(root, "policy/policy-resolve.ts"),
     path.join(root, "ledger/ledger-chain.ts"),
-    path.join(root, "doctor-core.ts"),
+    path.join(root, "doctor/doctor-core.ts"),
   ];
   for (const file of files) {
     const src = fs.readFileSync(file, "utf8");

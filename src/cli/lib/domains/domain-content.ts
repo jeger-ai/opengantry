@@ -174,6 +174,7 @@ function buildContentRule(
     const inner = /starting: (.+)\)/.exec(snippet)?.[1];
     if (!inner || choice !== "enforce") return null;
     return {
+      kind: "pattern",
       id: question.ruleId,
       from_layer: "content",
       applies_to: ["content/**"],
@@ -182,6 +183,7 @@ function buildContentRule(
   }
   if (snippet.includes("…") || snippet.length < 8) {
     return {
+      kind: "pattern",
       id: question.ruleId,
       from_layer: "content",
       applies_to: ["content/**"],
@@ -190,6 +192,7 @@ function buildContentRule(
   }
   if (choice === "enforce") {
     return {
+      kind: "pattern",
       id: question.ruleId,
       from_layer: "content",
       applies_to: ["content/**"],

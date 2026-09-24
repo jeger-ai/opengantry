@@ -9,10 +9,10 @@ import {
   assertMcpSkillWritePath,
   assertMcpSubstrateUpgradeWritePaths,
   McpWriteDeniedError,
-} from "../lib/mcp-write-guard.js";
+} from "../lib/mcp/mcp-write-guard.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { handlePinMission } from "../lib/mcp-runtime.js";
-import { getRepoRoot } from "../lib/git.js";
+import { handlePinMission } from "../lib/mcp/mcp-runtime.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 
 function scaffoldRepo(): string {

@@ -8,7 +8,7 @@ import {
   readEnvWithLegacy,
   readGitConfigWithLegacy,
 } from "./config-namespace.js";
-import { gitRunOk } from "./git.js";
+import { gitRunOk } from "./git/git.js";
 
 export { ENV_PLANNER_EMAILS } from "./config-namespace.js";
 

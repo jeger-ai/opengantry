@@ -1,4 +1,4 @@
-import { gitRunOk } from "./git.js";
+import { gitRunOk } from "./git/git.js";
 
 /** Canonical env/config namespaces (user-facing). Legacy GAPMAN/gantry.* read silently when unset. */
 export const ENV_PREFIX = "GANTRY_" as const;

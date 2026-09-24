@@ -4,11 +4,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { evaluatePolicyPhase } from "../lib/verify-org-phases.js";
-import type { PhaseContext } from "../lib/verify-phase-steps.js";
+import { evaluatePolicyPhase } from "../lib/verify/verify-org-phases.js";
+import type { PhaseContext } from "../lib/verify/verify-phase-steps.js";
 import type { OrgPolicyFail } from "../lib/policy/policy-resolve.js";
 import { loadPolicyPointer, resolveOrgPolicy } from "../lib/policy/policy-resolve.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
 import { REL_POLICY_POINTER } from "../lib/constants.js";
 

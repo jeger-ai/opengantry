@@ -10,7 +10,7 @@ import {
   DraftTokenError,
 } from "../lib/draft-token.js";
 import { canonicalJson } from "../lib/canonical-json.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { emptyDraftTokenInterrogationFields } from "./test-fixtures.js";
 
 test("draft-token: stateless sign/verify roundtrip", () => {

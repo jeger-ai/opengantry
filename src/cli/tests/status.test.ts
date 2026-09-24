@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { runStatus } from "../commands/status.js";
-import { pinMissionFile } from "../lib/missions/parser.js";
+import { pinMissionFile } from "../lib/missions/resolution.js";
 import { writeMiniGantryRepo, gitInitCommit, writeMiniGantryMission } from "./test-fixtures.js";
 import { captureConsole, PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 

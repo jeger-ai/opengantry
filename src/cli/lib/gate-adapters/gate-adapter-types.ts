@@ -1,4 +1,4 @@
-import type { VerifyFinding } from "../verify-finding.js";
+import type { VerifyFinding } from "../verify/verify-finding.js";
 import type { GateAdapterId } from "./gate-adapter-id.js";
 
 export interface GateExecContext {

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
-import { collectGitMetrics } from "../lib/git-metrics.js";
+import { getRepoRoot } from "../lib/git/git.js";
+import { collectGitMetrics } from "../lib/git/git-metrics.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 

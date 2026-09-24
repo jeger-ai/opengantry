@@ -1,9 +1,9 @@
 import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
-import { runUpgradeApply } from "../lib/upgrade-apply.js";
-import { runUpgradePlan } from "../lib/upgrade-plan.js";
-import { toStableUpgradePlanPayloadV1 } from "../lib/upgrade-plan-payload.js";
+import { runUpgradeApply } from "../lib/upgrade/upgrade-apply.js";
+import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
+import { toStableUpgradePlanPayloadV1 } from "../lib/upgrade/upgrade-plan-payload.js";
 import { GantryUserError } from "../lib/errors.js";
 
 export interface UpgradeOptions {

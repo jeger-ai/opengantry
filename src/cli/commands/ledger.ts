@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { loadWorkspace } from "../lib/workspace.js";
 import { LEDGER_REF } from "../lib/constants.js";
-import { gitRun } from "../lib/git.js";
+import { gitRun } from "../lib/git/git.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
 import { sha256Utf8, type ReceiptLedgerPayload } from "../lib/ledger/ledger-entry.js";
 import { exportLedgerJson, exportSoc2Pack } from "../lib/ledger/ledger-export.js";

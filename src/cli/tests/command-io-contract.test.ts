@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
 import { captureConsole } from "./test-shared.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 import { runCheck } from "../commands/check.js";
 import { runRegister } from "../commands/register.js";

@@ -6,15 +6,15 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { isStubOperatorAnswer } from "../lib/interrogate/answers.js";
 import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
 import { REL_PLANNER_ALLOWLIST } from "../lib/planner-identity.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import type { ParsedMission } from "../lib/types.js";
 import { loadManifest } from "../lib/manifest.js";
-import { evaluateInterrogationPhase } from "../lib/verify-interrogation.js";
-import { handleDraftLegislation } from "../lib/mcp-draft-legislation.js";
+import { evaluateInterrogationPhase } from "../lib/verify/verify-interrogation.js";
+import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
 import { copyMissionSchema, gitCommit, gitInitCommit, writeManifest } from "./test-fixtures.js";
 
 const PLANNER = "planner@example.com";

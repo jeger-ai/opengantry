@@ -13,8 +13,8 @@ import {
 } from "../lib/contract/preflight-jev.js";
 import { runPreflight } from "../lib/contract/preflight.js";
 import { jevFallbackRationale, type JevFallbackReason, type PreflightResult } from "../lib/contract/preflight-types.js";
-import { handlePreflightContract } from "../lib/mcp-preflight-contract.js";
-import { getRepoRoot } from "../lib/git.js";
+import { handlePreflightContract } from "../lib/mcp/mcp-preflight-contract.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";

@@ -1,6 +1,6 @@
 import { CLI_NAME } from "./constants.js";
 import { errorMessage, logError, logInfo, setExitCode, writeStdout } from "./cli-io.js";
-import { getRepoRoot } from "./git.js";
+import { getRepoRoot } from "./git/git.js";
 import { isGantryUserError, reportUserFacingError, userFacingErrorToJson } from "./errors.js";
 
 /**

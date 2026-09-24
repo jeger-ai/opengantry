@@ -4,14 +4,15 @@ import { contractViolationCode, formatContractViolation, scanContractImports } f
 import type { ContractImportViolation, EffectiveScope } from "../lib/contract/contract-types.js";
 import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
 import { GantryUserError } from "../lib/errors.js";
-import { parseMissionFile, resolvePinnedMission } from "../lib/missions/parser.js";
+import { parseMissionFile } from "../lib/missions/parser.js";
+import { resolvePinnedMission } from "../lib/missions/resolution.js";
 import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
 import { formatContractBlock, formatEffectiveScope } from "../lib/contract/format.js";
 import { TYPESAFE_API_KEY_ENV } from "../lib/contract/preflight-jev.js";
 import { isPreflightProvider, runPreflight } from "../lib/contract/preflight.js";
 import { OpenAiEmbeddingProvider, writeHostEmbeddingFile } from "../lib/contract/embedding-provider.js";
 import { proposeContract } from "../lib/contract/propose.js";
-import { resolveSkillKeyForLegislation } from "../lib/legislate.js";
+import { resolveSkillKeyForLegislation } from "../lib/legislate/legislate.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface ContractCheckCliOptions {

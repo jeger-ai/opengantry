@@ -10,7 +10,7 @@ import {
 } from "../lib/receipt-attribution.js";
 import { computePrincipalHmacs } from "../lib/principal-hmac.js";
 import type { PepperKeyringEntry } from "../lib/pepper-keyring.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 
 const ROOT = getRepoRoot();
 const VECTORS_PATH = path.join(ROOT, "test", "fixtures", "attribution-vectors.json");

@@ -87,7 +87,7 @@ function archBannedForRoots(root: string, proposedRoots: readonly string[]): str
   for (const r of proposedRoots) layers.add(layerForFile(spec, r.endsWith("/") ? `${r}index.ts` : `${r}/index.ts`));
   const out = new Set<string>();
   for (const rule of spec.rules) {
-    if (!rule.forbid_specifier_substring) continue;
+    if (rule.kind !== "import" || !rule.forbid_specifier_substring) continue;
     if (layers.has(rule.from_layer) || rule.from_layer === "*") out.add(rule.forbid_specifier_substring);
   }
   return [...out].sort();

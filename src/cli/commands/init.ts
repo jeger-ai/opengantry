@@ -9,12 +9,12 @@ import {
   resolveTemplateRootFromModule,
   type IntegrationCompatManifest,
 } from "../lib/integration-compat.js";
-import { resolveAssetsFromProfile } from "../lib/init-asset-catalog.js";
+import { resolveAssetsFromProfile } from "../lib/init/init-asset-catalog.js";
 import {
   composeArchitecturePointer,
   serializeArchitecturePointer,
-} from "../lib/init-compose.js";
-import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose.js";
+} from "../lib/init/init-compose.js";
+import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init/init-compose.js";
 import {
   defaultInitProfile,
   mergeInitProfile,
@@ -22,7 +22,7 @@ import {
   shouldRunInteractiveWizard,
   validateIntegrationsDocPath,
   type InitProfile,
-} from "../lib/init-profile.js";
+} from "../lib/init/init-profile.js";
 import {
   applyInitWrites,
   logInitNextSteps,
@@ -30,11 +30,11 @@ import {
   planInitAssets,
   type InitBodyTransform,
   type PlannedWrite,
-} from "../lib/init-plan.js";
+} from "../lib/init/init-plan.js";
 import {
   isConfigJsonTarget,
   mergeDefensiveProfileIntoConfigBody,
-} from "../lib/init-defensive-profile.js";
+} from "../lib/init/init-defensive-profile.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -92,7 +92,7 @@ async function resolveProfile(
   const partial = profileFromCliFlags(options);
   if (shouldRunInteractiveWizard({ yes: options.yes, partial })) {
     // Lazy-load: interactive wizard + @clack/prompts not needed on non-interactive init paths.
-    const { runInitInteractiveWizard } = await import("../lib/init-interactive.js");
+    const { runInitInteractiveWizard } = await import("../lib/init/init-interactive.js");
     return runInitInteractiveWizard(repoRoot, templatesRoot, partial);
   }
   return mergeInitProfile(defaultInitProfile(), partial);
@@ -170,7 +170,7 @@ async function resolveInitAssetPlan(
   logManagedAssetConflicts(plan.conflicts);
   // Lazy-load: overwrite prompts only when managed-asset conflicts need resolution.
   const { canPromptInitOverwrite, promptOverwriteManagedAssets } = await import(
-    "../lib/init-interactive.js"
+    "../lib/init/init-interactive.js"
   );
   if (!canPromptInitOverwrite(options)) {
     logError("pass --force to overwrite without prompting");
@@ -223,7 +223,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   const { repoRoot, templatesRoot, compat } = workspace;
 
   if (options.discover === true) {
-    const { runInitDiscoverFlow } = await import("../lib/init-discover.js");
+    const { runInitDiscoverFlow } = await import("../lib/init/init-discover.js");
     await runInitDiscoverFlow(repoRoot, {
       yes: options.yes,
       stdout: options.discoverStdout,
@@ -243,7 +243,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   ) {
     logInfo(`${CLI_NAME} init: substrate already present — tutorial only (skip re-scaffold)`);
     // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
-    const { runInitTutorial } = await import("../lib/init-tutorial.js");
+    const { runInitTutorial } = await import("../lib/init/init-tutorial.js");
     await runInitTutorial();
     mergeGitignoreFromTemplate(repoRoot, templatesRoot);
     mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
@@ -283,7 +283,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   logInitSummary(plan.writes, plan.skippedUserMutable, plan.unchanged);
   if (options.tutorial) {
     // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
-    const { runInitTutorial } = await import("../lib/init-tutorial.js");
+    const { runInitTutorial } = await import("../lib/init/init-tutorial.js");
     await runInitTutorial();
   } else {
     logInitNextSteps(profile);

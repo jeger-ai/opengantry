@@ -2,10 +2,7 @@ import fs from "node:fs";
 
 import { formatRepoRelative, logInfo } from "./cli-io.js";
 import { GantryUserError } from "./errors.js";
-import {
-  resolveMissionFilePath,
-  resolvePinnedMission,
-} from "./missions/parser.js";
+import { resolveMissionFilePath, resolvePinnedMission } from "./missions/resolution.js";
 
 export type MissionSource = "flag" | "pin";
 

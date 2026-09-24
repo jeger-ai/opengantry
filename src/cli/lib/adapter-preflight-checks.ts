@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { parseEslintJsonOutput } from "./gate-adapters/eslint-json-adapter.js";
 import { parseTscOutput } from "./gate-adapters/tsc-adapter.js";
-import type { DoctorLine } from "./doctor-types.js";
+import type { DoctorLine } from "./doctor/doctor-types.js";
 
 export interface CommandRunResult {
   status: number | null;

@@ -30,17 +30,27 @@ export interface ArchLayerSpec {
   globs: string[];
 }
 
-export interface ArchRuleSpec {
+interface ArchRuleBase {
   id: string;
   from_layer: string;
+  /** Selector. Valid on import and pattern rules; not an enforcement action. */
+  applies_to?: string[];
+}
+
+export interface ArchImportRule extends ArchRuleBase {
+  kind: "import";
   forbid_import_layer?: string;
   forbid_specifier_substring?: string;
   forbid_resolved_path_substring?: string;
-  /** Schema 0.3.0: glob(s) for pattern rules (content domain). */
-  applies_to?: string[];
+}
+
+export interface ArchPatternRule extends ArchRuleBase {
+  kind: "pattern";
   forbid_pattern?: string;
   require_pattern?: string;
 }
+
+export type ArchRuleSpec = ArchImportRule | ArchPatternRule;
 
 export interface TargetArchitectureSpec {
   schema_version: TargetArchitectureSchemaVersion;
@@ -177,17 +187,6 @@ function fileMatchesAppliesTo(repoRel: string, appliesTo: readonly string[] | un
   return fileMatchesScanRoots(repoRel, scanRoots);
 }
 
-function isImportRule(rule: ArchRuleSpec): boolean {
-  return (
-    rule.forbid_import_layer != null ||
-    rule.forbid_specifier_substring != null ||
-    rule.forbid_resolved_path_substring != null
-  );
-}
-
-function isPatternRule(rule: ArchRuleSpec): boolean {
-  return rule.forbid_pattern != null || rule.require_pattern != null;
-}
 
 function adapterSupportsImportRules(spec: TargetArchitectureSpec): boolean {
   const domain = spec.domain?.trim().toLowerCase();
@@ -230,7 +229,7 @@ function checkPatternRulesForFile(
   scanRoots: readonly string[],
 ): void {
   for (const rule of rules) {
-    if (!isPatternRule(rule)) continue;
+    if (rule.kind !== "pattern") continue;
     if (!fileMatchesAppliesTo(repoRel, rule.applies_to, scanRoots)) continue;
 
     if (rule.forbid_pattern) {
@@ -254,8 +253,64 @@ function fileMatchesLanguage(repoRel: string, languages: readonly string[], doma
     return /\.(md|html|htm|txt|json)$/i.test(norm);
   }
   if (languages.includes("typescript") && /\.tsx?$/i.test(norm)) return true;
-  if (languages.includes("typescript") && norm.endsWith(".ts")) return true;
   return false;
+}
+
+function presentString(raw: unknown): string | undefined {
+  if (raw == null) return undefined;
+  return String(raw);
+}
+
+function parseArchRule(rule: unknown, index: number): ArchRuleSpec {
+  if (rule == null || typeof rule !== "object") {
+    throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(index)}] invalid`);
+  }
+  const r = rule as Record<string, unknown>;
+  const id = typeof r.id === "string" && r.id.trim() ? r.id.trim() : "(missing id)";
+  if (typeof r.id !== "string" || !r.id.trim()) {
+    throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(index)}].id required`);
+  }
+  if (typeof r.from_layer !== "string") {
+    throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(index)}].from_layer required`);
+  }
+  const appliesTo = parseStringArrayField(r.applies_to, "applies_to");
+  const forbidImportLayer = presentString(r.forbid_import_layer);
+  const forbidSpecifier = presentString(r.forbid_specifier_substring);
+  const forbidResolved = presentString(r.forbid_resolved_path_substring);
+  const forbidPattern = presentString(r.forbid_pattern);
+  const requirePattern = presentString(r.require_pattern);
+  const importRule = forbidImportLayer != null || forbidSpecifier != null || forbidResolved != null;
+  const patternRule = forbidPattern != null || requirePattern != null;
+  if (importRule && patternRule) {
+    throw new Error(
+      `TARGET_ARCHITECTURE.yaml: rules[${String(index)}] "${id}" sets both import fields and pattern fields. Split this mixed rule into two distinct YAML entries, one import rule and one pattern rule.`,
+    );
+  }
+  if (!importRule && !patternRule) {
+    throw new Error(
+      `TARGET_ARCHITECTURE.yaml: rules[${String(index)}] "${id}" sets neither import fields (forbid_import_layer, forbid_specifier_substring, forbid_resolved_path_substring) nor pattern fields (forbid_pattern, require_pattern).`,
+    );
+  }
+  const base = {
+    id,
+    from_layer: String(r.from_layer),
+    ...(appliesTo ? { applies_to: appliesTo } : {}),
+  };
+  if (importRule) {
+    return {
+      ...base,
+      kind: "import",
+      ...(forbidImportLayer != null ? { forbid_import_layer: forbidImportLayer } : {}),
+      ...(forbidSpecifier != null ? { forbid_specifier_substring: forbidSpecifier } : {}),
+      ...(forbidResolved != null ? { forbid_resolved_path_substring: forbidResolved } : {}),
+    };
+  }
+  return {
+    ...base,
+    kind: "pattern",
+    ...(forbidPattern != null ? { forbid_pattern: forbidPattern } : {}),
+    ...(requirePattern != null ? { require_pattern: requirePattern } : {}),
+  };
 }
 
 export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec {
@@ -286,34 +341,7 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
     }
     return { id: l.id.trim(), globs: l.globs.map(String) };
   });
-  const rules: ArchRuleSpec[] = o.rules.map((rule, i) => {
-    if (rule == null || typeof rule !== "object") {
-      throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(i)}] invalid`);
-    }
-    const r = rule as Record<string, unknown>;
-    if (typeof r.id !== "string" || !r.id.trim()) {
-      throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(i)}].id required`);
-    }
-    if (typeof r.from_layer !== "string") {
-      throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(i)}].from_layer required`);
-    }
-    return {
-      id: r.id.trim(),
-      from_layer: String(r.from_layer),
-      ...(r.forbid_import_layer != null ? { forbid_import_layer: String(r.forbid_import_layer) } : {}),
-      ...(r.forbid_specifier_substring != null
-        ? { forbid_specifier_substring: String(r.forbid_specifier_substring) }
-        : {}),
-      ...(r.forbid_resolved_path_substring != null
-        ? { forbid_resolved_path_substring: String(r.forbid_resolved_path_substring) }
-        : {}),
-      ...(parseStringArrayField(r.applies_to, "applies_to")
-        ? { applies_to: parseStringArrayField(r.applies_to, "applies_to") }
-        : {}),
-      ...(r.forbid_pattern != null ? { forbid_pattern: String(r.forbid_pattern) } : {}),
-      ...(r.require_pattern != null ? { require_pattern: String(r.require_pattern) } : {}),
-    };
-  });
+  const rules: ArchRuleSpec[] = o.rules.map((rule, i) => parseArchRule(rule, i));
   return {
     schema_version,
     ...(domain ? { domain } : {}),
@@ -378,7 +406,7 @@ export function checkArchBoundariesForFiles(
       const targetLayer = resolved ? layerForFile(spec, resolved) : "other";
 
       for (const rule of spec.rules) {
-        if (!isImportRule(rule)) continue;
+        if (rule.kind !== "import") continue;
         if (rule.from_layer !== fromLayer) continue;
         if (rule.forbid_import_layer && targetLayer === rule.forbid_import_layer) {
           recordViolation(violations, repoRel, rule.id, imp.spec, bindings, imp.line, imp.column);

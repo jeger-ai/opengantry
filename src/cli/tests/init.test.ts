@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 import { checkSkillManifestSync } from "../lib/skill-sync.js";
 import { runInit } from "../commands/init.js";

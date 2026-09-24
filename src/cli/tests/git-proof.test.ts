@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   commitSubjectHasMsnPrefix,
   assertPlannerMissionProof,
   missionPathRepoRelative,
   ENV_MSN_SCAN_DEPTH,
   resolveMsnScanDepth,
-} from "../lib/git-proof.js";
+} from "../lib/git/git-proof.js";
 import { GantryUserError } from "../lib/errors.js";
 import { writeMiniGantryRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";

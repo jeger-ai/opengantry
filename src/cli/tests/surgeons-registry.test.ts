@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import type { GateFailure, VerifyPhaseFailure } from "../lib/verify-failure.js";
+import type { GateFailure, VerifyPhaseFailure } from "../lib/verify/verify-failure.js";
 import {
   getSurgeonForErrorCode,
   resolveSurgeonErrorCode,

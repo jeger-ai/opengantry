@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { evaluateKpiThresholds, loadKpiReport } from "../lib/kpi-engine.js";
 import { evaluateKpiPhase } from "../lib/kpi-engine.js";
 import type { KpiGateSpec, KpiReport } from "../lib/types.js";

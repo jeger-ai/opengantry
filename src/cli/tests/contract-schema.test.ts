@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import { computeGaps } from "../lib/interrogate/gaps.js";
 import { loadManifest } from "../lib/manifest.js";

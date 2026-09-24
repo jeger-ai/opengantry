@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CLI_VERSION } from "../lib/constants.js";
-import { registerGxtMcpTools } from "../lib/mcp-tools-register.js";
+import { registerGxtMcpTools } from "../lib/mcp/mcp-tools-register.js";
 
 export async function runMcpServe(): Promise<void> {
   const server = new McpServer({

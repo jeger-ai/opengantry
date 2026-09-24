@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { gitRun } from "../git.js";
+import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import { REL_POLICY_POINTER } from "../constants.js";

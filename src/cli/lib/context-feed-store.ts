@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { REL_NEXT_REMEDIATION } from "./constants.js";
 import { writeJsonAtomicSync } from "./atomic-fs.js";
-import type { VerifyFinding } from "./verify-finding.js";
+import type { VerifyFinding } from "./verify/verify-finding.js";
 
 export const REMEDIATION_SCHEMA_VERSION = 2 as const;
 export const REMEDIATION_SCHEMA_VERSION_LEGACY = 1 as const;

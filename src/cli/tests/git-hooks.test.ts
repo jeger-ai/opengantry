@@ -5,13 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import { AIDER_TMVC_SCOPE_REL, ensureAiderConfRead, writeAiderTmvcScope } from "../lib/aider-scope.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   TMVC_GUARD_STRICT_KEY,
   installTmvcStrictHook,
   readHooksStatus,
   uninstallTmvcStrictHook,
-} from "../lib/git-hooks.js";
+} from "../lib/git/git-hooks.js";
 
 function initGitRepo(dest: string): void {
   execSync("git init", { cwd: dest, stdio: "pipe" });

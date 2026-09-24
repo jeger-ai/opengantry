@@ -179,6 +179,7 @@ function buildCodeRule(
   const forbidden = importMatch?.[1];
   if (choice === "enforce" && forbidden) {
     return {
+      kind: "import",
       id: question.ruleId,
       from_layer: "app",
       forbid_specifier_substring: forbidden,
@@ -186,6 +187,7 @@ function buildCodeRule(
   }
   if (choice === "warn" && forbidden) {
     return {
+      kind: "import",
       id: question.ruleId,
       from_layer: "app",
       forbid_specifier_substring: forbidden,

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "../lib/kpi-advisory-findings.js";
 import { evaluateKpiThresholds } from "../lib/kpi-engine.js";
 import type { KpiFinding, KpiReport } from "../lib/types.js";

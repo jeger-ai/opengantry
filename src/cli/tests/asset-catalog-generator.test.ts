@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 
 test("gen-asset-catalog: runs and produces valid catalog without repo-only scripts", () => {
   const repoRoot = getRepoRoot();

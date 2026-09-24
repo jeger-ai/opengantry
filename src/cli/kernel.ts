@@ -32,16 +32,16 @@ export type {
   GateExecAdapter,
   GateExecContext,
   GateExecutionResult,
-} from "./lib/verify-options.js";
-export type { VerifyResultPayload } from "./lib/verify-payload.js";
-export { buildVerifyResultPayload } from "./lib/verify-payload.js";
+} from "./lib/verify/verify-options.js";
+export type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
+export { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";
 
 import type { Manifest, ParsedMission } from "./lib/types.js";
 import { parseMissionFile } from "./lib/missions/parser.js";
 import { loadManifest } from "./lib/manifest.js";
-import type { VerifyOptions } from "./lib/verify-options.js";
-import type { VerifyResultPayload } from "./lib/verify-payload.js";
-import { buildVerifyResultPayload } from "./lib/verify-payload.js";
+import type { VerifyOptions } from "./lib/verify/verify-options.js";
+import type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
+import { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;

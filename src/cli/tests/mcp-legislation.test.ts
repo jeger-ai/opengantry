@@ -4,15 +4,15 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
-import { handleDraftLegislation } from "../lib/mcp-draft-legislation.js";
-import { handleExecuteLegislation } from "../lib/mcp-execute-legislation.js";
-import { handleCheckSignature } from "../lib/mcp-check-signature.js";
-import { getRepoRoot } from "../lib/git.js";
+import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
+import { handleExecuteLegislation } from "../lib/mcp/mcp-execute-legislation.js";
+import { handleCheckSignature } from "../lib/mcp/mcp-check-signature.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
 
 function mcpLegislationDraftInput(
-  overrides: Partial<import("../lib/mcp-governance-shared.js").DraftLegislationInput> = {},
-): import("../lib/mcp-governance-shared.js").DraftLegislationInput {
+  overrides: Partial<import("../lib/mcp/mcp-governance-shared.js").DraftLegislationInput> = {},
+): import("../lib/mcp/mcp-governance-shared.js").DraftLegislationInput {
   return {
     title: "Add gantry verify helper",
     msn_id: "MSN-0201",

@@ -16,7 +16,7 @@ import {
 } from "../lib/virtual-scratch-store.js";
 import type { Manifest } from "../lib/types.js";
 import { mergeGitignoreFromTemplate } from "../lib/file-merge-gxt.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   copyMissionSchema,
   gitInitCommit,

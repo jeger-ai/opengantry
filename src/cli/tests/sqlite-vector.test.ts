@@ -13,7 +13,7 @@ import {
   contractVectorDbPath,
   openContractVectorStore,
 } from "../lib/contract/vector-store.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 
 function tempRoot(): string {

@@ -12,7 +12,7 @@ import {
 } from "../lib/attestation-receipt.js";
 import { REL_MANIFEST } from "../lib/constants.js";
 import { GantryUserError } from "../lib/errors.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import {
   canonicalReceiptUtf8,
@@ -20,7 +20,7 @@ import {
 } from "../lib/receipt-signing.js";
 import { writeRuntimeExecRepo, writeOrgExportConfig, gitInitCommit, isolateOrgAttributionEnv } from "./test-fixtures.js";
 import { signReceiptHash, verifyReceiptSignature } from "../lib/receipt-signing.js";
-import { gitConfigGet } from "../lib/git.js";
+import { gitConfigGet } from "../lib/git/git.js";
 
 test("canonicalJson: deterministic key order", () => {
   const a = canonicalJson({ b: 2, a: 1, nested: { z: 1, y: 2 } });

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { EXECUTOR_LOG_FILENAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git.js";
+import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "./git/git.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest, TraceRow } from "./types.js";
 import type { ResolvedQuoteLine } from "./trace-quote.js";

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { importMatchesBan } from "../ast-discovery.js";
 import { toPosixRel } from "../cli-io.js";
-import { gitRunOk } from "../git.js";
+import { gitRunOk } from "../git/git.js";
 import { GXT_ERROR, type GxtErrorCode } from "../gxt-error-codes.js";
 import { extractImportSites, type ImportSite } from "../import-scanner.js";
 import { isPathUnderRoot, normalizeRepoRelativePath } from "../tmvc-path.js";

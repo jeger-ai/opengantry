@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 
 test("MISSION.schema.yaml matches templates copy (managed_strict parity)", () => {
   const root = getRepoRoot();

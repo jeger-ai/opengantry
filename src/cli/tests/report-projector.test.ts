@@ -5,11 +5,11 @@ import {
   buildDonutBuckets,
   buildPhaseBars,
   projectReportViewModel,
-} from "../lib/report-projector.js";
-import { verifyFinding } from "../lib/verify-finding.js";
-import { appendVerifyRunRing } from "../lib/verify-run-ring.js";
-import { renderReportHtml } from "../lib/report-template-html.js";
-import { jsonScriptIsland } from "../lib/report-template-shared.js";
+} from "../lib/report/report-projector.js";
+import { verifyFinding } from "../lib/verify/verify-finding.js";
+import { appendVerifyRunRing } from "../lib/verify/verify-run-ring.js";
+import { renderReportHtml } from "../lib/report/report-template-html.js";
+import { jsonScriptIsland } from "../lib/report/report-template-shared.js";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";

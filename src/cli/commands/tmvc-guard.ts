@@ -1,7 +1,7 @@
 import { logWarn, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
-import { resolvePinnedMission } from "../lib/missions/parser.js";
+import { resolvePinnedMission } from "../lib/missions/resolution.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,

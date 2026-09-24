@@ -6,9 +6,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { SKIPPED_MESSAGE } from "../lib/doctor-adapter-preflight.js";
-import { handleDoctor, type DoctorMcpResult } from "../lib/mcp-doctor.js";
-import { getRepoRoot } from "../lib/git.js";
+import { SKIPPED_MESSAGE } from "../lib/doctor/doctor-adapter-preflight.js";
+import { handleDoctor, type DoctorMcpResult } from "../lib/mcp/mcp-doctor.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

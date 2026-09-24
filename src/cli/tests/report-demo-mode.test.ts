@@ -8,10 +8,10 @@ import {
   applyReportDemoOverview,
   withReportDemoOverlay,
   REL_REPORT_DEMO_FLAG,
-} from "../lib/report-demo-mode.js";
-import { DEMO_REPO_NAME, DEMO_TIMELINE } from "../lib/report-demo-fixtures.js";
-import { projectOverviewViewModel } from "../lib/report-overview-projector.js";
-import { buildGxtExtensionMetadata } from "../lib/git-metrics.js";
+} from "../lib/report/report-demo-mode.js";
+import { DEMO_REPO_NAME, DEMO_TIMELINE } from "../lib/report/report-demo-fixtures.js";
+import { projectOverviewViewModel } from "../lib/report/report-overview-projector.js";
+import { buildGxtExtensionMetadata } from "../lib/git/git-metrics.js";
 
 test("isReportDemoMode: false when flag missing", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-off-"));

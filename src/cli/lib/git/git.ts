@@ -1,0 +1,123 @@
+import { execSync, spawnSync } from "node:child_process";
+import path from "node:path";
+import { CLI_NAME } from "../constants.js";
+
+/**
+ * Copy of the process env for a git child. `GIT_DIR` / `GIT_WORK_TREE` are removed from the
+ * copy only (never from `process.env`) so `git -C <root>` is authoritative and cannot resolve
+ * into a parent repository.
+ */
+export function gitChildEnv(extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra };
+  delete env.GIT_DIR;
+  delete env.GIT_WORK_TREE;
+  return env;
+}
+
+export interface GitRunOptions {
+  maxBuffer?: number;
+  input?: string;
+  env?: NodeJS.ProcessEnv;
+}
+
+export function getRepoRoot(cwd = process.cwd()): string {
+  try {
+    const out = execSync("git rev-parse --show-toplevel", {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: gitChildEnv(),
+    }).trim();
+    if (!out) throw new Error("empty root");
+    return path.resolve(cwd, out);
+  } catch {
+    throw new Error(`${CLI_NAME}: not inside a git repository`);
+  }
+}
+
+export interface GitRunResult {
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+  status: number | null;
+}
+
+/** Run git in repository root (`git -C root ...args`). Third arg is maxBuffer or options. */
+export function gitRun(
+  repoRoot: string,
+  args: string[],
+  maxBufferOrOpts: number | GitRunOptions = 32 * 1024 * 1024,
+): GitRunResult {
+  const opts: GitRunOptions =
+    typeof maxBufferOrOpts === "number" ? { maxBuffer: maxBufferOrOpts } : maxBufferOrOpts;
+  const maxBuffer = opts.maxBuffer ?? 32 * 1024 * 1024;
+  const r = spawnSync("git", ["-C", repoRoot, ...args], {
+    encoding: "utf8",
+    maxBuffer,
+    env: gitChildEnv(opts.env),
+    ...(opts.input !== undefined ? { input: opts.input } : {}),
+  });
+  return {
+    ok: r.status === 0,
+    stdout: typeof r.stdout === "string" ? r.stdout : "",
+    stderr: typeof r.stderr === "string" ? r.stderr : "",
+    status: r.status,
+  };
+}
+
+export function gitRunOk(
+  repoRoot: string,
+  args: string[],
+  maxBuffer = 32 * 1024 * 1024,
+): { ok: boolean; stdout: string } {
+  const r = gitRun(repoRoot, args, maxBuffer);
+  return { ok: r.ok, stdout: r.stdout };
+}
+
+export function gitRevParse(repoRoot: string, ref: string): string | null {
+  const r = gitRunOk(repoRoot, ["rev-parse", "--verify", `${ref}^{commit}`]);
+  return r.ok && r.stdout.trim() ? r.stdout.trim() : null;
+}
+
+export function gitHead(repoRoot: string): string | null {
+  const r = gitRunOk(repoRoot, ["rev-parse", "HEAD"]);
+  return r.ok && r.stdout.trim() ? r.stdout.trim() : null;
+}
+
+export function gitLogSubjects(repoRoot: string, grep: string, limit: number): string[] {
+  const r = gitRunOk(repoRoot, ["log", `--grep=${grep}`, `-${limit}`, "--format=%s"]);
+  if (!r.ok || !r.stdout.trim()) return [];
+  return r.stdout.split("\n").filter(Boolean);
+}
+
+export function gitConfigGet(repoRoot: string, key: string): string | null {
+  const r = gitRunOk(repoRoot, ["config", "--get", key]);
+  if (!r.ok || !r.stdout.trim()) return null;
+  return r.stdout.trim();
+}
+
+export function gitConfigSet(repoRoot: string, key: string, value: string): boolean {
+  return gitRunOk(repoRoot, ["config", key, value]).ok;
+}
+
+export type GitDiffSinceCommitResult =
+  | { ok: true; paths: string[] }
+  | { ok: false; stderr: string };
+
+/** Paths under tmvcRoots that differ between ref and the working tree; empty paths = fresh. */
+export function gitDiffNameOnlySinceCommit(
+  repoRoot: string,
+  commit: string,
+  tmvcRoots: readonly string[],
+): GitDiffSinceCommitResult {
+  const roots = tmvcRoots.map((r) => r.trim()).filter((r) => r.length > 0);
+  if (roots.length === 0) return { ok: true, paths: [] };
+
+  const r = gitRun(repoRoot, ["diff", "--name-only", commit, "--", ...roots]);
+  if (!r.ok) return { ok: false, stderr: r.stderr.trim() || "git diff failed" };
+  const paths = r.stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return { ok: true, paths };
+}

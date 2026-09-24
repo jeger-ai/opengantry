@@ -14,7 +14,7 @@ import {
   formatContextRequestLine,
   stageExecutorLogIfRequested,
 } from "../lib/context-request.js";
-import { gitReadStagedBlob, gitStagedNameOnly } from "../lib/git-staged.js";
+import { gitReadStagedBlob, gitStagedNameOnly } from "../lib/git/git-staged.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,

@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { REL_RECEIPTS_DIR } from "../lib/constants.js";
-import { getRepoRoot } from "../lib/git.js";
-import { runVerifyCore } from "../lib/verify-run.js";
+import { getRepoRoot } from "../lib/git/git.js";
+import { runVerifyCore } from "../lib/verify/verify-run.js";
 import {
   copyMissionSchema,
   gitInitCommit,

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
-import { handleVerify } from "../lib/mcp-runtime.js";
+import { getRepoRoot } from "../lib/git/git.js";
+import { handleVerify } from "../lib/mcp/mcp-runtime.js";
 import { writeMiniGantryRepo, writeMiniGantryMission, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 

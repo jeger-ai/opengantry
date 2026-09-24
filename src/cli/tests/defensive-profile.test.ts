@@ -10,7 +10,7 @@ import {
   parseDefensiveProfilePreset,
 } from "../lib/defensive-profile-presets.js";
 import { countAssertionTokens } from "../lib/defensive-guard.js";
-import { mergeDefensiveProfileIntoConfigBody } from "../lib/init-defensive-profile.js";
+import { mergeDefensiveProfileIntoConfigBody } from "../lib/init/init-defensive-profile.js";
 
 test("validateDefensiveProfile: rejects invalid max_net_loc", () => {
   assert.throws(

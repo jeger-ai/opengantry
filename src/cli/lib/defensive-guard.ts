@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { gitRunOk } from "./git.js";
+import { gitRunOk } from "./git/git.js";
 import { normalizeRepoRelativePath } from "./tmvc-path.js";
 import { loadGxtConfig } from "./gxt-config.js";
 import {

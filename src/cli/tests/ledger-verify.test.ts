@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LEDGER_REF } from "../lib/constants.js";
 import { GantryUserError } from "../lib/errors.js";
-import { getRepoRoot, gitRevParse, gitRun } from "../lib/git.js";
+import { getRepoRoot, gitRevParse, gitRun } from "../lib/git/git.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
 import {
   buildLedgerEntry,

@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
-import { gitChildEnv } from "../lib/git.js";
+import { gitChildEnv } from "../lib/git/git.js";
 import type { InterrogationRow } from "../lib/interrogate/findings.js";
 import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
 import type { ParsedMission } from "../lib/types.js";

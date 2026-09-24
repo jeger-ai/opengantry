@@ -4,17 +4,17 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { runInit } from "../commands/init.js";
-import { runUpgradePlan } from "../lib/upgrade-plan.js";
+import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
 import { loadIntegrationCompat } from "../lib/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import {
   assertStableUpgradePlanPayloadV1,
   STABLE_UPGRADE_PLAN_PAYLOAD_VERSION,
   toStableUpgradePlanPayloadV1,
-} from "../lib/upgrade-plan-payload.js";
-import { handleUpgradePlan } from "../lib/mcp-upgrade.js";
+} from "../lib/upgrade/upgrade-plan-payload.js";
+import { handleUpgradePlan } from "../lib/mcp/mcp-upgrade.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 
 const ogRoot = getRepoRoot();

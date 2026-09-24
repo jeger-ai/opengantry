@@ -1,7 +1,7 @@
 import { checkPerimeter } from "../lib/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary } from "../lib/command-boundary.js";
-import { gitRevParse } from "../lib/git.js";
+import { gitRevParse } from "../lib/git/git.js";
 import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import type { PerimeterViolation } from "../lib/perimeter.js";

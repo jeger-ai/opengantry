@@ -1,20 +1,20 @@
 import { logInfo, setExitCode } from "../lib/cli-io.js";
 import { enterDocumentStdout, leaveDocumentStdout } from "../lib/output-context.js";
-import { initFailurePayload } from "../lib/verify-payload.js";
-import { emitVerifyDocument } from "../lib/verify-presenters.js";
-import type { VerifyOptions } from "../lib/verify-options.js";
+import { initFailurePayload } from "../lib/verify/verify-payload.js";
+import { emitVerifyDocument } from "../lib/verify/verify-presenters.js";
+import type { VerifyOptions } from "../lib/verify/verify-options.js";
 import { resolveDefaultChangedBaseRef } from "../lib/mission-changed.js";
-import { discoverChangedMissionFiles } from "../lib/verify-engine.js";
+import { discoverChangedMissionFiles } from "../lib/verify/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
-import { runVerifyCore } from "../lib/verify-run.js";
+import { runVerifyCore } from "../lib/verify/verify-run.js";
 import { appendEventSpool } from "../lib/event-spool.js";
 import { resolveOrgExportConfig } from "../lib/org-export-config.js";
 import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 
-export type { VerifyOptions } from "../lib/verify-options.js";
+export type { VerifyOptions } from "../lib/verify/verify-options.js";
 
 function structuredVerifyOutput(options: VerifyOptions): boolean {
   return options.json === true || options.format !== undefined;

@@ -1,5 +1,5 @@
 import { REL_POLICY_POINTER } from "../constants.js";
-import type { DoctorLine } from "../doctor-types.js";
+import type { DoctorLine } from "../doctor/doctor-types.js";
 import { compareExpectedDigests } from "../policy-digest-doctor.js";
 import { loadPolicyPointer, resolveOrgPolicy } from "./policy-resolve.js";
 

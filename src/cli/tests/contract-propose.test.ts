@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { formatContractBlock } from "../lib/contract/format.js";
 import { proposeContract } from "../lib/contract/propose.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   aggregateFromLogStream,
   clearMetricsDiffCache,
@@ -12,7 +12,7 @@ import {
   streamLogRecords,
   GXT_METRICS_CLASSIFICATION_MODE,
   GXT_METRICS_EXTENSION_SCHEMA_VERSION,
-} from "../lib/git-metrics.js";
+} from "../lib/git/git-metrics.js";
 import {
   copyMissionSchema,
   writeManifest,

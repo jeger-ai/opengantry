@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../../lib/git.js";
+import { getRepoRoot } from "../../lib/git/git.js";
 import { validateYamlMission } from "../../lib/missions/parser.js";
 test("mission schema: rejects unknown top-level keys", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-"));

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { runAuditRigorChecks } from "../lib/audit-rigor.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 
 test("audit-rigor: strict tsconfig passes in isolated sandbox", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-ar-strict-"));

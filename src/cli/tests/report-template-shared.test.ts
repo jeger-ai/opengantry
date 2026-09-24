@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { statusBadgeClass, statusBadgeLabel } from "../lib/report-template-shared.js";
+import { statusBadgeClass, statusBadgeLabel } from "../lib/report/report-template-shared.js";
 
 test("statusBadgeClass maps outcomes to badge modifiers", () => {
   assert.match(statusBadgeClass("PASS"), /badge--pass/);

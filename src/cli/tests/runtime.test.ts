@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { hashProcessChunk } from "../lib/runtime-exec-process.js";

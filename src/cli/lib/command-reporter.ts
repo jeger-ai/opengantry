@@ -8,9 +8,9 @@ import {
 import { getOutputAudience } from "./output-context.js";
 import { CLI_NAME } from "./constants.js";
 import { logFixHint } from "./fix-hints.js";
-import type { VerifyPhaseSuccess } from "./verify-engine.js";
-import type { VerifyFailurePresentation } from "./verify-failure-normalize.js";
-import type { AudienceTaggedStep } from "./verify-hints.js";
+import type { VerifyPhaseSuccess } from "./verify/verify-engine.js";
+import type { VerifyFailurePresentation } from "./verify/verify-failure-normalize.js";
+import type { AudienceTaggedStep } from "./verify/verify-hints.js";
 
 export type CommandReporterChannel = "human" | "json" | "silent";
 

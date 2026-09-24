@@ -1,4 +1,4 @@
-import { gitRun } from "../git.js";
+import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import type { MissionDependencySpec } from "../types.js";

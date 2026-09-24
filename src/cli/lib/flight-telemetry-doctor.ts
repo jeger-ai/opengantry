@@ -1,4 +1,4 @@
-import type { DoctorLine } from "./doctor-types.js";
+import type { DoctorLine } from "./doctor/doctor-types.js";
 import { loadGxtConfig, resolveFlightTelemetryBodyMode } from "./gxt-config.js";
 import { isDefensiveProfilePresetName } from "./defensive-profile-presets.js";
 

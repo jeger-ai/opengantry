@@ -1,12 +1,12 @@
 import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
-import { runLegislateFromIntent } from "./lib/legislate-from-intent.js";
+import { runLegislateFromIntent } from "./lib/legislate/legislate-from-intent.js";
 import { isGantryUserError } from "./lib/errors.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
-import type { VerifyOptions } from "./lib/verify-options.js";
-import type { VerifyExportFormat } from "./lib/verify-export.js";
+import type { VerifyOptions } from "./lib/verify/verify-options.js";
+import type { VerifyExportFormat } from "./lib/verify/verify-export.js";
 import { runScan } from "./commands/scan.js";
 import { runEventsPush } from "./commands/events-push.js";
 import { runRegister } from "./commands/register.js";

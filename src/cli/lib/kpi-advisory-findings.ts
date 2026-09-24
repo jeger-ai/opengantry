@@ -1,6 +1,6 @@
 import type { KpiFinding } from "./types.js";
-import type { VerifyFinding } from "./verify-finding.js";
-import { verifyFinding } from "./verify-finding.js";
+import type { VerifyFinding } from "./verify/verify-finding.js";
+import { verifyFinding } from "./verify/verify-finding.js";
 
 /** Map committed KPI advisory findings to ADR-0032 envelope rows on verify PASS. */
 export function kpiFindingsToAdvisoryVerifyFindings(findings: readonly KpiFinding[]): VerifyFinding[] {

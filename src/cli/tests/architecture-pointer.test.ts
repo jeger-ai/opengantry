@@ -3,15 +3,15 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   loadArchitecturePointer,
   architectureRequiresDiscovery,
   runArchitecturePointerDoctorChecks,
   validateArchitecturePointer,
 } from "../lib/arch/external/architecture-pointer.js";
-import { composeArchitecturePointer } from "../lib/init-compose.js";
-import { defaultInitProfile } from "../lib/init-profile.js";
+import { composeArchitecturePointer } from "../lib/init/init-compose.js";
+import { defaultInitProfile } from "../lib/init/init-profile.js";
 
 test("validateArchitecturePointer: accepts file, directory, external", () => {
   assert.deepEqual(

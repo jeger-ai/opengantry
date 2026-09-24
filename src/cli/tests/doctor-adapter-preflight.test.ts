@@ -9,9 +9,9 @@ import {
   resolveNpmScript,
   type CommandRunner,
 } from "../lib/adapter-preflight-checks.js";
-import { runAdapterPreflightDoctorChecks } from "../lib/doctor-adapter-preflight.js";
-import { collectDoctorReport } from "../lib/doctor-core.js";
-import { getRepoRoot } from "../lib/git.js";
+import { runAdapterPreflightDoctorChecks } from "../lib/doctor/doctor-adapter-preflight.js";
+import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { buildProgram } from "../program.js";
 import type { Manifest } from "../lib/types.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";

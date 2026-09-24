@@ -6,7 +6,7 @@
  * indented lines extend the active diagnostic, anything else is skipped.
  * Selected only via `gate_adapter: tsc`.
  */
-import type { VerifyFinding } from "../verify-finding.js";
+import type { VerifyFinding } from "../verify/verify-finding.js";
 import {
   findingsFromRun,
   type GateRunSnapshot,

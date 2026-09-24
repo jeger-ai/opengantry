@@ -6,7 +6,7 @@ import {
   type TmvcPathClassification,
 } from "./tmvc-path.js";
 import type { EffectiveScope } from "./contract/contract-types.js";
-import { gitStagedNameOnly } from "./git-staged.js";
+import { gitStagedNameOnly } from "./git/git-staged.js";
 import type { Manifest } from "./types.js";
 
 export interface StagedTmvcViolation {

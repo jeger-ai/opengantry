@@ -12,7 +12,7 @@ import {
   REL_VERIFY_RUNS_DIR,
   VERIFY_RUN_RING_MAX,
   type VerifyLastSnapshot,
-} from "../lib/verify-run-ring.js";
+} from "../lib/verify/verify-run-ring.js";
 
 function snapshot(n: number, msnId = "MSN-0181"): VerifyLastSnapshot {
   return {

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 
 function runLibCyclesCheck(repoRoot: string, ...args: string[]) {
   const script = path.join(repoRoot, "scripts", "check-lib-cycles.mjs");

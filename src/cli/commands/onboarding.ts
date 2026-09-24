@@ -8,11 +8,11 @@ import {
   onboardingVerifyHint,
 } from "../lib/onboarding-flow.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
-import { integrationOnboardingBlockers } from "../lib/doctor-integration.js";
+import { integrationOnboardingBlockers } from "../lib/doctor/doctor-integration.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
-import { runVerifyCore } from "../lib/verify-run.js";
+import { runVerifyCore } from "../lib/verify/verify-run.js";
 
 const EXAMPLE_MISSION = ".gitagent/missions/example.verify.yaml";
 

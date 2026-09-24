@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
-import { gitDiffNameOnlySinceCommit } from "../lib/git.js";
+import { gitDiffNameOnlySinceCommit } from "../lib/git/git.js";
 import {
   parseBlamePorcelainByLine,
   UNCOMMITTED_BLAME_COMMIT,

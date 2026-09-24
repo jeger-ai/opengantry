@@ -2,7 +2,7 @@ import path from "node:path";
 import { errorMessage, logWarn } from "../cli-io.js";
 import { GantryUserError, isGantryUserError } from "../errors.js";
 import { loadGxtConfig, resolveLedgerMode, resolveLedgerSignatureTier } from "../gxt-config.js";
-import { gitRevParse } from "../git.js";
+import { gitRevParse } from "../git/git.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import { resolveOrgExportConfig } from "../org-export-config.js";
 import { resolveRepositoryHash } from "../receipt-attribution.js";

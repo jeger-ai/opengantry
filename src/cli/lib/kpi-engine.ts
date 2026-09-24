@@ -5,13 +5,13 @@ import YAML from "yaml";
 import { createSchemaValidator } from "./ajv-loader.js";
 import { REL_KPI_REPORT_SCHEMA } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git.js";
+import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git/git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import { isVirtualScratchPath } from "./virtual-scratch-store.js";
 import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
-import type { VerifyOptions } from "./verify-options.js";
-import type { KpiFailure } from "./verify-failure.js";
+import type { VerifyOptions } from "./verify/verify-options.js";
+import type { KpiFailure } from "./verify/verify-failure.js";
 
 let compiledValidator: ValidateFunction | null = null;
 let compiledForRoot: string | null = null;

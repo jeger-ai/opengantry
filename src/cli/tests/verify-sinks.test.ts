@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveVerifySink } from "../lib/verify-presenters.js";
+import { resolveVerifySink } from "../lib/verify/verify-presenters.js";
 
 test("resolveVerifySink: human default", () => {
   assert.equal(resolveVerifySink({}), "human");

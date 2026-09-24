@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { DoctorLine } from "./doctor-types.js";
+import type { DoctorLine } from "./doctor/doctor-types.js";
 
 const PLACEHOLDER_QUOTE = "REPLACE_WITH_VERBATIM";
 

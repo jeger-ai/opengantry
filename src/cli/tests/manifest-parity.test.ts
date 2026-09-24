@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest, validateManifestShape } from "../lib/manifest.js";
 import { pathMatchesPerimeterGlob } from "../lib/path-glob.js";
 import { copyManifestLibScripts } from "./test-fixtures.js";

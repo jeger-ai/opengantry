@@ -1,5 +1,5 @@
 import { layerForFile, loadTargetArchitecture, resolveArchScanRoots, fileMatchesScanRoots } from "../arch/cage/target-architecture.js";
-import { findForbiddenZoneHits } from "../legislate-forbidden-zone.js";
+import { findForbiddenZoneHits } from "../legislate/legislate-forbidden-zone.js";
 import { triageIntent, isTriageEscalated } from "../triage-logic.js";
 import type { Manifest } from "../types.js";
 import { normalizeRepoRelativePath, pathRiskTier } from "../tmvc-path.js";

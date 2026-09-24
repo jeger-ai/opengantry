@@ -17,7 +17,7 @@ import {
 import { proposeContract } from "../lib/contract/propose.js";
 import { EMBEDDING_DIMENSIONS } from "../lib/contract/vector-store.js";
 import { isGantryUserError } from "../lib/errors.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 
 function vector(length = OPENAI_EMBEDDING_DIMENSIONS, fill = 0.25): number[] {

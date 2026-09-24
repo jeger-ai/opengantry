@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import {
   INTEGRATION_IDE_KEYS,
   loadIntegrationCompat,
@@ -11,10 +11,10 @@ import {
 } from "../lib/integration-compat.js";
 import {
   resolveAssetsFromProfile,
-} from "../lib/init-asset-catalog.js";
-import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init-compose.js";
-import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "../lib/init-profile.js";
-import { canPromptInitOverwrite } from "../lib/init-interactive.js";
+} from "../lib/init/init-asset-catalog.js";
+import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init/init-compose.js";
+import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "../lib/init/init-profile.js";
+import { canPromptInitOverwrite } from "../lib/init/init-interactive.js";
 import type { IntegrationIdeKey } from "../lib/integration-compat.js";
 
 test("integration compat: all IDE keys have manifest entries and recipes", () => {
@@ -109,7 +109,7 @@ test("runIntegrationDoctorChecks: warns on deprecated .cursorrules", async () =>
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
   const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../lib/doctor-integration.js");
+  const { runIntegrationDoctorChecks } = await import("../lib/doctor/doctor-integration.js");
   const lines = runIntegrationDoctorChecks(dest, templatesRoot);
   assert.ok(lines.some((l) => l.message.includes("deprecated path .cursorrules")));
 });
@@ -123,7 +123,7 @@ test("runIntegrationDoctorChecks: AGENTS.md alone does not detect codex-cli", as
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
   const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../lib/doctor-integration.js");
+  const { runIntegrationDoctorChecks } = await import("../lib/doctor/doctor-integration.js");
   const lines = runIntegrationDoctorChecks(dest, templatesRoot);
   const wiring = lines.find((l) => l.message.startsWith("detected agent wiring:"));
   assert.ok(wiring);

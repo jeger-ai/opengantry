@@ -4,15 +4,15 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { runLegislate } from "../lib/legislate.js";
+import { runLegislate } from "../lib/legislate/legislate.js";
 import { buildAttestationReceipt } from "../lib/attestation-receipt.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { stableFindingId } from "../lib/interrogate/findings.js";
 import { runInterrogate } from "../lib/interrogate/run.js";
 import { loadManifest } from "../lib/manifest.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
-import { evaluateInterrogationPhase } from "../lib/verify-interrogation.js";
+import { evaluateInterrogationPhase } from "../lib/verify/verify-interrogation.js";
 import { copyMissionSchema, writeOrgExportConfig, isolateOrgAttributionEnv } from "./test-fixtures.js";
 
 function scaffoldGantryLegislateRepo(): string {

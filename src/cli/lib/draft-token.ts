@@ -4,7 +4,7 @@ import path from "node:path";
 import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
 import { canonicalJson } from "./canonical-json.js";
-import { gitRun } from "./git.js";
+import { gitRun } from "./git/git.js";
 import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId, type MissionContract } from "./types.js";
 import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 

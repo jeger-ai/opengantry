@@ -6,8 +6,8 @@
 import path from "node:path";
 import { toPosixRel } from "../cli-io.js";
 import { MAX_IO_BUFFER_BYTES } from "../gate.js";
-import { readEvidenceSnippet } from "../verify-evidence-snippet.js";
-import { verifyFinding, type VerifyFinding, type VerifyFindingSeverity } from "../verify-finding.js";
+import { readEvidenceSnippet } from "../verify/verify-evidence-snippet.js";
+import { verifyFinding, type VerifyFinding, type VerifyFindingSeverity } from "../verify/verify-finding.js";
 import type { GateExecContext } from "./gate-adapter-types.js";
 
 /** Hard cap on findings per gate run; the remainder is summarized in one finding. */

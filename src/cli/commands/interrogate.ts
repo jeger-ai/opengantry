@@ -3,7 +3,7 @@ import { GantryUserError } from "../lib/errors.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 import type { InterrogationRow } from "../lib/interrogate/findings.js";
 import { runInterrogate } from "../lib/interrogate/run.js";
-import { resolveLegislateGateOptions } from "../lib/legislate-gate-options.js";
+import { resolveLegislateGateOptions } from "../lib/legislate/legislate-gate-options.js";
 import { resolveManifestSkillKey } from "../lib/skill-key.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import fs from "node:fs";

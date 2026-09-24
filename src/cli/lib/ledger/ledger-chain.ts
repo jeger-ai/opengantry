@@ -1,6 +1,6 @@
 import path from "node:path";
 import { LEDGER_REF } from "../constants.js";
-import { gitRevParse, gitRun, type GitRunResult } from "../git.js";
+import { gitRevParse, gitRun, type GitRunResult } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import { entryHash, genesisPrevHash, type LedgerEntry } from "./ledger-entry.js";

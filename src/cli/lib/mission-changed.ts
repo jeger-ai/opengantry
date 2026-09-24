@@ -3,7 +3,7 @@ import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { isVerifiableMissionPath } from "./dirty-missions.js";
 import { GantryUserError } from "./errors.js";
-import { gitRevParse, gitRunOk } from "./git.js";
+import { gitRevParse, gitRunOk } from "./git/git.js";
 
 const MSN_TAG_RE = /\[(MSN-\d{4})\]/g;
 

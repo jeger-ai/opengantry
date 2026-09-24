@@ -5,9 +5,9 @@ import {
   filterTaggedStepsForAudience,
   type OutputAudience,
 } from "../lib/audience-output.js";
-import { collectDoctorReport } from "../lib/doctor-core.js";
-import type { AdapterPreflightOptions } from "../lib/doctor-adapter-preflight.js";
-import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor-types.js";
+import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
+import type { AdapterPreflightOptions } from "../lib/doctor/doctor-adapter-preflight.js";
+import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor/doctor-types.js";
 import type { TypedGateAdapterId } from "../lib/types.js";
 import { loadWorkspace } from "../lib/workspace.js";
 

@@ -8,7 +8,7 @@ import {
   appendDigestToRing,
   digestRecurredInRing,
   EVIDENCE_TRUNCATION_SENTINEL,
-} from "../lib/verify-finding-fingerprint.js";
+} from "../lib/verify/verify-finding-fingerprint.js";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 

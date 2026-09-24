@@ -1,0 +1,371 @@
+import fs from "node:fs";
+import path from "node:path";
+import { CLI_NAME } from "../constants.js";
+import { buildLegislativeTraceRows, buildMissionYamlScaffold, extractMsnIdFromMissionPath, isValidMsnId } from "../missions/parser.js";
+import { listMissionFiles } from "../missions/resolution.js";
+import {
+  formatRepoRelative,
+  logError,
+  logInfo,
+  logWarn,
+  toPosixRel,
+} from "../cli-io.js";
+import { triageIntent, isTriageEscalated } from "../triage-logic.js";
+import { manifestHasSkill, resolveManifestSkillKey } from "../skill-key.js";
+import {
+  DEFAULT_GATE_ADAPTER,
+  type GateAdapterId,
+  type Manifest,
+  type MissionContract,
+  type TriageResult,
+} from "../types.js";
+import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
+import { loadPolicyBundleQuiet, resolveEffectiveScope } from "../contract/effective-scope.js";
+import { errorMessage } from "../cli-io.js";
+import { isGantryUserError } from "../errors.js";
+import { loadWorkspace } from "../workspace.js";
+import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
+import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
+import type { InterrogationRow } from "../interrogate/findings.js";
+import { runInterrogate } from "../interrogate/run.js";
+import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
+
+export type LegislateInterrogation =
+  | { source: "draft_token"; rows: InterrogationRow[]; sha256: string }
+  | { source: "operator_file"; rows: InterrogationRow[] };
+
+export interface LegislateOptions {
+  intent: string;
+  msn?: string;
+  skillKey?: string;
+  out?: string;
+  allowDuplicate?: boolean;
+  gateCommand?: string;
+  gateSuccessSubstring?: string;
+  /** Explicit gate output parser (ADR-0041); omitted/generic is not written. */
+  gateAdapter?: GateAdapterId;
+  paths?: string[];
+  interrogation?: LegislateInterrogation;
+  /** When true, skip stdout info messages (MCP / structured JSON callers). */
+  silent?: boolean;
+  /** Planner-sealed cage; written as `contract` + `contract_sha256`. */
+  contract?: MissionContract | null;
+}
+
+export type ResolveSkillKeyResult =
+  | { ok: true; skillKey: string; triage: TriageResult }
+  | { ok: false; triage: TriageResult; reason: string; kind: "unknown_skill" | "escalated" };
+
+export function resolveSkillKeyForLegislation(opts: {
+  root: string;
+  manifest: Manifest;
+  intent: string;
+  skillKey?: string;
+}): ResolveSkillKeyResult {
+  const explicit = opts.skillKey?.trim();
+  if (explicit) {
+    if (!manifestHasSkill(opts.manifest, explicit)) {
+      return {
+        ok: false,
+        triage: triageIntent(opts.root, opts.intent, opts.manifest),
+        reason: `unknown skill_key "${explicit}" (manifest skills: ${Object.keys(opts.manifest.skills).join(", ")})`,
+        kind: "unknown_skill",
+      };
+    }
+    const triage = triageIntent(opts.root, opts.intent, opts.manifest);
+    const canonical = resolveManifestSkillKey(opts.manifest, explicit);
+    return { ok: true, skillKey: canonical, triage };
+  }
+
+  const triage = triageIntent(opts.root, opts.intent, opts.manifest);
+  if (isTriageEscalated(triage)) {
+    return {
+      ok: false,
+      triage,
+      reason: `triage escalation — ${triage.reason}. Pass --skill-key <manifest skill> after Planner assigns scope.`,
+      kind: "escalated",
+    };
+  }
+  return {
+    ok: true,
+    skillKey: resolveManifestSkillKey(opts.manifest, triage.skill_key),
+    triage,
+  };
+}
+
+export type LegislateResult =
+  | { ok: true; missionAbs: string; missionRel: string }
+  | { ok: false; exitCode: 2 };
+
+function intentSlug(intent: string, maxLen: number): string {
+  const s = intent
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, maxLen);
+  return s || "mission";
+}
+
+function buildYamlMissionBody(opts: {
+  msn_id: string;
+  skill_key: string;
+  intent: string;
+  gate_command: string;
+  gate_success_substring: string | null;
+  gate_adapter?: GateAdapterId;
+  interrogation?: InterrogationRow[];
+  interrogation_sha256?: string;
+  declared_paths?: string[];
+  contract?: MissionContract | null;
+}): string {
+  const doc: Record<string, unknown> = {
+    msn_id: opts.msn_id,
+    skill_key: opts.skill_key,
+    gate_command: opts.gate_command,
+    trace_rows: buildLegislativeTraceRows(),
+  };
+  if (opts.gate_success_substring !== null) {
+    doc.gate_success_substring = opts.gate_success_substring;
+  }
+  if (opts.gate_adapter !== undefined && opts.gate_adapter !== DEFAULT_GATE_ADAPTER) {
+    doc.gate_adapter = opts.gate_adapter;
+  }
+  if (opts.interrogation && opts.interrogation.length > 0) {
+    doc.interrogation = opts.interrogation;
+    if (opts.interrogation_sha256) {
+      doc.interrogation_sha256 = opts.interrogation_sha256;
+    }
+    if (opts.declared_paths && opts.declared_paths.length > 0) {
+      doc.declared_paths = opts.declared_paths;
+    }
+  }
+  if (opts.contract) {
+    const contract = normalizeContract(opts.contract);
+    doc.contract = contract;
+    doc.contract_sha256 = contractSha256(contract);
+  }
+  return buildMissionYamlScaffold({
+    header:
+      `# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).\n` +
+      `# Legislated intent: ${opts.intent.trim().replace(/\n/g, " ")}\n`,
+    doc,
+  });
+}
+
+function resolveInterrogationForLegislate(
+  root: string,
+  manifest: Manifest,
+  options: LegislateOptions,
+  skillKey: string,
+  gateCommand: string,
+  gateSuccessSubstring: string | null,
+): { ok: true; rows: InterrogationRow[]; declaredPaths: string[]; interrogationSha256?: string } | { ok: false } {
+  const paths = options.paths ?? [];
+  let tmvcRoots: string[];
+  try {
+    tmvcRoots = resolveEffectiveScope({
+      manifest,
+      skillKey,
+      contract: options.contract ?? null,
+      policy: loadPolicyBundleQuiet(root),
+    }).tmvcRoots;
+  } catch (e) {
+    logError(isGantryUserError(e) ? e.message : errorMessage(e));
+    return { ok: false };
+  }
+  const interrogation = runInterrogate({
+    root,
+    manifest,
+    intent: options.intent,
+    skillKey,
+    gateCommand,
+    gateSuccessSubstring,
+    paths,
+    interrogation: options.interrogation?.rows ?? [],
+    tmvcRoots,
+  });
+
+  if (interrogation.status === "halt") {
+    logError(
+      `legislate: interrogation required — run gantry interrogate and pass --interrogation-file (finding ${interrogation.next_question.finding_id})`,
+    );
+    return { ok: false };
+  }
+
+  if (
+    options.interrogation?.source === "draft_token" &&
+    options.interrogation.sha256 !== interrogation.interrogation_sha256
+  ) {
+    logError("legislate: interrogation_sha256 mismatch vs draft token payload");
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    rows: interrogation.interrogation,
+    declaredPaths: interrogation.declared_paths,
+    ...(interrogation.interrogation.length > 0
+      ? { interrogationSha256: interrogation.interrogation_sha256 }
+      : {}),
+  };
+}
+
+function resolveLegislateSkillKey(
+  options: LegislateOptions,
+  root: string,
+  manifest: ReturnType<typeof loadWorkspace>["manifest"],
+): string | null {
+  const resolved = resolveSkillKeyForLegislation({
+    root,
+    manifest,
+    intent: options.intent,
+    skillKey: options.skillKey,
+  });
+  if (!resolved.ok) {
+    logError(`legislate: ${resolved.reason}`);
+    return null;
+  }
+  return resolved.skillKey;
+}
+
+function resolveLegislateOutputPath(
+  root: string,
+  options: LegislateOptions,
+  msnId: string,
+): string | null {
+  const slug = intentSlug(options.intent, 48);
+  const defaultFilename = `.gitagent/missions/${msnId}.${slug}.yaml`;
+  const outRel = options.out?.trim() || defaultFilename;
+  const absolute = path.isAbsolute(outRel)
+    ? path.resolve(outRel)
+    : path.join(root, outRel.replace(/\\/g, path.sep));
+
+  const normRel = toPosixRel(root, path.resolve(absolute));
+  if (!normRel || normRel.startsWith("..")) {
+    logError(`legislate: output path outside repository (${absolute})`);
+    return null;
+  }
+  if (!normRel.startsWith(".gitagent/missions/")) {
+    logError(
+      `legislate: mission path must stay under .gitagent/missions/ for gantry verify (got ${normRel})`,
+    );
+    return null;
+  }
+  if (fs.existsSync(absolute)) {
+    logError(`legislate: output already exists ${absolute}`);
+    return null;
+  }
+  return absolute;
+}
+
+function findDuplicateMsnMissionPaths(root: string, msnId: string): string[] {
+  const dupes: string[] = [];
+  for (const abs of listMissionFiles(root)) {
+    try {
+      if (extractMsnIdFromMissionPath(abs) === msnId) {
+        dupes.push(formatRepoRelative(root, abs));
+      }
+    } catch {
+      // ignore malformed mission files during advisory scan
+    }
+  }
+  return dupes;
+}
+
+function assertLegislateDuplicatePolicy(
+  options: LegislateOptions,
+  msnId: string,
+  existingMissionDupes: string[],
+): boolean {
+  if (existingMissionDupes.length === 0) return true;
+  if (options.allowDuplicate === true) {
+    logWarn(
+      `legislate: allowing duplicate msn ${msnId} for migration flow; existing mission file(s): ${existingMissionDupes.join(", ")}`,
+    );
+    return true;
+  }
+  logError(
+    `legislate: duplicate msn ${msnId} already appears in ${existingMissionDupes.length} mission file(s): ${existingMissionDupes.join(", ")}. Re-run with --allow-duplicate only for intentional branch migrations.`,
+  );
+  return false;
+}
+
+function resolveLegislateGateOptionsFromLegislate(options: LegislateOptions) {
+  return resolveLegislateGateOptions({
+    gateCommand: options.gateCommand,
+    gateSuccessSubstring: options.gateSuccessSubstring,
+    adapter: options.gateAdapter,
+  });
+}
+
+export { resolveLegislateGateOptions } from "./legislate-gate-options.js";
+
+export function runLegislate(options: LegislateOptions): LegislateResult {
+  const { root, manifest } = loadWorkspace();
+  const msnId = (options.msn ?? "").trim();
+  if (!isValidMsnId(msnId)) {
+    logError('legislate: --msn must match "MSN-0007" exactly');
+    return { ok: false, exitCode: 2 };
+  }
+
+  const skill_key = resolveLegislateSkillKey(options, root, manifest);
+  if (!skill_key) return { ok: false, exitCode: 2 };
+
+  for (const zone of findForbiddenZoneHits(manifest, skill_key, options.intent)) {
+    logWarn(
+      `legislate: intent may touch forbidden zone ${zone} for skill ${skill_key} — narrow TMVC in mission or confirm Planner override`,
+    );
+  }
+  warnLegislatePolicyFloor(root);
+
+  const absolute = resolveLegislateOutputPath(root, options, msnId);
+  if (!absolute) return { ok: false, exitCode: 2 };
+
+  const existingMissionDupes = findDuplicateMsnMissionPaths(root, msnId);
+  if (!assertLegislateDuplicatePolicy(options, msnId, existingMissionDupes)) {
+    return { ok: false, exitCode: 2 };
+  }
+
+  const gate = resolveLegislateGateOptionsFromLegislate(options);
+  const interrogationResolved = resolveInterrogationForLegislate(
+    root,
+    manifest,
+    options,
+    skill_key,
+    gate.command,
+    gate.successSubstring,
+  );
+  if (!interrogationResolved.ok) return { ok: false, exitCode: 2 };
+
+  const src = interrogationResolved;
+  const interrogationSha = src.interrogationSha256;
+
+  const body = buildYamlMissionBody({
+    msn_id: msnId,
+    skill_key,
+    intent: options.intent,
+    gate_command: gate.command,
+    gate_success_substring: gate.successSubstring,
+    gate_adapter: gate.adapter,
+    contract: options.contract ?? null,
+    ...(src.rows.length > 0
+      ? {
+          interrogation: src.rows,
+          interrogation_sha256: interrogationSha,
+          declared_paths: src.declaredPaths,
+        }
+      : {}),
+  });
+
+  fs.mkdirSync(path.dirname(absolute), { recursive: true });
+  fs.writeFileSync(absolute, body, "utf8");
+  const missionRel = formatRepoRelative(root, absolute);
+  if (!options.silent) {
+    logInfo(`${CLI_NAME} legislate: wrote ${missionRel}`);
+    logInfo(
+      `Planner: git commit modifying this mission with subject starting [${msnId}] from an allowlisted Planner email (gantry planner show).`,
+    );
+  }
+  return { ok: true, missionAbs: absolute, missionRel };
+}

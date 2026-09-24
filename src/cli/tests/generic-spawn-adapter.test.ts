@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 
 import { genericSpawnAdapter } from "../lib/gate-adapters/generic-spawn-adapter.js";
 import { spawnOrDestroyStream } from "../lib/gate-adapters/spawn-stream-core.js";
-import type { GateExecAdapter } from "../lib/verify-options.js";
+import type { GateExecAdapter } from "../lib/verify/verify-options.js";
 
 function ctx(dir: string, logPath: string, successSubstring: string | null = null) {
   return { cwd: dir, gateLogPath: logPath, successSubstring };

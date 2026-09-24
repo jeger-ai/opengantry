@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { runKpiScan, verifierOutputSucceeded } from "../lib/kpi-scan.js";
 import type { ParsedMission } from "../lib/types.js";
 import { copyMissionSchema, emptyInterrogationMissionFields } from "./test-fixtures.js";

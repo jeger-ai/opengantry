@@ -7,7 +7,7 @@ import {
   REL_ARCHITECTURE_DISCOVERY_SKILL,
   REL_ARCHITECTURE_POINTER,
 } from "../../constants.js";
-import type { DoctorLine } from "../../doctor-types.js";
+import type { DoctorLine } from "../../doctor/doctor-types.js";
 
 export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
 
@@ -50,19 +50,32 @@ export function architecturePointerPath(repoRoot: string): string {
   return path.join(repoRoot, fromPosix(REL_ARCHITECTURE_POINTER));
 }
 
+function optionalTrimmedString(
+  o: Record<string, unknown>,
+  key: string,
+  label: string,
+): string | undefined {
+  if (o[key] == null) return undefined;
+  const value = o[key];
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`architecture pointer: ${label} invalid`);
+  }
+  return value.trim();
+}
+
+function repoRelativeSkill(skill: string, field: string): string {
+  if (skill.includes("..")) throw new Error(`architecture pointer: ${field} must not contain ..`);
+  return skill.replace(/\\/g, "/");
+}
+
 function validateDiscovery(raw: unknown): ArchitectureDiscovery {
   if (raw == null || typeof raw !== "object") {
     throw new Error("architecture pointer: discovery must be an object");
   }
   const o = raw as Record<string, unknown>;
   const discovery: ArchitectureDiscovery = {};
-  if (o.skill != null) {
-    if (typeof o.skill !== "string" || !o.skill.trim()) {
-      throw new Error("architecture pointer: discovery.skill invalid");
-    }
-    if (o.skill.includes("..")) throw new Error("architecture pointer: discovery.skill must not contain ..");
-    discovery.skill = o.skill.trim().replace(/\\/g, "/");
-  }
+  const skill = optionalTrimmedString(o, "skill", "discovery.skill");
+  if (skill != null) discovery.skill = repoRelativeSkill(skill, "discovery.skill");
   return discovery;
 }
 
@@ -75,27 +88,14 @@ function validateAccess(raw: unknown): ArchitectureAccess {
     throw new Error("architecture pointer: access.required must be boolean");
   }
   const access: ArchitectureAccess = { required: o.required };
-  if (o.tool != null) {
-    if (typeof o.tool !== "string" || !o.tool.trim()) throw new Error("architecture pointer: access.tool invalid");
-    access.tool = o.tool.trim();
-  }
-  if (o.skill != null) {
-    if (typeof o.skill !== "string" || !o.skill.trim()) throw new Error("architecture pointer: access.skill invalid");
-    if (o.skill.includes("..")) throw new Error("architecture pointer: access.skill must not contain ..");
-    access.skill = o.skill.trim().replace(/\\/g, "/");
-  }
-  if (o.credential_slot != null) {
-    if (typeof o.credential_slot !== "string" || !o.credential_slot.trim()) {
-      throw new Error("architecture pointer: access.credential_slot invalid");
-    }
-    access.credential_slot = o.credential_slot.trim();
-  }
-  if (o.auth_hint != null) {
-    if (typeof o.auth_hint !== "string" || !o.auth_hint.trim()) {
-      throw new Error("architecture pointer: access.auth_hint invalid");
-    }
-    access.auth_hint = o.auth_hint.trim();
-  }
+  const tool = optionalTrimmedString(o, "tool", "access.tool");
+  if (tool != null) access.tool = tool;
+  const skill = optionalTrimmedString(o, "skill", "access.skill");
+  if (skill != null) access.skill = repoRelativeSkill(skill, "access.skill");
+  const credentialSlot = optionalTrimmedString(o, "credential_slot", "access.credential_slot");
+  if (credentialSlot != null) access.credential_slot = credentialSlot;
+  const authHint = optionalTrimmedString(o, "auth_hint", "access.auth_hint");
+  if (authHint != null) access.auth_hint = authHint;
   if (o.detect != null) {
     if (!Array.isArray(o.detect) || o.detect.some((d) => typeof d !== "string" || !d.trim())) {
       throw new Error("architecture pointer: access.detect must be string array");

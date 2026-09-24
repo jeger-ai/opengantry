@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../../lib/git.js";
+import { getRepoRoot } from "../../lib/git/git.js";
 import { isMarkdownTableSeparatorRow, parseMarkdownMission, parseMissionFile } from "../../lib/missions/parser.js";
 import { extractMsnIdFromMissionPath } from "../../lib/missions/parser.js";
 

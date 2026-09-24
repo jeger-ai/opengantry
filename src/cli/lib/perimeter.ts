@@ -1,13 +1,13 @@
 import path from "node:path";
 import { GXT_ERROR } from "./gxt-error-codes.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitRevParse, gitRun, gitRunOk } from "./git.js";
+import { gitRevParse, gitRun, gitRunOk } from "./git/git.js";
 import {
   commitSubjectHasMsnPrefix,
   listCommitChangedPaths,
   listMsnSubjectCommits,
   type MsnCommitRow,
-} from "./git-proof.js";
+} from "./git/git-proof.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "./types.js";
 import { pathMatchesPerimeterGlob } from "./path-glob.js";

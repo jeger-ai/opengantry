@@ -1,7 +1,7 @@
-import type { VerifyFailedPayload } from "./verify-payload.js";
+import type { VerifyFailedPayload } from "./verify/verify-payload.js";
 import type { ParsedMission } from "./types.js";
-import type { VerifyPhaseFailure } from "./verify-failure.js";
-import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyPhaseFailure } from "./verify/verify-failure.js";
+import type { VerifyOptions } from "./verify/verify-options.js";
 import { toPosixRel } from "./cli-io.js";
 import { writeRemediationSnapshot, type RemediationSnapshot } from "./context-feed-store.js";
 import { writeGateLog } from "./gate-log-writer.js";
@@ -9,10 +9,10 @@ import {
   buildCompactRemediationSnapshot,
   loadPriorDigestRing,
   applyFindingsRecurrence,
-} from "./verify-remediation-pipeline.js";
-import { computeFindingsDigest } from "./verify-finding-fingerprint.js";
-import { buildFindingsForFailure, toVerifyFailedPayload } from "./verify-payload.js";
-import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
+} from "./verify/verify-remediation-pipeline.js";
+import { computeFindingsDigest } from "./verify/verify-finding-fingerprint.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "./verify/verify-payload.js";
+import { normalizeVerifyPhaseFailure } from "./verify/verify-failure-normalize.js";
 
 function remediationFromPayload(
   root: string,

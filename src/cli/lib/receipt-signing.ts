@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { canonicalJson } from "./canonical-json.js";
-import { gitConfigGet } from "./git.js";
+import { gitConfigGet } from "./git/git.js";
 
 export type ReceiptSignatureKind = "ssh" | "gpg" | "none";
 export type ReceiptSignatureVerifyStatus = "good" | "bad" | "unknown";

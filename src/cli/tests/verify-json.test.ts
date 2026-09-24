@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { handleVerify } from "../lib/mcp-runtime.js";
+import { handleVerify } from "../lib/mcp/mcp-runtime.js";
 import { clearRemediationSnapshot } from "../lib/context-feed-store.js";
 import { runVerify } from "../commands/verify.js";
 import {
@@ -14,7 +14,7 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
-import type { VerifyFailedPayload } from "../lib/verify-payload.js";
+import type { VerifyFailedPayload } from "../lib/verify/verify-payload.js";
 
 function parseStdoutJson(stdout: string): Record<string, unknown> {
   const trimmed = stdout.trim();

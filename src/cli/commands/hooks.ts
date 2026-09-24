@@ -1,6 +1,6 @@
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { runUserCommand } from "../lib/command-boundary.js";
-import { installTmvcStrictHook, readHooksStatus, uninstallTmvcStrictHook } from "../lib/git-hooks.js";
+import { installTmvcStrictHook, readHooksStatus, uninstallTmvcStrictHook } from "../lib/git/git-hooks.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export function runHooksInstall(): void {

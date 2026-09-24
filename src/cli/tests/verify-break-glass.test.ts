@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { ENV_BYPASS_SECRET, commitHasValidBypassNote } from "../lib/break-glass.js";
 import { runVerify } from "../commands/verify.js";
 import {

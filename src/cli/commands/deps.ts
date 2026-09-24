@@ -10,7 +10,7 @@ import {
   checkMissionDependencies,
   type DependencyCheckResult,
 } from "../lib/deps/deps-resolve.js";
-import { gitRun } from "../lib/git.js";
+import { gitRun } from "../lib/git/git.js";
 
 function loadMissionDeps(root: string, missionArg?: string) {
   const resolved = resolveMissionArg(root, missionArg);

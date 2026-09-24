@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, it } from "node:test";
 
 import { GATE_EXEC_ADAPTERS, resolveGateExecAdapter } from "../lib/gate-adapters/registry.js";
-import { getRepoRoot } from "../lib/git.js";
+import { getRepoRoot } from "../lib/git/git.js";
 import { GATE_ADAPTER_IDS, isGateAdapterId } from "../lib/types.js";
 
 describe("resolveGateExecAdapter", () => {
@@ -53,10 +53,17 @@ describe("gate-adapters import-direction contract (ADR-0041)", () => {
 
   it("registry is consumed only by verify-phase-steps", () => {
     const lib = path.join(getRepoRoot(), "src", "cli", "lib");
-    const importers = fs
-      .readdirSync(lib)
-      .filter((f) => f.endsWith(".ts"))
-      .filter((f) => fs.readFileSync(path.join(lib, f), "utf8").includes("gate-adapters/registry.js"));
-    assert.deepEqual(importers, ["verify-phase-steps.ts"]);
+    const importers: string[] = [];
+    const walk = (dir: string): void => {
+      for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+        const abs = path.join(dir, ent.name);
+        if (ent.isDirectory()) walk(abs);
+        else if (ent.name.endsWith(".ts") && fs.readFileSync(abs, "utf8").includes("gate-adapters/registry.js")) {
+          importers.push(ent.name);
+        }
+      }
+    };
+    walk(lib);
+    assert.deepEqual(importers.sort(), ["verify-phase-steps.ts"]);
   });
 });
