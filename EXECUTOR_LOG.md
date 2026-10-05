@@ -1013,3 +1013,8 @@ DoD 1 MSN-0226: optional sqlite-vec contract index; host-supplied float[1536]; p
 - Context Request PENDING: `.githooks/pre-commit`, `templates/.githooks/pre-commit`, `.gitagent/planner/RUNTIME.md`, `docs/INTEGRATIONS.md`, `templates/integrations/recipes/aider.md` — These paths are outside src/cli/ and need a context request before the tracked hook, runtime contract row, and Aider integration notes are edited. | msn=MSN-0227
 [SKILL-EXEC] skill_key=gantry tool=cursor scope=src/cli/,.githooks/pre-commit,templates/.githooks/pre-commit
 DoD 1 MSN-0227: gantry hooks install arms local gxt.tmvcGuardStrict so tracked .githooks/pre-commit runs gantry tmvc guard --strict; git commit --no-verify is the only bypass; GANTRY_TMVC_ROOTS is space-separated and repo-relative; runtime env --aider writes .gitagent/tmp/aider-tmvc-scope.md; npm test: tests 806 pass 806 fail 0
+
+## MSN-0227 — Close-out trace (pre-v3.6.0)
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml reason=Mission trace row was left PENDING after the code landed; trace sink and mission trace_rows live outside contract.tmvc_roots proposed=EXECUTOR_LOG.md,.gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml | msn=MSN-0227
+[SKILL-EXEC] skill_key=gantry tool=claude-code scope=EXECUTOR_LOG.md,.gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml
+DoD 1 MSN-0227 close-out: tracked pre-commit hook armed by gantry hooks install (gxt.tmvcGuardStrict); re-run gate at 6e5736d after MSN-0228 restructure; npm test: tests 799 pass 799 fail 0
