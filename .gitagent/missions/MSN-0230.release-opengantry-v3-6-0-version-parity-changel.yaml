@@ -1,0 +1,48 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.6.0 version parity changelog and annotated tag; repoint MCP dogfood and report screenshot scripts at restructured dist paths
+msn_id: MSN-0230
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Reject applicability: only the dist import paths in the MCP
+      dogfood test harness change; no gxt_* tool boundary, write guard, or MCP
+      write path is touched."
+    adr_refs:
+      - ADR-0022
+interrogation_sha256: b05c5f9243209710634030d69bf8df1a83094157ad966d29751bd0b70265d8e8
+declared_paths:
+  - .gitagent/missions/MSN-0230.release-opengantry-v3-6-0-version-parity-changel.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/INTEGRATIONS.md
+    - package-lock.json
+    - package.json
+    - scripts/fixtures/gantry-report-screenshots/seed-demo-state.mjs
+    - scripts/validate-mcp-dogfood.mjs
+    - scripts/validate-mcp-dogfood.sh
+    - src/cli/lib/version.gen.ts
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+    - templates/scripts/validate-mcp-dogfood.mjs
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 253a349582c5acfe6e3f714b64c2cee2a3886c8a2d90623ee7187393dec55f6b
