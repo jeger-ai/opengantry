@@ -6,6 +6,7 @@ import { contractSha256, normalizeContract } from "../contract/contract-hash.js"
 import { GantryUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
 import { GXT_ERROR } from "../gxt-error-codes.js";
+import { assertTypedAdapterSingleCommand } from "./adapter-command-guard.js";
 import { normalizeTraceStatus } from "../trace.js";
 import {
   INTERROGATION_FINDING_KINDS,
@@ -279,4 +280,5 @@ export function assertMissionGatePresent(mission: ParsedMission): void {
       hintMissionNoGate(mission.rawPath),
     );
   }
+  assertTypedAdapterSingleCommand(mission.gate.adapter, mission.gate.command);
 }

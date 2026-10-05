@@ -38,6 +38,11 @@ test("gxtCodeFromGantryUserError: runtime and forbidden codes", () => {
   assert.equal(gxtCodeFromGantryUserError("MCP_WRITE_DENIED"), GXT_ERROR.MCP_WRITE_DENIED);
 });
 
+test("gxtCodeFromGantryUserError: GATE_ADAPTER_COMPOUND_COMMAND maps to GXT_GATE_ADAPTER_MISCONFIG", () => {
+  assert.equal(gxtCodeFromGantryUserError("GATE_ADAPTER_COMPOUND_COMMAND"), GXT_ERROR.GATE_ADAPTER_MISCONFIG);
+  assert.equal(isKnownGantryUserErrorCode("GATE_ADAPTER_COMPOUND_COMMAND"), true);
+});
+
 test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
   const codes = [
     "MISSION_MISSING_MSN",
