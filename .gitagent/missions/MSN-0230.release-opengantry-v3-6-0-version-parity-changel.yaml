@@ -5,9 +5,9 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0230: version parity 3.6.0 across package.json, package-lock.json, version.gen.ts, compatibility.json, and both SUBSTRATE.version.json files; changelog v3.6.0 highlights and From v3.5.0 upgrade notes (typed-adapter fail-closed, hooks install, contract index); validate-mcp-dogfood and seed-demo-state repointed at dist/cli/lib/mcp/ and dist/cli/lib/verify/; npm test: tests 830 pass 830 fail 0; OK: MCP dogfood flow passed; dev-validate-core OK"
+    anchor: "1036"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: a7bb97b7d55a

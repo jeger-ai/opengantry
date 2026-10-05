@@ -4,12 +4,12 @@
  * Usage: node scripts/fixtures/gantry-report-screenshots/seed-demo-state.mjs <pass|fail|abort|overview|off>
  *
  * Activates report demo mode (fictional acme-payments data, not real repo MSNs).
- * Prereq: npm run build (uses dist/cli/lib/verify-run-ring.js).
+ * Prereq: npm run build (uses dist/cli/lib/verify/verify-run-ring.js).
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { appendVerifyRunRing } from "../../../dist/cli/lib/verify-run-ring.js";
+import { appendVerifyRunRing } from "../../../dist/cli/lib/verify/verify-run-ring.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const state = process.argv[2]?.trim().toLowerCase();

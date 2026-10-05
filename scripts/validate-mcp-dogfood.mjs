@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { handleDraftLegislation } from "../dist/cli/lib/mcp-draft-legislation.js";
-import { handleExecuteLegislation } from "../dist/cli/lib/mcp-execute-legislation.js";
-import { handleCheckSignature } from "../dist/cli/lib/mcp-check-signature.js";
-import { handlePinMission, handleRuntimeEnv } from "../dist/cli/lib/mcp-runtime.js";
-import { handleDoctor } from "../dist/cli/lib/mcp-doctor.js";
+import { handleDraftLegislation } from "../dist/cli/lib/mcp/mcp-draft-legislation.js";
+import { handleExecuteLegislation } from "../dist/cli/lib/mcp/mcp-execute-legislation.js";
+import { handleCheckSignature } from "../dist/cli/lib/mcp/mcp-check-signature.js";
+import { handlePinMission, handleRuntimeEnv } from "../dist/cli/lib/mcp/mcp-runtime.js";
+import { handleDoctor } from "../dist/cli/lib/mcp/mcp-doctor.js";
 
 const dest = process.env.GXT_DOGFOOD_TMP;
 if (!dest) throw new Error("GXT_DOGFOOD_TMP unset");

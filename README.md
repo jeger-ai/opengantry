@@ -214,6 +214,8 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
+**v3.6.0:** `gate_adapter: tsc|eslint` fails closed on chained `gate_command`s (`GXT_GATE_ADAPTER_MISCONFIG`). `gantry hooks install` arms the tracked pre-commit hook so `gantry tmvc guard --strict` blocks commits outside the pinned mission. Optional local sqlite-vec contract drift index (`gantry contract embed`, `legislate --from-intent --embedding-file`). See [`docs/CHANGELOG.md`](docs/CHANGELOG.md) upgrade notes.
+
 **v3.5.0:** Cursor MCP uses a byte-identical `./scripts/mcp-launcher.sh` (no mcp.json parity exemption). `gantry verify --format sarif|junit` writes the document only on stdout and diagnostics on stderr ([`docs/CI.md`](docs/CI.md)). `gantry contract preflight` is advisory and fail-open ([ADR-0046](.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)).
 
 **Mission contracts (v3.4.0):** Planner-sealed inline `contract` + `contract_sha256` on the mission YAML (tighten-only TMVC / forbidden / import cage). `gantry contract propose|check|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`. Verify runs a `contract` phase after git-proof; `gantry runtime env` exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation` ([ADR-0045](.gitagent/out-of-scope/ADR-0045-mission-contracts.md)).

@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.6.0** | **Typed adapter gates fail closed:** `gate_adapter: tsc\|eslint` rejects a `gate_command` with unquoted `&&`, `||`, `;`, or line break at legislate and mission validate (`GXT_GATE_ADAPTER_MISCONFIG`); tsc/eslint parser self-diagnostic tests (MSN-0229, port of the never-landed MSN-0195). **Terminal-agent TMVC gate:** `gantry hooks install\|uninstall` arms the tracked pre-commit hook so `gantry tmvc guard --strict` blocks staged paths outside the pinned mission; `runtime env` prints repo-relative space-separated `GANTRY_TMVC_ROOTS`; `runtime env --aider` writes an Aider scope file (MSN-0227). **Optional contract drift index:** local sqlite-vec index at `.gitagent/planner/contracts.sqlite` (gitignored, advisory, never mission law); `gantry contract embed`, `legislate --from-intent --embedding-file\|--auto-embed`, `contract propose --embedding-file` (MSN-0226). **Internal:** `src/cli/lib` prefixes folded into directories (MSN-0228); public `exports` (`.`, `./kernel`) unchanged. |
 | **v3.5.0** | **Cursor MCP launcher:** specimen and adopters share byte-identical `.cursor/mcp.json` (`./scripts/mcp-launcher.sh`; no mcp.json parity exemption). **Verify exports:** `--format sarif\|junit` writes the document only on stdout and diagnostics on stderr ([`CI.md`](CI.md)). **Experimental contract preflight:** `gantry contract preflight` / `gxt_preflight_contract` catalogs every `MANIFEST.json` skill; Jev 2000ms timeout or non-OK HTTP (including 500) falls open to the heuristic ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)). |
 | **v3.4.0** | **Mission contracts (ADR-0045):** Planner-sealed inline `contract` + `contract_sha256` (tighten-only TMVC / forbidden / import cage). `gantry contract propose\|check\|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`, draft token v3 (v2 still accepted). Verify `contract` phase (tamper + import sites including `import()` / `require()` / `export … from`). Runtime exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation`. Empty TMVC roots scan git-dirty sources (not the whole tree). |
 | **v3.3.0** | **Breaking (kernel):** `verifyMission` is async. Git-native org control plane — tighten-only org policy floor (`gantry policy pull\|status\|diff`, ADR-0042); compliance ledger on `refs/gxt/ledger` with CAS append + `soc2-pack` export (ADR-0043); cross-repo `depends_on` + `gantry deps` / `release check` (ADR-0044). Receipt schema stays 0.2.0. Doctor/verify stay offline. |
@@ -42,15 +43,28 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.5.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.6.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged). Diagnostics go to stderr; the document is the only stdout payload. GitHub Code Scanning and GitLab JUnit wiring: [`CI.md`](CI.md).
+- **Typed adapter gates:** `gate_adapter: tsc|eslint` requires a single command. Unquoted `&&`, `||`, `;`, or line breaks fail closed with `GXT_GATE_ADAPTER_MISCONFIG` ([ADR-0041](../.gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md)).
+- **Contract drift index:** optional, local, and advisory. `better-sqlite3` and `sqlite-vec` load only when an embedding is supplied.
 - **Experimental contract preflight:** `gantry contract preflight` / MCP `gxt_preflight_contract` (heuristic default; optional Jev). Jev reads every skill from `MANIFEST.json`. A 2000ms timeout or non-OK HTTP status (including 500) falls open to the offline heuristic. Advisory only — does not seal a contract ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
 
 ---
 
 ## Upgrade notes
+
+### From v3.5.0 (typed-adapter guard, pre-commit TMVC gate, contract index — v3.6.0)
+
+```bash
+npm install @jeger-ai/opengantry@3.6.0
+```
+
+- **Behavior change (fail-closed):** missions with `gate_adapter: tsc` or `gate_adapter: eslint` whose `gate_command` contains an unquoted `&&`, `||`, `;`, or line break are now rejected at `gantry legislate` and when `gantry verify` loads the mission (`GXT_GATE_ADAPTER_MISCONFIG`). Typed adapters parse one tool's stdout, so chained commands never produced reliable findings. Fix: wrap the sequence in one script (for example `npm run lint:json`), or set `gate_adapter: generic`. Pipes (`|`), quoted operators, backslash-newline continuations, and trailing newlines from YAML block scalars are still accepted. Check before upgrading: `grep -l "gate_adapter: \(tsc\|eslint\)" .gitagent/missions/*.yaml`.
+- **Pre-commit TMVC gate (opt-in):** `gantry hooks install` sets local `gxt.tmvcGuardStrict` so the tracked `.githooks/pre-commit` blocks staged paths outside the pinned mission. `gantry hooks uninstall` clears it. `git commit --no-verify` is the only bypass. Run `gantry upgrade` to stage the updated `templates/.githooks/pre-commit`.
+- **Contract drift index (optional):** new dependencies `better-sqlite3` (native module, prebuilt binaries for common platforms) and `sqlite-vec`. They are loaded lazily and only when you pass `--embedding-file` / `--auto-embed`; other commands never import them. `--auto-embed` and `gantry contract embed` call OpenAI and need `OPENAI_API_KEY`. The index file `.gitagent/planner/contracts.sqlite` should be gitignored.
+- **No public API change:** the `src/cli/lib` folder restructure (MSN-0228) only moves internal files. Deep `dist/cli/lib/*` imports have not resolved through the `exports` map since v3.2.2.
 
 ### From v3.4.0 (launcher, verify exports, preflight — v3.5.0)
 
