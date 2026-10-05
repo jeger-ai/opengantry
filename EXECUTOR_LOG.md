@@ -1018,3 +1018,8 @@ DoD 1 MSN-0227: gantry hooks install arms local gxt.tmvcGuardStrict so tracked .
 [CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml reason=Mission trace row was left PENDING after the code landed; trace sink and mission trace_rows live outside contract.tmvc_roots proposed=EXECUTOR_LOG.md,.gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml | msn=MSN-0227
 [SKILL-EXEC] skill_key=gantry tool=claude-code scope=EXECUTOR_LOG.md,.gitagent/missions/MSN-0227.arm-the-tracked-pre-commit-hook-so-a-local-git-c.yaml
 DoD 1 MSN-0227 close-out: tracked pre-commit hook armed by gantry hooks install (gxt.tmvcGuardStrict); re-run gate at 6e5736d after MSN-0228 restructure; npm test: tests 799 pass 799 fail 0
+
+## MSN-0228 — Close-out trace (pre-v3.6.0)
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/MSN-0228.restructure-gantry-cli-fold-lib-prefixes-into-di.yaml reason=Mission trace row was left PENDING after the restructure landed; trace sink and mission trace_rows live outside contract.tmvc_roots proposed=EXECUTOR_LOG.md,.gitagent/missions/MSN-0228.restructure-gantry-cli-fold-lib-prefixes-into-di.yaml | msn=MSN-0228
+[SKILL-EXEC] skill_key=gantry tool=claude-code scope=EXECUTOR_LOG.md,.gitagent/missions/MSN-0228.restructure-gantry-cli-fold-lib-prefixes-into-di.yaml
+DoD 1 MSN-0228 close-out: lib prefixes folded into directories, mission pin resolution split from the parser, architecture rules are a discriminated union with applies_to as a selector; gate re-run at 875f1f9; npm test: tests 799 pass 799 fail 0

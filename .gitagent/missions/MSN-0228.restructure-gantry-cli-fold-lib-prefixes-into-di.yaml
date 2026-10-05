@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0228 close-out: lib prefixes folded into directories, mission pin resolution split from the parser, architecture rules are a discriminated union with applies_to as a selector; gate re-run at 875f1f9; npm test: tests 799 pass 799 fail 0"
+    anchor: "1025"
+    status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
     kind: undefined_boundary
