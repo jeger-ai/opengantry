@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0229: MSN-0195 adapter hardening ported onto current main — fail-closed GATE_ADAPTER_COMPOUND_COMMAND / GXT_GATE_ADAPTER_MISCONFIG for typed tsc/eslint gate_command with unquoted && || ; at legislate and mission validate (guard uses isTypedGateAdapterId); tsc/eslint parser self-diagnostic tests on GateExecContext; README lint:json YAML recipe, DEVELOPMENT and FEATURES fail-closed notes; npm test: tests 829 pass 829 fail 0"
+    anchor: "1030"
+    status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
     kind: undefined_boundary

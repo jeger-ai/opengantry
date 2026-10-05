@@ -26,6 +26,7 @@ import { isGantryUserError } from "../errors.js";
 import { loadWorkspace } from "../workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
 import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
+import { typedAdapterCommandError } from "../missions/adapter-command-guard.js";
 import type { InterrogationRow } from "../interrogate/findings.js";
 import { runInterrogate } from "../interrogate/run.js";
 import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
@@ -328,6 +329,11 @@ export function runLegislate(options: LegislateOptions): LegislateResult {
   }
 
   const gate = resolveLegislateGateOptionsFromLegislate(options);
+  const compound = typedAdapterCommandError(gate.adapter, gate.command);
+  if (compound) {
+    logError(compound);
+    return { ok: false, exitCode: 2 };
+  }
   const interrogationResolved = resolveInterrogationForLegislate(
     root,
     manifest,
