@@ -169,7 +169,7 @@ After MSN-0193, whole-tree `src/cli` ESLint is green. Standard **gantry** featur
 | Types | `tsc` | `npx tsc --noEmit --pretty false` |
 | Lint | `eslint` | `npm run lint:json` (`eslint --format json src/cli/**/*.ts`) |
 
-Do **not** concatenate `tsc` and `eslint` in one `gate_command`. Routing is never inferred from the command string; one mission has one adapter. Typed adapters **fail closed** (`GXT_GATE_ADAPTER_MISCONFIG`) when `gate_command` contains unquoted `&&`, `||`, or `;` — wrap sequences in a script or use `gate_adapter: generic`. `npm run lint` stays the human-readable formatter and is **not** adapter input.
+Do **not** concatenate `tsc` and `eslint` in one `gate_command`. Routing is never inferred from the command string; one mission has one adapter. Typed adapters **fail closed** (`GXT_GATE_ADAPTER_MISCONFIG`) when `gate_command` contains unquoted `&&`, `||`, `;`, or line break — wrap sequences in a script or use `gate_adapter: generic`. `npm run lint` stays the human-readable formatter and is **not** adapter input.
 
 Before pinning a `tsc` or `eslint` mission, run `gantry doctor` or MCP `gxt_doctor` (`gate_adapter`, `adapter_baseline`) (and `gantry doctor --adapter-baseline` / `adapter_baseline: true` for pre-existing debt). Preflight checks `npx` plus local `typescript`/`eslint` packages, `tsconfig.json` parseability, ESLint config, and that `lint:json` / the mission `gate_command` emit `eslint --format json`. Selection uses declared `gate_adapter` (or `--gate-adapter` / the MCP `gate_adapter` arg); doctor never sniffs `gate_command`.
 

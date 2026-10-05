@@ -9,10 +9,12 @@ import { hintTypedAdapterCompoundCommand } from "../fix-hints.js";
 import { isTypedGateAdapterId, type GateAdapterId } from "../types.js";
 
 /**
- * True when command contains an unquoted `&&`, `||`, or `;`.
- * A lone `|` is not a combinator (stdout pipes remain valid).
+ * True when command contains an unquoted `&&`, `||`, `;`, or line break.
+ * A lone `|` is not a combinator (stdout pipes remain valid). Backslash-escaped
+ * characters (including `\`-newline continuations) and trailing whitespace are ignored.
  */
-export function hasUnquotedShellCombinator(command: string): boolean {
+export function hasUnquotedShellCombinator(rawCommand: string): boolean {
+  const command = rawCommand.trimEnd();
   let quote: "'" | '"' | null = null;
   for (let i = 0; i < command.length; i++) {
     const c = command[i]!;
@@ -29,10 +31,15 @@ export function hasUnquotedShellCombinator(command: string): boolean {
       if (c === '"') quote = null;
       continue;
     }
+    if (c === "\\" && next !== undefined) {
+      i += 1;
+      continue;
+    }
     if (c === "'" || c === '"') {
       quote = c;
       continue;
     }
+    if (c === "\n" || c === "\r") return true;
     if (c === "&" && next === "&") return true;
     if (c === "|" && next === "|") return true;
     if (c === ";") return true;
@@ -47,7 +54,7 @@ export function typedAdapterCommandError(
   if (!isTypedGateAdapterId(adapter) || !hasUnquotedShellCombinator(command)) return null;
   return (
     `${CLI_NAME}: GATE_ADAPTER_COMPOUND_COMMAND — gate_adapter ${adapter} requires a single command ` +
-    `(no unquoted &&, ||, or ;). Wrap sequences in a script or use gate_adapter: generic.`
+    `(no unquoted &&, ||, ;, or line break). Wrap sequences in a script or use gate_adapter: generic.`
   );
 }
 

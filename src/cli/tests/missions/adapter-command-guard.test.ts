@@ -16,6 +16,15 @@ describe("hasUnquotedShellCombinator", () => {
     assert.equal(hasUnquotedShellCombinator("cd src; npx tsc"), true);
   });
 
+  it("detects unquoted line breaks but not continuations or trailing newlines", () => {
+    assert.equal(hasUnquotedShellCombinator("npx tsc --noEmit\nnpm run lint:json"), true);
+    assert.equal(hasUnquotedShellCombinator("npx tsc --noEmit\r\nnpm run lint:json"), true);
+    assert.equal(hasUnquotedShellCombinator("npx tsc \\\n  --noEmit --pretty false"), false);
+    assert.equal(hasUnquotedShellCombinator("npx tsc --noEmit --pretty false\n"), false);
+    assert.equal(hasUnquotedShellCombinator("eslint --rule 'a\nb' --format json"), false);
+    assert.equal(hasUnquotedShellCombinator("echo a \\; npx tsc"), false);
+  });
+
   it("allows pipes, quoted combinators, and single commands", () => {
     assert.equal(hasUnquotedShellCombinator("eslint --format json | tee gate.json"), false);
     assert.equal(hasUnquotedShellCombinator("eslint --format json --rule 'a && b'"), false);
