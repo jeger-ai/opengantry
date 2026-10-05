@@ -23,6 +23,7 @@ interrogation:
       - ADR-0022
 interrogation_sha256: b05c5f9243209710634030d69bf8df1a83094157ad966d29751bd0b70265d8e8
 declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
   - .gitagent/missions/MSN-0230.release-opengantry-v3-6-0-version-parity-changel.yaml
 contract:
   tmvc_roots:
