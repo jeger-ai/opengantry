@@ -110,4 +110,5 @@ contract:
     - x
     - yaml
     - zod
-contract_sha256: cfa54d08c1d5289ed7d3d2e763dfbe751b4985b66792c0decf660ba2c7a4edf4
+  allow_dynamic_specifiers: true
+contract_sha256: 1ed9a2a1c1f36e8257bd08d57c1bd292a855e61bb8d1a0b31b56e8c61190d8a7
