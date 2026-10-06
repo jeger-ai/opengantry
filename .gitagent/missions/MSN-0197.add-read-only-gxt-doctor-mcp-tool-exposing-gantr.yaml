@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0197: gxt_doctor MCP tool wraps collectDoctorReport (gate_adapter tsc|eslint, adapter_baseline off by default, policy_path); skip when no typed missions; ADR-0041 no sniff; dogfood handleDoctor; DEVELOPMENT+FEATURES+INTEGRATIONS; npm test 655 pass"
-    anchor: "862"
+    trace_quote: "DoD 1 MSN-0197 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0"
+    anchor: "1070"
     status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
