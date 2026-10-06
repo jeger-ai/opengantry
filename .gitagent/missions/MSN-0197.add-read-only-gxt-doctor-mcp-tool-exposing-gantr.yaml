@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Add read-only gxt_doctor MCP tool exposing gantry doctor including tsc/eslint adapter preflight
+# Planner re-stamp: its squash merge was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 msn_id: MSN-0197
 skill_key: gantry
 gate_command: npm test
