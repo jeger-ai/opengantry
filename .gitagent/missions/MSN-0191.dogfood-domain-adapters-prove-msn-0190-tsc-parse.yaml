@@ -7,8 +7,8 @@ skill_key: gantry
 gate_command: npx tsc --noEmit --pretty false
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0191 re-attest v4: tsc adapter dogfood still holds after MSN-0194 attest-ingest-workflow.test.ts under src/cli/tests/; npx tsc --noEmit --pretty false green"
-    anchor: "838"
+    trace_quote: "DoD 1 MSN-0191 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npx tsc --noEmit --pretty false → exit 0, no diagnostics"
+    anchor: "1067"
     status: PASS
 gate_adapter: tsc
 interrogation:
