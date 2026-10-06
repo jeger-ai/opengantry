@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: M1 CI verify --export, typed signer principal, GitHub Actions ingest recipe (ADR-0037)
+# Planner re-stamp: its Planner stamp commit did not modify this mission file; this commit restores Planner git-proof.
 msn_id: MSN-0145
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
