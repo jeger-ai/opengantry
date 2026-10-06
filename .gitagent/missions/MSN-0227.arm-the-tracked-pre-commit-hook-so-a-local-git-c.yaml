@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0227 close-out: tracked pre-commit hook armed by gantry hooks install (gxt.tmvcGuardStrict); re-run gate at 6e5736d after MSN-0228 restructure; npm test: tests 799 pass 799 fail 0"
-    anchor: "1020"
+    trace_quote: "DoD 1 MSN-0227 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0"
+    anchor: "1076"
     status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
