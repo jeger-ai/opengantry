@@ -65,6 +65,7 @@ contract:
     - also-commented
     - axios
     - banned-pkg
+    - better-sqlite3
     - commander
     - commented-out
     - express
@@ -81,6 +82,7 @@ contract:
     - prisma/client
     - react
     - side
+    - sqlite-vec
     - typescript
     - x
     - yaml
@@ -89,4 +91,4 @@ contract:
     - "@modelcontextprotocol/sdk/client/index.js"
     - "@modelcontextprotocol/sdk/client/stdio.js"
   allow_dynamic_specifiers: true
-contract_sha256: 3f8405f41bb0f3e52ac80204a20d1ae9f7b791434756b035caee6913d01bbb81
+contract_sha256: 0bad465fb6e19444f5dcbba56f49b9ce916c03669216396ed1a01a1d1a6171bf
