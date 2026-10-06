@@ -112,9 +112,11 @@ contract:
     - src/db/schema/
   allowed_imports:
     - ${spec}
+    - better-sqlite3
+    - sqlite-vec
     - yaml
   banned_imports:
     - "@modelcontextprotocol/sdk/client/index.js"
     - "@modelcontextprotocol/sdk/client/stdio.js"
     - commander
-contract_sha256: 467749893f6d980222ebfb1ef8c3e9760138c3df1c6f4618670045c7da61af4b
+contract_sha256: 7de1fb8c4ea5d77ee2ee540742150e6a02830392f121fd0ab145744425f075c5
