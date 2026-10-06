@@ -37,6 +37,7 @@ interrogation:
       - ADR-0039
 interrogation_sha256: 9d4071a185846f80d4d9b4066154f8ae7acb8509faacb41c9cf25f438cdbb924
 declared_paths:
+  - .gitagent/missions/MSN-0164.msn-0164-wire-validate-offline-mjs-into-manifest.yaml
   - .gitagent/foreman/MANIFEST.json
   - .github/workflows/gxt-validate.yml
   - skills/iii-integration.md
