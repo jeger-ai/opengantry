@@ -3,10 +3,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0226: optional sqlite-vec contract index; host-supplied
-      float[1536]; proposeContract stays pure; npm test: tests 790 pass 790 fail
-      0"
-    anchor: "1010"
+    trace_quote: "DoD 1 MSN-0226 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0"
+    anchor: "1075"
     status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
