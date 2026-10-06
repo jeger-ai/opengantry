@@ -33,9 +33,11 @@ interrogation:
       - ADR-0039
 interrogation_sha256: 14c87ac7b66922c94fbcc5c244033e7e1272fae98a4dc571f3873a62d74551b5
 declared_paths:
+  - .gitagent/missions/MSN-0231.sandbox-os-tmpdir-per-npm-test-process-via-a-pre.yaml
   - EXECUTOR_LOG.md
   - package.json
   - src/cli/tests/
+  - src/cli/tests/test-tmpdir-setup.ts
 contract:
   tmvc_roots:
     - package.json
