@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Port orphaned MSN-0195 adapter hardening onto current main: tsc/eslint parser self-diagnostic tests, fail-closed GATE_ADAPTER_COMPOUND_COMMAND / GXT_GATE_ADAPTER_MISCONFIG guard for typed gate adapters with unquoted && || ; combinators, lint:json docs
+# Planner re-stamp: squash merge 55a1b46 was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 msn_id: MSN-0229
 skill_key: gantry
 gate_command: npm test
