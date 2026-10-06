@@ -7,10 +7,10 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0157: v3.2.2 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG kernel breaking change on 3.2 line; SECURITY 3.x support"
-    anchor: "MSN-0157"
+    trace_quote: "DoD 1 MSN-0157 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)"
+    anchor: "1065"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0157: npm 3.2.2 — kernel exports + MSN-0153–0156 squashed; dev-validate-core OK; pack:check OK"
-    anchor: "MSN-0157"
+    trace_quote: "DoD 2 MSN-0157 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)"
+    anchor: "1066"
     status: PASS
