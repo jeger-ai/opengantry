@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Site and docs overhaul: upstream messaging — verification-pipeline framing, accurate architectural boundaries, findings remediation
+# Planner re-stamp: its Planner stamp commit did not modify this mission file; this commit restores Planner git-proof.
 msn_id: MSN-0158
 skill_key: substrate
 gate_command: ./scripts/assert-docs-deterministic.sh
