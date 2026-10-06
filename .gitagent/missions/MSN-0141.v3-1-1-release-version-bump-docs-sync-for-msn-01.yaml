@@ -6,11 +6,11 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0141: v3.1.1 version parity — package.json, compatibility.json, SUBSTRATE.version.json; CHANGELOG/BACKLOG synced; MSN-0140 local DX in release notes"
-    anchor: "MSN-0141"
+    trace_quote: "DoD 1 MSN-0141 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)"
+    anchor: "1062"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0141: npm 3.1.1 — local DX pin defaults + receipts (MSN-0140); dev-validate-core OK"
-    anchor: "MSN-0141"
+    trace_quote: "DoD 2 MSN-0141 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)"
+    anchor: "1063"
     status: PASS
 gate_success_substring: dev-validate-core OK
