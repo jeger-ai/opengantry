@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Release: v3.3.0 — squashed MSN-0198..MSN-0200 + MSN-9002 upgrade (org control plane).
+# Planner re-stamp: its squash merge was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 # Legislated intent: Release OpenGantry v3.3.0 changelog version parity catalog and tag
 msn_id: MSN-0200
 skill_key: gantry
