@@ -6,7 +6,7 @@ skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0053: Wave 2 lib consolidation — domain modules, missions/ submodule, gate-work-dir, check-lib-cycles; dev-validate-core OK"
-    anchor: "MSN-0053"
+    trace_quote: "DoD 1 MSN-0053 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)"
+    anchor: "1045"
     status: PASS
 gate_success_substring: dev-validate-core OK
