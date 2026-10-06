@@ -51,7 +51,7 @@ echo "dev-validate-core: upgrade-tmp staging guard"
 ./scripts/validate-gxt.sh upgrade-tmp
 
 echo "dev-validate-core: unit tests"
-node --test "dist/cli/tests/**/*.test.js"
+node --import ./dist/cli/tests/test-tmpdir-setup.js --test "dist/cli/tests/**/*.test.js"
 
 echo "dev-validate-core: MCP dogfood flow"
 ./scripts/validate-mcp-dogfood.sh
