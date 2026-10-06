@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0229 (review fix): typed-adapter guard also rejects unquoted line breaks (CodeRabbit on #162); backslash continuations, escaped characters, and trailing newlines stay allowed; compound tsc/eslint gate_command fails closed with GXT_GATE_ADAPTER_MISCONFIG; parser self-diagnostic tests; docs updated; npm test: tests 830 pass 830 fail 0"
-    anchor: "1031"
+    trace_quote: "DoD 1 MSN-0229 refresh at 23ed6e9 after Planner re-stamp: compound tsc/eslint gate_command still fails closed with GXT_GATE_ADAPTER_MISCONFIG; npm test: tests 830 pass 830 fail 0"
+    anchor: "1040"
     status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
