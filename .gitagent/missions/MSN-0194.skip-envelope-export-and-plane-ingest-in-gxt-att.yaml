@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Skip envelope export and plane ingest in gxt-attest-ingest when GANTRY_ORG_ID/GANTRY_ORG_PEPPER or PLANE_INGEST_URL/PLANE_INGEST_TOKEN are unset, so mission PRs do not fail CI for missing optional control-plane config. Still run gantry verify without --export. Keep export+ingest when configured. Mirror the change in templates/.github/workflows/gxt-attest-ingest.yml and document the skip in docs/INTEGRATIONS.md.
+# Planner re-stamp: its squash merge was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 msn_id: MSN-0194
 skill_key: gantry
 gate_command: npm test
