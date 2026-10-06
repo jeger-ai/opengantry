@@ -6,8 +6,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0194: gxt-attest-ingest skips --export when GANTRY_ORG_ID or GANTRY_ORG_PEPPER unset and skips ingest when PLANE_INGEST_URL or PLANE_INGEST_TOKEN unset; verify still runs; configured path unchanged; template mirrored; INTEGRATIONS.md documents skip; npm test 637 pass"
-    anchor: "831"
+    trace_quote: "DoD 1 MSN-0194 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0"
+    anchor: "1069"
     status: PASS
 interrogation:
   - finding_id: 2121e0ae69d9
