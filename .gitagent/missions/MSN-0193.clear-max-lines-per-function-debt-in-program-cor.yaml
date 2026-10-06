@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Clear max-lines-per-function debt in program-core.ts, program-workflow.ts, and program-mission.ts by splitting register*Commands into local helpers in the same files (no new modules). Add npm run lint:json (eslint --format json src/cli/**/*.ts). Document one-adapter-per-mission tsc vs eslint recipes in docs/DEVELOPMENT.md via Context Request (docs outside gantry TMVC). Do not concatenate tsc and eslint in one gate_command. Do not change CI changed-file lint. Out of scope: Jest/Vitest, ADR-0041 enum expansion, live iii bus.
+# Planner re-stamp: squash merge c19c834 was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 msn_id: MSN-0193
 skill_key: gantry
 gate_command: npm run lint:json
