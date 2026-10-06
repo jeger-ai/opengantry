@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0223 close-out: verify export collapsed to one document-stdout mode with a pure SARIF builder and one JUnit case shape, shipped in v3.5.0; gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0"
+    anchor: "1074"
+    status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
     kind: undefined_boundary
