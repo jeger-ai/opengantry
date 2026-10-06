@@ -1038,3 +1038,40 @@ DoD 1 MSN-0230: version parity 3.6.0 across package.json, package-lock.json, ver
 ## Planner re-stamp refresh (MSN-0193, MSN-0229)
 DoD 1 MSN-0193 refresh at 23ed6e9 after Planner re-stamp: npm run lint:json over src/cli exits 0 with eslint JSON for 285 files, 0 errors, 0 warnings (gate_adapter eslint)
 DoD 1 MSN-0229 refresh at 23ed6e9 after Planner re-stamp: compound tsc/eslint gate_command still fails closed with GXT_GATE_ADAPTER_MISCONFIG; npm test: tests 830 pass 830 fail 0
+
+## Trace refresh after Planner re-stamps and contract reseals (2026-10-06)
+[CONTEXT-REQUEST] path=EXECUTOR_LOG.md,.gitagent/missions/ reason=Re-attest stale or PENDING trace rows; trace sink and mission trace_rows live outside contract.tmvc_roots | msn=MSN-0052..MSN-0228
+DoD 1 MSN-0052 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0053 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0055 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 2 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 3 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 4 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 5 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 6 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 7 MSN-0063 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0064 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 2 MSN-0064 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 3 MSN-0064 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 4 MSN-0064 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0140 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 2 MSN-0140 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 3 MSN-0140 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 4 MSN-0140 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0141 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 2 MSN-0141 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0145 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0157 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 2 MSN-0157 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0191 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npx tsc --noEmit --pretty false → exit 0, no diagnostics
+DoD 1 MSN-0192 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npx eslint --format json src/cli/tests/fixtures/dogfood-eslint-adapter.ts → exit 0, 0 errors, 0 warnings
+DoD 1 MSN-0194 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0197 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0200 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)
+DoD 1 MSN-0221 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0222 close-out: gantry verify --format text|sarif|junit shipped in v3.5.0; gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0223 close-out: verify export collapsed to one document-stdout mode with a pure SARIF builder and one JUnit case shape, shipped in v3.5.0; gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0226 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0227 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0228 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
