@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: MSN-0164: Wire validate-offline.mjs into MANIFEST iii-integration gate_command. Add validate-offline step to gxt-validate.yml and sync via npm run gen:dogfood. Update skills/iii-integration.md Rule 4.4 sync.
+# Planner re-stamp: its Planner stamp commit did not modify this mission file; this commit restores Planner git-proof.
 msn_id: MSN-0164
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
