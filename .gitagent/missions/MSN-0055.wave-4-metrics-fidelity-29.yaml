@@ -1,5 +1,6 @@
 # Wave 4 metrics fidelity (#29): explicit PATH_TOUCH_PROXY metadata in gapman metrics --json.
 msn_id: MSN-0055
+# Planner re-stamp: its squash merge was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 skill_key: gapman
 gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
