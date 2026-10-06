@@ -7,8 +7,8 @@ skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0200: v3.3.0 version parity — package.json, compatibility.json, SUBSTRATE.version.json, CHANGELOG org control plane, catalog ORG-POLICY + POLICY.pointer; dogfood policy/ledger/soc2-pack; dev-validate-core OK"
-    anchor: "1"
+    trace_quote: "DoD 1 MSN-0200 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: ./scripts/dev-validate-core.sh → dev-validate-core OK (tests 830 pass 830 fail 0)"
+    anchor: "1071"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
