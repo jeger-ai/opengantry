@@ -1,0 +1,39 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Preload the per-run os.tmpdir test sandbox in dev-validate-core unit tests so mission gate runs stop leaking fixture directories into /tmp
+msn_id: MSN-0232
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill: substrate (Tier-3). TMVC: scripts/dev-validate-core.sh
+      (unit-test line gains --import of dist/cli/tests/test-tmpdir-setup.js from
+      MSN-0231) plus the EXECUTOR_LOG.md trace row. Gate:
+      ./scripts/dev-validate-core.sh. No MANIFEST.json, RULES.md, hook, or
+      workflow change."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: c37a734a951f7656cc6fb478adf34de8066277bbe631dabc17942472fae6d87a
+declared_paths:
+  - .gitagent/missions/MSN-0232.preload-the-per-run-os-tmpdir-test-sandbox-in-de.yaml
+  - EXECUTOR_LOG.md
+  - scripts/dev-validate-core.sh
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - scripts/dev-validate-core.sh
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 5f009ca9de9f54b05aed9c653da7e0969ac89963b04f0cdcfcea00d569b65023
