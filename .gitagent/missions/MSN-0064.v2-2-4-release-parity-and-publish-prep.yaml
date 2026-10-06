@@ -1,5 +1,6 @@
 # v2.2.4 release — compatibility.json parity sync, BACKLOG #98, npm publish prep.
 # Closes release gate after naming cutover (#94) and docs positioning (#95–#97) on main.
+# Planner re-stamp: its Planner stamp commit did not modify this mission file; this commit restores Planner git-proof.
 msn_id: MSN-0064
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
