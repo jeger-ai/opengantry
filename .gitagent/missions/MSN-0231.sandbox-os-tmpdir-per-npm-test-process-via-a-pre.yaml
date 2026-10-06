@@ -5,9 +5,9 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0231: npm test preloads dist/cli/tests/test-tmpdir-setup.js, which points os.tmpdir() at a per-process og-test-run- directory and removes it on exit; a full run leaves no fixture dirs behind (was ~400 dirs / 99M per run); npm test: tests 830 pass 830 fail 0"
+    anchor: "1078"
+    status: PASS
 interrogation:
   - finding_id: c2f468809c0c
     kind: undefined_boundary

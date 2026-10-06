@@ -1075,3 +1075,4 @@ DoD 1 MSN-0223 close-out: verify export collapsed to one document-stdout mode wi
 DoD 1 MSN-0226 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
 DoD 1 MSN-0227 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
 DoD 1 MSN-0228 re-attested after Planner re-stamp: gate re-run on src/cli tree dccdca2: npm test → tests 830 pass 830 fail 0
+DoD 1 MSN-0231: npm test preloads dist/cli/tests/test-tmpdir-setup.js, which points os.tmpdir() at a per-process og-test-run- directory and removes it on exit; a full run leaves no fixture dirs behind (was ~400 dirs / 99M per run); npm test: tests 830 pass 830 fail 0
