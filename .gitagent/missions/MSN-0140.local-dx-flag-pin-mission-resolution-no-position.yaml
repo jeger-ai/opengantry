@@ -1,5 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Local DX: flag→pin mission resolution (no positional on verify/scan); active-mission banner; gantry pin/unpin; verify --receipt path feedback; gantry receipt list|show; scan pin default + commit-next + Fix codes; docs DEVELOPMENT/ADOPTION/FEATURES
+# Planner re-stamp: its squash merge was authored by the GitHub noreply address (not on PLANNER.allowlist); this commit restores Planner git-proof.
 msn_id: MSN-0140
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
