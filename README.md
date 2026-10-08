@@ -148,6 +148,16 @@ npx -p @jeger-ai/opengantry opengantry-cage -- <agent command>
 # installed: gantry cage -- <agent command>
 ```
 
+Daily use: install once, then alias your agent so every run is caged (`npx` re-resolves the package on each launch):
+
+```bash
+npm install -g @jeger-ai/opengantry
+alias claude='gantry cage -- claude'
+alias aider='gantry cage -- aider'
+```
+
+Interactive agents keep their terminal; cage runs the real binary, not the alias.
+
 After the command exits, cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), and your manifest `forbidden_zones`. Lockfile changes are listed but kept. Exit `3` means something was reverted; otherwise the command's own exit code passes through.
 
 Cage detects and reverts **after** the command exits. It does not see reads, network calls, or writes outside the protected set. For scope enforcement during a run, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
