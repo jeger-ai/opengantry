@@ -96,4 +96,5 @@ contract:
     - src/auth/
     - src/core/
     - src/db/schema/
-contract_sha256: f47dee53dd281f77cc14150578cfb2f2b8f4f8acf1820a77be4ef32d9987a8c3
+  allow_dynamic_specifiers: true
+contract_sha256: ca14876b8eda638427ef5ab15387464fcfdde93524d5db73c73be6b878ddb9d3
