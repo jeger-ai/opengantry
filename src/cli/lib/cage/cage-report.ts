@@ -12,6 +12,14 @@ export const CAGE_LIMITS: readonly string[] = [
   "background processes that outlive the command can still write after the check",
 ];
 
+/** One-line stderr form of {@link CAGE_LIMITS}; `--json` keeps the full list. */
+export const CAGE_LIMITS_SUMMARY =
+  "after-exit check only; reads, network calls and writes outside the protected set are not detected";
+
+/** Printed once under a violation report: the path from cage to project-specific missions. */
+export const CAGE_UPGRADE_FOOTER =
+  "Need project-specific boundaries or task contracts? Run: npx -p @jeger-ai/opengantry gantry init";
+
 export type CageStatus = "ok" | "violations_reverted" | "violations_unresolved" | "runtime_error";
 
 /** One changed protected path. Digests and outcomes only; never file bodies (ADR-0034). */
@@ -125,6 +133,9 @@ export function formatCageReport(report: CageReport): string[] {
       `cage: detect_only files exceeded the ${String(report.max_file_bytes)}-byte per-file cap or the total snapshot budget and were not restored`,
     );
   }
-  lines.push(`cage: exit ${String(report.exit_code)}; limits: ${report.limits.join("; ")}`);
+  lines.push(`cage: exit ${String(report.exit_code)}; limits: ${CAGE_LIMITS_SUMMARY}`);
+  if (report.status === "violations_reverted" || report.status === "violations_unresolved") {
+    lines.push(`cage: ${CAGE_UPGRADE_FOOTER}`);
+  }
   return lines;
 }
