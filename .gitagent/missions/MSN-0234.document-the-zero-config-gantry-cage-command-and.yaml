@@ -1,0 +1,52 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Document the zero-config gantry cage command and the opengantry-cage bin shipped in MSN-0233: README try-it section, FEATURES reference entry, ADOPTION step zero, CHANGELOG release row; claims limited to after-exit detect-and-revert
+# Scope note: CHANGELOG is NOT in scope (operator: left to the release mission, which owns version numbers).
+# Interrogation record (contract.tmvc_roots resolves the substrate empty-roots finding, so legislate computes no open
+# findings; operator answer kept here verbatim, MSN-0217 precedent):
+#   f5d6a4d5f4da undefined_boundary (ADR-0045) — operator: Docs three, no CHANGELOG — Skill substrate (Tier-3), per
+#   ADR-0045 Planner-declared roots. TMVC: README.md, docs/FEATURES.md, docs/ADOPTION.md, plus EXECUTOR_LOG.md.
+#   docs/CHANGELOG.md is left to the release mission, which owns version numbers. Docs only: no src/cli/,
+#   MANIFEST.json, RULES.md, hook or workflow change. Gate: ./scripts/dev-validate-core.sh (runs assert-docs-deterministic).
+msn_id: MSN-0234
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: README.md gains 'Try it in 60 seconds: gantry cage' before 'Feature tour'; its FEATURES link resolves.
+# DoD 2: docs/FEATURES.md gains 'Zero-config cage (gantry cage)' after 'Enforcement boundary' (rules, cap/budget,
+#        exit codes, report, limits) matching src/cli/lib/cage/.
+# DoD 3: docs/ADOPTION.md gains 'Step zero: cage an agent you already use' first under 'First run'.
+# DoD 4: ./scripts/dev-validate-core.sh passes, including assert-docs-deterministic OK.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+declared_paths:
+  - .gitagent/missions/MSN-0234.document-the-zero-config-gantry-cage-command-and.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/FEATURES.md
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/FEATURES.md
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 3b7b8cc0ddcdbdbe85506ba086aa4931a61f87279a2e2c2c1d235d5006fdf5b3
