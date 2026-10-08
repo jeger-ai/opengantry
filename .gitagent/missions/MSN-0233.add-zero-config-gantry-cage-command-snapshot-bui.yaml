@@ -1,0 +1,99 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Add zero-config gantry cage command: snapshot built-in protected paths plus manifest forbidden_zones, run the wrapped command, diff, revert violating changes, print a receipt; reuses runtime exec forbidden-scan baseline
+msn_id: MSN-0233
+skill_key: gantry
+gate_command: npm run validate
+# DoD 1: cage reverts added/modified/deleted files in CI config, .env and .git/hooks (tests).
+# DoD 2: lockfile changes are reported but kept (report-only) (tests).
+# DoD 3: files over the in-memory size cap are reported detect-only, not reverted (tests).
+# DoD 4: --json cage report carries path, change kind, sha256 before/after and revert
+#        outcome only; no file bodies appear in output (tests; ADR-0034).
+# DoD 5: cage works with no MANIFEST.json and no gantry init; manifest forbidden_zones
+#        are unioned in when present; exit 3 on violation, else the wrapped exit code (tests).
+# DoD 6: npm run validate passes.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 0aab8fc3443c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: src/cli/ + package.json — Also allow package.json edits (e.g. a
+      bin alias for cage).
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Accept; digest-only report — ADR-0034 stays ACTIVE and binds
+      cage: the cage report (stdout / --json) lists path, change kind, sha256
+      before/after and revert outcome only — never file bodies. It is not a
+      schema-0.2.0 attestation receipt and is not written to
+      .gitagent/history/receipts/."
+    adr_refs:
+      - ADR-0034
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept; not applicable — ADR-0022 stays ACTIVE. cage is a CLI
+      pre/post diff wrapper like runtime exec (which ADR-0022 calls
+      complementary); it adds no MCP tool and no global write proxy.
+    adr_refs:
+      - ADR-0022
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: Accept; not applicable — ADR-0036 stays ACTIVE. cage emits an
+      unsigned, digest-only 'cage report' — no receipt schema, no signing, no
+      --export envelope, no org/pepper fields. Naming uses 'cage report', not
+      'receipt'.
+    adr_refs:
+      - ADR-0036
+interrogation_sha256: 298f106bd9922edd0ba0af63efc361b008f39106320eb0b227e8e471c7b971f2
+declared_paths:
+  - package.json
+  - src/cli/
+contract:
+  tmvc_roots:
+    - package.json
+    - src/cli/
+  forbidden_zones:
+    - .gitagent
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: f47dee53dd281f77cc14150578cfb2f2b8f4f8acf1820a77be4ef32d9987a8c3
