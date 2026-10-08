@@ -243,6 +243,8 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
+**v3.7.0:** zero-config `gantry cage -- <cmd>` (and `npx -p @jeger-ai/opengantry opengantry-cage -- <cmd>`) restores CI configs, `.env*`, git hooks/config and manifest forbidden zones after a one-shot agent run, reports lockfile changes, and exits 3 on tampering. See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
+
 **v3.6.0:** `gate_adapter: tsc|eslint` fails closed on chained `gate_command`s (`GXT_GATE_ADAPTER_MISCONFIG`). `gantry hooks install` arms the tracked pre-commit hook so `gantry tmvc guard --strict` blocks commits outside the pinned mission. Optional local sqlite-vec contract drift index (`gantry contract embed`, `legislate --from-intent --embedding-file`). See [`docs/CHANGELOG.md`](docs/CHANGELOG.md) upgrade notes.
 
 **v3.5.0:** Cursor MCP uses a byte-identical `./scripts/mcp-launcher.sh` (no mcp.json parity exemption). `gantry verify --format sarif|junit` writes the document only on stdout and diagnostics on stderr ([`docs/CI.md`](docs/CI.md)). `gantry contract preflight` is advisory and fail-open ([ADR-0046](.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)).

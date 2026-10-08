@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.7.0** | **Zero-config cage:** `gantry cage -- <cmd>` and standalone `opengantry-cage` bin (`npx -p @jeger-ai/opengantry opengantry-cage -- <cmd>`) snapshot CI configs, `.env*`, `.git/config` / hooks / `core.hooksPath` and manifest `forbidden_zones` in memory, run the command with inherited stdio, then restore protected changes and exit 3. Lockfiles are reported, not reverted; over-cap or over-budget files are `detect_only`; `--json` emits a digest-only `gantry.cage-report.v1`; `--report-only` skips restore (MSN-0233). Violation reports end with a `gantry init` upgrade footer and a one-line limits summary (MSN-0235). Docs: README "Try it in 60 seconds", FEATURES reference, ADOPTION step zero (MSN-0234). Detect-after-exit only: no read, network, or in-flight interception; use for one-shot headless runs. |
 | **v3.6.0** | **Typed adapter gates fail closed:** `gate_adapter: tsc\|eslint` rejects a `gate_command` with unquoted `&&`, `||`, `;`, or line break at legislate and mission validate (`GXT_GATE_ADAPTER_MISCONFIG`); tsc/eslint parser self-diagnostic tests (MSN-0229, port of the never-landed MSN-0195). **Terminal-agent TMVC gate:** `gantry hooks install\|uninstall` arms the tracked pre-commit hook so `gantry tmvc guard --strict` blocks staged paths outside the pinned mission; `runtime env` prints repo-relative space-separated `GANTRY_TMVC_ROOTS`; `runtime env --aider` writes an Aider scope file (MSN-0227). **Optional contract drift index:** local sqlite-vec index at `.gitagent/planner/contracts.sqlite` (gitignored, advisory, never mission law); `gantry contract embed`, `legislate --from-intent --embedding-file\|--auto-embed`, `contract propose --embedding-file` (MSN-0226). **Internal:** `src/cli/lib` prefixes folded into directories (MSN-0228); public `exports` (`.`, `./kernel`) unchanged. |
 | **v3.5.0** | **Cursor MCP launcher:** specimen and adopters share byte-identical `.cursor/mcp.json` (`./scripts/mcp-launcher.sh`; no mcp.json parity exemption). **Verify exports:** `--format sarif\|junit` writes the document only on stdout and diagnostics on stderr ([`CI.md`](CI.md)). **Experimental contract preflight:** `gantry contract preflight` / `gxt_preflight_contract` catalogs every `MANIFEST.json` skill; Jev 2000ms timeout or non-OK HTTP (including 500) falls open to the heuristic ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)). |
 | **v3.4.0** | **Mission contracts (ADR-0045):** Planner-sealed inline `contract` + `contract_sha256` (tighten-only TMVC / forbidden / import cage). `gantry contract propose\|check\|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`, draft token v3 (v2 still accepted). Verify `contract` phase (tamper + import sites including `import()` / `require()` / `export … from`). Runtime exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation`. Empty TMVC roots scan git-dirty sources (not the whole tree). |
@@ -43,7 +44,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.6.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.7.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged). Diagnostics go to stderr; the document is the only stdout payload. GitHub Code Scanning and GitLab JUnit wiring: [`CI.md`](CI.md).
 - **Typed adapter gates:** `gate_adapter: tsc|eslint` requires a single command. Unquoted `&&`, `||`, `;`, or line breaks fail closed with `GXT_GATE_ADAPTER_MISCONFIG` ([ADR-0041](../.gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md)).
@@ -54,6 +55,17 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ---
 
 ## Upgrade notes
+
+### From v3.6.0 (zero-config cage — v3.7.0)
+
+```bash
+npm install @jeger-ai/opengantry@3.7.0
+```
+
+- **New command, no behavior change elsewhere:** `gantry cage -- <command...>` and the `opengantry-cage` bin are additive. Existing missions, verify, and hooks are unchanged.
+- **Cage checks once, after the command exits.** Use it for one-shot, headless agent runs (`claude -p …`, `aider --message … --no-auto-commits --yes-always`), not interactive sessions. It restores the working tree, not git history or a remote.
+- **Exit code 3** means protected files changed (reverted, or `detect_only` / `revert_failed`). Wrappers that treat any non-zero exit as failure will see it.
+- **`.git/config` is protected:** an agent's `git push -u` upstream entry is reverted after the run.
 
 ### From v3.5.0 (typed-adapter guard, pre-commit TMVC gate, contract index — v3.6.0)
 
