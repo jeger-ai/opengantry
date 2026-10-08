@@ -148,15 +148,19 @@ npx -p @jeger-ai/opengantry opengantry-cage -- <agent command>
 # installed: gantry cage -- <agent command>
 ```
 
-Daily use: install once, then alias your agent so every run is caged (`npx` re-resolves the package on each launch):
+Cage checks once, after the command exits, so use it for one-shot, headless agent runs rather than interactive sessions (install once; `npx` re-resolves the package on each launch):
 
 ```bash
 npm install -g @jeger-ai/opengantry
-alias claude='gantry cage -- claude'
-alias aider='gantry cage -- aider'
+gantry cage -- claude -p "Fix the failing test in auth.spec.ts"
+gantry cage -- aider --message "Refactor DB queries" --no-auto-commits --yes-always
+
+# single-task shell functions
+c-run() { gantry cage -- claude -p "$*"; }
+a-run() { gantry cage -- aider --message "$*" --no-auto-commits --yes-always; }
 ```
 
-Interactive agents keep their terminal; cage runs the real binary, not the alias.
+Don't alias `claude` or `aider` themselves: both open an interactive REPL, and a protected-file edit early in a long session stays in place (and can be pushed) until you quit. Keep Aider's auto-commits off: cage restores the working tree, not git history or a remote, so a committed or pushed change needs a manual fix.
 
 After the command exits, cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), and your manifest `forbidden_zones`. Lockfile changes are listed but kept. Exit `3` means something was reverted; otherwise the command's own exit code passes through.
 
