@@ -1,12 +1,7 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: Document the zero-config gantry cage command and the opengantry-cage bin shipped in MSN-0233: README try-it section, FEATURES reference entry, ADOPTION step zero, CHANGELOG release row; claims limited to after-exit detect-and-revert
 # Scope note: CHANGELOG is NOT in scope (operator: left to the release mission, which owns version numbers).
-# Interrogation record (contract.tmvc_roots resolves the substrate empty-roots finding, so legislate computes no open
-# findings; operator answer kept here verbatim, MSN-0217 precedent):
-#   f5d6a4d5f4da undefined_boundary (ADR-0045) — operator: Docs three, no CHANGELOG — Skill substrate (Tier-3), per
-#   ADR-0045 Planner-declared roots. TMVC: README.md, docs/FEATURES.md, docs/ADOPTION.md, plus EXECUTOR_LOG.md.
-#   docs/CHANGELOG.md is left to the release mission, which owns version numbers. Docs only: no src/cli/,
-#   MANIFEST.json, RULES.md, hook or workflow change. Gate: ./scripts/dev-validate-core.sh (runs assert-docs-deterministic).
+# Interrogation: the boundary answer below is the operator record (contract.tmvc_roots resolves the finding at legislate; verify --ci requires the block).
 msn_id: MSN-0234
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
@@ -33,6 +28,22 @@ trace_rows:
     anchor: "1096"
     status: PASS
 gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "Docs three, no CHANGELOG — Skill substrate (Tier-3), per
+      ADR-0045 Planner-declared roots. TMVC: README.md, docs/FEATURES.md,
+      docs/ADOPTION.md, plus EXECUTOR_LOG.md. docs/CHANGELOG.md is left to the
+      release mission, which owns version numbers. Docs only: no src/cli/,
+      MANIFEST.json, RULES.md, hook or workflow change. Gate:
+      ./scripts/dev-validate-core.sh (runs assert-docs-deterministic)."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 93167bb3c0a769ad6cc561eecd7d2ad9bd2029299f648b21244bae1985b0b8bf
 declared_paths:
   - .gitagent/missions/MSN-0234.document-the-zero-config-gantry-cage-command-and.yaml
   - EXECUTOR_LOG.md
