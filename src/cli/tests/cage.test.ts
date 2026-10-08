@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 import { runCage } from "../lib/cage/cage-run.js";
 import { cageBasenameRule } from "../lib/cage/cage-rules.js";
+import { formatCageReport } from "../lib/cage/cage-report.js";
 import { writeManifest } from "./test-fixtures.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-7f3a";
@@ -97,6 +98,24 @@ test("cage: files over the in-memory size cap are detect-only and not restored (
   );
   assert.notEqual(report.changes[0]!.sha256_before, report.changes[0]!.sha256_after);
   assert.equal(read(dest, ".env.production"), "Y".repeat(4096));
+  assert.ok(formatCageReport(report).some((l) => l.includes("per-file cap or the total snapshot budget")));
+});
+
+test("cage: a small file past the total snapshot budget is detect-only too (DoD 3)", async () => {
+  const dest = makeRepo("og-cage-budget-", false);
+  // Budget fits nothing beyond the first few bytes; .env (well under the per-file cap) gets no baseline.
+  const report = await runCage({
+    cwd: dest,
+    maxTotalBytes: 4,
+    command: nodeScript(`require("fs").writeFileSync(".env", "TOKEN=changed\\n");`),
+  });
+  assert.equal(report.status, "violations_unresolved");
+  assert.deepEqual(
+    report.changes.map((c) => [c.path, c.outcome]),
+    [[".env", "detect_only"]],
+  );
+  assert.ok(report.max_file_bytes > 1024, "per-file cap was not the cause");
+  assert.equal(read(dest, ".env"), "TOKEN=changed\n");
 });
 
 test("cage: --report-only detects and fails without reverting", async () => {

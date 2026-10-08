@@ -121,7 +121,9 @@ export function formatCageReport(report: CageReport): string[] {
     for (const c of report.changes) lines.push(changeLine(c));
   }
   if (report.changes.some((c) => c.outcome === "detect_only")) {
-    lines.push(`cage: detect_only files exceeded the ${String(report.max_file_bytes)}-byte snapshot cap and were not restored`);
+    lines.push(
+      `cage: detect_only files exceeded the ${String(report.max_file_bytes)}-byte per-file cap or the total snapshot budget and were not restored`,
+    );
   }
   lines.push(`cage: exit ${String(report.exit_code)}; limits: ${report.limits.join("; ")}`);
   return lines;
