@@ -146,6 +146,36 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ---
 
+## Zero-config cage (`gantry cage`)
+
+**Why:** Teams want a guardrail before they adopt missions. `gantry cage -- <command...>` (standalone bin: `opengantry-cage`) runs any command with inherited stdio, then diffs and restores a built-in protected set. It needs no manifest and no `gantry init`. The root is the enclosing git work tree, or the current directory outside git.
+
+| Rule | Paths | On change |
+|------|-------|-----------|
+| `ci_config` | `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `azure-pipelines.yml` | revert |
+| `secrets` | `.env`, `.env.*` except `.env.example` (any depth) | revert |
+| `git_control` | `.git/config`, `.git/hooks/`, active `core.hooksPath` | revert |
+| `manifest_forbidden_zone` | union of all skills' `forbidden_zones`, when a manifest exists | revert |
+| `lockfile` | `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `Pipfile.lock`, `uv.lock`, `go.sum`, `Gemfile.lock`, `composer.lock` | report, keep |
+
+The whole-tree scan for `.env*` and lockfiles skips `node_modules`, `.git`, `.venv`, `venv` and `__pycache__`.
+
+- **Snapshot:** in memory only. Files over `--max-file-bytes` (default 5 MiB), or past the 64 MiB total budget, are `detect_only`: the change is reported but not restored.
+- **Restore:** write to a temp file, then rename, so a failed restore never truncates the target. File mode is restored (for example, a hook's `0755`). Added files are removed. mtime-only changes are ignored.
+- **Exit codes:** `3` when any revert-rule path changed (status `violations_reverted` or `violations_unresolved`); `2` when the command could not start; otherwise the command's own exit code (`128 + N` for signal N).
+- **Report:** human summary on stderr; `--json` emits `gantry.cage-report.v1` on stdout. Each change row has `path`, `kind`, `rule`, `sha256_before`, `sha256_after`, `outcome` and `error_code`, and never file bodies ([ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md)). It is not an attestation receipt ([ADR-0036](../.gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md)).
+- **`--report-only`:** detect and exit 3 without restoring.
+- **Fail closed:** an invalid `MANIFEST.json` aborts before the command runs.
+- **Signals:** SIGTERM and SIGHUP are forwarded to the command. Ctrl-C reaches it through the terminal while cage waits to diff.
+
+**Limits (printed in every report):** after-the-fact detection only. Reads, network/API side effects, writes outside the protected set or repo, and writes by background processes that outlive the command are not detected. Agents that run `git push -u` will see the upstream entry in `.git/config` reverted. That is intentional.
+
+**When to use:** As the zero-config on-ramp: wrap an agent you already run. `gantry runtime exec` needs a pinned mission and enforces TMVC and forbidden zones with telemetry; missions add scope enforcement during the run, Planner-signed law and `gantry verify` in CI.
+
+**How:** `npx -p @jeger-ai/opengantry opengantry-cage -- <agent>` · `gantry cage --json -- <cmd>` · [`ADOPTION.md`](ADOPTION.md#step-zero-cage-an-agent-you-already-use)
+
+---
+
 ## Role-based CLI output (`--audience`)
 
 **Why:** Executors, Planners, and CI verifiers need different verbosity — constraint-forward next steps vs silent pass/fail.

@@ -1,0 +1,63 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Document the zero-config gantry cage command and the opengantry-cage bin shipped in MSN-0233: README try-it section, FEATURES reference entry, ADOPTION step zero, CHANGELOG release row; claims limited to after-exit detect-and-revert
+# Scope note: CHANGELOG is NOT in scope (operator: left to the release mission, which owns version numbers).
+# Interrogation: the boundary answer below is the operator record (contract.tmvc_roots resolves the finding at legislate; verify --ci requires the block).
+msn_id: MSN-0234
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: README.md gains 'Try it in 60 seconds: gantry cage' before 'Feature tour'; its FEATURES link resolves.
+# DoD 2: docs/FEATURES.md gains 'Zero-config cage (gantry cage)' after 'Enforcement boundary' (rules, cap/budget,
+#        exit codes, report, limits) matching src/cli/lib/cage/.
+# DoD 3: docs/ADOPTION.md gains 'Step zero: cage an agent you already use' first under 'First run'.
+# DoD 4: ./scripts/dev-validate-core.sh passes, including assert-docs-deterministic OK.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0234 re-attested after the headless recipes 0e68593: README.md line 142 '## Try it in 60 seconds: `gantry cage`' precedes '## Feature tour' (line 171); npx -p @jeger-ai/opengantry opengantry-cage one-off; headless one-shot recipes (line 155 gantry cage -- claude -p, aider --message --no-auto-commits --yes-always, c-run/a-run functions) with the no-interactive-alias and commit/push caveat; restore set, exit 3, after-exit limits; links docs/FEATURES.md#zero-config-cage-gantry-cage (heading present)"
+    anchor: "1101"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0234 re-attested after the headless recipes 0e68593: docs/FEATURES.md line 149 '## Zero-config cage (`gantry cage`)' follows '## Enforcement boundary' (line 133); rules table (ci_config, secrets, git_control, manifest_forbidden_zone revert; lockfile report), 5 MiB per-file cap and 64 MiB budget detect_only, exit 3/2/passthrough, gantry.cage-report.v1 digest-only, limits; matches src/cli/lib/cage/"
+    anchor: "1102"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0234 re-attested after the headless recipes 0e68593: docs/ADOPTION.md line 38 '### Step zero: cage an agent you already use' is the first subsection under '## First run (onboarding)' (line 36)"
+    anchor: "1103"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0234 re-attested after the headless recipes 0e68593: ./scripts/dev-validate-core.sh: assert-docs-deterministic OK; tests 841 pass 841 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1104"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "Docs three, no CHANGELOG — Skill substrate (Tier-3), per
+      ADR-0045 Planner-declared roots. TMVC: README.md, docs/FEATURES.md,
+      docs/ADOPTION.md, plus EXECUTOR_LOG.md. docs/CHANGELOG.md is left to the
+      release mission, which owns version numbers. Docs only: no src/cli/,
+      MANIFEST.json, RULES.md, hook or workflow change. Gate:
+      ./scripts/dev-validate-core.sh (runs assert-docs-deterministic)."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 93167bb3c0a769ad6cc561eecd7d2ad9bd2029299f648b21244bae1985b0b8bf
+declared_paths:
+  - .gitagent/missions/MSN-0234.document-the-zero-config-gantry-cage-command-and.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/FEATURES.md
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/FEATURES.md
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 3b7b8cc0ddcdbdbe85506ba086aa4931a61f87279a2e2c2c1d235d5006fdf5b3

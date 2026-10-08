@@ -139,6 +139,35 @@ See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GR
 
 ---
 
+## Try it in 60 seconds: `gantry cage`
+
+No setup. Wrap any agent command:
+
+```bash
+npx -p @jeger-ai/opengantry opengantry-cage -- <agent command>
+# installed: gantry cage -- <agent command>
+```
+
+Cage checks once, after the command exits, so use it for one-shot, headless agent runs rather than interactive sessions (install once; `npx` re-resolves the package on each launch):
+
+```bash
+npm install -g @jeger-ai/opengantry
+gantry cage -- claude -p "Fix the failing test in auth.spec.ts"
+gantry cage -- aider --message "Refactor DB queries" --no-auto-commits --yes-always
+
+# single-task shell functions
+c-run() { gantry cage -- claude -p "$*"; }
+a-run() { gantry cage -- aider --message "$*" --no-auto-commits --yes-always; }
+```
+
+Don't alias `claude` or `aider` themselves: both open an interactive REPL, and a protected-file edit early in a long session stays in place (and can be pushed) until you quit. Keep Aider's auto-commits off: cage restores the working tree, not git history or a remote, so a committed or pushed change needs a manual fix.
+
+After the command exits, cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), and your manifest `forbidden_zones`. Lockfile changes are listed but kept. Exit `3` means something was reverted; otherwise the command's own exit code passes through.
+
+Cage detects and reverts **after** the command exits. It does not see reads, network calls, or writes outside the protected set. For scope enforcement during a run, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
+
+---
+
 ## Feature tour: what to try first
 
 ### 1. Bootstrap a repo
