@@ -1,0 +1,126 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Add zero-config gantry cage command: snapshot built-in protected paths plus manifest forbidden_zones, run the wrapped command, diff, revert violating changes, print a receipt; reuses runtime exec forbidden-scan baseline
+msn_id: MSN-0233
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+# DoD 1: cage reverts added/modified/deleted files in CI config, .env and .git/hooks (tests).
+# DoD 2: lockfile changes are reported but kept (report-only) (tests).
+# DoD 3: files over the in-memory size cap are reported detect-only, not reverted (tests).
+# DoD 4: --json cage report carries path, change kind, sha256 before/after and revert
+#        outcome only; no file bodies appear in output (tests; ADR-0034).
+# DoD 5: cage works with no MANIFEST.json and no gantry init; manifest forbidden_zones
+#        are unioned in when present; exit 3 on violation, else the wrapped exit code (tests).
+# DoD 6: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0233 re-attested after CodeRabbit fix 3fb6180: gantry cage restores modified .github/workflows/ci.yml and deleted .env byte-exact, removes added .github/workflows/new.yml and .git/hooks/pre-push, restores .git/hooks/pre-commit with mode 0755; exit 3 (ok 57 cage.test.ts DoD 1); ./scripts/dev-validate-core.sh: tests 841 pass 841 fail 0"
+    anchor: "1087"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0233 re-attested after CodeRabbit fix 3fb6180: package-lock.json change reported as kept (rule lockfile) and left in place; wrapped exit code 7 passes through with status ok (ok 58 cage.test.ts DoD 2); ./scripts/dev-validate-core.sh: tests 841 pass 841 fail 0"
+    anchor: "1088"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0233 re-attested after CodeRabbit fix 3fb6180: .env.production over the --max-file-bytes 1024 cap is detect_only and not restored (ok 59); a small .env past a 4-byte total snapshot budget is detect_only too (ok 60); report line names the per-file cap or the total snapshot budget; ./scripts/dev-validate-core.sh: tests 841 pass 841 fail 0"
+    anchor: "1089"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0233 re-attested after CodeRabbit fix 3fb6180: cage --json report (gantry.cage-report.v1) change rows carry only path, kind, rule, sha256_before, sha256_after, outcome, error_code; SECRET-MARKER absent from stdout and stderr (ok 65 cage.test.ts DoD 4, DoD 5); ./scripts/dev-validate-core.sh: tests 841 pass 841 fail 0"
+    anchor: "1090"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0233 re-attested after CodeRabbit fix 3fb6180: zero-config in a non-git dir with no MANIFEST.json restores .env and exits 3 (ok 65); manifest forbidden_zones infra/ unioned and reverted (ok 63); invalid manifest fails closed before the command runs (ok 64); opengantry-cage bin reverts and exits 3 (ok 67); ./scripts/dev-validate-core.sh: tests 841 pass 841 fail 0"
+    anchor: "1091"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0233 re-attested after CodeRabbit fix 3fb6180: ./scripts/dev-validate-core.sh on src/cli tree 3fb6180: tests 841 pass 841 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1092"
+    status: PASS
+interrogation:
+  - finding_id: 0aab8fc3443c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: src/cli/ + package.json — Also allow package.json edits (e.g. a
+      bin alias for cage).
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: Authorize ./scripts/dev-validate-core.sh with success substring
+      'dev-validate-core OK'. npm run validate recursed via verify-pr-missions
+      re-verifying MSN-0233; dev-validate-core runs the same build, check,
+      tests, doctor, changed-code and MSN-subject stack without PR mission
+      verify (MSN-0232 precedent). npm run validate stays the separate pre-PR
+      check.
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Accept; digest-only report — ADR-0034 stays ACTIVE and binds
+      cage: the cage report (stdout / --json) lists path, change kind, sha256
+      before/after and revert outcome only — never file bodies. It is not a
+      schema-0.2.0 attestation receipt and is not written to
+      .gitagent/history/receipts/."
+    adr_refs:
+      - ADR-0034
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept; not applicable — ADR-0022 stays ACTIVE. cage is a CLI
+      pre/post diff wrapper like runtime exec (which ADR-0022 calls
+      complementary); it adds no MCP tool and no global write proxy.
+    adr_refs:
+      - ADR-0022
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: Accept; not applicable — ADR-0036 stays ACTIVE. cage emits an
+      unsigned, digest-only 'cage report' — no receipt schema, no signing, no
+      --export envelope, no org/pepper fields. Naming uses 'cage report', not
+      'receipt'.
+    adr_refs:
+      - ADR-0036
+interrogation_sha256: 0bdcf29ffe6e5ab0fcf4bfda03211b29878ed30213dba3c4a77b0ce09102c46a
+declared_paths:
+  - .gitagent/missions/MSN-0233.add-zero-config-gantry-cage-command-snapshot-bui.yaml
+  - EXECUTOR_LOG.md
+  - package.json
+  - src/cli/
+  - src/cli/cage-bin.ts
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/cage-process.ts
+  - src/cli/lib/cage/cage-report.ts
+  - src/cli/lib/cage/cage-revert.ts
+  - src/cli/lib/cage/cage-rules.ts
+  - src/cli/lib/cage/cage-run.ts
+  - src/cli/lib/cage/cage-snapshot.ts
+  - src/cli/program-cage.ts
+  - src/cli/program.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - package.json
+    - src/cli/
+  forbidden_zones:
+    - .gitagent
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+  allow_dynamic_specifiers: true
+contract_sha256: ca14876b8eda638427ef5ab15387464fcfdde93524d5db73c73be6b878ddb9d3
