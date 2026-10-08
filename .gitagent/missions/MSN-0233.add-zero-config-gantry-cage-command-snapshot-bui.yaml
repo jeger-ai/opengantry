@@ -2,7 +2,8 @@
 # Legislated intent: Add zero-config gantry cage command: snapshot built-in protected paths plus manifest forbidden_zones, run the wrapped command, diff, revert violating changes, print a receipt; reuses runtime exec forbidden-scan baseline
 msn_id: MSN-0233
 skill_key: gantry
-gate_command: npm run validate
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
 # DoD 1: cage reverts added/modified/deleted files in CI config, .env and .git/hooks (tests).
 # DoD 2: lockfile changes are reported but kept (report-only) (tests).
 # DoD 3: files over the in-memory size cap are reported detect-only, not reverted (tests).
@@ -45,6 +46,18 @@ interrogation:
       decision on the record.
     operator_answer: src/cli/ + package.json — Also allow package.json edits (e.g. a
       bin alias for cage).
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: Authorize ./scripts/dev-validate-core.sh with success substring
+      'dev-validate-core OK'. npm run validate recursed via verify-pr-missions
+      re-verifying MSN-0233; dev-validate-core runs the same build, check,
+      tests, doctor, changed-code and MSN-subject stack without PR mission
+      verify (MSN-0232 precedent). npm run validate stays the separate pre-PR
+      check.
   - finding_id: 95083290c452
     kind: adr_conflict
     question: Intent may relate to ADR-0034. Accept ADR decision, reject
@@ -81,7 +94,7 @@ interrogation:
       'receipt'.
     adr_refs:
       - ADR-0036
-interrogation_sha256: 298f106bd9922edd0ba0af63efc361b008f39106320eb0b227e8e471c7b971f2
+interrogation_sha256: 0bdcf29ffe6e5ab0fcf4bfda03211b29878ed30213dba3c4a77b0ce09102c46a
 declared_paths:
   - .gitagent/missions/MSN-0233.add-zero-config-gantry-cage-command-snapshot-bui.yaml
   - EXECUTOR_LOG.md
