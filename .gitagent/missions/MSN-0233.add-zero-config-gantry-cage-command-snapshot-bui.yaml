@@ -13,29 +13,29 @@ gate_command: npm run validate
 # DoD 6: npm run validate passes.
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0233: gantry cage reverts protected writes on src/cli tree 873eeb3 — modified .github/workflows/ci.yml and deleted .env restored byte-exact, added .github/workflows/new.yml and .git/hooks/pre-push removed, .git/hooks/pre-commit restored with mode 0755; exit 3 (ok 57 cage.test.ts DoD 1); npm run validate: tests 840 pass 840 fail 0"
+    anchor: "1080"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0233: lockfile change to package-lock.json reported as kept (rule lockfile) and left in place; with no revert-mode change the wrapped exit code 7 passes through, status ok (ok 58 cage.test.ts DoD 2); npm run validate: tests 840 pass 840 fail 0"
+    anchor: "1081"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0233: .env.production over the --max-file-bytes 1024 in-memory cap reported detect_only with differing sha256 before/after and not restored; status violations_unresolved, exit 3 (ok 59 cage.test.ts DoD 3); npm run validate: tests 840 pass 840 fail 0"
+    anchor: "1082"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0233: cage --json report (gantry.cage-report.v1) change rows carry only path, kind, rule, sha256_before, sha256_after, outcome, error_code; SECRET-MARKER absent from stdout and stderr (ok 64 cage.test.ts DoD 4, DoD 5); npm run validate: tests 840 pass 840 fail 0"
+    anchor: "1083"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0233: cage runs zero-config in a non-git dir with no MANIFEST.json (exit 3, .env restored); manifest forbidden_zones infra/ unioned and reverted (ok 62); invalid manifest fails closed before the command runs (ok 63); opengantry-cage bin (package.json bin -> dist/cli/cage-bin.js) reverts and exits 3 (ok 66); npm run validate: tests 840 pass 840 fail 0"
+    anchor: "1084"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0233: npm run validate on src/cli tree 873eeb3: tests 840 pass 840 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK"
+    anchor: "1085"
+    status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
     kind: undefined_boundary
