@@ -5,7 +5,8 @@
   "type": "module",
   "bin": {
     "gantry": "dist/cli/index.js",
-    "gapman": "dist/cli/index.js"
+    "gapman": "dist/cli/index.js",
+    "opengantry-cage": "dist/cli/cage-bin.js"
   },
   "exports": {
     ".": "./dist/cli/index.js",

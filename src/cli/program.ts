@@ -7,6 +7,7 @@ import { registerMissionCommands } from "./program-mission.js";
 import { registerWorkflowCommands } from "./program-workflow.js";
 import { registerOrgControlPlaneCommands } from "./program-org.js";
 import { registerMcpCommands } from "./program-mcp.js";
+import { registerCageCommands } from "./program-cage.js";
 import { registerBuiltinDomains } from "./lib/domains/index.js";
 
 export { CLI_VERSION } from "./lib/constants.js";
@@ -37,6 +38,7 @@ export function buildProgram(): Command {
   registerWorkflowCommands(program);
   registerOrgControlPlaneCommands(program);
   registerMcpCommands(program);
+  registerCageCommands(program);
 
   return program;
 }
