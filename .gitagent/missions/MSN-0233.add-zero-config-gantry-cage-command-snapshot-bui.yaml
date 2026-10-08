@@ -34,8 +34,8 @@ trace_rows:
     anchor: "1084"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0233: npm run validate on src/cli tree 873eeb3: tests 840 pass 840 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK"
-    anchor: "1085"
+    trace_quote: "DoD 6 MSN-0233 re-attested after gate re-stamp 523c5a5: ./scripts/dev-validate-core.sh on src/cli tree 523c5a5: tests 840 pass 840 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1086"
     status: PASS
 interrogation:
   - finding_id: 0aab8fc3443c
