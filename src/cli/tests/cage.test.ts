@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 import { runCage } from "../lib/cage/cage-run.js";
 import { cageBasenameRule } from "../lib/cage/cage-rules.js";
-import { formatCageReport } from "../lib/cage/cage-report.js";
+import { CAGE_LIMITS, CAGE_LIMITS_SUMMARY, CAGE_UPGRADE_FOOTER, formatCageReport } from "../lib/cage/cage-report.js";
 import { writeManifest } from "./test-fixtures.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-7f3a";
@@ -216,4 +216,29 @@ test("opengantry-cage bin: package.json alias runs the same cage and reverts", (
   assert.equal(r.status, 3, r.stderr);
   assert.match(r.stderr, /cage: violations_reverted/);
   assert.equal(read(dest, ".github/workflows/ci.yml"), "on: push\n");
+});
+
+test("cage report: violations end with the upgrade footer; ok runs and --json carry none (MSN-0235 DoD 1)", async () => {
+  const bad = await runCage({
+    cwd: makeRepo("og-cage-footer-bad-", false),
+    command: nodeScript(`require("fs").writeFileSync(".env", "TOKEN=changed\\n");`),
+  });
+  const badLines = formatCageReport(bad);
+  assert.equal(bad.exit_code, 3);
+  assert.equal(badLines.at(-1), `cage: ${CAGE_UPGRADE_FOOTER}`);
+  assert.match(CAGE_UPGRADE_FOOTER, /npx -p @jeger-ai\/opengantry gantry init/);
+  assert.ok(!JSON.stringify(bad).includes(CAGE_UPGRADE_FOOTER), "footer is human output only");
+
+  const ok = await runCage({ cwd: makeRepo("og-cage-footer-ok-", false), command: nodeScript("") });
+  assert.equal(ok.status, "ok");
+  assert.ok(!formatCageReport(ok).some((l) => l.includes(CAGE_UPGRADE_FOOTER)));
+});
+
+test("cage report: stderr limits are one compact line; --json keeps the full list (MSN-0235 DoD 2)", async () => {
+  const report = await runCage({ cwd: makeRepo("og-cage-limits-", false), command: nodeScript("") });
+  const limitLines = formatCageReport(report).filter((l) => l.includes("limits:"));
+  assert.deepEqual(limitLines, [`cage: exit 0; limits: ${CAGE_LIMITS_SUMMARY}`]);
+  assert.ok(limitLines[0]!.length < 120, `limits line is ${String(limitLines[0]!.length)} chars`);
+  assert.deepEqual(report.limits, CAGE_LIMITS);
+  assert.equal(report.limits.length, 5);
 });
