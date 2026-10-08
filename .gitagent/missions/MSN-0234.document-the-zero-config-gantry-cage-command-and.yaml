@@ -17,21 +17,21 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 4: ./scripts/dev-validate-core.sh passes, including assert-docs-deterministic OK.
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0234: README.md line 142 '## Try it in 60 seconds: `gantry cage`' precedes '## Feature tour' (line 157) at 61dca35; shows npx -p @jeger-ai/opengantry opengantry-cage, restore set, exit 3, after-exit limits; links docs/FEATURES.md#zero-config-cage-gantry-cage (heading present)"
+    anchor: "1093"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0234: docs/FEATURES.md line 149 '## Zero-config cage (`gantry cage`)' follows '## Enforcement boundary' (line 133) at 61dca35; rules table (ci_config, secrets, git_control, manifest_forbidden_zone revert; lockfile report), 5 MiB per-file cap and 64 MiB budget detect_only, exit 3/2/passthrough, gantry.cage-report.v1 digest-only, limits; matches src/cli/lib/cage/"
+    anchor: "1094"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0234: docs/ADOPTION.md line 38 '### Step zero: cage an agent you already use' is the first subsection under '## First run (onboarding)' (line 36) at 61dca35"
+    anchor: "1095"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0234: ./scripts/dev-validate-core.sh on tree 61dca35: assert-docs-deterministic OK; tests 841 pass 841 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1096"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 declared_paths:
   - .gitagent/missions/MSN-0234.document-the-zero-config-gantry-cage-command-and.yaml
