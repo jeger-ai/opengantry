@@ -139,6 +139,21 @@ See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GR
 
 ---
 
+## Try it in 60 seconds: `gantry cage`
+
+No setup. Wrap any agent command:
+
+```bash
+npx -p @jeger-ai/opengantry opengantry-cage -- <agent command>
+# installed: gantry cage -- <agent command>
+```
+
+After the command exits, cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), and your manifest `forbidden_zones`. Lockfile changes are listed but kept. Exit `3` means something was reverted; otherwise the command's own exit code passes through.
+
+Cage detects and reverts **after** the command exits. It does not see reads, network calls, or writes outside the protected set. For scope enforcement during a run, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
+
+---
+
 ## Feature tour: what to try first
 
 ### 1. Bootstrap a repo
