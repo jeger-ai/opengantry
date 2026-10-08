@@ -83,8 +83,21 @@ interrogation:
       - ADR-0036
 interrogation_sha256: 298f106bd9922edd0ba0af63efc361b008f39106320eb0b227e8e471c7b971f2
 declared_paths:
+  - .gitagent/missions/MSN-0233.add-zero-config-gantry-cage-command-snapshot-bui.yaml
+  - EXECUTOR_LOG.md
   - package.json
   - src/cli/
+  - src/cli/cage-bin.ts
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/cage-process.ts
+  - src/cli/lib/cage/cage-report.ts
+  - src/cli/lib/cage/cage-revert.ts
+  - src/cli/lib/cage/cage-rules.ts
+  - src/cli/lib/cage/cage-run.ts
+  - src/cli/lib/cage/cage-snapshot.ts
+  - src/cli/program-cage.ts
+  - src/cli/program.ts
+  - src/cli/tests/cage.test.ts
 contract:
   tmvc_roots:
     - package.json
