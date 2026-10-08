@@ -12,20 +12,20 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 4: ./scripts/dev-validate-core.sh passes, including assert-docs-deterministic OK.
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0234 re-attested after alias recipes b276d9c: README.md line 142 '## Try it in 60 seconds: `gantry cage`' precedes '## Feature tour' (line 167); npx -p @jeger-ai/opengantry opengantry-cage one-off, install-once alias recipes (line 155 alias claude='gantry cage -- claude', alias aider), restore set, exit 3, after-exit limits; links docs/FEATURES.md#zero-config-cage-gantry-cage (heading present)"
-    anchor: "1097"
+    trace_quote: "DoD 1 MSN-0234 re-attested after the headless recipes 0e68593: README.md line 142 '## Try it in 60 seconds: `gantry cage`' precedes '## Feature tour' (line 171); npx -p @jeger-ai/opengantry opengantry-cage one-off; headless one-shot recipes (line 155 gantry cage -- claude -p, aider --message --no-auto-commits --yes-always, c-run/a-run functions) with the no-interactive-alias and commit/push caveat; restore set, exit 3, after-exit limits; links docs/FEATURES.md#zero-config-cage-gantry-cage (heading present)"
+    anchor: "1101"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0234 re-attested after alias recipes b276d9c: docs/FEATURES.md line 149 '## Zero-config cage (`gantry cage`)' follows '## Enforcement boundary' (line 133); rules table (ci_config, secrets, git_control, manifest_forbidden_zone revert; lockfile report), 5 MiB per-file cap and 64 MiB budget detect_only, exit 3/2/passthrough, gantry.cage-report.v1 digest-only, limits; matches src/cli/lib/cage/"
-    anchor: "1098"
+    trace_quote: "DoD 2 MSN-0234 re-attested after the headless recipes 0e68593: docs/FEATURES.md line 149 '## Zero-config cage (`gantry cage`)' follows '## Enforcement boundary' (line 133); rules table (ci_config, secrets, git_control, manifest_forbidden_zone revert; lockfile report), 5 MiB per-file cap and 64 MiB budget detect_only, exit 3/2/passthrough, gantry.cage-report.v1 digest-only, limits; matches src/cli/lib/cage/"
+    anchor: "1102"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0234 re-attested after alias recipes b276d9c: docs/ADOPTION.md line 38 '### Step zero: cage an agent you already use' is the first subsection under '## First run (onboarding)' (line 36)"
-    anchor: "1099"
+    trace_quote: "DoD 3 MSN-0234 re-attested after the headless recipes 0e68593: docs/ADOPTION.md line 38 '### Step zero: cage an agent you already use' is the first subsection under '## First run (onboarding)' (line 36)"
+    anchor: "1103"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0234 re-attested after alias recipes b276d9c: ./scripts/dev-validate-core.sh: assert-docs-deterministic OK; tests 841 pass 841 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1100"
+    trace_quote: "DoD 4 MSN-0234 re-attested after the headless recipes 0e68593: ./scripts/dev-validate-core.sh: assert-docs-deterministic OK; tests 841 pass 841 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1104"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
