@@ -1,0 +1,42 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cage guard-dog hardening: contested-file kill switch (configurable contest limit, halt the wrapped process group with SIGTERM then SIGKILL, distinct exit code and report row) and a top-level default mode in .cage.yaml that applies only to project protect entries, never to built-in rules
+msn_id: MSN-0244
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: .cage.yaml accepts a top-level mode: revert|report default and contest_limit: <n>; the default applies only to
+#        protect entries without their own mode; a resulting report mode on a built-in revert path is rejected with
+#        GXT_CAGE_CONFIG_INVALID; built-in rules are unaffected (tests).
+# DoD 2: the contest limit comes from --contest-limit <n>, then .cage.yaml contest_limit, then the default 3; 0 disables
+#        the halt and keeps the restore-once-at-exit behaviour (tests).
+# DoD 3: when a revert-mode file reaches the limit, cage sends SIGTERM to the wrapped process group, waits a grace
+#        period, then SIGKILL; the child is spawned as its own group leader and SIGINT/SIGTERM/SIGHUP are forwarded to the
+#        group (tests).
+# DoD 4: a halt restores the triggering file, exits 4, names the triggering path in the exit summary, and the JSON report
+#        carries halt {path, rule, live_restores} (tests).
+# DoD 5: --report-only and --allow-override paths never trigger a halt (tests).
+# DoD 6: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
