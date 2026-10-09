@@ -1,0 +1,57 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate ADR-0047 config file format convention: humans write YAML, machines write JSON; third-party tool formats keep their native format; existing JSON governance files (MANIFEST.json, config.json, pointer files) stay until a dedicated migration mission with dual-read. ADR only, no code, RULES.md untouched.
+msn_id: MSN-0241
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: .gitagent/out-of-scope/ADR-0047-config-file-format.md (status ACTIVE, match_terms) records the format rule:
+#        humans write YAML, machines write JSON (canonical-json for hashed/signed artifacts), third-party formats keep
+#        their native format, existing hand-edited JSON (MANIFEST.json, config.json, pointer files) stays until a
+#        dedicated dual-read migration mission; docs/CHANGELOG.md Unreleased notes ADR-0047; no src/, templates/,
+#        MANIFEST.json or RULES.md change; ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0037 stays ACTIVE. The match is
+      'migration' as in a future config-format migration with dual-read, not
+      plane deployment, CI ingestion or pepper custody. Receipts and ingest
+      payloads stay canonical JSON, which ADR-0047 reaffirms.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0026 stays ACTIVE. The match is
+      'pointer' as a file name (ARCHITECTURE.pointer.json, POLICY.pointer.json
+      stay JSON for now), not the external architecture HTTP fetch. ADR-0047
+      changes no fetch, credential or doctor behaviour.
+    adr_refs:
+      - ADR-0026
+interrogation_sha256: 201f8e0ebe249261eb2ddc9bb461e2c331e326c3ab9e6a2c404293a4d8236c0b
+declared_paths:
+  - .gitagent/missions/MSN-0241.substrate-adr-0047-config-file-format-convention.yaml
+  - .gitagent/out-of-scope/ADR-0047-config-file-format.md
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/ADR-0047-config-file-format.md
+    - docs/CHANGELOG.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/
+    - templates/
+contract_sha256: f45734d406e96a6ae3ef71d7ee77de76788dc65473612ab1805fb0b0fcda8042
