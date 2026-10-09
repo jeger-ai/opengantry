@@ -11,17 +11,17 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 3: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0242: gantry cage suggest at dac4f31 proposes .githooks, .husky, .lefthook.yml, .pre-commit-config.yaml, lefthook.yml and tools/lefthook.yaml as path entries with category git_hooks and a hook reason, in code-point order (ok 63 cage-suggest.test.ts MSN-0242 DoD 1, DoD 2); ./scripts/dev-validate-core.sh: tests 865 pass 865 fail 0"
+    anchor: "1155"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0242: with git config core.hooksPath .githooks the active hooks dir is already git_control, so .githooks is not proposed, already_covered 1 and 5 suggestions remain at dac4f31 (ok 63 cage-suggest.test.ts MSN-0242 DoD 1, DoD 2); ./scripts/dev-validate-core.sh: tests 865 pass 865 fail 0"
+    anchor: "1156"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0242: ./scripts/dev-validate-core.sh on src/cli tree dac4f31: tests 865 pass 865 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1157"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 35f551fb4fe5
