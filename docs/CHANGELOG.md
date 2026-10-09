@@ -52,6 +52,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 - **Contract drift index:** optional, local, and advisory. `better-sqlite3` and `sqlite-vec` load only when an embedding is supplied.
 - **Experimental contract preflight:** `gantry contract preflight` / MCP `gxt_preflight_contract` (heuristic default; optional Jev). Jev reads every skill from `MANIFEST.json`. A 2000ms timeout or non-OK HTTP status (including 500) falls open to the offline heuristic. Advisory only — does not seal a contract ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
+- **Config file format:** humans write YAML (missions, `TARGET_ARCHITECTURE.yaml`, `.cage.yaml`); the CLI writes JSON (receipts, ledger, KPI, tokens via `canonicalJson`); third-party formats stay native. `MANIFEST.json`, `config.json` and the pointer files stay JSON until a dedicated dual-read migration ([ADR-0047](../.gitagent/out-of-scope/ADR-0047-config-file-format.md)).
 
 ---
 
