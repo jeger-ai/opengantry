@@ -152,6 +152,14 @@ While the session runs, cage checks about once a second and restores changes to 
 
 Nothing is printed into the agent's screen while it runs: events go to a session log in your temp dir (path shown at start), with a terminal bell per restore. If the agent keeps rewriting the same file, cage stops restoring it after 3 tries, marks it contested and restores it once at exit.
 
+To protect more of your own repo (migrations, infrastructure, key files), let cage propose rules, review them, and commit `.cage.yaml`:
+
+```bash
+gantry cage suggest --write      # writes .cage.yaml.suggested; review it, keep what you want as .cage.yaml, commit
+```
+
+`.cage.yaml` can only add protection; it can never switch a built-in rule off. To relax one path for a single run, pass `--allow-override <path>`: cage then reports that path instead of restoring it, and says so at start and in the report.
+
 Cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and a committed change stays in local history (cage restores the working tree only). Reads, network calls and writes outside the protected set are not seen. `--no-watch` checks once at exit instead. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
 
 ---
@@ -230,6 +238,8 @@ On failure, external agents ingest `findings[]`:
   "resolution_hint": "..."
 }
 ```
+
+**v3.8.0:** per-project cage rules: `.cage.yaml` adds paths and globs to the protected set (additive only, self-protected, fail closed), `gantry cage suggest` proposes them for review, and `--allow-override <path>` reports instead of restoring one path for a run, always announced ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)). See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 
 **v3.7.1:** `gantry cage` restores protected files live during interactive agent sessions (default; `--no-watch` for exit-only) and refuses `git push` of protected paths from inside the session. See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 

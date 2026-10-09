@@ -155,10 +155,41 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 | `ci_config` | `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `azure-pipelines.yml` | revert |
 | `secrets` | `.env`, `.env.*` except `.env.example` (any depth) | revert |
 | `git_control` | `.git/config`, `.git/hooks/`, active `core.hooksPath` | revert |
+| `cage_config` | `.cage.yaml` itself, whether or not it exists | revert |
 | `manifest_forbidden_zone` | union of all skills' `forbidden_zones`, when a manifest exists | revert |
+| `cage_protect` | your `.cage.yaml` `protect:` entries (see below) | revert, or report per entry |
 | `lockfile` | `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `Pipfile.lock`, `uv.lock`, `go.sum`, `Gemfile.lock`, `composer.lock` | report, keep |
 
-The whole-tree scan for `.env*` and lockfiles skips `node_modules`, `.git`, `.venv`, `venv` and `__pycache__`.
+The whole-tree scan for `.env*`, lockfiles and `.cage.yaml` globs skips `node_modules`, `.git`, `.venv`, `venv` and `__pycache__`.
+
+**Project rules (`.cage.yaml`, optional).** A file at the cage root adds paths to the protected set. It can only add: the built-in rules above are a floor that nothing in the repo can lower ([ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)).
+
+```yaml
+protect:
+  - path: db/migrations          # file or directory tree, relative to the cage root
+  - glob: "**/*.pem"             # * stays in one path segment, ** spans any depth
+  - path: docs/generated.md
+    mode: report                 # list the change but keep it (default: revert)
+```
+
+- **Strict, fail closed:** cage exits 2 before the command runs (`GXT_CAGE_CONFIG_INVALID`) on invalid YAML, YAML aliases, unknown keys, subtractive keys such as `relax` or `exclude`, an entry with both or neither of `path:` and `glob:`, absolute or `..` paths, or `mode: report` on a path a built-in rule reverts. Format follows [ADR-0047](../.gitagent/out-of-scope/ADR-0047-config-file-format.md).
+- **Self-protected:** `.cage.yaml` is the built-in `cage_config` target. An edit during the session is restored, and a `.cage.yaml` created during the session is removed. The push guard uses the rules the session started with, so editing the file mid-session cannot loosen it.
+- **On record:** cage reads the working tree. When `.cage.yaml` is untracked or differs from `HEAD`, it warns on stderr (`cage: warning: .cage.yaml is untracked or has uncommitted changes; review and commit it`) and still runs.
+- **Caps:** if the protected set at the start holds more than 5,000 files or 64 MiB, cage aborts before the command runs (`GXT_CAGE_LIMITS_EXCEEDED`, exit 2) and reports both totals. Narrow broad globs or zones.
+
+**Proposals (`gantry cage suggest`).** A setup step you run yourself: it scans the repo statically and proposes `protect:` entries, each with a category and a reason. It looks for migration directories, Terraform, Kubernetes and Helm, Docker and compose files, package registry config (`.npmrc`, `.pypirc`, …), `CODEOWNERS`, other CI systems (Jenkins, Buildkite, Bitbucket, Drone, Travis, Woodpecker, Cloud Build, `.github/actions`), committed git hook config (`.githooks/`, `.husky/`, `.pre-commit-config.yaml`, Lefthook) and key files (`*.pem`, `*.key`, `*.p12`, `*.pfx`).
+
+- Entries already protected by a built-in rule or your `.cage.yaml` are left out; `node_modules/`, `dist/`, `build/`, `vendor/` and `target/` are not scanned. Output is sorted the same way on every machine.
+- `gantry cage suggest` prints the proposal. `--write` saves it as `.cage.yaml.suggested` (`--force` replaces an existing one; otherwise `GXT_CAGE_SUGGEST_EXISTS`). `--json` emits the suggestions as JSON.
+- It never writes `.cage.yaml`, and cage never reads `.cage.yaml.suggested`. Review the proposal, move what you keep into `.cage.yaml`, and commit it.
+- Cage sets `GANTRY_CAGE_SESSION=1` for the wrapped command, and `cage suggest` refuses to run inside a session (`GXT_CAGE_SUGGEST_IN_SESSION`). No MCP tool exposes it.
+- `gantry cage -- suggest` still runs a command named `suggest`; the standalone `opengantry-cage` bin has no subcommands.
+
+**Overrides (`--allow-override <path>`).** For one run, changes under `<path>` are reported instead of restored. Repeat the flag for more paths.
+
+- It never applies to git hooks and config or to `.cage.yaml`, and it is refused for a path no revert rule covers (`GXT_CAGE_OVERRIDE_INVALID`, exit 2, before the command runs).
+- It is always announced: a stderr line at start and in the exit summary (`cage: OVERRIDE (--allow-override): changes are reported, not restored, under: <paths>`), `overrides[]` in the JSON report, and `overridden: true` on affected rows. Overridden changes do not cause exit 3.
+- The push guard lets overridden paths through, like any report-mode path.
 
 - **Live restore (default):** every `--watch-interval-ms` (default 1000) cage re-snapshots the protected set and restores revert-rule changes. `--no-watch` checks only once, at exit.
 - **Contested paths:** after 3 live restores of one path, cage stops restoring it live, logs it as contested and restores it once at exit, so an agent and cage do not overwrite each other forever.
@@ -166,17 +197,17 @@ The whole-tree scan for `.env*` and lockfiles skips `node_modules`, `.git`, `.ve
 - **Session push guard:** the caged process tree gets a temporary `core.hooksPath` (via `GIT_CONFIG_*` env, in the OS temp dir) whose `pre-push` refuses outgoing commits that touch revert-rule paths, prints the reason, then runs your repo's own hooks. Nothing is written to the repo; the temp dir is removed at exit. Lockfile commits are allowed.
 - **Snapshot:** in memory only. Files over `--max-file-bytes` (default 5 MiB), or past the 64 MiB total budget, are `detect_only`: the change is reported but not restored.
 - **Restore:** write to a temp file, then rename, so a failed restore never truncates the target. File mode is restored (for example, a hook's `0755`). Added files are removed. mtime-only changes are ignored.
-- **Exit codes:** `3` when any revert-rule path changed during the session or at exit (status `violations_reverted` or `violations_unresolved`); `2` when the command could not start; otherwise the command's own exit code (`128 + N` for signal N).
-- **Report:** human summary on stderr at exit; `--json` emits `gantry.cage-report.v1` on stdout. Each change row has `path`, `kind`, `rule`, `sha256_before`, `sha256_after`, `outcome` and `error_code`, and never file bodies ([ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md)). `watch` (`enabled`, `interval_ms`, `live_restores`, `contested`, `session_log`) and `push_guard` (`enabled`, `refused_pushes`) summarize the session. It is not an attestation receipt ([ADR-0036](../.gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md)).
+- **Exit codes:** `3` when any revert-rule path changed during the session or at exit (status `violations_reverted` or `violations_unresolved`); `2` when the command could not start, or when `.cage.yaml`, an override or the caps fail closed before it runs; otherwise the command's own exit code (`128 + N` for signal N).
+- **Report:** human summary on stderr at exit; `--json` emits `gantry.cage-report.v1` on stdout. Each change row has `path`, `kind`, `rule`, `source` (`builtin`, `manifest` or `cage_yaml`), `overridden`, `sha256_before`, `sha256_after`, `outcome` and `error_code`, and never file bodies ([ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md)). `watch` (`enabled`, `interval_ms`, `live_restores`, `contested`, `session_log`) and `push_guard` (`enabled`, `refused_pushes`) summarize the session; `cage_config` (`present`, `entries`, `committed`) and `overrides` describe the rules in force. It is not an attestation receipt ([ADR-0036](../.gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md)).
 - **`--report-only`:** detect and exit 3 without restoring (no live restore).
-- **Fail closed:** an invalid `MANIFEST.json` aborts before the command runs.
+- **Fail closed:** an invalid `MANIFEST.json` or `.cage.yaml`, an invalid `--allow-override`, or a protected set over the caps aborts before the command runs.
 - **Signals:** SIGTERM and SIGHUP are forwarded to the command. Ctrl-C reaches it through the terminal while cage waits.
 
 **Limits (printed in every report):** restore, not blocking. A change can be committed or used in the gap before the next check. The push guard only covers `git push` run inside the session and is skipped by `--no-verify`; a refused or committed change stays in local history, because cage restores the working tree, not commits or a remote. Reads, network/API side effects and writes outside the protected set or repo are not detected. Agents that run `git push -u` will see the upstream entry in `.git/config` reverted. That is intentional.
 
 **When to use:** As the zero-config on-ramp: start the agent you already use inside it (`gantry cage -- claude`). Missions add scope enforcement on every write, Planner-signed law and `gantry verify` in CI; `gantry runtime exec` needs a pinned mission and enforces TMVC and forbidden zones with telemetry.
 
-**How:** `npx -p @jeger-ai/opengantry opengantry-cage -- claude` · `gantry cage -- aider` · `gantry cage --json -- <cmd>` · [`ADOPTION.md`](ADOPTION.md#step-zero-cage-an-agent-you-already-use)
+**How:** `npx -p @jeger-ai/opengantry opengantry-cage -- claude` · `gantry cage -- aider` · `gantry cage --json -- <cmd>` · `gantry cage suggest --write` · `gantry cage --allow-override .env.local -- <cmd>` · [`ADOPTION.md`](ADOPTION.md#step-zero-cage-an-agent-you-already-use)
 
 ---
 
