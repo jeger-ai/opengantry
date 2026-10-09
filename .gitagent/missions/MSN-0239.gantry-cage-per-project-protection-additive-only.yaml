@@ -100,6 +100,8 @@ interrogation:
       CHANGELOG follow in a separate mission (MSN-0237 precedent)."
 interrogation_sha256: 3b8ebb3c147f2f3f56dbedb3ba3be447b2dd9043e616b8d44efb1393a39df88c
 declared_paths:
+  - .gitagent/missions/MSN-0239.gantry-cage-per-project-protection-additive-only.yaml
+  - EXECUTOR_LOG.md
   - src/cli/commands/cage.ts
   - src/cli/lib/cage/
   - src/cli/program-cage.ts
