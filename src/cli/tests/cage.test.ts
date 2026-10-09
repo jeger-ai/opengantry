@@ -289,7 +289,7 @@ test("cage .cage.yaml: protect paths and globs are added to the built-in set; re
       fs.writeFileSync("src/app.ts", "y\\n");
     `),
   });
-  assert.deepEqual(report.cage_config, { present: true, entries: 3 });
+  assert.deepEqual(report.cage_config, { present: true, entries: 3, committed: false });
   assert.equal(report.status, "violations_reverted");
   assert.deepEqual(
     report.changes.map((c) => [c.path, c.rule, c.source, c.outcome]),
@@ -307,7 +307,7 @@ test("cage .cage.yaml: protect paths and globs are added to the built-in set; re
   assert.equal(read(dest, "src/app.ts"), "y\n", "paths outside the protected set are not touched");
 
   const zeroConfig = await runCage({ cwd: makeRepo("og-cage-noyaml-", true), watch: false, command: nodeScript("") });
-  assert.deepEqual(zeroConfig.cage_config, { present: false, entries: 0 });
+  assert.deepEqual(zeroConfig.cage_config, { present: false, entries: 0, committed: null });
   assert.deepEqual(zeroConfig.overrides, []);
 });
 

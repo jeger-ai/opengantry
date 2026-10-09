@@ -5,7 +5,13 @@ import { REL_MANIFEST } from "../constants.js";
 import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { loadManifest } from "../manifest.js";
-import { CAGE_CONFIG_FILE, cageGlobToRegExp, loadCageConfig, normalizeCageRelPath } from "./cage-config.js";
+import {
+  CAGE_CONFIG_FILE,
+  cageConfigCommitted,
+  cageGlobToRegExp,
+  loadCageConfig,
+  normalizeCageRelPath,
+} from "./cage-config.js";
 
 /**
  * Zero-config protected set for `gantry cage`. Paths are matched without any
@@ -99,7 +105,8 @@ export interface CagePlan {
   /** Root-relative paths whose revert rules `--allow-override` downgraded to report. */
   overrides: string[];
   manifestZoneCount: number;
-  config: { present: boolean; entries: number };
+  /** `committed` is null when there is no config or no git work tree. */
+  config: { present: boolean; entries: number; committed: boolean | null };
 }
 
 /** How one path is protected after overrides; null when no rule matches. */
@@ -254,7 +261,11 @@ function addConfigTargets(plan: CagePlan, root: string): number {
       plan.globs.push({ pattern: e.value, re: cageGlobToRegExp(e.value), mode: e.mode, source: "cage_yaml" });
     }
   }
-  plan.config = { present: config.present, entries: config.entries.length };
+  plan.config = {
+    present: config.present,
+    entries: config.entries.length,
+    committed: config.present ? cageConfigCommitted(root) : null,
+  };
   return config.entries.length;
 }
 
@@ -280,7 +291,7 @@ export function buildCagePlan(root: string, opts: { overrides?: readonly string[
     globs: [],
     overrides: [],
     manifestZoneCount: zones.length,
-    config: { present: false, entries: 0 },
+    config: { present: false, entries: 0, committed: null },
   };
   addConfigTargets(plan, root);
   plan.overrides = validateOverrides(plan, opts.overrides ?? []);

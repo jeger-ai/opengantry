@@ -63,8 +63,11 @@ export interface CageReport {
   max_file_bytes: number;
   protected_files: number;
   manifest_zones: number;
-  /** `.cage.yaml` at the cage root: whether it exists and how many protect entries it adds. */
-  cage_config: { present: boolean; entries: number };
+  /**
+   * `.cage.yaml` at the cage root: whether it exists, how many protect entries it adds, and whether it is
+   * committed unchanged (null without a config or outside git).
+   */
+  cage_config: { present: boolean; entries: number; committed: boolean | null };
   /** Paths downgraded from revert to report for this run by `--allow-override`. */
   overrides: string[];
   changes: CageReportChange[];

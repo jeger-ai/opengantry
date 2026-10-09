@@ -14,6 +14,7 @@ import {
 } from "./cage-snapshot.js";
 import { signalExitCode, spawnCaged } from "./cage-process.js";
 import { createCagePushGuard } from "./cage-push-guard.js";
+import { CAGE_SESSION_ENV } from "./cage-suggest.js";
 import {
   CAGE_DEFAULT_WATCH_INTERVAL_MS,
   openCageSessionLog,
@@ -45,7 +46,13 @@ export interface CageRunOptions {
   maxTargets?: number;
   maxScanBytes?: number;
   /** Called once before the command starts, e.g. to print where the session log is. */
-  onStart?: (info: { sessionLog: string | null; protectedFiles: number; watch: boolean; overrides: string[] }) => void;
+  onStart?: (info: {
+    sessionLog: string | null;
+    protectedFiles: number;
+    watch: boolean;
+    overrides: string[];
+    configCommitted: boolean | null;
+  }) => void;
   bell?: () => void;
 }
 
@@ -122,13 +129,15 @@ async function runSession(
     protectedFiles: before.entries.size,
     watch: s.watch,
     overrides: plan.overrides,
+    configCommitted: plan.config.committed,
   });
   const watcher =
     s.watch && log
       ? startCageWatch({ plan, baseline: before, snapshotOptions: s.snap, intervalMs: s.intervalMs, log, bell: opts.bell })
       : null;
   try {
-    const proc = await spawnCaged(opts.command, s.cwd, guard?.env ?? {});
+    // The session marker lets setup-only commands (cage suggest) refuse to run inside the cage.
+    const proc = await spawnCaged(opts.command, s.cwd, { ...guard?.env, [CAGE_SESSION_ENV]: "1" });
     return { proc, live: watcher?.stop() ?? null, log, guarded: guard !== null };
   } finally {
     watcher?.stop();
