@@ -18,26 +18,26 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 6: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0244: .cage.yaml at 466d2b3 accepts top-level mode: revert|report and contest_limit: <n>; with mode: report the entry docs/generated.md without its own mode is kept (v2 stays) while infra with mode: revert is reverted and the built-in .env and .github/workflows/ci.yml are reverted regardless; mode: report with path .env fails closed 'would weaken the built-in secrets rule', mode: ignore fails 'top level: mode must be revert or report', contest_limit: many and -1 fail 'contest_limit must be a non-negative integer', all GXT_CAGE_CONFIG_INVALID exit 2 before the command runs; report.watch.contest_limit 2 (ok 90 cage.test.ts MSN-0244 DoD 1; ok 94 bad configs); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1162"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0244: at 466d2b3 the contest limit resolves --contest-limit, then .cage.yaml contest_limit, then 3: .cage.yaml contest_limit: 1 halts after 1 live restore (contest_limit 1 in the report), contestLimit 0 with .cage.yaml contest_limit: 1 never halts and .env is contested after 3 restores and restored once at exit (status violations_reverted, exit 3, halt null), gantry cage --contest-limit 1 exits 4 and --contest-limit x exits 2 (ok 65, ok 68 cage-watch.test.ts MSN-0244 DoD 2); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1163"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0244: at 466d2b3 a node loop rewriting .env every 300ms gets SIGTERM after the 4th rewrite (command_signal SIGTERM, probe-finished.txt never written); with sh -c 'node grandchild.js; echo after > probe-after.txt' and a grandchild that ignores SIGTERM, cage SIGTERMs the enumerated tree (ps -A -o pid=,ppid=), waits haltGraceMs 200 and SIGKILLs the union of the first listing and a fresh one, so the grandchild pid is dead, probe-after.txt is absent and .env is restored; the command keeps the terminal's foreground group (no detached spawn), SIGINT swallow and SIGTERM/SIGHUP forwarding unchanged (ok 66, ok 67 cage-watch.test.ts MSN-0244 DoD 3); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1164"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0244: at 466d2b3 a halt restores the triggering file (.env back to the baseline), status halted, exit_code 4 (CAGE_HALT_EXIT_CODE), report.watch.halt {path .env, rule secrets, live_restores 3}, stderr 'cage: HALTED: .env (secrets) was rewritten again after 3 live restore(s); the command was terminated (contest limit 3)' plus 'cage: exit 4;' and the upgrade footer, session log carries event halt with path and live_restores (ok 66, ok 68 cage-watch.test.ts MSN-0244 DoD 4); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1165"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0244: at 466d2b3 with --allow-override .env and contestLimit 1 a 6x rewrite loop runs to completion with halt null, live_restores 0 and status ok; with --report-only the watcher is off (watch.enabled false), halt null, exit 3 and .env keeps the last agent write (ok 69 cage-watch.test.ts MSN-0244 DoD 5); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1166"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "6"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0244: ./scripts/dev-validate-core.sh on src/cli tree 466d2b3: tests 870 pass 870 fail 0; gantry arch check OK; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1167"
+    status: PASS
