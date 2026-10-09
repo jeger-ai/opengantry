@@ -235,7 +235,8 @@ test("cage report: violations end with the upgrade footer; ok runs and --json ca
 });
 
 test("cage report: stderr limits are one compact line; --json keeps the full list (MSN-0235 DoD 2)", async () => {
-  const report = await runCage({ cwd: makeRepo("og-cage-limits-", false), command: nodeScript("") });
+  // --no-watch: the after-exit limits this test was written for; watch-mode limits are covered in cage-watch.test.ts.
+  const report = await runCage({ cwd: makeRepo("og-cage-limits-", false), command: nodeScript(""), watch: false });
   const limitLines = formatCageReport(report).filter((l) => l.includes("limits:"));
   assert.deepEqual(limitLines, [`cage: exit 0; limits: ${CAGE_LIMITS_SUMMARY}`]);
   assert.ok(limitLines[0]!.length < 120, `limits line is ${String(limitLines[0]!.length)} chars`);
