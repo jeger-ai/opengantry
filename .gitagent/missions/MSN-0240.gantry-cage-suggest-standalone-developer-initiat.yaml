@@ -18,33 +18,33 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 7: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0240: gantry cage suggest is dispatched only when suggest is the first operand with no -- before it at 0b75a0b: gantry cage suggest prints a protect: proposal, gantry cage --json -- suggest ran a fake suggest binary on PATH (report command suggest), and opengantry-cage suggest also runs the command (cage-suggest.test.ts MSN-0240 DoD 1 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1132"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0240: static heuristics at 0b75a0b propose 12 sorted entries with category and reason (**/*.pem, **/*.tf, **/*.tfvars, .github/CODEOWNERS, .github/actions, .npmrc, Dockerfile, Jenkinsfile, db/migrations, deploy/k8s, services/api/Dockerfile.dev, services/api/migrations), skip node_modules/ and dist/ decoys and built-in .github/workflows, omit 2 entries already in .cage.yaml (already_covered 2), are deterministic, and the YAML loads with loadCageConfig to the same entries (cage-suggest.test.ts MSN-0240 DoD 2 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1133"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0240: --write at 0b75a0b creates .cage.yaml.suggested with empty stdout and never .cage.yaml; a second --write exits 2 '.cage.yaml.suggested already exists', --force replaces it; a cage run with only a subtractive .cage.yaml.suggested present reports cage_config present false and status ok (cage-suggest.test.ts MSN-0240 DoD 3 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1134"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0240: cage exports GANTRY_CAGE_SESSION=1 to the wrapped process (probe read 1) and gantry cage suggest --write run inside the session exits 2 'refused inside a cage session' without writing .cage.yaml.suggested at 0b75a0b (cage-suggest.test.ts MSN-0240 DoD 4 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1135"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0240: the registered gxt_* MCP tool list at 0b75a0b has no tool named cage or suggest and no description mentioning cage suggest or .cage.yaml (cage-suggest.test.ts MSN-0240 DoD 5 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1136"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0240: cage warns 'cage: warning: .cage.yaml is untracked or has uncommitted changes; review and commit it' without aborting (exit 0) and the JSON report has cage_config.committed false when untracked or modified, true with no warning once committed, null outside git at 0b75a0b (cage-suggest.test.ts MSN-0240 DoD 6 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1137"
+    status: PASS
   - dod_id: "7"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 7 MSN-0240: ./scripts/dev-validate-core.sh on src/cli tree 0b75a0b: tests 864 pass 864 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1138"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 2121e0ae69d9
