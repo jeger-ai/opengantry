@@ -1,0 +1,78 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate ADR-0048 amendment and cage docs for MSN-0244: record the contested-file halt (contest limit, process-tree SIGTERM then SIGKILL, exit 4, --contest-limit and .cage.yaml contest_limit, 0 keeps the old contested behaviour, a dev server that rewrites .env.local needs --allow-override) and the top-level .cage.yaml mode: default that applies only to project protect entries; update README and docs/FEATURES.md; docs only, no code
+msn_id: MSN-0245
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: .gitagent/out-of-scope/ADR-0048-cage-trust-model.md (status ACTIVE, decisions 1-6 unchanged) records the
+#        MSN-0244 amendment: top-level mode: in .cage.yaml is a default for project protect entries only and never lowers
+#        a built-in rule; the contested-file halt (contest_limit / --contest-limit, default 3, 0 never halts; SIGTERM to
+#        the command and its descendants, then SIGKILL; exit 4) is stronger enforcement of the same rules; consequences
+#        name the dev-server case (--allow-override or contest_limit: 0) and reword 'restores rather than blocks'.
+# DoD 2: README 'Try it in 60 seconds' and docs/FEATURES.md 'Zero-config cage' describe the halt (replacing the
+#        'contested after 3 tries' text), exit 4, --contest-limit, and the .cage.yaml top-level mode: and contest_limit:
+#        keys with the scoped-default rule; the report bullet lists watch.contest_limit and watch.halt.
+# DoD 3: no src/, templates/, MANIFEST.json or RULES.md change; ./scripts/dev-validate-core.sh passes
+#        (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0245: .gitagent/out-of-scope/ADR-0048-cage-trust-model.md at 2b34f0c stays ACTIVE with decisions 1-6 unchanged and gains: decision 2 notes the top-level mode: default and contest_limit: keys and that the default applies to the file's own protect entries only, never a built-in rule, with report on a built-in path rejected as before; new decision 7 records the contested-file halt (restore once more after contest_limit live restores, SIGTERM to the command and enumerated descendants, grace, SIGKILL; status halted, exit 4, watch.halt; limit resolves --contest-limit, then contest_limit:, then 3; 0 never halts; report-mode, overridden and --report-only never halt; no process-group spawn because of SIGTTIN); consequences add the dev-server case (--allow-override .env.local or contest_limit: 0) and reword 'restores rather than blocks' to restores and, past the limit, terminates; ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1168"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0245: README 'Try it in 60 seconds' at 2b34f0c replaces 'stops restoring it after 3 tries, marks it contested' with restore once more after the third try, terminate the agent and everything it spawned (SIGTERM then SIGKILL), exit 4, --contest-limit <n> (0 never halts), and says a top-level mode: report in .cage.yaml is a default for your own entries only plus contest_limit: <n>; docs/FEATURES.md 'Zero-config cage' adds mode: and contest_limit: to the .cage.yaml example, the strict list and a 'Scoped default' bullet, replaces the 'Contested paths' bullet with 'Contested paths halt the command' (limit precedence, exit 4, halt event, no process group), lists exit 4 first in exit codes, adds contest_limit and halt to the report watch fields, extends the limits line and adds gantry cage --contest-limit 1 to How; assert-docs-deterministic OK; ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1169"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0245: git diff 0c02705..2b34f0c touches only .gitagent/out-of-scope/ADR-0048-cage-trust-model.md, README.md and docs/FEATURES.md; no src/, templates/, MANIFEST.json or RULES.md change; ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1170"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE and is amended in place, not
+      superseded. The amendment records what MSN-0244 shipped inside the
+      existing decision: the top-level mode: default applies only to project
+      protect entries and never lowers a built-in rule (floor unchanged, point
+      2); the contested-file halt is stronger enforcement of the same rules (a
+      new consequence: a dev server that rewrites .env.local now needs
+      --allow-override or contest_limit: 0), and the 'restores rather than
+      blocks' consequence is reworded to say cage restores and, past the contest
+      limit, terminates, but still does not block individual writes. Decisions
+      1-6 are unchanged."
+    adr_refs:
+      - ADR-0048
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0047 stays ACTIVE. The docs describe the two new
+      top-level .cage.yaml keys (mode:, contest_limit:) in the same
+      human-written strict YAML schema ADR-0047 point 1 requires; the JSON
+      report stays machine-written JSON. Docs only, no format change.
+    adr_refs:
+      - ADR-0047
+interrogation_sha256: 7103b4d9ab95c435a00959d219a06e116e21973b141694cf9c7d9e6f5c525f82
+declared_paths:
+  - .gitagent/missions/MSN-0245.substrate-adr-0048-cage-halt-and-default-mode-docs.yaml
+  - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/FEATURES.md
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+    - README.md
+    - docs/FEATURES.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/
+    - templates/
+contract_sha256: ecb551b57ffcad79bc78a374b03b300e074fff2f276c3b46aa3dd067109a8eea
