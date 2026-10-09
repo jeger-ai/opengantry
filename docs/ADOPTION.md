@@ -43,7 +43,11 @@ Before adopting missions, start your current agent inside the cage:
 npx -p @jeger-ai/opengantry opengantry-cage -- claude
 ```
 
-During the session, cage restores CI, secrets, git-control and forbidden-zone changes about once a second and refuses `git push` of those paths; it prints one report when you quit ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage)). It restores rather than blocks. When you want scope enforced on every write, plus Planner-signed missions and `gantry verify` in CI, continue with the steps below.
+During the session, cage restores CI, secrets, git-control and forbidden-zone changes about once a second and refuses `git push` of those paths; it prints one report when you quit ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage)). It restores rather than blocks.
+
+To cover your own sensitive paths too, run `gantry cage suggest --write` yourself (not inside a cage session), review `.cage.yaml.suggested`, keep what you want as `.cage.yaml` and commit it. The file can only add protection ([ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)).
+
+When you want scope enforced on every write, plus Planner-signed missions and `gantry verify` in CI, continue with the steps below.
 
 
 Install **gantry** (Node.js 24+):
