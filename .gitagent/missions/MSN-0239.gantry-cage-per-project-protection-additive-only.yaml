@@ -1,0 +1,123 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cage per-project protection: additive-only .cage.yaml (protect paths/globs, strict schema, fail closed on unknown or subtractive keys, self-protected, source-labelled rules, aggregate target-count and snapshot-byte caps) and --allow-override <path> runtime flag that downgrades a built-in revert rule to report-only (never git_control or .cage.yaml), announced on stderr and in the JSON report, with push-guard parity
+msn_id: MSN-0239
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: additive .cage.yaml at the cage root: single key protect:, entries {path} or {glob} (* within a segment, ** any
+#        depth) with optional mode revert|report (default revert), unioned with built-ins and manifest forbidden_zones; no
+#        file = behavior unchanged (tests).
+# DoD 2: fail closed with exit 2 before the command runs on invalid YAML, unknown keys, subtractive keys (relax, exclude,
+#        allow, ...), absolute or .. paths, and mode: report on a path a built-in rule already reverts (tests).
+# DoD 3: .cage.yaml is always a revert target, present or absent: an in-session edit is restored and an in-session
+#        creation is removed (tests).
+# DoD 4: caps: more than 5000 resolved targets or more than 64 MiB aggregate snapshot bytes aborts before the command runs
+#        and reports both counts (tests).
+# DoD 5: --allow-override <path> (repeatable) downgrades a matching revert target to report; refused with exit 2 for
+#        git_control, .cage.yaml and paths matching no protected target; stderr banner at start and in the exit summary;
+#        JSON report overrides[] and overridden: true on affected change rows (tests).
+# DoD 6: every plan target and report row carries source builtin | manifest | cage_yaml, added to gantry.cage-report.v1
+#        without breaking existing readers (tests).
+# DoD 7: push-guard parity: the push guard resolves the same plan as live restore: refuses .cage.yaml revert paths and
+#        globs, allows overridden paths (tests).
+# DoD 8: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: .cage.yaml protect entries at 2a90f0d: path infra/ and glob **/*.pem are reverted or removed with rule cage_protect source cage_yaml, a mode: report path is kept, unprotected src/app.ts untouched; no .cage.yaml gives cage_config present false entries 0; globs keep * in one segment and ** across (ok 77, ok 78 cage.test.ts MSN-0239 DoD 1); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1133"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: 13 bad .cage.yaml cases fail closed with exit 2 before the command runs (invalid YAML, unknown keys, relax/exclude subtractive keys, plain string entry, path+glob, absolute and .. paths, bad mode, mode: report on .env and on .github/workflows/ci.yml, YAML aliases); CLI relax: exits 2 and the command never ran at 2a90f0d Failures carry code GXT_CAGE_CONFIG_INVALID. (ok 79 cage.test.ts MSN-0239 DoD 2); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1134"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: .cage.yaml is a cage_config revert target at 2a90f0d: an in-session rewrite to protect: [] was restored while the command still ran (probe read the original) and reported reverted source builtin; a .cage.yaml created in-session was removed (ok 80 cage.test.ts MSN-0239 DoD 3); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1135"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: caps CAGE_MAX_TARGETS 5000 and CAGE_MAX_SCAN_BYTES 64 MiB at 2a90f0d: maxTargets 4 and maxScanBytes 3000 abort with exit 2 and 'cage: protected set too large: N file(s), X MiB (limits ...)' counting the whole set; the command never ran; default caps pass Failures carry code GXT_CAGE_LIMITS_EXCEEDED. (ok 81 cage.test.ts MSN-0239 DoD 4); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1136"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: --allow-override .env at 2a90f0d: change kept with overridden true, overrides ['.env'], status ok exit 0, banner 'cage: OVERRIDE (--allow-override): ...' once at start with --json and twice (start and exit) without; .git/config, .git, .cage.yaml, src/app.ts, package-lock.json and ../elsewhere are refused with exit 2 before the command runs Refusals carry code GXT_CAGE_OVERRIDE_INVALID. (ok 82, ok 83 cage.test.ts MSN-0239 DoD 5); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1137"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: every plan target and glob carries source builtin, manifest or cage_yaml, and report rows .env/infra/main.tf/terraform/main.tf say builtin/manifest/cage_yaml at 2a90f0d; change rows add source and overridden to gantry.cage-report.v1 (ok 84 cage.test.ts MSN-0239 DoD 6); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1138"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "DoD 7 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: push guard reads the serialized session plan at 2a90f0d: push of overridden infra/ok goes through, glob keys/deep/server.pem and path infra/main.tf are refused, and after the agent rewrote .cage.yaml to protect: [] infra/later.tf is still refused; remote has only main and override, refused_pushes 3, .cage.yaml restored at exit (ok 63 cage-watch.test.ts MSN-0239 DoD 7); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1139"
+    status: PASS
+  - dod_id: "8"
+    trace_quote: "DoD 8 MSN-0239 re-attested after rebase onto main 259361c at 2a90f0d: ./scripts/dev-validate-core.sh on src/cli tree 2a90f0d: tests 858 pass 858 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1140"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key gantry. 'schema' means the cage-local .cage.yaml
+      format (protect entries only), not a database, mission or manifest schema.
+      Contract narrows TMVC to src/cli/lib/cage/, src/cli/commands/cage.ts,
+      src/cli/program-cage.ts, src/cli/tests/cage.test.ts and
+      src/cli/tests/cage-watch.test.ts. Follows the ADR-0042 tighten-only floor:
+      built-in rules are a floor, the repo file can only add; relaxation is a
+      runtime flag that downgrades revert to report and is always reported.
+      Report stays digest-only per ADR-0034. Tier-3: mandatory full human audit
+      before merge."
+    adr_refs:
+      - ADR-0042
+      - ADR-0034
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: "Authorize ./scripts/dev-validate-core.sh with success
+      substring 'dev-validate-core OK': adds lint, changed-code budgets, doctor
+      and MSN-subject checks over npm test. Same rationale as MSN-0233, MSN-0235
+      and MSN-0237: npm run validate recurses via verify-pr-missions; MSN-0232
+      precedent."
+  - finding_id: 655d6fb29829
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirm: contract tmvc_roots narrowed to src/cli/lib/cage/,
+      src/cli/commands/cage.ts, src/cli/program-cage.ts,
+      src/cli/tests/cage.test.ts and src/cli/tests/cage-watch.test.ts (plus the
+      EXECUTOR_LOG.md trace). .cage.yaml loading, the --allow-override flag,
+      rule-source labels, caps and push-guard parity all stay inside the cage
+      command. No MANIFEST.json, RULES.md, .githooks/, workflow or package.json
+      change (uses the existing yaml dependency); README, docs/FEATURES.md and
+      CHANGELOG follow in a separate mission (MSN-0237 precedent)."
+interrogation_sha256: 3b8ebb3c147f2f3f56dbedb3ba3be447b2dd9043e616b8d44efb1393a39df88c
+declared_paths:
+  - .gitagent/missions/MSN-0239.gantry-cage-per-project-protection-additive-only.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 3d10186207c40eda2763e04a085b9f9e482721f53cdf14d6e43aff07b260e1dc

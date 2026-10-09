@@ -1,0 +1,66 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.7.0: version parity and changelog for the zero-config gantry cage (MSN-0233), its docs (MSN-0234) and the upgrade footer (MSN-0235)
+msn_id: MSN-0236
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: version 3.7.0 in package.json, package-lock.json (root + packages[""]), both SUBSTRATE.version.json and compatibility.json.
+# DoD 2: docs/CHANGELOG.md has the v3.7.0 highlights row, substrate note CLI 3.7.0 and From v3.6.0 upgrade notes; README has a v3.7.0 line.
+# DoD 3: ./scripts/dev-validate-core.sh passes (dev-validate-core OK) and gantry --version prints 3.7.0.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0236: version parity 3.7.0 at ce8c5f0 across package.json, package-lock.json (root and packages[\"\"]), .gitagent/foreman/SUBSTRATE.version.json, templates/.gitagent/foreman/SUBSTRATE.version.json and templates/integrations/compatibility.json; no \"3.6.0\" left in those files"
+    anchor: "1111"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0236: docs/CHANGELOG.md at ce8c5f0 has the v3.7.0 highlights row (zero-config cage MSN-0233, docs MSN-0234, upgrade footer MSN-0235, detect-after-exit only), substrate note CLI 3.7.0 and 'From v3.6.0 (zero-config cage — v3.7.0)' upgrade notes; README.md has the v3.7.0 line linking #try-it-in-60-seconds-gantry-cage"
+    anchor: "1112"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0236: ./scripts/dev-validate-core.sh on ce8c5f0: tests 843 pass 843 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; gantry --version prints 3.7.0"
+    anchor: "1113"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "Skill substrate (Tier-3), per ADR-0045 Planner-declared roots,
+      MSN-0230 precedent. TMVC: package.json, package-lock.json (version 3.7.0),
+      .gitagent/foreman/SUBSTRATE.version.json and
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json, docs/CHANGELOG.md (v3.7.0 row,
+      substrate note, upgrade notes), README.md (v3.7.0 line), plus
+      EXECUTOR_LOG.md. No src/cli/ code, MANIFEST.json, RULES.md, hook or
+      workflow change. The tag is pushed by the operator after merge;
+      npm-publish.yml publishes on v*."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 89741229d85c44bf3c6112b7bc923cb2366b6c253010dc43b096126276e4e490
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0236.release-opengantry-v3-7-0-version-parity-and-cha.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - package-lock.json
+  - package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - package-lock.json
+    - package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: f93d581732fb00f55cbe0d4d825b6d8da0fcd460963eb295f909b21934279d92

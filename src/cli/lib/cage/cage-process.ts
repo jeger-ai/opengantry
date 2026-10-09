@@ -24,9 +24,13 @@ const FORWARDED_SIGNALS: readonly NodeJS.Signals[] = ["SIGTERM", "SIGHUP"];
  *   shared process group, and forwarding it again would double-interrupt.
  * - SIGTERM / SIGHUP are forwarded to the child instead of killing the cage.
  */
-export async function spawnCaged(argv: readonly string[], cwd: string): Promise<CageProcessResult> {
+export async function spawnCaged(
+  argv: readonly string[],
+  cwd: string,
+  extraEnv: NodeJS.ProcessEnv = {},
+): Promise<CageProcessResult> {
   const [command, ...args] = argv;
-  const child = spawn(command!, args, { cwd, stdio: "inherit", env: process.env });
+  const child = spawn(command!, args, { cwd, stdio: "inherit", env: { ...process.env, ...extraEnv } });
   const ignoreInt = (): void => {};
   const forward = (sig: NodeJS.Signals): void => {
     child.kill(sig);

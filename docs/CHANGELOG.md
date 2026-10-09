@@ -10,6 +10,8 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.7.1** | **Cage for interactive sessions:** `gantry cage` now restores protected paths live while the command runs (default; `--watch-interval-ms`, `--no-watch` for exit-only), marks a path contested after 3 live restores and restores it once at exit, and prints nothing into the agent's screen beyond one start line and a bell per event (JSONL session log in the OS temp dir). **Session push guard:** the caged process tree gets a temporary `core.hooksPath` whose `pre-push` refuses outgoing commits touching protected paths and chains to the repo's own hooks; nothing is written to the repo. The report gains `watch` and `push_guard` summaries; change rows are unchanged (MSN-0237). Docs move from one-shot `claude -p` recipes to interactive sessions (MSN-0238). Restore, not blocking: committed changes stay in local history; `--no-verify` skips the guard. |
+| **v3.7.0** | **Zero-config cage:** `gantry cage -- <cmd>` and standalone `opengantry-cage` bin (`npx -p @jeger-ai/opengantry opengantry-cage -- <cmd>`) snapshot CI configs, `.env*`, `.git/config` / hooks / `core.hooksPath` and manifest `forbidden_zones` in memory, run the command with inherited stdio, then restore protected changes and exit 3. Lockfiles are reported, not reverted; over-cap or over-budget files are `detect_only`; `--json` emits a digest-only `gantry.cage-report.v1`; `--report-only` skips restore (MSN-0233). Violation reports end with a `gantry init` upgrade footer and a one-line limits summary (MSN-0235). Docs: README "Try it in 60 seconds", FEATURES reference, ADOPTION step zero (MSN-0234). Detect-after-exit only: no read, network, or in-flight interception; use for one-shot headless runs. |
 | **v3.6.0** | **Typed adapter gates fail closed:** `gate_adapter: tsc\|eslint` rejects a `gate_command` with unquoted `&&`, `||`, `;`, or line break at legislate and mission validate (`GXT_GATE_ADAPTER_MISCONFIG`); tsc/eslint parser self-diagnostic tests (MSN-0229, port of the never-landed MSN-0195). **Terminal-agent TMVC gate:** `gantry hooks install\|uninstall` arms the tracked pre-commit hook so `gantry tmvc guard --strict` blocks staged paths outside the pinned mission; `runtime env` prints repo-relative space-separated `GANTRY_TMVC_ROOTS`; `runtime env --aider` writes an Aider scope file (MSN-0227). **Optional contract drift index:** local sqlite-vec index at `.gitagent/planner/contracts.sqlite` (gitignored, advisory, never mission law); `gantry contract embed`, `legislate --from-intent --embedding-file\|--auto-embed`, `contract propose --embedding-file` (MSN-0226). **Internal:** `src/cli/lib` prefixes folded into directories (MSN-0228); public `exports` (`.`, `./kernel`) unchanged. |
 | **v3.5.0** | **Cursor MCP launcher:** specimen and adopters share byte-identical `.cursor/mcp.json` (`./scripts/mcp-launcher.sh`; no mcp.json parity exemption). **Verify exports:** `--format sarif\|junit` writes the document only on stdout and diagnostics on stderr ([`CI.md`](CI.md)). **Experimental contract preflight:** `gantry contract preflight` / `gxt_preflight_contract` catalogs every `MANIFEST.json` skill; Jev 2000ms timeout or non-OK HTTP (including 500) falls open to the heuristic ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)). |
 | **v3.4.0** | **Mission contracts (ADR-0045):** Planner-sealed inline `contract` + `contract_sha256` (tighten-only TMVC / forbidden / import cage). `gantry contract propose\|check\|show`, `gantry legislate --from-intent`, MCP `gxt_propose_contract`, draft token v3 (v2 still accepted). Verify `contract` phase (tamper + import sites including `import()` / `require()` / `export … from`). Runtime exports `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS`; `runtime exec` reports `contract_violation`. Empty TMVC roots scan git-dirty sources (not the whole tree). |
@@ -43,17 +45,39 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.6.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.7.1** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged). Diagnostics go to stderr; the document is the only stdout payload. GitHub Code Scanning and GitLab JUnit wiring: [`CI.md`](CI.md).
 - **Typed adapter gates:** `gate_adapter: tsc|eslint` requires a single command. Unquoted `&&`, `||`, `;`, or line breaks fail closed with `GXT_GATE_ADAPTER_MISCONFIG` ([ADR-0041](../.gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md)).
 - **Contract drift index:** optional, local, and advisory. `better-sqlite3` and `sqlite-vec` load only when an embedding is supplied.
 - **Experimental contract preflight:** `gantry contract preflight` / MCP `gxt_preflight_contract` (heuristic default; optional Jev). Jev reads every skill from `MANIFEST.json`. A 2000ms timeout or non-OK HTTP status (including 500) falls open to the offline heuristic. Advisory only — does not seal a contract ([ADR-0046](../.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md)).
 - **External architecture docs:** `gantry arch fetch` for `kind: external` pointers (doctor stays offline).
+- **Config file format:** humans write YAML (missions, `TARGET_ARCHITECTURE.yaml`, `.cage.yaml`); the CLI writes JSON (receipts, ledger, KPI, tokens via `canonicalJson`); third-party formats stay native. `MANIFEST.json`, `config.json` and the pointer files stay JSON until a dedicated dual-read migration ([ADR-0047](../.gitagent/out-of-scope/ADR-0047-config-file-format.md)).
 
 ---
 
 ## Upgrade notes
+
+### From v3.7.0 (cage live restore and push guard — v3.7.1)
+
+```bash
+npm install @jeger-ai/opengantry@3.7.1
+```
+
+- **Behavior change (cage only):** live restore is now the default. Protected files are restored while the command runs, not only at exit. Pass `--no-watch` to keep the v3.7.0 exit-only behavior (for example in scripted runs that inspect protected files mid-run).
+- **Push guard:** `git push` run inside a cage session is refused when outgoing commits touch CI configs, secrets or manifest forbidden zones. Your repo hooks still run (chained). `--no-verify` skips it.
+- **Report additions:** `--json` gains `watch` and `push_guard` objects; existing fields and change-row keys are unchanged, `report_schema` stays `gantry.cage-report.v1`.
+
+### From v3.6.0 (zero-config cage — v3.7.0)
+
+```bash
+npm install @jeger-ai/opengantry@3.7.0
+```
+
+- **New command, no behavior change elsewhere:** `gantry cage -- <command...>` and the `opengantry-cage` bin are additive. Existing missions, verify, and hooks are unchanged.
+- **Cage checks once, after the command exits.** Use it for one-shot, headless agent runs (`claude -p …`, `aider --message … --no-auto-commits --yes-always`), not interactive sessions. It restores the working tree, not git history or a remote.
+- **Exit code 3** means protected files changed (reverted, or `detect_only` / `revert_failed`). Wrappers that treat any non-zero exit as failure will see it.
+- **`.git/config` is protected:** an agent's `git push -u` upstream entry is reverted after the run.
 
 ### From v3.5.0 (typed-adapter guard, pre-commit TMVC gate, contract index — v3.6.0)
 

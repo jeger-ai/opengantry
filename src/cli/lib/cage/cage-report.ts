@@ -1,9 +1,9 @@
-import type { CageRuleId } from "./cage-rules.js";
+import { cageRuleSource, type CageRuleId, type CageRuleSource } from "./cage-rules.js";
 import type { CageOutcome, CageResolvedChange } from "./cage-revert.js";
 
 export const CAGE_REPORT_SCHEMA = "gantry.cage-report.v1" as const;
 
-/** Detect-after-the-fact limits, stated in every cage report. */
+/** Limits with `--no-watch` (after-exit check only), stated in every such report. */
 export const CAGE_LIMITS: readonly string[] = [
   "detects protected-path writes after the command exits; it does not block them while it runs",
   "reads are not detected: the command can still read .env and other secrets",
@@ -12,6 +12,27 @@ export const CAGE_LIMITS: readonly string[] = [
   "background processes that outlive the command can still write after the check",
 ];
 
+/** One-line stderr form of {@link CAGE_LIMITS}; `--json` keeps the full list. */
+export const CAGE_LIMITS_SUMMARY =
+  "after-exit check only; reads, network calls and writes outside the protected set are not detected";
+
+/** Limits in watch mode (the default): live restore, not prevention. */
+export const CAGE_WATCH_LIMITS: readonly string[] = [
+  "restores protected-path writes about once per watch interval while the command runs; it does not block them",
+  "a change can be committed or used before the next check; the push guard covers git push from inside the session only",
+  "reads are not detected: the command can still read .env and other secrets",
+  "network and API side effects are not detected",
+  "writes outside the protected set, and outside the repository, are not checked",
+];
+
+/** One-line stderr form of {@link CAGE_WATCH_LIMITS}. */
+export const CAGE_WATCH_LIMITS_SUMMARY =
+  "live restore, not blocking; reads, network calls and writes outside the protected set are not detected";
+
+/** Printed once under a violation report: the path from cage to project-specific missions. */
+export const CAGE_UPGRADE_FOOTER =
+  "Need project-specific boundaries or task contracts? Run: npx -p @jeger-ai/opengantry gantry init";
+
 export type CageStatus = "ok" | "violations_reverted" | "violations_unresolved" | "runtime_error";
 
 /** One changed protected path. Digests and outcomes only; never file bodies (ADR-0034). */
@@ -19,6 +40,9 @@ export interface CageReportChange {
   path: string;
   kind: "added" | "modified" | "deleted";
   rule: CageRuleId;
+  source: CageRuleSource;
+  /** A revert rule downgraded to report by `--allow-override`. */
+  overridden: boolean;
   sha256_before: string | null;
   sha256_after: string | null;
   outcome: CageOutcome;
@@ -39,7 +63,22 @@ export interface CageReport {
   max_file_bytes: number;
   protected_files: number;
   manifest_zones: number;
+  /**
+   * `.cage.yaml` at the cage root: whether it exists, how many protect entries it adds, and whether it is
+   * committed unchanged (null without a config or outside git).
+   */
+  cage_config: { present: boolean; entries: number; committed: boolean | null };
+  /** Paths downgraded from revert to report for this run by `--allow-override`. */
+  overrides: string[];
   changes: CageReportChange[];
+  watch: {
+    enabled: boolean;
+    interval_ms: number | null;
+    live_restores: number;
+    contested: string[];
+    session_log: string | null;
+  };
+  push_guard: { enabled: boolean; refused_pushes: number };
   limits: readonly string[];
 }
 
@@ -53,7 +92,11 @@ export interface CageReportInput {
   maxFileBytes: number;
   protectedFiles: number;
   manifestZones: number;
+  cageConfig: CageReport["cage_config"];
+  overrides: readonly string[];
   changes: readonly CageResolvedChange[];
+  watch: CageReport["watch"];
+  pushGuard: CageReport["push_guard"];
   signalExitCode: (signal: NodeJS.Signals) => number;
 }
 
@@ -91,22 +134,53 @@ export function buildCageReport(input: CageReportInput): CageReport {
     max_file_bytes: input.maxFileBytes,
     protected_files: input.protectedFiles,
     manifest_zones: input.manifestZones,
+    cage_config: input.cageConfig,
+    overrides: [...input.overrides],
     changes: input.changes.map((c) => ({
       path: c.rel,
       kind: c.kind,
       rule: c.rule,
+      source: cageRuleSource(c.rule),
+      overridden: c.overridden,
       sha256_before: c.before?.sha256 ?? null,
       sha256_after: c.after?.sha256 ?? null,
       outcome: c.outcome,
       error_code: c.errorCode,
     })),
-    limits: CAGE_LIMITS,
+    watch: input.watch,
+    push_guard: input.pushGuard,
+    limits: input.watch.enabled ? CAGE_WATCH_LIMITS : CAGE_LIMITS,
   };
 }
 
 function changeLine(c: CageReportChange): string {
   const err = c.error_code ? ` ${c.error_code}` : "";
-  return `  ${c.outcome.padEnd(13)} ${c.kind.padEnd(8)} ${c.path} (${c.rule})${err}`;
+  const over = c.overridden ? ", overridden" : "";
+  return `  ${c.outcome.padEnd(13)} ${c.kind.padEnd(8)} ${c.path} (${c.rule}${over})${err}`;
+}
+
+/** Stderr banner for `--allow-override`, printed at start and again in the exit summary. */
+export function formatCageOverrideBanner(overrides: readonly string[]): string | null {
+  if (overrides.length === 0) return null;
+  return `cage: OVERRIDE (--allow-override): changes are reported, not restored, under: ${overrides.join(", ")}`;
+}
+
+function sessionLines(report: CageReport): string[] {
+  const out: string[] = [];
+  const w = report.watch;
+  if (w.live_restores > 0) {
+    out.push(`cage: restored ${String(w.live_restores)} protected change(s) during the session`);
+  }
+  if (w.contested.length > 0) {
+    out.push(`cage: contested (kept being rewritten; restored once at exit): ${w.contested.join(", ")}`);
+  }
+  if (report.push_guard.refused_pushes > 0) {
+    out.push(`cage: refused ${String(report.push_guard.refused_pushes)} push(es) touching protected paths`);
+  }
+  if (w.session_log && (w.live_restores > 0 || report.push_guard.refused_pushes > 0)) {
+    out.push(`cage: session log: ${w.session_log}`);
+  }
+  return out;
 }
 
 /** Human summary (stderr), so it never mixes into the wrapped command's stdout. */
@@ -125,6 +199,13 @@ export function formatCageReport(report: CageReport): string[] {
       `cage: detect_only files exceeded the ${String(report.max_file_bytes)}-byte per-file cap or the total snapshot budget and were not restored`,
     );
   }
-  lines.push(`cage: exit ${String(report.exit_code)}; limits: ${report.limits.join("; ")}`);
+  lines.push(...sessionLines(report));
+  const banner = formatCageOverrideBanner(report.overrides);
+  if (banner) lines.push(banner);
+  const summary = report.watch.enabled ? CAGE_WATCH_LIMITS_SUMMARY : CAGE_LIMITS_SUMMARY;
+  lines.push(`cage: exit ${String(report.exit_code)}; limits: ${summary}`);
+  if (report.status === "violations_reverted" || report.status === "violations_unresolved") {
+    lines.push(`cage: ${CAGE_UPGRADE_FOOTER}`);
+  }
   return lines;
 }

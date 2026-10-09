@@ -35,6 +35,17 @@ See also: [`FEATURES.md`](FEATURES.md) · [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.m
 
 ## First run (onboarding)
 
+### Step zero: cage an agent you already use
+
+Before adopting missions, start your current agent inside the cage:
+
+```bash
+npx -p @jeger-ai/opengantry opengantry-cage -- claude
+```
+
+During the session, cage restores CI, secrets, git-control and forbidden-zone changes about once a second and refuses `git push` of those paths; it prints one report when you quit ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage)). It restores rather than blocks. When you want scope enforced on every write, plus Planner-signed missions and `gantry verify` in CI, continue with the steps below.
+
+
 Install **gantry** (Node.js 24+):
 
 ```bash

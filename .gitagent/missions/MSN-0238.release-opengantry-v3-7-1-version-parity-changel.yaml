@@ -1,0 +1,77 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.7.1: version parity, changelog, and docs for gantry cage live restore and the session push guard (MSN-0237); README, FEATURES and ADOPTION move from one-shot headless runs to interactive sessions
+msn_id: MSN-0238
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: version 3.7.1 in package.json, package-lock.json (root + packages[""]), both SUBSTRATE.version.json and compatibility.json.
+# DoD 2: docs/CHANGELOG.md has the v3.7.1 highlights row, substrate note CLI 3.7.1 and From v3.7.0 upgrade notes; README has a v3.7.1 line.
+# DoD 3: README, FEATURES and ADOPTION describe live restore (default), contested paths, --no-watch and the session push guard,
+#        with interactive-session examples instead of one-shot claude -p / aider --message recipes; limits match CAGE_WATCH_LIMITS.
+# DoD 4: ./scripts/dev-validate-core.sh passes (dev-validate-core OK, assert-docs-deterministic OK) and gantry --version prints 3.7.1.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0238: version parity 3.7.1 at dae2d8d across package.json, package-lock.json (root and packages[\"\"]), .gitagent/foreman/SUBSTRATE.version.json, templates/.gitagent/foreman/SUBSTRATE.version.json and templates/integrations/compatibility.json"
+    anchor: "1120"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0238: docs/CHANGELOG.md at dae2d8d has the v3.7.1 highlights row (cage live restore, contested paths, session push guard MSN-0237; docs MSN-0238), substrate note CLI 3.7.1 and 'From v3.7.0 (cage live restore and push guard — v3.7.1)' upgrade notes; README.md has the v3.7.1 line"
+    anchor: "1121"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0238: README 'Try it in 60 seconds', FEATURES 'Zero-config cage' and ADOPTION 'Step zero' at dae2d8d describe live restore (default, --watch-interval-ms, --no-watch), contested paths after 3 restores, the quiet session log and the session push guard, with opengantry-cage -- claude / gantry cage -- aider examples instead of claude -p / aider --message recipes; limits: restore not blocking, commit gap, --no-verify, history not restored"
+    anchor: "1122"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0238: ./scripts/dev-validate-core.sh on dae2d8d: assert-docs-deterministic OK; tests 849 pass 849 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; gantry --version prints 3.7.1"
+    anchor: "1123"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "Skill substrate (Tier-3), per ADR-0045 Planner-declared roots,
+      MSN-0236 precedent. TMVC: package.json, package-lock.json (version 3.7.1),
+      both SUBSTRATE.version.json files,
+      templates/integrations/compatibility.json, docs/CHANGELOG.md (v3.7.1 row,
+      substrate note, upgrade notes), README.md, docs/FEATURES.md and
+      docs/ADOPTION.md (cage live restore, contested paths, session push guard;
+      interactive sessions replace the one-shot headless recipes), plus
+      EXECUTOR_LOG.md. No src/cli/ code, MANIFEST.json, RULES.md, hook or
+      workflow change. The agent pushes the v3.7.1 tag after merge
+      (operator-authorized); npm-publish.yml publishes on v*."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: f53ae63a60cbdb64acb0606a9ecff72003af8aa79b4d85ef795347b31a5b771a
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0238.release-opengantry-v3-7-1-version-parity-changel.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - package-lock.json
+  - package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - package-lock.json
+    - package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 8072e1f9e57982562f34566e1e54e6341bd496468c645454d6dc86e8e5cc27ba

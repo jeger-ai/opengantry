@@ -1,0 +1,79 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cage suggest: also propose committed git hook config (.githooks/, .husky/, .pre-commit-config.yaml, lefthook.yml) as protect entries, category git_hooks; skip when the active hooks path already covers it
+msn_id: MSN-0242
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: gantry cage suggest proposes committed hook config with category git_hooks and a reason: directories .githooks/
+#        and .husky/ as path entries, and .pre-commit-config.yaml, lefthook.yml, lefthook.yaml and .lefthook.yml as path
+#        entries wherever found (tests).
+# DoD 2: a hooks directory that is the repo's active core.hooksPath is already protected by the built-in git_control rule
+#        and is not proposed again (counted in already_covered) (tests).
+# DoD 3: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0242: gantry cage suggest at dac4f31 proposes .githooks, .husky, .lefthook.yml, .pre-commit-config.yaml, lefthook.yml and tools/lefthook.yaml as path entries with category git_hooks and a hook reason, in code-point order (ok 63 cage-suggest.test.ts MSN-0242 DoD 1, DoD 2); ./scripts/dev-validate-core.sh: tests 865 pass 865 fail 0"
+    anchor: "1155"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0242: with git config core.hooksPath .githooks the active hooks dir is already git_control, so .githooks is not proposed, already_covered 1 and 5 suggestions remain at dac4f31 (ok 63 cage-suggest.test.ts MSN-0242 DoD 1, DoD 2); ./scripts/dev-validate-core.sh: tests 865 pass 865 fail 0"
+    anchor: "1156"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0242: ./scripts/dev-validate-core.sh on src/cli tree dac4f31: tests 865 pass 865 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1157"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: "Authorize ./scripts/dev-validate-core.sh with success
+      substring 'dev-validate-core OK': adds lint, changed-code budgets, doctor
+      and MSN-subject checks over npm test. Same rationale as MSN-0237, MSN-0239
+      and MSN-0240: npm run validate recurses via verify-pr-missions; MSN-0232
+      precedent."
+  - finding_id: e53d33ccc6d3
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirm: contract tmvc_roots narrowed to
+      src/cli/lib/cage/cage-suggest.ts and src/cli/tests/cage-suggest.test.ts
+      (plus the mission file and EXECUTOR_LOG.md trace). Only the cage suggest
+      heuristics change; cage protection, the .cage.yaml loader and the push
+      guard are untouched. No MANIFEST.json, RULES.md, .githooks/, workflow or
+      package.json change."
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0047 stays ACTIVE. The match is on yaml file names
+      the scanner detects (.pre-commit-config.yaml, lefthook.yml). Those are
+      third-party formats owned by their tools (ADR-0047 point 3) and are only
+      read by name, never parsed or rewritten. The proposal output stays
+      human-reviewed .cage.yaml YAML, as ADR-0047 point 1 requires.
+    adr_refs:
+      - ADR-0047
+interrogation_sha256: 839956439840f511a0fe04b7c95185ef470d30e5fc1b6942e1726849797b2950
+declared_paths:
+  - .gitagent/missions/MSN-0242.gantry-cage-suggest-also-propose-committed-git-h.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/lib/cage/cage-suggest.ts
+  - src/cli/tests/cage-suggest.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/lib/cage/cage-suggest.ts
+    - src/cli/tests/cage-suggest.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 2d7c4c344df5dec30dd3491f0e4f930f55716b964595960cebf23efd3d04dc67

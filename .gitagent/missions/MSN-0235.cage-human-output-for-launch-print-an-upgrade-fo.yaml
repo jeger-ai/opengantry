@@ -1,0 +1,61 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Cage human output for launch: print an upgrade footer on violations pointing to npx -p @jeger-ai/opengantry gantry init, and shorten the stderr limits line to one compact sentence while --json keeps the full limits list
+msn_id: MSN-0235
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: on violations (exit 3) the human stderr report ends with one footer line pointing to
+#        npx -p @jeger-ai/opengantry gantry init; no footer on ok runs or in --json (tests).
+# DoD 2: the stderr limits line is one compact sentence; --json still carries the full limits list (tests).
+# DoD 3: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0235 re-attested after rebase onto main 5fc746e at 657456c: on violations the cage stderr report ends with 'cage: Need project-specific boundaries or task contracts? Run: npx -p @jeger-ai/opengantry gantry init'; no footer on ok runs and none in --json (cage.test.ts MSN-0235 DoD 1 ok); ./scripts/dev-validate-core.sh: tests 843 pass 843 fail 0"
+    anchor: "1108"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0235 re-attested after rebase onto main 5fc746e at 657456c: stderr limits line is 'cage: exit N; limits: after-exit check only; reads, network calls and writes outside the protected set are not detected' (under 120 chars); --json limits still lists all 5 entries (cage.test.ts MSN-0235 DoD 2 ok); ./scripts/dev-validate-core.sh: tests 843 pass 843 fail 0"
+    anchor: "1109"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0235 re-attested after rebase onto main 5fc746e at 657456c: ./scripts/dev-validate-core.sh: tests 843 pass 843 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1110"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: "Authorize ./scripts/dev-validate-core.sh with success
+      substring 'dev-validate-core OK': adds lint, changed-code budgets, doctor
+      and MSN-subject checks over npm test. Same rationale as MSN-0233: npm run
+      validate recurses via verify-pr-missions; MSN-0232 precedent."
+  - finding_id: aea51c453269
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirm: contract tmvc_roots narrowed to
+      src/cli/lib/cage/cage-report.ts and src/cli/tests/cage.test.ts (plus
+      EXECUTOR_LOG.md trace). Human stderr output only: upgrade footer on
+      violations, one-line limits; --json report schema unchanged."
+interrogation_sha256: 5072f89e3be967b5bf2bd01c6a75f6d4016fd4b3ab02e69da144432e38db0e82
+declared_paths:
+  - .gitagent/missions/MSN-0235.cage-human-output-for-launch-print-an-upgrade-fo.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/lib/cage/cage-report.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/lib/cage/cage-report.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 81d77812189a8cac272405cb6ee09f43e34efa256ff8b8932068df57324431b7

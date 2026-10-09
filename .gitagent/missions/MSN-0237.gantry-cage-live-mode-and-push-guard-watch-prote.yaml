@@ -1,0 +1,102 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cage live mode and push guard: watch protected paths during the session and restore them as they change (default on, --no-watch to opt out; events to a session log outside the repo plus terminal bell, full report at exit; stop live-reverting a path after 3 reverts and restore it once at exit), and give the caged process tree a session-scoped core.hooksPath whose pre-push refuses outgoing commits that touch protected paths and chains to the repo's real hooks
+msn_id: MSN-0237
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: watch is the default: a revert-rule change made while the command runs is restored during the session (not only
+#        at exit) and logged; the exit report lists it; exit 3. Lockfiles stay report-only (tests).
+# DoD 2: after 3 live restores of one path it is marked contested: no more live restores, restored once at exit (tests).
+# DoD 3: live events go to a session log in the OS temp dir (path printed at start) plus a terminal bell; no other text is
+#        written while the command runs (tests).
+# DoD 4: --no-watch keeps the after-exit-only behavior; existing cage tests pass unchanged in intent (tests).
+# DoD 5: push guard: the caged process tree gets a session core.hooksPath (GIT_CONFIG_* env, temp dir outside the repo)
+#        whose pre-push refuses outgoing commits touching revert-rule paths and chains to the repo's real hooks; the temp dir
+#        is removed at exit and nothing is written to the repo (tests).
+# DoD 6: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0237: cage watch is the default at 9d3c662: a .env write is restored while the command is still running (probe read the original value), package-lock.json is not reverted live, the exit report lists .env as reverted with status violations_reverted and exit 3 (ok 57 cage-watch.test.ts DoD 1); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1114"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0237: after 3 live restores a rewritten .env is contested: watch.live_restores 3, watch.contested [\".env\"], no further live restore, restored once at exit, exit 3, report line 'cage: contested …' (ok 58 cage-watch.test.ts DoD 2); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1115"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0237: CLI prints one start line 'cage: watching N protected file(s); live events: <log>' and only bell characters while the command runs; the session log outside the repo records a restored event for .env without file bodies (ok 59); watch-mode limits CAGE_WATCH_LIMITS and summary 'live restore, not blocking; …' (ok 60); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1116"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0237: --no-watch keeps after-exit behavior: no live restore (probe saw the agent's write), watch.enabled false, restored at exit with CAGE_LIMITS, exit 3 (ok 61 cage-watch.test.ts DoD 4); existing cage.test.ts cases pass, MSN-0235 limits test pinned to watch: false; ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1117"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0237: session push guard: unprotected push succeeds, pushes of a .github/workflows change to main and to a new branch are refused (remote has 'ok', no 'evil', no evil-branch), the repo's own pre-push hook still ran, push_guard.refused_pushes 2, .git/config unchanged and the gantry-cage-hooks temp dir removed at exit (ok 62 cage-watch.test.ts DoD 5); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1118"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0237: ./scripts/dev-validate-core.sh on src/cli tree 9d3c662: tests 849 pass 849 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1119"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: "Authorize ./scripts/dev-validate-core.sh with success
+      substring 'dev-validate-core OK': adds lint, changed-code budgets, doctor
+      and MSN-subject checks over npm test. Same rationale as MSN-0233 and
+      MSN-0235: npm run validate recurses via verify-pr-missions; MSN-0232
+      precedent."
+  - finding_id: 655d6fb29829
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirm: contract tmvc_roots narrowed to src/cli/lib/cage/,
+      src/cli/commands/cage.ts, src/cli/program-cage.ts,
+      src/cli/tests/cage.test.ts and src/cli/tests/cage-watch.test.ts (plus the
+      EXECUTOR_LOG.md trace). Live watch-and-restore, the session event log and
+      the push guard stay inside the cage command; the session hooks dir and log
+      live in the OS temp dir, never in the repo. No MANIFEST.json, RULES.md,
+      .githooks/ or workflow change; docs follow in a separate mission."
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept; not applicable — ADR-0045 stays ACTIVE. The match is
+      'session-scoped' (the cage push guard), not mission scope. Cage reads no
+      mission and no contract block; it does not change contract parsing,
+      contract_sha256 or effective scope. This mission itself carries a narrowed
+      contract under ADR-0045.
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 1e081e40182cd579cf489ff82a4e6b77fc9766dc35461d7c1557dacec12c9069
+declared_paths:
+  - .gitagent/missions/MSN-0237.gantry-cage-live-mode-and-push-guard-watch-prote.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 3d10186207c40eda2763e04a085b9f9e482721f53cdf14d6e43aff07b260e1dc
