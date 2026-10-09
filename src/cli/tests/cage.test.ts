@@ -322,7 +322,43 @@ test("cage .cage.yaml: globs keep * inside one segment and ** across segments (M
   assert.ok(!cageGlobToRegExp("a.b").test("axb"), "regex metacharacters are literal");
 });
 
+test("cage .cage.yaml: a top-level mode: default applies only to protect entries without their own; built-ins stay revert (MSN-0244 DoD 1)", async () => {
+  const dest = makeRepo("og-cage-yaml-mode-", true);
+  writeFile(dest, ".cage.yaml", ["mode: report", "contest_limit: 2", "protect:", "  - path: docs/generated.md", "  - path: infra", "    mode: revert", ""].join("\n"));
+  writeFile(dest, "docs/generated.md", "v1\n");
+  writeFile(dest, "infra/main.tf", "resource {}\n");
+  const report = await runCage({
+    cwd: dest,
+    watch: false,
+    command: nodeScript(`
+      const fs = require("fs");
+      fs.writeFileSync("docs/generated.md", "v2\\n");
+      fs.writeFileSync("infra/main.tf", "evil\\n");
+      fs.writeFileSync(".env", "TOKEN=agent\\n");
+      fs.writeFileSync(".github/workflows/ci.yml", "evil\\n");
+    `),
+  });
+  assert.deepEqual(
+    report.changes.map((c) => [c.path, c.rule, c.outcome]),
+    [
+      [".env", "secrets", "reverted"],
+      [".github/workflows/ci.yml", "ci_config", "reverted"],
+      ["docs/generated.md", "cage_protect", "kept"],
+      ["infra/main.tf", "cage_protect", "reverted"],
+    ],
+  );
+  assert.equal(read(dest, "docs/generated.md"), "v2\n", "top-level report default applies to the entry without a mode");
+  assert.equal(read(dest, "infra/main.tf"), "resource {}\n", "a per-entry mode wins over the default");
+  assert.equal(read(dest, ".env"), `${SECRET}\n`, "built-in rules ignore the default");
+  assert.equal(report.watch.contest_limit, 2, "contest_limit read from .cage.yaml");
+  assert.deepEqual(report.cage_config, { present: true, entries: 2, committed: false });
+});
+
 const BAD_CONFIGS: readonly [string, string, RegExp][] = [
+  ["top-level bad mode", "mode: ignore\nprotect: []\n", /top level: mode must be revert or report/],
+  ["top-level report default on a built-in path", "mode: report\nprotect:\n  - path: .env\n", /would weaken the built-in secrets rule/],
+  ["contest_limit not an integer", "contest_limit: many\n", /contest_limit must be a non-negative integer/],
+  ["contest_limit negative", "contest_limit: -1\n", /contest_limit must be a non-negative integer/],
   ["invalid YAML", "protect: [\n", /invalid YAML/],
   ["unknown top-level key", "protect: []\nextra: 1\n", /unknown key "extra"/],
   ["subtractive top-level key", "relax:\n  - .env\n", /"relax" would remove protection/],

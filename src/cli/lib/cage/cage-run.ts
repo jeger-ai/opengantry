@@ -12,10 +12,11 @@ import {
   type CageSnapshot,
   type CageSnapshotOptions,
 } from "./cage-snapshot.js";
-import { signalExitCode, spawnCaged } from "./cage-process.js";
+import { signalExitCode, startCaged, type CageProcessResult } from "./cage-process.js";
 import { createCagePushGuard } from "./cage-push-guard.js";
 import { CAGE_SESSION_ENV } from "./cage-suggest.js";
 import {
+  CAGE_CONTEST_LIMIT,
   CAGE_DEFAULT_WATCH_INTERVAL_MS,
   openCageSessionLog,
   startCageWatch,
@@ -27,6 +28,8 @@ import {
 export const CAGE_DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024;
 /** Total in-memory snapshot budget across all protected files. */
 export const CAGE_DEFAULT_MAX_TOTAL_BYTES = 64 * 1024 * 1024;
+/** Time between SIGTERM and SIGKILL when the contested-file halt terminates the command. */
+export const CAGE_DEFAULT_HALT_GRACE_MS = 2000;
 
 export interface CageRunOptions {
   command: readonly string[];
@@ -42,6 +45,13 @@ export interface CageRunOptions {
   pushGuard?: boolean;
   /** Root-relative paths whose revert rules are downgraded to report for this run (`--allow-override`). */
   allowOverride?: readonly string[];
+  /**
+   * Live restores of one path before cage halts the command (`--contest-limit`). Overrides `.cage.yaml`
+   * `contest_limit:`; default {@link CAGE_CONTEST_LIMIT}. 0 never halts: the path is contested after the
+   * default limit and restored once at exit.
+   */
+  contestLimit?: number;
+  haltGraceMs?: number;
   /** Baseline caps; defaults {@link CAGE_MAX_TARGETS} and {@link CAGE_MAX_SCAN_BYTES}. */
   maxTargets?: number;
   maxScanBytes?: number;
@@ -109,10 +119,16 @@ function resolveSettings(opts: CageRunOptions): CageSettings {
 }
 
 interface CageSessionResult {
-  proc: Awaited<ReturnType<typeof spawnCaged>>;
+  proc: CageProcessResult;
   live: CageWatchSummary | null;
   log: CageSessionLog | null;
   guarded: boolean;
+  contestLimit: number;
+}
+
+/** CLI flag, then `.cage.yaml`, then the built-in default. */
+function resolveContestLimit(opts: CageRunOptions, plan: ReturnType<typeof buildCagePlan>): number {
+  return opts.contestLimit ?? plan.contestLimit ?? CAGE_CONTEST_LIMIT;
 }
 
 /** Run the command with the session log, live watcher and push guard; always tear the guard down. */
@@ -131,14 +147,28 @@ async function runSession(
     overrides: plan.overrides,
     configCommitted: plan.config.committed,
   });
+  // The session marker lets setup-only commands (cage suggest) refuse to run inside the cage.
+  const child = startCaged(opts.command, s.cwd, { ...guard?.env, [CAGE_SESSION_ENV]: "1" });
+  const contestLimit = resolveContestLimit(opts, plan);
+  let halting: Promise<void> = Promise.resolve();
   const watcher =
     s.watch && log
-      ? startCageWatch({ plan, baseline: before, snapshotOptions: s.snap, intervalMs: s.intervalMs, log, bell: opts.bell })
+      ? startCageWatch({
+          plan,
+          baseline: before,
+          snapshotOptions: s.snap,
+          intervalMs: s.intervalMs,
+          log,
+          bell: opts.bell,
+          contestLimit: contestLimit > 0 ? contestLimit : CAGE_CONTEST_LIMIT,
+          onHalt: contestLimit > 0 ? () => (halting = child.terminate(opts.haltGraceMs ?? CAGE_DEFAULT_HALT_GRACE_MS)) : undefined,
+        })
       : null;
   try {
-    // The session marker lets setup-only commands (cage suggest) refuse to run inside the cage.
-    const proc = await spawnCaged(opts.command, s.cwd, { ...guard?.env, [CAGE_SESSION_ENV]: "1" });
-    return { proc, live: watcher?.stop() ?? null, log, guarded: guard !== null };
+    const proc = await child.done;
+    // After a halt, wait for the whole tree to be gone before the exit diff.
+    await halting;
+    return { proc, live: watcher?.stop() ?? null, log, guarded: guard !== null, contestLimit };
   } finally {
     watcher?.stop();
     guard?.dispose();
@@ -157,7 +187,7 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
   const plan = buildCagePlan(s.root, { overrides: opts.allowOverride });
   const limits = { maxTargets: opts.maxTargets ?? CAGE_MAX_TARGETS, maxScanBytes: opts.maxScanBytes ?? CAGE_MAX_SCAN_BYTES };
   const before = takeCageSnapshot(plan, { ...s.snap, limits });
-  const { proc, live, log, guarded } = await runSession(opts, s, plan, before);
+  const { proc, live, log, guarded, contestLimit } = await runSession(opts, s, plan, before);
   const after = takeCageSnapshot(plan, { ...s.snap, keepBytes: false });
   const changes = mergeChanges(live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
 
@@ -179,6 +209,8 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
       interval_ms: s.watch ? s.intervalMs : null,
       live_restores: live?.liveRestores ?? 0,
       contested: live?.contested ?? [],
+      contest_limit: contestLimit,
+      halt: live?.halt ? { path: live.halt.path, rule: live.halt.rule, live_restores: live.halt.liveRestores } : null,
       session_log: log?.path ?? null,
     },
     pushGuard: { enabled: guarded, refused_pushes: countRefusedPushes(log) },

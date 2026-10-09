@@ -107,6 +107,8 @@ export interface CagePlan {
   manifestZoneCount: number;
   /** `committed` is null when there is no config or no git work tree. */
   config: { present: boolean; entries: number; committed: boolean | null };
+  /** `.cage.yaml` `contest_limit:`; null when unset (the CLI flag and the built-in default apply). */
+  contestLimit: number | null;
 }
 
 /** How one path is protected after overrides; null when no rule matches. */
@@ -266,6 +268,7 @@ function addConfigTargets(plan: CagePlan, root: string): number {
     entries: config.entries.length,
     committed: config.present ? cageConfigCommitted(root) : null,
   };
+  plan.contestLimit = config.contestLimit;
   return config.entries.length;
 }
 
@@ -292,6 +295,7 @@ export function buildCagePlan(root: string, opts: { overrides?: readonly string[
     overrides: [],
     manifestZoneCount: zones.length,
     config: { present: false, entries: 0, committed: null },
+    contestLimit: null,
   };
   addConfigTargets(plan, root);
   plan.overrides = validateOverrides(plan, opts.overrides ?? []);
@@ -305,6 +309,7 @@ interface SerializedCagePlan {
   overrides: string[];
   manifestZoneCount: number;
   config: CagePlan["config"];
+  contestLimit?: number | null;
 }
 
 /** JSON form for the session push guard, so it checks the exact plan the session started with. */
@@ -315,5 +320,5 @@ export function serializeCagePlan(plan: CagePlan): string {
 
 export function parseSerializedCagePlan(json: string): CagePlan {
   const p = JSON.parse(json) as SerializedCagePlan;
-  return { ...p, globs: p.globs.map((g) => ({ ...g, re: cageGlobToRegExp(g.pattern) })) };
+  return { ...p, contestLimit: p.contestLimit ?? null, globs: p.globs.map((g) => ({ ...g, re: cageGlobToRegExp(g.pattern) })) };
 }

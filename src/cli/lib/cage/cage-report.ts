@@ -33,7 +33,8 @@ export const CAGE_WATCH_LIMITS_SUMMARY =
 export const CAGE_UPGRADE_FOOTER =
   "Need project-specific boundaries or task contracts? Run: npx -p @jeger-ai/opengantry gantry init";
 
-export type CageStatus = "ok" | "violations_reverted" | "violations_unresolved" | "runtime_error";
+/** `halted`: a protected path was rewritten past the contest limit and the command was terminated. */
+export type CageStatus = "ok" | "violations_reverted" | "violations_unresolved" | "runtime_error" | "halted";
 
 /** One changed protected path. Digests and outcomes only; never file bodies (ADR-0034). */
 export interface CageReportChange {
@@ -76,6 +77,10 @@ export interface CageReport {
     interval_ms: number | null;
     live_restores: number;
     contested: string[];
+    /** Live restores of one path before the command is halted; 0 when the halt is off. */
+    contest_limit: number;
+    /** The path that tripped the limit, or null. */
+    halt: { path: string; rule: CageRuleId; live_restores: number } | null;
     session_log: string | null;
   };
   push_guard: { enabled: boolean; refused_pushes: number };
@@ -102,9 +107,12 @@ export interface CageReportInput {
 
 const VIOLATION_EXIT_CODE = 3;
 const RUNTIME_ERROR_EXIT_CODE = 2;
+/** Distinct from 3 so a wrapper can tell "restored and finished" from "killed the command". */
+export const CAGE_HALT_EXIT_CODE = 4;
 const RESOLVED_OUTCOMES: ReadonlySet<CageOutcome> = new Set(["reverted", "removed"]);
 
 function cageStatus(input: CageReportInput): CageStatus {
+  if (input.watch.halt) return "halted";
   const violations = input.changes.filter((c) => c.mode === "revert");
   if (violations.length > 0) {
     return violations.every((c) => RESOLVED_OUTCOMES.has(c.outcome)) ? "violations_reverted" : "violations_unresolved";
@@ -113,6 +121,7 @@ function cageStatus(input: CageReportInput): CageStatus {
 }
 
 function cageExitCode(status: CageStatus, input: CageReportInput): number {
+  if (status === "halted") return CAGE_HALT_EXIT_CODE;
   if (status === "violations_reverted" || status === "violations_unresolved") return VIOLATION_EXIT_CODE;
   if (status === "runtime_error") return RUNTIME_ERROR_EXIT_CODE;
   if (input.commandSignal) return input.signalExitCode(input.commandSignal);
@@ -174,6 +183,11 @@ function sessionLines(report: CageReport): string[] {
   if (w.contested.length > 0) {
     out.push(`cage: contested (kept being rewritten; restored once at exit): ${w.contested.join(", ")}`);
   }
+  if (w.halt) {
+    out.push(
+      `cage: HALTED: ${w.halt.path} (${w.halt.rule}) was rewritten again after ${String(w.halt.live_restores)} live restore(s); the command was terminated (contest limit ${String(w.contest_limit)})`,
+    );
+  }
   if (report.push_guard.refused_pushes > 0) {
     out.push(`cage: refused ${String(report.push_guard.refused_pushes)} push(es) touching protected paths`);
   }
@@ -204,7 +218,7 @@ export function formatCageReport(report: CageReport): string[] {
   if (banner) lines.push(banner);
   const summary = report.watch.enabled ? CAGE_WATCH_LIMITS_SUMMARY : CAGE_LIMITS_SUMMARY;
   lines.push(`cage: exit ${String(report.exit_code)}; limits: ${summary}`);
-  if (report.status === "violations_reverted" || report.status === "violations_unresolved") {
+  if (report.status !== "ok" && report.status !== "runtime_error") {
     lines.push(`cage: ${CAGE_UPGRADE_FOOTER}`);
   }
   return lines;

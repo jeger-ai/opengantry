@@ -8,9 +8,10 @@ gate_command: ./scripts/dev-validate-core.sh
 #        GXT_CAGE_CONFIG_INVALID; built-in rules are unaffected (tests).
 # DoD 2: the contest limit comes from --contest-limit <n>, then .cage.yaml contest_limit, then the default 3; 0 disables
 #        the halt and keeps the restore-once-at-exit behaviour (tests).
-# DoD 3: when a revert-mode file reaches the limit, cage sends SIGTERM to the wrapped process group, waits a grace
-#        period, then SIGKILL; the child is spawned as its own group leader and SIGINT/SIGTERM/SIGHUP are forwarded to the
-#        group (tests).
+# DoD 3: when a revert-mode file reaches the limit, cage sends SIGTERM to the wrapped command and every descendant
+#        (tree enumerated via ps, so the command keeps the terminal's foreground group and interactive agents are not
+#        stopped by SIGTTIN), waits a grace period, then SIGKILLs what is left, including orphans of the first listing;
+#        terminal signal forwarding is unchanged (tests).
 # DoD 4: a halt restores the triggering file, exits 4, names the triggering path in the exit summary, and the JSON report
 #        carries halt {path, rule, live_restores} (tests).
 # DoD 5: --report-only and --allow-override paths never trigger a halt (tests).

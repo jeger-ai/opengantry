@@ -56,11 +56,12 @@ test("cage watch: protected writes are restored during the session; lockfiles ar
   assert.equal(byPath.get("package-lock.json")?.outcome, "kept");
 });
 
-test("cage watch: a path rewritten again after 3 live restores is contested and restored once at exit (DoD 2)", async () => {
+test("cage watch: with the halt off (contest limit 0) a path rewritten after 3 live restores is contested and restored once at exit (DoD 2, MSN-0244 DoD 2)", async () => {
   const dest = makeRepo("og-cage-contest-");
   const report = await runCage({
     cwd: dest,
     watchIntervalMs: FAST,
+    contestLimit: 0,
     bell: () => {},
     command: nodeScript(`
       for (let i = 0; i < 6; i++) { fs.writeFileSync(".env", "TOKEN=agent-" + i + "\\n"); sleep(300); }
@@ -72,7 +73,126 @@ test("cage watch: a path rewritten again after 3 live restores is contested and 
   assert.equal(read(dest, "probe-env.txt"), "TOKEN=agent-5\n", "no live restore once contested");
   assert.equal(read(dest, ".env"), `${SECRET}\n`, "restored at exit");
   assert.equal(report.exit_code, 3);
+  assert.equal(report.watch.halt, null);
+  assert.equal(report.watch.contest_limit, 0);
   assert.ok(formatCageReport(report).some((l) => l.startsWith("cage: contested") && l.includes(".env")));
+});
+
+/** Rewrites .env every 300ms for far longer than any test needs; only a halt ends it early. */
+const REWRITE_LOOP = `
+  for (let i = 0; i < 60; i++) { fs.writeFileSync(".env", "TOKEN=agent-" + i + "\\n"); sleep(300); }
+  fs.writeFileSync("probe-finished.txt", "1");
+`;
+
+test("cage halt: a path rewritten past the contest limit is restored and the command is terminated with exit 4 (MSN-0244 DoD 3, DoD 4)", async () => {
+  const dest = makeRepo("og-cage-halt-");
+  const report = await runCage({ cwd: dest, watchIntervalMs: FAST, haltGraceMs: 200, bell: () => {}, command: nodeScript(REWRITE_LOOP) });
+  assert.equal(report.status, "halted");
+  assert.equal(report.exit_code, 4);
+  assert.deepEqual(report.watch.halt, { path: ".env", rule: "secrets", live_restores: CAGE_CONTEST_LIMIT });
+  assert.equal(report.watch.contest_limit, CAGE_CONTEST_LIMIT);
+  assert.equal(report.command_signal, "SIGTERM", "the agent got SIGTERM first");
+  assert.equal(fs.existsSync(path.join(dest, "probe-finished.txt")), false, "the command did not run to completion");
+  assert.equal(read(dest, ".env"), `${SECRET}\n`, "restored");
+  assert.deepEqual(report.watch.contested, []);
+  const lines = formatCageReport(report);
+  assert.ok(lines.some((l) => l.startsWith("cage: HALTED: .env (secrets)") && l.includes("terminated")), lines.join("\n"));
+  assert.ok(lines.some((l) => l.startsWith("cage: exit 4;")));
+  const events = fs.readFileSync(report.watch.session_log!, "utf8").trim().split("\n").map((l) => JSON.parse(l) as Record<string, unknown>);
+  assert.ok(events.some((e) => e.event === "halt" && e.path === ".env" && e.live_restores === CAGE_CONTEST_LIMIT));
+});
+
+function pidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test("cage halt: terminates the whole process tree, SIGKILL after the grace period for a grandchild that ignores SIGTERM (MSN-0244 DoD 3)", async () => {
+  const dest = makeRepo("og-cage-halt-tree-");
+  fs.writeFileSync(
+    path.join(dest, "grandchild.js"),
+    [
+      'const fs = require("fs");',
+      "process.on(\"SIGTERM\", () => {});",
+      'fs.writeFileSync("probe-pid.txt", String(process.pid));',
+      "const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);",
+      'for (let i = 0; i < 100; i++) { fs.writeFileSync(".env", "TOKEN=g-" + i + "\\n"); sleep(200); }',
+      "",
+    ].join("\n"),
+  );
+  const report = await runCage({
+    cwd: dest,
+    watchIntervalMs: FAST,
+    contestLimit: 1,
+    haltGraceMs: 200,
+    bell: () => {},
+    command: ["sh", "-c", `${JSON.stringify(process.execPath)} grandchild.js; echo after > probe-after.txt`],
+  });
+  assert.equal(report.status, "halted");
+  assert.equal(report.watch.halt?.live_restores, 1);
+  const pid = Number(read(dest, "probe-pid.txt"));
+  for (let i = 0; i < 20 && pidAlive(pid); i++) await new Promise((r) => setTimeout(r, 50));
+  assert.equal(pidAlive(pid), false, "grandchild that ignored SIGTERM was SIGKILLed");
+  assert.equal(fs.existsSync(path.join(dest, "probe-after.txt")), false, "the shell did not continue past the halt");
+  assert.equal(read(dest, ".env"), `${SECRET}\n`);
+});
+
+test("cage halt: limit comes from --contest-limit, then .cage.yaml contest_limit, then the default; the CLI exits 4 (MSN-0244 DoD 2, DoD 4)", async () => {
+  const fromYaml = makeRepo("og-cage-halt-yaml-");
+  fs.writeFileSync(path.join(fromYaml, ".cage.yaml"), "contest_limit: 1\n");
+  const yamlReport = await runCage({ cwd: fromYaml, watchIntervalMs: FAST, haltGraceMs: 200, bell: () => {}, command: nodeScript(REWRITE_LOOP) });
+  assert.equal(yamlReport.status, "halted");
+  assert.equal(yamlReport.watch.contest_limit, 1);
+  assert.equal(yamlReport.watch.halt?.live_restores, 1);
+
+  const flagWins = makeRepo("og-cage-halt-flag-");
+  fs.writeFileSync(path.join(flagWins, ".cage.yaml"), "contest_limit: 1\n");
+  const flagReport = await runCage({
+    cwd: flagWins,
+    watchIntervalMs: FAST,
+    contestLimit: 0,
+    bell: () => {},
+    command: nodeScript(`for (let i = 0; i < 6; i++) { fs.writeFileSync(".env", "TOKEN=agent-" + i + "\\n"); sleep(300); }`),
+  });
+  assert.equal(flagReport.status, "violations_reverted", "--contest-limit 0 turns the halt off even when .cage.yaml sets one");
+  assert.equal(flagReport.watch.halt, null);
+  assert.deepEqual(flagReport.watch.contested, [".env"]);
+
+  const cli = path.join(getRepoRoot(), "dist", "cli", "index.js");
+  const dest = makeRepo("og-cage-halt-cli-");
+  const r = spawnSync(
+    process.execPath,
+    [cli, "cage", "--watch-interval-ms", String(FAST), "--contest-limit", "1", "--", ...nodeScript(REWRITE_LOOP)],
+    { cwd: dest, encoding: "utf8", env: gitChildEnv() },
+  );
+  assert.equal(r.status, 4, r.stderr);
+  assert.match(r.stderr, /^cage: HALTED: \.env \(secrets\) was rewritten again after 1 live restore\(s\); the command was terminated \(contest limit 1\)$/m);
+  assert.match(r.stderr, /cage: halted — 1 protected change\(s\)/);
+  const bad = spawnSync(process.execPath, [cli, "cage", "--contest-limit", "x", "--", ...nodeScript("")], { cwd: dest, encoding: "utf8", env: gitChildEnv() });
+  assert.equal(bad.status, 2);
+  assert.match(bad.stderr, /--contest-limit must be non-negative integers/);
+});
+
+test("cage halt: never fires for --allow-override paths or in --report-only runs (MSN-0244 DoD 5)", async () => {
+  const loop = nodeScript(`for (let i = 0; i < 6; i++) { fs.writeFileSync(".env", "TOKEN=agent-" + i + "\\n"); sleep(100); }\nfs.writeFileSync("probe-finished.txt", "1");`);
+  const over = makeRepo("og-cage-halt-override-");
+  const overReport = await runCage({ cwd: over, watchIntervalMs: FAST, contestLimit: 1, allowOverride: [".env"], bell: () => {}, command: loop });
+  assert.equal(overReport.status, "ok");
+  assert.equal(overReport.watch.halt, null);
+  assert.equal(overReport.watch.live_restores, 0);
+  assert.ok(fs.existsSync(path.join(over, "probe-finished.txt")), "the command ran to completion");
+
+  const ro = makeRepo("og-cage-halt-reportonly-");
+  const roReport = await runCage({ cwd: ro, watchIntervalMs: FAST, contestLimit: 1, reportOnly: true, bell: () => {}, command: loop });
+  assert.equal(roReport.watch.enabled, false);
+  assert.equal(roReport.watch.halt, null);
+  assert.equal(roReport.exit_code, 3);
+  assert.ok(fs.existsSync(path.join(ro, "probe-finished.txt")));
+  assert.equal(read(ro, ".env"), "TOKEN=agent-5\n", "report-only never restores");
 });
 
 test("cage CLI watch: one start line naming the session log, only bells while running, events logged without bodies (DoD 3)", () => {
