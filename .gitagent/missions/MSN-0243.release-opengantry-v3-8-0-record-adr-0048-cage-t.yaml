@@ -1,0 +1,81 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.8.0: record ADR-0048 cage trust model (built-in rules are a floor, .cage.yaml only adds, relaxation is the announced runtime flag --allow-override, rule authoring stays outside the agent loop), document .cage.yaml, --allow-override and gantry cage suggest in README, FEATURES, ADOPTION and CHANGELOG, and bump version parity to 3.8.0
+msn_id: MSN-0243
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: ADR-0048 (ACTIVE) records the cage trust model: built-in rules are a floor; .cage.yaml can only add (strict,
+#        fail closed, self-protected, read from the working tree); relaxation is the runtime --allow-override flag,
+#        always announced and never for git_control or .cage.yaml; rule authoring stays outside the agent loop (no MCP
+#        tool, cage suggest only proposes and refuses inside a session); cites ADR-0042, ADR-0022, ADR-0034, ADR-0047.
+# DoD 2: docs/FEATURES.md "Zero-config cage (`gantry cage`)" keeps its heading and documents .cage.yaml (format, modes,
+#        fail-closed cases, self-protection, caps), --allow-override, gantry cage suggest, the new report fields
+#        (source, overridden, overrides, cage_config) and the GXT_CAGE_* codes; README "Try it in 60 seconds" and
+#        ADOPTION step zero add the suggest, review, commit .cage.yaml step.
+# DoD 3: version parity 3.8.0 across package.json, package-lock.json (root and packages[""]), both
+#        SUBSTRATE.version.json files and templates/integrations/compatibility.json; docs/CHANGELOG.md has the v3.8.0
+#        highlights row, substrate note CLI 3.8.0 and 'From v3.7.1' upgrade notes; README has the v3.8.0 line.
+# DoD 4: ./scripts/dev-validate-core.sh passes (dev-validate-core OK); gantry --version prints 3.8.0.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0047 stays ACTIVE and this mission follows it.
+      .cage.yaml is human-written, so it is YAML, parsed with the yaml package,
+      strict keys, aliases rejected and typed GXT_CAGE_* errors (MSN-0239). The
+      cage report and cage suggest --json stay JSON. ADR-0048 cites ADR-0047 for
+      the format and ADR-0042 for the tighten-only floor it mirrors.
+    adr_refs:
+      - ADR-0047
+      - ADR-0042
+interrogation_sha256: 6ca4328dec8e516c60cd8c6b9dbf7914780689139290fa918ff08d9cba18cbe5
+declared_paths:
+  - .gitagent/missions/MSN-0243.release-opengantry-v3-8-0-record-adr-0048-cage-t.yaml
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - package-lock.json
+  - package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - package-lock.json
+    - package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - src/
+contract_sha256: 4811e8027fe0665220b8eb1aed82e8733ee6890bbe10d3fbe1434657d21173d0
