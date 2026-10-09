@@ -344,7 +344,8 @@ test("cage .cage.yaml: invalid, unknown or subtractive config fails closed befor
     writeFile(dest, ".cage.yaml", body);
     await assert.rejects(
       runCage({ cwd: dest, command: nodeScript(`require("fs").writeFileSync("ran.txt", "1");`) }),
-      (err: Error & { exitCode?: number }) => pattern.test(err.message) && err.exitCode === 2,
+      (err: Error & { exitCode?: number; code?: string }) =>
+        pattern.test(err.message) && err.exitCode === 2 && err.code === "GXT_CAGE_CONFIG_INVALID",
       name,
     );
     assert.equal(fs.existsSync(path.join(dest, "ran.txt")), false, `${name}: command must not run`);
@@ -353,7 +354,7 @@ test("cage .cage.yaml: invalid, unknown or subtractive config fails closed befor
   writeFile(dest, ".cage.yaml", "relax:\n  - .env\n");
   const r = runCli(dest, ["--", ...nodeScript(`require("fs").writeFileSync("ran.txt", "1");`)]);
   assert.equal(r.status, 2, r.stderr);
-  assert.match(r.stderr, /subtractive keys are not allowed/);
+  assert.match(r.stderr, /\[GXT_CAGE_CONFIG_INVALID\].*subtractive keys are not allowed/);
   assert.equal(fs.existsSync(path.join(dest, "ran.txt")), false);
 });
 
@@ -397,7 +398,8 @@ test("cage caps: a protected set over the file or byte cap aborts before the com
   for (let i = 0; i < 6; i += 1) writeFile(dest, `data/f${String(i)}.dat`, "x".repeat(1000));
   const ran = path.join(dest, "ran.txt");
   const command = nodeScript(`require("fs").writeFileSync("ran.txt", "1");`);
-  await assert.rejects(runCage({ cwd: dest, command, maxTargets: 4 }), (err: Error & { exitCode?: number }) => {
+  await assert.rejects(runCage({ cwd: dest, command, maxTargets: 4 }), (err: Error & { exitCode?: number; code?: string }) => {
+    assert.equal(err.code, "GXT_CAGE_LIMITS_EXCEEDED");
     assert.match(err.message, /protected set too large: \d+ file\(s\), [\d.]+ MiB \(limits 4 files/);
     assert.ok(Number(/(\d+) file\(s\)/.exec(err.message)![1]) >= 9, "counts the whole set, not the first overflow");
     return err.exitCode === 2;
@@ -447,6 +449,7 @@ test("cage --allow-override: refused for git control, .cage.yaml and unprotected
     const r = runCli(dest, ["--allow-override", p, "--", ...nodeScript(`require("fs").writeFileSync("ran.txt", "1");`)]);
     assert.equal(r.status, 2, `${p}: ${r.stderr}`);
     assert.match(r.stderr, pattern, p);
+    assert.match(r.stderr, /\[GXT_CAGE_OVERRIDE_INVALID\]/, p);
     assert.equal(fs.existsSync(path.join(dest, "ran.txt")), false, `${p}: command must not run`);
   }
   const dest = makeRepo("og-cage-override-dir-", true);

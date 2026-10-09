@@ -202,7 +202,7 @@ export function applyCageOverride(
 }
 
 function overrideError(message: string): GantryUserError {
-  return new GantryUserError("CAGE_OVERRIDE_INVALID", `cage: --allow-override ${message}`, undefined, 2);
+  return new GantryUserError("GXT_CAGE_OVERRIDE_INVALID", `cage: --allow-override ${message}`, undefined, 2);
 }
 
 function overlaps(a: string, b: string): boolean {
@@ -236,7 +236,7 @@ function assertNoBuiltinDowngrade(plan: CagePlan, value: string): void {
   const hit = classifyCagePath(plan, value, { overrides: false });
   if (hit && hit.mode === "revert" && cageRuleSource(hit.rule) === "builtin") {
     throw new GantryUserError(
-      "CAGE_CONFIG_INVALID",
+      "GXT_CAGE_CONFIG_INVALID",
       `cage: ${CAGE_CONFIG_FILE}: mode: report on ${value} would weaken the built-in ${hit.rule} rule`,
       "Relax a built-in rule for one run with --allow-override <path>.",
       2,

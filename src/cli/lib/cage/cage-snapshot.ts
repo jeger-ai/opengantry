@@ -182,7 +182,7 @@ function limitsError(ctx: CaptureContext): GantryUserError {
   const l = ctx.opts.limits!;
   const mib = (n: number): string => (n / (1024 * 1024)).toFixed(1);
   return new GantryUserError(
-    "CAGE_LIMITS_EXCEEDED",
+    "GXT_CAGE_LIMITS_EXCEEDED",
     `cage: protected set too large: ${String(ctx.scanned.files)} file(s), ${mib(ctx.scanned.bytes)} MiB (limits ${String(l.maxTargets)} files, ${mib(l.maxScanBytes)} MiB); the command was not run`,
     "Narrow broad .cage.yaml or manifest forbidden_zones entries.",
     2,

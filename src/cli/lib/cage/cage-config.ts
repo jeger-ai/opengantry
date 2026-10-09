@@ -41,7 +41,7 @@ const ENTRY_KEYS: ReadonlySet<string> = new Set(["path", "glob", "mode"]);
 
 function configError(message: string): GantryUserError {
   return new GantryUserError(
-    "CAGE_CONFIG_INVALID",
+    "GXT_CAGE_CONFIG_INVALID",
     `cage: ${CAGE_CONFIG_FILE}: ${message}`,
     `${CAGE_CONFIG_FILE} is additive only (protect: entries). Relax a rule for one run with --allow-override <path>.`,
     2,
