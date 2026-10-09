@@ -225,3 +225,31 @@ test("cage: warns when .cage.yaml is untracked or uncommitted; the report says c
   assert.equal((JSON.parse(r.stdout) as { cage_config: { committed: boolean | null } }).cage_config.committed, null);
   assert.ok(!r.stderr.includes(warning), "no warning outside git");
 });
+
+test("cage suggest: proposes committed git hook config unless it is the active hooks path (MSN-0242 DoD 1, DoD 2)", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-suggest-hooks-"));
+  git(dest, ["init", "-q"]);
+  for (const rel of [".githooks/pre-push", ".husky/pre-commit", ".pre-commit-config.yaml", "lefthook.yml", "tools/lefthook.yaml", ".lefthook.yml"]) {
+    touch(dest, rel);
+  }
+  const result = suggestCageRules(dest);
+  assert.deepEqual(
+    result.suggestions.map((s) => [s.kind, s.value, s.category]),
+    [
+      ["path", ".githooks", "git_hooks"],
+      ["path", ".husky", "git_hooks"],
+      ["path", ".lefthook.yml", "git_hooks"],
+      ["path", ".pre-commit-config.yaml", "git_hooks"],
+      ["path", "lefthook.yml", "git_hooks"],
+      ["path", "tools/lefthook.yaml", "git_hooks"],
+    ],
+  );
+  for (const s of result.suggestions) assert.match(s.reason, /hook/);
+  assert.equal(result.already_covered, 0);
+
+  git(dest, ["config", "core.hooksPath", ".githooks"]);
+  const active = suggestCageRules(dest);
+  assert.ok(!active.suggestions.some((s) => s.value === ".githooks"), "the active hooks path is already git_control");
+  assert.equal(active.already_covered, 1);
+  assert.equal(active.suggestions.length, 5);
+});

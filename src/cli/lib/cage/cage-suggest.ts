@@ -22,6 +22,7 @@ export type CageSuggestCategory =
   | "package_registry"
   | "code_owners"
   | "ci"
+  | "git_hooks"
   | "keys";
 
 export interface CageSuggestion extends CageProtectEntry {
@@ -51,6 +52,8 @@ const DIR_RULES: ReadonlyMap<string, NameRule> = new Map([
   ["charts", { category: "infrastructure", reason: "Helm charts" }],
   [".buildkite", { category: "ci", reason: "Buildkite pipeline" }],
   [".woodpecker", { category: "ci", reason: "Woodpecker CI pipeline" }],
+  [".githooks", { category: "git_hooks", reason: "committed git hooks (run on commit and push)" }],
+  [".husky", { category: "git_hooks", reason: "Husky git hooks (run on commit and push)" }],
 ]);
 
 /** Root-relative directory paths protected as a whole tree. */
@@ -78,6 +81,10 @@ const FILE_RULES: ReadonlyMap<string, NameRule> = new Map([
   [".travis.yml", { category: "ci", reason: "Travis CI pipeline" }],
   [".woodpecker.yml", { category: "ci", reason: "Woodpecker CI pipeline" }],
   ["cloudbuild.yaml", { category: "ci", reason: "Google Cloud Build pipeline" }],
+  [".pre-commit-config.yaml", { category: "git_hooks", reason: "pre-commit hook config" }],
+  ["lefthook.yml", { category: "git_hooks", reason: "Lefthook git hook config" }],
+  ["lefthook.yaml", { category: "git_hooks", reason: "Lefthook git hook config" }],
+  [".lefthook.yml", { category: "git_hooks", reason: "Lefthook git hook config" }],
 ]);
 
 /** Extensions protected repo-wide by glob once one such file exists. */
