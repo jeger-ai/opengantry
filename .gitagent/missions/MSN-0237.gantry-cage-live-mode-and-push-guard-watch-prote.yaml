@@ -15,29 +15,29 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 6: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0237: cage watch is the default at 9d3c662: a .env write is restored while the command is still running (probe read the original value), package-lock.json is not reverted live, the exit report lists .env as reverted with status violations_reverted and exit 3 (ok 57 cage-watch.test.ts DoD 1); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1114"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0237: after 3 live restores a rewritten .env is contested: watch.live_restores 3, watch.contested [\".env\"], no further live restore, restored once at exit, exit 3, report line 'cage: contested …' (ok 58 cage-watch.test.ts DoD 2); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1115"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0237: CLI prints one start line 'cage: watching N protected file(s); live events: <log>' and only bell characters while the command runs; the session log outside the repo records a restored event for .env without file bodies (ok 59); watch-mode limits CAGE_WATCH_LIMITS and summary 'live restore, not blocking; …' (ok 60); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1116"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0237: --no-watch keeps after-exit behavior: no live restore (probe saw the agent's write), watch.enabled false, restored at exit with CAGE_LIMITS, exit 3 (ok 61 cage-watch.test.ts DoD 4); existing cage.test.ts cases pass, MSN-0235 limits test pinned to watch: false; ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1117"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0237: session push guard: unprotected push succeeds, pushes of a .github/workflows change to main and to a new branch are refused (remote has 'ok', no 'evil', no evil-branch), the repo's own pre-push hook still ran, push_guard.refused_pushes 2, .git/config unchanged and the gantry-cage-hooks temp dir removed at exit (ok 62 cage-watch.test.ts DoD 5); ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0"
+    anchor: "1118"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0237: ./scripts/dev-validate-core.sh on src/cli tree 9d3c662: tests 849 pass 849 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1119"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 35f551fb4fe5
