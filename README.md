@@ -141,30 +141,18 @@ See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GR
 
 ## Try it in 60 seconds: `gantry cage`
 
-No setup. Wrap any agent command:
+No setup. Start your agent inside the cage, exactly as you normally would:
 
 ```bash
-npx -p @jeger-ai/opengantry opengantry-cage -- <agent command>
-# installed: gantry cage -- <agent command>
+npx -p @jeger-ai/opengantry opengantry-cage -- claude
+# installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry cage -- aider
 ```
 
-Cage checks once, after the command exits, so use it for one-shot, headless agent runs rather than interactive sessions (install once; `npx` re-resolves the package on each launch):
+While the session runs, cage checks about once a second and restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`) and your manifest `forbidden_zones` from an in-memory snapshot. Lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths, and the agent sees why. When you quit, cage prints one report: everything it restored, any refused pushes, exit `3` if anything was touched (otherwise the agent's own exit code).
 
-```bash
-npm install -g @jeger-ai/opengantry
-gantry cage -- claude -p "Fix the failing test in auth.spec.ts"
-gantry cage -- aider --message "Refactor DB queries" --no-auto-commits --yes-always
+Nothing is printed into the agent's screen while it runs: events go to a session log in your temp dir (path shown at start), with a terminal bell per restore. If the agent keeps rewriting the same file, cage stops restoring it after 3 tries, marks it contested and restores it once at exit.
 
-# single-task shell functions
-c-run() { gantry cage -- claude -p "$*"; }
-a-run() { gantry cage -- aider --message "$*" --no-auto-commits --yes-always; }
-```
-
-Don't alias `claude` or `aider` themselves: both open an interactive REPL, and a protected-file edit early in a long session stays in place (and can be pushed) until you quit. Keep Aider's auto-commits off: cage restores the working tree, not git history or a remote, so a committed or pushed change needs a manual fix.
-
-After the command exits, cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), and your manifest `forbidden_zones`. Lockfile changes are listed but kept. Exit `3` means something was reverted; otherwise the command's own exit code passes through.
-
-Cage detects and reverts **after** the command exits. It does not see reads, network calls, or writes outside the protected set. For scope enforcement during a run, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
+Cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and a committed change stays in local history (cage restores the working tree only). Reads, network calls and writes outside the protected set are not seen. `--no-watch` checks once at exit instead. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
 
 ---
 
@@ -242,6 +230,8 @@ On failure, external agents ingest `findings[]`:
   "resolution_hint": "..."
 }
 ```
+
+**v3.7.1:** `gantry cage` restores protected files live during interactive agent sessions (default; `--no-watch` for exit-only) and refuses `git push` of protected paths from inside the session. See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 
 **v3.7.0:** zero-config `gantry cage -- <cmd>` (and `npx -p @jeger-ai/opengantry opengantry-cage -- <cmd>`) restores CI configs, `.env*`, git hooks/config and manifest forbidden zones after a one-shot agent run, reports lockfile changes, and exits 3 on tampering. See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 
