@@ -10,9 +10,9 @@ gate_command: ./scripts/dev-validate-core.sh
 #        MANIFEST.json or RULES.md change; ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0241: ADR-0047 config file format (humans write YAML, machines write JSON via canonicalJson, third-party formats native, MANIFEST.json/config.json/pointer files stay JSON until a dual-read migration mission) recorded ACTIVE at 4813afc with a docs/CHANGELOG.md substrate note; no src/, templates/, MANIFEST.json or RULES.md change; ./scripts/dev-validate-core.sh: tests 849 pass 849 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1124"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 2121e0ae69d9
