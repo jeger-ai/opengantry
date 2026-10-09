@@ -22,37 +22,37 @@ gate_command: ./scripts/dev-validate-core.sh
 # DoD 8: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0239: .cage.yaml protect entries at 4b33451: path infra/ and glob **/*.pem are reverted or removed with rule cage_protect source cage_yaml, a mode: report path is kept, unprotected src/app.ts untouched; no .cage.yaml gives cage_config present false entries 0; globs keep * in one segment and ** across (ok 77, ok 78 cage.test.ts MSN-0239 DoD 1); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1124"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0239: 13 bad .cage.yaml cases fail closed with exit 2 before the command runs (invalid YAML, unknown keys, relax/exclude subtractive keys, plain string entry, path+glob, absolute and .. paths, bad mode, mode: report on .env and on .github/workflows/ci.yml, YAML aliases); CLI relax: exits 2 and the command never ran at 4b33451 (ok 79 cage.test.ts MSN-0239 DoD 2); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1125"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0239: .cage.yaml is a cage_config revert target at 4b33451: an in-session rewrite to protect: [] was restored while the command still ran (probe read the original) and reported reverted source builtin; a .cage.yaml created in-session was removed (ok 80 cage.test.ts MSN-0239 DoD 3); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1126"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0239: caps CAGE_MAX_TARGETS 5000 and CAGE_MAX_SCAN_BYTES 64 MiB at 4b33451: maxTargets 4 and maxScanBytes 3000 abort with exit 2 and 'cage: protected set too large: N file(s), X MiB (limits ...)' counting the whole set; the command never ran; default caps pass (ok 81 cage.test.ts MSN-0239 DoD 4); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1127"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0239: --allow-override .env at 4b33451: change kept with overridden true, overrides ['.env'], status ok exit 0, banner 'cage: OVERRIDE (--allow-override): ...' once at start with --json and twice (start and exit) without; .git/config, .git, .cage.yaml, src/app.ts, package-lock.json and ../elsewhere are refused with exit 2 before the command runs (ok 82, ok 83 cage.test.ts MSN-0239 DoD 5); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1128"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0239: every plan target and glob carries source builtin, manifest or cage_yaml, and report rows .env/infra/main.tf/terraform/main.tf say builtin/manifest/cage_yaml at 4b33451; change rows add source and overridden to gantry.cage-report.v1 (ok 84 cage.test.ts MSN-0239 DoD 6); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1129"
+    status: PASS
   - dod_id: "7"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 7 MSN-0239: push guard reads the serialized session plan at 4b33451: push of overridden infra/ok goes through, glob keys/deep/server.pem and path infra/main.tf are refused, and after the agent rewrote .cage.yaml to protect: [] infra/later.tf is still refused; remote has only main and override, refused_pushes 3, .cage.yaml restored at exit (ok 63 cage-watch.test.ts MSN-0239 DoD 7); ./scripts/dev-validate-core.sh: tests 858 pass 858 fail 0"
+    anchor: "1130"
+    status: PASS
   - dod_id: "8"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 8 MSN-0239: ./scripts/dev-validate-core.sh on src/cli tree 4b33451: tests 858 pass 858 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1131"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1362fca0b3bc
