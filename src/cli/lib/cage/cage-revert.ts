@@ -6,7 +6,7 @@ import type { CageChange, CageEntry } from "./cage-snapshot.js";
 /**
  * - `reverted`: baseline bytes (or symlink) restored
  * - `removed`: an added file was deleted
- * - `kept`: report-only rule (lockfiles); change left in place
+ * - `kept`: report-only rule (lockfiles, report entries, `--allow-override`); change left in place
  * - `reported`: `--report-only` run; change left in place
  * - `detect_only`: no baseline bytes (over size cap or budget); change left in place
  * - `revert_failed`: restore attempted and failed (`error_code` says why)

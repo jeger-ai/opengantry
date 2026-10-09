@@ -2,9 +2,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { toPosixRel } from "../cli-io.js";
 import { gitRun } from "../git/git.js";
-import { CAGE_RULE_MODES, cageBasenameRule, type CagePlan, type CageRuleId } from "./cage-rules.js";
+import { classifyCagePath, serializeCagePlan, type CagePlan, type CageRuleId } from "./cage-rules.js";
 
 /** Standard client-side git hooks; each session wrapper chains to the repo's real hook of the same name. */
 const GIT_HOOK_NAMES = [
@@ -34,6 +33,9 @@ const ZERO_SHA = /^0+$/;
 /** Env var the session hook reads to find the cage session log. */
 export const CAGE_SESSION_LOG_ENV = "GANTRY_CAGE_SESSION_LOG";
 
+/** The session plan, written next to the hooks so the push guard checks exactly what the session protects. */
+const PLAN_FILE = "cage-plan.json";
+
 export interface CagePushGuard {
   hooksDir: string;
   /** Env additions for the caged process tree (GIT_CONFIG_* appends, never replaces, existing entries). */
@@ -56,11 +58,11 @@ function cliEntry(): string {
   return fileURLToPath(new URL("../../index.js", import.meta.url));
 }
 
-function hookScript(name: string, realHooks: string, root: string): string {
+function hookScript(name: string, realHooks: string, root: string, planFile: string): string {
   const real = shellQuote(path.join(realHooks, name));
   const guard =
     name === "pre-push"
-      ? `stdin_copy="$(cat)"\nprintf '%s\\n' "$stdin_copy" | ${shellQuote(process.execPath)} ${shellQuote(cliEntry())} cage-guard pre-push --root ${shellQuote(root)} || exit 1\n`
+      ? `stdin_copy="$(cat)"\nprintf '%s\\n' "$stdin_copy" | ${shellQuote(process.execPath)} ${shellQuote(cliEntry())} cage-guard pre-push --root ${shellQuote(root)} --plan ${shellQuote(planFile)} || exit 1\n`
       : "";
   const chain =
     name === "pre-push"
@@ -83,28 +85,28 @@ function gitConfigEnv(hooksDir: string): NodeJS.ProcessEnv {
  * Create a temporary hooks dir outside the repo and the env that points the caged process tree at it.
  * Returns null outside a git work tree. Nothing is written into the repository.
  */
-export function createCagePushGuard(root: string, sessionLogPath: string | null): CagePushGuard | null {
+export function createCagePushGuard(plan: CagePlan, sessionLogPath: string | null): CagePushGuard | null {
+  const root = plan.root;
   const realHooks = activeHooksDir(root);
   if (!realHooks) return null;
   const hooksDir = fs.mkdtempSync(path.join(os.tmpdir(), "gantry-cage-hooks-"));
+  const planFile = path.join(hooksDir, PLAN_FILE);
+  fs.writeFileSync(planFile, serializeCagePlan(plan), { mode: 0o600 });
   for (const name of GIT_HOOK_NAMES) {
-    fs.writeFileSync(path.join(hooksDir, name), hookScript(name, realHooks, root), { mode: 0o755 });
+    fs.writeFileSync(path.join(hooksDir, name), hookScript(name, realHooks, root, planFile), { mode: 0o755 });
   }
   const env: NodeJS.ProcessEnv = { ...gitConfigEnv(hooksDir) };
   if (sessionLogPath) env[CAGE_SESSION_LOG_ENV] = sessionLogPath;
   return { hooksDir, env, dispose: () => fs.rmSync(hooksDir, { recursive: true, force: true }) };
 }
 
-/** Rule for a repo-relative path in an outgoing commit; lockfiles (report-only) never block a push. */
+/**
+ * Rule for a repo-relative path in an outgoing commit, resolved exactly like the live snapshot.
+ * Report-mode paths (lockfiles, report entries, `--allow-override`) never block a push.
+ */
 export function pushGuardRule(plan: CagePlan, rel: string): CageRuleId | null {
-  for (const t of plan.targets) {
-    if (t.rule !== "ci_config" && t.rule !== "manifest_forbidden_zone") continue;
-    const base = toPosixRel(plan.root, t.abs);
-    if (base.startsWith("..")) continue;
-    if (rel === base || rel.startsWith(`${base}/`)) return t.rule;
-  }
-  const rule = cageBasenameRule(path.posix.basename(rel));
-  return rule && CAGE_RULE_MODES[rule] === "revert" ? rule : null;
+  const hit = classifyCagePath(plan, rel);
+  return hit && hit.mode === "revert" ? hit.rule : null;
 }
 
 function outgoingRange(localSha: string, remoteSha: string): string[] {
