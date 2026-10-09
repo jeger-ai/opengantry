@@ -1,0 +1,137 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cage suggest: standalone, developer-initiated setup subcommand that statically scans the repo for sensitive anchors (migration dirs, IaC, container and package-registry config, CODEOWNERS, other CI systems, key and cert files) and proposes additive .cage.yaml protect entries with a reason each, printed to stdout or written to .cage.yaml.suggested; never writes .cage.yaml, never loaded by cage, refuses to run inside a cage session, no MCP tool; gantry cage -- suggest still runs an external command; cage warns when .cage.yaml has uncommitted changes
+msn_id: MSN-0240
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: gantry cage suggest is a subcommand of gantry cage only (not the standalone opengantry-cage bin); gantry cage --
+#        suggest still runs an external command named suggest (tests).
+# DoD 2: static heuristics only (migration dirs, Terraform/k8s/Helm, Dockerfile, .npmrc/.pypirc, CODEOWNERS, Jenkins/
+#        Buildkite/Bitbucket CI, key and cert files); each suggestion is {path|glob, mode, reason}; output is deterministic
+#        and sorted, omits entries already covered by built-ins or the existing .cage.yaml, and parses with the MSN-0239
+#        .cage.yaml loader (tests).
+# DoD 3: proposal only: stdout by default; --write creates .cage.yaml.suggested and refuses to overwrite it without
+#        --force; never writes .cage.yaml; cage never loads .cage.yaml.suggested (tests).
+# DoD 4: cage exports GANTRY_CAGE_SESSION=1 to the wrapped process; gantry cage suggest exits 2 when it is set (tests).
+# DoD 5: no gxt_* MCP tool exposes suggest (test asserts the registered tool list) (tests).
+# DoD 6: cage warns on stderr, without aborting, when .cage.yaml is untracked or differs from HEAD; the JSON report
+#        carries config.committed: false (tests).
+# DoD 7: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: gantry cage suggest is dispatched only when suggest is the first operand with no -- before it at 1b8d96b: gantry cage suggest prints a protect: proposal, gantry cage --json -- suggest ran a fake suggest binary on PATH (report command suggest), and opengantry-cage suggest also runs the command (cage-suggest.test.ts MSN-0240 DoD 1 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1148"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: static heuristics at 1b8d96b propose 12 sorted entries with category and reason (**/*.pem, **/*.tf, **/*.tfvars, .github/CODEOWNERS, .github/actions, .npmrc, Dockerfile, Jenkinsfile, db/migrations, deploy/k8s, services/api/Dockerfile.dev, services/api/migrations), skip node_modules/ and dist/ decoys and built-in .github/workflows, omit 2 entries already in .cage.yaml (already_covered 2), are deterministic, and the YAML loads with loadCageConfig to the same entries (cage-suggest.test.ts MSN-0240 DoD 2 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1149"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: --write at 1b8d96b creates .cage.yaml.suggested with empty stdout and never .cage.yaml; a second --write exits 2 '.cage.yaml.suggested already exists', --force replaces it; a cage run with only a subtractive .cage.yaml.suggested present reports cage_config present false and status ok The second --write fails with code GXT_CAGE_SUGGEST_EXISTS. (cage-suggest.test.ts MSN-0240 DoD 3 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1150"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: cage exports GANTRY_CAGE_SESSION=1 to the wrapped process (probe read 1) and gantry cage suggest --write run inside the session exits 2 'refused inside a cage session' without writing .cage.yaml.suggested at 1b8d96b The refusal carries code GXT_CAGE_SUGGEST_IN_SESSION; the MSN-0237 push-guard test now checks its own session hooks dir (read via git config core.hooksPath) instead of diffing the shared temp dir. (cage-suggest.test.ts MSN-0240 DoD 4 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1151"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: the registered gxt_* MCP tool list at 1b8d96b has no tool named cage or suggest and no description mentioning cage suggest or .cage.yaml (cage-suggest.test.ts MSN-0240 DoD 5 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1152"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: cage warns 'cage: warning: .cage.yaml is untracked or has uncommitted changes; review and commit it' without aborting (exit 0) and the JSON report has cage_config.committed false when untracked or modified, true with no warning once committed, null outside git at 1b8d96b (cage-suggest.test.ts MSN-0240 DoD 6 ok); ./scripts/dev-validate-core.sh: tests 864 pass 864 fail 0"
+    anchor: "1153"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "DoD 7 MSN-0240 re-attested after rebase onto MSN-0239 8421aae at 1b8d96b: ./scripts/dev-validate-core.sh on src/cli tree 1b8d96b: tests 864 pass 864 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1154"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0037 stays ACTIVE. The match is on
+      'migration' and 'CI' as file categories the scanner detects (migration
+      directories, CI config files), not plane deployment, CI receipt ingestion
+      or pepper custody. Nothing leaves the machine; scan output contains paths
+      and reasons only, no file bodies.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: "Authorize ./scripts/dev-validate-core.sh with success
+      substring 'dev-validate-core OK': adds lint, changed-code budgets, doctor
+      and MSN-subject checks over npm test. Same rationale as MSN-0233,
+      MSN-0235, MSN-0237 and MSN-0239: npm run validate recurses via
+      verify-pr-missions; MSN-0232 precedent."
+  - finding_id: 3cba3dc39c4f
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirm: contract tmvc_roots narrowed to src/cli/lib/cage/,
+      src/cli/commands/cage.ts, src/cli/program-cage.ts,
+      src/cli/tests/cage.test.ts and the new src/cli/tests/cage-suggest.test.ts
+      (plus the EXECUTOR_LOG.md trace). cage suggest is a standalone developer
+      setup command; it only writes .cage.yaml.suggested on request and never
+      .cage.yaml. No MCP, MANIFEST.json, RULES.md, .githooks/, workflow or
+      package.json change; docs follow in a separate mission."
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0026 stays ACTIVE. The match is
+      'external' as in 'gantry cage -- suggest still runs an external command'
+      (subcommand vs wrapped-command parsing), not the external architecture
+      pointer or HTTP fetch. cage suggest does no network I/O and reads no
+      architecture pointer.
+    adr_refs:
+      - ADR-0026
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0022 stays ACTIVE and is honored by omission: cage
+      suggest gets no gxt_* MCP tool and no MCP write path, so rule
+      authorization stays outside any agent tool boundary. Proposals are inert
+      until a human renames .cage.yaml.suggested and commits it; the in-session
+      self-protection of .cage.yaml (MSN-0239 DoD 3) is unchanged."
+    adr_refs:
+      - ADR-0022
+      - ADR-0042
+interrogation_sha256: 4f8f087b3fa7778f04c75ecc3578b7fc3464a00581134cdf9cb2fb078f841e1a
+declared_paths:
+  - .gitagent/missions/MSN-0240.gantry-cage-suggest-standalone-developer-initiat.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-suggest.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-suggest.test.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 7fa841900a49f4b477803c82d1f2501e4efc998e2888040939f97b40a31c8e51

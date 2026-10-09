@@ -1,10 +1,18 @@
 import fs from "node:fs";
+import path from "node:path";
 import { logError, readStdinIfEmpty, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
 import { CAGE_SESSION_LOG_ENV, findPushViolations } from "../lib/cage/cage-push-guard.js";
 import { formatCageOverrideBanner, formatCageReport } from "../lib/cage/cage-report.js";
 import { buildCagePlan, parseSerializedCagePlan } from "../lib/cage/cage-rules.js";
-import { runCage } from "../lib/cage/cage-run.js";
+import { resolveCageRoot, runCage } from "../lib/cage/cage-run.js";
+import {
+  assertOutsideCageSession,
+  formatCageSuggestionsYaml,
+  suggestCageRules,
+  writeCageSuggestions,
+} from "../lib/cage/cage-suggest.js";
+import { CAGE_CONFIG_FILE } from "../lib/cage/cage-config.js";
 
 export interface CageCliOptions {
   command: string[];
@@ -48,10 +56,13 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
       watchIntervalMs: interval.value,
       allowOverride: options.allowOverride,
       // The only lines printed before the command starts; nothing is written while it runs except a bell.
-      onStart: ({ sessionLog, protectedFiles, watch, overrides }) => {
+      onStart: ({ sessionLog, protectedFiles, watch, overrides, configCommitted }) => {
         const mode = watch ? "watching" : "checking at exit";
         const logPart = sessionLog ? `; live events: ${sessionLog}` : "";
         console.error(`cage: ${mode} ${String(protectedFiles)} protected file(s)${logPart}`);
+        if (configCommitted === false) {
+          console.error(`cage: warning: ${CAGE_CONFIG_FILE} is untracked or has uncommitted changes; review and commit it`);
+        }
         const banner = formatCageOverrideBanner(overrides);
         if (banner) console.error(banner);
       },
@@ -81,4 +92,32 @@ export async function runCageGuardPrePush(options: { root: string; plan?: string
     fs.appendFileSync(logPath, `${JSON.stringify(event)}\n`);
   }
   setExitCode(1);
+}
+
+export interface CageSuggestCliOptions {
+  write?: boolean;
+  force?: boolean;
+  json?: boolean;
+}
+
+/** `gantry cage suggest`: propose `.cage.yaml` entries; prints them, or writes `.cage.yaml.suggested`. */
+export async function runCageSuggestCommand(options: CageSuggestCliOptions): Promise<void> {
+  await runUserCommandAsync({ json: options.json }, () => {
+    assertOutsideCageSession();
+    const root = resolveCageRoot(process.cwd());
+    const result = suggestCageRules(root);
+    const yaml = formatCageSuggestionsYaml(result, fs.existsSync(path.join(root, CAGE_CONFIG_FILE)));
+    const n = result.suggestions.length;
+    let written: string | null = null;
+    if (options.write && n > 0) written = writeCageSuggestions(root, yaml, options.force === true);
+    if (options.json) {
+      emitCliJson({ ...result, written: written ? path.basename(written) : null });
+    } else if (!options.write) {
+      process.stdout.write(yaml);
+    }
+    const covered = `${String(result.already_covered)} already protected`;
+    if (written) console.error(`cage suggest: wrote ${path.basename(written)} (${String(n)} entr${n === 1 ? "y" : "ies"}; ${covered}); review it, then move what you keep into ${CAGE_CONFIG_FILE}`);
+    else console.error(`cage suggest: ${String(n)} new suggestion(s); ${covered}`);
+    return Promise.resolve();
+  });
 }

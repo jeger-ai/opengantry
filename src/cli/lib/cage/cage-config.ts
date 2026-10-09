@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseDocument } from "yaml";
 import { GantryUserError } from "../errors.js";
+import { gitRun } from "../git/git.js";
 
 /** Per-project cage config at the cage root. Additive only: it can protect more, never less. */
 export const CAGE_CONFIG_FILE = ".cage.yaml";
@@ -118,6 +119,18 @@ export function loadCageConfig(root: string): CageConfig {
     throw configError(`unreadable (${(err as NodeJS.ErrnoException).code ?? "ERROR"})`);
   }
   return parseConfigText(text);
+}
+
+/**
+ * Whether `.cage.yaml` is on record: tracked and identical to `HEAD`. Null outside a git work tree.
+ * Unreviewed rules can only protect more, so cage warns rather than refuses.
+ */
+export function cageConfigCommitted(root: string): boolean | null {
+  const tracked = gitRun(root, ["ls-files", "--", CAGE_CONFIG_FILE]);
+  if (!tracked.ok) return null;
+  if (!tracked.stdout.trim()) return false;
+  const status = gitRun(root, ["status", "--porcelain", "--", CAGE_CONFIG_FILE]);
+  return status.ok ? status.stdout.trim() === "" : null;
 }
 
 /** `*` and `?` stay inside one path segment; `**` spans any depth (`**\/x` also matches top-level `x`). */
