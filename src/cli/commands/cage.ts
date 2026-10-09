@@ -23,6 +23,7 @@ export interface CageCliOptions {
   watch?: boolean;
   watchIntervalMs?: string;
   allowOverride?: string[];
+  contestLimit?: string;
 }
 
 function parseNonNegativeInt(raw: string | undefined): { ok: true; value: number | undefined } | { ok: false } {
@@ -41,8 +42,9 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
   }
   const max = parseNonNegativeInt(options.maxFileBytes);
   const interval = parseNonNegativeInt(options.watchIntervalMs);
-  if (!max.ok || !interval.ok || interval.value === 0) {
-    logError("cage: --max-file-bytes must be a non-negative integer and --watch-interval-ms a positive integer");
+  const contest = parseNonNegativeInt(options.contestLimit);
+  if (!max.ok || !interval.ok || interval.value === 0 || !contest.ok) {
+    logError("cage: --max-file-bytes and --contest-limit must be non-negative integers and --watch-interval-ms a positive integer");
     setExitCode(2);
     return;
   }
@@ -55,6 +57,7 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
       watch: options.watch !== false,
       watchIntervalMs: interval.value,
       allowOverride: options.allowOverride,
+      contestLimit: contest.value,
       // The only lines printed before the command starts; nothing is written while it runs except a bell.
       onStart: ({ sessionLog, protectedFiles, watch, overrides, configCommitted }) => {
         const mode = watch ? "watching" : "checking at exit";

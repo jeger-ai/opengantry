@@ -20,7 +20,13 @@ export interface CageProtectEntry {
 export interface CageConfig {
   present: boolean;
   entries: CageProtectEntry[];
+  /** Top-level `mode:`; the default for entries without their own. Never applied to built-in rules. */
+  defaultMode: CageConfigMode;
+  /** Top-level `contest_limit:`; null when unset. 0 keeps restoring without ever halting the command. */
+  contestLimit: number | null;
 }
+
+const EMPTY_CONFIG: Omit<CageConfig, "present"> = { entries: [], defaultMode: "revert", contestLimit: null };
 
 /** Keys that would loosen protection. Named in the error so authors know relaxation is a runtime flag. */
 const SUBTRACTIVE_KEYS: ReadonlySet<string> = new Set([
@@ -39,6 +45,7 @@ const SUBTRACTIVE_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 const ENTRY_KEYS: ReadonlySet<string> = new Set(["path", "glob", "mode"]);
+const TOP_LEVEL_KEYS: ReadonlySet<string> = new Set(["protect", "mode", "contest_limit"]);
 
 function configError(message: string): GantryUserError {
   return new GantryUserError(
@@ -64,7 +71,7 @@ export function normalizeCageRelPath(raw: string): string | null {
   return norm;
 }
 
-function parseEntry(raw: unknown, index: number): CageProtectEntry {
+function parseEntry(raw: unknown, index: number, defaultMode: CageConfigMode): CageProtectEntry {
   const where = `protect[${String(index)}]`;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw configError(`${where}: expected a mapping with path: or glob:`);
@@ -79,9 +86,22 @@ function parseEntry(raw: unknown, index: number): CageProtectEntry {
   const rawValue = obj[kind];
   const value = typeof rawValue === "string" ? normalizeCageRelPath(rawValue) : null;
   if (!value) throw configError(`${where}: ${kind} must be a root-relative path without ".." or a leading "/"`);
-  const mode = obj.mode ?? "revert";
-  if (mode !== "revert" && mode !== "report") throw configError(`${where}: mode must be revert or report`);
+  const mode = parseMode(obj.mode, where) ?? defaultMode;
   return { kind, value, mode };
+}
+
+function parseMode(raw: unknown, where: string): CageConfigMode | null {
+  if (raw === undefined || raw === null) return null;
+  if (raw !== "revert" && raw !== "report") throw configError(`${where}: mode must be revert or report`);
+  return raw;
+}
+
+function parseContestLimit(raw: unknown): number | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== "number" || !Number.isInteger(raw) || raw < 0) {
+    throw configError("top level: contest_limit must be a non-negative integer (0 never halts the command)");
+  }
+  return raw;
 }
 
 function parseConfigText(text: string): CageConfig {
@@ -94,15 +114,17 @@ function parseConfigText(text: string): CageConfig {
   } catch (err) {
     throw configError(`invalid YAML: ${err instanceof Error ? err.message : String(err)}`);
   }
-  if (data === null || data === undefined) return { present: true, entries: [] };
+  if (data === null || data === undefined) return { present: true, ...EMPTY_CONFIG };
   if (typeof data !== "object" || Array.isArray(data)) throw configError("expected a mapping with a protect: list");
   const obj = data as Record<string, unknown>;
   for (const key of Object.keys(obj)) {
-    if (key !== "protect") throw unknownKey(key, "top level");
+    if (!TOP_LEVEL_KEYS.has(key)) throw unknownKey(key, "top level");
   }
   const protect = obj.protect ?? [];
   if (!Array.isArray(protect)) throw configError("protect: must be a list");
-  return { present: true, entries: protect.map((e, i) => parseEntry(e, i)) };
+  const defaultMode = parseMode(obj.mode, "top level") ?? "revert";
+  const contestLimit = parseContestLimit(obj.contest_limit);
+  return { present: true, entries: protect.map((e, i) => parseEntry(e, i, defaultMode)), defaultMode, contestLimit };
 }
 
 /**
@@ -115,7 +137,7 @@ export function loadCageConfig(root: string): CageConfig {
   try {
     text = fs.readFileSync(file, "utf8");
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { present: false, entries: [] };
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { present: false, ...EMPTY_CONFIG };
     throw configError(`unreadable (${(err as NodeJS.ErrnoException).code ?? "ERROR"})`);
   }
   return parseConfigText(text);

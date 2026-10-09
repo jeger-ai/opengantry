@@ -45,6 +45,10 @@ export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } =
     .option("--watch-interval-ms <n>", "Live check interval while the command runs (default 1000)")
     .option("--max-file-bytes <n>", "Per-file in-memory snapshot cap; larger files are detect-only")
     .option(
+      "--contest-limit <n>",
+      "Live restores of one path before cage terminates the command (default 3, or .cage.yaml contest_limit; 0 never halts)",
+    )
+    .option(
       "--allow-override <path>",
       "Report instead of restore changes under <path> for this run (repeatable; never git hooks/config or .cage.yaml)",
       collect,
@@ -63,6 +67,7 @@ export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } =
           watch?: boolean;
           watchIntervalMs?: string;
           allowOverride?: string[];
+          contestLimit?: string;
         },
       ) => {
         if (opts.suggest && isSuggestInvocation(command)) {

@@ -1,0 +1,128 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cage guard-dog hardening: contested-file kill switch (configurable contest limit, halt the wrapped process group with SIGTERM then SIGKILL, distinct exit code and report row) and a top-level default mode in .cage.yaml that applies only to project protect entries, never to built-in rules
+msn_id: MSN-0244
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: .cage.yaml accepts a top-level mode: revert|report default and contest_limit: <n>; the default applies only to
+#        protect entries without their own mode; a resulting report mode on a built-in revert path is rejected with
+#        GXT_CAGE_CONFIG_INVALID; built-in rules are unaffected (tests).
+# DoD 2: the contest limit comes from --contest-limit <n>, then .cage.yaml contest_limit, then the default 3; 0 disables
+#        the halt and keeps the restore-once-at-exit behaviour (tests).
+# DoD 3: when a revert-mode file reaches the limit, cage sends SIGTERM to the wrapped command and every descendant
+#        (tree enumerated via ps, so the command keeps the terminal's foreground group and interactive agents are not
+#        stopped by SIGTTIN), waits a grace period, then SIGKILLs what is left, including orphans of the first listing;
+#        terminal signal forwarding is unchanged (tests).
+# DoD 4: a halt restores the triggering file, exits 4, names the triggering path in the exit summary, and the JSON report
+#        carries halt {path, rule, live_restores} (tests).
+# DoD 5: --report-only and --allow-override paths never trigger a halt (tests).
+# DoD 6: ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0244: .cage.yaml at 466d2b3 accepts top-level mode: revert|report and contest_limit: <n>; with mode: report the entry docs/generated.md without its own mode is kept (v2 stays) while infra with mode: revert is reverted and the built-in .env and .github/workflows/ci.yml are reverted regardless; mode: report with path .env fails closed 'would weaken the built-in secrets rule', mode: ignore fails 'top level: mode must be revert or report', contest_limit: many and -1 fail 'contest_limit must be a non-negative integer', all GXT_CAGE_CONFIG_INVALID exit 2 before the command runs; report.watch.contest_limit 2 (ok 90 cage.test.ts MSN-0244 DoD 1; ok 94 bad configs); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1162"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0244: at 466d2b3 the contest limit resolves --contest-limit, then .cage.yaml contest_limit, then 3: .cage.yaml contest_limit: 1 halts after 1 live restore (contest_limit 1 in the report), contestLimit 0 with .cage.yaml contest_limit: 1 never halts and .env is contested after 3 restores and restored once at exit (status violations_reverted, exit 3, halt null), gantry cage --contest-limit 1 exits 4 and --contest-limit x exits 2 (ok 65, ok 68 cage-watch.test.ts MSN-0244 DoD 2); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1163"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0244: at 466d2b3 a node loop rewriting .env every 300ms gets SIGTERM after the 4th rewrite (command_signal SIGTERM, probe-finished.txt never written); with sh -c 'node grandchild.js; echo after > probe-after.txt' and a grandchild that ignores SIGTERM, cage SIGTERMs the enumerated tree (ps -A -o pid=,ppid=), waits haltGraceMs 200 and SIGKILLs the union of the first listing and a fresh one, so the grandchild pid is dead, probe-after.txt is absent and .env is restored; the command keeps the terminal's foreground group (no detached spawn), SIGINT swallow and SIGTERM/SIGHUP forwarding unchanged (ok 66, ok 67 cage-watch.test.ts MSN-0244 DoD 3); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1164"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0244: at 466d2b3 a halt restores the triggering file (.env back to the baseline), status halted, exit_code 4 (CAGE_HALT_EXIT_CODE), report.watch.halt {path .env, rule secrets, live_restores 3}, stderr 'cage: HALTED: .env (secrets) was rewritten again after 3 live restore(s); the command was terminated (contest limit 3)' plus 'cage: exit 4;' and the upgrade footer, session log carries event halt with path and live_restores (ok 66, ok 68 cage-watch.test.ts MSN-0244 DoD 4); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1165"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0244: at 466d2b3 with --allow-override .env and contestLimit 1 a 6x rewrite loop runs to completion with halt null, live_restores 0 and status ok; with --report-only the watcher is off (watch.enabled false), halt null, exit 3 and .env keeps the last agent write (ok 69 cage-watch.test.ts MSN-0244 DoD 5); ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0"
+    anchor: "1166"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0244: ./scripts/dev-validate-core.sh on src/cli tree 466d2b3: tests 870 pass 870 fail 0; gantry arch check OK; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1167"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 35f551fb4fe5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh" with
+      documented success substring for verify.
+    operator_answer: "Authorize ./scripts/dev-validate-core.sh with success
+      substring 'dev-validate-core OK': adds lint, changed-code budgets, doctor
+      and MSN-subject checks over npm test. Same rationale as MSN-0237,
+      MSN-0239, MSN-0240 and MSN-0242: npm run validate recurses via
+      verify-pr-missions; MSN-0232 precedent."
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE and this mission tightens within
+      it. Built-in rules remain a floor: the top-level mode: default in
+      .cage.yaml applies only to protect entries that lack a per-entry mode, and
+      a resulting report mode on a path a built-in rule reverts is rejected with
+      GXT_CAGE_CONFIG_INVALID exactly as per-entry mode: report is today.
+      Relaxation stays on the CLI (--report-only, --allow-override) and
+      announced. The contested-file halt is stronger enforcement, not a rule
+      change: cage still restores rather than blocks writes, but on reaching the
+      contest limit it halts the wrapped process group instead of giving up. The
+      ADR text is amended in a follow-up substrate mission to record the halt
+      consequence (a dev server that rewrites .env.local needs --allow-override)
+      and the scoped default."
+    adr_refs:
+      - ADR-0048
+  - finding_id: 655d6fb29829
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirm: contract tmvc_roots are src/cli/commands/cage.ts,
+      src/cli/program-cage.ts, src/cli/lib/cage/ and the cage tests
+      src/cli/tests/cage.test.ts and src/cli/tests/cage-watch.test.ts (plus the
+      mission file and EXECUTOR_LOG.md trace). Only cage runtime behaviour
+      changes: contested-file halt in cage-watch/cage-run/cage-process,
+      top-level default mode in cage-config, report and exit-code rows in
+      cage-report. The push guard, cage suggest, MANIFEST.json, RULES.md,
+      .githooks/, workflows and package.json are untouched. ADR-0048 amendment
+      and README/FEATURES docs follow in a separate substrate mission, as for
+      MSN-0241 and MSN-0243."
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0047 stays ACTIVE. The only config touched is
+      .cage.yaml, which stays human-written YAML with a strict schema (ADR-0047
+      point 1). The new top-level mode: key and the contest_limit: key are added
+      to that same strict schema; unknown keys still fail closed. The JSON
+      report stays machine-written JSON. No new config file is introduced."
+    adr_refs:
+      - ADR-0047
+interrogation_sha256: 567ad6b6544529d2d7108d5663b4626ed3da687b3c4cee13ce1f77a397c1726e
+declared_paths:
+  - .gitagent/missions/MSN-0244.cage-guard-dog-kill-switch-and-default-mode.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 3d10186207c40eda2763e04a085b9f9e482721f53cdf14d6e43aff07b260e1dc
