@@ -173,3 +173,33 @@ test("cage push guard: refuses pushes of protected paths, chains the repo's own 
   assert.deepEqual(tmpHooksAfter, tmpHooksBefore, "session hooks dir removed at exit");
   assert.ok(formatCageReport(report).some((l) => l === "cage: refused 2 push(es) touching protected paths"));
 });
+
+test("cage push guard: checks the session plan, so .cage.yaml paths and globs are refused and overrides go through (MSN-0239 DoD 7)", async () => {
+  const { dest, remote } = makeRepoWithRemote();
+  fs.writeFileSync(path.join(dest, ".cage.yaml"), 'protect:\n  - path: infra\n  - glob: "**/*.pem"\n');
+  const g = 'git -c user.email=t@example.com -c user.name=t -c commit.gpgsign=false';
+  const branch = (name: string, rel: string): string =>
+    [
+      `git checkout -q main && git checkout -q -b ${name}`,
+      `mkdir -p "$(dirname ${rel})" && echo x > ${rel} && ${g} add ${rel} && ${g} commit -qm ${name}`,
+      `git push -q origin HEAD:refs/heads/${name}; echo $? > probe-${name}`,
+    ].join(" && ");
+  const script = [
+    branch("override", "infra/ok/a.tf"),
+    branch("pem", "keys/deep/server.pem"),
+    branch("infra", "infra/main.tf"),
+    // The agent removes its own protect entry; the guard still uses the plan the session started with.
+    `printf 'protect: []\\n' > .cage.yaml`,
+    branch("after", "infra/later.tf"),
+  ].join("\n");
+  const report = await runCage({ cwd: dest, watch: false, allowOverride: ["infra/ok"], command: ["sh", "-c", script] });
+
+  assert.equal(read(dest, "probe-override").trim(), "0", "overridden path is pushed");
+  assert.notEqual(read(dest, "probe-pem").trim(), "0", "glob-protected path is refused");
+  assert.notEqual(read(dest, "probe-infra").trim(), "0", "path-protected tree is refused");
+  assert.notEqual(read(dest, "probe-after").trim(), "0", "editing .cage.yaml mid-session does not loosen the guard");
+  const branches = git(remote, ["branch", "--list", "--format=%(refname:short)"]).split("\n").sort();
+  assert.deepEqual(branches, ["main", "override"]);
+  assert.equal(report.push_guard.refused_pushes, 3);
+  assert.equal(read(dest, ".cage.yaml"), 'protect:\n  - path: infra\n  - glob: "**/*.pem"\n', "config restored at exit");
+});

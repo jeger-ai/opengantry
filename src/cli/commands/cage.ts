@@ -2,8 +2,8 @@ import fs from "node:fs";
 import { logError, readStdinIfEmpty, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
 import { CAGE_SESSION_LOG_ENV, findPushViolations } from "../lib/cage/cage-push-guard.js";
-import { formatCageReport } from "../lib/cage/cage-report.js";
-import { buildCagePlan } from "../lib/cage/cage-rules.js";
+import { formatCageOverrideBanner, formatCageReport } from "../lib/cage/cage-report.js";
+import { buildCagePlan, parseSerializedCagePlan } from "../lib/cage/cage-rules.js";
 import { runCage } from "../lib/cage/cage-run.js";
 
 export interface CageCliOptions {
@@ -14,6 +14,7 @@ export interface CageCliOptions {
   /** Commander sets false for `--no-watch`. */
   watch?: boolean;
   watchIntervalMs?: string;
+  allowOverride?: string[];
 }
 
 function parseNonNegativeInt(raw: string | undefined): { ok: true; value: number | undefined } | { ok: false } {
@@ -45,11 +46,14 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
       maxFileBytes: max.value,
       watch: options.watch !== false,
       watchIntervalMs: interval.value,
-      // The only line printed before the command starts; nothing is written while it runs except a bell.
-      onStart: ({ sessionLog, protectedFiles, watch }) => {
+      allowOverride: options.allowOverride,
+      // The only lines printed before the command starts; nothing is written while it runs except a bell.
+      onStart: ({ sessionLog, protectedFiles, watch, overrides }) => {
         const mode = watch ? "watching" : "checking at exit";
         const logPart = sessionLog ? `; live events: ${sessionLog}` : "";
         console.error(`cage: ${mode} ${String(protectedFiles)} protected file(s)${logPart}`);
+        const banner = formatCageOverrideBanner(overrides);
+        if (banner) console.error(banner);
       },
     });
     if (options.json) {
@@ -61,10 +65,12 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
   });
 }
 
-/** `gantry cage-guard pre-push --root <dir>`: called by the cage session pre-push hook. */
-export async function runCageGuardPrePush(options: { root: string }): Promise<void> {
+/** `gantry cage-guard pre-push --root <dir> [--plan <file>]`: called by the cage session pre-push hook. */
+export async function runCageGuardPrePush(options: { root: string; plan?: string }): Promise<void> {
   const stdin = await readStdinIfEmpty("");
-  const violations = findPushViolations(buildCagePlan(options.root), stdin);
+  // The session plan (with its overrides) when the hook passes one; a fresh plan otherwise.
+  const plan = options.plan ? parseSerializedCagePlan(fs.readFileSync(options.plan, "utf8")) : buildCagePlan(options.root);
+  const violations = findPushViolations(plan, stdin);
   if (violations.length === 0) return;
   const list = violations.map((v) => `${v.path} (${v.rule})`).join(", ");
   console.error(`gantry cage: push refused: outgoing commits change protected paths: ${list}`);

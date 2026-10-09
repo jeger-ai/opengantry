@@ -4,7 +4,14 @@ import { getRepoRoot } from "../git/git.js";
 import { buildCageReport, type CageReport } from "./cage-report.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import { buildCagePlan } from "./cage-rules.js";
-import { diffCageSnapshots, takeCageSnapshot, type CageSnapshot, type CageSnapshotOptions } from "./cage-snapshot.js";
+import {
+  CAGE_MAX_SCAN_BYTES,
+  CAGE_MAX_TARGETS,
+  diffCageSnapshots,
+  takeCageSnapshot,
+  type CageSnapshot,
+  type CageSnapshotOptions,
+} from "./cage-snapshot.js";
 import { signalExitCode, spawnCaged } from "./cage-process.js";
 import { createCagePushGuard } from "./cage-push-guard.js";
 import {
@@ -32,8 +39,13 @@ export interface CageRunOptions {
   watchIntervalMs?: number;
   /** Session pre-push guard for git run by the caged command (default true inside a git work tree). */
   pushGuard?: boolean;
+  /** Root-relative paths whose revert rules are downgraded to report for this run (`--allow-override`). */
+  allowOverride?: readonly string[];
+  /** Baseline caps; defaults {@link CAGE_MAX_TARGETS} and {@link CAGE_MAX_SCAN_BYTES}. */
+  maxTargets?: number;
+  maxScanBytes?: number;
   /** Called once before the command starts, e.g. to print where the session log is. */
-  onStart?: (info: { sessionLog: string | null; protectedFiles: number; watch: boolean }) => void;
+  onStart?: (info: { sessionLog: string | null; protectedFiles: number; watch: boolean; overrides: string[] }) => void;
   bell?: () => void;
 }
 
@@ -104,8 +116,13 @@ async function runSession(
   before: CageSnapshot,
 ): Promise<CageSessionResult> {
   const log = s.watch || s.pushGuard ? openCageSessionLog() : null;
-  const guard = s.pushGuard ? createCagePushGuard(s.root, log?.path ?? null) : null;
-  opts.onStart?.({ sessionLog: log?.path ?? null, protectedFiles: before.entries.size, watch: s.watch });
+  const guard = s.pushGuard ? createCagePushGuard(plan, log?.path ?? null) : null;
+  opts.onStart?.({
+    sessionLog: log?.path ?? null,
+    protectedFiles: before.entries.size,
+    watch: s.watch,
+    overrides: plan.overrides,
+  });
   const watcher =
     s.watch && log
       ? startCageWatch({ plan, baseline: before, snapshotOptions: s.snap, intervalMs: s.intervalMs, log, bell: opts.bell })
@@ -126,9 +143,11 @@ async function runSession(
  */
 export async function runCage(opts: CageRunOptions): Promise<CageReport> {
   const s = resolveSettings(opts);
-  // Plan before spawning: an invalid manifest fails closed and the command never runs.
-  const plan = buildCagePlan(s.root);
-  const before = takeCageSnapshot(plan, s.snap);
+  // Plan and baseline before spawning: an invalid manifest, .cage.yaml or override, or a protected set
+  // over the caps, fails closed and the command never runs.
+  const plan = buildCagePlan(s.root, { overrides: opts.allowOverride });
+  const limits = { maxTargets: opts.maxTargets ?? CAGE_MAX_TARGETS, maxScanBytes: opts.maxScanBytes ?? CAGE_MAX_SCAN_BYTES };
+  const before = takeCageSnapshot(plan, { ...s.snap, limits });
   const { proc, live, log, guarded } = await runSession(opts, s, plan, before);
   const after = takeCageSnapshot(plan, { ...s.snap, keepBytes: false });
   const changes = mergeChanges(live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
@@ -143,6 +162,8 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
     maxFileBytes: s.snap.maxFileBytes,
     protectedFiles: before.entries.size,
     manifestZones: plan.manifestZoneCount,
+    cageConfig: plan.config,
+    overrides: plan.overrides,
     changes,
     watch: {
       enabled: s.watch,
