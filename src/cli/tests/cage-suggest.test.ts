@@ -148,7 +148,7 @@ test("cage suggest: proposal only; --write creates .cage.yaml.suggested, never .
 
   const again = cli(dest, ["cage", "suggest", "--write"]);
   assert.equal(again.status, 2);
-  assert.match(again.stderr, /\.cage\.yaml\.suggested already exists/);
+  assert.match(again.stderr, /\[GXT_CAGE_SUGGEST_EXISTS\].*\.cage\.yaml\.suggested already exists/);
   fs.writeFileSync(suggested, "stale\n");
   const forced = cli(dest, ["cage", "suggest", "--write", "--force"]);
   assert.equal(forced.status, 0, forced.stderr);
@@ -166,7 +166,10 @@ test("cage suggest: proposal only; --write creates .cage.yaml.suggested, never .
 });
 
 test("cage suggest: cage marks its session and suggest refuses to run inside it (MSN-0240 DoD 4)", async () => {
-  assert.throws(() => assertOutsideCageSession({ [CAGE_SESSION_ENV]: "1" }), /refused inside a cage session/);
+  assert.throws(
+    () => assertOutsideCageSession({ [CAGE_SESSION_ENV]: "1" }),
+    (err: Error & { code?: string }) => /refused inside a cage session/.test(err.message) && err.code === "GXT_CAGE_SUGGEST_IN_SESSION",
+  );
   assert.doesNotThrow(() => assertOutsideCageSession({}));
 
   const dest = makeAnchoredRepo("og-cage-suggest-session-");

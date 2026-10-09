@@ -147,10 +147,11 @@ function makeRepoWithRemote(): { dest: string; remote: string; marker: string } 
 
 test("cage push guard: refuses pushes of protected paths, chains the repo's own hooks, leaves no trace (DoD 5)", async () => {
   const { dest, remote, marker } = makeRepoWithRemote();
-  const tmpHooksBefore = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("gantry-cage-hooks-"));
   const configBefore = read(dest, ".git/config");
   const g = 'git -c user.email=t@example.com -c user.name=t -c commit.gpgsign=false';
   const script = [
+    // This session's hooks dir, read through git so the exit check does not race other tests' sessions.
+    `git config core.hooksPath > probe-hooks-dir`,
     `echo more >> README.md && ${g} commit -qam ok && git push -q origin HEAD:main; echo $? > probe-push-ok`,
     `echo evil >> .github/workflows/ci.yml && ${g} commit -qam evil && git push -q origin HEAD:main; echo $? > probe-push-ci`,
     `git push -q origin HEAD:refs/heads/evil-branch; echo $? > probe-push-new`,
@@ -169,8 +170,9 @@ test("cage push guard: refuses pushes of protected paths, chains the repo's own 
   assert.equal(report.push_guard.enabled, true);
   assert.equal(report.push_guard.refused_pushes, 2);
   assert.equal(read(dest, ".git/config"), configBefore, "no core.hooksPath written to the repo");
-  const tmpHooksAfter = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith("gantry-cage-hooks-"));
-  assert.deepEqual(tmpHooksAfter, tmpHooksBefore, "session hooks dir removed at exit");
+  const hooksDir = read(dest, "probe-hooks-dir").trim();
+  assert.match(path.basename(hooksDir), /^gantry-cage-hooks-/);
+  assert.equal(fs.existsSync(hooksDir), false, "session hooks dir removed at exit");
   assert.ok(formatCageReport(report).some((l) => l === "cage: refused 2 push(es) touching protected paths"));
 });
 

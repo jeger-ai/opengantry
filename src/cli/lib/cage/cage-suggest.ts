@@ -173,7 +173,7 @@ export function writeCageSuggestions(root: string, text: string, force: boolean)
     fs.writeFileSync(file, text, { flag: force ? "w" : "wx" });
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "EEXIST") {
-      throw new GantryUserError("CAGE_SUGGEST_EXISTS", `cage suggest: ${CAGE_SUGGESTED_FILE} already exists`, "Re-run with --force to replace it.", 2);
+      throw new GantryUserError("GXT_CAGE_SUGGEST_EXISTS", `cage suggest: ${CAGE_SUGGESTED_FILE} already exists`, "Re-run with --force to replace it.", 2);
     }
     throw err;
   }
@@ -184,7 +184,7 @@ export function writeCageSuggestions(root: string, text: string, force: boolean)
 export function assertOutsideCageSession(env: NodeJS.ProcessEnv = process.env): void {
   if (env[CAGE_SESSION_ENV]) {
     throw new GantryUserError(
-      "CAGE_SUGGEST_IN_SESSION",
+      "GXT_CAGE_SUGGEST_IN_SESSION",
       "cage suggest: refused inside a cage session; run it yourself, outside gantry cage",
       undefined,
       2,
