@@ -150,7 +150,7 @@ npx -p @jeger-ai/opengantry opengantry-cage -- claude
 
 While the session runs, cage checks about once a second and restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`) and your manifest `forbidden_zones` from an in-memory snapshot. Lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths, and the agent sees why. When you quit, cage prints one report: everything it restored, any refused pushes, exit `3` if anything was touched (otherwise the agent's own exit code).
 
-Nothing is printed into the agent's screen while it runs: events go to a session log in your temp dir (path shown at start), with a terminal bell per restore. If the agent keeps rewriting the same file, cage stops restoring it after 3 tries, marks it contested and restores it once at exit.
+Nothing is printed into the agent's screen while it runs: events go to a session log in your temp dir (path shown at start), with a terminal bell per restore. If the agent keeps rewriting the same file, cage restores it once more after the third try, terminates the agent and everything it spawned (SIGTERM, then SIGKILL), and exits `4`. Raise or lower that with `--contest-limit <n>` (`0` keeps restoring and never halts).
 
 To protect more of your own repo (migrations, infrastructure, key files), let cage propose rules, review them, and commit `.cage.yaml`:
 
@@ -158,7 +158,7 @@ To protect more of your own repo (migrations, infrastructure, key files), let ca
 gantry cage suggest --write      # writes .cage.yaml.suggested; review it, keep what you want as .cage.yaml, commit
 ```
 
-`.cage.yaml` can only add protection; it can never switch a built-in rule off. To relax one path for a single run, pass `--allow-override <path>`: cage then reports that path instead of restoring it, and says so at start and in the report.
+`.cage.yaml` can only add protection; it can never switch a built-in rule off. A top-level `mode: report` in it is a default for your own entries, not for the built-ins, and `contest_limit: <n>` sets the halt threshold for the project. To relax one path for a single run (a dev server that rewrites `.env.local`, say), pass `--allow-override <path>`: cage then reports that path instead of restoring it, never halts on it, and says so at start and in the report.
 
 Cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and a committed change stays in local history (cage restores the working tree only). Reads, network calls and writes outside the protected set are not seen. `--no-watch` checks once at exit instead. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
 
