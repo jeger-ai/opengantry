@@ -10,6 +10,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 | Release | Highlights |
 |---------|------------|
+| **v3.8.1** | **Cage halts an agent that keeps rewriting a protected path.** When a revert-rule path is rewritten again after the contest limit of live restores (default 3), cage restores it once more and terminates the command and everything it spawned (SIGTERM, then SIGKILL after a short grace). The run ends with status `halted` and **exit 4**, the report carries `watch.halt` and `watch.contest_limit`, and the session log a `halt` event. Before, cage gave up on the path, marked it contested and restored it only at exit, so the agent kept running against the tampered file. Set the limit with `--contest-limit <n>` or `.cage.yaml` `contest_limit:`; `0` keeps the old behaviour. `.cage.yaml` also takes a top-level `mode:` default for its own `protect:` entries, never for built-in rules (MSN-0244). [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) amended with decision 7; README and FEATURES updated (MSN-0245). **Behaviour change in a patch release:** see the upgrade notes. |
 | **v3.8.0** | **Per-project cage rules:** optional `.cage.yaml` at the cage root adds `protect:` paths and globs (`mode: revert\|report`) on top of the built-in set. It can only add: unknown or subtractive keys, aliases, `..` paths and report mode on a built-in path fail closed before the command runs (`GXT_CAGE_CONFIG_INVALID`); the file protects itself; baseline caps 5,000 files / 64 MiB (`GXT_CAGE_LIMITS_EXCEEDED`); cage warns when it is untracked or uncommitted. **`--allow-override <path>`** reports instead of restoring a path for one run, never for git control or `.cage.yaml`, always announced on stderr and in the report. The push guard checks the plan the session started with (MSN-0239). **`gantry cage suggest`** proposes rules (migrations, IaC, Docker, registry config, CODEOWNERS, other CI, git hook config, key files) to stdout or `.cage.yaml.suggested`, never `.cage.yaml`, and refuses inside a cage session (MSN-0240, MSN-0242). Trust model recorded in [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) (MSN-0243). |
 | **v3.7.1** | **Cage for interactive sessions:** `gantry cage` now restores protected paths live while the command runs (default; `--watch-interval-ms`, `--no-watch` for exit-only), marks a path contested after 3 live restores and restores it once at exit, and prints nothing into the agent's screen beyond one start line and a bell per event (JSONL session log in the OS temp dir). **Session push guard:** the caged process tree gets a temporary `core.hooksPath` whose `pre-push` refuses outgoing commits touching protected paths and chains to the repo's own hooks; nothing is written to the repo. The report gains `watch` and `push_guard` summaries; change rows are unchanged (MSN-0237). Docs move from one-shot `claude -p` recipes to interactive sessions (MSN-0238). Restore, not blocking: committed changes stay in local history; `--no-verify` skips the guard. |
 | **v3.7.0** | **Zero-config cage:** `gantry cage -- <cmd>` and standalone `opengantry-cage` bin (`npx -p @jeger-ai/opengantry opengantry-cage -- <cmd>`) snapshot CI configs, `.env*`, `.git/config` / hooks / `core.hooksPath` and manifest `forbidden_zones` in memory, run the command with inherited stdio, then restore protected changes and exit 3. Lockfiles are reported, not reverted; over-cap or over-budget files are `detect_only`; `--json` emits a digest-only `gantry.cage-report.v1`; `--report-only` skips restore (MSN-0233). Violation reports end with a `gantry init` upgrade footer and a one-line limits summary (MSN-0235). Docs: README "Try it in 60 seconds", FEATURES reference, ADOPTION step zero (MSN-0234). Detect-after-exit only: no read, network, or in-flight interception; use for one-shot headless runs. |
@@ -46,7 +47,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.8.0** (see `package.json`).
+- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.8.1** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged). Diagnostics go to stderr; the document is the only stdout payload. GitHub Code Scanning and GitLab JUnit wiring: [`CI.md`](CI.md).
 - **Typed adapter gates:** `gate_adapter: tsc|eslint` requires a single command. Unquoted `&&`, `||`, `;`, or line breaks fail closed with `GXT_GATE_ADAPTER_MISCONFIG` ([ADR-0041](../.gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md)).
@@ -58,6 +59,18 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ---
 
 ## Upgrade notes
+
+### From v3.8.0 (cage contested-file halt — v3.8.1)
+
+```bash
+npm install @jeger-ai/opengantry@3.8.1
+```
+
+- **Behaviour change:** a protected path rewritten again after 3 live restores now terminates the wrapped command and every process it started, and cage exits `4` instead of `3`. Scripts and CI that treat any non-zero cage exit as failure need no change; scripts that check for exactly `3` should also accept `4`.
+- **Keep the old behaviour:** pass `--contest-limit 0` or set `contest_limit: 0` in `.cage.yaml`. The path is then marked contested and restored once at exit, as in v3.8.0.
+- **Legitimate rewriters:** a dev server or tool that rewrites a protected file (for example `.env.local`) will now halt the session. Run it with `--allow-override <path>` for that run; overridden and report-mode paths never halt.
+- **Report additions:** `watch.contest_limit` and `watch.halt` (`path`, `rule`, `live_restores`, or null); status `halted`. Existing fields are unchanged and `report_schema` stays `gantry.cage-report.v1`.
+- **New `.cage.yaml` keys:** top-level `mode:` (default for the file's own entries only) and `contest_limit:`. Both fail closed when invalid (`GXT_CAGE_CONFIG_INVALID`, exit 2).
 
 ### From v3.7.1 (per-project cage rules — v3.8.0)
 

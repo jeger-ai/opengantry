@@ -239,6 +239,8 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
+**v3.8.1:** `gantry cage` terminates an agent that keeps rewriting a protected path (exit `4`; `--contest-limit <n>` or `.cage.yaml` `contest_limit:`, `0` for the old contested-at-exit behaviour), and `.cage.yaml` gains a top-level `mode:` default for its own entries ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 7). See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
+
 **v3.8.0:** per-project cage rules: `.cage.yaml` adds paths and globs to the protected set (additive only, self-protected, fail closed), `gantry cage suggest` proposes them for review, and `--allow-override <path>` reports instead of restoring one path for a run, always announced ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)). See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 
 **v3.7.1:** `gantry cage` restores protected files live during interactive agent sessions (default; `--no-watch` for exit-only) and refuses `git push` of protected paths from inside the session. See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
