@@ -1,0 +1,85 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Release OpenGantry v3.8.1: cage contested-file halt (MSN-0244) and the ADR-0048 amendment and docs (MSN-0245); version parity 3.8.1, changelog highlights row, substrate note and 'From v3.8.0' upgrade notes that call out the behaviour change (a path rewritten past the contest limit now terminates the command, exit 4; --contest-limit 0 or contest_limit: 0 restores the old behaviour); README v3.8.1 line; no code
+msn_id: MSN-0246
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+# DoD 1: version parity 3.8.1 across package.json, package-lock.json (root and packages[""]), both
+#        SUBSTRATE.version.json files and templates/integrations/compatibility.json.
+# DoD 2: docs/CHANGELOG.md has the v3.8.1 highlights row (MSN-0244, MSN-0245), substrate note CLI 3.8.1 and
+#        'From v3.8.0' upgrade notes stating the behaviour change (a path rewritten past the contest limit now
+#        terminates the command, exit 4) and the opt-out (--contest-limit 0 or contest_limit: 0); README has the
+#        v3.8.1 line.
+# DoD 3: no src/ or RULES.md change; ./scripts/dev-validate-core.sh passes (dev-validate-core OK); gantry --version
+#        prints 3.8.1.
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0246: version parity 3.8.1 at d2e7807 across package.json, package-lock.json (root and packages[\"\"]), .gitagent/foreman/SUBSTRATE.version.json, templates/.gitagent/foreman/SUBSTRATE.version.json and templates/integrations/compatibility.json; no 3.8.0 left in those files; ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1171"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0246: docs/CHANGELOG.md at d2e7807 has the v3.8.1 highlights row (contested-file halt, exit 4, watch.halt and watch.contest_limit, --contest-limit and contest_limit:, 0 keeps the old behaviour, scoped top-level mode:; MSN-0244, MSN-0245; 'Behaviour change in a patch release'), substrate note CLI 3.8.1 and 'From v3.8.0 (cage contested-file halt — v3.8.1)' upgrade notes covering the behaviour change, the opt-out, legitimate rewriters via --allow-override, report additions and the new .cage.yaml keys; README has the v3.8.1 line; assert-docs-deterministic OK"
+    anchor: "1172"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0246: git diff a209857..d2e7807 touches only the five version files, docs/CHANGELOG.md and README.md; no src/ or RULES.md change; gantry --version prints 3.8.1; ./scripts/dev-validate-core.sh: tests 870 pass 870 fail 0; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1173"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE as amended by MSN-0245 (decision
+      7, contested-file halt). This release publishes that behaviour and does
+      not change the ADR. Versioned as a patch (3.8.1) by Planner decision: the
+      halt closes the gap where an agent in a write loop kept running against a
+      tampered file. Because the default behaviour changes (a path rewritten
+      past the contest limit now terminates the command with exit 4), the
+      changelog upgrade notes state it explicitly and give the opt-out
+      (--contest-limit 0 or contest_limit: 0)."
+    adr_refs:
+      - ADR-0048
+  - finding_id: 9f551c7bd116
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, substrate —
+      escalate to Teacher. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate, as for the v3.8.0 release (MSN-0243). The
+      gantry match is package.json, which only takes the version bump. Contract
+      tmvc_roots: package.json, package-lock.json,
+      .gitagent/foreman/SUBSTRATE.version.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json, docs/CHANGELOG.md and
+      README.md, plus the mission file and EXECUTOR_LOG.md trace. src/,
+      templates/ beyond the two version files, MANIFEST.json and RULES.md are
+      untouched. The released behaviour shipped in MSN-0244 and MSN-0245."
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 28daf5a7b370ab7c29502a99e0e87a734c35af0d3b15776edb26c2148a5994fc
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0246.release-opengantry-v3-8-1-cage-contested-file-halt.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - package-lock.json
+  - package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - README.md
+    - docs/CHANGELOG.md
+    - package-lock.json
+    - package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - src/
+contract_sha256: 399f5fa1dee7235d6977afbb622b45df2a7999a53f7d5d75c2e3d1a3b0a9933f
