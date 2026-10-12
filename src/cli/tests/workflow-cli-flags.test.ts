@@ -13,11 +13,12 @@ import {
 
 test("commander maps interrogate --path and --answers to path/answers keys", () => {
   const cmd = new Command("interrogate");
+  cmd.argument("[intent...]", "Planner intent summary");
   cmd.option("--path <paths...>", "Declared paths");
   cmd.option("--answers <file>", "Answers file");
   cmd.option("--msn <id>", "MSN");
   cmd.parse(
-    ["node", "test", "fix cli", "--path", "src/a.ts", "src/b.ts", "--answers", "/tmp/ans.json", "--msn", "MSN-0100"],
+    ["fix", "cli", "--path", "src/a.ts", "src/b.ts", "--answers", "/tmp/ans.json", "--msn", "MSN-0100"],
     { from: "user" },
   );
   const opts = cmd.opts() as InterrogateCommanderOptions;
@@ -33,9 +34,10 @@ test("commander maps interrogate --path and --answers to path/answers keys", () 
 
 test("commander maps legislate --path to path key and mapLegislateCommanderOptions forwards paths", () => {
   const cmd = new Command("legislate");
+  cmd.argument("[intent...]", "One-line Planner intent summary");
   cmd.option("--path <paths...>", "Declared paths");
   cmd.requiredOption("--msn <id>", "MSN");
-  cmd.parse(["node", "test", "ship gate", "--msn", "MSN-0101", "--path", "src/cli/foo.ts"], { from: "user" });
+  cmd.parse(["ship", "gate", "--msn", "MSN-0101", "--path", "src/cli/foo.ts"], { from: "user" });
   const opts = cmd.opts() as { path?: string[]; msn: string };
   assert.deepEqual(opts.path, ["src/cli/foo.ts"]);
 
@@ -98,7 +100,7 @@ test("context-request commander maps --stage-worker-log to stageWorkerLog", () =
   const cmd = new Command("context-request");
   cmd.requiredOption("--reason <text>", "reason");
   cmd.option("--stage-worker-log", "stage log");
-  cmd.parse(["node", "test", "--reason", "need path", "--stage-worker-log"], { from: "user" });
+  cmd.parse(["--reason", "need path", "--stage-worker-log"], { from: "user" });
   const opts = cmd.opts() as { stageWorkerLog?: boolean; reason: string };
   assert.equal(opts.stageWorkerLog, true);
   assert.equal(opts.reason, "need path");
