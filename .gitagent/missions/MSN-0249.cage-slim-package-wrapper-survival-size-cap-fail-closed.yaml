@@ -1,0 +1,132 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# DRAFT — not Planner-stamped. Executor must not execute until [MSN-0249] legislation commit + pin.
+#
+# Legislated intent: Cage adoption hardening from the 2026-10-12 adoption audit: (1) publish a slim
+# `@jeger-ai/opengantry-cage` npm package with no native modules and no SQLite/MCP stack so
+# `npx @jeger-ai/opengantry-cage -- <cmd>` resolves and installs fast; (2) fail closed when the cage
+# wrapper is killed — no protected tamper may remain and the wrapped agent must not keep running
+# unsupervised (watchdog / process ownership / persisted baseline with restore on next start); (3) fail
+# closed when a protected file exceeds the in-memory snapshot cap or total budget instead of
+# detect-only leave-behind. Planner to choose workspace vs split build and release coupling in
+# interrogation; amend ADR-0048 in a follow-up substrate mission for size-cap semantics.
+#
+# Implementation plan (Planner may revise):
+#   - Prefer an npm workspace package `packages/opengantry-cage/` publishing `@jeger-ai/opengantry-cage`,
+#     sharing cage sources from `src/cli/lib/cage/` (and minimal git/manifest helpers) via tsc project
+#     references or a dedicated build entry — no better-sqlite3, sqlite-vec, or @modelcontextprotocol/sdk
+#     in that package's dependencies. Keep `@jeger-ai/opengantry` bin alias optional for one release cycle.
+#   - Versioning: independent package version with release docs; tag publish workflow publishes both
+#     packages (extend `.github/workflows/npm-publish.yml` or add workspace publish step). Lockstep minor
+#     bumps are acceptable if Planner prefers a single release train.
+#
+# Candidate later missions (out of scope for MSN-0249):
+#   - Windows-native cage push guard (non-sh hooks) and full descendant kill tree on win32.
+#   - Optional lockfile `mode: revert` (built-in stays report unless ADR-0048 amended).
+#   - Broader protection for agent-created paths (rename evasion, arbitrary backdoor files).
+#   - Official Node 20/22 support (engines relaxation vs prebuild matrix).
+#
+# DoD 1 (slim package): `@jeger-ai/opengantry-cage` is published (or pack:check-ready) from this repo with
+#        `files`/`bin` containing only the cage CLI; `npm pack --dry-run` and `npm ls` show zero dependency
+#        on better-sqlite3, sqlite-vec, and @modelcontextprotocol/sdk; `engines.node` documents >=24.
+#        Zones: packages/opengantry-cage/** (or agreed path), package.json workspaces, scripts/npm-pack-check.sh.
+# DoD 2 (npx entry): On a clean machine (CI job or documented script), `npx --yes @jeger-ai/opengantry-cage --version`
+#        exits 0; `npx --yes @jeger-ai/opengantry-cage -- node -e "…tamper .env…"` exits 3 and restores `.env`.
+#        Install footprint: node_modules for the slim package is under an agreed budget (Planner sets MiB in
+#        interrogation; audit used ~61 MiB for full opengantry vs target <<20 MiB for cage-only).
+# DoD 3 (release wiring): docs (README adoption + docs/ADOPTION.md) show `npx @jeger-ai/opengantry-cage`;
+#        publish workflow publishes the slim artifact; version parity recorded in CHANGELOG (substrate row or
+#        package README). Zones: .github/workflows/npm-publish.yml, docs/ADOPTION.md, docs/FEATURES.md, README.md.
+# DoD 4 (wrapper kill — child): While a long-running caged command is active, SIGKILL (or SIGTERM) on the cage
+#        wrapper process terminates the wrapped command tree within a bounded grace period; no `sleep`/agent
+#        child outlives the wrapper. Test: spawn cage wrapping `node -e sleep(30)`, kill wrapper, assert child gone.
+#        Zones: src/cli/lib/cage/cage-process.ts, cage-run.ts, cage-watch.ts, tests.
+# DoD 5 (wrapper kill — restore): Same scenario: after wrapper death, protected files (.env) match the pre-run
+#        baseline (either restored synchronously in a shutdown handler or on the next `opengantry-cage` start
+#        from a persisted session baseline under the OS temp dir — fail closed if baseline exists and restore
+#        fails). Test: assert `.env` not left tampered; second cage start may print a recovery line.
+#        Zones: src/cli/lib/cage/cage-run.ts, cage-snapshot.ts, cage-revert.ts, new cage-session-persist module.
+# DoD 6 (size cap fail closed): A protected file larger than `--max-file-bytes` (or default) at baseline causes
+#        cage to refuse to run the command (exit 2, `GXT_CAGE_*` code) OR halts before agent start — not
+#        `detect_only` with tamper left in place. Update cage.test.ts DoD 3 expectations accordingly.
+#        Zones: src/cli/lib/cage/cage-snapshot.ts, cage-run.ts, cage-report.ts, cage.test.ts.
+# DoD 7 (total budget fail closed): Same for total snapshot budget exceedance at baseline (today
+#        `GXT_CAGE_LIMITS_EXCEEDED` for scan caps; align per-file and per-total in-memory caps to the same
+#        fail-closed story). Tests for both caps.
+# DoD 8 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK); `./scripts/cage-smoke.sh` passes
+#        when present on the branch.
+msn_id: MSN-0249
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "7"
+    status: PENDING
+  - dod_id: "8"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "8"
+    status: PENDING
+declared_paths:
+  - .gitagent/missions/MSN-0249.cage-slim-package-wrapper-survival-size-cap-fail-closed.yaml
+  - .github/workflows/npm-publish.yml
+  - .github/workflows/cage-smoke.yml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/FEATURES.md
+  - docs/CHANGELOG.md
+  - package.json
+  - package-lock.json
+  - packages/
+  - scripts/cage-smoke.sh
+  - scripts/npm-pack-check.sh
+  - src/cli/cage-bin.ts
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage.test.ts
+  - src/cli/tests/cage-watch.test.ts
+contract:
+  tmvc_roots:
+    - package.json
+    - packages/
+    - scripts/cage-smoke.sh
+    - scripts/npm-pack-check.sh
+    - src/cli/cage-bin.ts
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage.test.ts
+    - src/cli/tests/cage-watch.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: c09c11321fbafac5d8bd4844c9cee74af8d0db56b1995f538089219bd03424af
