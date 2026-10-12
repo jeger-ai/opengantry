@@ -1,4 +1,5 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Planner restamp: include mission file in newest [MSN-0247] commit for git-proof.
 # Legislated intent: Bump @modelcontextprotocol/sdk to 1.31.0 and fast-uri to 3.1.8 in examples/iii-integration; fix dependabot npm ecosystems
 msn_id: MSN-0247
 skill_key: gantry
@@ -33,6 +34,7 @@ interrogation:
       - ADR-0039
 interrogation_sha256: 17b3b16363b1868e79910d59a369dabc4d045f51bfabaa0c94d0ca46af9fe640
 declared_paths:
+  - .gitagent/missions/MSN-0247.bump-modelcontextprotocol-sdk-to-1-31-0-and-fast.yaml
   - .github/dependabot.yml
   - examples/iii-integration/package-lock.json
   - package-lock.json
