@@ -1,0 +1,43 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry cli bump typescript to 7.0.2 side-by-side with typescript 6 for eslint and commander to 15.0.0
+msn_id: MSN-0248
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0248: npx tsc --version is 7.0.2 via @typescript/native (npm:typescript@^7.0.2); require(typescript) is 6.0.2 via npm:@typescript/typescript6@^6.0.2; commander is 15.0.0; @modelcontextprotocol/sdk stays ^1.31.0; profileFromCliFlags and gantry report --no-open follow Commander 15 negation; npm test 880 pass 880 fail 0"
+    anchor: "1"
+    status: PASS
+gate_success_substring: pass
+interrogation:
+  - finding_id: 05f6188bea43
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: src/cli/program-core.ts and
+      src/cli/tests/workflow-cli-flags.test.ts stay inside the gantry TMVC root
+      src/cli/. program-core.ts maps Commander 15 paired negation so gantry
+      report --no-open still sets noOpen. The workflow CLI flag tests drop the
+      old node/test argv prefix because Commander 15 rejects excess positionals.
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: ADR-0041 does not apply. The gate stays generic npm test.
+      eslint appears in the intent only because typescript-eslint still peers on
+      TypeScript 6, so the repo keeps @typescript/typescript6 beside
+      @typescript/native. No gate_adapter change.
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: 8b91672cefa8fb86513fed7a2fcb09202d102609d23073da022d9b6cec414a03
+declared_paths:
+  - .gitagent/missions/MSN-0248.upgrade-typescript-7-and-commander-15.yaml
+  - package-lock.json
+  - package.json
+  - src/cli/lib/init/init-profile.ts
+  - src/cli/program-core.ts
+  - src/cli/tests/workflow-cli-flags.test.ts
