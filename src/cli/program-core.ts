@@ -326,12 +326,12 @@ function registerReportCommand(program: Command): void {
     .option("--no-open", "Do not open a browser tab")
     .option("--last", "Open last-verify drill-down (/verify) instead of overview")
     .option("--json", "Emit overview view model JSON (use with --last for last-verify model)")
-    .action(async (opts: { port?: string; noOpen?: boolean; json?: boolean; last?: boolean }) => {
+    .action(async (opts: { port?: string; open?: boolean; json?: boolean; last?: boolean }) => {
       const port =
         opts.port !== undefined ? Number.parseInt(opts.port, 10) : undefined;
       await runReport({
         port: port !== undefined && Number.isFinite(port) ? port : undefined,
-        noOpen: opts.noOpen,
+        noOpen: opts.open === false,
         json: opts.json,
         last: opts.last,
       });

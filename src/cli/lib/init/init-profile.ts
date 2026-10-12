@@ -76,21 +76,22 @@ export function profileFromCliFlags(opts: {
   noCi?: boolean;
   archSource?: string;
   archLocation?: string;
-  defensiveProfile?: string;
+  defensiveProfile?: string | false;
   noDefensiveProfile?: boolean;
 }): Partial<InitProfile> {
   const partial: Partial<InitProfile> = {};
   if (opts.ides) partial.ides = parseIdesCsv(opts.ides);
   if (opts.docsPath) partial.integrationsDocPath = opts.docsPath.replace(/\\/g, "/");
   if (opts.skills === "minimal" || opts.skills === "specimen") partial.skillsPreset = opts.skills;
-  if (opts.noHooks) partial.gitHooks = false;
-  else if (opts.hooks) partial.gitHooks = true;
-  if (opts.noCi) partial.ciWorkflow = false;
-  else if (opts.ci) partial.ciWorkflow = true;
+  if (opts.noHooks === true || opts.hooks === false) partial.gitHooks = false;
+  else if (opts.hooks === true) partial.gitHooks = true;
+  if (opts.noCi === true || opts.ci === false) partial.ciWorkflow = false;
+  else if (opts.ci === true) partial.ciWorkflow = true;
   if (opts.archSource) partial.architectureSource = parseArchitectureSource(opts.archSource);
   if (opts.archLocation) partial.architectureLocation = opts.archLocation.replace(/\\/g, "/");
-  if (opts.noDefensiveProfile) partial.defensiveProfilePreset = null;
-  else if (opts.defensiveProfile) {
+  if (opts.noDefensiveProfile === true || opts.defensiveProfile === false) {
+    partial.defensiveProfilePreset = null;
+  } else if (typeof opts.defensiveProfile === "string" && opts.defensiveProfile.length > 0) {
     partial.defensiveProfilePreset = parseDefensiveProfilePreset(opts.defensiveProfile);
   }
   return partial;
