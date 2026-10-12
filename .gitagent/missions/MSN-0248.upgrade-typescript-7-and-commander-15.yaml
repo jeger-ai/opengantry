@@ -5,7 +5,7 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0248: npx tsc --version is 7.0.2 via @typescript/native (npm:typescript@^7.0.2); require(typescript) is 6.0.2 via npm:@typescript/typescript6@^6.0.2; commander is 15.0.0; @modelcontextprotocol/sdk stays ^1.31.0; profileFromCliFlags and gantry report --no-open follow Commander 15 negation; npm test 880 pass 880 fail 0"
+    trace_quote: "DoD 1 MSN-0248 re-attested after the MSN-0249 dependency bumps: npx tsc --version is 7.0.2; eslint is 10.12.0; zod is 4.6.5; @modelcontextprotocol/sdk 1.31.0 remains; npm test 880 pass 880 fail 0"
     anchor: "1"
     status: PASS
 gate_success_substring: pass

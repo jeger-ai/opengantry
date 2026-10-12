@@ -6,7 +6,7 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0247 re-attested after the TypeScript 7 and Commander 15 commits: @modelcontextprotocol/sdk 1.31.0 remains in package-lock.json; fast-uri 3.1.8 remains in examples/iii-integration/package-lock.json; npm ci reports 0 vulnerabilities; npm test 880 pass 880 fail 0"
+    trace_quote: "DoD 1 MSN-0247 re-attested after the MSN-0249 dependency bumps: @modelcontextprotocol/sdk 1.31.0 remains in package-lock.json; fast-uri 3.1.8 remains in examples/iii-integration/package-lock.json; npm ci reports 0 vulnerabilities; npm test 880 pass 880 fail 0"
     anchor: "1"
     status: PASS
 gate_success_substring: pass
