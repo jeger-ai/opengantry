@@ -1,0 +1,52 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Planner restamp: include mission file in newest [MSN-0247] commit for git-proof.
+# Legislated intent: Bump @modelcontextprotocol/sdk to 1.31.0 and fast-uri to 3.1.8 in examples/iii-integration; fix dependabot npm ecosystems
+msn_id: MSN-0247
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0247: @modelcontextprotocol/sdk 1.31.0 at root (package.json + package-lock.json); fast-uri 3.1.8 in examples/iii-integration/package-lock.json; .github/dependabot.yml adds npm ecosystems for / and /examples/iii-integration; no MCP OAuth provider usage in src/cli (stdio server only); npm ci && npm run build && npx tsc --noEmit && npm run lint OK; npm test 870 pass 870 fail 0; root npm audit 0 vulnerabilities; examples/iii-integration npm ci && npm run validate OK; fast-uri and @modelcontextprotocol/sdk absent from iii-integration npm audit report"
+    anchor: "1"
+    status: PASS
+gate_success_substring: pass
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: ADR-0001 not applicable; routine dependency security bumps only.
+    adr_refs:
+      - ADR-0001
+  - finding_id: db4a881ab72c
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key gantry; TMVC package.json, package-lock.json,
+      examples/iii-integration/package-lock.json, .github/dependabot.yml for npm
+      ecosystem entries.
+    adr_refs:
+      - ADR-0039
+interrogation_sha256: 17b3b16363b1868e79910d59a369dabc4d045f51bfabaa0c94d0ca46af9fe640
+declared_paths:
+  - .gitagent/missions/MSN-0247.bump-modelcontextprotocol-sdk-to-1-31-0-and-fast.yaml
+  - .github/dependabot.yml
+  - examples/iii-integration/package-lock.json
+  - package-lock.json
+  - package.json
+contract:
+  tmvc_roots:
+    - package.json
+  forbidden_zones:
+    - .gitagent
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: f764bff730c83868a44eaddaad375d85bd20f3103e09314ed256c3c140c2e2fa
