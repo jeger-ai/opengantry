@@ -1,0 +1,73 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# DRAFT — not Planner-stamped. Part (B) of cage audit split. Depends on cage runtime in src/cli/lib/cage/.
+# Executor must not run until [MSN-0250] legislation commit + pin.
+#
+# Legislated intent: Cage must survive wrapper termination with no protected tamper left behind and no unsupervised
+# agent process. Two mechanisms are BOTH required (no either/or):
+#
+#   (1) Catchable signals (SIGINT, SIGTERM, SIGHUP): cage traps the signal, sends SIGKILL to the whole detached
+#       process group (spawn child with `detached: true`; `process.kill(-child.pid, 'SIGKILL')`) so nested shells
+#       cannot escape, restores the working tree from the in-memory snapshot, removes the journal, and exits.
+#
+#   (2) Uncatchable kill (`kill -9` on the wrapper): before spawning the child, cage writes a hash-verified baseline
+#       journal to a deterministic path (e.g. `.git/gantry-cage-journal/`). On the next cage invocation (and
+#       optionally a git hook), cage detects a dirty journal, verifies the previous PID is dead, kills any orphaned
+#       process group if it still exists, restores mutated files to baseline bytes verified by their hashes, clears
+#       the journal, and only then starts the new run. Corrupt journal or hash verification failure → refuse to run
+#       (fail closed, exit 2).
+#
+# DoD 1 (catchable signals): implementation matches (1) above; journal removed on clean signal shutdown.
+# DoD 2 (uncatchable kill + journal): implementation matches (2) above; journal format is hash-verified.
+# DoD 3 (test SIGTERM): SIGTERM on the cage wrapper while running a nested
+#        `sh -c 'sleep 60 & sleep 60'` tree kills the whole tree and restores `.env` to baseline.
+# DoD 4 (test kill -9): `kill -9` on the wrapper leaves a dirty journal; the next `opengantry-cage` invocation
+#        restores `.env` before spawning the wrapped command; orphaned PGID killed if still alive.
+# DoD 5 (test corrupt journal): tampered journal bytes → cage refuses to start (exit 2, fail closed).
+# DoD 6 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+msn_id: MSN-0250
+skill_key: gantry
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
+declared_paths:
+  - .gitagent/missions/MSN-0250.cage-signal-trap-and-journal-recovery.yaml
+  - EXECUTOR_LOG.md
+  - src/cli/lib/cage/
+  - src/cli/tests/cage.test.ts
+  - src/cli/tests/cage-watch.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/lib/cage/
+    - src/cli/tests/cage.test.ts
+    - src/cli/tests/cage-watch.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: c723911ed22479f17f7ff9c268307f3c3e635e34c36537b13f6f7ae7dd3be924

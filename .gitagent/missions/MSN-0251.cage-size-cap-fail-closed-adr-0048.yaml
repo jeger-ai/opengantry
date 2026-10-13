@@ -1,0 +1,65 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# DRAFT — not Planner-stamped. Part (C) of cage audit split. Amends ADR-0048 for size-cap semantics.
+# Executor must not run until [MSN-0251] legislation commit + pin.
+#
+# Legislated intent: When a protected file exceeds `--max-file-bytes` or the total in-memory snapshot budget at
+# baseline, cage must refuse to start the wrapped agent (exit 2 — configuration/setup error), distinct from exit 3
+# for runtime violations. No `detect_only` leave-behind. Amend ADR-0048 under `docs/adr/` to record the behaviour.
+#
+# DoD 1 (per-file cap): a protected file larger than the effective per-file cap at baseline → command never runs,
+#        exit 2 with a `GXT_CAGE_*` code; tests replace MSN-0233 DoD 3 detect_only expectations.
+# DoD 2 (total budget): total in-memory snapshot budget exceeded at baseline → same exit 2 fail-closed story
+#        (align with scan caps where applicable).
+# DoD 3 (ADR-0048): `docs/adr/` documents the amendment (size/over-budget protected files block the run; exit 2);
+#        cross-reference ADR-0047 caps where relevant.
+# DoD 4 (docs sync): docs/FEATURES.md zero-config cage section matches exit 2 for over-cap/budget (no detect_only).
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+msn_id: MSN-0251
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+declared_paths:
+  - .gitagent/missions/MSN-0251.cage-size-cap-fail-closed-adr-0048.yaml
+  - EXECUTOR_LOG.md
+  - docs/adr/
+  - docs/FEATURES.md
+  - src/cli/lib/cage/cage-report.ts
+  - src/cli/lib/cage/cage-run.ts
+  - src/cli/lib/cage/cage-snapshot.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/lib/cage/cage-snapshot.ts
+    - src/cli/lib/cage/cage-run.ts
+    - src/cli/lib/cage/cage-report.ts
+    - src/cli/tests/cage.test.ts
+    - docs/adr/
+    - docs/FEATURES.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: d3a2fc1de82d2e80182771ef692110eeff82abd19e3fdd9a7503cd4e896ca535
