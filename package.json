@@ -43,8 +43,7 @@
     "gantry": "node dist/cli/index.js"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "keywords": [
     "gxt",

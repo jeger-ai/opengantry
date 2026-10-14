@@ -214,12 +214,16 @@ git push origin v<version>
 
 The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which publishes `@jeger-ai/opengantry` and then `@jeger-ai/opengantry-cage`. Each publish goes through `scripts/npm-publish-if-new.sh` and is skipped when that version is already on npm.
 
-- **Token:** the `NPM_TOKEN` secret must be allowed to publish every package in the `@jeger-ai` scope. A token limited to selected packages cannot create a new package name, and npm answers the publish with `E404`.
+- **Authentication is npm trusted publishing (MSN-0259).** npm exchanges the job's GitHub OIDC token for a short-lived publish token and attaches provenance; the workflow holds no npm token or secret and needs npm 11.5.1 or newer, which it checks. Each package needs a trusted publisher on npmjs.com, under the package's settings: provider **GitHub Actions**, repository **`jeger-ai/opengantry`**, workflow **`npm-publish.yml`**. A package without one fails to publish with an auth error (`E404`, `ENEEDAUTH`, `E401` or `EOTP`), and the script names the missing setting; there is no token to fall back to.
+- **New packages:** trusted publishing can only be configured for a package that exists, so the first version of a new package is published by hand (below), then the trusted publisher is added before the next release.
+- **Once releases publish from CI:** set both packages to disallow tokens on npmjs.com and delete any `NPM_TOKEN` repository secret.
 - **Partial release:** if one package published and the other failed, do not re-run the tag run (it uses the workflow file at the tagged commit) and never move the tag. Fix the cause, then start a run from `main` with the tag. It refuses unless the tag matches `package.json` and everything that gets published on `main` is identical to the tag; the package already on npm is skipped. Provenance for that run names the `main` commit it used.
 
 ```bash
 gh workflow run npm-publish.yml -f tag=v<version>
 ```
+
+- **Emergency local publish** (no provenance): from a clean checkout of the tag, after `npm run build`, run `npm publish --access public` for the root package or add `--workspace @jeger-ai/opengantry-cage`. `publishConfig` no longer forces provenance, so this works outside CI; npm asks for two-factor approval in the browser or for `--otp <code>`.
 
 ## LLM evidence + KPI gate
 

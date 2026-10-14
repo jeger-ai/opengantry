@@ -91,4 +91,18 @@ else
   args+=(--provenance --access public)
   echo "npm-publish-if-new: ${name}@${version} not on npm; publishing"
 fi
+
+set +e
 npm "${args[@]}"
+publish_rc=$?
+set -e
+if [[ $publish_rc -ne 0 && "${GITHUB_ACTIONS:-}" == "true" && $dry_run -eq 0 ]]; then
+  # Trusted publishing (MSN-0259): with no trusted publisher for this package, npm's OIDC exchange fails
+  # and, with no token configured, the publish ends in an auth error (E404, ENEEDAUTH, E401 or EOTP).
+  repo="${GITHUB_REPOSITORY:-<owner>/<repo>}"
+  workflow="${GITHUB_WORKFLOW_REF:-}"
+  workflow="${workflow%%@*}"
+  workflow="${workflow##*/}"
+  echo "::error::npm-publish-if-new: publishing ${name}@${version} failed (exit ${publish_rc}). If npm reported E404, ENEEDAUTH, E401 or EOTP, ${name} has no trusted publisher for this workflow: on npmjs.com add one to ${name} with provider GitHub Actions, repository ${repo}, workflow ${workflow:-<workflow file>}." >&2
+fi
+exit $publish_rc
