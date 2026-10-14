@@ -1,0 +1,106 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0254]. Part (C) of cage audit split. Amends ADR-0048 for size-cap semantics.
+# Executor must not run until [MSN-0254] legislation commit + pin.
+#
+# Legislated intent: When a protected file exceeds `--max-file-bytes` or the total in-memory snapshot budget at
+# baseline, cage must refuse to start the wrapped agent (exit 2 — configuration/setup error), distinct from exit 3
+# for runtime violations. No `detect_only` leave-behind. Amend `.gitagent/out-of-scope/ADR-0048-cage-trust-model.md` to record the behaviour.
+#
+# DoD 1 (per-file cap): a protected file larger than the effective per-file cap at baseline → command never runs,
+#        exit 2 with a `GXT_CAGE_*` code; tests replace MSN-0233 DoD 3 detect_only expectations.
+# DoD 2 (total budget): total in-memory snapshot budget exceeded at baseline → same exit 2 fail-closed story
+#        (align with scan caps where applicable).
+# DoD 3 (ADR-0048): `.gitagent/out-of-scope/ADR-0048-cage-trust-model.md` documents the amendment (size/over-budget protected files block the run; exit 2);
+#        cross-reference the ADR-0048 decision 2 baseline caps (5,000 files / 64 MiB, GXT_CAGE_LIMITS_EXCEEDED) where relevant.
+# DoD 4 (docs sync): docs/FEATURES.md zero-config cage section matches exit 2 for over-cap/budget (no detect_only).
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+msn_id: MSN-0254
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+interrogation:
+- finding_id: 4367eadf9a61
+  kind: adr_conflict
+  question: Intent may relate to ADR-0048. Accept ADR decision, reject applicability, or cite superseding
+    rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before legislation proceeds.
+  operator_answer: 'Accept with an amendment on the record: ADR-0048 stays ACTIVE and this mission amends
+    decision 2 so that a protected file over the per-file cap, or a baseline over the snapshot budget,
+    refuses to start the command (exit 2 with a GXT_CAGE_* code) instead of a detect_only leave-behind,
+    consistent with the fail-closed GXT_CAGE_LIMITS_EXCEEDED caps already in decision 2. Runtime violations
+    keep exit 3 and halts keep exit 4.'
+  adr_refs:
+  - ADR-0048
+- finding_id: aea51c453269
+  kind: undefined_boundary
+  question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2). Confirm boundary for
+    all listed paths.
+  hypothesis: Operator authorizes work within declared TMVC and documents boundary decision on the record.
+  operator_answer: Confirmed. src/cli/tests/cage.test.ts is the existing cage suite outside the import
+    layers by design; DoD 1-2 replace the MSN-0233 DoD 3 detect_only expectations there. No layer rule
+    changes.
+- finding_id: d585ecf2924b
+  kind: risk_escalation
+  question: 'Triage escalated: No confident skill_key match in intent (ambiguous or missing). Which skill_key
+    and TMVC scope authorize this work?'
+  hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission after operator confirmation.
+  operator_answer: skill_key substrate, required because the mission amends an ADR under .gitagent/ (Tier-3).
+    The Planner-sealed contract narrows TMVC to src/cli/lib/cage/cage-snapshot.ts, cage-run.ts, cage-report.ts,
+    src/cli/tests/cage.test.ts, .gitagent/out-of-scope/ADR-0048-cage-trust-model.md and docs/FEATURES.md.
+  adr_refs:
+  - ADR-0045
+  - ADR-0048
+- finding_id: f5d6a4d5f4da
+  kind: undefined_boundary
+  question: Skill substrate has empty tmvc_roots. What TMVC roots does this mission authorize?
+  hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with declared roots.
+  operator_answer: Narrowed by the contract tmvc_roots listed above (ADR-0045). No manifest, RULES, templates
+    or other src/ path is authorized.
+  adr_refs:
+  - ADR-0045
+interrogation_sha256: c1daac2e5d4901d1faccef536c85633000ca0e95c1f43e084e1df6facc5f42f3
+declared_paths:
+  - .gitagent/missions/MSN-0254.cage-size-cap-fail-closed-adr-0048.yaml
+  - EXECUTOR_LOG.md
+  - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+  - docs/FEATURES.md
+  - src/cli/lib/cage/cage-report.ts
+  - src/cli/lib/cage/cage-run.ts
+  - src/cli/lib/cage/cage-snapshot.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - src/cli/lib/cage/cage-snapshot.ts
+    - src/cli/lib/cage/cage-run.ts
+    - src/cli/lib/cage/cage-report.ts
+    - src/cli/tests/cage.test.ts
+    - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+    - docs/FEATURES.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 67d332fe02cc949a2a011b699d915c849b7c78da65e7e0289b584c397eae38a5
