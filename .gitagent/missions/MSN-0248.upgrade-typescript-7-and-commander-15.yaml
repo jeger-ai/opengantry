@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0248 re-attested by MSN-0249 at 3745aa9 after merging main: npx tsc --version 7.0.2 via @typescript/native 7.0.2; the typescript alias resolves @typescript/typescript6 6.0.2 in package-lock.json; commander 15.0.0; eslint 10.12.0; zod 4.6.5; @modelcontextprotocol/sdk 1.31.0; npm test 895 pass 895 fail 0"
-    anchor: "1259"
+    trace_quote: "DoD 1 MSN-0248 re-attested by MSN-0249 at 30233f7 with the behaviour evidence restored: npx tsc --version 7.0.2 via @typescript/native 7.0.2; the typescript alias resolves @typescript/typescript6 6.0.2 in package-lock.json; commander 15.0.0; Commander 15 negation: profileFromCliFlags maps hooks false to gitHooks false, ci false to ciWorkflow false and defensiveProfile false to defensiveProfilePreset null (hooks true stays gitHooks true), and gantry report --no-open is wired as noOpen: opts.open === false with --no-open in report --help; the workflow-cli-flags tests parse with from: user and pass; eslint 10.12.0; zod 4.6.5; @modelcontextprotocol/sdk 1.31.0; npm test 895 pass 895 fail 0"
+    anchor: "1267"
     status: PASS
 gate_success_substring: pass
 interrogation:
