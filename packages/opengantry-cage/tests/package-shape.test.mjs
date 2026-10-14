@@ -8,10 +8,10 @@ import { installTarball, npm, packOnce, pkgDir } from "./helpers.mjs";
 
 const HEAVY = ["better-sqlite3", "sqlite-vec", "@modelcontextprotocol/sdk", "ajv", "ajv-formats", "yaml", "zod", "@clack/prompts"];
 
-test("package.json publishes the opengantry-cage bin with commander as the only dependency", () => {
+test("package.json publishes only the gantry-cage bin, with commander as the only dependency (MSN-0258)", () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
   assert.equal(pkg.name, "@jeger-ai/opengantry-cage");
-  assert.deepEqual(pkg.bin, { "opengantry-cage": "dist/cli/index.js" });
+  assert.deepEqual(pkg.bin, { "gantry-cage": "dist/cli/index.js" });
   assert.deepEqual(Object.keys(pkg.dependencies), ["commander"]);
   assert.equal(pkg.optionalDependencies, undefined);
   assert.equal(pkg.peerDependencies, undefined);

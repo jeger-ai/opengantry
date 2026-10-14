@@ -109,7 +109,7 @@ test("cage suggest: a gantry cage subcommand; cage -- suggest and the standalone
     env,
   });
   assert.equal(standalone.status, 0, standalone.stderr);
-  assert.ok(fs.existsSync(path.join(dest, "wrapped-ran.txt")), "opengantry-cage suggest runs the command named suggest");
+  assert.ok(fs.existsSync(path.join(dest, "wrapped-ran.txt")), "gantry-cage suggest runs the command named suggest");
 });
 
 test("cage suggest: static anchors with reasons, sorted, skipping covered paths and build trees; parses as .cage.yaml (MSN-0240 DoD 2)", () => {

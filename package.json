@@ -6,6 +6,7 @@
   "bin": {
     "gantry": "dist/cli/index.js",
     "gapman": "dist/cli/index.js",
+    "gantry-cage": "dist/cli/cage-bin.js",
     "opengantry-cage": "dist/cli/cage-bin.js"
   },
   "exports": {
@@ -37,7 +38,7 @@
     "prepublishOnly": "npm run build && npm test",
     "pack:check": "./scripts/npm-pack-check.sh",
     "test": "npm run build && node --import ./dist/cli/tests/test-tmpdir-setup.js --test \"dist/cli/tests/**/*.test.js\" && npm run test:cage",
-    "test:cage": "node --test \"packages/opengantry-cage/tests/*.test.mjs\"",
+    "test:cage": "node --test --test-concurrency=1 \"packages/opengantry-cage/tests/*.test.mjs\"",
     "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
     "gantry": "node dist/cli/index.js"
   },

@@ -5,7 +5,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { npxCage, packOnce, tmpDir } from "./helpers.mjs";
+import { npx, npxCage, packOnce, run, tmpDir } from "./helpers.mjs";
 
 function scratchRepo() {
   const dir = tmpDir("opengantry-cage-parity-");
@@ -49,4 +49,16 @@ test("the session pre-push hook resolves the guard to this package's dist/cli/in
   const out = JSON.parse(r.stdout.trim().split("\n").pop());
   assert.ok(out.entry && out.entry.replace(/\\/g, "/").endsWith("/dist/cli/index.js"), `guard entry: ${out.entry}`);
   assert.equal(out.exists, true, "guard entry exists on disk while the session runs");
+});
+
+test("npx <tarball> with no -p runs the package's single bin, gantry-cage (MSN-0258 DoD 3)", { timeout: 120_000 }, () => {
+  const cwd = tmpDir("opengantry-cage-npx-");
+  // A bare path as npx's first argument is executed as a program; `file:` makes it a package spec,
+  // like `npx @jeger-ai/opengantry-cage` resolves the registry package.
+  const spec = `file:${packOnce()}`;
+  const version = run(npx, ["-y", spec, "--version"], { cwd });
+  assert.equal(version.status, 0, version.stderr);
+  assert.match(version.stdout.trim(), /^\d+\.\d+\.\d+$/);
+  const help = run(npx, ["-y", spec, "--help"], { cwd });
+  assert.match(help.stdout, /^Usage: gantry-cage \[options\] <command\.\.\.>/m);
 });

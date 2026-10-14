@@ -1,6 +1,7 @@
-// DoD 3 (MSN-0252): with a WARM npm cache, `npx -p <packed tarball> opengantry-cage --version` exits 0
+// DoD 3 (MSN-0252): with a WARM npm cache, `npx -p <packed tarball> gantry-cage --version` exits 0
 // in under 1.5 s wall time. Precondition: the first (untimed) run below warms the cache for this tarball;
 // only the second run is measured. A cold cache (first ever extraction) is explicitly out of budget.
+// The suite runs with --test-concurrency=1 (test:cage) so no other test file's npm work competes with the timed run.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";

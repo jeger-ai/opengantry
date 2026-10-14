@@ -41,7 +41,7 @@ Before adopting missions, start your current agent inside the cage:
 
 ```bash
 npx @jeger-ai/opengantry-cage -- claude
-# same cage from the full package: npx -p @jeger-ai/opengantry opengantry-cage -- claude
+# same cage from the full package: npx -p @jeger-ai/opengantry gantry-cage -- claude
 ```
 
 `@jeger-ai/opengantry-cage` is a slim standalone build of `gantry cage` (shared sources; `commander` is its only runtime dependency, no native modules, no install scripts), so the first run does not pull the full OpenGantry stack. During the session, cage restores CI, secrets, git-control and forbidden-zone changes about once a second and refuses `git push` of those paths; it prints one report when you quit ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage)). It restores rather than blocks.
