@@ -1,30 +1,34 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # DRAFT — not Planner-stamped. Part (B) of cage audit split. Depends on cage runtime in src/cli/lib/cage/.
-# Executor must not run until [MSN-0250] legislation commit + pin.
+# Executor must not run until [MSN-0253] legislation commit + pin.
 #
 # Legislated intent: Cage must survive wrapper termination with no protected tamper left behind and no unsupervised
 # agent process. Two mechanisms are BOTH required (no either/or):
 #
-#   (1) Catchable signals (SIGINT, SIGTERM, SIGHUP): cage traps the signal, sends SIGKILL to the whole detached
-#       process group (spawn child with `detached: true`; `process.kill(-child.pid, 'SIGKILL')`) so nested shells
-#       cannot escape, restores the working tree from the in-memory snapshot, removes the journal, and exits.
+#   (1) Catchable signals (SIGINT, SIGTERM, SIGHUP): cage traps the signal and terminates the command and every
+#       descendant it can enumerate, reusing the ADR-0048 decision 7 halt path (SIGTERM to the enumerated tree via
+#       `ps -A -o pid=,ppid=`, grace period, then SIGKILL to the union of the first listing and a fresh one) so nested
+#       shells cannot escape. The child is NOT spawned as its own process group (`detached: true` is forbidden): a
+#       detached child loses the terminal's foreground group and interactive agents stop on SIGTTIN. Cage then
+#       restores the working tree from the in-memory snapshot, removes the journal, and exits.
 #
 #   (2) Uncatchable kill (`kill -9` on the wrapper): before spawning the child, cage writes a hash-verified baseline
 #       journal to a deterministic path (e.g. `.git/gantry-cage-journal/`). On the next cage invocation (and
-#       optionally a git hook), cage detects a dirty journal, verifies the previous PID is dead, kills any orphaned
-#       process group if it still exists, restores mutated files to baseline bytes verified by their hashes, clears
+#       optionally a git hook), cage detects a dirty journal, verifies the previous wrapper PID is dead, kills any
+#       orphaned descendant PIDs recorded in the journal that are still alive (tree enumeration, no process-group
+#       kill), restores mutated files to baseline bytes verified by their hashes, clears
 #       the journal, and only then starts the new run. Corrupt journal or hash verification failure → refuse to run
 #       (fail closed, exit 2).
 #
-# DoD 1 (catchable signals): implementation matches (1) above; journal removed on clean signal shutdown.
+# DoD 1 (catchable signals): implementation matches (1) above; no `detached: true` spawn; journal removed on clean signal shutdown.
 # DoD 2 (uncatchable kill + journal): implementation matches (2) above; journal format is hash-verified.
 # DoD 3 (test SIGTERM): SIGTERM on the cage wrapper while running a nested
 #        `sh -c 'sleep 60 & sleep 60'` tree kills the whole tree and restores `.env` to baseline.
 # DoD 4 (test kill -9): `kill -9` on the wrapper leaves a dirty journal; the next `opengantry-cage` invocation
-#        restores `.env` before spawning the wrapped command; orphaned PGID killed if still alive.
+#        restores `.env` before spawning the wrapped command; orphaned descendant PIDs from the journal killed if still alive.
 # DoD 5 (test corrupt journal): tampered journal bytes → cage refuses to start (exit 2, fail closed).
 # DoD 6 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
-msn_id: MSN-0250
+msn_id: MSN-0253
 skill_key: gantry
 gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
@@ -54,7 +58,7 @@ trace_rows:
     anchor: "6"
     status: PENDING
 declared_paths:
-  - .gitagent/missions/MSN-0250.cage-signal-trap-and-journal-recovery.yaml
+  - .gitagent/missions/MSN-0253.cage-signal-trap-and-journal-recovery.yaml
   - EXECUTOR_LOG.md
   - src/cli/lib/cage/
   - src/cli/tests/cage.test.ts

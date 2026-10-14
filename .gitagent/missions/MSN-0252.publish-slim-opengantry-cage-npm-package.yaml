@@ -1,6 +1,6 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# DRAFT — not Planner-stamped. Part (A) of MSN-0249/0250/0251 cage audit split. Executor must not run until
-# [MSN-0249] legislation commit + pin. See MSN-0250 (journal/signals) and MSN-0251 (size-cap + ADR).
+# DRAFT — not Planner-stamped. Part (A) of MSN-0252/0253/0254 cage audit split. Executor must not run until
+# [MSN-0252] legislation commit + pin. See MSN-0253 (journal/signals) and MSN-0254 (size-cap + ADR).
 #
 # Legislated intent: Publish `@jeger-ai/opengantry-cage` as a slim npm package (workspace under
 # `packages/opengantry-cage/`) so `npx @jeger-ai/opengantry-cage -- <cmd>` resolves without pulling the full
@@ -20,7 +20,7 @@
 #        docs/ADOPTION.md and docs/FEATURES.md document `npx @jeger-ai/opengantry-cage` (not only `-p @jeger-ai/opengantry`).
 #        Root `package.json` / `package-lock.json` wire the workspace.
 # DoD 6 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
-msn_id: MSN-0249
+msn_id: MSN-0252
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
@@ -50,7 +50,7 @@ trace_rows:
     anchor: "6"
     status: PENDING
 declared_paths:
-  - .gitagent/missions/MSN-0249.publish-slim-opengantry-cage-npm-package.yaml
+  - .gitagent/missions/MSN-0252.publish-slim-opengantry-cage-npm-package.yaml
   - .github/workflows/npm-publish.yml
   - EXECUTOR_LOG.md
   - README.md
