@@ -1,0 +1,44 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: gantry root dependency bumps eslint 10.12.0, typescript-eslint 8.71.1, zod 4.6.5, acorn 8.19.0, acorn-walk 8.3.5, and sdk 0.24.4
+msn_id: MSN-0249
+skill_key: gantry
+gate_command: npm test
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0249 re-attested at e30a6b3: eslint 10.12.0, typescript-eslint 8.71.1 and zod 4.6.5 at the root, acorn 8.19.0, acorn-walk 8.3.5 and iii-sdk 0.24.4 in examples/iii-integration; npm audit 0 vulnerabilities; npm test 895 pass 895 fail 0 plus test:cage 10 pass 0 fail on the merged tree (sources unchanged since 3745aa9); under this mission the MSN-0248 DoD 1 and MSN-0253 DoD 1, 2 and 4 re-attestations were rewritten after the CodeRabbit review on #192 to keep every original assertion, and the pre-push verify of MSN-0248 and MSN-0253 passed"
+    anchor: "1271"
+    status: PASS
+gate_success_substring: pass
+interrogation:
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: ADR-0044 does not apply. There is no mission depends_on and no
+      cross-repo ledger ref. The word dependency refers to in-repo npm version
+      bumps only.
+    adr_refs:
+      - ADR-0044
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: ADR-0041 does not apply. The gate stays generic npm test.
+      eslint is only the devDependency being bumped to 10.12.0; there is no
+      gate_adapter change.
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: e25c4ad32a050ea5729974daefe9e30beaf7c0d6b28f69a8400e0fbb14b31938
+declared_paths:
+  - .gitagent/missions/MSN-0253.cage-signal-trap-and-journal-recovery.yaml
+  - .gitagent/missions/MSN-0247.bump-modelcontextprotocol-sdk-to-1-31-0-and-fast.yaml
+  - .gitagent/missions/MSN-0248.upgrade-typescript-7-and-commander-15.yaml
+  - .gitagent/missions/MSN-0249.bundle-dependabot-eslint-zod-and-integration-bumps.yaml
+  - examples/iii-integration/package-lock.json
+  - examples/iii-integration/package.json
+  - package-lock.json
+  - package.json
