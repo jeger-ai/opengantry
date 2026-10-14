@@ -1,0 +1,93 @@
+# OpenGantry mission (Planner-stamped by [MSN-0256]). Release v3.8.2. No code.
+#
+# Legislated intent: Release OpenGantry v3.8.2: cage signal trap and kill -9 journal recovery (MSN-0253),
+# fail-closed size caps (MSN-0254), the slim @jeger-ai/opengantry-cage package (MSN-0252), ADR-0049 (MSN-0250)
+# and the follow-ups (MSN-0255); version parity 3.8.2 including the slim package; the Unreleased changelog
+# row and upgrade notes become v3.8.2 and call out the two behaviour changes in a patch release (precedent:
+# v3.8.1); README v3.8.2 line.
+#
+# DoD 1 (version parity): 3.8.2 in package.json, package-lock.json (root, packages[""] and
+#        packages["packages/opengantry-cage"]), packages/opengantry-cage/package.json,
+#        .gitagent/foreman/SUBSTRATE.version.json, templates/.gitagent/foreman/SUBSTRATE.version.json and
+#        templates/integrations/compatibility.json; no 3.8.1 left in those files; `gantry --version`, the
+#        bundled `opengantry-cage --version` and the slim package bin print 3.8.2; `gantry doctor` reports the
+#        substrate version matching the bundled gantry. examples/iii-integration/package-lock.json is out of
+#        scope (it snapshots the root package only when that lockfile is regenerated).
+# DoD 2 (CHANGELOG): the **Unreleased** release-highlights row becomes **v3.8.2** with "Behaviour changes in
+#        a patch release" and MSN-0256 named; the Unreleased upgrade-notes subsection becomes
+#        "From v3.8.1 (… — v3.8.2)" with `npm install @jeger-ai/opengantry@3.8.2` and
+#        `npx @jeger-ai/opengantry-cage@3.8.2`; the substrate note says CLI 3.8.2; no "Unreleased" left.
+# DoD 3 (README): a **v3.8.2:** line above the v3.8.1 line.
+# DoD 4 (scope + packaging): the diff against main touches only the contract files and the mission file;
+#        no src/ change; `npm run pack:check` OK and `npm run test:cage` passes for the 3.8.2 tarball.
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+#
+# After merge (Planner, not this mission): push tag v3.8.2 to trigger npm-publish.yml, which publishes both
+# packages. The first publish of @jeger-ai/opengantry-cage needs an NPM_TOKEN allowed to create that name.
+msn_id: MSN-0256
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stays ACTIVE as amended by MSN-0254 (decision
+      8) and is unchanged by this release. The release only bumps versions and
+      turns the Unreleased changelog row and upgrade notes written by MSN-0255
+      into v3.8.2; the cage behaviour it ships (decision 7 tree termination
+      reused for trapped signals, the kill -9 journal, decision 8 fail-closed
+      caps) was legislated and verified in MSN-0253 and MSN-0254.
+    adr_refs:
+      - ADR-0048
+interrogation_sha256: 1cfd01873b81dc95b6b7dd5c533bf2109ec3419ff8e3a3d4f44ec8448e8973cc
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0256.release-opengantry-v3-8-2.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - package-lock.json
+  - package.json
+  - packages/opengantry-cage/package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - package-lock.json
+    - package.json
+    - packages/opengantry-cage/package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - src/
+contract_sha256: 37237d0f9fcdecc06b159a979a3f2a671b91e25f7198e67bb2fe0edb14e81f50
