@@ -1,0 +1,112 @@
+# OpenGantry mission (Planner-stamped by [MSN-0258]). Rename the standalone cage bin to gantry-cage.
+#
+# Legislated intent: the full package adds gantry-cage and keeps opengantry-cage as a silent legacy alias
+# (like gapman); the slim @jeger-ai/opengantry-cage package exposes only gantry-cage; help and version say
+# gantry-cage; tests, README, ADOPTION, FEATURES, the slim README and an Unreleased changelog entry follow.
+# Package names, the packages/opengantry-cage/ directory, the internal bundle file name and temp-dir
+# prefixes stay unchanged. Holds for both outcomes of the open fold-back question.
+#
+# Contract note: src/cli/lib/ is outside the roots but NOT a forbidden zone, because cage-bin.ts, the slim
+# entry and cage.test.ts import from it and forbidden zones also ban imports (ADR-0045, MSN-0257 lesson).
+#
+# DoD 1 (bins): root package.json bin maps gantry-cage and opengantry-cage to dist/cli/cage-bin.js;
+#        packages/opengantry-cage/package.json bin is exactly {"gantry-cage": "dist/cli/index.js"};
+#        package-lock.json bin entries match, reproduced by `npm install --package-lock-only`.
+# DoD 2 (program name): src/cli/cage-bin.ts and packages/opengantry-cage/src/entry.ts register as
+#        gantry-cage, so usage and help say gantry-cage, also when invoked as opengantry-cage; comments in
+#        cage-bin.ts, program-cage.ts, entry.ts and build.mjs updated.
+# DoD 3 (tests): cage.test.ts asserts both root bin keys and runs the cage through gantry-cage and through
+#        the alias; cage-suggest.test.ts wording follows; the slim package's tests expect
+#        {"gantry-cage": …}, call gantry-cage via npx -p <tarball>, and check that `npx <tarball>` resolves
+#        the single bin.
+# DoD 4 (docs): README, docs/ADOPTION.md, docs/FEATURES.md and packages/opengantry-cage/README.md teach
+#        gantry-cage; docs/CHANGELOG.md gains an Unreleased row and upgrade note (full package: opengantry-cage
+#        still works as an alias; slim package: bin renamed); historical changelog rows unchanged.
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK); `npm run test:cage` passes.
+#
+# Not in this mission: extending scripts/assert-no-stale-cli-naming.sh to flag opengantry-cage (belongs to
+# the later mission that removes the alias); examples/iii-integration/package-lock.json (snapshot); the
+# release that publishes the rename (needs CI publishing fixed: EOTP with the current token).
+msn_id: MSN-0258
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 0f494e657a26
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/cage-bin.ts and src/cli/program-cage.ts are
+      the existing CLI-delivery entry and wiring for the cage (only the program
+      name and comments change); src/cli/tests/cage.test.ts and
+      cage-suggest.test.ts are the existing cage suites, outside the import
+      layers by design. No import or layer rule changes.
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stays ACTIVE and unchanged. It never names the
+      standalone bin; this mission renames the bin to gantry-cage and keeps
+      opengantry-cage as a silent alias in the full package, with no change to
+      cage rules, overrides, halts, journal or caps.
+    adr_refs:
+      - ADR-0048
+interrogation_sha256: 94daf47206153ead03c5f49e695e3ffde68d4a3d493d292c14c6d822103b6416
+declared_paths:
+  - .gitagent/missions/MSN-0258.gantry-cage-bin.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - package-lock.json
+  - package.json
+  - packages/opengantry-cage/
+  - src/cli/cage-bin.ts
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-suggest.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - package-lock.json
+    - package.json
+    - packages/opengantry-cage/
+    - src/cli/cage-bin.ts
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-suggest.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - templates/
+contract_sha256: 088964c7c3850a00c0cfaa07fb283ff679dbda401d54cd2048fb532311948dbc
