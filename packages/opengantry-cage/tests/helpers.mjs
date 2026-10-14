@@ -49,7 +49,7 @@ export function run(cmd, args, opts = {}) {
   return { status: r.status, signal: r.signal, stdout: r.stdout ?? "", stderr: r.stderr ?? "", error: r.error };
 }
 
-/** `npx -y -p <tarball> opengantry-cage …` exactly as DoD 3 and 4 describe. */
+/** `npx -y -p <tarball> gantry-cage …` as MSN-0252 DoD 3 and 4 describe, with the MSN-0258 bin name. */
 export function npxCage(tarball, args, opts = {}) {
-  return run(npx, ["-y", "-p", tarball, "opengantry-cage", ...args], opts);
+  return run(npx, ["-y", "-p", tarball, "gantry-cage", ...args], opts);
 }

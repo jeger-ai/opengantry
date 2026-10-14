@@ -27,7 +27,7 @@ async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Pr
   await runCageSuggestCommand({ json: inherited.json, ...sub.opts() });
 }
 
-/** Shared by `gantry cage` and the standalone `opengantry-cage` bin so the two never drift. */
+/** Shared by `gantry cage` and the standalone `gantry-cage` bin (alias `opengantry-cage`) so they never drift. */
 export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } = {}): Command {
   if (opts.suggest) {
     cmd.addHelpText(

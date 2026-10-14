@@ -6,8 +6,8 @@ import { configureCageCommand, registerCageCommands } from "../../../src/cli/pro
 
 /**
  * Entry of the slim `@jeger-ai/opengantry-cage` package. Bundled by build.mjs together with the cage
- * runtime from src/cli (shared source, no copy), so `opengantry-cage [options] -- <command...>` behaves
- * exactly like `gantry cage`.
+ * runtime from src/cli (shared source, no copy), so `gantry-cage [options] -- <command...>` behaves
+ * exactly like `gantry cage`. The package exposes only the `gantry-cage` bin (MSN-0258).
  *
  * The cage session pre-push hook calls `<node> <dist/cli/index.js> cage-guard pre-push --root … --plan …`
  * (see src/cli/lib/cage/cage-push-guard.ts). In the full package that file is the gantry CLI; here the
@@ -18,8 +18,8 @@ resetOutputContext();
 const argv = process.argv;
 const program =
   argv[2] === "cage-guard"
-    ? registerGuard(new Command("opengantry-cage"))
-    : configureCageCommand(new Command("opengantry-cage")).version(CLI_VERSION);
+    ? registerGuard(new Command("gantry-cage"))
+    : configureCageCommand(new Command("gantry-cage")).version(CLI_VERSION);
 
 program.parseAsync(argv).catch(reportUserFacingError);
 

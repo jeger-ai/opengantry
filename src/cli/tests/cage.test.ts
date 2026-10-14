@@ -227,11 +227,15 @@ test("cage CLI: missing command fails", () => {
   assert.notEqual(r.status, 0);
 });
 
-test("opengantry-cage bin: package.json alias runs the same cage and reverts", () => {
+test("gantry-cage bin, and the opengantry-cage alias, run the same cage and revert (MSN-0258 DoD 1-3)", () => {
   const ogRoot = getRepoRoot();
   const pkg = JSON.parse(fs.readFileSync(path.join(ogRoot, "package.json"), "utf8")) as { bin: Record<string, string> };
-  assert.equal(pkg.bin["opengantry-cage"], "dist/cli/cage-bin.js");
-  const bin = path.join(ogRoot, pkg.bin["opengantry-cage"]!);
+  assert.equal(pkg.bin["gantry-cage"], "dist/cli/cage-bin.js");
+  assert.equal(pkg.bin["opengantry-cage"], pkg.bin["gantry-cage"], "opengantry-cage stays a silent alias of the same file");
+  const bin = path.join(ogRoot, pkg.bin["gantry-cage"]!);
+  const help = spawnSync(process.execPath, [bin, "--help"], { encoding: "utf8" });
+  assert.match(help.stdout, /^Usage: gantry-cage \[options\] <command\.\.\.>/m, "help names gantry-cage, whichever name was typed");
+  assert.ok(!help.stdout.includes("opengantry-cage"), "the alias is silent");
   const dest = makeRepo("og-cage-bin-", true);
   const r = spawnSync(
     process.execPath,

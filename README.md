@@ -145,8 +145,8 @@ No setup. Start your agent inside the cage, exactly as you normally would:
 
 ```bash
 npx @jeger-ai/opengantry-cage -- claude
-# same cage from the full package: npx -p @jeger-ai/opengantry opengantry-cage -- claude
-# installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry cage -- aider
+# same cage from the full package: npx -p @jeger-ai/opengantry gantry-cage -- claude
+# installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry-cage -- aider
 ```
 
 `@jeger-ai/opengantry-cage` is the slim standalone build of `gantry cage` (same sources, `commander` as the only runtime dependency, no native modules, no install scripts) for the `npx` on-ramp. The full package adds missions, `gantry verify`, MCP and the rest.
