@@ -81,6 +81,7 @@ interrogation:
   - ADR-0045
 interrogation_sha256: c1daac2e5d4901d1faccef536c85633000ca0e95c1f43e084e1df6facc5f42f3
 declared_paths:
+  - .gitagent/missions/MSN-0253.cage-signal-trap-and-journal-recovery.yaml
   - .gitagent/missions/MSN-0254.cage-size-cap-fail-closed-adr-0048.yaml
   - EXECUTOR_LOG.md
   - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
