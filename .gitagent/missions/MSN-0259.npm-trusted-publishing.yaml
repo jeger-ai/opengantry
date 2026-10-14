@@ -35,25 +35,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0259 at 42ae376: .github/workflows/npm-publish.yml has no secrets.* reference and no NODE_AUTH_TOKEN in any step env; permissions are contents: read and id-token: write; setup-node has no registry-url (no .npmrc token placeholder sent with npm view); a Require npm with trusted publishing (>= 11.5.1) step runs before the publishes and, executed with stub npm versions, fails for 10.9.9 and 11.5.0 and passes for 11.5.1, 11.19.0 and 12.0.0; tag pushes, the guarded workflow_dispatch and both publishes via scripts/npm-publish-if-new.sh unchanged"
+    anchor: "1245"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0259 at 42ae376: scripts/npm-publish-if-new.sh keeps skip, publish on E404 and fail-closed behaviour; when npm publish fails with GITHUB_ACTIONS=true it keeps the exit code and prints ::error:: naming the package and the trusted publisher to add (provider GitHub Actions, repository from GITHUB_REPOSITORY, workflow file from GITHUB_WORKFLOW_REF, e.g. npm-publish.yml); outside GitHub Actions a failed publish exits non-zero without that hint"
+    anchor: "1246"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0259 at 42ae376: publishConfig in package.json and packages/opengantry-cage/package.json is exactly access public (provenance removed); CI still passes --provenance through the script; against a throwaway local registry, npm publish --workspace @jeger-ai/opengantry-cage --access public fails with EUSAGE Automatic provenance generation not supported for provider: null using main's publishConfig and succeeds (+ @jeger-ai/opengantry-cage@3.8.2, one PUT) with this branch's"
+    anchor: "1247"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0259 at 42ae376: src/cli/tests/npm-publish-if-new.test.ts asserts the token-free workflow, the npm version check and both publishConfig blocks, and the CI-only failure hint with a stub npm (11 pass 0 fail); docs/DEVELOPMENT.md Releasing replaces the NPM_TOKEN guidance with trusted publishing (GitHub Actions, jeger-ai/opengantry, npm-publish.yml, for both packages), the first-publish-by-hand rule for new packages, disallowing tokens and deleting the NPM_TOKEN secret afterwards, and the emergency local publish without provenance; assert-docs-deterministic OK"
+    anchor: "1248"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0259 at 42ae376: ./scripts/dev-validate-core.sh: assert-docs-deterministic OK; assert-no-stale-cli-naming OK; tests 895 pass 895 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; npm run test:cage 10 pass 0 fail"
+    anchor: "1249"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1d3b16f1795a
