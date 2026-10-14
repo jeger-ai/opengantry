@@ -1,0 +1,54 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: Record ADR-0049: technical flight levels compose by tighten-only; product management stays outside the substrate
+msn_id: MSN-0250
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0250: .gitagent/out-of-scope/ADR-0049-flight-level-decision-model.md (status ACTIVE, blob 8231e96) records the technical flight levels: five levels (Enterprise, System, Application, Module, Execution) mapped to the org policy bundle, TARGET_ARCHITECTURE.yaml, the MANIFEST skill entry, the mission contract and .cage.yaml; tighten-only restated as the composition rule between levels; one Planner stamp per mission and no dual seal; business intent enters only as mission intent and gate_command, with an optional opaque external_ref deferred to a follow-on; Planner, Executor and Verifier unchanged; the Manifesto rewrite deferred to a docs-only mission; cites ADR-0023, ADR-0024, ADR-0034, ADR-0042, ADR-0044, ADR-0045 and ADR-0048"
+    anchor: "1177"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0250: working tree against 1655f6e (origin/main) touches only .gitagent/out-of-scope/ADR-0049-flight-level-decision-model.md, .gitagent/missions/MSN-0250.record-adr-0049-technical-flight-levels-compose-.yaml and EXECUTOR_LOG.md; no src/, templates/, MANIFEST.json, RULES.md or docs/ change; interrogation records ADR-0042 accepted and ADR-0049 self-match accepted; contract seals tmvc_roots to the ADR file and EXECUTOR_LOG.md"
+    anchor: "1178"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0250: ./scripts/dev-validate-core.sh with ADR-0049 in the tree on 1655f6e: assert-docs-deterministic OK; tests 880 pass 880 fail 0; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1179"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0042 stays ACTIVE and is the Level 4 and Level 3
+      artifact in ADR-0049. ADR-0049 restates the tighten-only merge of RULES
+      section 8 as the composition rule between flight levels and changes no
+      policy pull, pointer, cache, or doctor behaviour.
+    adr_refs:
+      - ADR-0042
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept; the match is ADR-0049 itself, already present in the
+      working tree at legislation time. This mission records it under
+      .gitagent/out-of-scope/ as the law for technical flight levels and keeps
+      epics, roadmaps and module business requirements in external trackers.
+    adr_refs:
+      - ADR-0049
+interrogation_sha256: ee989f7fe541a7a0411933a43a0cb523dcfdd7ead41a92eda137f552c6be9ac3
+declared_paths:
+  - .gitagent/missions/MSN-0250.record-adr-0049-technical-flight-levels-compose-.yaml
+  - .gitagent/out-of-scope/ADR-0049-flight-level-decision-model.md
+  - EXECUTOR_LOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/ADR-0049-flight-level-decision-model.md
+    - EXECUTOR_LOG.md
+contract_sha256: 1860af86b66a8d87fc4aeb1b976e15dc1fc563c8db258d38ad1814aabcc7af06
