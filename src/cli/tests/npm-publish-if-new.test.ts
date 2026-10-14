@@ -284,7 +284,7 @@ test("npm-publish.yml npm version check: passes from npm 11.5.1, fails below (MS
       env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}` },
     });
     assert.equal(r.status, want, `npm ${version}: ${r.stdout}${r.stderr}`);
-    if (want === 1) assert.match(r.stdout, new RegExp(`npm ${version.replace(/\./g, "\\.")} cannot use trusted publishing; need npm >= 11\\.5\\.1`));
+    if (want === 1) assert.ok(r.stdout.includes(`npm ${version} cannot use trusted publishing; need npm >= 11.5.1`), r.stdout);
   }
 });
 
