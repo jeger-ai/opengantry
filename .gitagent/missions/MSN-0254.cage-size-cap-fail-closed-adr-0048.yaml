@@ -20,25 +20,25 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0254: src/cli/lib/cage/cage-snapshot.ts at a4bc435 records every revert-rule file over --max-file-bytes during the baseline scan (keepBytes only) and throws GXT_CAGE_FILE_TOO_LARGE exit 2 after the scan listing each path and size; runCage rejects before spawning, probe-ran.txt is never written and .env.production stays untouched; the CLI exits 2 with the code and path on stderr; --report-only keeps no bytes and reports the change; --allow-override .env.production runs with the path kept and no detect_only line; the detect_only report line is removed from cage-report.ts (cage.test.ts MSN-0254 DoD 1 replaces the MSN-0233 DoD 3 detect_only expectations)"
+    anchor: "1177"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0254: cage-snapshot.ts at a4bc435 sums the would-be bytes of all revert-rule files at baseline and throws GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED exit 2 when the total exceeds maxTotalBytes, the same fail-closed shape as the scan caps (GXT_CAGE_LIMITS_EXCEEDED checked first); with maxTotalBytes 4 runCage rejects before spawning, probe-ran.txt is never written, .env keeps its baseline, and the default budget leaves a normal repo alone with status ok; later snapshots (keepBytes false) only hash, so live ticks, the exit diff and --report-only are unaffected (cage.test.ts MSN-0254 DoD 2)"
+    anchor: "1178"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0254: .gitagent/out-of-scope/ADR-0048-cage-trust-model.md at a4bc435 stays ACTIVE with decisions 1-7 unchanged and gains decision 8 (amended by MSN-0254): a revert-rule file over the per-file cap or a set over the total budget ends the run before the command spawns with exit 2 and GXT_CAGE_FILE_TOO_LARGE or GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED, the same fail-closed shape as the decision 2 scan caps (5,000 files or 64 MiB, GXT_CAGE_LIMITS_EXCEEDED); exit 2 is distinct from 3 and 4; the ways through are a higher --max-file-bytes or the announced --allow-override of decision 3, --report-only is unaffected, nothing in the working tree can lift the cap; a consequence bullet states the operator-visible change"
+    anchor: "1179"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0254: docs/FEATURES.md at a4bc435 Zero-config cage section: the Snapshot bullet says a file over --max-file-bytes or a set over the 64 MiB budget stops cage before the command runs with GXT_CAGE_FILE_TOO_LARGE or GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED exit 2, nothing is left detect_only, raise the cap or --allow-override, --report-only unaffected, citing ADR-0048 decision 8; the exit-code bullet lists the per-file cap and snapshot budget under exit 2; the Fail closed bullet names a revert-rule file the snapshot cannot hold; assert-docs-deterministic OK"
+    anchor: "1180"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0254: ./scripts/dev-validate-core.sh on a4bc435: tests 880 pass 880 fail 0; check-changed-code: 4 changed file(s) OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; cage, cage-watch and cage-suggest suites 40 pass 0 fail"
+    anchor: "1181"
+    status: PASS
 interrogation:
 - finding_id: 4367eadf9a61
   kind: adr_conflict
