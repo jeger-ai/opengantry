@@ -29,25 +29,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0256: version parity 3.8.2 at 5cbee2c across package.json, package-lock.json (root, packages[\"\"] and packages[\"packages/opengantry-cage\"]), packages/opengantry-cage/package.json, .gitagent/foreman/SUBSTRATE.version.json, templates/.gitagent/foreman/SUBSTRATE.version.json and templates/integrations/compatibility.json; no 3.8.1 left in those files; npm install --package-lock-only reproduces the lockfile byte for byte; gantry --version, dist/cli/cage-bin.js --version and packages/opengantry-cage/dist/cli/index.js --version print 3.8.2; gantry doctor: ok: substrate version: 3.8.2 (matches bundled gantry); examples/iii-integration/package-lock.json left out of scope"
+    anchor: "1225"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0256: docs/CHANGELOG.md at 5cbee2c: the Unreleased highlights row is now v3.8.2 naming MSN-0250, MSN-0252 to MSN-0255 and the release MSN-0256, ending Behaviour changes in a patch release: see the upgrade notes; the upgrade notes subsection is From v3.8.1 (cage signals, kill -9 recovery, fail-closed caps, slim package — v3.8.2) with npm install @jeger-ai/opengantry@3.8.2 and npx @jeger-ai/opengantry-cage@3.8.2; the new-package bullet says it publishes with v3.8.2 at the same version; the substrate note says CLI 3.8.2; no Unreleased left"
+    anchor: "1226"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0256: README.md at 5cbee2c has a v3.8.2 line above the v3.8.1 line: cage terminates the agent tree on SIGTERM or SIGHUP and restores, recovers a kill -9 from the hash-verified journal, stops with exit 2 on a protected file over the snapshot cap (ADR-0048 decision 8), ships as npx @jeger-ai/opengantry-cage, links the upgrade notes"
+    anchor: "1227"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0256: git diff --name-only origin/main..5cbee2c lists only the nine contract files and the mission file; no src/ change; npm run pack:check: pack:check OK (jeger-ai-opengantry-3.8.2.tgz); the slim package packs as jeger-ai-opengantry-cage-3.8.2.tgz, unpackedSize 231882; npm run test:cage 9 pass 0 fail"
+    anchor: "1228"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0256: ./scripts/dev-validate-core.sh on 5cbee2c: assert-docs-deterministic OK; tests 884 pass 884 fail 0; doctor substrate version 3.8.2 matches bundled gantry; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1229"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 4367eadf9a61
