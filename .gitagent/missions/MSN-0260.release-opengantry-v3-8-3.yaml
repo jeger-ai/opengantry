@@ -1,0 +1,107 @@
+# OpenGantry mission (Planner-stamped by [MSN-0260]). Release v3.8.3. No code.
+#
+# Legislated intent: Release OpenGantry v3.8.3: the gantry-cage command name (MSN-0258), dependency bumps
+# incl. zod 4 (MSN-0249), the first release published through npm trusted publishing with provenance for
+# both packages (MSN-0257, MSN-0259); version parity 3.8.3 including the slim package; the Unreleased
+# changelog row and upgrade notes become v3.8.3 and gain the dependency and publishing entries; README
+# v3.8.3 line; no code.
+#
+# DoD 1 (version parity): 3.8.3 in package.json, package-lock.json (root, packages[""] and
+#        packages["packages/opengantry-cage"]), packages/opengantry-cage/package.json, both
+#        SUBSTRATE.version.json files and templates/integrations/compatibility.json; no 3.8.2 left in those
+#        files; npm install --package-lock-only reproduces the lockfile; `gantry --version`, `gantry-cage
+#        --version` (full and slim bins) print 3.8.3; `gantry doctor` reports the substrate version matching.
+#        examples/iii-integration/package-lock.json stays out of scope (snapshot, as in MSN-0246 / MSN-0256).
+# DoD 2 (CHANGELOG): the Unreleased highlights row becomes **v3.8.3**, keeps the gantry-cage entry and gains
+#        the dependency bumps (zod 4 as the one runtime major, used by the MCP server) and trusted publishing
+#        (provenance for both packages, incl. the slim package that shipped 3.8.2 without it), naming MSN-0249,
+#        MSN-0257, MSN-0258, MSN-0259 and MSN-0260; the Unreleased upgrade notes become
+#        "From v3.8.2 (… — v3.8.3)" with install lines for both packages and a zod 4 note; substrate note CLI
+#        3.8.3; no "Unreleased" left.
+# DoD 3 (README): a **v3.8.3:** line above the v3.8.2 line.
+# DoD 4 (scope + packaging): the diff against main touches only the contract files and the mission file;
+#        no src/ change; `npm run pack:check` OK; `npm run test:cage` passes for the 3.8.3 tarball.
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+#
+# Before tagging (Planner, not this mission): add a trusted publisher on npmjs.com to @jeger-ai/opengantry
+# and @jeger-ai/opengantry-cage (GitHub Actions, jeger-ai/opengantry, npm-publish.yml). npm-publish.yml has
+# no token since MSN-0259, so without them the publish fails with an auth error. Then tag v3.8.3 on the
+# release merge commit; after a CI publish succeeds, disallow tokens on both packages and delete NPM_TOKEN.
+msn_id: MSN-0260
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0260: version parity 3.8.3 at 2f478a8 across package.json, package-lock.json (root, packages[\"\"] and packages[\"packages/opengantry-cage\"]), packages/opengantry-cage/package.json, both SUBSTRATE.version.json files and templates/integrations/compatibility.json; no 3.8.2 left in those files; npm install --package-lock-only reproduces the lockfile byte for byte; gantry --version, dist/cli/cage-bin.js --version and the slim packages/opengantry-cage/dist/cli/index.js --version print 3.8.3; gantry doctor: ok: substrate version: 3.8.3 (matches bundled gantry); examples/iii-integration/package-lock.json left out of scope"
+    anchor: "1272"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0260: docs/CHANGELOG.md at 2f478a8: the Unreleased row is now v3.8.3, keeps the gantry-cage entry (MSN-0258) and adds Dependencies (zod 4.6.5 used only by the MCP server's tool registration, not the ./kernel export; eslint 10.12.0 and typescript-eslint 8.71.1 for development; iii-sdk 0.24.4, acorn 8.19.0 and acorn-walk 8.3.5 in the iii example; MSN-0249) and Publishing (npm trusted publishing with provenance for both packages, idempotent publish; MSN-0257, MSN-0259) and Release (MSN-0260); the upgrade notes are From v3.8.2 (gantry-cage command, zod 4, trusted publishing — v3.8.3) with install lines for both packages, a zod 4 note and a provenance note (npm audit signatures); substrate note CLI 3.8.3; no Unreleased left"
+    anchor: "1273"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0260: README.md at 2f478a8 has a v3.8.3 line above the v3.8.2 line naming the gantry-cage command (opengantry-cage alias kept in the full package), zod 4 inside the MCP server and trusted publishing with provenance, linking the upgrade notes"
+    anchor: "1274"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0260: git diff --name-only origin/main..2f478a8 lists only the nine contract files and the mission file; no src/ change; npm run pack:check: pack:check OK (jeger-ai-opengantry-3.8.3.tgz); the slim package packs as jeger-ai-opengantry-cage-3.8.3.tgz, unpackedSize 232118; npm run test:cage 10 pass 0 fail"
+    anchor: "1275"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0260: ./scripts/dev-validate-core.sh on 2f478a8: assert-docs-deterministic OK; tests 895 pass 895 fail 0; doctor substrate version 3.8.3 matches bundled gantry; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1276"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stays ACTIVE as amended by MSN-0254 (decision
+      8) and is unchanged by this release. The release only bumps versions and
+      turns the Unreleased changelog row and upgrade notes into v3.8.3; the
+      gantry-cage command name it ships (MSN-0258) changes no cage rule,
+      override, halt, journal or cap.
+    adr_refs:
+      - ADR-0048
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0044 stays ACTIVE. The match is the
+      word dependency, as in the npm dependency bumps (eslint,
+      typescript-eslint, zod, iii example) merged by MSN-0249; this release adds
+      no depends_on, deps fetch or cross-repo mission gate.
+    adr_refs:
+      - ADR-0044
+interrogation_sha256: d3daf15fbd8500831459f1b44cb575ad600dba34261773ffabe71f0b0a91eedb
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0260.release-opengantry-v3-8-3.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - package-lock.json
+  - package.json
+  - packages/opengantry-cage/package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - package-lock.json
+    - package.json
+    - packages/opengantry-cage/package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - src/
+contract_sha256: 37237d0f9fcdecc06b159a979a3f2a671b91e25f7198e67bb2fe0edb14e81f50
