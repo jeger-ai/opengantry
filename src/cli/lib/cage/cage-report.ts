@@ -1,3 +1,4 @@
+import type { CageRecovery } from "./cage-journal.js";
 import { cageRuleSource, type CageRuleId, type CageRuleSource } from "./cage-rules.js";
 import type { CageOutcome, CageResolvedChange } from "./cage-revert.js";
 
@@ -58,9 +59,19 @@ export interface CageReport {
   command: string;
   command_exit_code: number | null;
   command_signal: string | null;
+  /** A signal the wrapper trapped (SIGTERM, SIGHUP, non-interactive SIGINT) and answered by terminating the tree. */
+  trapped_signal: string | null;
   runtime_error: string | null;
+  /** A journal left by an interrupted session that was recovered before this command ran (MSN-0253). */
+  recovery: {
+    previous_pid: number;
+    started_at: string;
+    restored: CageReportChange[];
+    orphans_killed: number[];
+  } | null;
   root: string;
   revert_mode: "revert" | "report_only";
+  /** Per-file snapshot cap the baseline was held to; a larger revert-rule file never reaches a report (exit 2 first). */
   max_file_bytes: number;
   protected_files: number;
   manifest_zones: number;
@@ -91,7 +102,9 @@ export interface CageReportInput {
   command: string;
   commandExitCode: number | null;
   commandSignal: NodeJS.Signals | null;
+  trappedSignal: NodeJS.Signals | null;
   runtimeError: string | null;
+  recovery: CageRecovery | null;
   root: string;
   reportOnly: boolean;
   maxFileBytes: number;
@@ -128,8 +141,23 @@ function cageExitCode(status: CageStatus, input: CageReportInput): number {
   return input.commandExitCode ?? RUNTIME_ERROR_EXIT_CODE;
 }
 
+function toReportChange(c: CageResolvedChange): CageReportChange {
+  return {
+    path: c.rel,
+    kind: c.kind,
+    rule: c.rule,
+    source: cageRuleSource(c.rule),
+    overridden: c.overridden,
+    sha256_before: c.before?.sha256 ?? null,
+    sha256_after: c.after?.sha256 ?? null,
+    outcome: c.outcome,
+    error_code: c.errorCode,
+  };
+}
+
 export function buildCageReport(input: CageReportInput): CageReport {
   const status = cageStatus(input);
+  const r = input.recovery;
   return {
     report_schema: CAGE_REPORT_SCHEMA,
     status,
@@ -137,7 +165,11 @@ export function buildCageReport(input: CageReportInput): CageReport {
     command: input.command,
     command_exit_code: input.commandExitCode,
     command_signal: input.commandSignal,
+    trapped_signal: input.trappedSignal,
     runtime_error: input.runtimeError,
+    recovery: r
+      ? { previous_pid: r.previousPid, started_at: r.startedAt, restored: r.restored.map(toReportChange), orphans_killed: [...r.orphansKilled] }
+      : null,
     root: input.root,
     revert_mode: input.reportOnly ? "report_only" : "revert",
     max_file_bytes: input.maxFileBytes,
@@ -145,17 +177,7 @@ export function buildCageReport(input: CageReportInput): CageReport {
     manifest_zones: input.manifestZones,
     cage_config: input.cageConfig,
     overrides: [...input.overrides],
-    changes: input.changes.map((c) => ({
-      path: c.rel,
-      kind: c.kind,
-      rule: c.rule,
-      source: cageRuleSource(c.rule),
-      overridden: c.overridden,
-      sha256_before: c.before?.sha256 ?? null,
-      sha256_after: c.after?.sha256 ?? null,
-      outcome: c.outcome,
-      error_code: c.errorCode,
-    })),
+    changes: input.changes.map(toReportChange),
     watch: input.watch,
     push_guard: input.pushGuard,
     limits: input.watch.enabled ? CAGE_WATCH_LIMITS : CAGE_LIMITS,
@@ -188,6 +210,9 @@ function sessionLines(report: CageReport): string[] {
       `cage: HALTED: ${w.halt.path} (${w.halt.rule}) was rewritten again after ${String(w.halt.live_restores)} live restore(s); the command was terminated (contest limit ${String(w.contest_limit)})`,
     );
   }
+  if (report.trapped_signal) {
+    out.push(`cage: trapped ${report.trapped_signal}: terminated the command and its process tree, then restored the protected set`);
+  }
   if (report.push_guard.refused_pushes > 0) {
     out.push(`cage: refused ${String(report.push_guard.refused_pushes)} push(es) touching protected paths`);
   }
@@ -201,17 +226,19 @@ function sessionLines(report: CageReport): string[] {
 export function formatCageReport(report: CageReport): string[] {
   const lines: string[] = [];
   const n = report.changes.length;
+  if (report.recovery) {
+    const r = report.recovery;
+    lines.push(
+      `cage: recovered an interrupted session (pid ${String(r.previous_pid)}, started ${r.started_at}): restored ${String(r.restored.length)} protected path(s), killed ${String(r.orphans_killed.length)} orphan process(es)`,
+    );
+    for (const c of r.restored) lines.push(changeLine(c));
+  }
   if (report.runtime_error) lines.push(`cage: command did not run: ${report.runtime_error}`);
   if (n === 0) {
     lines.push(`cage: ${report.status} — ${String(report.protected_files)} protected file(s) unchanged`);
   } else {
     lines.push(`cage: ${report.status} — ${String(n)} protected change(s)`);
     for (const c of report.changes) lines.push(changeLine(c));
-  }
-  if (report.changes.some((c) => c.outcome === "detect_only")) {
-    lines.push(
-      `cage: detect_only files exceeded the ${String(report.max_file_bytes)}-byte per-file cap or the total snapshot budget and were not restored`,
-    );
   }
   lines.push(...sessionLines(report));
   const banner = formatCageOverrideBanner(report.overrides);

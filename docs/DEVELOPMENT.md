@@ -203,6 +203,28 @@ Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and 
 
 - **pre-push** — `gantry verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gantry check` if manifest/skills changed; advisory `gantry perimeter` when governance files change; changed-code gate for touched `src/cli/**/*.ts`.
 
+## Releasing
+
+A release is its own mission that bumps every version site (including `packages/opengantry-cage/package.json`) and turns the changelog's draft row into the release row (MSN-0246, MSN-0256). After it merges:
+
+```bash
+git tag -a v<version> <merge-commit> -m "OpenGantry v<version>"
+git push origin v<version>
+```
+
+The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which publishes `@jeger-ai/opengantry` and then `@jeger-ai/opengantry-cage`. Each publish goes through `scripts/npm-publish-if-new.sh` and is skipped when that version is already on npm.
+
+- **Authentication is npm trusted publishing (MSN-0259).** npm exchanges the job's GitHub OIDC token for a short-lived publish token and attaches provenance; the workflow holds no npm token or secret and needs npm 11.5.1 or newer, which it checks. Each package needs a trusted publisher on npmjs.com, under the package's settings: provider **GitHub Actions**, repository **`jeger-ai/opengantry`**, workflow **`npm-publish.yml`**. A package without one fails to publish with an auth error (`E404`, `ENEEDAUTH`, `E401` or `EOTP`), and the script names the missing setting; there is no token to fall back to.
+- **New packages:** trusted publishing can only be configured for a package that exists, so the first version of a new package is published by hand (below), then the trusted publisher is added before the next release.
+- **Once releases publish from CI:** set both packages to disallow tokens on npmjs.com and delete any `NPM_TOKEN` repository secret.
+- **Partial release:** if one package published and the other failed, do not re-run the tag run (it uses the workflow file at the tagged commit) and never move the tag. Fix the cause, then start a run from `main` with the tag. It refuses unless the tag matches `package.json` and everything that gets published on `main` is identical to the tag; the package already on npm is skipped. Provenance for that run names the `main` commit it used.
+
+```bash
+gh workflow run npm-publish.yml -f tag=v<version>
+```
+
+- **Emergency local publish** (no provenance): from a clean checkout of the tag, after `npm run build`, run `npm publish --access public` for the root package or add `--workspace @jeger-ai/opengantry-cage`. `publishConfig` no longer forces provenance, so this works outside CI; npm asks for two-factor approval in the browser or for `--otp <code>`.
+
 ## LLM evidence + KPI gate
 
 Nondeterministic LLM checks produce **committed evidence**; merge stays deterministic:

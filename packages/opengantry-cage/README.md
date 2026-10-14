@@ -1,0 +1,20 @@
+# @jeger-ai/opengantry-cage
+
+Zero-config cage for AI coding agents. Start the agent you already use inside it:
+
+```bash
+npx @jeger-ai/opengantry-cage -- claude
+# installed (npm install -g @jeger-ai/opengantry-cage): gantry-cage -- claude
+```
+
+The command is `gantry-cage`. Releases up to 3.8.2 of this package named it `opengantry-cage`; the full package `@jeger-ai/opengantry` still accepts that name as an alias.
+
+While the session runs, the cage checks about once a second and restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/`, your GXT manifest `forbidden_zones` and `.cage.yaml` `protect:` entries from an in-memory snapshot. Lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths. When you quit, the cage prints one report and exits `3` if anything was restored (otherwise the agent's own exit code).
+
+This is the same `gantry cage` that ships in [`@jeger-ai/opengantry`](https://www.npmjs.com/package/@jeger-ai/opengantry), built from the same sources as a slim standalone package: no native modules, no install scripts, `commander` is the only runtime dependency. Use the full package for missions, `gantry verify`, MCP and everything else.
+
+Options: `--json`, `--report-only`, `--no-watch`, `--watch-interval-ms <n>`, `--max-file-bytes <n>`, `--contest-limit <n>`, `--allow-override <path>`. `cage suggest` (proposing `.cage.yaml` rules) lives in the full package: `npx -p @jeger-ai/opengantry gantry cage suggest --write`.
+
+Docs: [FEATURES § Zero-config cage](https://github.com/jeger-ai/opengantry/blob/main/docs/FEATURES.md#zero-config-cage-gantry-cage) · [ADOPTION § Step zero](https://github.com/jeger-ai/opengantry/blob/main/docs/ADOPTION.md#step-zero-cage-an-agent-you-already-use) · trust model [ADR-0048](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md).
+
+License: Apache-2.0. The bundle inlines `yaml` (ISC), `ajv` and `ajv-formats` (MIT); their notices are kept at the end of the bundle file.

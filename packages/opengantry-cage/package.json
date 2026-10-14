@@ -1,0 +1,49 @@
+{
+  "name": "@jeger-ai/opengantry-cage",
+  "version": "3.8.2",
+  "description": "Zero-config cage for AI coding agents: run any command and restore CI configs, .env secrets, git hooks/config and protected paths while it runs. Slim standalone build of `gantry cage` from @jeger-ai/opengantry.",
+  "type": "module",
+  "bin": {
+    "gantry-cage": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test --test-concurrency=1 \"tests/*.test.mjs\""
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "cage",
+    "ai-agents",
+    "guardrail",
+    "git-hooks",
+    "opengantry",
+    "gantry"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeger-ai/opengantry.git",
+    "directory": "packages/opengantry-cage"
+  },
+  "author": "Juergen Eger",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/jeger-ai/opengantry/issues"
+  },
+  "homepage": "https://opengantry.ai"
+}

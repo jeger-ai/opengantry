@@ -1,8 +1,27 @@
 name: npm publish
 
+# Publishes @jeger-ai/opengantry and the @jeger-ai/opengantry-cage workspace for a release tag.
+# Each publish skips a version that is already on npm (scripts/npm-publish-if-new.sh), so a partial
+# release can be finished without failing on the package that already went out (MSN-0257).
+#
+# A re-run of a tag run uses the workflow file at the tagged commit. To finish a partial release with
+# the current workflow, start a manual run from main with the release tag; the guard below refuses
+# unless everything that gets published on main is identical to that tag.
+#
+# Authentication is npm trusted publishing (MSN-0259): npm exchanges this job's GitHub OIDC token for a
+# short-lived publish token and adds provenance. No npm token or secret is used. Each package needs a
+# trusted publisher on npmjs.com (GitHub Actions, repository jeger-ai/opengantry, workflow npm-publish.yml);
+# without one the publish fails with an auth error instead of silently falling back to a stored token.
+
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to finish, e.g. v3.8.2. Main's published inputs must be identical to it."
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,7 +39,41 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          registry-url: https://registry.npmjs.org
+          # No registry-url: it would write an .npmrc that sends NODE_AUTH_TOKEN (a placeholder without a
+          # secret) with every request, including the anonymous `npm view` checks. npm's default registry
+          # is npmjs.org, and trusted publishing needs no .npmrc token.
+
+      - name: Require npm with trusted publishing (>= 11.5.1)
+        run: |
+          v="$(npm --version)"
+          if ! node -e 'const [a,b,c]=process.argv[1].split(".").map(Number);process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$v"; then
+            echo "::error::npm $v cannot use trusted publishing; need npm >= 11.5.1"
+            exit 1
+          fi
+          echo "npm $v supports trusted publishing"
+
+      - name: Guard manual run against the release tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          version="$(node -p 'require("./package.json").version')"
+          if [[ "$TAG" != "v${version}" ]]; then
+            echo "::error::tag '$TAG' does not match package.json version v${version}"
+            exit 1
+          fi
+          if ! git rev-parse -q --verify "refs/tags/${TAG}^{commit}" >/dev/null; then
+            echo "::error::tag '$TAG' does not exist"
+            exit 1
+          fi
+          published=(src ':(exclude)src/cli/tests' packages package.json package-lock.json templates README.md LICENSE NOTICE)
+          if ! git diff --quiet "$TAG" HEAD -- "${published[@]}"; then
+            echo "::error::published inputs on ${GITHUB_SHA} differ from ${TAG}; refusing to publish"
+            git diff --stat "$TAG" HEAD -- "${published[@]}"
+            exit 1
+          fi
+          echo "guard: ${GITHUB_SHA} publishes the same inputs as ${TAG}"
 
       - name: Install Node deps
         run: npm ci
@@ -31,7 +84,8 @@ jobs:
       - name: Validate stack
         run: npm run validate
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish @jeger-ai/opengantry to npm (skipped if this version is already published)
+        run: ./scripts/npm-publish-if-new.sh
+
+      - name: Publish @jeger-ai/opengantry-cage to npm (skipped if this version is already published)
+        run: ./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-cage

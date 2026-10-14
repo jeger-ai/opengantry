@@ -8,7 +8,9 @@ import type { CageChange, CageEntry } from "./cage-snapshot.js";
  * - `removed`: an added file was deleted
  * - `kept`: report-only rule (lockfiles, report entries, `--allow-override`); change left in place
  * - `reported`: `--report-only` run; change left in place
- * - `detect_only`: no baseline bytes (over size cap or budget); change left in place
+ * - `detect_only`: no baseline bytes; change left in place. No longer produced for revert-rule files since
+ *   MSN-0254 (a file the snapshot cannot hold stops cage before the command runs, exit 2); kept in the
+ *   union so `gantry.cage-report.v1` consumers that match on it keep parsing.
  * - `revert_failed`: restore attempted and failed (`error_code` says why)
  */
 export type CageOutcome = "reverted" | "removed" | "kept" | "reported" | "detect_only" | "revert_failed";

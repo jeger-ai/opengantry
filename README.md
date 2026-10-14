@@ -144,9 +144,12 @@ See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GR
 No setup. Start your agent inside the cage, exactly as you normally would:
 
 ```bash
-npx -p @jeger-ai/opengantry opengantry-cage -- claude
-# installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry cage -- aider
+npx @jeger-ai/opengantry-cage -- claude
+# same cage from the full package: npx -p @jeger-ai/opengantry gantry-cage -- claude
+# installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry-cage -- aider
 ```
+
+`@jeger-ai/opengantry-cage` is the slim standalone build of `gantry cage` (same sources, `commander` as the only runtime dependency, no native modules, no install scripts) for the `npx` on-ramp. The full package adds missions, `gantry verify`, MCP and the rest.
 
 While the session runs, cage checks about once a second and restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`) and your manifest `forbidden_zones` from an in-memory snapshot. Lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths, and the agent sees why. When you quit, cage prints one report: everything it restored, any refused pushes, exit `3` if anything was touched (otherwise the agent's own exit code).
 
@@ -238,6 +241,8 @@ On failure, external agents ingest `findings[]`:
   "resolution_hint": "..."
 }
 ```
+
+**v3.8.2:** `gantry cage` survives being stopped and refuses what it cannot restore: SIGTERM or SIGHUP on cage terminates the agent's whole process tree and restores, a `kill -9` on cage is recovered by the next run from a hash-verified journal, and a protected file over the snapshot cap stops cage with exit `2` instead of running unprotected ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 8). The cage also ships on its own: `npx @jeger-ai/opengantry-cage -- claude`. See the [upgrade notes](docs/CHANGELOG.md#upgrade-notes) for the two behaviour changes.
 
 **v3.8.1:** `gantry cage` terminates an agent that keeps rewriting a protected path (exit `4`; `--contest-limit <n>` or `.cage.yaml` `contest_limit:`, `0` for the old contested-at-exit behaviour), and `.cage.yaml` gains a top-level `mode:` default for its own entries ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 7). See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 

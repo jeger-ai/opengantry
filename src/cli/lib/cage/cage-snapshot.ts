@@ -29,7 +29,7 @@ export interface CageEntry {
   sha256: string;
   size: number;
   fileMode: number;
-  /** Baseline bytes for revert; null when over the size cap, budget, or report-only. */
+  /** Baseline bytes for revert; null for report-mode entries and for hash-only snapshots (`keepBytes: false`). */
   bytes: Buffer | null;
   linkTarget: string | null;
 }
@@ -65,6 +65,11 @@ interface CaptureContext {
   entries: Map<string, CageEntry>;
   /** Files and bytes in the protected set, counted against `opts.limits`. */
   scanned: { files: number; bytes: number; over: boolean; seen: Set<string> };
+  /**
+   * Baseline only (`keepBytes`): revert-rule files the snapshot could not hold. A file over the per-file
+   * cap, or a set over the total budget, fails closed after the scan so the error can list everything.
+   */
+  caps: { tooLarge: { rel: string; size: number }[]; wantedBytes: number };
 }
 
 const HASH_CHUNK_BYTES = 1024 * 1024;
@@ -112,6 +117,10 @@ function readEntry(abs: string, rule: CageRuleId, ruleMode: CageRuleMode, ctx: C
     return { ...base, type: "symlink", sha256: sha256Hex(`symlink\0${target}`), size: 0, bytes: null, linkTarget: target };
   }
   if (!st.isFile()) return null;
+  if (ctx.opts.keepBytes && mode === "revert") {
+    if (st.size > ctx.opts.maxFileBytes) ctx.caps.tooLarge.push({ rel, size: st.size });
+    ctx.caps.wantedBytes += st.size;
+  }
   const keep =
     ctx.opts.keepBytes && mode === "revert" && st.size <= ctx.opts.maxFileBytes && st.size <= ctx.budget;
   if (!keep) {
@@ -189,6 +198,34 @@ function limitsError(ctx: CaptureContext): GantryUserError {
   );
 }
 
+function fileTooLargeError(ctx: CaptureContext): GantryUserError {
+  const list = ctx.caps.tooLarge
+    .sort((a, b) => a.rel.localeCompare(b.rel))
+    .map((f) => `${f.rel} (${String(f.size)} bytes)`)
+    .join(", ");
+  return new GantryUserError(
+    "GXT_CAGE_FILE_TOO_LARGE",
+    `cage: ${String(ctx.caps.tooLarge.length)} protected file(s) exceed the ${String(ctx.opts.maxFileBytes)}-byte per-file snapshot cap and could not be restored: ${list}; the command was not run`,
+    "Raise --max-file-bytes, or pass --allow-override <path> to report that path instead of restoring it (announced in every report).",
+    2,
+  );
+}
+
+function budgetError(ctx: CaptureContext): GantryUserError {
+  return new GantryUserError(
+    "GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED",
+    `cage: protected files total ${String(ctx.caps.wantedBytes)} bytes, over the ${String(ctx.opts.maxTotalBytes)}-byte in-memory snapshot budget; the command was not run`,
+    "Narrow broad .cage.yaml or manifest forbidden_zones entries, or pass --allow-override <path> for paths that may be reported instead of restored.",
+    2,
+  );
+}
+
+/**
+ * Capture the protected set. With `keepBytes` (the baseline) every revert-rule file must fit the per-file
+ * cap and the total budget, or the snapshot could not restore it: cage then fails closed before the
+ * command runs (exit 2), the same shape as the scan caps (ADR-0048 decision 2, amended by MSN-0254).
+ * Later snapshots (`keepBytes: false`) only hash, so caps never apply to them.
+ */
 export function takeCageSnapshot(plan: CagePlan, opts: CageSnapshotOptions): CageSnapshot {
   const ctx: CaptureContext = {
     plan,
@@ -196,10 +233,15 @@ export function takeCageSnapshot(plan: CagePlan, opts: CageSnapshotOptions): Cag
     budget: opts.maxTotalBytes,
     entries: new Map(),
     scanned: { files: 0, bytes: 0, over: false, seen: new Set() },
+    caps: { tooLarge: [], wantedBytes: 0 },
   };
   for (const target of plan.targets) captureTarget(target.abs, target.rule, target.mode, ctx);
   walkTree(plan.root, CAGE_SCAN_SKIP_DIRS, (abs) => captureScanned(abs, ctx));
   if (ctx.scanned.over) throw limitsError(ctx);
+  if (ctx.opts.keepBytes) {
+    if (ctx.caps.tooLarge.length > 0) throw fileTooLargeError(ctx);
+    if (ctx.caps.wantedBytes > ctx.opts.maxTotalBytes) throw budgetError(ctx);
+  }
   return { entries: ctx.entries };
 }
 

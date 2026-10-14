@@ -1,11 +1,12 @@
 {
   "name": "@jeger-ai/opengantry",
-  "version": "3.8.1",
+  "version": "3.8.2",
   "description": "Open Source Gantry — vendor-neutral GXT substrate and Gantry CLI for local git-native agent governance",
   "type": "module",
   "bin": {
     "gantry": "dist/cli/index.js",
     "gapman": "dist/cli/index.js",
+    "gantry-cage": "dist/cli/cage-bin.js",
     "opengantry-cage": "dist/cli/cage-bin.js"
   },
   "exports": {
@@ -20,11 +21,15 @@
     "LICENSE",
     "NOTICE"
   ],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "gen:version": "node scripts/gen-version.mjs",
     "gen:catalog": "node scripts/gen-asset-catalog.mjs",
     "gen:dogfood": "node scripts/gen-dogfood.mjs",
-    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc",
+    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc && npm run build:cage",
+    "build:cage": "npm run build -w @jeger-ai/opengantry-cage",
     "gapman": "node dist/cli/index.js",
     "lint": "eslint src/cli/**/*.ts",
     "lint:json": "eslint --format json src/cli/**/*.ts",
@@ -32,13 +37,13 @@
     "validate": "./scripts/dev-validate.sh",
     "prepublishOnly": "npm run build && npm test",
     "pack:check": "./scripts/npm-pack-check.sh",
-    "test": "npm run build && node --import ./dist/cli/tests/test-tmpdir-setup.js --test \"dist/cli/tests/**/*.test.js\"",
+    "test": "npm run build && node --import ./dist/cli/tests/test-tmpdir-setup.js --test \"dist/cli/tests/**/*.test.js\" && npm run test:cage",
+    "test:cage": "node --test --test-concurrency=1 \"packages/opengantry-cage/tests/*.test.mjs\"",
     "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
     "gantry": "node dist/cli/index.js"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "keywords": [
     "gxt",
