@@ -242,6 +242,8 @@ On failure, external agents ingest `findings[]`:
 }
 ```
 
+**v3.8.2:** `gantry cage` survives being stopped and refuses what it cannot restore: SIGTERM or SIGHUP on cage terminates the agent's whole process tree and restores, a `kill -9` on cage is recovered by the next run from a hash-verified journal, and a protected file over the snapshot cap stops cage with exit `2` instead of running unprotected ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 8). The cage also ships on its own: `npx @jeger-ai/opengantry-cage -- claude`. See the [upgrade notes](docs/CHANGELOG.md#upgrade-notes) for the two behaviour changes.
+
 **v3.8.1:** `gantry cage` terminates an agent that keeps rewriting a protected path (exit `4`; `--contest-limit <n>` or `.cage.yaml` `contest_limit:`, `0` for the old contested-at-exit behaviour), and `.cage.yaml` gains a top-level `mode:` default for its own entries ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 7). See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
 
 **v3.8.0:** per-project cage rules: `.cage.yaml` adds paths and globs to the protected set (additive only, self-protected, fail closed), `gantry cage suggest` proposes them for review, and `--allow-override <path>` reports instead of restoring one path for a run, always announced ([ADR-0048](.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)). See [Try it in 60 seconds](#try-it-in-60-seconds-gantry-cage).
