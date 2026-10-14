@@ -34,28 +34,28 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0253 re-attested at a49d7b3 after merging main (package.json gained the opengantry-cage workspace, build:cage and test:cage from MSN-0252; src/cli/ unchanged by the merge): cage-process.ts traps SIGINT, SIGTERM and SIGHUP; SIGTERM, SIGHUP and a non-interactive SIGINT terminate the enumerated tree (SIGTERM, grace, SIGKILL), never a detached spawn; the exit path restores the snapshot and disposes the journal; clean run has journal.json while the command runs and none at exit (cage.test.ts MSN-0253 DoD 1)"
-    anchor: "1198"
+    trace_quote: "DoD 1 MSN-0253 re-attested by MSN-0254 at 2e26e94 (size-cap fail-closed merged into cage-run.ts, cage-report.ts, cage-snapshot.ts and cage.test.ts): SIGINT, SIGTERM and SIGHUP are still trapped; SIGTERM, SIGHUP and a non-interactive SIGINT terminate the enumerated tree, never a detached spawn; the exit path restores and disposes the journal; a clean run has journal.json while running and none at exit (cage.test.ts MSN-0253 DoD 1)"
+    anchor: "1214"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0253 re-attested at a49d7b3: cage-journal.ts writes hash-sidecarred journal.json and pids.json plus blobs/<sha256> under <git-dir>/gantry-cage-journal/; recovery verifies every hash, refuses GXT_CAGE_SESSION_ACTIVE for a live previous wrapper, SIGKILLs journaled pids still alive with their recorded start time, restores .cage.yaml first, restores the baseline diff, clears the journal, then spawns; corruption fails closed with GXT_CAGE_JOURNAL_CORRUPT exit 2"
-    anchor: "1199"
+    trace_quote: "DoD 2 MSN-0253 re-attested by MSN-0254 at 2e26e94: the hash-sidecarred journal under <git-dir>/gantry-cage-journal/ is written after the now fail-closed baseline, so a cap refusal leaves no journal; recovery runs before the baseline with a hash-only snapshot that the caps never apply to, verifies every hash, kills journaled orphans by start time, restores, clears, then spawns; corruption fails closed with GXT_CAGE_JOURNAL_CORRUPT exit 2"
+    anchor: "1215"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0253 re-attested at a49d7b3: SIGTERM on the cage wrapper running sh -c tamper .env then sleep 60 & sleep 60 kills sh and both sleeps, the wrapper exits 3 not by signal, .env is back to baseline, the journal dir is gone, stderr says cage: trapped SIGTERM (cage.test.ts MSN-0253 DoD 3)"
-    anchor: "1200"
+    trace_quote: "DoD 3 MSN-0253 re-attested by MSN-0254 at 2e26e94: SIGTERM on the cage wrapper running sh -c tamper .env then sleep 60 & sleep 60 kills the whole tree, the wrapper exits 3, .env is restored and the journal is gone (cage.test.ts MSN-0253 DoD 3)"
+    anchor: "1216"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0253 re-attested at a49d7b3: kill -9 on the wrapper leaves .env tampered, a dirty journal and live orphans; the next gantry cage --json run restores .env before spawning, reports recovery with previous_pid, .env reverted and non-empty orphans_killed, every orphan is dead and the journal is cleared (cage.test.ts MSN-0253 DoD 4)"
-    anchor: "1201"
+    trace_quote: "DoD 4 MSN-0253 re-attested by MSN-0254 at 2e26e94: after kill -9 on the wrapper the next gantry cage --json run restores .env before spawning, reports recovery with previous_pid, .env reverted and non-empty orphans_killed, and clears the journal (cage.test.ts MSN-0253 DoD 4)"
+    anchor: "1217"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0253 re-attested at a49d7b3: one byte appended to journal.json makes the next run exit 2 with GXT_CAGE_JOURNAL_CORRUPT, the wrapped command never runs, .env stays tampered and the journal is kept (cage.test.ts MSN-0253 DoD 5)"
-    anchor: "1202"
+    trace_quote: "DoD 5 MSN-0253 re-attested by MSN-0254 at 2e26e94: a tampered journal.json makes the next run exit 2 with GXT_CAGE_JOURNAL_CORRUPT, the command never runs and the journal is kept (cage.test.ts MSN-0253 DoD 5)"
+    anchor: "1218"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0253 re-attested at a49d7b3: ./scripts/dev-validate-core.sh on the merged tree: tests 884 pass 884 fail 0; check-changed-code: 5 changed file(s) OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; cage suites 44 pass 0 fail; npm run test:cage 9 pass 0 fail"
-    anchor: "1203"
+    trace_quote: "DoD 6 MSN-0253 re-attested by MSN-0254 at 2e26e94: ./scripts/dev-validate-core.sh on the merged tree: tests 884 pass 884 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; cage suites 44 pass 0 fail in two runs"
+    anchor: "1219"
     status: PASS
 interrogation:
 - finding_id: 35f551fb4fe5

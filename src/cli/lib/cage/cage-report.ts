@@ -71,6 +71,7 @@ export interface CageReport {
   } | null;
   root: string;
   revert_mode: "revert" | "report_only";
+  /** Per-file snapshot cap the baseline was held to; a larger revert-rule file never reaches a report (exit 2 first). */
   max_file_bytes: number;
   protected_files: number;
   manifest_zones: number;
@@ -238,11 +239,6 @@ export function formatCageReport(report: CageReport): string[] {
   } else {
     lines.push(`cage: ${report.status} — ${String(n)} protected change(s)`);
     for (const c of report.changes) lines.push(changeLine(c));
-  }
-  if (report.changes.some((c) => c.outcome === "detect_only")) {
-    lines.push(
-      `cage: detect_only files exceeded the ${String(report.max_file_bytes)}-byte per-file cap or the total snapshot budget and were not restored`,
-    );
   }
   lines.push(...sessionLines(report));
   const banner = formatCageOverrideBanner(report.overrides);

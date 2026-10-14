@@ -86,40 +86,59 @@ test("cage: lockfile changes are reported but kept; clean runs pass the command 
   assert.equal(read(dest, "package-lock.json"), "{\"a\":1}\n");
 });
 
-test("cage: files over the in-memory size cap are detect-only and not restored (DoD 3)", async () => {
+test("cage caps: a revert-rule file over --max-file-bytes refuses to start with exit 2; nothing is left detect-only (MSN-0254 DoD 1)", async () => {
   const dest = makeRepo("og-cage-cap-", false);
   fs.writeFileSync(path.join(dest, ".env.production"), "X".repeat(4096));
-  const report = await runCage({
+  const probe = nodeScript(`require("fs").writeFileSync("probe-ran.txt", "ran");`);
+  await assert.rejects(runCage({ cwd: dest, maxFileBytes: 1024, command: probe }), (err: Error & { exitCode?: number; code?: string }) => {
+    assert.equal(err.code, "GXT_CAGE_FILE_TOO_LARGE");
+    assert.match(err.message, /1 protected file\(s\) exceed the 1024-byte per-file snapshot cap .*\.env\.production \(4096 bytes\).*the command was not run/);
+    return err.exitCode === 2;
+  });
+  assert.equal(fs.existsSync(path.join(dest, "probe-ran.txt")), false, "the command never ran");
+  assert.equal(read(dest, ".env.production"), "X".repeat(4096), "the file is untouched");
+
+  const cli = path.join(getRepoRoot(), "dist", "cli", "index.js");
+  const r = spawnSync(process.execPath, [cli, "cage", "--max-file-bytes", "1024", "--", ...probe], { cwd: dest, encoding: "utf8", env: gitChildEnv() });
+  assert.equal(r.status, 2, r.stderr);
+  assert.match(r.stderr, /GXT_CAGE_FILE_TOO_LARGE.*\.env\.production \(4096 bytes\)/);
+  assert.equal(fs.existsSync(path.join(dest, "probe-ran.txt")), false);
+
+  // --report-only keeps no bytes, so the cap does not apply: the change is reported, not restored.
+  const reported = await runCage({
     cwd: dest,
     maxFileBytes: 1024,
+    reportOnly: true,
     command: nodeScript(`require("fs").writeFileSync(".env.production", "Y".repeat(4096));`),
   });
-  assert.equal(report.status, "violations_unresolved");
-  assert.equal(report.exit_code, 3);
-  assert.deepEqual(
-    report.changes.map((c) => [c.path, c.outcome]),
-    [[".env.production", "detect_only"]],
-  );
-  assert.notEqual(report.changes[0]!.sha256_before, report.changes[0]!.sha256_after);
-  assert.equal(read(dest, ".env.production"), "Y".repeat(4096));
-  assert.ok(formatCageReport(report).some((l) => l.includes("per-file cap or the total snapshot budget")));
+  assert.deepEqual(reported.changes.map((c) => [c.path, c.outcome]), [[".env.production", "reported"]]);
+  assert.equal(reported.exit_code, 3);
+
+  // --allow-override downgrades the oversized path to report (announced), so the run starts.
+  const overridden = await runCage({
+    cwd: dest,
+    maxFileBytes: 1024,
+    watch: false,
+    allowOverride: [".env.production"],
+    command: nodeScript(`require("fs").writeFileSync(".env.production", "Z".repeat(4096));`),
+  });
+  assert.deepEqual(overridden.changes.map((c) => [c.path, c.outcome, c.overridden]), [[".env.production", "kept", true]]);
+  assert.ok(!formatCageReport(overridden).some((l) => l.includes("detect_only")), "detect_only is never reported");
 });
 
-test("cage: a small file past the total snapshot budget is detect-only too (DoD 3)", async () => {
+test("cage caps: revert-rule files over the total snapshot budget refuse to start with exit 2 (MSN-0254 DoD 2)", async () => {
   const dest = makeRepo("og-cage-budget-", false);
-  // Budget fits nothing beyond the first few bytes; .env (well under the per-file cap) gets no baseline.
-  const report = await runCage({
-    cwd: dest,
-    maxTotalBytes: 4,
-    command: nodeScript(`require("fs").writeFileSync(".env", "TOKEN=changed\\n");`),
+  const probe = nodeScript(`require("fs").writeFileSync("probe-ran.txt", "ran");`);
+  // Budget fits nothing beyond the first few bytes; .env alone (well under the per-file cap) exceeds it.
+  await assert.rejects(runCage({ cwd: dest, maxTotalBytes: 4, command: probe }), (err: Error & { exitCode?: number; code?: string }) => {
+    assert.equal(err.code, "GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED");
+    assert.match(err.message, /protected files total \d+ bytes, over the 4-byte in-memory snapshot budget; the command was not run/);
+    return err.exitCode === 2;
   });
-  assert.equal(report.status, "violations_unresolved");
-  assert.deepEqual(
-    report.changes.map((c) => [c.path, c.outcome]),
-    [[".env", "detect_only"]],
-  );
-  assert.ok(report.max_file_bytes > 1024, "per-file cap was not the cause");
-  assert.equal(read(dest, ".env"), "TOKEN=changed\n");
+  assert.equal(fs.existsSync(path.join(dest, "probe-ran.txt")), false, "the command never ran");
+  assert.equal(read(dest, ".env"), `${SECRET}\n`);
+  const ok = await runCage({ cwd: dest, watch: false, command: probe });
+  assert.equal(ok.status, "ok", "the default budget leaves a normal repo alone");
 });
 
 test("cage: --report-only detects and fails without reverting", async () => {
