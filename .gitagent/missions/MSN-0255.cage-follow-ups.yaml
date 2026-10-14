@@ -26,25 +26,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0255: src/cli/program-cage.ts at 5a4d6ec sets the --max-file-bytes help to Per-file snapshot cap (default 5 MiB); a larger protected file stops cage before the command runs (exit 2); gantry cage --help, dist/cli/cage-bin.js --help and packages/opengantry-cage/dist/cli/index.js --help all show it and contain no detect-only"
+    anchor: "1220"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0255: src/cli/lib/cage/cage-revert.ts at 5a4d6ec documents detect_only as no longer produced for revert-rule files since MSN-0254 (a file the snapshot cannot hold stops cage before the command runs, exit 2) and kept in the CageOutcome union for gantry.cage-report.v1 consumers; comment-only change"
+    anchor: "1221"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0255: docs/FEATURES.md at 5a4d6ec Zero-config cage section replaces the stale forward-only Signals bullet with: SIGTERM, SIGHUP and a non-terminal SIGINT terminate the enumerated tree (SIGTERM, grace, SIGKILL, never a detached group, ADR-0048 decision 7), then restore, trapped_signal, exit 3 or the command's own code, terminal Ctrl-C left to the agent; adds an Interrupted sessions bullet (journal under <git dir>/gantry-cage-journal/ with 0600 files and sha256 sidecars, pid refresh every watch interval at most every 500 ms, kill -9 recovery before the next run, GXT_CAGE_SESSION_ACTIVE and GXT_CAGE_JOURNAL_CORRUPT exit 2); Snapshot bullet notes the journal copy; Exit codes, Report (trapped_signal, recovery) and Limits updated; assert-docs-deterministic OK"
+    anchor: "1222"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0255: docs/CHANGELOG.md at 5a4d6ec adds an Unreleased release-highlights row above v3.8.1 naming MSN-0250, MSN-0252, MSN-0253, MSN-0254 and MSN-0255, and an Unreleased upgrade-notes subsection with the two behaviour changes (wrapper signals now terminate the tree; over-cap or over-budget protected files now exit 2 instead of detect_only), the new journal, report additions and the new package; no version bump"
+    anchor: "1223"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0255: ./scripts/dev-validate-core.sh on 5a4d6ec: assert-docs-deterministic OK; tests 884 pass 884 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1224"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 4367eadf9a61
