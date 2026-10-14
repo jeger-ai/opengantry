@@ -4,10 +4,26 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import YAML from "yaml";
-import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 
 /** MSN-0257: scripts/npm-publish-if-new.sh and the npm-publish.yml guard, offline (stub npm on PATH). */
+
+// The mission contract forbids src/cli/lib/ (it must not change what gets published), and ADR-0045 extends a
+// forbidden zone to imports, so this file does not import the git helpers. Compiled to dist/cli/tests/, the
+// repo root is three levels up.
+const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+
+/**
+ * Env for a git child in a scratch repo: same rule as gitChildEnv in src/cli/lib/git/git.ts. Inside a git
+ * hook (pre-push runs this suite) GIT_DIR / GIT_WORK_TREE would otherwise point git at this repository.
+ */
+function scratchGitEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra };
+  delete env.GIT_DIR;
+  delete env.GIT_WORK_TREE;
+  return env;
+}
 
 const POSIX_ONLY = { skip: process.platform === "win32" ? "bash script" : false };
 
@@ -26,7 +42,7 @@ interface Fixture {
 function makeFixture(): Fixture {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-npm-publish-"));
   fs.mkdirSync(path.join(dir, "scripts"));
-  fs.copyFileSync(path.join(getRepoRoot(), "scripts", "npm-publish-if-new.sh"), path.join(dir, "scripts", "npm-publish-if-new.sh"));
+  fs.copyFileSync(path.join(REPO_ROOT, "scripts", "npm-publish-if-new.sh"), path.join(dir, "scripts", "npm-publish-if-new.sh"));
   fs.chmodSync(path.join(dir, "scripts", "npm-publish-if-new.sh"), 0o755);
   fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: "@acme/root", version: "1.2.3", workspaces: ["packages/*"] }));
   fs.mkdirSync(path.join(dir, "packages", "slim"), { recursive: true });
@@ -124,7 +140,7 @@ interface WorkflowStep {
 }
 
 function loadWorkflow(): { on: Record<string, unknown>; steps: WorkflowStep[] } {
-  const doc = YAML.parse(fs.readFileSync(path.join(getRepoRoot(), ".github", "workflows", "npm-publish.yml"), "utf8")) as {
+  const doc = YAML.parse(fs.readFileSync(path.join(REPO_ROOT, ".github", "workflows", "npm-publish.yml"), "utf8")) as {
     on: Record<string, unknown>;
     jobs: { publish: { steps: WorkflowStep[] } };
   };
@@ -163,13 +179,13 @@ function runGuard(repo: string, tagInput: string): { status: number | null; out:
   const r = spawnSync("bash", ["-c", guard.run!], {
     cwd: repo,
     encoding: "utf8",
-    env: gitChildEnv({ TAG: tagInput, GITHUB_SHA: "HEAD" }),
+    env: scratchGitEnv({ TAG: tagInput, GITHUB_SHA: "HEAD" }),
   });
   return { status: r.status, out: `${r.stdout}${r.stderr}` };
 }
 
 function gitIn(repo: string, ...args: string[]): void {
-  const r = spawnSync("git", args, { cwd: repo, encoding: "utf8", env: gitChildEnv() });
+  const r = spawnSync("git", args, { cwd: repo, encoding: "utf8", env: scratchGitEnv() });
   assert.equal(r.status, 0, r.stderr);
 }
 
