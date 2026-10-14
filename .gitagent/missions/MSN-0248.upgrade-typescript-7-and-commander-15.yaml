@@ -5,8 +5,8 @@ skill_key: gantry
 gate_command: npm test
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0248 re-attested after the MSN-0249 dependency bumps: npx tsc --version is 7.0.2; eslint is 10.12.0; zod is 4.6.5; @modelcontextprotocol/sdk 1.31.0 remains; npm test 880 pass 880 fail 0"
-    anchor: "1"
+    trace_quote: "DoD 1 MSN-0248 re-attested by MSN-0249 at 3745aa9 after merging main: npx tsc --version 7.0.2 via @typescript/native 7.0.2; the typescript alias resolves @typescript/typescript6 6.0.2 in package-lock.json; commander 15.0.0; eslint 10.12.0; zod 4.6.5; @modelcontextprotocol/sdk 1.31.0; npm test 895 pass 895 fail 0"
+    anchor: "1259"
     status: PASS
 gate_success_substring: pass
 interrogation:
