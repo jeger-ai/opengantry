@@ -24,9 +24,9 @@ import {
   type CageWatchSummary,
 } from "./cage-watch.js";
 
-/** Per-file in-memory snapshot cap; larger revert-mode files are detect-only. */
+/** Per-file in-memory snapshot cap; a larger revert-rule file at baseline refuses to start (`GXT_CAGE_FILE_TOO_LARGE`). */
 export const CAGE_DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024;
-/** Total in-memory snapshot budget across all protected files. */
+/** Total in-memory snapshot budget across all revert-rule files; over it, cage refuses to start (`GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED`). */
 export const CAGE_DEFAULT_MAX_TOTAL_BYTES = 64 * 1024 * 1024;
 /** Time between SIGTERM and SIGKILL when the contested-file halt terminates the command. */
 export const CAGE_DEFAULT_HALT_GRACE_MS = 2000;
@@ -182,8 +182,9 @@ async function runSession(
  */
 export async function runCage(opts: CageRunOptions): Promise<CageReport> {
   const s = resolveSettings(opts);
-  // Plan and baseline before spawning: an invalid manifest, .cage.yaml or override, or a protected set
-  // over the caps, fails closed and the command never runs.
+  // Plan and baseline before spawning: an invalid manifest, .cage.yaml or override, a protected set over
+  // the scan caps, or a revert-rule file over the per-file cap or the total budget, fails closed (exit 2)
+  // and the command never runs; nothing is ever left detect-only.
   const plan = buildCagePlan(s.root, { overrides: opts.allowOverride });
   const limits = { maxTargets: opts.maxTargets ?? CAGE_MAX_TARGETS, maxScanBytes: opts.maxScanBytes ?? CAGE_MAX_SCAN_BYTES };
   const before = takeCageSnapshot(plan, { ...s.snap, limits });
