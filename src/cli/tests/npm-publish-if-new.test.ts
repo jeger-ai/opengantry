@@ -66,7 +66,12 @@ function makeFixture(): Fixture {
       "  esac",
       "fi",
       'if [[ "$1" == "publish" ]]; then',
-      '  if [[ "${STUB_PUBLISH_FAIL:-}" == "1" ]]; then echo "npm error code ENEEDAUTH" >&2; exit 1; fi',
+      '  if [[ "${STUB_PUBLISH_FAIL:-}" == "1" ]]; then',
+      '    echo "npm error code ENEEDAUTH" >&2',
+      // Like npm: write the debug log, then name it on stderr (MSN-0261).
+      '    if [[ -n "${STUB_DEBUG_LOG:-}" ]]; then printf "%s\\n" "${STUB_DEBUG_LOG_BODY:-}" > "$STUB_DEBUG_LOG"; echo "npm error A complete log of this run can be found in: $STUB_DEBUG_LOG" >&2; fi',
+      "    exit 1",
+      "  fi",
       '  echo "+ published"; exit 0',
       "fi",
       "exit 0",
@@ -293,4 +298,65 @@ test("publishConfig: both packages publish public without forcing provenance, so
     const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, rel), "utf8")) as { publishConfig: Record<string, unknown> };
     assert.deepEqual(pkg.publishConfig, { access: "public" }, rel);
   }
+});
+
+/** A debug log shaped like npm 11's: numbered lines with a level, plus lines that must never be printed. */
+const DEBUG_LOG_BODY = [
+  '0 verbose cli /usr/local/bin/node /usr/local/bin/npm',
+  '7 verbose argv "publish" "--workspace" "@acme/slim" "--provenance" "--access" "public"',
+  "12 silly config //registry.npmjs.org/:_authToken=SECRET-TOKEN-MUST-NOT-PRINT",
+  "20 verbose oidc Failed token exchange request with body message: OIDC token exchange error - package not found",
+  "21 silly oidc Skipped provenance because exchange failed",
+  "30 verbose stack HttpErrorGeneral: 404 Not Found",
+].join("\n");
+
+function ciEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+  return {
+    STUB_PUBLISH_FAIL: "1",
+    GITHUB_ACTIONS: "true",
+    GITHUB_REPOSITORY: "acme/repo",
+    GITHUB_WORKFLOW_REF: "acme/repo/.github/workflows/npm-publish.yml@refs/heads/main",
+    ...extra,
+  };
+}
+
+test("npm-publish-if-new: a failed CI publish prints npm's oidc log lines and nothing else from the debug log (MSN-0261 DoD 1, DoD 2)", POSIX_ONLY, () => {
+  const fx = makeFixture();
+  const log = path.join(fx.dir, "npm-debug-0.log");
+  const r = runScript(fx, "missing_package", ["--workspace", "@acme/slim"], ciEnv({ STUB_DEBUG_LOG: log, STUB_DEBUG_LOG_BODY: DEBUG_LOG_BODY }));
+  assert.equal(r.status, 1, "npm's exit code is kept");
+  const hint = r.stderr.indexOf("::error::npm-publish-if-new: publishing @acme/slim@1.2.3 failed");
+  const header = r.stderr.indexOf("npm's trusted-publishing (oidc) log for @acme/slim:");
+  assert.ok(hint >= 0 && header > hint, "the oidc lines follow the trusted-publisher hint");
+  assert.match(r.stderr, /\n {2}20 verbose oidc Failed token exchange request with body message: OIDC token exchange error - package not found\n/);
+  assert.match(r.stderr, /\n {2}21 silly oidc Skipped provenance because exchange failed/);
+  const combined = `${r.stdout}${r.stderr}`;
+  assert.ok(!combined.includes("SECRET-TOKEN-MUST-NOT-PRINT"), "no other debug-log line is printed");
+  assert.ok(!combined.includes("verbose argv"), "argv is not printed");
+  assert.ok(!combined.includes("HttpErrorGeneral"), "stack lines are not printed");
+});
+
+test("npm-publish-if-new: says so when the debug log has no oidc lines or cannot be found (MSN-0261 DoD 1, DoD 2)", POSIX_ONLY, () => {
+  const fx = makeFixture();
+  const log = path.join(fx.dir, "npm-debug-0.log");
+  const noOidc = runScript(fx, "missing_package", [], ciEnv({ STUB_DEBUG_LOG: log, STUB_DEBUG_LOG_BODY: "0 verbose cli node npm\n1 verbose argv \"publish\"" }));
+  assert.equal(noOidc.status, 1);
+  assert.match(noOidc.stderr, /npm's debug log .*npm-debug-0\.log has no oidc lines: npm did not attempt trusted publishing for @acme\/root/);
+
+  const noLog = runScript(makeFixture(), "missing_package", [], ciEnv());
+  assert.equal(noLog.status, 1);
+  assert.match(noLog.stderr, /npm's debug log was not found, so its trusted-publishing \(oidc\) messages cannot be shown/);
+});
+
+test("npm-publish-if-new: no oidc diagnostics outside GitHub Actions or when the publish succeeds (MSN-0261 DoD 1, DoD 2)", POSIX_ONLY, () => {
+  const fx = makeFixture();
+  const log = path.join(fx.dir, "npm-debug-0.log");
+  const local = runScript(fx, "missing_package", [], { STUB_PUBLISH_FAIL: "1", STUB_DEBUG_LOG: log, STUB_DEBUG_LOG_BODY: DEBUG_LOG_BODY });
+  assert.equal(local.status, 1);
+  assert.ok(!local.stderr.includes("oidc"), "no diagnostics outside GitHub Actions");
+
+  const ok = runScript(makeFixture(), "missing_package", [], { GITHUB_ACTIONS: "true" });
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.ok(!`${ok.stdout}${ok.stderr}`.includes("oidc"), "no diagnostics when the publish succeeds");
+  assert.match(ok.stdout, /\+ published/, "npm's output is still shown");
 });
