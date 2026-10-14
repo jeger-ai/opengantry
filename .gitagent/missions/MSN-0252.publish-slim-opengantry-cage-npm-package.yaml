@@ -27,27 +27,27 @@ gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0252: packages/opengantry-cage/package.json at c3beb34 publishes bin opengantry-cage -> dist/cli/index.js; dependencies are exactly commander ^15.0.0 (no better-sqlite3, sqlite-vec, @modelcontextprotocol/sdk, ajv, ajv-formats, yaml, zod); no preinstall, install, postinstall or prepare scripts; engines.node >=24; the bundle dist/cli/lib/cage/opengantry-cage.js has commander as its only bare import (yaml, ajv and ajv-formats inlined with license notices); npm pack ships README.md, dist/cli/index.js, dist/cli/lib/cage/opengantry-cage.js and package.json; a clean install of the packed tarball resolves @jeger-ai/opengantry-cage and commander only under npm ls --all (package-shape.test.mjs 3 pass)"
-    anchor: "1177"
+    anchor: "1180"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0252: packages/opengantry-cage/ including dist/ totals 237596 bytes and npm pack unpackedSize is 222795 bytes (bundle 219599 bytes), both under the 2097152-byte cap (size-budget.test.mjs 2 pass)"
-    anchor: "1178"
+    anchor: "1181"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0252: with a warm npm cache (the first untimed run warms it) npx -y -p <packed tarball> opengantry-cage --version exits 0 printing 3.8.1 in 643 ms wall time, under the 1500 ms budget; the cold first run measured 1.13 s and is documented in the test as out of budget (npx-latency.test.mjs 1 pass)"
-    anchor: "1179"
+    anchor: "1182"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0252: same tarball in a scratch git repo: npx -y -p <tarball> opengantry-cage -- node -e writeFileSync('.env','tampered') exits 3, stderr reports reverted modified .env (secrets) and .env is back to its baseline bytes; a clean command keeps its own exit code 7; the session pre-push hook calls <node> <pkg>/dist/cli/index.js cage-guard pre-push and that entry exists while the session runs; the cage runtime is bundled from src/cli by esbuild in build.mjs with no src/ edit (behaviour-parity.test.mjs 3 pass)"
-    anchor: "1180"
+    anchor: "1183"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0252: .github/workflows/npm-publish.yml at c3beb34 adds npm publish --workspace @jeger-ai/opengantry-cage --provenance --access public after the root publish; README.md Try it in 60 seconds, docs/ADOPTION.md Step zero and docs/FEATURES.md Zero-config cage Why and How lead with npx @jeger-ai/opengantry-cage -- claude and keep npx -p @jeger-ai/opengantry opengantry-cage; root package.json adds workspaces packages/*, build:cage chained into build and test:cage chained into test; package-lock.json adds esbuild 0.28.2 (dev) and the workspace entry only"
-    anchor: "1181"
+    anchor: "1184"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0252: ./scripts/dev-validate-core.sh on c3beb34: assert-docs-deterministic OK; tests 880 pass 880 fail 0; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; npm run test:cage 9 pass 0 fail; tsc -p packages/opengantry-cage/tsconfig.json clean"
-    anchor: "1182"
+    anchor: "1185"
     status: PASS
 interrogation:
 - finding_id: 4367eadf9a61
