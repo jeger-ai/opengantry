@@ -34,29 +34,29 @@ gate_command: ./scripts/dev-validate-core.sh
 gate_success_substring: dev-validate-core OK
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0253: src/cli/lib/cage/cage-process.ts at f43bd1f traps SIGINT, SIGTERM and SIGHUP in the wrapper; SIGTERM, SIGHUP and a non-interactive SIGINT (stdin not a TTY, or runCage interactive false) call terminate: SIGTERM to the enumerated tree via ps -A -o pid=,ppid=, grace, SIGKILL to the union of the first and a fresh listing; the child is never spawned detached; the normal exit path then restores the snapshot and cage-run.ts disposes the journal; an interactive SIGINT (terminal Ctrl-C) is left to the command, which already received it; the report gains trapped_signal; a clean run has journal.json present while the command runs and removed at exit (cage.test.ts MSN-0253 DoD 1)"
+    anchor: "1177"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0253: src/cli/lib/cage/cage-journal.ts at f43bd1f writes journal.json plus journal.sha256, pids.json plus pids.sha256 (refreshed every interval with the command, its enumerated descendants and their ps start times) and blobs/<sha256> under <git-dir>/gantry-cage-journal/ (a root-keyed OS temp dir outside git), all tmp plus rename; recoverCageJournal on the next invocation verifies the hashes, refuses GXT_CAGE_SESSION_ACTIVE when the previous wrapper pid is alive with the same start time, SIGKILLs journaled pids still alive with their recorded start time, restores .cage.yaml first, rebuilds the plan with the recorded overrides, restores the diff against the journaled baseline, clears the journal and only then spawns; a corrupt manifest, sidecar, blob or root fails closed with GXT_CAGE_JOURNAL_CORRUPT exit 2 and nothing restored"
+    anchor: "1178"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0253: SIGTERM on the cage wrapper running sh -c printf tamper to .env then sleep 60 & sleep 60 (node dist/cli/index.js cage --no-watch) kills sh and both sleeps (every listDescendantPids pid dead), the wrapper exits 3 and not by signal, .env is back to its baseline, the journal dir is gone and stderr says cage: trapped SIGTERM: terminated the command and its process tree (cage.test.ts MSN-0253 DoD 3)"
+    anchor: "1179"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0253: kill -9 on the wrapper leaves .env tampered, journal.json present and the sh and sleep orphans alive; the next gantry cage --json invocation exits 0, probe-env.txt written by the wrapped command holds the baseline .env (restored before spawning), report.recovery.previous_pid is the killed wrapper, recovery.restored lists .env reverted, orphans_killed is non-empty, every orphan pid is dead, the journal is cleared and stderr says cage: recovered an interrupted session (cage.test.ts MSN-0253 DoD 4)"
+    anchor: "1180"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0253: with one byte appended to journal.json the next invocation exits 2 with GXT_CAGE_JOURNAL_CORRUPT, the wrapped command never runs (no probe-ran.txt), .env stays tampered because nothing is restored from an untrusted journal, and the journal is kept for inspection (cage.test.ts MSN-0253 DoD 5)"
+    anchor: "1181"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "6"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0253: ./scripts/dev-validate-core.sh on f43bd1f: tests 884 pass 884 fail 0; check-changed-code: 5 changed file(s) OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; cage, cage-watch and cage-suggest suites 44 pass 0 fail"
+    anchor: "1182"
+    status: PASS
 interrogation:
 - finding_id: 35f551fb4fe5
   kind: missing_test_criteria
