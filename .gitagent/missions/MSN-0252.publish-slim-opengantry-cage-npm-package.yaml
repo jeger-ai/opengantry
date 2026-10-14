@@ -1,0 +1,100 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0252]. Part (A) of MSN-0252/0253/0254 cage audit split. Executor must not run until
+# [MSN-0252] legislation commit + pin. See MSN-0253 (journal/signals) and MSN-0254 (size-cap + ADR).
+#
+# Legislated intent: Publish `@jeger-ai/opengantry-cage` as a slim npm package (workspace under
+# `packages/opengantry-cage/`) so `npx @jeger-ai/opengantry-cage -- <cmd>` resolves without pulling the full
+# OpenGantry stack (no native modules, no install scripts, runtime deps limited to commander + Node built-ins).
+#
+# DoD 1 (package shape): `packages/opengantry-cage/package.json` publishes bin `opengantry-cage`; `dependencies`
+#        contain only `commander` (no better-sqlite3, sqlite-vec, @modelcontextprotocol/sdk, ajv, yaml, zod, etc.);
+#        no `install`/`postinstall` scripts; `engines.node` documents >=24. Test: `npm pack` in package dir + `npm ls`
+#        in a clean install of the packed tarball.
+# DoD 2 (unpacked size budget): the unpacked contents of `packages/opengantry-cage/` (build output included) total at
+#        most 2,097,152 bytes (2 MiB). Test: script or unit test asserts byte sum under cap.
+# DoD 3 (npx latency): with a warm npm cache, `npx` against a locally packed `@jeger-ai/opengantry-cage` tarball runs
+#        `opengantry-cage --version` and exits 0 in under 1.5 seconds wall time (test documents warm-cache precondition).
+# DoD 4 (behaviour parity smoke): same tarball, `npx … opengantry-cage -- node -e "tamper .env"` in a scratch repo
+#        exits 3 and restores `.env` (cage logic shared or bundled without widening deps).
+# DoD 5 (release + adoption docs): `.github/workflows/npm-publish.yml` publishes the slim package; README.md,
+#        docs/ADOPTION.md and docs/FEATURES.md document `npx @jeger-ai/opengantry-cage` (not only `-p @jeger-ai/opengantry`).
+#        Root `package.json` / `package-lock.json` wire the workspace.
+# DoD 6 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+msn_id: MSN-0252
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+gate_success_substring: dev-validate-core OK
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
+interrogation:
+- finding_id: 4367eadf9a61
+  kind: adr_conflict
+  question: Intent may relate to ADR-0048. Accept ADR decision, reject applicability, or cite superseding
+    rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before legislation proceeds.
+  operator_answer: 'Accept; ADR-0048 stays ACTIVE and unchanged. The slim package ships the same cage
+    runtime: built-in floor, additive .cage.yaml, announced --allow-override, no MCP rule authoring, contested-file
+    halt. Packaging changes distribution, not the trust model; DoD 4 parity smoke (exit 3 and .env restore)
+    proves the rules travel with the package.'
+  adr_refs:
+  - ADR-0048
+- finding_id: f5d6a4d5f4da
+  kind: undefined_boundary
+  question: Skill substrate has empty tmvc_roots. What TMVC roots does this mission authorize?
+  hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with declared roots.
+  operator_answer: 'The mission narrows TMVC via the Planner-sealed contract (ADR-0045) to package.json,
+    package-lock.json, packages/opengantry-cage/, .github/workflows/npm-publish.yml, README.md, docs/ADOPTION.md
+    and docs/FEATURES.md. src/ is not edited: the cage logic is shared or bundled from the existing src/cli/lib/cage/
+    build output. Forbidden zones union the manifest Tier-3 paths.'
+  adr_refs:
+  - ADR-0045
+interrogation_sha256: bb36d8c69d05d0382a97259855b8ef705ed4bbb08e728360067be82e51f46518
+declared_paths:
+  - .gitagent/missions/MSN-0252.publish-slim-opengantry-cage-npm-package.yaml
+  - .github/workflows/npm-publish.yml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/FEATURES.md
+  - package.json
+  - package-lock.json
+  - packages/opengantry-cage/
+contract:
+  tmvc_roots:
+    - package.json
+    - package-lock.json
+    - packages/opengantry-cage/
+    - .github/workflows/npm-publish.yml
+    - README.md
+    - docs/ADOPTION.md
+    - docs/FEATURES.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 14bfcd273936ecf0d811ca010563c011267cde7710c5953c73c1dd252f5b30b4
