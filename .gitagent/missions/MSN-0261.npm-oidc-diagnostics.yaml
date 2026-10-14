@@ -32,21 +32,21 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0261 at 83d8118: scripts/npm-publish-if-new.sh tees npm publish output to a temp file (still streamed) and, when the publish fails with GITHUB_ACTIONS=true and not --dry-run, prints after the ::error:: hint only the lines of npm's debug log (path from npm's 'A complete log of this run can be found in:' line) matching ^N (silly|verbose|http|info|notice|warn|error) oidc, indented under npm's trusted-publishing (oidc) log for <name>, then exits with npm's code; it says when the log has no oidc lines or cannot be found; against real npm 11 with GITHUB_ACTIONS=true and a throwaway local registry it printed exactly '29 silly oidc Skipped because incorrect permissions for id-token within GitHub workflow' and no other debug-log line; the registry received no upload"
+    anchor: "1277"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0261 at 83d8118: src/cli/tests/npm-publish-if-new.test.ts with a stub npm writing a fixture debug log: the token-exchange failure and a silly oidc line are printed after the hint, the argv, config _authToken and stack lines are not; a log without oidc lines and a missing log are each reported; no diagnostics outside GitHub Actions or on a successful publish, whose npm output is still shown; 14 pass 0 fail including the 11 earlier MSN-0257/MSN-0259 cases"
+    anchor: "1278"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0261 at 83d8118: docs/DEVELOPMENT.md Releasing gains 'Why a publish was refused (MSN-0261)': where npm's oidc lines appear and what Failed token exchange request with body message, Skipped because incorrect permissions for id-token, Successfully retrieved and set token and no oidc lines mean; assert-docs-deterministic OK"
+    anchor: "1279"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0261 at 83d8118: ./scripts/dev-validate-core.sh: assert-dogfood-sync OK; assert-docs-deterministic OK; tests 898 pass 898 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1280"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1d3b16f1795a
