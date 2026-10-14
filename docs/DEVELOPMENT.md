@@ -203,6 +203,24 @@ Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and 
 
 - **pre-push** — `gantry verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gantry check` if manifest/skills changed; advisory `gantry perimeter` when governance files change; changed-code gate for touched `src/cli/**/*.ts`.
 
+## Releasing
+
+A release is its own mission that bumps every version site (including `packages/opengantry-cage/package.json`) and turns the changelog's draft row into the release row (MSN-0246, MSN-0256). After it merges:
+
+```bash
+git tag -a v<version> <merge-commit> -m "OpenGantry v<version>"
+git push origin v<version>
+```
+
+The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which publishes `@jeger-ai/opengantry` and then `@jeger-ai/opengantry-cage`. Each publish goes through `scripts/npm-publish-if-new.sh` and is skipped when that version is already on npm.
+
+- **Token:** the `NPM_TOKEN` secret must be allowed to publish every package in the `@jeger-ai` scope. A token limited to selected packages cannot create a new package name, and npm answers the publish with `E404`.
+- **Partial release:** if one package published and the other failed, do not re-run the tag run (it uses the workflow file at the tagged commit) and never move the tag. Fix the cause, then start a run from `main` with the tag. It refuses unless the tag matches `package.json` and everything that gets published on `main` is identical to the tag; the package already on npm is skipped. Provenance for that run names the `main` commit it used.
+
+```bash
+gh workflow run npm-publish.yml -f tag=v<version>
+```
+
 ## LLM evidence + KPI gate
 
 Nondeterministic LLM checks produce **committed evidence**; merge stays deterministic:
