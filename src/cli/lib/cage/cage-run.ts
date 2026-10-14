@@ -1,6 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getRepoRoot } from "../git/git.js";
+import {
+  CAGE_JOURNAL_PID_REFRESH_MIN_MS,
+  recoverCageJournal,
+  resolveCageJournalDir,
+  writeCageJournal,
+  type CageJournalHandle,
+  type CageRecovery,
+} from "./cage-journal.js";
 import { buildCageReport, type CageReport } from "./cage-report.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import { buildCagePlan } from "./cage-rules.js";
@@ -52,6 +60,10 @@ export interface CageRunOptions {
    */
   contestLimit?: number;
   haltGraceMs?: number;
+  /** Ctrl-C semantics for a trapped SIGINT (see cage-process.ts); defaults to whether stdin is a TTY. */
+  interactive?: boolean;
+  /** Called when a journal left by an interrupted session was recovered before this run; default prints one stderr line. */
+  onRecovery?: (recovery: CageRecovery) => void;
   /** Baseline caps; defaults {@link CAGE_MAX_TARGETS} and {@link CAGE_MAX_SCAN_BYTES}. */
   maxTargets?: number;
   maxScanBytes?: number;
@@ -120,6 +132,7 @@ function resolveSettings(opts: CageRunOptions): CageSettings {
 
 interface CageSessionResult {
   proc: CageProcessResult;
+  trappedSignal: NodeJS.Signals | null;
   live: CageWatchSummary | null;
   log: CageSessionLog | null;
   guarded: boolean;
@@ -131,12 +144,19 @@ function resolveContestLimit(opts: CageRunOptions, plan: ReturnType<typeof build
   return opts.contestLimit ?? plan.contestLimit ?? CAGE_CONTEST_LIMIT;
 }
 
-/** Run the command with the session log, live watcher and push guard; always tear the guard down. */
+function defaultRecoveryNotice(r: CageRecovery): void {
+  process.stderr.write(
+    `cage: recovered an interrupted session (pid ${String(r.previousPid)}, started ${r.startedAt}): restored ${String(r.restored.length)} protected path(s), killed ${String(r.orphansKilled.length)} orphan process(es)\n`,
+  );
+}
+
+/** Run the command with the session log, live watcher, push guard and pid journal; always tear them down. */
 async function runSession(
   opts: CageRunOptions,
   s: CageSettings,
   plan: ReturnType<typeof buildCagePlan>,
   before: CageSnapshot,
+  journal: CageJournalHandle,
 ): Promise<CageSessionResult> {
   const log = s.watch || s.pushGuard ? openCageSessionLog() : null;
   const guard = s.pushGuard ? createCagePushGuard(plan, log?.path ?? null) : null;
@@ -148,9 +168,13 @@ async function runSession(
     configCommitted: plan.config.committed,
   });
   // The session marker lets setup-only commands (cage suggest) refuse to run inside the cage.
-  const child = startCaged(opts.command, s.cwd, { ...guard?.env, [CAGE_SESSION_ENV]: "1" });
+  const graceMs = opts.haltGraceMs ?? CAGE_DEFAULT_HALT_GRACE_MS;
+  const child = startCaged(opts.command, s.cwd, { ...guard?.env, [CAGE_SESSION_ENV]: "1" }, { graceMs, interactive: opts.interactive });
+  // Journal the command and its descendants so a kill -9 on the wrapper can be cleaned up next time.
+  journal.refreshPids(child.pid);
+  const pidTimer = setInterval(() => journal.refreshPids(child.pid), Math.max(s.intervalMs, CAGE_JOURNAL_PID_REFRESH_MIN_MS));
+  pidTimer.unref();
   const contestLimit = resolveContestLimit(opts, plan);
-  let halting: Promise<void> = Promise.resolve();
   const watcher =
     s.watch && log
       ? startCageWatch({
@@ -161,15 +185,16 @@ async function runSession(
           log,
           bell: opts.bell,
           contestLimit: contestLimit > 0 ? contestLimit : CAGE_CONTEST_LIMIT,
-          onHalt: contestLimit > 0 ? () => (halting = child.terminate(opts.haltGraceMs ?? CAGE_DEFAULT_HALT_GRACE_MS)) : undefined,
+          onHalt: contestLimit > 0 ? () => void child.terminate(graceMs) : undefined,
         })
       : null;
   try {
     const proc = await child.done;
-    // After a halt, wait for the whole tree to be gone before the exit diff.
-    await halting;
-    return { proc, live: watcher?.stop() ?? null, log, guarded: guard !== null, contestLimit };
+    // After a halt or a trapped signal, wait for the whole tree to be gone before the exit diff.
+    await child.settled();
+    return { proc, trappedSignal: child.trappedSignal, live: watcher?.stop() ?? null, log, guarded: guard !== null, contestLimit };
   } finally {
+    clearInterval(pidTimer);
     watcher?.stop();
     guard?.dispose();
   }
@@ -177,25 +202,36 @@ async function runSession(
 
 /**
  * Snapshot the protected set, run the command (restoring protected changes live unless `watch: false`),
- * diff once more at exit, and restore what is left. Bytes stay in memory; the session log and the
- * temporary hooks dir live in the OS temp dir, never in the repository.
+ * diff once more at exit, and restore what is left. Bytes stay in memory and, for the kill -9 case, in a
+ * hash-verified journal under the git dir (or the OS temp dir) that a clean shutdown removes; the session
+ * log and the temporary hooks dir live in the OS temp dir, never in the repository.
  */
 export async function runCage(opts: CageRunOptions): Promise<CageReport> {
   const s = resolveSettings(opts);
+  // A journal left by an interrupted session is recovered first: orphans killed, baseline restored,
+  // journal cleared. A corrupt journal or a still-running session fails closed before anything spawns.
+  const journalDir = resolveCageJournalDir(s.root);
+  const recovery = recoverCageJournal(s.root, journalDir, s.snap);
+  if (recovery) (opts.onRecovery ?? defaultRecoveryNotice)(recovery);
   // Plan and baseline before spawning: an invalid manifest, .cage.yaml or override, or a protected set
   // over the caps, fails closed and the command never runs.
   const plan = buildCagePlan(s.root, { overrides: opts.allowOverride });
   const limits = { maxTargets: opts.maxTargets ?? CAGE_MAX_TARGETS, maxScanBytes: opts.maxScanBytes ?? CAGE_MAX_SCAN_BYTES };
   const before = takeCageSnapshot(plan, { ...s.snap, limits });
-  const { proc, live, log, guarded, contestLimit } = await runSession(opts, s, plan, before);
+  const journal = writeCageJournal(journalDir, s.root, before, plan.overrides);
+  const { proc, trappedSignal, live, log, guarded, contestLimit } = await runSession(opts, s, plan, before, journal);
   const after = takeCageSnapshot(plan, { ...s.snap, keepBytes: false });
   const changes = mergeChanges(live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
+  // Everything the session had to restore is restored: the journal has served its purpose.
+  journal.dispose();
 
   return buildCageReport({
     command: opts.command[0] ?? "",
     commandExitCode: proc.code,
     commandSignal: proc.signal,
+    trappedSignal,
     runtimeError: proc.spawnError,
+    recovery,
     root: s.root,
     reportOnly: s.reportOnly,
     maxFileBytes: s.snap.maxFileBytes,
