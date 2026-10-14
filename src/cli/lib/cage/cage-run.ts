@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getRepoRoot } from "../git/git.js";
-import { recoverCageJournal, resolveCageJournalDir, writeCageJournal, type CageJournalHandle, type CageRecovery } from "./cage-journal.js";
+import {
+  CAGE_JOURNAL_PID_REFRESH_MIN_MS,
+  recoverCageJournal,
+  resolveCageJournalDir,
+  writeCageJournal,
+  type CageJournalHandle,
+  type CageRecovery,
+} from "./cage-journal.js";
 import { buildCageReport, type CageReport } from "./cage-report.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import { buildCagePlan } from "./cage-rules.js";
@@ -165,7 +172,7 @@ async function runSession(
   const child = startCaged(opts.command, s.cwd, { ...guard?.env, [CAGE_SESSION_ENV]: "1" }, { graceMs, interactive: opts.interactive });
   // Journal the command and its descendants so a kill -9 on the wrapper can be cleaned up next time.
   journal.refreshPids(child.pid);
-  const pidTimer = setInterval(() => journal.refreshPids(child.pid), s.intervalMs);
+  const pidTimer = setInterval(() => journal.refreshPids(child.pid), Math.max(s.intervalMs, CAGE_JOURNAL_PID_REFRESH_MIN_MS));
   pidTimer.unref();
   const contestLimit = resolveContestLimit(opts, plan);
   const watcher =

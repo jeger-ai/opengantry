@@ -5,7 +5,6 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
-import { listDescendantPids } from "./cage-process.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import { buildCagePlan } from "./cage-rules.js";
 import { diffCageSnapshots, takeCageSnapshot, type CageEntry, type CageSnapshot, type CageSnapshotOptions } from "./cage-snapshot.js";
@@ -24,6 +23,8 @@ import { diffCageSnapshots, takeCageSnapshot, type CageEntry, type CageSnapshot,
  */
 export const CAGE_JOURNAL_DIR = "gantry-cage-journal";
 export const CAGE_JOURNAL_VERSION = 1;
+/** Floor for the pid refresh cadence: each refresh is one `ps` listing, which must not crowd the watcher. */
+export const CAGE_JOURNAL_PID_REFRESH_MIN_MS = 500;
 
 const MANIFEST_FILE = "journal.json";
 const PIDS_FILE = "pids.json";
@@ -61,7 +62,7 @@ interface TrackedPid {
 
 export interface CageJournalHandle {
   dir: string;
-  /** Record the caged command and its current descendants (called at spawn and on every watch tick). */
+  /** Record the caged command and its current descendants: at spawn, then every refresh interval (see cage-run.ts). */
   refreshPids(childPid: number | null): void;
   /** Clean shutdown: the session restored everything it had to, so the journal is no longer needed. */
   dispose(): void;
@@ -143,6 +144,32 @@ function trackPids(pids: readonly number[]): TrackedPid[] {
   return pids.map((pid) => ({ pid, start: starts.get(pid) ?? null }));
 }
 
+/** The command and its descendants with start times from one `ps` listing (POSIX); the command alone elsewhere. */
+function trackTree(childPid: number): TrackedPid[] {
+  if (process.platform === "win32") return [{ pid: childPid, start: null }];
+  const r = spawnSync("ps", ["-A", "-o", "pid=,ppid=,lstart="], { encoding: "utf8" });
+  if (r.status !== 0) return [{ pid: childPid, start: null }];
+  const children = new Map<number, number[]>();
+  const start = new Map<number, string>();
+  for (const line of r.stdout.split("\n")) {
+    const m = /^\s*(\d+)\s+(\d+)\s+(.+?)\s*$/.exec(line);
+    if (!m) continue;
+    const pid = Number(m[1]);
+    const parent = Number(m[2]);
+    start.set(pid, m[3]!);
+    children.set(parent, [...(children.get(parent) ?? []), pid]);
+  }
+  const out: TrackedPid[] = [{ pid: childPid, start: start.get(childPid) ?? null }];
+  const queue = [childPid];
+  while (queue.length > 0) {
+    for (const c of children.get(queue.shift()!) ?? []) {
+      out.push({ pid: c, start: start.get(c) ?? null });
+      queue.push(c);
+    }
+  }
+  return out;
+}
+
 /** Alive, and still the process we recorded (start time unchanged when one is known). */
 function isTrackedAlive(t: TrackedPid): boolean {
   try {
@@ -206,7 +233,7 @@ export function writeCageJournal(dir: string, root: string, baseline: CageSnapsh
     refreshPids(childPid) {
       if (!childPid) return;
       try {
-        writeHashed(dir, PIDS_FILE, { pids: trackPids([childPid, ...listDescendantPids(childPid)]) });
+        writeHashed(dir, PIDS_FILE, { pids: trackTree(childPid) });
       } catch {
         // The journal dir may already be gone at shutdown; the next tick or dispose settles it.
       }
