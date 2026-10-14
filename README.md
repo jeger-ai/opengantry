@@ -144,9 +144,12 @@ See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GR
 No setup. Start your agent inside the cage, exactly as you normally would:
 
 ```bash
-npx -p @jeger-ai/opengantry opengantry-cage -- claude
+npx @jeger-ai/opengantry-cage -- claude
+# same cage from the full package: npx -p @jeger-ai/opengantry opengantry-cage -- claude
 # installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry cage -- aider
 ```
+
+`@jeger-ai/opengantry-cage` is the slim standalone build of `gantry cage` (same sources, `commander` as the only runtime dependency, no native modules, no install scripts) for the `npx` on-ramp. The full package adds missions, `gantry verify`, MCP and the rest.
 
 While the session runs, cage checks about once a second and restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`) and your manifest `forbidden_zones` from an in-memory snapshot. Lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths, and the agent sees why. When you quit, cage prints one report: everything it restored, any refused pushes, exit `3` if anything was touched (otherwise the agent's own exit code).
 
