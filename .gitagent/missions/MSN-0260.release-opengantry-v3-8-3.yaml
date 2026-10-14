@@ -32,25 +32,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0260: version parity 3.8.3 at 2f478a8 across package.json, package-lock.json (root, packages[\"\"] and packages[\"packages/opengantry-cage\"]), packages/opengantry-cage/package.json, both SUBSTRATE.version.json files and templates/integrations/compatibility.json; no 3.8.2 left in those files; npm install --package-lock-only reproduces the lockfile byte for byte; gantry --version, dist/cli/cage-bin.js --version and the slim packages/opengantry-cage/dist/cli/index.js --version print 3.8.3; gantry doctor: ok: substrate version: 3.8.3 (matches bundled gantry); examples/iii-integration/package-lock.json left out of scope"
+    anchor: "1272"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0260: docs/CHANGELOG.md at 2f478a8: the Unreleased row is now v3.8.3, keeps the gantry-cage entry (MSN-0258) and adds Dependencies (zod 4.6.5 used only by the MCP server's tool registration, not the ./kernel export; eslint 10.12.0 and typescript-eslint 8.71.1 for development; iii-sdk 0.24.4, acorn 8.19.0 and acorn-walk 8.3.5 in the iii example; MSN-0249) and Publishing (npm trusted publishing with provenance for both packages, idempotent publish; MSN-0257, MSN-0259) and Release (MSN-0260); the upgrade notes are From v3.8.2 (gantry-cage command, zod 4, trusted publishing — v3.8.3) with install lines for both packages, a zod 4 note and a provenance note (npm audit signatures); substrate note CLI 3.8.3; no Unreleased left"
+    anchor: "1273"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0260: README.md at 2f478a8 has a v3.8.3 line above the v3.8.2 line naming the gantry-cage command (opengantry-cage alias kept in the full package), zod 4 inside the MCP server and trusted publishing with provenance, linking the upgrade notes"
+    anchor: "1274"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0260: git diff --name-only origin/main..2f478a8 lists only the nine contract files and the mission file; no src/ change; npm run pack:check: pack:check OK (jeger-ai-opengantry-3.8.3.tgz); the slim package packs as jeger-ai-opengantry-cage-3.8.3.tgz, unpackedSize 232118; npm run test:cage 10 pass 0 fail"
+    anchor: "1275"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0260: ./scripts/dev-validate-core.sh on 2f478a8: assert-docs-deterministic OK; tests 895 pass 895 fail 0; doctor substrate version 3.8.3 matches bundled gantry; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1276"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 4367eadf9a61
