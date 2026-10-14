@@ -7,6 +7,11 @@ name: npm publish
 # A re-run of a tag run uses the workflow file at the tagged commit. To finish a partial release with
 # the current workflow, start a manual run from main with the release tag; the guard below refuses
 # unless everything that gets published on main is identical to that tag.
+#
+# Authentication is npm trusted publishing (MSN-0259): npm exchanges this job's GitHub OIDC token for a
+# short-lived publish token and adds provenance. No npm token or secret is used. Each package needs a
+# trusted publisher on npmjs.com (GitHub Actions, repository jeger-ai/opengantry, workflow npm-publish.yml);
+# without one the publish fails with an auth error instead of silently falling back to a stored token.
 
 on:
   push:
@@ -34,7 +39,18 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          registry-url: https://registry.npmjs.org
+          # No registry-url: it would write an .npmrc that sends NODE_AUTH_TOKEN (a placeholder without a
+          # secret) with every request, including the anonymous `npm view` checks. npm's default registry
+          # is npmjs.org, and trusted publishing needs no .npmrc token.
+
+      - name: Require npm with trusted publishing (>= 11.5.1)
+        run: |
+          v="$(npm --version)"
+          if ! node -e 'const [a,b,c]=process.argv[1].split(".").map(Number);process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$v"; then
+            echo "::error::npm $v cannot use trusted publishing; need npm >= 11.5.1"
+            exit 1
+          fi
+          echo "npm $v supports trusted publishing"
 
       - name: Guard manual run against the release tag
         if: github.event_name == 'workflow_dispatch'
@@ -70,10 +86,6 @@ jobs:
 
       - name: Publish @jeger-ai/opengantry to npm (skipped if this version is already published)
         run: ./scripts/npm-publish-if-new.sh
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @jeger-ai/opengantry-cage to npm (skipped if this version is already published)
         run: ./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-cage
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
