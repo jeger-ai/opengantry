@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
+import { resolveCageJournalDir } from "../lib/cage/cage-journal.js";
+import { listDescendantPids } from "../lib/cage/cage-process.js";
 import { runCage } from "../lib/cage/cage-run.js";
 import { buildCagePlan, cageBasenameRule, classifyCagePath } from "../lib/cage/cage-rules.js";
 import { cageGlobToRegExp } from "../lib/cage/cage-config.js";
@@ -536,4 +538,155 @@ test("cage sources: plan targets and report rows say builtin, manifest or cage_y
     [[".env", "builtin"], ["infra/main.tf", "manifest"], ["terraform/main.tf", "cage_yaml"]],
   );
   assert.equal(classifyCagePath(plan, "x/y.pem"), null, "single * does not cross directories");
+});
+
+// ---- MSN-0253: signal trap and journal recovery -------------------------------------------------------
+
+const POSIX_ONLY = { skip: process.platform === "win32" ? "sh/ps based" : false };
+/** A nested tree that tampers .env then idles: `sh` with a background and a foreground `sleep`. */
+const TAMPER_THEN_IDLE = ["sh", "-c", "printf 'TOKEN=tampered\\n' > .env; sleep 60 & sleep 60"];
+
+function pidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function waitFor(check: () => boolean, what: string, timeoutMs = 8000): Promise<void> {
+  const until = Date.now() + timeoutMs;
+  while (!check()) {
+    if (Date.now() > until) throw new Error(`timed out waiting for ${what}`);
+    await new Promise((r) => setTimeout(r, 25));
+  }
+}
+
+interface CageWrapper {
+  proc: ChildProcess;
+  exit: Promise<{ code: number | null; signal: NodeJS.Signals | null }>;
+  stderr: () => string;
+}
+
+/** Spawn the real CLI as the cage wrapper (pipes, so SIGINT is non-interactive) and keep its stderr. */
+function spawnCageWrapper(dest: string, command: readonly string[]): CageWrapper {
+  const cli = path.join(getRepoRoot(), "dist", "cli", "index.js");
+  const proc = spawn(process.execPath, [cli, "cage", "--no-watch", "--watch-interval-ms", "50", "--", ...command], {
+    cwd: dest,
+    env: gitChildEnv(),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let err = "";
+  proc.stderr?.on("data", (d: Buffer) => (err += d.toString()));
+  const exit = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
+    proc.on("exit", (code, signal) => resolve({ code, signal }));
+  });
+  return { proc, exit, stderr: () => err };
+}
+
+function journaledPids(journalDir: string): number[] {
+  try {
+    return (JSON.parse(fs.readFileSync(path.join(journalDir, "pids.json"), "utf8")) as { pids: { pid: number }[] }).pids.map((p) => p.pid);
+  } catch {
+    return [];
+  }
+}
+
+/** Start the wrapper on the tamper-then-idle tree and wait until the tamper landed and the tree is journaled. */
+async function startTamperedSession(dest: string): Promise<{ wrapper: CageWrapper; tree: number[]; journalDir: string }> {
+  const journalDir = resolveCageJournalDir(dest);
+  const wrapper = spawnCageWrapper(dest, TAMPER_THEN_IDLE);
+  await waitFor(() => read(dest, ".env") === "TOKEN=tampered\n" && journaledPids(journalDir).length >= 3, "tamper + journaled tree");
+  const tree = listDescendantPids(wrapper.proc.pid!);
+  assert.ok(tree.length >= 3, `sh and two sleeps enumerated, got ${String(tree.length)}`);
+  return { wrapper, tree, journalDir };
+}
+
+test("cage journal: a clean run writes the baseline journal under the git dir and removes it at exit (MSN-0253 DoD 1)", async () => {
+  const dest = makeRepo("og-cage-journal-clean-", true);
+  const journalDir = resolveCageJournalDir(dest);
+  assert.equal(fs.realpathSync(path.dirname(journalDir)), fs.realpathSync(path.join(dest, ".git")), "journal lives under the git dir");
+  const report = await runCage({
+    cwd: dest,
+    watch: false,
+    command: nodeScript(`require("fs").writeFileSync("probe-journal.txt", String(require("fs").existsSync(${JSON.stringify(path.join(journalDir, "journal.json"))})));`),
+  });
+  assert.equal(read(dest, "probe-journal.txt"), "true", "journal.json exists while the command runs");
+  assert.equal(report.status, "ok");
+  assert.equal(report.recovery, null);
+  assert.equal(report.trapped_signal, null);
+  assert.ok(!fs.existsSync(journalDir), "journal removed on clean shutdown");
+});
+
+test("cage signals: SIGTERM on the wrapper kills the nested sh/sleep tree and restores .env (MSN-0253 DoD 1, DoD 3)", POSIX_ONLY, async () => {
+  const dest = makeRepo("og-cage-sigterm-", true);
+  const { wrapper, tree, journalDir } = await startTamperedSession(dest);
+  process.kill(wrapper.proc.pid!, "SIGTERM");
+  const r = await wrapper.exit;
+  assert.equal(r.signal, null, "the wrapper traps SIGTERM instead of dying from it");
+  assert.equal(r.code, 3, wrapper.stderr());
+  for (const pid of tree) assert.equal(pidAlive(pid), false, `pid ${String(pid)} of the tree was killed`);
+  assert.equal(read(dest, ".env"), `${SECRET}\n`, ".env restored from the in-memory snapshot");
+  assert.ok(!fs.existsSync(journalDir), "journal removed on clean signal shutdown");
+  assert.match(wrapper.stderr(), /cage: trapped SIGTERM: terminated the command and its process tree/);
+});
+
+test("cage journal: kill -9 on the wrapper leaves a dirty journal; the next invocation kills the orphans and restores .env before spawning (MSN-0253 DoD 2, DoD 4)", POSIX_ONLY, async () => {
+  const dest = makeRepo("og-cage-kill9-", true);
+  const { wrapper, tree, journalDir } = await startTamperedSession(dest);
+  process.kill(wrapper.proc.pid!, "SIGKILL");
+  const r = await wrapper.exit;
+  assert.equal(r.signal, "SIGKILL");
+  assert.equal(read(dest, ".env"), "TOKEN=tampered\n", "an uncatchable kill leaves the tamper in place");
+  assert.ok(fs.existsSync(path.join(journalDir, "journal.json")), "dirty journal left behind");
+  assert.ok(tree.some(pidAlive), "the orphaned tree outlives the wrapper");
+
+  const cli = path.join(getRepoRoot(), "dist", "cli", "index.js");
+  const next = spawnSync(
+    process.execPath,
+    [cli, "cage", "--json", "--", ...nodeScript(`require("fs").writeFileSync("probe-env.txt", require("fs").readFileSync(".env", "utf8"));`)],
+    { cwd: dest, encoding: "utf8", env: gitChildEnv() },
+  );
+  assert.equal(next.status, 0, next.stderr);
+  assert.equal(read(dest, "probe-env.txt"), `${SECRET}\n`, ".env was restored before the wrapped command ran");
+  const report = JSON.parse(next.stdout) as {
+    recovery: { previous_pid: number; restored: { path: string; outcome: string }[]; orphans_killed: number[] } | null;
+  };
+  assert.ok(report.recovery, "report carries the recovery");
+  assert.equal(report.recovery.previous_pid, wrapper.proc.pid);
+  assert.ok(report.recovery.restored.some((c) => c.path === ".env" && c.outcome === "reverted"));
+  assert.ok(report.recovery.orphans_killed.length >= 1, "orphaned descendant pids from the journal were killed");
+  for (const pid of tree) assert.equal(pidAlive(pid), false, `orphan ${String(pid)} is dead`);
+  assert.ok(!fs.existsSync(journalDir), "journal cleared after recovery");
+  assert.match(next.stderr, /cage: recovered an interrupted session \(pid \d+/);
+});
+
+test("cage journal: tampered journal bytes make the next invocation refuse to start (exit 2, fail closed) (MSN-0253 DoD 5)", POSIX_ONLY, async () => {
+  const dest = makeRepo("og-cage-corrupt-", true);
+  const { wrapper, tree, journalDir } = await startTamperedSession(dest);
+  process.kill(wrapper.proc.pid!, "SIGKILL");
+  await wrapper.exit;
+  try {
+    fs.appendFileSync(path.join(journalDir, "journal.json"), " ");
+    const cli = path.join(getRepoRoot(), "dist", "cli", "index.js");
+    const next = spawnSync(
+      process.execPath,
+      [cli, "cage", "--", ...nodeScript(`require("fs").writeFileSync("probe-ran.txt", "ran");`)],
+      { cwd: dest, encoding: "utf8", env: gitChildEnv() },
+    );
+    assert.equal(next.status, 2, next.stderr);
+    assert.match(next.stderr, /GXT_CAGE_JOURNAL_CORRUPT/);
+    assert.ok(!fs.existsSync(path.join(dest, "probe-ran.txt")), "the command never ran");
+    assert.equal(read(dest, ".env"), "TOKEN=tampered\n", "nothing is restored from an untrusted journal");
+    assert.ok(fs.existsSync(path.join(journalDir, "journal.json")), "the journal is kept for inspection");
+  } finally {
+    for (const pid of tree) {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch {
+        // already gone
+      }
+    }
+  }
 });

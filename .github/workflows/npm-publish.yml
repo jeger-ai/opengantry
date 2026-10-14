@@ -35,3 +35,8 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @jeger-ai/opengantry-cage to npm
+        run: npm publish --workspace @jeger-ai/opengantry-cage --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

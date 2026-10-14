@@ -148,7 +148,7 @@ Discovery uses streaming regex (budgeted for large monorepos in CI) — fast con
 
 ## Zero-config cage (`gantry cage`)
 
-**Why:** Teams want a guardrail before they adopt missions. `gantry cage -- <command...>` (standalone bin: `opengantry-cage`) runs any command, including an interactive agent session, with inherited stdio, and restores a built-in protected set while it runs and once more at exit. It needs no manifest and no `gantry init`. The root is the enclosing git work tree, or the current directory outside git.
+**Why:** Teams want a guardrail before they adopt missions. `gantry cage -- <command...>` (standalone bin: `opengantry-cage`, also published on its own as the slim `@jeger-ai/opengantry-cage` package: shared sources, `commander` as the only runtime dependency, no native modules, no install scripts) runs any command, including an interactive agent session, with inherited stdio, and restores a built-in protected set while it runs and once more at exit. It needs no manifest and no `gantry init`. The root is the enclosing git work tree, or the current directory outside git.
 
 | Rule | Paths | On change |
 |------|-------|-----------|
@@ -210,7 +210,7 @@ protect:
 
 **When to use:** As the zero-config on-ramp: start the agent you already use inside it (`gantry cage -- claude`). Missions add scope enforcement on every write, Planner-signed law and `gantry verify` in CI; `gantry runtime exec` needs a pinned mission and enforces TMVC and forbidden zones with telemetry.
 
-**How:** `npx -p @jeger-ai/opengantry opengantry-cage -- claude` · `gantry cage -- aider` · `gantry cage --json -- <cmd>` · `gantry cage suggest --write` · `gantry cage --allow-override .env.local -- <cmd>` · `gantry cage --contest-limit 1 -- <cmd>` · [`ADOPTION.md`](ADOPTION.md#step-zero-cage-an-agent-you-already-use)
+**How:** `npx @jeger-ai/opengantry-cage -- claude` · `npx -p @jeger-ai/opengantry opengantry-cage -- claude` · `gantry cage -- aider` · `gantry cage --json -- <cmd>` · `gantry cage suggest --write` · `gantry cage --allow-override .env.local -- <cmd>` · `gantry cage --contest-limit 1 -- <cmd>` · [`ADOPTION.md`](ADOPTION.md#step-zero-cage-an-agent-you-already-use)
 
 ---
 
