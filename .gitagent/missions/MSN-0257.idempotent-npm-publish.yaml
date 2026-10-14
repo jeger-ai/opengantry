@@ -36,25 +36,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0257: scripts/npm-publish-if-new.sh at 2502e0a (mode 100755) reads name and version from the root or the named workspace package.json, runs npm view <name>@<version> version, skips with already published, skipping when it prints the version, publishes with --provenance --access public on E404 or an empty exit-0 answer, fails closed with exit 1 and nothing published on any other error, exits 2 for an unknown workspace or argument; against the real registry @jeger-ai/opengantry@3.8.2 is skipped and @jeger-ai/opengantry-cage@3.8.2 goes to npm publish --dry-run (4 files)"
+    anchor: "1230"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0257: .github/workflows/npm-publish.yml at 2502e0a keeps push tags v* and adds workflow_dispatch with a required string tag input; a Guard manual run step (if workflow_dispatch, tag via env TAG, no expression in the script) runs before Install Node deps and Validate stack and fails unless TAG is v<package.json version>, the tag exists and git diff --quiet <tag> HEAD is empty for src except src/cli/tests, packages, package.json, package-lock.json, templates, README.md, LICENSE and NOTICE; both publish steps run ./scripts/npm-publish-if-new.sh (the second with --workspace @jeger-ai/opengantry-cage); no bare npm publish step remains; the guard run on this branch against the real v3.8.2 tag prints publishes the same inputs as v3.8.2"
+    anchor: "1231"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0257: src/cli/tests/npm-publish-if-new.test.ts at 2502e0a, offline with a stub npm on PATH: published version skipped with npm publish never called; missing version, missing package and empty answers publish with --provenance --access public; --workspace reads the workspace version and passes --workspace, an unknown workspace exits 2 without calling npm; an ETIMEDOUT view error exits 1 without publishing; --dry-run omits provenance; the workflow structure check and the guard run in a scratch tagged repo (passes for the tag and for test-only changes, refuses a version mismatch, a missing tag and a README change) all pass, 7 pass 0 fail"
+    anchor: "1232"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0257: docs/DEVELOPMENT.md at 2502e0a has a Releasing section before LLM evidence + KPI gate: release missions bump every version site incl. the slim package, tag v<version> on the merge commit, the tag run publishes both packages through npm-publish-if-new.sh, NPM_TOKEN must cover every package in the @jeger-ai scope (a selected-packages token answers a new name with E404), finish a partial release with gh workflow run npm-publish.yml -f tag=v<version> from main, never re-run the tag run or move the tag; assert-docs-deterministic OK"
+    anchor: "1233"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0257: ./scripts/dev-validate-core.sh on 2502e0a: assert-dogfood-sync OK; assert-docs-deterministic OK; tests 891 pass 891 fail 0; check-changed-code OK; MSN commit subjects OK; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1234"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1d3b16f1795a
