@@ -43,7 +43,7 @@ export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } =
     .option("--report-only", "Detect and report protected changes without reverting them")
     .option("--no-watch", "Check only once, after the command exits (no live restore)")
     .option("--watch-interval-ms <n>", "Live check interval while the command runs (default 1000)")
-    .option("--max-file-bytes <n>", "Per-file in-memory snapshot cap; larger files are detect-only")
+    .option("--max-file-bytes <n>", "Per-file snapshot cap (default 5 MiB); a larger protected file stops cage before the command runs (exit 2)")
     .option(
       "--contest-limit <n>",
       "Live restores of one path before cage terminates the command (default 3, or .cage.yaml contest_limit; 0 never halts)",
