@@ -102,8 +102,11 @@ declared_paths:
   - .gitagent/missions/MSN-0253.cage-signal-trap-and-journal-recovery.yaml
   - EXECUTOR_LOG.md
   - src/cli/lib/cage/
+  - src/cli/lib/cage/cage-journal.ts
+  - src/cli/lib/cage/cage-process.ts
+  - src/cli/lib/cage/cage-report.ts
+  - src/cli/lib/cage/cage-run.ts
   - src/cli/tests/cage.test.ts
-  - src/cli/tests/cage-watch.test.ts
 contract:
   tmvc_roots:
     - src/cli/lib/cage/
