@@ -69,6 +69,11 @@ jobs:
         if: steps.mission.outputs.path != ''
         run: node dist/cli/index.js deps fetch --mission "${{ steps.mission.outputs.path }}"
 
+      # Same reason as mission_verify in gxt-validate.yml: iii-integration mission gates need the example's deps.
+      - name: Install iii integration example deps
+        if: steps.mission.outputs.path != '' && hashFiles('examples/iii-integration/package-lock.json') != ''
+        run: npm ci --prefix examples/iii-integration --no-audit --no-fund
+
       - name: Verify and export envelope
         id: verify
         if: steps.mission.outputs.path != ''

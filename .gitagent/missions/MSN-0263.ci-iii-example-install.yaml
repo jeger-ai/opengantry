@@ -1,0 +1,158 @@
+# OpenGantry mission (Planner-stamped by [MSN-0263]). CI installs the iii example's deps before verifying missions.
+#
+# Legislated intent: mission_verify (gxt-validate.yml) and attest_ingest (gxt-attest-ingest.yml) gain an
+# `npm ci` step in examples/iii-integration before they run `gantry verify`, so an iii-integration mission's
+# gate (validate-offline.mjs, which needs the example's own acorn-walk) can run in CI instead of exiting 2.
+# PR #207 (MSN-0262) failed exactly there and had to re-legislate its gate to self-install.
+#
+# Scope widened on purpose (same files, same cause): both workflows are shipped to adopters by gantry init and
+# gantry upgrade from templates/.github/workflows/ (managed_strict; mirrored to .github/ by gen:dogfood), and
+# the template's existing `iii integration offline validate` step in the manifest job runs unconditionally,
+# so an adopter's CI without examples/iii-integration fails at `cd examples/iii-integration`. Every iii example
+# step in both templates becomes conditional on examples/iii-integration/package-lock.json existing.
+#
+# DoD 1 (templates): templates/.github/workflows/gxt-validate.yml: the manifest job's iii step and a new
+#        mission_verify step `Install iii integration example deps` (npm ci in examples/iii-integration, before
+#        `Full verify on PR-changed missions`) both run only if hashFiles('examples/iii-integration/package-lock.json')
+#        is non-empty; templates/.github/workflows/gxt-attest-ingest.yml gains the same guarded install step
+#        before `Verify and export envelope` (also only when a mission was resolved). No other step changes.
+# DoD 2 (mirrors): npm run gen:dogfood copies both templates to .github/workflows/ byte for byte;
+#        assert-dogfood-sync passes.
+# DoD 3 (tests): src/cli/tests/ci-iii-example-install.test.ts parses both templates and their mirrors: every
+#        step that touches examples/iii-integration carries the hashFiles guard, the install steps precede the
+#        verify steps, and the mirrors equal the templates.
+# DoD 4 (docs): docs/DEVELOPMENT.md CI table notes the install for mission_verify; docs/CHANGELOG.md gains an
+#        Unreleased entry and upgrade note (gantry upgrade brings the guarded steps; adopters' CI no longer runs
+#        the iii example steps).
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+#
+# Limit: this PR's own CI verifies only MSN-0263 (substrate gate), so it cannot run an iii-integration gate;
+# the proof is the structural test plus a local run of the plain gate after `npm ci` in the example.
+msn_id: MSN-0263
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0263 at 984a63f: templates/.github/workflows/gxt-validate.yml guards the manifest job's iii integration offline validate with if: hashFiles('examples/iii-integration/package-lock.json') != '' and adds Install iii integration example deps (npm ci --prefix examples/iii-integration --no-audit --no-fund, same guard) to mission_verify before Full verify on PR-changed missions; templates/.github/workflows/gxt-attest-ingest.yml adds the same install step before Verify and export envelope, guarded by steps.mission.outputs.path != '' and the hashFiles check; with the example's node_modules removed, that install followed by node examples/iii-integration/scripts/validate-offline.mjs prints [iii-integration: offline validate OK]"
+    anchor: "1286"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0263 at 984a63f: npm run gen:dogfood regenerated .github/workflows/gxt-validate.yml and gxt-attest-ingest.yml byte-identical to their templates (cmp); ./scripts/assert-dogfood-sync.sh: assert-dogfood-sync: scripts/ matches templates/scripts/ and mirrored files match"
+    anchor: "1287"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0263 at 984a63f: src/cli/tests/ci-iii-example-install.test.ts (no src/cli/lib imports) parses both templates with yaml: mirrors equal templates byte for byte; every step whose name or run mentions the iii integration example carries the hashFiles guard (3 steps); the install step precedes Full verify on PR-changed missions and Verify and export envelope with the exact npm ci command and if; tests 4 pass 4 fail 0; removing the manifest step's guard fails 2 of the 4 tests"
+    anchor: "1288"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0263 at 984a63f: docs/DEVELOPMENT.md mission_verify row notes the guarded example install (also in gxt-attest-ingest.yml); docs/CHANGELOG.md gains an Unreleased release-highlights row and an Unreleased upgrade note (gantry upgrade apply updates both managed workflows; steps skip without examples/iii-integration/package-lock.json)"
+    anchor: "1289"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0263 at 984a63f: ./scripts/dev-validate-core.sh: assert-dogfood-sync OK; tests 902 pass 902 fail 0; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1290"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0001 is the template's placeholder
+      ADR ("Example out-of-scope decision") and matched only on the word
+      example, as in the iii integration example.
+    adr_refs:
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0037 stays ACTIVE and unchanged. The CI ingestion
+      contract in gxt-attest-ingest.yml (identity resolution, envelope schema
+      1.0.0, ingest and ledger steps) is untouched; the job only gains a
+      conditional npm ci in examples/iii-integration before Verify and export
+      envelope, so an iii-integration mission's gate can run instead of failing
+      with exit 2.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0034 stays ACTIVE and unchanged. No receipt,
+      attestation, hash_only telemetry or export vector changes; the spoke stays
+      the sole enforcer. The added step installs the iii example's dependencies
+      before verify and emits nothing.
+    adr_refs:
+      - ADR-0034
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0027 stays ACTIVE and unchanged. The attest_ingest
+      verify step keeps its command and --format envelope export; this mission
+      only adds a preceding install of the iii example's dependencies so the
+      mission gate can run.
+    adr_refs:
+      - ADR-0027
+  - finding_id: c6b28db36628
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate: the work edits the CI workflow templates
+      (templates/.github/workflows/gxt-validate.yml and gxt-attest-ingest.yml,
+      Tier-3, shipped by gantry init and upgrade) and their gen:dogfood mirrors
+      under .github/workflows/, plus one new test, DEVELOPMENT.md and
+      CHANGELOG.md. Not gantry (no CLI code change) and not iii-integration /
+      iii-architecture (nothing under examples/ changes; the workflows only
+      install the example's existing lockfile). The Planner-sealed contract
+      narrows TMVC to exactly those files plus EXECUTOR_LOG.md."
+    adr_refs:
+      - ADR-0045
+  - finding_id: f39dfe7d8795
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/tests/ci-iii-example-install.test.ts is a
+      new test outside the import layers by design; it parses both workflow
+      templates and their mirrors with the yaml package and imports nothing from
+      src/cli/lib. No layer rule changes.
+interrogation_sha256: f6170d8e7cd2be23513259ed43a0c33bce9c628468ac2a519b491f08f50bf879
+declared_paths:
+  - .gitagent/missions/MSN-0263.ci-iii-example-install.yaml
+  - .github/workflows/gxt-attest-ingest.yml
+  - .github/workflows/gxt-validate.yml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - src/cli/tests/ci-iii-example-install.test.ts
+  - templates/.github/workflows/gxt-attest-ingest.yml
+  - templates/.github/workflows/gxt-validate.yml
+contract:
+  tmvc_roots:
+    - .github/workflows/gxt-attest-ingest.yml
+    - .github/workflows/gxt-validate.yml
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - src/cli/tests/ci-iii-example-install.test.ts
+    - templates/.github/workflows/gxt-attest-ingest.yml
+    - templates/.github/workflows/gxt-validate.yml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - examples/
+contract_sha256: 4baa8c16b563fe382160d47af05640129677ec778dab5da418b2d8c7e7f00131
