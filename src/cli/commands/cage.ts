@@ -13,6 +13,7 @@ import {
   writeCageSuggestions,
 } from "../lib/cage/cage-suggest.js";
 import { CAGE_CONFIG_FILE } from "../lib/cage/cage-config.js";
+import { formatCageCheckReport, runCageCheck } from "../lib/cage/cage-check.js";
 
 export interface CageCliOptions {
   command: string[];
@@ -121,6 +122,23 @@ export async function runCageSuggestCommand(options: CageSuggestCliOptions): Pro
     const covered = `${String(result.already_covered)} already protected`;
     if (written) console.error(`cage suggest: wrote ${path.basename(written)} (${String(n)} entr${n === 1 ? "y" : "ies"}; ${covered}); review it, then move what you keep into ${CAGE_CONFIG_FILE}`);
     else console.error(`cage suggest: ${String(n)} new suggestion(s); ${covered}`);
+    return Promise.resolve();
+  });
+}
+
+export interface CageCheckCliOptions {
+  base: string;
+  head?: string;
+  json?: boolean;
+}
+
+/** `gantry cage check --base <ref>`: exit 3 when commits in base..head change paths a revert rule protects. */
+export async function runCageCheckCommand(options: CageCheckCliOptions): Promise<void> {
+  await runUserCommandAsync({ json: options.json }, () => {
+    const report = runCageCheck({ base: options.base, head: options.head });
+    if (options.json) emitCliJson(report);
+    else for (const line of formatCageCheckReport(report)) console.error(line);
+    if (report.exit_code !== 0) setExitCode(report.exit_code);
     return Promise.resolve();
   });
 }

@@ -141,19 +141,30 @@ See [`docs/DOMAINS.md`](docs/DOMAINS.md) for adapter details and [`docs/AGENT-GR
 
 ## Try it in 60 seconds: `gantry cage`
 
-No setup. Start your agent inside the cage, exactly as you normally would:
+No setup, and nothing to change about how you start your agent. Whatever wrote the commits (a terminal agent, an IDE agent or a cloud agent that opens pull requests), check them:
 
 ```bash
-npx @jeger-ai/opengantry-cage -- claude
-# same cage from the full package: npx -p @jeger-ai/opengantry gantry-cage -- claude
-# installed (npm install -g @jeger-ai/opengantry): gantry cage -- claude, gantry-cage -- aider
+npx -p @jeger-ai/opengantry gantry cage check --base origin/main
+# installed (npm install -g @jeger-ai/opengantry): gantry cage check --base origin/main
 ```
 
-`@jeger-ai/opengantry-cage` is the slim standalone build of `gantry cage` (same sources, `commander` as the only runtime dependency, no native modules, no install scripts) for the `npx` on-ramp. The full package adds missions, `gantry verify`, MCP and the rest.
+`cage check` looks at every commit in `base..HEAD` and fails (exit `3`) when one of them changes a protected path: CI configs, `.env` / `.env.*`, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries. Lockfile changes are listed but do not fail it. A secret committed and deleted again still counts, because it is in the history you push. The rules come from the base commit, so a branch cannot loosen the check it is held to by editing `.cage.yaml` or the manifest; the edit itself is flagged. `--json` emits a digest-only report (paths and rules, never file contents).
 
-While the session runs, cage checks about once a second and restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`) and your manifest `forbidden_zones` from an in-memory snapshot. Lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths, and the agent sees why. When you quit, cage prints one report: everything it restored, any refused pushes, exit `3` if anything was touched (otherwise the agent's own exit code).
+Put it where every agent's work lands, the pull request:
 
-Nothing is printed into the agent's screen while it runs: events go to a session log in your temp dir (path shown at start), with a terminal bell per restore. If the agent keeps rewriting the same file, cage restores it once more after the third try, terminates the agent and everything it spawned (SIGTERM, then SIGKILL), and exits `4`. Raise or lower that with `--contest-limit <n>` (`0` keeps restoring and never halts).
+```yaml
+# .github/workflows/cage-check.yml
+on: pull_request
+jobs:
+  cage-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npx -y -p @jeger-ai/opengantry gantry cage check --base ${{ github.event.pull_request.base.sha }}
+```
 
 To protect more of your own repo (migrations, infrastructure, key files), let cage propose rules, review them, and commit `.cage.yaml`:
 
@@ -161,9 +172,18 @@ To protect more of your own repo (migrations, infrastructure, key files), let ca
 gantry cage suggest --write      # writes .cage.yaml.suggested; review it, keep what you want as .cage.yaml, commit
 ```
 
-`.cage.yaml` can only add protection; it can never switch a built-in rule off. A top-level `mode: report` in it is a default for your own entries, not for the built-ins, and `contest_limit: <n>` sets the halt threshold for the project. To relax one path for a single run (a dev server that rewrites `.env.local`, say), pass `--allow-override <path>`: cage then reports that path instead of restoring it, never halts on it, and says so at start and in the report.
+`.cage.yaml` can only add protection; it can never switch a built-in rule off. A top-level `mode: report` in it is a default for your own entries, not for the built-ins.
 
-Cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and a committed change stays in local history (cage restores the working tree only). Reads, network calls and writes outside the protected set are not seen. `--no-watch` checks once at exit instead. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage).
+**Scripted agent runs: the session cage.** When a script or CI job starts an agent non-interactively, wrap it, and cage restores protected files while it runs:
+
+```bash
+npx @jeger-ai/opengantry-cage -- claude -p "…"
+# full package: gantry cage -- <cmd>, gantry-cage -- <cmd>
+```
+
+`@jeger-ai/opengantry-cage` is the slim standalone build of the session cage (same sources, `commander` as the only runtime dependency, no native modules, no install scripts); `cage check` and `cage suggest` live in the full package. About once a second the session cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), manifest `forbidden_zones` and `.cage.yaml` entries; lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths. At the end it prints one report and exits `3` if anything was restored (otherwise the command's own exit code). A path the command keeps rewriting halts it after the third restore (exit `4`; `--contest-limit <n>`, or `contest_limit:` in `.cage.yaml`, `0` never halts), and `--allow-override <path>` reports one path instead of restoring it for a run, always announced.
+
+The session cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and reads, network calls and writes outside the protected set are not seen. `cage check` sees committed history only. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage) · why check comes first: [ADR-0050](.gitagent/out-of-scope/ADR-0050-cage-diff-check.md).
 
 ---
 

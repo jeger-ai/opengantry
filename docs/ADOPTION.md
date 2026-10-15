@@ -35,18 +35,31 @@ See also: [`FEATURES.md`](FEATURES.md) · [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.m
 
 ## First run (onboarding)
 
-### Step zero: cage an agent you already use
+### Step zero: check your agents' commits
 
-Before adopting missions, start your current agent inside the cage:
+Before adopting missions, add one CI step that checks what any agent committed. Nothing changes about how you start your agents, and it covers the ones you cannot wrap (IDE, desktop and cloud agents):
 
-```bash
-npx @jeger-ai/opengantry-cage -- claude
-# same cage from the full package: npx -p @jeger-ai/opengantry gantry-cage -- claude
+```yaml
+# .github/workflows/cage-check.yml
+on: pull_request
+jobs:
+  cage-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # the base commit must be present
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npx -y -p @jeger-ai/opengantry gantry cage check --base ${{ github.event.pull_request.base.sha }}
 ```
 
-`@jeger-ai/opengantry-cage` is a slim standalone build of `gantry cage` (shared sources; `commander` is its only runtime dependency, no native modules, no install scripts), so the first run does not pull the full OpenGantry stack. During the session, cage restores CI, secrets, git-control and forbidden-zone changes about once a second and refuses `git push` of those paths; it prints one report when you quit ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage)). It restores rather than blocks.
+Locally, before you push: `npx -p @jeger-ai/opengantry gantry cage check --base origin/main`.
 
-To cover your own sensitive paths too, run `gantry cage suggest --write` yourself (not inside a cage session), review `.cage.yaml.suggested`, keep what you want as `.cage.yaml` and commit it. The file can only add protection ([ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)).
+`gantry cage check` fails with exit `3` when a commit in the range changes CI configs, `.env` / `.env.*`, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries; lockfile changes are listed without failing it. It reads the rules from the base commit, so a branch cannot loosen them, and it checks every commit, so a secret committed and removed again still fails ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage), [ADR-0050](../.gitagent/out-of-scope/ADR-0050-cage-diff-check.md)). A legitimate change to a protected path fails it too: review it and merge. Whether to make the check a required status is your branch-protection choice.
+
+To cover your own sensitive paths too, run `gantry cage suggest --write` yourself, review `.cage.yaml.suggested`, keep what you want as `.cage.yaml` and commit it. The file can only add protection ([ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)), and its additions apply to the changes after it is merged.
+
+For agents your scripts start non-interactively, the session cage restores protected files while they run: `npx @jeger-ai/opengantry-cage -- <agent command>` (slim standalone package: `commander` is its only runtime dependency, no native modules, no install scripts). It restores rather than blocks.
 
 When you want scope enforced on every write, plus Planner-signed missions and `gantry verify` in CI, continue with the steps below.
 

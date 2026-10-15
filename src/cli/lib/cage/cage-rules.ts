@@ -5,12 +5,14 @@ import { REL_MANIFEST } from "../constants.js";
 import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { loadManifest } from "../manifest.js";
+import type { Manifest } from "../types.js";
 import {
   CAGE_CONFIG_FILE,
   cageConfigCommitted,
   cageGlobToRegExp,
   loadCageConfig,
   normalizeCageRelPath,
+  type CageConfig,
 } from "./cage-config.js";
 
 /**
@@ -160,13 +162,8 @@ function gitControlTargets(root: string): string[] {
   return [...new Set(out.map((p) => path.resolve(p)))];
 }
 
-/**
- * Union of every skill's `forbidden_zones` when a manifest exists. An unreadable or
- * invalid manifest throws so cage fails closed before the wrapped command runs.
- */
-function manifestZoneTargets(root: string): string[] {
-  if (!fs.existsSync(rootJoin(root, REL_MANIFEST))) return [];
-  const manifest = loadManifest(root);
+/** Union of every skill's `forbidden_zones` as sorted root-relative POSIX paths. */
+export function cageManifestZones(manifest: Manifest): string[] {
   const zones = new Set<string>();
   for (const skill of Object.values(manifest.skills)) {
     for (const raw of skill.forbidden_zones ?? []) {
@@ -175,7 +172,16 @@ function manifestZoneTargets(root: string): string[] {
       zones.add(norm);
     }
   }
-  return [...zones].sort().map((z) => rootJoin(root, z));
+  return [...zones].sort();
+}
+
+/**
+ * Zones from the working-tree manifest when one exists. An unreadable or invalid manifest throws
+ * so cage fails closed before the wrapped command runs.
+ */
+function manifestZones(root: string): string[] {
+  if (!fs.existsSync(rootJoin(root, REL_MANIFEST))) return [];
+  return cageManifestZones(loadManifest(root));
 }
 
 /** `rel` equals `base` or lies inside it. */
@@ -268,8 +274,7 @@ function assertNoBuiltinDowngrade(plan: CagePlan, value: string): void {
   }
 }
 
-function addConfigTargets(plan: CagePlan, root: string): number {
-  const config = loadCageConfig(root);
+function addConfigTargets(plan: CagePlan, root: string, config: CageConfig, committed: boolean | null): void {
   for (const e of config.entries) {
     if (e.kind === "path" && e.mode === "report") assertNoBuiltinDowngrade(plan, e.value);
     if (e.kind === "path") {
@@ -281,10 +286,9 @@ function addConfigTargets(plan: CagePlan, root: string): number {
   plan.config = {
     present: config.present,
     entries: config.entries.length,
-    committed: config.present ? cageConfigCommitted(root) : null,
+    committed: config.present ? committed : null,
   };
   plan.contestLimit = config.contestLimit;
-  return config.entries.length;
 }
 
 function builtinTarget(abs: string, rule: CageRuleId): CageTarget {
@@ -292,12 +296,19 @@ function builtinTarget(abs: string, rule: CageRuleId): CageTarget {
 }
 
 /**
- * Resolve the session's protected set. An invalid manifest, `.cage.yaml` or override throws, so cage
- * fails closed before the wrapped command runs.
+ * Rule inputs that live in the repository: manifest `forbidden_zones` (root-relative) and `.cage.yaml`.
+ * The session reads them from the working tree; `gantry cage check` reads them from a commit.
  */
-export function buildCagePlan(givenRoot: string, opts: { overrides?: readonly string[] } = {}): CagePlan {
-  const root = canonicalCageRoot(givenRoot);
-  const zones = manifestZoneTargets(root);
+export interface CageRuleInputs {
+  zones: readonly string[];
+  config: CageConfig;
+  /** Whether `.cage.yaml` is on record; ignored when it is absent. */
+  configCommitted: boolean | null;
+}
+
+/** Built-in floor plus the repo's rule inputs, for a canonical root. An invalid `.cage.yaml` entry throws. */
+export function assembleCagePlan(root: string, inputs: CageRuleInputs): CagePlan {
+  const zones = inputs.zones.map((z) => rootJoin(root, z));
   const plan: CagePlan = {
     root,
     targets: [
@@ -313,7 +324,19 @@ export function buildCagePlan(givenRoot: string, opts: { overrides?: readonly st
     config: { present: false, entries: 0, committed: null },
     contestLimit: null,
   };
-  addConfigTargets(plan, root);
+  addConfigTargets(plan, root, inputs.config, inputs.configCommitted);
+  return plan;
+}
+
+/**
+ * Resolve the session's protected set from the working tree. An invalid manifest, `.cage.yaml` or
+ * override throws, so cage fails closed before the wrapped command runs.
+ */
+export function buildCagePlan(givenRoot: string, opts: { overrides?: readonly string[] } = {}): CagePlan {
+  const root = canonicalCageRoot(givenRoot);
+  const zones = manifestZones(root);
+  const config = loadCageConfig(root);
+  const plan = assembleCagePlan(root, { zones, config, configCommitted: config.present ? cageConfigCommitted(root) : null });
   plan.overrides = validateOverrides(plan, opts.overrides ?? []);
   return plan;
 }
