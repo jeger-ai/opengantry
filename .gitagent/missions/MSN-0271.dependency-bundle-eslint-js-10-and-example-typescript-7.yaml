@@ -1,0 +1,163 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0271]. Executor must not run until the [MSN-0271] legislation commit + pin.
+#
+# Legislated intent: bundle two Dependabot bumps that change package.json and so need a mission (the
+# trusted_automation policy covers only workflow pin bumps): @eslint/js ^9.28.0 -> ^10.0.1 at the root (PR #210;
+# eslint 10.12 is already in use since MSN-0249) and typescript ^5.7.2 -> ^7.0.2 in examples/iii-integration
+# (PR #211; the root is on TypeScript 7 since MSN-0248). Each bump is taken from its Dependabot commit with
+# git cherry-pick -n (c2b68ffe9a for #210, ddb289855c for #211), so the three-way merge keeps the lockfile changes
+# main gained from #212 and #213, and is committed under an [MSN-0271] subject. Dependabot closes #210 and #211 itself
+# once main carries the versions.
+#
+# Re-legislated before execution (Planner option 1): @eslint/js 10 adds no-useless-assignment to the recommended
+# rules, and npm run lint then fails on src/cli/lib/virtual-scratch-store.ts:150 (the dead initial `let mtime = 0`
+# in scavengeVirtualFlights). #210's CI missed it because CI lints only changed files. The contract now also allows
+# that one file; every other source change still means stop and re-legislate.
+#
+# DoD 1 (root bump): package.json devDependencies @eslint/js is ^10.0.1 and package-lock.json resolves 10.0.1;
+#        yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 from #212/#213 are still resolved; npm ci succeeds.
+# DoD 2 (example bump): examples/iii-integration/package.json typescript is ^7.0.2 and its lockfile resolves
+#        7.0.2; npm ci in the example succeeds.
+# DoD 3 (one source fix): the only source change is `let mtime: number;` instead of `let mtime = 0;` in
+#        src/cli/lib/virtual-scratch-store.ts (both branches still assign it; no behaviour change); git diff
+#        origin/main touches only the contract paths and the mission file; npm run lint passes over src/cli/**/*.ts
+#        with @eslint/js 10; the iii offline validator passes.
+# DoD 4 (changelog): docs/CHANGELOG.md Unreleased row gains a dependencies note (yaml 2.9.1, MCP SDK 1.32.1,
+#        @eslint/js 10.0.1, example typescript 7.0.2).
+# DoD 5 (gate): the composite gate passes (dev-validate-core OK, lint, example install and offline validate).
+msn_id: MSN-0271
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh && npm run lint && cd
+  examples/iii-integration && npm ci --no-audit --no-fund && node
+  scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0271 at 85a9f34: package.json devDependencies @eslint/js ^9.28.0 -> ^10.0.1 and package-lock.json resolves @eslint/js 10.0.1 (with eslint 10.12.0), applied from Dependabot commit c2b68ffe9a (PR #210) with git cherry-pick -n; the three-way lockfile merge keeps yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 from #213 and #212; npm ci succeeds; npm audit: found 0 vulnerabilities"
+    anchor: "1348"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0271 at 85a9f34: examples/iii-integration/package.json typescript ^5.7.2 -> ^7.0.2 and its lockfile resolves typescript 7.0.2 (plus the 20 optional per-platform @typescript/typescript-* compiler packages, as at the root), applied from Dependabot commit ddb289855c (PR #211); npm ci in the example added 42 packages; npx tsc --version: Version 7.0.2; npm audit there: found 0 vulnerabilities"
+    anchor: "1349"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0271 at 85a9f34: the only source change is let mtime: number; instead of let mtime = 0; in src/cli/lib/virtual-scratch-store.ts (scavengeVirtualFlights; both try and catch still assign it), 1 file changed, 1 insertion, 1 deletion under src; git diff --name-only origin/main..85a9f34 lists only the contract paths and the mission file; npm run lint exit 0 with @eslint/js 10 (before the fix: 150:11 error no-useless-assignment); node scripts/validate-offline.mjs: [iii-integration: offline validate OK]"
+    anchor: "1350"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0271 at 85a9f34: docs/CHANGELOG.md Unreleased row gains Dependencies: yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 (lockfile only, #212 and #213), @eslint/js 10.0.1 for development with the no-useless-assignment fix, and typescript 7.0.2 in the iii integration example (MSN-0271); assert-docs-deterministic OK"
+    anchor: "1351"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0271 at 85a9f34: composite gate ./scripts/dev-validate-core.sh && npm run lint && cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs exit 0: tests 919 pass 919 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; lint OK; [iii-integration: offline validate OK]"
+    anchor: "1352"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0001 is the template placeholder ADR
+      (Example out-of-scope decision) and matched only on the word example, as
+      in the iii integration example (same answer as MSN-0263).
+    adr_refs:
+      - ADR-0001
+  - finding_id: 795dea2b28a5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh && npm
+      run lint && cd examples/iii-integration && npm ci --no-audit --no-fund &&
+      node scripts/validate-offline.mjs" with documented success substring for
+      verify.
+    operator_answer: "Authorized: ./scripts/dev-validate-core.sh && npm run lint &&
+      cd examples/iii-integration && npm ci --no-audit --no-fund && node
+      scripts/validate-offline.mjs, success substring dev-validate-core OK. It
+      chains the allowlisted substrate gate, the allowlisted gantry lint gate
+      (which proves @eslint/js 10 needs no source change) and the
+      iii-integration gate preceded by installing the example from its own
+      lockfile (as authorized for MSN-0262), so it covers both bumped manifests.
+      Every step is joined with &&, so verify also requires exit code 0 from the
+      last step."
+    adr_refs:
+      - ADR-0045
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0044 stays ACTIVE and unchanged.
+      There is no mission depends_on and no cross-repo ledger ref; dependency
+      here means in-repo npm version bumps only (same answer as MSN-0249).
+    adr_refs:
+      - ADR-0044
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate. The bundle changes the root package.json
+      and lockfile (gantry skill root), the iii integration example manifest and
+      lockfile (iii-integration skill) and one CLI source file, so no single
+      feature skill covers it; it runs under substrate as MSN-0263 and MSN-0265
+      did. The sealed contract (ADR-0045) narrows TMVC to package.json,
+      package-lock.json, examples/iii-integration/package.json,
+      examples/iii-integration/package-lock.json,
+      src/cli/lib/virtual-scratch-store.ts, docs/CHANGELOG.md and
+      EXECUTOR_LOG.md, and forbids src/cli/commands/, src/cli/tests/, src/auth/,
+      src/core/, src/db/schema/, templates/, .githooks/, .gitagent/foreman/ and
+      .gitagent/planner/RULES.md (src/cli/lib/ stays importable because the
+      fixed file imports atomic-fs.js and constants.js; the TMVC roots alone
+      limit edits under src/ to that one file). Re-legislated before execution
+      (Planner option 1): @eslint/js 10 enables no-useless-assignment, which
+      rejects the dead initial mtime = 0 in that file; the one-line fix changes
+      no behaviour."
+    adr_refs:
+      - ADR-0045
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0041 stays ACTIVE and unchanged. It matched on
+      eslint and tsc because the bundle bumps @eslint/js and typescript. The
+      gate stays the generic adapter (no gate_adapter field), runs npm run lint
+      only for its exit code, and no adapter routing is involved (same answer as
+      MSN-0249).
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: 34302b3d88d6bf3eb4128498a0f9ecbd1ae17dfe5c0df26079e1f3352080a82b
+declared_paths:
+  - .gitagent/missions/MSN-0271.dependency-bundle-eslint-js-10-and-example-typescript-7.yaml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - examples/iii-integration/package-lock.json
+  - examples/iii-integration/package.json
+  - package-lock.json
+  - package.json
+  - src/cli/lib/virtual-scratch-store.ts
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - examples/iii-integration/package-lock.json
+    - examples/iii-integration/package.json
+    - package-lock.json
+    - package.json
+    - src/cli/lib/virtual-scratch-store.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .githooks
+    - src/auth/
+    - src/cli/commands/
+    - src/cli/tests/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: caf009016ef5af6f8b49146f5731a0536d1940de533cf7d8508afb8842da741c
