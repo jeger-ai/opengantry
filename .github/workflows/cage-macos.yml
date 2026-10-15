@@ -26,7 +26,10 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 20
     steps:
+      # No git credentials needed: the job never fetches or pushes, and npm ci, the build and the tests run PR code.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         with:
