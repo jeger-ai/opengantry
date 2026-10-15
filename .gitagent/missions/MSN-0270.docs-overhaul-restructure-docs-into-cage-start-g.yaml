@@ -60,6 +60,8 @@
 # DoD 8 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
 # Amended by Planner stamp: declared_paths added (this mission file plus the contract roots) after verify reported
 #        GXT_INTERROGATION_PATH_DRIFT for the mission file; scope, gate, DoDs and contract unchanged.
+# Verifier record: the context request to edit this mission's trace_rows (EXECUTOR_LOG.md) was accepted by the
+#        Planner/Verifier on 2026-10-15 before merging PR #220.
 msn_id: MSN-0270
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
