@@ -33,25 +33,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0263 at 984a63f: templates/.github/workflows/gxt-validate.yml guards the manifest job's iii integration offline validate with if: hashFiles('examples/iii-integration/package-lock.json') != '' and adds Install iii integration example deps (npm ci --prefix examples/iii-integration --no-audit --no-fund, same guard) to mission_verify before Full verify on PR-changed missions; templates/.github/workflows/gxt-attest-ingest.yml adds the same install step before Verify and export envelope, guarded by steps.mission.outputs.path != '' and the hashFiles check; with the example's node_modules removed, that install followed by node examples/iii-integration/scripts/validate-offline.mjs prints [iii-integration: offline validate OK]"
+    anchor: "1286"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0263 at 984a63f: npm run gen:dogfood regenerated .github/workflows/gxt-validate.yml and gxt-attest-ingest.yml byte-identical to their templates (cmp); ./scripts/assert-dogfood-sync.sh: assert-dogfood-sync: scripts/ matches templates/scripts/ and mirrored files match"
+    anchor: "1287"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0263 at 984a63f: src/cli/tests/ci-iii-example-install.test.ts (no src/cli/lib imports) parses both templates with yaml: mirrors equal templates byte for byte; every step whose name or run mentions the iii integration example carries the hashFiles guard (3 steps); the install step precedes Full verify on PR-changed missions and Verify and export envelope with the exact npm ci command and if; tests 4 pass 4 fail 0; removing the manifest step's guard fails 2 of the 4 tests"
+    anchor: "1288"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0263 at 984a63f: docs/DEVELOPMENT.md mission_verify row notes the guarded example install (also in gxt-attest-ingest.yml); docs/CHANGELOG.md gains an Unreleased release-highlights row and an Unreleased upgrade note (gantry upgrade apply updates both managed workflows; steps skip without examples/iii-integration/package-lock.json)"
+    anchor: "1289"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0263 at 984a63f: ./scripts/dev-validate-core.sh: assert-dogfood-sync OK; tests 902 pass 902 fail 0; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1290"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1a4b88b71538
