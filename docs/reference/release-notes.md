@@ -9,16 +9,17 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version from this list. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
-## Unreleased
+## 3.9
 
-- **`gantry cage check`** checks the commits in `base..head` against the cage rules and exits `3` when one changes a protected path, so the cage reaches every agent whose work ends in a commit, including IDE, desktop and cloud agents that cannot be wrapped. The rules come from the base commit, every commit in the range counts, and `--json` emits a digest-only report. Full package only. The docs now lead with the check in CI and keep the session cage for scripted, non-interactive runs.
-- **`gantry cage watch`** watches the protected files on disk in its own terminal, gitignored `.env` and `.git` hooks included, and asks you to accept or reject every change; no answer within 20 seconds restores it, accept applies only to the content shown, and a path rejected three times is restored without asking. Full package only.
-- **Session push guard** also refuses a push whose commits rename a protected file away or edit a protected path inside a merge commit.
-- **Documentation reorganized** into cage, start, guides, concepts and reference sections, with navigation built from frontmatter and a structure check in validate. Old page paths remain as pointers.
-- **Cage on macOS.** The cage resolves its root to the real path, so a root reached through a symlink, as every macOS temp directory is, keeps its git control rules. A macOS CI job runs every cage test. Linux and macOS are the tested platforms; Windows is not supported yet.
-- **Shipped CI** installs the iii integration example's dependencies before verifying missions, and skips the example's steps in repositories that do not have it.
-- **Dependencies:** yaml 2.9.1 and `@modelcontextprotocol/sdk` 1.32.1 (lockfile only), `@eslint/js` 10.0.1 for development, and TypeScript 7.0.2 in the iii integration example.
-- **Gates in linked worktrees.** Gate commands and test processes no longer inherit repository-locating `GIT_*` variables from hooks, so a gate run from a hook in a linked worktree acts on the repository at its working directory.
+- **3.9.0** Two new cage commands bring the cage to every agent: `gantry cage check` checks commits and `gantry cage watch` asks you about every change to a protected file on disk.
+  - **`gantry cage check`** checks the commits in `base..head` against the cage rules and exits `3` when one changes a protected path, so the cage reaches every agent whose work ends in a commit, including IDE, desktop and cloud agents that cannot be wrapped. The rules come from the base commit, every commit in the range counts, and `--json` emits a digest-only report. Full package only. The docs now lead with the check in CI and keep the session cage for scripted, non-interactive runs.
+  - **`gantry cage watch`** watches the protected files on disk in its own terminal, gitignored `.env` and `.git` hooks included, and asks you to accept or reject every change; no answer within 20 seconds restores it, accept applies only to the content shown, and a path rejected three times is restored without asking. Full package only.
+  - **Session push guard** also refuses a push whose commits rename a protected file away or edit a protected path inside a merge commit.
+  - **Documentation reorganized** into cage, start, guides, concepts and reference sections, with navigation built from frontmatter and a structure check in validate. Old page paths remain as pointers.
+  - **Cage on macOS.** The cage resolves its root to the real path, so a root reached through a symlink, as every macOS temp directory is, keeps its git control rules. A macOS CI job runs every cage test. Linux and macOS are the tested platforms; Windows is not supported yet.
+  - **Shipped CI** installs the iii integration example's dependencies before verifying missions, and skips the example's steps in repositories that do not have it.
+  - **Dependencies:** yaml 2.9.1 and `@modelcontextprotocol/sdk` 1.32.1 (lockfile only), `@eslint/js` 10.0.1 for development, and TypeScript 7.0.2 in the iii integration example.
+  - **Gates in linked worktrees.** Gate commands and test processes no longer inherit repository-locating `GIT_*` variables from hooks, so a gate run from a hook in a linked worktree acts on the repository at its working directory.
 
 ## 3.8
 
