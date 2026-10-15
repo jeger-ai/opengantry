@@ -26,7 +26,7 @@ export interface CageConfig {
   contestLimit: number | null;
 }
 
-const EMPTY_CONFIG: Omit<CageConfig, "present"> = { entries: [], defaultMode: "revert", contestLimit: null };
+export const EMPTY_CAGE_CONFIG: Omit<CageConfig, "present"> = { entries: [], defaultMode: "revert", contestLimit: null };
 
 /** Keys that would loosen protection. Named in the error so authors know relaxation is a runtime flag. */
 const SUBTRACTIVE_KEYS: ReadonlySet<string> = new Set([
@@ -104,7 +104,8 @@ function parseContestLimit(raw: unknown): number | null {
   return raw;
 }
 
-function parseConfigText(text: string): CageConfig {
+/** Parse `.cage.yaml` text (working tree or a committed blob); malformed or subtractive input throws. */
+export function parseCageConfigText(text: string): CageConfig {
   const doc = parseDocument(text, { uniqueKeys: true });
   if (doc.errors.length > 0) throw configError(`invalid YAML: ${doc.errors[0]!.message.split("\n")[0]!}`);
   let data: unknown;
@@ -114,7 +115,7 @@ function parseConfigText(text: string): CageConfig {
   } catch (err) {
     throw configError(`invalid YAML: ${err instanceof Error ? err.message : String(err)}`);
   }
-  if (data === null || data === undefined) return { present: true, ...EMPTY_CONFIG };
+  if (data === null || data === undefined) return { present: true, ...EMPTY_CAGE_CONFIG };
   if (typeof data !== "object" || Array.isArray(data)) throw configError("expected a mapping with a protect: list");
   const obj = data as Record<string, unknown>;
   for (const key of Object.keys(obj)) {
@@ -137,10 +138,10 @@ export function loadCageConfig(root: string): CageConfig {
   try {
     text = fs.readFileSync(file, "utf8");
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { present: false, ...EMPTY_CONFIG };
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { present: false, ...EMPTY_CAGE_CONFIG };
     throw configError(`unreadable (${(err as NodeJS.ErrnoException).code ?? "ERROR"})`);
   }
-  return parseConfigText(text);
+  return parseCageConfigText(text);
 }
 
 /**

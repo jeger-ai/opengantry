@@ -1,0 +1,53 @@
+# OpenGantry mission (Planner-stamped by [MSN-0264]). Gate G logo in the README and docs.
+#
+# Legislated intent: replace the scales-of-justice artwork in docs/assets/opengantry-logo.svg (shown at the top of
+# README.md and docs/index.md) with the Gate G, the mark opengantry.ai adopted in its own MSN-0264: a G drawn as a
+# perimeter whose gate arm reaches in toward an agent dot, on a rounded dark tile so it reads on GitHub's light and
+# dark themes.
+#
+# DoD 1 (logo): docs/assets/opengantry-logo.svg draws the Gate G (path M26 10V5H6v22h20V16h-8, stroke 3.4, round caps
+#        and joins; agent dot at 13.5,16 r3) on a rounded dark tile, the same geometry and colours as
+#        opengantry.ai/favicon.svg; no scales elements remain.
+# DoD 2 (scope): the diff against main touches only docs/assets/opengantry-logo.svg, the mission file and
+#        EXECUTOR_LOG.md (all three declared); README.md and docs/index.md keep referencing the same path.
+#        Re-legislated before tracing to declare the mission file and EXECUTOR_LOG.md (house convention, MSN-0258).
+# DoD 3 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0264
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0264 re-attested at 83863aa after merging main 7ca8540 (PR #216): docs/assets/opengantry-logo.svg unchanged since 6e681f8, the Gate G on a #08090c rounded tile; no scales elements"
+    anchor: "1311"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0264 re-attested at 83863aa: git diff --name-only origin/main..83863aa lists only .gitagent/missions/MSN-0264.gate-g-logo-in-the-readme-and-docs-replace-the-s.yaml, EXECUTOR_LOG.md and docs/assets/opengantry-logo.svg; README.md and docs/index.md unchanged"
+    anchor: "1312"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0264 re-attested at 83863aa: ./scripts/dev-validate-core.sh on main 7ca8540 plus this branch: tests 896 pass 896 fail 0; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1313"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "Authorize three declared paths:
+      docs/assets/opengantry-logo.svg (the logo), the mission file
+      .gitagent/missions/MSN-0264.gate-g-logo-in-the-readme-and-docs-replace-th\
+      e-s.yaml and EXECUTOR_LOG.md (trace rows), as MSN-0258 does. Substrate
+      skill roots are empty, so the Planner declares the roots (ADR-0045: empty
+      skill roots accept Planner-declared roots). README.md and docs/index.md
+      already reference the logo and stay unchanged. The mark matches
+      opengantry.ai (site MSN-0264): the Gate G on a dark tile."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 5592e7cd88d9020222730273b8c28a2792e849bd722366521fdf589e9787860d
+declared_paths:
+  - .gitagent/missions/MSN-0264.gate-g-logo-in-the-readme-and-docs-replace-the-s.yaml
+  - EXECUTOR_LOG.md
+  - docs/assets/opengantry-logo.svg

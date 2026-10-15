@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { withoutGitRepoEnv } from "./git/git.js";
 import type { GateSpec } from "./types.js";
 
 export const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
@@ -30,7 +31,8 @@ export function runGate(workingDirectory: string, spec: GateSpec): GateRunResult
     shell: shellForPlatform(),
     encoding: "utf8",
     maxBuffer: MAX_IO_BUFFER_BYTES,
-    env: process.env,
+    // A gate run from a linked worktree's hook must not inherit its GIT_DIR (MSN-0266); cwd locates the repo.
+    env: withoutGitRepoEnv(),
   });
   const stdout = proc.stdout ?? "";
   const stderr = proc.stderr ?? "";

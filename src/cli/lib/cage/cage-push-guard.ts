@@ -118,15 +118,25 @@ export interface PushGuardViolation {
   rule: CageRuleId;
 }
 
+/**
+ * Repo-relative paths changed by the commits a `git log` range selects; null when git fails. Shared by the
+ * push guard and `gantry cage check` so both see the same paths. Renames list both sides (`--no-renames`),
+ * and a merge lists the paths it changed against every parent (an edit made while resolving it), not the
+ * paths it brought in from the merged branch (MSN-0267).
+ */
+export function changedPathsInRange(root: string, range: readonly string[]): string[] | null {
+  const r = gitRun(root, ["log", "--format=", "--name-only", "-z", "--no-renames", "--cc", ...range]);
+  if (!r.ok) return null;
+  return [...new Set(r.stdout.split("\0").filter(Boolean))];
+}
+
 /** Parse pre-push stdin (`<local ref> <local sha> <remote ref> <remote sha>` per line) and list protected paths. */
 export function findPushViolations(plan: CagePlan, prePushStdin: string): PushGuardViolation[] {
   const hits = new Map<string, CageRuleId>();
   for (const line of prePushStdin.split(/\r?\n/)) {
     const [, localSha, , remoteSha] = line.trim().split(/\s+/);
     if (!localSha || !remoteSha || ZERO_SHA.test(localSha)) continue;
-    const r = gitRun(plan.root, ["log", "--format=", "--name-only", ...outgoingRange(localSha, remoteSha)]);
-    if (!r.ok) continue;
-    for (const rel of r.stdout.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)) {
+    for (const rel of changedPathsInRange(plan.root, outgoingRange(localSha, remoteSha)) ?? []) {
       const rule = pushGuardRule(plan, rel);
       if (rule) hits.set(rel, rule);
     }
