@@ -17,16 +17,16 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0264 at 813de3b: docs/assets/opengantry-logo.svg is the Gate G (path M26 10V5H6v22h20V16h-8, stroke 3.4, round caps and joins; agent dot 13.5,16 r3) on a #08090c rounded tile; apart from its comment line it is byte-identical to opengantry.ai public/favicon.svg; no scales elements remain"
-    anchor: "1293"
+    trace_quote: "DoD 1 MSN-0264 re-attested at 83863aa after merging main 7ca8540 (PR #216): docs/assets/opengantry-logo.svg unchanged since 6e681f8, the Gate G on a #08090c rounded tile; no scales elements"
+    anchor: "1311"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0264 at 813de3b: git diff --name-only origin/main..813de3b lists only .gitagent/missions/MSN-0264.gate-g-logo-in-the-readme-and-docs-replace-the-s.yaml and docs/assets/opengantry-logo.svg (EXECUTOR_LOG.md follows in the trace commit), all declared; README.md and docs/index.md unchanged and still reference the same path"
-    anchor: "1294"
+    trace_quote: "DoD 2 MSN-0264 re-attested at 83863aa: git diff --name-only origin/main..83863aa lists only .gitagent/missions/MSN-0264.gate-g-logo-in-the-readme-and-docs-replace-the-s.yaml, EXECUTOR_LOG.md and docs/assets/opengantry-logo.svg; README.md and docs/index.md unchanged"
+    anchor: "1312"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0264 at 813de3b: ./scripts/dev-validate-core.sh on main 59a52f5 plus this branch: tests 892 pass 892 fail 0; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1295"
+    trace_quote: "DoD 3 MSN-0264 re-attested at 83863aa: ./scripts/dev-validate-core.sh on main 7ca8540 plus this branch: tests 896 pass 896 fail 0; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1313"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
