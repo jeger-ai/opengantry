@@ -38,29 +38,29 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0266 at 1567529: src/cli/lib/git/git.ts exports GIT_REPO_LOCATION_ENV (GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_COMMON_DIR, GIT_OBJECT_DIRECTORY, GIT_ALTERNATE_OBJECT_DIRECTORIES, GIT_NAMESPACE) and withoutGitRepoEnv, which returns a copy without them; gitChildEnv now uses it (before: GIT_DIR and GIT_WORK_TREE only); GIT_CONFIG_* stay for the cage push guard (ADR-0048 decision 5); unit test: input env not mutated, GIT_CONFIG_KEY_0 kept"
+    anchor: "1314"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0266 at 1567529: runGate (src/cli/lib/gate.ts) and spawnGateStreaming (src/cli/lib/gate-adapters/spawn-stream-core.ts) spawn the gate with withoutGitRepoEnv() instead of process.env; cwd, shell and buffers unchanged; check-lib-cycles finds no runtime cycle"
+    anchor: "1315"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0266 at 1567529: src/cli/tests/test-tmpdir-setup.ts deletes GIT_REPO_LOCATION_ENV from process.env at load, so every npm test process and its children run without them; packages/opengantry-cage/tests/helpers.mjs (imported by all 4 slim suites) deletes the same list and now imports process from node:process; npm run test:cage: pass 10 fail 0"
+    anchor: "1316"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0266 at 1567529: src/cli/tests/gate-git-env.test.ts: (a) runGate and spawnGateStreaming with GIT_DIR and GIT_INDEX_FILE pointing at a sentinel repo run git init and git config user.name Fixture in their own temp dir and leave the sentinel config byte-identical; (b) incident replay: temp repo, bare remote, linked worktree whose pre-push hook runs the gate through the built runGate; after git push from the worktree the main repo config is unchanged and it is not bare; (c) the preload leaves none of the 7 keys in a child started with them set, GIT_CONFIG_COUNT kept; tests 5 pass 5; against the unfixed code (e488ed0) the first four fail: AssertionError the gate's git used its own repo (sentinel .git), the main repo's config is unchanged by the hook's gate, GIT_DIR is removed"
+    anchor: "1317"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0266 at 1567529: docs/CHANGELOG.md Unreleased row gains Gate git isolation (MSN-0266) and the Unreleased upgrade notes gain Gates in linked worktrees; docs/DEVELOPMENT.md troubleshooting gains Gates and linked worktrees: the 2026-10-15 incident, the strip list, the replay test, and what to check in .git/config if a worktree push leaves git status failing"
+    anchor: "1318"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "6"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0266 at 1567529: ./scripts/dev-validate-core.sh in a clean worktree: assert-dogfood-sync OK; assert-docs-deterministic OK; tests 901 pass 901 fail 0; check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1319"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 25e9778952e8
