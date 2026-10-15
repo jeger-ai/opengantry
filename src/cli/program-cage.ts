@@ -1,5 +1,11 @@
 import { Command } from "commander";
-import { runCageCheckCommand, runCageCommand, runCageGuardPrePush, runCageSuggestCommand } from "./commands/cage.js";
+import {
+  runCageCheckCommand,
+  runCageCommand,
+  runCageGuardPrePush,
+  runCageSuggestCommand,
+  runCageWatchCommand,
+} from "./commands/cage.js";
 
 function collect(value: string, previous: string[]): string[] {
   return [...previous, value];
@@ -45,12 +51,28 @@ async function runCheckArgs(args: string[], inherited: { json?: boolean }): Prom
   await runCageCheckCommand({ json: inherited.json, ...sub.opts<{ base: string; head?: string; json?: boolean }>() });
 }
 
+async function runWatchArgs(args: string[], inherited: { json?: boolean }): Promise<void> {
+  const sub = new Command("gantry cage watch")
+    .description("Watch protected files on disk (gitignored .env and .git hooks included); you accept or reject every change in this terminal")
+    .option("--decision-timeout <seconds>", "Seconds before an unanswered change is restored (default 20)")
+    .option("--watch-interval-ms <n>", "Check interval (default 1000)")
+    .option("--max-file-bytes <n>", "Per-file snapshot cap (default 5 MiB); a larger protected file stops watch before it starts (exit 2)")
+    .option("--no-notify", "No desktop notifications (the terminal bell and prompt still alert)")
+    .option("--json", "Emit the digest-only gantry.cage-watch.v1 report on stdout when the watch stops");
+  sub.parse(args, { from: "user" });
+  await runCageWatchCommand({
+    json: inherited.json,
+    ...sub.opts<{ decisionTimeout?: string; watchIntervalMs?: string; maxFileBytes?: string; notify?: boolean; json?: boolean }>(),
+  });
+}
+
 /** Shared by `gantry cage` and the standalone `gantry-cage` bin (alias `opengantry-cage`) so they never drift. */
 export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean } = {}): Command {
   if (opts.subcommands) {
     cmd.addHelpText(
       "after",
       "\nCheck commits (pre-push, CI):\n  gantry cage check --base <ref> [--head <ref>] [--json]  exit 3 when commits in base..head change protected paths\n" +
+        "\nWatch files while you work (own terminal):\n  gantry cage watch [--decision-timeout <s>] [--no-notify] [--json]  accept or reject every protected change\n" +
         "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n",
     );
   }
@@ -95,6 +117,10 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
         }
         if (opts.subcommands && isCageSubcommandInvocation("check", command)) {
           await runCheckArgs(command.slice(1), { json: cliOpts.json });
+          return;
+        }
+        if (opts.subcommands && isCageSubcommandInvocation("watch", command)) {
+          await runWatchArgs(command.slice(1), { json: cliOpts.json });
           return;
         }
         await runCageCommand({ command, ...cliOpts });

@@ -14,6 +14,7 @@ import {
 } from "../lib/cage/cage-suggest.js";
 import { CAGE_CONFIG_FILE } from "../lib/cage/cage-config.js";
 import { formatCageCheckReport, runCageCheck } from "../lib/cage/cage-check.js";
+import { formatCageWatchReport, runCageWatch } from "../lib/cage/cage-watch-run.js";
 
 export interface CageCliOptions {
   command: string[];
@@ -140,5 +141,39 @@ export async function runCageCheckCommand(options: CageCheckCliOptions): Promise
     else for (const line of formatCageCheckReport(report)) console.error(line);
     if (report.exit_code !== 0) setExitCode(report.exit_code);
     return Promise.resolve();
+  });
+}
+
+export interface CageWatchCliOptions {
+  decisionTimeout?: string;
+  watchIntervalMs?: string;
+  maxFileBytes?: string;
+  /** Commander sets false for `--no-notify`. */
+  notify?: boolean;
+  json?: boolean;
+}
+
+/** `gantry cage watch`: accept or reject every protected change in this terminal until Ctrl-C. */
+export async function runCageWatchCommand(options: CageWatchCliOptions): Promise<void> {
+  const timeout = parseNonNegativeInt(options.decisionTimeout);
+  const interval = parseNonNegativeInt(options.watchIntervalMs);
+  const max = parseNonNegativeInt(options.maxFileBytes);
+  if (!timeout.ok || timeout.value === 0 || !interval.ok || interval.value === 0 || !max.ok) {
+    logError("cage watch: --decision-timeout and --watch-interval-ms must be positive integers and --max-file-bytes a non-negative integer");
+    setExitCode(2);
+    return;
+  }
+  await runUserCommandAsync({ json: options.json }, async () => {
+    const report = await runCageWatch({
+      decisionTimeoutS: timeout.value,
+      watchIntervalMs: interval.value,
+      maxFileBytes: max.value,
+      notify: options.notify !== false,
+      onRecovery: (r) =>
+        console.error(`cage watch: recovered an interrupted session (pid ${String(r.previousPid)}): restored ${String(r.restored.length)} protected path(s)`),
+    });
+    if (options.json) emitCliJson(report);
+    else for (const line of formatCageWatchReport(report)) console.error(line);
+    if (report.exit_code !== 0) setExitCode(report.exit_code);
   });
 }

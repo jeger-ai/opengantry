@@ -166,6 +166,15 @@ jobs:
       - run: npx -y -p @jeger-ai/opengantry gantry cage check --base ${{ github.event.pull_request.base.sha }}
 ```
 
+**While you work: `gantry cage watch`.** The files agents tamper with locally, a gitignored `.env`, `.git/config`, `.git/hooks`, never reach a commit. Start a watch in its own terminal before the agent, and every change to a protected file becomes your decision:
+
+```bash
+gantry cage watch
+# cage watch: .env changed (secrets, modified, sha256 3467a14afa0c). Keep it? [a]ccept / [r]eject; rejected in 20s
+```
+
+You get a terminal bell and a desktop notification; you answer in the watch terminal only, where an agent cannot type (keep it out of tmux or screen, whose `send-keys` could). `a` keeps the change, `r` restores the file, and no answer within 20 seconds (`--decision-timeout <s>`) restores it too. Accept applies only to the content the prompt showed. A path rejected three times is restored without asking for the rest of the session. Lockfile changes are logged without a prompt. Ctrl-C restores anything still pending and prints a report (`--json` for `gantry.cage-watch.v1`; exit `3` if anything was restored). It covers every agent, IDE, desktop or terminal, because it watches files, not processes; it cannot stop reads of `.env`, so deny those in your agent tool's permissions.
+
 To protect more of your own repo (migrations, infrastructure, key files), let cage propose rules, review them, and commit `.cage.yaml`:
 
 ```bash
@@ -183,7 +192,7 @@ npx @jeger-ai/opengantry-cage -- claude -p "…"
 
 `@jeger-ai/opengantry-cage` is the slim standalone build of the session cage (same sources, `commander` as the only runtime dependency, no native modules, no install scripts); `cage check` and `cage suggest` live in the full package. About once a second the session cage restores changes to CI configs, `.env` / `.env.*`, `.git/config`, `.git/hooks/` (and `core.hooksPath`), manifest `forbidden_zones` and `.cage.yaml` entries; lockfile changes are listed but kept. A `git push` from inside the session is refused when the outgoing commits touch those paths. At the end it prints one report and exits `3` if anything was restored (otherwise the command's own exit code). A path the command keeps rewriting halts it after the third restore (exit `4`; `--contest-limit <n>`, or `contest_limit:` in `.cage.yaml`, `0` never halts), and `--allow-override <path>` reports one path instead of restoring it for a run, always announced.
 
-The session cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and reads, network calls and writes outside the protected set are not seen. `cage check` sees committed history only. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage) · why check comes first: [ADR-0050](.gitagent/out-of-scope/ADR-0050-cage-diff-check.md).
+The session cage restores; it does not block. A change can be committed in the second before the next check, `git push --no-verify` skips the push guard, and reads, network calls and writes outside the protected set are not seen. `cage check` sees committed history only; `cage watch` sees files on disk while it runs. For scope enforced on every write, use missions (below). Details: [`docs/FEATURES.md`](docs/FEATURES.md#zero-config-cage-gantry-cage) · why check and watch come first: [ADR-0050](.gitagent/out-of-scope/ADR-0050-cage-diff-check.md).
 
 ---
 
