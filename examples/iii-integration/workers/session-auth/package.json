@@ -8,6 +8,6 @@
     "test": "node --test tests/admission.test.mjs"
   },
   "dependencies": {
-    "iii-sdk": "^0.22.1"
+    "iii-sdk": "^0.24.5"
   }
 }

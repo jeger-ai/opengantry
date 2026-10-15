@@ -1,0 +1,99 @@
+# OpenGantry mission (Planner-stamped by [MSN-0262]). Refresh the iii integration example lockfiles.
+#
+# Legislated intent: clear the 14 open Dependabot alerts, all in the iii integration example (not in either
+# published package; npm audit --omit=dev on both is clean): critical proxy-addr, high
+# @opentelemetry/propagator-jaeger, and hono, ip-address, qs, brace-expansion, @opentelemetry/core.
+#   - examples/iii-integration: every finding has an in-range fix, so this is a lockfile refresh.
+#   - workers/session-auth: most findings are in range; @iii-dev/helpers, @opentelemetry/core and iii-sdk
+#     itself need iii-sdk ^0.24.5 (npm flags it major because 0.x minors are breaking). The example already
+#     runs on the 0.24 line (^0.24.4 since MSN-0249). The worker only uses registerWorker from iii-sdk.
+#
+# DoD 1 (example): examples/iii-integration/package-lock.json refreshed with in-range fixes only
+#        (package.json unchanged unless npm requires it); `npm audit` there reports 0 vulnerabilities.
+# DoD 2 (worker): workers/session-auth/package.json iii-sdk ^0.24.5 and its package-lock.json refreshed;
+#        `npm audit` there reports 0 vulnerabilities; the installed iii-sdk still exports registerWorker;
+#        the worker's own `npm test` (tests/admission.test.mjs) passes.
+# DoD 3 (scope): the diff against main touches only the four contract files, the mission file and
+#        EXECUTOR_LOG.md; no root package.json, package-lock.json, src/ or published-package change.
+# DoD 4 (gate): `cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs`
+#        passes (offline validate OK). Re-legislated after PR #207's first CI run: the CI mission_verify job installs
+#        only root deps, so the gate installs the example's own deps first, as the gxt-validate manifest job does.
+#
+# After merge: GitHub's Dependabot alerts for these manifests should close on their own; the mission
+# records the audit result, not the alert count, which GitHub recomputes asynchronously.
+msn_id: MSN-0262
+skill_key: iii-integration
+gate_command: "cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs"
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0262 at 96026fd: examples/iii-integration/package-lock.json refreshed by npm audit fix with in-range fixes only (package.json unchanged): proxy-addr 2.0.7 -> 2.0.8, hono 4.13.1 -> 4.13.13, ip-address 10.5.0 -> 10.7.4, qs 6.15.2 -> 6.16.1, brace-expansion 5.0.9 -> 5.0.12, two transitive patch bumps, and the file:../../ snapshot of @jeger-ai/opengantry 3.8.1 -> 3.8.3; npm audit there: found 0 vulnerabilities"
+    anchor: "1281"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0262 at 96026fd: workers/session-auth/package.json iii-sdk ^0.22.1 -> ^0.24.5 and package-lock.json refreshed (iii-sdk 0.24.5, @iii-dev/helpers 0.24.5, @opentelemetry/core 1.30.1 -> 2.12.0, @opentelemetry/propagator-jaeger no longer in the tree); npm audit there: found 0 vulnerabilities; the installed iii-sdk exports registerWorker as a function; the worker's npm test (tests/admission.test.mjs) 1 pass 0 fail"
+    anchor: "1282"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0262 at 96026fd: git diff --name-only origin/main..96026fd lists only examples/iii-integration/package-lock.json, examples/iii-integration/workers/session-auth/package.json, examples/iii-integration/workers/session-auth/package-lock.json and the mission file (EXECUTOR_LOG.md follows in the trace commit); no root package.json, package-lock.json, src/ or published-package change"
+    anchor: "1283"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0262 re-attested at dfe31c7 with the re-legislated gate: cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs, run with the example's node_modules removed as in the CI mission_verify job: npm ci added 41 packages from the unchanged lockfile, then validate-offline PASS: architecture self-test; [iii-integration: offline validate OK]; exit 0; the working tree stayed clean"
+    anchor: "1285"
+    status: PASS
+gate_success_substring: offline validate OK
+interrogation:
+- finding_id: 1a4b88b71538
+  kind: adr_conflict
+  question: Intent may relate to ADR-0001. Accept ADR decision, reject applicability, or cite superseding
+    rationale?
+  hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before legislation proceeds.
+  operator_answer: Reject applicability; ADR-0001 is the template's placeholder ADR ("Example out-of-scope
+    decision") and matched only on the word example, as in the iii integration example. It records no
+    decision this mission touches.
+  adr_refs:
+  - ADR-0001
+- finding_id: ac525c781896
+  kind: missing_test_criteria
+  question: Gate command is not on the skill allowlist. Authorize this gate and its success criteria on
+    the record.
+  hypothesis: Planner accepts gate_command "cd examples/iii-integration && npm ci --no-audit --no-fund
+    && node scripts/validate-offline.mjs" with documented success substring for verify.
+  operator_answer: 'Authorized: cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs,
+    success substring offline validate OK. It is the allowlisted iii-integration gate preceded by installing
+    the example''s own dependencies from its lockfile, exactly as the gxt-validate manifest job does.
+    Without that install the CI mission_verify job (root npm ci only) stops the validator with exit 2,
+    missing acorn-walk, which the validator itself reports as not an architecture violation (PR #207).
+    Re-legislated by the Planner as option 1; the durable fix in the workflow is a separate mission.'
+  adr_refs:
+  - ADR-0045
+- finding_id: c6b28db36628
+  kind: risk_escalation
+  question: 'Triage escalated: Multiple skill matches: gantry, iii-integration, iii-architecture — escalate
+    to Teacher. Which skill_key and TMVC scope authorize this work?'
+  hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission after operator confirmation.
+  operator_answer: 'skill_key iii-integration: the work is confined to the iii integration example''s
+    two package.json and two package-lock.json files (MSN-0167 precedent for a lockfile refresh there).
+    Not gantry (no src/cli or root package change) and not iii-architecture (that is the example''s lint
+    profile; its gate is not affected). The Planner-sealed contract narrows TMVC to those four files within
+    the skill root; EXECUTOR_LOG.md and the mission file are declared outside it, as in MSN-0167.'
+  adr_refs:
+  - ADR-0045
+interrogation_sha256: 8b5749c5f5e9688607e2bd47b9076bd1aa2943ed95ff3c30ac5172486f51f4ea
+declared_paths:
+  - .gitagent/missions/MSN-0262.iii-example-lockfiles.yaml
+  - EXECUTOR_LOG.md
+  - examples/iii-integration/package-lock.json
+  - examples/iii-integration/package.json
+  - examples/iii-integration/workers/session-auth/package-lock.json
+  - examples/iii-integration/workers/session-auth/package.json
+contract:
+  tmvc_roots:
+    - examples/iii-integration/package-lock.json
+    - examples/iii-integration/package.json
+    - examples/iii-integration/workers/session-auth/package-lock.json
+    - examples/iii-integration/workers/session-auth/package.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+contract_sha256: a8db7081ba6858dcbc7fe21a0102c30fcb90f5aa74bca75bd76190c3f52090b2
