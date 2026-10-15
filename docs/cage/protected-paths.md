@@ -1,13 +1,13 @@
 ---
 title: "Protected paths"
-description: "The built-in rules gantry cage check and the session cage share: which paths fail the check or get restored, and which are only listed."
+description: "The built-in rules all three forms of the cage share: which paths fail the check, prompt in the watch or get restored, and which are only listed."
 section: cage
-order: 4
+order: 5
 ---
 
 # Protected paths
 
-Both forms of the cage use one rule set: [`cage check`](check.md) fails on a commit that changes a restore-rule path, and the [session cage](session.md) restores it. Your `.cage.yaml` can add to the set ([Project rules](cage-yaml.md)); nothing in the repository can remove from it.
+All three forms of the cage use one rule set: [`cage check`](check.md) fails on a commit that changes a restore-rule path, [`cage watch`](watch.md) asks you about it, and the [session cage](session.md) restores it. Your `.cage.yaml` can add to the set ([Project rules](cage-yaml.md)); nothing in the repository can remove from it.
 
 ## Built-in rules
 
@@ -23,15 +23,15 @@ Both forms of the cage use one rule set: [`cage check`](check.md) fails on a com
 
 ## What the modes mean
 
-| Mode | `cage check` | Session cage |
-|------|--------------|--------------|
-| **revert** | Fails the check (exit `3`) | Restores the file and exits `3` at the end |
-| **report** | Listed, does not fail | Listed and kept |
+| Mode | `cage check` | `cage watch` | Session cage |
+|------|--------------|--------------|--------------|
+| **revert** | Fails the check (exit `3`) | Asks you; restores on reject or timeout | Restores the file and exits `3` at the end |
+| **report** | Listed, does not fail | Logged and kept, never prompted | Listed and kept |
 
-## Where the two forms differ
+## Where the forms differ
 
-- **Git control.** Paths under `.git` are never committed, so in `cage check` the `git_control` rule only applies to a `core.hooksPath` inside the repository. The session cage watches `.git/config` and `.git/hooks/` directly.
-- **Secrets.** `cage check` sees a `.env` only once it is committed; an edit to a gitignored `.env` never reaches a commit. The session cage restores it on disk.
-- **Where the rules come from.** `cage check` reads `.cage.yaml` and the manifest zones from the base commit. The session cage reads them from the working tree at the start of the session.
+- **Git control.** Paths under `.git` are never committed, so in `cage check` the `git_control` rule only applies to a `core.hooksPath` inside the repository. The watch and the session cage see `.git/config` and `.git/hooks/` on disk.
+- **Secrets.** `cage check` sees a `.env` only once it is committed; an edit to a gitignored `.env` never reaches a commit. The watch and the session cage see it on disk.
+- **Where the rules come from.** `cage check` reads `.cage.yaml` and the manifest zones from the base commit. The watch and the session cage read them from the working tree when they start.
 
 The whole-tree scan for `.env*`, lockfiles and `.cage.yaml` globs skips `node_modules`, `.git`, `.venv`, `venv` and `__pycache__`.

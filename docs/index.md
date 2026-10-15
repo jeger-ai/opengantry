@@ -17,9 +17,9 @@ OpenGantry keeps AI coding agents inside boundaries you declare and checks their
 
 No setup and no config. The cage protects CI configs, `.env` files, git hooks and your own sensitive paths from what an agent changes.
 
-- [Cage an agent](cage/index.md): the one-command start
+- [The cage](cage/index.md): [check commits](cage/check.md), [watch files](cage/watch.md), [cage scripted runs](cage/session.md)
 - [Protected paths](cage/protected-paths.md) and [project rules](cage/cage-yaml.md)
-- [Report and exit codes](cage/report.md) and [limits](cage/limits.md)
+- [Session report and exit codes](cage/report.md) and [limits](cage/limits.md)
 
 ## Govern agent work: missions and verify
 

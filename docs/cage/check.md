@@ -68,7 +68,7 @@ The report holds paths and rules only: no file contents and no diffs. It says wh
 
 - There is no `--allow-override`, and no MCP tool runs it. It never writes rules.
 - It sees committed history only: an edit to a gitignored `.env` or to anything under `.git` never shows up. Paths under `.git` are never committed, so `git_control` applies to a `core.hooksPath` inside the repository only.
-- It cannot undo anything. It reports what is in the range; you decide whether to merge.
+- It cannot undo anything. It reports what is in the range; you decide whether to merge. For files that never reach a commit, run a [watch](watch.md) while agents work.
 
 More on what neither form of the cage sees: [Limits](limits.md).
 

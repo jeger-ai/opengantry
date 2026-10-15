@@ -87,6 +87,6 @@ Details: [Perimeters and domain adapters](../concepts/perimeters.md).
 
 ## Where the cage fits
 
-[The cage](../cage/index.md) needs none of this: `gantry cage check` fails a pull request whose commits change CI configs, secrets, git hooks or your own protected paths, and the session cage restores them during scripted agent runs. Missions add what the cage cannot: scope checked on every write, work approved before it starts, and evidence a reviewer can check in CI.
+[The cage](../cage/index.md) needs none of this: `gantry cage check` fails a pull request whose commits change CI configs, secrets, git hooks or your own protected paths, `gantry cage watch` asks you about every change to those files on disk while you work, and the session cage restores them during scripted agent runs. Missions add what the cage cannot: scope checked on every write, work approved before it starts, and evidence a reviewer can check in CI.
 
 Install the CLI and run the tutorial next: [Install](install.md).

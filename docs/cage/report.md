@@ -2,12 +2,12 @@
 title: "Session report and exit codes"
 description: "What the session cage prints when the command ends: its JSON report, exit codes, the contested-path halt, signals, and recovery after kill -9."
 section: cage
-order: 6
+order: 7
 ---
 
 # Session report and exit codes
 
-This page covers the [session cage](session.md). For `cage check`, see [Check commits](check.md#exit-codes).
+This page covers the [session cage](session.md). For `cage check`, see [Check commits](check.md#exit-codes); for `cage watch`, [Watch files](watch.md#stopping-and-the-report).
 
 ## Exit codes
 

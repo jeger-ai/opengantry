@@ -12,6 +12,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
 ## Unreleased
 
 - **`gantry cage check`** checks the commits in `base..head` against the cage rules and exits `3` when one changes a protected path, so the cage reaches every agent whose work ends in a commit, including IDE, desktop and cloud agents that cannot be wrapped. The rules come from the base commit, every commit in the range counts, and `--json` emits a digest-only report. Full package only. The docs now lead with the check in CI and keep the session cage for scripted, non-interactive runs.
+- **`gantry cage watch`** watches the protected files on disk in its own terminal, gitignored `.env` and `.git` hooks included, and asks you to accept or reject every change; no answer within 20 seconds restores it, accept applies only to the content shown, and a path rejected three times is restored without asking. Full package only.
 - **Session push guard** also refuses a push whose commits rename a protected file away or edit a protected path inside a merge commit.
 - **Documentation reorganized** into cage, start, guides, concepts and reference sections, with navigation built from frontmatter and a structure check in validate. Old page paths remain as pointers.
 - **Cage on macOS.** The cage resolves its root to the real path, so a root reached through a symlink, as every macOS temp directory is, keeps its git control rules. A macOS CI job runs every cage test. Linux and macOS are the tested platforms; Windows is not supported yet.

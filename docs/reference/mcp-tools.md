@@ -47,7 +47,7 @@ order: 1
 | `gxt_upgrade_plan` | Plans a substrate upgrade; with `dry_run: true` it previews without staging |
 | `gxt_upgrade_apply` | Applies a Planner-signed substrate upgrade after verifying the staged hashes |
 
-The cage has no MCP tool: `gantry cage check`, `gantry cage suggest` and the session cage are not exposed to agents through MCP.
+The cage has no MCP tool: `gantry cage check`, `gantry cage watch`, `gantry cage suggest` and the session cage are not exposed to agents through MCP.
 
 ## Kernel library
 

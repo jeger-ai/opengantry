@@ -2,12 +2,12 @@
 title: "Session cage"
 description: "Wrap an agent run your scripts start: gantry-cage restores protected files while it runs and refuses pushes of them from inside the session."
 section: cage
-order: 3
+order: 4
 ---
 
 # Session cage
 
-The session cage wraps one command, typically an agent that a script or CI job starts non-interactively, and protects the repository while that command runs. Its place is runs where wrapping costs nothing. For every agent, including the ones you cannot wrap, [check commits](check.md) instead.
+The session cage wraps one command, typically an agent that a script or CI job starts non-interactively, and protects the repository while that command runs. Its place is runs where wrapping costs nothing. For every agent, including the ones you cannot wrap, [check commits](check.md) and [watch files](watch.md) instead.
 
 ```bash
 npx @jeger-ai/opengantry-cage -- claude -p "…"
@@ -27,7 +27,7 @@ The cage root is the enclosing git work tree, or the current directory outside g
 
 ## How restore works
 
-- **Snapshot.** Before the command starts, the cage reads every file a restore rule covers ([Protected paths](protected-paths.md)) into memory, with a copy in a session journal so an interrupted session can be recovered ([Report and exit codes](report.md#interrupted-sessions)).
+- **Snapshot.** Before the command starts, the cage reads every file a restore rule covers ([Protected paths](protected-paths.md)) into memory, with a copy in a session journal so an interrupted session can be recovered ([Report and exit codes](report.md#interrupted-sessions)). The journal is shared with `cage watch`, so a session refuses to start while a watch runs in the same repository, and the other way round.
 - **Live check.** Every `--watch-interval-ms` (default 1000) it compares the protected set with the snapshot and restores what changed. `--no-watch` checks only once, when the command exits.
 - **Safe writes.** A restore writes a temporary file and renames it over the target, so a failed restore never truncates a file. File mode comes back too, for example a hook's `0755`. Added files are removed. A change to the modification time alone is ignored.
 - **Final check.** After the command exits, the cage checks and restores once more, then prints the report.
