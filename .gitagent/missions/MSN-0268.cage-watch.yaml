@@ -1,0 +1,170 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0268]. Executor must not run until the [MSN-0268] legislation commit + pin.
+#
+# Legislated intent: gantry cage watch. cage check (MSN-0267) sees committed history only; a gitignored .env,
+# .git/config and .git/hooks never reach a commit, so their tampering is invisible to it. Watch covers files on disk
+# without wrapping the agent, so it reaches IDE, desktop and cloud-synced agents alike. It cannot tell which process
+# wrote a file, so every protected change is a human-in-the-loop decision: notify, the operator accepts or rejects,
+# no answer within the timeout rejects. Stacked on msn-0267-cage-check (ADR-0050 and the cage docs live there).
+#
+# Constraints: ADR-0048 stays ACTIVE and unchanged; the watch plan is the one it started with (decision 5). Answers
+# come only from the watch process's own terminal stdin: no command, file, socket, signal or MCP tool can accept.
+# No --allow-override, no halt, no push guard. Full package only (packages/opengantry-cage/src/ is forbidden).
+#
+# DoD 1 (command): `gantry cage watch [--decision-timeout <seconds>] [--watch-interval-ms <n>] [--max-file-bytes <n>]
+#        [--json]` runs in the foreground until Ctrl-C/SIGTERM; default decision timeout 20 seconds. Root, rules and
+#        baseline as the session cage (working tree, gitignored files included, fail-closed caps). Exit 2 before
+#        watching when stdin is not a TTY (GXT_CAGE_WATCH_NO_TTY), while a session cage or another watch is active
+#        in the root (GXT_CAGE_SESSION_ACTIVE), or on invalid rules or caps. `gantry cage -- watch` still runs a
+#        command named watch; the slim gantry-cage bin gains no subcommand.
+# DoD 2 (decisions): each revert-rule change becomes a pending decision: terminal bell, a prompt on the watch
+#        terminal (path, rule, kind, short sha256, seconds left) and a best-effort desktop notification (notify-send on
+#        Linux, osascript on macOS; failure ignored) naming path and rule only. `a` accepts, `r` rejects, read only
+#        from the watch process's stdin. Accept keeps the change and re-baselines that path only if its current sha256
+#        equals the one prompted; otherwise it is a new decision. Reject and timeout restore from the baseline. A
+#        rewrite while pending never extends the deadline. A path rejected or timed out 3 times is restored at once
+#        without a prompt for the rest of the session and announced. Report-mode changes are logged, never prompted.
+# DoD 3 (shutdown/report): Ctrl-C or SIGTERM rejects every pending decision, restores the protected set once more
+#        and prints a summary; exit 3 when any change was rejected, timed out or auto-restored, otherwise 0. A JSONL
+#        session log records detected, accepted, rejected, timed_out and auto_restored events without file bodies;
+#        --json emits gantry.cage-watch.v1 (digest-only). A kill -9 on watch leaves a journal the next cage or watch
+#        run recovers from: baseline incl. accepted changes restored, no process killed.
+# DoD 4 (tests): new src/cli/tests/cage-watch-decisions.test.ts drives the watch loop with injected input stream,
+#        clock and notifier: accept, reject, timeout; accept after the content changed is refused and re-prompted;
+#        rewrite does not extend the deadline; third rejection auto-restores; lockfile logged without prompt; non-TTY
+#        stdin and an active session exit 2; shutdown rejects pending; notifications and reports carry no file
+#        bytes; kill -9 recovery restores and kills nothing. Existing cage suites and npm run test:cage pass.
+# DoD 5 (ADR): ADR-0050 amended: check (commits) and watch (files on disk) are the two primary forms; watch
+#        decision rules (terminal-only answers, hash-bound accept, default 20 s auto-reject, prompt-spam limit);
+#        limits (no process identity, so no halt and no push guard; reads not prevented; a same-user agent can kill
+#        the watch, the next run recovers from the journal; the change is live while its decision is pending).
+# DoD 6 (docs): README cage section, ADOPTION step zero (check in CI plus watch locally), a FEATURES watch section,
+#        the slim README pointer and a CHANGELOG Unreleased entry.
+# DoD 7 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0268
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "7"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0037 stays ACTIVE and unchanged. It
+      matched on a substring (CI); gantry cage watch is a local foreground
+      command in the operator's terminal. It emits no envelope or receipt and
+      touches no control plane, ingestion workflow, pepper or attestation path;
+      this mission adds no workflow (.github/workflows/ and templates/ are
+      forbidden).
+    adr_refs:
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE and unchanged. gantry cage watch
+      uses the same rules (built-in floor, additive .cage.yaml, manifest zones)
+      read from the working tree at start, and the plan stays the one the watch
+      started with (decision 5), so an accepted .cage.yaml edit changes no rule
+      until a new watch starts. Accept is not a relaxation of a rule: it is a
+      per-change decision by the operator, answered only on the watch process's
+      own terminal stdin (no command, file, socket or MCP tool an agent could
+      use; decision 4), bound to the sha256 of the content shown, recorded in
+      the session log and the exit report; unanswered changes are rejected after
+      the decision timeout (default 20 seconds). Reject, timeout and shutdown
+      restore from the baseline as the session cage does. --allow-override is
+      not offered on watch. ADR-0050 is amended to record watch as the local
+      complement of cage check."
+    adr_refs:
+      - ADR-0048
+      - ADR-0050
+  - finding_id: fbd8dbab2fd1
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/program-cage.ts is the cage command
+      registration module, one of the src/cli/program-*.ts files no
+      TARGET_ARCHITECTURE layer maps; it only wires commander options for gantry
+      cage watch to src/cli/commands/cage.ts.
+      src/cli/tests/cage-watch-decisions.test.ts (new),
+      src/cli/tests/cage-watch.test.ts and src/cli/tests/cage.test.ts hold tests
+      only and may import the cage library they exercise. No production logic
+      goes into these paths beyond command wiring.
+interrogation_sha256: 1e576949837552f4e11d0a1be0e116feb34d30daa6735d272fea873cec55aceb
+declared_paths:
+  - .gitagent/missions/MSN-0268.cage-watch.yaml
+  - .gitagent/out-of-scope/ADR-0050-cage-diff-check.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - packages/opengantry-cage/README.md
+  - packages/opengantry-cage/tests/
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-watch-decisions.test.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/ADR-0050-cage-diff-check.md
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - packages/opengantry-cage/README.md
+    - packages/opengantry-cage/tests/
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-watch-decisions.test.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/opengantry-cage/src/
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: 380f5cdf164a54fdd9f8f716df7e5df2cecb2b43d1fc3f9c177b01e21cece836
