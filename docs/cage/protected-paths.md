@@ -1,0 +1,37 @@
+---
+title: "Protected paths"
+description: "The built-in rules all three forms of the cage share: which paths fail the check, prompt in the watch or get restored, and which are only listed."
+section: cage
+order: 5
+---
+
+# Protected paths
+
+All three forms of the cage use one rule set: [`cage check`](check.md) fails on a commit that changes a restore-rule path, [`cage watch`](watch.md) asks you about it, and the [session cage](session.md) restores it. Your `.cage.yaml` can add to the set ([Project rules](cage-yaml.md)); nothing in the repository can remove from it.
+
+## Built-in rules
+
+| Rule | Paths | Mode |
+|------|-------|------|
+| `ci_config` | `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `azure-pipelines.yml` | revert |
+| `secrets` | `.env`, `.env.*` except `.env.example`, at any depth | revert |
+| `git_control` | `.git/config`, `.git/hooks/`, the active `core.hooksPath` | revert |
+| `cage_config` | `.cage.yaml` itself, whether or not it exists | revert |
+| `manifest_forbidden_zone` | every skill's `forbidden_zones` in `.gitagent/foreman/MANIFEST.json`, when the repository has one | revert |
+| `cage_protect` | your `.cage.yaml` `protect:` entries | revert, or report per entry |
+| `lockfile` | `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `Pipfile.lock`, `uv.lock`, `go.sum`, `Gemfile.lock`, `composer.lock` | report |
+
+## What the modes mean
+
+| Mode | `cage check` | `cage watch` | Session cage |
+|------|--------------|--------------|--------------|
+| **revert** | Fails the check (exit `3`) | Asks you; restores on reject or timeout | Restores the file and exits `3` at the end |
+| **report** | Listed, does not fail | Logged and kept, never prompted | Listed and kept |
+
+## Where the forms differ
+
+- **Git control.** Paths under `.git` are never committed, so in `cage check` the `git_control` rule only applies to a `core.hooksPath` inside the repository. The watch and the session cage see `.git/config` and `.git/hooks/` on disk.
+- **Secrets.** `cage check` sees a `.env` only once it is committed; an edit to a gitignored `.env` never reaches a commit. The watch and the session cage see it on disk.
+- **Where the rules come from.** `cage check` reads `.cage.yaml` and the manifest zones from the base commit. The watch and the session cage read them from the working tree when they start.
+
+The whole-tree scan for `.env*`, lockfiles and `.cage.yaml` globs skips `node_modules`, `.git`, `.venv`, `venv` and `__pycache__`.

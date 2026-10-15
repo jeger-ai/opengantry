@@ -30,4 +30,4 @@ npm test          # passes after agent run
 
 **Orchestrator specimen LOC (measured):** [`agent-run.mjs`](agent-run.mjs) ~140+ non-empty lines vs Gantry mission + executor patch boundary in the benchmark harness (see [`../benchmark-agent/`](../benchmark-agent/)). This is **not** a claim that your team will write this file — it models what improvised agent glue tends to reinvent.
 
-Compare: [`../gantry-minimal/`](../gantry-minimal/) · [`../benchmark-agent/`](../benchmark-agent/) · [`../../docs/ADOPTION.md`](../../docs/ADOPTION.md).
+Compare: [`../gantry-minimal/`](../gantry-minimal/) · [`../benchmark-agent/`](../benchmark-agent/) · [`../../docs/start/first-mission.md`](../../docs/start/first-mission.md).

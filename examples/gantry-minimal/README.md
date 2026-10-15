@@ -51,4 +51,4 @@ npm test
 | Audit | `.agent-state.json` | Git + `EXECUTOR_LOG.md` |
 | Scope | Heuristic | `tmvc_roots` / forbidden zones |
 
-Benchmark: [`../benchmark-agent/`](../benchmark-agent/) · [`../../scripts/benchmark-scaffold.sh`](../../scripts/benchmark-scaffold.sh) · Practice: [`../../docs/KATA.md`](../../docs/KATA.md).
+Benchmark: [`../benchmark-agent/`](../benchmark-agent/) · [`../../scripts/benchmark-scaffold.sh`](../../scripts/benchmark-scaffold.sh) · Practice: [`../../docs/start/first-mission.md`](../../docs/start/first-mission.md).

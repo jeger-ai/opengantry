@@ -1,3 +1,10 @@
+---
+title: "The Post-PR Software Factory"
+description: "OpenGantry's north star: move governance from post-commit review to a deterministic referee in the inner loop, where agents generate code."
+section: about
+order: 1
+---
+
 # The Post-PR Software Factory: A North Star Manifesto
 
 The current trajectory of AI-assisted software engineering has a fatal flaw. The industry is scaling code generation to infinite volumes while keeping human verification capacity fixed. OpenGantry is built for a different future.
