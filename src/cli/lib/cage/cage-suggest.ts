@@ -146,9 +146,11 @@ function byCodePoint(a: string, b: string): number {
   return a < b ? -1 : 1;
 }
 
-export function suggestCageRules(root: string): CageSuggestResult {
+export function suggestCageRules(givenRoot: string): CageSuggestResult {
   // An invalid existing .cage.yaml fails closed here too, with the same message cage would give.
-  const plan = buildCagePlan(root);
+  const plan = buildCagePlan(givenRoot);
+  // The plan's root is canonical (MSN-0265); scan from it so found paths and plan targets share one base.
+  const root = plan.root;
   const found = new Map<string, CageSuggestion>();
   collect(root, root, found);
   const all = [...found.values()];

@@ -11,7 +11,7 @@ import {
 } from "./cage-journal.js";
 import { buildCageReport, type CageReport } from "./cage-report.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
-import { buildCagePlan } from "./cage-rules.js";
+import { buildCagePlan, canonicalCageRoot } from "./cage-rules.js";
 import {
   CAGE_MAX_SCAN_BYTES,
   CAGE_MAX_TARGETS,
@@ -81,9 +81,9 @@ export interface CageRunOptions {
 /** Zero-config root: the enclosing git work tree when there is one, otherwise the directory itself. */
 export function resolveCageRoot(cwd: string): string {
   try {
-    return getRepoRoot(cwd);
+    return canonicalCageRoot(getRepoRoot(cwd));
   } catch {
-    return path.resolve(cwd);
+    return canonicalCageRoot(cwd);
   }
 }
 

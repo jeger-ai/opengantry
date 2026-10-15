@@ -1,0 +1,155 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0265]. Executor must not run until the [MSN-0265] legislation commit + pin.
+#
+# Legislated intent: macOS cage support. The target audience runs gantry-cage on macOS, but cage has only run on
+# Ubuntu CI. PR #194's macOS run (on code before MSN-0252..0258) passed every halt, signal and process-tree test and
+# failed one: cage suggest proposed the active core.hooksPath although it is already git control. Cause, reproduced
+# on Linux: macOS temp dirs are reached through the /var -> /private/var symlink; cage builds git control targets
+# from git's resolved paths and every other target from the root it was given, so with an unresolved root the git
+# targets fall outside plan.root and lose their rule. The CLI's own root (git toplevel or process.cwd()) is already
+# resolved, so this hits library callers and the tests, not today's gantry-cage runs.
+#
+# Constraint (ADR-0048 decision 7): no `detached: true` spawn and no process-group kill (`process.kill(-pid)`);
+# termination stays the ps-enumerated descendant tree. Windows stays out of scope (deferred, documented only).
+# Making the new job a required status check on main is a repository setting for the Planner after merge.
+#
+# DoD 1 (root): the cage resolves its root to the real path once (plan building and resolveCageRoot), so every
+#        protected target and every git control path (.git/config, .git/hooks, active core.hooksPath) shares one
+#        base and keeps its rule when the root is given through a symlink. No rule, mode, cap or exit code changes.
+# DoD 2 (test): new src/cli/tests/cage-symlink-root.test.ts drives cage through a symlinked directory on any POSIX
+#        host: every plan target lies under plan.root; cage suggest does not propose the active hooks path; a caged
+#        command that rewrites .git/hooks/pre-commit and .env through the symlinked root has both restored. The test
+#        fails against the pre-fix build (shown in the trace).
+# DoD 3 (CI): repo-only .github/workflows/cage-macos.yml (not in templates/, not shipped to adopters) defines a job
+#        named `cage (macos-latest)` on runs-on macos-latest, triggered by every pull_request to main and push to
+#        main, without path filters: Node 24, npm ci, npm run build, every cage suite (cage, cage-watch, cage-suggest,
+#        cage-symlink-root) and npm run test:cage (slim package). The trace checks this by parsing the workflow.
+#        Re-legislated: the job's pass on this mission's PR is a merge-time PR check judged by the Planner, not a
+#        trace row, because the pre-push hook refuses a PENDING row and the job cannot run before the push. Any
+#        macOS failure it exposes is fixed within the contract, never skipped by platform; otherwise stop and
+#        re-legislate.
+# DoD 4 (docs): FEATURES cage section and packages/opengantry-cage/README.md state platform support: Linux and
+#        macOS tested in CI, Windows not supported yet (no descendant enumeration or journal process check on
+#        win32; the push guard needs sh hooks). DEVELOPMENT names the macOS job and that it should be a required
+#        check. CHANGELOG gains an Unreleased entry.
+# DoD 5 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0265
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0265 re-attested at cb178d9 after the npx latency test change: src/cli/lib/cage/ unchanged since 3a1bf6d; canonicalCageRoot still resolves the root once for buildCagePlan, resolveCageRoot and suggestCageRules; no rule, mode, cap or exit code changed"
+    anchor: "1301"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0265 re-attested at cb178d9: src/cli/tests/cage-symlink-root.test.ts unchanged since 3a1bf6d and part of the gate's test run below (tests 896 pass 896)"
+    anchor: "1302"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0265 re-attested at cb178d9: cage-macos.yml unchanged since 19db552 (persist-credentials false); PR #216 macOS run 38705843397 failed one test (single warm npx sample 1616 ms vs 1.5 s budget) and passed on re-run; packages/opengantry-cage/tests/npx-latency.test.mjs now applies the same 1.5 s budget to the best of three timed warm runs on every platform, no platform skip; on this Linux workstation test:cage reports best 2133 ms (samples 2284, 2357, 2133 ms), over budget here as the single-sample test was, so the macOS run on the PR remains the merge-time check"
+    anchor: "1303"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0265 re-attested at cb178d9: docs/FEATURES.md, packages/opengantry-cage/README.md, docs/DEVELOPMENT.md and the docs/CHANGELOG.md Unreleased row unchanged since 3a1bf6d"
+    anchor: "1304"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0265 re-attested at cb178d9: ./scripts/dev-validate-core.sh: assert-docs-deterministic OK; tests 896 pass 896 fail 0; check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1305"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0037 stays ACTIVE and unchanged. It
+      matched only on CI and GitHub Actions. The new cage-macos.yml workflow
+      runs the cage test suites on a macOS runner; it does not touch the control
+      plane, the ingestion contract, gxt-attest-ingest.yml, the pepper or any
+      envelope.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 3d789f7bc264
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. These are the existing cage test suites plus one new
+      one under src/cli/tests/, which hold tests only and are not part of any
+      TARGET_ARCHITECTURE layer; tests may import the cage library they
+      exercise. No production code is placed in them.
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE and unchanged. Resolving the
+      cage root to its real path changes no rule, mode, cap or exit code: it
+      only makes every protected target share one base so built-in git control
+      paths keep their rule when the root is reached through a symlink, which
+      keeps decision 1 (built-in rules are a floor) true on macOS. Decision 7
+      binds the Executor: the command is not spawned with detached: true and is
+      not killed as a process group (no process.kill(-pid)); termination stays
+      the ps-enumerated tree. The Windows deferral is a documented platform
+      limit in FEATURES and the slim README, not a trust-model change."
+    adr_refs:
+      - ADR-0048
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate. The work spans cage code under
+      src/cli/lib/cage/ (gantry skill) and a new repo-only CI workflow
+      .github/workflows/cage-macos.yml (Tier-3, outside the gantry skill's
+      roots), so it runs under substrate as MSN-0254 and MSN-0263 did. TMVC is
+      narrowed by the mission contract to the cage library, the cage test
+      suites, the slim package's tests and README, the new workflow, FEATURES,
+      DEVELOPMENT, CHANGELOG and EXECUTOR_LOG.md. The sealed contract follows
+      ADR-0045: its tmvc_roots and forbidden_zones bound the Executor, and
+      templates/ is forbidden so nothing ships to adopters."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 91418857607f002b942aa68e205675e80f03e12b3126cea9ef8427f18052d75a
+declared_paths:
+  - .gitagent/missions/MSN-0265.cage-macos-support.yaml
+  - .github/workflows/cage-macos.yml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/FEATURES.md
+  - packages/opengantry-cage/README.md
+  - packages/opengantry-cage/tests/
+  - src/cli/lib/cage/
+  - src/cli/tests/cage-suggest.test.ts
+  - src/cli/tests/cage-symlink-root.test.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - .github/workflows/cage-macos.yml
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/FEATURES.md
+    - packages/opengantry-cage/README.md
+    - packages/opengantry-cage/tests/
+    - src/cli/lib/cage/
+    - src/cli/tests/cage-suggest.test.ts
+    - src/cli/tests/cage-symlink-root.test.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: 2bfbb5ef9697f374ef72696e0ff29e5b982b04f2281b9a028cb52e227a908cc9
