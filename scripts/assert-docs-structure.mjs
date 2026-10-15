@@ -72,12 +72,27 @@ function stripInlineCode(line) {
   return line.replace(/`+[^`]*`+/g, "");
 }
 
+/** Remove HTML tags by scanning, not by regex, and drop any unmatched angle bracket. Text only feeds slugs and counts. */
+function stripTags(text, replacement = "") {
+  let out = "";
+  let inTag = false;
+  for (const ch of text) {
+    if (ch === "<") {
+      inTag = true;
+      continue;
+    }
+    if (ch === ">") {
+      if (inTag) out += replacement;
+      inTag = false;
+      continue;
+    }
+    if (!inTag) out += ch;
+  }
+  return out;
+}
+
 function wordCount(body) {
-  return proseLines(body)
-    .map(stripInlineCode)
-    .join(" ")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/[<>]/g, " ")
+  return stripTags(proseLines(body).map(stripInlineCode).join(" "), " ")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .split(/\s+/)
     .filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
@@ -92,11 +107,7 @@ function anchorsOf(text) {
     for (const a of line.matchAll(/<a\s+[^>]*(?:id|name)="([^"]+)"/g)) out.add(a[1]);
     const h = line.match(/^#{1,6}\s+(.+?)\s*#*\s*$/);
     if (!h) continue;
-    const textOnly = h[1]
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .replace(/<[^>]*>/g, "")
-      .replace(/[<>]/g, "") // drop stray angle brackets a tag strip can leave behind (slug text only)
-      .replace(/[*_`]/g, "");
+    const textOnly = stripTags(h[1].replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")).replace(/[*_`]/g, "");
     let slug = textOnly.toLowerCase().replace(/[^\p{L}\p{N}\p{M}\- _]/gu, "").replace(/ /g, "-");
     const n = seen.get(slug) ?? 0;
     seen.set(slug, n + 1);
