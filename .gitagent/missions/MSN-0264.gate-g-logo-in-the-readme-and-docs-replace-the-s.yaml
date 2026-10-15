@@ -1,0 +1,48 @@
+# OpenGantry mission (Planner-stamped by [MSN-0264]). Gate G logo in the README and docs.
+#
+# Legislated intent: replace the scales-of-justice artwork in docs/assets/opengantry-logo.svg (shown at the top of
+# README.md and docs/index.md) with the Gate G, the mark opengantry.ai adopted in its own MSN-0264: a G drawn as a
+# perimeter whose gate arm reaches in toward an agent dot, on a rounded dark tile so it reads on GitHub's light and
+# dark themes.
+#
+# DoD 1 (logo): docs/assets/opengantry-logo.svg draws the Gate G (path M26 10V5H6v22h20V16h-8, stroke 3.4, round caps
+#        and joins; agent dot at 13.5,16 r3) on a rounded dark tile, the same geometry and colours as
+#        opengantry.ai/favicon.svg; no scales elements remain.
+# DoD 2 (scope): the diff against main touches only docs/assets/opengantry-logo.svg, the mission file and
+#        EXECUTOR_LOG.md; README.md and docs/index.md keep referencing the same path.
+# DoD 3 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0264
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    operator_answer: "Authorize exactly one declared path:
+      docs/assets/opengantry-logo.svg. Substrate skill roots are empty, so the
+      Planner declares the root (ADR-0045: empty skill roots accept
+      Planner-declared roots). README.md and docs/index.md already reference
+      this file and stay unchanged. The mark matches opengantry.ai (site
+      MSN-0264): the Gate G on a dark tile."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 95afb278f929213919ff3bebd677470e1637e31bc7afa1e0e0d3608c0a2a8a28
+declared_paths:
+  - docs/assets/opengantry-logo.svg
