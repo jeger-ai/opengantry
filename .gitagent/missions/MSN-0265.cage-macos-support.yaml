@@ -36,25 +36,25 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0265 at 3a1bf6d: src/cli/lib/cage/cage-rules.ts adds canonicalCageRoot (path.resolve, then fs.realpathSync; a path that does not exist stays as given); buildCagePlan canonicalizes its root before building any target, resolveCageRoot canonicalizes both the git toplevel and the non-git cwd, and suggestCageRules scans from plan.root, so CI config, .env, .cage.yaml, manifest zones and git control targets (.git/config, .git/hooks, active core.hooksPath) share one base; no rule, mode, cap or exit code changed; no detached spawn and no process-group kill added"
+    anchor: "1291"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0265 at 3a1bf6d: src/cli/tests/cage-symlink-root.test.ts builds a repo behind a directory symlink: plan.root is the resolved path and every target lies under it, .git/config, .git/hooks/pre-commit and .githooks/pre-push classify as git_control; resolveCageRoot resolves a symlinked non-git dir; cage suggest skips the active hooks path and still proposes an inactive one; runCage through the symlink restores .git/hooks/pre-commit and .env (exit 3); tests 4 pass 4; against the unfixed cage code (22d88e5) the same file fails 3 of 4, including the macOS symptom: AssertionError the active hooks path is already git_control"
+    anchor: "1292"
+    status: PASS
   - dod_id: "3"
     trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
     anchor: "3"
     status: PENDING
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0265 at 3a1bf6d: docs/FEATURES.md cage section gains Platforms (Linux and macOS tested in CI; symlinked roots resolved; Windows not supported yet: no descendant listing or orphan kill on win32, taskkill /T only for a command still running, sh push guard untested); packages/opengantry-cage/README.md states the same platforms; docs/DEVELOPMENT.md CI parity names cage-macos.yml and the cage (macos-latest) job as a required check on main, repository-only; docs/CHANGELOG.md Unreleased row gains Cage on macOS (MSN-0265)"
+    anchor: "1293"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0265 at 3a1bf6d: ./scripts/dev-validate-core.sh in a clean worktree: assert-dogfood-sync OK; assert-docs-deterministic OK; tests 896 pass 896 fail 0 (892 on main plus the 4 symlinked-root tests); check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1294"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 2121e0ae69d9
