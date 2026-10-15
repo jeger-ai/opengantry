@@ -147,7 +147,7 @@ export function scavengeStaleVirtualFlights(
     .filter((e) => e.isDirectory())
     .map((e) => {
       const full = path.join(root, e.name);
-      let mtime = 0;
+      let mtime: number;
       try {
         mtime = fs.statSync(full).mtimeMs;
       } catch {
