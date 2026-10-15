@@ -57,6 +57,14 @@ Locally, before you push: `npx -p @jeger-ai/opengantry gantry cage check --base 
 
 `gantry cage check` fails with exit `3` when a commit in the range changes CI configs, `.env` / `.env.*`, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries; lockfile changes are listed without failing it. It reads the rules from the base commit, so a branch cannot loosen them, and it checks every commit, so a secret committed and removed again still fails. Files that never reach a commit, such as a gitignored `.env` or `.git/hooks`, are outside its view ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage), [ADR-0050](../.gitagent/out-of-scope/ADR-0050-cage-diff-check.md)). A legitimate change to a protected path fails it too: review it and merge. Whether to make the check a required status is your branch-protection choice.
 
+For what never reaches a commit (a gitignored `.env`, `.git/config`, `.git/hooks`), run a watch in its own terminal while agents work, started before them:
+
+```bash
+npx -p @jeger-ai/opengantry gantry cage watch
+```
+
+Every change to a protected file rings, notifies and asks you in that terminal: `a` keeps it, `r` restores it, and no answer within 20 seconds restores it too. Answers come only from the watch terminal, so run it in a plain terminal window, not inside tmux or screen ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage), [ADR-0050](../.gitagent/out-of-scope/ADR-0050-cage-diff-check.md)).
+
 To cover your own sensitive paths too, run `gantry cage suggest --write` yourself, review `.cage.yaml.suggested`, keep what you want as `.cage.yaml` and commit it. The file can only add protection ([ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)), and its additions apply to the changes after it is merged.
 
 For agents your scripts start non-interactively, the session cage restores protected files while they run: `npx @jeger-ai/opengantry-cage -- <agent command>` (slim standalone package: `commander` is its only runtime dependency, no native modules, no install scripts). It restores rather than blocks.

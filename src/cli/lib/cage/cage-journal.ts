@@ -64,6 +64,8 @@ export interface CageJournalHandle {
   dir: string;
   /** Record the caged command and its current descendants: at spawn, then every refresh interval (see cage-run.ts). */
   refreshPids(childPid: number | null): void;
+  /** `gantry cage watch` accepted a change: persist the new baseline so a kill -9 restores to it (MSN-0268). */
+  replaceBaseline(baseline: CageSnapshot): void;
   /** Clean shutdown: the session restored everything it had to, so the journal is no longer needed. */
   dispose(): void;
 }
@@ -212,11 +214,6 @@ function toJournalEntry(e: CageEntry): JournalEntry {
 export function writeCageJournal(dir: string, root: string, baseline: CageSnapshot, overrides: readonly string[]): CageJournalHandle {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, BLOBS_DIR), { recursive: true, mode: 0o700 });
-  const entries: JournalEntry[] = [];
-  for (const e of baseline.entries.values()) {
-    if (e.bytes) writeAtomic(path.join(dir, BLOBS_DIR, e.sha256), e.bytes);
-    entries.push(toJournalEntry(e));
-  }
   const [wrapper] = trackPids([process.pid]);
   const manifest: JournalManifest = {
     version: CAGE_JOURNAL_VERSION,
@@ -224,7 +221,7 @@ export function writeCageJournal(dir: string, root: string, baseline: CageSnapsh
     wrapper: wrapper!,
     started_at: new Date().toISOString(),
     overrides: [...overrides],
-    entries,
+    entries: journalEntries(dir, baseline),
   };
   writeHashed(dir, MANIFEST_FILE, manifest);
   writeHashed(dir, PIDS_FILE, { pids: [] as TrackedPid[] });
@@ -238,10 +235,24 @@ export function writeCageJournal(dir: string, root: string, baseline: CageSnapsh
         // The journal dir may already be gone at shutdown; the next tick or dispose settles it.
       }
     },
+    replaceBaseline(next) {
+      writeHashed(dir, MANIFEST_FILE, { ...manifest, entries: journalEntries(dir, next) });
+    },
     dispose() {
       fs.rmSync(dir, { recursive: true, force: true });
     },
   };
+}
+
+/** Write every baseline blob not yet in the journal (blobs first, so a manifest never names a missing one). */
+function journalEntries(dir: string, baseline: CageSnapshot): JournalEntry[] {
+  const entries: JournalEntry[] = [];
+  for (const e of baseline.entries.values()) {
+    const blob = path.join(dir, BLOBS_DIR, e.sha256);
+    if (e.bytes && !fs.existsSync(blob)) writeAtomic(blob, e.bytes);
+    entries.push(toJournalEntry(e));
+  }
+  return entries;
 }
 
 function readManifest(dir: string, root: string): JournalManifest | null {
