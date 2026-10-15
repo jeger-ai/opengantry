@@ -38,8 +38,8 @@ trace_rows:
     anchor: "1283"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0262 at 96026fd: node examples/iii-integration/scripts/validate-offline.mjs: validate-offline PASS: architecture self-test; [iii-integration: offline validate OK]"
-    anchor: "1284"
+    trace_quote: "DoD 4 MSN-0262 re-attested at dfe31c7 with the re-legislated gate: cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs, run with the example's node_modules removed as in the CI mission_verify job: npm ci added 41 packages from the unchanged lockfile, then validate-offline PASS: architecture self-test; [iii-integration: offline validate OK]; exit 0; the working tree stayed clean"
+    anchor: "1285"
     status: PASS
 gate_success_substring: offline validate OK
 interrogation:
