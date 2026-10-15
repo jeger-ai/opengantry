@@ -65,36 +65,36 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0270 re-attested at aa4808c after merging PR #219 (MSN-0268 cage watch): docs/ holds index.md plus cage/ (index, check, watch, session, protected-paths, cage-yaml, report, limits), start/ (how-it-works, install, first-mission), guides/ (agents, cursor, claude-code, codex, other-agents, ci, agent-graphs, content-domain, regulated-teams, org-control-plane, troubleshooting), concepts/ (missions, scope, perimeters, verify, trace-evidence, enforcement-boundary, when-to-adopt) and reference/ (mcp-tools, session-variables, metrics-and-report, break-glass, experimental, release-notes); against the legislated list it adds guides/agents, cage/check and cage/session (ADR-0050, PR #218) and cage/watch (ADR-0050 amendment, PR #219); the dropped-content record above still holds"
-    anchor: "1358"
+    trace_quote: "DoD 1 MSN-0270 re-attested at 5f52d33 after the CodeQL fix to scripts/assert-docs-structure.mjs: docs/ layout unchanged since aa4808c (index.md plus cage/ index, check, watch, session, protected-paths, cage-yaml, report, limits; start/ 3 pages; guides/ 11; concepts/ 7; reference/ 6), additions against the legislated list as recorded at aa4808c"
+    anchor: "1366"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0270 re-attested at aa4808c: every docs/**/*.md outside archive/ has frontmatter (assert-docs-structure OK (52 pages, 38 published, 290 relative links checked)); MANIFESTO and SECURITY stay published; DEVELOPMENT, ARCHITECTURE, ADR-EPHEMERAL-VIRTUALIZATION, CHANGELOG and STYLE are publish: false; the merge kept the CHANGELOG without the release-highlights table, and the cage watch highlight from PR #219 is in reference/release-notes.md"
-    anchor: "1359"
+    trace_quote: "DoD 2 MSN-0270 re-attested at 5f52d33: docs/ unchanged since aa4808c; assert-docs-structure OK (52 pages, 38 published, 290 relative links checked)"
+    anchor: "1367"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0270 re-attested at aa4808c: the nine moved pages are unchanged since 94e4d7f (the merge kept them over PR #219's ADOPTION and FEATURES edits, which added no headings); anchors include FEATURES#zero-config-cage-gantry-cage, ADOPTION#step-zero-cage-an-agent-you-already-use and ADOPTION#step-zero-check-your-agents-commits"
-    anchor: "1360"
+    trace_quote: "DoD 3 MSN-0270 re-attested at 5f52d33: the nine moved pages unchanged since 94e4d7f"
+    anchor: "1368"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0270 re-attested at aa4808c: docs/STYLE.md unchanged since bcbd6fb"
-    anchor: "1361"
+    trace_quote: "DoD 4 MSN-0270 re-attested at 5f52d33: docs/STYLE.md unchanged since bcbd6fb"
+    anchor: "1369"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0270 re-attested at aa4808c: docs/cage restates check, watch and the session cage from FEATURES, ADOPTION, the slim README, ADR-0048 and ADR-0050 with its MSN-0268 amendment; all 13 GXT_CAGE_* codes and 13 flags named in docs/cage exist in src/cli/lib/cage, src/cli/program-cage.ts or gantry cage --help, cage check --help, cage suggest --help and cage watch --help; the watch defaults (decision timeout 20 s, reject limit 3) match src/cli/lib/cage/cage-watch-decisions.ts; no rule, mode, cap, flag or exit code changed"
-    anchor: "1362"
+    trace_quote: "DoD 5 MSN-0270 re-attested at 5f52d33: docs/cage unchanged since aa4808c; its 13 GXT_CAGE_* codes and 13 flags still match src/cli/lib/cage and the cage help output"
+    anchor: "1370"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0270 re-attested at aa4808c: README.md is 122 lines and now also introduces gantry cage watch; packages/opengantry-cage/README.md links the opengantry.ai cage pages including /docs/cage/watch/; the four example READMEs unchanged since cab321a"
-    anchor: "1363"
+    trace_quote: "DoD 6 MSN-0270 re-attested at 5f52d33: README.md, packages/opengantry-cage/README.md and the four example READMEs unchanged since aa4808c"
+    anchor: "1371"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0270 re-attested at aa4808c: scripts/assert-docs-structure.mjs and scripts/assert-docs-deterministic.sh unchanged since cab321a; assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes)"
-    anchor: "1364"
+    trace_quote: "DoD 7 MSN-0270 re-attested at 5f52d33: scripts/assert-docs-structure.mjs strips tags with /<[^>]*>/ and then drops stray < and > (CodeQL js/incomplete-multi-character-sanitization on PR #220); assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes) and the tree result is unchanged; scripts/assert-docs-deterministic.sh unchanged since cab321a"
+    anchor: "1372"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0270 re-attested at aa4808c: ./scripts/dev-validate-core.sh: assert-docs-structure OK (52 pages, 38 published, 290 relative links checked); tests 919 pass 919 fail 0; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1365"
+    trace_quote: "DoD 8 MSN-0270 re-attested at 5f52d33: ./scripts/dev-validate-core.sh: assert-docs-structure OK (52 pages, 38 published, 290 relative links checked); tests 919 pass 919 fail 0; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1373"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
