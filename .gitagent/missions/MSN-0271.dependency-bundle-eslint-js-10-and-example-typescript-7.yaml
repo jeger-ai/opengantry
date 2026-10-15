@@ -32,25 +32,25 @@ gate_command: ./scripts/dev-validate-core.sh && npm run lint && cd
   scripts/validate-offline.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0271 at 85a9f34: package.json devDependencies @eslint/js ^9.28.0 -> ^10.0.1 and package-lock.json resolves @eslint/js 10.0.1 (with eslint 10.12.0), applied from Dependabot commit c2b68ffe9a (PR #210) with git cherry-pick -n; the three-way lockfile merge keeps yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 from #213 and #212; npm ci succeeds; npm audit: found 0 vulnerabilities"
+    anchor: "1348"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0271 at 85a9f34: examples/iii-integration/package.json typescript ^5.7.2 -> ^7.0.2 and its lockfile resolves typescript 7.0.2 (plus the 20 optional per-platform @typescript/typescript-* compiler packages, as at the root), applied from Dependabot commit ddb289855c (PR #211); npm ci in the example added 42 packages; npx tsc --version: Version 7.0.2; npm audit there: found 0 vulnerabilities"
+    anchor: "1349"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0271 at 85a9f34: the only source change is let mtime: number; instead of let mtime = 0; in src/cli/lib/virtual-scratch-store.ts (scavengeVirtualFlights; both try and catch still assign it), 1 file changed, 1 insertion, 1 deletion under src; git diff --name-only origin/main..85a9f34 lists only the contract paths and the mission file; npm run lint exit 0 with @eslint/js 10 (before the fix: 150:11 error no-useless-assignment); node scripts/validate-offline.mjs: [iii-integration: offline validate OK]"
+    anchor: "1350"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0271 at 85a9f34: docs/CHANGELOG.md Unreleased row gains Dependencies: yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 (lockfile only, #212 and #213), @eslint/js 10.0.1 for development with the no-useless-assignment fix, and typescript 7.0.2 in the iii integration example (MSN-0271); assert-docs-deterministic OK"
+    anchor: "1351"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0271 at 85a9f34: composite gate ./scripts/dev-validate-core.sh && npm run lint && cd examples/iii-integration && npm ci --no-audit --no-fund && node scripts/validate-offline.mjs exit 0: tests 919 pass 919 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; lint OK; [iii-integration: offline validate OK]"
+    anchor: "1352"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1a4b88b71538
