@@ -92,9 +92,12 @@ else
   echo "npm-publish-if-new: ${name}@${version} not on npm; publishing"
 fi
 
+# Keep a copy of npm's output (still streamed to the log) so a failure can be diagnosed below.
+publish_out="$(mktemp)"
+trap 'rm -f "$publish_out"' EXIT
 set +e
-npm "${args[@]}"
-publish_rc=$?
+npm "${args[@]}" 2>&1 | tee "$publish_out"
+publish_rc=${PIPESTATUS[0]}
 set -e
 if [[ $publish_rc -ne 0 && "${GITHUB_ACTIONS:-}" == "true" && $dry_run -eq 0 ]]; then
   # Trusted publishing (MSN-0259): with no trusted publisher for this package, npm's OIDC exchange fails
@@ -104,5 +107,22 @@ if [[ $publish_rc -ne 0 && "${GITHUB_ACTIONS:-}" == "true" && $dry_run -eq 0 ]];
   workflow="${workflow%%@*}"
   workflow="${workflow##*/}"
   echo "::error::npm-publish-if-new: publishing ${name}@${version} failed (exit ${publish_rc}). If npm reported E404, ENEEDAUTH, E401 or EOTP, ${name} has no trusted publisher for this workflow: on npmjs.com add one to ${name} with provider GitHub Actions, repository ${repo}, workflow ${workflow:-<workflow file>}." >&2
+
+  # npm's reason (MSN-0261): npm logs every trusted-publishing step under the `oidc` prefix at silly/verbose
+  # level, which never reaches the terminal but is always written to the debug log it names on failure.
+  # Print only those lines, never the rest of the log.
+  debug_log="$(sed -n 's/.*A complete log of this run can be found in: //p' "$publish_out" | tail -1 | tr -d '\r')"
+  debug_log="${debug_log%"${debug_log##*[![:space:]]}"}"
+  if [[ -n "$debug_log" && -f "$debug_log" ]]; then
+    oidc_lines="$(grep -E '^[0-9]+ (silly|verbose|http|info|notice|warn|error) oidc ' "$debug_log" || true)"
+    if [[ -n "$oidc_lines" ]]; then
+      echo "npm-publish-if-new: npm's trusted-publishing (oidc) log for ${name}:" >&2
+      printf '%s\n' "$oidc_lines" | sed 's/^/  /' >&2
+    else
+      echo "npm-publish-if-new: npm's debug log ${debug_log} has no oidc lines: npm did not attempt trusted publishing for ${name}" >&2
+    fi
+  else
+    echo "npm-publish-if-new: npm's debug log was not found, so its trusted-publishing (oidc) messages cannot be shown" >&2
+  fi
 fi
 exit $publish_rc
