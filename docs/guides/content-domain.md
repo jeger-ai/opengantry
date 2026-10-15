@@ -61,7 +61,7 @@ rules:
 
 ## In a mission
 
-Use `gantry perimeter check` as the mission gate, or as one step of it. A violation comes back as a finding with `file` and `line`, so a writing agent can fix the exact sentence:
+Use `gantry perimeter check` as the mission gate, or as one step of it. A violation comes back as a finding with `offending_file` and `line`, so a writing agent can fix the exact sentence:
 
 ```json
 {

@@ -15,7 +15,7 @@ gantry cage check --base <ref> [--head <ref>] [--json]
 
 ## Where to run it
 
-**In CI, on every pull request.** This is where it cannot be skipped:
+**In CI, on pull requests.** CI can run the check on every pull request, where an agent cannot skip it:
 
 ```yaml
 - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ gantry cage check --base <ref> [--head <ref>] [--json]
 - run: npx -y -p @jeger-ai/opengantry gantry cage check --base ${{ github.event.pull_request.base.sha }}
 ```
 
-Whether a failing check blocks the merge is your branch-protection choice: make it a required status, or let a human review it.
+A failing check blocks the merge only when you make it a required status in branch protection; otherwise it is a signal a human reviews.
 
 **Before you push**, for fast feedback:
 

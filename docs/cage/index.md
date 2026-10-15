@@ -11,7 +11,7 @@ The cage protects the files an agent should never change on its own: CI configs,
 
 ## Check every agent's commits
 
-Every agent's work, however it was started, reaches your repository as commits and lands through a pull request. Check them there:
+Work that reaches your repository as commits through a pull request can be checked there, however the agent was started:
 
 ```yaml
 # .github/workflows/cage-check.yml

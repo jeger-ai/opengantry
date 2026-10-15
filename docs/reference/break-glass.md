@@ -28,7 +28,7 @@ git push origin refs/notes/gxt-bypass
 
 - Authorization requires `GXT_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256`. A commit subject alone can never authorize a bypass.
 - Verify writes a forensic record as a git note on `refs/notes/gxt-bypass`. Pass `--audit-commit` when notes cannot be pushed. Push the notes with the branch.
-- Pull request CI accepts governance-touching commits that carry a valid bypass note.
+- Pull request CI (`gxt-validate.yml`) fetches `refs/notes/*` and accepts a commit that touches mission-enforced paths without an `[MSN-NNNN]` subject only when that commit carries a valid bypass note, the record `gantry verify --break-glass` writes.
 - With the compliance ledger enabled, a bypass without a `break_glass` ledger row is a failed control ([Org control plane](../guides/org-control-plane.md#compliance-ledger)).
 - The Planner reviews every bypass after the incident.
 

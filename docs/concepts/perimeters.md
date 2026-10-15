@@ -64,7 +64,7 @@ rules:
     require_pattern: "These statements have not been evaluated by the FDA"
 ```
 
-Schemas `0.1.0` and `0.2.0` remain supported for code-only repositories. Violations carry `file` and `line` into the failure envelope.
+Schemas `0.1.0` and `0.2.0` remain supported for code-only repositories. Violations come back as findings with `offending_file` and `line`.
 
 ```bash
 gantry arch check <files…>   # code: import and layer rules

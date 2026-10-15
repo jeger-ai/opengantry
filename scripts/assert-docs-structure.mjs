@@ -56,15 +56,20 @@ function unquote(v) {
 
 /** Body lines with fenced code blanked out, so prose rules and links ignore code. */
 function proseLines(body) {
-  let fence = null;
+  let fence = null; // { ch, len } of the open fence
   return body.split(/\r?\n/).map((line) => {
-    const f = line.match(/^\s*(`{3,}|~{3,})/);
-    if (f) {
-      if (!fence) fence = f[1][0];
-      else if (f[1][0] === fence) fence = null;
-      return "";
+    if (!fence) {
+      const open = line.match(/^ {0,3}(`{3,}|~{3,})/);
+      if (open) {
+        fence = { ch: open[1][0], len: open[1].length };
+        return "";
+      }
+      return line;
     }
-    return fence ? "" : line;
+    // CommonMark: a closing fence uses the same character, is at least as long, and has only whitespace after it.
+    const close = line.match(/^ {0,3}(`{3,}|~{3,})\s*$/);
+    if (close && close[1][0] === fence.ch && close[1].length >= fence.len) fence = null;
+    return "";
   });
 }
 
@@ -272,7 +277,7 @@ const CLEAN = {
   "docs/index.md": page("overview", 0, "Start with the [cage](cage/index.md) or [install](start/install.md#install).\n"),
   "docs/cage/index.md": page("cage", 1, "# Cage\n\nSee [protected paths](protected-paths.md) and [going further](../start/install.md).\n\nDesign notes: ADR-0048.\n"),
   "docs/cage/protected-paths.md": page("cage", 2, "# Protected paths\n\nBack to the [cage](index.md#cage).\n"),
-  "docs/start/install.md": page("start", 1, "# Install\n\n```bash\ngantry legislate --msn MSN-0001\n```\n"),
+  "docs/start/install.md": page("start", 1, "# Install\n\n```bash\ngantry legislate --msn MSN-0001\n```\n\n````md\n```bash\nMSN-0123 [x](nowhere.md)\n```\n````\n"),
   "docs/OLD.md": fm({ title: '"Old"', description: '"Moved"', publish: "false", moved_to: ["start/install.md"] }) + "Moved to [install](start/install.md).\n",
   "docs/archive/IGNORED.md": "no frontmatter needed here\n",
   "README.md": "Read [the docs](docs/index.md).\n",

@@ -18,7 +18,7 @@ No setup and no config. Check what any agent committed, whatever started it (a t
 npx -p @jeger-ai/opengantry gantry cage check --base origin/main
 ```
 
-`cage check` fails with exit `3` when a commit in `base..HEAD` changes CI configs, `.env` files, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries. Lockfile changes are listed without failing it. The rules come from the base commit, so a branch cannot loosen them, and every commit counts, so a secret committed and removed again still fails. Put it where every agent's work lands, the pull request:
+`cage check` fails with exit `3` when a commit in `base..HEAD` changes CI configs, `.env` files, hook files under an in-repository `core.hooksPath` (such as `.githooks/`), your manifest `forbidden_zones` or your `.cage.yaml` entries. Lockfile changes are listed without failing it. The rules come from the base commit, so a branch cannot loosen them, and every commit counts, so a secret committed and removed again still fails. Put it where every agent's work lands, the pull request:
 
 ```yaml
 # .github/workflows/cage-check.yml

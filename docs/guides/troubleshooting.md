@@ -14,6 +14,7 @@ Run the failing command with `--json` to get the `GXT_*` error code and its `fix
 | Symptom | Meaning | Fix |
 |---------|---------|-----|
 | `NO_MSN_COMMITS` on push | The mission changed but was never Planner-stamped | Commit with a subject starting `[MSN-NNNN]` that modifies the mission file, from an email in `GANTRY_PLANNER_EMAILS` |
+| `NO_PLANNER_MSN_COMMIT` | `[MSN-NNNN]` commits exist, but none is from an allowlisted Planner email | Add the author to the allowlist (`gantry planner set`, `GANTRY_PLANNER_EMAILS`) or have a Planner make the commit |
 | `PLANNER_IDENTITY_UNCONFIGURED` | The Planner allowlist is empty | `gantry planner set "$(git config user.email)"`, or `export GANTRY_PLANNER_EMAILS="$(git config user.email)"` |
 | `MISSION_FILE_NOT_MODIFIED_BY_PLANNER` | The newest `[MSN-NNNN]` commit from a Planner email does not touch the mission file | Add a Planner commit with that id that modifies the mission, or legislate under a fresh id ([Missions](../concepts/missions.md#the-planner-commit)) |
 | Pre-push passes, full verify fails on trace | The handoff worked; execution is incomplete | The executor fills `EXECUTOR_LOG.md`, the trace rows are aligned with it, then full verify runs again |

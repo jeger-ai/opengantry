@@ -53,7 +53,7 @@ gantry legislate --from-intent "Fix login spinner" --msn MSN-0001   # propose th
 
 A mission counts as approved only through Git. Among the last 200 commits (`--scan-depth <n>` or `GXT_MSN_SCAN_DEPTH` to change), the **newest** commit whose subject starts with `[MSN-NNNN]` and whose author email is in the Planner allowlist is the Planner stamp, and it must modify the mission file being verified.
 
-A later `[MSN-NNNN]` commit by a Planner email that does not touch the mission file therefore breaks verify (`MISSION_FILE_NOT_MODIFIED_BY_PLANNER`) until another Planner commit with that id modifies it, or you legislate under a fresh id. A mission with no stamp at all fails with `NO_MSN_COMMITS`.
+A later `[MSN-NNNN]` commit by a Planner email that does not touch the mission file therefore breaks verify (`MISSION_FILE_NOT_MODIFIED_BY_PLANNER`) until another Planner commit with that id modifies it, or you legislate under a fresh id. If no `[MSN-NNNN]` commit exists at all, verify fails with `NO_MSN_COMMITS`; if such commits exist but none is from a Planner email, it fails with `NO_PLANNER_MSN_COMMIT`.
 
 Every mission-related commit starts with `[MSN-NNNN]`, so `git log --grep='MSN-0001'` is the mission index. No separate history file is needed.
 

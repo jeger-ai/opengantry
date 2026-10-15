@@ -20,7 +20,7 @@ About 15 minutes from an empty repository to a verified, scoped change. Every st
 | 5 | Legislate | `gantry start "First change" --msn MSN-0001 --skill-key logic --gate-command "npm test"` | `gantry legislate "First change" --msn MSN-0001 --skill-key logic --gate-command "npm test"` |
 | 6 | Planner commit | Review the YAML, then `git commit -m "[MSN-0001] legislate mission"` | same |
 | 7 | Executor env | `eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.*.yaml)"` | `gantry runtime env --mission … --json` |
-| 8 | Make the change | Edit inside the mission's `tmvc_roots` | `gantry runtime exec --mission … -- npm test` after the edits |
+| 8 | Make the change | Edit inside the mission's `tmvc_roots` | `gantry runtime exec --mission … -- <agent command>`, so the agent runs inside the process boundary |
 | 9 | Record evidence | Append the gate output as a unique line to `EXECUTOR_LOG.md` | same |
 | 10 | Verify | `gantry verify --mission …` | `gantry verify --mission … --json` |
 | 11 | Audit | `git log --grep='MSN-0001' --oneline` | same |
