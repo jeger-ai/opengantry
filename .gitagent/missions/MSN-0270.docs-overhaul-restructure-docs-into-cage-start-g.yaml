@@ -67,36 +67,36 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0270 re-attested at 450534e after the CodeRabbit review fixes: docs/ layout unchanged since aa4808c (index.md plus cage/ index, check, watch, session, protected-paths, cage-yaml, report, limits; start/ 3 pages; guides/ 11; concepts/ 7; reference/ 6), additions against the legislated list as recorded at aa4808c; wording fixes in cage/index, cage/check, concepts/missions, concepts/perimeters, guides/content-domain, guides/troubleshooting, reference/break-glass and start/first-mission"
-    anchor: "1382"
+    trace_quote: "DoD 1 MSN-0270 re-attested at 2e63dee after merging PR #221 (MSN-0271 dependency bundle): docs/ layout unchanged since aa4808c (index.md plus cage/ index, check, watch, session, protected-paths, cage-yaml, report, limits; start/ 3 pages; guides/ 11; concepts/ 7; reference/ 6), additions against the legislated list as recorded at aa4808c"
+    anchor: "1395"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0270 re-attested at 450534e: every docs/**/*.md outside archive/ keeps its frontmatter; assert-docs-structure OK (52 pages, 38 published, 290 relative links checked)"
-    anchor: "1383"
+    trace_quote: "DoD 2 MSN-0270 re-attested at 2e63dee: frontmatter on every docs page (assert-docs-structure OK (52 pages, 38 published, 290 relative links checked)); the merge kept the CHANGELOG without the release-highlights table, and PR #221's dependencies note is in reference/release-notes.md"
+    anchor: "1396"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0270 re-attested at 450534e: the nine moved pages unchanged since 94e4d7f"
-    anchor: "1384"
+    trace_quote: "DoD 3 MSN-0270 re-attested at 2e63dee: the nine moved pages unchanged since 94e4d7f"
+    anchor: "1397"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0270 re-attested at 450534e: docs/STYLE.md unchanged since bcbd6fb"
-    anchor: "1385"
+    trace_quote: "DoD 4 MSN-0270 re-attested at 2e63dee: docs/STYLE.md unchanged since bcbd6fb"
+    anchor: "1398"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0270 re-attested at 450534e: docs/cage rules, modes, caps, flags and exit codes unchanged since aa4808c (only the PR-check coverage wording in cage/index and cage/check changed); its 13 GXT_CAGE_* codes and 13 flags still match src/cli/lib/cage and the cage help output"
-    anchor: "1386"
+    trace_quote: "DoD 5 MSN-0270 re-attested at 2e63dee: docs/cage rules, modes, caps, flags and exit codes unchanged since aa4808c; src/cli/lib/cage unchanged by PR #221; the 13 GXT_CAGE_* codes and 13 flags still match"
+    anchor: "1399"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0270 re-attested at 450534e: README.md names hook files under an in-repository core.hooksPath (such as .githooks/) for cage check; packages/opengantry-cage/README.md and the four example READMEs unchanged since aa4808c"
-    anchor: "1387"
+    trace_quote: "DoD 6 MSN-0270 re-attested at 2e63dee: README.md, packages/opengantry-cage/README.md and the four example READMEs unchanged since 450534e"
+    anchor: "1400"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0270 re-attested at 450534e: scripts/assert-docs-structure.mjs closes a fence only on a CommonMark closing fence (same character, at least as long, only whitespace after) and its clean self-test tree gains a nested-fence page; assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes); scripts/assert-docs-deterministic.sh unchanged since cab321a"
-    anchor: "1388"
+    trace_quote: "DoD 7 MSN-0270 re-attested at 2e63dee: scripts/assert-docs-structure.mjs unchanged since 450534e; assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes); scripts/assert-docs-deterministic.sh unchanged since cab321a"
+    anchor: "1401"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0270 re-attested at 450534e: ./scripts/dev-validate-core.sh: assert-docs-structure OK (52 pages, 38 published, 290 relative links checked); tests 919 pass 919 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1389"
+    trace_quote: "DoD 8 MSN-0270 re-attested at 2e63dee after npm ci with PR #221's lockfile: ./scripts/dev-validate-core.sh: assert-docs-structure OK (52 pages, 38 published, 290 relative links checked); tests 919 pass 919 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1402"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
