@@ -28,7 +28,7 @@
     "gen:version": "node scripts/gen-version.mjs",
     "gen:catalog": "node scripts/gen-asset-catalog.mjs",
     "gen:dogfood": "node scripts/gen-dogfood.mjs",
-    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc && npm run build:cage",
+    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc && node scripts/prune-dist.mjs && npm run build:cage",
     "build:cage": "npm run build -w @jeger-ai/opengantry-cage",
     "gapman": "node dist/cli/index.js",
     "lint": "eslint src/cli/**/*.ts",
