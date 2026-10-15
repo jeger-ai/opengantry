@@ -1,0 +1,163 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0267]. Executor must not run until the [MSN-0267] legislation commit + pin.
+#
+# Legislated intent: make a diff check the primary form of gantry cage. Wrapping an agent session
+# (`gantry-cage -- claude`) needs a per-session habit, cannot reach IDE, desktop or cloud agents, and competes with
+# harness sandboxes that block before the write. Every agent's work passes through commits and the PR, so the cage
+# rules run there: `gantry cage check` for pre-push and CI. The session wrapper stays for scripted headless runs.
+#
+# Constraints: ADR-0048 stays ACTIVE and unchanged. No MCP tool, no --allow-override, nothing new in the slim
+# package bin (`gantry-cage` keeps no subcommands; packages/opengantry-cage/src/ is forbidden). No workflow and no
+# adopter template: .github/workflows/ and templates/ are forbidden; the GitHub Actions snippet lives in docs only.
+#
+# DoD 1 (command): `gantry cage check --base <ref> [--head <ref>] [--json]` (head defaults to HEAD) lists the paths
+#        changed by commits in base..head and classifies each with the cage rules. Range and rename-free name listing
+#        are the session push guard's, shared code, not a copy. Exit 0 when no revert-rule path changed, 3 when one
+#        did, 2 outside a git work tree, on a ref that does not resolve, or on an invalid .cage.yaml or MANIFEST.json
+#        at base. Report-mode hits (lockfiles, .cage.yaml report entries) are listed and never change the exit code.
+#        `gantry cage -- check` still runs a command named check.
+# DoD 2 (rules from base): .cage.yaml and MANIFEST forbidden_zones are read from the base commit through git, never
+#        from the working tree or head. A head that deletes .cage.yaml is still checked against base's entries, and
+#        the deletion is reported under cage_config. Built-in rules apply unchanged. The session cage
+#        (`gantry cage -- <cmd>`, `gantry-cage`) changes no rule, mode, cap or exit code.
+# DoD 3 (output): human summary on stderr; `--json` emits `gantry.cage-check.v1` on stdout with base and head shas,
+#        the commit the rules were read from, changes[] (path, rule, source, mode) and a status. Digest-only: no file
+#        bodies, no diffs.
+# DoD 4 (tests): new src/cli/tests/cage-check.test.ts over temp git repos: clean range exit 0; CI config, .env,
+#        manifest forbidden zone and .cage.yaml protect entry changes exit 3 naming the rule; lockfile-only change
+#        exit 0 and listed; head deleting .cage.yaml and touching a path base's entry protects exits 3; unresolvable
+#        ref and invalid base .cage.yaml exit 2; .env committed then removed inside the range exits 3; `cage -- check`
+#        runs a command. npm run test:cage (slim package) passes unchanged.
+# DoD 5 (ADR): .gitagent/out-of-scope/ADR-0050-cage-diff-check.md, status ACTIVE: context (why session wrapping
+#        will not be adopted), decision (check first, rules from base, history semantics, wrapper for scripted
+#        headless runs, slim package unchanged pending the fold-back decision), consequences (a legitimate CI config
+#        change fails the check and is resolved by human review; check is not an attestation receipt), follow-ups
+#        (shipped CI template, pre-write harness hooks for Claude Code and Cursor, a mission clearing a protected-path
+#        change). ADR-0048 stays ACTIVE.
+# DoD 6 (docs): README "Try it in 60 seconds" leads with cage check, the session wrapper follows as the option for
+#        scripted runs; ADOPTION step zero becomes cage check in CI with a GitHub Actions snippet (fetch-depth: 0,
+#        base = the PR base sha); FEATURES cage section documents check (options, exit codes, JSON, rules from base,
+#        limits); packages/opengantry-cage/README.md says check lives in the full package; CHANGELOG Unreleased entry.
+# DoD 7 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0267
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0267 re-attested at e82ced4 after the docs-only commit: src/cli/lib/cage/, src/cli/commands/cage.ts and src/cli/program-cage.ts unchanged since a4d4450; gantry cage check exit codes 0, 3 and 2, report-mode listing and the cage -- check disambiguation as attested at a4d4450"
+    anchor: "1327"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0267 re-attested at e82ced4: buildCagePlanAtCommit and assembleCagePlan unchanged since a4d4450; rules still read from the base commit; session cage rules, modes, caps and exit codes unchanged"
+    anchor: "1328"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0267 re-attested at e82ced4: formatCageCheckReport and the gantry.cage-check.v1 JSON unchanged since a4d4450; digest-only"
+    anchor: "1329"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0267 re-attested at e82ced4: src/cli/tests/cage-check.test.ts unchanged since d768482 and part of the gate run below (tests 908 pass 908); npm run test:cage pass 10 fail 0"
+    anchor: "1330"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0267 re-attested at e82ced4: .gitagent/out-of-scope/ADR-0050-cage-diff-check.md unchanged since d768482, status ACTIVE; ADR-0048 unchanged"
+    anchor: "1331"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0267 re-attested at e82ced4: README, docs/ADOPTION.md and docs/FEATURES.md now also say that cage check cannot see files that never reach a commit (a gitignored .env, .git/hooks); everything else in the DoD 6 docs as attested at a4d4450"
+    anchor: "1332"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "DoD 7 MSN-0267 re-attested at e82ced4: ./scripts/dev-validate-core.sh: assert-docs-deterministic OK; tests 908 pass 908 fail 0; check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1333"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0037 stays ACTIVE and unchanged. It
+      matched only on CI. gantry cage check is a local read-only command that
+      adopters may call from their own CI; it emits no envelope or receipt,
+      touches no control plane, ingestion workflow, pepper or attestation path,
+      and this mission adds no workflow (.github/workflows/ and templates/ are
+      forbidden). The GitHub Actions snippet lives in docs only.
+    adr_refs:
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE and unchanged. cage check
+      applies the same rules with the same trust model: built-in rules are the
+      floor, .cage.yaml only adds, MANIFEST forbidden_zones are included, and
+      both are read from the base commit, not the head under review, so a change
+      cannot loosen the rules it is checked against (the floor-from-outside idea
+      of decisions 1-2; a .cage.yaml edit is itself flagged by the built-in
+      cage_config rule). check takes no --allow-override in this mission, so
+      decision 3 has nothing to announce. Decision 4 holds: no MCP tool exposes
+      check, and check never writes rules. The new ADR-0050 records the change
+      in how cage is positioned (diff check first, session wrapper for scripted
+      headless runs, pre-write harness hooks and a shipped CI template as
+      follow-ups); it does not supersede ADR-0048."
+    adr_refs:
+      - ADR-0048
+  - finding_id: a9421a4fe801
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/program-cage.ts is the cage command
+      registration module, one of the src/cli/program-*.ts files that none of
+      the TARGET_ARCHITECTURE layers map; it only wires commander options to
+      src/cli/commands/cage.ts. src/cli/tests/cage-check.test.ts (new) and
+      src/cli/tests/cage.test.ts hold tests only and may import the cage library
+      they exercise. No production logic goes into these paths beyond command
+      wiring.
+interrogation_sha256: 12180460eb69ba0d1e63d1064d05a5f30452d55c9d2019be65feabd216f1313b
+declared_paths:
+  - .gitagent/missions/MSN-0267.cage-check.yaml
+  - .gitagent/out-of-scope/ADR-0050-cage-diff-check.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/FEATURES.md
+  - packages/opengantry-cage/README.md
+  - packages/opengantry-cage/tests/
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-check.test.ts
+  - src/cli/tests/cage.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/out-of-scope/ADR-0050-cage-diff-check.md
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/CHANGELOG.md
+    - docs/FEATURES.md
+    - packages/opengantry-cage/README.md
+    - packages/opengantry-cage/tests/
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-check.test.ts
+    - src/cli/tests/cage.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/opengantry-cage/src/
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: b3c979ac4fcb4a88e0dc360a57eb6c488e4eb3545457debd989913de6ef2dc41

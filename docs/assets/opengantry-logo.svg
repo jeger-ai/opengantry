@@ -1,13 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="7" fill="#0a0e14"/>
-  <path d="M9 29 L16 23 L23 29 Z" fill="#7c6ef0"/>
-  <rect x="14.25" y="11.5" width="3.5" height="12" rx="0.5" fill="#7c6ef0"/>
-  <circle cx="16" cy="10.5" r="2.75" fill="#7c6ef0"/>
-  <line x1="3" y1="10.5" x2="29" y2="10.5" stroke="#7c6ef0" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="3" cy="10.5" r="2" fill="#7c6ef0"/>
-  <circle cx="29" cy="10.5" r="2" fill="#7c6ef0"/>
-  <line x1="7" y1="10.5" x2="7" y2="16" stroke="#7d8aa3" stroke-width="2.25" stroke-linecap="round"/>
-  <path d="M2.5 16.5 L7 21.5 L11.5 16.5 Z" fill="#2dd4a8" stroke="#5eecc4" stroke-width="1.25" stroke-linejoin="round"/>
-  <line x1="25" y1="10.5" x2="25" y2="16" stroke="#7d8aa3" stroke-width="2.25" stroke-linecap="round"/>
-  <path d="M20.5 16.5 L25 21.5 L29.5 16.5 Z" fill="rgba(125,138,163,0.2)" stroke="#7d8aa3" stroke-width="1.25" stroke-linejoin="round"/>
+  <!-- Gate G: a G drawn as a perimeter whose gate arm reaches in toward the agent. Same mark as opengantry.ai/favicon.svg. -->
+  <rect width="32" height="32" rx="7" fill="#08090c"/>
+  <g transform="translate(16 16) scale(0.8) translate(-16 -16)">
+    <path d="M26 10V5H6v22h20V16h-8" stroke="#eceef2" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="13.5" cy="16" r="3" fill="#8ba4ff"/>
+  </g>
 </svg>

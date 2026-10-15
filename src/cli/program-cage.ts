@@ -1,20 +1,34 @@
 import { Command } from "commander";
-import { runCageCommand, runCageGuardPrePush, runCageSuggestCommand } from "./commands/cage.js";
+import {
+  runCageCheckCommand,
+  runCageCommand,
+  runCageGuardPrePush,
+  runCageSuggestCommand,
+  runCageWatchCommand,
+} from "./commands/cage.js";
 
 function collect(value: string, previous: string[]): string[] {
   return [...previous, value];
 }
 
 /**
- * `gantry cage suggest` was typed: `suggest` is the first operand and no `--` came before it.
- * Commander drops `--` from operands, so read the raw argv; `gantry cage -- suggest` runs a command.
+ * `gantry cage <name>` was typed: `name` is the first operand and no `--` came before it.
+ * Commander drops `--` from operands, so read the raw argv; `gantry cage -- <name>` runs a command.
  */
-export function isSuggestInvocation(operands: readonly string[], argv: readonly string[] = process.argv): boolean {
-  if (operands[0] !== "suggest") return false;
+export function isCageSubcommandInvocation(
+  name: string,
+  operands: readonly string[],
+  argv: readonly string[] = process.argv,
+): boolean {
+  if (operands[0] !== name) return false;
   const raw = argv.slice(2);
   const after = raw.slice(raw.indexOf("cage") + 1);
   const dashes = after.indexOf("--");
-  return dashes === -1 || after.indexOf("suggest") < dashes;
+  return dashes === -1 || after.indexOf(name) < dashes;
+}
+
+export function isSuggestInvocation(operands: readonly string[], argv: readonly string[] = process.argv): boolean {
+  return isCageSubcommandInvocation("suggest", operands, argv);
 }
 
 async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Promise<void> {
@@ -27,12 +41,39 @@ async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Pr
   await runCageSuggestCommand({ json: inherited.json, ...sub.opts() });
 }
 
+async function runCheckArgs(args: string[], inherited: { json?: boolean }): Promise<void> {
+  const sub = new Command("gantry cage check")
+    .description("Check commits in base..head for protected-path changes, with the cage rules committed at base (pre-push, CI)")
+    .requiredOption("--base <ref>", "Base commit; its .cage.yaml and manifest forbidden_zones are the rules")
+    .option("--head <ref>", "Head commit (default HEAD)")
+    .option("--json", "Emit the digest-only gantry.cage-check.v1 report on stdout");
+  sub.parse(args, { from: "user" });
+  await runCageCheckCommand({ json: inherited.json, ...sub.opts<{ base: string; head?: string; json?: boolean }>() });
+}
+
+async function runWatchArgs(args: string[], inherited: { json?: boolean }): Promise<void> {
+  const sub = new Command("gantry cage watch")
+    .description("Watch protected files on disk (gitignored .env and .git hooks included); you accept or reject every change in this terminal")
+    .option("--decision-timeout <seconds>", "Seconds before an unanswered change is restored (default 20)")
+    .option("--watch-interval-ms <n>", "Check interval (default 1000)")
+    .option("--max-file-bytes <n>", "Per-file snapshot cap (default 5 MiB); a larger protected file stops watch before it starts (exit 2)")
+    .option("--no-notify", "No desktop notifications (the terminal bell and prompt still alert)")
+    .option("--json", "Emit the digest-only gantry.cage-watch.v1 report on stdout when the watch stops");
+  sub.parse(args, { from: "user" });
+  await runCageWatchCommand({
+    json: inherited.json,
+    ...sub.opts<{ decisionTimeout?: string; watchIntervalMs?: string; maxFileBytes?: string; notify?: boolean; json?: boolean }>(),
+  });
+}
+
 /** Shared by `gantry cage` and the standalone `gantry-cage` bin (alias `opengantry-cage`) so they never drift. */
-export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } = {}): Command {
-  if (opts.suggest) {
+export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean } = {}): Command {
+  if (opts.subcommands) {
     cmd.addHelpText(
       "after",
-      "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n",
+      "\nCheck commits (pre-push, CI):\n  gantry cage check --base <ref> [--head <ref>] [--json]  exit 3 when commits in base..head change protected paths\n" +
+        "\nWatch files while you work (own terminal):\n  gantry cage watch [--decision-timeout <s>] [--no-notify] [--json]  accept or reject every protected change\n" +
+        "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n",
     );
   }
   return cmd
@@ -70,8 +111,16 @@ export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } =
           contestLimit?: string;
         },
       ) => {
-        if (opts.suggest && isSuggestInvocation(command)) {
+        if (opts.subcommands && isSuggestInvocation(command)) {
           await runSuggestArgs(command.slice(1), { json: cliOpts.json });
+          return;
+        }
+        if (opts.subcommands && isCageSubcommandInvocation("check", command)) {
+          await runCheckArgs(command.slice(1), { json: cliOpts.json });
+          return;
+        }
+        if (opts.subcommands && isCageSubcommandInvocation("watch", command)) {
+          await runWatchArgs(command.slice(1), { json: cliOpts.json });
           return;
         }
         await runCageCommand({ command, ...cliOpts });
@@ -80,7 +129,7 @@ export function configureCageCommand(cmd: Command, opts: { suggest?: boolean } =
 }
 
 export function registerCageCommands(program: Command): void {
-  configureCageCommand(program.command("cage"), { suggest: true });
+  configureCageCommand(program.command("cage"), { subcommands: true });
   program
     .command("cage-guard", { hidden: true })
     .description("Internal: checks run by the cage session git hooks")
