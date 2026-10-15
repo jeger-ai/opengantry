@@ -70,7 +70,7 @@ Sandboxes are created under **`.gitagent/virtual/benchmark-run/<runId>/`** (giti
 
 Both phases use `git init` + seed commit inside their sandbox. The orchestrator tears down the run directory before exit — repeated runs do not accrue debris layers.
 
-See also: [`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](../../docs/ADR-EPHEMERAL-VIRTUALIZATION.md)
+Virtual scratch: [`docs/reference/experimental.md`](../../docs/reference/experimental.md#virtual-scratch) · design record [`docs/ADR-EPHEMERAL-VIRTUALIZATION.md`](../../docs/ADR-EPHEMERAL-VIRTUALIZATION.md)
 
 ## Layout
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Deterministic documentation metrics: published inventory, index link integrity, doc-surface naming drift.
+# Deterministic documentation metrics: published inventory, index link integrity, doc structure
+# (docs/STYLE.md via scripts/assert-docs-structure.mjs), doc-surface naming drift.
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
@@ -14,8 +15,19 @@ fail() {
 }
 
 # --- 1. Published doc inventory (website + adopter surfaces) ---
+# Moved pages (ADOPTION, INTEGRATIONS, FEATURES) stay required: released CLI hints, shipped templates
+# and ADRs link to them.
 REQUIRED_DOCS=(
   docs/index.md
+  docs/STYLE.md
+  docs/cage/index.md
+  docs/start/how-it-works.md
+  docs/start/install.md
+  docs/start/first-mission.md
+  docs/guides/agents.md
+  docs/concepts/missions.md
+  docs/concepts/verify.md
+  docs/reference/release-notes.md
   docs/ADOPTION.md
   docs/DEVELOPMENT.md
   docs/INTEGRATIONS.md
@@ -67,6 +79,10 @@ while IFS= read -r raw; do
 done < <(grep -oE '\]\([^)]+\)' "$INDEX" | sed 's/^\](//')
 
 echo "assert-docs-deterministic: inventory + index links OK"
+
+# --- 2b. Docs structure (docs/STYLE.md): self-test the checker, then check the tree ---
+node scripts/assert-docs-structure.mjs --self-test >/dev/null || fail "assert-docs-structure self-test"
+node scripts/assert-docs-structure.mjs || fail "docs structure (see findings above; rules in docs/STYLE.md)"
 
 # --- 3. Doc-surface legacy CLI naming drift ---
 if ! command -v rg >/dev/null 2>&1; then

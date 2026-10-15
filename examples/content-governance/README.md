@@ -25,4 +25,4 @@ node dist/cli/index.js perimeter check --cwd examples/content-governance
 # Expect violations — fix files, rerun until OK
 ```
 
-See [`docs/AGENT-GRAPH.md`](../../docs/AGENT-GRAPH.md) and [`docs/DOMAINS.md`](../../docs/DOMAINS.md).
+See [`docs/guides/content-domain.md`](../../docs/guides/content-domain.md) and [`docs/concepts/perimeters.md`](../../docs/concepts/perimeters.md).
