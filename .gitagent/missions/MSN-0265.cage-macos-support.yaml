@@ -46,9 +46,9 @@ trace_rows:
     anchor: "1292"
     status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0265 at 850b839 (re-legislated): .github/workflows/cage-macos.yml parsed with yaml: job cage named cage (macos-latest), runs-on macos-latest, on pull_request and push with branches [main] and no paths or paths-ignore filters, setup-node node-version 24, npm ci, npm run build, the cage suites step globs dist/cli/tests/cage*.test.js (cage, cage-suggest, cage-symlink-root, cage-watch) and npm run test:cage; git ls-files templates lists no cage-macos file; the job's run on the PR is a merge-time check per the re-legislated DoD 3"
+    anchor: "1295"
+    status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0265 at 3a1bf6d: docs/FEATURES.md cage section gains Platforms (Linux and macOS tested in CI; symlinked roots resolved; Windows not supported yet: no descendant listing or orphan kill on win32, taskkill /T only for a command still running, sh push guard untested); packages/opengantry-cage/README.md states the same platforms; docs/DEVELOPMENT.md CI parity names cage-macos.yml and the cage (macos-latest) job as a required check on main, repository-only; docs/CHANGELOG.md Unreleased row gains Cage on macOS (MSN-0265)"
     anchor: "1293"
