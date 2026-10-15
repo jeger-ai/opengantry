@@ -41,7 +41,7 @@ For scripts and CI, `gantry init --yes` runs without prompts, and `gantry init -
 | `AGENTS.md` | Cross-tool entry point: read RULES and MANIFEST before acting |
 | `.gitagent/ARCHITECTURE.pointer.json` and `docs/ARCHITECTURE.md` | Where agents find your code layout |
 | `.githooks/` | Pre-commit and pre-push enforcement |
-| IDE pointer files and runtime scripts | For the tools you selected ([Agent guides](../guides/cursor.md)) |
+| IDE pointer files and runtime scripts | For the tools you selected ([Wire any agent](../guides/agents.md)) |
 | `docs/INTEGRATIONS.md` | Setup notes for humans, composed from the recipes for your tools |
 | `.github/workflows/gxt-validate.yml` | Mission checks on pull requests (skipped with `--no-ci`) |
 

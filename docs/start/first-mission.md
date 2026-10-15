@@ -73,4 +73,4 @@ Look the code up in [Troubleshooting](../guides/troubleshooting.md), then file a
 
 The repository ships a contrast benchmark: an improvised agent orchestrator script next to the same task under OpenGantry. Clone the repository, run `npm ci && npm run build`, then `npm run examples:benchmark` (`-- --json` for machine output). The specimens live in [`examples/contrast-agent-script/`](https://github.com/jeger-ai/opengantry/tree/main/examples/contrast-agent-script) and [`examples/gantry-minimal/`](https://github.com/jeger-ai/opengantry/tree/main/examples/gantry-minimal). The raw script compresses common anti-patterns into one file; most teams do not ship a monolithic orchestrator, but without a Git-native protocol, structure and auditability are improvised.
 
-Next, wire your agent: [Cursor](../guides/cursor.md), [Claude Code](../guides/claude-code.md), [Codex](../guides/codex.md) or [other agents](../guides/other-agents.md).
+Next, [wire your agent](../guides/agents.md).
