@@ -37,6 +37,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 - **Repositories with the example:** a mission gate that runs `examples/iii-integration/scripts/validate-offline.mjs` no longer has to run `npm ci` in the example itself.
 - **Cage push guard (session cage):** a `git push` from inside `gantry cage -- <cmd>` is now also refused when an outgoing commit renames a protected file away or a merge commit edits a protected path; before, only the rename's new path and no merge edits were checked.
 - **`gantry cage check`** is new; in CI, check out with full history (`fetch-depth: 0`) so the base commit is present.
+- **`gantry cage watch`** is new and needs a terminal; it shares the cage journal, so it refuses to start while a `gantry cage -- <cmd>` session runs in the same repository, and the other way round.
 
 ### From v3.8.2 (`gantry-cage` command, zod 4, trusted publishing — v3.8.3)
 

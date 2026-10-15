@@ -34,13 +34,22 @@ jobs:
       - run: npx -y -p @jeger-ai/opengantry gantry cage check --base ${{ github.event.pull_request.base.sha }}
 ```
 
+While you work, **`gantry cage watch`** covers what never reaches a commit: a gitignored `.env`, `.git/config`, `.git/hooks`. Start it in its own terminal before the agent, and every change to a protected file becomes your decision:
+
+```bash
+npx -p @jeger-ai/opengantry gantry cage watch
+# cage watch: .env changed (secrets, modified, sha256 3467a14afa0c). Keep it? [a]ccept / [r]eject; rejected in 20s
+```
+
+`a` keeps the change, `r` restores the file, and no answer within 20 seconds restores it too. Answers come only from the watch terminal, so run it in a plain terminal window, not inside tmux or screen. It watches files, not processes, so it covers IDE, desktop and terminal agents alike.
+
 For agents your scripts start non-interactively, the **session cage** restores protected files while they run and refuses `git push` of them from inside the session:
 
 ```bash
 npx @jeger-ai/opengantry-cage -- claude -p "…"
 ```
 
-`gantry cage suggest --write` proposes `.cage.yaml` rules for migrations, infrastructure and key files; the file can only add protection. The check sees committed history only, and the session cage restores rather than blocks. Read [the cage docs](docs/cage/index.md) and [its limits](docs/cage/limits.md).
+`gantry cage suggest --write` proposes `.cage.yaml` rules for migrations, infrastructure and key files; the file can only add protection. The check sees committed history only, the watch sees files on disk while it runs, and the session cage restores rather than blocks. Read [the cage docs](docs/cage/index.md) and [its limits](docs/cage/limits.md).
 
 ## Then govern agent work with missions
 
@@ -81,7 +90,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | Goal | Commands |
 |------|----------|
 | Set up | `gantry init`, `gantry onboarding`, `gantry planner set "$(git config user.email)"`, `gantry doctor` |
-| Cage | `gantry cage check --base <ref>`, `gantry cage -- <cmd>`, `gantry cage suggest --write` |
+| Cage | `gantry cage check --base <ref>`, `gantry cage watch`, `gantry cage -- <cmd>`, `gantry cage suggest --write` |
 | Legislate | `gantry legislate "<intent>" --msn MSN-NNNN --skill-key <key> --gate-command "<cmd>"`, `gantry legislate --from-intent "<intent>" --msn MSN-NNNN`, `gantry start` |
 | Execute | `gantry pin <mission>`, `eval "$(gantry runtime env)"`, `gantry runtime exec --mission <file> -- <cmd>` |
 | Verify | `gantry verify --mission <file>`, `--json`, `--format sarif\|junit`, `gantry context-feed --json` |
@@ -101,7 +110,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 
 | Start here | |
 |------------|---|
-| [The cage](docs/cage/index.md) | `cage check` and the session cage |
+| [The cage](docs/cage/index.md) | `cage check`, `cage watch` and the session cage |
 | [Get started](docs/start/how-it-works.md) | How it works, install, first mission |
 | [Guides](docs/guides/agents.md) | Agents, CI, content, regulated teams, org control plane, troubleshooting |
 | [Concepts](docs/concepts/missions.md) | Missions, scope, perimeters, verify, trace evidence, enforcement boundary |
