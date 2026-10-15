@@ -31,15 +31,17 @@
 # Before tagging (Planner, not this mission): the slim package README links https://opengantry.ai/docs/cage/ pages
 # that exist only once the site mission (MSN-0273, opengantry.ai) is live, and the tag publishes both packages to
 # npm. Order: merge this release; MSN-0273 pins OPENGANTRY_DOCS_REF to the release merge commit (the fetch script
-# reads any ref's tarball) and deploys; then tag v3.9.0 on the release merge commit (npm-publish.yml publishes both
+# reads any ref's tarball) and deploys; then configure the npm trusted publisher for @jeger-ai/opengantry-cage on
+# npmjs.com (GitHub Actions, jeger-ai/opengantry, npm-publish.yml), without which its publish fails; then tag
+# v3.9.0 on the release merge commit (npm-publish.yml publishes both
 # packages with provenance); then re-pin the site to the v3.9.0 tag.
 msn_id: MSN-0272
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0272 at 8a2de8b: 3.9.0 in package.json, package-lock.json (root, packages[''] and packages/opengantry-cage), packages/opengantry-cage/package.json, .gitagent/foreman/SUBSTRATE.version.json, templates/.gitagent/foreman/SUBSTRATE.version.json and templates/integrations/compatibility.json (9 strings); no 3.8.3 left in those files; npm install --package-lock-only reproduces the lockfile byte for byte; gantry --version 3.9.0, gantry-cage --version 3.9.0 for the full bin and the slim bin; gantry doctor: ok: substrate version: 3.9.0 (matches bundled gantry)"
-    anchor: "1417"
+    trace_quote: "DoD 1 MSN-0272 re-attested at 4b62a70 with the count corrected (review on PR #224): 3.9.0 in package.json (1), package-lock.json (3: root, packages[''] and packages/opengantry-cage), packages/opengantry-cage/package.json (1), .gitagent/foreman/SUBSTRATE.version.json (1), templates/.gitagent/foreman/SUBSTRATE.version.json (1) and templates/integrations/compatibility.json (1), 8 strings in all, not 9 as the line at 8a2de8b said; no 3.8.3 left in those files; npm install --package-lock-only reproduces the lockfile byte for byte; gantry --version 3.9.0, gantry-cage --version 3.9.0 for the full bin and the slim bin; gantry doctor: ok: substrate version: 3.9.0 (matches bundled gantry)"
+    anchor: "1422"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0272 at 8a2de8b: docs/reference/release-notes.md: the Unreleased heading becomes ## 3.9 with a **3.9.0** entry whose sub-bullets carry all eight Unreleased items verbatim (gantry cage check, gantry cage watch, session push guard, documentation reorganized, cage on macOS, shipped CI, dependencies, gates in linked worktrees); no Unreleased left on the page; 1043 words, no mission ids; assert-docs-structure OK"
