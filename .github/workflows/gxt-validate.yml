@@ -53,6 +53,8 @@ jobs:
         run: npm run build
 
       - name: iii integration offline validate
+        # Only in repositories that carry the iii integration example (this template is shipped by gantry init).
+        if: hashFiles('examples/iii-integration/package-lock.json') != ''
         run: |
           cd examples/iii-integration
           npm ci
@@ -194,6 +196,12 @@ jobs:
             [ -n "$m" ] || continue
             node dist/cli/index.js deps fetch --mission "$m"
           done
+
+      # iii-integration mission gates run examples/iii-integration/scripts/validate-offline.mjs, which needs the
+      # example's own dependencies; without them it exits 2 (MSN-0263).
+      - name: Install iii integration example deps
+        if: hashFiles('examples/iii-integration/package-lock.json') != ''
+        run: npm ci --prefix examples/iii-integration --no-audit --no-fund
 
       - name: Full verify on PR-changed missions
         env:

@@ -282,7 +282,7 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 | `manifest` | `gantry check`, `validate-gxt.sh manifest`, unit tests, `gantry doctor`, `gantry perimeter --ci` on PRs |
 | `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
 | `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); or valid `gxt-bypass` note; or repository `trusted_automation` policy (`gxt-manifest-lib.mjs eval-commit`) |
-| `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gantry verify` on each mission file in triple-dot diff; fails if protected paths change without a mission file unless `trusted_automation` policy passes (`eval-range`) |
+| `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gantry verify` on each mission file in triple-dot diff; fails if protected paths change without a mission file unless `trusted_automation` policy passes (`eval-range`). Installs the iii integration example's dependencies first when `examples/iii-integration/package-lock.json` exists, as does `gxt-attest-ingest.yml`, so mission gates that run its offline validator work (MSN-0263) |
 
 Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` + MSN vs `origin/main`). Run it before you open a PR.
 
