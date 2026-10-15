@@ -171,18 +171,27 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
     }
   };
   const stop = waitForStop(input, (key) => guarded(() => engine.answer(key)));
-  input.setRawMode!(true);
-  input.resume();
-  const timer = setInterval(() => guarded(() => engine.tick()), opts.watchIntervalMs ?? CAGE_DEFAULT_WATCH_INTERVAL_MS);
+  let timer: NodeJS.Timeout | null = null;
+  let raw = false;
   let trapped: string | null = null;
   try {
+    input.setRawMode!(true);
+    raw = true;
+    input.resume();
+    timer = setInterval(() => guarded(() => engine.tick()), opts.watchIntervalMs ?? CAGE_DEFAULT_WATCH_INTERVAL_MS);
     trapped = await stop.done;
+  } catch (err) {
+    // The terminal could not be set up, so nothing was watched or decided: drop the journal rather than have
+    // a later run restore this baseline over edits made since.
+    journal.dispose();
+    throw err;
   } finally {
-    clearInterval(timer);
+    if (timer) clearInterval(timer);
     stop.cleanup();
-    input.setRawMode!(false);
+    if (raw) input.setRawMode!(false);
     input.pause();
   }
+  // If the final restore throws, the journal stays on disk on purpose: the next cage or watch run recovers from it.
   const summary = engine.stop();
   journal.dispose();
   const restoredAny = summary.decisions.some((d) => d.outcome !== "accepted");
@@ -206,9 +215,14 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
 /** Human summary for stderr. */
 export function formatCageWatchReport(r: CageWatchReport): string[] {
   const kept = r.decisions.filter((d) => d.outcome === "accepted");
-  const restored = r.decisions.filter((d) => d.outcome !== "accepted");
-  const lines = [`cage watch: stopped${r.trapped_signal ? ` (${r.trapped_signal})` : ""}; kept ${String(kept.length)}, restored ${String(restored.length)}`];
-  for (const d of r.decisions) lines.push(`  ${d.path}  ${d.rule}  ${d.outcome.replace(/_/g, " ")}`);
+  const restored = r.decisions.filter((d) => d.outcome !== "accepted" && !d.error_code);
+  const failed = r.decisions.filter((d) => d.error_code);
+  const failedPart = failed.length > 0 ? `, restore failed ${String(failed.length)}` : "";
+  const lines = [`cage watch: stopped${r.trapped_signal ? ` (${r.trapped_signal})` : ""}; kept ${String(kept.length)}, restored ${String(restored.length)}${failedPart}`];
+  for (const d of r.decisions) {
+    const failed = d.error_code ? `  (restore failed: ${d.error_code}; still on disk)` : "";
+    lines.push(`  ${d.path}  ${d.rule}  ${d.outcome.replace(/_/g, " ")}${failed}`);
+  }
   if (r.kept.length > 0) lines.push("cage watch: reported only (kept):", ...r.kept.map((k) => `  ${k.path}  ${k.rule}`));
   if (r.contested.length > 0) lines.push(`cage watch: restored without asking after repeated rejections: ${r.contested.join(", ")}`);
   lines.push(`cage watch: session log: ${r.session_log}`, "cage watch: limits:", ...r.limits.map((l) => `  - ${l}`));

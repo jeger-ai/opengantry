@@ -265,3 +265,44 @@ test("cage watch: after kill -9 the next run restores to the last accepted state
   assert.equal(read(root, ".env"), "TOKEN=accepted\n", "the accepted state is the baseline");
   assert.equal(read(root, HOOK), "#!/bin/sh\nexit 1\n");
 });
+
+test("cage watch: a failed restore is reported as such, is not counted as a rejection and is asked again (MSN-0268 DoD 2)", (t) => {
+  if (process.getuid?.() === 0) {
+    t.skip("root can write into a read-only directory");
+    return;
+  }
+  const h = harness("og-cage-wd-fail-");
+  fs.writeFileSync(path.join(h.root, ".env"), "TOKEN=agent\n");
+  fs.chmodSync(h.root, 0o555);
+  try {
+    for (let i = 0; i < 3; i += 1) {
+      h.engine.tick();
+      assert.deepEqual(h.engine.pendingPaths(), [".env"], `asked again (round ${String(i)})`);
+      h.engine.answer("r");
+    }
+    assert.match(h.said.join("\n"), /could not restore \.env \(rejected; EACCES\); the change is still on disk/);
+    assert.ok(!h.said.some((l) => l.includes("restored .env")), "never claims a restore that failed");
+    assert.ok(!h.said.some((l) => l.includes("further changes are restored without asking")), "failures do not make the path contested");
+    h.engine.tick();
+    assert.deepEqual(h.engine.pendingPaths(), [".env"]);
+  } finally {
+    fs.chmodSync(h.root, 0o755);
+  }
+  const summary = h.engine.stop();
+  assert.deepEqual(summary.contested, []);
+  assert.ok(summary.decisions.slice(0, 3).every((d) => d.outcome === "rejected" && d.error_code === "EACCES"));
+  assert.equal(read(h.root, ".env"), `${SECRET}\n`, "restored once the directory is writable again");
+});
+
+test("cage watch runner: a terminal that cannot be set up leaves no handlers and no journal (MSN-0268 DoD 1)", async () => {
+  const root = makeRepo("og-cage-wr-raw-");
+  const tty = new FakeTty();
+  tty.setRawMode = (mode: boolean) => {
+    if (mode) throw new Error("EIO: raw mode unavailable");
+    return tty;
+  };
+  const before = process.listenerCount("SIGTERM");
+  await assert.rejects(runCageWatch({ cwd: root, input: tty, notify: false, say: () => undefined }), /raw mode unavailable/);
+  assert.equal(process.listenerCount("SIGTERM"), before);
+  assert.equal(fs.existsSync(resolveCageJournalDir(root)), false);
+});

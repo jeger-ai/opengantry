@@ -27,6 +27,8 @@ export interface CageDecision {
   kind: CageChange["kind"];
   outcome: CageDecisionOutcome;
   sha256_after: string | null;
+  /** Set when the restore this outcome called for failed; the change is then still on disk. */
+  error_code: string | null;
 }
 
 /** What a desktop notification and the terminal prompt may carry: path, rule and kind only. */
@@ -126,7 +128,7 @@ export class CageDecisionEngine {
   stop(): CageDecisionSummary {
     for (const p of [...this.pending.values()]) this.restore(p, "rejected");
     const leftover = this.currentChanges().filter((c) => c.mode === "revert");
-    for (const r of resolveCageChanges(leftover, { reportOnly: false })) this.record(r, "restored_at_exit");
+    for (const c of leftover) this.restoreChange(c, "restored_at_exit");
     return {
       decisions: [...this.decisions],
       kept: [...this.kept.values()].map(({ path, rule, kind }) => ({ path, rule, kind })),
@@ -149,8 +151,9 @@ export class CageDecisionEngine {
       return;
     }
     if (this.contested.has(c.abs)) {
-      for (const r of resolveCageChanges([c], { reportOnly: false })) this.record(r, "auto_restored");
-      return;
+      if (this.restoreChange(c, "auto_restored")) return;
+      // A restore that fails goes back to asking, instead of failing again on every tick.
+      this.contested.delete(c.abs);
     }
     const known = this.pending.get(c.abs);
     if (known) {
@@ -190,7 +193,7 @@ export class CageDecisionEngine {
     else this.input.baseline.entries.delete(p.abs);
     this.input.journal.replaceBaseline(this.input.baseline);
     this.pending.delete(p.abs);
-    this.decisions.push({ path: p.rel, rule: p.rule, kind: p.kind, outcome: "accepted", sha256_after: p.shownSha ?? null });
+    this.decisions.push({ path: p.rel, rule: p.rule, kind: p.kind, outcome: "accepted", sha256_after: p.shownSha ?? null, error_code: null });
     this.input.log.append({ event: "accepted", path: p.rel, rule: p.rule, kind: p.kind, sha256_after: p.shownSha ?? null });
     this.input.say(`cage watch: kept ${p.rel}`);
   }
@@ -219,9 +222,16 @@ export class CageDecisionEngine {
   private restore(p: Pending, outcome: "rejected" | "timed_out"): void {
     this.pending.delete(p.abs);
     const change = this.currentChanges().find((c) => c.abs === p.abs);
-    if (!change) return;
-    for (const r of resolveCageChanges([change], { reportOnly: false })) this.record(r, outcome);
-    this.countRejection(p);
+    // Only a restore that took effect counts toward the rejection limit; a failed one is asked again next tick.
+    if (change && this.restoreChange(change, outcome)) this.countRejection(p);
+  }
+
+  /** Restore one change from the baseline and record it; false when the restore failed. */
+  private restoreChange(c: CageChange, outcome: Exclude<CageDecisionOutcome, "accepted">): boolean {
+    const [r] = resolveCageChanges([c], { reportOnly: false });
+    if (!r) return false;
+    this.record(r, outcome);
+    return r.outcome === "reverted" || r.outcome === "removed";
   }
 
   private countRejection(p: Pending): void {
@@ -241,8 +251,12 @@ export class CageDecisionEngine {
 
   private record(r: CageResolvedChange, outcome: Exclude<CageDecisionOutcome, "accepted">): void {
     const sha = r.after?.sha256 ?? null;
-    this.decisions.push({ path: r.rel, rule: r.rule, kind: r.kind, outcome, sha256_after: sha });
+    const failed = r.outcome !== "reverted" && r.outcome !== "removed";
+    const errorCode = failed ? (r.errorCode ?? r.outcome) : null;
+    this.decisions.push({ path: r.rel, rule: r.rule, kind: r.kind, outcome, sha256_after: sha, error_code: errorCode });
     this.input.log.append({ event: outcome, path: r.rel, rule: r.rule, kind: r.kind, restore: r.outcome, error_code: r.errorCode });
-    if (outcome !== "restored_at_exit") this.input.say(`cage watch: restored ${r.rel} (${outcome.replace("_", " ")})`);
+    const why = outcome.replace(/_/g, " ");
+    if (failed) this.input.say(`cage watch: could not restore ${r.rel} (${why}; ${String(errorCode)}); the change is still on disk`);
+    else if (outcome !== "restored_at_exit") this.input.say(`cage watch: restored ${r.rel} (${why})`);
   }
 }
