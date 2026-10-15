@@ -1,0 +1,153 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0270]. Executor must not run until the [MSN-0270] legislation commit + pin.
+#
+# Legislated intent: docs overhaul. docs/ reads as maintainer notes: FEATURES.md is 35 KB with 35 ADR links,
+# ADOPTION.md opens with the enterprise control plane before the first run, INTEGRATIONS.md puts nine tools on one
+# page, and pages carry their own navigation (Product home / All docs lines, When-to-read tables, How: chains) on
+# top of the opengantry.ai sidebar. The cage and the full OpenGantry stack are mixed on the same pages. This
+# mission restructures docs/ by audience and topic so opengantry.ai can build navigation from frontmatter. The site
+# change (recursive fetch, frontmatter nav, redirects from moved_to) is a separate mission in jeger-ai/opengantry.ai;
+# production keeps pinning v3.8.3 until then, so nothing published breaks when this merges. The next npm release
+# waits until the site mission is live, because the slim README links to opengantry.ai/docs/cage/.
+#
+# Constraint: no new product facts. Every statement on a new page comes from the pre-mission docs/, README.md, the
+# slim README, an ADR or src/cli/; content that is dropped is listed in the trace, not deleted silently. No shipped
+# code, template, workflow or substrate file changes (contract forbidden_zones).
+#
+# DoD 1 (layout): docs/ holds index.md plus these sections, content redistributed from ADOPTION, FEATURES,
+#        INTEGRATIONS, KATA, DOMAINS, AGENT-GRAPH, CI, COMPLIANCE-ISO, USE-CASES and the README feature tour:
+#          cage/       index (quickstart), protected-paths, cage-yaml, report (report, --json, exit codes, signals,
+#                      kill -9 recovery, contested-file halt), limits (restores not blocks, platforms)
+#          start/      install, first-mission (KATA + standard change graph), how-it-works (roles, mission graph)
+#          guides/     cursor, claude-code, codex, other-agents, ci (SARIF/JUnit + CI receipt ingestion),
+#                      agent-graphs (AGENT-GRAPH + remote handoff + context feed), content-domain, regulated-teams,
+#                      org-control-plane, troubleshooting
+#          concepts/   missions, scope (TMVC, forbidden zones, contracts, context-request), perimeters,
+#                      verify (gates, typed adapters, findings[], --fix), trace-evidence, enforcement-boundary,
+#                      when-to-adopt (personas, vs TDD + CI, vs alternatives, what OpenGantry is not)
+#          reference/  mcp-tools, session-variables, metrics-and-report, break-glass, experimental, release-notes
+#        File names in sections are lowercase-hyphenated. Any merge or split against this list is recorded in the
+#        trace with its reason. docs/index.md is rewritten as a short landing page with two entry points (cage,
+#        OpenGantry) and no When-to-read tables.
+# DoD 2 (frontmatter): every docs/**/*.md outside docs/archive/ starts with frontmatter holding title, description
+#        (at most 160 characters) and either section + order (published) or publish: false. MANIFESTO.md (section
+#        about) and SECURITY.md (section reference) stay at their paths and stay published. DEVELOPMENT.md,
+#        ARCHITECTURE.md, ADR-EPHEMERAL-VIRTUALIZATION.md, CHANGELOG.md and the new STYLE.md stay in the repo with
+#        publish: false. Release highlights move from CHANGELOG.md to reference/release-notes.md (one source);
+#        CHANGELOG.md keeps upgrade notes and gains an Unreleased entry naming the new layout and the moved pages.
+# DoD 3 (moved pages): ADOPTION, FEATURES, INTEGRATIONS, KATA, DOMAINS, AGENT-GRAPH, CI, COMPLIANCE-ISO and
+#        USE-CASES stay at their old paths with publish: false and moved_to: (the new pages). Each body is at most
+#        20 lines mapping its former sections, including FEATURES#zero-config-cage-gantry-cage and
+#        ADOPTION#step-zero-cage-an-agent-you-already-use, to new pages, so links from released CLI hints, shipped
+#        templates, ADRs, workflow comments and past npm READMEs keep resolving on GitHub.
+# DoD 4 (style contract): docs/STYLE.md states the rules: one page, one job; published pages at most 1,500 words
+#        excluding frontmatter and fenced code; no navigation inside page bodies (no Product home / All docs lines,
+#        When-to-read tables, How: or See also chains); no MSN-NNNN on published pages; ADR-NNNN only on one
+#        trailing line starting "Design notes:"; cage pages stand alone and link only to other docs/cage/ pages plus
+#        one link into docs/start/.
+# DoD 5 (cage docs): the docs/cage/ pages restate cage behaviour from FEATURES § Zero-config cage, ADOPTION § Step
+#        zero, packages/opengantry-cage/README.md and ADR-0048 without changing any rule, mode, cap, flag or exit
+#        code; each flag or exit code named matches src/cli/lib/cage/ (checked in the trace).
+# DoD 6 (inbound links): README.md is rewritten to pitch, cage quickstart, install and links into docs/ (at most
+#        150 lines). packages/opengantry-cage/README.md links to https://opengantry.ai/docs/cage/ pages instead of
+#        GitHub FEATURES/ADOPTION anchors. The four examples/*/README.md files link to the new pages.
+# DoD 7 (gate): new scripts/assert-docs-structure.mjs (node: imports only) enforces DoD 2-4 and that every relative
+#        .md link and #anchor (GitHub heading slugs) in docs/**, README.md, packages/opengantry-cage/README.md and
+#        examples/*/README.md resolves, and that every moved_to target exists. scripts/assert-docs-deterministic.sh
+#        runs it, and its REQUIRED_DOCS list matches the new layout. The trace shows the checker failing on one
+#        seeded violation per rule (missing frontmatter, oversized page, nav line, MSN ref, stray ADR ref, broken
+#        anchor, cage page linking outside cage/ and start/, missing moved_to target) and passing on the tree.
+# DoD 8 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0270
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "8"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stays ACTIVE and unchanged. The new docs/cage/
+      pages restate the existing trust model (built-in floor, .cage.yaml can
+      only add protection, relaxation only at run time) from FEATURES, ADOPTION,
+      the slim README and ADR-0048 itself. No rule, mode, cap, flag or exit code
+      changes, and src/cli/lib/cage/ is forbidden.
+    adr_refs:
+      - ADR-0048
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate. docs/ and the docs gate script sit
+      outside every skill's roots and dev-validate-core is in the substrate gate
+      allowlist, so this runs under substrate as MSN-0265 did. The sealed
+      contract (ADR-0045) narrows TMVC to docs/ (without docs/archive/),
+      README.md, the slim package README, four example READMEs,
+      scripts/assert-docs-deterministic.sh, the new
+      scripts/assert-docs-structure.mjs and EXECUTOR_LOG.md. src/, templates/,
+      .github/, .cursor/, packages/opengantry-cage/src/ and .gitagent/ foreman,
+      planner and out-of-scope are forbidden: no shipped code, template,
+      workflow or substrate file changes."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 59c0f72abe2ea96fe88b1d5ce07a7c33960c939b9d8b20a92c6d16c7cae871be
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/
+    - examples/benchmark-agent/README.md
+    - examples/content-governance/README.md
+    - examples/contrast-agent-script/README.md
+    - examples/gantry-minimal/README.md
+    - packages/opengantry-cage/README.md
+    - scripts/assert-docs-deterministic.sh
+    - scripts/assert-docs-structure.mjs
+  forbidden_zones:
+    - .cursor
+    - .gitagent/foreman/
+    - .gitagent/out-of-scope/
+    - .gitagent/planner/
+    - .github
+    - docs/archive/
+    - packages/opengantry-cage/src/
+    - src/
+    - templates/
+contract_sha256: 7a0e2a248be94892d6d1a3eddd5c29193af1e97ffa2e8c256d6f656a38b5a173
