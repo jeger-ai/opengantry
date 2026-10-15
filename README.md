@@ -148,7 +148,7 @@ npx -p @jeger-ai/opengantry gantry cage check --base origin/main
 # installed (npm install -g @jeger-ai/opengantry): gantry cage check --base origin/main
 ```
 
-`cage check` looks at every commit in `base..HEAD` and fails (exit `3`) when one of them changes a protected path: CI configs, `.env` / `.env.*`, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries. Lockfile changes are listed but do not fail it. A secret committed and deleted again still counts, because it is in the history you push. The rules come from the base commit, so a branch cannot loosen the check it is held to by editing `.cage.yaml` or the manifest; the edit itself is flagged. `--json` emits a digest-only report (paths and rules, never file contents).
+`cage check` looks at every commit in `base..HEAD` and fails (exit `3`) when one of them changes a protected path: CI configs, `.env` / `.env.*`, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries. Lockfile changes are listed but do not fail it. A secret committed and deleted again still counts, because it is in the history you push. It cannot see what never gets committed: an edit to a gitignored `.env` or to `.git/hooks` stays invisible to it. The rules come from the base commit, so a branch cannot loosen the check it is held to by editing `.cage.yaml` or the manifest; the edit itself is flagged. `--json` emits a digest-only report (paths and rules, never file contents).
 
 Put it where every agent's work lands, the pull request:
 
