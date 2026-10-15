@@ -48,4 +48,4 @@ OpenGantry contributors use the **full GXT stack** — see [`docs/DEVELOPMENT.md
 - `npm run validate` (build, `gantry check`, tests, doctor, changed-code, MSN subjects)
 - Mission + Planner `[MSN-…]` commit when GXT or CLI behavior changes
 - `gantry verify --mission …` with matching `EXECUTOR_LOG.md` trace
-- No new duplicate `gitSpawn` helpers (use [`git-repo.ts`](../src/cli/lib/git-repo.ts))
+- No new duplicate git spawn helpers (use `gitRun` from [`git/git.ts`](../src/cli/lib/git/git.ts))
