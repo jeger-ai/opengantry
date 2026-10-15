@@ -65,36 +65,36 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0270 re-attested at 5f52d33 after the CodeQL fix to scripts/assert-docs-structure.mjs: docs/ layout unchanged since aa4808c (index.md plus cage/ index, check, watch, session, protected-paths, cage-yaml, report, limits; start/ 3 pages; guides/ 11; concepts/ 7; reference/ 6), additions against the legislated list as recorded at aa4808c"
-    anchor: "1366"
+    trace_quote: "DoD 1 MSN-0270 re-attested at 93922e5 after the second CodeQL fix to scripts/assert-docs-structure.mjs: docs/ layout unchanged since aa4808c (index.md plus cage/ index, check, watch, session, protected-paths, cage-yaml, report, limits; start/ 3 pages; guides/ 11; concepts/ 7; reference/ 6), additions against the legislated list as recorded at aa4808c"
+    anchor: "1374"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0270 re-attested at 5f52d33: docs/ unchanged since aa4808c; assert-docs-structure OK (52 pages, 38 published, 290 relative links checked)"
-    anchor: "1367"
+    trace_quote: "DoD 2 MSN-0270 re-attested at 93922e5: docs/ unchanged since aa4808c; assert-docs-structure OK (52 pages, 38 published, 290 relative links checked)"
+    anchor: "1375"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0270 re-attested at 5f52d33: the nine moved pages unchanged since 94e4d7f"
-    anchor: "1368"
+    trace_quote: "DoD 3 MSN-0270 re-attested at 93922e5: the nine moved pages unchanged since 94e4d7f"
+    anchor: "1376"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0270 re-attested at 5f52d33: docs/STYLE.md unchanged since bcbd6fb"
-    anchor: "1369"
+    trace_quote: "DoD 4 MSN-0270 re-attested at 93922e5: docs/STYLE.md unchanged since bcbd6fb"
+    anchor: "1377"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0270 re-attested at 5f52d33: docs/cage unchanged since aa4808c; its 13 GXT_CAGE_* codes and 13 flags still match src/cli/lib/cage and the cage help output"
-    anchor: "1370"
+    trace_quote: "DoD 5 MSN-0270 re-attested at 93922e5: docs/cage unchanged since aa4808c; its 13 GXT_CAGE_* codes and 13 flags still match src/cli/lib/cage and the cage help output"
+    anchor: "1378"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0270 re-attested at 5f52d33: README.md, packages/opengantry-cage/README.md and the four example READMEs unchanged since aa4808c"
-    anchor: "1371"
+    trace_quote: "DoD 6 MSN-0270 re-attested at 93922e5: README.md, packages/opengantry-cage/README.md and the four example READMEs unchanged since aa4808c"
+    anchor: "1379"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0270 re-attested at 5f52d33: scripts/assert-docs-structure.mjs strips tags with /<[^>]*>/ and then drops stray < and > (CodeQL js/incomplete-multi-character-sanitization on PR #220); assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes) and the tree result is unchanged; scripts/assert-docs-deterministic.sh unchanged since cab321a"
-    anchor: "1372"
+    trace_quote: "DoD 7 MSN-0270 re-attested at 93922e5: scripts/assert-docs-structure.mjs strips HTML tags with a character scan (stripTags) instead of a regex, for CodeQL js/incomplete-multi-character-sanitization on PR #220; assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes) and the tree result is unchanged; scripts/assert-docs-deterministic.sh unchanged since cab321a"
+    anchor: "1380"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0270 re-attested at 5f52d33: ./scripts/dev-validate-core.sh: assert-docs-structure OK (52 pages, 38 published, 290 relative links checked); tests 919 pass 919 fail 0; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1373"
+    trace_quote: "DoD 8 MSN-0270 re-attested at 93922e5: ./scripts/dev-validate-core.sh: assert-docs-structure OK (52 pages, 38 published, 290 relative links checked); tests 919 pass 919 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1381"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
