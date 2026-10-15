@@ -51,6 +51,7 @@ export const REPO_ONLY_SCRIPTS = [
   "validate-mcp-dogfood.sh",
   "gen-asset-catalog.mjs",
   "gen-version.mjs",
+  "prune-dist.mjs",
 ];
 
 /** @param {string} fileNameOrRel */
