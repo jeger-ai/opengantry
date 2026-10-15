@@ -3,15 +3,36 @@ import path from "node:path";
 import { CLI_NAME } from "../constants.js";
 
 /**
- * Copy of the process env for a git child. `GIT_DIR` / `GIT_WORK_TREE` are removed from the
+ * Environment variables that tell git which repository to use (MSN-0266). git sets `GIT_DIR` for hooks run in a
+ * linked worktree, so a child that inherits it acts on that repository whatever its cwd: the 2026-10-15 incident
+ * had pre-push gate fixtures rewrite the real repository's config and push to its origin. Config variables
+ * (`GIT_CONFIG_*`, `GIT_CONFIG_PARAMETERS`) are not on the list: the cage session push guard injects
+ * `core.hooksPath` through them (ADR-0048 decision 5).
+ */
+export const GIT_REPO_LOCATION_ENV = [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_COMMON_DIR",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  "GIT_NAMESPACE",
+] as const;
+
+/** Copy of `env` without {@link GIT_REPO_LOCATION_ENV}, so git in a child finds its repository from its cwd. */
+export function withoutGitRepoEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const copy: NodeJS.ProcessEnv = { ...env };
+  for (const key of GIT_REPO_LOCATION_ENV) delete copy[key];
+  return copy;
+}
+
+/**
+ * Copy of the process env for a git child. The repository-location variables are removed from the
  * copy only (never from `process.env`) so `git -C <root>` is authoritative and cannot resolve
  * into a parent repository.
  */
 export function gitChildEnv(extra?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra };
-  delete env.GIT_DIR;
-  delete env.GIT_WORK_TREE;
-  return env;
+  return withoutGitRepoEnv({ ...process.env, GIT_OPTIONAL_LOCKS: "0", ...extra });
 }
 
 export interface GitRunOptions {

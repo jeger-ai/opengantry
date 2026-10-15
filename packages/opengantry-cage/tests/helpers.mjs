@@ -2,8 +2,23 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
+import process from "node:process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+// Same list as GIT_REPO_LOCATION_ENV in src/cli/lib/git/git.ts (MSN-0266): these tests run git in temp repos, and an
+// inherited GIT_DIR (set by git for hooks in a linked worktree) would point that git at the real repository.
+for (const key of [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_COMMON_DIR",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  "GIT_NAMESPACE",
+]) {
+  delete process.env[key];
+}
 
 export const pkgDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const npm = process.platform === "win32" ? "npm.cmd" : "npm";
