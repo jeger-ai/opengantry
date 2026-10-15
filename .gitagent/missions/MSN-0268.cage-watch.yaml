@@ -46,32 +46,32 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0268 at b5d4982: gantry cage watch [--decision-timeout <seconds>] [--watch-interval-ms <n>] [--max-file-bytes <n>] [--no-notify] [--json] runs in the foreground until Ctrl-C/SIGINT/SIGTERM/SIGHUP, default decision timeout 20 s, rules and baseline from buildCagePlan and takeCageSnapshot as the session cage; exit 2 for GXT_CAGE_WATCH_NO_TTY (CLI with piped stdin), GXT_CAGE_SESSION_ACTIVE (live journal) and invalid rules or caps; gantry cage -- watch runs a command named watch; no slim-bin subcommand"
-    anchor: "1334"
+    trace_quote: "DoD 1 MSN-0268 re-attested at 0d3465b after the review fixes: gantry cage watch options, defaults and exit-2 refusals as attested at b5d4982; runCageWatch now sets raw mode inside its try block, so a terminal that cannot be set up leaves no signal handlers and no journal"
+    anchor: "1341"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0268 at b5d4982: CageDecisionEngine queues each revert-rule change with bell, desktopNotify (path, rule and kind; osascript text passed as argv) and a terminal prompt; a and r are read only from the watch stdin in raw mode; accept re-baselines and calls journal.replaceBaseline only while the sha256 equals the one prompted, else re-prompts; reject and timeout restore; a rewrite keeps the deadline; the third rejection marks the path contested and later changes are auto_restored; lockfiles logged as reported without a prompt"
-    anchor: "1335"
+    trace_quote: "DoD 2 MSN-0268 re-attested at 0d3465b: decision rules as attested at b5d4982; a restore that fails is reported as could not restore with its error code, is not counted toward the rejection limit, never marks a path contested, and is asked again on the next tick"
+    anchor: "1342"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0268 at b5d4982: stop() rejects pending decisions and restores leftovers as restored_at_exit; exit 3 when any decision is not accepted, else 0; session log events detected, accepted, rejected, timed_out, auto_restored, contested, reported without file bodies; --json emits gantry.cage-watch.v1; a kill -9 on watch leaves a journal whose recovery restores the last accepted state with orphansKilled []"
-    anchor: "1336"
+    trace_quote: "DoD 3 MSN-0268 re-attested at 0d3465b: shutdown, exit codes, session log and kill -9 recovery as attested at b5d4982; gantry.cage-watch.v1 decisions gain error_code (null unless the restore failed) and the summary counts failed restores separately"
+    anchor: "1343"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0268 at b5d4982: src/cli/tests/cage-watch-decisions.test.ts 9 tests pass (accept, reject, timeout with a rewrite that keeps the deadline, hash-bound accept, deletion accept and lockfile without prompt, third rejection auto-restore, shutdown, runner with raw mode and Ctrl-C and digest-only report, no-TTY and active-session refusal incl. CLI exit 2, kill -9 recovery); all cage suites 64 pass 64 before the commit; npm run test:cage pass 10 fail 0; a real pty run via script restored on r, kept on a and exited 3"
-    anchor: "1337"
+    trace_quote: "DoD 4 MSN-0268 re-attested at 0d3465b: src/cli/tests/cage-watch-decisions.test.ts 11 tests pass, the 9 attested at b5d4982 plus a failed restore in a read-only directory and a raw-mode setup failure; all cage suites 66 pass 66; npm run test:cage pass 10 fail 0"
+    anchor: "1344"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0268 at b5d4982: ADR-0050 amended (title, match_terms, decisions 7-10): watch as the second primary form; terminal-only answers, hash-bound accept, 20 s auto-reject, three-rejection rule; limits incl. live change while pending, no halt and no push guard, reads not seen, a same-user process can stop the watch, tmux or screen send-keys can inject keystrokes; ADR-0048 unchanged"
-    anchor: "1338"
+    trace_quote: "DoD 5 MSN-0268 re-attested at 0d3465b: ADR-0050 amendment unchanged since b5d4982; ADR-0048 unchanged"
+    anchor: "1345"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0268 at b5d4982: README cage section adds While you work: gantry cage watch; ADOPTION step zero adds the local watch next to the CI check; FEATURES adds the Watch files while you work section and How entries; packages/opengantry-cage/README.md points to gantry cage watch in the full package; CHANGELOG Unreleased row and an upgrade note"
-    anchor: "1339"
+    trace_quote: "DoD 6 MSN-0268 re-attested at 0d3465b: README, docs/ADOPTION.md, docs/FEATURES.md, packages/opengantry-cage/README.md and docs/CHANGELOG.md unchanged since b5d4982"
+    anchor: "1346"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0268 at b5d4982: ./scripts/dev-validate-core.sh: tests 917 pass 917 fail 0; check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1340"
+    trace_quote: "DoD 7 MSN-0268 re-attested at 0d3465b: ./scripts/dev-validate-core.sh: tests 919 pass 919 fail 0; check-changed-code OK; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1347"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
