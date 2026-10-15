@@ -44,33 +44,33 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh && node scripts/assert-docs-structure.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0274 at c9fd475: docs/MANIFESTO.md replaces The Two-Role Software Factory with Who owns which law: a table of the five levels Enterprise, System, Application, Module and Execution with owner, what each decides and its artifact (org policy floor, org policy banned imports and manifest constraints, target architecture perimeters, manifest skill entries, mission intent and contract or .cage.yaml); lower levels narrow and never widen; business work stays in the product tool and enters only as mission intent and gate command, with no second business signature; Planner, Executor and Verifier stay steps of a mission; one person may hold several roles, business and technical ownership usually differ"
+    anchor: "1410"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0274 at c9fd475: The adoption ladder table names Cage, Verify and Plane with what each protects, who it is for and what happens on a breach (cage: pull request check fails, watch asks, caged session restores and stops a repeat rewriter; verify: work does not land, structured findings to retry on; plane: local rules raised to the floor, tampered or unsigned policy fails closed, ledger records each run), each linking its published page; the cage stops a tampering agent while iterative feedback belongs to verify; the steps are not labelled Tier 1/2/3"
+    anchor: "1411"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0274 at c9fd475: Floors that never move lists seven floors: decisions are deterministic, invalid law fails closed, built-in protections are a floor, lower levels only tighten, law is written outside the agent loop, the executor never verifies itself (every pass cites executor log evidence), and the plane sees digests, not code"
+    anchor: "1412"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0274 at c9fd475: the bottleneck, referee and crucible sections stay; the referee names the rules OpenGantry checks (edit scope, forbidden zones, import layers, content patterns, the gate command) instead of AST proofs, as concepts/perimeters.md states it is not a full-repository AST scanner; the crucible is marked as direction, its step 3 is verify (Referee) rather than the cage, and mathematically proven claims are gone; every named mechanism links a published page (299 relative links checked)"
+    anchor: "1413"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "5"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0274 at c9fd475: frontmatter kept (title, a 150-character description, section about, order 1); 1133 words; no MSN- ids on the page; ADR-0049, ADR-0048, ADR-0042 and ADR-0034 only on the trailing Design notes line as GitHub links; assert-docs-structure OK (52 pages, 38 published, 299 relative links checked)"
+    anchor: "1414"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "6"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0274 at c9fd475: README.md docs table Manifesto row reads Why: the post-PR software factory, who owns which law, and the ladder from cage to verify to the org plane; README links resolve (assert-docs-structure checks README.md)"
+    anchor: "1415"
+    status: PASS
   - dod_id: "7"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "7"
-    status: PENDING
+    trace_quote: "DoD 7 MSN-0274 at c9fd475: ./scripts/dev-validate-core.sh && node scripts/assert-docs-structure.mjs exit 0: tests 922 pass 922 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; assert-docs-structure OK"
+    anchor: "1416"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 2121e0ae69d9
