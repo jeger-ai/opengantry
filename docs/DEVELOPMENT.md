@@ -284,6 +284,8 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 | `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); or valid `gxt-bypass` note; or repository `trusted_automation` policy (`gxt-manifest-lib.mjs eval-commit`) |
 | `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gantry verify` on each mission file in triple-dot diff; fails if protected paths change without a mission file unless `trusted_automation` policy passes (`eval-range`). Installs the iii integration example's dependencies first when `examples/iii-integration/package-lock.json` exists, as does `gxt-attest-ingest.yml`, so mission gates that run its offline validator work (MSN-0263) |
 
+Pull requests and pushes to `main` also run [`.github/workflows/cage-macos.yml`](../.github/workflows/cage-macos.yml): the job `cage (macos-latest)` runs every cage suite and the slim `@jeger-ai/opengantry-cage` tests on macOS, because the cage's users mostly run it there and every other job runs on Ubuntu (MSN-0265). It has no path filter so it reports on every PR; make it a required status check on `main`. It is repository-only and not shipped by `gantry init` or `upgrade`.
+
 Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` + MSN vs `origin/main`). Run it before you open a PR.
 
 `gantry init` ships [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) when CI is enabled. Existing installs: run `gantry upgrade apply` or re-init managed CI assets.

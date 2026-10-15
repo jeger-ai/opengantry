@@ -13,6 +13,8 @@ While the session runs, the cage checks about once a second and restores changes
 
 This is the same `gantry cage` that ships in [`@jeger-ai/opengantry`](https://www.npmjs.com/package/@jeger-ai/opengantry), built from the same sources as a slim standalone package: no native modules, no install scripts, `commander` is the only runtime dependency. Use the full package for missions, `gantry verify`, MCP and everything else.
 
+Platforms: Linux and macOS, both tested in CI. Windows is not supported yet: there the cage cannot reliably stop every process the agent started.
+
 Options: `--json`, `--report-only`, `--no-watch`, `--watch-interval-ms <n>`, `--max-file-bytes <n>`, `--contest-limit <n>`, `--allow-override <path>`. `cage suggest` (proposing `.cage.yaml` rules) lives in the full package: `npx -p @jeger-ai/opengantry gantry cage suggest --write`.
 
 Docs: [FEATURES § Zero-config cage](https://github.com/jeger-ai/opengantry/blob/main/docs/FEATURES.md#zero-config-cage-gantry-cage) · [ADOPTION § Step zero](https://github.com/jeger-ai/opengantry/blob/main/docs/ADOPTION.md#step-zero-cage-an-agent-you-already-use) · trust model [ADR-0048](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md).
