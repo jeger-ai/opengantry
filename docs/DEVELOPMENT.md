@@ -211,7 +211,7 @@ Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and 
 
 ## Releasing
 
-A release is its own mission that bumps every version site (including `packages/opengantry-cage/package.json`) and turns the changelog's draft row into the release row (MSN-0246, MSN-0256). After it merges:
+A release is its own mission that bumps every version site (including `packages/opengantry-cage/package.json`) and turns the **Unreleased** entries into the release's: the list in `docs/reference/release-notes.md` and the upgrade notes in `docs/CHANGELOG.md` (MSN-0246, MSN-0256; release highlights moved to the release notes in MSN-0270). After it merges:
 
 ```bash
 git tag -a v<version> <merge-commit> -m "OpenGantry v<version>"

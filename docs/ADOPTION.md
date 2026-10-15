@@ -1,305 +1,37 @@
-# Adoption runbook
-
-Product home: [https://opengantry.ai](https://opengantry.ai) · All docs: [`index.md`](index.md)
-
-This runbook is the operational path for adopters using `gantry` locally. Product positioning and use cases: [README](../README.md) · [`USE-CASES.md`](USE-CASES.md).
-
-**Open Source Gantry** is **vendor-neutral**, **local-first**, **git-native** — the **`gantry` CLI** plus Git hooks and `gantry verify` over mission YAML (scope + `gate_command`). Execution never requires a hosted agent dashboard; optional future **metadata hub** integrations consume **digest-only attestation receipts** (`gantry attest`, `gantry verify --receipt`) — see [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
-
-**First mission practice:** [`KATA.md`](KATA.md) (~15 min, headless-friendly).
-
-## Enterprise control plane (optional, v3.3.0)
-
-Git-native org floor, ledger, and cross-repo gates. The spoke still enforces; nothing here requires a hub.
-
-```bash
-# 1. Pin a signed org policy repo (network). Doctor/verify stay offline after this.
-gantry policy pull
-gantry policy status --json
-gantry policy diff
-
-# 2. Enable the compliance ledger in .gitagent/config.json
-#    { "ledger": { "mode": "local", "signature": "warn" } }
-gantry ledger verify --json
-gantry ledger export --format soc2-pack --out .gitagent/history/ledger-export
-
-# 3. Cross-repo gates — fetch foreign refs/gxt/ledger before verify
-gantry deps fetch --mission .gitagent/missions/MSN-0042.yaml
-gantry deps check --mission .gitagent/missions/MSN-0042.yaml --json
-gantry release check --tag v3.2.6
-```
-
-Do not commit a filled `POLICY.pointer.json` until `gantry policy pull` has populated `.gitagent/history/policy/` (gitignored). An unpinned or drifted pointer fails verify closed. See [FEATURES](FEATURES.md) and [COMPLIANCE-ISO](COMPLIANCE-ISO.md).
-
-See also: [`FEATURES.md`](FEATURES.md) · [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) · [`CHANGELOG.md`](CHANGELOG.md) (release history).
-
-## First run (onboarding)
-
-### Step zero: check your agents' commits
-
-Before adopting missions, add one CI step that checks what any agent committed. Nothing changes about how you start your agents, and it covers the ones you cannot wrap (IDE, desktop and cloud agents):
-
-```yaml
-# .github/workflows/cage-check.yml
-on: pull_request
-jobs:
-  cage-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }   # the base commit must be present
-      - uses: actions/setup-node@v4
-        with: { node-version: 24 }
-      - run: npx -y -p @jeger-ai/opengantry gantry cage check --base ${{ github.event.pull_request.base.sha }}
-```
-
-Locally, before you push: `npx -p @jeger-ai/opengantry gantry cage check --base origin/main`.
-
-`gantry cage check` fails with exit `3` when a commit in the range changes CI configs, `.env` / `.env.*`, a committed `core.hooksPath`, your manifest `forbidden_zones` or your `.cage.yaml` entries; lockfile changes are listed without failing it. It reads the rules from the base commit, so a branch cannot loosen them, and it checks every commit, so a secret committed and removed again still fails. Files that never reach a commit, such as a gitignored `.env` or `.git/hooks`, are outside its view ([`FEATURES.md`](FEATURES.md#zero-config-cage-gantry-cage), [ADR-0050](../.gitagent/out-of-scope/ADR-0050-cage-diff-check.md)). A legitimate change to a protected path fails it too: review it and merge. Whether to make the check a required status is your branch-protection choice.
-
-To cover your own sensitive paths too, run `gantry cage suggest --write` yourself, review `.cage.yaml.suggested`, keep what you want as `.cage.yaml` and commit it. The file can only add protection ([ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md)), and its additions apply to the changes after it is merged.
-
-For agents your scripts start non-interactively, the session cage restores protected files while they run: `npx @jeger-ai/opengantry-cage -- <agent command>` (slim standalone package: `commander` is its only runtime dependency, no native modules, no install scripts). It restores rather than blocks.
-
-When you want scope enforced on every write, plus Planner-signed missions and `gantry verify` in CI, continue with the steps below.
-
-
-Install **gantry** (Node.js 24+):
-
-```bash
-npm install -g @jeger-ai/opengantry
-# or: npx @jeger-ai/opengantry <cmd>
-```
-
-```bash
-gantry init --tutorial   # guided graph after scaffold (~3 min)
-# or:
-gantry init
-gantry onboarding      # same strict checks as production
-gantry planner set "$(git config user.email)"
-gantry doctor
-gantry pin .gitagent/missions/example.verify.yaml   # optional; enables verify/scan without --mission
-gantry verify                                       # uses pin when set
-```
-
-## Standard change graph (review → run → audit)
-
-```bash
-# 1. Human reviews mission BEFORE executor (Planner commit required)
-gantry start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
-# Planner: review YAML scope/gates, then:
-git add .gitagent/missions/MSN-0001.<slug>.yaml
-git commit -m "[MSN-0001] legislate mission"
-
-# 2. Pin + executor env (pin optional but recommended for day-one DX)
-gantry pin .gitagent/missions/MSN-0001.<slug>.yaml
-eval "$(gantry runtime env)"
-
-# 3. Audit evidence: verify + grep
-gantry verify --fix
-gantry verify --json | jq -r '.error_code // "passed"'
-git log --grep='MSN-0001' --oneline
-gantry status --json --verbose
-```
-
-Legacy equivalent: `gantry legislate "<intent>" --msn MSN-0001 --skill-key ui --gate-command "npm test"`.
-
-`gantry init` composes per-tool recipes into `docs/INTEGRATIONS.md`. Non-interactive: `gantry init --yes` or `gantry init --ides cursor,claude-code --no-ci`.
-
-Wire your IDE agent: [`INTEGRATIONS.md`](INTEGRATIONS.md).
-
-## Regulated teams (ISO 27001 / ISO 42001)
-
-If auditors ask how AI-assisted coding fits your ISMS or AI management system, see [`COMPLIANCE-ISO.md`](COMPLIANCE-ISO.md) for control-to-artifact mapping (SOD, change authorization, trace evidence, enforcement tiers). OpenGantry does not grant certification — it produces the operational records assessors typically request.
-
-## Prevent unreviewed edits
-
-**Gantry Git hook** enforcement (`.githooks/pre-commit`, `.githooks/pre-push`, IDE `beforeShellExecution`) complements the **Gantry CLI** — hard boundaries live in hooks, `gantry verify`, and `runtime exec`, not in a vendor cloud console.
-
-- **Planner-approved mission commit:** among recent commits, the newest `[MSN-XXXX]` from an allowlisted Planner email must **modify** the mission file passed to `--mission`.
-- **Pre-push handoff:** `gantry verify --pre-push` lets legislative stubs push for remote agent handoff; **full verify** (gate + trace) is still required before merge.
-- **IDE writes are advisory:** rules and `AGENTS.md` guide agents; hooks + `gantry runtime exec` enforce hard boundaries.
-
-## Audit evidence cheatsheet
-
-```bash
-git log --grep='MSN-' --oneline
-# Mission file: .gitagent/missions/<MSN>.<slug>.yaml
-# Executor trace: repo-root EXECUTOR_LOG.md (verifier cites verbatim quotes)
-gantry verify --mission .gitagent/missions/<file>.yaml
-```
-
-PR CI (this specimen): commits touching `.gitagent/`, `EXECUTOR_LOG.md`, hooks, or `gxt-validate.yml` need `[MSN-NNNN]` subjects **unless** the change satisfies a repository-declared **`trusted_automation`** rule in [`.gitagent/config.json`](../.gitagent/config.json) (fail-closed when absent).
-
-### Trusted automation policy
-
-Low-risk ecosystem bot maintenance can bypass manual mission authoring when **all** constraints in a committed policy rule pass. Each rule declares **exactly one** `allowed_structural_changes` kind (mixing kinds on a single rule is rejected at config load).
-
-| Constraint | Meaning |
-|------------|---------|
-| `allowed_actors` | Commit author email (`git log -1 --format=%ae`) must match an entry you legislated — no hardcoded vendor strings in the engine |
-| `allowed_paths` | Every MSN-enforced changed file must match a glob in the rule |
-| `allowed_structural_changes` | Structural kind — see table below (one kind per rule) |
-| `max_net_loc` | Total diff churn (additions + deletions) per evaluation; must be ≤ the hard cap for that kind |
-
-| Kind | Use case | Hard `max_net_loc` cap | Structural checks |
-|------|----------|------------------------|-------------------|
-| `workflow_version_pin` | Dependabot workflow `uses:` version bumps | **5** | YAML structure unchanged; only existing `uses:` version segments may differ |
-| `bounded_content` | Security autofix bots (code scanning, Snyk, similar) | **100** | Content changes allowed inside `allowed_paths`; engine **hard-rejects** any touch under `.gitagent/**` or MANIFEST `perimeter_protected` even if listed in `allowed_paths` |
-
-Example — workflow pins (this specimen repo):
-
-```json
-{
-  "trusted_automation": {
-    "rules": [
-      {
-        "id": "workflow-dependency-bumps",
-        "allowed_actors": ["dependabot[bot]@users.noreply.github.com"],
-        "allowed_paths": [".github/workflows/**"],
-        "allowed_structural_changes": ["workflow_version_pin"],
-        "max_net_loc": 5
-      }
-    ]
-  }
-}
-```
-
-#### Ecosystem autofix bots
-
-GitHub code scanning agentic autofix, Copilot SWE agent, Snyk fix PRs, and similar tools commit application-source changes without a `[MSN-NNNN]` subject. To let those PRs pass MSN CI **without** break-glass, add a separate `bounded_content` rule — opt-in per repository:
-
-```json
-{
-  "id": "security-autofix-bots",
-  "allowed_actors": [
-    "223556219+Copilot@users.noreply.github.com",
-    "snyk-bot@snyk.io"
-  ],
-  "allowed_paths": ["src/**", "package.json", "package-lock.json"],
-  "allowed_structural_changes": ["bounded_content"],
-  "max_net_loc": 80
-}
-```
-
-**Actor discovery:** when CI fails MSN check on a bot PR, inspect the commit author on the failing commit (`git log -1 --format=%ae <sha>`) and add that exact email to `allowed_actors`. GitHub noreply formats vary by account; Snyk private-repo fix PRs may be opened on behalf of a human collaborator — those commits will **not** match `snyk-bot@snyk.io` unless you configure Snyk’s fixed GitHub account or add the collaborator email explicitly.
-
-**Not for break-glass:** routine autofixes belong in `trusted_automation`. Reserve [`gantry verify --break-glass`](SECURITY.md) for production emergencies only (secret-gated, Planner post-incident review).
-
-Evaluation is **git-derived only** (`gxt-manifest-lib.mjs eval-commit` / `eval-range`) — not CI environment variables. Missing or invalid config → full MSN/mission workflow remains enforced.
-
-## Role-based CLI output
-
-```bash
-gantry --audience executor start "…"      # constraint-forward next steps
-gantry --audience planner verify …      # copyable git / mission hints
-gantry --audience verifier verify …     # silence unless [GXT_*] errors (CI)
-export GXT_AUDIENCE=verifier            # same as global --audience
-```
-
-## Verify troubleshooting
-
-`gantry verify` **auto-resolves formatter line drift** in `EXECUTOR_LOG.md`. Use `--strict-trace` only when you need exact line numbers. Pre-push: `gantry verify --pre-push` for legislative stub handoff.
-
-### Stale trace evidence
-
-After gate + trace quote mapping, full verify binds each **committed** PASS quote line in `EXECUTOR_LOG.md` to the mission skill's full `tmvc_roots`:
-
-1. Resolve the quote line (numeric anchor, fuzzy drift, or freeform anchor + quote).
-2. `git blame --porcelain` on that line → attestation commit (skip when blame is all-zeros — uncommitted line; trace and code co-evolve in the working tree).
-3. `git diff --name-only <attestationCommit> -- <tmvc_roots…>` vs working tree — any path listed → **`Trace STALE`** (`GXT_TRACE_STALE`).
-
-Re-run the gate, append a fresh unique trace line to `EXECUTOR_LOG.md`, update mission `trace_quote`, commit, and verify again. After interactive rebase/squash, historical attestation may be invalidated — expect to refresh traces.
-
-**Formatter guard (recommended):** Add `EXECUTOR_LOG.md` to `.prettierignore` (Prettier) or an equivalent ignore for your formatter (Biome `files.ignore`, ESLint ignore, editor format-on-save exclude). Numeric anchors and stale-evidence `git blame` bind to **committed line numbers**; auto-formatting the log causes avoidable drift (`verify` can fuzzy-resolve, but prevention is cheaper). `gantry init` and `gantry upgrade apply` merge this entry automatically; existing repos should add it once manually or re-run upgrade.
-
-Migration escape hatch: `gantry verify --skip-stale-evidence` (also `skip_stale_evidence` on MCP `gxt_verify`). Do not hash working-tree files in Node for this check — Git's diff engine handles CRLF and `.gitattributes` correctly on all platforms.
-
-### MCP verify envelope
-
-`gxt_verify` / `handleVerify` returns a flat **`VerifyResultPayload`** — same shape as `gantry verify --json`:
-
-- Success: `{ "status": "passed", "phase": "full" | "pre_push_stub" | "break_glass", "exit_code": 0, … }`
-- Failure: `{ "status": "failed", "phase": "<phase>", "error_code": "GXT_*", "fix_hints": [], "next_actions": [], "exit_code": N, … }`
-
-Init and parse failures use **`status: "failed"`, `phase: "init"`** — not legacy `{ "status": "error" }`. Other MCP tools (`gxt_runtime_env`, `gxt_runtime_exec`) still use `{ "status": "error" }` until a future unification.
-
-`gantry verify --json` and `--fix` are mutually exclusive; combining them returns **`GXT_INVALID_ARGUMENT`** (`exit_code: 2`).
-
-## Enforcement boundary
-
-**IDE Agent Write/Edit is advisory TMVC; hard boundaries live in `runtime exec`, `gantry verify`, and hooks.**
-
-| Tier | Mechanism | Enterprise control |
-|------|-----------|-------------------|
-| **Process-boundary** | `gantry runtime exec` | Forbidden-zone scan + subprocess TMVC envelope |
-| **Deterministic hook** | Cursor `beforeShellExecution`, pre-push verify | Governance path writes require mission + verify |
-| **Advisory** | IDE rules, `AGENTS.md`, sessionStart context | IDE suggestions alone do not count as approval |
-
-Per-tool closed-graph recipes: [`INTEGRATIONS.md`](INTEGRATIONS.md).
-
-## Hooks (fast, scoped)
-
-```bash
-git config core.hooksPath .githooks
-```
-
-- **post-checkout:** creates `EXECUTOR_LOG.md` on feature branches when missing.
-- **pre-commit:** `gantry tmvc guard` — advisory TMVC path warnings for staged files (stderr; exit 0). Skips when no pinned mission. Set `GXT_TMVC_GUARD_STRICT=1` or pass `--strict` to block.
-- **pre-push:** `gantry verify --pre-push` for mission files changed on branch — ensures Planner review before remote handoff; full gate+trace still required to merge.
-
-Record out-of-TMVC expansion before editing: `gantry context-request --path <p…> --reason <text>` (optional `--stage-worker-log`).
-
-## Break-glass (emergency only)
-
-Emergency bypass for verify when production is down — **not** a substitute for mission review. Authorization requires `GXT_BYPASS_SECRET` matching `.gitagent/foreman/BYPASS.sha256` (never commit the plaintext secret). Audit trail: `refs/notes/gxt-bypass` or `--audit-commit`.
-
-### Technical setup
-
-```bash
-printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/foreman/BYPASS.sha256
-export GXT_BYPASS_SECRET='your-team-secret'
-gantry verify --break-glass --reason "Production auth down: hotfix session cookie" \
-  --mission .gitagent/missions/MSN-0001.<slug>.yaml
-git push origin refs/notes/gxt-bypass
-```
-
-`gantry doctor` tests whether `GXT_BYPASS_SECRET` matches the anchor when set.
-
-**Substrate version drift:** `gantry doctor` compares on-disk `.gitagent/foreman/SUBSTRATE.version.json` to the `opengantry_version` bundled with your installed gantry (same source as `gantry upgrade`). When behind, doctor emits a **warn** (exit 0) and suggests `gantry upgrade` after updating the npm package. Warnings do not fail gates that only check exit code.
-
-## Agent errors (machine vs human)
-
-On `runtime exec` failure, a one-line human summary goes to stdout; full JSON goes to stderr and `.gitagent/history/.ignored-last-error.json`. Orchestrators read `GXT_LAST_ERROR_FILE` from `gantry runtime env`.
-
-## Metrics
-
-```bash
-gantry metrics
-gantry metrics --json --ref main
-```
-
-Git-native only (single streamed `git log` pass). Counters are not the compliance ledger — that lives on `refs/gxt/ledger` when `ledger.mode` is `local`.
-
-**Routing proxy caveat:** `legislative_commits` vs `worker_trace_commits` are path-touch heuristics, not historical `gantry triage` replay. JSON exposes this explicitly via `gxt_extension_metadata` (see below).
-
-### Metrics JSON envelope
-
-`gantry metrics --json` includes a namespaced extension block so strict top-level parsers that only read primitive counters remain compatible:
-
-```json
-{
-  "legislative_commits": 12,
-  "worker_trace_commits": 4,
-  "gxt_extension_metadata": {
-    "classification_mode": "PATH_TOUCH_PROXY",
-    "schema_version": 1
-  }
-}
-```
-
-**Classification rules (PATH_TOUCH_PROXY):**
-
-- `legislative_commits`: commit touches `.gitagent/missions/*` with `MSN-NNNN` in the filename, subject starts with `[MSN-NNNN]`, author is in `GANTRY_PLANNER_EMAILS` (non-empty allowlist entries only).
-- `worker_trace_commits`: commit touches `EXECUTOR_LOG.md` and does **not** qualify as legislative (mutually exclusive; dual-touch legislative commits never increment worker-trace).
-- Human stdout labels `(proxy)` on the counters; JSON uses `gxt_extension_metadata.classification_mode` instead of suffixing field names.
+---
+title: "Adoption runbook (moved)"
+description: "Moved. Install, first mission, cage, CI, control plane and troubleshooting pages."
+publish: false
+moved_to:
+  - cage/index.md
+  - start/install.md
+  - start/first-mission.md
+  - guides/org-control-plane.md
+  - guides/regulated-teams.md
+  - concepts/enforcement-boundary.md
+  - concepts/verify.md
+  - concepts/trace-evidence.md
+  - guides/troubleshooting.md
+  - guides/agent-graphs.md
+  - reference/break-glass.md
+  - reference/metrics-and-report.md
+---
+
+# Adoption runbook (moved)
+
+This page was split into the cage, start, guides, concepts and reference sections.
+
+| Former section | Now |
+|----------------|-----|
+| <a id="step-zero-check-your-agents-commits"></a><a id="step-zero-cage-an-agent-you-already-use"></a>Step zero (cage check; the session cage) | [cage/index.md](cage/index.md) |
+| <a id="adoption-runbook"></a><a id="first-run-onboarding"></a><a id="hooks-fast-scoped"></a>First run, onboarding | [start/install.md](start/install.md) |
+| <a id="standard-change-graph-review--run--audit"></a><a id="audit-evidence-cheatsheet"></a>Standard change graph, audit cheatsheet | [start/first-mission.md](start/first-mission.md) |
+| <a id="enterprise-control-plane-optional-v330"></a>Enterprise control plane | [guides/org-control-plane.md](guides/org-control-plane.md) |
+| <a id="regulated-teams-iso-27001--iso-42001"></a>Regulated teams | [guides/regulated-teams.md](guides/regulated-teams.md) |
+| <a id="prevent-unreviewed-edits"></a><a id="enforcement-boundary"></a><a id="trusted-automation-policy"></a><a id="ecosystem-autofix-bots"></a>Prevent unreviewed edits, enforcement boundary, trusted automation, autofix bots | [concepts/enforcement-boundary.md](concepts/enforcement-boundary.md) |
+| <a id="role-based-cli-output"></a>Role-based CLI output | [concepts/verify.md](concepts/verify.md) |
+| <a id="stale-trace-evidence"></a>Stale trace evidence | [concepts/trace-evidence.md](concepts/trace-evidence.md) |
+| <a id="verify-troubleshooting"></a><a id="mcp-verify-envelope"></a>Verify troubleshooting, MCP verify envelope | [guides/troubleshooting.md](guides/troubleshooting.md) |
+| <a id="agent-errors-machine-vs-human"></a>Agent errors | [guides/agent-graphs.md](guides/agent-graphs.md) |
+| <a id="break-glass-emergency-only"></a><a id="technical-setup"></a>Break-glass | [reference/break-glass.md](reference/break-glass.md) |
+| <a id="metrics"></a><a id="metrics-json-envelope"></a>Metrics | [reference/metrics-and-report.md](reference/metrics-and-report.md) |
