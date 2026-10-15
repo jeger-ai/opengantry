@@ -24,21 +24,21 @@ skill_key: iii-integration
 gate_command: node examples/iii-integration/scripts/validate-offline.mjs
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0262 at 96026fd: examples/iii-integration/package-lock.json refreshed by npm audit fix with in-range fixes only (package.json unchanged): proxy-addr 2.0.7 -> 2.0.8, hono 4.13.1 -> 4.13.13, ip-address 10.5.0 -> 10.7.4, qs 6.15.2 -> 6.16.1, brace-expansion 5.0.9 -> 5.0.12, two transitive patch bumps, and the file:../../ snapshot of @jeger-ai/opengantry 3.8.1 -> 3.8.3; npm audit there: found 0 vulnerabilities"
+    anchor: "1281"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "2"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0262 at 96026fd: workers/session-auth/package.json iii-sdk ^0.22.1 -> ^0.24.5 and package-lock.json refreshed (iii-sdk 0.24.5, @iii-dev/helpers 0.24.5, @opentelemetry/core 1.30.1 -> 2.12.0, @opentelemetry/propagator-jaeger no longer in the tree); npm audit there: found 0 vulnerabilities; the installed iii-sdk exports registerWorker as a function; the worker's npm test (tests/admission.test.mjs) 1 pass 0 fail"
+    anchor: "1282"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "3"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0262 at 96026fd: git diff --name-only origin/main..96026fd lists only examples/iii-integration/package-lock.json, examples/iii-integration/workers/session-auth/package.json, examples/iii-integration/workers/session-auth/package-lock.json and the mission file (EXECUTOR_LOG.md follows in the trace commit); no root package.json, package-lock.json, src/ or published-package change"
+    anchor: "1283"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "4"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0262 at 96026fd: node examples/iii-integration/scripts/validate-offline.mjs: validate-offline PASS: architecture self-test; [iii-integration: offline validate OK]"
+    anchor: "1284"
+    status: PASS
 gate_success_substring: offline validate OK
 interrogation:
   - finding_id: 1a4b88b71538
