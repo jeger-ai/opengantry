@@ -58,6 +58,8 @@
 #        seeded violation per rule (missing frontmatter, oversized page, nav line, MSN ref, stray ADR ref, broken
 #        anchor, cage page linking outside cage/ and start/, missing moved_to target) and passing on the tree.
 # DoD 8 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+# Amended by Planner stamp: declared_paths added (this mission file plus the contract roots) after verify reported
+#        GXT_INTERROGATION_PATH_DRIFT for the mission file; scope, gate, DoDs and contract unchanged.
 msn_id: MSN-0270
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
@@ -128,6 +130,18 @@ interrogation:
     adr_refs:
       - ADR-0045
 interrogation_sha256: 59c0f72abe2ea96fe88b1d5ce07a7c33960c939b9d8b20a92c6d16c7cae871be
+declared_paths:
+  - .gitagent/missions/MSN-0270.docs-overhaul-restructure-docs-into-cage-start-g.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/
+  - examples/benchmark-agent/README.md
+  - examples/content-governance/README.md
+  - examples/contrast-agent-script/README.md
+  - examples/gantry-minimal/README.md
+  - packages/opengantry-cage/README.md
+  - scripts/assert-docs-deterministic.sh
+  - scripts/assert-docs-structure.mjs
 contract:
   tmvc_roots:
     - EXECUTOR_LOG.md
