@@ -63,37 +63,37 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0270 at c94941b: docs/ holds index.md plus cage/ (index, check, session, protected-paths, cage-yaml, report, limits), start/ (how-it-works, install, first-mission), guides/ (agents, cursor, claude-code, codex, other-agents, ci, agent-graphs, content-domain, regulated-teams, org-control-plane, troubleshooting), concepts/ (missions, scope, perimeters, verify, trace-evidence, enforcement-boundary, when-to-adopt) and reference/ (mcp-tools, session-variables, metrics-and-report, break-glass, experimental, release-notes); against the legislated list it adds guides/agents (the steps every agent shares, so the per-tool guides do not repeat them) and cage/check plus cage/session (ADR-0050, merged in PR #218, makes cage check the primary form; report becomes Session report and exit codes); index.md is a two-entry landing (cage, OpenGantry) without When-to-read tables"
+    anchor: "1335"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0270 at c94941b: every docs/**/*.md outside archive/ has frontmatter (assert-docs-structure OK (51 pages, 37 published, 278 relative links checked)); MANIFESTO (section about) and SECURITY (section reference) stay published at their paths; DEVELOPMENT, ARCHITECTURE, ADR-EPHEMERAL-VIRTUALIZATION, CHANGELOG and STYLE are publish: false; release highlights moved from CHANGELOG to reference/release-notes.md, and the CHANGELOG Unreleased upgrade notes gain the docs-layout entry"
+    anchor: "1337"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0270 at c94941b: ADOPTION, FEATURES, INTEGRATIONS, KATA, DOMAINS, AGENT-GRAPH, CI, COMPLIANCE-ISO and USE-CASES are publish: false moved pages with moved_to and bodies of 8 to 19 lines; every former heading slug is an <a id> anchor in the mapping table, including FEATURES#zero-config-cage-gantry-cage and both ADOPTION#step-zero-cage-an-agent-you-already-use and ADOPTION#step-zero-check-your-agents-commits"
+    anchor: "1338"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0270 at c94941b: docs/STYLE.md states one page one job, at most 1,500 words excluding frontmatter and fenced code, no in-body navigation, no MSN ids on published pages, ADR ids only on a trailing Design notes line, cage pages linking only to cage/ plus one start/ link; it adds two link rules the site needs: relative links from published pages stay inside docs/, and published pages never link unpublished ones"
+    anchor: "1339"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0270 at c94941b: docs/cage restates cage behaviour from FEATURES, ADOPTION, the slim README, ADR-0048 and ADR-0050; all 12 GXT_CAGE_* codes and 11 flags named in docs/cage exist in src/cli/lib/cage, src/cli/program-cage.ts or gantry cage --help, cage check --help and cage suggest --help, and the defaults 1000 ms, 5 MiB, 64 MiB, 5000 files and contest limit 3 and the exit codes 2, 3 and 4 match the constants in src/cli/lib/cage; no rule, mode, cap, flag or exit code changed"
+    anchor: "1340"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0270 at c94941b: README.md is 113 lines (pitch, check-first cage quickstart, missions, install, a gantry CLI overview that restores the README.md#gantry-cli anchor, docs map); packages/opengantry-cage/README.md links the https://opengantry.ai/docs/cage/ pages instead of FEATURES and ADOPTION anchors; the benchmark-agent, content-governance, contrast-agent-script and gantry-minimal example READMEs link the new pages"
+    anchor: "1341"
+    status: PASS
   - dod_id: "7"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 7 MSN-0270 at c94941b: assert-docs-structure self-test OK (15 seeded rules fail, clean tree passes): frontmatter, description-length, section, section-folder, word-budget, nav-line, msn-ref, adr-ref, link-anchor, link-target, link-outside-docs, link-unpublished, cage-link, moved-target, moved-page each fail alone on a seeded tree; scripts/assert-docs-deterministic.sh runs the self-test and the tree check, and REQUIRED_DOCS lists the new layout"
+    anchor: "1342"
+    status: PASS
   - dod_id: "8"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 8 MSN-0270 at c94941b: ./scripts/dev-validate-core.sh: assert-docs-structure OK (51 pages, 37 published, 278 relative links checked); assert-docs-deterministic OK; tests 908 pass 908 fail 0; check-changed-code: no changed src/cli TypeScript files; MSN commit subjects OK (path-scoped: substrate + MANIFEST tmvc_roots); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1343"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 4367eadf9a61
