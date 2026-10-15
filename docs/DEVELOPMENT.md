@@ -1,3 +1,9 @@
+---
+title: "Developing OpenGantry"
+description: "Contributor guide for this repository: dogfood the full GXT stack with missions, hooks, gantry verify and npm run validate."
+publish: false
+---
+
 # Developing OpenGantry (dogfood the full stack)
 
 This repository **is** the GXT specimen. Contributors and agents MUST follow the same substrate, hooks, and `gantry` commands we ship to adopters — not a lighter internal process.
@@ -19,7 +25,7 @@ gantry doctor
 
 **Roadmap / open work:** [GitHub Issues](https://github.com/jeger-ai/opengantry/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog) · [Project board #2](https://github.com/orgs/jeger-ai/projects/2) · Historical backlog: [`docs/archive/BACKLOG.md`](archive/BACKLOG.md) · Release history: [`docs/CHANGELOG.md`](CHANGELOG.md)
 
-**Docs map:** [`docs/index.md`](index.md) · root [README § Documentation map](../README.md#documentation-map-start-here).
+**Docs map:** [`docs/index.md`](index.md) · writing rules for `docs/`: [`docs/STYLE.md`](STYLE.md).
 
 ## Law + routing (before you edit)
 

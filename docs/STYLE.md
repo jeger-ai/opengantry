@@ -57,6 +57,7 @@ Link inline where a sentence needs it. A page may end with one short sentence th
 - Published pages do not name missions (`MSN-NNNN`) outside code **(gate)**. Mission ids belong in commit history.
 - An ADR may be named only on one trailing line that starts with `Design notes:` **(gate)**, as a link to the ADR on GitHub.
 - Relative links from a published page stay inside `docs/` **(gate)**; link repository files outside `docs/` with a `https://github.com/jeger-ai/opengantry/...` URL, because the site renders only `docs/`.
+- A published page never links to an unpublished one, moved pages included **(gate)**: link the new page, or the GitHub URL of a repository doc such as `CHANGELOG.md`.
 - Every relative link and `#anchor` in `docs/`, `README.md`, `packages/opengantry-cage/README.md` and `examples/*/README.md` resolves **(gate)**. Anchors follow GitHub heading slugs.
 
 ## Cage pages stand alone

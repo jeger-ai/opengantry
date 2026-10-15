@@ -143,6 +143,9 @@ export function checkDocs(root) {
   };
   let published = 0;
   let linkCount = 0;
+  const unpublished = new Set(
+    docs.filter((f) => (parseFrontmatter(readFileSync(f, "utf8")).data ?? { publish: "false" }).publish === "false"),
+  );
 
   for (const file of docs) {
     const text = readFileSync(file, "utf8");
@@ -200,6 +203,10 @@ export function checkDocs(root) {
       const dest = p ? path.resolve(path.dirname(file), decodeURIComponent(p)) : file;
       if (isPublished && p && !dest.startsWith(docsDir + path.sep)) {
         fail("link-outside-docs", file, line, `relative link leaves docs/ (use a GitHub URL): ${target}`);
+        continue;
+      }
+      if (isPublished && p && unpublished.has(dest)) {
+        fail("link-unpublished", file, line, `published page links to an unpublished page (use its new page, or a GitHub URL): ${target}`);
         continue;
       }
       if (folder === "cage" && isPublished && p) {
@@ -270,6 +277,7 @@ const SEEDS = [
   ["link-anchor", { "docs/start/anchor.md": page("start", 2, "[x](install.md#missing)\n") }],
   ["link-target", { "docs/start/target.md": page("start", 2, "[x](nowhere.md)\n") }],
   ["link-outside-docs", { "docs/start/outside.md": page("start", 2, "[x](../../README.md)\n") }],
+  ["link-unpublished", { "docs/start/old.md": page("start", 2, "[x](../OLD.md)\n") }],
   ["cage-link", { "docs/cage/leak.md": page("cage", 3, "[x](../start/install.md) [y](../concepts/missions.md)\n"), "docs/concepts/missions.md": page("concepts", 1, "x\n") }],
   ["moved-target", { "docs/GONE.md": fm({ title: '"G"', description: '"G"', publish: "false", moved_to: ["start/missing.md"] }) + "x\n" }],
   ["moved-page", { "docs/LONG.md": fm({ title: '"L"', description: '"L"', publish: "false", moved_to: ["start/install.md"] }) + "line\n".repeat(MOVED_BODY_MAX_LINES + 1) }],

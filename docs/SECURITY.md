@@ -1,3 +1,10 @@
+---
+title: "Security policy"
+description: "Supported versions, what counts as a vulnerability, how to report one privately, and how OpenGantry keeps records and human oversight."
+section: reference
+order: 7
+---
+
 # Security Policy
 
 OpenGantry ships the **gantry** CLI and the **GXT substrate** (law, Foreman manifest, hooks, and integration templates). Security fixes are published from this repository and delivered through semver **gantry** releases; adopters apply substrate updates with `gantry upgrade` after updating their gantry dependency.
@@ -33,7 +40,7 @@ cat .gitagent/foreman/SUBSTRATE.version.json   # after gantry init / upgrade
 
 - Security of **application code** in repositories that ran `gantry init` (your product, dependencies, and deployment are your responsibility).
 - Misconfiguration (empty Planner allowlist, disabled hooks, committed secrets) unless gantry documents unsafe defaults.
-- IDE or agent products themselves; integration recipes point to upstream docs ([`INTEGRATIONS.md`](INTEGRATIONS.md)).
+- IDE or agent products themselves; integration recipes point to upstream docs ([Wire any agent](guides/agents.md)).
 
 ## Reporting a vulnerability
 
@@ -49,7 +56,7 @@ We aim to acknowledge reports within **5 business days** and to coordinate discl
 ## Upgrading for security fixes
 
 1. Update gantry to the latest **3.x** (e.g. `npm install @jeger-ai/opengantry@latest` or rebuild from an updated clone of this repo).
-2. Run `gantry upgrade plan`, review `.gitagent/.upgrade-tmp/`, Planner-commit the upgrade mission, then `gantry upgrade apply --mission …`.
+2. Preview with `gantry upgrade plan`, stage the upgrade and review `.gitagent/.upgrade-tmp/`, Planner-commit the upgrade mission, then run `gantry upgrade apply --mission …` ([Install § Upgrade the substrate](start/install.md#upgrade-the-substrate)).
 3. Run `gantry doctor` and your usual `gantry verify` / CI checks.
 
 ## Hybrid hub and spoke boundary
@@ -64,7 +71,6 @@ OpenGantry separates **local execution** (CLI, cages, verify) from an optional f
 - **Hub role:** consumer / aggregator / reporter (dashboards, hash→human resolve, advisory status checks, PDF). SaaS/webhook backends belong in a separate Hub repo, not this CLI.
 - **Never via GXT export:** source trees, gate stdout bodies, credentials, draft-token keys, or bypass secrets.
 
-See [ADR-0034](../.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
 
 ## Automatic record-keeping and human oversight
 
@@ -119,12 +125,12 @@ When a production hotfix cannot wait for full git-proof + trace mapping:
 2. Set `GXT_BYPASS_SECRET` in the execution environment.
 3. Run `gantry verify --break-glass --reason "<incident description>" --mission <path>` (optional `--audit-commit` if git notes cannot be pushed).
 4. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
-5. Planner reviews bypass usage post-incident (RULES.md §6.2, ADR-0021).
+5. Planner reviews bypass usage post-incident ([Break-glass](reference/break-glass.md)).
 
-**Routine bot autofixes** (GitHub code scanning, Snyk, Dependabot source fixes) are **not** break-glass cases — configure [`trusted_automation`](ADOPTION.md) in `.gitagent/config.json` instead (`bounded_content` or `workflow_version_pin`).
-
-See [`ADOPTION.md`](ADOPTION.md).
+**Routine bot autofixes** (GitHub code scanning, Snyk, Dependabot source fixes) are **not** break-glass cases — configure [`trusted_automation`](concepts/enforcement-boundary.md#trusted-automation) in `.gitagent/config.json` instead (`bounded_content` or `workflow_version_pin`).
 
 ## Acknowledgments
 
 We credit reporters who agree to be named when we publish advisories.
+
+Design notes: [ADR-0021 break-glass protocol](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0021-break-glass-protocol.md), [ADR-0034 hub and spoke](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).

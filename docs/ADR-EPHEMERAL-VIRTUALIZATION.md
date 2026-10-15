@@ -1,3 +1,9 @@
+---
+title: "ADR: Ephemeral state virtualization"
+description: "Design record for the opt-in .gitagent/virtual/ scratch area used by KPI and file-matching gates."
+publish: false
+---
+
 # ADR: Ephemeral State Virtualization
 
 **Status:** Accepted  
