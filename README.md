@@ -115,7 +115,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | [Guides](docs/guides/agents.md) | Agents, CI, content, regulated teams, org control plane, troubleshooting |
 | [Concepts](docs/concepts/missions.md) | Missions, scope, perimeters, verify, trace evidence, enforcement boundary |
 | [Reference](docs/reference/mcp-tools.md) | MCP tools, session variables, metrics, break-glass, [release notes](docs/reference/release-notes.md) |
-| [Manifesto](docs/MANIFESTO.md) | Why: the post-PR software factory |
+| [Manifesto](docs/MANIFESTO.md) | Why: the post-PR software factory, who owns which law, and the ladder from cage to verify to the org plane |
 
 All docs: [`docs/index.md`](docs/index.md), also at [opengantry.ai/docs](https://opengantry.ai/docs/). Upgrade notes: [`docs/CHANGELOG.md`](docs/CHANGELOG.md). Security: [`docs/SECURITY.md`](docs/SECURITY.md). Contributing: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
