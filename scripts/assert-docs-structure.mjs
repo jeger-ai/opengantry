@@ -76,7 +76,8 @@ function wordCount(body) {
   return proseLines(body)
     .map(stripInlineCode)
     .join(" ")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[<>]/g, " ")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .split(/\s+/)
     .filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
@@ -93,7 +94,8 @@ function anchorsOf(text) {
     if (!h) continue;
     const textOnly = h[1]
       .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .replace(/<[^>]+>/g, "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/[<>]/g, "") // drop stray angle brackets a tag strip can leave behind (slug text only)
       .replace(/[*_`]/g, "");
     let slug = textOnly.toLowerCase().replace(/[^\p{L}\p{N}\p{M}\- _]/gu, "").replace(/ /g, "-");
     const n = seen.get(slug) ?? 0;
