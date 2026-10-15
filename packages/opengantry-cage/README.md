@@ -19,6 +19,6 @@ Platforms: Linux and macOS, both tested in CI. Windows is not supported yet: the
 
 Options: `--json`, `--report-only`, `--no-watch`, `--watch-interval-ms <n>`, `--max-file-bytes <n>`, `--contest-limit <n>`, `--allow-override <path>`. `cage suggest` (proposing `.cage.yaml` rules) lives in the full package: `npx -p @jeger-ai/opengantry gantry cage suggest --write`.
 
-Docs: [FEATURES § Zero-config cage](https://github.com/jeger-ai/opengantry/blob/main/docs/FEATURES.md#zero-config-cage-gantry-cage) · [ADOPTION § Step zero](https://github.com/jeger-ai/opengantry/blob/main/docs/ADOPTION.md#step-zero-check-your-agents-commits) · trust model [ADR-0048](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md).
+Docs: [the cage](https://opengantry.ai/docs/cage/) · [session cage](https://opengantry.ai/docs/cage/session/) · [check commits](https://opengantry.ai/docs/cage/check/) · [`.cage.yaml`](https://opengantry.ai/docs/cage/cage-yaml/) · [report and exit codes](https://opengantry.ai/docs/cage/report/) · [limits](https://opengantry.ai/docs/cage/limits/) · trust model [ADR-0048](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md).
 
 License: Apache-2.0. The bundle inlines `yaml` (ISC), `ajv` and `ajv-formats` (MIT); their notices are kept at the end of the bundle file.
