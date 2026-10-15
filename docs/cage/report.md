@@ -1,11 +1,13 @@
 ---
-title: "Report and exit codes"
-description: "What gantry-cage prints when the command ends, its JSON report, exit codes, the contested-path halt, signals, and recovery after kill -9."
+title: "Session report and exit codes"
+description: "What the session cage prints when the command ends: its JSON report, exit codes, the contested-path halt, signals, and recovery after kill -9."
 section: cage
-order: 4
+order: 6
 ---
 
-# Report and exit codes
+# Session report and exit codes
+
+This page covers the [session cage](session.md). For `cage check`, see [Check commits](check.md#exit-codes).
 
 ## Exit codes
 
@@ -16,7 +18,7 @@ order: 4
 | `2` | `runtime_error` | The command could not start, or the cage failed closed before running it (below) |
 | the command's own | `ok` | Nothing protected changed; `128 + N` when signal `N` ended the command |
 
-The cage fails closed with exit `2`, before the command runs, on an invalid `.gitagent/foreman/MANIFEST.json` or `.cage.yaml`, an invalid `--allow-override`, a protected set over the size caps or a file over the snapshot caps ([Protected paths](protected-paths.md#size-caps)), a still-running earlier session, or a corrupt journal.
+The cage fails closed with exit `2`, before the command runs, on an invalid `.gitagent/foreman/MANIFEST.json` or `.cage.yaml`, an invalid `--allow-override`, a protected set over the size caps or a file over the snapshot caps ([Session cage](session.md#size-caps)), a still-running earlier session, or a corrupt journal.
 
 `--report-only` detects and reports without restoring anything and without live restore. It still exits `3` when a protected path changed.
 
@@ -85,6 +87,6 @@ It refuses to start while the earlier cage is still running (`GXT_CAGE_SESSION_A
 | `--watch-interval-ms <n>` | Live check interval (default 1000) |
 | `--max-file-bytes <n>` | Per-file snapshot cap (default 5 MiB) |
 | `--contest-limit <n>` | Live restores of one path before the halt (default 3, `0` never halts) |
-| `--allow-override <path>` | Report instead of restore under `<path>` for this run ([Project rules](cage-yaml.md#relax-one-path-for-one-run)) |
+| `--allow-override <path>` | Report instead of restore under `<path>` for this run ([Project rules](cage-yaml.md#relax-one-path-for-one-session)) |
 
 Design notes: [ADR-0048 cage trust model](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md), decisions 7 and 8.

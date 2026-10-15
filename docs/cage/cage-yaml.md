@@ -1,8 +1,8 @@
 ---
 title: "Project rules (.cage.yaml)"
-description: "Add your own paths to the cage with .cage.yaml, let cage suggest propose them, and relax one path for a single run with --allow-override."
+description: "Add your own paths to the cage with .cage.yaml, let cage suggest propose them, and relax one path for one session with --allow-override."
 section: cage
-order: 3
+order: 5
 ---
 
 # Project rules (`.cage.yaml`)
@@ -21,10 +21,11 @@ protect:
 
 ## How the file is treated
 
-- **Strict, fail closed.** The cage exits `2` before the command runs (`GXT_CAGE_CONFIG_INVALID`) on invalid YAML, YAML aliases, unknown keys, subtractive keys such as `relax` or `exclude`, an entry with both or neither of `path:` and `glob:`, absolute or `..` paths, a `contest_limit:` that is not a non-negative integer, or `mode: report` on a path a built-in rule restores.
+- **Commit it.** `cage check` reads `.cage.yaml` from the base commit, so entries a branch adds apply to the changes after it is merged, and a branch that edits or deletes the file is checked against the base's entries. The session cage reads it from the working tree when the session starts.
+- **Strict, fail closed.** An invalid file stops `cage check`, and stops the session cage before the command runs, with exit `2` (`GXT_CAGE_CONFIG_INVALID`). Invalid means: invalid YAML, YAML aliases, unknown keys, subtractive keys such as `relax` or `exclude`, an entry with both or neither of `path:` and `glob:`, absolute or `..` paths, a `contest_limit:` that is not a non-negative integer, or `mode: report` on a path a built-in rule restores.
 - **Scoped default.** The top-level `mode:` applies only to `protect:` entries without their own `mode:`. Built-in rules keep restoring whatever it says.
-- **Protects itself.** `.cage.yaml` is the built-in `cage_config` target. An edit during the session is restored, and a `.cage.yaml` created during the session is removed.
-- **On record.** The cage reads the working tree. When `.cage.yaml` is untracked or differs from `HEAD`, it warns on stderr (`cage: warning: .cage.yaml is untracked or has uncommitted changes; review and commit it`) and still runs. Commit the file so everyone gets the same rules.
+- **Protects itself.** `.cage.yaml` is the built-in `cage_config` target. A commit that changes it fails `cage check`. During a session, an edit is restored and a `.cage.yaml` created during the session is removed.
+- **On record.** When `.cage.yaml` is untracked or differs from `HEAD` at the start of a session, the session cage warns on stderr (`cage: warning: .cage.yaml is untracked or has uncommitted changes; review and commit it`) and still runs. Commit the file so everyone gets the same rules.
 
 ## Let the cage propose rules
 
@@ -42,9 +43,9 @@ It scans the repository and proposes `protect:` entries, each with a category an
 - The cage sets `GANTRY_CAGE_SESSION=1` for the command it runs, and `cage suggest` refuses to run inside a session (`GXT_CAGE_SUGGEST_IN_SESSION`). No MCP tool exposes it.
 - `gantry cage -- suggest` runs a command named `suggest`. The `gantry-cage` command has no subcommands.
 
-## Relax one path for one run
+## Relax one path for one session
 
-Some tools legitimately rewrite a protected file, for example a dev server that rewrites `.env.local`. For one run, report changes under a path instead of restoring them:
+This applies to the session cage only; `cage check` has no override. Some tools legitimately rewrite a protected file, for example a dev server that rewrites `.env.local`. For one run, report changes under a path instead of restoring them:
 
 ```bash
 gantry-cage --allow-override .env.local -- npm run dev

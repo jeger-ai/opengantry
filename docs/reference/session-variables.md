@@ -43,6 +43,6 @@ order: 2
 
 ## Set by the cage
 
-`gantry cage` sets `GANTRY_CAGE_SESSION=1` for the command it runs, and passes its temporary push guard through `GIT_CONFIG_*` variables ([Protected paths](../cage/protected-paths.md#session-push-guard)).
+The session cage sets `GANTRY_CAGE_SESSION=1` for the command it runs, and passes its temporary push guard through `GIT_CONFIG_*` variables ([Session cage](../cage/session.md#session-push-guard)).
 
 `scripts/gxt-cursor-env.sh` is a deprecated alias that sources `gxt-runtime-env.sh` with a notice on stderr.
