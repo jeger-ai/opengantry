@@ -6,15 +6,22 @@
 # eslint 10.12 is already in use since MSN-0249) and typescript ^5.7.2 -> ^7.0.2 in examples/iii-integration
 # (PR #211; the root is on TypeScript 7 since MSN-0248). Each bump is taken from its Dependabot commit with
 # git cherry-pick -n (c2b68ffe9a for #210, ddb289855c for #211), so the three-way merge keeps the lockfile changes
-# main gained from #212 and #213, and is committed under an [MSN-0271] subject. No source file changes: if lint
-# needs a source edit, stop and re-legislate. Dependabot closes #210 and #211 itself once main carries the versions.
+# main gained from #212 and #213, and is committed under an [MSN-0271] subject. Dependabot closes #210 and #211 itself
+# once main carries the versions.
+#
+# Re-legislated before execution (Planner option 1): @eslint/js 10 adds no-useless-assignment to the recommended
+# rules, and npm run lint then fails on src/cli/lib/virtual-scratch-store.ts:150 (the dead initial `let mtime = 0`
+# in scavengeVirtualFlights). #210's CI missed it because CI lints only changed files. The contract now also allows
+# that one file; every other source change still means stop and re-legislate.
 #
 # DoD 1 (root bump): package.json devDependencies @eslint/js is ^10.0.1 and package-lock.json resolves 10.0.1;
 #        yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 from #212/#213 are still resolved; npm ci succeeds.
 # DoD 2 (example bump): examples/iii-integration/package.json typescript is ^7.0.2 and its lockfile resolves
 #        7.0.2; npm ci in the example succeeds.
-# DoD 3 (no source changes): git diff origin/main touches only the contract paths and the mission file;
-#        npm run lint passes over src/cli/**/*.ts with @eslint/js 10; the iii offline validator passes.
+# DoD 3 (one source fix): the only source change is `let mtime: number;` instead of `let mtime = 0;` in
+#        src/cli/lib/virtual-scratch-store.ts (both branches still assign it; no behaviour change); git diff
+#        origin/main touches only the contract paths and the mission file; npm run lint passes over src/cli/**/*.ts
+#        with @eslint/js 10; the iii offline validator passes.
 # DoD 4 (changelog): docs/CHANGELOG.md Unreleased row gains a dependencies note (yaml 2.9.1, MCP SDK 1.32.1,
 #        @eslint/js 10.0.1, example typescript 7.0.2).
 # DoD 5 (gate): the composite gate passes (dev-validate-core OK, lint, example install and offline validate).
@@ -87,23 +94,28 @@ interrogation:
       here means in-repo npm version bumps only (same answer as MSN-0249).
     adr_refs:
       - ADR-0044
-  - finding_id: db4a881ab72c
+  - finding_id: c381e0aea4c3
     kind: risk_escalation
-    question: "Triage escalated: Multiple skill matches: iii-integration,
-      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
-      authorize this work?"
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
     hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
       after operator confirmation.
-    operator_answer: skill_key substrate. The bundle changes the root package.json
-      and lockfile (gantry skill root) and the iii integration example manifest
-      and lockfile (iii-integration skill), so no single feature skill covers
-      it; it runs under substrate as MSN-0263 and MSN-0265 did. The sealed
-      contract (ADR-0045) narrows TMVC to package.json, package-lock.json,
-      examples/iii-integration/package.json,
-      examples/iii-integration/package-lock.json, docs/CHANGELOG.md and
-      EXECUTOR_LOG.md, and forbids src/, templates/, .githooks/,
-      .gitagent/foreman/ and RULES.md, so no source or architecture rule
-      changes.
+    operator_answer: "skill_key substrate. The bundle changes the root package.json
+      and lockfile (gantry skill root), the iii integration example manifest and
+      lockfile (iii-integration skill) and one CLI source file, so no single
+      feature skill covers it; it runs under substrate as MSN-0263 and MSN-0265
+      did. The sealed contract (ADR-0045) narrows TMVC to package.json,
+      package-lock.json, examples/iii-integration/package.json,
+      examples/iii-integration/package-lock.json,
+      src/cli/lib/virtual-scratch-store.ts, docs/CHANGELOG.md and
+      EXECUTOR_LOG.md, and forbids src/cli/commands/, src/cli/tests/, src/auth/,
+      src/core/, src/db/schema/, templates/, .githooks/, .gitagent/foreman/ and
+      .gitagent/planner/RULES.md (src/cli/lib/ stays importable because the
+      fixed file imports atomic-fs.js and constants.js; the TMVC roots alone
+      limit edits under src/ to that one file). Re-legislated before execution
+      (Planner option 1): @eslint/js 10 enables no-useless-assignment, which
+      rejects the dead initial mtime = 0 in that file; the one-line fix changes
+      no behaviour."
     adr_refs:
       - ADR-0045
   - finding_id: fed1d96ee1dc
@@ -119,7 +131,7 @@ interrogation:
       MSN-0249).
     adr_refs:
       - ADR-0041
-interrogation_sha256: 77109d4a46c550e2aceb75751b1d82361c66ec7e5eecb74490436a9a2a9cfcf2
+interrogation_sha256: 34302b3d88d6bf3eb4128498a0f9ecbd1ae17dfe5c0df26079e1f3352080a82b
 declared_paths:
   - .gitagent/missions/MSN-0271.dependency-bundle-eslint-js-10-and-example-typescript-7.yaml
   - EXECUTOR_LOG.md
@@ -128,6 +140,7 @@ declared_paths:
   - examples/iii-integration/package.json
   - package-lock.json
   - package.json
+  - src/cli/lib/virtual-scratch-store.ts
 contract:
   tmvc_roots:
     - EXECUTOR_LOG.md
@@ -136,10 +149,15 @@ contract:
     - examples/iii-integration/package.json
     - package-lock.json
     - package.json
+    - src/cli/lib/virtual-scratch-store.ts
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
     - .githooks
-    - src/
+    - src/auth/
+    - src/cli/commands/
+    - src/cli/tests/
+    - src/core/
+    - src/db/schema/
     - templates/
-contract_sha256: 3ef522286e0c3714c154b7eb7bab85020b723dbcb11d276bc4f91f3754bd84c2
+contract_sha256: caf009016ef5af6f8b49146f5731a0536d1940de533cf7d8508afb8842da741c
