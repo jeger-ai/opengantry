@@ -1,0 +1,127 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0266]. Executor must not run until the [MSN-0266] legislation commit + pin.
+#
+# Legislated intent: gate commands and test processes must not inherit the GIT_ variables that locate a repository.
+# Incident 2026-10-15: git sets GIT_DIR for hooks run in a linked worktree (a plain checkout gets none). The pre-push
+# hook runs gantry verify, whose gate runner passes process.env to the gate; the gate ran npm test, and every test
+# git call that did not strip GIT_DIR acted on the real repository: it set core.bare=true, a Fixture user.name and
+# user.email, fixture gantry/gapman planner emails and commit.gpgsign=false in .git/config, committed 77 fixture
+# commits onto the branch, force-pushed a fixture root commit over GitHub main and pushed an evil-branch. Reproduced
+# in a throwaway repo: GIT_DIR appears in a worktree's pre-push hook env and not in a plain checkout's.
+#
+# Strip list (repository location only): GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_COMMON_DIR,
+# GIT_OBJECT_DIRECTORY, GIT_ALTERNATE_OBJECT_DIRECTORIES, GIT_NAMESPACE. GIT_CONFIG_* (GIT_CONFIG_COUNT/KEY_n/VALUE_n,
+# GIT_CONFIG_PARAMETERS) are kept: the cage session push guard injects core.hooksPath through them (ADR-0048
+# decision 5). The gate keeps its cwd (the repository root), so git inside the gate finds the right repository.
+# Hooks and templates are untouched: the fix is in the CLI, so adopters get it with the package.
+#
+# DoD 1 (shared list): src/cli/lib/git/git.ts exports the strip list and one function that returns an env without
+#        those keys; gitChildEnv uses it, so it strips the whole list (today only GIT_DIR and GIT_WORK_TREE).
+# DoD 2 (gate env): runGate (src/cli/lib/gate.ts) and spawnGateStreaming (src/cli/lib/gate-adapters/
+#        spawn-stream-core.ts) spawn the gate with that env instead of process.env; cwd and shell unchanged.
+# DoD 3 (test processes): src/cli/tests/test-tmpdir-setup.ts deletes the strip list from process.env at load, so
+#        every npm test process and its children run without them; packages/opengantry-cage/tests/helpers.mjs does
+#        the same for the slim package tests.
+# DoD 4 (regression): new src/cli/tests/gate-git-env.test.ts: (a) runGate and spawnGateStreaming, with GIT_DIR in
+#        the parent env pointing at a sentinel repo, run git in their own temp repo and leave the sentinel's config
+#        and refs unchanged; (b) the incident replayed: a temp repo with a bare remote and a linked worktree whose
+#        pre-push hook runs a gate through the built runGate that does git init and git config user.name Fixture in
+#        a fresh temp dir; after git push from the worktree the main temp repo's config has no Fixture name and
+#        core.bare stays false; (c) the preload leaves no strip-list key in a child test process started with
+#        GIT_DIR set. Parts (a) and (b) fail against the unfixed build (shown in the trace).
+# DoD 5 (docs): docs/CHANGELOG.md Unreleased entry (gate commands no longer inherit repository-locating GIT_
+#        variables from hooks; matters for pushes from linked worktrees); docs/DEVELOPMENT.md notes the incident,
+#        the strip list and that linked-worktree pushes are safe again once this lands.
+# DoD 6 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0266
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 25e9778952e8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Both are test-only files under src/cli/tests/: the
+      existing preload that every test process loads with node --import, and one
+      new regression suite. Neither is part of a TARGET_ARCHITECTURE layer; they
+      may import the git helper and gate runner they exercise. No production
+      code is placed in them."
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key substrate. The fix spans the CLI's git helper and
+      both gate spawn paths under src/cli/lib/ (gantry skill), the test preload,
+      the slim package's shared test helper (outside the gantry skill's roots),
+      CHANGELOG and DEVELOPMENT, so it runs under substrate as MSN-0263 and
+      MSN-0265 did. The sealed contract (ADR-0045) narrows TMVC to
+      src/cli/lib/git/git.ts, src/cli/lib/gate.ts,
+      src/cli/lib/gate-adapters/spawn-stream-core.ts,
+      src/cli/tests/test-tmpdir-setup.ts, src/cli/tests/gate-git-env.test.ts
+      (new), packages/opengantry-cage/tests/helpers.mjs, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md and EXECUTOR_LOG.md; templates/ and .githooks/ are
+      forbidden.
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 6de491b9bf03689ea9f0d0096a157997f3a837c6d691a1836ab08016bf8d6673
+declared_paths:
+  - .gitagent/missions/MSN-0266.gate-git-env-isolation.yaml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/opengantry-cage/tests/helpers.mjs
+  - src/cli/lib/gate-adapters/spawn-stream-core.ts
+  - src/cli/lib/gate.ts
+  - src/cli/lib/git/git.ts
+  - src/cli/tests/gate-git-env.test.ts
+  - src/cli/tests/test-tmpdir-setup.ts
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/opengantry-cage/tests/helpers.mjs
+    - src/cli/lib/gate-adapters/spawn-stream-core.ts
+    - src/cli/lib/gate.ts
+    - src/cli/lib/git/git.ts
+    - src/cli/tests/gate-git-env.test.ts
+    - src/cli/tests/test-tmpdir-setup.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .githooks
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: ef137e87c73ad9948134bcea4a6a52b2fc624ef5d748933d6a3f9d5978a8123a
