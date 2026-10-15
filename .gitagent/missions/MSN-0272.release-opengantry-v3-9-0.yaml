@@ -1,0 +1,157 @@
+# OpenGantry mission (Planner-stamped by [MSN-0272]). Release v3.9.0. No code.
+#
+# Legislated intent: Release OpenGantry v3.9.0, a minor release for two new cage commands: gantry cage check
+# (MSN-0267) and gantry cage watch (MSN-0268, ADR-0050 as amended), plus the restructured docs with release notes
+# (MSN-0270), gate git isolation in linked worktrees (MSN-0266), the session cage on macOS (MSN-0265) and the
+# shipped CI iii example install (MSN-0263) and the dependency bundle (MSN-0271: @eslint/js 10, TypeScript 7 in the
+# iii example, yaml and MCP SDK lockfile bumps). Version parity 3.9.0 including the slim package; the Unreleased entries
+# in docs/reference/release-notes.md and the Unreleased upgrade notes in docs/CHANGELOG.md become v3.9.0. No code.
+# First release after MSN-0270 moved release highlights out of CHANGELOG.md, so there is no highlights row and no
+# README version line to update.
+#
+# Precondition: PR #220 (MSN-0270) is merged (362df2c); this mission branches from main after it.
+#
+# DoD 1 (version parity): 3.9.0 in package.json, package-lock.json (root, packages[""] and
+#        packages["packages/opengantry-cage"]), packages/opengantry-cage/package.json, both
+#        SUBSTRATE.version.json files and templates/integrations/compatibility.json; no 3.8.3 left in those files;
+#        npm install --package-lock-only reproduces the lockfile; `gantry --version`, `gantry-cage --version` (full
+#        and slim bins) print 3.9.0; `gantry doctor` reports the substrate version matching.
+#        examples/iii-integration/package-lock.json stays out of scope (snapshot, as in MSN-0246 / MSN-0256 / MSN-0260).
+# DoD 2 (release notes): in docs/reference/release-notes.md the "Unreleased" heading becomes a "3.9" section with a
+#        **3.9.0** entry carrying the current Unreleased items (cage check, cage watch, session push guard, docs
+#        reorganized, cage on macOS, shipped CI iii install, dependencies, gates in linked worktrees); no "Unreleased" left on the
+#        page; the page stays within docs/STYLE.md (no mission ids, at most 1,500 words).
+# DoD 3 (CHANGELOG): the "### Unreleased (…)" upgrade notes become "### From v3.8.3 (cage check, cage watch, docs
+#        layout — v3.9.0)" with install lines for both packages (`npm install @jeger-ai/opengantry@3.9.0`,
+#        `npm install @jeger-ai/opengantry-cage@3.9.0`); the substrate note names CLI 3.9.0; no "Unreleased" left.
+# DoD 4 (scope + packaging): the diff against main touches only the contract files and the mission file; no src/
+#        change; `npm run pack:check` OK; `npm run test:cage` passes for the 3.9.0 tarball.
+# DoD 5 (gate): `./scripts/dev-validate-core.sh` passes (dev-validate-core OK).
+#
+# Before tagging (Planner, not this mission): the slim package README links https://opengantry.ai/docs/cage/ pages
+# that exist only once the site mission (MSN-0273, opengantry.ai) is live, and the tag publishes both packages to
+# npm. Order: merge this release; MSN-0273 pins OPENGANTRY_DOCS_REF to the release merge commit (the fetch script
+# reads any ref's tarball) and deploys; then configure the npm trusted publisher for @jeger-ai/opengantry-cage on
+# npmjs.com (GitHub Actions, jeger-ai/opengantry, npm-publish.yml), without which its publish fails; then tag
+# v3.9.0 on the release merge commit (npm-publish.yml publishes both
+# packages with provenance); then re-pin the site to the v3.9.0 tag.
+msn_id: MSN-0272
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0272 re-attested at 4b62a70 with the count corrected (review on PR #224): 3.9.0 in package.json (1), package-lock.json (3: root, packages[''] and packages/opengantry-cage), packages/opengantry-cage/package.json (1), .gitagent/foreman/SUBSTRATE.version.json (1), templates/.gitagent/foreman/SUBSTRATE.version.json (1) and templates/integrations/compatibility.json (1), 8 strings in all, not 9 as the line at 8a2de8b said; no 3.8.3 left in those files; npm install --package-lock-only reproduces the lockfile byte for byte; gantry --version 3.9.0, gantry-cage --version 3.9.0 for the full bin and the slim bin; gantry doctor: ok: substrate version: 3.9.0 (matches bundled gantry)"
+    anchor: "1422"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0272 at 8a2de8b: docs/reference/release-notes.md: the Unreleased heading becomes ## 3.9 with a **3.9.0** entry whose sub-bullets carry all eight Unreleased items verbatim (gantry cage check, gantry cage watch, session push guard, documentation reorganized, cage on macOS, shipped CI, dependencies, gates in linked worktrees); no Unreleased left on the page; 1043 words, no mission ids; assert-docs-structure OK"
+    anchor: "1418"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0272 at 8a2de8b: docs/CHANGELOG.md: ### Unreleased becomes ### From v3.8.3 (cage check, cage watch, docs layout — v3.9.0) with npm install @jeger-ai/opengantry@3.9.0 and npm install @jeger-ai/opengantry-cage@3.9.0; the substrate note reads CLI **3.9.0**; no Unreleased left"
+    anchor: "1419"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0272 at 8a2de8b: git diff --name-only origin/main..8a2de8b lists only the nine contract files and the mission file, no src/ change (main merged in at 4a21597 with PR #222 and PR #223); npm run pack:check: pack:check OK (jeger-ai-opengantry-3.9.0.tgz); npm run test:cage: tests 10 pass 10 fail 0"
+    anchor: "1420"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0272 at 8a2de8b: ./scripts/dev-validate-core.sh: tests 922 pass 922 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1421"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0001 is the template's placeholder
+      example decision and matched only on the word example (the iii integration
+      example). It records no decision this release touches.
+    adr_refs:
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability; ADR-0037 stays ACTIVE and unchanged. It
+      matched on CI: the release ships the CI change already merged by MSN-0263
+      (the guarded iii example install in gxt-validate.yml and
+      gxt-attest-ingest.yml) and touches no workflow, ingestion contract, pepper
+      or envelope itself."
+    adr_refs:
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stays ACTIVE and unchanged. The release only
+      bumps versions and turns the Unreleased release notes and upgrade notes
+      into v3.9.0; the cage changes it ships (macOS root resolution MSN-0265,
+      cage check MSN-0267, cage watch MSN-0268) keep the built-in floor,
+      additive .cage.yaml and run-time-only relaxation.
+    adr_refs:
+      - ADR-0048
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0050 stays ACTIVE as amended by MSN-0268 and is
+      unchanged by this release, which publishes gantry cage check and gantry
+      cage watch as merged (MSN-0267, MSN-0268) and the docs that lead with them
+      (MSN-0270). No cage rule, mode, cap, flag or exit code changes.
+    adr_refs:
+      - ADR-0050
+  - finding_id: c6b28db36628
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate, as for every release since MSN-0243
+      (MSN-0256, MSN-0260): the version sites span .gitagent/foreman/,
+      templates/, the root and slim package manifests and the lockfile, outside
+      any single skill's roots. The gantry, iii-integration and iii-architecture
+      matches come from naming the CLI and the shipped CI iii example install in
+      the intent; this release changes no src/cli code and nothing under
+      examples/. The sealed contract (ADR-0045) narrows TMVC to the nine version
+      and release-notes files plus EXECUTOR_LOG.md, and forbids src/ and
+      RULES.md."
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 2e126dba8a71df0cb7d3fae342d5822566648ee2d5d4475d52029e7a35f701d1
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0272.release-opengantry-v3-9-0.yaml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/opengantry-cage/package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/opengantry-cage/package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - src/
+contract_sha256: 855bdb45b511fa9754357fe6f65a77805f5fc747a03357ce42076f5cbadca9a9
