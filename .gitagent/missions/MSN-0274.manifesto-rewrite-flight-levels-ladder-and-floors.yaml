@@ -1,0 +1,199 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0274]. Executor must not run until the [MSN-0274] legislation commit + pin.
+#
+# Legislated intent: the docs-only follow-on of ADR-0049 decision 6. docs/MANIFESTO.md still pitches the flat
+# two-role factory (Visionary and Architect) from August. Rewrite it so the north star matches what ships and how
+# adoption works: the Architect function is federated across the technical flight levels through the tighten-only
+# artifact chain; the Visionary function lives in product tools and enters only as mission intent and gate_command;
+# adoption climbs a ladder of three steps, cage, then verify, then plane; and a short list of floors holds at every
+# step. Keep the north-star argument (post-PR factory, referee instead of reviewer, the inner loop).
+#
+# Planner decisions recorded here:
+# - The ladder steps are named cage, verify and plane, and are not labelled Tier 1/2/3: "Tier-1..3" already names
+#   mission risk tiers, and docs/concepts/enforcement-boundary.md already has "Three tiers" for process boundary,
+#   deterministic hook and advisory.
+# - The cage halts on repeated tampering; iterative agent feedback belongs to verify. The page says so.
+# - The optional external_ref field (ADR-0049 decision 4) stays out of scope.
+# - ADR-0049 decision 6 names a README roles list; the docs restructure removed it, so the pointer is the README
+#   Manifesto row.
+#
+# DoD 1 (who owns which law): the two-role section is replaced by a flight-level section: a table of the five
+#        technical levels (Enterprise, System, Application, Module, Execution) with owner, what each decides and the
+#        artifact that carries it; lower levels narrow and never widen; the Visionary enters only as intent and
+#        gate_command, with epics and roadmaps in the product tool; Planner, Executor and Verifier stay process roles;
+#        one person may hold several roles, and business and technical ownership are usually separate.
+# DoD 2 (adoption ladder): a section names the three steps with what each protects and who it is for: cage (fixed
+#        files such as CI config, .env and git hooks; no setup; halts on repeated tampering), verify (missions and
+#        deterministic gates whose structured findings an agent retries on, the inner-loop feedback), plane (org
+#        policy floor, digest-only ledger, cross-repository gates); each step links its published page.
+# DoD 3 (floors): a section lists the floors that hold at every step: decisions are deterministic commands and exit
+#        codes, never a model's judgment; invalid law fails closed before work runs; built-in cage rules cannot be
+#        weakened from the working tree; lower levels only tighten; law is written outside the agent loop and
+#        stamped in git; the executor never verifies its own work; the plane receives digests, never source or
+#        plaintext identities.
+# DoD 4 (consistency): every mechanism the page names exists and links its published page; forward-looking lines
+#        read as direction, not as shipped behaviour; the bottleneck, referee and inner-loop sections stay.
+# DoD 5 (style gate): frontmatter kept (section about, order 1, title, description); at most 1,500 words; no
+#        mission ids; ADRs named only on one trailing Design notes line as GitHub links; relative links only to
+#        published pages; assert-docs-structure OK.
+# DoD 6 (README): the README docs table Manifesto row describes the new page (why, who owns which law, the
+#        cage-verify-plane ladder); README links still resolve.
+# DoD 7 (gate): ./scripts/dev-validate-core.sh && node scripts/assert-docs-structure.mjs passes.
+msn_id: MSN-0274
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh && node scripts/assert-docs-structure.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "6"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "7"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0037 stays ACTIVE and unchanged. The plane rung
+      and the digest-only floor on the page restate it without new claims: the
+      customer holds the pepper and the control plane receives only HMACs and
+      digests, never source, plaintext identities or branch names. The page
+      links the published org control plane guide rather than describing
+      deployment."
+    adr_refs:
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0048 stays ACTIVE and unchanged. The cage rung and
+      its floors restate decisions 1, 4 and 7 without new claims: built-in rules
+      are a floor nothing in the working tree can weaken, rule authoring stays
+      outside the agent loop, and a path rewritten past the contest limit halts
+      the command rather than feeding back to the agent, because the cage guards
+      fixed files while iterative feedback belongs to verify."
+    adr_refs:
+      - ADR-0048
+  - finding_id: 4573c151c81c
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh && node
+      scripts/assert-docs-structure.mjs" with documented success substring for
+      verify.
+    operator_answer: "Authorized: ./scripts/dev-validate-core.sh && node
+      scripts/assert-docs-structure.mjs, success substring dev-validate-core OK.
+      The allowlisted substrate gate does not run the docs structure gate, which
+      enforces the published-page rules this page must meet (frontmatter, at
+      most 1,500 words, no mission ids, ADRs only on a Design notes line, links
+      only to published pages); chaining it with && makes verify also require
+      its exit code 0."
+    adr_refs:
+      - ADR-0045
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0026 stays ACTIVE and unchanged. It
+      is about the gantry arch fetch command for external architecture pointers
+      and matched only on the word architecture (the Architect function and
+      Application/System Architects); the page describes no fetch behaviour.
+    adr_refs:
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0027 stays ACTIVE and unchanged. It
+      defines the verify SARIF and JUnit export formats and matched only on the
+      word verify; the page names verify as a rung of the adoption ladder and
+      changes no output format.
+    adr_refs:
+      - ADR-0027
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0049 stays ACTIVE and unchanged, and this mission
+      executes its decision 6. The page federates the Architect function across
+      the five technical flight levels of decision 1 through the tighten-only
+      chain of decision 2, places the Visionary function in external product
+      tools entering only as mission intent and gate_command (decision 4), keeps
+      Planner, Executor and Verifier as process roles (decision 5) and adds no
+      schema, field or role (decision 7). Decision 6 also names a one-line
+      pointer in the README roles list; the docs restructure removed that list,
+      so the pointer goes into the README Manifesto row instead. The optional
+      external_ref field stays out of scope by Planner decision.
+    adr_refs:
+      - ADR-0049
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "skill_key substrate. This is the docs-only follow-on that
+      ADR-0049 decision 6 names: the north-star page and one README row, which
+      no feature skill owns; it runs under substrate as MSN-0250 (ADR-0049
+      itself) did. The sealed contract (ADR-0045) narrows TMVC to
+      docs/MANIFESTO.md, README.md and EXECUTOR_LOG.md and forbids src/,
+      scripts/, packages/, templates/, .githooks/, .gitagent/foreman/,
+      .gitagent/planner/ and .gitagent/out-of-scope/, so no code, rule or ADR
+      changes."
+    adr_refs:
+      - ADR-0045
+      - ADR-0049
+interrogation_sha256: 77dfb300d3404a69ac9a5094557f2f50648f5b8b430753b4bd0dae6c1938a8ac
+declared_paths:
+  - .gitagent/missions/MSN-0274.manifesto-rewrite-flight-levels-ladder-and-floors.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/MANIFESTO.md
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/MANIFESTO.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/out-of-scope/
+    - .gitagent/planner/
+    - .githooks
+    - packages/
+    - scripts/
+    - src/
+    - templates/
+contract_sha256: 09dfbebae3fb855872060a7bf1d1c14f654f75e3d62134ed252cbc1ae1e8bd3f
