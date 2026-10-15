@@ -20,10 +20,12 @@
 #        host: every plan target lies under plan.root; cage suggest does not propose the active hooks path; a caged
 #        command that rewrites .git/hooks/pre-commit and .env through the symlinked root has both restored. The test
 #        fails against the pre-fix build (shown in the trace).
-# DoD 3 (CI): repo-only .github/workflows/cage-macos.yml (not in templates/, not shipped to adopters) runs a job
-#        named `cage (macos-latest)` on every pull_request to main and push to main, without path filters: Node 24,
-#        npm ci, npm run build, every cage suite (cage, cage-watch, cage-suggest, cage-symlink-root) and
-#        npm run test:cage (slim package). The job passes on this mission's PR; the trace cites the run. Any further
+# DoD 3 (CI): repo-only .github/workflows/cage-macos.yml (not in templates/, not shipped to adopters) defines a job
+#        named `cage (macos-latest)` on runs-on macos-latest, triggered by every pull_request to main and push to
+#        main, without path filters: Node 24, npm ci, npm run build, every cage suite (cage, cage-watch, cage-suggest,
+#        cage-symlink-root) and npm run test:cage (slim package). The trace checks this by parsing the workflow.
+#        Re-legislated: the job's pass on this mission's PR is a merge-time PR check judged by the Planner, not a
+#        trace row, because the pre-push hook refuses a PENDING row and the job cannot run before the push. Any
 #        macOS failure it exposes is fixed within the contract, never skipped by platform; otherwise stop and
 #        re-legislate.
 # DoD 4 (docs): FEATURES cage section and packages/opengantry-cage/README.md state platform support: Linux and
