@@ -129,6 +129,21 @@ function rootJoin(root: string, posixRel: string): string {
   return path.join(root, ...posixRel.split("/"));
 }
 
+/**
+ * The cage root as one canonical absolute path (symlinks resolved). git reports resolved paths for
+ * `.git/config`, `.git/hooks` and `core.hooksPath`, so a root reached through a symlink (every macOS temp
+ * dir sits behind /var -> /private/var) would leave those targets outside the root and without their rule
+ * (MSN-0265). A path that does not exist yet stays as given, absolute.
+ */
+export function canonicalCageRoot(root: string): string {
+  const abs = path.resolve(root);
+  try {
+    return fs.realpathSync(abs);
+  } catch {
+    return abs;
+  }
+}
+
 function gitPathAbs(root: string, args: string[]): string | null {
   const r = gitRun(root, ["rev-parse", "--path-format=absolute", ...args]);
   const out = r.stdout.trim();
@@ -280,7 +295,8 @@ function builtinTarget(abs: string, rule: CageRuleId): CageTarget {
  * Resolve the session's protected set. An invalid manifest, `.cage.yaml` or override throws, so cage
  * fails closed before the wrapped command runs.
  */
-export function buildCagePlan(root: string, opts: { overrides?: readonly string[] } = {}): CagePlan {
+export function buildCagePlan(givenRoot: string, opts: { overrides?: readonly string[] } = {}): CagePlan {
+  const root = canonicalCageRoot(givenRoot);
   const zones = manifestZoneTargets(root);
   const plan: CagePlan = {
     root,

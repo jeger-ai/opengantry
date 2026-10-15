@@ -1,0 +1,51 @@
+# Cage on macOS (MSN-0265): gantry-cage's audience runs it on Macs, while every other workflow runs on Ubuntu.
+# Runs every cage suite and the slim @jeger-ai/opengantry-cage tests on a macOS runner. No path filter, so the
+# job reports on every PR and can be a required status check on main.
+#
+# Repository-only: this file is not in templates/ and is not shipped to adopters by gantry init or upgrade.
+# Windows is not supported yet (docs/FEATURES.md, cage platforms), so there is no Windows job.
+name: cage macOS
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cage-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cage:
+    name: cage (macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      # No git credentials needed: the job never fetches or pushes, and npm ci, the build and the tests run PR code.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install Node deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      # cage, cage-watch, cage-suggest and cage-symlink-root. macOS temp dirs sit behind /var -> /private/var,
+      # so these suites also exercise a symlinked cage root on every run.
+      - name: Cage suites
+        run: node --import ./dist/cli/tests/test-tmpdir-setup.js --test --test-concurrency=1 "dist/cli/tests/cage*.test.js"
+
+      - name: Slim package tests (@jeger-ai/opengantry-cage)
+        run: npm run test:cage
