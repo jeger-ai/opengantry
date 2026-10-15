@@ -1,0 +1,145 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0271]. Executor must not run until the [MSN-0271] legislation commit + pin.
+#
+# Legislated intent: bundle two Dependabot bumps that change package.json and so need a mission (the
+# trusted_automation policy covers only workflow pin bumps): @eslint/js ^9.28.0 -> ^10.0.1 at the root (PR #210;
+# eslint 10.12 is already in use since MSN-0249) and typescript ^5.7.2 -> ^7.0.2 in examples/iii-integration
+# (PR #211; the root is on TypeScript 7 since MSN-0248). Each bump is taken from its Dependabot commit with
+# git cherry-pick -n (c2b68ffe9a for #210, ddb289855c for #211), so the three-way merge keeps the lockfile changes
+# main gained from #212 and #213, and is committed under an [MSN-0271] subject. No source file changes: if lint
+# needs a source edit, stop and re-legislate. Dependabot closes #210 and #211 itself once main carries the versions.
+#
+# DoD 1 (root bump): package.json devDependencies @eslint/js is ^10.0.1 and package-lock.json resolves 10.0.1;
+#        yaml 2.9.1 and @modelcontextprotocol/sdk 1.32.1 from #212/#213 are still resolved; npm ci succeeds.
+# DoD 2 (example bump): examples/iii-integration/package.json typescript is ^7.0.2 and its lockfile resolves
+#        7.0.2; npm ci in the example succeeds.
+# DoD 3 (no source changes): git diff origin/main touches only the contract paths and the mission file;
+#        npm run lint passes over src/cli/**/*.ts with @eslint/js 10; the iii offline validator passes.
+# DoD 4 (changelog): docs/CHANGELOG.md Unreleased row gains a dependencies note (yaml 2.9.1, MCP SDK 1.32.1,
+#        @eslint/js 10.0.1, example typescript 7.0.2).
+# DoD 5 (gate): the composite gate passes (dev-validate-core OK, lint, example install and offline validate).
+msn_id: MSN-0271
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh && npm run lint && cd
+  examples/iii-integration && npm ci --no-audit --no-fund && node
+  scripts/validate-offline.mjs
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "2"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "3"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "4"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "5"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0001 is the template placeholder ADR
+      (Example out-of-scope decision) and matched only on the word example, as
+      in the iii integration example (same answer as MSN-0263).
+    adr_refs:
+      - ADR-0001
+  - finding_id: 795dea2b28a5
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh && npm
+      run lint && cd examples/iii-integration && npm ci --no-audit --no-fund &&
+      node scripts/validate-offline.mjs" with documented success substring for
+      verify.
+    operator_answer: "Authorized: ./scripts/dev-validate-core.sh && npm run lint &&
+      cd examples/iii-integration && npm ci --no-audit --no-fund && node
+      scripts/validate-offline.mjs, success substring dev-validate-core OK. It
+      chains the allowlisted substrate gate, the allowlisted gantry lint gate
+      (which proves @eslint/js 10 needs no source change) and the
+      iii-integration gate preceded by installing the example from its own
+      lockfile (as authorized for MSN-0262), so it covers both bumped manifests.
+      Every step is joined with &&, so verify also requires exit code 0 from the
+      last step."
+    adr_refs:
+      - ADR-0045
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0044 stays ACTIVE and unchanged.
+      There is no mission depends_on and no cross-repo ledger ref; dependency
+      here means in-repo npm version bumps only (same answer as MSN-0249).
+    adr_refs:
+      - ADR-0044
+  - finding_id: db4a881ab72c
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: skill_key substrate. The bundle changes the root package.json
+      and lockfile (gantry skill root) and the iii integration example manifest
+      and lockfile (iii-integration skill), so no single feature skill covers
+      it; it runs under substrate as MSN-0263 and MSN-0265 did. The sealed
+      contract (ADR-0045) narrows TMVC to package.json, package-lock.json,
+      examples/iii-integration/package.json,
+      examples/iii-integration/package-lock.json, docs/CHANGELOG.md and
+      EXECUTOR_LOG.md, and forbids src/, templates/, .githooks/,
+      .gitagent/foreman/ and RULES.md, so no source or architecture rule
+      changes.
+    adr_refs:
+      - ADR-0045
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0041 stays ACTIVE and unchanged. It matched on
+      eslint and tsc because the bundle bumps @eslint/js and typescript. The
+      gate stays the generic adapter (no gate_adapter field), runs npm run lint
+      only for its exit code, and no adapter routing is involved (same answer as
+      MSN-0249).
+    adr_refs:
+      - ADR-0041
+interrogation_sha256: 77109d4a46c550e2aceb75751b1d82361c66ec7e5eecb74490436a9a2a9cfcf2
+declared_paths:
+  - .gitagent/missions/MSN-0271.dependency-bundle-eslint-js-10-and-example-typescript-7.yaml
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - examples/iii-integration/package-lock.json
+  - examples/iii-integration/package.json
+  - package-lock.json
+  - package.json
+contract:
+  tmvc_roots:
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - examples/iii-integration/package-lock.json
+    - examples/iii-integration/package.json
+    - package-lock.json
+    - package.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .githooks
+    - src/
+    - templates/
+contract_sha256: 3ef522286e0c3714c154b7eb7bab85020b723dbcb11d276bc4f91f3754bd84c2
