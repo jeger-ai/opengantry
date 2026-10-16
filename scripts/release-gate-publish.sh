@@ -15,6 +15,9 @@ DRAFT_ID="${3:-}"
 
 echo "release-gate-publish: preflight version parity"
 ./scripts/assert-cli-version-parity.sh
+echo "release-gate-publish: npm trusted publishing must be configured on npmjs.com for BOTH packages before tagging:"
+echo "  @jeger-ai/opengantry and @jeger-ai/opengantry-cage — provider GitHub Actions, repository jeger-ai/opengantry, workflow npm-publish.yml"
+echo "  (see docs/DEVELOPMENT.md § Releasing; missing cage publisher fails with ENEEDAUTH / OIDC package not found)"
 if [[ -x dist/cli/index.js ]]; then
   echo "release-gate-publish: optional gantry release check (depends_on since previous tag)"
   node dist/cli/index.js release check --tag "${TAG}" --json || echo "release-gate-publish: release check skipped"
@@ -65,7 +68,8 @@ if (m) console.log(JSON.stringify(m));
   done
 fi
 
-echo "release-gate-publish: polling npm registry for ${VERSION}"
+echo "release-gate-publish: polling npm registry for ${VERSION} (both packages)"
+./scripts/poll-npm-version.sh @jeger-ai/opengantry-cage "${VERSION}"
 ./scripts/poll-npm-version.sh @jeger-ai/opengantry "${VERSION}"
 
 if [[ -n "$DRAFT_ID" ]]; then
