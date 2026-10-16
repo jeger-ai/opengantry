@@ -84,8 +84,10 @@ jobs:
       - name: Validate stack
         run: npm run validate
 
-      - name: Publish @jeger-ai/opengantry to npm (skipped if this version is already published)
-        run: ./scripts/npm-publish-if-new.sh
-
+      # Publish the slim package first so a missing trusted publisher on cage fails before the root
+      # package ships (issue #225: main had a publisher; cage did not).
       - name: Publish @jeger-ai/opengantry-cage to npm (skipped if this version is already published)
         run: ./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-cage
+
+      - name: Publish @jeger-ai/opengantry to npm (skipped if this version is already published)
+        run: ./scripts/npm-publish-if-new.sh
