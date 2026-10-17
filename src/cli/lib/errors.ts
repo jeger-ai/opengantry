@@ -11,7 +11,7 @@ import type { RuntimeExecResult } from "./runtime-exec.js";
 import type { ResolvedRuntimeEnv } from "./runtime-env.js";
 
 export { GantryUserError, isGantryUserError } from "#core/user-error.js";
-import { GantryUserError, isGantryUserError } from "#core/user-error.js";
+import { isGantryUserError } from "#core/user-error.js";
 
 function logUnexpectedError(error: Error): void {
   if (readEnvWithLegacy("DEBUG") === "1") {
