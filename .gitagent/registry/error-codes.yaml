@@ -1,0 +1,197 @@
+# Registry (ADR-0052 step 1, MSN-0281). Humans write it: YAML 1.2 core, no aliases, no unknown keys.
+schema: opengantry.registry.v1
+kind: error-codes
+law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
+note: Every GXT_* code the CLI or MCP server can emit, including codes created as literals outside gxt-error-codes.ts. Internal GantryUserError codes map onto these and are not listed.
+entries:
+  - name: GXT_ARCH_BOUNDARY_VIOLATION
+    since: MSN-0082
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_BANNED_IMPORT_DETECTED
+    since: MSN-0047
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_CAGE_CHECK_NOT_GIT
+    since: MSN-0267
+    defined_in: literal
+  - name: GXT_CAGE_CHECK_REF_INVALID
+    since: MSN-0267
+    defined_in: literal
+  - name: GXT_CAGE_CHECK_RULES_INVALID
+    since: MSN-0267
+    defined_in: literal
+  - name: GXT_CAGE_CONFIG_INVALID
+    since: MSN-0239
+    defined_in: literal
+  - name: GXT_CAGE_FILE_TOO_LARGE
+    since: MSN-0254
+    defined_in: literal
+  - name: GXT_CAGE_JOURNAL_CORRUPT
+    since: MSN-0253
+    defined_in: literal
+  - name: GXT_CAGE_LIMITS_EXCEEDED
+    since: MSN-0239
+    defined_in: literal
+  - name: GXT_CAGE_OVERRIDE_INVALID
+    since: MSN-0239
+    defined_in: literal
+  - name: GXT_CAGE_SESSION_ACTIVE
+    since: MSN-0253
+    defined_in: literal
+  - name: GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED
+    since: MSN-0254
+    defined_in: literal
+  - name: GXT_CAGE_SUGGEST_EXISTS
+    since: MSN-0240
+    defined_in: literal
+  - name: GXT_CAGE_SUGGEST_IN_SESSION
+    since: MSN-0240
+    defined_in: literal
+  - name: GXT_CAGE_WATCH_NO_TTY
+    since: MSN-0268
+    defined_in: literal
+  - name: GXT_CONTRACT_IMPORT_BANNED
+    since: MSN-0209
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_CONTRACT_IMPORT_DYNAMIC
+    since: MSN-0209
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_CONTRACT_IMPORT_UNLISTED
+    since: MSN-0209
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_CONTRACT_SCOPE_ESCAPE
+    since: MSN-0209
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_CONTRACT_TAMPERED
+    since: MSN-0209
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_DEFENSIVE_GUARD_FAILED
+    since: MSN-0097
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_DEP_VERIFY_MISSION_ASYNC
+    since: MSN-0202
+    defined_in: literal
+    kind: deprecation-warning
+    deprecated: "4.0"
+  - name: GXT_DEPENDENCY_ORG_MISMATCH
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_DEPENDENCY_STALE
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_DEPENDENCY_UNFETCHED
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_DEPENDENCY_UNSATISFIED
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_DEPENDENCY_UNSIGNED
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_FINDINGS_RECURRED
+    since: MSN-0179
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_FORBIDDEN_ZONE
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_GATE_ADAPTER_MISCONFIG
+    since: MSN-0229
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_GATE_FAILED
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_IMPORT_LAYER_VIOLATION
+    since: MSN-0048
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_INTERROGATION_MISMATCH
+    since: MSN-0149
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_INTERROGATION_PATH_DRIFT
+    since: MSN-0149
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_INTERROGATION_REQUIRED
+    since: MSN-0149
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_INTERROGATION_SHALLOW_HISTORY
+    since: MSN-0149
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_INTERROGATION_STUB
+    since: MSN-0149
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_INVALID_ARGUMENT
+    since: MSN-0031
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_KPI_GATE_FAILED
+    since: MSN-0045
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_KPI_REPORT_INVALID
+    since: MSN-0045
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_KPI_REPORT_MISSING
+    since: MSN-0045
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_KPI_REPORT_STALE
+    since: MSN-0045
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_LEDGER_CAS_EXHAUSTED
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_LEDGER_CHAIN_BROKEN
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_LEDGER_UNSIGNED
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_MCP_WRITE_DENIED
+    since: MSN-0077
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_MISSION_SCHEMA_INVALID
+    since: MSN-0049
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_MISSION_UNSTAMPED
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_PARSE_ERROR
+    since: MSN-0028
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_PERIMETER_SHALLOW_HISTORY
+    since: MSN-0049
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_PERIMETER_VIOLATION
+    since: MSN-0045
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_PLANNER_STAMP_UNSIGNED
+    since: MSN-0078
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_POLICY_DRIFT
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_POLICY_FLOOR_VIOLATION
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_POLICY_SIGNATURE_INVALID
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_POLICY_UNPINNED
+    since: MSN-0200
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_REMEDIATION_CLEARED
+    since: commit f777025
+    defined_in: literal
+  - name: GXT_RUNTIME_EXEC_FAILED
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_TRACE_AMBIGUOUS
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_TRACE_MISSING
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_TRACE_PENDING
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_TRACE_STALE
+    since: MSN-0025
+    defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_VERIFY_FAILED
+    since: commit 26d06cf
+    defined_in: src/cli/lib/gxt-error-codes.ts

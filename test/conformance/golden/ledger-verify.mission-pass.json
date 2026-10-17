@@ -1,0 +1,19 @@
+{
+  "id": "ledger-verify.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "ledger",
+    "verify",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "ok": true,
+    "ref": "refs/gxt/ledger",
+    "tip": null,
+    "count": 0,
+    "errors": [],
+    "entries": []
+  },
+  "stderr_codes": []
+}

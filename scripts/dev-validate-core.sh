@@ -53,6 +53,9 @@ echo "dev-validate-core: upgrade-tmp staging guard"
 echo "dev-validate-core: unit tests"
 node --import ./dist/cli/tests/test-tmpdir-setup.js --test "dist/cli/tests/**/*.test.js"
 
+echo "dev-validate-core: conformance suite (ADR-0052 step 1, golden CLI output)"
+npm run test:conformance
+
 echo "dev-validate-core: MCP dogfood flow"
 ./scripts/validate-mcp-dogfood.sh
 

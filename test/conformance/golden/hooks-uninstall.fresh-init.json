@@ -1,0 +1,12 @@
+{
+  "id": "hooks-uninstall.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "hooks",
+    "uninstall"
+  ],
+  "exit": 0,
+  "stdout": "hooks uninstall: strict mode was not armed\n",
+  "stderr_codes": [],
+  "tree": []
+}

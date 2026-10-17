@@ -1,0 +1,42 @@
+{
+  "id": "verify.mission-fail-gate",
+  "fixture": "mission-fail-gate",
+  "args": [
+    "verify",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "status": "failed",
+    "phase": "gate",
+    "message": "GATE FAILED",
+    "error_code": "GXT_GATE_FAILED",
+    "fix_hints": [
+      "re-run gate: sh -c 'echo NOPE; exit 1'  # then gantry verify --mission .gitagent/missions/m-MSN-0101.yaml"
+    ],
+    "next_actions": [
+      "re-run gate: sh -c 'echo NOPE; exit 1'",
+      "gantry verify --mission .gitagent/missions/m-MSN-0101.yaml"
+    ],
+    "exit_code": 1,
+    "envelope_schema_version": 3,
+    "findings": [
+      {
+        "failed_gate": "gate",
+        "offending_file": "",
+        "line": 0,
+        "severity": "error",
+        "resolution_hint": "gate command failed",
+        "fingerprint": "<SHA256>",
+        "semantic_fingerprint": "<SHA256>"
+      }
+    ],
+    "stdout": "NOPE\n",
+    "findings_digest": "<SHA256>",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}

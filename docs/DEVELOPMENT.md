@@ -150,6 +150,22 @@ MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply` (same gates as CLI).
 
 IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; use `runtime exec` when you need manifest-enforced subprocess boundaries. See INTEGRATIONS **Enforcement boundary**.
 
+## Registries, baseline and conformance (ADR-0052 step 1)
+
+[ADR-0052](../.gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md) puts the shape of this codebase under law. Step 1 (MSN-0281) adds three things; the evaluator that enforces them arrives in step 3.
+
+| Artifact | What it is | Who edits it |
+|----------|------------|--------------|
+| `.gitagent/registry/*.yaml` | One entry per `GXT_*` error code, env name (`prefix`, `role`), subcommand, MCP tool and dependency (runtime and dev), each with `since` | Planner only, in a substrate mission: the directory is `perimeter_protected` and a `gantry` forbidden zone, so `cage check` fails a commit that edits it elsewhere |
+| `ARCH_BASELINE.json` | Per-layer file, line and export counts for the layers of `TARGET_ARCHITECTURE.yaml`, plus the 800-line per-file ceiling | Machine-written: `node scripts/arch-baseline.mjs`; `--check` exits 1 when the tree no longer matches. Counts may only go down until step 3 replaces the script with `gantry arch check --ratchet` |
+| `test/conformance/` | Golden `--json` output, exit code and `[GXT_*]` stderr codes for every public subcommand on fixture repositories; `spawning-tests.yaml` classifies the unit tests that spawn a process | `npm run test:conformance` (in `dev-validate-core.sh` and `npm run validate`); re-record only with `CONFORMANCE_RECORD=1` inside a mission that says so |
+
+Rules while the rewrite runs:
+
+- A mission that introduces a new error code, env name, subcommand, MCP tool or dependency includes the registry entry in the legislation commit, with the MSN as `since`.
+- A mission that changes CLI output updates the golden files in the same commit and names the change in its intent; a golden diff without that is a regression.
+- `node scripts/arch-baseline.mjs --check` must pass; lowering a count is fine and is locked in later by a Planner mission, never automatically.
+
 ## Zero-trust gates (sole trust boundary)
 
 All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry does not deterministically attribute offline IDE provenance. Security relies on **result-state checks** only:

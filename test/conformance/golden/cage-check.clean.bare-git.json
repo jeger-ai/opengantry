@@ -1,0 +1,36 @@
+{
+  "id": "cage-check.clean.bare-git",
+  "fixture": "bare-git",
+  "args": [
+    "cage",
+    "check",
+    "--base",
+    "HEAD",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "report_schema": "gantry.cage-check.v1",
+    "status": "clean",
+    "exit_code": 0,
+    "root": "<ROOT>",
+    "base": "<SHA>",
+    "head": "<SHA>",
+    "rules_ref": "<SHA>",
+    "commits": 0,
+    "manifest_zones": 0,
+    "cage_config": {
+      "present": false,
+      "entries": 0
+    },
+    "dependencies": "report",
+    "changes": [],
+    "limits": [
+      "Checks committed history in base..head only: uncommitted and untracked changes are not seen.",
+      "Rules come from the base commit: .cage.yaml or manifest changes in the range apply once they are merged.",
+      "Paths under .git are never committed; git control shows up only for a core.hooksPath inside the repo.",
+      "Not an attestation receipt: it reports which protected paths changed, not who changed them or why."
+    ]
+  },
+  "stderr_codes": []
+}

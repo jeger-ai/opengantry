@@ -1,0 +1,12 @@
+{
+  "id": "blueprint.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "blueprint",
+    "--yes"
+  ],
+  "exit": 2,
+  "stdout": "gantry blueprint: insufficient evidence-anchored questions (1) — add source files\n",
+  "stderr_codes": [],
+  "tree": []
+}

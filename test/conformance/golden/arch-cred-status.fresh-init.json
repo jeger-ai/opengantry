@@ -1,0 +1,12 @@
+{
+  "id": "arch-cred-status.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "cred",
+    "status"
+  ],
+  "exit": 0,
+  "stdout": "gantry arch cred: no slots stored under .gitagent/history/credentials\n",
+  "stderr_codes": []
+}

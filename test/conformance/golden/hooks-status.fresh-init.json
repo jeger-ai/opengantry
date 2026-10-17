@@ -1,0 +1,11 @@
+{
+  "id": "hooks-status.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "hooks",
+    "status"
+  ],
+  "exit": 0,
+  "stdout": "hooks status: strict=off\nhooks status: core.hooksPath=.githooks\nhooks status: pre-commit=missing\n",
+  "stderr_codes": []
+}

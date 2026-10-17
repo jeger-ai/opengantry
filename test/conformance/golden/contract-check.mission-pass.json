@@ -1,0 +1,33 @@
+{
+  "id": "contract-check.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "contract",
+    "check",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "ok": true,
+    "mission": ".gitagent/missions/m-MSN-0101.yaml",
+    "msn_id": "MSN-0101",
+    "contract_sha256": null,
+    "scope": {
+      "tmvc_roots": [
+        "src/components/"
+      ],
+      "forbidden_zones": [
+        ".gitagent/foreman/"
+      ],
+      "allowed_imports": [],
+      "banned_imports": [],
+      "allow_dynamic_specifiers": false,
+      "strict_relative_imports": false,
+      "has_contract": false
+    },
+    "violations": []
+  },
+  "stderr_codes": []
+}

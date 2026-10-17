@@ -1,0 +1,28 @@
+{
+  "id": "runtime-env.json.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "runtime",
+    "env",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "GXT_REPO_ROOT": "<ROOT>",
+    "GXT_MISSION_FILE": ".gitagent/missions/m-MSN-0101.yaml",
+    "GXT_MSN_ID": "MSN-0101",
+    "GXT_SKILL_KEY": "ui",
+    "GXT_TMVC_ROOTS": "<ROOT>/src/components",
+    "GANTRY_TMVC_ROOTS": "src/components/",
+    "GXT_FORBIDDEN_ZONES": "<ROOT>/.gitagent/foreman",
+    "GXT_ALLOWED_IMPORTS": "",
+    "GXT_BANNED_IMPORTS": "",
+    "GXT_EXECUTOR_LOG": "<ROOT>/EXECUTOR_LOG.md",
+    "GXT_LAST_ERROR_FILE": "",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}
