@@ -1,0 +1,107 @@
+{
+  "id": "status.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "status",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "repo": "<ROOT>",
+    "schema_version": "0.5.0",
+    "skill_sync_ok": false,
+    "manifest_skills": [
+      "gantry",
+      "logic",
+      "substrate",
+      "ui"
+    ],
+    "skills_md": [
+      "logic",
+      "ui"
+    ],
+    "doctor_lines": [
+      {
+        "level": "ok",
+        "message": "repo: <ROOT>"
+      },
+      {
+        "level": "fail",
+        "message": "Rule 4.4: manifest skill \"gantry\" has no definition file skills/gantry.md"
+      },
+      {
+        "level": "fail",
+        "message": "Rule 4.4: manifest skill \"substrate\" has no definition file skills/substrate.md"
+      },
+      {
+        "level": "ok",
+        "message": "Planner allowlist (allowlist_local): planner@fixture.test"
+      },
+      {
+        "level": "ok",
+        "message": "planner_signature tier: off"
+      },
+      {
+        "level": "ok",
+        "message": "receipt_signature tier: off"
+      },
+      {
+        "level": "warn",
+        "message": "BYPASS.sha256 has no hash line — break-glass not provisioned"
+      },
+      {
+        "level": "ok",
+        "message": "core.hooksPath=.githooks"
+      },
+      {
+        "level": "warn",
+        "message": "no example.verify.yaml — legislate a mission first"
+      },
+      {
+        "level": "ok",
+        "message": "flight_telemetry.body_mode: hash_only"
+      },
+      {
+        "level": "ok",
+        "message": ".gitagent/foreman/POLICY.pointer.json: scaffold (unpinned)"
+      },
+      {
+        "level": "ok",
+        "message": "refs/gxt/ledger: absent"
+      },
+      {
+        "level": "warn",
+        "message": "architecture pointer kind=unset — agents must ask user before implementing (see ARCHITECTURE-DISCOVERY.md)"
+      },
+      {
+        "level": "ok",
+        "message": "TARGET_ARCHITECTURE.yaml present (schema <SEMVER>)"
+      },
+      {
+        "level": "ok",
+        "message": "adapter preflight: no tsc/eslint missions declared (skipped)"
+      },
+      {
+        "level": "ok",
+        "message": "detected agent wiring: cursor"
+      },
+      {
+        "level": "ok",
+        "message": "substrate version: <SEMVER> (matches bundled gantry)"
+      }
+    ],
+    "pinned_mission": null,
+    "verify_readiness": "blocked",
+    "blockers": [
+      "Rule 4.4: manifest skill \"gantry\" has no definition file skills/gantry.md",
+      "Rule 4.4: manifest skill \"substrate\" has no definition file skills/substrate.md",
+      "Rule 4.4: manifest skill \"gantry\" has no definition file skills/gantry.md",
+      "Rule 4.4: manifest skill \"substrate\" has no definition file skills/substrate.md"
+    ],
+    "readiness_summary": "blocked (4 issues)",
+    "last_error_file": null,
+    "next_step": "gantry check",
+    "exit_code": 1
+  },
+  "stderr_codes": []
+}

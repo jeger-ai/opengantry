@@ -1,0 +1,17 @@
+{
+  "id": "deps-check.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "deps",
+    "check",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "ok",
+    "results": []
+  },
+  "stderr_codes": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "triage.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "triage",
+    "add a button component",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr_codes": []
+}

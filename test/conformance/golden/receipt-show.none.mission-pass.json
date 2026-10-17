@@ -1,0 +1,19 @@
+{
+  "id": "receipt-show.none.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "receipt",
+    "show",
+    "MSN-0101",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "status": "failed",
+    "error_code": "GXT_PARSE_ERROR",
+    "message": "gantry receipt show: no receipts for MSN-0101",
+    "fix_hints": [],
+    "exit_code": 1
+  },
+  "stderr_codes": []
+}

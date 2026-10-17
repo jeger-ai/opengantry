@@ -1,0 +1,15 @@
+{
+  "id": "planner-set.bare-git",
+  "fixture": "bare-git",
+  "args": [
+    "planner",
+    "set",
+    "planner@fixture.test"
+  ],
+  "exit": 0,
+  "stdout": "gantry planner: wrote .gitagent/foreman/PLANNER.allowlist.local\n  emails: planner@fixture.test\n",
+  "stderr_codes": [],
+  "tree": [
+    "?? .gitagent/foreman/PLANNER.allowlist.local"
+  ]
+}
