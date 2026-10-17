@@ -39,6 +39,12 @@ Every form of the cage prints its limits in its report. Read them before you rel
 - Writes outside the protected set, and outside the repository, are not checked.
 - Commands are not blocked. With dependencies frozen, an install the agent runs still executes its install scripts (`postinstall`, build scripts) before the cage restores `package.json` or the lockfile; the freeze keeps the dependency out of the working tree, commits and pull requests, not off your machine. Use your package manager's own controls, such as `ignore-scripts` or a frozen install like `npm ci`, or deny install commands in your agent tool's permissions.
 
+## A scope guards one area, nothing more
+
+- Gitignored files are outside its view. Changing the root `.gitignore` is itself an out-of-scope change and is restored, after which the file it hid is caught, but a file hidden through `.git/info/exclude` or a global excludes file is not.
+- Untracked files are hashed into the repository's object store for the baseline. They stay there, unreferenced, until `git gc` prunes them.
+- It is not a mission: nobody approved the area, imports are not checked, and nothing records evidence for a reviewer.
+
 ## Platforms
 
 The session cage is tested in CI on Linux and macOS. It resolves its root to the real path first, so a root reached through a symlink, such as a macOS temp directory behind `/var` → `/private/var`, keeps the git control rules on `.git/config`, `.git/hooks` and the active `core.hooksPath`.

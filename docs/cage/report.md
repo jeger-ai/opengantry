@@ -38,6 +38,7 @@ When the command ends, a human summary goes to stderr. With `--json`, the report
 | `push_guard` | `enabled`, `refused_pushes` |
 | `cage_config`, `overrides` | Whether `.cage.yaml` is present, its entry count and whether it is committed; paths passed to `--allow-override` |
 | `dependencies` | `revert` when dependencies were frozen (`--lock-deps` or `.cage.yaml` `dependencies: revert`), else `report` |
+| `scope`, `scope_sources` | The allowed-area globs (`.cage.yaml` `allow_only:` first, then `--allow-only`) and which list each came from; null without a scope. With both lists, a path must match one glob of each |
 | `trapped_signal` | A signal the cage answered by terminating the command |
 | `recovery` | An interrupted earlier session cleaned up before this one: `previous_pid`, `started_at`, `restored`, `orphans_killed`, or null |
 | `limits` | The limits that apply to this run ([Limits](limits.md)) |
