@@ -177,6 +177,11 @@ test("verify trust: a tracked contract is read from the base commit, so a change
   write(dest, "verify.yaml", `${CONTRACT}base: HEAD\n`);
   commit(dest, "pick my own base");
   assert.throws(() => runVerifyContract({ cwd: dest }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_REQUIRED");
+  // The same repository reached through a symlinked directory: the committed contract is still read from base.
+  const link = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-link-")), "repo");
+  fs.symlinkSync(dest, link);
+  assert.throws(() => runVerifyContract({ cwd: link, contract: "verify.yaml" }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_REQUIRED");
+  assert.equal(runVerifyContract({ cwd: link, contract: path.join(link, "verify.yaml"), base, mode: "quick" }).contract.source, "base");
   const noBase = path.join(outside, "nobase.json");
   write(outside, "nobase.json", JSON.stringify({ schema: "commitly.gate.v1", allowed_paths: ["."], forbidden_paths: [], checks: [] }));
   assert.throws(() => runVerifyContract({ cwd: dest, contract: noBase }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_MISSING");
