@@ -1,0 +1,225 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0277]. Executor must not run until the [MSN-0277] legislation commit + pin.
+#
+# Legislated intent: mission A of the standalone verify (roadmap #9, re-prioritized 2026-10-17 for another project
+# of the operator's). A repository that has not adopted .gitagent/ declares what a change must satisfy in one
+# contract file, and gantry verify --contract decides it deterministically: scope of the diff, a size budget, regex
+# rules over added lines, and command checks with a failure baseline. Modelled on COMMITLY hangar's gate.js
+# (commitly.gate.v1), whose gate.json is read natively. Mission B adds import/layer checks (JS/TS scanner, Python
+# imports, regex fallback) and signed evidence; mission C the slim @jeger-ai/opengantry-verify package (bin +
+# library) and SARIF/JUnit for contract results.
+#
+# Operator decisions (2026-10-17): verify.yaml canonical, gate.json accepted; a contract committed in the repository
+# is read from the base commit, one outside it from disk; no built-in forbidden paths in verify (cage check covers
+# CI configs and .env); results are digest-only (check output tails on stderr only); engine in
+# src/cli/lib/verify-standalone/, docs in docs/guides/. gantry verify --mission is unchanged.
+#
+# DoD 1 (contract): verify.yaml with schema: opengantry.verify.v1 and keys base?, scope {allowed_paths?,
+#        forbidden_paths?}, size {max_added_lines?, exclude?}, rules [{name, files, forbid, why?}], checks [{name,
+#        run, expect: exit0|empty, heavy?, quick_run?, failures?}]. Strict: YAML 1.2 core, no aliases, unknown keys,
+#        wrong types, empty names, duplicate check names and invalid regexes exit 2 with GXT_VERIFY_CONTRACT_INVALID.
+#        gate.json with schema commitly.gate.v1 is read natively (base, allowed_paths, forbidden_paths,
+#        max_added_lines, size_exclude, rules {name, approach, files, forbid}, checks {name, cmd, expect, heavy,
+#        self_check, failures}); cage_protect and part are ignored with a stderr notice.
+# DoD 2 (trust): a contract tracked in the repository is read from the base commit through git, never from the
+#        working tree or HEAD, so a change cannot weaken its own contract; a contract outside the repository (or
+#        untracked) is read from disk. The result records contract_source base|disk. The base is --base, else the
+#        contract's base; neither, or a base that does not resolve, exits 2.
+# DoD 3 (scope, size, rules): changed files are base...HEAD (committed), plus uncommitted and untracked files with
+#        --worktree. Path patterns follow hangar: no wildcard = the path or a folder above it ("." = everything);
+#        * one segment, ** any depth, ? one character. A changed file outside allowed_paths, or matching
+#        forbidden_paths, fails. Added lines in files not matching size.exclude (deletions never count) over
+#        max_added_lines fail. Each rule fails on every added line, in changed files matching its files globs, that
+#        matches forbid, reported as file:line.
+# DoD 4 (checks): each check runs with sh -c at the repository root. expect exit0 passes on exit 0; expect empty
+#        passes when stdout is empty and the exit code is 0 or 1. With --quick a heavy check is skipped; with
+#        --worktree a heavy check runs quick_run, or is skipped without one. A failing exit0 check with a failures
+#        regex passes when every failure it names is already in the baseline; only new failures fail it.
+# DoD 5 (modes): default judges the committed state and needs a clean tree; --worktree, --quick, --baseline (HEAD
+#        at the base and a clean tree; writes which exit0 checks fail and their failures to --baseline-file, default
+#        verify-baseline.json beside the contract) and --check-result <file> (exit 0 only when that result passed in
+#        the default mode for this HEAD and this contract's sha256 on a clean tree). Exit 0 pass, 1 fail, 2 cannot
+#        run (incl. --format sarif|junit with --contract, and --contract with --mission).
+# DoD 6 (result): opengantry.verify-result.v1 with status, mode, head, base, contract {path, sha256, source}, paths
+#        {changed, outside, forbidden}, size {added, max, files}, rules [{name, why, violations [{file, line}]}],
+#        checks [{name, expect, exit, seconds, ok, reason, skipped?, failures?, new_failures?}], problems. --json
+#        prints it on stdout, --out writes it. Digest-only: no check output and no added-line text in it; the human
+#        summary on stderr shows the tail of a failing check's output.
+# DoD 7 (tests): src/cli/tests/verify-standalone.test.ts and verify-standalone-cli.test.ts over temp git repos cover
+#        DoD 1-6: schema errors, gate.json mapping, base-commit contract vs disk contract, scope/forbidden/size/rules,
+#        exit0/empty/heavy/quick_run, baseline accepting known failures and failing new ones, --check-result
+#        (pass, stale HEAD, changed contract, quick-mode result), exit codes, digest-only JSON, --mission unchanged.
+# DoD 8 (ADR): .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md, status ACTIVE: context (verify without
+#        .gitagent/, COMMITLY hangar as the model), decision (contract format and gate.json, trust from base, no
+#        built-in paths, digest-only results, modes), consequences, follow-ups (missions B and C). ADR-0045, ADR-0047,
+#        ADR-0027 and ADR-0049 stay unchanged.
+# DoD 9 (docs): docs/guides/verify-contract.md (frontmatter, section guides) with a contract example, modes, exit
+#        codes, CI snippet and limits; docs/index.md and README.md link it; docs/CHANGELOG.md Unreleased entry.
+# DoD 10 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0277
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "8"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "9"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "10"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 6502376617f7
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/program-workflow.ts registers gantry verify,
+      one of the src/cli/program-*.ts files no TARGET_ARCHITECTURE layer maps;
+      it only gains the --contract option family (--contract, --base,
+      --worktree, --quick, --baseline, --check-result, --out, --baseline-file)
+      wired to src/cli/commands. src/cli/tests/verify-standalone.test.ts and
+      verify-standalone-cli.test.ts hold tests only and may import the library
+      they exercise. The engine itself lives in the lib layer
+      (src/cli/lib/verify-standalone/) and imports nothing from commands or
+      commander.
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0027 stays ACTIVE and unchanged for mission
+      verify: --format json|sarif|junit and the GXT_* ruleIds keep working for
+      gantry verify --mission. Contract mode has its own digest-only result
+      schema, opengantry.verify-result.v1, printed with --json and written with
+      --out. In this mission --format sarif or junit together with --contract is
+      refused with exit 2; mapping contract results to SARIF/JUnit is left to
+      the packaging mission (C)."
+    adr_refs:
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: substrate (Tier-3). The intent mentions .gitagent/ only to say
+      the standalone contract needs none of it; the mission touches .gitagent/
+      for its own mission file and the new ADR-0051 only. The work is a new
+      engine under src/cli/lib/verify-standalone/, the --contract mode of gantry
+      verify (src/cli/commands/verify.ts, a new
+      src/cli/commands/verify-contract.ts, src/cli/program-workflow.ts), its
+      tests, docs/guides/verify-contract.md, docs/index.md, README.md and
+      docs/CHANGELOG.md. TMVC is narrowed by contract.tmvc_roots to exactly
+      these paths plus EXECUTOR_LOG.md and this mission file. Mission verify
+      (gantry verify --mission) and its phases are unchanged.
+    adr_refs:
+      - ADR-0049
+      - ADR-0034
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0045 stays ACTIVE and unchanged. A verify contract
+      is not a mission contract: it carries no Planner seal, no contract_sha256
+      and no trace, and gantry verify --mission never reads it. Its scope fields
+      (allowed_paths, forbidden_paths) check the diff in base...HEAD, which a
+      mission contract checks through TMVC; import rules are left to mission B.
+      ADR-0051 states when to use which: the verify contract is the no-mission
+      rung of the ADR-0049 ladder, missions remain Planner-approved scope with
+      evidence."
+    adr_refs:
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0047 stays ACTIVE and unchanged. verify.yaml is
+      human-written, so it is YAML (decision 1): parsed with the yaml package,
+      YAML 1.2 core schema, aliases rejected, unknown keys and wrong types
+      rejected with a typed GXT_VERIFY_CONTRACT_INVALID error (exit 2).
+      gate.json (commitly.gate.v1) is a third-party format owned by COMMITLY
+      hangar and is read natively (decision 3). The result and baseline files
+      are machine-written and stay JSON (decision 2)."
+    adr_refs:
+      - ADR-0047
+interrogation_sha256: ad34dbe2e99b7025c097e98a03470292dbd9199891aa0be22cadba243f1176f2
+declared_paths:
+  - .gitagent/missions/MSN-0277.verify-contract.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-contract.md
+  - docs/index.md
+  - src/cli/commands/verify-contract.ts
+  - src/cli/commands/verify.ts
+  - src/cli/lib/verify-standalone/
+  - src/cli/program-workflow.ts
+  - src/cli/tests/verify-standalone-cli.test.ts
+  - src/cli/tests/verify-standalone.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0277.verify-contract.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-contract.md
+    - docs/index.md
+    - src/cli/commands/verify-contract.ts
+    - src/cli/commands/verify.ts
+    - src/cli/lib/verify-standalone/
+    - src/cli/program-workflow.ts
+    - src/cli/tests/verify-standalone-cli.test.ts
+    - src/cli/tests/verify-standalone.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/auth/
+    - src/cli/lib/cage/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: 58bdf293adffb1db7dc8a5abd46068a6cd925547395bd9b8a67ec5412f9f07eb
