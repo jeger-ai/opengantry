@@ -258,3 +258,13 @@ test("cage check dependency freeze: --lock-deps freezes without a .cage.yaml and
     [[".env.local", "secrets", "revert"]],
   );
 });
+
+test("cage check dependency freeze: vendored manifests do not fail a frozen check (MSN-0275 DoD 3, review on #227)", () => {
+  const { dest, base } = makeRepo("og-cage-check-deps-vendor-");
+  write(dest, "vendor/rust/serde/Cargo.toml", "[package]\nname = \"serde\"\n");
+  write(dest, "vendor/acme/pkg/composer.json", "{}\n");
+  commitAll(dest, "vendor update");
+  const report = runCageCheck({ cwd: dest, base, lockDeps: true });
+  assert.equal(report.exit_code, 0);
+  assert.deepEqual(rules(report), []);
+});
