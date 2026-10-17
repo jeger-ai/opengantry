@@ -13,9 +13,9 @@
   "stdout": {
     "status": "failed",
     "error_code": "GXT_VERIFY_FAILED",
-    "message": "no peppers found for org_id: org-fixture",
+    "message": "pepper keyring not found: <HOME>/.config/gantry/pepper-keyring.json",
     "fix_hints": [
-      "available org_ids: org-golden-fixture"
+      "create the keyring or set GANTRY_PEPPER_KEYRING"
     ],
     "exit_code": 2
   },

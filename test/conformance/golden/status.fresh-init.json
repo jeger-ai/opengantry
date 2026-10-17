@@ -75,7 +75,7 @@
       },
       {
         "level": "ok",
-        "message": "TARGET_ARCHITECTURE.yaml present (schema 0.2.0)"
+        "message": "TARGET_ARCHITECTURE.yaml present (schema <SEMVER>)"
       },
       {
         "level": "ok",
@@ -83,11 +83,11 @@
       },
       {
         "level": "ok",
-        "message": "detected agent wiring: cursor (3.23.12)"
+        "message": "detected agent wiring: cursor"
       },
       {
         "level": "ok",
-        "message": "substrate version: 3.9.0 (matches bundled gantry)"
+        "message": "substrate version: <SEMVER> (matches bundled gantry)"
       }
     ],
     "pinned_mission": null,

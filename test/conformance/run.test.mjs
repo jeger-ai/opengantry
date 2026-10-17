@@ -32,6 +32,12 @@ if (!fs.existsSync(cli)) {
 const spec = YAML.parse(fs.readFileSync(path.join(here, "cases.yaml"), "utf8"));
 const runDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-conformance-"));
 const fixturesDir = path.join(runDir, "fixtures");
+// Hermetic HOME: nothing from the developer's or the runner's home (pepper keyring, git config, agent installs) reaches a case.
+const homeDir = path.join(runDir, "home");
+fs.mkdirSync(path.join(homeDir, ".config"), { recursive: true });
+process.env.HOME = homeDir;
+process.env.XDG_CONFIG_HOME = path.join(homeDir, ".config");
+buildAll(fixturesDir, cli);
 buildAll(fixturesDir, cli);
 process.on("exit", () => fs.rmSync(runDir, { recursive: true, force: true }));
 
@@ -43,6 +49,7 @@ const GLOBAL_NORMALIZERS = [
   [/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,12}\b/g, "<SHORT_SHA>"],
   [/"(duration_ms|elapsed_ms|took_ms|wall_ms|pid|ppid|port)":\s*\d+/g, '"$1": "<N>"'],
   [/\bv\d+\.\d+\.\d+\b/g, "<SEMVER>"],
+  [/(?<=[ (:])\d+\.\d+\.\d+(?=[ )]|$)/gm, "<SEMVER>"],
 ];
 
 function normalize(text, caseDir, extra) {
@@ -50,6 +57,7 @@ function normalize(text, caseDir, extra) {
   const real = fs.realpathSync(caseDir);
   for (const p of new Set([caseDir, real])) out = out.split(p).join("<ROOT>");
   out = out.split(repoRoot).join("<CLI_ROOT>");
+  for (const h of new Set([homeDir, fs.realpathSync(homeDir)])) out = out.split(h).join("<HOME>");
   out = out.split(os.tmpdir()).join("<TMP>");
   for (const [re, rep] of GLOBAL_NORMALIZERS) out = out.replace(re, rep);
   for (const n of extra ?? []) out = out.replace(new RegExp(n.pattern, "g"), n.replace ?? "<X>");
@@ -82,7 +90,7 @@ function treeAfter(caseDir) {
 function runCase(c) {
   const caseDir = path.join(runDir, "cases", c.id);
   fs.cpSync(path.join(fixturesDir, c.fixture), caseDir, { recursive: true });
-  const env = gitEnv({ GANTRY_PLANNER_EMAILS: PLANNER_EMAIL, NO_COLOR: "1", ...(c.env ?? {}) });
+  const env = gitEnv({ HOME: homeDir, XDG_CONFIG_HOME: path.join(homeDir, ".config"), GANTRY_PLANNER_EMAILS: PLANNER_EMAIL, NO_COLOR: "1", ...(c.env ?? {}) });
   const r = spawnSync(process.execPath, [cli, ...c.args], {
     cwd: caseDir,
     encoding: "utf8",
@@ -119,6 +127,15 @@ for (const c of spec.cases) {
     }
     assert.ok(fs.existsSync(goldenPath), `no golden file for ${c.id}; record it inside a mission (CONFORMANCE_RECORD=1)`);
     const golden = JSON.parse(fs.readFileSync(goldenPath, "utf8"));
-    assert.deepEqual(observed, golden);
+    if (JSON.stringify(observed) !== JSON.stringify(golden)) {
+      const a = JSON.stringify(golden, null, 2).split("\n");
+      const b = JSON.stringify(observed, null, 2).split("\n");
+      const diff = [];
+      for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+        if (a[i] !== b[i]) diff.push(`  line ${i + 1}\n    golden:   ${a[i] ?? "<none>"}\n    observed: ${b[i] ?? "<none>"}`);
+        if (diff.length >= 12) break;
+      }
+      assert.fail(`${c.id}: output differs from golden/${c.id}.json\n${diff.join("\n")}`);
+    }
   });
 }
