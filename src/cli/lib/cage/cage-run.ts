@@ -59,6 +59,8 @@ export interface CageRunOptions {
    * default limit and restored once at exit.
    */
   contestLimit?: number;
+  /** `--lock-deps`: freeze lockfiles and dependency manifests for this run whatever `.cage.yaml` says. */
+  lockDeps?: boolean;
   haltGraceMs?: number;
   /** Ctrl-C semantics for a trapped SIGINT (see cage-process.ts); defaults to whether stdin is a TTY. */
   interactive?: boolean;
@@ -74,6 +76,7 @@ export interface CageRunOptions {
     watch: boolean;
     overrides: string[];
     configCommitted: boolean | null;
+    dependencies: "revert" | "report";
   }) => void;
   bell?: () => void;
 }
@@ -166,6 +169,7 @@ async function runSession(
     watch: s.watch,
     overrides: plan.overrides,
     configCommitted: plan.config.committed,
+    dependencies: plan.dependencies,
   });
   // The session marker lets setup-only commands (cage suggest) refuse to run inside the cage.
   const graceMs = opts.haltGraceMs ?? CAGE_DEFAULT_HALT_GRACE_MS;
@@ -216,10 +220,10 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
   // Plan and baseline before spawning: an invalid manifest, .cage.yaml or override, a protected set over
   // the scan caps, or a revert-rule file over the per-file cap or the total budget, fails closed (exit 2)
   // and the command never runs; nothing is ever left detect-only.
-  const plan = buildCagePlan(s.root, { overrides: opts.allowOverride });
+  const plan = buildCagePlan(s.root, { overrides: opts.allowOverride, lockDeps: opts.lockDeps });
   const limits = { maxTargets: opts.maxTargets ?? CAGE_MAX_TARGETS, maxScanBytes: opts.maxScanBytes ?? CAGE_MAX_SCAN_BYTES };
   const before = takeCageSnapshot(plan, { ...s.snap, limits });
-  const journal = writeCageJournal(journalDir, s.root, before, plan.overrides);
+  const journal = writeCageJournal(journalDir, s.root, before, plan.overrides, { lockDeps: opts.lockDeps });
   const { proc, trappedSignal, live, log, guarded, contestLimit } = await runSession(opts, s, plan, before, journal);
   const after = takeCageSnapshot(plan, { ...s.snap, keepBytes: false });
   const changes = mergeChanges(live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
@@ -239,6 +243,7 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
     protectedFiles: before.entries.size,
     manifestZones: plan.manifestZoneCount,
     cageConfig: plan.config,
+    dependencies: plan.dependencies,
     overrides: plan.overrides,
     changes,
     watch: {

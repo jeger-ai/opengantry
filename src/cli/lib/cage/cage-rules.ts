@@ -25,6 +25,7 @@ export type CageRuleId =
   | "secrets"
   | "git_control"
   | "lockfile"
+  | "dependency_manifest"
   | "cage_config"
   | "manifest_forbidden_zone"
   | "cage_protect";
@@ -39,8 +40,11 @@ export const CAGE_RULE_MODES: Readonly<Record<CageRuleId, CageRuleMode>> = {
   ci_config: "revert",
   secrets: "revert",
   git_control: "revert",
-  // Package managers legitimately rewrite lockfiles; surface the change, never undo it.
+  // Package managers legitimately rewrite lockfiles; surface the change, never undo it, unless the plan
+  // freezes dependencies (`.cage.yaml` `dependencies: revert`, `--lock-deps`): see cagePlanRuleMode.
   lockfile: "report",
+  // Only ever matched when dependencies are frozen.
+  dependency_manifest: "revert",
   cage_config: "revert",
   manifest_forbidden_zone: "revert",
   // Default only: each `.cage.yaml` entry carries its own mode.
@@ -74,6 +78,21 @@ const LOCKFILE_NAMES: ReadonlySet<string> = new Set([
   "Gemfile.lock",
   "composer.lock",
 ]);
+
+/** Dependency manifests, protected only when the plan freezes dependencies. Basename match, anywhere in the tree. */
+const DEPENDENCY_MANIFEST_NAMES: ReadonlySet<string> = new Set([
+  "package.json",
+  "pyproject.toml",
+  "Pipfile",
+  "Cargo.toml",
+  "go.mod",
+  "Gemfile",
+  "composer.json",
+]);
+const REQUIREMENTS_TXT = /^requirements.*\.txt$/;
+
+/** Rules a dependency freeze switches to revert. */
+const DEPENDENCY_RULES: ReadonlySet<CageRuleId> = new Set(["lockfile", "dependency_manifest"]);
 
 /** Directory names skipped by the whole-tree basename scan (dependency and VCS bulk). */
 export const CAGE_SCAN_SKIP_DIRS: ReadonlySet<string> = new Set([
@@ -111,6 +130,8 @@ export interface CagePlan {
   config: { present: boolean; entries: number; committed: boolean | null };
   /** `.cage.yaml` `contest_limit:`; null when unset (the CLI flag and the built-in default apply). */
   contestLimit: number | null;
+  /** `revert` when dependencies are frozen (`.cage.yaml` `dependencies: revert` or `--lock-deps`), else `report`. */
+  dependencies: CageRuleMode;
 }
 
 /** How one path is protected after overrides; null when no rule matches. */
@@ -120,11 +141,29 @@ export interface CagePathRule {
   overridden: boolean;
 }
 
-/** Rule for a file found by the whole-tree scan, keyed on its basename. */
-export function cageBasenameRule(name: string): CageRuleId | null {
+/** Rule for a file found by the whole-tree scan, keyed on its basename. Manifests match only under a freeze. */
+export function cageBasenameRule(name: string, dependencies: CageRuleMode = "report"): CageRuleId | null {
   if (name === ".env" || (name.startsWith(".env.") && name !== ".env.example")) return "secrets";
   if (LOCKFILE_NAMES.has(name)) return "lockfile";
+  if (dependencies === "revert" && (DEPENDENCY_MANIFEST_NAMES.has(name) || REQUIREMENTS_TXT.test(name))) {
+    return "dependency_manifest";
+  }
   return null;
+}
+
+/**
+ * Rule for a file found by the whole-tree scan, by its root-relative path. Manifests under a `vendor/` directory
+ * are install output (`composer install`, `cargo vendor` write one per package), not the project's manifests,
+ * so the freeze leaves them alone.
+ */
+export function cageScanRule(rel: string, dependencies: CageRuleMode = "report"): CageRuleId | null {
+  const rule = cageBasenameRule(path.posix.basename(rel), dependencies);
+  return rule === "dependency_manifest" && rel.split("/").slice(0, -1).includes("vendor") ? null : rule;
+}
+
+/** A rule's mode under this plan: a dependency freeze turns the lockfile rule to revert. */
+export function cagePlanRuleMode(plan: Pick<CagePlan, "dependencies">, rule: CageRuleId): CageRuleMode {
+  return DEPENDENCY_RULES.has(rule) ? plan.dependencies : CAGE_RULE_MODES[rule];
 }
 
 function rootJoin(root: string, posixRel: string): string {
@@ -212,8 +251,8 @@ export function classifyCagePath(plan: CagePlan, rel: string, opts: { overrides?
     const base = targetRel(plan, t);
     if (base !== null && underPath(rel, base)) hit = stricter(hit, { rule: t.rule, mode: t.mode, overridden: false });
   }
-  const byName = cageBasenameRule(path.posix.basename(rel));
-  if (byName) hit = stricter(hit, { rule: byName, mode: CAGE_RULE_MODES[byName], overridden: false });
+  const byName = cageScanRule(rel, plan.dependencies);
+  if (byName) hit = stricter(hit, { rule: byName, mode: cagePlanRuleMode(plan, byName), overridden: false });
   for (const g of plan.globs) {
     if (g.re.test(rel)) hit = stricter(hit, { rule: "cage_protect", mode: g.mode, overridden: false });
   }
@@ -306,8 +345,14 @@ export interface CageRuleInputs {
   configCommitted: boolean | null;
 }
 
+/** Run options that can only tighten the repo's rules. */
+export interface CagePlanOptions {
+  /** `--lock-deps`: freeze dependencies for this run whatever `.cage.yaml` says. */
+  lockDeps?: boolean;
+}
+
 /** Built-in floor plus the repo's rule inputs, for a canonical root. An invalid `.cage.yaml` entry throws. */
-export function assembleCagePlan(root: string, inputs: CageRuleInputs): CagePlan {
+export function assembleCagePlan(root: string, inputs: CageRuleInputs, opts: CagePlanOptions = {}): CagePlan {
   const zones = inputs.zones.map((z) => rootJoin(root, z));
   const plan: CagePlan = {
     root,
@@ -323,6 +368,8 @@ export function assembleCagePlan(root: string, inputs: CageRuleInputs): CagePlan
     manifestZoneCount: zones.length,
     config: { present: false, entries: 0, committed: null },
     contestLimit: null,
+    // Set before the config entries so a report entry on a frozen path is refused as a downgrade.
+    dependencies: opts.lockDeps === true || inputs.config.dependencies === "revert" ? "revert" : "report",
   };
   addConfigTargets(plan, root, inputs.config, inputs.configCommitted);
   return plan;
@@ -332,11 +379,15 @@ export function assembleCagePlan(root: string, inputs: CageRuleInputs): CagePlan
  * Resolve the session's protected set from the working tree. An invalid manifest, `.cage.yaml` or
  * override throws, so cage fails closed before the wrapped command runs.
  */
-export function buildCagePlan(givenRoot: string, opts: { overrides?: readonly string[] } = {}): CagePlan {
+export function buildCagePlan(
+  givenRoot: string,
+  opts: CagePlanOptions & { overrides?: readonly string[] } = {},
+): CagePlan {
   const root = canonicalCageRoot(givenRoot);
   const zones = manifestZones(root);
   const config = loadCageConfig(root);
-  const plan = assembleCagePlan(root, { zones, config, configCommitted: config.present ? cageConfigCommitted(root) : null });
+  const inputs = { zones, config, configCommitted: config.present ? cageConfigCommitted(root) : null };
+  const plan = assembleCagePlan(root, inputs, { lockDeps: opts.lockDeps });
   plan.overrides = validateOverrides(plan, opts.overrides ?? []);
   return plan;
 }
@@ -349,6 +400,7 @@ interface SerializedCagePlan {
   manifestZoneCount: number;
   config: CagePlan["config"];
   contestLimit?: number | null;
+  dependencies?: CageRuleMode;
 }
 
 /** JSON form for the session push guard, so it checks the exact plan the session started with. */
@@ -359,5 +411,10 @@ export function serializeCagePlan(plan: CagePlan): string {
 
 export function parseSerializedCagePlan(json: string): CagePlan {
   const p = JSON.parse(json) as SerializedCagePlan;
-  return { ...p, contestLimit: p.contestLimit ?? null, globs: p.globs.map((g) => ({ ...g, re: cageGlobToRegExp(g.pattern) })) };
+  return {
+    ...p,
+    contestLimit: p.contestLimit ?? null,
+    dependencies: p.dependencies ?? "report",
+    globs: p.globs.map((g) => ({ ...g, re: cageGlobToRegExp(g.pattern) })),
+  };
 }

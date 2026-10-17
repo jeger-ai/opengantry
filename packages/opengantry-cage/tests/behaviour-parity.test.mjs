@@ -62,3 +62,27 @@ test("npx <tarball> with no -p runs the package's single bin, gantry-cage (MSN-0
   const help = run(npx, ["-y", spec, "--help"], { cwd });
   assert.match(help.stdout, /^Usage: gantry-cage \[options\] <command\.\.\.>/m);
 });
+
+test("--lock-deps restores a lockfile and a dependency manifest, like gantry cage --lock-deps (MSN-0275 DoD 2, 5)", { timeout: 120_000 }, () => {
+  const cwd = scratchRepo();
+  fs.writeFileSync(path.join(cwd, "package-lock.json"), "{}\n");
+  fs.writeFileSync(path.join(cwd, "package.json"), '{"name":"fixture"}\n');
+  const addDep = [
+    "const fs=require('fs');",
+    "fs.writeFileSync('package-lock.json','{\"typosquat\":1}\\n');",
+    "fs.writeFileSync('package.json','{\"name\":\"fixture\",\"dependencies\":{\"reqeusts\":\"1.0.0\"}}\\n');",
+  ].join("");
+  const unfrozen = npxCage(packOnce(), ["--", "node", "-e", addDep], { cwd });
+  assert.equal(unfrozen.status, 0, `stderr: ${unfrozen.stderr}`);
+  assert.match(unfrozen.stderr, /kept\s+modified package-lock\.json \(lockfile\)/);
+  fs.writeFileSync(path.join(cwd, "package-lock.json"), "{}\n");
+  fs.writeFileSync(path.join(cwd, "package.json"), '{"name":"fixture"}\n');
+
+  const r = npxCage(packOnce(), ["--lock-deps", "--", "node", "-e", addDep], { cwd });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}`);
+  assert.match(r.stderr, /\(dependencies frozen\)/);
+  assert.match(r.stderr, /reverted\s+modified package-lock\.json \(lockfile\)/);
+  assert.match(r.stderr, /reverted\s+modified package\.json \(dependency_manifest\)/);
+  assert.equal(fs.readFileSync(path.join(cwd, "package-lock.json"), "utf8"), "{}\n");
+  assert.equal(fs.readFileSync(path.join(cwd, "package.json"), "utf8"), '{"name":"fixture"}\n');
+});

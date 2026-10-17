@@ -40,6 +40,8 @@ export interface CageWatchRunOptions {
   decisionTimeoutS?: number;
   watchIntervalMs?: number;
   maxFileBytes?: number;
+  /** `--lock-deps`: freeze lockfiles and dependency manifests whatever `.cage.yaml` says. */
+  lockDeps?: boolean;
   /** Desktop notifications (default true); they only alert, they never answer. */
   notify?: boolean | ((alert: CageDecisionAlert) => void);
   /** Default `process.stdin`; must be a TTY. */
@@ -56,6 +58,8 @@ export interface CageWatchReport {
   exit_code: 0 | 3;
   root: string;
   decision_timeout_s: number;
+  /** `revert` when dependencies were frozen (`.cage.yaml` `dependencies: revert` or `--lock-deps`). */
+  dependencies: "revert" | "report";
   protected_files: number;
   decisions: CageDecision[];
   kept: CageDecisionSummary["kept"];
@@ -141,9 +145,9 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
   const journalDir = resolveCageJournalDir(root);
   const recovery = recoverCageJournal(root, journalDir, snap);
   if (recovery) opts.onRecovery?.(recovery);
-  const plan = buildCagePlan(root);
+  const plan = buildCagePlan(root, { lockDeps: opts.lockDeps });
   const baseline = takeCageSnapshot(plan, snap);
-  const journal = writeCageJournal(journalDir, root, baseline, []);
+  const journal = writeCageJournal(journalDir, root, baseline, [], { lockDeps: opts.lockDeps });
   const log = openCageSessionLog();
   const timeoutS = opts.decisionTimeoutS ?? CAGE_DEFAULT_DECISION_TIMEOUT_S;
   const say = opts.say ?? ((line: string) => process.stderr.write(`${line}\r\n`));
@@ -160,7 +164,7 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
     bell: opts.bell ?? (() => process.stderr.write(BELL)),
   });
   say(
-    `cage watch: watching ${String(baseline.entries.size)} protected file(s) in ${root}; answer prompts here with a or r (unanswered: restored after ${String(timeoutS)}s); Ctrl-C stops; live events: ${log.path}`,
+    `cage watch: watching ${String(baseline.entries.size)} protected file(s) in ${root}${plan.dependencies === "revert" ? " (dependencies frozen)" : ""}; answer prompts here with a or r (unanswered: restored after ${String(timeoutS)}s); Ctrl-C stops; live events: ${log.path}`,
   );
 
   const guarded = (fn: () => void): void => {
@@ -173,7 +177,7 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
   const stop = waitForStop(input, (key) => guarded(() => engine.answer(key)));
   let timer: NodeJS.Timeout | null = null;
   let raw = false;
-  let trapped: string | null = null;
+  let trapped: string | null;
   try {
     input.setRawMode!(true);
     raw = true;
@@ -201,6 +205,7 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
     exit_code: restoredAny ? 3 : 0,
     root,
     decision_timeout_s: timeoutS,
+    dependencies: plan.dependencies,
     protected_files: baseline.entries.size,
     decisions: summary.decisions,
     kept: summary.kept,
