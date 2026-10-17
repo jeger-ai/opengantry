@@ -29,6 +29,7 @@
       "entries": 0,
       "committed": null
     },
+    "dependencies": "report",
     "overrides": [],
     "changes": [],
     "watch": {

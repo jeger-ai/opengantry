@@ -23,6 +23,7 @@
       "present": false,
       "entries": 0
     },
+    "dependencies": "report",
     "changes": [
       {
         "path": ".env",

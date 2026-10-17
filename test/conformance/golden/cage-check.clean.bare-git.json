@@ -23,6 +23,7 @@
       "present": false,
       "entries": 0
     },
+    "dependencies": "report",
     "changes": [],
     "limits": [
       "Checks committed history in base..head only: uncommitted and untracked changes are not seen.",
