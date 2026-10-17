@@ -15,6 +15,8 @@ npx @jeger-ai/opengantry-cage -- claude -p "…"
 
 Anything after `--` is the command the cage runs. It needs Node.js 24 or newer and runs on Linux and macOS.
 
+When the task should not add or change packages, add `--lock-deps`: lockfiles and dependency manifests such as `package.json` are then restored like any protected file ([Freeze dependencies](protected-paths.md#freeze-dependencies)), and the start line says `(dependencies frozen)`. `.cage.yaml` `dependencies: revert` does the same for every run.
+
 | How | Command |
 |-----|---------|
 | One-off, slim package | `npx @jeger-ai/opengantry-cage -- <cmd>` |
@@ -37,7 +39,7 @@ Agents that run `git push -u` will see the upstream entry they add to `.git/conf
 
 ## Session push guard
 
-The caged process tree gets a temporary `core.hooksPath`, set through `GIT_CONFIG_*` environment variables and placed in the OS temp directory. Its `pre-push` hook refuses outgoing commits that touch a path a restore rule covers, prints the reason, and then runs your repository's own hooks. Commits are listed the same way as in `cage check`: both sides of a rename, and edits inside merge commits. Nothing is written to the repository, and the temporary directory is removed at exit. Commits that touch only lockfiles or report-mode paths are allowed.
+The caged process tree gets a temporary `core.hooksPath`, set through `GIT_CONFIG_*` environment variables and placed in the OS temp directory. Its `pre-push` hook refuses outgoing commits that touch a path a restore rule covers, prints the reason, and then runs your repository's own hooks. Commits are listed the same way as in `cage check`: both sides of a rename, and edits inside merge commits. Nothing is written to the repository, and the temporary directory is removed at exit. Commits that touch only report-mode paths, such as lockfiles when dependencies are not frozen, are allowed.
 
 The guard uses the rules the session started with, so editing `.cage.yaml` during the session cannot loosen it.
 

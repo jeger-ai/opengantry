@@ -10,6 +10,8 @@ match_terms:
   - protected set
   - relax
   - exclude
+  - lock-deps
+  - dependency freeze
 ---
 
 ## Context
@@ -27,7 +29,7 @@ The same tighten-only shape already governs org policy ([ADR-0042](ADR-0042-org-
 ## Decision
 
 1. **Built-in rules are a floor.** Nothing in the working tree can remove or weaken a built-in rule.
-2. **`.cage.yaml` only adds.** The file at the cage root has a `protect:` list of `{path}` or `{glob}` entries, each with an optional `mode: revert|report`, plus two optional top-level keys: `mode:`, the default for `protect:` entries that set none, and `contest_limit:` (see 7).
+2. **`.cage.yaml` only adds.** The file at the cage root has a `protect:` list of `{path}` or `{glob}` entries, each with an optional `mode: revert|report`, plus three optional top-level keys: `mode:`, the default for `protect:` entries that set none, `contest_limit:` (see 7) and `dependencies:` (see 9).
    - Unknown keys, subtractive keys (`relax`, `exclude`, `allow`, …), absolute or `..` paths, YAML aliases, and `mode: report` on a path a built-in rule reverts are rejected before the command runs (`GXT_CAGE_CONFIG_INVALID`, exit 2). Format rules follow [ADR-0047](ADR-0047-config-file-format.md): humans write it, so it is YAML with a strict schema.
    - The top-level `mode:` default applies to the file's own `protect:` entries only. It never touches a built-in rule, and a default of `report` that would land on a path a built-in rule reverts is rejected the same way as a per-entry `mode: report` (amended by MSN-0244).
    - `.cage.yaml` is itself a built-in revert target, present or not. An edit during the session is restored, and a file created during the session is removed.
@@ -49,6 +51,14 @@ The same tighten-only shape already governs org policy ([ADR-0042](ADR-0042-org-
 8. **A protected file the snapshot cannot hold stops the run before it starts** (amended by MSN-0254). The baseline keeps revert-rule bytes in memory, bounded by the per-file cap (`--max-file-bytes`, default 5 MiB) and the total budget (64 MiB). A file over the cap, or a set whose revert-rule bytes exceed the budget, used to be captured `detect_only`: hashed, change-detected, but never restored, which left a protected path that cage silently could not defend. Now such a baseline ends the run before the command spawns, exit `2` with `GXT_CAGE_FILE_TOO_LARGE` (every offending path and size listed) or `GXT_CAGE_SNAPSHOT_BUDGET_EXCEEDED` (the total against the budget): the same fail-closed shape as the decision 2 scan caps (5,000 files or 64 MiB, `GXT_CAGE_LIMITS_EXCEEDED`). `detect_only` is no longer produced.
    - Exit `2` is a setup refusal, distinct from exit `3` (a protected path changed and was restored or reported) and exit `4` (the contested-file halt).
    - The ways through are the ones this ADR already allows: a higher `--max-file-bytes` on the command line, or `--allow-override <path>` (decision 3, always announced) to report that path instead of restoring it. `--report-only` keeps no bytes and is unaffected. Nothing in the working tree can lift the cap.
+9. **Dependencies can be frozen, and freezing only tightens** (amended by MSN-0275). By default the built-in `lockfile` rule reports and dependency manifests are not protected, because package managers rewrite lockfiles as part of ordinary work. A task that needs no new packages can freeze them: `.cage.yaml` top-level `dependencies: revert`, or `--lock-deps` on the session (`gantry cage -- <cmd>`, `gantry-cage`), `cage watch` and `cage check`.
+   - Under the freeze, the `lockfile` rule (the 13 built-in lockfile names) is `revert`, and a built-in `dependency_manifest` rule matches `package.json`, `pyproject.toml`, `Pipfile`, `requirements*.txt`, `Cargo.toml`, `go.mod`, `Gemfile` and `composer.json` by basename anywhere in the tree (the same scan and skip dirs as `.env*`), also `revert`, except under a `vendor/` path segment: `composer install` and `cargo vendor` write one manifest per installed package there, which is install output, not the project's manifests. Lockfiles have no such exception. Freezing the lockfile alone would not be enough: a dependency or a `postinstall` script added to `package.json` would come back with the next non-frozen install.
+   - Decisions 1-2 hold: `dependencies: report` is the default and loosens nothing, and a `protect:` entry with `mode: report` on a frozen path is refused as a downgrade of a built-in rule. There is no flag that turns the freeze off; the flag and the key only add.
+   - Decision 3 holds: `--allow-override <path>` can relax a frozen path for one run, announced like any other override.
+   - Decision 5 holds: the setting is part of the session plan, of the serialized plan the push guard reads, and of the journal, so an in-session `.cage.yaml` edit cannot change it and kill -9 recovery rebuilds the frozen plan. `cage check` reads it from the base commit like every other rule ([ADR-0050](ADR-0050-cage-diff-check.md)); `--lock-deps` on check adds to the base rules and never removes from them.
+   - Decision 8 holds: frozen files are revert-rule bytes, so a lockfile over `--max-file-bytes` stops the run with `GXT_CAGE_FILE_TOO_LARGE`.
+   - Reports name the rule (`lockfile`, `dependency_manifest`, both source `builtin`), and the session report, `gantry.cage-check.v1` and `gantry.cage-watch.v1` carry an additive `dependencies: "revert" | "report"` field so a reviewer can see whether the freeze was on.
+   - **Limit:** cage restores files; it does not block the install. When an agent runs `npm install` against a tampered `package.json`, install-time scripts (`postinstall`, build scripts) have already run on the machine by the time cage restores the file. The freeze keeps an injected dependency out of the working tree, commits and PRs (session restore, push guard, `cage check` in CI); it does not stop install-time execution. That needs the package manager's own controls (`ignore-scripts`, a frozen install such as `npm ci`) or a harness that blocks the command.
 
 ## Consequences
 
@@ -56,5 +66,6 @@ The same tighten-only shape already governs org policy ([ADR-0042](ADR-0042-org-
 - Projects that need a relaxation pass it on the command line and accept that it shows up in every report. There is no quiet way to turn a built-in rule off.
 - A legitimate rewriter of a protected path, such as a dev server that regenerates `.env.local`, now halts the session instead of being tolerated after three restores. The operator passes `--allow-override .env.local` for that run (announced, as always) or sets `contest_limit: 0` in `.cage.yaml` to keep the old contested behaviour.
 - Proposals to make cage rules subtractive in a file, to let an MCP tool edit them, or to let `cage suggest` write `.cage.yaml` directly reopen this ADR and need a Planner mission that supersedes it.
+- A project that freezes dependencies cannot add or upgrade a package in a caged run without an announced `--allow-override`, and `cage check` fails a PR that changes a lockfile or manifest once the freeze is committed at base. Dependency updates then go through a run or a PR where the freeze is deliberately off, which is the point.
 - A repository with a protected file over 5 MiB, or more than 64 MiB of protected bytes, now refuses to start a cage session instead of running with a hole in the protected set. The operator raises the cap or passes `--allow-override` for that path, and either shows up in the report.
 - Cage still restores rather than blocks individual writes: a change can be used in the gap before the next check, and past the contest limit cage terminates the command rather than preventing the write. This ADR is about who can change the rules and how far cage goes when they are broken; missions remain the tool for scope enforced on every write.

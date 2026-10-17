@@ -24,7 +24,7 @@ The watch uses the same rules and baseline as the [session cage](session.md): th
 - **No answer is a rejection.** After `--decision-timeout` (default 20 seconds) the file is restored. A rewrite while a decision is pending never extends the deadline.
 - **Accept is bound to what you saw.** It keeps the change, and moves the baseline for that path, only while the file still has the sha256 in the prompt. Content changed after the prompt is a new decision.
 - **Prompt spam ends in a rule.** A path rejected or timed out 3 times is restored without asking for the rest of the session, so an agent cannot wear you down into accepting.
-- **Report-mode changes** (lockfiles, `.cage.yaml` entries with `mode: report`) are logged, never prompted.
+- **Report-mode changes** (lockfiles, `.cage.yaml` entries with `mode: report`) are logged, never prompted. With `--lock-deps` or `.cage.yaml` `dependencies: revert`, lockfiles and dependency manifests are restore-rule paths and are prompted like any other ([Freeze dependencies](protected-paths.md#freeze-dependencies)); the start line says `(dependencies frozen)`.
 
 Watch cannot tell which process wrote a file, so it cannot tell your own edit from an agent's. That is why every change is your decision.
 
@@ -41,7 +41,8 @@ Ctrl-C, SIGINT, SIGTERM or SIGHUP rejects every pending decision, restores the p
 | Field | Contents |
 |-------|----------|
 | `decisions[]` | `path`, `rule`, `kind`, `outcome` (`accepted`, `rejected`, `timed_out`, `auto_restored`, `restored_at_exit`), `sha256_after` |
-| `kept[]` | Report-mode changes (lockfiles, `mode: report` entries) that were logged and kept |
+| `kept[]` | Report-mode changes (unfrozen lockfiles, `mode: report` entries) that were logged and kept |
+| `dependencies` | `revert` when dependencies were frozen, else `report` |
 | `contested[]` | Paths restored without asking after 3 rejections |
 | `trapped_signal`, `session_log`, `recovery`, `limits` | The signal that stopped the watch, the event log, an interrupted earlier run cleaned up before this one, and the watch's limits |
 
@@ -65,6 +66,7 @@ Watch shares the session cage's journal, so a watch and a session cage never run
 | `--watch-interval-ms <n>` | Check interval (default 1000) |
 | `--max-file-bytes <n>` | Per-file snapshot cap (default 5 MiB); a larger protected file stops the watch before it starts |
 | `--no-notify` | No desktop notifications; the bell and the prompt still alert |
+| `--lock-deps` | Freeze dependencies: lockfile and dependency manifest changes are prompted like any restore-rule path ([Freeze dependencies](protected-paths.md#freeze-dependencies)) |
 | `--json` | Print the report as JSON on stdout when the watch stops |
 
 There is no `--allow-override` and no MCP tool.

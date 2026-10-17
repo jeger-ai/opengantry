@@ -26,6 +26,7 @@ export interface CageCliOptions {
   watchIntervalMs?: string;
   allowOverride?: string[];
   contestLimit?: string;
+  lockDeps?: boolean;
 }
 
 function parseNonNegativeInt(raw: string | undefined): { ok: true; value: number | undefined } | { ok: false } {
@@ -60,11 +61,13 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
       watchIntervalMs: interval.value,
       allowOverride: options.allowOverride,
       contestLimit: contest.value,
+      lockDeps: options.lockDeps,
       // The only lines printed before the command starts; nothing is written while it runs except a bell.
-      onStart: ({ sessionLog, protectedFiles, watch, overrides, configCommitted }) => {
+      onStart: ({ sessionLog, protectedFiles, watch, overrides, configCommitted, dependencies }) => {
         const mode = watch ? "watching" : "checking at exit";
+        const frozen = dependencies === "revert" ? " (dependencies frozen)" : "";
         const logPart = sessionLog ? `; live events: ${sessionLog}` : "";
-        console.error(`cage: ${mode} ${String(protectedFiles)} protected file(s)${logPart}`);
+        console.error(`cage: ${mode} ${String(protectedFiles)} protected file(s)${frozen}${logPart}`);
         if (configCommitted === false) {
           console.error(`cage: warning: ${CAGE_CONFIG_FILE} is untracked or has uncommitted changes; review and commit it`);
         }
@@ -131,12 +134,13 @@ export interface CageCheckCliOptions {
   base: string;
   head?: string;
   json?: boolean;
+  lockDeps?: boolean;
 }
 
 /** `gantry cage check --base <ref>`: exit 3 when commits in base..head change paths a revert rule protects. */
 export async function runCageCheckCommand(options: CageCheckCliOptions): Promise<void> {
   await runUserCommandAsync({ json: options.json }, () => {
-    const report = runCageCheck({ base: options.base, head: options.head });
+    const report = runCageCheck({ base: options.base, head: options.head, lockDeps: options.lockDeps });
     if (options.json) emitCliJson(report);
     else for (const line of formatCageCheckReport(report)) console.error(line);
     if (report.exit_code !== 0) setExitCode(report.exit_code);
@@ -151,6 +155,7 @@ export interface CageWatchCliOptions {
   /** Commander sets false for `--no-notify`. */
   notify?: boolean;
   json?: boolean;
+  lockDeps?: boolean;
 }
 
 /** `gantry cage watch`: accept or reject every protected change in this terminal until Ctrl-C. */
@@ -169,6 +174,7 @@ export async function runCageWatchCommand(options: CageWatchCliOptions): Promise
       watchIntervalMs: interval.value,
       maxFileBytes: max.value,
       notify: options.notify !== false,
+      lockDeps: options.lockDeps,
       onRecovery: (r) =>
         console.error(`cage watch: recovered an interrupted session (pid ${String(r.previousPid)}): restored ${String(r.restored.length)} protected path(s)`),
     });

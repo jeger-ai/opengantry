@@ -11,6 +11,7 @@ import {
   canonicalCageRoot,
   classifyCagePath,
   type CagePlan,
+  type CagePlanOptions,
   type CageRuleId,
   type CageRuleMode,
   type CageRuleSource,
@@ -30,7 +31,7 @@ export interface CageCheckChange {
   path: string;
   rule: CageRuleId;
   source: CageRuleSource;
-  /** `revert`: fails the check. `report`: listed, never fails it (lockfiles, `.cage.yaml` report entries). */
+  /** `revert`: fails the check. `report`: listed, never fails it (unfrozen lockfiles, `.cage.yaml` report entries). */
   mode: CageRuleMode;
 }
 
@@ -47,6 +48,8 @@ export interface CageCheckReport {
   commits: number;
   manifest_zones: number;
   cage_config: { present: boolean; entries: number };
+  /** `revert` when dependencies are frozen (base `.cage.yaml` `dependencies: revert` or `--lock-deps`). */
+  dependencies: CageRuleMode;
   changes: CageCheckChange[];
   limits: readonly string[];
 }
@@ -56,6 +59,8 @@ export interface CageCheckOptions {
   /** Default `HEAD`. */
   head?: string;
   cwd?: string;
+  /** `--lock-deps`: freeze dependencies on top of the base commit's rules (only tightens). */
+  lockDeps?: boolean;
 }
 
 function checkError(code: string, message: string, hint?: string): GantryUserError {
@@ -114,11 +119,11 @@ function configAt(root: string, rev: string): CageConfig {
  * The cage rules as committed at `rev`: the built-in floor plus that commit's manifest `forbidden_zones`
  * and `.cage.yaml`. The head under review never supplies rules, so it cannot loosen its own check.
  */
-export function buildCagePlanAtCommit(root: string, rev: string): CagePlan {
+export function buildCagePlanAtCommit(root: string, rev: string, opts: CagePlanOptions = {}): CagePlan {
   const zones = zonesAt(root, rev);
   const config = configAt(root, rev);
   try {
-    return assembleCagePlan(root, { zones, config, configCommitted: true });
+    return assembleCagePlan(root, { zones, config, configCommitted: true }, opts);
   } catch (err) {
     if (isGantryUserError(err)) throw new GantryUserError(err.code, `${err.message} (at ${rev.slice(0, 12)})`, err.hint, 2);
     throw err;
@@ -130,7 +135,7 @@ export function runCageCheck(opts: CageCheckOptions): CageCheckReport {
   const root = repoRoot(opts.cwd ?? process.cwd());
   const base = resolveRef(root, "--base", opts.base);
   const head = resolveRef(root, "--head", opts.head ?? "HEAD");
-  const plan = buildCagePlanAtCommit(root, base);
+  const plan = buildCagePlanAtCommit(root, base, { lockDeps: opts.lockDeps });
   const range = [`${base}..${head}`];
   const paths = changedPathsInRange(root, range);
   if (paths === null) throw checkError("GXT_CAGE_CHECK_REF_INVALID", `git log ${base.slice(0, 12)}..${head.slice(0, 12)} failed`);
@@ -154,6 +159,7 @@ export function runCageCheck(opts: CageCheckOptions): CageCheckReport {
     commits: count.ok ? Number.parseInt(count.stdout.trim(), 10) || 0 : 0,
     manifest_zones: plan.manifestZoneCount,
     cage_config: { present: plan.config.present, entries: plan.config.entries },
+    dependencies: plan.dependencies,
     changes,
     limits: CAGE_CHECK_LIMITS,
   };
@@ -165,7 +171,8 @@ export function formatCageCheckReport(r: CageCheckReport): string[] {
   const row = (c: CageCheckChange): string => `  ${c.path}  ${c.rule} (${c.source})`;
   const failing = r.changes.filter((c) => c.mode === "revert");
   const reported = r.changes.filter((c) => c.mode === "report");
-  const lines = [`cage check: ${String(r.commits)} commit(s) in ${short(r.base)}..${short(r.head)}; rules from ${short(r.rules_ref)}`];
+  const frozen = r.dependencies === "revert" ? "; dependencies frozen" : "";
+  const lines = [`cage check: ${String(r.commits)} commit(s) in ${short(r.base)}..${short(r.head)}; rules from ${short(r.rules_ref)}${frozen}`];
   if (failing.length > 0) lines.push("cage check: protected paths changed:", ...failing.map(row));
   if (reported.length > 0) lines.push("cage check: reported only (does not fail the check):", ...reported.map(row));
   lines.push(
