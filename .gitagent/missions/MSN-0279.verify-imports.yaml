@@ -1,0 +1,302 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0279]. Executor must not run until the [MSN-0279] legislation commit + pin.
+#
+# Legislated intent: mission B of the standalone verify (ADR-0051 follow-up B): import and layer rules that
+# understand JS/TS and Python imports, repository law that also binds task-level gate.json contracts, and signed
+# results. Revised after operator review on 2026-10-17: path aliases for TS/Angular, Python from-import submodule
+# resolution with __init__.py, gate.json inheriting the base verify.yaml, and no new signature schema (receipt
+# envelope, compatible with the ADR-0052 RunRecord). MSN-0278 is taken by ADR-0052 in another worktree. Branch cut
+# from msn-0277-verify-contract (PR #228); the PR opens against main after #228 merges.
+#
+# Constraints: one JS/TS scanner (src/cli/lib/import-scanner.ts, read-only here); one signing module
+# (src/cli/lib/receipt-signing.ts, extended only by an allowed-signers verify path); mission verify (src/cli/lib/
+# verify/) and the cage untouched; no network call (Sigstore keyless is a follow-up); results digest-only.
+#
+# DoD 1 (parsing): JS/TS (.ts .tsx .js .jsx .mjs .cjs .mts .cts) through import-scanner.ts: static imports,
+#        export ... from, require and import() with a string literal. Python (.py) through a new parser: import a.b,
+#        from a.b import c, d, relative from . import x / from ..m import y, parenthesized multi-line imports,
+#        comments and strings ignored. from X import Y yields the module X and the candidates X.Y for every name.
+#        Files of another type matched by an imports or layers rule are listed as skipped in the result.
+# DoD 2 (new only): each changed file's imports at HEAD (from disk with --worktree) are compared with the same file
+#        at the base; only imports the change adds count.
+# DoD 3 (resolution): JS/TS relative specifiers resolve to the path, then the extensions above, then index.*; a
+#        specifier starting with a path_aliases key is rewritten to its repo path and resolved the same way; other
+#        bare specifiers are packages and are no layer imports. Python from X import Y tries X/Y.py, X/Y/__init__.py,
+#        then X.py and X/__init__.py; import X.Y tries X/Y.py and X/Y/__init__.py; absolute imports under each
+#        python_paths root (default the repository root), relative imports from the importing file's package.
+# DoD 4 (imports rules): imports: [{name, files, forbid: [module prefixes], why?}]; a new import whose module or
+#        candidate equals a forbid entry, or starts with it plus "/" (JS/TS) or "." (Python), fails, reported as
+#        file:line spec.
+# DoD 5 (layers rules): layers: [{name, paths, may_not_import?}]; a new import from a file in layer A that resolves
+#        into layer B fails when B is in A's may_not_import, reported as file:line spec -> resolved path. Unknown
+#        layer names, duplicate layers and invalid aliases or python_paths exit 2 (GXT_VERIFY_CONTRACT_INVALID).
+# DoD 6 (repository law): when the contract is not the repository's own verify.yaml and the base commit has a root
+#        verify.yaml, its imports, layers, path_aliases, python_paths, rules and forbidden_paths are merged in,
+#        tighten-only (rules and paths unioned; on conflicting aliases or python_paths the repository entry wins);
+#        checks, size and allowed_paths stay the task contract's. The result names the inherited contract (path,
+#        sha256). gate.json gains no keys.
+# DoD 7 (signing): --sign (with --out) adds a signature block in exactly the ReceiptSignature shape of
+#        receipt-signing.ts (kind, signature_b64, payload_encoding canonical_json_utf8, key_fingerprint,
+#        signer_principal) over the canonical JSON of the result without it, through signReceiptMessage; no key
+#        configured exits 2. receipt-signing.ts can verify against a given allowed-signers file. --check-result <file>
+#        --allowed-signers <file> requires a good signature and reports the signer; unsigned, tampered or wrongly
+#        signed results fail.
+# DoD 8 (result): opengantry.verify-result.v1 gains imports and layers findings, skipped files, the inherited
+#        contract and the optional signature; digest-only (specifiers and repo paths, never source text).
+# DoD 9 (tests): src/cli/tests/verify-standalone-imports.test.ts (JS/TS forms, Angular-style @app/ aliases, index.*,
+#        Python submodule vs symbol, __init__.py packages, python_paths, relative imports, new vs existing imports,
+#        gate.json inheriting the base verify.yaml) and verify-standalone-sign.test.ts (throwaway SSH key: sign,
+#        verify against an allowed-signers file, tampered result, wrong signer, unsigned); existing verify suites pass.
+# DoD 10 (ADR): ADR-0051 amended for DoD 1-8; Sigstore keyless as the next follow-up; ADR-0052 cited for the
+#        signature envelope.
+# DoD 11 (docs): docs/guides/verify-contract.md sections for imports, layers, path aliases, python_paths,
+#        repository law for gate.json and signing; docs/CHANGELOG.md Unreleased entry.
+# DoD 12 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0279
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "8"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "9"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "10"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "11"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "12"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 1b8d3219a2c3
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/program-workflow.ts only loses the
+      --contract option block, which moves into a
+      registerVerifyContractOptions() in src/cli/commands/verify-contract.ts (a
+      consolidation, not a split); no logic is added there. The four
+      src/cli/tests/verify-standalone*.test.ts files hold tests only and may
+      import the library they exercise.
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: "Accept the principle, ADR-0042 unchanged: the gate.json
+      inheritance follows its tighten-only rule (the repository verify.yaml at
+      base is the floor; imports, layers, rules and forbidden_paths are unioned
+      and the task contract cannot remove them). Contract mode does not read the
+      org policy pointer or cache, adds no policy fields and makes no network
+      call; folding an org floor into verify contracts is left to ADR-0052 (one
+      Law with tighten())."
+    adr_refs:
+      - ADR-0042
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Reject applicability; ADR-0023 stays ACTIVE and unchanged. It
+      is about signing the Planner stamp commit (git commit -S,
+      planner_signature tier). This mission signs verify result files with the
+      same git signing key through receipt-signing.ts; it does not read, require
+      or change Planner stamp signatures or the planner_signature tier.
+    adr_refs:
+      - ADR-0023
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0034 stays ACTIVE and unchanged. Results stay
+      digest-only: import and layer findings carry file, line, rule name and the
+      import specifier or resolved repo path, never source text; the signature
+      block carries a signature over the canonical result, a key fingerprint and
+      a principal, never file contents or command output."
+    adr_refs:
+      - ADR-0034
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0027 stays ACTIVE and unchanged. Mission verify
+      formats are untouched; contract results keep their
+      opengantry.verify-result.v1 JSON and gain import, layer, inheritance and
+      signature fields additively. --format sarif|junit with --contract still
+      exits 2; that projection stays with the packaging mission (ADR-0051
+      follow-up C).
+    adr_refs:
+      - ADR-0027
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0036 stays ACTIVE and unchanged, and its signing
+      rule is reused as is: the verify result signature covers the canonical
+      UTF-8 JSON of the result body without the signature field,
+      payload_encoding canonical_json_utf8, in the ReceiptSignature envelope of
+      receipt-signing.ts (kind, signature_b64, payload_encoding,
+      key_fingerprint, signer_principal). Results are not receipts: no org_id,
+      pepper, branch HMAC or hub export envelope is added; a projection into the
+      receipt / RunRecord family is left to the ADR-0052 rewrite."
+    adr_refs:
+      - ADR-0036
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3), mission B of ADR-0051 (follow-up B): the
+      verify contract engine under src/cli/lib/verify-standalone/ gains import
+      and layer rules, repository-law inheritance for gate.json and signed
+      results; src/cli/lib/receipt-signing.ts gains only an allowed-signers
+      verify path; the --contract options move from src/cli/program-workflow.ts
+      into one registration function in src/cli/commands/verify-contract.ts.
+      TMVC is narrowed by contract.tmvc_roots to exactly these paths, the verify
+      tests, ADR-0051, the guide, docs/CHANGELOG.md, EXECUTOR_LOG.md and this
+      mission file."
+    adr_refs:
+      - ADR-0051
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: 'Accept and amend: ADR-0051 stays ACTIVE and gains decisions
+      for follow-up B: imports and layers rules over imports the change adds
+      (JS/TS via import-scanner.ts, Python via a new parser, resolution through
+      path_aliases, python_paths, __init__.py and index.*, with from X import Y
+      tried as X/Y before X); a gate.json or other non-repository contract
+      inherits imports, layers, path_aliases, python_paths, rules and
+      forbidden_paths from the base verify.yaml, tighten-only; --sign results
+      carry the receipt-signing.ts ReceiptSignature envelope and --check-result
+      --allowed-signers verifies them. Decisions 1-8 stand except that the
+      "Results are not signed" consequence is replaced. Sigstore keyless signing
+      becomes the next follow-up; ADR-0052 (the v4 RunRecord, uncommitted in
+      another worktree at legislation time) is cited as the reason no new
+      signature schema is introduced.'
+    adr_refs:
+      - ADR-0051
+      - ADR-0052
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0045 stays ACTIVE and unchanged. The verify
+      contract gains imports and layers rules of its own; it does not read or
+      write mission contracts (banned_imports, allowed_imports), and gantry
+      verify --mission does not read verify.yaml. JS/TS import sites come from
+      the existing src/cli/lib/import-scanner.ts that the mission contract check
+      uses, so there is still one JS/TS scanner.
+    adr_refs:
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0047 stays ACTIVE and unchanged. The new keys
+      (imports, layers, path_aliases, python_paths) go into the human-written
+      verify.yaml with the same strict YAML loader: unknown keys, wrong types,
+      invalid layer references, duplicate names and aliases are refused with
+      GXT_VERIFY_CONTRACT_INVALID. gate.json stays COMMITLY-owned and gains no
+      keys (decision 3); repository law reaches it by inheritance from the base
+      verify.yaml. Signed results stay machine-written JSON."
+    adr_refs:
+      - ADR-0047
+interrogation_sha256: 148c59330ab854ded91aeb91e0060f8d48ceb6192a8de10b6fc71aafd7463d77
+declared_paths:
+  - .gitagent/missions/MSN-0279.verify-imports.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-contract.md
+  - src/cli/commands/verify-contract.ts
+  - src/cli/lib/receipt-signing.ts
+  - src/cli/lib/verify-standalone/
+  - src/cli/program-workflow.ts
+  - src/cli/tests/verify-standalone-cli.test.ts
+  - src/cli/tests/verify-standalone-imports.test.ts
+  - src/cli/tests/verify-standalone-sign.test.ts
+  - src/cli/tests/verify-standalone.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0279.verify-imports.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-contract.md
+    - src/cli/commands/verify-contract.ts
+    - src/cli/lib/receipt-signing.ts
+    - src/cli/lib/verify-standalone/
+    - src/cli/program-workflow.ts
+    - src/cli/tests/verify-standalone-cli.test.ts
+    - src/cli/tests/verify-standalone-imports.test.ts
+    - src/cli/tests/verify-standalone-sign.test.ts
+    - src/cli/tests/verify-standalone.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/auth/
+    - src/cli/lib/cage/
+    - src/cli/lib/verify/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: 0e625e4d21741caf082667962b938ebb1eb21af21084bcd7f7d9284f2dde73ef
