@@ -93,8 +93,8 @@ trace_rows:
     anchor: "1448"
     status: PASS
   - dod_id: "9"
-    trace_quote: "DoD 9 MSN-0279 at d025976: src/cli/tests/verify-standalone-imports.test.ts tests 5 and verify-standalone-sign.test.ts tests 2 with a throwaway ed25519 key; all verify-standalone suites tests 21 pass 21"
-    anchor: "1449"
+    trace_quote: "DoD 9 MSN-0279 re-attested at 2afcbde after the contract amendment (3cfe7ea): the Python fixture string \"from ..db import (\" is split so the JS/TS scanner does not read it as import(); verify-standalone-imports.test.ts pass 5 fail 0; gantry contract check OK, no import-site violations; git diff origin/main..2afcbde under src/cli/lib/verify and src/cli/lib/cage is empty"
+    anchor: "1453"
     status: PASS
   - dod_id: "10"
     trace_quote: "DoD 10 MSN-0279 at d025976: ADR-0051 amendment decisions 9-12 (import and layer rules over new imports, resolution with path_aliases, python_paths and X/Y before X, repository law for task contracts, receipt-envelope signatures with allowed signers), limits, consequence on signed results, Sigstore keyless follow-up, ADR-0052 cited for the envelope"
@@ -105,8 +105,8 @@ trace_rows:
     anchor: "1451"
     status: PASS
   - dod_id: "12"
-    trace_quote: "DoD 12 MSN-0279 at d025976: ./scripts/dev-validate-core.sh exit 0: tests 943 pass 943 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN (first run hit the flaky cage push guard count, which passes alone 3/3; no cage code changed)"
-    anchor: "1452"
+    trace_quote: "DoD 12 MSN-0279 re-attested at 2afcbde: ./scripts/dev-validate-core.sh exit 0: tests 943 pass 943 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1454"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
