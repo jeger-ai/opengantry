@@ -73,8 +73,8 @@ trace_rows:
     anchor: "1429"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0277 re-attested at 578df3a after the review on PR #228 and the amendment (79a3e46): a tracked contract never names its base; without --base, also with base: HEAD in the branch's verify.yaml, it exits 2 with GXT_VERIFY_BASE_REQUIRED; a disk contract without base exits 2 with GXT_VERIFY_BASE_MISSING; the rest as attested at 28a9130"
-    anchor: "1439"
+    trace_quote: "DoD 2 MSN-0277 re-attested at eef3d97 after the third review on PR #228: the contract's directory is resolved with realpath before the tracked check (the file name is kept, so a symlinked verify.yaml is not followed); through a symlinked repository directory a committed contract without --base still exits 2 with GXT_VERIFY_BASE_REQUIRED and with --base is read from the base (source base); a mutation without the realpath fails that test; the rest as attested at 578df3a"
+    anchor: "1447"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0277 re-attested at 578df3a: changed, untracked and numstat paths are read NUL-separated and -U0 diffs run per file, so app/secret/ä \"q\".txt is forbidden, both odd-named files count toward the size and app/api/röutes.py:2 is reported; an added line \"++ x\" is not taken for a header; the default verify.yaml is found from a subdirectory; the rest as attested at 28a9130"
@@ -105,8 +105,8 @@ trace_rows:
     anchor: "1445"
     status: PASS
   - dod_id: "10"
-    trace_quote: "DoD 10 MSN-0277 re-attested at 578df3a: ./scripts/dev-validate-core.sh exit 0: tests 936 pass 936 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1446"
+    trace_quote: "DoD 10 MSN-0277 re-attested at eef3d97: ./scripts/dev-validate-core.sh exit 0: tests 936 pass 936 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1448"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
