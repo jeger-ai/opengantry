@@ -22,21 +22,21 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0280 at c501b3e: .gitagent/foreman/PLANNER.allowlist lists jeger@commitly.com and 11678629+jeger-at@users.noreply.github.com, with the comment that GitHub squash merges author the stamp with the noreply address; the header says gantry verify"
+    anchor: "1425"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0280 at c501b3e: .gitagent/foreman/PLANNER.allowlist.local removed from the index with git rm --cached; the operator's copy stays on disk and is now ignored by the existing .gitignore entry"
+    anchor: "1426"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0280 at c501b3e: gantry planner show lists jeger@commitly.com, 11678629+jeger-at@users.noreply.github.com; gantry verify --mission .gitagent/missions/MSN-0278.adr-0052-structural-law.yaml: git-proof OK (Planner legislation for MSN-0278), gate passed, trace mapping OK"
+    anchor: "1427"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0280 at c501b3e: ./scripts/dev-validate-core.sh exit 0: tests 922 pass 922 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1428"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 5c3ad2b2a9a3
