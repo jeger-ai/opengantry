@@ -91,5 +91,6 @@ It refuses to start while the earlier cage is still running (`GXT_CAGE_SESSION_A
 | `--contest-limit <n>` | Live restores of one path before the halt (default 3, `0` never halts) |
 | `--allow-override <path>` | Report instead of restore under `<path>` for this run ([Project rules](cage-yaml.md#relax-one-path-for-one-session)) |
 | `--lock-deps` | Freeze dependencies: restore lockfiles and dependency manifests for this run ([Freeze dependencies](protected-paths.md#freeze-dependencies)) |
+| `--allow-only <glob>` | Scope: restore every file git would track outside the glob for this run (repeatable; [Scope a task](protected-paths.md#scope-a-task)) |
 
 Design notes: [ADR-0048 cage trust model](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md), decisions 7 and 8.
