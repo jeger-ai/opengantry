@@ -67,7 +67,9 @@ interrogation:
       - ADR-0049
 interrogation_sha256: 1a3a29ef80a26258ae1a368c4877406564080b7bd4a09d1a2b9f150f059694e5
 declared_paths:
+  - .gitagent/missions/MSN-0278.adr-0052-structural-law.yaml
   - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+  - EXECUTOR_LOG.md
 contract:
   tmvc_roots:
     - .gitagent/missions/MSN-0278.adr-0052-structural-law.yaml
