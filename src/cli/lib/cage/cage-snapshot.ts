@@ -6,8 +6,8 @@ import { GantryUserError } from "../errors.js";
 import {
   CAGE_SCAN_SKIP_DIRS,
   applyCageOverride,
-  cageBasenameRule,
   cagePlanRuleMode,
+  cageScanRule,
   cageScopeHit,
   inCageScope,
   type CagePlan,
@@ -199,10 +199,10 @@ function captureTarget(abs: string, rule: CageRuleId, mode: CageRuleMode, ctx: C
 
 /** Whole-tree scan: built-in basename rules (`.env*`, lockfiles, frozen manifests) and `.cage.yaml` globs. */
 function captureScanned(abs: string, ctx: CaptureContext): void {
-  const rule = cageBasenameRule(path.basename(abs), ctx.plan.dependencies);
+  const rel = toPosixRel(ctx.plan.root, abs);
+  const rule = cageScanRule(rel, ctx.plan.dependencies);
   if (rule) captureEntry(abs, rule, cagePlanRuleMode(ctx.plan, rule), ctx);
   if (ctx.plan.globs.length === 0) return;
-  const rel = toPosixRel(ctx.plan.root, abs);
   for (const g of ctx.plan.globs) {
     if (g.re.test(rel)) captureEntry(abs, "cage_protect", g.mode, ctx);
   }

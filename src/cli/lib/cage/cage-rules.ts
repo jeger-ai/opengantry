@@ -166,6 +166,16 @@ export function cageScopeHit(plan: Pick<CagePlan, "scope">, rel: string, hit: Ca
   return stricter(hit, { rule: "out_of_scope", mode: "revert", overridden: false });
 }
 
+/**
+ * Rule for a file found by the whole-tree scan, by its root-relative path. Manifests under a `vendor/` directory
+ * are install output (`composer install`, `cargo vendor` write one per package), not the project's manifests,
+ * so the freeze leaves them alone.
+ */
+export function cageScanRule(rel: string, dependencies: CageRuleMode = "report"): CageRuleId | null {
+  const rule = cageBasenameRule(path.posix.basename(rel), dependencies);
+  return rule === "dependency_manifest" && rel.split("/").slice(0, -1).includes("vendor") ? null : rule;
+}
+
 /** A rule's mode under this plan: a dependency freeze turns the lockfile rule to revert. */
 export function cagePlanRuleMode(plan: Pick<CagePlan, "dependencies">, rule: CageRuleId): CageRuleMode {
   return DEPENDENCY_RULES.has(rule) ? plan.dependencies : CAGE_RULE_MODES[rule];
@@ -256,7 +266,7 @@ export function classifyCagePath(plan: CagePlan, rel: string, opts: { overrides?
     const base = targetRel(plan, t);
     if (base !== null && underPath(rel, base)) hit = stricter(hit, { rule: t.rule, mode: t.mode, overridden: false });
   }
-  const byName = cageBasenameRule(path.posix.basename(rel), plan.dependencies);
+  const byName = cageScanRule(rel, plan.dependencies);
   if (byName) hit = stricter(hit, { rule: byName, mode: cagePlanRuleMode(plan, byName), overridden: false });
   for (const g of plan.globs) {
     if (g.re.test(rel)) hit = stricter(hit, { rule: "cage_protect", mode: g.mode, overridden: false });

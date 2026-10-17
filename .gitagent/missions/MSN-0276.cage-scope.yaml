@@ -54,39 +54,39 @@ gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0276 at a87c834: .cage.yaml top-level allow_only: parsed in cage-config.ts; [], a scalar, 42, /etc and ../up exit 2 with GXT_CAGE_CONFIG_INVALID before the command runs; CagePlan.scope {config, flag} is serialized for the push guard and recorded in the journal (allow_only globs, scope_tree); an in-session allow_only edit is restored and does not change the running scope"
-    anchor: "1431"
+    anchor: "1436"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0276 at a87c834: --allow-only <glob> (repeatable) on gantry cage -- <cmd> and gantry-cage, gantry cage watch and gantry cage check, also before the subcommand; .cage.yaml allow_only [src] with --allow-only [src/billing, other] leaves src/shared and other out of scope (intersection); ../up exits 2 with GXT_CAGE_SCOPE_INVALID"
-    anchor: "1432"
+    anchor: "1437"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0276 at a87c834: out_of_scope rule (revert, source builtin) for every file git would track outside the scope: session restores modified tracked and untracked files, removes other/new.ts, restores other/del.ts, the executable bit and a symlink target, restores an unfrozen package-lock.json outside the scope; dist/ (gitignored) kept; src/billing/.env still restored as secrets; watch prompts; check exits 3; push guard refuses; --allow-override other/b.ts keeps the change, overridden true; a .gitignore edit that hides a new file is restored and the file removed at exit, also with --no-watch"
-    anchor: "1433"
+    anchor: "1438"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0276 at a87c834: baseline is a git tree written through a temporary index seeded from the real one; git ls-files -s unchanged and the staged change still staged after a session; restores read blobs via git cat-file --filters with file mode and symlink target; the journal records scope_tree and allow_only, not per-file entries, and kill -9 recovery restores src/shared/util.ts, other/del.ts and removes other/new.ts; a scope run in a non-git dir exits 2 with GXT_CAGE_SCOPE_NOT_GIT before the command runs"
-    anchor: "1434"
+    anchor: "1439"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0276 at a87c834: rows name out_of_scope with source builtin; session report, gantry.cage-check.v1 and gantry.cage-watch.v1 carry scope (globs) and scope_sources {cage_yaml, flag}; start lines say (scope: src/billing); check summary line ends ; scope: src/billing, README.md; reports carry no file bodies"
-    anchor: "1435"
+    anchor: "1440"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0276 at a87c834: new src/cli/tests/cage-scope.test.ts 10 tests (session via config and flag, CLI, intersection, invalid values and non-git, --allow-override, in-session edit, kill -9 recovery, push guard, watch reject and accept, .gitignore second pass which fails without the fix); cage-check.test.ts 3 new tests; all cage suites tests 92 pass 92; npm run test:cage tests 12 pass 12 fail 0 incl. gantry-cage --allow-only"
-    anchor: "1436"
+    anchor: "1441"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0276 at a87c834: ADR-0048 stays ACTIVE, decision 2 lists allow_only:, new decision 10 (scope mode): key and flag, directory coverage, intersection, out_of_scope semantics, decisions 2, 3, 5 hold, git tree baseline instead of decision 8 caps, scope and scope_sources in reports, limits (restore not block, gitignored and .git/info/exclude not seen, unreachable objects until gc, not a mission contract); consequence added"
-    anchor: "1437"
+    anchor: "1442"
     status: PASS
   - dod_id: "8"
     trace_quote: "DoD 8 MSN-0276 at a87c834: docs/cage/protected-paths.md out_of_scope row and Scope a task section; cage-yaml.md, session.md, check.md, watch.md, report.md, limits.md and index.md updated; packages/opengantry-cage/README.md lists --allow-only; docs/CHANGELOG.md Unreleased covers the scope mode; assert-docs-structure OK (52 pages, 38 published, 312 relative links checked)"
-    anchor: "1438"
+    anchor: "1443"
     status: PASS
   - dod_id: "9"
     trace_quote: "DoD 9 MSN-0276 at a87c834: ./scripts/dev-validate-core.sh exit 0: tests 948 pass 948 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1439"
+    anchor: "1444"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:

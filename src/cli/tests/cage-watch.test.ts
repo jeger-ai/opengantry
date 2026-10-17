@@ -400,3 +400,26 @@ test("gantry cage watch --lock-deps: a frozen lockfile change is prompted; rejec
   ]);
   assert.deepEqual(report.kept, [], "a frozen lockfile is decided, not just logged");
 });
+
+test("cage dependency freeze: manifests under vendor/ are install output and stay unfrozen (MSN-0275 DoD 3, review on #227)", async () => {
+  const dest = makeRepo("og-cage-live-deps-vendor-");
+  fs.writeFileSync(path.join(dest, "composer.json"), "{\"require\":{}}\n");
+  fs.mkdirSync(path.join(dest, "vendor", "rust", "serde"), { recursive: true });
+  fs.writeFileSync(path.join(dest, "vendor", "rust", "serde", "Cargo.toml"), "[package]\n");
+  const report = await runCage({
+    cwd: dest,
+    lockDeps: true,
+    watchIntervalMs: FAST,
+    bell: () => {},
+    command: nodeScript(`
+      fs.mkdirSync("vendor/acme/pkg", { recursive: true });
+      fs.writeFileSync("vendor/acme/pkg/composer.json", "{}\\n");
+      fs.writeFileSync("vendor/rust/serde/Cargo.toml", "[package]\\nversion = \\"2\\"\\n");
+      fs.writeFileSync("composer.json", "{\\"require\\":{\\"evil/pkg\\":\\"*\\"}}\\n");
+      sleep(300);
+    `),
+  });
+  assert.deepEqual(report.changes.map((c) => [c.path, c.rule, c.outcome]), [["composer.json", "dependency_manifest", "reverted"]]);
+  assert.equal(read(dest, "vendor/acme/pkg/composer.json"), "{}\n", "vendored install output kept");
+  assert.equal(read(dest, "vendor/rust/serde/Cargo.toml"), "[package]\nversion = \"2\"\n");
+});

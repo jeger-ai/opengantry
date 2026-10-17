@@ -6,6 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 import { runCageCheck } from "../lib/cage/cage-check.js";
+import { cageScanRule } from "../lib/cage/cage-rules.js";
 import { isCageSubcommandInvocation } from "../program-cage.js";
 import { writeManifest } from "./test-fixtures.js";
 
@@ -257,6 +258,21 @@ test("cage check dependency freeze: --lock-deps freezes without a .cage.yaml and
     rules(runCageCheck({ cwd: dest, base })).filter(([p]) => p === ".env.local"),
     [[".env.local", "secrets", "revert"]],
   );
+});
+
+test("cage check dependency freeze: vendored manifests do not fail a frozen check (MSN-0275 DoD 3, review on #227)", () => {
+  const { dest, base } = makeRepo("og-cage-check-deps-vendor-");
+  write(dest, "vendor/rust/serde/Cargo.toml", "[package]\nname = \"serde\"\n");
+  write(dest, "vendor/acme/pkg/composer.json", "{}\n");
+  commitAll(dest, "vendor update");
+  const report = runCageCheck({ cwd: dest, base, lockDeps: true });
+  assert.equal(report.exit_code, 0);
+  assert.deepEqual(rules(report), []);
+  assert.equal(cageScanRule("app/vendor/x/package.json", "revert"), null);
+  assert.equal(cageScanRule("vendor/package.json", "revert"), null);
+  assert.equal(cageScanRule("src/vendors/package.json", "revert"), "dependency_manifest", "only a vendor/ segment counts");
+  assert.equal(cageScanRule("vendor/acme/composer.lock", "revert"), "lockfile", "lockfiles are unchanged");
+  assert.equal(cageScanRule("vendor/acme/.env", "revert"), "secrets");
 });
 
 test("cage check scope: base allow_only fails a range that touches a path outside it (MSN-0276 DoD 1, 3, 6)", () => {

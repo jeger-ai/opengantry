@@ -21,6 +21,9 @@
 # DoD 3 (rules): with the freeze on, the built-in lockfile rule (the 13 existing names) is revert, and a new built-in
 #        dependency_manifest rule (package.json, pyproject.toml, Pipfile, requirements*.txt, Cargo.toml, go.mod,
 #        Gemfile, composer.json; basename match in the whole-tree scan with the existing skip dirs) is revert.
+#        Amended after review on PR #227: manifests under a vendor/ path segment are excluded from dependency_manifest
+#        (composer install and cargo vendor write one per installed package; that is install output, not the
+#        project's manifests). Lockfiles are unchanged.
 #        Session: modified restored, added removed, deleted restored; watch prompts; check exits 3; push guard blocks.
 #        With the freeze off, lockfiles stay report and manifests are unprotected, exactly as before.
 #        --allow-override <path> can still downgrade a frozen path for one run and is announced (decision 3).
@@ -57,28 +60,28 @@ trace_rows:
     anchor: "1424"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0275 at 2695e86: frozen plan: lockfile rule revert and new dependency_manifest rule (package.json, pyproject.toml, Pipfile, requirements*.txt, Cargo.toml, go.mod, Gemfile, composer.json; basename in the whole-tree scan) revert; session restores modified, removes added sub/package.json; watch prompts; check exits 3; freeze off: lockfile kept, manifests unprotected, cageBasenameRule(\"package.json\") null; --allow-override package-lock.json under the freeze keeps the change, overridden true, banner printed"
-    anchor: "1425"
+    trace_quote: "DoD 3 MSN-0275 re-attested at 53363c8 after the review on PR #227 and the DoD 3 amendment (4837125): dependency_manifest matches by basename in the whole-tree scan except under a vendor/ path segment (cageScanRule, shared by the snapshot scan and classifyCagePath); a frozen session keeps vendor/acme/pkg/composer.json and vendor/rust/serde/Cargo.toml and restores the root composer.json; lockfiles and .env under vendor/ keep their rules; everything else in DoD 3 as attested at 2695e86"
+    anchor: "1431"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0275 at 2695e86: rows name lockfile or dependency_manifest with source builtin; session report, gantry.cage-check.v1 and gantry.cage-watch.v1 carry dependencies \"revert\"|\"report\"; start lines say (dependencies frozen); JSON stdout holds no file bodies (no typosquat or postinstall strings)"
     anchor: "1426"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0275 at 2695e86: cage.test.ts 8 new tests, cage-check.test.ts 3 new tests, cage-watch.test.ts 2 new tests (live restore of a frozen lockfile; gantry cage watch --lock-deps prompts, reject and timeout restore, decisions lockfile rejected and dependency_manifest timed_out), .env.local and apps/web/.env.production.local created in a session are removed, a committed .env.local fails cage check; npm run test:cage tests 11 pass 11 fail 0 incl. gantry-cage --lock-deps"
-    anchor: "1427"
+    trace_quote: "DoD 5 MSN-0275 re-attested at 53363c8: vendor/ tests added in cage-watch.test.ts (frozen session) and cage-check.test.ts (frozen check exit 0 on vendored manifests, cageScanRule cases); cage suites tests 81 pass 81; npm run test:cage pass 11 fail 0; the other DoD 5 tests unchanged since 2695e86"
+    anchor: "1432"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0275 at 2695e86: ADR-0048 stays ACTIVE, decision 2 lists the dependencies: key, new decision 9 (dependency freeze): config key and flag, tighten-only, decisions 3, 5 and 8 hold, check reads it from base, reports carry dependencies, limit: cage restores files and does not block installs, postinstall has already run; consequence for frozen projects added"
-    anchor: "1428"
+    trace_quote: "DoD 6 MSN-0275 re-attested at 53363c8: ADR-0048 decision 9 now states the vendor/ exception for dependency_manifest (vendored install output) and that lockfiles have none; the rest as attested at 2695e86"
+    anchor: "1433"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0275 at 2695e86: docs/cage protected-paths.md (dependency_manifest row, lockfile mode, Freeze dependencies section), cage-yaml.md, session.md, check.md, watch.md, report.md, index.md and limits.md updated; docs/FEATURES.md is a redirect table since MSN-0270 with no cage section to change; packages/opengantry-cage/README.md lists --lock-deps; docs/CHANGELOG.md Unreleased upgrade notes; assert-docs-structure OK (52 pages, 38 published, 305 relative links checked)"
-    anchor: "1429"
+    trace_quote: "DoD 7 MSN-0275 re-attested at 53363c8: docs/cage/protected-paths.md dependency_manifest row says except under a vendor/ directory; docs/CHANGELOG.md Unreleased entry says the same; assert-docs-structure OK (52 pages, 38 published, 305 relative links checked)"
+    anchor: "1434"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0275 at 2695e86: ./scripts/dev-validate-core.sh exit 0: tests 935 pass 935 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1430"
+    trace_quote: "DoD 8 MSN-0275 re-attested at 53363c8: ./scripts/dev-validate-core.sh exit 0: tests 937 pass 937 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1435"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
