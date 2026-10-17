@@ -1,5 +1,8 @@
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated by Planner stamp [MSN-0282]. Executor must not run until the [MSN-0282] legislation commit + pin.
+# Re-legislated after execution: the contract names the ten src/cli files the facades touch instead of src/cli/,
+# because the whole directory put seven pre-existing dynamic requires (not touched here) under the contract's
+# import scan (GXT_CONTRACT_IMPORT_DYNAMIC). Answers, gate and DoDs are unchanged.
 #
 # Legislated intent: ADR-0052 migration step 2a. Two workspace packages, core (pure domain) and git (the git
 # adapter), built by tsc project references into dist/packages/ and reached through the root package.json imports
