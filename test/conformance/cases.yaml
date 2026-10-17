@@ -107,5 +107,5 @@ cases:
 
   # --- not recorded ---
   - { id: mcp-serve, fixture: fresh-init, args: [mcp, serve], skip: "long-running stdio server; covered by src/cli/tests/mcp-legislation.test.ts" }
-  - { id: verify.contract.contract-standalone, fixture: contract-standalone, args: [verify, --contract, verify.yaml, --json], skip: "gantry verify --contract lands with MSN-0277 (#228)" }
-  - { id: verify.contract.gate-json.contract-standalone, fixture: contract-standalone, args: [verify, --contract, gate.json, --json], skip: "gantry verify --contract lands with MSN-0277 (#228)" }
+  - { id: verify.contract.contract-standalone, fixture: contract-standalone, args: [verify, --contract, verify.yaml, --base, HEAD~1, --json] }
+  - { id: verify.contract.gate-json.contract-standalone, fixture: contract-standalone, args: [verify, --contract, gate.json, --base, HEAD~1, --json] }
