@@ -5,7 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
+import { EventEmitter } from "node:events";
 import { runCage } from "../lib/cage/cage-run.js";
+import { runCageWatch } from "../lib/cage/cage-watch-run.js";
 import { CAGE_CONTEST_LIMIT } from "../lib/cage/cage-watch.js";
 import { CAGE_LIMITS, CAGE_WATCH_LIMITS, CAGE_WATCH_LIMITS_SUMMARY, formatCageReport } from "../lib/cage/cage-report.js";
 
@@ -324,4 +326,77 @@ test("cage push guard: checks the session plan, so .cage.yaml paths and globs ar
   assert.deepEqual(branches, ["main", "override"]);
   assert.equal(report.push_guard.refused_pushes, 3);
   assert.equal(read(dest, ".cage.yaml"), 'protect:\n  - path: infra\n  - glob: "**/*.pem"\n', "config restored at exit");
+});
+
+test("cage watch dependency freeze: a frozen lockfile is restored live while the command runs (MSN-0275 DoD 3, 5)", async () => {
+  const dest = makeRepo("og-cage-live-deps-");
+  fs.writeFileSync(path.join(dest, "package.json"), "{\"name\":\"fixture\"}\n");
+  const report = await runCage({
+    cwd: dest,
+    lockDeps: true,
+    watchIntervalMs: FAST,
+    bell: () => {},
+    command: nodeScript(`
+      fs.writeFileSync("package-lock.json", "{\\"typosquat\\":1}\\n");
+      fs.writeFileSync("package.json", "{\\"name\\":\\"edited\\"}\\n");
+      sleep(600);
+      fs.writeFileSync("probe-lock.txt", fs.readFileSync("package-lock.json", "utf8"));
+      fs.writeFileSync("probe-manifest.txt", fs.readFileSync("package.json", "utf8"));
+    `),
+  });
+  assert.equal(read(dest, "probe-lock.txt"), "{}\n", "lockfile restored while the command was still running");
+  assert.equal(read(dest, "probe-manifest.txt"), "{\"name\":\"fixture\"}\n");
+  assert.ok(report.watch.live_restores >= 2);
+  assert.equal(report.exit_code, 3);
+});
+
+/** A stand-in for the watch terminal: raw mode recorded, key presses emitted as data. */
+class FakeTty extends EventEmitter {
+  isTTY = true;
+  setRawMode(): this {
+    return this;
+  }
+  resume(): this {
+    return this;
+  }
+  pause(): this {
+    return this;
+  }
+  press(keys: string): void {
+    this.emit("data", Buffer.from(keys));
+  }
+}
+
+async function waitFor(cond: () => boolean, ms = 5000): Promise<void> {
+  const end = Date.now() + ms;
+  while (!cond()) {
+    if (Date.now() > end) throw new Error("timed out waiting");
+    await new Promise((r) => setTimeout(r, 20));
+  }
+}
+
+test("gantry cage watch --lock-deps: a frozen lockfile change is prompted; reject and timeout both restore (MSN-0275 DoD 2, 3, 4, 5)", async () => {
+  const dest = fs.realpathSync(makeRepo("og-cage-watch-deps-"));
+  spawnSync("git", ["init", "-q"], { cwd: dest, env: gitChildEnv() });
+  fs.writeFileSync(path.join(dest, "go.mod"), "module fixture\n");
+  const tty = new FakeTty();
+  const said: string[] = [];
+  const done = runCageWatch({ cwd: dest, input: tty, lockDeps: true, decisionTimeoutS: 1, watchIntervalMs: 30, notify: false, say: (l) => said.push(l), bell: () => undefined });
+  assert.ok(said[0]?.includes("(dependencies frozen)"), said[0]);
+  fs.writeFileSync(path.join(dest, "package-lock.json"), "{\"typosquat\":1}\n");
+  await waitFor(() => said.some((l) => l.includes("package-lock.json changed (lockfile")));
+  tty.press("r");
+  await waitFor(() => read(dest, "package-lock.json") === "{}\n");
+  fs.writeFileSync(path.join(dest, "go.mod"), "module fixture\nrequire evil v1.0.0\n");
+  await waitFor(() => said.some((l) => l.includes("go.mod changed (dependency_manifest")));
+  await waitFor(() => read(dest, "go.mod") === "module fixture\n", 4000);
+  tty.press("\u0003");
+  const report = await done;
+  assert.equal(report.dependencies, "revert");
+  assert.equal(report.exit_code, 3);
+  assert.deepEqual(report.decisions.map((d) => [d.path, d.rule, d.outcome]), [
+    ["package-lock.json", "lockfile", "rejected"],
+    ["go.mod", "dependency_manifest", "timed_out"],
+  ]);
+  assert.deepEqual(report.kept, [], "a frozen lockfile is decided, not just logged");
 });

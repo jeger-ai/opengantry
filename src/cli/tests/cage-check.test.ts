@@ -204,3 +204,57 @@ test("cage check: `gantry cage -- check` stays a command named check (MSN-0267 D
   assert.equal(r.status, 0, r.stderr);
   assert.equal(fs.readFileSync(path.join(dir, "ran.txt"), "utf8"), "ran-check\n");
 });
+
+test("cage check dependency freeze: base dependencies: revert fails a range that changes a manifest or lockfile (MSN-0275 DoD 1, 3, 5)", () => {
+  const { dest } = makeRepo("og-cage-check-deps-");
+  write(dest, ".cage.yaml", "dependencies: revert\nprotect:\n  - path: db/migrations\n");
+  write(dest, "package.json", '{"name":"fixture"}\n');
+  const base = commitAll(dest, "freeze dependencies");
+  write(dest, "package.json", '{"name":"fixture","dependencies":{"reqeusts":"1.0.0"}}\n');
+  write(dest, "package-lock.json", '{"reqeusts":1}\n');
+  write(dest, "tools/requirements.txt", "reqeusts==1.0\n");
+  commitAll(dest, "add a dependency");
+  const report = runCageCheck({ cwd: dest, base });
+  assert.equal(report.exit_code, 3);
+  assert.equal(report.dependencies, "revert");
+  assert.deepEqual(rules(report), [
+    ["package-lock.json", "lockfile", "revert"],
+    ["package.json", "dependency_manifest", "revert"],
+    ["tools/requirements.txt", "dependency_manifest", "revert"],
+  ]);
+});
+
+test("cage check dependency freeze: a head that adds dependencies: revert is not held to it in its own range (MSN-0275 DoD 1, 5)", () => {
+  const { dest, base } = makeRepo("og-cage-check-deps-head-");
+  write(dest, ".cage.yaml", "dependencies: revert\nprotect:\n  - path: db/migrations\n");
+  write(dest, "package.json", '{"name":"fixture"}\n');
+  commitAll(dest, "freeze and add a manifest in the same range");
+  const report = runCageCheck({ cwd: dest, base });
+  assert.equal(report.dependencies, "report");
+  assert.deepEqual(rules(report), [[".cage.yaml", "cage_config", "revert"]], "only the config change itself fails");
+});
+
+test("cage check dependency freeze: --lock-deps freezes without a .cage.yaml and only adds; a committed .env.local fails (MSN-0275 DoD 2, 4, 5)", () => {
+  const { dest, base } = makeRepo("og-cage-check-deps-flag-");
+  write(dest, "package-lock.json", '{"a":1}\n');
+  commitAll(dest, "deps");
+  assert.equal(runCageCheck({ cwd: dest, base }).exit_code, 0, "lockfile alone is report-only without the freeze");
+  const frozen = runCageCheck({ cwd: dest, base, lockDeps: true });
+  assert.equal(frozen.exit_code, 3);
+  assert.deepEqual(rules(frozen), [["package-lock.json", "lockfile", "revert"]]);
+
+  const run = (...args: string[]) => spawnSync(process.execPath, [CLI, "cage", ...args], { cwd: dest, encoding: "utf8", env: gitChildEnv() });
+  const after = run("check", "--base", base, "--lock-deps", "--json");
+  assert.equal(after.status, 3, after.stderr);
+  assert.equal((JSON.parse(after.stdout) as { dependencies: string }).dependencies, "revert");
+  const before = run("--lock-deps", "check", "--base", base);
+  assert.equal(before.status, 3, "a --lock-deps before the subcommand carries over");
+  assert.match(before.stderr, /^cage check: 1 commit\(s\) in .*; rules from [0-9a-f]{12}; dependencies frozen$/m);
+
+  write(dest, ".env.local", "TOKEN=agent\n");
+  commitAll(dest, "local env");
+  assert.deepEqual(
+    rules(runCageCheck({ cwd: dest, base })).filter(([p]) => p === ".env.local"),
+    [[".env.local", "secrets", "revert"]],
+  );
+});
