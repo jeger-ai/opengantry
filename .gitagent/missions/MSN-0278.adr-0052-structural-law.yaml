@@ -24,13 +24,13 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0278 at ad54623: .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md present with frontmatter id ADR-0052, status ACTIVE and 16 match_terms; sections Context (Symptoms table, Why the law did not prevent this), Decision Part A (A1-A11), Decision Part B (B1-B7), Migration (steps 1-6), Consequences, Non-goals, Follow-ups; A5 reads Approved by the operator on 2026-10-17; the three operator amendments present: A1 cage depends on core, git for check and the push guard only, core and git inlined into the published tarballs; B4 ratchets only through gantry arch check --ratchet in a Planner or release mission, never on merge; B7 and Non-goals carry the 800-line per-file sanity ceiling and no per-file ratchets; Migration step 1 keeps the B2 rule kinds out of TARGET_ARCHITECTURE.yaml until step 3 because the v3.9 parser rejects a rule with neither import nor pattern fields"
+    anchor: "1423"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0278 at ad54623: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 922 pass 922 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; MSN commit subjects OK; git diff --name-only origin/main..ad54623 lists only .gitagent/missions/MSN-0278.adr-0052-structural-law.yaml and .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md, both in contract.tmvc_roots"
+    anchor: "1424"
+    status: PASS
 interrogation:
   - finding_id: 6390c6b59d47
     kind: adr_conflict
