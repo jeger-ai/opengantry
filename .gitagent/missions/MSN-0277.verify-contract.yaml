@@ -25,6 +25,8 @@
 #        working tree or HEAD, so a change cannot weaken its own contract; a contract outside the repository (or
 #        untracked) is read from disk. The result records contract_source base|disk. The base is --base, else the
 #        contract's base; neither, or a base that does not resolve, exits 2.
+#        Amended after review on PR #228: a tracked contract never names its own base (its base: is ignored);
+#        --base is required for it (GXT_VERIFY_BASE_REQUIRED). Only a contract read from disk may supply base:.
 # DoD 3 (scope, size, rules): changed files are base...HEAD (committed), plus uncommitted and untracked files with
 #        --worktree. Path patterns follow hangar: no wildcard = the path or a folder above it ("." = everything);
 #        * one segment, ** any depth, ? one character. A changed file outside allowed_paths, or matching
@@ -35,11 +37,17 @@
 #        passes when stdout is empty and the exit code is 0 or 1. With --quick a heavy check is skipped; with
 #        --worktree a heavy check runs quick_run, or is skipped without one. A failing exit0 check with a failures
 #        regex passes when every failure it names is already in the baseline; only new failures fail it.
+#        Amended after review on PR #228: with a contract from the base commit, a baseline inside the repository is
+#        read from the base commit too; every baseline must name the sha256 of the contract in force (contract_sha256,
+#        or hangar's gate_sha256), else exit 2 (GXT_VERIFY_BASELINE_STALE).
 # DoD 5 (modes): default judges the committed state and needs a clean tree; --worktree, --quick, --baseline (HEAD
 #        at the base and a clean tree; writes which exit0 checks fail and their failures to --baseline-file, default
 #        verify-baseline.json beside the contract) and --check-result <file> (exit 0 only when that result passed in
 #        the default mode for this HEAD and this contract's sha256 on a clean tree). Exit 0 pass, 1 fail, 2 cannot
 #        run (incl. --format sarif|junit with --contract, and --contract with --mission).
+#        Amended after review on PR #228: --check-result also requires the result's base to equal the base in force;
+#        paths are read NUL-separated so unusual file names are judged, and a default verify.yaml is found at the
+#        repository root from any subdirectory.
 # DoD 6 (result): opengantry.verify-result.v1 with status, mode, head, base, contract {path, sha256, source}, paths
 #        {changed, outside, forbidden}, size {added, max, files}, rules [{name, why, violations [{file, line}]}],
 #        checks [{name, expect, exit, seconds, ok, reason, skipped?, failures?, new_failures?}], problems. --json
