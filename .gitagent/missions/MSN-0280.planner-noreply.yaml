@@ -1,0 +1,98 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0280]. Executor must not run until the [MSN-0280] legislation commit + pin.
+#
+# Legislated intent: PR #229 (MSN-0278, ADR-0052) was squash-merged on GitHub, which authored the [MSN-0278] stamp on
+# main with the operator's GitHub noreply address. That address is not on the Planner allowlist, so every branch that
+# merges main fails the pre-push verify of MSN-0278 (GXT_MISSION_UNSTAMPED, NO_PLANNER_MSN_COMMIT). Operator decision
+# 2026-10-17: commit the address to the team allowlist instead of a local workaround.
+#
+# Risk (stated): git author emails are not authenticated and planner_signature is off, so the added address carries
+# the same weight as jeger@commitly.com does today.
+#
+# DoD 1 (allowlist): .gitagent/foreman/PLANNER.allowlist adds 11678629+jeger-at@users.noreply.github.com with a
+#        comment that GitHub squash merges author the stamp with it; the header comment says gantry verify, not
+#        gapman verify; jeger@commitly.com stays.
+# DoD 2 (local file): .gitagent/foreman/PLANNER.allowlist.local is no longer tracked (git rm --cached; the operator's
+#        copy stays on disk), as .gitignore and the team file's comment already intend.
+# DoD 3 (proof): gantry planner show lists both addresses, and gantry verify --mission
+#        .gitagent/missions/MSN-0278.adr-0052-structural-law.yaml passes git-proof.
+# DoD 4 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0280
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0023 stays ACTIVE and unchanged. Optional Planner
+      stamp signing is not touched: the planner_signature tier stays off, so an
+      allowlisted email is trusted as an author address, as jeger@commitly.com
+      is today. The added address is the operator's own GitHub noreply identity,
+      which GitHub uses as the author of squash merges the operator performs."
+    adr_refs:
+      - ADR-0023
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Reject applicability; ADR-0034 stays ACTIVE and unchanged. It
+      matched on the noreply/identity wording; this mission changes only who may
+      stamp legislation locally and in CI, not what leaves the spoke: no
+      payload, export or hub field changes."
+    adr_refs:
+      - ADR-0034
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3): the Planner allowlist under
+      .gitagent/foreman/ is substrate law (RULES 6.1). TMVC is narrowed by
+      contract.tmvc_roots to .gitagent/foreman/PLANNER.allowlist,
+      .gitagent/foreman/PLANNER.allowlist.local, EXECUTOR_LOG.md and this
+      mission file; no code changes."
+    adr_refs:
+      - ADR-0023
+interrogation_sha256: 0560c6286a4f21c330b25794ee760cc1b82717d88bf8589b5230b826583dbfcc
+declared_paths:
+  - .gitagent/foreman/PLANNER.allowlist
+  - .gitagent/foreman/PLANNER.allowlist.local
+  - .gitagent/missions/MSN-0280.planner-noreply.yaml
+  - EXECUTOR_LOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/PLANNER.allowlist
+    - .gitagent/foreman/PLANNER.allowlist.local
+    - .gitagent/missions/MSN-0280.planner-noreply.yaml
+    - EXECUTOR_LOG.md
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/
+    - templates/
+contract_sha256: c2131ad74c54d959f4fbf52cee928091132ffb340b2815627246e267a6b7fe66
