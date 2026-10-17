@@ -42,7 +42,8 @@ test("python imports: every statement form; comments and strings are not imports
     "import os, app.api as a  # import fake",
     "from app import api, services as s",
     "from . import sibling",
-    "from ..db import (",
+    // Split so the JS/TS import scanner, which also reads string literals, does not take it for import().
+    "from ..db import" + " (",
     "    models,  # comment",
     "    session,",
     ")",
