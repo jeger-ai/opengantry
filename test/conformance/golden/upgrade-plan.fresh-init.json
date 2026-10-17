@@ -12,7 +12,7 @@
     "status": "already_current",
     "from_version": "3.9.0",
     "to_version": "3.9.0",
-    "message": "Substrate is up to date (installed 3.9.0, bundled <SEMVER>).\nTo upgrade to a newer OpenGantry release, first update the package manager dependency\n(e.g. npm install @jeger-ai/opengantry@latest) and re-run: gantry upgrade",
+    "message": "Substrate is up to date (installed <SEMVER>, bundled <SEMVER>).\nTo upgrade to a newer OpenGantry release, first update the package manager dependency\n(e.g. npm install @jeger-ai/opengantry@latest) and re-run: gantry upgrade",
     "legacy_warning": null
   },
   "stderr_codes": []

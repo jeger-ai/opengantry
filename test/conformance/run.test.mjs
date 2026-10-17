@@ -49,7 +49,7 @@ const GLOBAL_NORMALIZERS = [
   [/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,12}\b/g, "<SHORT_SHA>"],
   [/"(duration_ms|elapsed_ms|took_ms|wall_ms|pid|ppid|port)":\s*\d+/g, '"$1": "<N>"'],
   [/\bv\d+\.\d+\.\d+\b/g, "<SEMVER>"],
-  [/(?<=[ (:])\d+\.\d+\.\d+(?=[ )]|$)/gm, "<SEMVER>"],
+  [/(?<=[ (:])\d+\.\d+\.\d+(?=[ ),]|$)/gm, "<SEMVER>"],
 ];
 
 function normalize(text, caseDir, extra) {
