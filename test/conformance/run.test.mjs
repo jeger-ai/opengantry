@@ -1,4 +1,4 @@
-// Conformance suite (ADR-0052 step 1, MSN-0280): the v3.9 CLI contract as golden output.
+// Conformance suite (ADR-0052 step 1, MSN-0281): the v3.9 CLI contract as golden output.
 //
 // For every case in cases.yaml: copy its fixture repository, run the built CLI with the case's
 // arguments, normalize the output (paths, shas, timestamps, durations) and compare exit code,

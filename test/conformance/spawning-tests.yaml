@@ -1,4 +1,4 @@
-# Inventory of src/cli tests that spawn a process (ADR-0052 step 1, MSN-0280).
+# Inventory of src/cli tests that spawn a process (ADR-0052 step 1, MSN-0281).
 # class cli: drives dist/cli/index.js and is CLI contract the v4 packages must keep passing.
 # class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
 # class none: spawns git only (in-process CLI calls); listed for completeness.

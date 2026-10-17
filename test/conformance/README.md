@@ -1,6 +1,6 @@
 # Conformance suite
 
-The v3.9 `gantry` CLI contract as golden output (ADR-0052 step 1, MSN-0280). The v4 packages must pass this suite unchanged, except where an ADR says a schema changes.
+The v3.9 `gantry` CLI contract as golden output (ADR-0052 step 1, MSN-0281). The v4 packages must pass this suite unchanged, except where an ADR says a schema changes.
 
 ## What a case records
 

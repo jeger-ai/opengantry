@@ -1,4 +1,4 @@
-// Conformance fixtures (ADR-0052 step 1, MSN-0280): small git repositories the golden cases run in.
+// Conformance fixtures (ADR-0052 step 1, MSN-0281): small git repositories the golden cases run in.
 // Each builder writes one repository under <outDir>/<name>. Content is deterministic: fixed emails,
 // fixed dates, fixed file bodies, no timestamps of the build machine. Builders call the built CLI
 // (dist/cli/index.js) only where the fixture is "what gantry init leaves behind".

@@ -1,4 +1,4 @@
-# Registry (ADR-0052 step 1, MSN-0280). Humans write it: YAML 1.2 core, no aliases, no unknown keys.
+# Registry (ADR-0052 step 1, MSN-0281). Humans write it: YAML 1.2 core, no aliases, no unknown keys.
 schema: opengantry.registry.v1
 kind: error-codes
 law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."

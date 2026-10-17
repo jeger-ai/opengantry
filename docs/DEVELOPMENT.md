@@ -152,7 +152,7 @@ IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; 
 
 ## Registries, baseline and conformance (ADR-0052 step 1)
 
-[ADR-0052](../.gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md) puts the shape of this codebase under law. Step 1 (MSN-0280) adds three things; the evaluator that enforces them arrives in step 3.
+[ADR-0052](../.gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md) puts the shape of this codebase under law. Step 1 (MSN-0281) adds three things; the evaluator that enforces them arrives in step 3.
 
 | Artifact | What it is | Who edits it |
 |----------|------------|--------------|

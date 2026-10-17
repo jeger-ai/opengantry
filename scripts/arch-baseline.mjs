@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ADR-0052 step 1 (MSN-0280): record or check the per-layer architecture baseline.
+// ADR-0052 step 1 (MSN-0281): record or check the per-layer architecture baseline.
 //   node scripts/arch-baseline.mjs            write ARCH_BASELINE.json from the layers in TARGET_ARCHITECTURE.yaml
 //   node scripts/arch-baseline.mjs --check    exit 1 when the file on disk differs from a fresh computation
 // Counts per layer: .ts files (tests excluded), their lines, and top-level `export` statements.

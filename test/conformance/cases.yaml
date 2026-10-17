@@ -1,4 +1,4 @@
-# Conformance cases (ADR-0052 step 1, MSN-0280). One entry per invocation the v4 CLI must reproduce.
+# Conformance cases (ADR-0052 step 1, MSN-0281). One entry per invocation the v4 CLI must reproduce.
 # fixture: a repository from build-fixtures.mjs, copied fresh for each case.
 # args: the gantry arguments. env: extra environment. normalize: extra per-case regexes.
 # record_tree: also record the working-tree changes the command made (git status --porcelain).
