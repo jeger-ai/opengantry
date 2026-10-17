@@ -177,7 +177,7 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
   const stop = waitForStop(input, (key) => guarded(() => engine.answer(key)));
   let timer: NodeJS.Timeout | null = null;
   let raw = false;
-  let trapped: string | null = null;
+  let trapped: string | null;
   try {
     input.setRawMode!(true);
     raw = true;

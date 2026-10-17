@@ -116,7 +116,7 @@ function readHashed<T>(dir: string, name: string): T | null {
   const file = path.join(dir, name);
   if (!fs.existsSync(file)) return null;
   const body = fs.readFileSync(file);
-  let expected = "";
+  let expected: string;
   try {
     expected = fs.readFileSync(path.join(dir, name.replace(/\.json$/, ".sha256")), "utf8").trim();
   } catch {
