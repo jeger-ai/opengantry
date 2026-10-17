@@ -67,6 +67,7 @@ Watch shares the session cage's journal, so a watch and a session cage never run
 | `--watch-interval-ms <n>` | Check interval (default 1000) |
 | `--max-file-bytes <n>` | Per-file snapshot cap (default 5 MiB); a larger protected file stops the watch before it starts |
 | `--no-notify` | No desktop notifications; the bell and the prompt still alert |
+| `--lock-deps` | Freeze dependencies: lockfile and dependency manifest changes are prompted like any restore-rule path ([Freeze dependencies](protected-paths.md#freeze-dependencies)) |
 | `--json` | Print the report as JSON on stdout when the watch stops |
 
 There is no `--allow-override` and no MCP tool.
