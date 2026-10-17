@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import type { Command } from "commander";
 import { setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
 import { GantryUserError } from "../lib/errors.js";
@@ -22,9 +23,26 @@ export interface VerifyContractCliOptions {
   baselineFile?: string;
   checkResult?: string;
   out?: string;
+  sign?: boolean;
+  allowedSigners?: string;
   json?: boolean;
   format?: string;
   mission?: string;
+}
+
+/** The `--contract` family of `gantry verify` (ADR-0051), registered in one place. */
+export function registerVerifyContractOptions(cmd: Command): Command {
+  return cmd
+    .option("--contract [file]", "Standalone verify contract instead of a mission: verify.yaml (default) or a COMMITLY gate.json")
+    .option("--base <ref>", "With --contract: base commit (required for a committed contract)")
+    .option("--worktree", "With --contract: include uncommitted and untracked work (check before committing)")
+    .option("--quick", "With --contract: skip heavy checks")
+    .option("--baseline", "With --contract: at the base, record which checks already fail")
+    .option("--baseline-file <file>", "With --contract: baseline file (default verify-baseline.json beside the contract)")
+    .option("--check-result <file>", "With --contract: pass only if that result passed in a full run for this HEAD, base and contract")
+    .option("--out <file>", "With --contract: write the opengantry.verify-result.v1 result to <file>")
+    .option("--sign", "With --contract and --out: sign the result with the git signing key")
+    .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file");
 }
 
 function usage(message: string): GantryUserError {
@@ -36,6 +54,8 @@ function assertCompatible(o: VerifyContractCliOptions): void {
   if (o.format && o.format !== "json" && o.format !== "text") throw usage(`--format ${o.format} is not available for contract results yet; use --json`);
   const modes = [o.worktree && "--worktree", o.quick && "--quick", o.baseline && "--baseline", o.checkResult && "--check-result"].filter(Boolean);
   if (modes.length > 1) throw usage(`choose one of ${modes.join(", ")}`);
+  if (o.sign && (!o.out || o.baseline || o.checkResult)) throw usage("--sign signs the result written by --out");
+  if (o.allowedSigners && !o.checkResult) throw usage("--allowed-signers is for --check-result");
 }
 
 function modeOf(o: VerifyContractCliOptions): VerifyMode {
@@ -64,6 +84,9 @@ function summary(result: VerifyContractResult): string[] {
   const lines = [
     `verify: ${result.mode} run of ${result.contract.path} (${result.contract.source}) on ${result.base.slice(0, 12)}...${result.head.slice(0, 12)}: ${String(result.paths.changed.length)} changed file(s), ${String(result.size.added)} line(s) added`,
   ];
+  if (result.inherited) lines.push(`verify: repository law from ${result.inherited.path} at the base applies too`);
+  if (result.skipped.length > 0) lines.push(`verify: note: imports not read (language not supported): ${result.skipped.join(", ")}`);
+  if (result.signature) lines.push(`verify: signed (${result.signature.kind}${result.signature.key_fingerprint ? ` ${result.signature.key_fingerprint}` : ""})`);
   if (result.contract.ignored.length > 0) {
     lines.push(`verify: note: ${result.contract.ignored.join(", ")} in ${result.contract.path} are for the cage and hangar, not verify; ignored`);
   }
@@ -92,13 +115,16 @@ export async function runVerifyContractCommand(o: VerifyContractCliOptions): Pro
       return Promise.resolve();
     }
     if (o.checkResult) {
-      const { ok, problems } = checkVerifyResult(o.checkResult, base);
-      if (json) emitCliJson({ status: ok ? "verified" : "fail", problems });
-      else console.error([...problems.map((p) => `verify: PROBLEM ${p}`), ok ? "verify: VERIFIED" : `verify: FAIL, ${String(problems.length)} problem(s)`].join("\n"));
+      const { ok, problems, signer } = checkVerifyResult(o.checkResult, { ...base, allowedSigners: o.allowedSigners });
+      if (json) emitCliJson({ status: ok ? "verified" : "fail", signer, problems });
+      else {
+        const verified = signer ? `verify: VERIFIED, signed by ${signer}` : "verify: VERIFIED";
+        console.error([...problems.map((p) => `verify: PROBLEM ${p}`), ok ? verified : `verify: FAIL, ${String(problems.length)} problem(s)`].join("\n"));
+      }
       if (!ok) setExitCode(1);
       return Promise.resolve();
     }
-    const result = runVerifyContract({ ...base, mode: modeOf(o), onCheck });
+    const result = runVerifyContract({ ...base, mode: modeOf(o), onCheck, sign: o.sign });
     if (o.out) writeResult(o.out, result);
     if (json) emitCliJson(result);
     else for (const line of summary(result)) console.error(line);

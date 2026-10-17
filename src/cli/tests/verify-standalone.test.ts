@@ -271,7 +271,7 @@ test("verify --check-result: only a passing full run for this HEAD and this cont
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-out-")), "result.json");
   const save = (r: unknown): void => fs.writeFileSync(out, JSON.stringify(r));
   save(runVerifyContract({ cwd: dest, base }));
-  assert.deepEqual(checkVerifyResult(out, { cwd: dest, base }), { ok: true, problems: [] });
+  assert.deepEqual(checkVerifyResult(out, { cwd: dest, base }), { ok: true, problems: [], signer: null });
   assert.match(checkVerifyResult(out, { cwd: dest, base: "HEAD" }).problems.join(), /the result was measured from [0-9a-f]{12}, the base is/);
 
   save(runVerifyContract({ cwd: dest, base, mode: "quick" }));
