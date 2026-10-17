@@ -81,12 +81,12 @@ trace_rows:
     anchor: "1449"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0276 at a87c834: docs/cage/protected-paths.md out_of_scope row and Scope a task section; cage-yaml.md, session.md, check.md, watch.md, report.md, limits.md and index.md updated; packages/opengantry-cage/README.md lists --allow-only; docs/CHANGELOG.md Unreleased covers the scope mode; assert-docs-structure OK (52 pages, 38 published, 312 relative links checked)"
-    anchor: "1450"
+    trace_quote: "DoD 8 MSN-0276 re-attested at 8d77bab after merging main (#227, #229, #230): docs/cage/watch.md and docs/cage/report.md options tables list --allow-only next to --lock-deps; the rest of the docs as attested at a87c834; assert-docs-structure OK (52 pages, 38 published, 316 relative links checked)"
+    anchor: "1452"
     status: PASS
   - dod_id: "9"
-    trace_quote: "DoD 9 MSN-0276 at a87c834: ./scripts/dev-validate-core.sh exit 0: tests 948 pass 948 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1451"
+    trace_quote: "DoD 9 MSN-0276 re-attested at 8d77bab: ./scripts/dev-validate-core.sh exit 0: tests 950 pass 950 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1453"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
