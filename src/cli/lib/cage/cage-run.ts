@@ -11,7 +11,8 @@ import {
 } from "./cage-journal.js";
 import { buildCageReport, type CageReport } from "./cage-report.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
-import { buildCagePlan, canonicalCageRoot } from "./cage-rules.js";
+import { buildCagePlan, canonicalCageRoot, type CageScope } from "./cage-rules.js";
+import { assertCageScopeGitRoot, createCageScopeIndex, disposeCageScopeIndex } from "./cage-scope.js";
 import {
   CAGE_MAX_SCAN_BYTES,
   CAGE_MAX_TARGETS,
@@ -61,6 +62,8 @@ export interface CageRunOptions {
   contestLimit?: number;
   /** `--lock-deps`: freeze lockfiles and dependency manifests for this run whatever `.cage.yaml` says. */
   lockDeps?: boolean;
+  /** `--allow-only <glob>`: protect everything git would track outside these globs (with `.cage.yaml` `allow_only:`). */
+  allowOnly?: readonly string[];
   haltGraceMs?: number;
   /** Ctrl-C semantics for a trapped SIGINT (see cage-process.ts); defaults to whether stdin is a TTY. */
   interactive?: boolean;
@@ -77,6 +80,7 @@ export interface CageRunOptions {
     overrides: string[];
     configCommitted: boolean | null;
     dependencies: "revert" | "report";
+    scope: CageScope | null;
   }) => void;
   bell?: () => void;
 }
@@ -170,6 +174,7 @@ async function runSession(
     overrides: plan.overrides,
     configCommitted: plan.config.committed,
     dependencies: plan.dependencies,
+    scope: plan.scope,
   });
   // The session marker lets setup-only commands (cage suggest) refuse to run inside the cage.
   const graceMs = opts.haltGraceMs ?? CAGE_DEFAULT_HALT_GRACE_MS;
@@ -220,15 +225,27 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
   // Plan and baseline before spawning: an invalid manifest, .cage.yaml or override, a protected set over
   // the scan caps, or a revert-rule file over the per-file cap or the total budget, fails closed (exit 2)
   // and the command never runs; nothing is ever left detect-only.
-  const plan = buildCagePlan(s.root, { overrides: opts.allowOverride, lockDeps: opts.lockDeps });
+  const plan = buildCagePlan(s.root, { overrides: opts.allowOverride, lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
   const limits = { maxTargets: opts.maxTargets ?? CAGE_MAX_TARGETS, maxScanBytes: opts.maxScanBytes ?? CAGE_MAX_SCAN_BYTES };
-  const before = takeCageSnapshot(plan, { ...s.snap, limits });
-  const journal = writeCageJournal(journalDir, s.root, before, plan.overrides, { lockDeps: opts.lockDeps });
-  const { proc, trappedSignal, live, log, guarded, contestLimit } = await runSession(opts, s, plan, before, journal);
-  const after = takeCageSnapshot(plan, { ...s.snap, keepBytes: false });
-  const changes = mergeChanges(live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
-  // Everything the session had to restore is restored: the journal has served its purpose.
-  journal.dispose();
+  // A scope keeps one temporary index for the session, so each check only hashes what changed.
+  if (plan.scope) assertCageScopeGitRoot(s.root);
+  const scopeIndex = plan.scope ? createCageScopeIndex(s.root) : undefined;
+  const snap = { ...s.snap, scopeIndex };
+  let changes: CageResolvedChange[];
+  let session: CageSessionResult;
+  let before: CageSnapshot;
+  try {
+    before = takeCageSnapshot(plan, { ...snap, limits });
+    const journal = writeCageJournal(journalDir, s.root, before, plan.overrides, { lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
+    session = await runSession(opts, { ...s, snap }, plan, before, journal);
+    const after = takeCageSnapshot(plan, { ...snap, keepBytes: false });
+    changes = mergeChanges(session.live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
+    // Everything the session had to restore is restored: the journal has served its purpose.
+    journal.dispose();
+  } finally {
+    if (scopeIndex) disposeCageScopeIndex(scopeIndex);
+  }
+  const { proc, trappedSignal, live, log, guarded, contestLimit } = session;
 
   return buildCageReport({
     command: opts.command[0] ?? "",
@@ -244,6 +261,7 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
     manifestZones: plan.manifestZoneCount,
     cageConfig: plan.config,
     dependencies: plan.dependencies,
+    scope: plan.scope,
     overrides: plan.overrides,
     changes,
     watch: {

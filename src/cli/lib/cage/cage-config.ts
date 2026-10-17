@@ -29,6 +29,11 @@ export interface CageConfig {
    * revert-rule paths. `report` (the default) leaves lockfiles report-only and manifests unprotected.
    */
   dependencies: CageConfigMode;
+  /**
+   * Top-level `allow_only:` globs; null when unset. Everything git would track outside them is protected
+   * (the `out_of_scope` rule). A glob that matches a directory covers everything under it.
+   */
+  allowOnly: string[] | null;
 }
 
 export const EMPTY_CAGE_CONFIG: Omit<CageConfig, "present"> = {
@@ -36,6 +41,7 @@ export const EMPTY_CAGE_CONFIG: Omit<CageConfig, "present"> = {
   defaultMode: "revert",
   contestLimit: null,
   dependencies: "report",
+  allowOnly: null,
 };
 
 /** Keys that would loosen protection. Named in the error so authors know relaxation is a runtime flag. */
@@ -55,7 +61,7 @@ const SUBTRACTIVE_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 const ENTRY_KEYS: ReadonlySet<string> = new Set(["path", "glob", "mode"]);
-const TOP_LEVEL_KEYS: ReadonlySet<string> = new Set(["protect", "mode", "contest_limit", "dependencies"]);
+const TOP_LEVEL_KEYS: ReadonlySet<string> = new Set(["protect", "mode", "contest_limit", "dependencies", "allow_only"]);
 
 function configError(message: string): GantryUserError {
   return new GantryUserError(
@@ -114,6 +120,18 @@ function parseContestLimit(raw: unknown): number | null {
   return raw;
 }
 
+function parseAllowOnly(raw: unknown): string[] | null {
+  if (raw === undefined || raw === null) return null;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw configError("top level: allow_only must be a non-empty list of globs");
+  }
+  return raw.map((g, i) => {
+    const value = typeof g === "string" ? normalizeCageRelPath(g) : null;
+    if (!value) throw configError(`allow_only[${String(i)}]: expected a root-relative glob without ".." or a leading "/"`);
+    return value;
+  });
+}
+
 /** Parse `.cage.yaml` text (working tree or a committed blob); malformed or subtractive input throws. */
 export function parseCageConfigText(text: string): CageConfig {
   const doc = parseDocument(text, { uniqueKeys: true });
@@ -136,8 +154,9 @@ export function parseCageConfigText(text: string): CageConfig {
   const defaultMode = parseMode(obj.mode, "top level") ?? "revert";
   const contestLimit = parseContestLimit(obj.contest_limit);
   const dependencies = parseMode(obj.dependencies, "top level", "dependencies") ?? "report";
+  const allowOnly = parseAllowOnly(obj.allow_only);
   const entries = protect.map((e, i) => parseEntry(e, i, defaultMode));
-  return { present: true, entries, defaultMode, contestLimit, dependencies };
+  return { present: true, entries, defaultMode, contestLimit, dependencies, allowOnly };
 }
 
 /**

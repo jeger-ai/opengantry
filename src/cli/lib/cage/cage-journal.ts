@@ -7,7 +7,15 @@ import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import { buildCagePlan } from "./cage-rules.js";
-import { diffCageSnapshots, takeCageSnapshot, type CageEntry, type CageSnapshot, type CageSnapshotOptions } from "./cage-snapshot.js";
+import { listCageScopeTree } from "./cage-scope.js";
+import {
+  addCageScopeEntries,
+  diffCageSnapshots,
+  takeCageSnapshot,
+  type CageEntry,
+  type CageSnapshot,
+  type CageSnapshotOptions,
+} from "./cage-snapshot.js";
 
 /**
  * On-disk baseline journal so a cage session killed with an uncatchable signal (`kill -9` on the wrapper)
@@ -19,6 +27,8 @@ import { diffCageSnapshots, takeCageSnapshot, type CageEntry, type CageSnapshot,
  *   journal.json    baseline entries, wrapper pid + start time, overrides, lock_deps   journal.sha256  sha256 of journal.json
  *   pids.json       wrapper child + descendants, refreshed while it runs      pids.sha256     sha256 of pids.json
  *   blobs/<sha256>  baseline bytes of revert-mode files that fit the snapshot caps
+ * With a cage scope, out-of-scope files are not listed one by one: the journal records the scope tree (already in
+ * the repository object store) and the `--allow-only` globs, and recovery rebuilds those entries from the tree.
  * A hash mismatch anywhere is a corrupt journal: cage refuses to start (`GXT_CAGE_JOURNAL_CORRUPT`, exit 2).
  */
 export const CAGE_JOURNAL_DIR = "gantry-cage-journal";
@@ -43,6 +53,8 @@ interface JournalEntry {
   linkTarget: string | null;
   /** Baseline bytes are stored under blobs/<sha256>; false for detect-only entries. */
   blob: boolean;
+  /** Git blob id of an out-of-scope entry (cage scope); absent otherwise. */
+  git_oid?: string;
 }
 
 interface JournalManifest {
@@ -53,6 +65,10 @@ interface JournalManifest {
   overrides: string[];
   /** `--lock-deps` for this session; absent in journals written before MSN-0275 (false). */
   lock_deps?: boolean;
+  /** `--allow-only` globs for this session; absent without a flag scope (MSN-0276). */
+  allow_only?: string[];
+  /** The scope tree out-of-scope entries are restored from; absent without a scope (MSN-0276). */
+  scope_tree?: string;
   entries: JournalEntry[];
 }
 
@@ -209,6 +225,7 @@ function toJournalEntry(e: CageEntry): JournalEntry {
     fileMode: e.fileMode,
     linkTarget: e.linkTarget,
     blob: e.bytes !== null,
+    ...(e.git ? { git_oid: e.git.oid } : {}),
   };
 }
 
@@ -218,7 +235,7 @@ export function writeCageJournal(
   root: string,
   baseline: CageSnapshot,
   overrides: readonly string[],
-  opts: { lockDeps?: boolean } = {},
+  opts: { lockDeps?: boolean; allowOnly?: readonly string[] } = {},
 ): CageJournalHandle {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, BLOBS_DIR), { recursive: true, mode: 0o700 });
@@ -230,6 +247,8 @@ export function writeCageJournal(
     started_at: new Date().toISOString(),
     overrides: [...overrides],
     lock_deps: opts.lockDeps === true,
+    ...(opts.allowOnly && opts.allowOnly.length > 0 ? { allow_only: [...opts.allowOnly] } : {}),
+    ...(baseline.scopeTree ? { scope_tree: baseline.scopeTree } : {}),
     entries: journalEntries(dir, baseline),
   };
   writeHashed(dir, MANIFEST_FILE, manifest);
@@ -257,6 +276,8 @@ export function writeCageJournal(
 function journalEntries(dir: string, baseline: CageSnapshot): JournalEntry[] {
   const entries: JournalEntry[] = [];
   for (const e of baseline.entries.values()) {
+    // An out-of-scope entry without bytes lives in the scope tree, which the manifest names.
+    if (e.git && !e.bytes) continue;
     const blob = path.join(dir, BLOBS_DIR, e.sha256);
     if (e.bytes && !fs.existsSync(blob)) writeAtomic(blob, e.bytes);
     entries.push(toJournalEntry(e));
@@ -285,10 +306,10 @@ function loadBaseline(dir: string, m: JournalManifest): CageSnapshot {
       bytes = fs.readFileSync(blobPath);
       if (sha256Hex(bytes) !== e.sha256) throw corrupt(dir, `blob for ${e.rel} does not match its sha256`);
     }
-    const { blob: _blob, ...rest } = e;
-    entries.set(e.abs, { ...rest, bytes });
+    const { blob: _blob, git_oid: oid, ...rest } = e;
+    entries.set(e.abs, { ...rest, bytes, ...(oid ? { git: { root: m.root, oid } } : {}) });
   }
-  return { entries };
+  return { entries, scopeTree: m.scope_tree ?? null };
 }
 
 function killOrphans(dir: string): number[] {
@@ -331,7 +352,8 @@ export function recoverCageJournal(root: string, dir: string, snap: CageSnapshot
   if (config && (!fs.existsSync(config.abs) || sha256Hex(fs.readFileSync(config.abs)) !== config.sha256)) {
     fs.writeFileSync(config.abs, config.bytes!, { mode: config.fileMode });
   }
-  const plan = buildCagePlan(root, { overrides: m.overrides, lockDeps: m.lock_deps === true });
+  const plan = buildCagePlan(root, { overrides: m.overrides, lockDeps: m.lock_deps === true, allowOnly: m.allow_only });
+  if (m.scope_tree && plan.scope) addCageScopeEntries(plan, baseline.entries, listCageScopeTree(root, m.scope_tree));
   const current = takeCageSnapshot(plan, { ...snap, keepBytes: false });
   const restored = resolveCageChanges(diffCageSnapshots(baseline, current), { reportOnly: false });
   fs.rmSync(dir, { recursive: true, force: true });

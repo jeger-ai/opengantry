@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { readCageScopeBlob } from "./cage-scope.js";
 import type { CageChange, CageEntry } from "./cage-snapshot.js";
 
 /**
@@ -51,12 +52,15 @@ function revertChange(change: CageChange): CageOutcome {
     return "removed";
   }
   const before = change.before!;
+  // Out-of-scope entries keep no bytes: the baseline is a blob in the scope tree.
+  const fromGit = !before.bytes && before.git ? readCageScopeBlob(before.git.root, before.rel, before.git.oid) : null;
   if (before.type === "symlink") {
-    restoreSymlink(change.abs, before.linkTarget!);
+    restoreSymlink(change.abs, before.linkTarget ?? fromGit!.toString("utf8"));
     return "reverted";
   }
-  if (!before.bytes) return "detect_only";
-  restoreFile(change.abs, before, before.bytes);
+  const bytes = before.bytes ?? fromGit;
+  if (!bytes) return "detect_only";
+  restoreFile(change.abs, before, bytes);
   return "reverted";
 }
 
