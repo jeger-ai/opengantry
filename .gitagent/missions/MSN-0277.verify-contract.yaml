@@ -70,43 +70,43 @@ gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0277 at 28a9130: verify.yaml opengantry.verify.v1 (base, scope {allowed_paths, forbidden_paths}, size {max_added_lines, exclude}, rules, checks) parsed strictly in src/cli/lib/verify-standalone/contract.ts; wrong schema, unknown keys, a negative budget, an invalid regex, empty rule files, a bad expect, duplicate check names, non-boolean heavy and aliases exit 2 with GXT_VERIFY_CONTRACT_INVALID; commitly.gate.v1 gate.json maps cmd, self_check, approach and size_exclude; cage_protect and checks[].part reported as ignored and noted on stderr"
-    anchor: "1425"
+    anchor: "1429"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0277 re-attested at 578df3a after the review on PR #228 and the amendment (79a3e46): a tracked contract never names its base; without --base, also with base: HEAD in the branch's verify.yaml, it exits 2 with GXT_VERIFY_BASE_REQUIRED; a disk contract without base exits 2 with GXT_VERIFY_BASE_MISSING; the rest as attested at 28a9130"
-    anchor: "1435"
+    anchor: "1439"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0277 re-attested at 578df3a: changed, untracked and numstat paths are read NUL-separated and -U0 diffs run per file, so app/secret/ä \"q\".txt is forbidden, both odd-named files count toward the size and app/api/röutes.py:2 is reported; an added line \"++ x\" is not taken for a header; the default verify.yaml is found from a subdirectory; the rest as attested at 28a9130"
-    anchor: "1436"
+    anchor: "1440"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0277 re-attested at 578df3a: a committed baseline is read from the base commit, so a branch that adds its own failure to verify-baseline.json still fails; a disk baseline for an edited contract exits 2 with GXT_VERIFY_BASELINE_STALE and a corrupt one with GXT_VERIFY_BASELINE_INVALID; the rest as attested at 28a9130"
-    anchor: "1437"
+    anchor: "1441"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0277 re-attested at 578df3a: --check-result also refuses a result measured from another base (the result was measured from …, the base is …); the rest as attested at 28a9130"
-    anchor: "1438"
+    anchor: "1442"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0277 at 28a9130: opengantry.verify-result.v1 with status, mode, head, base, contract {path, sha256, source, format, ignored}, paths, size, rules, checks, problems; --json prints it, --out writes it; neither holds added-line text or check output (CHECK-OUTPUT-MARKER only on stderr as an indented tail)"
-    anchor: "1430"
+    anchor: "1434"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0277 re-attested at 578df3a: src/cli/tests/verify-standalone.test.ts tests 10 and src/cli/tests/verify-standalone-cli.test.ts tests 4, 14 pass 14 (alias test now uses known keys); a mutation reading the baseline from disk fails the baseline test"
-    anchor: "1439"
+    anchor: "1443"
     status: PASS
   - dod_id: "8"
     trace_quote: "DoD 8 MSN-0277 re-attested at 578df3a: ADR-0051 decisions 1, 3, 4 and 5 state that a committed contract needs --base, that paths are read NUL-separated, that a baseline is read from the base and bound to the contract sha256, and that --check-result compares the base"
-    anchor: "1440"
+    anchor: "1444"
     status: PASS
   - dod_id: "9"
     trace_quote: "DoD 9 MSN-0277 re-attested at 578df3a: docs/guides/verify-contract.md (base only for contracts outside the repo, --base required for committed ones, committed baseline read from the base, GXT_VERIFY_BASELINE_STALE, --check-result checks the base) and docs/CHANGELOG.md updated; assert-docs-structure OK (53 pages, 39 published, 305 relative links checked)"
-    anchor: "1441"
+    anchor: "1445"
     status: PASS
   - dod_id: "10"
     trace_quote: "DoD 10 MSN-0277 re-attested at 578df3a: ./scripts/dev-validate-core.sh exit 0: tests 936 pass 936 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1442"
+    anchor: "1446"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:

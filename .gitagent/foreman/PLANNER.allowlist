@@ -1,3 +1,6 @@
-# Team Planner identities for gapman verify git-proof (one email per line).
+# Team Planner identities for gantry verify git-proof (one email per line).
 # Personal overrides: .gitagent/foreman/PLANNER.allowlist.local (gitignored)
 jeger@commitly.com
+# GitHub authors squash merges with the merger's noreply address, so a squash-merged mission PR's [MSN-…] stamp
+# carries this address (MSN-0280).
+11678629+jeger-at@users.noreply.github.com
