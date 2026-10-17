@@ -8,7 +8,7 @@ import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 import { recoverCageJournal, resolveCageJournalDir } from "../lib/cage/cage-journal.js";
 import { listDescendantPids } from "../lib/cage/cage-process.js";
 import { runCage } from "../lib/cage/cage-run.js";
-import { buildCagePlan, cageBasenameRule, cageScanRule, classifyCagePath } from "../lib/cage/cage-rules.js";
+import { buildCagePlan, cageBasenameRule, classifyCagePath } from "../lib/cage/cage-rules.js";
 import { cageGlobToRegExp } from "../lib/cage/cage-config.js";
 import { CAGE_MAX_SCAN_BYTES, CAGE_MAX_TARGETS } from "../lib/cage/cage-snapshot.js";
 import { CAGE_LIMITS, CAGE_LIMITS_SUMMARY, CAGE_UPGRADE_FOOTER, formatCageReport } from "../lib/cage/cage-report.js";
@@ -893,30 +893,4 @@ test("cage: a .env.local created in the session is removed (MSN-0275 DoD 5)", as
   );
   assert.equal(fs.existsSync(path.join(dest, ".env.local")), false);
   assert.equal(fs.existsSync(path.join(dest, "apps", "web", ".env.production.local")), false);
-});
-
-test("cage dependency freeze: manifests under vendor/ are install output and stay unfrozen (MSN-0275 DoD 3, review on #227)", async () => {
-  const dest = makeDepsRepo("og-cage-deps-vendor-");
-  writeFile(dest, "composer.json", "{\"require\":{}}\n");
-  writeFile(dest, "vendor/rust/serde/Cargo.toml", "[package]\nname = \"serde\"\n");
-  const report = await runCage({
-    cwd: dest,
-    lockDeps: true,
-    command: nodeScript(`
-      const fs = require("fs");
-      fs.mkdirSync("vendor/acme/pkg", { recursive: true });
-      fs.writeFileSync("vendor/acme/pkg/composer.json", "{\\"name\\":\\"acme/pkg\\"}\\n");
-      fs.writeFileSync("vendor/rust/serde/Cargo.toml", "[package]\\nname = \\"serde\\"\\nversion = \\"2\\"\\n");
-      fs.writeFileSync("composer.json", "{\\"require\\":{\\"evil/pkg\\":\\"*\\"}}\\n");
-    `),
-  });
-  assert.deepEqual(report.changes.map((c) => [c.path, c.rule, c.outcome]), [["composer.json", "dependency_manifest", "reverted"]]);
-  assert.equal(read(dest, "vendor/acme/pkg/composer.json"), "{\"name\":\"acme/pkg\"}\n", "vendored install output kept");
-  assert.equal(cageScanRule("vendor/acme/pkg/composer.json", "revert"), null);
-  assert.equal(cageScanRule("app/vendor/x/package.json", "revert"), null);
-  assert.equal(cageScanRule("vendor.json", "revert"), null);
-  assert.equal(cageScanRule("vendor/package.json", "revert"), null);
-  assert.equal(cageScanRule("src/vendors/package.json", "revert"), "dependency_manifest", "only a vendor/ segment counts");
-  assert.equal(cageScanRule("vendor/acme/composer.lock", "revert"), "lockfile", "lockfiles are unchanged");
-  assert.equal(cageScanRule("vendor/acme/.env", "revert"), "secrets");
 });

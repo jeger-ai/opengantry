@@ -6,6 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 import { runCageCheck } from "../lib/cage/cage-check.js";
+import { cageScanRule } from "../lib/cage/cage-rules.js";
 import { isCageSubcommandInvocation } from "../program-cage.js";
 import { writeManifest } from "./test-fixtures.js";
 
@@ -267,4 +268,9 @@ test("cage check dependency freeze: vendored manifests do not fail a frozen chec
   const report = runCageCheck({ cwd: dest, base, lockDeps: true });
   assert.equal(report.exit_code, 0);
   assert.deepEqual(rules(report), []);
+  assert.equal(cageScanRule("app/vendor/x/package.json", "revert"), null);
+  assert.equal(cageScanRule("vendor/package.json", "revert"), null);
+  assert.equal(cageScanRule("src/vendors/package.json", "revert"), "dependency_manifest", "only a vendor/ segment counts");
+  assert.equal(cageScanRule("vendor/acme/composer.lock", "revert"), "lockfile", "lockfiles are unchanged");
+  assert.equal(cageScanRule("vendor/acme/.env", "revert"), "secrets");
 });
