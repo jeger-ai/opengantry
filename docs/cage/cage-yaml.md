@@ -12,6 +12,7 @@ A `.cage.yaml` at the cage root adds paths to the protected set: migrations, inf
 ```yaml
 mode: revert                     # optional default for the entries below (never for built-in rules)
 contest_limit: 3                 # optional: live restores of one path before cage halts the command (0 never halts)
+dependencies: revert             # optional: freeze lockfiles and dependency manifests (default: report)
 protect:
   - path: db/migrations          # file or directory tree, relative to the cage root
   - glob: "**/*.pem"             # * stays in one path segment, ** spans any depth
@@ -22,8 +23,9 @@ protect:
 ## How the file is treated
 
 - **Commit it.** `cage check` reads `.cage.yaml` from the base commit, so entries a branch adds apply to the changes after it is merged, and a branch that edits or deletes the file is checked against the base's entries. The watch and the session cage read it from the working tree when they start.
-- **Strict, fail closed.** An invalid file stops `cage check` and `cage watch`, and stops the session cage before the command runs, with exit `2` (`GXT_CAGE_CONFIG_INVALID`). Invalid means: invalid YAML, YAML aliases, unknown keys, subtractive keys such as `relax` or `exclude`, an entry with both or neither of `path:` and `glob:`, absolute or `..` paths, a `contest_limit:` that is not a non-negative integer, or `mode: report` on a path a built-in rule restores.
+- **Strict, fail closed.** An invalid file stops `cage check` and `cage watch`, and stops the session cage before the command runs, with exit `2` (`GXT_CAGE_CONFIG_INVALID`). Invalid means: invalid YAML, YAML aliases, unknown keys, subtractive keys such as `relax` or `exclude`, an entry with both or neither of `path:` and `glob:`, absolute or `..` paths, a `contest_limit:` that is not a non-negative integer, a `dependencies:` other than `revert` or `report`, or `mode: report` on a path a built-in rule restores (including a frozen lockfile or manifest).
 - **Scoped default.** The top-level `mode:` applies only to `protect:` entries without their own `mode:`. Built-in rules keep restoring whatever it says.
+- **Dependency freeze.** `dependencies: revert` makes lockfiles and dependency manifests restore-rule paths in all three forms ([Freeze dependencies](protected-paths.md#freeze-dependencies)). `--lock-deps` does the same for one run without the file. `dependencies: report` is the default and loosens nothing.
 - **Protects itself.** `.cage.yaml` is the built-in `cage_config` target. A commit that changes it fails `cage check`. During a session, an edit is restored and a `.cage.yaml` created during the session is removed.
 - **On record.** When `.cage.yaml` is untracked or differs from `HEAD` at the start of a session, the session cage warns on stderr (`cage: warning: .cage.yaml is untracked or has uncommitted changes; review and commit it`) and still runs. Commit the file so everyone gets the same rules.
 

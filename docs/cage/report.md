@@ -37,6 +37,7 @@ When the command ends, a human summary goes to stderr. With `--json`, the report
 | `watch` | `enabled`, `interval_ms`, `live_restores`, `contested`, `contest_limit`, `halt` (`path`, `rule`, `live_restores`, or null), `session_log` |
 | `push_guard` | `enabled`, `refused_pushes` |
 | `cage_config`, `overrides` | Whether `.cage.yaml` is present, its entry count and whether it is committed; paths passed to `--allow-override` |
+| `dependencies` | `revert` when dependencies were frozen (`--lock-deps` or `.cage.yaml` `dependencies: revert`), else `report` |
 | `trapped_signal` | A signal the cage answered by terminating the command |
 | `recovery` | An interrupted earlier session cleaned up before this one: `previous_pid`, `started_at`, `restored`, `orphans_killed`, or null |
 | `limits` | The limits that apply to this run ([Limits](limits.md)) |

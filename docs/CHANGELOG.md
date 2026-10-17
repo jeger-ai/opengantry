@@ -27,6 +27,14 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
+### Unreleased (cage dependency freeze — next release after v3.9.0)
+
+- **New, opt-in:** `.cage.yaml` top-level `dependencies: revert`, or `--lock-deps` on `gantry cage -- <cmd>` / `gantry-cage`, `gantry cage watch` and `gantry cage check`, freezes dependencies. Lockfiles become restore-rule paths, and a new built-in `dependency_manifest` rule covers `package.json`, `pyproject.toml`, `Pipfile`, `requirements*.txt`, `Cargo.toml`, `go.mod`, `Gemfile` and `composer.json` at any depth. Without either, nothing changes: lockfiles are listed and kept, manifests are not protected (MSN-0275, [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 9).
+- **Only tightens:** `dependencies: report` is the default; `mode: report` on a frozen path is refused (`GXT_CAGE_CONFIG_INVALID`). `--allow-override <path>` still relaxes one frozen path for one session run, announced. `cage check` reads the setting from the base commit; `--lock-deps` adds to it.
+- **Caps apply:** frozen lockfiles are snapshotted for restore, so a lockfile over `--max-file-bytes` (default 5 MiB) stops a frozen run with exit `2` (`GXT_CAGE_FILE_TOO_LARGE`).
+- **Report additions:** `dependencies` (`revert` or `report`) in the session report, `gantry.cage-check.v1` and `gantry.cage-watch.v1`; rows can carry rule `dependency_manifest`. Schemas keep their names; existing fields are unchanged. The session journal records `lock_deps` so kill -9 recovery rebuilds the frozen plan; journals from earlier versions read as unfrozen.
+- **Limit:** the freeze restores files; it does not block installs. Install scripts run by an agent's `npm install` have executed before cage restores `package.json`.
+
 ### From v3.8.3 (cage check, cage watch, docs layout — v3.9.0)
 
 ```bash

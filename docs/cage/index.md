@@ -65,7 +65,7 @@ At the end it prints one report and exits `3` if it restored anything, `4` if it
 | The rules themselves | `.cage.yaml`, and manifest `forbidden_zones` when the repository has a manifest |
 | Your paths | `.cage.yaml` `protect:` entries |
 
-Lockfiles are listed but never fail the check, prompt or get restored. The full table: [Protected paths](protected-paths.md). To add migrations, infrastructure code or key files, commit a [`.cage.yaml`](cage-yaml.md); it can only add protection.
+Lockfiles are listed but do not fail the check, prompt or get restored, unless you freeze dependencies with `--lock-deps` or `.cage.yaml` `dependencies: revert`; then lockfiles and dependency manifests such as `package.json` are protected too. The full table: [Protected paths](protected-paths.md). To add migrations, infrastructure code or key files, commit a [`.cage.yaml`](cage-yaml.md); it can only add protection.
 
 ## Know the limits
 
