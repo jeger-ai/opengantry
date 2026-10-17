@@ -5,7 +5,7 @@
       "desc": "gantry CLI delivery, lib layers, and unit tests (OpenGantry specimen).",
       "trust_threshold": "Tier-2",
       "tmvc_roots": ["src/cli/", "package.json"],
-      "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md"],
+      "forbidden_zones": [".gitagent/foreman/", ".gitagent/planner/RULES.md", ".gitagent/registry/"],
       "gate_commands": [
         "npm test",
         "npm run validate",
@@ -52,6 +52,8 @@
   "risk_keywords": ["refactor", "migrate", "delete", "security", "schema"],
   "perimeter_protected": [
     "**/.gxt-skill.yaml",
+    ".gitagent/registry/",
+    "ARCH_BASELINE.json",
     ".gitagent/foreman/MANIFEST.json",
     ".gitagent/foreman/POLICY.pointer.json",
     ".gitagent/planner/RULES.md"

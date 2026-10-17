@@ -1,0 +1,48 @@
+# Registry (ADR-0052 step 1, MSN-0280). Humans write it: YAML 1.2 core, no aliases, no unknown keys.
+schema: opengantry.registry.v1
+kind: mcp-tools
+law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
+note: Tools registered by gantry mcp serve (ADR-0022 write containment applies).
+entries:
+  - name: gxt_attest
+    since: MSN-0228
+  - name: gxt_check_signature
+    since: MSN-0228
+  - name: gxt_deps_check
+    since: MSN-0228
+  - name: gxt_doctor
+    since: MSN-0228
+  - name: gxt_draft_legislation
+    since: MSN-0228
+  - name: gxt_execute_legislation
+    since: MSN-0228
+  - name: gxt_interrogate
+    since: MSN-0228
+  - name: gxt_last_error
+    since: MSN-0228
+  - name: gxt_ledger_verify
+    since: MSN-0228
+  - name: gxt_pin_mission
+    since: MSN-0228
+  - name: gxt_policy_status
+    since: MSN-0228
+  - name: gxt_preflight_contract
+    since: MSN-0228
+  - name: gxt_propose_contract
+    since: MSN-0228
+  - name: gxt_resolve_mission
+    since: MSN-0228
+  - name: gxt_runtime_env
+    since: MSN-0228
+  - name: gxt_runtime_exec
+    since: MSN-0228
+  - name: gxt_scan
+    since: MSN-0228
+  - name: gxt_start_orchestration
+    since: MSN-0228
+  - name: gxt_upgrade_apply
+    since: MSN-0228
+  - name: gxt_upgrade_plan
+    since: MSN-0228
+  - name: gxt_verify
+    since: MSN-0228

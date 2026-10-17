@@ -1,0 +1,198 @@
+# Registry (ADR-0052 step 1, MSN-0280). Humans write it: YAML 1.2 core, no aliases, no unknown keys.
+schema: opengantry.registry.v1
+kind: commands
+law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
+note: Every gantry subcommand, public and hidden. since names the first commit that registered the leaf name in src/cli (registrar basis; for a leaf name used by several groups it is the earliest).
+bins:
+  - name: gantry
+    package: "@jeger-ai/opengantry"
+  - name: gapman
+    package: "@jeger-ai/opengantry"
+    deprecated: "4.0"
+  - name: gantry-cage
+    package: "@jeger-ai/opengantry and @jeger-ai/opengantry-cage"
+  - name: opengantry-cage
+    package: "@jeger-ai/opengantry"
+    note: alias of gantry-cage
+entries:
+  - name: arch
+    since: commit 12461b8
+  - name: arch check
+    since: MSN-0010
+  - name: arch cred
+    since: commit 12461b8
+  - name: arch cred set
+    since: commit 12461b8
+  - name: arch cred status
+    since: MSN-0010
+  - name: arch cred unset
+    since: commit 12461b8
+  - name: arch fetch
+    since: MSN-0080
+  - name: arch pointer
+    since: commit 12461b8
+  - name: attest
+    since: MSN-0133
+  - name: audit-rigor
+    since: commit f777025
+  - name: blueprint
+    since: MSN-0111
+  - name: cage
+    since: MSN-0233
+  - name: cage check
+    since: MSN-0267
+    note: Dispatched inside gantry cage, not a Commander subcommand.
+  - name: cage suggest
+    since: MSN-0240
+    note: Dispatched inside gantry cage, not a Commander subcommand.
+  - name: cage watch
+    since: MSN-0237
+    note: Dispatched inside gantry cage, not a Commander subcommand.
+  - name: cage-guard pre-push
+    hidden: true
+    since: MSN-0237
+    note: "Internal: run by the cage session git hooks. Folds into gantry hook in ADR-0052 step 5."
+  - name: check
+    since: MSN-0010
+  - name: check-imports
+    since: MSN-0045
+  - name: context-feed
+    since: commit f777025
+  - name: context-request
+    since: commit 3062fcc
+  - name: contract
+    since: MSN-0210
+  - name: contract check
+    since: MSN-0010
+  - name: contract embed
+    since: MSN-0227
+  - name: contract preflight
+    since: MSN-0216
+  - name: contract propose
+    since: MSN-0210
+  - name: contract show
+    since: MSN-9000
+  - name: deps
+    since: MSN-0200
+  - name: deps check
+    since: MSN-0010
+  - name: deps fetch
+    since: MSN-0080
+  - name: deps status
+    since: MSN-0010
+  - name: doctor
+    since: commit 3709795
+  - name: domains
+    since: MSN-0120
+  - name: events
+    since: commit 8f81584
+  - name: events push
+    since: commit 8f81584
+  - name: hooks
+    since: MSN-0227
+  - name: hooks install
+    since: MSN-0227
+  - name: hooks status
+    since: MSN-0010
+  - name: hooks uninstall
+    since: MSN-0227
+  - name: init
+    since: commit 44a4420
+  - name: interrogate
+    since: MSN-0149
+  - name: ledger
+    since: MSN-0200
+  - name: ledger append
+    since: MSN-0200
+  - name: ledger export
+    since: MSN-0200
+  - name: ledger fetch
+    since: MSN-0080
+  - name: ledger list
+    since: MSN-0140
+  - name: ledger push
+    since: commit 8f81584
+  - name: ledger verify
+    since: MSN-0010
+  - name: legislate
+    since: commit 274f923
+  - name: mcp
+    since: MSN-9000
+  - name: mcp serve
+    since: MSN-9000
+  - name: metrics
+    since: commit 3709795
+  - name: mission
+    since: MSN-0010
+  - name: mission changed
+    since: MSN-0207
+  - name: mission snapshot
+    since: MSN-0010
+  - name: mission validate
+    since: MSN-0010
+  - name: onboarding
+    since: commit 26d06cf
+  - name: perimeter
+    since: MSN-0045
+  - name: perimeter check
+    since: MSN-0010
+  - name: pin
+    since: MSN-0140
+  - name: planner
+    since: MSN-0075
+  - name: planner set
+    since: commit 12461b8
+  - name: planner show
+    since: MSN-9000
+  - name: policy
+    since: MSN-0200
+  - name: policy diff
+    since: MSN-0200
+  - name: policy pull
+    since: MSN-0200
+  - name: policy status
+    since: MSN-0010
+  - name: receipt
+    since: MSN-0140
+  - name: receipt list
+    since: MSN-0140
+  - name: receipt principal-hmac
+    since: MSN-0148
+  - name: receipt show
+    since: MSN-9000
+  - name: register
+    since: MSN-0045
+  - name: release
+    since: MSN-0200
+  - name: release check
+    since: MSN-0010
+  - name: report
+    since: MSN-0181
+  - name: runtime
+    since: commit 274f923
+  - name: runtime env
+    since: commit 274f923
+  - name: runtime exec
+    since: commit 10c0b2e
+  - name: scan
+    since: MSN-0045
+  - name: start
+    since: commit 26d06cf
+  - name: status
+    since: MSN-0010
+  - name: tmvc
+    since: commit 3062fcc
+  - name: tmvc guard
+    since: commit 3062fcc
+  - name: triage
+    since: MSN-0010
+  - name: unpin
+    since: MSN-0140
+  - name: upgrade
+    since: MSN-9000
+  - name: upgrade apply
+    since: commit 75ce7c4
+  - name: upgrade plan
+    since: commit 75ce7c4
+  - name: verify
+    since: MSN-0010

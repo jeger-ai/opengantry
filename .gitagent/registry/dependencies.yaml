@@ -1,0 +1,72 @@
+# Registry (ADR-0052 step 1, MSN-0280). Humans write it: YAML 1.2 core, no aliases, no unknown keys.
+schema: opengantry.registry.v1
+kind: dependencies
+law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
+note: Runtime and dev dependencies of @jeger-ai/opengantry (the slim cage package depends on commander only). native marks modules with compiled bindings; ADR-0052 A10 moves the contract drift index and its native modules out of core.
+entries:
+  - name: "@clack/prompts"
+    scope: runtime
+    range: ^0.10.1
+    since: commit 12461b8
+  - name: "@modelcontextprotocol/sdk"
+    scope: runtime
+    range: ^1.31.0
+    since: MSN-9000
+  - name: ajv
+    scope: runtime
+    range: ^8.20.0
+    since: MSN-0045
+  - name: ajv-formats
+    scope: runtime
+    range: ^3.0.1
+    since: MSN-0045
+  - name: better-sqlite3
+    scope: runtime
+    range: ^13.0.3
+    native: true
+    since: MSN-0226
+  - name: commander
+    scope: runtime
+    range: ^15.0.0
+    since: MSN-0010
+  - name: sqlite-vec
+    scope: runtime
+    range: ^0.1.9
+    native: true
+    since: MSN-0226
+  - name: yaml
+    scope: runtime
+    range: ^2.6.1
+    since: MSN-0010
+  - name: zod
+    scope: runtime
+    range: ^4.6.5
+    since: MSN-9000
+  - name: "@eslint/js"
+    scope: dev
+    range: ^10.0.1
+    since: commit 3709795
+  - name: "@types/better-sqlite3"
+    scope: dev
+    range: ^9.6.0
+    since: MSN-0226
+  - name: "@types/node"
+    scope: dev
+    range: ^24.0.0
+    since: MSN-0010
+  - name: "@typescript/native"
+    scope: dev
+    range: npm:typescript@^7.0.2
+    since: MSN-0248
+  - name: eslint
+    scope: dev
+    range: ^10.12.0
+    since: commit 3709795
+  - name: typescript
+    scope: dev
+    range: npm:@typescript/typescript6@^6.0.2
+    since: MSN-0010
+  - name: typescript-eslint
+    scope: dev
+    range: ^8.71.1
+    since: commit 3709795
