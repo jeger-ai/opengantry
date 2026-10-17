@@ -161,6 +161,11 @@ declared_paths:
   - .gitagent/foreman/MANIFEST.json
   - .gitagent/missions/MSN-0281.adr-0052-step-1.yaml
   - .gitagent/registry/
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/dependencies.yaml
+  - .gitagent/registry/env.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/registry/mcp-tools.yaml
   - ARCH_BASELINE.json
   - EXECUTOR_LOG.md
   - TARGET_ARCHITECTURE.yaml
