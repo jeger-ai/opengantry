@@ -1,0 +1,111 @@
+# Conformance cases (ADR-0052 step 1, MSN-0280). One entry per invocation the v4 CLI must reproduce.
+# fixture: a repository from build-fixtures.mjs, copied fresh for each case.
+# args: the gantry arguments. env: extra environment. normalize: extra per-case regexes.
+# record_tree: also record the working-tree changes the command made (git status --porcelain).
+# skip: the case is listed as contract but not recorded yet, with the reason.
+# Every public subcommand is listed; the hidden `cage-guard pre-push` folds into `gantry hook` (ADR-0052 A8).
+schema: opengantry.conformance-cases.v1
+mission_file: .gitagent/missions/m-MSN-0101.yaml
+cases:
+  # --- substrate state ---
+  - { id: check.fresh-init, fixture: fresh-init, args: [check] }
+  - { id: status.fresh-init, fixture: fresh-init, args: [status, --json] }
+  - { id: status.mission-pass, fixture: mission-pass, args: [status, --json] }
+  - { id: doctor.fresh-init, fixture: fresh-init, args: [doctor, --json] }
+  - { id: doctor.mission-pass, fixture: mission-pass, args: [doctor, --json] }
+  - { id: doctor.bare-git, fixture: bare-git, args: [doctor, --json] }
+  - { id: planner-show.fresh-init, fixture: fresh-init, args: [planner, show, --json] }
+  - { id: planner-set.bare-git, fixture: bare-git, args: [planner, set, planner@fixture.test], record_tree: true }
+  - { id: domains.fresh-init, fixture: fresh-init, args: [domains] }
+  - { id: release-check.fresh-init, fixture: fresh-init, args: [release, check, --json] }
+
+  # --- init, onboarding, upgrade, blueprint ---
+  - { id: init.bare-git, fixture: bare-git, args: [init, --yes, --no-hooks, --no-ci, --skills, minimal, --no-defensive-profile, --ides, cursor], record_tree: true }
+  - { id: init.dry-run.bare-git, fixture: bare-git, args: [init, --yes, --dry-run, --no-hooks, --no-ci, --skills, minimal, --no-defensive-profile, --ides, cursor], record_tree: true }
+  - { id: onboarding.fresh-init, fixture: fresh-init, args: [onboarding] }
+  - { id: upgrade-plan.fresh-init, fixture: fresh-init, args: [upgrade, plan, --json] }
+  - { id: upgrade-apply.no-mission.fresh-init, fixture: fresh-init, args: [upgrade, apply, --json] }
+  - { id: blueprint.fresh-init, fixture: fresh-init, args: [blueprint, --yes], record_tree: true }
+  - { id: hooks-status.fresh-init, fixture: fresh-init, args: [hooks, status] }
+  - { id: hooks-install.fresh-init, fixture: fresh-init, args: [hooks, install], record_tree: true }
+  - { id: hooks-uninstall.fresh-init, fixture: fresh-init, args: [hooks, uninstall], record_tree: true }
+
+  # --- legislation ---
+  - { id: triage.fresh-init, fixture: fresh-init, args: [triage, add a button component, --json] }
+  - { id: interrogate.mission-pass, fixture: mission-pass, args: [interrogate, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE, --json] }
+  - { id: legislate.interrogation-required.mission-pass, fixture: mission-pass, args: [legislate, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE], record_tree: true }
+  - { id: start.preview.mission-pass, fixture: mission-pass, args: [start, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE, --no-write, --json] }
+  - { id: contract-propose.mission-pass, fixture: mission-pass, args: [contract, propose, add a button component, --skill-key, ui, --json] }
+  - { id: contract-preflight.mission-pass, fixture: mission-pass, args: [contract, preflight, add a button component] }
+  - { id: contract-embed.no-key.mission-pass, fixture: mission-pass, args: [contract, embed, add a button component] }
+  - { id: contract-show.mission-pass, fixture: mission-pass, args: [contract, show, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: contract-check.mission-pass, fixture: mission-pass, args: [contract, check, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: register.fresh-init, fixture: fresh-init, args: [register, src, --json] }
+
+  # --- mission lifecycle ---
+  - { id: mission-validate.mission-pass, fixture: mission-pass, args: [mission, validate, --file, .gitagent/missions/m-MSN-0101.yaml] }
+  - { id: mission-snapshot.mission-pass, fixture: mission-pass, args: [mission, snapshot, --file, .gitagent/missions/m-MSN-0101.yaml] }
+  - { id: mission-changed.mission-pass, fixture: mission-pass, args: [mission, changed, --base-ref, HEAD~1, --json] }
+  - { id: pin.mission-pass, fixture: mission-pass, args: [pin, .gitagent/missions/m-MSN-0101.yaml], record_tree: true }
+  - { id: unpin.mission-pass, fixture: mission-pass, args: [unpin] }
+  - { id: runtime-env.json.mission-pass, fixture: mission-pass, args: [runtime, env, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: runtime-env.text.mission-pass, fixture: mission-pass, args: [runtime, env, --mission, .gitagent/missions/m-MSN-0101.yaml, --format, text] }
+  - { id: runtime-exec.mission-pass, fixture: mission-pass, args: [runtime, exec, --mission, .gitagent/missions/m-MSN-0101.yaml, --json, --no-stream, --, echo, executor-ran] }
+  - { id: tmvc-guard.mission-pass, fixture: mission-pass, args: [tmvc, guard, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: context-request.mission-pass, fixture: mission-pass, args: [context-request, --mission, .gitagent/missions/m-MSN-0101.yaml, --reason, need the docs folder, --path, docs/, --json], record_tree: true }
+  - { id: context-feed.mission-pass, fixture: mission-pass, args: [context-feed, --json] }
+  - { id: scan.mission-pass, fixture: mission-pass, args: [scan, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+
+  # --- verify and evidence ---
+  - { id: verify.mission-pass, fixture: mission-pass, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: verify.pre-push.mission-pass, fixture: mission-pass, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --pre-push, --json] }
+  - { id: verify.sarif.mission-pass, fixture: mission-pass, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --format, sarif] }
+  - { id: verify.junit.mission-pass, fixture: mission-pass, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --format, junit] }
+  - { id: verify.mission-fail-gate, fixture: mission-fail-gate, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: verify.ci.mission-stale, fixture: mission-stale, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --ci, --json] }
+  - { id: verify.no-mission.fresh-init, fixture: fresh-init, args: [verify, --json] }
+  - { id: attest.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json], env: { GANTRY_ORG_ID: org-fixture, GANTRY_ORG_PEPPER: fixture-pepper-0000 } }
+  - { id: attest.no-org.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: receipt-list.mission-pass, fixture: mission-pass, args: [receipt, list, --json] }
+  - { id: receipt-show.none.mission-pass, fixture: mission-pass, args: [receipt, show, MSN-0101, --json] }
+  - { id: receipt-principal-hmac.no-keyring.bare-git, fixture: bare-git, args: [receipt, principal-hmac, planner@fixture.test, --org, org-fixture, --json] }
+  - { id: audit-rigor.mission-pass, fixture: mission-pass, args: [audit-rigor, --json] }
+  - { id: metrics.mission-pass, fixture: mission-pass, args: [metrics, --json] }
+  - { id: report.mission-pass, fixture: mission-pass, args: [report, --json, --no-open] }
+  - { id: events-push.dry-run.mission-pass, fixture: mission-pass, args: [events, push, --dry-run, --json] }
+
+  # --- architecture and perimeters ---
+  - { id: arch-pointer.fresh-init, fixture: fresh-init, args: [arch, pointer] }
+  - { id: arch-fetch.file-pointer.fresh-init, fixture: fresh-init, args: [arch, fetch, --json] }
+  - { id: arch-check.fresh-init, fixture: fresh-init, args: [arch, check, src/app.ts, --json] }
+  - { id: arch-cred-status.fresh-init, fixture: fresh-init, args: [arch, cred, status] }
+  - { id: arch-cred-set.no-stdin.fresh-init, fixture: fresh-init, args: [arch, cred, set, --slot, docs, --kind, bearer] }
+  - { id: arch-cred-unset.fresh-init, fixture: fresh-init, args: [arch, cred, unset, --slot, docs] }
+  - { id: perimeter-check.mission-pass, fixture: mission-pass, args: [perimeter, check, src/components/Button.ts, --json] }
+  - { id: check-imports.fresh-init, fixture: fresh-init, args: [check-imports, src, --ban, lodash, --json] }
+
+  # --- organization plane ---
+  - { id: policy-pull.no-pointer.fresh-init, fixture: fresh-init, args: [policy, pull, --json] }
+  - { id: policy-status.fresh-init, fixture: fresh-init, args: [policy, status, --json] }
+  - { id: policy-diff.fresh-init, fixture: fresh-init, args: [policy, diff, --json] }
+  - { id: ledger-append.mission-pass, fixture: mission-pass, args: [ledger, append, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: ledger-verify.mission-pass, fixture: mission-pass, args: [ledger, verify, --json] }
+  - { id: ledger-list.mission-pass, fixture: mission-pass, args: [ledger, list, --json] }
+  - { id: ledger-export.mission-pass, fixture: mission-pass, args: [ledger, export, --json] }
+  - { id: ledger-push.mission-pass, fixture: mission-pass, args: [ledger, push, --json] }
+  - { id: ledger-fetch.mission-pass, fixture: mission-pass, args: [ledger, fetch, --json] }
+  - { id: deps-fetch.mission-pass, fixture: mission-pass, args: [deps, fetch, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: deps-check.mission-pass, fixture: mission-pass, args: [deps, check, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: deps-status.mission-pass, fixture: mission-pass, args: [deps, status, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+
+  # --- cage ---
+  - { id: cage-check.tamper, fixture: cage-tamper, args: [cage, check, --base, HEAD~2, --json] }
+  - { id: cage-check.clean.bare-git, fixture: bare-git, args: [cage, check, --base, HEAD, --json] }
+  - { id: cage-suggest.tamper, fixture: cage-tamper, args: [cage, suggest, --json] }
+  - { id: cage-watch.no-tty.tamper, fixture: cage-tamper, args: [cage, watch, --json] }
+  - { id: cage-session.true.tamper, fixture: cage-tamper, args: [cage, --json, --no-watch, --, "true"], normalize: [{ pattern: "gantry-cage-\\d+-", replace: "gantry-cage-<PID>-" }] }
+
+  # --- not recorded ---
+  - { id: mcp-serve, fixture: fresh-init, args: [mcp, serve], skip: "long-running stdio server; covered by src/cli/tests/mcp-legislation.test.ts" }
+  - { id: verify.contract.contract-standalone, fixture: contract-standalone, args: [verify, --contract, verify.yaml, --json], skip: "gantry verify --contract lands with MSN-0277 (#228)" }
+  - { id: verify.contract.gate-json.contract-standalone, fixture: contract-standalone, args: [verify, --contract, gate.json, --json], skip: "gantry verify --contract lands with MSN-0277 (#228)" }

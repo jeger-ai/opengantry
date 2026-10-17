@@ -1,0 +1,29 @@
+{
+  "id": "runtime-exec.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "runtime",
+    "exec",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json",
+    "--no-stream",
+    "--",
+    "echo",
+    "executor-ran"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "success",
+    "exit_code": 0,
+    "worker_exit_code": 0,
+    "worker_signal": null,
+    "violation_count": 0,
+    "violations": [],
+    "executor_log": "<ROOT>/EXECUTOR_LOG.md",
+    "flight_id": "<UUID>",
+    "agent_error_path": "",
+    "agent_error": null
+  },
+  "stderr_codes": []
+}

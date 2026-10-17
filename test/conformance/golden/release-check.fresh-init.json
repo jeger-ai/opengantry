@@ -1,0 +1,15 @@
+{
+  "id": "release-check.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "release",
+    "check",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "ok",
+    "results": []
+  },
+  "stderr_codes": []
+}

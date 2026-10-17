@@ -1,0 +1,19 @@
+{
+  "id": "planner-show.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "planner",
+    "show",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "emails": [
+      "planner@fixture.test"
+    ],
+    "source": "allowlist_local",
+    "detail": ".gitagent/foreman/PLANNER.allowlist.local",
+    "repo_root": "<ROOT>"
+  },
+  "stderr_codes": []
+}

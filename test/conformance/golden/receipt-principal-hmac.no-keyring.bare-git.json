@@ -1,0 +1,23 @@
+{
+  "id": "receipt-principal-hmac.no-keyring.bare-git",
+  "fixture": "bare-git",
+  "args": [
+    "receipt",
+    "principal-hmac",
+    "planner@fixture.test",
+    "--org",
+    "org-fixture",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": {
+    "status": "failed",
+    "error_code": "GXT_VERIFY_FAILED",
+    "message": "no peppers found for org_id: org-fixture",
+    "fix_hints": [
+      "available org_ids: org-golden-fixture"
+    ],
+    "exit_code": 2
+  },
+  "stderr_codes": []
+}

@@ -1,0 +1,160 @@
+# Inventory of src/cli tests that spawn a process (ADR-0052 step 1, MSN-0280).
+# class cli: drives dist/cli/index.js and is CLI contract the v4 packages must keep passing.
+# class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
+# class none: spawns git only (in-process CLI calls); listed for completeness.
+schema: opengantry.spawning-tests.v1
+count: 51
+entries:
+  - file: asset-catalog-generator.test.ts
+    class: script
+    spawns: [script]
+  - file: audience-cli.test.ts
+    class: cli
+    spawns: [cli]
+  - file: cage-check.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: cage-suggest.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: cage-symlink-root.test.ts
+    class: none
+    spawns: [git]
+  - file: cage-watch-decisions.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: cage-watch.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: cage.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: check-import-layers.test.ts
+    class: script
+    spawns: [script, git]
+  - file: check-lib-cycles.test.ts
+    class: script
+    spawns: [script]
+  - file: command-io-contract.test.ts
+    class: none
+    spawns: [git]
+  - file: config-namespace.test.ts
+    class: none
+    spawns: [git]
+  - file: context-feed.test.ts
+    class: none
+    spawns: []
+  - file: context-request.test.ts
+    class: none
+    spawns: [git]
+  - file: contract-legislate.test.ts
+    class: cli
+    spawns: [cli]
+  - file: contract-runtime.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: contract-verify.test.ts
+    class: none
+    spawns: [git]
+  - file: defensive-guard.test.ts
+    class: none
+    spawns: [git]
+  - file: dirty-missions.test.ts
+    class: none
+    spawns: [git]
+  - file: draft-token.test.ts
+    class: none
+    spawns: [git]
+  - file: embedding-provider.test.ts
+    class: cli
+    spawns: [cli]
+  - file: gate-git-env.test.ts
+    class: script
+    spawns: [script, git]
+  - file: git-hooks.test.ts
+    class: script
+    spawns: [script, git]
+  - file: git-proof.test.ts
+    class: none
+    spawns: [git]
+  - file: init.test.ts
+    class: cli
+    spawns: [cli, script, git]
+  - file: interrogate-verify-roundtrip.test.ts
+    class: none
+    spawns: [git]
+  - file: kpi-report-stale.test.ts
+    class: none
+    spawns: [git]
+  - file: ledger-verify.test.ts
+    class: none
+    spawns: []
+  - file: legislate.test.ts
+    class: none
+    spawns: [git]
+  - file: manifest-lib-boundary.test.ts
+    class: script
+    spawns: [script, git]
+  - file: manifest-parity.test.ts
+    class: script
+    spawns: [script]
+  - file: mcp-legislation.test.ts
+    class: none
+    spawns: [git]
+  - file: mcp-write-guard.test.ts
+    class: none
+    spawns: [git]
+  - file: metrics-classification.test.ts
+    class: none
+    spawns: [git]
+  - file: mission-changed.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: msn-allocate.test.ts
+    class: none
+    spawns: [git]
+  - file: npm-publish-if-new.test.ts
+    class: script
+    spawns: [script, git]
+  - file: performance-judge.test.ts
+    class: script
+    spawns: [script]
+  - file: perimeter.test.ts
+    class: none
+    spawns: [git]
+  - file: planner-identity.test.ts
+    class: none
+    spawns: [git]
+  - file: prune-dist.test.ts
+    class: script
+    spawns: [script]
+  - file: runtime.test.ts
+    class: cli
+    spawns: [cli]
+  - file: trace-evidence.test.ts
+    class: none
+    spawns: [git]
+  - file: trusted-automation.test.ts
+    class: cli
+    spawns: [cli, script, git]
+  - file: upgrade-plan-payload.test.ts
+    class: none
+    spawns: [git]
+  - file: upgrade.test.ts
+    class: none
+    spawns: [git]
+  - file: validate-gxt.test.ts
+    class: script
+    spawns: [script, git]
+  - file: verify-break-glass.test.ts
+    class: none
+    spawns: [git]
+  - file: verify-interrogation-phase.test.ts
+    class: none
+    spawns: [git]
+  - file: verify-pr-missions.test.ts
+    class: cli
+    spawns: [cli, script, git]
+  - file: verify.test.ts
+    class: none
+    spawns: [git]

@@ -1,0 +1,16 @@
+{
+  "id": "arch-cred-set.no-stdin.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "cred",
+    "set",
+    "--slot",
+    "docs",
+    "--kind",
+    "bearer"
+  ],
+  "exit": 2,
+  "stdout": "",
+  "stderr_codes": []
+}

@@ -1,0 +1,48 @@
+{
+  "id": "attest.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "attest",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "ok",
+    "repo_root": "<ROOT>",
+    "receipt": {
+      "schema_version": "0.2.0",
+      "org_id": "org-fixture",
+      "pepper_version": 1,
+      "repository_hash": "<SHA256>",
+      "branch_hmac": "<SHA256>",
+      "branch_class": "default",
+      "msn_id": "MSN-0101",
+      "mission_sha256": "<SHA256>",
+      "manifest_sha256": "<SHA256>",
+      "target_architecture_sha256": "<SHA256>",
+      "config_sha256": "<SHA256>",
+      "git_head": "<SHA>",
+      "git_tree_sha": "no-tree",
+      "agent": {
+        "name": "gantry-cli",
+        "version": "3.9.0",
+        "harness_mode": "cli"
+      },
+      "planner_stamp": {
+        "commit": "<SHA>",
+        "author_email_hmac": "<SHA256>"
+      },
+      "signer_principal_hmac": "<SHA256>",
+      "signer_principal_kind": "email",
+      "verify_status": "attest_only",
+      "issued_at": "<TS>",
+      "receipt_sha256": "<SHA256>"
+    },
+    "receipt_path": "<ROOT>/.gitagent/history/receipts/MSN-0101-<SHORT_SHA>.json",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}
