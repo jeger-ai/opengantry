@@ -76,8 +76,8 @@ trace_rows:
     anchor: "1433"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0275 re-attested at 53363c8: docs/cage/protected-paths.md dependency_manifest row says except under a vendor/ directory; docs/CHANGELOG.md Unreleased entry says the same; assert-docs-structure OK (52 pages, 38 published, 305 relative links checked)"
-    anchor: "1434"
+    trace_quote: "DoD 7 MSN-0275 re-attested at 3c60f79 after the second review on PR #227: docs/cage/watch.md and docs/cage/report.md options tables list --lock-deps; the rest as attested at 53363c8; assert-docs-structure OK (52 pages, 38 published, 307 relative links checked)"
+    anchor: "1436"
     status: PASS
   - dod_id: "8"
     trace_quote: "DoD 8 MSN-0275 re-attested at 53363c8: ./scripts/dev-validate-core.sh exit 0: tests 937 pass 937 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
