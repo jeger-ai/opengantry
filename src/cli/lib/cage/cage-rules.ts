@@ -6,6 +6,7 @@ import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { loadManifest } from "../manifest.js";
 import type { Manifest } from "../types.js";
+import { inCageScope, parseCageScopeFlag, type CageScope } from "./cage-scope.js";
 import {
   CAGE_CONFIG_FILE,
   cageConfigCommitted,
@@ -53,6 +54,8 @@ export const CAGE_RULE_MODES: Readonly<Record<CageRuleId, CageRuleMode>> = {
   // Only ever matched when the plan has a scope (`.cage.yaml` `allow_only:`, `--allow-only`).
   out_of_scope: "revert",
 };
+
+export { inCageScope, type CageScope };
 
 /** Rules `--allow-override` can never downgrade: they protect the harness itself. */
 const NON_OVERRIDABLE_RULES: ReadonlySet<CageRuleId> = new Set(["git_control", "cage_config"]);
@@ -139,14 +142,6 @@ export interface CagePlan {
   scope: CageScope | null;
 }
 
-/**
- * Globs from `.cage.yaml` `allow_only:` and from `--allow-only`. A path is in scope only when it matches a glob
- * of every list that is set, so neither source can widen the other.
- */
-export interface CageScope {
-  config: string[] | null;
-  flag: string[] | null;
-}
 
 /** How one path is protected after overrides; null when no rule matches. */
 export interface CagePathRule {
@@ -165,48 +160,10 @@ export function cageBasenameRule(name: string, dependencies: CageRuleMode = "rep
   return null;
 }
 
-const scopeRegExps = new Map<string, RegExp>();
-
-function scopeRegExp(glob: string): RegExp {
-  let re = scopeRegExps.get(glob);
-  if (!re) {
-    re = cageGlobToRegExp(glob);
-    scopeRegExps.set(glob, re);
-  }
-  return re;
-}
-
-/** A glob that matches the path, or a directory above it, covers the path. */
-function scopeListCovers(globs: readonly string[], rel: string): boolean {
-  const segs = rel.split("/");
-  for (let i = segs.length; i > 0; i -= 1) {
-    const prefix = segs.slice(0, i).join("/");
-    if (globs.some((g) => scopeRegExp(g).test(prefix))) return true;
-  }
-  return false;
-}
-
-/** Whether a root-relative path lies in the plan's allowed area; always true without a scope. */
-export function inCageScope(plan: Pick<CagePlan, "scope">, rel: string): boolean {
-  const s = plan.scope;
-  if (!s) return true;
-  // Paths under the git dir are git_control's business, never the scope's.
-  if (rel === ".git" || rel.startsWith(".git/") || rel.startsWith("../")) return true;
-  if (s.config && !scopeListCovers(s.config, rel)) return false;
-  if (s.flag && !scopeListCovers(s.flag, rel)) return false;
-  return true;
-}
-
 /** Add the `out_of_scope` rule to a path's hit when the path lies outside the scope; a revert hit keeps its own rule. */
 export function cageScopeHit(plan: Pick<CagePlan, "scope">, rel: string, hit: CagePathRule | null): CagePathRule | null {
   if (inCageScope(plan, rel)) return hit;
   return stricter(hit, { rule: "out_of_scope", mode: "revert", overridden: false });
-}
-
-/** The scope globs in effect, flattened for reports: `.cage.yaml` entries first, then flag entries. */
-export function cageScopeGlobs(plan: Pick<CagePlan, "scope">): string[] | null {
-  const s = plan.scope;
-  return s ? [...(s.config ?? []), ...(s.flag ?? [])] : null;
 }
 
 /** A rule's mode under this plan: a dependency freeze turns the lockfile rule to revert. */
@@ -402,22 +359,6 @@ export interface CagePlanOptions {
   allowOnly?: readonly string[];
 }
 
-function flagScope(raw: readonly string[] | undefined): string[] | null {
-  if (!raw || raw.length === 0) return null;
-  return raw.map((g) => {
-    const value = normalizeCageRelPath(g);
-    if (!value) {
-      throw new GantryUserError(
-        "GXT_CAGE_SCOPE_INVALID",
-        `cage: --allow-only ${g}: expected a root-relative glob without ".." or a leading "/"`,
-        undefined,
-        2,
-      );
-    }
-    return value;
-  });
-}
-
 /** Built-in floor plus the repo's rule inputs, for a canonical root. An invalid `.cage.yaml` entry throws. */
 export function assembleCagePlan(root: string, inputs: CageRuleInputs, opts: CagePlanOptions = {}): CagePlan {
   const zones = inputs.zones.map((z) => rootJoin(root, z));
@@ -439,7 +380,7 @@ export function assembleCagePlan(root: string, inputs: CageRuleInputs, opts: Cag
     dependencies: opts.lockDeps === true || inputs.config.dependencies === "revert" ? "revert" : "report",
     scope: null,
   };
-  const flag = flagScope(opts.allowOnly);
+  const flag = parseCageScopeFlag(opts.allowOnly);
   if (inputs.config.allowOnly || flag) plan.scope = { config: inputs.config.allowOnly, flag };
   addConfigTargets(plan, root, inputs.config, inputs.configCommitted);
   return plan;

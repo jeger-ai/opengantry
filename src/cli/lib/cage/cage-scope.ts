@@ -1,10 +1,10 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { GantryUserError } from "../errors.js";
 import { gitChildEnv } from "../git/git.js";
+import { cageGlobToRegExp, normalizeCageRelPath } from "./cage-config.js";
 
 /**
  * Baseline for a cage scope (`.cage.yaml` `allow_only:`, `--allow-only`; ADR-0048 decision 10). Everything git
@@ -14,6 +14,64 @@ import { gitChildEnv } from "../git/git.js";
  * index, HEAD and refs are never touched. Changes are found by comparing blob ids; a restore reads the blob back
  * through the checkout filters, so the file gets the bytes it had on disk.
  */
+
+/**
+ * Globs from `.cage.yaml` `allow_only:` and from `--allow-only`. A path is in scope only when it matches a glob
+ * of every list that is set, so neither source can widen the other.
+ */
+export interface CageScope {
+  config: string[] | null;
+  flag: string[] | null;
+}
+
+const scopeRegExps = new Map<string, RegExp>();
+
+function scopeRegExp(glob: string): RegExp {
+  let re = scopeRegExps.get(glob);
+  if (!re) {
+    re = cageGlobToRegExp(glob);
+    scopeRegExps.set(glob, re);
+  }
+  return re;
+}
+
+/** A glob that matches the path, or a directory above it, covers the path. */
+function scopeListCovers(globs: readonly string[], rel: string): boolean {
+  const segs = rel.split("/");
+  for (let i = segs.length; i > 0; i -= 1) {
+    const prefix = segs.slice(0, i).join("/");
+    if (globs.some((g) => scopeRegExp(g).test(prefix))) return true;
+  }
+  return false;
+}
+
+/** Whether a root-relative path lies in the allowed area; always true without a scope. */
+export function inCageScope(plan: { scope: CageScope | null }, rel: string): boolean {
+  const s = plan.scope;
+  if (!s) return true;
+  // Paths under the git dir are git_control's business, never the scope's.
+  if (rel === ".git" || rel.startsWith(".git/") || rel.startsWith("../")) return true;
+  if (s.config && !scopeListCovers(s.config, rel)) return false;
+  if (s.flag && !scopeListCovers(s.flag, rel)) return false;
+  return true;
+}
+
+/** `--allow-only` values, normalized; null when none were given. */
+export function parseCageScopeFlag(raw: readonly string[] | undefined): string[] | null {
+  if (!raw || raw.length === 0) return null;
+  return raw.map((g) => {
+    const value = normalizeCageRelPath(g);
+    if (!value) {
+      throw new GantryUserError(
+        "GXT_CAGE_SCOPE_INVALID",
+        `cage: --allow-only ${g}: expected a root-relative glob without ".." or a leading "/"`,
+        undefined,
+        2,
+      );
+    }
+    return value;
+  });
+}
 
 /** One file in a scope tree. */
 export interface CageScopeFile {
@@ -36,10 +94,10 @@ function scopeError(code: string, message: string, hint?: string): GantryUserErr
   return new GantryUserError(code, `cage: ${message}`, hint, 2);
 }
 
-function git(root: string, args: string[], opts: { indexFile?: string; input?: string } = {}): Buffer {
+function git(root: string, args: string[], opts: { indexFile?: string } = {}): Buffer {
   const env = gitChildEnv();
   if (opts.indexFile) env.GIT_INDEX_FILE = opts.indexFile;
-  const r = spawnSync("git", ["-C", root, ...args], { env, maxBuffer: MAX_BUFFER, input: opts.input });
+  const r = spawnSync("git", ["-C", root, ...args], { env, maxBuffer: MAX_BUFFER });
   if (r.status !== 0) {
     const err = r.stderr ? r.stderr.toString("utf8").trim().split("\n")[0] : String(r.error ?? r.status);
     throw scopeError("GXT_CAGE_SCOPE_GIT_FAILED", `scope: git ${args[0] ?? ""} failed: ${err}`);
@@ -125,8 +183,4 @@ export function listCageScopeTree(root: string, tree: string): CageScopeFile[] {
 /** A blob as the checkout would write it (smudge and eol filters applied for `rel`). */
 export function readCageScopeBlob(root: string, rel: string, oid: string): Buffer {
   return git(root, ["cat-file", "--filters", `--path=${rel}`, oid]);
-}
-
-export function sha256Hex(data: Buffer | string): string {
-  return crypto.createHash("sha256").update(data).digest("hex");
 }
