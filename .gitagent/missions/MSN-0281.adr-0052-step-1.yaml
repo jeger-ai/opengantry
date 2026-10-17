@@ -66,20 +66,20 @@ trace_rows:
     anchor: "1446"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0281 at 950bd2a: test/conformance/ with README.md, cases.yaml (schema opengantry.conformance-cases.v1), build-fixtures.mjs, run.test.mjs (node:test, node:assert, yaml only), golden/ with 82 files, fixtures bare-git (added for init, onboarding and the manifest-less cage), fresh-init, mission-pass, mission-fail-gate, mission-stale, cage-tamper, contract-standalone; 85 cases: every one of the 69 public leaf subcommands has at least one case (checked against commands.yaml), every --json leaf has a --json case, verify --format sarif and --format junit on mission-pass; 3 cases skipped on record: mcp serve (long-running stdio server, covered by mcp-legislation.test.ts) and the two verify --contract cases on contract-standalone until MSN-0277 (#228) lands; each golden records exit, normalized stdout (JSON parsed) and the set of GXT_ codes on stderr, record_tree on 9 cases; normalizers for root, CLI root, tmpdir, ISO timestamps, UUIDs, sha256, shas, durations, pids, ports, semver and per-case pid in the cage session log; recorded once, then compare mode passed twice in a row (82 pass, 0 fail, 3 skipped) before and after the rebase onto #227, which changed only the three cage goldens (dependencies: report field); finding, not fixed here (src/ forbidden): gantry init --yes --skills minimal writes a MANIFEST with skills ui, logic, gantry, substrate but only skills/ui.md and skills/logic.md, so doctor, check and status fail Rule 4.4 on a fresh init; the goldens record that behaviour"
-    anchor: "1447"
+    trace_quote: "DoD 5 MSN-0281 re-attested at e2d3faa: after the first CI run, five cases (doctor and status on fresh-init and mission-pass, receipt principal-hmac) differed on the runner because they read the machine's home directory (pepper keyring, agent install) and tool versions; run.test.mjs now builds fixtures and runs every case under a temp HOME and XDG_CONFIG_HOME (normalized to <HOME>), normalizes version numbers in prose (<SEMVER>, JSON schema_version fields untouched) and prints the differing lines on a mismatch; six goldens re-recorded (doctor x2, status x2, receipt-principal-hmac, upgrade-plan); compare mode then passed twice in a row locally: 82 pass, 0 fail, 3 skipped; the three cage goldens and all other 73 are unchanged"
+    anchor: "1451"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0281 at 950bd2a: test/conformance/spawning-tests.yaml classifies 51 src/cli/tests files that spawn a process (spawnSync, execFileSync or execSync; the DoD's count of 32 covered spawnSync and execFileSync only): cli 14 (drive dist/cli/index.js), script 11 (drive scripts/), none 26 (spawn git only); the none class is added because those tests are neither CLI nor script contract"
     anchor: "1448"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0281 at 950bd2a: package.json gains the script test:conformance only (node --test test/conformance/run.test.mjs); no dependency change, package-lock.json untouched (git diff origin/main...HEAD -- package-lock.json empty); scripts/dev-validate-core.sh runs npm run test:conformance after the unit tests, so the gate and npm run validate exercise it; docs/DEVELOPMENT.md section Registries, baseline and conformance (ADR-0052 step 1); docs/CHANGELOG.md substrate note and an Unreleased bullet under the dependency-freeze heading of #227"
-    anchor: "1449"
+    trace_quote: "DoD 7 MSN-0281 re-attested at e2d3faa: wiring unchanged (package.json test:conformance, scripts/dev-validate-core.sh runs it after unit tests); package-lock.json still untouched; README.md of the suite documents the hermetic HOME"
+    anchor: "1452"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0281 at 950bd2a: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 937 pass 937 fail 0; conformance tests 85 pass 82 fail 0 skipped 3; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; git diff --name-only origin/main...HEAD lists only ARCH_BASELINE.json docs/CHANGELOG.md docs/DEVELOPMENT.md .gitagent/foreman/MANIFEST.json .gitagent/missions/MSN-0281.adr-0052-step-1.yaml .gitagent/registry/* package.json scripts/arch-baseline.mjs scripts/dev-validate-core.sh TARGET_ARCHITECTURE.yaml test/conformance/build-fixtures.mjs test/conformance/cases.yaml test/conformance/golden/* test/conformance/README.md test/conformance/run.test.mjs test/conformance/spawning-tests.yaml, all under contract.tmvc_roots; renumbered from MSN-0280 because PR #230 took that id on main while this mission was local, and rebuilt on main after #227 (MSN-0275) merged"
-    anchor: "1450"
+    trace_quote: "DoD 8 MSN-0281 re-attested at e2d3faa: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 937 pass 937 fail 0; conformance pass/skipped 82/3; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; this re-attestation commit touches the mission file so the newest [MSN-0281] Planner-email commit modifies it (RULES 6.1 git-proof), which the two runner-fix commits did not"
+    anchor: "1453"
     status: PASS
 interrogation:
   - finding_id: 2121e0ae69d9
