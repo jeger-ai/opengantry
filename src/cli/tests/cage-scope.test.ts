@@ -340,3 +340,18 @@ test("gantry cage watch --allow-only: an out-of-scope change is prompted; reject
   assert.equal(read(dest, "other/b.ts"), "accepted\n", "an accepted out-of-scope change survives shutdown");
   assert.equal(read(dest, "src/billing/invoice.ts"), "in scope\n", "in-scope edits are never prompted");
 });
+
+test("cage scope: a file hidden by a .gitignore edit is still removed at exit, also with --no-watch (MSN-0276 DoD 3, 6)", POSIX_ONLY, async () => {
+  const dest = makeRepo("og-cage-scope-gitignore-");
+  const report = await runCage({
+    cwd: dest,
+    watch: false,
+    allowOnly: ["src/billing"],
+    command: ["sh", "-c", "echo hidden.ts >> .gitignore; echo evil > hidden.ts"],
+  });
+  assert.deepEqual(report.changes.map((c) => [c.path, c.outcome]), [
+    [".gitignore", "reverted"],
+    ["hidden.ts", "removed"],
+  ]);
+  assert.equal(read(dest, "hidden.ts"), null);
+});

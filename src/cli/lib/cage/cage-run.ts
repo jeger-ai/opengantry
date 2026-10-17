@@ -10,8 +10,8 @@ import {
   type CageRecovery,
 } from "./cage-journal.js";
 import { buildCageReport, type CageReport } from "./cage-report.js";
-import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
-import { buildCagePlan, canonicalCageRoot, type CageScope } from "./cage-rules.js";
+import { resolveCageChanges, restoredGitignore, type CageResolvedChange } from "./cage-revert.js";
+import { buildCagePlan, canonicalCageRoot, type CagePlan, type CageScope } from "./cage-rules.js";
 import { assertCageScopeGitRoot, createCageScopeIndex, disposeCageScopeIndex } from "./cage-scope.js";
 import {
   CAGE_MAX_SCAN_BYTES,
@@ -146,6 +146,19 @@ interface CageSessionResult {
   contestLimit: number;
 }
 
+/**
+ * The exit diff, restored. A restored `.gitignore` can un-hide files the scope never saw, so with a scope that pass
+ * is followed by one more.
+ */
+function finalChanges(plan: CagePlan, before: CageSnapshot, snap: CageSnapshotOptions, reportOnly: boolean): CageResolvedChange[] {
+  const pass = (): CageResolvedChange[] =>
+    resolveCageChanges(diffCageSnapshots(before, takeCageSnapshot(plan, { ...snap, keepBytes: false })), { reportOnly });
+  const first = pass();
+  if (!plan.scope || reportOnly || !first.some((c) => restoredGitignore(c))) return first;
+  const seen = new Set(first.map((c) => c.abs));
+  return [...first, ...pass().filter((c) => !seen.has(c.abs))];
+}
+
 /** CLI flag, then `.cage.yaml`, then the built-in default. */
 function resolveContestLimit(opts: CageRunOptions, plan: ReturnType<typeof buildCagePlan>): number {
   return opts.contestLimit ?? plan.contestLimit ?? CAGE_CONTEST_LIMIT;
@@ -238,8 +251,7 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
     before = takeCageSnapshot(plan, { ...snap, limits });
     const journal = writeCageJournal(journalDir, s.root, before, plan.overrides, { lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
     session = await runSession(opts, { ...s, snap }, plan, before, journal);
-    const after = takeCageSnapshot(plan, { ...snap, keepBytes: false });
-    changes = mergeChanges(session.live, resolveCageChanges(diffCageSnapshots(before, after), { reportOnly: s.reportOnly }));
+    changes = mergeChanges(session.live, finalChanges(plan, before, snap, s.reportOnly));
     // Everything the session had to restore is restored: the journal has served its purpose.
     journal.dispose();
   } finally {

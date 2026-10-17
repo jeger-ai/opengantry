@@ -64,6 +64,11 @@ function revertChange(change: CageChange): CageOutcome {
   return "reverted";
 }
 
+/** A `.gitignore` the cage put back: files it had hidden from a scope are visible again. */
+export function restoredGitignore(c: CageResolvedChange): boolean {
+  return (c.outcome === "reverted" || c.outcome === "removed") && path.posix.basename(c.rel) === ".gitignore";
+}
+
 export function resolveCageChanges(
   changes: readonly CageChange[],
   opts: { reportOnly: boolean },
