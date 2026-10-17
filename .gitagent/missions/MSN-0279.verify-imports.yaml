@@ -12,6 +12,10 @@
 # (src/cli/lib/receipt-signing.ts, extended only by an allowed-signers verify path); mission verify (src/cli/lib/
 # verify/) and the cage untouched; no network call (Sigstore keyless is a follow-up); results digest-only.
 #
+# Amended 2026-10-17 (Planner, at the operator's choice): src/cli/lib/verify/ removed from contract.forbidden_zones.
+#        A forbidden zone also bans imports into it, and src/cli/program-workflow.ts (in scope) has always imported
+#        verify-options.js and verify-export.js from there. Mission verify stays untouched: no file under
+#        src/cli/lib/verify/ may change in this mission.
 # DoD 1 (parsing): JS/TS (.ts .tsx .js .jsx .mjs .cjs .mts .cts) through import-scanner.ts: static imports,
 #        export ... from, require and import() with a string literal. Python (.py) through a new parser: import a.b,
 #        from a.b import c, d, relative from . import x / from ..m import y, parenthesized multi-line imports,
@@ -295,8 +299,7 @@ contract:
     - packages/
     - src/auth/
     - src/cli/lib/cage/
-    - src/cli/lib/verify/
     - src/core/
     - src/db/schema/
     - templates/
-contract_sha256: 0e625e4d21741caf082667962b938ebb1eb21af21084bcd7f7d9284f2dde73ef
+contract_sha256: ea9cb7cec091f09abb95ebbcca131d7bdf4a613e492a4621e7df8484008e014f
