@@ -1,6 +1,6 @@
 import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
-import { CLI_NAME } from "../constants.js";
+import { CLI_NAME } from "#core/constants.js";
 
 /**
  * Environment variables that tell git which repository to use (MSN-0266). git sets `GIT_DIR` for hooks run in a

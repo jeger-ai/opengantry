@@ -38,7 +38,10 @@ function walk(dir) {
 
 function compute() {
   const arch = YAML.parse(fs.readFileSync(path.join(root, "TARGET_ARCHITECTURE.yaml"), "utf8"));
-  const files = walk(path.join(root, "src", "cli")).map((f) => path.relative(root, f).split(path.sep).join("/")).sort();
+  const roots = (arch.scan_roots ?? ["src/cli/**"]).map((g) => g.replace(/\/\*\*$/, "")).map((r) => path.join(root, r));
+  const files = [...new Set(roots.flatMap((r) => (fs.existsSync(r) ? walk(r) : [])))]
+    .map((f) => path.relative(root, f).split(path.sep).join("/"))
+    .sort();
   const layers = {};
   const unmapped = [];
   for (const layer of arch.layers) layers[layer.id] = { files: 0, lines: 0, exports: 0 };

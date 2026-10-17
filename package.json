@@ -9,6 +9,10 @@
     "gantry-cage": "dist/cli/cage-bin.js",
     "opengantry-cage": "dist/cli/cage-bin.js"
   },
+  "imports": {
+    "#core/*": "./dist/packages/core/src/*",
+    "#git/*": "./dist/packages/git/src/*"
+  },
   "exports": {
     ".": "./dist/cli/index.js",
     "./kernel": "./dist/cli/kernel.js"
@@ -28,18 +32,19 @@
     "gen:version": "node scripts/gen-version.mjs",
     "gen:catalog": "node scripts/gen-asset-catalog.mjs",
     "gen:dogfood": "node scripts/gen-dogfood.mjs",
-    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc && node scripts/prune-dist.mjs && npm run build:cage",
+    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc -b && node scripts/prune-dist.mjs && npm run build:cage",
     "build:cage": "npm run build -w @jeger-ai/opengantry-cage",
     "gapman": "node dist/cli/index.js",
-    "lint": "eslint src/cli/**/*.ts",
-    "lint:json": "eslint --format json src/cli/**/*.ts",
+    "lint": "eslint \"src/cli/**/*.ts\" \"packages/*/src/**/*.ts\"",
+    "lint:json": "eslint --format json \"src/cli/**/*.ts\" \"packages/*/src/**/*.ts\"",
     "check:changed": "./scripts/check-changed-code.sh",
     "validate": "./scripts/dev-validate.sh",
     "prepublishOnly": "npm run build && npm test",
     "pack:check": "./scripts/npm-pack-check.sh",
-    "test": "npm run build && node --import ./dist/cli/tests/test-tmpdir-setup.js --test \"dist/cli/tests/**/*.test.js\" && npm run test:cage",
+    "test": "npm run build && node --import ./dist/cli/tests/test-tmpdir-setup.js --test \"dist/cli/tests/**/*.test.js\" && npm run test:packages && npm run test:cage",
     "test:cage": "node --test --test-concurrency=1 \"packages/opengantry-cage/tests/*.test.mjs\"",
     "test:conformance": "node --test \"test/conformance/run.test.mjs\"",
+    "test:packages": "node --test \"dist/packages/*/tests/*.test.js\"",
     "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
     "gantry": "node dist/cli/index.js"
   },
