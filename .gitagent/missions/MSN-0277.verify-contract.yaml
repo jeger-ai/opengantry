@@ -111,13 +111,13 @@ trace_rows:
     anchor: "1474"
     status: PASS
   - dod_id: "10"
-    trace_quote: "DoD 10 MSN-0277 re-attested at 2bd6af3: ./scripts/dev-validate-core.sh exit 0: tests 951 pass 951 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1475"
+    trace_quote: "DoD 10 MSN-0277 re-attested at d374be2 after merging main (#232, ADR-0052 step 1): ./scripts/dev-validate-core.sh exit 0, unit tests pass, conformance suite tests 85 pass 84 fail 0 skipped 1 (mcp-serve); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1476"
     status: PASS
   - dod_id: "11"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 11 MSN-0277 at d374be2: .gitagent/registry/error-codes.yaml lists the 13 GXT_VERIFY_* codes of this mission (BASE_INVALID, BASE_MISSING, BASE_REQUIRED, BASELINE_DIRTY, BASELINE_INVALID, BASELINE_NOT_AT_BASE, BASELINE_STALE, CONTRACT_INVALID, CONTRACT_NOT_AT_BASE, GIT_FAILED, NO_HEAD, NOT_GIT, RESULT_UNREADABLE) with since MSN-0277, committed by the Planner in 73a8d3b; test/conformance/cases.yaml un-skips verify.contract.contract-standalone and verify.contract.gate-json.contract-standalone with --base HEAD~1; both golden files recorded (exit 0, status pass, contract source base); no other golden file changed"
+    anchor: "1477"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 6390c6b59d47
