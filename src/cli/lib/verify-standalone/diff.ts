@@ -23,8 +23,9 @@ function git(root: string, args: string[]): string {
   return r.stdout;
 }
 
-function lines(text: string): string[] {
-  return text.split("\n").filter(Boolean);
+/** NUL-separated git output: paths arrive unquoted, whatever bytes they hold. */
+function zlines(text: string): string[] {
+  return text.split("\0").filter(Boolean);
 }
 
 function range(base: string, worktree: boolean): string {
@@ -32,12 +33,12 @@ function range(base: string, worktree: boolean): string {
 }
 
 export function untrackedFiles(root: string): string[] {
-  return lines(git(root, ["ls-files", "--others", "--exclude-standard"]));
+  return zlines(git(root, ["ls-files", "-z", "--others", "--exclude-standard"]));
 }
 
 /** Repo-relative POSIX paths changed since the base (renames as a delete and an add), sorted. */
 export function changedFiles(root: string, base: string, worktree: boolean): string[] {
-  const changed = lines(git(root, ["diff", "--name-only", "--no-renames", range(base, worktree)]));
+  const changed = zlines(git(root, ["diff", "--name-only", "-z", "--no-renames", range(base, worktree)]));
   const untracked = worktree ? untrackedFiles(root) : [];
   return [...new Set([...changed, ...untracked])].sort();
 }
@@ -61,7 +62,8 @@ export function countAddedLines(root: string, base: string, files: readonly stri
   const tracked = present.filter((f) => !untracked.has(f));
   let added = 0;
   if (tracked.length > 0) {
-    for (const row of lines(git(root, ["diff", "--numstat", "--no-renames", range(base, worktree), "--", ...tracked]))) {
+    // With -z and no renames each record is "added<TAB>deleted<TAB>path"; binary files report "-".
+    for (const row of zlines(git(root, ["diff", "--numstat", "-z", "--no-renames", range(base, worktree), "--", ...tracked]))) {
       added += Number(row.split("\t")[0]) || 0;
     }
   }
@@ -69,18 +71,27 @@ export function countAddedLines(root: string, base: string, files: readonly stri
   return added;
 }
 
-function parseUnifiedZero(diff: string): AddedLine[] {
+const HUNK = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/;
+
+/**
+ * Added lines of one file's `-U0` diff. The hunk header says how many lines it adds, so an added line that itself
+ * starts with "++ " is never mistaken for a file header.
+ */
+function parseUnifiedZero(file: string, diff: string): AddedLine[] {
   const out: AddedLine[] = [];
-  let file: string | null = null;
   let n = 0;
+  let left = 0;
   for (const line of diff.split("\n")) {
-    if (line.startsWith("+++ ")) {
-      file = line === "+++ /dev/null" ? null : line.replace(/^\+\+\+ b\//, "");
-    } else if (line.startsWith("@@")) {
-      n = Number(/\+(\d+)/.exec(line)?.[1] ?? 0);
-    } else if (line.startsWith("+") && file) {
+    if (left > 0 && line.startsWith("+")) {
       out.push({ file, line: n, text: line.slice(1) });
       n += 1;
+      left -= 1;
+      continue;
+    }
+    const hunk = HUNK.exec(line);
+    if (hunk) {
+      n = Number(hunk[1]);
+      left = hunk[2] === undefined ? 1 : Number(hunk[2]);
     }
   }
   return out;
@@ -92,9 +103,10 @@ export function addedLinesOf(root: string, base: string, files: readonly string[
   if (present.length === 0) return [];
   const untracked = worktree ? new Set(untrackedFiles(root)) : new Set<string>();
   const tracked = present.filter((f) => !untracked.has(f));
-  const out = tracked.length > 0
-    ? parseUnifiedZero(git(root, ["diff", "-U0", "--no-color", "--no-renames", "--no-ext-diff", range(base, worktree), "--", ...tracked]))
-    : [];
+  // One diff per file: the file name comes from the list, never from a (possibly quoted) diff header.
+  const out = tracked.flatMap((f) =>
+    parseUnifiedZero(f, git(root, ["diff", "-U0", "--no-color", "--no-renames", "--no-ext-diff", range(base, worktree), "--", f])),
+  );
   for (const f of present.filter((x) => untracked.has(x))) {
     fileLines(root, f).forEach((text, i) => out.push({ file: f, line: i + 1, text }));
   }

@@ -15,7 +15,7 @@ It is in the full package, `@jeger-ai/opengantry`. A slim standalone package is 
 
 ```yaml
 schema: opengantry.verify.v1
-base: origin/main                    # or pass --base <ref>
+base: origin/main                    # used only for a contract outside the repo; a committed one needs --base
 scope:
   allowed_paths: [src/billing, tests/billing]   # absent: the whole repository
   forbidden_paths: [src/billing/migrations]
@@ -48,32 +48,32 @@ checks:
 
 ## Who gets to change the contract
 
-Commit `verify.yaml`. When git tracks the contract, verify reads it from the base commit, not from the branch under review, so a pull request that loosens the contract is still judged by the old one. Change the contract in its own pull request first. A contract outside the repository (a handover folder) or an untracked one is read from disk. The result says which (`contract.source`).
+Commit `verify.yaml`. When git tracks the contract, verify reads it from the base commit, not from the branch under review, so a pull request that loosens the contract is still judged by the old one. Change the contract in its own pull request first. For the same reason a committed contract cannot name its own base: pass `--base` (verify stops with `GXT_VERIFY_BASE_REQUIRED` otherwise). A contract outside the repository (a handover folder) or an untracked one is read from disk and may set `base:`. The result says which (`contract.source`).
 
 ## Run it
 
 ```bash
-gantry verify --contract                          # verify.yaml at the root, the committed change since base
+gantry verify --contract --base origin/main      # verify.yaml at the repository root, the committed change since base
 gantry verify --contract path/to/gate.json --base main
 ```
 
 | Option | What it does |
 |--------|--------------|
 | `--contract [file]` | The contract; default `verify.yaml` at the repository root |
-| `--base <ref>` | The base commit; default the contract's `base:` |
+| `--base <ref>` | The base commit. Required for a committed contract; a contract outside the repository may set `base:` instead |
 | `--worktree` | Include uncommitted and untracked work: the check before you commit. Heavy checks run `quick_run`, or are skipped |
 | `--quick` | Skip heavy checks |
 | `--baseline` | At the base, on a clean tree: record which checks already fail, and how, in `verify-baseline.json` beside the contract |
 | `--baseline-file <file>` | Another place for the baseline |
 | `--out <file>` | Write the result |
-| `--check-result <file>` | Pass only if that result passed in a full run for this HEAD and this contract, on a clean tree |
+| `--check-result <file>` | Pass only if that result passed in a full run for this HEAD, this base and this contract, on a clean tree |
 | `--json` | Print the result on stdout |
 
 Without `--worktree`, verify judges the committed state and fails when the tree has uncommitted changes. Each check runs with `sh -c` at the repository root.
 
 ### A failing suite you inherited
 
-When a check already fails at the base, run `--baseline` once there. Later runs accept the failures the baseline names (matched by `failures`) and fail only on new ones. A check whose failures cannot be named fails as before.
+When a check already fails at the base, run `--baseline` once there and commit `verify-baseline.json` with the contract. Later runs accept the failures the baseline names (matched by `failures`) and fail only on new ones. A check whose failures cannot be named fails as before. A committed baseline is read from the base commit, so a branch cannot accept its own new failures, and a baseline written for another version of the contract stops the run (`GXT_VERIFY_BASELINE_STALE`): run `--baseline` again after changing the contract.
 
 ## Exit codes
 
@@ -81,7 +81,7 @@ When a check already fails at the base, run `--baseline` once there. Later runs 
 |------|---------|
 | `0` | Every path, the size, every rule and every check passed (`--check-result`: the result is verified) |
 | `1` | At least one problem; each is listed on stderr as `verify: PROBLEM …` |
-| `2` | Could not run: not a git work tree, no or an unknown base, an invalid or unreadable contract, a tracked contract that the base does not have, `--format sarif` or `junit` (not available for contracts yet) |
+| `2` | Could not run: not a git work tree, no or an unknown base (a committed contract needs `--base`), an invalid or unreadable contract, a tracked contract that the base does not have, an invalid baseline or one for another contract version, `--format sarif` or `junit` (not available for contracts yet) |
 
 ## The result
 

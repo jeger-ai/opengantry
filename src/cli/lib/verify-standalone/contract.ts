@@ -269,19 +269,21 @@ function trackedRel(root: string, abs: string): string | null {
 }
 
 /**
- * Read the contract from disk to learn its base, then, when git tracks it in this repository, read it again from
- * the base commit: the change under review never supplies its own contract (ADR-0051).
+ * When git tracks the contract in this repository it is read from the base commit, and its `base:` is never used:
+ * the change under review supplies neither its own contract nor the commit that contract comes from (ADR-0051).
+ * Only a contract outside the repository (or untracked) is read from disk and may name its base.
+ * `resolveBase` receives the contract's own base (null for a tracked contract) and whether the contract is tracked.
  */
 export function loadVerifyContract(
   root: string,
   file: string,
-  resolveBase: (contractBase: string | null) => string,
+  resolveBase: (contractBase: string | null, tracked: boolean) => string,
 ): { loaded: LoadedVerifyContract; base: string } {
   const abs = path.resolve(root, file);
   const diskText = readDisk(abs);
   const disk = parseVerifyContract(diskText, abs);
-  const base = resolveBase(disk.base);
   const rel = trackedRel(root, abs);
+  const base = resolveBase(rel ? null : disk.base, rel !== null);
   if (!rel) return { loaded: { contract: disk, path: abs, sha256: sha256(diskText), source: "disk" }, base };
   const at = gitRun(root, ["cat-file", "blob", `${base}:${rel}`]);
   if (!at.ok) {

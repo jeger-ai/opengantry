@@ -3,7 +3,7 @@ import path from "node:path";
 import { GantryUserError } from "../errors.js";
 import { gitRevParse, gitRun } from "../git/git.js";
 import {
-  readVerifyBaseline,
+  parseVerifyBaseline,
   runVerifyCheck,
   type CheckRun,
   type VerifyBaselineFailures,
@@ -73,9 +73,17 @@ function repoRoot(cwd: string): string {
 
 function prepare(opts: VerifyContractOptions): Prepared {
   const root = repoRoot(path.resolve(opts.cwd ?? process.cwd()));
-  const file = opts.contract ?? DEFAULT_VERIFY_CONTRACT;
-  const { loaded, base } = loadVerifyContract(root, path.resolve(opts.cwd ?? process.cwd(), file), (contractBase) => {
+  // An explicit file is relative to the working directory; the default lives at the repository root.
+  const file = opts.contract ? path.resolve(opts.cwd ?? process.cwd(), opts.contract) : path.join(root, DEFAULT_VERIFY_CONTRACT);
+  const { loaded, base } = loadVerifyContract(root, file, (contractBase, tracked) => {
     const ref = opts.base ?? contractBase;
+    if (!ref && tracked) {
+      throw prep(
+        "GXT_VERIFY_BASE_REQUIRED",
+        "the contract is committed in this repository, so it cannot name its own base: pass --base <ref>",
+        "In CI, pass the pull request's base commit, e.g. --base ${{ github.event.pull_request.base.sha }}.",
+      );
+    }
     if (!ref) throw prep("GXT_VERIFY_BASE_MISSING", "no base commit: pass --base <ref> or set base: in the contract");
     const sha = gitRevParse(root, ref);
     if (!sha) throw prep("GXT_VERIFY_BASE_INVALID", `base ${ref} does not resolve to a commit`, "In CI, fetch full history (actions/checkout fetch-depth: 0).");
@@ -91,6 +99,25 @@ function baselinePath(p: Prepared, opts: VerifyContractOptions): string {
   if (opts.baselineFile) return path.resolve(opts.cwd ?? process.cwd(), opts.baselineFile);
   const contractAbs = path.isAbsolute(p.loaded.path) ? p.loaded.path : path.join(p.root, p.loaded.path);
   return path.join(path.dirname(contractAbs), DEFAULT_VERIFY_BASELINE);
+}
+
+/**
+ * The baseline decides which failures pass, so it gets the contract's protection: with a contract from the base
+ * commit, a baseline inside the repository is read from the base commit too, never from the change under review.
+ * It must have been written for this contract (same sha256), or it is refused.
+ */
+function loadBaseline(p: Prepared, opts: VerifyContractOptions): VerifyBaselineFailures | null {
+  const file = baselinePath(p, opts);
+  const rel = path.relative(p.root, file).split(path.sep).join("/");
+  const inside = rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
+  let text: string | null;
+  if (p.loaded.source === "base" && inside) {
+    const r = gitRun(p.root, ["cat-file", "blob", `${p.base}:${rel}`]);
+    text = r.ok ? r.stdout : null;
+  } else {
+    text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+  }
+  return text === null ? null : parseVerifyBaseline(text, file, p.loaded.sha256);
 }
 
 function judgePaths(p: Prepared, changed: string[], problems: string[]): VerifyContractResult["paths"] {
@@ -141,7 +168,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   const paths = judgePaths(p, changed, problems);
   const size = judgeSize(p, changed, worktree, problems);
   const rules = judgeRules(p, changed, worktree, problems);
-  const baseline = readVerifyBaseline(baselinePath(p, opts));
+  const baseline = loadBaseline(p, opts);
   const checks = p.loaded.contract.checks.map((check) => {
     const run = runVerifyCheck(p.root, check, mode, baseline);
     opts.onCheck?.(run);
@@ -207,6 +234,7 @@ export function checkVerifyResult(resultFile: string, opts: VerifyContractOption
     result.status !== "pass" && `the result says ${String(result.status)}`,
     result.mode !== "full" && `the result is a ${String(result.mode)} run, not a full run`,
     result.head !== p.head && `the result is for ${String(result.head).slice(0, 12)}, HEAD is ${p.head.slice(0, 12)}`,
+    result.base !== p.base && `the result was measured from ${String(result.base).slice(0, 12)}, the base is ${p.base.slice(0, 12)}`,
     result.contract?.sha256 !== p.loaded.sha256 && "the contract changed after the result was written",
     p.dirty && "the tree has uncommitted changes",
   ].filter((x): x is string => typeof x === "string");

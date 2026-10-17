@@ -30,7 +30,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ### Unreleased (standalone verify contract — next release after v3.9.0)
 
 - **New: `gantry verify --contract [file]`.** Decides whether a change may land from one contract, without `.gitagent/`: `verify.yaml` (`opengantry.verify.v1`) or a COMMITLY hangar `gate.json` (`commitly.gate.v1`). It checks the paths changed since the base (`allowed_paths`, `forbidden_paths`), added lines against a budget, regex rules over added lines, and check commands (`expect: exit0|empty`, `heavy`, `quick_run`, a `failures` baseline). Modes `--worktree`, `--quick`, `--baseline`, `--check-result`; exit `0` pass, `1` fail, `2` cannot run. Guide: [Verify a change without missions](guides/verify-contract.md); [ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) (MSN-0277).
-- **Trust:** a contract git tracks is read from the base commit, so a pull request cannot weaken its own contract; a tracked contract the base does not have exits `2` (`GXT_VERIFY_CONTRACT_NOT_AT_BASE`).
+- **Trust:** a contract git tracks is read from the base commit and needs `--base` (its own `base:` is ignored), so a pull request can weaken neither its contract nor its baseline; a tracked contract the base does not have exits `2` (`GXT_VERIFY_CONTRACT_NOT_AT_BASE`), a baseline for another contract version too (`GXT_VERIFY_BASELINE_STALE`).
 - **Unchanged:** `gantry verify --mission` and its formats. `--format sarif|junit` with `--contract` exits `2` until the slim package mission.
 
 ### From v3.8.3 (cage check, cage watch, docs layout — v3.9.0)

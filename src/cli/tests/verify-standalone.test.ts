@@ -79,7 +79,7 @@ test("verify contract: verify.yaml is strict; invalid input fails closed with GX
     ["schema: opengantry.verify.v1\nchecks: [{ name: c, run: x, expect: maybe }]\n", /expect must be exit0 or empty/],
     ["schema: opengantry.verify.v1\nchecks: [{ name: c, run: x, expect: exit0 }, { name: c, run: y, expect: exit0 }]\n", /duplicate name "c"/],
     ["schema: opengantry.verify.v1\nchecks: [{ name: c, run: x, expect: exit0, heavy: yes }]\n", /heavy must be true or false/],
-    ["schema: opengantry.verify.v1\nx: &a [1]\ny: *a\n", /invalid YAML|unknown key/],
+    ["schema: opengantry.verify.v1\nbase: &a main\nscope: { allowed_paths: [*a] }\n", /invalid YAML/],
   ];
   for (const [text, pattern] of bad) {
     assert.throws(() => parseVerifyYaml(text), (e: Error & { code?: string; exitCode?: number }) => e.code === "GXT_VERIFY_CONTRACT_INVALID" && e.exitCode === 2 && pattern.test(e.message), text);
@@ -172,7 +172,14 @@ test("verify trust: a tracked contract is read from the base commit, so a change
   assert.equal(h.contract.format, "commitly_gate");
   assert.equal(h.status, "pass", h.problems.join("\n"));
 
-  assert.throws(() => runVerifyContract({ cwd: dest }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_MISSING");
+  assert.throws(() => runVerifyContract({ cwd: dest }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_REQUIRED");
+  // A branch that sets base: HEAD in its tracked contract does not get to pick the commit its contract comes from.
+  write(dest, "verify.yaml", `${CONTRACT}base: HEAD\n`);
+  commit(dest, "pick my own base");
+  assert.throws(() => runVerifyContract({ cwd: dest }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_REQUIRED");
+  const noBase = path.join(outside, "nobase.json");
+  write(outside, "nobase.json", JSON.stringify({ schema: "commitly.gate.v1", allowed_paths: ["."], forbidden_paths: [], checks: [] }));
+  assert.throws(() => runVerifyContract({ cwd: dest, contract: noBase }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_MISSING");
   assert.throws(() => runVerifyContract({ cwd: dest, base: "no-such-ref" }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_INVALID");
 });
 
@@ -201,10 +208,12 @@ test("verify checks: expect empty, heavy checks in full, quick and worktree mode
 });
 
 test("verify baseline: failures the base already has pass; a new failure fails (MSN-0277 DoD 4, 5)", () => {
-  const { dest, base } = makeRepo("og-verify-baseline-");
-  const report = writeVerifyBaseline({ cwd: dest, base });
+  const { dest, base: base0 } = makeRepo("og-verify-baseline-");
+  const report = writeVerifyBaseline({ cwd: dest, base: base0 });
   assert.deepEqual(report.checks.tests, { exit: 1, failures: ["tests/test_old.py::test_legacy"] });
   assert.equal(report.file, path.join(dest, "verify-baseline.json"));
+  git(dest, "add", "-f", "verify-baseline.json");
+  const base = commit(dest, "commit the baseline");
 
   write(dest, "app/x.py", "x\n");
   commit(dest, "work");
@@ -219,8 +228,40 @@ test("verify baseline: failures the base already has pass; a new failure fails (
   assert.equal(fresh.ok, false);
   assert.deepEqual(fresh.new_failures, ["tests/test_new.py::test_new"]);
 
-  write(dest, "verify-baseline.json", "{oops");
-  assert.throws(() => runVerifyContract({ cwd: dest, base }), (e: Error & { code?: string; exitCode?: number }) => e.code === "GXT_VERIFY_BASELINE_INVALID" && e.exitCode === 2);
+  // The change adds its own failure to the committed baseline: the base commit's baseline still applies.
+  const doc = JSON.parse(fs.readFileSync(path.join(dest, "verify-baseline.json"), "utf8")) as { checks: { tests: { failures: string[] } } };
+  doc.checks.tests.failures.push("tests/test_new.py::test_new");
+  write(dest, "verify-baseline.json", JSON.stringify(doc));
+  git(dest, "add", "-f", "verify-baseline.json");
+  commit(dest, "accept my own failure");
+  assert.equal(runVerifyContract({ cwd: dest, base, mode: "quick" }).checks.find((c) => c.name === "tests")!.ok, false);
+});
+
+test("verify baseline: a disk baseline must be valid and written for this contract (MSN-0277 DoD 4)", () => {
+  const { dest, base } = makeRepo("og-verify-baseline-disk-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-handover-"));
+  const contract = path.join(dir, "verify.yaml");
+  fs.writeFileSync(contract, `${CONTRACT}base: ${base}\n`);
+  const report = writeVerifyBaseline({ cwd: dest, contract });
+  assert.equal(report.file, path.join(dir, "verify-baseline.json"));
+  assert.equal(runVerifyContract({ cwd: dest, contract, mode: "quick" }).checks.find((c) => c.name === "tests")!.ok, true);
+  fs.appendFileSync(contract, "# edited\n");
+  assert.throws(() => runVerifyContract({ cwd: dest, contract }), (e: Error & { code?: string; exitCode?: number }) => e.code === "GXT_VERIFY_BASELINE_STALE" && e.exitCode === 2);
+  fs.writeFileSync(report.file, "{oops");
+  assert.throws(() => runVerifyContract({ cwd: dest, contract }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASELINE_INVALID");
+});
+
+test("verify paths: unusual file names and an added line starting with ++ are judged, not skipped (MSN-0277 DoD 3)", () => {
+  const { dest, base } = makeRepo("og-verify-quoted-");
+  write(dest, "app/secret/\u00e4 \"q\".txt", "k\n");
+  write(dest, "app/api/r\u00f6utes.py", "++ x\ndb.query(1)\n");
+  commit(dest, "odd names");
+  const r = runVerifyContract({ cwd: dest, base, mode: "quick" });
+  assert.deepEqual(r.paths.forbidden, ["app/secret/\u00e4 \"q\".txt"]);
+  assert.equal(r.size.added, 3, "both files' lines count");
+  assert.deepEqual(r.rules[0]!.violations, [{ file: "app/api/r\u00f6utes.py", line: 2 }]);
+  fs.mkdirSync(path.join(dest, "app", "sub"), { recursive: true });
+  assert.equal(runVerifyContract({ cwd: path.join(dest, "app", "sub"), base, mode: "quick" }).contract.path, "verify.yaml", "the default contract is at the root");
 });
 
 test("verify --check-result: only a passing full run for this HEAD and this contract on a clean tree verifies (MSN-0277 DoD 5)", () => {
@@ -231,6 +272,7 @@ test("verify --check-result: only a passing full run for this HEAD and this cont
   const save = (r: unknown): void => fs.writeFileSync(out, JSON.stringify(r));
   save(runVerifyContract({ cwd: dest, base }));
   assert.deepEqual(checkVerifyResult(out, { cwd: dest, base }), { ok: true, problems: [] });
+  assert.match(checkVerifyResult(out, { cwd: dest, base: "HEAD" }).problems.join(), /the result was measured from [0-9a-f]{12}, the base is/);
 
   save(runVerifyContract({ cwd: dest, base, mode: "quick" }));
   assert.match(checkVerifyResult(out, { cwd: dest, base }).problems.join(), /a quick run, not a full run/);

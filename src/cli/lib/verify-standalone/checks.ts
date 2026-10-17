@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import { GantryUserError } from "../errors.js";
 import { withoutGitRepoEnv } from "../git/git.js";
@@ -76,14 +75,24 @@ export function runVerifyCheck(root: string, check: VerifyCheck, mode: VerifyMod
   return { result: { name: check.name, expect: check.expect, exit, seconds, ...verdict }, output };
 }
 
-/** The baseline file: ours (`opengantry.verify-baseline.v1`) or hangar's (`commitly.gate-baseline.v1`). */
-export function readVerifyBaseline(file: string): VerifyBaselineFailures | null {
-  if (!fs.existsSync(file)) return null;
-  let raw: { checks?: Record<string, { failures?: unknown }> };
+function baselineError(code: string, message: string): GantryUserError {
+  return new GantryUserError(code, `verify: baseline ${message}`, "Run --baseline again at the base for this contract.", 2);
+}
+
+/**
+ * A baseline: ours (`opengantry.verify-baseline.v1`, `contract_sha256`) or hangar's (`commitly.gate-baseline.v1`,
+ * `gate_sha256`). It must name the sha256 of the contract in force; a baseline for another contract is refused.
+ */
+export function parseVerifyBaseline(text: string, file: string, contractSha256: string): VerifyBaselineFailures {
+  let raw: { checks?: Record<string, { failures?: unknown }>; contract_sha256?: unknown; gate_sha256?: unknown };
   try {
-    raw = JSON.parse(fs.readFileSync(file, "utf8")) as typeof raw;
+    raw = JSON.parse(text) as typeof raw;
   } catch (err) {
-    throw new GantryUserError("GXT_VERIFY_BASELINE_INVALID", `verify: baseline ${file} is not valid JSON: ${err instanceof Error ? err.message : String(err)}`, undefined, 2);
+    throw baselineError("GXT_VERIFY_BASELINE_INVALID", `${file} is not valid JSON: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const forSha = raw.contract_sha256 ?? raw.gate_sha256;
+  if (forSha !== contractSha256) {
+    throw baselineError("GXT_VERIFY_BASELINE_STALE", `${file} was written for another version of the contract (sha256 ${String(forSha).slice(0, 12)})`);
   }
   const out: VerifyBaselineFailures = {};
   for (const [name, entry] of Object.entries(raw.checks ?? {})) {
