@@ -21,6 +21,9 @@
 # DoD 3 (rules): with the freeze on, the built-in lockfile rule (the 13 existing names) is revert, and a new built-in
 #        dependency_manifest rule (package.json, pyproject.toml, Pipfile, requirements*.txt, Cargo.toml, go.mod,
 #        Gemfile, composer.json; basename match in the whole-tree scan with the existing skip dirs) is revert.
+#        Amended after review on PR #227: manifests under a vendor/ path segment are excluded from dependency_manifest
+#        (composer install and cargo vendor write one per installed package; that is install output, not the
+#        project's manifests). Lockfiles are unchanged.
 #        Session: modified restored, added removed, deleted restored; watch prompts; check exits 3; push guard blocks.
 #        With the freeze off, lockfiles stay report and manifests are unprotected, exactly as before.
 #        --allow-override <path> can still downgrade a frozen path for one run and is announced (decision 3).
