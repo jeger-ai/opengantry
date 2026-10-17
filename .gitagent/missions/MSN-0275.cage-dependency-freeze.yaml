@@ -179,6 +179,7 @@ interrogation:
       - ADR-0047
 interrogation_sha256: d8a2a088d3f9ba3dbb045826f620026f15d9e1df5c83f393493cff2977542ad9
 declared_paths:
+  - .gitagent/missions/MSN-0275.cage-dependency-freeze.yaml
   - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
   - EXECUTOR_LOG.md
   - README.md
