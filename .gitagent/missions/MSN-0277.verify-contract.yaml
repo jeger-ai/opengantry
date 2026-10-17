@@ -61,45 +61,45 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0277 at 28a9130: verify.yaml opengantry.verify.v1 (base, scope {allowed_paths, forbidden_paths}, size {max_added_lines, exclude}, rules, checks) parsed strictly in src/cli/lib/verify-standalone/contract.ts; wrong schema, unknown keys, a negative budget, an invalid regex, empty rule files, a bad expect, duplicate check names, non-boolean heavy and aliases exit 2 with GXT_VERIFY_CONTRACT_INVALID; commitly.gate.v1 gate.json maps cmd, self_check, approach and size_exclude; cage_protect and checks[].part reported as ignored and noted on stderr"
+    anchor: "1423"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0277 at 28a9130: a tracked verify.yaml is read from the base commit (contract.source base): a head that empties the contract is still held to the base allowed_paths; a tracked contract absent at base exits 2 with GXT_VERIFY_CONTRACT_NOT_AT_BASE; a gate.json outside the repository is read from disk (source disk); no base exits 2 with GXT_VERIFY_BASE_MISSING, an unknown ref with GXT_VERIFY_BASE_INVALID"
+    anchor: "1424"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0277 at 28a9130: changed files are base...HEAD (plus uncommitted and untracked with --worktree); hangar path semantics (app covers app/api/x.py, not apple/x; . everything; *, ** and ?); README.md outside allowed_paths and app/secret/key.txt in forbidden_paths fail; 5 added lines against a budget of 4 with tests/** excluded fail; rule routes do not query reports app/api/routes.py:4"
+    anchor: "1425"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0277 at 28a9130: checks run with sh -c at the root; expect empty fails on output (prints something) and passes on none; a heavy check runs in full, is skipped by --quick and runs quick_run with --worktree; with a baseline the legacy failure passes (only the 1 failure(s) the baseline lists) and a new failure fails with new_failures tests/test_new.py::test_new; a corrupt baseline exits 2 with GXT_VERIFY_BASELINE_INVALID"
+    anchor: "1426"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0277 at 28a9130: default and --quick need a clean tree, --worktree includes uncommitted work; --baseline refuses away from the base (GXT_VERIFY_BASELINE_NOT_AT_BASE) and writes verify-baseline.json beside the contract; --check-result verifies a passing full run and refuses a quick result, a stale HEAD and a changed contract; exit 0 pass, 1 fail, 2 for --format sarif, --contract with --mission, two modes, a bad base, a missing contract and a non-git dir; gantry verify --mission unchanged"
+    anchor: "1427"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0277 at 28a9130: opengantry.verify-result.v1 with status, mode, head, base, contract {path, sha256, source, format, ignored}, paths, size, rules, checks, problems; --json prints it, --out writes it; neither holds added-line text or check output (CHECK-OUTPUT-MARKER only on stderr as an indented tail)"
+    anchor: "1428"
+    status: PASS
   - dod_id: "7"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 7 MSN-0277 at 28a9130: src/cli/tests/verify-standalone.test.ts tests 8 pass 8 and src/cli/tests/verify-standalone-cli.test.ts tests 4 pass 4 over temp git repos, part of the gate run below"
+    anchor: "1429"
+    status: PASS
   - dod_id: "8"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 8 MSN-0277 at 28a9130: .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md status ACTIVE: context (verify without .gitagent/, COMMITLY hangar gate.js as the model), decisions 1-8 (contract format, gate.json as is, contract from base, hangar path semantics, modes, digest-only results, no built-in paths, separate from missions), consequences, follow-ups B and C; ADR-0045, ADR-0047, ADR-0027 and ADR-0049 unchanged"
+    anchor: "1430"
+    status: PASS
   - dod_id: "9"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 9 MSN-0277 at 28a9130: docs/guides/verify-contract.md (section guides, order 12) with contract example, trust, options, baseline, exit codes, result, CI snippet with cage check alongside, limits; docs/index.md and README.md link it; docs/CHANGELOG.md Unreleased entry; assert-docs-structure OK (53 pages, 39 published, 305 relative links checked)"
+    anchor: "1431"
+    status: PASS
   - dod_id: "10"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 10 MSN-0277 at 28a9130: ./scripts/dev-validate-core.sh exit 0: tests 934 pass 934 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1432"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 6502376617f7
