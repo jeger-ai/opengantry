@@ -34,7 +34,7 @@ flowchart TB
 
 ## Packages (ADR-0052 step 2)
 
-`packages/core` and `packages/git` are workspace packages with their own `package.json`, `tsconfig.json` and `tests/`. `tsc -b` builds them first (project references) into `dist/packages/<name>/src/`, and every importer reaches them through the root `package.json` `imports` field: `#core/<module>.js` and `#git/<module>.js`. That map resolves identically in the checkout and in the published tarball, so nothing is published separately and the slim cage bundle inlines them. Inside a package use relative imports; `packages/git` resolves `#core/*` through its `tsconfig.json` `paths` (a package `imports` target must stay inside its own package). The old paths under `src/cli/lib` are re-export facades until step 3 migrates the importers.
+`packages/core` and `packages/git` are packages in this repository with their own `package.json` (private), `tsconfig.json` and `tests/`. They are not npm workspaces: nothing resolves them through `node_modules`, so the lockfile does not list them. `tsc -b` builds them first (project references) into `dist/packages/<name>/src/`, and every importer reaches them through the root `package.json` `imports` field: `#core/<module>.js` and `#git/<module>.js`. That map resolves identically in the checkout and in the published tarball, so nothing is published separately and the slim cage bundle inlines them. Inside a package use relative imports; `packages/git` resolves `#core/*` through its `tsconfig.json` `paths` (a package `imports` target must stay inside its own package). The old paths under `src/cli/lib` are re-export facades until step 3 migrates the importers.
 
 ## Import rules (enforced in CI for changed files)
 

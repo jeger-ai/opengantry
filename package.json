@@ -26,7 +26,7 @@
     "NOTICE"
   ],
   "workspaces": [
-    "packages/*"
+    "packages/opengantry-cage"
   ],
   "scripts": {
     "gen:version": "node scripts/gen-version.mjs",
