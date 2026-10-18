@@ -68,7 +68,7 @@ function flattenBindingGroups(groups: ImportBindingGroups): string[] {
 function proxyConstLine(binding: string, specifier: string, ruleId: string, reason: string): string {
   return [
     `const ${binding} = new Proxy(Object.create(null), {`,
-    `  get() { throw new Error("GXT Security Violation: Execution blocked. ${reason} Import '${specifier}' quarantined by Code Surgeon [${ruleId}]."); }`,
+    `  get() { throw new Error("GXT Security Violation: Execution blocked. ${reason} Import '${specifier}' quarantined by Code Repair [${ruleId}]."); }`,
     `});`,
   ].join("\n");
 }

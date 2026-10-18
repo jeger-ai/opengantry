@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { importLayerSurgeon } from "../lib/surgeons/import-layer.js";
-import type { SurgeonContext } from "../lib/surgeons/registry.js";
+import { importLayerRepair } from "../lib/repairs/import-layer.js";
+import type { RepairContext } from "../lib/repairs/registry.js";
 import type { VerifyPhaseFailure } from "../lib/verify/verify-failure.js";
 
-test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-layer-"));
+test("importLayerRepair: applies bottom-to-top quarantine from gate JSON", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-repair-layer-"));
   const libDir = path.join(dir, "src", "cli", "lib");
   fs.mkdirSync(libDir, { recursive: true });
   const file = path.join(libDir, "bad.ts");
@@ -50,7 +50,7 @@ test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", asyn
     gateOutput: gateJson,
   };
 
-  const context: SurgeonContext = {
+  const context: RepairContext = {
     root: dir,
     failure,
     manifest: { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] },
@@ -58,7 +58,7 @@ test("importLayerSurgeon: applies bottom-to-top quarantine from gate JSON", asyn
     errorCode: "GXT_IMPORT_LAYER_VIOLATION",
   };
 
-  const result = await importLayerSurgeon.applyMutation(context);
+  const result = await importLayerRepair.applyMutation(context);
   assert.equal(result.mutated, true);
   assert.match(result.summary, /import-layer quarantined: src\/cli\/lib\/bad\.ts/);
 

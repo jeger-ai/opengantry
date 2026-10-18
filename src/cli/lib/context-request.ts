@@ -3,7 +3,7 @@ import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
 import { EXECUTOR_LOG_FILENAME } from "./constants.js";
 import { gitStagePath } from "#git/git-staged.js";
-import { ensureExecutorLogExists } from "./surgeon.js";
+import { ensureExecutorLogExists } from "./repair.js";
 
 export type ContextRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED";
 

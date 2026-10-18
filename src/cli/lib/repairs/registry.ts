@@ -1,19 +1,19 @@
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
-import { gateOutputIndicatesImportLayer } from "../surgeon.js";
+import { gateOutputIndicatesImportLayer } from "../repair.js";
 import type { GateFailure, VerifyPhaseFailure } from "../verify/verify-failure.js";
 import type { Manifest } from "#core/mission-types.js";
-import { bannedImportSurgeon } from "./banned-import.js";
-import { importLayerSurgeon } from "./import-layer.js";
+import { bannedImportRepair } from "./banned-import.js";
+import { importLayerRepair } from "./import-layer.js";
 
-export interface SurgeonMutationResult {
+export interface RepairMutationResult {
   mutated: boolean;
   summary: string;
 }
 
-/** Surgeons operate exclusively on gate failures (they parse gate output). */
-export interface SurgeonContext {
+/** Repairs operate exclusively on gate failures (they parse gate output). */
+export interface RepairContext {
   root: string;
   failure: GateFailure;
   manifest: Manifest;
@@ -21,18 +21,18 @@ export interface SurgeonContext {
   errorCode: GxtErrorCode;
 }
 
-export interface CodeSurgeon {
+export interface CodeRepair {
   errorCode: GxtErrorCode;
-  applyMutation(context: SurgeonContext): Promise<SurgeonMutationResult>;
+  applyMutation(context: RepairContext): Promise<RepairMutationResult>;
 }
 
-const SURGEONS: CodeSurgeon[] = [importLayerSurgeon, bannedImportSurgeon];
+const REPAIRS: CodeRepair[] = [importLayerRepair, bannedImportRepair];
 
-export function getSurgeonForErrorCode(code: GxtErrorCode): CodeSurgeon | undefined {
-  return SURGEONS.find((s) => s.errorCode === code);
+export function getRepairForErrorCode(code: GxtErrorCode): CodeRepair | undefined {
+  return REPAIRS.find((s) => s.errorCode === code);
 }
 
-export function resolveSurgeonErrorCode(failure: VerifyPhaseFailure): GxtErrorCode | null {
+export function resolveRepairErrorCode(failure: VerifyPhaseFailure): GxtErrorCode | null {
   if (failure.phase !== "gate") return null;
   const combined = failure.gateOutput ?? "";
 

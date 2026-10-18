@@ -6,7 +6,7 @@ import {
   extractImportSites,
   extractImportSpecifiers,
   extractImportsWithMeta,
-  stripSurgeonQuarantineRegions,
+  stripRepairQuarantineRegions,
 } from "#core/import-scanner.js";
 
 test("extractBindingsFromSnippet: mixed default + named", () => {
@@ -27,7 +27,7 @@ test("extractImportsWithMeta: ignores quarantine regions when scrubbing", () => 
     "// GXT-SURGEON-QUARANTINE-END",
     'import { ok } from "./constants.js";',
   ].join("\n");
-  const scrubbed = stripSurgeonQuarantineRegions(source);
+  const scrubbed = stripRepairQuarantineRegions(source);
   assert.doesNotMatch(scrubbed, /verify\.js/);
   const imports = extractImportsWithMeta(source, true);
   assert.equal(imports.length, 1);

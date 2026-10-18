@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { GateFailure, VerifyPhaseFailure } from "../lib/verify/verify-failure.js";
 import {
-  getSurgeonForErrorCode,
-  resolveSurgeonErrorCode,
-} from "../lib/surgeons/registry.js";
+  getRepairForErrorCode,
+  resolveRepairErrorCode,
+} from "../lib/repairs/registry.js";
 
 function gateFailure(output: string): GateFailure {
   return {
@@ -18,14 +18,14 @@ function gateFailure(output: string): GateFailure {
   };
 }
 
-test("resolveSurgeonErrorCode: maps banned-import gate stderr", () => {
-  const code = resolveSurgeonErrorCode(
+test("resolveRepairErrorCode: maps banned-import gate stderr", () => {
+  const code = resolveRepairErrorCode(
     gateFailure('src/bad.ts: banned import "axios"\n'),
   );
   assert.equal(code, GXT_ERROR.BANNED_IMPORT_DETECTED);
 });
 
-test("resolveSurgeonErrorCode: non-gate phase returns null", () => {
+test("resolveRepairErrorCode: non-gate phase returns null", () => {
   const failure: VerifyPhaseFailure = {
     ok: false,
     phase: "trace",
@@ -36,16 +36,16 @@ test("resolveSurgeonErrorCode: non-gate phase returns null", () => {
     traceReason: "trace fail",
     traceQuote: "DoD 1 MSN-0001: quote",
   };
-  assert.equal(resolveSurgeonErrorCode(failure), null);
+  assert.equal(resolveRepairErrorCode(failure), null);
 });
 
-test("getSurgeonForErrorCode: BANNED_IMPORT_DETECTED registered", () => {
-  const surgeon = getSurgeonForErrorCode(GXT_ERROR.BANNED_IMPORT_DETECTED);
-  assert.ok(surgeon);
-  assert.equal(surgeon!.errorCode, GXT_ERROR.BANNED_IMPORT_DETECTED);
+test("getRepairForErrorCode: BANNED_IMPORT_DETECTED registered", () => {
+  const repair = getRepairForErrorCode(GXT_ERROR.BANNED_IMPORT_DETECTED);
+  assert.ok(repair);
+  assert.equal(repair!.errorCode, GXT_ERROR.BANNED_IMPORT_DETECTED);
 });
 
-test("resolveSurgeonErrorCode: maps import-layer gate JSON", () => {
+test("resolveRepairErrorCode: maps import-layer gate JSON", () => {
   const json = JSON.stringify({
     schema_version: 1,
     ok: false,
@@ -60,12 +60,12 @@ test("resolveSurgeonErrorCode: maps import-layer gate JSON", () => {
       },
     ],
   });
-  const code = resolveSurgeonErrorCode(gateFailure(""));
+  const code = resolveRepairErrorCode(gateFailure(""));
   assert.equal(code, null);
-  const withStdout = resolveSurgeonErrorCode(gateFailure(json));
+  const withStdout = resolveRepairErrorCode(gateFailure(json));
   assert.equal(withStdout, GXT_ERROR.IMPORT_LAYER_VIOLATION);
 });
 
-test("getSurgeonForErrorCode: IMPORT_LAYER_VIOLATION registered", () => {
-  assert.ok(getSurgeonForErrorCode(GXT_ERROR.IMPORT_LAYER_VIOLATION));
+test("getRepairForErrorCode: IMPORT_LAYER_VIOLATION registered", () => {
+  assert.ok(getRepairForErrorCode(GXT_ERROR.IMPORT_LAYER_VIOLATION));
 });

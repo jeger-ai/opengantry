@@ -4,7 +4,7 @@ const QUARANTINE_START = "// GXT-SURGEON-QUARANTINE-START";
 const QUARANTINE_END = "// GXT-SURGEON-QUARANTINE-END";
 
 /** Remove every START..END quarantine region and the whitespace after END; an unterminated START is left as is. Linear in the source. */
-export function stripSurgeonQuarantineRegions(source: string): string {
+export function stripRepairQuarantineRegions(source: string): string {
   let out = "";
   let pos = 0;
   for (;;) {
@@ -178,7 +178,7 @@ export function blankComments(source: string): string {
 }
 
 function prepareSource(source: string, scrubQuarantine: boolean): string {
-  return blankComments(scrubQuarantine ? stripSurgeonQuarantineRegions(source) : source);
+  return blankComments(scrubQuarantine ? stripRepairQuarantineRegions(source) : source);
 }
 
 function positionOf(source: string, index: number): { line: number; column: number } {

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { findBannedImportsInFolder } from "../lib/ast-discovery.js";
-import { quarantineImportDeclaration } from "../lib/surgeons/quarantine-import.js";
+import { quarantineImportDeclaration } from "../lib/repairs/quarantine-import.js";
 
 function quarantineBannedImportInFile(
   absPath: string,
@@ -23,7 +23,7 @@ function quarantineBannedImportInFile(
 }
 
 test("quarantineImportDeclaration: comments import and injects proxy roadblock", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-ban-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-repair-ban-"));
   const file = path.join(dir, "bad.ts");
   fs.writeFileSync(
     file,
@@ -47,7 +47,7 @@ export const x = fetchData;
 });
 
 test("quarantineImportDeclaration: no-op when specifier absent", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-ban-miss-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-repair-ban-miss-"));
   const file = path.join(dir, "clean.ts");
   const source = `import fs from "node:fs";\nexport const x = 1;\n`;
   fs.writeFileSync(file, source, "utf8");
@@ -58,7 +58,7 @@ test("quarantineImportDeclaration: no-op when specifier absent", () => {
 });
 
 test("quarantineImportDeclaration: gate scan no longer detects banned specifier", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-surgeon-ban-gate-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-repair-ban-gate-"));
   const relDir = path.join("src", "pkg");
   const absDir = path.join(dir, relDir);
   fs.mkdirSync(absDir, { recursive: true });

@@ -77,7 +77,7 @@ export function isTriageEscalated(triage: TriageResult): boolean {
 }
 
 /**
- * Foreman-style triage (manifest-only routing), aligned with .gitagent/foreman/SOUL.md.
+ * Manifest-only triage (routing by skill roots, path risks and risk keywords), aligned with .gitagent/foreman/SOUL.md.
  * May attach non-binding `adr_hints` from `.gitagent/out-of-scope/` when ADR `match_terms`
  * overlap intent; routing remains binary.
  */

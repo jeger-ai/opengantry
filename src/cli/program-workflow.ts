@@ -160,7 +160,7 @@ function registerLegislateCommand(program: Command): void {
     .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Planner still commits)")
     .argument("[intent...]", "One-line Planner intent summary")
     .requiredOption("--msn <id>", "Explicit mission id (must match MSN-0007)")
-    .option("--skill-key <key>", "Override Foreman-derived skill_key when triage escalates")
+    .option("--skill-key <key>", "Override the manifest-derived skill_key when triage escalates")
     .option("--allow-duplicate", "Allow duplicate msn_id only for intentional branch migrations")
     .option("--out <file>", "Output path (.gitagent/missions/…); defaults to MSN.slug.yaml")
     .option(

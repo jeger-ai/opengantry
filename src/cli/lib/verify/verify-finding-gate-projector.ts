@@ -1,5 +1,5 @@
 import { parseBannedImportGateOutput } from "../banned-import-violation.js";
-import { extractImportLayerGateReport } from "../surgeon.js";
+import { extractImportLayerGateReport } from "../repair.js";
 import { readEvidenceSnippet } from "./verify-evidence-snippet.js";
 import { verifyFinding, type VerifyFinding } from "./verify-finding.js";
 import type { GateFailure } from "./verify-failure.js";

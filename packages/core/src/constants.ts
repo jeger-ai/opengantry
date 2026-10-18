@@ -40,7 +40,7 @@ export const REL_NEXT_REMEDIATION = ".gitagent/tmp/NEXT_REMEDIATION.json" as con
 export const DEFAULT_REPORT_PORT = 3134;
 /** Ephemeral runtime snapshot scratch (gitignored; see docs/ADR-EPHEMERAL-VIRTUALIZATION.md). */
 export const REL_VIRTUAL_SCRATCH = ".gitagent/virtual/" as const;
-/** ADR markdown (optional `match_terms` in frontmatter) — Foreman may emit non-binding hints only. */
+/** ADR markdown (optional `match_terms` in frontmatter) — triage may emit non-binding hints only. */
 export const REL_OUT_OF_SCOPE_DIR = ".gitagent/out-of-scope" as const;
 export const SKILLS_DIR_NAME = "skills" as const;
 export const EXECUTOR_LOG_FILENAME = "EXECUTOR_LOG.md" as const;

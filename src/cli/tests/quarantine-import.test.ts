@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
-import { quarantineImportDeclaration } from "../lib/surgeons/quarantine-import.js";
+import { quarantineImportDeclaration } from "../lib/repairs/quarantine-import.js";
 
 test("quarantineImportDeclaration: AST quarantine for lib-to-command import", () => {
   const root = getRepoRoot();

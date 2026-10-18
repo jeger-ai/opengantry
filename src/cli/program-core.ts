@@ -230,7 +230,7 @@ function registerUpgradeCommand(program: Command): void {
 function registerTriageCommand(program: Command): void {
   program
     .command("triage")
-    .description("Foreman-style triage from manifest (SOUL-aligned)")
+    .description("Triage an intent from the manifest (skill, tier, keywords)")
     .argument("[intent...]", "User intent text")
     .option("--json", "Print JSON only")
     .option(
@@ -260,7 +260,7 @@ function registerStartCommand(program: Command): void {
     .description("Goal-first orchestration: triage → legislate stub → runtime next steps")
     .argument("[intent...]", "What you want to build")
     .option("--msn <id>", "Mission id (auto-suggested when omitted)")
-    .option("--skill-key <key>", "Override Foreman skill_key")
+    .option("--skill-key <key>", "Override the manifest skill_key")
     .option("--gate-command <cmd>", "Deterministic gate command")
     .option("--gate-success-substring <text>", "Gate success substring")
     .addOption(
