@@ -6,6 +6,7 @@ import { gitRun } from "../git/git.js";
 import { GantryUserError } from "../errors.js";
 import { loadManifest } from "../manifest.js";
 import type { Manifest } from "../types.js";
+import { inCageScope, parseCageScopeFlag, type CageScope } from "./cage-scope.js";
 import {
   CAGE_CONFIG_FILE,
   cageConfigCommitted,
@@ -28,7 +29,8 @@ export type CageRuleId =
   | "dependency_manifest"
   | "cage_config"
   | "manifest_forbidden_zone"
-  | "cage_protect";
+  | "cage_protect"
+  | "out_of_scope";
 
 /** Where a rule comes from: shipped with cage, the GXT manifest, or the project's `.cage.yaml`. */
 export type CageRuleSource = "builtin" | "manifest" | "cage_yaml";
@@ -49,7 +51,11 @@ export const CAGE_RULE_MODES: Readonly<Record<CageRuleId, CageRuleMode>> = {
   manifest_forbidden_zone: "revert",
   // Default only: each `.cage.yaml` entry carries its own mode.
   cage_protect: "revert",
+  // Only ever matched when the plan has a scope (`.cage.yaml` `allow_only:`, `--allow-only`).
+  out_of_scope: "revert",
 };
+
+export { inCageScope, type CageScope };
 
 /** Rules `--allow-override` can never downgrade: they protect the harness itself. */
 const NON_OVERRIDABLE_RULES: ReadonlySet<CageRuleId> = new Set(["git_control", "cage_config"]);
@@ -132,7 +138,10 @@ export interface CagePlan {
   contestLimit: number | null;
   /** `revert` when dependencies are frozen (`.cage.yaml` `dependencies: revert` or `--lock-deps`), else `report`. */
   dependencies: CageRuleMode;
+  /** The allowed area, or null when the whole repository is (no scope). */
+  scope: CageScope | null;
 }
+
 
 /** How one path is protected after overrides; null when no rule matches. */
 export interface CagePathRule {
@@ -149,6 +158,12 @@ export function cageBasenameRule(name: string, dependencies: CageRuleMode = "rep
     return "dependency_manifest";
   }
   return null;
+}
+
+/** Add the `out_of_scope` rule to a path's hit when the path lies outside the scope; a revert hit keeps its own rule. */
+export function cageScopeHit(plan: Pick<CagePlan, "scope">, rel: string, hit: CagePathRule | null): CagePathRule | null {
+  if (inCageScope(plan, rel)) return hit;
+  return stricter(hit, { rule: "out_of_scope", mode: "revert", overridden: false });
 }
 
 /**
@@ -256,7 +271,7 @@ export function classifyCagePath(plan: CagePlan, rel: string, opts: { overrides?
   for (const g of plan.globs) {
     if (g.re.test(rel)) hit = stricter(hit, { rule: "cage_protect", mode: g.mode, overridden: false });
   }
-  return applyCageOverride(plan, rel, hit, opts.overrides !== false);
+  return applyCageOverride(plan, rel, cageScopeHit(plan, rel, hit), opts.overrides !== false);
 }
 
 /** Downgrade a revert rule to report when the path is overridden; harness rules never are. */
@@ -303,7 +318,8 @@ function validateOverrides(plan: CagePlan, raw: readonly string[]): string[] {
 /** Report mode on a path a built-in rule already reverts would read as a relaxation; refuse it. */
 function assertNoBuiltinDowngrade(plan: CagePlan, value: string): void {
   const hit = classifyCagePath(plan, value, { overrides: false });
-  if (hit && hit.mode === "revert" && cageRuleSource(hit.rule) === "builtin") {
+  // out_of_scope stays revert whatever a report entry says (revert beats report), so it is no downgrade.
+  if (hit && hit.mode === "revert" && hit.rule !== "out_of_scope" && cageRuleSource(hit.rule) === "builtin") {
     throw new GantryUserError(
       "GXT_CAGE_CONFIG_INVALID",
       `cage: ${CAGE_CONFIG_FILE}: mode: report on ${value} would weaken the built-in ${hit.rule} rule`,
@@ -349,6 +365,8 @@ export interface CageRuleInputs {
 export interface CagePlanOptions {
   /** `--lock-deps`: freeze dependencies for this run whatever `.cage.yaml` says. */
   lockDeps?: boolean;
+  /** `--allow-only <glob>`: narrow the allowed area for this run (intersected with `.cage.yaml` `allow_only:`). */
+  allowOnly?: readonly string[];
 }
 
 /** Built-in floor plus the repo's rule inputs, for a canonical root. An invalid `.cage.yaml` entry throws. */
@@ -370,7 +388,10 @@ export function assembleCagePlan(root: string, inputs: CageRuleInputs, opts: Cag
     contestLimit: null,
     // Set before the config entries so a report entry on a frozen path is refused as a downgrade.
     dependencies: opts.lockDeps === true || inputs.config.dependencies === "revert" ? "revert" : "report",
+    scope: null,
   };
+  const flag = parseCageScopeFlag(opts.allowOnly);
+  if (inputs.config.allowOnly || flag) plan.scope = { config: inputs.config.allowOnly, flag };
   addConfigTargets(plan, root, inputs.config, inputs.configCommitted);
   return plan;
 }
@@ -387,7 +408,7 @@ export function buildCagePlan(
   const zones = manifestZones(root);
   const config = loadCageConfig(root);
   const inputs = { zones, config, configCommitted: config.present ? cageConfigCommitted(root) : null };
-  const plan = assembleCagePlan(root, inputs, { lockDeps: opts.lockDeps });
+  const plan = assembleCagePlan(root, inputs, { lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
   plan.overrides = validateOverrides(plan, opts.overrides ?? []);
   return plan;
 }
@@ -401,6 +422,7 @@ interface SerializedCagePlan {
   config: CagePlan["config"];
   contestLimit?: number | null;
   dependencies?: CageRuleMode;
+  scope?: CageScope | null;
 }
 
 /** JSON form for the session push guard, so it checks the exact plan the session started with. */
@@ -415,6 +437,7 @@ export function parseSerializedCagePlan(json: string): CagePlan {
     ...p,
     contestLimit: p.contestLimit ?? null,
     dependencies: p.dependencies ?? "report",
+    scope: p.scope ?? null,
     globs: p.globs.map((g) => ({ ...g, re: cageGlobToRegExp(g.pattern) })),
   };
 }

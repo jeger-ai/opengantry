@@ -8,7 +8,7 @@ order: 2
 # Check commits (`gantry cage check`)
 
 ```bash
-gantry cage check --base <ref> [--head <ref>] [--lock-deps] [--json]
+gantry cage check --base <ref> [--head <ref>] [--lock-deps] [--allow-only <glob>] [--json]
 ```
 
 `cage check` lists every path changed by the commits in `base..head` (`--head` defaults to `HEAD`) and classifies it with the [protected-path rules](protected-paths.md). It is in the full package, `@jeger-ai/opengantry`, so run it as `npx -p @jeger-ai/opengantry gantry cage check …` or install the package. The slim `gantry-cage` command has no subcommands, and `gantry cage -- check` runs a command named `check`.
@@ -41,6 +41,7 @@ A local pre-push check can be skipped, and an agent that edits `.git/hooks` can 
 - **History, not the net diff.** Every commit in the range counts. A `.env` committed and removed again still fails, because it is in the history you push. A rename lists the path it left. A merge commit lists the paths it changed against every parent, so an edit made while resolving a conflict is seen, but what the merge brought in is not listed again.
 - **Report-mode paths are listed, not failed.** Lockfiles and `.cage.yaml` entries with `mode: report` appear in the report but do not fail the check.
 - **Frozen dependencies fail it.** When the base's `.cage.yaml` sets `dependencies: revert`, or you pass `--lock-deps`, a change to a lockfile or a dependency manifest (`package.json`, `pyproject.toml`, `go.mod`, …) fails the check ([Freeze dependencies](protected-paths.md#freeze-dependencies)). `--lock-deps` only adds to the base's rules; a branch that adds `dependencies: revert` is held to it after it is merged.
+- **A scope fails changes outside it.** With `allow_only:` in the base's `.cage.yaml`, or `--allow-only <glob>`, a changed path outside the allowed area fails the check as `out_of_scope` ([Scope a task](protected-paths.md#scope-a-task)). With both, a path must match each. A branch that adds `allow_only:` is held to it after it is merged.
 
 ## Exit codes
 
@@ -61,6 +62,7 @@ A human summary goes to stderr. `--json` prints `gantry.cage-check.v1` on stdout
 | `commits` | How many commits were checked |
 | `manifest_zones`, `cage_config` | How many manifest zones were in force, and whether `.cage.yaml` is present with how many entries |
 | `dependencies` | `revert` when dependencies were frozen (base `.cage.yaml` or `--lock-deps`), else `report` |
+| `scope`, `scope_sources` | The allowed-area globs, and which came from the base `.cage.yaml` and which from `--allow-only`; null without a scope |
 | `changes[]` | One row per path: `path`, `rule`, `source`, `mode` (`revert` fails the check, `report` is only listed) |
 | `limits` | What the check cannot see ([Limits](limits.md)) |
 
@@ -68,7 +70,7 @@ The report holds paths and rules only: no file contents and no diffs. It says wh
 
 ## What it does not do
 
-- There is no `--allow-override`, and no MCP tool runs it. It never writes rules. `--lock-deps` is the only rule flag, and it only tightens.
+- There is no `--allow-override`, and no MCP tool runs it. It never writes rules. `--lock-deps` and `--allow-only` are the only rule flags, and both only tighten.
 - It sees committed history only: an edit to a gitignored `.env` or to anything under `.git` never shows up. Paths under `.git` are never committed, so `git_control` applies to a `core.hooksPath` inside the repository only.
 - It cannot undo anything. It reports what is in the range; you decide whether to merge. For files that never reach a commit, run a [watch](watch.md) while agents work.
 

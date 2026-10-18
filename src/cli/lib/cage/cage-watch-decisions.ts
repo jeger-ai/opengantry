@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
 import type { CageJournalHandle } from "./cage-journal.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import type { CagePlan, CageRuleId } from "./cage-rules.js";
@@ -127,8 +128,12 @@ export class CageDecisionEngine {
   /** Shutdown: reject every pending decision, then restore whatever else still differs from the baseline. */
   stop(): CageDecisionSummary {
     for (const p of [...this.pending.values()]) this.restore(p, "rejected");
-    const leftover = this.currentChanges().filter((c) => c.mode === "revert");
-    for (const c of leftover) this.restoreChange(c, "restored_at_exit");
+    // A restored .gitignore can un-hide files a scope never saw, so that pass is followed by one more.
+    for (let pass = 0; pass < 2; pass += 1) {
+      const leftover = this.currentChanges().filter((c) => c.mode === "revert");
+      const restored = leftover.map((c) => this.restoreChange(c, "restored_at_exit") && c);
+      if (!this.input.plan.scope || !restored.some((c) => c && path.posix.basename(c.rel) === ".gitignore")) break;
+    }
     return {
       decisions: [...this.decisions],
       kept: [...this.kept.values()].map(({ path, rule, kind }) => ({ path, rule, kind })),

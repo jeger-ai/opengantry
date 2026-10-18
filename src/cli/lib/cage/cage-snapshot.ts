@@ -8,10 +8,20 @@ import {
   applyCageOverride,
   cagePlanRuleMode,
   cageScanRule,
+  cageScopeHit,
+  inCageScope,
   type CagePlan,
   type CageRuleId,
   type CageRuleMode,
 } from "./cage-rules.js";
+import {
+  assertCageScopeGitRoot,
+  captureCageScopeTree,
+  createCageScopeIndex,
+  disposeCageScopeIndex,
+  readCageScopeBlob,
+  type CageScopeFile,
+} from "./cage-scope.js";
 
 /** Baseline caps so an oversized or hostile protected set cannot stall the session. */
 export const CAGE_MAX_TARGETS = 5000;
@@ -32,10 +42,17 @@ export interface CageEntry {
   /** Baseline bytes for revert; null for report-mode entries and for hash-only snapshots (`keepBytes: false`). */
   bytes: Buffer | null;
   linkTarget: string | null;
+  /**
+   * Out-of-scope entries (cage scope): the git blob holding the baseline, read back on restore. Such entries
+   * compare by blob id; `sha256` is filled in only for changed ones (empty until then).
+   */
+  git?: { root: string; oid: string };
 }
 
 export interface CageSnapshot {
   entries: Map<string, CageEntry>;
+  /** The scope tree the out-of-scope entries came from; null without a scope. */
+  scopeTree: string | null;
 }
 
 export interface CageSnapshotOptions {
@@ -45,6 +62,8 @@ export interface CageSnapshotOptions {
   maxTotalBytes: number;
   /** Baseline only: abort when the protected set exceeds these caps (counts are reported). */
   limits?: { maxTargets: number; maxScanBytes: number };
+  /** Temporary index for the scope tree, kept for the session so each snapshot only hashes what changed. */
+  scopeIndex?: string;
 }
 
 export interface CageChange {
@@ -109,9 +128,11 @@ function readEntry(abs: string, rule: CageRuleId, ruleMode: CageRuleMode, ctx: C
   const st = fs.lstatSync(abs);
   if (countScan(abs, st, ctx)) return null;
   const rel = toPosixRel(ctx.plan.root, abs);
-  const resolved = applyCageOverride(ctx.plan, rel, { rule, mode: ruleMode, overridden: false })!;
+  // Outside a scope, a report-mode path (an unfrozen lockfile) is restored like everything else there.
+  const scoped = cageScopeHit(ctx.plan, rel, { rule, mode: ruleMode, overridden: false })!;
+  const resolved = applyCageOverride(ctx.plan, rel, scoped)!;
   const mode = resolved.mode;
-  const base = { abs, rel, rule, mode, overridden: resolved.overridden, fileMode: st.mode & 0o7777 };
+  const base = { abs, rel, rule: resolved.rule, mode, overridden: resolved.overridden, fileMode: st.mode & 0o7777 };
   if (st.isSymbolicLink()) {
     const target = fs.readlinkSync(abs);
     return { ...base, type: "symlink", sha256: sha256Hex(`symlink\0${target}`), size: 0, bytes: null, linkTarget: target };
@@ -226,6 +247,44 @@ function budgetError(ctx: CaptureContext): GantryUserError {
  * command runs (exit 2), the same shape as the scan caps (ADR-0048 decision 2, amended by MSN-0254).
  * Later snapshots (`keepBytes: false`) only hash, so caps never apply to them.
  */
+/**
+ * Add an `out_of_scope` entry for every file of a scope tree that lies outside the scope and that no other rule
+ * already holds. No bytes: the blob in the object store is the baseline.
+ */
+export function addCageScopeEntries(plan: CagePlan, entries: Map<string, CageEntry>, files: readonly CageScopeFile[]): void {
+  for (const f of files) {
+    const abs = path.join(plan.root, ...f.rel.split("/"));
+    if (entries.has(abs) || inCageScope(plan, f.rel)) continue;
+    const resolved = applyCageOverride(plan, f.rel, { rule: "out_of_scope", mode: "revert", overridden: false })!;
+    entries.set(abs, {
+      abs,
+      rel: f.rel,
+      rule: "out_of_scope",
+      mode: resolved.mode,
+      overridden: resolved.overridden,
+      type: f.type,
+      sha256: "",
+      size: 0,
+      fileMode: f.fileMode,
+      bytes: null,
+      linkTarget: null,
+      git: { root: plan.root, oid: f.oid },
+    });
+  }
+}
+
+function captureScope(plan: CagePlan, opts: CageSnapshotOptions, entries: Map<string, CageEntry>): string {
+  if (opts.keepBytes) assertCageScopeGitRoot(plan.root);
+  const index = opts.scopeIndex ?? createCageScopeIndex(plan.root);
+  try {
+    const { tree, files } = captureCageScopeTree(plan.root, index);
+    addCageScopeEntries(plan, entries, files);
+    return tree;
+  } finally {
+    if (!opts.scopeIndex) disposeCageScopeIndex(index);
+  }
+}
+
 export function takeCageSnapshot(plan: CagePlan, opts: CageSnapshotOptions): CageSnapshot {
   const ctx: CaptureContext = {
     plan,
@@ -242,12 +301,39 @@ export function takeCageSnapshot(plan: CagePlan, opts: CageSnapshotOptions): Cag
     if (ctx.caps.tooLarge.length > 0) throw fileTooLargeError(ctx);
     if (ctx.caps.wantedBytes > ctx.opts.maxTotalBytes) throw budgetError(ctx);
   }
-  return { entries: ctx.entries };
+  // Last, so rule-held paths keep their in-memory entry; the scope covers everything else git would track.
+  const scopeTree = plan.scope ? captureScope(plan, opts, ctx.entries) : null;
+  return { entries: ctx.entries, scopeTree };
 }
 
 function entryChanged(a: CageEntry, b: CageEntry): boolean {
   // mtime is ignored on purpose: a bare `touch` is not a mutation.
-  return a.sha256 !== b.sha256 || a.type !== b.type || a.fileMode !== b.fileMode;
+  const content = a.git && b.git ? a.git.oid !== b.git.oid : a.sha256 !== b.sha256;
+  return content || a.type !== b.type || a.fileMode !== b.fileMode;
+}
+
+/** Fill in sha256 (and a symlink's target) for an out-of-scope entry, from its blob or, after, from disk. */
+function hydrate(e: CageEntry | null, side: "before" | "after"): CageEntry | null {
+  if (!e?.git || e.sha256) return e;
+  try {
+    if (side === "after") {
+      if (e.type === "symlink") {
+        const target = fs.readlinkSync(e.abs);
+        return { ...e, sha256: sha256Hex(`symlink\0${target}`), linkTarget: target };
+      }
+      const bytes = fs.readFileSync(e.abs);
+      return { ...e, sha256: sha256Hex(bytes), size: bytes.length };
+    }
+    const blob = readCageScopeBlob(e.git.root, e.rel, e.git.oid);
+    if (e.type === "symlink") {
+      const target = blob.toString("utf8");
+      return { ...e, sha256: sha256Hex(`symlink\0${target}`), linkTarget: target };
+    }
+    return { ...e, sha256: sha256Hex(blob), size: blob.length };
+  } catch {
+    // Gone or unreadable between snapshot and diff: the change is still reported, without a digest.
+    return e;
+  }
 }
 
 export function diffCageSnapshots(before: CageSnapshot, after: CageSnapshot): CageChange[] {
@@ -262,7 +348,16 @@ export function diffCageSnapshots(before: CageSnapshot, after: CageSnapshot): Ca
     else if (b && a && entryChanged(b, a)) kind = "modified";
     if (!kind) continue;
     const ref = (b ?? a)!;
-    changes.push({ abs, rel: ref.rel, kind, rule: ref.rule, mode: ref.mode, overridden: ref.overridden, before: b, after: a });
+    changes.push({
+      abs,
+      rel: ref.rel,
+      kind,
+      rule: ref.rule,
+      mode: ref.mode,
+      overridden: ref.overridden,
+      before: hydrate(b, "before"),
+      after: hydrate(a, "after"),
+    });
   }
   return changes.sort((x, y) => x.rel.localeCompare(y.rel));
 }

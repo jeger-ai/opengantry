@@ -1,7 +1,9 @@
 import { spawn } from "node:child_process";
 import { GantryUserError } from "../errors.js";
 import { recoverCageJournal, resolveCageJournalDir, writeCageJournal, type CageRecovery } from "./cage-journal.js";
-import { buildCagePlan } from "./cage-rules.js";
+import { cageScopeReport, cageStartSuffix } from "./cage-report.js";
+import { buildCagePlan, type CagePlan } from "./cage-rules.js";
+import { assertCageScopeGitRoot, createCageScopeIndex, disposeCageScopeIndex } from "./cage-scope.js";
 import { CAGE_DEFAULT_MAX_FILE_BYTES, CAGE_DEFAULT_MAX_TOTAL_BYTES, resolveCageRoot } from "./cage-run.js";
 import { takeCageSnapshot, type CageSnapshotOptions } from "./cage-snapshot.js";
 import { CAGE_DEFAULT_WATCH_INTERVAL_MS, openCageSessionLog } from "./cage-watch.js";
@@ -42,6 +44,8 @@ export interface CageWatchRunOptions {
   maxFileBytes?: number;
   /** `--lock-deps`: freeze lockfiles and dependency manifests whatever `.cage.yaml` says. */
   lockDeps?: boolean;
+  /** `--allow-only <glob>`: everything git would track outside these globs is protected (with `.cage.yaml` `allow_only:`). */
+  allowOnly?: readonly string[];
   /** Desktop notifications (default true); they only alert, they never answer. */
   notify?: boolean | ((alert: CageDecisionAlert) => void);
   /** Default `process.stdin`; must be a TTY. */
@@ -60,6 +64,9 @@ export interface CageWatchReport {
   decision_timeout_s: number;
   /** `revert` when dependencies were frozen (`.cage.yaml` `dependencies: revert` or `--lock-deps`). */
   dependencies: "revert" | "report";
+  /** Allowed-area globs and their sources; null without a scope. */
+  scope: string[] | null;
+  scope_sources: { cage_yaml: string[] | null; flag: string[] | null } | null;
   protected_files: number;
   decisions: CageDecision[];
   kept: CageDecisionSummary["kept"];
@@ -145,9 +152,29 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
   const journalDir = resolveCageJournalDir(root);
   const recovery = recoverCageJournal(root, journalDir, snap);
   if (recovery) opts.onRecovery?.(recovery);
-  const plan = buildCagePlan(root, { lockDeps: opts.lockDeps });
+  const plan = buildCagePlan(root, { lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
+  if (plan.scope) {
+    assertCageScopeGitRoot(root);
+    snap.scopeIndex = createCageScopeIndex(root);
+  }
+  try {
+    return await watchWithPlan(opts, input, root, plan, snap, journalDir, recovery);
+  } finally {
+    if (snap.scopeIndex) disposeCageScopeIndex(snap.scopeIndex);
+  }
+}
+
+async function watchWithPlan(
+  opts: CageWatchRunOptions,
+  input: CageWatchInput,
+  root: string,
+  plan: CagePlan,
+  snap: CageSnapshotOptions,
+  journalDir: string,
+  recovery: CageRecovery | null,
+): Promise<CageWatchReport> {
   const baseline = takeCageSnapshot(plan, snap);
-  const journal = writeCageJournal(journalDir, root, baseline, [], { lockDeps: opts.lockDeps });
+  const journal = writeCageJournal(journalDir, root, baseline, [], { lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
   const log = openCageSessionLog();
   const timeoutS = opts.decisionTimeoutS ?? CAGE_DEFAULT_DECISION_TIMEOUT_S;
   const say = opts.say ?? ((line: string) => process.stderr.write(`${line}\r\n`));
@@ -164,7 +191,7 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
     bell: opts.bell ?? (() => process.stderr.write(BELL)),
   });
   say(
-    `cage watch: watching ${String(baseline.entries.size)} protected file(s) in ${root}${plan.dependencies === "revert" ? " (dependencies frozen)" : ""}; answer prompts here with a or r (unanswered: restored after ${String(timeoutS)}s); Ctrl-C stops; live events: ${log.path}`,
+    `cage watch: watching ${String(baseline.entries.size)} protected file(s) in ${root}${cageStartSuffix(plan.dependencies, plan.scope)}; answer prompts here with a or r (unanswered: restored after ${String(timeoutS)}s); Ctrl-C stops; live events: ${log.path}`,
   );
 
   const guarded = (fn: () => void): void => {
@@ -206,6 +233,7 @@ export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<Cage
     root,
     decision_timeout_s: timeoutS,
     dependencies: plan.dependencies,
+    ...cageScopeReport(plan.scope),
     protected_files: baseline.entries.size,
     decisions: summary.decisions,
     kept: summary.kept,

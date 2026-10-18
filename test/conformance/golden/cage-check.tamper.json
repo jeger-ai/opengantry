@@ -24,6 +24,8 @@
       "entries": 0
     },
     "dependencies": "report",
+    "scope": null,
+    "scope_sources": null,
     "changes": [
       {
         "path": ".env",
