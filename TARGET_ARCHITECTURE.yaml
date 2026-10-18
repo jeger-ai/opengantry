@@ -200,20 +200,14 @@ rules:
     kind: dependency
     registry: .gitagent/registry/dependencies.yaml
     manifest: package.json
-  # B2 duplicate: scripts/ and templates/scripts/ are kept byte-identical by assert-dogfood-sync.sh until ADR-0052 A8
-  # ends the copy; the pairs that exist today are allowed, a new one is not.
+  # B2 duplicate: scripts/ and templates/scripts/ are kept byte-identical by assert-dogfood-sync.sh; ADR-0052 A8 shrinks
+  # the list as scripts move into the CLI (step 5b removed six); the pairs that exist today are allowed, a new one is not.
   - id: DUPLICATE-SCRIPTS-TEMPLATES
     kind: duplicate
     between: [scripts/, templates/scripts/]
     allowed:
       - scripts/dev-validate.sh
-      - scripts/gxt-manifest-lib.mjs
       - scripts/gxt-runtime-env.sh
       - scripts/gxt-shell-agent.sh
-      - scripts/lib/glob-match.mjs
-      - scripts/lib/manifest-validate.mjs
-      - scripts/lib/trusted-automation.mjs
       - scripts/mcp-launcher.sh
-      - scripts/validate-gxt.sh
       - scripts/validate-mcp-dogfood.mjs
-      - scripts/verify-pr-missions.sh

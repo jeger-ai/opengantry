@@ -36,7 +36,7 @@ gantry doctor
 
 **jeger-ai/opengantry** dogfoods through the **`gantry`** skill and TMVC `src/cli/` only. The specimen [`.gitagent/foreman/MANIFEST.json`](../.gitagent/foreman/MANIFEST.json) intentionally **diverges** from [`templates/.gitagent/foreman/MANIFEST.json`](../templates/.gitagent/foreman/MANIFEST.json): adopters still receive `ui`/`logic` skills and example app paths after `gantry init`, but this CLI-only repo does not list fictional `src/components/` or `src/lib/` roots.
 
-MSN-enforced paths for commits and PR guards come from **fixed substrate paths** plus **every `tmvc_roots` entry in MANIFEST** (see `scripts/gxt-manifest-lib.mjs`).
+MSN-enforced paths for commits and PR guards come from **fixed substrate paths** plus **every `tmvc_roots` entry in MANIFEST** (see `manifestMsnEnforcedPrefixes` in `src/cli/lib/trusted-automation.ts`; `gantry ci msn-range` applies it).
 
 **Planner allowlist:** committed [`.gitagent/foreman/PLANNER.allowlist`](../.gitagent/foreman/PLANNER.allowlist) (team emails for CI git-proof). Personal overrides: `.gitagent/foreman/PLANNER.allowlist.local` (gitignored). Run `gantry planner show` to confirm.
 
@@ -190,7 +190,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Mission gate | `gantry verify` | Mission `gate_command` + optional `gate_success_substring` + optional `gate_adapter` (`generic` default, `eslint`, `tsc` — ADR-0041). Optional phases: `policy` (ADR-0042), `dependencies` (ADR-0044). |
 | Unit tests | gate / CI | `npm test` (`node:test`) |
 | Compile / types | build / CI | `npm run build` (`tsc`) |
-| Manifest shape | CI / pre-push | `gantry check`, `validate-gxt.sh manifest` |
+| Manifest shape | CI / pre-push | `gantry check` |
 | Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
 | Banned imports | mission gate / surgeon | `gantry check-imports` |
 | KPI thresholds | verify (optional) | `gantry scan` + mission `kpi_gate` |
@@ -220,7 +220,7 @@ External IDE skill packs are **edge-only** (local, gitignored). They must not be
 npm run validate
 ```
 
-Runs **`dev-validate-core.sh`** (build, `gantry check`, `validate-gxt.sh manifest` via Node—no `jq`, tests, doctor, MCP dogfood, changed-code, MSN vs `origin/main`) then **`verify-pr-missions.sh`** (full `gantry verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
+Runs **`dev-validate-core.sh`** (build, `gantry check`, `gantry ci upgrade-tmp`, tests, doctor, MCP dogfood, changed-code, `gantry ci msn-range` vs `origin/main`) then **`gantry ci verify-missions`** (full `gantry verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
 
 **Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `check-import-layers.mjs`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` in [`scripts/lib/asset-catalog-static.mjs`](../scripts/lib/asset-catalog-static.mjs) — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
 
@@ -234,7 +234,7 @@ Runs **`dev-validate-core.sh`** (build, `gantry check`, `validate-gxt.sh manifes
 | `validate-mcp-dogfood.sh` | MCP integration dogfood harness |
 | `release-gate-publish.sh` / `poll-npm-version.sh` | npm publish orchestration |
 
-Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and runtime helpers from the init catalog — not the specimen-only gates above.
+Adopters receive the runtime helpers from the init catalog, not the specimen-only gates above; the CI checks are `gantry ci` subcommands (ADR-0052 step 5b), so no validation script ships.
 
 **Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a one-line shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell.
 
@@ -318,16 +318,16 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 | Job | What it enforces |
 |-----|------------------|
 | `pr_governance` | PRs must target the integration branch (`main` here; `default_branch` in init template; override via repo variable `GXT_INTEGRATION_BRANCH`) — blocks stacked mission PRs |
-| `manifest` | `gantry check`, `validate-gxt.sh manifest`, unit tests, `gantry doctor`, `gantry perimeter --ci` on PRs |
+| `manifest` | `gantry check`, unit tests, `gantry doctor`, `gantry perimeter --ci` on PRs |
 | `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
-| `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); or valid `gxt-bypass` note; or repository `trusted_automation` policy (`gxt-manifest-lib.mjs eval-commit`) |
-| `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gantry verify` on each mission file in triple-dot diff; fails if protected paths change without a mission file unless `trusted_automation` policy passes (`eval-range`). Installs the iii integration example's dependencies first when `examples/iii-integration/package-lock.json` exists, as does `gxt-attest-ingest.yml`, so mission gates that run its offline validator work (MSN-0263) |
+| `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); or valid `gxt-bypass` note; or repository `trusted_automation` policy (`gantry ci trusted-automation --commit <sha>`); runs as `gantry ci msn-range` |
+| `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gantry verify` on each mission file in triple-dot diff; fails if protected paths change without a mission file unless `trusted_automation` policy passes (`gantry ci trusted-automation --base … --head …`); runs as `gantry ci verify-missions`. Installs the iii integration example's dependencies first when `examples/iii-integration/package-lock.json` exists, as does `gxt-attest-ingest.yml`, so mission gates that run its offline validator work (MSN-0263) |
 
 Pull requests and pushes to `main` also run [`.github/workflows/cage-macos.yml`](../.github/workflows/cage-macos.yml): the job `cage (macos-latest)` runs every cage suite and the slim `@jeger-ai/opengantry-cage` tests on macOS, because the cage's users mostly run it there and every other job runs on Ubuntu (MSN-0265). It has no path filter so it reports on every PR; make it a required status check on `main`. It is repository-only and not shipped by `gantry init` or `upgrade`.
 
-Local `npm run validate` is the full superset (includes `verify-pr-missions.sh` + MSN vs `origin/main`). Run it before you open a PR.
+Local `npm run validate` is the full superset (includes `gantry ci verify-missions` + `gantry ci msn-range` vs `origin/main`). Run it before you open a PR.
 
-`gantry init` ships [`scripts/verify-pr-missions.sh`](../scripts/verify-pr-missions.sh) when CI is enabled. Existing installs: run `gantry upgrade apply` or re-init managed CI assets.
+`gantry init` ships the workflow when CI is enabled; it calls `gantry ci msn-range` and `gantry ci verify-missions` (ADR-0052 step 5b). Existing installs: run `gantry upgrade apply` or re-init managed CI assets.
 
 ## Troubleshooting verify / hooks
 

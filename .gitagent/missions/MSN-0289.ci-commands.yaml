@@ -1,0 +1,411 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0289]. Executor must not run until the [MSN-0289] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 5b-i (A8, CI calls the CLI). gantry ci msn-range, verify-missions,
+# trusted-automation and upgrade-tmp carry the checks of scripts/validate-gxt.sh, verify-pr-missions.sh and
+# gxt-manifest-lib.mjs with scripts/lib (path-scoped [MSN] subjects with gxt-bypass notes and trusted automation,
+# mission purity and the mission requirement over a PR range, the upgrade staging guard). The trusted-automation
+# evaluator is pure core code; the workflow template, its mirror and the dev gate call gantry ci; the six scripts, their
+# template copies and the four script-driven tests are deleted; the init catalog no longer ships them, so the init and
+# blueprint goldens are re-recorded (the one deliberate contract change of this step).
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): same rules, same messages; the
+# runtime helper scripts (gxt-resolve/pin-mission.sh, gxt-cursor-env.sh, the Cursor session hook) follow in 5b-ii.
+# No trace rows: the evidence is .gitagent/runs/MSN-0289.json written by gantry verify --record (RULES §3).
+#
+# DoD 1 (core): packages/core/src/trusted-automation.ts exports parseTrustedAutomationRules (shape, one structural
+#        kind per rule, hard caps 5 and 100), msnEnforcedPrefixes and isMsnEnforcedPath, parseNumstatTotal,
+#        isValidBypassNote, workflowVersionPinOnly, isSubstrateHardDeniedPath, pathMatchesAllowed, evaluateAgainstRule
+#        and evaluateTrustedAutomation; packages/core/tests/trusted-automation.test.ts; core index exports it.
+# DoD 2 (lib): src/cli/lib/trusted-automation.ts loads the config, reads git (changed files, author, numstat, blobs)
+#        and judges a commit or a range; src/cli/lib/ci-checks.ts holds checkMsnRange (subject, bypass note, trusted
+#        automation), checkUpgradeTmp and missionsForRange (contamination, purity, mission required unless trusted).
+# DoD 3 (command): src/cli/commands/ci.ts and program-ci.ts register gantry ci msn-range, verify-missions (full
+#        verify per changed mission, audience verifier), trusted-automation (--commit or --base/--head) and upgrade-tmp;
+#        --base/--head fall back to BASE_SHA/HEAD_SHA; program.ts wires it.
+# DoD 4 (callers): templates/.github/workflows/gxt-validate.yml and its mirror drop the Node-parity manifest step and
+#        call gantry ci msn-range (the msn_commits job builds gantry first) and gantry ci verify-missions;
+#        scripts/dev-validate-core.sh runs gantry ci upgrade-tmp and gantry ci msn-range; templates/scripts/dev-validate.sh
+#        and its copy run gantry ci verify-missions.
+# DoD 5 (removal): scripts/validate-gxt.sh, scripts/verify-pr-missions.sh, scripts/gxt-manifest-lib.mjs and
+#        scripts/lib/{glob-match,manifest-validate,trusted-automation}.mjs are deleted with their templates/scripts copies;
+#        scripts/lib/asset-catalog-static.mjs and templates/integrations/asset-catalog.json no longer list them;
+#        TARGET_ARCHITECTURE.yaml's duplicate rule drops the six pairs; .gitagent/registry/commands.yaml gains ci,
+#        ci msn-range, ci trusted-automation, ci upgrade-tmp, ci verify-missions (since MSN-0289).
+# DoD 6 (tests): src/cli/tests/ci-msn-range.test.ts and ci-verify-missions.test.ts port validate-gxt.test.ts and
+#        verify-pr-missions.test.ts; trusted-automation.test.ts drives gantry ci; manifest-lib-boundary and
+#        manifest-parity tests are deleted; init and init-profile tests use another managed asset; spawning-tests.yaml
+#        updated; all unit tests pass; conformance passes with the init and blueprint goldens re-recorded and no other
+#        golden changed.
+# DoD 7 (docs, dogfood): docs/DEVELOPMENT.md and docs/CHANGELOG.md; ARCH_BASELINE.json raised with --ratchet
+#        --allow-raise; this mission is verified by its committed run record; ./scripts/dev-validate-core.sh passes;
+#        git diff --name-only origin/main...HEAD lists only paths under contract.tmvc_roots.
+msn_id: MSN-0289
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0289.ci-commands.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0289.json,
+      .github/workflows/gxt-validate.yml, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      TARGET_ARCHITECTURE.yaml, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      packages/core/src/index.ts, packages/core/src/trusted-automation.ts,
+      packages/core/tests/trusted-automation.test.ts,
+      scripts/dev-validate-core.sh, scripts/dev-validate.sh,
+      scripts/gxt-manifest-lib.mjs, scripts/lib/asset-catalog-static.mjs,
+      scripts/lib/glob-match.mjs, scripts/lib/manifest-validate.mjs,
+      scripts/lib/trusted-automation.mjs, scripts/validate-gxt.sh,
+      scripts/verify-pr-missions.sh, src/cli/commands/ci.ts,
+      src/cli/lib/ci-checks.ts, src/cli/lib/trusted-automation.ts,
+      src/cli/program-ci.ts, src/cli/program.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/init-profile.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/manifest-lib-boundary.test.ts,
+      src/cli/tests/manifest-parity.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/trusted-automation.test.ts,
+      src/cli/tests/validate-gxt.test.ts,
+      src/cli/tests/verify-pr-missions.test.ts,
+      templates/.github/workflows/gxt-validate.yml,
+      templates/integrations/asset-catalog.json,
+      templates/scripts/dev-validate.sh, templates/scripts/gxt-manifest-lib.mjs,
+      templates/scripts/lib/glob-match.mjs,
+      templates/scripts/lib/manifest-validate.mjs,
+      templates/scripts/lib/trusted-automation.mjs,
+      templates/scripts/validate-gxt.sh,
+      templates/scripts/verify-pr-missions.sh,
+      test/conformance/golden/blueprint.fresh-init.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/spawning-tests.yaml. src/cli changes: commands/ci.ts,
+      program-ci.ts, lib/ci-checks.ts and lib/trusted-automation.ts (new),
+      program.ts (one registration line), tests re-pointed at gantry ci;
+      packages/core gains trusted-automation.ts (pure evaluator). Deleted:
+      scripts/validate-gxt.sh, scripts/verify-pr-missions.sh,
+      scripts/gxt-manifest-lib.mjs,
+      scripts/lib/{glob-match,manifest-validate,trusted-automation}.mjs, their
+      templates/scripts copies, and the tests validate-gxt, verify-pr-missions,
+      manifest-lib-boundary, manifest-parity. .github/workflows/gxt-validate.yml
+      (mirrored from templates) calls gantry ci msn-range and gantry ci
+      verify-missions; the msn_commits job builds gantry first.
+      .gitagent/registry/commands.yaml gains ci, ci msn-range, ci
+      verify-missions, ci trusted-automation, ci upgrade-tmp (since MSN-0289).
+      TARGET_ARCHITECTURE.yaml's duplicate rule drops the six removed pairs. The
+      init and blueprint goldens are re-recorded because the init catalog no
+      longer ships the scripts (the one deliberate contract change of this
+      step). .gitagent/foreman/ and .gitagent/planner/RULES.md are forbidden.
+      Operator direction (2026-10-18, continue until everything is done):
+      ADR-0052 A8 as decided; this is step 5b-i (CI scripts). The same rules and
+      messages apply (path-scoped [MSN] subjects, gxt-bypass notes, trusted
+      automation with its hard caps, mission purity, the mission requirement
+      over a range, the upgrade staging guard); the runtime helper scripts
+      (gxt-resolve/pin-mission.sh, gxt-cursor-env.sh, the Cursor session hook)
+      follow in 5b-ii. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0289.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. No plane call occurs.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 316f2a4ff6b6
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0289.ci-commands.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0289.json,
+      .github/workflows/gxt-validate.yml, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      TARGET_ARCHITECTURE.yaml, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      packages/core/src/index.ts, packages/core/src/trusted-automation.ts,
+      packages/core/tests/trusted-automation.test.ts,
+      scripts/dev-validate-core.sh, scripts/dev-validate.sh,
+      scripts/gxt-manifest-lib.mjs, scripts/lib/asset-catalog-static.mjs,
+      scripts/lib/glob-match.mjs, scripts/lib/manifest-validate.mjs,
+      scripts/lib/trusted-automation.mjs, scripts/validate-gxt.sh,
+      scripts/verify-pr-missions.sh, src/cli/commands/ci.ts,
+      src/cli/lib/ci-checks.ts, src/cli/lib/trusted-automation.ts,
+      src/cli/program-ci.ts, src/cli/program.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/init-profile.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/manifest-lib-boundary.test.ts,
+      src/cli/tests/manifest-parity.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/trusted-automation.test.ts,
+      src/cli/tests/validate-gxt.test.ts,
+      src/cli/tests/verify-pr-missions.test.ts,
+      templates/.github/workflows/gxt-validate.yml,
+      templates/integrations/asset-catalog.json,
+      templates/scripts/dev-validate.sh, templates/scripts/gxt-manifest-lib.mjs,
+      templates/scripts/lib/glob-match.mjs,
+      templates/scripts/lib/manifest-validate.mjs,
+      templates/scripts/lib/trusted-automation.mjs,
+      templates/scripts/validate-gxt.sh,
+      templates/scripts/verify-pr-missions.sh,
+      test/conformance/golden/blueprint.fresh-init.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/spawning-tests.yaml. src/cli changes: commands/ci.ts,
+      program-ci.ts, lib/ci-checks.ts and lib/trusted-automation.ts (new),
+      program.ts (one registration line), tests re-pointed at gantry ci;
+      packages/core gains trusted-automation.ts (pure evaluator). Deleted:
+      scripts/validate-gxt.sh, scripts/verify-pr-missions.sh,
+      scripts/gxt-manifest-lib.mjs,
+      scripts/lib/{glob-match,manifest-validate,trusted-automation}.mjs, their
+      templates/scripts copies, and the tests validate-gxt, verify-pr-missions,
+      manifest-lib-boundary, manifest-parity. .github/workflows/gxt-validate.yml
+      (mirrored from templates) calls gantry ci msn-range and gantry ci
+      verify-missions; the msn_commits job builds gantry first.
+      .gitagent/registry/commands.yaml gains ci, ci msn-range, ci
+      verify-missions, ci trusted-automation, ci upgrade-tmp (since MSN-0289).
+      TARGET_ARCHITECTURE.yaml's duplicate rule drops the six removed pairs. The
+      init and blueprint goldens are re-recorded because the init catalog no
+      longer ships the scripts (the one deliberate contract change of this
+      step). .gitagent/foreman/ and .gitagent/planner/RULES.md are forbidden.
+      Paths outside any TARGET_ARCHITECTURE layer in this mission are scripts,
+      workflows, law, goldens and docs: the deleted scripts and their templates,
+      scripts/dev-validate-core.sh and dev-validate.sh (call gantry ci),
+      scripts/lib/asset-catalog-static.mjs and
+      templates/integrations/asset-catalog.json (catalog without the scripts),
+      .github/workflows/gxt-validate.yml and its template (call gantry ci),
+      .gitagent/registry/commands.yaml (five entries),
+      .gitagent/runs/MSN-0289.json (machine-written record), ARCH_BASELINE.json
+      (ratchet raise), TARGET_ARCHITECTURE.yaml (duplicate rule allowed list),
+      test/conformance goldens and spawning-tests.yaml, EXECUTOR_LOG.md
+      (narrative), docs/. packages/core/src/trusted-automation.ts is the core
+      layer, src/cli/commands/ci.ts the command layer, src/cli/lib/ci-checks.ts
+      and lib/trusted-automation.ts the lib layer, src/cli/program-ci.ts and
+      program.ts the delivery layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5ba7c672d023
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0289.ci-commands.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0289.json,
+      .github/workflows/gxt-validate.yml, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      TARGET_ARCHITECTURE.yaml, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      packages/core/src/index.ts, packages/core/src/trusted-automation.ts,
+      packages/core/tests/trusted-automation.test.ts,
+      scripts/dev-validate-core.sh, scripts/dev-validate.sh,
+      scripts/gxt-manifest-lib.mjs, scripts/lib/asset-catalog-static.mjs,
+      scripts/lib/glob-match.mjs, scripts/lib/manifest-validate.mjs,
+      scripts/lib/trusted-automation.mjs, scripts/validate-gxt.sh,
+      scripts/verify-pr-missions.sh, src/cli/commands/ci.ts,
+      src/cli/lib/ci-checks.ts, src/cli/lib/trusted-automation.ts,
+      src/cli/program-ci.ts, src/cli/program.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/init-profile.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/manifest-lib-boundary.test.ts,
+      src/cli/tests/manifest-parity.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/trusted-automation.test.ts,
+      src/cli/tests/validate-gxt.test.ts,
+      src/cli/tests/verify-pr-missions.test.ts,
+      templates/.github/workflows/gxt-validate.yml,
+      templates/integrations/asset-catalog.json,
+      templates/scripts/dev-validate.sh, templates/scripts/gxt-manifest-lib.mjs,
+      templates/scripts/lib/glob-match.mjs,
+      templates/scripts/lib/manifest-validate.mjs,
+      templates/scripts/lib/trusted-automation.mjs,
+      templates/scripts/validate-gxt.sh,
+      templates/scripts/verify-pr-missions.sh,
+      test/conformance/golden/blueprint.fresh-init.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/spawning-tests.yaml. src/cli changes: commands/ci.ts,
+      program-ci.ts, lib/ci-checks.ts and lib/trusted-automation.ts (new),
+      program.ts (one registration line), tests re-pointed at gantry ci;
+      packages/core gains trusted-automation.ts (pure evaluator). Deleted:
+      scripts/validate-gxt.sh, scripts/verify-pr-missions.sh,
+      scripts/gxt-manifest-lib.mjs,
+      scripts/lib/{glob-match,manifest-validate,trusted-automation}.mjs, their
+      templates/scripts copies, and the tests validate-gxt, verify-pr-missions,
+      manifest-lib-boundary, manifest-parity. .github/workflows/gxt-validate.yml
+      (mirrored from templates) calls gantry ci msn-range and gantry ci
+      verify-missions; the msn_commits job builds gantry first.
+      .gitagent/registry/commands.yaml gains ci, ci msn-range, ci
+      verify-missions, ci trusted-automation, ci upgrade-tmp (since MSN-0289).
+      TARGET_ARCHITECTURE.yaml's duplicate rule drops the six removed pairs. The
+      init and blueprint goldens are re-recorded because the init catalog no
+      longer ships the scripts (the one deliberate contract change of this
+      step). .gitagent/foreman/ and .gitagent/planner/RULES.md are forbidden.
+      Paths outside any TARGET_ARCHITECTURE layer in this mission are scripts,
+      workflows, law, goldens and docs: the deleted scripts and their templates,
+      scripts/dev-validate-core.sh and dev-validate.sh (call gantry ci),
+      scripts/lib/asset-catalog-static.mjs and
+      templates/integrations/asset-catalog.json (catalog without the scripts),
+      .github/workflows/gxt-validate.yml and its template (call gantry ci),
+      .gitagent/registry/commands.yaml (five entries),
+      .gitagent/runs/MSN-0289.json (machine-written record), ARCH_BASELINE.json
+      (ratchet raise), TARGET_ARCHITECTURE.yaml (duplicate rule allowed list),
+      test/conformance goldens and spawning-tests.yaml, EXECUTOR_LOG.md
+      (narrative), docs/. packages/core/src/trusted-automation.ts is the core
+      layer, src/cli/commands/ci.ts the command layer, src/cli/lib/ci-checks.ts
+      and lib/trusted-automation.ts the lib layer, src/cli/program-ci.ts and
+      program.ts the delivery layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Verify output formats are unchanged; the hook prints
+      the same human lines the shell hook printed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: b88a6c3319b0
+    kind: adr_conflict
+    question: Intent may relate to ADR-0031. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0031 before
+      legislation proceeds.
+    operator_answer: Accept. Blueprint output logic is unchanged; its fresh-init
+      golden is re-recorded only because the init catalog no longer ships the
+      scripts the scan counted as evidence (0 instead of 1 evidence-anchored
+      question).
+    adr_refs:
+      - ADR-0052
+      - ADR-0031
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+interrogation_sha256: 525a146007669eb05ebf299dc49ac481c46538d32da197330cc75e5e1ffb0c8d
+declared_paths:
+  - .gitagent/missions/MSN-0289.ci-commands.yaml
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0289.json
+  - .github/workflows/gxt-validate.yml
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/index.ts
+  - packages/core/src/trusted-automation.ts
+  - packages/core/tests/trusted-automation.test.ts
+  - scripts/dev-validate-core.sh
+  - scripts/dev-validate.sh
+  - scripts/gxt-manifest-lib.mjs
+  - scripts/lib/asset-catalog-static.mjs
+  - scripts/lib/glob-match.mjs
+  - scripts/lib/manifest-validate.mjs
+  - scripts/lib/trusted-automation.mjs
+  - scripts/validate-gxt.sh
+  - scripts/verify-pr-missions.sh
+  - src/cli/commands/ci.ts
+  - src/cli/lib/ci-checks.ts
+  - src/cli/lib/trusted-automation.ts
+  - src/cli/program-ci.ts
+  - src/cli/program.ts
+  - src/cli/tests/ci-msn-range.test.ts
+  - src/cli/tests/ci-verify-missions.test.ts
+  - src/cli/tests/init-profile.test.ts
+  - src/cli/tests/init.test.ts
+  - src/cli/tests/manifest-lib-boundary.test.ts
+  - src/cli/tests/manifest-parity.test.ts
+  - src/cli/tests/test-fixtures.ts
+  - src/cli/tests/trusted-automation.test.ts
+  - src/cli/tests/validate-gxt.test.ts
+  - src/cli/tests/verify-pr-missions.test.ts
+  - templates/.github/workflows/gxt-validate.yml
+  - templates/integrations/asset-catalog.json
+  - templates/scripts/dev-validate.sh
+  - templates/scripts/gxt-manifest-lib.mjs
+  - templates/scripts/lib/glob-match.mjs
+  - templates/scripts/lib/manifest-validate.mjs
+  - templates/scripts/lib/trusted-automation.mjs
+  - templates/scripts/validate-gxt.sh
+  - templates/scripts/verify-pr-missions.sh
+  - test/conformance/golden/blueprint.fresh-init.json
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/init.dry-run.bare-git.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0289.ci-commands.yaml
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0289.json
+    - .github/workflows/gxt-validate.yml
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/index.ts
+    - packages/core/src/trusted-automation.ts
+    - packages/core/tests/trusted-automation.test.ts
+    - scripts/dev-validate-core.sh
+    - scripts/dev-validate.sh
+    - scripts/gxt-manifest-lib.mjs
+    - scripts/lib/asset-catalog-static.mjs
+    - scripts/lib/glob-match.mjs
+    - scripts/lib/manifest-validate.mjs
+    - scripts/lib/trusted-automation.mjs
+    - scripts/validate-gxt.sh
+    - scripts/verify-pr-missions.sh
+    - src/cli/commands/ci.ts
+    - src/cli/lib/ci-checks.ts
+    - src/cli/lib/trusted-automation.ts
+    - src/cli/program-ci.ts
+    - src/cli/program.ts
+    - src/cli/tests/ci-msn-range.test.ts
+    - src/cli/tests/ci-verify-missions.test.ts
+    - src/cli/tests/init-profile.test.ts
+    - src/cli/tests/init.test.ts
+    - src/cli/tests/manifest-lib-boundary.test.ts
+    - src/cli/tests/manifest-parity.test.ts
+    - src/cli/tests/test-fixtures.ts
+    - src/cli/tests/trusted-automation.test.ts
+    - src/cli/tests/validate-gxt.test.ts
+    - src/cli/tests/verify-pr-missions.test.ts
+    - templates/.github/workflows/gxt-validate.yml
+    - templates/integrations/asset-catalog.json
+    - templates/scripts/dev-validate.sh
+    - templates/scripts/gxt-manifest-lib.mjs
+    - templates/scripts/lib/glob-match.mjs
+    - templates/scripts/lib/manifest-validate.mjs
+    - templates/scripts/lib/trusted-automation.mjs
+    - templates/scripts/validate-gxt.sh
+    - templates/scripts/verify-pr-missions.sh
+    - test/conformance/golden/blueprint.fresh-init.json
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/init.dry-run.bare-git.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+contract_sha256: 52aa0a9317a90fb7bcb4732c317b7233bb6018045828fe03019844fad3af5206

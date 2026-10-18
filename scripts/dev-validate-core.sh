@@ -45,10 +45,10 @@ echo "dev-validate-core: gantry check (Rule 4.4)"
 "${GANTRY[@]}" check
 
 echo "dev-validate-core: Foreman MANIFEST (Node parity)"
-./scripts/validate-gxt.sh manifest
+node dist/cli/index.js check >/dev/null && echo "MANIFEST OK (gantry check)"
 
 echo "dev-validate-core: upgrade-tmp staging guard"
-./scripts/validate-gxt.sh upgrade-tmp
+node dist/cli/index.js ci upgrade-tmp
 
 echo "dev-validate-core: unit tests"
 node --import ./dist/cli/tests/test-tmpdir-setup.js --test "dist/cli/tests/**/*.test.js"
@@ -70,7 +70,7 @@ echo "dev-validate-core: changed-code quality (${BASE_REF}..${HEAD_REF})"
 
 if git rev-parse --verify "${BASE_REF}^{commit}" >/dev/null 2>&1; then
   echo "dev-validate-core: path-scoped MSN subjects (${BASE_REF}..${HEAD_REF})"
-  ./scripts/validate-gxt.sh msn "${BASE_REF}" "${HEAD_REF}"
+  node dist/cli/index.js ci msn-range --base "${BASE_REF}" --head "${HEAD_REF}"
 fi
 
 echo "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"

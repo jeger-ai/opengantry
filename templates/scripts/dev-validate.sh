@@ -18,7 +18,7 @@ HEAD_REF="${2:-HEAD}"
 
 if git rev-parse --verify "${BASE_REF}^{commit}" >/dev/null 2>&1; then
   echo "dev-validate: PR mission verify (${BASE_REF}...${HEAD_REF})"
-  ./scripts/verify-pr-missions.sh "${BASE_REF}" "${HEAD_REF}"
+  node dist/cli/index.js ci verify-missions --base "${BASE_REF}" --head "${HEAD_REF}"
 fi
 
 echo "dev-validate OK — stack: check, manifest, tests, doctor, changed-code, MSN, mission-verify"
