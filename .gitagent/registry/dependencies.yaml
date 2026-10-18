@@ -12,14 +12,6 @@ entries:
     scope: runtime
     range: ^1.31.0
     since: MSN-9000
-  - name: ajv
-    scope: runtime
-    range: ^8.20.0
-    since: MSN-0045
-  - name: ajv-formats
-    scope: runtime
-    range: ^3.0.1
-    since: MSN-0045
   - name: commander
     scope: runtime
     range: ^15.0.0

@@ -1,36 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ValidateFunction } from "ajv";
 import YAML from "yaml";
-import { createSchemaValidator } from "./ajv-loader.js";
+import { formatSchemaIssues, orgPolicySchema } from "#core/schemas/index.js";
 import { REL_POLICY_CACHE } from "#core/constants.js";
 import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { sha256File } from "./digests.js";
 import type { OrgPolicyBundle, PolicyPointer } from "./policy-types.js";
-
-let compiledValidator: ValidateFunction | null = null;
-let compiledForRoot: string | null = null;
-
-function loadOrgPolicySchemaValidator(root: string): ValidateFunction {
-  if (compiledValidator && compiledForRoot === root) {
-    return compiledValidator;
-  }
-  const schemaPath = path.join(root, ".gitagent/planner/ORG-POLICY.schema.yaml");
-  if (!fs.existsSync(schemaPath)) {
-    throw new GantryUserError(
-      GXT_ERROR.PARSE_ERROR,
-      "ORG-POLICY.schema.yaml not found",
-      "run gantry init or restore .gitagent/planner/ORG-POLICY.schema.yaml",
-      2,
-    );
-  }
-  const schemaDoc = YAML.parse(fs.readFileSync(schemaPath, "utf8")) as Record<string, unknown>;
-  const validate = createSchemaValidator(schemaDoc);
-  compiledValidator = validate;
-  compiledForRoot = root;
-  return validate;
-}
 
 export function policyCacheDir(root: string, commit: string): string {
   return path.join(root, REL_POLICY_CACHE, commit.trim());
@@ -40,13 +16,11 @@ export function cachedBundlePath(root: string, pointer: PolicyPointer): string {
   return path.join(policyCacheDir(root, pointer.pinned_commit), pointer.bundle_path);
 }
 
-export function parseOrgPolicyBundle(root: string, raw: string): OrgPolicyBundle {
+export function parseOrgPolicyBundle(_root: string, raw: string): OrgPolicyBundle {
   const data = YAML.parse(raw) as unknown;
-  const validate = loadOrgPolicySchemaValidator(root);
-  if (!validate(data)) {
-    const err = validate.errors?.[0];
-    const msg = err ? `${err.instancePath} ${err.message}` : "invalid org policy bundle";
-    throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `org policy bundle: ${msg}`, undefined, 1);
+  const parsed = orgPolicySchema.safeParse(data);
+  if (!parsed.success) {
+    throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `org policy bundle: ${formatSchemaIssues(parsed.error)}`, undefined, 1);
   }
   const bundle = data as OrgPolicyBundle;
   const producers = bundle.producers ?? {};

@@ -105,7 +105,7 @@ test("distribution: packed gantry init works outside workspace", () => {
     fs.cpSync(path.join(ogRoot, "node_modules", "yaml"), path.join(pkgNodeModules, "yaml"), {
       recursive: true,
     });
-    for (const dep of ["ajv", "ajv-formats", "fast-uri", "fast-deep-equal", "json-schema-traverse"]) {
+    for (const dep of ["zod"]) {
       const src = path.join(ogRoot, "node_modules", dep);
       if (fs.existsSync(src)) {
         fs.cpSync(src, path.join(pkgNodeModules, dep), { recursive: true });

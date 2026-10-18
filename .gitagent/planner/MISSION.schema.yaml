@@ -1,41 +1,11 @@
-# MISSION.schema — JSON Schema (YAML encoding) for structured missions
-# Consumed by gantry (Ajv). Version label for docs only.
+# MISSION.schema — JSON Schema for structured missions
+# Generated from packages/core/src/schemas by scripts/gen-schemas.mjs (ADR-0052 A6). Do not edit; the CLI validates with zod.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://opengantry.local/schemas/mission.v1_1.json
-title: OpenGantryMission
 type: object
-additionalProperties: false
-required:
-  - skill_key
-  - gate_command
-allOf:
-  - anyOf:
-      - required: [msn_id]
-      - required: [msnId]
-  - if:
-      properties:
-        interrogation:
-          type: array
-          minItems: 1
-      required: [interrogation]
-    then:
-      required: [interrogation_sha256]
-  - if:
-      required: [contract]
-    then:
-      required: [contract_sha256]
 properties:
   contract:
     type: object
-    additionalProperties: false
-    description: >-
-      Planner-sealed mission cage (ADR-0045). Tighten-only: tmvc_roots must be
-      a subset of the skill's manifest roots; forbidden_zones and banned_imports
-      are unioned with skill and org-policy sets. Allowed/banned lists match
-      bare specifiers (exact or prefix); relative and tsconfig-alias imports are
-      resolved to repo paths and checked against forbidden zones. gantry verify
-      re-reads this block from the Planner stamp commit and fails
-      GXT_CONTRACT_TAMPERED on drift.
     properties:
       tmvc_roots:
         type: array
@@ -58,27 +28,25 @@ properties:
           type: string
           minLength: 1
       allow_dynamic_specifiers:
-        type: boolean
         default: false
-        description: >-
-          When false, import(expr) / require(expr) with a non-literal argument
-          under effective TMVC roots fails GXT_CONTRACT_IMPORT_DYNAMIC.
+        description: When false, import(expr) / require(expr) with a non-literal argument under effective TMVC roots fails GXT_CONTRACT_IMPORT_DYNAMIC.
+        type: boolean
       strict_relative_imports:
-        type: boolean
         default: false
-        description: >-
-          When true, relative or alias imports resolving outside effective TMVC
-          roots fail GXT_CONTRACT_SCOPE_ESCAPE (forbidden zones always fail).
+        description: When true, relative or alias imports resolving outside effective TMVC roots fail GXT_CONTRACT_SCOPE_ESCAPE (forbidden zones always fail).
+        type: boolean
+    additionalProperties: false
+    description: "Planner-sealed mission cage (ADR-0045). Tighten-only: tmvc_roots must be a subset of the skill's manifest roots; forbidden_zones and banned_imports are unioned with skill and org-policy sets. gantry verify re-reads this block from the Planner stamp commit and fails GXT_CONTRACT_TAMPERED on drift."
   contract_sha256:
-    type: string
-    pattern: "^[0-9a-f]{64}$"
     description: SHA-256 of the canonical (normalized, sorted) contract block.
+    type: string
+    pattern: ^[0-9a-f]{64}$
   msn_id:
     type: string
-    pattern: "^MSN-[0-9]{4}$"
+    pattern: ^MSN-[0-9]{4}$
   msnId:
     type: string
-    pattern: "^MSN-[0-9]{4}$"
+    pattern: ^MSN-[0-9]{4}$
   skill_key:
     type: string
     minLength: 1
@@ -86,31 +54,23 @@ properties:
     type: string
     minLength: 1
   gate_success_substring:
-    type: ["string", "null"]
+    type:
+      - string
+      - "null"
   gate_adapter:
-    type: string
-    enum: [generic, eslint, tsc]
     default: generic
-    description: >-
-      Explicit gate output parser (ADR-0041). generic: exit code + optional
-      success substring only. eslint: gate_command must emit `eslint --format
-      json`; tsc: gate_command must emit plain tsc diagnostics. Adapters map
-      tool output to envelope v3 findings with offending_file/line/rule_id.
-      Routing is never inferred from gate_command text.
+    description: "Explicit gate output parser (ADR-0041). generic: exit code + optional success substring only. eslint: gate_command must emit `eslint --format json`; tsc: gate_command must emit plain tsc diagnostics. Routing is never inferred from gate_command text."
+    type: string
+    enum:
+      - generic
+      - eslint
+      - tsc
   virtual_capture:
-    type: boolean
     default: false
-    description: >-
-      Ignored since 3.10 (ADR-0052 A10 parked the virtual scratch store; see
-      examples/virtual-scratch/). Accepted for v3 missions, removed in 4.0.
+    description: Ignored since 3.10 (ADR-0052 A10 parked the virtual scratch store; see examples/virtual-scratch/). Accepted for v3 missions, removed in 4.0.
+    type: boolean
   upgrade_payload:
     type: object
-    additionalProperties: false
-    required:
-      - from_version
-      - to_version
-      - staged_hashes
-      - planned_writes
     properties:
       from_version:
         type: string
@@ -118,7 +78,7 @@ properties:
         type: string
       staged_root:
         type: string
-        const: ".gitagent/.upgrade-tmp"
+        const: .gitagent/.upgrade-tmp
       planned_writes:
         type: array
         items:
@@ -129,21 +89,23 @@ properties:
           type: string
       staged_hashes:
         type: object
+        propertyNames:
+          type: string
         additionalProperties:
           type: string
       created_at:
         type: string
+    required:
+      - from_version
+      - to_version
+      - planned_writes
+      - staged_hashes
+    additionalProperties: false
   trace_rows:
-    type: array
     default: []
+    type: array
     items:
       type: object
-      additionalProperties: false
-      required:
-        - dod_id
-        - trace_quote
-        - anchor
-        - status
       properties:
         dod_id:
           type: string
@@ -153,43 +115,50 @@ properties:
           type: string
         status:
           type: string
-          pattern: "^(PASS|FAIL|PENDING|pass|fail|pending)$"
+          pattern: ^(PASS|FAIL|PENDING|pass|fail|pending)$
+      required:
+        - dod_id
+        - trace_quote
+        - anchor
+        - status
+      additionalProperties: false
   kpi_gate:
     type: object
-    additionalProperties: false
-    required:
-      - thresholds
     properties:
       report_path:
         type: string
         minLength: 1
       thresholds:
-        type: array
         minItems: 1
+        type: array
         items:
           type: object
-          additionalProperties: false
-          required:
-            - metric
-            - op
-            - value
           properties:
             metric:
               type: string
               minLength: 1
             op:
               type: string
-              enum: ["<=", ">=", "==", "<", ">"]
+              enum:
+                - <=
+                - ">="
+                - ==
+                - <
+                - ">"
             value:
               type: number
+          required:
+            - metric
+            - op
+            - value
+          additionalProperties: false
+    required:
+      - thresholds
+    additionalProperties: false
   llm_verifiers:
     type: array
     items:
       type: object
-      additionalProperties: false
-      required:
-        - id
-        - command
       properties:
         id:
           type: string
@@ -200,42 +169,42 @@ properties:
         provider:
           type: string
         required:
-          type: boolean
           default: false
+          type: boolean
+      required:
+        - id
+        - command
+      additionalProperties: false
   aggregators:
     type: array
     items:
       type: object
-      additionalProperties: false
-      required:
-        - key
-        - op
-        - sources
       properties:
         key:
           type: string
           minLength: 1
         op:
           type: string
-          enum: [max, min, sum]
+          enum:
+            - max
+            - min
+            - sum
         sources:
-          type: array
           minItems: 1
+          type: array
           items:
             type: string
             minLength: 1
+      required:
+        - key
+        - op
+        - sources
+      additionalProperties: false
   interrogation:
-    type: array
     default: []
+    type: array
     items:
       type: object
-      additionalProperties: false
-      required:
-        - finding_id
-        - kind
-        - question
-        - hypothesis
-        - operator_answer
       properties:
         finding_id:
           type: string
@@ -261,53 +230,63 @@ properties:
           type: array
           items:
             type: string
-            pattern: "^ADR-[0-9]{4}$"
+            pattern: ^ADR-[0-9]{4}$
+      required:
+        - finding_id
+        - kind
+        - question
+        - hypothesis
+        - operator_answer
+      additionalProperties: false
   interrogation_sha256:
     type: string
-    pattern: "^[0-9a-f]{64}$"
+    pattern: ^[0-9a-f]{64}$
   declared_paths:
     type: array
     items:
       type: string
       minLength: 1
   depends_on:
-    type: array
     default: []
-    description: >-
-      Cross-repo mission dependencies (ADR-0044). Resolved offline from fetched
-      refs/gxt/deps/<slug> ledger chains. gantry deps fetch is the only network
-      path; verify/doctor/check read local refs only.
+    description: Cross-repo mission dependencies (ADR-0044). Resolved offline from fetched refs/gxt/deps/<slug> ledger chains. gantry deps fetch is the only network path; verify/doctor/check read local refs only.
+    type: array
     items:
       type: object
-      additionalProperties: false
-      required:
-        - repo
-        - msn_id
       properties:
         repo:
           type: string
           minLength: 1
           description: Canonical host/owner/repo or git URL.
         ref:
-          type: string
           default: refs/gxt/ledger
+          type: string
         msn_id:
           type: string
-          pattern: "^MSN-[0-9]{4}$"
+          pattern: ^MSN-[0-9]{4}$
         require:
           type: object
-          additionalProperties: false
           properties:
             verify_status:
-              type: string
-              enum: [passed]
               default: passed
+              type: string
+              enum:
+                - passed
             signed:
-              type: boolean
               default: false
+              type: boolean
             max_age_days:
               type: number
               exclusiveMinimum: 0
+          additionalProperties: false
         expected_repository_hash:
           type: string
-          pattern: "^[0-9a-f]{64}$"
+          pattern: ^[0-9a-f]{64}$
+      required:
+        - repo
+        - msn_id
+      additionalProperties: false
+required:
+  - skill_key
+  - gate_command
+additionalProperties: false
+description: OpenGantryMission

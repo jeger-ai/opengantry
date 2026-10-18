@@ -35,7 +35,7 @@
     "gen:version": "node scripts/gen-version.mjs",
     "gen:catalog": "node scripts/gen-asset-catalog.mjs",
     "gen:dogfood": "node scripts/gen-dogfood.mjs",
-    "build": "npm run gen:version && npm run gen:catalog && npm run gen:dogfood && tsc -b && node scripts/prune-dist.mjs && npm run build:cage",
+    "build": "npm run gen:version && npm run gen:catalog && tsc -b && node scripts/prune-dist.mjs && npm run gen:schemas && npm run gen:dogfood && npm run build:cage",
     "build:cage": "npm run build -w @jeger-ai/opengantry-cage",
     "gapman": "node dist/cli/index.js",
     "lint": "eslint \"src/cli/**/*.ts\" \"packages/*/src/**/*.ts\"",
@@ -49,7 +49,8 @@
     "test:conformance": "node --test \"test/conformance/run.test.mjs\"",
     "test:packages": "node --test \"dist/packages/*/tests/*.test.js\"",
     "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
-    "gantry": "node dist/cli/index.js"
+    "gantry": "node dist/cli/index.js",
+    "gen:schemas": "node scripts/gen-schemas.mjs"
   },
   "publishConfig": {
     "access": "public"
@@ -78,8 +79,6 @@
   "dependencies": {
     "@clack/prompts": "^0.10.1",
     "@modelcontextprotocol/sdk": "^1.31.0",
-    "ajv": "^8.20.0",
-    "ajv-formats": "^3.0.1",
     "commander": "^15.0.0",
     "yaml": "^2.6.1",
     "zod": "^4.6.5"
