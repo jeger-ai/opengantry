@@ -11,7 +11,8 @@
   },
   "imports": {
     "#core/*": "./dist/packages/core/src/*",
-    "#git/*": "./dist/packages/git/src/*"
+    "#git/*": "./dist/packages/git/src/*",
+    "#cage/*": "./dist/packages/cage/src/*"
   },
   "exports": {
     ".": "./dist/cli/index.js",

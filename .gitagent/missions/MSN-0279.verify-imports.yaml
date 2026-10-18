@@ -68,55 +68,55 @@ gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0279 at d025976: JS/TS import sites through src/cli/lib/import-scanner.ts (static, type-only, multi-line, export-from, require, import()); Python through src/cli/lib/verify-standalone/python-imports.ts: import a, b as c; from X import Y, Z as s; from . import x; from ..db import (models, session) across lines; from X import *; ; separated and backslash-continued statements; comments, strings and docstrings are not imports; a .go file covered by a rule is listed in skipped"
-    anchor: "1509"
+    anchor: "1517"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0279 at d025976: imports are compared per file at HEAD (disk with --worktree) and at the base; the legacy component's existing @angular/common/http and @app/api/http imports do not count when the file is touched, a new component's do"
-    anchor: "1510"
+    anchor: "1518"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0279 at d025976: @app/api resolves through path_aliases to client/src/app/api/index.ts, ../api/http.js to client/src/app/api/http.ts; from shop import api to src/shop/api/__init__.py, from shop.api.routes import handler to src/shop/api/routes.py, from ..api import routes to src/shop/api/routes.py, all under python_paths [src]; from . import helpers stays in the services layer"
-    anchor: "1511"
+    anchor: "1519"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0279 at d025976: imports rule components do not use HttpClient reports client/src/app/components/new.component.ts:1 @angular/common/http/testing; services know no HTTP reports fastapi and starlette.routing and not fastapix"
-    anchor: "1512"
+    anchor: "1520"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0279 at d025976: layer components reports new.component.ts:3 ../api/http.js -> client/src/app/api/http.ts (api) and :4 @app/api; layer services reports three imports into src/shop/api; unknown layer in may_not_import, duplicate layers, empty forbid, a relative alias key and .. in aliases or python_paths exit 2 with GXT_VERIFY_CONTRACT_INVALID"
-    anchor: "1513"
+    anchor: "1521"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0279 at d025976: a gate.json outside the repository inherits the base verify.yaml (inherited.path verify.yaml, sha256): its services layer and its no print rule apply next to the task's no TODO rule; the repository's own verify.yaml inherits nothing (inherited null)"
-    anchor: "1514"
+    anchor: "1522"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0279 at d025976: --sign adds signature {kind ssh, signature_b64, payload_encoding canonical_json_utf8, key_fingerprint SHA256:…, verify_status} via signReceiptMessage over the JSON-normalized result; receipt-signing.ts verifySignatureWithAllowedSigners; --check-result --allowed-signers verifies (signer ci@example.com) and refuses a tampered result, a key not on the list and an unsigned result; --sign without --out, --allowed-signers without --check-result and --sign without a signing key (GXT_VERIFY_SIGN_NO_KEY) exit 2"
-    anchor: "1515"
+    anchor: "1523"
     status: PASS
   - dod_id: "8"
     trace_quote: "DoD 8 MSN-0279 at d025976: opengantry.verify-result.v1 gains imports, layers, skipped, inherited and the optional signature; findings carry file, line, specifier, resolved repo path and layer, never source text (no export const in the JSON)"
-    anchor: "1516"
+    anchor: "1524"
     status: PASS
   - dod_id: "9"
     trace_quote: "DoD 9 MSN-0279 re-attested at 2afcbde after the contract amendment (3cfe7ea): the Python fixture string \"from ..db import (\" is split so the JS/TS scanner does not read it as import(); verify-standalone-imports.test.ts pass 5 fail 0; gantry contract check OK, no import-site violations; git diff origin/main..2afcbde under src/cli/lib/verify and src/cli/lib/cage is empty"
-    anchor: "1521"
+    anchor: "1529"
     status: PASS
   - dod_id: "10"
     trace_quote: "DoD 10 MSN-0279 at d025976: ADR-0051 amendment decisions 9-12 (import and layer rules over new imports, resolution with path_aliases, python_paths and X/Y before X, repository law for task contracts, receipt-envelope signatures with allowed signers), limits, consequence on signed results, Sigstore keyless follow-up, ADR-0052 cited for the envelope"
-    anchor: "1518"
+    anchor: "1526"
     status: PASS
   - dod_id: "11"
     trace_quote: "DoD 11 MSN-0279 at d025976: docs/guides/verify-contract.md sections Imports and layers, A task contract answers to the repository, Signed results, --sign and --allowed-signers options and updated limits; docs/CHANGELOG.md Unreleased entry; assert-docs-structure OK (53 pages, 39 published, 305 relative links checked)"
-    anchor: "1519"
+    anchor: "1527"
     status: PASS
   - dod_id: "12"
     trace_quote: "DoD 12 MSN-0279 re-attested at d13af2c after merging main (#233 MSN-0282, ADR-0052 step 2 core and git packages): ./scripts/dev-validate-core.sh exit 0: unit tests 971 pass 971 fail 0; conformance suite tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; gantry contract check OK, no import-site violations"
-    anchor: "1525"
+    anchor: "1533"
     status: PASS
   - dod_id: "13"
     trace_quote: "DoD 13 MSN-0279 at d1e976c: .gitagent/registry/error-codes.yaml lists GXT_VERIFY_SIGN_NO_KEY with since MSN-0279 (Planner commit 0897da0, after the amendment 1c2417f missed the last-sorting entry); verify.contract.contract-standalone and verify.contract.gate-json.contract-standalone re-recorded, differing only by inherited, imports, layers and skipped (the gate.json case inherits the fixture's verify.yaml and its no-console rule); no other golden file changed"
-    anchor: "1524"
+    anchor: "1532"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:

@@ -1,7 +1,7 @@
-import { REL_MANIFEST } from "../constants.js";
-import { GantryUserError, isGantryUserError } from "../errors.js";
-import { gitRevParse, gitRun } from "../git/git.js";
-import { validateManifestShape } from "../manifest.js";
+import { REL_MANIFEST } from "#core/constants.js";
+import { GantryUserError, isGantryUserError } from "#core/user-error.js";
+import { gitRevParse, gitRun } from "#git/git.js";
+import { validateManifestShape } from "#core/manifest.js";
 import { CAGE_CONFIG_FILE, EMPTY_CAGE_CONFIG, parseCageConfigText, type CageConfig } from "./cage-config.js";
 import { changedPathsInRange } from "./cage-push-guard.js";
 import { cageScopeReport } from "./cage-report.js";

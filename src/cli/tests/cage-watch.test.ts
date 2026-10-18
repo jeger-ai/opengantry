@@ -6,10 +6,10 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
 import { EventEmitter } from "node:events";
-import { runCage } from "../lib/cage/cage-run.js";
-import { runCageWatch } from "../lib/cage/cage-watch-run.js";
-import { CAGE_CONTEST_LIMIT } from "../lib/cage/cage-watch.js";
-import { CAGE_LIMITS, CAGE_WATCH_LIMITS, CAGE_WATCH_LIMITS_SUMMARY, formatCageReport } from "../lib/cage/cage-report.js";
+import { runCage } from "#cage/cage-run.js";
+import { runCageWatch } from "#cage/cage-watch-run.js";
+import { CAGE_CONTEST_LIMIT } from "#cage/cage-watch.js";
+import { CAGE_LIMITS, CAGE_WATCH_LIMITS, CAGE_WATCH_LIMITS_SUMMARY, formatCageReport } from "#cage/cage-report.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-91c2";
 const FAST = 40;

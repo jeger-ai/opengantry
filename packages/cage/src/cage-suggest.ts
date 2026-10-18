@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "../cli-io.js";
-import { GantryUserError } from "../errors.js";
+import { toPosixRel } from "#core/posix-path.js";
+import { GantryUserError } from "#core/user-error.js";
 import { CAGE_CONFIG_FILE, type CageProtectEntry } from "./cage-config.js";
 import { CAGE_SCAN_SKIP_DIRS, buildCagePlan, classifyCagePath, type CagePlan } from "./cage-rules.js";
 

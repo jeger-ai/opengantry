@@ -2,19 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { logError, readStdinIfEmpty, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
-import { CAGE_SESSION_LOG_ENV, findPushViolations } from "../lib/cage/cage-push-guard.js";
-import { cageStartSuffix, formatCageOverrideBanner, formatCageReport } from "../lib/cage/cage-report.js";
-import { buildCagePlan, parseSerializedCagePlan } from "../lib/cage/cage-rules.js";
-import { resolveCageRoot, runCage } from "../lib/cage/cage-run.js";
+import { CAGE_SESSION_LOG_ENV, findPushViolations } from "#cage/cage-push-guard.js";
+import { cageStartSuffix, formatCageOverrideBanner, formatCageReport } from "#cage/cage-report.js";
+import { buildCagePlan, parseSerializedCagePlan } from "#cage/cage-rules.js";
+import { resolveCageRoot, runCage } from "#cage/cage-run.js";
 import {
   assertOutsideCageSession,
   formatCageSuggestionsYaml,
   suggestCageRules,
   writeCageSuggestions,
-} from "../lib/cage/cage-suggest.js";
-import { CAGE_CONFIG_FILE } from "../lib/cage/cage-config.js";
-import { formatCageCheckReport, runCageCheck } from "../lib/cage/cage-check.js";
-import { formatCageWatchReport, runCageWatch } from "../lib/cage/cage-watch-run.js";
+} from "#cage/cage-suggest.js";
+import { CAGE_CONFIG_FILE } from "#cage/cage-config.js";
+import { formatCageCheckReport, runCageCheck } from "#cage/cage-check.js";
+import { formatCageWatchReport, runCageWatch } from "#cage/cage-watch-run.js";
 
 export interface CageCliOptions {
   command: string[];

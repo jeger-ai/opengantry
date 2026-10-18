@@ -4,6 +4,7 @@ scan_roots:
   - src/cli/**
   - packages/core/**
   - packages/git/**
+  - packages/cage/**
 languages:
   - typescript
 layers:
@@ -13,6 +14,9 @@ layers:
   - id: git
     globs:
       - packages/git/src/**
+  - id: cage
+    globs:
+      - packages/cage/src/**
   - id: command
     globs:
       - src/cli/commands/**
@@ -27,9 +31,21 @@ layers:
       - src/cli/cage-bin.ts
       - src/cli/kernel.ts
 rules:
-  - id: RULE-CORE-NO-NODE-IO
+  - id: RULE-CORE-NO-FS
     from_layer: core
-    forbid_specifier_substring: "node:"
+    forbid_specifier_substring: "node:fs"
+  - id: RULE-CORE-NO-CHILD-PROCESS
+    from_layer: core
+    forbid_specifier_substring: "node:child_process"
+  - id: RULE-CORE-NO-OS
+    from_layer: core
+    forbid_specifier_substring: "node:os"
+  - id: RULE-CORE-NO-NET
+    from_layer: core
+    forbid_specifier_substring: "node:net"
+  - id: RULE-CORE-NO-HTTP
+    from_layer: core
+    forbid_specifier_substring: "node:http"
   - id: RULE-CORE-NO-GIT-LAYER
     from_layer: core
     forbid_import_layer: git
@@ -45,6 +61,15 @@ rules:
   - id: RULE-GIT-NO-COMMAND-LAYER
     from_layer: git
     forbid_import_layer: command
+  - id: RULE-CAGE-NO-LIB-LAYER
+    from_layer: cage
+    forbid_import_layer: lib
+  - id: RULE-CAGE-NO-COMMAND-LAYER
+    from_layer: cage
+    forbid_import_layer: command
+  - id: RULE-CAGE-NO-DELIVERY-LAYER
+    from_layer: cage
+    forbid_import_layer: delivery
   - id: RULE-LIB-TO-COMMAND
     from_layer: lib
     forbid_import_layer: command

@@ -5,13 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
-import { recoverCageJournal, resolveCageJournalDir } from "../lib/cage/cage-journal.js";
-import { listDescendantPids } from "../lib/cage/cage-process.js";
-import { runCage } from "../lib/cage/cage-run.js";
-import { buildCagePlan, cageBasenameRule, classifyCagePath } from "../lib/cage/cage-rules.js";
-import { cageGlobToRegExp } from "../lib/cage/cage-config.js";
-import { CAGE_MAX_SCAN_BYTES, CAGE_MAX_TARGETS } from "../lib/cage/cage-snapshot.js";
-import { CAGE_LIMITS, CAGE_LIMITS_SUMMARY, CAGE_UPGRADE_FOOTER, formatCageReport } from "../lib/cage/cage-report.js";
+import { recoverCageJournal, resolveCageJournalDir } from "#cage/cage-journal.js";
+import { listDescendantPids } from "#cage/cage-process.js";
+import { runCage } from "#cage/cage-run.js";
+import { buildCagePlan, cageBasenameRule, classifyCagePath } from "#cage/cage-rules.js";
+import { cageGlobToRegExp } from "#cage/cage-config.js";
+import { CAGE_MAX_SCAN_BYTES, CAGE_MAX_TARGETS } from "#cage/cage-snapshot.js";
+import { CAGE_LIMITS, CAGE_LIMITS_SUMMARY, CAGE_UPGRADE_FOOTER, formatCageReport } from "#cage/cage-report.js";
 import { writeManifest } from "./test-fixtures.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-7f3a";
@@ -837,7 +837,7 @@ test("cage dependency freeze: kill -9 recovery rebuilds the frozen plan from the
   const snap = { keepBytes: true, maxFileBytes: 5 * 1024 * 1024, maxTotalBytes: 64 * 1024 * 1024 };
   const journalDir = resolveCageJournalDir(dest);
   // A wrapper that journals a frozen baseline and dies without cleaning up: its pid is dead afterwards.
-  const lib = path.join(getRepoRoot(), "dist", "cli", "lib", "cage");
+  const lib = path.join(getRepoRoot(), "dist", "packages", "cage", "src");
   const writer = spawnSync(
     process.execPath,
     [
