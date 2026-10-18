@@ -65,7 +65,7 @@ const DEFAULT_NEXT_STEPS: AudienceNextStep[] = [
 export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
   {
     audience: "platform",
-    step: "edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check",
+    step: "edit .gitagent/foreman/MANIFEST.yaml (tmvc_roots, forbidden_zones, skills) and run gantry check",
   },
   { audience: "platform", step: "git config core.hooksPath .githooks" },
   { audience: "planner", step: 'gantry planner set "$(git config user.email)"' },

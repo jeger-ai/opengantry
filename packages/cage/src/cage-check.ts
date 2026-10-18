@@ -1,7 +1,7 @@
-import { REL_MANIFEST } from "#core/constants.js";
+import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import { parseManifestSource, selectManifestSource } from "#core/manifest-file.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import { gitRevParse, gitRun } from "#git/git.js";
-import { validateManifestShape } from "#core/manifest.js";
 import { CAGE_CONFIG_FILE, EMPTY_CAGE_CONFIG, parseCageConfigText, type CageConfig } from "./cage-config.js";
 import { changedPathsInRange } from "./cage-push-guard.js";
 import { cageScopeReport } from "./cage-report.js";
@@ -104,15 +104,16 @@ function committedText(root: string, rev: string, rel: string): string | null {
 }
 
 function zonesAt(root: string, rev: string): string[] {
-  const text = committedText(root, rev, REL_MANIFEST);
-  if (text === null) return [];
+  const yaml = committedText(root, rev, REL_MANIFEST_YAML);
+  const json = committedText(root, rev, REL_MANIFEST_JSON);
+  if (yaml === null && json === null) return [];
   try {
-    const raw = JSON.parse(text) as unknown;
-    validateManifestShape(raw);
-    return cageManifestZones(raw);
+    const source = selectManifestSource(yaml, json);
+    return source ? cageManifestZones(parseManifestSource(source)) : [];
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw checkError("GXT_CAGE_CHECK_RULES_INVALID", `${REL_MANIFEST} at ${rev.slice(0, 12)} is invalid: ${msg}`);
+    const rel = yaml !== null ? REL_MANIFEST_YAML : REL_MANIFEST_JSON;
+    throw checkError("GXT_CAGE_CHECK_RULES_INVALID", `${rel} at ${rev.slice(0, 12)} is invalid: ${msg}`);
   }
 }
 

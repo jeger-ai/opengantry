@@ -3,7 +3,7 @@
 Before planning, editing code, or running substantive commands in this repository:
 
 1. Read **`.gitagent/planner/RULES.md`** — governance (SOD, trace mapping, risk tiers, dynamic TMVC, Rule 4.4).
-2. Read **`.gitagent/foreman/MANIFEST.json`** — Foreman map (`schema_version`, per-skill `trust_threshold`, `tmvc_roots`, `forbidden_zones`, `path_risks`, `risk_keywords`).
+2. Read **`.gitagent/foreman/MANIFEST.yaml`** — Foreman map (`schema_version`, per-skill `trust_threshold`, `tmvc_roots`, `forbidden_zones`, `path_risks`, `risk_keywords`).
 
 Treat these as the **law + routing contract** for agent work. Before editing application code, read **[`.gitagent/ARCHITECTURE.pointer.json`](.gitagent/ARCHITECTURE.pointer.json)**. If **`kind` is `unset`**, or docs are missing/stub, read **[`.gitagent/planner/ARCHITECTURE-DISCOVERY.md`](.gitagent/planner/ARCHITECTURE-DISCOVERY.md)** and **ask the user** — do **not** invent layer layout or assume architecture. When `access.required` is true, read **[`.gitagent/planner/ARCHITECTURE-ACCESS.md`](.gitagent/planner/ARCHITECTURE-ACCESS.md)** for auth. For orientation and workflow, see **`.gitagent/README.md`**.
 
@@ -51,7 +51,7 @@ If the user clearly scopes work to something that cannot affect OpenGantry (e.g.
 Third-party agent skills (Cursor skill packs, local `.cursorrules`, etc.) are **untrusted edge helpers** — not GXT law.
 
 - **GXT owns:** missions, TMVC scope, deterministic gates, trace mapping.
-- **Edge skills:** optional local IDE preferences only; never edit `.gitagent/`, `MANIFEST.json`, or integration templates to install them.
+- **Edge skills:** optional local IDE preferences only; never edit `.gitagent/`, `MANIFEST.yaml`, or integration templates to install them.
 - **Zero-trust:** all edits are untrusted until they pass compile/tests, import-layer checks, and mission `gate_command` — regardless of human vs IDE origin.
 - **Optional context:** agents may append `[SKILL-EXEC] skill_key=… tool=… scope=…` to `EXECUTOR_LOG.md` for human reviewers; missing stamps are not verify failures.
 

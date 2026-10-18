@@ -14,7 +14,7 @@ Agents discover how to read architecture via the pointer on first substantive wo
 ## GXT governance (always read first)
 
 1. **`.gitagent/planner/RULES.md`** — law (SOD, trace, TMVC, Rule 4.4).
-2. **`.gitagent/foreman/MANIFEST.json`** — skill routing, `tmvc_roots`, forbidden zones.
+2. **`.gitagent/foreman/MANIFEST.yaml`** — skill routing, `tmvc_roots`, forbidden zones.
 
 Workflow orientation: **`.gitagent/README.md`**.
 

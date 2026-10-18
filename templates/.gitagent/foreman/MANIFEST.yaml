@@ -1,0 +1,41 @@
+# OpenGantry manifest: the Level-1 law file. Humans write YAML (ADR-0047); gantry init copies this file.
+# A skill names where an agent may edit (tmvc_roots), what it must never touch (forbidden_zones) and how much
+# trust a mission under it needs (trust_threshold: Tier-1 advisory, Tier-2 Planner-stamped, Tier-3 Planner mission).
+schema_version: "0.5.0"
+skills:
+  ui:
+    desc: UI components and styles within declared roots.
+    trust_threshold: Tier-1
+    tmvc_roots: [src/components/, src/styles/]
+    forbidden_zones: [.gitagent/, src/auth/, src/core/, src/db/schema/]
+  logic:
+    desc: Application logic and utilities within declared roots.
+    trust_threshold: Tier-2
+    tmvc_roots: [src/lib/, src/utils/]
+    forbidden_zones: [.gitagent/, src/auth/, src/core/, src/db/schema/]
+  gantry:
+    desc: gantry CLI delivery, lib layers, and unit tests (OpenGantry specimen).
+    trust_threshold: Tier-2
+    tmvc_roots: [src/cli/]
+    forbidden_zones: [.gitagent/foreman/, .gitagent/planner/RULES.md]
+  substrate:
+    desc: Reserved for high-risk substrate work; requires Planner mission.
+    trust_threshold: Tier-3
+    tmvc_roots: []
+    forbidden_zones: []
+# A path prefix and the tier any mission touching it needs; triage escalates to the higher tier.
+path_risks:
+  src/cli/: Tier-2
+  .gitagent/: Tier-3
+  src/core/: Tier-3
+  src/auth/: Tier-3
+  src/db/schema/: Tier-3
+# Words in an intent that escalate triage.
+risk_keywords: [refactor, migrate, delete, security, schema]
+# Globs only a Planner [MSN-…] commit may change (gantry perimeter check).
+perimeter_protected:
+  - "**/.gxt-skill.yaml"
+  - .gitagent/foreman/MANIFEST.yaml
+  - .gitagent/foreman/MANIFEST.yaml
+  - .gitagent/foreman/POLICY.pointer.json
+  - .gitagent/planner/RULES.md

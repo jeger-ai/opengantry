@@ -17,7 +17,7 @@ All three forms of the cage use one rule set: [`cage check`](check.md) fails on 
 | `secrets` | `.env`, `.env.*` except `.env.example`, at any depth | revert |
 | `git_control` | `.git/config`, `.git/hooks/`, the active `core.hooksPath` | revert |
 | `cage_config` | `.cage.yaml` itself, whether or not it exists | revert |
-| `manifest_forbidden_zone` | every skill's `forbidden_zones` in `.gitagent/foreman/MANIFEST.json`, when the repository has one | revert |
+| `manifest_forbidden_zone` | every skill's `forbidden_zones` in `.gitagent/foreman/MANIFEST.yaml`, when the repository has one | revert |
 | `cage_protect` | your `.cage.yaml` `protect:` entries | revert, or report per entry |
 | `lockfile` | `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `Pipfile.lock`, `uv.lock`, `go.sum`, `Gemfile.lock`, `composer.lock`, at any depth | report; revert when dependencies are frozen |
 | `dependency_manifest` | `package.json`, `pyproject.toml`, `Pipfile`, `requirements*.txt`, `Cargo.toml`, `go.mod`, `Gemfile`, `composer.json`, at any depth except under a `vendor/` directory | only when dependencies are frozen: revert |

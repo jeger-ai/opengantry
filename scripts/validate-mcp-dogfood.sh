@@ -19,7 +19,7 @@ cleanup() { rm -rf "$TMP"; }
 trap cleanup EXIT
 
 mkdir -p "$TMP/.gitagent/foreman" "$TMP/.gitagent/missions" "$TMP/.gitagent/planner"
-cp .gitagent/foreman/MANIFEST.json "$TMP/.gitagent/foreman/MANIFEST.json"
+cp .gitagent/foreman/MANIFEST.yaml "$TMP/.gitagent/foreman/MANIFEST.yaml"
 cp .gitagent/planner/MISSION.schema.yaml "$TMP/.gitagent/planner/MISSION.schema.yaml"
 git -C "$TMP" init -q
 git -C "$TMP" config user.email "teacher@example.com"

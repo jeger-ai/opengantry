@@ -11,6 +11,7 @@ import { registerMcpCommands } from "./program-mcp.js";
 import { registerCageCommands } from "./program-cage.js";
 import { registerHookCommands } from "./program-hook.js";
 import { registerCiCommands } from "./program-ci.js";
+import { registerMigrateCommands } from "./program-migrate.js";
 import { registerBuiltinDomains } from "./lib/domains/index.js";
 
 export { CLI_VERSION } from "./lib/constants.js";
@@ -44,6 +45,7 @@ export function buildProgram(): Command {
   registerCageCommands(program);
   registerHookCommands(program);
   registerCiCommands(program);
+  registerMigrateCommands(program);
 
   return program;
 }

@@ -21,8 +21,8 @@ function scaffoldRepo(): string {
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   return dest;
@@ -38,7 +38,7 @@ test("mcp-write-guard: mission path must stay under .gitagent/missions/", () => 
 
 test("mcp-write-guard: rejects path traversal", () => {
   assert.throws(
-    () => assertMcpMissionWritePath(".gitagent/missions/../foreman/MANIFEST.json"),
+    () => assertMcpMissionWritePath(".gitagent/missions/../foreman/MANIFEST.yaml"),
     /traversal/,
   );
 });
@@ -57,7 +57,7 @@ test("mcp-write-guard: skill write forbidden zone denied", () => {
   const dest = scaffoldRepo();
   const manifest = loadManifest(dest);
   assert.throws(
-    () => assertMcpSkillWritePath(manifest, "gantry", ".gitagent/foreman/MANIFEST.json"),
+    () => assertMcpSkillWritePath(manifest, "gantry", ".gitagent/foreman/MANIFEST.yaml"),
     /forbidden zone/,
   );
 });

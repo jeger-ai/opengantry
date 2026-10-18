@@ -20,7 +20,7 @@ function initRepo(prefix: string): string {
   fs.writeFileSync(path.join(dest, "README.md"), "init\n", "utf8");
   fs.mkdirSync(path.join(dest, ".gitagent/foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
-  fs.copyFileSync(path.join(getRepoRoot(), ".gitagent/foreman/MANIFEST.json"), path.join(dest, ".gitagent/foreman/MANIFEST.json"));
+  fs.copyFileSync(path.join(getRepoRoot(), ".gitagent/foreman/MANIFEST.yaml"), path.join(dest, ".gitagent/foreman/MANIFEST.yaml"));
   fs.writeFileSync(path.join(dest, ".gitagent/missions/README.md"), "# missions\n", "utf8");
   gitInitCommit(dest, "init", PLANNER_EMAIL);
   return dest;

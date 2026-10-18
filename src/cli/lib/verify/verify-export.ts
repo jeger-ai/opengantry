@@ -8,7 +8,7 @@ const SARIF_SCHEMA =
   "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
 
 /** Concrete file for repository-wide results. Directories cannot carry a SARIF region. */
-export const GENERIC_SARIF_FILE = ".gitagent/foreman/MANIFEST.json";
+export const GENERIC_SARIF_FILE = ".gitagent/foreman/MANIFEST.yaml";
 
 export const JUNIT_SUITE_NAME = "gantry-verify";
 

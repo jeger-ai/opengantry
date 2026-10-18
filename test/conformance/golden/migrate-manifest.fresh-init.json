@@ -1,0 +1,11 @@
+{
+  "id": "migrate-manifest.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "migrate",
+    "manifest"
+  ],
+  "exit": 0,
+  "stdout": "gantry migrate manifest: .gitagent/foreman/MANIFEST.yaml already exists; nothing to do\n",
+  "stderr_codes": []
+}

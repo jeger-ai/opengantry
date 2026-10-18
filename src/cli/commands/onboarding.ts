@@ -1,3 +1,4 @@
+import { manifestExists } from "../lib/manifest.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -79,8 +80,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   p.intro(`${CLI_NAME} onboarding — guided first mission graph`);
 
   const { root } = loadWorkspace();
-  const manifestPath = path.join(root, ".gitagent", "foreman", "MANIFEST.json");
-  if (!fs.existsSync(manifestPath)) {
+  if (!manifestExists(root)) {
     logError("Run gantry init first — substrate not found.");
     setExitCode(EXIT_CODE.USAGE);
     p.outro("Onboarding aborted");

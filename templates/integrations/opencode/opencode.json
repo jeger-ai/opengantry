@@ -3,6 +3,6 @@
     "AGENTS.md",
     ".gitagent/planner/AGENT-SETUP.md",
     ".gitagent/planner/RULES.md",
-    ".gitagent/foreman/MANIFEST.json"
+    ".gitagent/foreman/MANIFEST.yaml"
   ]
 }

@@ -205,7 +205,7 @@ test("verify-export: SARIF generic failure points at the mission file", () => {
   assert.equal((sarif as { version: string }).version, "2.1.0");
 });
 
-test("verify-export: SARIF gateless failure falls back to MANIFEST.json", () => {
+test("verify-export: SARIF gateless failure falls back to the manifest", () => {
   const sarif = buildSarifDocument({
     status: "failed",
     phase: "gate",

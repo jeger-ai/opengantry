@@ -1,0 +1,22 @@
+{
+  "id": "migrate-manifest.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "migrate",
+    "manifest",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "migrated",
+    "wrote": ".gitagent/foreman/MANIFEST.yaml",
+    "removed": ".gitagent/foreman/MANIFEST.json",
+    "perimeter_protected_updated": true,
+    "dry_run": false
+  },
+  "stderr_codes": [],
+  "tree": [
+    "?? .gitagent/foreman/MANIFEST.yaml",
+    "D .gitagent/foreman/MANIFEST.json"
+  ]
+}

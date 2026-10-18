@@ -51,7 +51,7 @@ Three roles keep the duties separate:
 | File | Role |
 |------|------|
 | `.gitagent/missions/MSN-NNNN.<slug>.yaml` | One mission: scope, `gate_command`, trace rows |
-| `.gitagent/foreman/MANIFEST.json` | Skills, their edit roots, forbidden zones and risk tiers |
+| `.gitagent/foreman/MANIFEST.yaml` | Skills, their edit roots, forbidden zones and risk tiers |
 | `.gitagent/planner/RULES.md` | Governance rules every agent reads first |
 | `EXECUTOR_LOG.md` | Verbatim gate output the verifier must find |
 | `TARGET_ARCHITECTURE.yaml` | Perimeter rules: import layers for code, patterns for content |

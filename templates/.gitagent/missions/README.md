@@ -4,7 +4,7 @@ Store mission files here (`.md` or `.yaml`) for `gantry verify`.
 
 Quick start:
 
-1. Configure `.gitagent/foreman/MANIFEST.json` skill keys and roots.
+1. Configure `.gitagent/foreman/MANIFEST.yaml` skill keys and roots.
 2. Set `GANTRY_TEACHER_EMAILS`.
 3. Legislate with explicit id:
 

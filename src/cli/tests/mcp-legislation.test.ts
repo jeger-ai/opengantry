@@ -46,8 +46,8 @@ function scaffoldRepo(): string {
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });

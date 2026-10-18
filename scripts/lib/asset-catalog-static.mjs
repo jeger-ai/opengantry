@@ -1,6 +1,6 @@
 /** Hand-tuned static assets — source of truth for core/skills/hooks/ci/runtime. */
 export const STATIC_ASSETS = [
-  { targetPath: ".gitagent/foreman/MANIFEST.json", mode: "scaffold_only", tags: ["core"] },
+  { targetPath: ".gitagent/foreman/MANIFEST.yaml", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/foreman/BYPASS.sha256", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/foreman/SUBSTRATE.version.json", mode: "scaffold_only", tags: ["core"] },
   { targetPath: ".gitagent/planner/RULES.md", mode: "scaffold_only", tags: ["core"] },

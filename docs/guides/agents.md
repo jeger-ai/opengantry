@@ -37,7 +37,7 @@ Do not copy rules into each tool's prompt file. Point each tool at three files:
 |------|------|
 | `AGENTS.md` | Cross-tool entry point: read RULES and MANIFEST before acting |
 | `.gitagent/planner/RULES.md` | Governance rules |
-| `.gitagent/foreman/MANIFEST.json` | Routing: edit roots and forbidden zones per skill |
+| `.gitagent/foreman/MANIFEST.yaml` | Routing: edit roots and forbidden zones per skill |
 
 `gantry init` scaffolds `AGENTS.md`, the pointer files for the tools you select, the runtime scripts, and `docs/INTEGRATIONS.md`, setup notes for humans composed from the recipes for your tools.
 

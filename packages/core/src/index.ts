@@ -13,6 +13,8 @@ export * from "./exit-codes.js";
 export * from "./law.js";
 export * from "./import-scanner.js";
 export * from "./manifest.js";
+export * from "./manifest-file.js";
+export * from "./strict-yaml.js";
 export * from "./path-glob.js";
 export * from "./posix-path.js";
 export * from "./run-record.js";

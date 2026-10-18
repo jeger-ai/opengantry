@@ -15,8 +15,8 @@ test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
@@ -65,8 +65,8 @@ test("legislate: triage escalation exits 2 without --skill-key", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-ex-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -91,8 +91,8 @@ test("legislate: rejects missing msn", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-no-msn-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -117,8 +117,8 @@ test("legislate: rejects malformed msn", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-bad-msn-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -147,8 +147,8 @@ test("legislate: duplicate msn fails closed by default", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-dupe-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   const missionsDir = path.join(dest, ".gitagent", "missions");
   fs.mkdirSync(missionsDir, { recursive: true });
@@ -183,8 +183,8 @@ test("legislate: --allow-duplicate permits duplicate msn", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-dupe-allow-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   const missionsDir = path.join(dest, ".gitagent", "missions");
   fs.mkdirSync(missionsDir, { recursive: true });
@@ -223,8 +223,8 @@ test("legislate: emits PENDING stub trace row", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-pending-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -257,8 +257,8 @@ test("legislate: --gate-command preserves spaces in complex command", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-gate-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -315,8 +315,8 @@ function legislateWithAdapter(tag: string, gateAdapter: "generic" | "eslint" | "
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), `og-leg-adapter-${tag}-`));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });
@@ -360,8 +360,8 @@ test("legislate: typed adapter with compound gate_command is rejected", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-leg-compound-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   fs.copyFileSync(

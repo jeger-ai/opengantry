@@ -55,7 +55,7 @@ The steps every tool shares are on [Wire any agent](agents.md). Below are the co
   read:
     - AGENTS.md
     - .gitagent/planner/RULES.md
-    - .gitagent/foreman/MANIFEST.json
+    - .gitagent/foreman/MANIFEST.yaml
   ```
 
 - **Bootstrap:**

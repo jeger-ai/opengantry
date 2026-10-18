@@ -105,7 +105,7 @@ test("distribution: packed gantry init works outside workspace", () => {
     fs.cpSync(path.join(ogRoot, "node_modules", "yaml"), path.join(pkgNodeModules, "yaml"), {
       recursive: true,
     });
-    for (const dep of ["zod"]) {
+    for (const dep of ["zod", "yaml"]) {
       const src = path.join(ogRoot, "node_modules", dep);
       if (fs.existsSync(src)) {
         fs.cpSync(src, path.join(pkgNodeModules, dep), { recursive: true });
@@ -115,7 +115,7 @@ test("distribution: packed gantry init works outside workspace", () => {
     const cli = path.join(pkgDir, "dist", "cli", "index.js");
     const run = spawnSync(process.execPath, [cli, "init"], { cwd: targetRepo, encoding: "utf8" });
     assert.equal(run.status, 0, (run.stderr || "") + (run.stdout || ""));
-    assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "foreman", "MANIFEST.json")), true);
+    assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "foreman", "MANIFEST.yaml")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.json")), true);
     const pointer = JSON.parse(
       fs.readFileSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.json"), "utf8"),

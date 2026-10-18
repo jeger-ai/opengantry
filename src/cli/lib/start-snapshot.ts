@@ -2,7 +2,8 @@ import { execSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { REL_HISTORY_DIR, REL_MANIFEST } from "./constants.js";
+import { REL_HISTORY_DIR } from "./constants.js";
+import { manifestPath } from "./manifest.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest } from "#core/mission-types.js";
 
@@ -76,8 +77,7 @@ export function captureStartState(
   skillKey: string | null,
 ): StartStateSnapshot {
   const headSha = execSync("git rev-parse HEAD", { cwd: repoRoot, encoding: "utf8" }).trim();
-  const manifestPath = path.join(repoRoot, REL_MANIFEST);
-  const manifestBytes = fs.readFileSync(manifestPath);
+  const manifestBytes = fs.readFileSync(manifestPath(repoRoot));
   const roots = tmvcRootsForSkill(manifest, skillKey);
   const trackedFiles = collectRelativeFilePaths(repoRoot, roots);
 

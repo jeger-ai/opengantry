@@ -13,7 +13,7 @@ order: 2
 
 The **TMVC** (target mission verification context) is the set of paths an executor may discover and edit for a mission.
 
-- Each skill in `.gitagent/foreman/MANIFEST.json` declares `tmvc_roots`.
+- Each skill in `.gitagent/foreman/MANIFEST.yaml` declares `tmvc_roots`.
 - A mission can narrow them further with `contract.tmvc_roots` ([Missions](missions.md#contracts)).
 - The **effective** roots are the contract's roots when present, otherwise the skill's. Editing is allowed recursively inside each root.
 

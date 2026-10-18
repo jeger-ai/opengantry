@@ -46,8 +46,8 @@ test("runtime env: rejects unknown manifest skill_key", () => {
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.copyFileSync(
     path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),

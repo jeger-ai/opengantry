@@ -9,7 +9,7 @@ order: 3
 
 ## Context
 
-Keep a minimal `CLAUDE.md` (or `.claude/CLAUDE.md`) that points at `AGENTS.md`, `.gitagent/planner/RULES.md` and `.gitagent/foreman/MANIFEST.json`. Link the canonical files rather than copying RULES into it, and keep it under about 200 lines.
+Keep a minimal `CLAUDE.md` (or `.claude/CLAUDE.md`) that points at `AGENTS.md`, `.gitagent/planner/RULES.md` and `.gitagent/foreman/MANIFEST.yaml`. Link the canonical files rather than copying RULES into it, and keep it under about 200 lines.
 
 ## Session bootstrap
 

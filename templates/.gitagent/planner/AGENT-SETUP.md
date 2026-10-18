@@ -10,7 +10,7 @@ Humans may prefer `gantry init --tutorial` or `gantry onboarding` instead of thi
 - **Node:** 24+ (`node -v`).
 - **CLI:** `gantry --version` — if missing, install `@jeger-ai/opengantry` or use https://opengantry.ai/get-started/.
 
-If `.gitagent/foreman/MANIFEST.json` exists:
+If `.gitagent/foreman/MANIFEST.yaml` exists:
 
 1. Do **not** re-scaffold unless the user asks or `gantry init --force`.
 2. Run `gantry doctor` and report results.
@@ -99,7 +99,7 @@ Tell the user:
 
 ## Do not
 
-- Edit `.gitagent/foreman/MANIFEST.json` or `.gitagent/planner/RULES.md` without a substrate mission and Planner commit.
+- Edit `.gitagent/foreman/MANIFEST.yaml` or `.gitagent/planner/RULES.md` without a substrate mission and Planner commit.
 - Skip `gantry planner set`.
 - Treat this file as GXT law — it is an onboarding helper; `gantry verify` remains authoritative.
 

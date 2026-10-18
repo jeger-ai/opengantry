@@ -1,5 +1,7 @@
 /** Repo-relative paths used across gantry */
-export const REL_MANIFEST = ".gitagent/foreman/MANIFEST.json" as const;
+/** The manifest, the Level-1 law file: humans write the YAML form (ADR-0047); the 3.x JSON form is still read. */
+export const REL_MANIFEST_YAML = ".gitagent/foreman/MANIFEST.yaml" as const;
+export const REL_MANIFEST_JSON = ".gitagent/foreman/MANIFEST.json" as const;
 /** Agent discovery for code layout (file, directory, or external). */
 export const REL_ARCHITECTURE_POINTER = ".gitagent/ARCHITECTURE.pointer.json" as const;
 /** Agent instructions when architecture access requires authentication. */

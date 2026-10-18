@@ -4,7 +4,7 @@ Before planning, editing code, or running substantive commands:
 
 1. Read **`AGENTS.md`**
 2. Read **`.gitagent/planner/RULES.md`**
-3. Read **`.gitagent/foreman/MANIFEST.json`**
+3. Read **`.gitagent/foreman/MANIFEST.yaml`**
 
 **Set up OpenGantry:** follow **`.gitagent/planner/AGENT-SETUP.md`** when the user asks to bootstrap or adopt OpenGantry.
 

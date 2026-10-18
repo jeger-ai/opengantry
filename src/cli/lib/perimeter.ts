@@ -13,6 +13,7 @@ import type { Manifest } from "#core/mission-types.js";
 import { isProtectedPath, law } from "#core/law.js";
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",
+  ".gitagent/foreman/MANIFEST.yaml",
   ".gitagent/foreman/MANIFEST.json",
   ".gitagent/planner/RULES.md",
 ] as const;

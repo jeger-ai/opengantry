@@ -17,7 +17,7 @@ Security fixes are provided **only for the latest release in the 3.x line** (cur
 |-----------|-----------|-------------|
 | **gantry CLI** (`@jeger-ai/opengantry`, `package.json` version) | **3.x** (latest patch) | **2.x** and earlier |
 | **Bundled substrate** (`opengantry_version` in `.gitagent/foreman/SUBSTRATE.version.json`, matching the gantry you installed) | Same as the **supported gantry** you run | Substrate older than the version bundled in your installed gantry (upgrade the package, then `gantry upgrade`) |
-| **GXT law schema** (`MANIFEST.json` → `schema_version`) | **0.5.0** (current) | Earlier schema versions (migrate via supported gantry + `gantry upgrade`) |
+| **GXT law schema** (`MANIFEST.yaml` → `schema_version`) | **0.5.0** (current) | Earlier schema versions (migrate via supported gantry + `gantry upgrade`) |
 | **Node.js runtime** (see `package.json` `engines`) | **24.x** and newer within `>=24` | Node 22 and below |
 
 Check your installed versions:

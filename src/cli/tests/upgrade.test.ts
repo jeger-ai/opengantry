@@ -44,7 +44,7 @@ test("upgradeEligibleAssets: excludes scaffold_only paths", () => {
   const assets = resolveAssetsFromProfile(profile, loadIntegrationCompat(templatesRoot), templatesRoot);
   const eligible = upgradeEligibleAssets(assets);
   const targets = eligible.map((a) => a.targetPath);
-  assert.ok(!targets.includes(".gitagent/foreman/MANIFEST.json"));
+  assert.ok(!targets.includes(".gitagent/foreman/MANIFEST.yaml"));
   assert.ok(!targets.includes(".gitagent/planner/RULES.md"));
   assert.ok(targets.includes(".cursor/hooks.json"));
 });

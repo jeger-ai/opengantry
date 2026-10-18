@@ -1,3 +1,4 @@
+import { readManifestDocument } from "./manifest.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -144,8 +145,7 @@ function isOverlyBroadWildcard(pattern: string): boolean {
 }
 
 function collectManifestWildcards(workspaceRoot: string): string[] {
-  const manifestPath = path.join(workspaceRoot, ".gitagent/foreman/MANIFEST.json");
-  const doc = readJsonFile(manifestPath) as {
+  const doc = readManifestDocument(workspaceRoot) as {
     skills?: Record<string, { forbidden_zones?: string[]; tmvc_roots?: string[] }>;
   } | null;
   if (!doc?.skills) return [];

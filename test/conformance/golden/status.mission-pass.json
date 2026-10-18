@@ -50,6 +50,10 @@
         "message": "no example.verify.yaml — legislate a mission first"
       },
       {
+        "level": "warn",
+        "message": ".gitagent/foreman/MANIFEST.json is the 3.x form; run gantry migrate manifest (MANIFEST.yaml is read first, JSON is still read)"
+      },
+      {
         "level": "ok",
         "message": "flight_telemetry.body_mode: hash_only"
       },
