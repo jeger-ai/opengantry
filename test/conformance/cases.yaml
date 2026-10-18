@@ -110,7 +110,7 @@ cases:
   - { id: cage-check.clean.bare-git, fixture: bare-git, args: [cage, check, --base, HEAD, --json] }
   - { id: cage-suggest.tamper, fixture: cage-tamper, args: [cage, suggest, --json] }
   - { id: cage-watch.no-tty.tamper, fixture: cage-tamper, args: [cage, watch, --json] }
-  - { id: cage-session.true.tamper, fixture: cage-tamper, args: [cage, --json, --no-watch, --, "true"], normalize: [{ pattern: "gantry-cage-\\d+-", replace: "gantry-cage-<PID>-" }] }
+  - { id: cage-session.true.tamper, fixture: cage-tamper, args: [cage, --json, --no-watch, --, "true"], normalize: [{ pattern: "gantry-cage-\\d+-(?:[0-9a-f]+|<SHORT_SHA>)\\.log", replace: "gantry-cage-<PID>-<SHORT_SHA>.log" }] }
 
   # --- not recorded ---
   - { id: mcp-serve, fixture: fresh-init, args: [mcp, serve], skip: "long-running stdio server; covered by src/cli/tests/mcp-legislation.test.ts" }
