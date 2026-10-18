@@ -46,7 +46,8 @@ function resolveAlias(spec: string, ts: TsconfigPaths): string | null {
     if (wildcard === null) continue;
     const target = targets[0];
     if (!target) continue;
-    const substituted = target.replace("*", wildcard);
+    // A tsconfig path target holds one `*`; replaceAll keeps a malformed target from leaving a literal star behind.
+    const substituted = target.replaceAll("*", wildcard);
     const joined = path.posix.join(ts.baseDirRel, substituted);
     return normalizeRepoRelativePath(path.posix.normalize(joined));
   }

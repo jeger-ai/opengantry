@@ -1,10 +1,23 @@
 /** Pure import-site extraction shared by discovery, architecture, and mission contracts. */
 
+const QUARANTINE_START = "// GXT-SURGEON-QUARANTINE-START";
+const QUARANTINE_END = "// GXT-SURGEON-QUARANTINE-END";
+
+/** Remove every START..END quarantine region and the whitespace after END; an unterminated START is left as is. Linear in the source. */
 export function stripSurgeonQuarantineRegions(source: string): string {
-  return source.replace(
-    /\/\/ GXT-SURGEON-QUARANTINE-START[\s\S]*?\/\/ GXT-SURGEON-QUARANTINE-END\s*/g,
-    "",
-  );
+  let out = "";
+  let pos = 0;
+  for (;;) {
+    const start = source.indexOf(QUARANTINE_START, pos);
+    if (start === -1) break;
+    const end = source.indexOf(QUARANTINE_END, start + QUARANTINE_START.length);
+    if (end === -1) break;
+    let after = end + QUARANTINE_END.length;
+    while (after < source.length && /\s/.test(source[after]!)) after += 1;
+    out += source.slice(pos, start);
+    pos = after;
+  }
+  return out + source.slice(pos);
 }
 
 export interface ImportMeta {
@@ -237,12 +250,21 @@ export function extractImportsWithMeta(source: string, scrubQuarantine = true): 
   return out;
 }
 
+/** `name as alias` yields `alias`; the last `as` wins, matching the previous split-on-as behaviour. Linear: one whitespace split. */
+function bindingAfterAs(part: string): string {
+  const tokens = part.split(/\s+/).filter((t) => t.length > 0);
+  let last = -1;
+  for (let i = 0; i < tokens.length; i += 1) if (tokens[i]!.toLowerCase() === "as") last = i;
+  if (last === -1 || last === tokens.length - 1) return part.trim();
+  return tokens.slice(last + 1).join(" ");
+}
+
 function parseNamedBindingParts(raw: string): string[] {
   return raw
     .split(",")
     .map((part) => part.trim())
     .filter((part) => part.length > 0 && !/^type\s/.test(part))
-    .map((part) => part.split(/\s+as\s+/i).pop()!.trim());
+    .map((part) => bindingAfterAs(part));
 }
 
 export function extractBindingsFromSnippet(snippet: string): string[] {
@@ -255,7 +277,7 @@ export function extractBindingsFromSnippet(snippet: string): string[] {
   }
   const mixedNs = /^import\s+(?:type\s+)?(\w+)\s*,\s*\*\s+as\s+(\w+)/.exec(snippet);
   if (mixedNs) return [mixedNs[1]!, mixedNs[2]!];
-  const named = /import\s+(?:type\s+)?\{([^}]+)\}/.exec(snippet);
+  const named = /^import\s+(?:type\s+)?\{([^{}]+)\}/.exec(snippet);
   if (named) return parseNamedBindingParts(named[1]!);
   const def = /import\s+(\w+)\s+from/.exec(snippet);
   if (def) return [def[1]!];
