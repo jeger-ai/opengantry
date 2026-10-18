@@ -53,7 +53,7 @@ test("ledger-chain: refuses relative or empty root", () => {
 });
 
 test("ledger-chain: source never spawns git without gitRun -C", () => {
-  const src = fs.readFileSync(path.join(getRepoRoot(), "src/cli/lib/ledger/ledger-chain.ts"), "utf8");
+  const src = fs.readFileSync(path.join(getRepoRoot(), "packages/plane/src/ledger-chain.ts"), "utf8");
   assert.match(src, /function requireRoot/);
   assert.match(src, /gitRun\(/);
   assert.doesNotMatch(src, /spawnSync/);

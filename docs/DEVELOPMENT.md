@@ -172,8 +172,9 @@ Rules while the rewrite runs:
 | Package | Holds | Depends on |
 |---------|-------|------------|
 | `packages/core` | pure domain: `law` (Law, tighten, classifyPath, isProtectedPath, ChangeSet, evaluatePaths, evaluateImportSite, ArchLaw, evaluateLayerImport, evaluatePatternRules), `import-scanner`, `specifier`, `error-codes`, `user-error`, `canonical-json`, `path-glob`, `posix-path`, `manifest` (shape), `constants` | nothing (`node:path`, `node:module` only) |
-| `packages/git` | `git` (the adapter), `git-staged` | core |
+| `packages/git` | `git` (the adapter), `git-staged`, `msn-commits` | core |
 | `packages/cage` | the cage runtime (15 modules: rules, snapshot, run, watch, check, suggest, journal, push guard, scope) | core, git |
+| `packages/plane` | the org plane: `ledger-entry`, `ledger-chain`, `ledger-append`, `ledger-export`, `policy-types`, `policy-bundle`, `policy-resolve`, `policy-fetch`, `deps-slug`, `deps-fetch`, `deps-resolve`, `receipt-signing`, `receipt-attribution`, `attestation-receipt`, `attestation-export`, `org-export-config`, `digests`, `ajv-loader` | core, git |
 
 - Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
 - Import a package module as `#core/<module>.js`, `#git/<module>.js` or `#cage/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a facade; the facades left under `src/cli/lib` go away in step 3.
