@@ -98,7 +98,8 @@ export class CommandReporter {
         `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted EXECUTOR_LOG line(s) skipped stale check`,
       );
     }
-    this.emitInfo(`${CLI_NAME} verify: trace mapping OK (${result.executorLogPath})`);
+    if (result.runRecordPath) this.emitInfo(`${CLI_NAME} verify: run record OK (${result.runRecordPath})`);
+    else this.emitInfo(`${CLI_NAME} verify: trace mapping OK (${result.executorLogPath})`);
   }
 
   emitFailurePresentation(presentation: VerifyFailurePresentation): void {

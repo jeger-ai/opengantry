@@ -34,7 +34,7 @@ import {
   type TracePhaseOutcome,
 } from "./verify-phase-steps.js";
 import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./verify-org-phases.js";
-import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, writeRunRecord } from "./verify-run-record.js";
+import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, runRecordRelPath, writeRunRecord } from "./verify-run-record.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -74,6 +74,8 @@ export interface VerifyPhaseSuccess {
   defensiveWarnings?: string[];
   defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
+  /** Set when the evidence was the run record (read or, with --record, written): its repo-relative path. */
+  runRecordPath?: string;
   phaseTimings: VerifyPhaseTiming[];
 }
 
@@ -149,8 +151,9 @@ function buildFullVerifySuccess(input: {
   defensive: Extract<DefensiveOutcome, { kind: "ok" }>;
   kpi: Extract<KpiOutcome, { kind: "ok" }>;
   phaseTimings: VerifyPhaseTiming[];
+  runRecordPath?: string;
 }): VerifyPhaseSuccess {
-  const { proofMsnId, executorLogPath, trace, gitProofWarnings, defensive, kpi, phaseTimings } =
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, defensive, kpi, phaseTimings, runRecordPath } =
     input;
   return {
     ok: true,
@@ -159,6 +162,7 @@ function buildFullVerifySuccess(input: {
     executorLogPath,
     traceWarnings: trace.warnings,
     phaseTimings,
+    ...(runRecordPath ? { runRecordPath } : {}),
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     ...(kpi.warnings.length > 0 ? { kpiWarnings: kpi.warnings } : {}),
     ...(kpi.advisoryFindings.length > 0 ? { kpiAdvisoryFindings: kpi.advisoryFindings } : {}),
@@ -264,6 +268,7 @@ export async function evaluateVerifyPhases(
 
   const trace = await clock.timed("trace", () => evaluateEvidencePhase(phaseCtx, proofMsnId));
   if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
+  const runRecordPath = mission.traceRows.length === 0 ? runRecordRelPath(proofMsnId) : undefined;
   if (options.record === true) {
     writeRunRecord(phaseCtx, proofMsnId, { command: gate.command, exit: gateOutcome.exitCode, durationMs: clock.durationOf("gate"), logText: gateOutcome.logText });
   }
@@ -278,5 +283,6 @@ export async function evaluateVerifyPhases(
     defensive,
     kpi,
     phaseTimings: clock.finalize(),
+    ...(runRecordPath ? { runRecordPath } : {}),
   });
 }
