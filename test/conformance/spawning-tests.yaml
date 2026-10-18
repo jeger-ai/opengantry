@@ -11,6 +11,12 @@ entries:
   - file: audience-cli.test.ts
     class: cli
     spawns: [cli]
+  - file: ci-msn-range.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: ci-verify-missions.test.ts
+    class: cli
+    spawns: [cli, git]
   - file: cage-check.test.ts
     class: cli
     spawns: [cli, git]
@@ -92,12 +98,6 @@ entries:
   - file: legislate.test.ts
     class: none
     spawns: [git]
-  - file: manifest-lib-boundary.test.ts
-    class: script
-    spawns: [script, git]
-  - file: manifest-parity.test.ts
-    class: script
-    spawns: [script]
   - file: mcp-legislation.test.ts
     class: none
     spawns: [git]
@@ -136,25 +136,19 @@ entries:
     spawns: [git]
   - file: trusted-automation.test.ts
     class: cli
-    spawns: [cli, script, git]
+    spawns: [cli, git]
   - file: upgrade-plan-payload.test.ts
     class: none
     spawns: [git]
   - file: upgrade.test.ts
     class: none
     spawns: [git]
-  - file: validate-gxt.test.ts
-    class: script
-    spawns: [script, git]
   - file: verify-break-glass.test.ts
     class: none
     spawns: [git]
   - file: verify-interrogation-phase.test.ts
     class: none
     spawns: [git]
-  - file: verify-pr-missions.test.ts
-    class: cli
-    spawns: [cli, script, git]
   - file: verify.test.ts
     class: none
     spawns: [git]

@@ -54,6 +54,16 @@ entries:
     note: "Internal: run by the cage session git hooks. Folds into gantry hook in ADR-0052 step 5."
   - name: check
     since: MSN-0010
+  - name: ci
+    since: MSN-0289
+  - name: ci msn-range
+    since: MSN-0289
+  - name: ci trusted-automation
+    since: MSN-0289
+  - name: ci upgrade-tmp
+    since: MSN-0289
+  - name: ci verify-missions
+    since: MSN-0289
   - name: check-imports
     since: MSN-0045
   - name: context-feed

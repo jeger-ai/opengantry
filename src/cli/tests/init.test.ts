@@ -23,7 +23,7 @@ test("init: preserves mutable files and fails on managed conflicts", async () =>
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, "scripts"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"custom"}\n', "utf8");
-  fs.writeFileSync(path.join(dest, "scripts", "validate-gxt.sh"), "#!/usr/bin/env bash\necho custom\n", "utf8");
+  fs.writeFileSync(path.join(dest, "scripts", "gxt-runtime-env.sh"), "#!/usr/bin/env bash\necho custom\n", "utf8");
 
   const prevCwd = process.cwd();
   process.chdir(dest);
@@ -36,7 +36,7 @@ test("init: preserves mutable files and fails on managed conflicts", async () =>
       /custom/,
     );
     assert.match(
-      fs.readFileSync(path.join(dest, "scripts", "validate-gxt.sh"), "utf8"),
+      fs.readFileSync(path.join(dest, "scripts", "gxt-runtime-env.sh"), "utf8"),
       /custom/,
     );
   } finally {
@@ -51,7 +51,7 @@ test("init --force: overwrites only managed files", async () => {
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.mkdirSync(path.join(dest, "scripts"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"custom"}\n', "utf8");
-  fs.writeFileSync(path.join(dest, "scripts", "validate-gxt.sh"), "#!/usr/bin/env bash\necho custom\n", "utf8");
+  fs.writeFileSync(path.join(dest, "scripts", "gxt-runtime-env.sh"), "#!/usr/bin/env bash\necho custom\n", "utf8");
   fs.writeFileSync(path.join(dest, "scripts", "neighbor.sh"), "#!/usr/bin/env bash\necho keep\n", "utf8");
 
   const prevCwd = process.cwd();
@@ -65,8 +65,8 @@ test("init --force: overwrites only managed files", async () => {
       /custom/,
     );
     assert.match(
-      fs.readFileSync(path.join(dest, "scripts", "validate-gxt.sh"), "utf8"),
-      /OpenGantry local \+ CI validation/,
+      fs.readFileSync(path.join(dest, "scripts", "gxt-runtime-env.sh"), "utf8"),
+      /gxt-runtime-env/,
     );
     assert.match(fs.readFileSync(path.join(dest, "scripts", "neighbor.sh"), "utf8"), /keep/);
     assert.equal(fs.existsSync(path.join(dest, ".gitagent", "missions", "README.md")), true);
@@ -123,8 +123,8 @@ test("distribution: packed gantry init works outside workspace", () => {
     assert.equal(pointer.kind, "unset");
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "missions", "README.md")), true);
     assert.equal(fs.existsSync(path.join(targetRepo, ".github", "workflows", "gxt-validate.yml")), true);
-    assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "validate-gxt.sh")), true);
-    assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "verify-pr-missions.sh")), true);
+    assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "gxt-runtime-env.sh")), true);
+    assert.equal(fs.existsSync(path.join(targetRepo, "scripts", "validate-gxt.sh")), false);
   } finally {
     if (fs.existsSync(tarAbs)) fs.rmSync(tarAbs, { force: true });
     fs.rmSync(extractDir, { recursive: true, force: true });
