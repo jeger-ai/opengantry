@@ -52,16 +52,16 @@ trace_rows:
     anchor: "1479"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0282 re-attested at e075cc4: package.json workspaces now lists packages/opengantry-cage only, so packages/core and packages/git are repository packages reached through the imports map and never through node_modules; npm ci with the unchanged package-lock.json installs cleanly (the first CI run failed with 'Missing: @jeger-ai/opengantry-core@3.9.0 from lock file' because the packages/* glob matched them); git status shows package-lock.json untouched; npm run build:cage still builds through the workspace"
-    anchor: "1486"
+    trace_quote: "DoD 3 MSN-0282 re-attested at 2ff6ac0: package.json files excludes dist/packages/*/tests; scripts/npm-pack-check.sh rejects test files under dist/cli/ and dist/packages/<name>/ and maps dist/packages/<name>/<stem> to packages/<name>/<stem>.ts for the orphan check; ./scripts/npm-pack-check.sh: pack:check OK (jeger-ai-opengantry-3.9.0.tgz) (the CI npm_pack job had listed every dist/packages file as an orphan)"
+    anchor: "1489"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0282 at 2b43009: src/cli/lib/canonical-json.ts, path-glob.ts, gxt-error-codes.ts, git/git.ts and git/git-staged.ts are 2-line re-export facades (export * from #core or #git); errors.ts re-exports GantryUserError and isGantryUserError from #core/user-error.js and keeps reportUserFacingError and the agent error file; constants.ts re-exports #core/constants.js plus version.gen; manifest.ts keeps manifestPath and loadManifest and re-exports validateManifestShape; types.ts re-exports TrustThreshold, SkillEntry and Manifest from #core/manifest.js; node check: dist/cli/lib/errors.js GantryUserError === dist/packages/core/src/user-error.js GantryUserError and GXT_ERROR identical across the facade; git diff --name-only origin/main...HEAD -- src/cli lists exactly canonical-json.ts, constants.ts, errors.ts, git/git-staged.ts, git/git.ts, gxt-error-codes.ts, manifest.ts, path-glob.ts, types.ts and tests/prune-dist.test.ts (accepts the tsc -b step and maps dist/packages); no other importer or test changed"
     anchor: "1481"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0282 at 2b43009: TARGET_ARCHITECTURE.yaml scan_roots src/cli/**, packages/core/**, packages/git/**; layers core (packages/core/src/**), git (packages/git/src/**), command, lib, delivery; rules RULE-CORE-NO-NODE-IO (forbid_specifier_substring node:), RULE-CORE-NO-GIT-LAYER, RULE-CORE-NO-LIB-LAYER, RULE-CORE-NO-COMMAND-LAYER, RULE-GIT-NO-LIB-LAYER, RULE-GIT-NO-COMMAND-LAYER; gantry arch check over every src/cli and packages/*/src *.ts outside tests: OK; scripts/arch-baseline.mjs walks scan_roots; ARCH_BASELINE.json commit 7fe91a4: core files 7 lines 329 exports 54, git files 3 lines 189 exports 21, command 37/2963/114, lib 251/31887/1514 (was 32374/1572), delivery 12/1775/30; --check OK; regenerated at 7fe91a4 byte-identical (cmp)"
-    anchor: "1482"
+    trace_quote: "DoD 5 MSN-0282 re-attested at 2ff6ac0: after merging origin/main (#228, MSN-0277 added src/cli/lib/verify-standalone and src/cli/commands/verify-contract.ts) ARCH_BASELINE.json is regenerated at 80fe0c0: core 7/329/54, git 3/189/21, command 38/3071/116, lib 255/32676/1552, delivery 12/1788/30; --check OK; gantry arch check over src/cli and both packages OK"
+    anchor: "1490"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0282 at 2b43009: conformance suite tests 85 pass 82 fail 0 skipped 3 with git status showing 0 changed golden files; unit tests 937 pass 937 fail 0"
@@ -72,8 +72,8 @@ trace_rows:
     anchor: "1487"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0282 re-attested at e075cc4: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 937 pass 937 fail 0; conformance 82 pass 0 fail 3 skipped; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; the changed path set is unchanged (package.json and the three docs were already in it)"
-    anchor: "1488"
+    trace_quote: "DoD 8 MSN-0282 re-attested at 2ff6ac0: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 951 pass 951 fail 0; conformance pass/skipped 84/1 (main un-skipped the two verify --contract cases); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; the contract was re-legislated twice after execution (ten src/cli files instead of src/cli/, then scripts/npm-pack-check.sh added) and the trace rows were re-anchored after the merge of main"
+    anchor: "1491"
     status: PASS
 interrogation:
   - finding_id: 25f6f42f070e
