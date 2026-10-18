@@ -38,6 +38,7 @@ When the command ends, a human summary goes to stderr. With `--json`, the report
 | `push_guard` | `enabled`, `refused_pushes` |
 | `cage_config`, `overrides` | Whether `.cage.yaml` is present, its entry count and whether it is committed; paths passed to `--allow-override` |
 | `dependencies` | `revert` when dependencies were frozen (`--lock-deps` or `.cage.yaml` `dependencies: revert`), else `report` |
+| `scope`, `scope_sources` | The allowed-area globs (`.cage.yaml` `allow_only:` first, then `--allow-only`) and which list each came from; null without a scope. With both lists, a path must match one glob of each |
 | `trapped_signal` | A signal the cage answered by terminating the command |
 | `recovery` | An interrupted earlier session cleaned up before this one: `previous_pid`, `started_at`, `restored`, `orphans_killed`, or null |
 | `limits` | The limits that apply to this run ([Limits](limits.md)) |
@@ -90,5 +91,6 @@ It refuses to start while the earlier cage is still running (`GXT_CAGE_SESSION_A
 | `--contest-limit <n>` | Live restores of one path before the halt (default 3, `0` never halts) |
 | `--allow-override <path>` | Report instead of restore under `<path>` for this run ([Project rules](cage-yaml.md#relax-one-path-for-one-session)) |
 | `--lock-deps` | Freeze dependencies: restore lockfiles and dependency manifests for this run ([Freeze dependencies](protected-paths.md#freeze-dependencies)) |
+| `--allow-only <glob>` | Scope: restore every file git would track outside the glob for this run (repeatable; [Scope a task](protected-paths.md#scope-a-task)) |
 
 Design notes: [ADR-0048 cage trust model](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md), decisions 7 and 8.

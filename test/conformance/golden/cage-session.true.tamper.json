@@ -30,6 +30,8 @@
       "committed": null
     },
     "dependencies": "report",
+    "scope": null,
+    "scope_sources": null,
     "overrides": [],
     "changes": [],
     "watch": {

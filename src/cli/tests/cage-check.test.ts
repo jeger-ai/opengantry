@@ -274,3 +274,52 @@ test("cage check dependency freeze: vendored manifests do not fail a frozen chec
   assert.equal(cageScanRule("vendor/acme/composer.lock", "revert"), "lockfile", "lockfiles are unchanged");
   assert.equal(cageScanRule("vendor/acme/.env", "revert"), "secrets");
 });
+
+test("cage check scope: base allow_only fails a range that touches a path outside it (MSN-0276 DoD 1, 3, 6)", () => {
+  const { dest } = makeRepo("og-cage-check-scope-");
+  write(dest, ".cage.yaml", "allow_only:\n  - src/billing/**\nprotect:\n  - path: db/migrations\n");
+  write(dest, "src/billing/invoice.ts", "export {};\n");
+  const base = commitAll(dest, "scope the repo");
+  write(dest, "src/billing/invoice.ts", "export const a = 1;\n");
+  write(dest, "src/shared/util.ts", "export {};\n");
+  write(dest, "package-lock.json", '{"a":1}\n');
+  commitAll(dest, "wander");
+  const report = runCageCheck({ cwd: dest, base });
+  assert.equal(report.exit_code, 3);
+  assert.deepEqual(report.scope, ["src/billing/**"]);
+  assert.deepEqual(report.scope_sources, { cage_yaml: ["src/billing/**"], flag: null });
+  assert.deepEqual(rules(report), [
+    ["package-lock.json", "out_of_scope", "revert"],
+    ["src/shared/util.ts", "out_of_scope", "revert"],
+  ]);
+});
+
+test("cage check scope: a head that adds allow_only is not held to it in its own range (MSN-0276 DoD 1, 6)", () => {
+  const { dest, base } = makeRepo("og-cage-check-scope-head-");
+  write(dest, ".cage.yaml", "allow_only:\n  - src/billing\nprotect:\n  - path: db/migrations\n");
+  write(dest, "src/shared/util.ts", "export {};\n");
+  commitAll(dest, "add a scope and wander in the same range");
+  const report = runCageCheck({ cwd: dest, base });
+  assert.equal(report.scope, null);
+  assert.deepEqual(rules(report), [[".cage.yaml", "cage_config", "revert"]]);
+});
+
+test("cage check scope: --allow-only works without .cage.yaml, also before the subcommand (MSN-0276 DoD 2, 5, 6)", () => {
+  const { dest, base } = makeRepo("og-cage-check-scope-flag-");
+  write(dest, "src/billing/invoice.ts", "export {};\n");
+  write(dest, "README.md", "changed\n");
+  commitAll(dest, "work");
+  assert.equal(runCageCheck({ cwd: dest, base }).exit_code, 0);
+  const scoped = runCageCheck({ cwd: dest, base, allowOnly: ["src/billing"] });
+  assert.deepEqual(rules(scoped), [["README.md", "out_of_scope", "revert"]]);
+
+  const run = (...args: string[]) => spawnSync(process.execPath, [CLI, "cage", ...args], { cwd: dest, encoding: "utf8", env: gitChildEnv() });
+  const r = run("--allow-only", "src/billing", "check", "--base", base, "--json");
+  assert.equal(r.status, 3, r.stderr);
+  const json = JSON.parse(r.stdout) as { scope: string[]; changes: { path: string; rule: string }[] };
+  assert.deepEqual(json.scope, ["src/billing"]);
+  assert.deepEqual(json.changes.map((c) => [c.path, c.rule]), [["README.md", "out_of_scope"]]);
+  const human = run("check", "--base", base, "--allow-only", "src/billing", "--allow-only", "README.md");
+  assert.equal(human.status, 0, human.stderr);
+  assert.match(human.stderr, /; scope: src\/billing, README\.md$/m);
+});

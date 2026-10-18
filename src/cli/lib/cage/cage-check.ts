@@ -4,6 +4,7 @@ import { gitRevParse, gitRun } from "../git/git.js";
 import { validateManifestShape } from "../manifest.js";
 import { CAGE_CONFIG_FILE, EMPTY_CAGE_CONFIG, parseCageConfigText, type CageConfig } from "./cage-config.js";
 import { changedPathsInRange } from "./cage-push-guard.js";
+import { cageScopeReport } from "./cage-report.js";
 import {
   assembleCagePlan,
   cageManifestZones,
@@ -50,6 +51,9 @@ export interface CageCheckReport {
   cage_config: { present: boolean; entries: number };
   /** `revert` when dependencies are frozen (base `.cage.yaml` `dependencies: revert` or `--lock-deps`). */
   dependencies: CageRuleMode;
+  /** Allowed-area globs (base `.cage.yaml` `allow_only:`, then `--allow-only`) and their sources; null without a scope. */
+  scope: string[] | null;
+  scope_sources: { cage_yaml: string[] | null; flag: string[] | null } | null;
   changes: CageCheckChange[];
   limits: readonly string[];
 }
@@ -61,6 +65,8 @@ export interface CageCheckOptions {
   cwd?: string;
   /** `--lock-deps`: freeze dependencies on top of the base commit's rules (only tightens). */
   lockDeps?: boolean;
+  /** `--allow-only <glob>`: narrow the base commit's scope, or set one (only tightens). */
+  allowOnly?: readonly string[];
 }
 
 function checkError(code: string, message: string, hint?: string): GantryUserError {
@@ -135,7 +141,7 @@ export function runCageCheck(opts: CageCheckOptions): CageCheckReport {
   const root = repoRoot(opts.cwd ?? process.cwd());
   const base = resolveRef(root, "--base", opts.base);
   const head = resolveRef(root, "--head", opts.head ?? "HEAD");
-  const plan = buildCagePlanAtCommit(root, base, { lockDeps: opts.lockDeps });
+  const plan = buildCagePlanAtCommit(root, base, { lockDeps: opts.lockDeps, allowOnly: opts.allowOnly });
   const range = [`${base}..${head}`];
   const paths = changedPathsInRange(root, range);
   if (paths === null) throw checkError("GXT_CAGE_CHECK_REF_INVALID", `git log ${base.slice(0, 12)}..${head.slice(0, 12)} failed`);
@@ -160,6 +166,7 @@ export function runCageCheck(opts: CageCheckOptions): CageCheckReport {
     manifest_zones: plan.manifestZoneCount,
     cage_config: { present: plan.config.present, entries: plan.config.entries },
     dependencies: plan.dependencies,
+    ...cageScopeReport(plan.scope),
     changes,
     limits: CAGE_CHECK_LIMITS,
   };
@@ -171,7 +178,10 @@ export function formatCageCheckReport(r: CageCheckReport): string[] {
   const row = (c: CageCheckChange): string => `  ${c.path}  ${c.rule} (${c.source})`;
   const failing = r.changes.filter((c) => c.mode === "revert");
   const reported = r.changes.filter((c) => c.mode === "report");
-  const frozen = r.dependencies === "revert" ? "; dependencies frozen" : "";
+  const frozen = [
+    r.dependencies === "revert" ? "; dependencies frozen" : "",
+    r.scope ? `; scope: ${r.scope.join(", ")}` : "",
+  ].join("");
   const lines = [`cage check: ${String(r.commits)} commit(s) in ${short(r.base)}..${short(r.head)}; rules from ${short(r.rules_ref)}${frozen}`];
   if (failing.length > 0) lines.push("cage check: protected paths changed:", ...failing.map(row));
   if (reported.length > 0) lines.push("cage check: reported only (does not fail the check):", ...reported.map(row));

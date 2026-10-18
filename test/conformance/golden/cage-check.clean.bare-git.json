@@ -24,6 +24,8 @@
       "entries": 0
     },
     "dependencies": "report",
+    "scope": null,
+    "scope_sources": null,
     "changes": [],
     "limits": [
       "Checks committed history in base..head only: uncommitted and untracked changes are not seen.",

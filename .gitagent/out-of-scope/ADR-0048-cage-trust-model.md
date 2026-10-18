@@ -12,6 +12,9 @@ match_terms:
   - exclude
   - lock-deps
   - dependency freeze
+  - allow_only
+  - allow-only
+  - scope mode
 ---
 
 ## Context
@@ -29,7 +32,7 @@ The same tighten-only shape already governs org policy ([ADR-0042](ADR-0042-org-
 ## Decision
 
 1. **Built-in rules are a floor.** Nothing in the working tree can remove or weaken a built-in rule.
-2. **`.cage.yaml` only adds.** The file at the cage root has a `protect:` list of `{path}` or `{glob}` entries, each with an optional `mode: revert|report`, plus three optional top-level keys: `mode:`, the default for `protect:` entries that set none, `contest_limit:` (see 7) and `dependencies:` (see 9).
+2. **`.cage.yaml` only adds.** The file at the cage root has a `protect:` list of `{path}` or `{glob}` entries, each with an optional `mode: revert|report`, plus four optional top-level keys: `mode:`, the default for `protect:` entries that set none, `contest_limit:` (see 7), `dependencies:` (see 9) and `allow_only:` (see 10).
    - Unknown keys, subtractive keys (`relax`, `exclude`, `allow`, …), absolute or `..` paths, YAML aliases, and `mode: report` on a path a built-in rule reverts are rejected before the command runs (`GXT_CAGE_CONFIG_INVALID`, exit 2). Format rules follow [ADR-0047](ADR-0047-config-file-format.md): humans write it, so it is YAML with a strict schema.
    - The top-level `mode:` default applies to the file's own `protect:` entries only. It never touches a built-in rule, and a default of `report` that would land on a path a built-in rule reverts is rejected the same way as a per-entry `mode: report` (amended by MSN-0244).
    - `.cage.yaml` is itself a built-in revert target, present or not. An edit during the session is restored, and a file created during the session is removed.
@@ -59,6 +62,15 @@ The same tighten-only shape already governs org policy ([ADR-0042](ADR-0042-org-
    - Decision 8 holds: frozen files are revert-rule bytes, so a lockfile over `--max-file-bytes` stops the run with `GXT_CAGE_FILE_TOO_LARGE`.
    - Reports name the rule (`lockfile`, `dependency_manifest`, both source `builtin`), and the session report, `gantry.cage-check.v1` and `gantry.cage-watch.v1` carry an additive `dependencies: "revert" | "report"` field so a reviewer can see whether the freeze was on.
    - **Limit:** cage restores files; it does not block the install. When an agent runs `npm install` against a tampered `package.json`, install-time scripts (`postinstall`, build scripts) have already run on the machine by the time cage restores the file. The freeze keeps an injected dependency out of the working tree, commits and PRs (session restore, push guard, `cage check` in CI); it does not stop install-time execution. That needs the package manager's own controls (`ignore-scripts`, a frozen install such as `npm ci`) or a harness that blocks the command.
+10. **A scope protects everything outside an allowed area, and only tightens** (amended by MSN-0276). The protected set is a blocklist. A build task usually knows the opposite, the few directories an implementer may touch, so a scope turns the cage into a per-task sandbox without missions: `.cage.yaml` top-level `allow_only: [globs]`, or the repeatable `--allow-only <glob>` on the session, `cage watch` and `cage check`.
+   - A glob that matches a path, or a directory above it, puts the path in scope. With both the key and the flag, a path is in scope only when it matches a glob of each list, so neither source can widen the other.
+   - Every path outside the scope that git would track (tracked files, and untracked files that are not gitignored) gets the built-in `out_of_scope` rule in revert mode. Gitignored files outside the scope (dependencies, build output, caches) are not policed, so builds and installs keep working; paths under `.git` stay with `git_control`. Other rules still apply inside and outside the scope and keep their own rule id (a `.env` inside the scope is still `secrets`); a report-mode path outside the scope, such as an unfrozen lockfile, becomes `out_of_scope` and is restored.
+   - Decision 2 holds: an empty `allow_only:`, a non-string entry or an absolute or `..` glob is refused (`GXT_CAGE_CONFIG_INVALID`; a bad flag value `GXT_CAGE_SCOPE_INVALID`). A `protect:` entry with `mode: report` on an out-of-scope path is not a downgrade: the path stays restored, because revert beats report.
+   - Decision 3 holds: `--allow-override <path>` relaxes one out-of-scope path for one session run, announced.
+   - Decision 5 holds: the scope is part of the session plan, the push guard's plan and the journal (the `--allow-only` globs), so an in-session `.cage.yaml` edit cannot change it. `cage check` reads `allow_only:` from the base commit ([ADR-0050](ADR-0050-cage-diff-check.md)); `--allow-only` intersects with it.
+   - Decision 8 is not weakened, and does not apply: the out-of-scope baseline is not held in memory. At start the working tree is written to the repository's object store as a git tree through a temporary index (the real index, HEAD and refs are untouched), changes are found by blob id, and a restore reads the blob back through the checkout filters, with the file mode and symlink target. The journal names the tree, so kill -9 recovery restores out-of-scope changes. A scope needs a git work tree at the cage root; elsewhere the run refuses before the command spawns (exit `2`, `GXT_CAGE_SCOPE_NOT_GIT`).
+   - Reports carry `scope` (the globs) and `scope_sources` (`cage_yaml`, `flag`).
+   - **Limits:** cage restores, it does not block, so a write outside the scope can be used or committed before the next check; the push guard and `cage check` cover commits. A scope does not see gitignored files. A root `.gitignore` edit is itself out of scope and restored, after which the file it hid is caught on the next check, but a file hidden through `.git/info/exclude` or a global excludes file is not restored. Untracked files hashed for the baseline stay in the object store as unreachable objects until git's garbage collection removes them. A scope is not a mission contract ([ADR-0045](ADR-0045-mission-contracts.md)): no Planner seal, no import rules, no evidence; missions remain the tool for Planner-approved scope that a reviewer can verify.
 
 ## Consequences
 
@@ -67,5 +79,6 @@ The same tighten-only shape already governs org policy ([ADR-0042](ADR-0042-org-
 - A legitimate rewriter of a protected path, such as a dev server that regenerates `.env.local`, now halts the session instead of being tolerated after three restores. The operator passes `--allow-override .env.local` for that run (announced, as always) or sets `contest_limit: 0` in `.cage.yaml` to keep the old contested behaviour.
 - Proposals to make cage rules subtractive in a file, to let an MCP tool edit them, or to let `cage suggest` write `.cage.yaml` directly reopen this ADR and need a Planner mission that supersedes it.
 - A project that freezes dependencies cannot add or upgrade a package in a caged run without an announced `--allow-override`, and `cage check` fails a PR that changes a lockfile or manifest once the freeze is committed at base. Dependency updates then go through a run or a PR where the freeze is deliberately off, which is the point.
+- A task run with a scope cannot leave edits outside its area in the working tree, and `cage check` fails a PR that touches paths outside a scope committed at base. Shared files a task legitimately needs (a route table, a schema) must be in its scope, or the change is restored; that is the point, and `--allow-override` covers the exception for one run.
 - A repository with a protected file over 5 MiB, or more than 64 MiB of protected bytes, now refuses to start a cage session instead of running with a hole in the protected set. The operator raises the cap or passes `--allow-override` for that path, and either shows up in the report.
 - Cage still restores rather than blocks individual writes: a change can be used in the gap before the next check, and past the contest limit cage terminates the command rather than preventing the write. This ADR is about who can change the rules and how far cage goes when they are broken; missions remain the tool for scope enforced on every write.

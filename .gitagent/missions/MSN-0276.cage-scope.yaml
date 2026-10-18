@@ -1,0 +1,243 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0276]. Executor must not run until the [MSN-0276] legislation commit + pin.
+#
+# Legislated intent: a scope mode for gantry cage. The cage protects a blocklist today (built-in rules, protect:).
+# A build task usually knows the opposite: the few directories an implementer may touch. A scope turns the cage into
+# a per-task sandbox without the mission substrate: everything git would track outside the allowed globs is
+# protected, in the session, watch and check.
+#
+# Constraints: no scope = today's behaviour, byte for byte. A scope only adds protection (ADR-0048 decisions 1-2).
+# Separate from mission contracts (ADR-0045): no Planner seal, no import rules, no trace, verify ignores it; reading
+# a mission contract as a cage scope is a later mission. No MCP tool, no workflow, no adopter template
+# (.github/workflows/ and templates/ forbidden); packages/opengantry-cage/src/ forbidden (the slim bin gets
+# --allow-only through the shared src/cli/program-cage.ts). Branch cut from msn-0275-cage-dependency-freeze (PR #227);
+# the PR opens against main after #227 merges.
+#
+# Amended 2026-10-18 after ADR-0052 step 1 (MSN-0281) landed on main: .gitagent/registry/error-codes.yaml and
+#        test/conformance/golden/ join the contract.
+# DoD 10 (law of ADR-0052 step 1): GXT_CAGE_SCOPE_NOT_GIT, GXT_CAGE_SCOPE_INVALID and GXT_CAGE_SCOPE_GIT_FAILED have
+#        error-codes.yaml entries (since MSN-0276) in the Planner commit; the golden files whose cage JSON gains
+#        scope and scope_sources (DoD 5) are re-recorded (cage-check.tamper, cage-check.clean.bare-git,
+#        cage-session.true.tamper) and no other golden file changes; npm run test:conformance passes.
+# DoD 1 (config): .cage.yaml takes a top-level allow_only: list of globs (same syntax as protect: globs). An empty
+#        list, a non-string entry, or an absolute or .. glob exits 2 with GXT_CAGE_CONFIG_INVALID. The resolved scope
+#        is part of the cage plan, of the serialized plan the session push guard reads, and of the journal.
+# DoD 2 (flag): --allow-only <glob> (repeatable) on the session (gantry cage -- <cmd>, gantry-cage), cage watch and
+#        cage check, also before the subcommand. With both .cage.yaml allow_only and the flag, a path is in scope only
+#        when it matches both (intersection), so neither widens the other.
+# DoD 3 (rule): every path outside the scope that git would track (tracked files, and untracked files that are not
+#        gitignored) gets a new built-in out_of_scope rule, revert. Gitignored files outside the scope are not
+#        policed; .git stays under git_control; other built-in rules still apply inside and outside the scope and
+#        keep their own rule id. Session: modified restored, added removed, deleted restored; watch prompts; check
+#        exits 3; push guard blocks. Without a scope, nothing changes. --allow-override <path> can relax an
+#        out-of-scope path for one session run, announced (decision 3).
+# DoD 4 (baseline): the out-of-scope baseline is a git tree written through a temporary index (the real index, HEAD
+#        and refs untouched); restores bring back bytes, the executable bit and symlinks from that tree; no in-memory
+#        cap applies to it. The journal records the tree so kill -9 recovery restores out-of-scope changes. A scope
+#        run outside a git work tree exits 2 with GXT_CAGE_SCOPE_NOT_GIT before the command runs.
+# DoD 5 (reports): rows name rule out_of_scope (source builtin). The session report, gantry.cage-check.v1 and
+#        gantry.cage-watch.v1 gain an additive scope: string[] | null field; start lines name the scope.
+#        Digest-only, no file bodies.
+# DoD 6 (tests): new src/cli/tests/cage-scope.test.ts: session via .cage.yaml and via --allow-only keeps an in-scope
+#        edit, restores a modified out-of-scope tracked file, removes a new non-ignored out-of-scope file, restores a
+#        deleted one, keeps a gitignored file outside the scope, still restores .env inside the scope; flag and
+#        config intersect; invalid allow_only and a non-git dir exit 2; the real index (git status) is unchanged; the
+#        executable bit survives a restore; kill -9 recovery restores an out-of-scope change; the push guard refuses
+#        a push of an out-of-scope path. cage check: base allow_only fails a range touching an out-of-scope path; a
+#        head that adds allow_only is not held to it in its own range; --allow-only works without .cage.yaml.
+#        cage watch: an out-of-scope change is prompted and restored on reject. npm run test:cage passes, with
+#        gantry-cage --allow-only covered in packages/opengantry-cage/tests/.
+# DoD 7 (ADR): ADR-0048 stays ACTIVE and gains decision 10 (scope mode): config key and flag, intersection,
+#        out_of_scope semantics, git tree baseline, plan-bound session and base-read check, and the limits
+#        (restore not block, gitignored files not seen, not a mission contract).
+# DoD 8 (docs): docs/cage/ documents the allow_only key, --allow-only, the out_of_scope rule, the git baseline and
+#        the limits (cage-yaml, protected-paths, session, check, watch, report, limits, index as needed);
+#        packages/opengantry-cage/README.md lists --allow-only; docs/CHANGELOG.md Unreleased entry.
+# DoD 9 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK).
+msn_id: MSN-0276
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0276 at a87c834: .cage.yaml top-level allow_only: parsed in cage-config.ts; [], a scalar, 42, /etc and ../up exit 2 with GXT_CAGE_CONFIG_INVALID before the command runs; CagePlan.scope {config, flag} is serialized for the push guard and recorded in the journal (allow_only globs, scope_tree); an in-session allow_only edit is restored and does not change the running scope"
+    anchor: "1478"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0276 at a87c834: --allow-only <glob> (repeatable) on gantry cage -- <cmd> and gantry-cage, gantry cage watch and gantry cage check, also before the subcommand; .cage.yaml allow_only [src] with --allow-only [src/billing, other] leaves src/shared and other out of scope (intersection); ../up exits 2 with GXT_CAGE_SCOPE_INVALID"
+    anchor: "1479"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0276 at a87c834: out_of_scope rule (revert, source builtin) for every file git would track outside the scope: session restores modified tracked and untracked files, removes other/new.ts, restores other/del.ts, the executable bit and a symlink target, restores an unfrozen package-lock.json outside the scope; dist/ (gitignored) kept; src/billing/.env still restored as secrets; watch prompts; check exits 3; push guard refuses; --allow-override other/b.ts keeps the change, overridden true; a .gitignore edit that hides a new file is restored and the file removed at exit, also with --no-watch"
+    anchor: "1480"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0276 at a87c834: baseline is a git tree written through a temporary index seeded from the real one; git ls-files -s unchanged and the staged change still staged after a session; restores read blobs via git cat-file --filters with file mode and symlink target; the journal records scope_tree and allow_only, not per-file entries, and kill -9 recovery restores src/shared/util.ts, other/del.ts and removes other/new.ts; a scope run in a non-git dir exits 2 with GXT_CAGE_SCOPE_NOT_GIT before the command runs"
+    anchor: "1481"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0276 at a87c834: rows name out_of_scope with source builtin; session report, gantry.cage-check.v1 and gantry.cage-watch.v1 carry scope (globs) and scope_sources {cage_yaml, flag}; start lines say (scope: src/billing); check summary line ends ; scope: src/billing, README.md; reports carry no file bodies"
+    anchor: "1482"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0276 at a87c834: new src/cli/tests/cage-scope.test.ts 10 tests (session via config and flag, CLI, intersection, invalid values and non-git, --allow-override, in-session edit, kill -9 recovery, push guard, watch reject and accept, .gitignore second pass which fails without the fix); cage-check.test.ts 3 new tests; all cage suites tests 92 pass 92; npm run test:cage tests 12 pass 12 fail 0 incl. gantry-cage --allow-only"
+    anchor: "1483"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "DoD 7 MSN-0276 at a87c834: ADR-0048 stays ACTIVE, decision 2 lists allow_only:, new decision 10 (scope mode): key and flag, directory coverage, intersection, out_of_scope semantics, decisions 2, 3, 5 hold, git tree baseline instead of decision 8 caps, scope and scope_sources in reports, limits (restore not block, gitignored and .git/info/exclude not seen, unreachable objects until gc, not a mission contract); consequence added"
+    anchor: "1484"
+    status: PASS
+  - dod_id: "8"
+    trace_quote: "DoD 8 MSN-0276 re-attested at 8d77bab after merging main (#227, #229, #230): docs/cage/watch.md and docs/cage/report.md options tables list --allow-only next to --lock-deps; the rest of the docs as attested at a87c834; assert-docs-structure OK (52 pages, 38 published, 316 relative links checked)"
+    anchor: "1487"
+    status: PASS
+  - dod_id: "9"
+    trace_quote: "DoD 9 MSN-0276 re-attested at bf33d48 after merging main (#232 ADR-0052 step 1, #228 MSN-0277): ./scripts/dev-validate-core.sh exit 0: unit tests 964 pass 964 fail 0; conformance suite tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1489"
+    status: PASS
+  - dod_id: "10"
+    trace_quote: "DoD 10 MSN-0276 at bf33d48: .gitagent/registry/error-codes.yaml lists GXT_CAGE_SCOPE_GIT_FAILED, GXT_CAGE_SCOPE_INVALID and GXT_CAGE_SCOPE_NOT_GIT with since MSN-0276, committed by the Planner in 8b07ae3; the golden files cage-check.tamper, cage-check.clean.bare-git and cage-session.true.tamper were re-recorded and differ only by \"scope\": null and \"scope_sources\": null; no other golden file changed; the conformance suite passes"
+    anchor: "1490"
+    status: PASS
+gate_success_substring: dev-validate-core OK
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept and amend: ADR-0048 stays ACTIVE and gains decision 10
+      (scope mode). It fits decisions 1-2: a scope only adds protection.
+      .cage.yaml top-level allow_only: [globs] and the repeatable --allow-only
+      <glob> flag (session, watch, check) define the allowed area; when both are
+      given a path must match both, so neither can widen the other. Every path
+      outside it that git would track (tracked files and untracked files that
+      are not gitignored) gets a new built-in out_of_scope rule in revert mode;
+      gitignored files outside the scope (node_modules, build output) are not
+      policed, and .git stays under git_control. Built-in rules still apply
+      inside the scope and win. Decision 3 holds: --allow-override <path> can
+      relax an out-of-scope path for one session run, announced. Decision 5
+      holds: the scope is part of the session plan, the serialized push-guard
+      plan and the journal, so an in-session .cage.yaml edit cannot change it;
+      cage check reads allow_only from the base commit (ADR-0050) and
+      --allow-only narrows it further. Decision 8 is not weakened: the
+      out-of-scope baseline is a git tree written to the repository object store
+      through a temporary index (the real index is untouched), not in-memory
+      bytes, so it has no memory cap; outside a git work tree a scope run
+      refuses with exit 2. Limits stated in the amendment: cage restores rather
+      than blocks, a scope does not see gitignored files, and it is not a
+      mission contract (ADR-0045)."
+    adr_refs:
+      - ADR-0048
+      - ADR-0050
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3), as for MSN-0267, MSN-0268 and MSN-0275:
+      the change spans the cage runtime under src/cli/lib/cage/, the cage
+      command wiring, an ADR-0048 amendment, docs/cage/ and the slim package
+      README and tests. TMVC is narrowed by contract.tmvc_roots to exactly those
+      paths plus the cage test files, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      README.md and this mission file."
+    adr_refs:
+      - ADR-0048
+      - ADR-0050
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0045 stays ACTIVE and unchanged. The cage scope is
+      deliberately separate from the mission contract (operator decision): it is
+      the no-mission tier, a plain glob list in .cage.yaml or on the command
+      line, with no Planner seal, no contract_sha256, no import rules and no
+      trace. It neither reads nor writes mission contracts, and gantry verify
+      ignores it. The ADR-0048 amendment and docs/cage say when to use which:
+      cage scope restores or fails changes outside an allowed area; a mission
+      contract is Planner-approved scope with evidence. Reading a mission
+      contract.tmvc_roots as a cage scope is left to a later mission."
+    adr_refs:
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0047 stays ACTIVE and unchanged. The new top-level
+      allow_only: key goes into the existing human-written .cage.yaml, parsed by
+      the existing yaml loader in cage-config.ts: YAML 1.2 core schema, aliases
+      rejected, unknown keys, an empty list, non-string entries and absolute or
+      .. globs rejected with GXT_CAGE_CONFIG_INVALID. The git tree baseline is
+      an object in the repository object store, not a new file format; reports
+      stay JSON."
+    adr_refs:
+      - ADR-0047
+  - finding_id: f4a803c82471
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/program-cage.ts is the cage command
+      registration module, one of the src/cli/program-*.ts files that no
+      TARGET_ARCHITECTURE layer maps; it only gains the --allow-only option
+      wiring for the session, watch and check commands, passed to
+      src/cli/commands/cage.ts. src/cli/tests/cage.test.ts, cage-check.test.ts,
+      cage-watch.test.ts, cage-watch-decisions.test.ts and the new
+      cage-scope.test.ts hold tests only and may import the cage library they
+      exercise. No production logic goes into these paths beyond option wiring.
+interrogation_sha256: 62f38f6eab1c37a6e6b5c41daebcaa1c51e3770780475ad9a6a45b49eb015f05
+declared_paths:
+  - .gitagent/missions/MSN-0276.cage-scope.yaml
+  - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+  - .gitagent/registry/error-codes.yaml
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/cage/
+  - packages/opengantry-cage/README.md
+  - packages/opengantry-cage/tests/
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-check.test.ts
+  - src/cli/tests/cage-scope.test.ts
+  - src/cli/tests/cage-watch-decisions.test.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+  - test/conformance/golden/
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0276.cage-scope.yaml
+    - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+    - .gitagent/registry/error-codes.yaml
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/cage/
+    - packages/opengantry-cage/README.md
+    - packages/opengantry-cage/tests/
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-check.test.ts
+    - src/cli/tests/cage-scope.test.ts
+    - src/cli/tests/cage-watch-decisions.test.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+    - test/conformance/golden/
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/opengantry-cage/src/
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+    - templates/
+contract_sha256: 8651c55bb33c62fe859132950610bf9479b248f45da8d0872a97b31a591e2b51
