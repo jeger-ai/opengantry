@@ -36,6 +36,21 @@ export interface VerifyCheck {
   failures: string | null;
 }
 
+/** `imports`: these files may not import those modules (a module prefix per entry). */
+export interface VerifyImportRule {
+  name: string;
+  files: string[];
+  forbid: string[];
+  why: string | null;
+}
+
+/** `layers`: files under `paths` form a layer; an import into a layer named in `mayNotImport` fails. */
+export interface VerifyLayer {
+  name: string;
+  paths: string[];
+  mayNotImport: string[];
+}
+
 export interface VerifyContract {
   format: "verify_yaml" | "commitly_gate";
   base: string | null;
@@ -45,6 +60,12 @@ export interface VerifyContract {
   sizeExclude: string[];
   rules: VerifyRule[];
   checks: VerifyCheck[];
+  imports: VerifyImportRule[];
+  layers: VerifyLayer[];
+  /** TS/JS specifier prefix -> repository path prefix, applied before resolution. */
+  pathAliases: Record<string, string>;
+  /** Roots for absolute Python imports; default the repository root. */
+  pythonPaths: string[];
   /** Keys read but not applied (gate.json `cage_protect`, `part`); reported once on stderr. */
   ignored: string[];
 }
@@ -155,6 +176,54 @@ function parseYamlCheck(raw: unknown, i: number): VerifyCheck {
   };
 }
 
+function relPath(v: unknown, where: string): string {
+  const s = str(v, where)!;
+  const clean = s.replace(/\\/g, "/").replace(/^\.\//, "");
+  if (clean.startsWith("/") || clean.split("/").includes("..")) throw contractError(`${where} must be a repository-relative path without ".."`);
+  return clean === "" ? "." : clean;
+}
+
+function parseImportRule(raw: unknown, i: number): VerifyImportRule {
+  const where = `imports[${String(i)}]`;
+  if (!isObj(raw)) throw contractError(`${where} must be a mapping`);
+  only(raw, ["name", "files", "forbid", "why"], where);
+  const files = strList(raw.files, `${where}.files`);
+  const forbid = strList(raw.forbid, `${where}.forbid`);
+  if (!files || files.length === 0) throw contractError(`${where}.files must list at least one glob`);
+  if (!forbid || forbid.length === 0) throw contractError(`${where}.forbid must list at least one module`);
+  return { name: str(raw.name, `${where}.name`)!, files, forbid, why: str(raw.why, `${where}.why`, { optional: true }) };
+}
+
+function parseLayers(raw: unknown): VerifyLayer[] {
+  const layers = uniqueNames(
+    list(raw, "layers").map((l, i) => {
+      const where = `layers[${String(i)}]`;
+      if (!isObj(l)) throw contractError(`${where} must be a mapping`);
+      only(l, ["name", "paths", "may_not_import"], where);
+      const paths = strList(l.paths, `${where}.paths`);
+      if (!paths || paths.length === 0) throw contractError(`${where}.paths must list at least one path`);
+      return { name: str(l.name, `${where}.name`)!, paths, mayNotImport: strList(l.may_not_import, `${where}.may_not_import`) ?? [] };
+    }),
+    "layers",
+  );
+  const known = new Set(layers.map((l) => l.name));
+  for (const l of layers) {
+    for (const target of l.mayNotImport) if (!known.has(target)) throw contractError(`layers: ${l.name} may_not_import names unknown layer "${target}"`);
+  }
+  return layers;
+}
+
+function parseAliases(raw: unknown): Record<string, string> {
+  if (raw === undefined || raw === null) return {};
+  if (!isObj(raw)) throw contractError("path_aliases must be a mapping of specifier prefix to repository path");
+  const out: Record<string, string> = {};
+  for (const [prefix, target] of Object.entries(raw)) {
+    if (!prefix.trim() || prefix.startsWith(".")) throw contractError(`path_aliases: "${prefix}" must be a non-relative specifier prefix`);
+    out[prefix] = relPath(target, `path_aliases["${prefix}"]`);
+  }
+  return out;
+}
+
 function section(raw: unknown, where: string, keys: readonly string[]): Obj {
   if (raw === undefined || raw === null) return {};
   if (!isObj(raw)) throw contractError(`${where} must be a mapping`);
@@ -173,7 +242,7 @@ export function parseVerifyYaml(text: string): VerifyContract {
     throw contractError(`invalid YAML: ${err instanceof Error ? err.message : String(err)}`);
   }
   if (!isObj(data)) throw contractError("expected a mapping");
-  only(data, ["schema", "base", "scope", "size", "rules", "checks"], "top level");
+  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths"], "top level");
   if (data.schema !== VERIFY_CONTRACT_SCHEMA) throw contractError(`schema must be ${VERIFY_CONTRACT_SCHEMA}`);
   const scope = section(data.scope, "scope", ["allowed_paths", "forbidden_paths"]);
   const size = section(data.size, "size", ["max_added_lines", "exclude"]);
@@ -186,7 +255,35 @@ export function parseVerifyYaml(text: string): VerifyContract {
     sizeExclude: strList(size.exclude, "size.exclude") ?? [],
     rules: uniqueNames(list(data.rules, "rules").map(parseYamlRule), "rules"),
     checks: uniqueNames(list(data.checks, "checks").map(parseYamlCheck), "checks"),
+    imports: uniqueNames(list(data.imports, "imports").map(parseImportRule), "imports"),
+    layers: parseLayers(data.layers),
+    pathAliases: parseAliases(data.path_aliases),
+    pythonPaths: (strList(data.python_paths, "python_paths") ?? ["."]).map((p, i) => relPath(p, `python_paths[${String(i)}]`)),
     ignored: [],
+  };
+}
+
+/**
+ * Repository law for a contract that is not the repository's own `verify.yaml` (a task's gate.json, a handover
+ * contract): the base `verify.yaml`'s imports, layers, aliases, Python roots, rules and forbidden paths join the
+ * task's, tighten-only. Checks, size and allowed paths stay the task's (ADR-0051, MSN-0279).
+ */
+export function mergeRepositoryLaw(task: VerifyContract, repo: VerifyContract): VerifyContract {
+  const layers = new Map<string, VerifyLayer>();
+  for (const l of [...repo.layers, ...task.layers]) {
+    const seen = layers.get(l.name);
+    layers.set(l.name, seen
+      ? { name: l.name, paths: [...new Set([...seen.paths, ...l.paths])], mayNotImport: [...new Set([...seen.mayNotImport, ...l.mayNotImport])] }
+      : l);
+  }
+  return {
+    ...task,
+    forbiddenPaths: [...new Set([...repo.forbiddenPaths, ...task.forbiddenPaths])],
+    rules: [...repo.rules, ...task.rules],
+    imports: [...repo.imports, ...task.imports],
+    layers: [...layers.values()],
+    pathAliases: { ...task.pathAliases, ...repo.pathAliases },
+    pythonPaths: [...new Set([...repo.pythonPaths, ...task.pythonPaths])],
   };
 }
 
@@ -239,6 +336,10 @@ export function parseCommitlyGate(text: string): VerifyContract {
     sizeExclude: strList(data.size_exclude, "size_exclude") ?? [],
     rules: uniqueNames(list(data.rules, "rules").map(parseGateRule), "rules"),
     checks: uniqueNames(checks, "checks"),
+    imports: [],
+    layers: [],
+    pathAliases: {},
+    pythonPaths: ["."],
     ignored: [...ignored].sort(),
   };
 }

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { GantryUserError } from "../errors.js";
@@ -10,8 +11,22 @@ import {
   type VerifyCheckResult,
   type VerifyMode,
 } from "./checks.js";
-import { loadVerifyContract, type LoadedVerifyContract, type VerifyContract } from "./contract.js";
+import {
+  canonicalReceiptUtf8,
+  signReceiptMessage,
+  verifySignatureWithAllowedSigners,
+  type ReceiptSignature,
+} from "../receipt-signing.js";
+import {
+  contractError,
+  loadVerifyContract,
+  mergeRepositoryLaw,
+  parseVerifyYaml,
+  type LoadedVerifyContract,
+  type VerifyContract,
+} from "./contract.js";
 import { addedLinesOf, anyPathOf, changedFiles, countAddedLines } from "./diff.js";
+import { diskSourceTree, evaluateImports, gitSourceTree, type ImportFindings } from "./imports.js";
 
 export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
 export const VERIFY_BASELINE_SCHEMA = "opengantry.verify-baseline.v1" as const;
@@ -37,8 +52,16 @@ export interface VerifyContractResult {
   paths: { changed: string[]; outside: string[]; forbidden: string[] };
   size: { added: number; max: number | null; files: number };
   rules: { name: string; why: string | null; violations: { file: string; line: number }[] }[];
+  /** The repository's base `verify.yaml` merged into a task contract (gate.json, a handover contract); else null. */
+  inherited: { path: string; sha256: string } | null;
+  imports: ImportFindings["imports"];
+  layers: ImportFindings["layers"];
+  /** Files an imports or layers rule covers that verify cannot parse. */
+  skipped: string[];
   checks: VerifyCheckResult[];
   problems: string[];
+  /** `--sign`: the receipt-signing envelope over the canonical result without this field. */
+  signature?: ReceiptSignature;
 }
 
 export interface VerifyContractOptions {
@@ -50,6 +73,8 @@ export interface VerifyContractOptions {
   baselineFile?: string;
   /** Called after each check, e.g. to print progress and a failing check's output on stderr. */
   onCheck?: (run: CheckRun) => void;
+  /** Sign the result with the git signing key (receipt-signing.ts). */
+  sign?: boolean;
 }
 
 interface Prepared {
@@ -58,6 +83,7 @@ interface Prepared {
   base: string;
   head: string;
   dirty: boolean;
+  inherited: VerifyContractResult["inherited"];
 }
 
 function prep(code: string, message: string, hint?: string): GantryUserError {
@@ -92,7 +118,23 @@ function prepare(opts: VerifyContractOptions): Prepared {
   const head = gitRevParse(root, "HEAD");
   if (!head) throw prep("GXT_VERIFY_NO_HEAD", "the repository has no commit at HEAD");
   const dirty = gitRun(root, ["status", "--porcelain"]).stdout.trim() !== "";
-  return { root, loaded, base, head, dirty };
+  const { contract, inherited } = withRepositoryLaw(root, base, loaded);
+  return { root, loaded: { ...loaded, contract }, base, head, dirty, inherited };
+}
+
+/** A task contract (not the repository's own verify.yaml) also answers to the base commit's verify.yaml. */
+function withRepositoryLaw(root: string, base: string, loaded: LoadedVerifyContract): { contract: VerifyContract; inherited: VerifyContractResult["inherited"] } {
+  if (loaded.source === "base" && loaded.path === DEFAULT_VERIFY_CONTRACT) return { contract: loaded.contract, inherited: null };
+  const at = gitRun(root, ["cat-file", "blob", `${base}:${DEFAULT_VERIFY_CONTRACT}`]);
+  if (!at.ok) return { contract: loaded.contract, inherited: null };
+  let repo: VerifyContract;
+  try {
+    repo = parseVerifyYaml(at.stdout);
+  } catch (err) {
+    throw contractError(`the repository ${DEFAULT_VERIFY_CONTRACT} at ${base.slice(0, 12)}: ${err instanceof Error ? err.message.replace(/^verify contract: /, "") : String(err)}`);
+  }
+  const sha256 = crypto.createHash("sha256").update(at.stdout).digest("hex");
+  return { contract: mergeRepositoryLaw(loaded.contract, repo), inherited: { path: DEFAULT_VERIFY_CONTRACT, sha256 } };
 }
 
 function baselinePath(p: Prepared, opts: VerifyContractOptions): string {
@@ -168,6 +210,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   const paths = judgePaths(p, changed, problems);
   const size = judgeSize(p, changed, worktree, problems);
   const rules = judgeRules(p, changed, worktree, problems);
+  const found = judgeImports(p, changed, worktree, problems);
   const baseline = loadBaseline(p, opts);
   const checks = p.loaded.contract.checks.map((check) => {
     const run = runVerifyCheck(p.root, check, mode, baseline);
@@ -176,7 +219,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
     return run.result;
   });
   const { contract, ...loaded } = p.loaded;
-  return {
+  const result: VerifyContractResult = {
     schema: VERIFY_RESULT_SCHEMA,
     status: problems.length > 0 ? "fail" : "pass",
     mode,
@@ -187,9 +230,33 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
     paths,
     size,
     rules,
+    inherited: p.inherited,
+    imports: found.imports,
+    layers: found.layers,
+    skipped: found.skipped,
     checks,
     problems,
   };
+  if (!opts.sign) return result;
+  // Sign exactly what the result file will hold: the JSON round trip drops keys whose value is undefined.
+  const signature = signReceiptMessage(p.root, canonicalReceiptUtf8(JSON.parse(JSON.stringify(result)) as VerifyContractResult), "canonical_json_utf8");
+  if (!signature) throw prep("GXT_VERIFY_SIGN_NO_KEY", "--sign needs a git signing key (git config user.signingkey, gpg.format ssh or gpg)");
+  return { ...result, signature };
+}
+
+function judgeImports(p: Prepared, changed: string[], worktree: boolean, problems: string[]): ImportFindings {
+  const c = p.loaded.contract;
+  if (c.imports.length === 0 && !c.layers.some((l) => l.mayNotImport.length > 0)) return { imports: [], layers: [], skipped: [] };
+  const head = worktree ? diskSourceTree(p.root) : gitSourceTree(p.root, p.head);
+  const found = evaluateImports(c, changed, head, gitSourceTree(p.root, p.base));
+  for (const r of found.imports.filter((x) => x.violations.length > 0)) {
+    const why = r.why ? ` (${r.why})` : "";
+    problems.push(`import rule "${r.name}"${why}: ${r.violations.map((v) => `${v.file}:${String(v.line)} ${v.spec}`).join(", ")}`);
+  }
+  for (const l of found.layers.filter((x) => x.violations.length > 0)) {
+    problems.push(`layer "${l.name}": ${l.violations.map((v) => `${v.file}:${String(v.line)} ${v.spec} -> ${v.target} (${v.layer})`).join(", ")}`);
+  }
+  return found;
 }
 
 export interface VerifyBaselineReport {
@@ -221,7 +288,10 @@ export function writeVerifyBaseline(opts: VerifyContractOptions = {}): VerifyBas
 }
 
 /** Whether a stored result passed in full mode for this HEAD and this contract, on a clean tree. */
-export function checkVerifyResult(resultFile: string, opts: VerifyContractOptions = {}): { ok: boolean; problems: string[] } {
+export function checkVerifyResult(
+  resultFile: string,
+  opts: VerifyContractOptions & { allowedSigners?: string } = {},
+): { ok: boolean; problems: string[]; signer: string | null } {
   const p = prepare(opts);
   let result: Partial<VerifyContractResult>;
   try {
@@ -238,7 +308,17 @@ export function checkVerifyResult(resultFile: string, opts: VerifyContractOption
     result.contract?.sha256 !== p.loaded.sha256 && "the contract changed after the result was written",
     p.dirty && "the tree has uncommitted changes",
   ].filter((x): x is string => typeof x === "string");
-  return { ok: problems.length === 0, problems };
+  let signer: string | null = null;
+  if (opts.allowedSigners) {
+    const signers = path.resolve(opts.cwd ?? process.cwd(), opts.allowedSigners);
+    if (!result.signature) problems.push("the result is not signed");
+    else {
+      const v = verifySignatureWithAllowedSigners(canonicalReceiptUtf8(result), result.signature, signers);
+      if (v.status === "good") signer = v.principal;
+      else problems.push(`the signature does not verify against ${opts.allowedSigners} (${v.status})`);
+    }
+  }
+  return { ok: problems.length === 0, problems, signer };
 }
 
 export type { VerifyBaselineFailures };

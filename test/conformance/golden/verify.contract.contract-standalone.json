@@ -43,6 +43,10 @@
         "violations": []
       }
     ],
+    "inherited": null,
+    "imports": [],
+    "layers": [],
+    "skipped": [],
     "checks": [
       {
         "name": "unit",

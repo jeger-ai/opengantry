@@ -228,3 +228,36 @@ export function verifyReceiptAgainstCanonical(
   const message = resolveSignatureMessage(receipt.receipt_sha256, canonicalUtf8, encoding);
   return verifyReceiptSignature(repoRoot, message, receipt.signature);
 }
+
+/**
+ * Verify a signature against an allowed-signers file (a team's or CI's list, `ssh-keygen` ALLOWED SIGNERS format)
+ * instead of the local signing key, and name the signer. SSH only: other kinds report `unknown`.
+ */
+export function verifySignatureWithAllowedSigners(
+  message: string,
+  signature: ReceiptSignature,
+  allowedSignersFile: string,
+): { status: ReceiptSignatureVerifyStatus; principal: string | null } {
+  if (signature.kind !== "ssh") return { status: "unknown", principal: null };
+  const sigPath = path.join(os.tmpdir(), `gxt-receipt-verify-${randomTempSuffix()}.sig`);
+  try {
+    fs.writeFileSync(sigPath, Buffer.from(signature.signature_b64, "base64"));
+    const found = spawnSync("ssh-keygen", ["-Y", "find-principals", "-s", sigPath, "-f", allowedSignersFile], { encoding: "utf8" });
+    const principals = found.status === 0 ? found.stdout.split("\n").map((l) => l.trim()).filter(Boolean) : [];
+    for (const principal of principals) {
+      const result = spawnSync(
+        "ssh-keygen",
+        ["-Y", "verify", "-f", allowedSignersFile, "-I", principal, "-n", RECEIPT_SIGN_NAMESPACE, "-s", sigPath],
+        { input: message, encoding: "utf8" },
+      );
+      if (result.status === 0) return { status: "good", principal };
+    }
+    return { status: "bad", principal: null };
+  } finally {
+    try {
+      fs.unlinkSync(sigPath);
+    } catch {
+      /* best effort */
+    }
+  }
+}
