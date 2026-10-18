@@ -108,7 +108,7 @@ gantry legislate "<intent summary>" --msn MSN-NNNN --skill-key <key> \
 1. Approve draft (MCP) or paste and run `gantry legislate` (CLI).
 2. Optionally review/edit the generated YAML.
 3. `git commit -m "[MSN-NNNN] legislate …"` including the mission file (Planner email in `GANTRY_PLANNER_EMAILS`; silent legacy fallback: `GAPMAN_PLANNER_EMAILS`).
-4. `scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml` (or `gxt_pin_mission` MCP tool).
+4. `gantry pin .gitagent/missions/MSN-NNNN.<slug>.yaml` (or `gxt_pin_mission` MCP tool).
 5. Executor phase begins.
 
 ## Executor phase (after pin)

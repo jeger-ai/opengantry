@@ -8,37 +8,33 @@ if [ -z "$ROOT" ]; then
 fi
 cd "$ROOT"
 
-MISSION=""
-if MISSION="$(scripts/gxt-resolve-mission.sh 2>/dev/null)"; then
-  :
+# gantry resolves the pinned mission itself (gantry pin <file>, GANTRY_MISSION, the legacy ACTIVE_MISSION files).
+RUNTIME_JSON=""
+if command -v gantry >/dev/null 2>&1; then
+  RUNTIME_JSON="$(gantry runtime env --json 2>/dev/null)" || RUNTIME_JSON=""
+elif [ -f "dist/cli/index.js" ]; then
+  RUNTIME_JSON="$(node dist/cli/index.js runtime env --json 2>/dev/null)" || RUNTIME_JSON=""
 else
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gantry legislate.",
+      additional_context: "GXT: gantry not built — run npm ci && npm run build, then gantry pin <mission>",
     }));
   '
   exit 0
 fi
 
-RUNTIME_JSON=""
-if command -v gantry >/dev/null 2>&1; then
-  RUNTIME_JSON="$(gantry runtime env --mission "$MISSION" --json 2>/dev/null || true)"
-elif [ -f "dist/cli/index.js" ]; then
-  RUNTIME_JSON="$(node dist/cli/index.js runtime env --mission "$MISSION" --json 2>/dev/null || true)"
-fi
-
 if [ -z "$RUNTIME_JSON" ]; then
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "GXT: gantry not built — run npm ci && npm run build, then scripts/gxt-pin-mission.sh <mission>",
+      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gantry legislate, then gantry pin <mission>.",
     }));
   '
   exit 0
 fi
 
 node -e '
-const mission = process.argv[1];
-const runtimeJson = process.argv[2];
+const runtimeJson = process.argv[1];
+const mission = "";
 let payload;
 try {
   payload = JSON.parse(runtimeJson);
@@ -63,6 +59,6 @@ process.stdout.write(JSON.stringify({
     "IDE Agent edits are advisory TMVC; shell substrate writes are hook-guarded. Full graph: docs/DEVELOPMENT.md",
   ].join("\n"),
 }));
-' "$MISSION" "$RUNTIME_JSON"
+' "$RUNTIME_JSON"
 
 exit 0
