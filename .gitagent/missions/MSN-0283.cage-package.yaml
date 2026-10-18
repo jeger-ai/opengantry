@@ -205,7 +205,33 @@ interrogation:
       - ADR-0049
 interrogation_sha256: 84cc39351f82a348fe0e4deeb44e333d5011dface068d56efe1f01f782a38286
 declared_paths:
-  - .gitagent/missions/MSN-0283.cage-package.yaml ARCH_BASELINE.json
+  - .gitagent/missions/MSN-0283.cage-package.yaml
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - package.json
+  - packages/cage/
+  - packages/core/src/index.ts
+  - packages/core/src/posix-path.ts
+  - packages/opengantry-cage/build.mjs
+  - packages/opengantry-cage/src/entry.ts
+  - packages/opengantry-cage/README.md
+  - packages/opengantry-cage/tests/package-shape.test.mjs
+  - packages/opengantry-cage/tests/size-budget.test.mjs
+  - src/cli/commands/cage.ts
+  - src/cli/lib/cage/
+  - src/cli/lib/cli-io.ts
+  - src/cli/tests/cage-check.test.ts
+  - src/cli/tests/cage-scope.test.ts
+  - src/cli/tests/cage-suggest.test.ts
+  - src/cli/tests/cage-symlink-root.test.ts
+  - src/cli/tests/cage-watch-decisions.test.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+  - tsconfig.json
     EXECUTOR_LOG.md TARGET_ARCHITECTURE.yaml docs/ARCHITECTURE.md
     docs/CHANGELOG.md docs/DEVELOPMENT.md package.json packages/cage/
     packages/core/src/index.ts packages/core/src/posix-path.ts
