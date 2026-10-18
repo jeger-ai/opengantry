@@ -53,20 +53,20 @@ trace_rows:
     anchor: "1551"
     status: PASS
   - dod_id: "4"
-    trace_quote: "DoD 4 MSN-0285 re-attested at d501612: unit tests 964 pass 964 fail 0 unchanged (contract runtime, legislate, arch check, perimeter, surgeon and check-import-layers tests included); conformance suite tests 85 pass 84 fail 0 skipped 1 with git status showing 0 changed golden files (arch-check, perimeter-check, contract-check, check-imports goldens included)"
-    anchor: "1552"
+    trace_quote: "DoD 4 MSN-0285 re-attested at ef1123f: after merging origin/main (#234, MSN-0279) unit tests 971 pass 971 fail 0; conformance pass/skipped 84/1 with 0 changed golden files (main's two re-recorded verify --contract goldens pass against this branch's build); MSN-0279's src/cli/lib/verify-standalone/imports.ts reaches the scanner through the src/cli/lib/import-scanner.ts facade"
+    anchor: "1556"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0285 re-attested at d501612: gantry arch check over src/cli and every package: OK; node: specifiers under packages/core/src: node:module node:path; ARCH_BASELINE.json commit 74349a8: core 11/1092/112, git 3/189/21, cage 15/3619/145, command 38/3081/116, lib 241/29017/1409, delivery 12/1804/30; --check OK; regenerated at 74349a8 byte-identical (cmp)"
-    anchor: "1553"
+    trace_quote: "DoD 5 MSN-0285 re-attested at ef1123f: ARCH_BASELINE.json regenerated at 33496f2: core 11/1092/112, git 3/189/21, cage 15/3619/145, command 38/3107/117, lib 243/29564/1422, delivery 12/1797/30; --check OK; gantry arch check OK"
+    anchor: "1557"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0285 re-attested at d501612: docs/ARCHITECTURE.md One law, one evaluator section names evaluateImportSite, ArchLaw, layerForFile, evaluateLayerImport and evaluatePatternRules and the scanner and classifier in core; docs/DEVELOPMENT.md core row and the rule that path, scope and import decisions go through #core/law.js; docs/CHANGELOG.md substrate note Import rules in core (ADR-0052 step 3b)"
     anchor: "1554"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0285 re-attested at d501612: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; git diff --name-only origin/main...HEAD lists only ARCH_BASELINE.json docs/ARCHITECTURE.md docs/CHANGELOG.md docs/DEVELOPMENT.md .gitagent/missions/MSN-0285.import-rules.yaml packages/core/src/import-scanner.ts packages/core/src/index.ts packages/core/src/law.ts packages/core/src/specifier.ts packages/core/tests/law-imports.test.ts src/cli/lib/arch/cage/target-architecture.ts src/cli/lib/ast-discovery.ts src/cli/lib/contract/contract-scan.ts src/cli/lib/contract/resolve-specifier.ts src/cli/lib/import-scanner.ts , all under contract.tmvc_roots"
-    anchor: "1555"
+    trace_quote: "DoD 7 MSN-0285 re-attested at ef1123f: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 971 pass 971 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; merge of main with the executor log keeping main's lines first and the rows re-anchored"
+    anchor: "1558"
     status: PASS
 interrogation:
   - finding_id: 1ae19e8f75ca
