@@ -64,16 +64,16 @@ trace_rows:
     anchor: "1505"
     status: PASS
   - dod_id: "6"
-    trace_quote: "DoD 6 MSN-0282 at 2b43009: conformance suite tests 85 pass 82 fail 0 skipped 3 with git status showing 0 changed golden files; unit tests 937 pass 937 fail 0"
-    anchor: "1496"
+    trace_quote: "DoD 6 MSN-0282 re-attested at 3f9f6f1: the conformance runner normalizes the receipt id in MSN-NNNN-<12 hex> paths (an all-digit id escaped the short-sha pattern and failed the attest case once inside the pre-push gate); attest.mission-pass re-recorded with MSN-0101-<ID>; compare mode then passed three times in a row: 84 pass, 0 fail, 1 skipped; no other golden changed"
+    anchor: "1507"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0282 re-attested at e075cc4: docs/ARCHITECTURE.md, docs/DEVELOPMENT.md and docs/CHANGELOG.md say the packages are not npm workspaces and that adding one changes no lockfile"
     anchor: "1500"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0282 re-attested at 2f3bc63: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; second merge of main (#231) with the executor log keeping main's lines first and the rows re-anchored"
-    anchor: "1506"
+    trace_quote: "DoD 8 MSN-0282 re-attested at 3f9f6f1: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1508"
     status: PASS
 interrogation:
   - finding_id: 25f6f42f070e
