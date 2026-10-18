@@ -101,7 +101,7 @@ export function missionsForRange(root: string, manifest: Manifest, baseSha: stri
       "diff touches MSN-enforced paths but no mission file under .gitagent/missions/",
       `  trusted automation: ${verdict.reason}`,
       '  Fix: gantry legislate "<intent>" --msn MSN-NNNN --skill-key gantry && include mission YAML in this PR',
-      "  Or: declare eligible automation in .gitagent/config.json trusted_automation (fail-closed by default)",
+      "  Or: declare eligible automation in .gitagent/config.yaml trusted_automation (fail-closed by default)",
     ].join("\n"),
   };
 }

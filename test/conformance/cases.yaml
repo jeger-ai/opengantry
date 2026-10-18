@@ -26,6 +26,8 @@ cases:
   - { id: migrate-manifest.mission-pass, fixture: mission-pass, args: [migrate, manifest, --json], record_tree: true }
   - { id: migrate-manifest.dry-run.mission-pass, fixture: mission-pass, args: [migrate, manifest, --dry-run], record_tree: true }
   - { id: migrate-manifest.fresh-init, fixture: fresh-init, args: [migrate, manifest] }
+  - { id: migrate-config.fresh-init, fixture: fresh-init, args: [migrate, config, --json] }
+  - { id: migrate-config.bare-git, fixture: bare-git, args: [migrate, config] }
   - { id: upgrade-plan.fresh-init, fixture: fresh-init, args: [upgrade, plan, --json] }
   - { id: upgrade-apply.no-mission.fresh-init, fixture: fresh-init, args: [upgrade, apply, --json] }
   - { id: blueprint.fresh-init, fixture: fresh-init, args: [blueprint, --yes], record_tree: true }

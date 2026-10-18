@@ -1,0 +1,14 @@
+# OpenGantry config: Planner-owned switches (signature tiers, telemetry, the ledger, trusted automation).
+# Humans write YAML (ADR-0047). The CLI reads this file; the 3.x config.json is read only when this file is absent.
+
+trusted_automation:
+  rules:
+    - id: workflow-dependency-bumps
+      allowed_actors:
+        - dependabot[bot]@users.noreply.github.com
+        - 49699333+dependabot[bot]@users.noreply.github.com
+      allowed_paths:
+        - .github/workflows/**
+      allowed_structural_changes:
+        - workflow_version_pin
+      max_net_loc: 5

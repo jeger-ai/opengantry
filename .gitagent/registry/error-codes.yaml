@@ -136,6 +136,10 @@ entries:
   - name: GXT_KPI_REPORT_STALE
     since: MSN-0045
     defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_LAW_FILE_AMBIGUOUS
+    since: MSN-0302
+    defined_in: packages/core/src/error-codes.ts
+    note: Replaces GXT_MANIFEST_AMBIGUOUS (MSN-0301) for every ADR-0047 dual-read file.
   - name: GXT_LEDGER_CAS_EXHAUSTED
     since: MSN-0200
     defined_in: src/cli/lib/gxt-error-codes.ts
@@ -145,9 +149,6 @@ entries:
   - name: GXT_LEDGER_UNSIGNED
     since: MSN-0200
     defined_in: src/cli/lib/gxt-error-codes.ts
-  - name: GXT_MANIFEST_AMBIGUOUS
-    since: MSN-0301
-    defined_in: packages/core/src/error-codes.ts
   - name: GXT_MCP_WRITE_DENIED
     since: MSN-0077
     defined_in: src/cli/lib/gxt-error-codes.ts

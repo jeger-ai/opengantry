@@ -1,6 +1,6 @@
 /**
  * Trusted automation (ADR-0052 step 5b, ported from scripts/lib/trusted-automation.mjs): a commit or PR range that
- * touches MSN-enforced paths may pass without a mission when a `.gitagent/config.json` `trusted_automation` rule covers
+ * touches MSN-enforced paths may pass without a mission when a `.gitagent/config.yaml` `trusted_automation` rule covers
  * the actor, the paths, the net line count and the structural kind of the change. Pure: the loader supplies git facts.
  */
 import { pathMatchesGlobPattern } from "./path-glob.js";
@@ -32,7 +32,7 @@ function isStructuralKind(value: unknown): value is StructuralChangeKind {
   return typeof value === "string" && Object.hasOwn(STRUCTURAL_KIND_HARD_MAX_NET_LOC, value);
 }
 
-/** Parse and validate the `trusted_automation` block of `.gitagent/config.json` (already JSON-parsed). */
+/** Parse and validate the `trusted_automation` block of `.gitagent/config.yaml` (already parsed). */
 export function parseTrustedAutomationRules(config: unknown): TrustedAutomationRule[] {
   const block = (config as { trusted_automation?: unknown } | null)?.trusted_automation as { rules?: unknown } | undefined;
   if (!block || !Array.isArray(block.rules) || block.rules.length === 0) return [];

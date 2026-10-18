@@ -22,7 +22,7 @@ gantry policy pull
 gantry policy status --json
 gantry policy diff
 
-# 2. Enable the compliance ledger in .gitagent/config.json:
+# 2. Enable the compliance ledger in .gitagent/config.yaml:
 #    { "ledger": { "mode": "local", "signature": "warn" } }
 gantry ledger verify --json
 gantry ledger export --format soc2-pack --out .gitagent/history/ledger-export
@@ -44,7 +44,7 @@ gantry release check --tag v3.2.6
 
 ## Compliance ledger
 
-With `ledger.mode: local` in `.gitagent/config.json`, verify, attest, break-glass and policy pull append a digest-only entry to `refs/gxt/ledger`. Git parent links plus an embedded `prev_entry_hash` form the hash chain.
+With `ledger.mode: local` in `.gitagent/config.yaml`, verify, attest, break-glass and policy pull append a digest-only entry to `refs/gxt/ledger`. Git parent links plus an embedded `prev_entry_hash` form the hash chain.
 
 - Appends use compare-and-swap with bounded retries, so parallel CI jobs never fork the chain; running out of retries fails closed (`GXT_LEDGER_CAS_EXHAUSTED`).
 - Unsigned entries are checksums, not proofs. `ledger.signature: require` demands signed commits.
@@ -76,7 +76,7 @@ Same-org proof recomputes `repository_hash` for the dependency with your `GANTRY
 | Attestation receipts | `gantry attest`, `gantry verify --receipt` | Digest-only JSON under `.gitagent/history/receipts/` (gitignored); verify prints `wrote <path>` |
 | Signed receipts | `receipt_signature` tier, `--sign` or `--sign-receipt` | SSH or GPG detached signature over `receipt_sha256`; an unsigned receipt is a checksum, not a proof |
 | Inspect receipts | `gantry receipt list`, `gantry receipt show [MSN\|path]` | Read-only local view |
-| Hash-only telemetry | `flight_telemetry.body_mode` in `.gitagent/config.json` (default `hash_only`) | Gate stream events keep `chunk_sha256` and `bytes`; `chunk_b64` only with `full` |
+| Hash-only telemetry | `flight_telemetry.body_mode` in `.gitagent/config.yaml` (default `hash_only`) | Gate stream events keep `chunk_sha256` and `bytes`; `chunk_b64` only with `full` |
 | Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline comparison of manifest, architecture and config digests |
 | Hub export | CI artifact or pull request attachment ([CI exporters and receipts](ci.md#receipt-export-to-a-control-plane)) | Spoke-owned; not a tracked receipt tree |
 

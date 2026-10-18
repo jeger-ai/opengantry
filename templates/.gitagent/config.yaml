@@ -1,0 +1,20 @@
+# OpenGantry config: Planner-owned switches. Humans write YAML (ADR-0047); gantry init copies this file.
+# planner_signature / receipt_signature: off | warn | require (signed Planner commits and receipts).
+# flight_telemetry.body_mode: hash_only (default) keeps gate output out of telemetry; full stores it.
+flight_telemetry:
+  body_mode: hash_only
+# ledger.mode: off | local (digest-only compliance ledger under refs/gxt/ledger); ledger.signature: off | warn | require.
+ledger:
+  mode: "off"
+  signature: "off"
+# trusted_automation: commits by these actors may touch MSN-enforced paths without a mission, within the rule.
+trusted_automation:
+  rules:
+    - id: workflow-dependency-bumps
+      allowed_actors:
+        - dependabot[bot]@users.noreply.github.com
+      allowed_paths:
+        - .github/workflows/**
+      allowed_structural_changes:
+        - workflow_version_pin
+      max_net_loc: 5

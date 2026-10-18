@@ -1,9 +1,7 @@
 /**
- * Trusted automation loader (ADR-0052 step 5b): reads `.gitagent/config.json`, the manifest and git, and asks the core
+ * Trusted automation loader (ADR-0052 step 5b): reads `.gitagent/config.yaml` (or the 3.x config.json), the manifest and git, and asks the core
  * evaluator whether a commit or a PR range may pass without a mission.
  */
-import fs from "node:fs";
-import path from "node:path";
 import YAML from "yaml";
 import {
   evaluateTrustedAutomation,
@@ -19,17 +17,17 @@ import {
 } from "#core/trusted-automation.js";
 import type { Manifest } from "#core/mission-types.js";
 import { gitRunOk } from "#git/git.js";
-
-const CONFIG_REL = ".gitagent/config.json";
+import { parseLawFileDocument } from "#core/law-file.js";
+import { readGxtConfigSource } from "./gxt-config.js";
 
 export function loadTrustedAutomationRules(root: string): TrustedAutomationRule[] {
-  const abs = path.join(root, CONFIG_REL);
-  if (!fs.existsSync(abs)) return [];
+  const source = readGxtConfigSource(root);
+  if (!source) return [];
   let parsed: unknown;
   try {
-    parsed = JSON.parse(fs.readFileSync(abs, "utf8"));
+    parsed = parseLawFileDocument(source);
   } catch (e) {
-    throw new Error(`trusted_automation: invalid JSON in ${CONFIG_REL}: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+    throw new Error(`trusted_automation: invalid ${source.kind.toUpperCase()} in ${source.rel}: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
   }
   return parseTrustedAutomationRules(parsed);
 }

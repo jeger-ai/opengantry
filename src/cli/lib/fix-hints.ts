@@ -97,7 +97,7 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
     case "PLANNER_STAMP_UNSIGNED":
       return [
         "enable commit signing for Planner legislation (git config commit.gpgsign true or SSH signing)",
-        "or set planner_signature to off or warn in .gitagent/config.json",
+        "or set planner_signature to off or warn in .gitagent/config.yaml",
         verifyCmd,
       ].join("; ");
     default:

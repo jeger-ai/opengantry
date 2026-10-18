@@ -1,0 +1,11 @@
+{
+  "id": "migrate-config.bare-git",
+  "fixture": "bare-git",
+  "args": [
+    "migrate",
+    "config"
+  ],
+  "exit": 2,
+  "stdout": "",
+  "stderr_codes": []
+}

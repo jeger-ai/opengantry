@@ -77,7 +77,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 9. Compliance ledger (v3.3.0)
 
-- When `.gitagent/config.json` `ledger.mode` is `local`, verify, attest, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)).
+- When `.gitagent/config.yaml` `ledger.mode` is `local`, verify, attest, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)).
 - Append MUST use compare-and-swap `git update-ref` with bounded retries and jitter. Exhaustion MUST fail closed (`GXT_LEDGER_CAS_EXHAUSTED`) so parallel CI jobs never fork the chain.
 - Unsigned ledger entries are checksums, not proofs. `ledger.signature` `require` demands `git commit -S`.
 - A break-glass bypass with no `break_glass` ledger row is a failed control ([ADR-0021](../out-of-scope/ADR-0021-break-glass-protocol.md)).

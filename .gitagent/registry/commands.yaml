@@ -138,6 +138,9 @@ entries:
     since: commit 3709795
   - name: migrate
     since: MSN-0301
+  - name: migrate config
+    since: MSN-0302
+    note: ADR-0047 §4 migrate path for .gitagent/config.
   - name: migrate manifest
     since: MSN-0301
     note: ADR-0047 §4 migrate path for the manifest.

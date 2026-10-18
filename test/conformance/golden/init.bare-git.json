@@ -22,7 +22,7 @@
     "?? .cursor/rules/opengantry-gxt-substrate.mdc",
     "?? .cursor/skills/setup-opengantry/SKILL.md",
     "?? .gitagent/ARCHITECTURE.pointer.json",
-    "?? .gitagent/config.json",
+    "?? .gitagent/config.yaml",
     "?? .gitagent/foreman/BYPASS.sha256",
     "?? .gitagent/foreman/MANIFEST.yaml",
     "?? .gitagent/foreman/POLICY.pointer.json",
