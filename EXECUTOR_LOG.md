@@ -1572,4 +1572,4 @@ MSN-0287 at 153941a: run record written by gantry verify --record; evidence is .
 MSN-0288 at 437960f: hook logic moved into gantry hook pre-commit, pre-push, post-checkout; evidence is .gitagent/runs/MSN-0288.json (RULES §3).
 MSN-0289 at 62a54e0: CI checks moved into gantry ci (msn-range, verify-missions, trusted-automation, upgrade-tmp); evidence is .gitagent/runs/MSN-0289.json (RULES §3).
 MSN-0290 at 1396773: runtime helper scripts replaced by gantry pin and gantry runtime env; evidence is .gitagent/runs/MSN-0290.json (RULES §3).
-MSN-0291 at pending: mission, contract, interrogation, trace-status, gate-adapter and config types moved to packages/core; evidence is .gitagent/runs/MSN-0291.json (RULES §3).
+MSN-0291 at 3f4889e: mission, contract, interrogation, trace-status, gate-adapter and config types moved to packages/core; evidence is .gitagent/runs/MSN-0291.json (RULES §3).
