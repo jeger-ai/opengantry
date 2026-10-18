@@ -40,7 +40,7 @@
       "issued_at": "<TS>",
       "receipt_sha256": "<SHA256>"
     },
-    "receipt_path": "<ROOT>/.gitagent/history/receipts/MSN-0101-<SHORT_SHA>.json",
+    "receipt_path": "<ROOT>/.gitagent/history/receipts/MSN-0101-<ID>.json",
     "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
     "mission_source": "flag"
   },
