@@ -16,25 +16,7 @@ export {
   isTypedGateAdapterId,
 } from "./gate-adapters/gate-adapter-id.js";
 
-export type TrustThreshold = "Tier-1" | "Tier-2" | "Tier-3" | string;
-
-export interface SkillEntry {
-  desc?: string;
-  trust_threshold: TrustThreshold;
-  tmvc_roots: string[];
-  forbidden_zones: string[];
-  /** Planner-approved deterministic gate commands (optional allowlist). */
-  gate_commands?: string[];
-}
-
-export interface Manifest {
-  schema_version: string;
-  skills: Record<string, SkillEntry>;
-  path_risks: Record<string, string>;
-  risk_keywords: string[];
-  /** Globs requiring Teacher-stamped (CI: signed) commits to modify. */
-  perimeter_protected?: string[];
-}
+export type { TrustThreshold, SkillEntry, Manifest } from "#core/manifest.js";
 
 export type TriageAction = "DIRECT_EXECUTION" | "LEGISLATIVE_ESCALATION";
 

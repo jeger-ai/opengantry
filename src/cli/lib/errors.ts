@@ -3,34 +3,16 @@ import { readEnvWithLegacy } from "./config-namespace.js";
 import path from "node:path";
 import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
-import { gxtCodeFromGantryUserError, GXT_ERROR } from "./gxt-error-codes.js";
+import { GXT_ERROR } from "./gxt-error-codes.js";
 import { REL_AGENT_ERROR_FILE } from "./constants.js";
 import type { ContractImportViolation } from "./contract/contract-types.js";
 import type { ForbiddenViolation } from "./forbidden-scan.js";
 import type { RuntimeExecResult } from "./runtime-exec.js";
 import type { ResolvedRuntimeEnv } from "./runtime-env.js";
 
-/** Expected policy / validation failure — never print a stack at the CLI boundary. */
-export class GantryUserError extends Error {
-  constructor(
-    readonly code: string,
-    message: string,
-    readonly hint?: string,
-    readonly exitCode = 1,
-  ) {
-    super(message);
-    this.name = "GantryUserError";
-  }
+export { GantryUserError, isGantryUserError } from "#core/user-error.js";
+import { isGantryUserError } from "#core/user-error.js";
 
-  /** Stable GXT error code for JSON/MCP consumers. */
-  get gxtCode(): string {
-    return gxtCodeFromGantryUserError(this.code);
-  }
-}
-
-export function isGantryUserError(e: unknown): e is GantryUserError {
-  return e instanceof GantryUserError;
-}
 function logUnexpectedError(error: Error): void {
   if (readEnvWithLegacy("DEBUG") === "1") {
     logError(error.stack ?? error.message);

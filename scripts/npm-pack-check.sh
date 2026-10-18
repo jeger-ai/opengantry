@@ -24,7 +24,7 @@ for path in \
   fi
 done
 
-if grep -q 'package/dist/cli/tests/' <<<"$listing"; then
+if grep -qE 'package/dist/(cli|packages/[^/]+)/tests/' <<<"$listing"; then
   echo "npm-pack-check: unexpected test files in tarball" >&2
   exit 1
 fi
@@ -36,13 +36,16 @@ while IFS= read -r entry; do
   rel="${entry#package/dist/}"
   for suffix in .d.ts.map .js.map .d.ts .js; do
     if [[ "$rel" == *"$suffix" ]]; then
-      [[ -f "src/${rel%"$suffix"}.ts" ]] || orphans+=("${entry#package/}")
+      stem="${rel%"$suffix"}"
+      # dist/packages/<name>/src/x.js comes from packages/<name>/src/x.ts (ADR-0052 step 2); the rest from src/.
+      if [[ "$stem" == packages/* ]]; then source="${stem}.ts"; else source="src/${stem}.ts"; fi
+      [[ -f "$source" ]] || orphans+=("${entry#package/}")
       break
     fi
   done
 done < <(grep -E '^package/dist/.+\.(js|d\.ts)(\.map)?$' <<<"$listing" || true)
 if [[ ${#orphans[@]} -gt 0 ]]; then
-  echo "npm-pack-check: ${#orphans[@]} file(s) in the tarball have no source in src/ (run npm run build, which prunes them):" >&2
+  echo "npm-pack-check: ${#orphans[@]} file(s) in the tarball have no source in src/ or packages/ (run npm run build, which prunes them):" >&2
   printf '  %s\n' "${orphans[@]}" >&2
   exit 1
 fi
