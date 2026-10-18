@@ -34,6 +34,15 @@ entries:
   - name: GXT_CAGE_OVERRIDE_INVALID
     since: MSN-0239
     defined_in: literal
+  - name: GXT_CAGE_SCOPE_GIT_FAILED
+    since: MSN-0276
+    defined_in: src/cli/lib/cage/cage-scope.ts
+  - name: GXT_CAGE_SCOPE_INVALID
+    since: MSN-0276
+    defined_in: src/cli/lib/cage/cage-scope.ts
+  - name: GXT_CAGE_SCOPE_NOT_GIT
+    since: MSN-0276
+    defined_in: src/cli/lib/cage/cage-scope.ts
   - name: GXT_CAGE_SESSION_ACTIVE
     since: MSN-0253
     defined_in: literal

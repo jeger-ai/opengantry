@@ -13,6 +13,12 @@
 # --allow-only through the shared src/cli/program-cage.ts). Branch cut from msn-0275-cage-dependency-freeze (PR #227);
 # the PR opens against main after #227 merges.
 #
+# Amended 2026-10-18 after ADR-0052 step 1 (MSN-0281) landed on main: .gitagent/registry/error-codes.yaml and
+#        test/conformance/golden/ join the contract.
+# DoD 10 (law of ADR-0052 step 1): GXT_CAGE_SCOPE_NOT_GIT, GXT_CAGE_SCOPE_INVALID and GXT_CAGE_SCOPE_GIT_FAILED have
+#        error-codes.yaml entries (since MSN-0276) in the Planner commit; the golden files whose cage JSON gains
+#        scope and scope_sources (DoD 5) are re-recorded (cage-check.tamper, cage-check.clean.bare-git,
+#        cage-session.true.tamper) and no other golden file changes; npm run test:conformance passes.
 # DoD 1 (config): .cage.yaml takes a top-level allow_only: list of globs (same syntax as protect: globs). An empty
 #        list, a non-string entry, or an absolute or .. glob exits 2 with GXT_CAGE_CONFIG_INVALID. The resolved scope
 #        is part of the cage plan, of the serialized plan the session push guard reads, and of the journal.
@@ -88,6 +94,10 @@ trace_rows:
     trace_quote: "DoD 9 MSN-0276 re-attested at 8d77bab: ./scripts/dev-validate-core.sh exit 0: tests 950 pass 950 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "1464"
     status: PASS
+  - dod_id: "10"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 4367eadf9a61
@@ -185,6 +195,7 @@ interrogation_sha256: 62f38f6eab1c37a6e6b5c41daebcaa1c51e3770780475ad9a6a45b49eb
 declared_paths:
   - .gitagent/missions/MSN-0276.cage-scope.yaml
   - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+  - .gitagent/registry/error-codes.yaml
   - EXECUTOR_LOG.md
   - README.md
   - docs/CHANGELOG.md
@@ -199,10 +210,12 @@ declared_paths:
   - src/cli/tests/cage-watch-decisions.test.ts
   - src/cli/tests/cage-watch.test.ts
   - src/cli/tests/cage.test.ts
+  - test/conformance/golden/
 contract:
   tmvc_roots:
     - .gitagent/missions/MSN-0276.cage-scope.yaml
     - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+    - .gitagent/registry/error-codes.yaml
     - EXECUTOR_LOG.md
     - README.md
     - docs/CHANGELOG.md
@@ -217,6 +230,7 @@ contract:
     - src/cli/tests/cage-watch-decisions.test.ts
     - src/cli/tests/cage-watch.test.ts
     - src/cli/tests/cage.test.ts
+    - test/conformance/golden/
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
@@ -226,4 +240,4 @@ contract:
     - src/core/
     - src/db/schema/
     - templates/
-contract_sha256: 606647689a589750b5cae354fc7c7de1722a8e9bf25c8b95f5a9873415e4247b
+contract_sha256: 8651c55bb33c62fe859132950610bf9479b248f45da8d0872a97b31a591e2b51
