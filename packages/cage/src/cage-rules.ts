@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "../cli-io.js";
-import { REL_MANIFEST } from "../constants.js";
-import { gitRun } from "../git/git.js";
-import { GantryUserError } from "../errors.js";
-import { loadManifest } from "../manifest.js";
-import type { Manifest } from "../types.js";
+import { toPosixRel } from "#core/posix-path.js";
+import { REL_MANIFEST } from "#core/constants.js";
+import { gitRun } from "#git/git.js";
+import { GantryUserError } from "#core/user-error.js";
+import { validateManifestShape } from "#core/manifest.js";
+import type { Manifest } from "#core/manifest.js";
 import { inCageScope, parseCageScopeFlag, type CageScope } from "./cage-scope.js";
 import {
   CAGE_CONFIG_FILE,
@@ -235,7 +235,9 @@ export function cageManifestZones(manifest: Manifest): string[] {
  */
 function manifestZones(root: string): string[] {
   if (!fs.existsSync(rootJoin(root, REL_MANIFEST))) return [];
-  return cageManifestZones(loadManifest(root));
+  const raw = JSON.parse(fs.readFileSync(rootJoin(root, REL_MANIFEST), "utf8")) as unknown;
+  validateManifestShape(raw);
+  return cageManifestZones(raw);
 }
 
 /** `rel` equals `base` or lies inside it. */

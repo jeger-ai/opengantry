@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { recoverCageJournal, resolveCageJournalDir, writeCageJournal, type CageRecovery } from "./cage-journal.js";
 import { cageScopeReport, cageStartSuffix } from "./cage-report.js";
 import { buildCagePlan, type CagePlan } from "./cage-rules.js";

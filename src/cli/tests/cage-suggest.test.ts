@@ -6,15 +6,15 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
-import { runCage } from "../lib/cage/cage-run.js";
-import { loadCageConfig } from "../lib/cage/cage-config.js";
+import { runCage } from "#cage/cage-run.js";
+import { loadCageConfig } from "#cage/cage-config.js";
 import {
   CAGE_SESSION_ENV,
   CAGE_SUGGESTED_FILE,
   assertOutsideCageSession,
   formatCageSuggestionsYaml,
   suggestCageRules,
-} from "../lib/cage/cage-suggest.js";
+} from "#cage/cage-suggest.js";
 import { registerGxtMcpTools } from "../lib/mcp/mcp-tools-register.js";
 import { isSuggestInvocation } from "../program-cage.js";
 

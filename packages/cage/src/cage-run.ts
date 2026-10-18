@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getRepoRoot } from "../git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import {
   CAGE_JOURNAL_PID_REFRESH_MIN_MS,
   recoverCageJournal,

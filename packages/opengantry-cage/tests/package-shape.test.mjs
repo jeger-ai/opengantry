@@ -23,7 +23,7 @@ test("package.json publishes only the gantry-cage bin, with commander as the onl
 });
 
 test("bundle imports only commander and Node built-ins at runtime", () => {
-  const bundle = fs.readFileSync(path.join(pkgDir, "dist", "cli", "lib", "cage", "opengantry-cage.js"), "utf8");
+  const bundle = fs.readFileSync(path.join(pkgDir, "dist", "packages", "cage", "src", "opengantry-cage.js"), "utf8");
   const bare = new Set();
   // esbuild emits minified ESM: `import{Command as X}from"commander";` (no spaces, not line-anchored).
   for (const m of bundle.matchAll(/\bimport\s*(?:[\w$*{}\s,]+?\s*from\s*)?["']([^"']+)["']/g)) {
@@ -37,7 +37,7 @@ test("bundle imports only commander and Node built-ins at runtime", () => {
 test("npm pack ships dist + README only; a clean install resolves commander and nothing else", () => {
   const dry = JSON.parse(execFileSync(npm, ["pack", "--dry-run", "--json"], { cwd: pkgDir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }))[0];
   const files = dry.files.map((f) => f.path).sort();
-  assert.deepEqual(files, ["README.md", "dist/cli/index.js", "dist/cli/lib/cage/opengantry-cage.js", "package.json"]);
+  assert.deepEqual(files, ["README.md", "dist/cli/index.js", "dist/packages/cage/src/opengantry-cage.js", "package.json"]);
 
   const dir = installTarball(packOnce());
   const ls = JSON.parse(execFileSync(npm, ["ls", "--json", "--all"], { cwd: dir, encoding: "utf8" }));
