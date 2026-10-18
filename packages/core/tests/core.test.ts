@@ -5,7 +5,7 @@ import { GXT_ERROR, gxtCodeFromGantryUserError } from "../src/error-codes.js";
 import { GantryUserError, isGantryUserError } from "../src/user-error.js";
 import { validateManifestShape } from "../src/manifest.js";
 import { pathMatchesArchGlob } from "../src/path-glob.js";
-import { REL_MANIFEST, MSN_ID_PATTERN } from "../src/constants.js";
+import { REL_MANIFEST_JSON, MSN_ID_PATTERN } from "../src/constants.js";
 
 test("canonicalJson sorts keys at every depth", () => {
   assert.equal(canonicalJson({ b: 1, a: { d: 2, c: 3 } }), '{"a":{"c":3,"d":2},"b":1}');
@@ -35,6 +35,6 @@ test("arch globs: ** matches any depth under the prefix and nothing outside it",
 });
 
 test("constants are the law paths the CLI reads", () => {
-  assert.equal(REL_MANIFEST, ".gitagent/foreman/MANIFEST.json");
+  assert.equal(REL_MANIFEST_JSON, ".gitagent/foreman/MANIFEST.json");
   assert.ok(MSN_ID_PATTERN.test("MSN-0282"));
 });

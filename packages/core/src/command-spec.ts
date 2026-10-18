@@ -83,6 +83,8 @@ export const COMMAND_SPEC: readonly CommandSpecEntry[] = [
   { path: "mcp", since: "MSN-9000" },
   { path: "mcp serve", since: "MSN-9000" },
   { path: "metrics", since: "commit 3709795" },
+  { path: "migrate", since: "MSN-0301" },
+  { path: "migrate manifest", since: "MSN-0301", note: "ADR-0047 §4 migrate path for the manifest." },
   { path: "mission", since: "MSN-0010" },
   { path: "mission changed", since: "MSN-0207" },
   { path: "mission snapshot", since: "MSN-0010" },

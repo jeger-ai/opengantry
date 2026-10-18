@@ -22,8 +22,8 @@ function scaffoldGantryLegislateRepo(): string {
   fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   execSync("git init", { cwd: dest, stdio: "pipe" });

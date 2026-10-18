@@ -54,6 +54,8 @@ entries:
     note: "Internal: run by the cage session git hooks. Folds into gantry hook in ADR-0052 step 5."
   - name: check
     since: MSN-0010
+  - name: check-imports
+    since: MSN-0045
   - name: ci
     since: MSN-0289
   - name: ci msn-range
@@ -64,8 +66,6 @@ entries:
     since: MSN-0289
   - name: ci verify-missions
     since: MSN-0289
-  - name: check-imports
-    since: MSN-0045
   - name: context-feed
     since: commit f777025
   - name: context-request
@@ -136,6 +136,11 @@ entries:
     since: MSN-9000
   - name: metrics
     since: commit 3709795
+  - name: migrate
+    since: MSN-0301
+  - name: migrate manifest
+    since: MSN-0301
+    note: ADR-0047 §4 migrate path for the manifest.
   - name: mission
     since: MSN-0010
   - name: mission changed

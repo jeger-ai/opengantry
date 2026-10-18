@@ -61,7 +61,7 @@ function addInitOptions(cmd: Command): Command {
 function registerCheckCommand(program: Command): void {
   program
     .command("check")
-    .description("Validate MANIFEST.json + Rule 4.4 skills/ sync")
+    .description("Validate the manifest (.gitagent/foreman/MANIFEST.yaml) + Rule 4.4 skills/ sync")
     .action(() => {
       runCheck();
     });

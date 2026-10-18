@@ -10,7 +10,7 @@ import {
   buildAttestationReceipt,
   computeReceiptSha256,
 } from "../lib/attestation-receipt.js";
-import { REL_MANIFEST } from "../lib/constants.js";
+import { REL_MANIFEST_JSON } from "../lib/constants.js";
 import { GantryUserError } from "../lib/errors.js";
 import { getRepoRoot, gitConfigGet } from "#git/git.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
@@ -85,7 +85,7 @@ test("attestation receipt: rejects missing MANIFEST with GantryUserError", () =>
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-attest-no-manifest-"));
   writeRuntimeExecRepo(dest, ogRoot, []);
   writeOrgExportConfig(dest);
-  fs.rmSync(path.join(dest, REL_MANIFEST), { force: true });
+  fs.rmSync(path.join(dest, REL_MANIFEST_JSON), { force: true });
   const missionArg = ".gitagent/missions/runtime.yaml";
   const mission = parseMissionFile(dest, missionArg);
   assert.throws(

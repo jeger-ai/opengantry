@@ -7,7 +7,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 ## Goals
 
 1. **Single bootstrap command** — The executor obtains all scope and trace sinks from **`gantry runtime env`**.
-2. **Manifest + contract truth** — `TMVC` roots and **`GANTRY_FORBIDDEN_ZONES`** start from **[`.gitagent/foreman/MANIFEST.json`](../foreman/MANIFEST.json)** for the mission’s **`skill_key`**, then tighten with the mission **`contract`** block when present ([`RULES.md`](RULES.md) §4, [ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)). Executors MUST treat the **effective** cage as authoritative. They MUST NOT widen scope.
+2. **Manifest + contract truth** — `TMVC` roots and **`GANTRY_FORBIDDEN_ZONES`** start from **[`.gitagent/foreman/MANIFEST.yaml`](../foreman/MANIFEST.yaml)** for the mission’s **`skill_key`**, then tighten with the mission **`contract`** block when present ([`RULES.md`](RULES.md) §4, [ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)). Executors MUST treat the **effective** cage as authoritative. They MUST NOT widen scope.
 3. **Trace sink** — The canonical worker-authored trace path is **`EXECUTOR_LOG.md`** at the repository root unless overridden at verify time (`gantry verify --executor-log`).
 
 ## CLI: `gantry runtime env`

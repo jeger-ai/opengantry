@@ -145,6 +145,9 @@ entries:
   - name: GXT_LEDGER_UNSIGNED
     since: MSN-0200
     defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_MANIFEST_AMBIGUOUS
+    since: MSN-0301
+    defined_in: packages/core/src/error-codes.ts
   - name: GXT_MCP_WRITE_DENIED
     since: MSN-0077
     defined_in: src/cli/lib/gxt-error-codes.ts
@@ -184,13 +187,13 @@ entries:
   - name: GXT_RUNTIME_EXEC_FAILED
     since: commit 26d06cf
     defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_RUN_RECORD_MISMATCH
+    since: MSN-0287
+    defined_in: packages/core/src/error-codes.ts
   - name: GXT_RUN_RECORD_MISSING
     since: MSN-0287
     defined_in: packages/core/src/error-codes.ts
   - name: GXT_RUN_RECORD_STALE
-    since: MSN-0287
-    defined_in: packages/core/src/error-codes.ts
-  - name: GXT_RUN_RECORD_MISMATCH
     since: MSN-0287
     defined_in: packages/core/src/error-codes.ts
   - name: GXT_TRACE_AMBIGUOUS

@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { runArchitecturePointerDoctorChecks } from "../arch/external/architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "../break-glass.js";
-import { REL_AGENT_ERROR_FILE, REL_MANIFEST, CLI_NAME } from "../constants.js";
+import { REL_AGENT_ERROR_FILE, CLI_NAME } from "../constants.js";
+import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
 import { ENV_PLANNER_EMAILS } from "../config-namespace.js";
 import { agentErrorAbsolutePath } from "../errors.js";
 import { gitConfigGet, gitRunOk } from "#git/git.js";
@@ -206,10 +207,17 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);
 
-  if (!fs.existsSync(path.join(root, REL_MANIFEST))) {
-    lines.push({ level: "fail", message: `${REL_MANIFEST} missing` });
+  const hasYaml = fs.existsSync(path.join(root, REL_MANIFEST_YAML));
+  const hasJson = fs.existsSync(path.join(root, REL_MANIFEST_JSON));
+  if (!hasYaml && !hasJson) {
+    lines.push({ level: "fail", message: `${REL_MANIFEST_YAML} missing` });
     hasFail = true;
     nextStep = pickNextStep(nextStep, "gantry init");
+  } else if (!hasYaml) {
+    lines.push({
+      level: "warn",
+      message: `${REL_MANIFEST_JSON} is the 3.x form; run gantry migrate manifest (MANIFEST.yaml is read first, JSON is still read)`,
+    });
   }
 
   return { lines, hasFail, nextStep, plannerAllowlistUnset };

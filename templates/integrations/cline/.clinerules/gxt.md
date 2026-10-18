@@ -1,6 +1,6 @@
 # GXT policy for Cline
 
-Before substantive work, read `AGENTS.md`, `.gitagent/planner/RULES.md`, and `.gitagent/foreman/MANIFEST.json`.
+Before substantive work, read `AGENTS.md`, `.gitagent/planner/RULES.md`, and `.gitagent/foreman/MANIFEST.yaml`.
 
 **Set up OpenGantry:** follow `.gitagent/planner/AGENT-SETUP.md` when the user asks to bootstrap or adopt OpenGantry.
 

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { REL_MANIFEST, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
+import { REL_MANIFEST_JSON, REL_MANIFEST_YAML, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 
 export function sha256File(absPath: string): string {
   return crypto.createHash("sha256").update(fs.readFileSync(absPath)).digest("hex");
@@ -19,7 +19,8 @@ export function computeWorkingDigests(root: string): {
   config_sha256: string | null;
 } {
   return {
-    manifest_sha256: sha256FileOrNull(path.join(root, REL_MANIFEST)),
+    manifest_sha256:
+      sha256FileOrNull(path.join(root, REL_MANIFEST_YAML)) ?? sha256FileOrNull(path.join(root, REL_MANIFEST_JSON)),
     target_architecture_sha256: sha256FileOrNull(path.join(root, TARGET_ARCHITECTURE_FILENAME)),
     config_sha256: sha256FileOrNull(path.join(root, ".gitagent", "config.json")),
   };

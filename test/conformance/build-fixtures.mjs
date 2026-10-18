@@ -136,6 +136,8 @@ trace_rows:
 /** fresh-init plus a one-skill manifest and a stamped mission whose gate passes. */
 export function buildMissionPass(root, cli, opts = {}) {
   buildFreshInit(root, cli);
+  // The 3.x JSON form on purpose: these fixtures cover the dual-read fallback. init wrote the YAML form; one file only.
+  fs.rmSync(path.join(root, ".gitagent/foreman/MANIFEST.yaml"), { force: true });
   write(root, ".gitagent/foreman/MANIFEST.json", `${JSON.stringify(MINI_MANIFEST, null, 2)}\n`);
   for (const f of fs.readdirSync(path.join(root, "skills"))) {
     if (f !== "ui.md") fs.rmSync(path.join(root, "skills", f));
@@ -167,6 +169,8 @@ trace_rows: []
 /** mission-pass's substrate with a rowless mission and no run record: verify reports GXT_RUN_RECORD_MISSING. */
 export function buildMissionNoRows(root, cli) {
   buildFreshInit(root, cli);
+  // The 3.x JSON form on purpose: these fixtures cover the dual-read fallback. init wrote the YAML form; one file only.
+  fs.rmSync(path.join(root, ".gitagent/foreman/MANIFEST.yaml"), { force: true });
   write(root, ".gitagent/foreman/MANIFEST.json", `${JSON.stringify(MINI_MANIFEST, null, 2)}\n`);
   for (const f of fs.readdirSync(path.join(root, "skills"))) {
     if (f !== "ui.md") fs.rmSync(path.join(root, "skills", f));

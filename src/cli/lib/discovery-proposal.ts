@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import { REL_MANIFEST } from "./constants.js";
+import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import type { Manifest } from "#core/manifest.js";
+import { writeManifestYaml } from "./manifest.js";
 import { toPosixRel } from "./cli-io.js";
 import {
   TARGET_ARCHITECTURE_FILENAME,
@@ -103,28 +105,22 @@ function buildDraftManifest(repoRoot: string): Record<string, unknown> {
     },
     path_risks: { "src/": "Tier-2" },
     risk_keywords: ["refactor", "migrate", "delete", "security", "schema"],
-    perimeter_protected: [
-      "**/.gxt-skill.yaml",
-      ".gitagent/foreman/MANIFEST.json",
-      ".gitagent/planner/RULES.md",
-    ],
+    perimeter_protected: ["**/.gxt-skill.yaml", REL_MANIFEST_YAML, REL_MANIFEST_JSON, ".gitagent/planner/RULES.md"],
   };
 }
 
-/** Apply confirmed discovery proposal to draft TARGET_ARCHITECTURE.yaml + MANIFEST.json. */
+/** Apply confirmed discovery proposal to draft TARGET_ARCHITECTURE.yaml + MANIFEST.yaml. */
 export function applyDiscoveryProposal(repoRoot: string, proposal: DiscoveryProposal): DiscoveryApplyResult {
   const archBody = YAML.stringify(buildDraftTargetArchitecture(proposal));
   const archAbs = path.join(repoRoot, TARGET_ARCHITECTURE_FILENAME);
   fs.writeFileSync(archAbs, archBody, "utf8");
 
-  const manifestAbs = path.join(repoRoot, REL_MANIFEST.split("/").join(path.sep));
-  fs.mkdirSync(path.dirname(manifestAbs), { recursive: true });
-  fs.writeFileSync(manifestAbs, `${JSON.stringify(buildDraftManifest(repoRoot), null, 2)}\n`, "utf8");
+  writeManifestYaml(repoRoot, buildDraftManifest(repoRoot) as unknown as Manifest);
 
   return {
     proposalPath: DISCOVERY_PROPOSAL_REL,
     targetArchitecturePath: TARGET_ARCHITECTURE_FILENAME,
-    manifestPath: REL_MANIFEST,
+    manifestPath: REL_MANIFEST_YAML,
   };
 }
 

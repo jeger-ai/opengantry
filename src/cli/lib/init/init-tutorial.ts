@@ -1,6 +1,6 @@
+import { manifestExists } from "../manifest.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
-import fs from "node:fs";
 import * as p from "@clack/prompts";
 import { CLI_NAME } from "../constants.js";
 import { fromPosix, logError, logInfo, setExitCode } from "../cli-io.js";
@@ -151,8 +151,7 @@ function emitTutorialOutro(
 
 export async function runInitTutorial(): Promise<void> {
   const { root: repoRoot, manifest } = loadWorkspace();
-  const manifestPath = path.join(repoRoot, ".gitagent", "foreman", "MANIFEST.json");
-  if (!fs.existsSync(manifestPath)) {
+  if (!manifestExists(repoRoot)) {
     logError("init --tutorial: substrate missing — init must complete before tutorial");
     setExitCode(EXIT_CODE.USAGE);
     return;

@@ -24,7 +24,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 4. Dynamic TMVC (roots + context requests)
 
-- TMVC is anchored by **tmvc_roots** from [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) unless the Planner narrows scope further in the mission **`contract.tmvc_roots`** ([ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)).
+- TMVC is anchored by **tmvc_roots** from [`.gitagent/foreman/MANIFEST.yaml`](.gitagent/foreman/MANIFEST.yaml) unless the Planner narrows scope further in the mission **`contract.tmvc_roots`** ([ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)).
 - The mission `contract` block is **Planner law** under §2. Executors MUST NOT edit `contract` or `contract_sha256`. Drift versus the Planner stamp commit is **Evidence Tampering** under §3 (`GXT_CONTRACT_TAMPERED`).
 - Effective TMVC = `contract.tmvc_roots` when present, else the skill roots. Effective forbidden zones and banned imports are the **union** of skill, contract, and org policy (tighten-only; §8). `contract.tmvc_roots` MUST be a subset of skill roots (empty skill roots accept Planner-declared roots).
 - Executors MAY discover and edit files only under the **effective** TMVC roots (recursive within each root) unless the mission explicitly allows expansion steps.
@@ -40,7 +40,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 5. Rule 4.4 — Planner-driven manifest sync
 
-- Any change that adds, removes, or renames a skill entry or materially edits per-skill fields in `MANIFEST.json` MUST include those manifest edits in the **same commit set** as the skill definition change.
+- Any change that adds, removes, or renames a skill entry or materially edits per-skill fields in `MANIFEST.yaml` MUST include those manifest edits in the **same commit set** as the skill definition change.
 - The Verifier MUST fail the mission if manifest state does not match the repository’s skill reality.
 
 ## 6. Git-native mission index

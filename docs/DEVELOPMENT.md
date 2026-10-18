@@ -30,11 +30,11 @@ gantry doctor
 ## Law + routing (before you edit)
 
 1. [`.gitagent/planner/RULES.md`](../.gitagent/planner/RULES.md) — SOD, trace, TMVC, Rule 4.4, break-glass.
-2. [`.gitagent/foreman/MANIFEST.json`](../.gitagent/foreman/MANIFEST.json) — skills, roots, forbidden zones.
+2. [`.gitagent/foreman/MANIFEST.yaml`](../.gitagent/foreman/MANIFEST.yaml) — skills, roots, forbidden zones.
 
 ### Specimen routing (this repository only)
 
-**jeger-ai/opengantry** dogfoods through the **`gantry`** skill and TMVC `src/cli/` only. The specimen [`.gitagent/foreman/MANIFEST.json`](../.gitagent/foreman/MANIFEST.json) intentionally **diverges** from [`templates/.gitagent/foreman/MANIFEST.json`](../templates/.gitagent/foreman/MANIFEST.json): adopters still receive `ui`/`logic` skills and example app paths after `gantry init`, but this CLI-only repo does not list fictional `src/components/` or `src/lib/` roots.
+**jeger-ai/opengantry** dogfoods through the **`gantry`** skill and TMVC `src/cli/` only. The specimen [`.gitagent/foreman/MANIFEST.yaml`](../.gitagent/foreman/MANIFEST.yaml) intentionally **diverges** from [`templates/.gitagent/foreman/MANIFEST.yaml`](../templates/.gitagent/foreman/MANIFEST.yaml): adopters still receive `ui`/`logic` skills and example app paths after `gantry init`, but this CLI-only repo does not list fictional `src/components/` or `src/lib/` roots.
 
 MSN-enforced paths for commits and PR guards come from **fixed substrate paths** plus **every `tmvc_roots` entry in MANIFEST** (see `manifestMsnEnforcedPrefixes` in `src/cli/lib/trusted-automation.ts`; `gantry ci msn-range` applies it).
 

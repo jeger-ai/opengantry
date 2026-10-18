@@ -1,7 +1,8 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
-import { CLI_NAME, REL_ARCHITECTURE_POINTER, REL_MANIFEST } from "../lib/constants.js";
+import { CLI_NAME, REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
+import { manifestExists } from "../lib/manifest.js";
 import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import {
@@ -200,7 +201,7 @@ function logInitDryRun(
 }
 
 function substrateAlreadyPresent(repoRoot: string): boolean {
-  return fs.existsSync(path.join(repoRoot, REL_MANIFEST.split("/").join(path.sep)));
+  return manifestExists(repoRoot);
 }
 
 export async function runInit(options: InitOptions = {}): Promise<void> {

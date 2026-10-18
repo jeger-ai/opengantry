@@ -10,7 +10,7 @@
     "lines": [
       {
         "level": "fail",
-        "message": "gantry: missing .gitagent/foreman/MANIFEST.json"
+        "message": "gantry: missing .gitagent/foreman/MANIFEST.yaml (or the 3.x .gitagent/foreman/MANIFEST.json)"
       }
     ],
     "next_step": null,

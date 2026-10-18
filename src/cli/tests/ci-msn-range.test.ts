@@ -22,7 +22,7 @@ function repoWithManifest(prefix: string): string {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   fs.writeFileSync(path.join(dest, "README.md"), "r\n", "utf8");
   fs.mkdirSync(path.join(dest, ".gitagent/foreman"), { recursive: true });
-  fs.copyFileSync(path.join(getRepoRoot(), ".gitagent/foreman/MANIFEST.json"), path.join(dest, ".gitagent/foreman/MANIFEST.json"));
+  fs.copyFileSync(path.join(getRepoRoot(), ".gitagent/foreman/MANIFEST.yaml"), path.join(dest, ".gitagent/foreman/MANIFEST.yaml"));
   gitInitCommit(dest, "init", PLANNER_EMAIL);
   return dest;
 }

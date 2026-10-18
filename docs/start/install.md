@@ -37,13 +37,15 @@ For scripts and CI, `gantry init --yes` runs without prompts, and `gantry init -
 
 | Path | Role |
 |------|------|
-| `.gitagent/` | Missions folder, `foreman/MANIFEST.json`, `planner/RULES.md` |
+| `.gitagent/` | Missions folder, `foreman/MANIFEST.yaml`, `planner/RULES.md` |
 | `AGENTS.md` | Cross-tool entry point: read RULES and MANIFEST before acting |
 | `.gitagent/ARCHITECTURE.pointer.json` and `docs/ARCHITECTURE.md` | Where agents find your code layout |
 | `.githooks/` | Pre-commit and pre-push enforcement |
 | IDE pointer files and runtime scripts | For the tools you selected ([Wire any agent](../guides/agents.md)) |
 | `docs/INTEGRATIONS.md` | Setup notes for humans, composed from the recipes for your tools |
 | `.github/workflows/gxt-validate.yml` | Mission checks on pull requests (skipped with `--no-ci`) |
+
+The manifest is written as `.gitagent/foreman/MANIFEST.yaml`. A repository set up by 3.x keeps working with its `MANIFEST.json`; `gantry migrate manifest` converts it (the YAML form is read first, both present and different is an error).
 
 `gantry init` and `gantry upgrade apply` also add `EXECUTOR_LOG.md` to `.prettierignore`, because verify binds evidence to committed line numbers ([Trace evidence](../concepts/trace-evidence.md)).
 

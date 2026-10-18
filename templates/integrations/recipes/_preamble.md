@@ -32,7 +32,7 @@ IDE agent file edits are not TMVC-trapped unless the tool runs inside `runtime e
 | `AGENTS.md` | Cross-tool entry: read RULES + MANIFEST before acting |
 | `.gitagent/planner/AGENT-SETUP.md` | One-shot agent bootstrap (harness-agnostic) — set up / adopt OpenGantry |
 | `.gitagent/planner/RULES.md` | Governance law |
-| `.gitagent/foreman/MANIFEST.json` | Routing map (TMVC roots, forbidden zones) |
+| `.gitagent/foreman/MANIFEST.yaml` | Routing map (TMVC roots, forbidden zones) |
 
 ## Shared session variables
 

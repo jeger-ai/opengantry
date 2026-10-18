@@ -18,8 +18,8 @@ test("draft-token: stateless sign/verify roundtrip", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-draft-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
@@ -50,8 +50,8 @@ test("draft-token: replay rejected on second consume", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-draft-replay-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
@@ -90,8 +90,8 @@ test("draft-token: v1 token rejected", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-draft-v1-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });
@@ -128,8 +128,8 @@ test("draft-token: gate_adapter round-trips through the signed payload; generic 
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-draft-adapter-"));
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.json"),
-    path.join(dest, ".gitagent", "foreman", "MANIFEST.json"),
+    path.join(ogRoot, ".gitagent", "foreman", "MANIFEST.yaml"),
+    path.join(dest, ".gitagent", "foreman", "MANIFEST.yaml"),
   );
   execSync("git init", { cwd: dest, stdio: "pipe" });
   execSync('git config user.email "teacher@example.com"', { cwd: dest, stdio: "pipe" });

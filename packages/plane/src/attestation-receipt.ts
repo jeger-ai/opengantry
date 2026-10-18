@@ -208,8 +208,8 @@ export function buildAttestationReceipt(input: BuildAttestationReceiptInput): Bu
   if (digests.manifest_sha256 === null) {
     throw new GantryUserError(
       "MANIFEST_MISSING",
-      "attestation receipt requires .gitagent/foreman/MANIFEST.json",
-      "run gantry init or restore MANIFEST.json",
+      "attestation receipt requires .gitagent/foreman/MANIFEST.yaml (or the 3.x MANIFEST.json)",
+      "run gantry init or restore the manifest",
       2,
     );
   }

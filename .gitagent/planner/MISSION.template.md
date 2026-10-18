@@ -1,6 +1,6 @@
 # Mission: [MSN-XXXX]
 
-**Risk tier:** [Tier-1 | Tier-2 | Tier-3] (must align with [`.gitagent/foreman/MANIFEST.json`](.gitagent/foreman/MANIFEST.json) for the selected skill)
+**Risk tier:** [Tier-1 | Tier-2 | Tier-3] (must align with [`.gitagent/foreman/MANIFEST.yaml`](.gitagent/foreman/MANIFEST.yaml) for the selected skill)
 
 ## 1. Intent & DoD (definition of done)
 

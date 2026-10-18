@@ -1,0 +1,68 @@
+# OpenGantry manifest: the Level-1 law file (skills, edit roots, forbidden zones, risk tiers).
+# Humans write YAML (ADR-0047). The CLI reads this file; the 3.x MANIFEST.json is read only when this file is absent.
+schema_version: 0.5.0
+skills:
+  gantry:
+    desc: gantry CLI delivery, lib layers, and unit tests (OpenGantry specimen).
+    trust_threshold: Tier-2
+    tmvc_roots:
+      - src/cli/
+      - package.json
+    forbidden_zones:
+      - .gitagent/foreman/
+      - .gitagent/planner/RULES.md
+      - .gitagent/registry/
+    gate_commands:
+      - npm test
+      - npm run validate
+      - npm run build
+      - npm run lint
+      - gantry arch check
+  substrate:
+    desc: Reserved for high-risk substrate work; requires Planner mission.
+    trust_threshold: Tier-3
+    tmvc_roots: []
+    forbidden_zones: []
+    gate_commands:
+      - ./scripts/dev-validate-core.sh
+      - npm run validate
+  iii-integration:
+    desc: iii.dev worker integration prototype under examples/iii-integration/.
+    trust_threshold: Tier-2
+    tmvc_roots:
+      - examples/iii-integration/
+    forbidden_zones:
+      - .gitagent/foreman/
+      - .gitagent/planner/RULES.md
+    gate_commands:
+      - node examples/iii-integration/scripts/validate-offline.mjs
+  iii-architecture:
+    desc: iii worker architecture lint profile (cold path) under examples/iii-integration/.
+    trust_threshold: Tier-2
+    tmvc_roots:
+      - examples/iii-integration/
+    forbidden_zones:
+      - .gitagent/foreman/
+      - .gitagent/planner/RULES.md
+    gate_commands:
+      - node examples/iii-integration/scripts/run-iii-architecture.mjs
+path_risks:
+  src/cli/: Tier-2
+  .gitagent/: Tier-3
+  src/core/: Tier-3
+  src/auth/: Tier-3
+  src/db/schema/: Tier-3
+risk_keywords:
+  - refactor
+  - migrate
+  - delete
+  - security
+  - schema
+perimeter_protected:
+  - "**/.gxt-skill.yaml"
+  - .gitagent/registry/
+  - ARCH_BASELINE.json
+  - .gitagent/foreman/MANIFEST.yaml
+  - .gitagent/foreman/MANIFEST.json
+  - .gitagent/foreman/POLICY.pointer.json
+  - .gitagent/planner/RULES.md

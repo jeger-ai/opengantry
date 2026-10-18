@@ -91,8 +91,8 @@ function initCliSampleRepo(dest: string, ogRoot: string, sampleBody = "export co
 function copyAutomationScripts(dest: string, ogRoot: string): void {
   fs.mkdirSync(path.join(dest, ".gitagent/foreman"), { recursive: true });
   fs.copyFileSync(
-    path.join(ogRoot, ".gitagent/foreman/MANIFEST.json"),
-    path.join(dest, ".gitagent/foreman/MANIFEST.json"),
+    path.join(ogRoot, ".gitagent/foreman/MANIFEST.yaml"),
+    path.join(dest, ".gitagent/foreman/MANIFEST.yaml"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent/missions/README.md"), "# missions\n", "utf8");

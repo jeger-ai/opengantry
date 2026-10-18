@@ -18,7 +18,7 @@ This page covers the [session cage](session.md). For `cage check`, see [Check co
 | `2` | `runtime_error` | The command could not start, or the cage failed closed before running it (below) |
 | the command's own | `ok` | Nothing protected changed; `128 + N` when signal `N` ended the command |
 
-The cage fails closed with exit `2`, before the command runs, on an invalid `.gitagent/foreman/MANIFEST.json` or `.cage.yaml`, an invalid `--allow-override`, a protected set over the size caps or a file over the snapshot caps ([Session cage](session.md#size-caps)), a still-running earlier session, or a corrupt journal.
+The cage fails closed with exit `2`, before the command runs, on an invalid `.gitagent/foreman/MANIFEST.yaml` or `.cage.yaml`, an invalid `--allow-override`, a protected set over the size caps or a file over the snapshot caps ([Session cage](session.md#size-caps)), a still-running earlier session, or a corrupt journal.
 
 `--report-only` detects and reports without restoring anything and without live restore. It still exits `3` when a protected path changed.
 

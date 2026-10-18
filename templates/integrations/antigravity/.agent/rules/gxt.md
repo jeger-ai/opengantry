@@ -4,7 +4,7 @@ always_on: true
 
 # GXT substrate (Google Antigravity)
 
-Read **`AGENTS.md`**, **`.gitagent/planner/RULES.md`**, and **`.gitagent/foreman/MANIFEST.json`** before acting.
+Read **`AGENTS.md`**, **`.gitagent/planner/RULES.md`**, and **`.gitagent/foreman/MANIFEST.yaml`** before acting.
 
 **Set up OpenGantry:** follow **`.gitagent/planner/AGENT-SETUP.md`** when the user asks to bootstrap or adopt OpenGantry.
 

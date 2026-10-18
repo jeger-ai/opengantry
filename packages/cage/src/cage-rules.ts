@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
-import { REL_MANIFEST } from "#core/constants.js";
+import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import { parseManifestSource, selectManifestSource } from "#core/manifest-file.js";
 import { gitRun } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
-import { validateManifestShape } from "#core/manifest.js";
 import type { Manifest } from "#core/manifest.js";
 import { inCageScope, parseCageScopeFlag, type CageScope } from "./cage-scope.js";
 import {
@@ -234,10 +234,10 @@ export function cageManifestZones(manifest: Manifest): string[] {
  * so cage fails closed before the wrapped command runs.
  */
 function manifestZones(root: string): string[] {
-  if (!fs.existsSync(rootJoin(root, REL_MANIFEST))) return [];
-  const raw = JSON.parse(fs.readFileSync(rootJoin(root, REL_MANIFEST), "utf8")) as unknown;
-  validateManifestShape(raw);
-  return cageManifestZones(raw);
+  const text = (rel: string): string | null =>
+    fs.existsSync(rootJoin(root, rel)) ? fs.readFileSync(rootJoin(root, rel), "utf8") : null;
+  const source = selectManifestSource(text(REL_MANIFEST_YAML), text(REL_MANIFEST_JSON));
+  return source ? cageManifestZones(parseManifestSource(source)) : [];
 }
 
 /** `rel` equals `base` or lies inside it. */

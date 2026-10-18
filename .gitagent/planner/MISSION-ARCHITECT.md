@@ -22,7 +22,7 @@ When inactive, answer normally — do not mention this protocol.
 
 Before proposing legislation, read (do not lecture the user):
 
-- `.gitagent/foreman/MANIFEST.json` — skills, TMVC roots, forbidden zones, path_risks, risk_keywords
+- `.gitagent/foreman/MANIFEST.yaml` — skills, TMVC roots, forbidden zones, path_risks, risk_keywords
 - `.gitagent/ARCHITECTURE.pointer.json` — code layout (if `kind=unset`, follow ARCHITECTURE-DISCOVERY.md and ask)
 - Optional: `.gitagent/out-of-scope/` ADRs when scope is ambiguous
 

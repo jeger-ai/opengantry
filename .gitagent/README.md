@@ -8,7 +8,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 1. **Trace mapping** — A verifier **PASS** is not a vibe. Each PASS **MUST** cite a verbatim quote from **`EXECUTOR_LOG.md`** plus a **line number or timestamp** from that file. If the quote is missing or not found in the log → **Evidence Tampering** → fail (see [`.gitagent/planner/RULES.md`](planner/RULES.md)). *This ensures execution integrity by decoupling what was intended from what actually occurred.*
 
-2. **Risk tiers** — Per-skill **`trust_threshold`** in [`.gitagent/foreman/MANIFEST.json`](foreman/MANIFEST.json): Tier-1 allows single-provider automation when trace + gate pass; Tier-2 makes single-provider output **advisory** and requires human trace audit; Tier-3 wants multi-provider when possible else **mandatory human audit**.
+2. **Risk tiers** — Per-skill **`trust_threshold`** in [`.gitagent/foreman/MANIFEST.yaml`](foreman/MANIFEST.yaml): Tier-1 allows single-provider automation when trace + gate pass; Tier-2 makes single-provider output **advisory** and requires human trace audit; Tier-3 wants multi-provider when possible else **mandatory human audit**.
 
 3. **Dynamic TMVC** — Scope is **`tmvc_roots`** (recursive entry points), not necessarily every file listed. Anything **outside** the effective boundary needs a **Context Request** logged in `EXECUTOR_LOG.md` before access. A **`forbidden_zone`** is not a soft limit: touching it without an approved, lawful path is a **security violation** — the loop **halts** (no merge, no “creative” bypass). The Verifier rejects the run; escalate to Planner if policy needs to change.
 
@@ -28,7 +28,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 | Path | Role |
 |------|------|
-| [`foreman/MANIFEST.json`](foreman/MANIFEST.json) | Map: `schema_version`, skills, `trust_threshold`, `tmvc_roots`, `forbidden_zones`, path risks |
+| [`foreman/MANIFEST.yaml`](foreman/MANIFEST.yaml) | Map: `schema_version`, skills, `trust_threshold`, `tmvc_roots`, `forbidden_zones`, path risks |
 | [`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json) | Agent discovery for code layout (`kind`, `location`, `read_hint`, optional `access`) |
 | [`teacher/ARCHITECTURE-DISCOVERY.md`](planner/ARCHITECTURE-DISCOVERY.md) | When architecture is **unset** or stub — ask user; never invent layout |
 | [`teacher/ARCHITECTURE-ACCESS.md`](planner/ARCHITECTURE-ACCESS.md) | Authenticated external architecture sources |
@@ -67,7 +67,7 @@ flowchart TD
 
 ## Rule 4.4 (manifest sync)
 
-If you change what a skill is or add/remove a skill entry, **update `MANIFEST.json` in the same commit set** as the skill change. Verifiers should fail on drift. The manifest is the **brain** (what is allowed to route where); skills are the **limbs** (who executes). Same commit set keeps them wired together.
+If you change what a skill is or add/remove a skill entry, **update `MANIFEST.yaml` in the same commit set** as the skill change. Verifiers should fail on drift. The manifest is the **brain** (what is allowed to route where); skills are the **limbs** (who executes). Same commit set keeps them wired together.
 
 ## For automated agents (Cursor / CI)
 

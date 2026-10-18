@@ -17,7 +17,7 @@ export interface InitDiscoverOptions {
 async function promptConfirmApply(): Promise<boolean> {
   const { confirm, isCancel } = await import("@clack/prompts");
   const answer = await confirm({
-    message: "Apply discovery proposal to TARGET_ARCHITECTURE.yaml and MANIFEST.json?",
+    message: "Apply discovery proposal to TARGET_ARCHITECTURE.yaml and MANIFEST.yaml?",
   });
   if (isCancel(answer) || answer !== true) return false;
   return true;
