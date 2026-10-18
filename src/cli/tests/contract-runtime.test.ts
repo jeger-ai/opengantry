@@ -46,7 +46,7 @@ contract_sha256: "${contractSha256(contract)}"
   return dest;
 }
 
-test("runtime env: effective scope narrows GXT_TMVC_ROOTS and exports GXT_ALLOWED_IMPORTS/GXT_BANNED_IMPORTS", () => {
+test("runtime env: effective scope narrows GANTRY_TMVC_ROOTS_ABSOLUTE and exports GANTRY_ALLOWED_IMPORTS/GANTRY_BANNED_IMPORTS", () => {
   const dest = scaffold({
     tmvc_roots: ["src/ui/"],
     forbidden_zones: ["src/db/"],
@@ -57,11 +57,11 @@ test("runtime env: effective scope narrows GXT_TMVC_ROOTS and exports GXT_ALLOWE
   assert.deepEqual(r.scope.tmvcRoots, ["src/ui/"]);
   assert.deepEqual(r.scope.forbiddenZones, [".gitagent/foreman/", "src/db/"]);
   const payload = resolvedRuntimeEnvToJsonPayload(r);
-  assert.equal(payload.GXT_TMVC_ROOTS, path.join(dest, "src", "ui"));
+  assert.equal(payload.GANTRY_TMVC_ROOTS_ABSOLUTE, path.join(dest, "src", "ui"));
   assert.equal(payload.GANTRY_TMVC_ROOTS, "src/ui/");
-  assert.ok(payload.GXT_FORBIDDEN_ZONES!.includes(path.join(dest, "src", "db")));
-  assert.equal(payload.GXT_ALLOWED_IMPORTS, "react\nzod");
-  assert.equal(payload.GXT_BANNED_IMPORTS, "prisma");
+  assert.ok(payload.GANTRY_FORBIDDEN_ZONES!.includes(path.join(dest, "src", "db")));
+  assert.equal(payload.GANTRY_ALLOWED_IMPORTS, "react\nzod");
+  assert.equal(payload.GANTRY_BANNED_IMPORTS, "prisma");
 });
 
 test("runtime env: GANTRY_TMVC_ROOTS joins repo-relative roots with spaces", () => {

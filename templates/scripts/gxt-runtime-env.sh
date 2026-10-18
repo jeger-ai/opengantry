@@ -38,4 +38,4 @@ HINT
   _gxt_runtime_sourced && return 1 || exit 1
 fi
 eval "$RUNTIME_SH"
-printf 'GXT runtime loaded: mission=%s skill=%s\n' "$GXT_MISSION_FILE" "${GXT_SKILL_KEY:-unknown}"
+printf 'GXT runtime loaded: mission=%s skill=%s\n' "$GANTRY_MISSION_FILE" "${GANTRY_SKILL_KEY:-unknown}"

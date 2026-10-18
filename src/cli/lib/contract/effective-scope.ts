@@ -2,7 +2,6 @@ import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { OrgPolicyBundle } from "#plane/policy-types.js";
 import { resolveOrgPolicy } from "../policy/policy-resolve.js";
-import { resolveManifestSkillKey } from "../skill-key.js";
 import { law, tighten } from "#core/law.js";
 import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
@@ -49,7 +48,7 @@ function assertRootsOutsideForbidden(hits: readonly string[]): void {
  * contract tries to widen scope.
  */
 export function resolveEffectiveScope(input: ResolveEffectiveScopeInput): EffectiveScope {
-  const skillKey = resolveManifestSkillKey(input.manifest, input.skillKey);
+  const skillKey = input.skillKey;
   const skill = input.manifest.skills[skillKey];
   const skillRoots = (skill?.tmvc_roots ?? []).map(normalizeContractPath);
   const skillForbidden = (skill?.forbidden_zones ?? []).map(normalizeContractPath);

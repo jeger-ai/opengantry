@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { readEnvWithLegacy } from "./config-namespace.js";
+import { readGantryEnv } from "./config-namespace.js";
 import { GantryUserError } from "./errors.js";
 
 export interface PepperKeyringEntry {
@@ -30,7 +30,7 @@ export function defaultPepperKeyringPath(): string {
 /** Resolve keyring path from explicit flag, GANTRY_PEPPER_KEYRING, or the default user config path. */
 export function resolvePepperKeyringPath(explicit?: string): string {
   if (explicit?.trim()) return expandHome(explicit.trim());
-  const env = readEnvWithLegacy("PEPPER_KEYRING");
+  const env = readGantryEnv("PEPPER_KEYRING");
   if (env) return expandHome(env);
   return defaultPepperKeyringPath();
 }

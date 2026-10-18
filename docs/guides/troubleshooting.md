@@ -33,7 +33,7 @@ Run the failing command with `--json` to get the `GXT_*` error code and its `fix
 
 ## Hooks
 
-- The pre-commit scope check is a warning by default. Set `GXT_TMVC_GUARD_STRICT=1` or run `gantry hooks install` to block. The tracked hooks are shims for `gantry hook pre-commit|pre-push|post-checkout`; run one by hand to see what it does.
+- The pre-commit scope check is a warning by default. Set `GANTRY_TMVC_GUARD_STRICT=1` or run `gantry hooks install` to block. The tracked hooks are shims for `gantry hook pre-commit|pre-push|post-checkout`; run one by hand to see what it does.
 - `gantry verify --pre-push` lets a legislated mission with placeholder trace rows through for handoff. A mission without a Planner stamp still fails.
 - In Cursor, restart if hooks do not load (**Output → Hooks**), and reload MCP after package upgrades ([Cursor](cursor.md#gotchas)).
 

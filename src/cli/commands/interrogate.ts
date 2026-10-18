@@ -5,7 +5,6 @@ import { runUserCommand } from "../lib/command-boundary.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate } from "../lib/interrogate/run.js";
 import { resolveLegislateGateOptions } from "../lib/legislate/legislate-gate-options.js";
-import { resolveManifestSkillKey } from "../lib/skill-key.js";
 import { loadWorkspace } from "../lib/workspace.js";
 import fs from "node:fs";
 
@@ -36,7 +35,7 @@ export function runInterrogateCommand(options: InterrogateCliOptions): void {
     if (!intent) {
       throw new GantryUserError("INVALID_ARGUMENT", "interrogate: intent is required", undefined, 2);
     }
-    const skillKey = resolveManifestSkillKey(manifest, options.skillKey?.trim() || "gantry");
+    const skillKey = options.skillKey?.trim() || "gantry";
     const gate = resolveLegislateGateOptions({
       gateCommand: options.gateCommand,
       gateSuccessSubstring: options.gateSuccessSubstring,

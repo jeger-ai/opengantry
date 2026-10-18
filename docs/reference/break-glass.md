@@ -15,18 +15,18 @@ Production emergencies happen, and a silent policy bypass is worse than an expli
 printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/foreman/BYPASS.sha256
 ```
 
-Commit only the hash. Never commit the plaintext secret. `gantry doctor` checks whether `GXT_BYPASS_SECRET` matches the anchor when the variable is set.
+Commit only the hash. Never commit the plaintext secret. `gantry doctor` checks whether `GANTRY_BYPASS_SECRET` matches the anchor when the variable is set.
 
 ## Use it
 
 ```bash
-export GXT_BYPASS_SECRET='your-team-secret'
+export GANTRY_BYPASS_SECRET='your-team-secret'
 gantry verify --break-glass --reason "Production auth down: hotfix session cookie" \
   --mission .gitagent/missions/MSN-0001.<slug>.yaml
 git push origin refs/notes/gxt-bypass
 ```
 
-- Authorization requires `GXT_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256`. A commit subject alone can never authorize a bypass.
+- Authorization requires `GANTRY_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256`. A commit subject alone can never authorize a bypass.
 - Verify writes a forensic record as a git note on `refs/notes/gxt-bypass`. Pass `--audit-commit` when notes cannot be pushed. Push the notes with the branch.
 - Pull request CI (`gxt-validate.yml`) fetches `refs/notes/*` and accepts a commit that touches mission-enforced paths without an `[MSN-NNNN]` subject only when that commit carries a valid bypass note, the record `gantry verify --break-glass` writes.
 - With the compliance ledger enabled, a bypass without a `break_glass` ledger row is a failed control ([Org control plane](../guides/org-control-plane.md#compliance-ledger)).

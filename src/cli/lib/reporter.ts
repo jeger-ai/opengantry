@@ -181,13 +181,13 @@ export interface ReporterArgv {
 }
 
 /**
- * The reporter for a command invocation. Precedence for the audience: --audience, then GXT_AUDIENCE. A
+ * The reporter for a command invocation. Precedence for the audience: --audience, then GANTRY_AUDIENCE. A
  * --format of json, sarif or junit, or --json, selects a structured mode; any other --format is a human
  * document (gantry report --format html).
  */
 export function reporterFromArgv(
   argv: ReporterArgv,
-  envAudience = process.env.GXT_AUDIENCE,
+  envAudience = process.env.GANTRY_AUDIENCE,
 ): { reporter: Reporter } | { invalidAudience: string } {
   const resolved = resolveAudience(argv.audience, envAudience);
   if (resolved.invalidCli) return { invalidAudience: resolved.invalidCli };

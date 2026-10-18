@@ -3,7 +3,6 @@ import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate, type InterrogateResult } from "../interrogate/run.js";
 import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
-import { resolveManifestSkillKey } from "../skill-key.js";
 
 export interface InterrogateMcpInput {
   intent: string;
@@ -24,7 +23,7 @@ export function handleInterrogate(input: InterrogateMcpInput): InterrogateMcpRes
   }
   const { root, manifest } = loadWorkspace();
   const skillKeyRaw = input.skill_key?.trim() || "gantry";
-  const skillKey = resolveManifestSkillKey(manifest, skillKeyRaw);
+  const skillKey = skillKeyRaw;
   const gate = resolveLegislateGateOptions({
     gateCommand: input.gate_command,
     gateSuccessSubstring: input.gate_success_substring,

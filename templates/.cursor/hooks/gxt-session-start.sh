@@ -42,17 +42,17 @@ try {
   process.stdout.write(JSON.stringify({ additional_context: "GXT: failed to parse runtime env" }));
   process.exit(0);
 }
-const tmvc = (payload.GXT_TMVC_ROOTS || "").split("\n").filter(Boolean);
-const forbidden = (payload.GXT_FORBIDDEN_ZONES || "").split("\n").filter(Boolean);
+const tmvc = (payload.GANTRY_TMVC_ROOTS_ABSOLUTE || "").split("\n").filter(Boolean);
+const forbidden = (payload.GANTRY_FORBIDDEN_ZONES || "").split("\n").filter(Boolean);
 process.stdout.write(JSON.stringify({
   env: payload,
   additional_context: [
     "GXT OpenGantry active mission (auto-loaded at session start):",
-    `- Mission: ${payload.GXT_MISSION_FILE || mission} (${payload.GXT_MSN_ID || "no MSN"})`,
-    `- Skill: ${payload.GXT_SKILL_KEY || "unknown"}`,
+    `- Mission: ${payload.GANTRY_MISSION_FILE || mission} (${payload.GANTRY_MSN_ID || "no MSN"})`,
+    `- Skill: ${payload.GANTRY_SKILL_KEY || "unknown"}`,
     `- TMVC roots: ${tmvc.join(", ") || "(none)"}`,
     `- Forbidden: ${forbidden.join(", ") || "(none)"}`,
-    `- Trace sink: ${payload.GXT_EXECUTOR_LOG || "EXECUTOR_LOG.md"}`,
+    `- Trace sink: ${payload.GANTRY_EXECUTOR_LOG || "EXECUTOR_LOG.md"}`,
     "",
     "Executor graph: edit within TMVC → append PASS quotes to EXECUTOR_LOG.md → gantry verify --mission … → npm run validate",
     "MCP tools: gxt_draft_legislation, gxt_execute_legislation, gxt_check_signature, gxt_pin_mission, gxt_runtime_env, gxt_verify (see .cursor/mcp.json).",

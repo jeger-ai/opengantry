@@ -8,7 +8,7 @@ import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
 import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
 
-export const ENV_BYPASS_SECRET = "GXT_BYPASS_SECRET";
+export const ENV_BYPASS_SECRET = "GANTRY_BYPASS_SECRET";
 export const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";
 export const GXT_BYPASS_NOTES_REF = "refs/notes/gxt-bypass";
 
@@ -44,7 +44,7 @@ function readAnchorHash(repoRoot: string): string | null {
   return null;
 }
 
-/** True when GXT_BYPASS_SECRET matches committed BYPASS.sha256 anchor. */
+/** True when GANTRY_BYPASS_SECRET matches committed BYPASS.sha256 anchor. */
 export function isBypassSecretAuthorized(repoRoot: string): boolean {
   const secret = process.env[ENV_BYPASS_SECRET];
   if (!secret?.length) return false;

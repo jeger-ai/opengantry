@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_ACTIVE_MISSION } from "../constants.js";
-import { readEnvWithLegacy } from "../config-namespace.js";
+import { readGantryEnv } from "../config-namespace.js";
 import { formatRepoRelative } from "../cli-io.js";
 import { GantryUserError } from "../errors.js";
 
@@ -93,11 +93,11 @@ export function buildMissionResolutionCandidates(
   if (options.explicit?.trim()) out.push(options.explicit.trim());
 
   if (profile === "full") {
-    const missionEnv = readEnvWithLegacy("MISSION", env);
+    const missionEnv = readGantryEnv("MISSION", env);
     if (missionEnv) out.push(missionEnv);
   }
   if (profile === "full" || profile === "status") {
-    if (env.GXT_MISSION_FILE?.trim()) out.push(env.GXT_MISSION_FILE.trim());
+    if (env.GANTRY_MISSION_FILE?.trim()) out.push(env.GANTRY_MISSION_FILE.trim());
   }
 
   const pin = readActiveMissionPin(_repoRoot);

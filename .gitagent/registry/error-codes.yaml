@@ -76,11 +76,6 @@ entries:
   - name: GXT_DEFENSIVE_GUARD_FAILED
     since: MSN-0097
     defined_in: src/cli/lib/gxt-error-codes.ts
-  - name: GXT_DEP_VERIFY_MISSION_ASYNC
-    since: MSN-0202
-    defined_in: literal
-    kind: deprecation-warning
-    deprecated: "4.0"
   - name: GXT_DEPENDENCY_ORG_MISMATCH
     since: MSN-0200
     defined_in: src/cli/lib/gxt-error-codes.ts

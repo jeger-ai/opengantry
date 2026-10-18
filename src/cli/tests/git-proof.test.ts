@@ -195,7 +195,7 @@ test("git-proof: scanDepth option reaches Planner stamp beyond default window", 
 });
 
 
-test("git-proof: GXT_MSN_SCAN_DEPTH env reaches Planner stamp", () => {
+test("git-proof: GANTRY_MSN_SCAN_DEPTH env reaches Planner stamp", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-env-depth-"));
   writeMiniGantryRepo(dest, ogRoot);

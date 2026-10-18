@@ -1,5 +1,4 @@
 import type { Manifest } from "#core/mission-types.js";
-import { resolveManifestSkillKey } from "./skill-key.js";
 import { classifyPath, isPathUnderRoot, law, normalizeRepoRelativePath } from "#core/law.js";
 
 /** Governance transport files — never TMVC drift violations during pre-commit scans. */
@@ -23,14 +22,14 @@ export function isGovernanceTransportPath(repoRel: string): boolean {
 
 export function tmvcRootsForSkill(manifest: Manifest, skillKey: string | null): string[] {
   if (!skillKey?.trim()) return [];
-  const resolved = resolveManifestSkillKey(manifest, skillKey.trim());
+  const resolved = skillKey.trim();
   const skill = manifest.skills[resolved];
   return skill ? [...skill.tmvc_roots] : [];
 }
 
 export function forbiddenZonesForSkill(manifest: Manifest, skillKey: string | null): string[] {
   if (!skillKey?.trim()) return [];
-  const resolved = resolveManifestSkillKey(manifest, skillKey.trim());
+  const resolved = skillKey.trim();
   const skill = manifest.skills[resolved];
   return skill ? [...skill.forbidden_zones] : [];
 }

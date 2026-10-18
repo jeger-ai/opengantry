@@ -9,8 +9,6 @@ order: 7
 
 OpenGantry ships the **gantry** CLI and the **GXT substrate** (law, Foreman manifest, hooks, and integration templates). Security fixes are published from this repository and delivered through semver **gantry** releases; adopters apply substrate updates with `gantry upgrade` after updating their gantry dependency.
 
-> **Deprecated alias:** the `gapman` npm bin still invokes the same CLI for one release cycle; prefer `gantry` in scripts and docs.
-
 ## Supported versions
 
 Security fixes are provided **only for the latest release in the 3.x line** (current patch included). Older lines do not receive backports unless noted in a GitHub Security Advisory.
@@ -122,7 +120,7 @@ Use OpenGantry when you need **declared edit blast radius and citeable verify ev
 When a production hotfix cannot wait for full git-proof + trace mapping:
 
 1. Provision `.gitagent/foreman/BYPASS.sha256` (SHA-256 of team secret; never commit plaintext).
-2. Set `GXT_BYPASS_SECRET` in the execution environment.
+2. Set `GANTRY_BYPASS_SECRET` in the execution environment.
 3. Run `gantry verify --break-glass --reason "<incident description>" --mission <path>` (optional `--audit-commit` if git notes cannot be pushed).
 4. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
 5. Planner reviews bypass usage post-incident ([Break-glass](reference/break-glass.md)).

@@ -395,7 +395,7 @@ function registerHooksCommand(program: Command): void {
 
   hooks
     .command("uninstall")
-    .description("Clear local gxt.tmvcGuardStrict; leave core.hooksPath unchanged")
+    .description("Clear local gantry.tmvcGuardStrict; leave core.hooksPath unchanged")
     .action(() => {
       runHooksUninstall();
     });

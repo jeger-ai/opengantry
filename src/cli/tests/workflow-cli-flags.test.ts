@@ -74,8 +74,8 @@ test("mapLegislateCommanderOptions reads --interrogation-file JSON", () => {
 });
 
 test("verifyOptionsFromCli: requireInterrogation is false when unset (not undefined)", () => {
-  const prev = process.env.GXT_REQUIRE_INTERROGATION;
-  delete process.env.GXT_REQUIRE_INTERROGATION;
+  const prev = process.env.GANTRY_REQUIRE_INTERROGATION;
+  delete process.env.GANTRY_REQUIRE_INTERROGATION;
   try {
     const opts = verifyOptionsFromCli({});
     assert.equal(opts.requireInterrogation, false);
@@ -84,8 +84,8 @@ test("verifyOptionsFromCli: requireInterrogation is false when unset (not undefi
     const ciOn = verifyOptionsFromCli({ ci: true });
     assert.equal(ciOn.requireInterrogation, true);
   } finally {
-    if (prev === undefined) delete process.env.GXT_REQUIRE_INTERROGATION;
-    else process.env.GXT_REQUIRE_INTERROGATION = prev;
+    if (prev === undefined) delete process.env.GANTRY_REQUIRE_INTERROGATION;
+    else process.env.GANTRY_REQUIRE_INTERROGATION = prev;
   }
 });
 

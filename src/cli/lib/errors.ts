@@ -1,6 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
-import { readEnvWithLegacy } from "./config-namespace.js";
+import { readGantryEnv } from "./config-namespace.js";
 import path from "node:path";
 import { logError, setExitCode, errorMessage } from "./cli-io.js";
 import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
@@ -15,7 +15,7 @@ export { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import { isGantryUserError } from "#core/user-error.js";
 
 function logUnexpectedError(error: Error): void {
-  if (readEnvWithLegacy("DEBUG") === "1") {
+  if (readGantryEnv("DEBUG") === "1") {
     logError(error.stack ?? error.message);
   } else {
     logError(error.message);
@@ -133,13 +133,13 @@ function buildRemediation(
     for (const v of result.violations.slice(0, 5)) {
       steps.push(`Revert or avoid changes to forbidden path: ${v.path} (${v.kind})`);
     }
-    steps.push("Confine edits to GXT_TMVC_ROOTS unless a Context Request is approved in EXECUTOR_LOG.md");
+    steps.push("Confine edits to GANTRY_TMVC_ROOTS_ABSOLUTE unless a Context Request is approved in EXECUTOR_LOG.md");
   }
   if (result.status === "contract_violation") {
     for (const v of result.contractViolations.slice(0, 5)) {
       steps.push(`${v.file}:${String(v.line)} — ${v.detail}`);
     }
-    steps.push("Use only GXT_ALLOWED_IMPORTS / avoid GXT_BANNED_IMPORTS; re-legislate the mission if the contract must widen");
+    steps.push("Use only GANTRY_ALLOWED_IMPORTS / avoid GANTRY_BANNED_IMPORTS; re-legislate the mission if the contract must widen");
   }
   if (result.status === "timeout") {
     steps.push("Increase --timeout-ms or reduce executor scope; retry with a smaller command");

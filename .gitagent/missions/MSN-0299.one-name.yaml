@@ -1,0 +1,436 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0299]. Executor must not run until the [MSN-0299] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 A9, part one: one name. The gapman bin and npm script, the GAPMAN_* env and gapman.*
+# git config fallbacks and the gapman skill-key alias are removed; the strict pre-commit flag is
+# gantry.tmvcGuardStrict; the deprecated kernel export verifyMissionAsync and its registry entry are removed
+# (verifyMission stays). One env prefix: every GXT_* environment variable is GANTRY_* (GXT_TMVC_ROOTS becomes
+# GANTRY_TMVC_ROOTS_ABSOLUTE because GANTRY_TMVC_ROOTS already names the repository-relative list); GXT_* error
+# codes are unchanged. Renamed in src, tests, goldens, templates, .cursor, scripts, the law files under .gitagent
+# and docs; the env registry has one prefix; REGISTRY-ERROR-CODES reads error-codes.yaml only.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): the 4.0 break the ADR announces,
+# no dual-read of the old env names. RULES.md is a root (Planner law edit: the env name in the bypass rule). The
+# contract allows dynamic specifiers: kernel-exports.test.ts requires the built kernel by path, as before.
+# No trace rows: the evidence is .gitagent/runs/MSN-0299.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0299
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: Accept. Break-glass semantics are unchanged; the secret
+      variable is GANTRY_BYPASS_SECRET and the BYPASS.sha256 anchor is untouched
+      (its comment line names the new variable).
+    adr_refs:
+      - ADR-0052
+      - ADR-0021
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept. The org policy bundle, its floor and its digests are
+      unchanged; only GANTRY_ORG_* variables, already GANTRY_, are involved and
+      they do not change.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 49606dc4afa2
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .cursor/hooks/gxt-session-start.sh,
+      .gitagent/README.md, .gitagent/foreman/BYPASS.sha256,
+      .gitagent/planner/RULES.md, .gitagent/planner/RUNTIME.md,
+      .gitagent/registry/env.yaml, .gitagent/registry/error-codes.yaml,
+      EXECUTOR_LOG.md, TARGET_ARCHITECTURE.yaml, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/SECURITY.md,
+      docs/concepts/enforcement-boundary.md, docs/concepts/missions.md,
+      docs/concepts/scope.md, docs/concepts/verify.md,
+      docs/guides/agent-graphs.md, docs/guides/agents.md, docs/guides/cursor.md,
+      docs/guides/troubleshooting.md, docs/reference/break-glass.md,
+      docs/reference/mcp-tools.md, docs/reference/session-variables.md,
+      docs/start/install.md, package.json, packages/core/src/constants.ts,
+      packages/git/src/msn-commits.ts, scripts/assert-docs-deterministic.sh,
+      scripts/assert-no-stale-cli-naming.sh, scripts/gxt-runtime-env.sh,
+      src/cli/commands/hook.ts, src/cli/commands/hooks.ts,
+      src/cli/commands/interrogate.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/kernel.ts, src/cli/lib/break-glass.ts, src/cli/lib/ci-checks.ts,
+      src/cli/lib/config-namespace.ts, src/cli/lib/contract/effective-scope.ts,
+      src/cli/lib/contract/propose.ts, src/cli/lib/doctor/doctor-core.ts,
+      src/cli/lib/errors.ts, src/cli/lib/fix-hints.ts,
+      src/cli/lib/git/git-hooks.ts, src/cli/lib/legislate/legislate.ts,
+      src/cli/lib/mcp/mcp-draft-legislation.ts,
+      src/cli/lib/mcp/mcp-interrogate.ts, src/cli/lib/mcp/mcp-tools-register.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/missions/resolution.ts,
+      src/cli/lib/pepper-keyring.ts, src/cli/lib/planner-identity.ts,
+      src/cli/lib/principal-hmac.ts, src/cli/lib/reporter.ts,
+      src/cli/lib/runtime-env.ts, src/cli/lib/runtime-exec.ts,
+      src/cli/lib/skill-key.ts, src/cli/lib/tmvc-path.ts,
+      src/cli/lib/verify/verify-options.ts, src/cli/program-core.ts,
+      src/cli/program-workflow.ts, src/cli/program.ts,
+      src/cli/tests/config-namespace.test.ts,
+      src/cli/tests/contract-runtime.test.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/kernel-exports.test.ts,
+      src/cli/tests/metrics-classification.test.ts,
+      src/cli/tests/missions/mission-path-resolution.test.ts,
+      src/cli/tests/planner-identity.test.ts, src/cli/tests/skill-key.test.ts,
+      src/cli/tests/workflow-cli-flags.test.ts,
+      templates/.cursor/hooks/gxt-session-start.sh,
+      templates/.gitagent/foreman/BYPASS.sha256,
+      templates/.gitagent/planner/RULES.md,
+      templates/scripts/gxt-runtime-env.sh,
+      test/conformance/golden/runtime-env.json.mission-pass.json,
+      test/conformance/golden/runtime-env.text.mission-pass.json,
+      .gitagent/missions/MSN-0299.one-name.yaml, .gitagent/runs/MSN-0299.json.
+      Removed: the gapman bin and npm script (package.json), LEGACY_CLI_NAME
+      (core constants), the GAPMAN_* env and gapman.* git config fallbacks
+      (config-namespace.ts now readGantryEnv and readGantryGitConfig; callers in
+      resolution, planner-identity, errors, principal-hmac, pepper-keyring), the
+      gapman skill-key alias (skill-key.ts keeps CANONICAL_CLI_SKILL_KEY and
+      manifestHasSkill; nine callers use the key as given), verifyMissionAsync
+      and its reset helper (kernel.ts) and the GXT_DEP_VERIFY_MISSION_ASYNC
+      registry entry. Renamed: gxt.tmvcGuardStrict to gantry.tmvcGuardStrict;
+      every GXT_* environment variable to GANTRY_* (GXT_TMVC_ROOTS to
+      GANTRY_TMVC_ROOTS_ABSOLUTE) in src, tests, the two runtime-env goldens,
+      templates, .cursor, scripts/gxt-runtime-env.sh, .gitagent/README.md,
+      .gitagent/planner/RUNTIME.md and RULES.md, .gitagent/foreman/BYPASS.sha256
+      (a comment line; the anchor is unchanged), docs; the env registry has one
+      prefix and sorted entries; TARGET_ARCHITECTURE.yaml REGISTRY-ERROR-CODES
+      reads error-codes.yaml only; the naming check scripts lose their
+      allowlists; SECURITY.md loses the alias note; CHANGELOG and
+      session-variables explain the rename. RULES.md is a root of this mission
+      (Planner law edit: the env name in the bypass rule);
+      .gitagent/foreman/MANIFEST.json, POLICY.pointer.json and
+      .github/workflows/ are forbidden. The contract allows dynamic specifiers
+      because kernel-exports.test.ts (a root) requires the built kernel by path,
+      as before this mission. Paths outside any TARGET_ARCHITECTURE layer in
+      this mission are package.json, the goldens, templates, .cursor, scripts,
+      the law files under .gitagent, the registries, the record and docs; the
+      renamed source files sit in their existing core, git, lib and command
+      layers."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 67ac2be17ab4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0039. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0039 before
+      legislation proceeds.
+    operator_answer: Accept. Interrogation gating is unchanged; the env that
+      requires it is GANTRY_REQUIRE_INTERROGATION now (was
+      GXT_REQUIRE_INTERROGATION); this mission is legislated through the gate
+      with every file declared.
+    adr_refs:
+      - ADR-0052
+      - ADR-0039
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Verify output formats are unchanged; only gantry
+      runtime env prints new variable names (goldens updated).
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .cursor/hooks/gxt-session-start.sh, .gitagent/README.md,
+      .gitagent/foreman/BYPASS.sha256, .gitagent/planner/RULES.md,
+      .gitagent/planner/RUNTIME.md, .gitagent/registry/env.yaml,
+      .gitagent/registry/error-codes.yaml, EXECUTOR_LOG.md,
+      TARGET_ARCHITECTURE.yaml, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      docs/SECURITY.md, docs/concepts/enforcement-boundary.md,
+      docs/concepts/missions.md, docs/concepts/scope.md,
+      docs/concepts/verify.md, docs/guides/agent-graphs.md,
+      docs/guides/agents.md, docs/guides/cursor.md,
+      docs/guides/troubleshooting.md, docs/reference/break-glass.md,
+      docs/reference/mcp-tools.md, docs/reference/session-variables.md,
+      docs/start/install.md, package.json, packages/core/src/constants.ts,
+      packages/git/src/msn-commits.ts, scripts/assert-docs-deterministic.sh,
+      scripts/assert-no-stale-cli-naming.sh, scripts/gxt-runtime-env.sh,
+      src/cli/commands/hook.ts, src/cli/commands/hooks.ts,
+      src/cli/commands/interrogate.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/kernel.ts, src/cli/lib/break-glass.ts, src/cli/lib/ci-checks.ts,
+      src/cli/lib/config-namespace.ts, src/cli/lib/contract/effective-scope.ts,
+      src/cli/lib/contract/propose.ts, src/cli/lib/doctor/doctor-core.ts,
+      src/cli/lib/errors.ts, src/cli/lib/fix-hints.ts,
+      src/cli/lib/git/git-hooks.ts, src/cli/lib/legislate/legislate.ts,
+      src/cli/lib/mcp/mcp-draft-legislation.ts,
+      src/cli/lib/mcp/mcp-interrogate.ts, src/cli/lib/mcp/mcp-tools-register.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/missions/resolution.ts,
+      src/cli/lib/pepper-keyring.ts, src/cli/lib/planner-identity.ts,
+      src/cli/lib/principal-hmac.ts, src/cli/lib/reporter.ts,
+      src/cli/lib/runtime-env.ts, src/cli/lib/runtime-exec.ts,
+      src/cli/lib/skill-key.ts, src/cli/lib/tmvc-path.ts,
+      src/cli/lib/verify/verify-options.ts, src/cli/program-core.ts,
+      src/cli/program-workflow.ts, src/cli/program.ts,
+      src/cli/tests/config-namespace.test.ts,
+      src/cli/tests/contract-runtime.test.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/kernel-exports.test.ts,
+      src/cli/tests/metrics-classification.test.ts,
+      src/cli/tests/missions/mission-path-resolution.test.ts,
+      src/cli/tests/planner-identity.test.ts, src/cli/tests/skill-key.test.ts,
+      src/cli/tests/workflow-cli-flags.test.ts,
+      templates/.cursor/hooks/gxt-session-start.sh,
+      templates/.gitagent/foreman/BYPASS.sha256,
+      templates/.gitagent/planner/RULES.md,
+      templates/scripts/gxt-runtime-env.sh,
+      test/conformance/golden/runtime-env.json.mission-pass.json,
+      test/conformance/golden/runtime-env.text.mission-pass.json,
+      .gitagent/missions/MSN-0299.one-name.yaml, .gitagent/runs/MSN-0299.json.
+      Removed: the gapman bin and npm script (package.json), LEGACY_CLI_NAME
+      (core constants), the GAPMAN_* env and gapman.* git config fallbacks
+      (config-namespace.ts now readGantryEnv and readGantryGitConfig; callers in
+      resolution, planner-identity, errors, principal-hmac, pepper-keyring), the
+      gapman skill-key alias (skill-key.ts keeps CANONICAL_CLI_SKILL_KEY and
+      manifestHasSkill; nine callers use the key as given), verifyMissionAsync
+      and its reset helper (kernel.ts) and the GXT_DEP_VERIFY_MISSION_ASYNC
+      registry entry. Renamed: gxt.tmvcGuardStrict to gantry.tmvcGuardStrict;
+      every GXT_* environment variable to GANTRY_* (GXT_TMVC_ROOTS to
+      GANTRY_TMVC_ROOTS_ABSOLUTE) in src, tests, the two runtime-env goldens,
+      templates, .cursor, scripts/gxt-runtime-env.sh, .gitagent/README.md,
+      .gitagent/planner/RUNTIME.md and RULES.md, .gitagent/foreman/BYPASS.sha256
+      (a comment line; the anchor is unchanged), docs; the env registry has one
+      prefix and sorted entries; TARGET_ARCHITECTURE.yaml REGISTRY-ERROR-CODES
+      reads error-codes.yaml only; the naming check scripts lose their
+      allowlists; SECURITY.md loses the alias note; CHANGELOG and
+      session-variables explain the rename. RULES.md is a root of this mission
+      (Planner law edit: the env name in the bypass rule);
+      .gitagent/foreman/MANIFEST.json, POLICY.pointer.json and
+      .github/workflows/ are forbidden. The contract allows dynamic specifiers
+      because kernel-exports.test.ts (a root) requires the built kernel by path,
+      as before this mission. Operator direction (2026-10-18, continue until
+      everything is done): ADR-0052 A9 as decided, first part (bins, fallbacks,
+      deprecated export, one env prefix); internal vocabulary in identifiers
+      (surgeon and friends) is the second part. GXT_TMVC_ROOTS cannot take the
+      plain GANTRY_ name because GANTRY_TMVC_ROOTS already exists with another
+      format for terminal harnesses, so it becomes GANTRY_TMVC_ROOTS_ABSOLUTE.
+      This is the 4.0 break the ADR announces: sessions, hooks and scripts that
+      read the old names must switch; no dual-read of the old env names, as for
+      GAPMAN_. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0299.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment is unchanged; two tool
+      descriptions name GANTRY_MISSION_FILE and GANTRY_LAST_ERROR_FILE instead
+      of the GXT_ names.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract cage, seal and scan are unchanged; the
+      exported allowed and banned import lists only change their variable names.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config file format changes; the env registry stays
+      human-written YAML (entries renamed and sorted).
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: a10d5127d1fac22c8205ec2ed5b97c71a0eb6e8fb22fd36fb9eb4a986e20ecf7
+declared_paths:
+  - .cursor/hooks/gxt-session-start.sh
+  - .gitagent/README.md
+  - .gitagent/foreman/BYPASS.sha256
+  - .gitagent/missions/MSN-0299.one-name.yaml
+  - .gitagent/planner/RULES.md
+  - .gitagent/planner/RUNTIME.md
+  - .gitagent/registry/env.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0299.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/SECURITY.md
+  - docs/concepts/enforcement-boundary.md
+  - docs/concepts/missions.md
+  - docs/concepts/scope.md
+  - docs/concepts/verify.md
+  - docs/guides/agent-graphs.md
+  - docs/guides/agents.md
+  - docs/guides/cursor.md
+  - docs/guides/troubleshooting.md
+  - docs/reference/break-glass.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/session-variables.md
+  - docs/start/install.md
+  - package.json
+  - packages/core/src/constants.ts
+  - packages/git/src/msn-commits.ts
+  - scripts/assert-docs-deterministic.sh
+  - scripts/assert-no-stale-cli-naming.sh
+  - scripts/gxt-runtime-env.sh
+  - src/cli/commands/hook.ts
+  - src/cli/commands/hooks.ts
+  - src/cli/commands/interrogate.ts
+  - src/cli/commands/tmvc-guard.ts
+  - src/cli/kernel.ts
+  - src/cli/lib/break-glass.ts
+  - src/cli/lib/ci-checks.ts
+  - src/cli/lib/config-namespace.ts
+  - src/cli/lib/contract/effective-scope.ts
+  - src/cli/lib/contract/propose.ts
+  - src/cli/lib/doctor/doctor-core.ts
+  - src/cli/lib/errors.ts
+  - src/cli/lib/fix-hints.ts
+  - src/cli/lib/git/git-hooks.ts
+  - src/cli/lib/legislate/legislate.ts
+  - src/cli/lib/mcp/mcp-draft-legislation.ts
+  - src/cli/lib/mcp/mcp-interrogate.ts
+  - src/cli/lib/mcp/mcp-tools-register.ts
+  - src/cli/lib/mcp/mcp-write-guard.ts
+  - src/cli/lib/missions/resolution.ts
+  - src/cli/lib/pepper-keyring.ts
+  - src/cli/lib/planner-identity.ts
+  - src/cli/lib/principal-hmac.ts
+  - src/cli/lib/reporter.ts
+  - src/cli/lib/runtime-env.ts
+  - src/cli/lib/runtime-exec.ts
+  - src/cli/lib/skill-key.ts
+  - src/cli/lib/tmvc-path.ts
+  - src/cli/lib/verify/verify-options.ts
+  - src/cli/program-core.ts
+  - src/cli/program-workflow.ts
+  - src/cli/program.ts
+  - src/cli/tests/config-namespace.test.ts
+  - src/cli/tests/contract-runtime.test.ts
+  - src/cli/tests/git-proof.test.ts
+  - src/cli/tests/kernel-exports.test.ts
+  - src/cli/tests/metrics-classification.test.ts
+  - src/cli/tests/missions/mission-path-resolution.test.ts
+  - src/cli/tests/planner-identity.test.ts
+  - src/cli/tests/skill-key.test.ts
+  - src/cli/tests/workflow-cli-flags.test.ts
+  - templates/.cursor/hooks/gxt-session-start.sh
+  - templates/.gitagent/foreman/BYPASS.sha256
+  - templates/.gitagent/planner/RULES.md
+  - templates/scripts/gxt-runtime-env.sh
+  - test/conformance/golden/runtime-env.json.mission-pass.json
+  - test/conformance/golden/runtime-env.text.mission-pass.json
+contract:
+  tmvc_roots:
+    - .cursor/hooks/gxt-session-start.sh
+    - .gitagent/README.md
+    - .gitagent/foreman/BYPASS.sha256
+    - .gitagent/missions/MSN-0299.one-name.yaml
+    - .gitagent/planner/RULES.md
+    - .gitagent/planner/RUNTIME.md
+    - .gitagent/registry/env.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0299.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/SECURITY.md
+    - docs/concepts/enforcement-boundary.md
+    - docs/concepts/missions.md
+    - docs/concepts/scope.md
+    - docs/concepts/verify.md
+    - docs/guides/agent-graphs.md
+    - docs/guides/agents.md
+    - docs/guides/cursor.md
+    - docs/guides/troubleshooting.md
+    - docs/reference/break-glass.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/session-variables.md
+    - docs/start/install.md
+    - package.json
+    - packages/core/src/constants.ts
+    - packages/git/src/msn-commits.ts
+    - scripts/assert-docs-deterministic.sh
+    - scripts/assert-no-stale-cli-naming.sh
+    - scripts/gxt-runtime-env.sh
+    - src/cli/commands/hook.ts
+    - src/cli/commands/hooks.ts
+    - src/cli/commands/interrogate.ts
+    - src/cli/commands/tmvc-guard.ts
+    - src/cli/kernel.ts
+    - src/cli/lib/break-glass.ts
+    - src/cli/lib/ci-checks.ts
+    - src/cli/lib/config-namespace.ts
+    - src/cli/lib/contract/effective-scope.ts
+    - src/cli/lib/contract/propose.ts
+    - src/cli/lib/doctor/doctor-core.ts
+    - src/cli/lib/errors.ts
+    - src/cli/lib/fix-hints.ts
+    - src/cli/lib/git/git-hooks.ts
+    - src/cli/lib/legislate/legislate.ts
+    - src/cli/lib/mcp/mcp-draft-legislation.ts
+    - src/cli/lib/mcp/mcp-interrogate.ts
+    - src/cli/lib/mcp/mcp-tools-register.ts
+    - src/cli/lib/mcp/mcp-write-guard.ts
+    - src/cli/lib/missions/resolution.ts
+    - src/cli/lib/pepper-keyring.ts
+    - src/cli/lib/planner-identity.ts
+    - src/cli/lib/principal-hmac.ts
+    - src/cli/lib/reporter.ts
+    - src/cli/lib/runtime-env.ts
+    - src/cli/lib/runtime-exec.ts
+    - src/cli/lib/skill-key.ts
+    - src/cli/lib/tmvc-path.ts
+    - src/cli/lib/verify/verify-options.ts
+    - src/cli/program-core.ts
+    - src/cli/program-workflow.ts
+    - src/cli/program.ts
+    - src/cli/tests/config-namespace.test.ts
+    - src/cli/tests/contract-runtime.test.ts
+    - src/cli/tests/git-proof.test.ts
+    - src/cli/tests/kernel-exports.test.ts
+    - src/cli/tests/metrics-classification.test.ts
+    - src/cli/tests/missions/mission-path-resolution.test.ts
+    - src/cli/tests/planner-identity.test.ts
+    - src/cli/tests/skill-key.test.ts
+    - src/cli/tests/workflow-cli-flags.test.ts
+    - templates/.cursor/hooks/gxt-session-start.sh
+    - templates/.gitagent/foreman/BYPASS.sha256
+    - templates/.gitagent/planner/RULES.md
+    - templates/scripts/gxt-runtime-env.sh
+    - test/conformance/golden/runtime-env.json.mission-pass.json
+    - test/conformance/golden/runtime-env.text.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.json
+    - .gitagent/foreman/POLICY.pointer.json
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: a9e97cb3ce345fc9028ba2fa729959a14cccfae377a7895117aef4b4716e28b3

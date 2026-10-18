@@ -32,7 +32,7 @@ const CLI_SOURCE_RE = /^src\/cli\/.*\.ts$/;
 const MISSION_FILE_RE = /^\.gitagent\/missions\/.*\.(ya?ml|md)$/i;
 
 function strictGuardArmed(root: string): boolean {
-  if (process.env.GXT_TMVC_GUARD_STRICT === "1") return true;
+  if (process.env.GANTRY_TMVC_GUARD_STRICT === "1") return true;
   const r = gitRunOk(root, ["config", "--get", TMVC_GUARD_STRICT_KEY]);
   return r.ok && r.stdout.trim() === "true";
 }

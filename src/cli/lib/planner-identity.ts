@@ -5,8 +5,8 @@ import { CLI_NAME } from "./constants.js";
 import {
   ENV_PLANNER_EMAILS,
   GIT_CONFIG_PLANNER_EMAILS,
-  readEnvWithLegacy,
-  readGitConfigWithLegacy,
+  readGantryEnv,
+  readGantryGitConfig,
 } from "./config-namespace.js";
 import { gitRunOk } from "#git/git.js";
 
@@ -45,7 +45,7 @@ function readAllowlistFile(repoRoot: string, relPath: string): string[] {
 }
 
 function readGitConfigPlannerEmails(repoRoot: string): string[] {
-  const raw = readGitConfigWithLegacy(repoRoot, "plannerEmails");
+  const raw = readGantryGitConfig(repoRoot, "plannerEmails");
   if (!raw) return [];
   return normalizeEmailList(raw);
 }
@@ -60,7 +60,7 @@ function readGitUserEmail(repoRoot: string): string | null {
 
 /** Legacy env-only parser (tests / explicit CI override). */
 export function parsePlannerEmailsFromEnv(): string[] {
-  const raw = readEnvWithLegacy("PLANNER_EMAILS");
+  const raw = readGantryEnv("PLANNER_EMAILS");
   if (!raw) return [];
   return normalizeEmailList(raw);
 }

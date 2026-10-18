@@ -103,7 +103,6 @@ DOC_PATHS=(
 mapfile -t naming_hits < <(
   rg -i 'gapman|GAPMAN' "${DOC_PATHS[@]}" \
     --glob '!docs/archive/**' \
-    --glob '!docs/SECURITY.md' \
     --glob '!docs/CHANGELOG.md' \
     --glob '!.gitagent/planner/RULES.md' \
     --glob '!.gitagent/planner/MISSION-ARCHITECT.md' \

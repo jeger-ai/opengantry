@@ -9,7 +9,6 @@ import {
 } from "../tmvc-path.js";
 import { GantryUserError } from "../errors.js";
 import type { Manifest } from "#core/mission-types.js";
-import { resolveManifestSkillKey } from "../skill-key.js";
 
 export const MCP_WRITE_DENIED = "MCP_WRITE_DENIED" as const;
 
@@ -73,7 +72,7 @@ export function assertMcpSkillWritePath(
   const norm = normalizeRepoRelativePath(repoRelPath);
   if (isGovernanceTransportPath(norm)) return;
 
-  const resolvedSkill = resolveManifestSkillKey(manifest, skillKey);
+  const resolvedSkill = skillKey;
   const forbidden = forbiddenZonesForSkill(manifest, resolvedSkill);
   const hit = pathHitsForbiddenZone(norm, forbidden);
   if (hit) {

@@ -53,7 +53,7 @@ export function checkMsnRange(root: string, manifest: Manifest, baseSha: string,
       `MSN check FAILED: commit ${commit} touches MSN-enforced paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note`,
       `  subject: ${subject}`,
       `  trusted automation: ${verdict.reason}`,
-      `  hint: run gantry verify --break-glass --reason "..." with GXT_BYPASS_SECRET, push refs/notes/gxt-bypass`,
+      `  hint: run gantry verify --break-glass --reason "..." with GANTRY_BYPASS_SECRET, push refs/notes/gxt-bypass`,
       "  touched paths (sample):",
       ...touched.slice(0, 20).map((p) => `    ${p}`),
     ].join("\n");
