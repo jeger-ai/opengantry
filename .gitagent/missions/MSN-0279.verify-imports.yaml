@@ -111,13 +111,13 @@ trace_rows:
     anchor: "1501"
     status: PASS
   - dod_id: "12"
-    trace_quote: "DoD 12 MSN-0279 re-attested at 2afcbde: ./scripts/dev-validate-core.sh exit 0: tests 943 pass 943 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1504"
+    trace_quote: "DoD 12 MSN-0279 re-attested at d1e976c after merging main (#228 MSN-0277, #231 MSN-0276, #232 ADR-0052 step 1): ./scripts/dev-validate-core.sh exit 0: unit tests 971 pass 971 fail 0; conformance suite tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1505"
     status: PASS
   - dod_id: "13"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 13 MSN-0279 at d1e976c: .gitagent/registry/error-codes.yaml lists GXT_VERIFY_SIGN_NO_KEY with since MSN-0279 (Planner commit 0897da0, after the amendment 1c2417f missed the last-sorting entry); verify.contract.contract-standalone and verify.contract.gate-json.contract-standalone re-recorded, differing only by inherited, imports, layers and skipped (the gate.json case inherits the fixture's verify.yaml and its no-console rule); no other golden file changed"
+    anchor: "1506"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1b8d3219a2c3
