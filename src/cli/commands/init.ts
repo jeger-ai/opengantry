@@ -1,7 +1,8 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
-import { CLI_NAME, REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
+import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "../lib/constants.js";
+import { readArchitecturePointerSource } from "../lib/arch/external/architecture-pointer.js";
 import { manifestExists } from "../lib/manifest.js";
 import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
@@ -61,8 +62,8 @@ export interface InitOptions {
 }
 
 function planArchitecturePointerWrite(profile: InitProfile, repoRoot: string): PlannedWrite | null {
-  const targetAbs = path.join(repoRoot, REL_ARCHITECTURE_POINTER.split("/").join(path.sep));
-  if (fs.existsSync(targetAbs)) return null;
+  if (readArchitecturePointerSource(repoRoot) !== null) return null;
+  const targetAbs = path.join(repoRoot, REL_ARCHITECTURE_POINTER_YAML.split("/").join(path.sep));
   const body = serializeArchitecturePointer(composeArchitecturePointer(profile));
   return { absoluteTarget: targetAbs, body, executable: false };
 }
@@ -196,7 +197,7 @@ function logInitDryRun(
     logInfo(`${CLI_NAME} init: composed ${profile.integrationsDocPath} (${docWrite.body.length} bytes)`);
   }
   if (pointerWrite) {
-    logInfo(`${CLI_NAME} init: composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
+    logInfo(`${CLI_NAME} init: composed ${REL_ARCHITECTURE_POINTER_YAML} (kind=${profile.architectureSource})`);
   }
 }
 
@@ -266,7 +267,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     logInfo(`${CLI_NAME} init: wrote composed ${profile.integrationsDocPath}`);
   }
   if (pointerWrite) {
-    logInfo(`${CLI_NAME} init: wrote composed ${REL_ARCHITECTURE_POINTER} (kind=${profile.architectureSource})`);
+    logInfo(`${CLI_NAME} init: wrote composed ${REL_ARCHITECTURE_POINTER_YAML} (kind=${profile.architectureSource})`);
   }
   logInitSummary(plan.writes, plan.skippedUserMutable, plan.unchanged);
   if (options.tutorial) {

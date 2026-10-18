@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ArchitecturePointer } from "../arch/external/architecture-pointer.js";
+import { architecturePointerToYaml } from "#core/architecture-pointer-file.js";
 import { REL_ARCHITECTURE_DISCOVERY_SKILL } from "../constants.js";
 import {
   INTEGRATION_IDE_KEYS,
@@ -80,7 +81,7 @@ export function composeArchitecturePointer(profile: InitProfile): ArchitecturePo
 }
 
 export function serializeArchitecturePointer(pointer: ArchitecturePointer): string {
-  return `${JSON.stringify(pointer, null, 2)}\n`;
+  return architecturePointerToYaml(pointer);
 }
 
 function readRecipe(templatesRoot: string, recipeFile: string): string {

@@ -309,7 +309,7 @@ Implementation: [`src/cli/lib/repairs/`](../src/cli/lib/repairs/) registry, [`sr
 - [ ] `EXECUTOR_LOG.md` trace lines match mission PASS rows (or `gantry verify` on your mission passes)
 - [ ] `npm run validate` passes
 - [ ] Rule 4.4: manifest skill keys ↔ `skills/*.md` in the same change set when skills change
-- [ ] `.gitagent/ARCHITECTURE.pointer.json` resolved and layer rules respected for `src/cli` edits
+- [ ] `.gitagent/ARCHITECTURE.pointer.yaml` resolved and layer rules respected for `src/cli` edits
 - [ ] When changing agent integration surfaces: bump `templates/integrations/compatibility.json` `verified_date` + recipe fragments in the same PR
 
 ## CI parity

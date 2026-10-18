@@ -1,0 +1,18 @@
+{
+  "id": "migrate-architecture-pointer.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "migrate",
+    "architecture-pointer",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "already_yaml",
+    "wrote": null,
+    "removed": null,
+    "perimeter_protected_updated": false,
+    "dry_run": false
+  },
+  "stderr_codes": []
+}

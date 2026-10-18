@@ -6,4 +6,4 @@ Before substantive work, read `AGENTS.md`, `.gitagent/planner/RULES.md`, and `.g
 
 Terminal bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`
 
-Code layout: read `.gitagent/ARCHITECTURE.pointer.json` first (file, folder, or external per `kind`). GXT workflow: `.gitagent/README.md`.
+Code layout: read `.gitagent/ARCHITECTURE.pointer.yaml` first (file, folder, or external per `kind`). GXT workflow: `.gitagent/README.md`.

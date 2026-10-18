@@ -9,4 +9,4 @@ Before planning or editing code, read:
 
 Bootstrap: `source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml`
 
-See `.gitagent/ARCHITECTURE.pointer.json` for code layout (follow `read_hint`). GXT workflow: `.gitagent/README.md`.
+See `.gitagent/ARCHITECTURE.pointer.yaml` for code layout (follow `read_hint`). GXT workflow: `.gitagent/README.md`.
