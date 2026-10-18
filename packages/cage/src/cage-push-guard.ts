@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { gitRun } from "../git/git.js";
+import { gitRun } from "#git/git.js";
 import { classifyCagePath, serializeCagePlan, type CagePlan, type CageRuleId } from "./cage-rules.js";
 
 /** Standard client-side git hooks; each session wrapper chains to the repo's real hook of the same name. */
@@ -53,9 +53,9 @@ function activeHooksDir(root: string): string | null {
   return r.ok && out ? path.resolve(out) : null;
 }
 
-/** The CLI entry the session pre-push hook calls (`dist/cli/index.js`, next to this module's `lib/`). */
+/** The CLI entry the session pre-push hook calls: `dist/cli/index.js`, from this module at `dist/packages/cage/src/`. */
 function cliEntry(): string {
-  return fileURLToPath(new URL("../../index.js", import.meta.url));
+  return fileURLToPath(new URL("../../../cli/index.js", import.meta.url));
 }
 
 function hookScript(name: string, realHooks: string, root: string, planFile: string): string {

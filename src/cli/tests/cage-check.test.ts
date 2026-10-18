@@ -5,8 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
-import { runCageCheck } from "../lib/cage/cage-check.js";
-import { cageScanRule } from "../lib/cage/cage-rules.js";
+import { runCageCheck } from "#cage/cage-check.js";
+import { cageScanRule } from "#cage/cage-rules.js";
 import { isCageSubcommandInvocation } from "../program-cage.js";
 import { writeManifest } from "./test-fixtures.js";
 

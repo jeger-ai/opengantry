@@ -2,8 +2,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { GantryUserError } from "../errors.js";
-import { gitChildEnv } from "../git/git.js";
+import { GantryUserError } from "#core/user-error.js";
+import { gitChildEnv } from "#git/git.js";
 import { cageGlobToRegExp, normalizeCageRelPath } from "./cage-config.js";
 
 /**

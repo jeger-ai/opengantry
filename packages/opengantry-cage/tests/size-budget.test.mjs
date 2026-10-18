@@ -18,7 +18,7 @@ function dirBytes(dir) {
 }
 
 test("packages/opengantry-cage/ including dist/ is at most 2,097,152 bytes", () => {
-  const bundle = path.join(pkgDir, "dist", "cli", "lib", "cage", "opengantry-cage.js");
+  const bundle = path.join(pkgDir, "dist", "packages", "cage", "src", "opengantry-cage.js");
   assert.ok(fs.existsSync(bundle), "build output present (run npm run build first)");
   const total = dirBytes(pkgDir);
   assert.ok(total <= SIZE_CAP_BYTES, `unpacked package dir is ${total} bytes, cap ${SIZE_CAP_BYTES}`);

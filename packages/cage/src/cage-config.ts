@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseDocument } from "yaml";
-import { GantryUserError } from "../errors.js";
-import { gitRun } from "../git/git.js";
+import { GantryUserError } from "#core/user-error.js";
+import { gitRun } from "#git/git.js";
 
 /** Per-project cage config at the cage root. Additive only: it can protect more, never less. */
 export const CAGE_CONFIG_FILE = ".cage.yaml";

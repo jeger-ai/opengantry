@@ -10,7 +10,7 @@ import { configureCageCommand, registerCageCommands } from "../../../src/cli/pro
  * exactly like `gantry cage`. The package exposes only the `gantry-cage` bin (MSN-0258).
  *
  * The cage session pre-push hook calls `<node> <dist/cli/index.js> cage-guard pre-push --root … --plan …`
- * (see src/cli/lib/cage/cage-push-guard.ts). In the full package that file is the gantry CLI; here the
+ * (see packages/cage/src/cage-push-guard.ts). In the full package that file is the gantry CLI; here the
  * same path is the package bin, so the guard subcommand is served from this entry too.
  */
 resetOutputContext();

@@ -6,12 +6,12 @@ import path from "node:path";
 import { EventEmitter } from "node:events";
 import { spawn, spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
-import { recoverCageJournal, resolveCageJournalDir, writeCageJournal } from "../lib/cage/cage-journal.js";
-import { buildCagePlan } from "../lib/cage/cage-rules.js";
-import { takeCageSnapshot, type CageSnapshotOptions } from "../lib/cage/cage-snapshot.js";
-import { openCageSessionLog } from "../lib/cage/cage-watch.js";
-import { CageDecisionEngine, type CageDecisionAlert } from "../lib/cage/cage-watch-decisions.js";
-import { runCageWatch } from "../lib/cage/cage-watch-run.js";
+import { recoverCageJournal, resolveCageJournalDir, writeCageJournal } from "#cage/cage-journal.js";
+import { buildCagePlan } from "#cage/cage-rules.js";
+import { takeCageSnapshot, type CageSnapshotOptions } from "#cage/cage-snapshot.js";
+import { openCageSessionLog } from "#cage/cage-watch.js";
+import { CageDecisionEngine, type CageDecisionAlert } from "#cage/cage-watch-decisions.js";
+import { runCageWatch } from "#cage/cage-watch-run.js";
 import { isCageSubcommandInvocation } from "../program-cage.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-9b2d";
@@ -241,7 +241,7 @@ test("cage watch runner: refuses without a terminal and while another cage sessi
 
 test("cage watch: after kill -9 the next run restores to the last accepted state and kills nothing (MSN-0268 DoD 3, 4)", async () => {
   const root = makeRepo("og-cage-wr-kill-");
-  const mod = path.join(getRepoRoot(), "dist", "cli", "lib", "cage", "cage-watch-run.js");
+  const mod = path.join(getRepoRoot(), "dist", "packages", "cage", "src", "cage-watch-run.js");
   const script = `
     import { EventEmitter } from "node:events";
     import fs from "node:fs";

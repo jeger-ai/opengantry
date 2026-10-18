@@ -6,10 +6,10 @@ import path from "node:path";
 import { EventEmitter } from "node:events";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
-import { recoverCageJournal, resolveCageJournalDir } from "../lib/cage/cage-journal.js";
-import { runCage } from "../lib/cage/cage-run.js";
-import { buildCagePlan, classifyCagePath, inCageScope } from "../lib/cage/cage-rules.js";
-import { runCageWatch } from "../lib/cage/cage-watch-run.js";
+import { recoverCageJournal, resolveCageJournalDir } from "#cage/cage-journal.js";
+import { runCage } from "#cage/cage-run.js";
+import { buildCagePlan, classifyCagePath, inCageScope } from "#cage/cage-rules.js";
+import { runCageWatch } from "#cage/cage-watch-run.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-5e0a";
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
@@ -226,7 +226,7 @@ test("cage scope: kill -9 recovery restores out-of-scope changes from the journa
   const journalDir = resolveCageJournalDir(dest);
   const snap = { keepBytes: true, maxFileBytes: 5 * 1024 * 1024, maxTotalBytes: 64 * 1024 * 1024 };
   // A session that journals its baseline and dies without cleaning up: its pid is dead afterwards.
-  const lib = path.join(getRepoRoot(), "dist", "cli", "lib", "cage");
+  const lib = path.join(getRepoRoot(), "dist", "packages", "cage", "src");
   const writer = spawnSync(
     process.execPath,
     [

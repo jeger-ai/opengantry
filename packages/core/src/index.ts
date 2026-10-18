@@ -4,4 +4,5 @@ export * from "./constants.js";
 export * from "./error-codes.js";
 export * from "./manifest.js";
 export * from "./path-glob.js";
+export * from "./posix-path.js";
 export * from "./user-error.js";
