@@ -91,13 +91,13 @@ trace_rows:
     anchor: "1487"
     status: PASS
   - dod_id: "9"
-    trace_quote: "DoD 9 MSN-0276 re-attested at 8d77bab: ./scripts/dev-validate-core.sh exit 0: tests 950 pass 950 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1488"
+    trace_quote: "DoD 9 MSN-0276 re-attested at bf33d48 after merging main (#232 ADR-0052 step 1, #228 MSN-0277): ./scripts/dev-validate-core.sh exit 0: unit tests 964 pass 964 fail 0; conformance suite tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1489"
     status: PASS
   - dod_id: "10"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 10 MSN-0276 at bf33d48: .gitagent/registry/error-codes.yaml lists GXT_CAGE_SCOPE_GIT_FAILED, GXT_CAGE_SCOPE_INVALID and GXT_CAGE_SCOPE_NOT_GIT with since MSN-0276, committed by the Planner in 8b07ae3; the golden files cage-check.tamper, cage-check.clean.bare-git and cage-session.true.tamper were re-recorded and differ only by \"scope\": null and \"scope_sources\": null; no other golden file changed; the conformance suite passes"
+    anchor: "1490"
+    status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 4367eadf9a61
