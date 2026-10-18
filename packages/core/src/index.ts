@@ -1,5 +1,6 @@
 /** @jeger-ai/opengantry-core: pure domain. No fs, git or child_process (TARGET_ARCHITECTURE RULE-CORE-*). */
 export * from "./canonical-json.js";
+export * from "./command-spec.js";
 export * from "./config.js";
 export * from "./contract-types.js";
 export * from "./gate-adapter.js";
