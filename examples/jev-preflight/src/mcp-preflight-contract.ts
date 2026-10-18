@@ -1,8 +1,8 @@
-import { runPreflight, type PreflightProvider, type PreflightResult } from "../contract/preflight.js";
-import { TYPESAFE_API_KEY_ENV } from "../contract/preflight-jev.js";
-import { isGantryUserError } from "../errors.js";
-import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
-import { loadWorkspace } from "../workspace.js";
+import { runPreflight, type PreflightProvider, type PreflightResult } from "./preflight.js";
+import { TYPESAFE_API_KEY_ENV } from "./preflight-jev.js";
+import { isGantryUserError } from "../../../src/cli/lib/errors.js";
+import { mcpError, type McpErrorBody } from "../../../src/cli/lib/mcp/mcp-governance-shared.js";
+import { loadWorkspace } from "../../../src/cli/lib/workspace.js";
 
 export interface PreflightContractMcpInput {
   intent: string;

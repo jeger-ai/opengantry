@@ -1,10 +1,11 @@
+// Parked with the drift index (ADR-0052 A10). These tests ran inside the CLI tree; the ../lib imports below name CLI internals.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { readHostEmbedding } from "../lib/contract/contract-drift.js";
+import { readHostEmbedding } from "../src/contract-drift.js";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
 import {
   OPENAI_API_KEY_ENV,
@@ -13,10 +14,10 @@ import {
   OPENAI_EMBEDDINGS_URL,
   OpenAiEmbeddingProvider,
   writeHostEmbeddingFile,
-} from "../lib/contract/embedding-provider.js";
+} from "../src/embedding-provider.js";
 import { proposeContract } from "../lib/contract/propose.js";
-import { EMBEDDING_DIMENSIONS } from "../lib/contract/vector-store.js";
-import { isGantryUserError } from "../lib/errors.js";
+import { EMBEDDING_DIMENSIONS } from "../src/vector-store.js";
+import { isGantryUserError } from "../src/errors.js";
 import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 

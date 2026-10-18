@@ -1,8 +1,8 @@
-import { normalizeContractPath } from "./contract-hash.js";
-import { existingHintedPaths } from "./intent-path-tokens.js";
+import { normalizeContractPath } from "../../../src/cli/lib/contract/contract-hash.js";
+import { existingHintedPaths } from "../../../src/cli/lib/contract/intent-path-tokens.js";
 import { PREFLIGHT_MIN_CONFIDENCE, type PreflightResult, type TmvcRootCandidate } from "./preflight-types.js";
-import { isTriageEscalated, triageIntent } from "../triage-logic.js";
-import type { Manifest } from "../types.js";
+import { isTriageEscalated, triageIntent } from "../../../src/cli/lib/triage-logic.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
 
 export interface HeuristicPreflightInput {
   root: string;

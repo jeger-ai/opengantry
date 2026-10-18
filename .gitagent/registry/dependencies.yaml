@@ -20,20 +20,10 @@ entries:
     scope: runtime
     range: ^3.0.1
     since: MSN-0045
-  - name: better-sqlite3
-    scope: runtime
-    range: ^13.0.3
-    native: true
-    since: MSN-0226
   - name: commander
     scope: runtime
     range: ^15.0.0
     since: MSN-0010
-  - name: sqlite-vec
-    scope: runtime
-    range: ^0.1.9
-    native: true
-    since: MSN-0226
   - name: yaml
     scope: runtime
     range: ^2.6.1
@@ -46,10 +36,6 @@ entries:
     scope: dev
     range: ^10.0.1
     since: commit 3709795
-  - name: "@types/better-sqlite3"
-    scope: dev
-    range: ^9.6.0
-    since: MSN-0226
   - name: "@types/node"
     scope: dev
     range: ^24.0.0

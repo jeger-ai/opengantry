@@ -9,29 +9,14 @@ order: 5
 
 None of these are needed for basic adoption. Each one is advisory or opt-in: it can add warnings or evidence, but merge stays deterministic.
 
-## Contract preflight
+## Parked: contract preflight and the contract drift index
 
-Before the deterministic contract proposer runs, the Mission Architect spends a turn inferring a `skill_key` and path hints. A typed classifier can suggest those hints, but it must never become mission law.
+Two experiments shipped inside the CLI until 3.9 and are parked by [ADR-0052](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md) A10, unchanged but outside the CLI:
 
-```bash
-gantry contract preflight "<intent>"     # MCP: gxt_preflight_contract
-```
+- The advisory contract preflight (`gantry contract preflight`, MCP `gxt_preflight_contract`, the optional Jev provider behind `TYPESAFE_API_KEY`) lives in [`examples/jev-preflight/`](https://github.com/jeger-ai/opengantry/tree/main/examples/jev-preflight).
+- The local contract drift index (`gantry contract embed`, `--embedding-file`, `--auto-embed`, `better-sqlite3` and `sqlite-vec`) lives in [`examples/contract-drift-index/`](https://github.com/jeger-ai/opengantry/tree/main/examples/contract-drift-index). The CLI no longer depends on a native module.
 
-- Advisory and read-only: it never writes `contract` or `contract_sha256`. Call `gantry contract propose` (MCP `gxt_propose_contract`) next.
-- The default provider is an offline heuristic. The optional provider `jev` calls TypeSafe System One when `TYPESAFE_API_KEY` is set; a missing key is an explicit error before any request.
-- `jev` builds its request from the live `.gitagent/foreman/MANIFEST.json`, including every skill's `desc` and `tmvc_roots`. There is no hard-coded skill list.
-- **Fails open:** the request limit is 2000 ms. A timeout or any non-OK HTTP status, including 500, returns the heuristic result with a `jev_fallback:` rationale and does not break the agent loop. Treat that as the heuristic payload and keep going.
-
-Example: [`examples/jev-preflight/`](https://github.com/jeger-ai/opengantry/tree/main/examples/jev-preflight).
-
-## Contract drift index
-
-An optional local index warns when a new mission's intent drifts from earlier contracts:
-
-- `gantry legislate --from-intent … --embedding-file <path>` takes a host-supplied 1536-dimension embedding; `--auto-embed` and `gantry contract embed` generate one through OpenAI and need `OPENAI_API_KEY`.
-- The warnings are advisory and shown before you approve the proposal.
-- The index uses `better-sqlite3` (a native module with prebuilt binaries for common platforms) and `sqlite-vec`, loaded only when an embedding is supplied. Other commands never import them.
-- Keep the index file, `.gitagent/planner/contracts.sqlite`, gitignored.
+Call `gantry contract propose` (MCP `gxt_propose_contract`) directly; it is deterministic and needs neither.
 
 ## LLM evidence and KPI gate
 

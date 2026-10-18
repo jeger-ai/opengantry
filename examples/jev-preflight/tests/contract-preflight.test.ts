@@ -1,23 +1,24 @@
+// Parked with the preflight (ADR-0052 A10). Ran inside the CLI tree; paths below point at the example's src/ and the CLI lib.
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { runHeuristicPreflight } from "../lib/contract/preflight-heuristic.js";
+import { runHeuristicPreflight } from "../src/preflight-heuristic.js";
 import {
   JEV_FETCH_TIMEOUT_MS,
   JEV_SYSTEM_ONE_URL,
   buildJevRequest,
   parseJevAnswers,
   runJevPreflight,
-} from "../lib/contract/preflight-jev.js";
-import { runPreflight } from "../lib/contract/preflight.js";
-import { jevFallbackRationale, type JevFallbackReason, type PreflightResult } from "../lib/contract/preflight-types.js";
-import { handlePreflightContract } from "../lib/mcp/mcp-preflight-contract.js";
-import { getRepoRoot } from "../lib/git/git.js";
-import { loadManifest } from "../lib/manifest.js";
-import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
-import { PLANNER_EMAIL } from "./test-shared.js";
+} from "../src/preflight-jev.js";
+import { runPreflight } from "../src/preflight.js";
+import { jevFallbackRationale, type JevFallbackReason, type PreflightResult } from "../src/preflight-types.js";
+import { handlePreflightContract } from "../src/mcp-preflight-contract.js";
+import { getRepoRoot } from "../../../src/cli/lib/git/git.js";
+import { loadManifest } from "../../../src/cli/lib/manifest.js";
+import { copyMissionSchema, gitInitCommit, writeManifest } from "../../../src/cli/tests/test-fixtures.js";
+import { PLANNER_EMAIL } from "../../../src/cli/tests/test-shared.js";
 
 const tempRoots: string[] = [];
 

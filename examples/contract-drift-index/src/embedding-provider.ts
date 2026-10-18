@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GantryUserError, isGantryUserError } from "../errors.js";
+import { GantryUserError, isGantryUserError } from "./errors.js";
 
 /** Must stay equal to `EMBEDDING_DIMENSIONS` in vector-store.ts. This module does not import it (sqlite-vec). */
 export const OPENAI_EMBEDDING_DIMENSIONS = 1536;
