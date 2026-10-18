@@ -1,0 +1,11 @@
+{
+  "id": "arch-pointer.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "pointer"
+  ],
+  "exit": 0,
+  "stdout": "kind=unset\nlocation=(none)\nread_hint=Architecture source not selected. Do NOT invent layer layout, module boundaries, or dependency rules. Read .gitagent/planner/ARCHITECTURE-DISCOVERY.md and ask the user structured questions before any application code changes.\ndiscovery.skill=.gitagent/planner/ARCHITECTURE-DISCOVERY.md\n",
+  "stderr_codes": []
+}

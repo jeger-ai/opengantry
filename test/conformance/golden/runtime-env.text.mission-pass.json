@@ -1,0 +1,15 @@
+{
+  "id": "runtime-env.text.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "runtime",
+    "env",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--format",
+    "text"
+  ],
+  "exit": 0,
+  "stdout": "GXT_REPO_ROOT=<ROOT>\nGXT_MISSION_FILE=.gitagent/missions/m-MSN-0101.yaml\nGXT_MSN_ID=MSN-0101\nGXT_SKILL_KEY=ui\nGXT_TMVC_ROOTS=<ROOT>/src/components\nGANTRY_TMVC_ROOTS=src/components/\nGXT_FORBIDDEN_ZONES=<ROOT>/.gitagent/foreman\nGXT_ALLOWED_IMPORTS=\nGXT_BANNED_IMPORTS=\nGXT_EXECUTOR_LOG=<ROOT>/EXECUTOR_LOG.md\nGXT_LAST_ERROR_FILE=\n",
+  "stderr_codes": []
+}

@@ -16,7 +16,7 @@ import { diffCageSnapshots, takeCageSnapshot, type CageEntry, type CageSnapshot,
  * to the hash-verified baseline bytes and clears the journal before it spawns anything (MSN-0253).
  *
  * Layout (all writes are tmp + rename):
- *   journal.json    baseline entries, wrapper pid + start time, overrides     journal.sha256  sha256 of journal.json
+ *   journal.json    baseline entries, wrapper pid + start time, overrides, lock_deps   journal.sha256  sha256 of journal.json
  *   pids.json       wrapper child + descendants, refreshed while it runs      pids.sha256     sha256 of pids.json
  *   blobs/<sha256>  baseline bytes of revert-mode files that fit the snapshot caps
  * A hash mismatch anywhere is a corrupt journal: cage refuses to start (`GXT_CAGE_JOURNAL_CORRUPT`, exit 2).
@@ -51,6 +51,8 @@ interface JournalManifest {
   wrapper: TrackedPid;
   started_at: string;
   overrides: string[];
+  /** `--lock-deps` for this session; absent in journals written before MSN-0275 (false). */
+  lock_deps?: boolean;
   entries: JournalEntry[];
 }
 
@@ -114,7 +116,7 @@ function readHashed<T>(dir: string, name: string): T | null {
   const file = path.join(dir, name);
   if (!fs.existsSync(file)) return null;
   const body = fs.readFileSync(file);
-  let expected = "";
+  let expected: string;
   try {
     expected = fs.readFileSync(path.join(dir, name.replace(/\.json$/, ".sha256")), "utf8").trim();
   } catch {
@@ -211,7 +213,13 @@ function toJournalEntry(e: CageEntry): JournalEntry {
 }
 
 /** Persist the baseline before the command spawns. Blobs are written first so the manifest never names a missing one. */
-export function writeCageJournal(dir: string, root: string, baseline: CageSnapshot, overrides: readonly string[]): CageJournalHandle {
+export function writeCageJournal(
+  dir: string,
+  root: string,
+  baseline: CageSnapshot,
+  overrides: readonly string[],
+  opts: { lockDeps?: boolean } = {},
+): CageJournalHandle {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, BLOBS_DIR), { recursive: true, mode: 0o700 });
   const [wrapper] = trackPids([process.pid]);
@@ -221,6 +229,7 @@ export function writeCageJournal(dir: string, root: string, baseline: CageSnapsh
     wrapper: wrapper!,
     started_at: new Date().toISOString(),
     overrides: [...overrides],
+    lock_deps: opts.lockDeps === true,
     entries: journalEntries(dir, baseline),
   };
   writeHashed(dir, MANIFEST_FILE, manifest);
@@ -322,7 +331,7 @@ export function recoverCageJournal(root: string, dir: string, snap: CageSnapshot
   if (config && (!fs.existsSync(config.abs) || sha256Hex(fs.readFileSync(config.abs)) !== config.sha256)) {
     fs.writeFileSync(config.abs, config.bytes!, { mode: config.fileMode });
   }
-  const plan = buildCagePlan(root, { overrides: m.overrides });
+  const plan = buildCagePlan(root, { overrides: m.overrides, lockDeps: m.lock_deps === true });
   const current = takeCageSnapshot(plan, { ...snap, keepBytes: false });
   const restored = resolveCageChanges(diffCageSnapshots(baseline, current), { reportOnly: false });
   fs.rmSync(dir, { recursive: true, force: true });

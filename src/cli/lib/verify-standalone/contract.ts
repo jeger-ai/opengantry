@@ -380,8 +380,12 @@ export function loadVerifyContract(
   file: string,
   resolveBase: (contractBase: string | null, tracked: boolean) => string,
 ): { loaded: LoadedVerifyContract; base: string } {
-  const abs = path.resolve(root, file);
-  const diskText = readDisk(abs);
+  const given = path.resolve(root, file);
+  const diskText = readDisk(given);
+  // `root` is a real path; resolve the contract's directory the same way, so a path through a symlinked directory
+  // (macOS /tmp, a CI mount) is still recognised as inside the repository. The file name itself is kept: following
+  // a symlinked contract file would let a branch point verify.yaml at an untracked file.
+  const abs = path.join(fs.realpathSync(path.dirname(given)), path.basename(given));
   const disk = parseVerifyContract(diskText, abs);
   const rel = trackedRel(root, abs);
   const base = resolveBase(rel ? null : disk.base, rel !== null);

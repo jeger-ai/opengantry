@@ -17,7 +17,7 @@ This is the same session `gantry cage` that ships in [`@jeger-ai/opengantry`](ht
 
 Platforms: Linux and macOS, both tested in CI. Windows is not supported yet: there the cage cannot reliably stop every process the agent started.
 
-Options: `--json`, `--report-only`, `--no-watch`, `--watch-interval-ms <n>`, `--max-file-bytes <n>`, `--contest-limit <n>`, `--allow-override <path>`. `cage suggest` (proposing `.cage.yaml` rules) lives in the full package: `npx -p @jeger-ai/opengantry gantry cage suggest --write`.
+Options: `--json`, `--report-only`, `--no-watch`, `--watch-interval-ms <n>`, `--max-file-bytes <n>`, `--contest-limit <n>`, `--allow-override <path>`, `--lock-deps` (freeze lockfiles and dependency manifests such as `package.json` for this run; `.cage.yaml` `dependencies: revert` does the same for every run). `cage suggest` (proposing `.cage.yaml` rules) lives in the full package: `npx -p @jeger-ai/opengantry gantry cage suggest --write`.
 
 Docs: [the cage](https://opengantry.ai/docs/cage/) · [session cage](https://opengantry.ai/docs/cage/session/) · [check commits](https://opengantry.ai/docs/cage/check/) · [watch files](https://opengantry.ai/docs/cage/watch/) · [`.cage.yaml`](https://opengantry.ai/docs/cage/cage-yaml/) · [report and exit codes](https://opengantry.ai/docs/cage/report/) · [limits](https://opengantry.ai/docs/cage/limits/) · trust model [ADR-0048](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0048-cage-trust-model.md).
 

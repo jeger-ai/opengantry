@@ -1,0 +1,46 @@
+{
+  "id": "verify.ci.mission-stale",
+  "fixture": "mission-stale",
+  "args": [
+    "verify",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--ci",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "status": "failed",
+    "phase": "interrogation",
+    "message": "mission missing required interrogation block",
+    "error_code": "GXT_INTERROGATION_REQUIRED",
+    "fix_hints": [
+      "mission missing required interrogation block",
+      "re-run gantry interrogate and update mission interrogation block on record"
+    ],
+    "next_actions": [
+      "gantry interrogate \"<intent>\" --msn MSN-0101 --skill-key gantry",
+      "gantry verify --mission .gitagent/missions/m-MSN-0101.yaml"
+    ],
+    "exit_code": 1,
+    "envelope_schema_version": 3,
+    "findings": [
+      {
+        "failed_gate": "interrogation",
+        "offending_file": "",
+        "line": 0,
+        "severity": "error",
+        "resolution_hint": "mission missing required interrogation block",
+        "fingerprint": "<SHA256>",
+        "semantic_fingerprint": "<SHA256>"
+      }
+    ],
+    "failures": [
+      "mission missing required interrogation block"
+    ],
+    "findings_digest": "<SHA256>",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}

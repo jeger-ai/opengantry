@@ -1,0 +1,59 @@
+{
+  "id": "verify.contract.gate-json.contract-standalone",
+  "fixture": "contract-standalone",
+  "args": [
+    "verify",
+    "--contract",
+    "gate.json",
+    "--base",
+    "HEAD~1",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "schema": "opengantry.verify-result.v1",
+    "status": "pass",
+    "mode": "full",
+    "head": "<SHA>",
+    "base": "<SHA>",
+    "contract": {
+      "path": "gate.json",
+      "sha256": "<SHA256>",
+      "source": "base",
+      "format": "commitly_gate",
+      "ignored": []
+    },
+    "written": "<TS>",
+    "paths": {
+      "changed": [
+        "src/app.ts"
+      ],
+      "outside": [],
+      "forbidden": []
+    },
+    "size": {
+      "added": 1,
+      "max": 200,
+      "files": 1
+    },
+    "rules": [
+      {
+        "name": "no-console",
+        "why": "no debug output in src",
+        "violations": []
+      }
+    ],
+    "checks": [
+      {
+        "name": "unit",
+        "expect": "exit0",
+        "exit": 0,
+        "seconds": 0,
+        "ok": true,
+        "reason": "exit 0"
+      }
+    ],
+    "problems": []
+  },
+  "stderr_codes": []
+}

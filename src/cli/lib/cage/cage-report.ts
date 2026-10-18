@@ -80,6 +80,8 @@ export interface CageReport {
    * committed unchanged (null without a config or outside git).
    */
   cage_config: { present: boolean; entries: number; committed: boolean | null };
+  /** `revert` when dependencies were frozen (`.cage.yaml` `dependencies: revert` or `--lock-deps`). */
+  dependencies: "revert" | "report";
   /** Paths downgraded from revert to report for this run by `--allow-override`. */
   overrides: string[];
   changes: CageReportChange[];
@@ -111,6 +113,7 @@ export interface CageReportInput {
   protectedFiles: number;
   manifestZones: number;
   cageConfig: CageReport["cage_config"];
+  dependencies: CageReport["dependencies"];
   overrides: readonly string[];
   changes: readonly CageResolvedChange[];
   watch: CageReport["watch"];
@@ -176,6 +179,7 @@ export function buildCageReport(input: CageReportInput): CageReport {
     protected_files: input.protectedFiles,
     manifest_zones: input.manifestZones,
     cage_config: input.cageConfig,
+    dependencies: input.dependencies,
     overrides: [...input.overrides],
     changes: input.changes.map(toReportChange),
     watch: input.watch,

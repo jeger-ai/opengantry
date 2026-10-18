@@ -1,0 +1,55 @@
+{
+  "id": "cage-check.tamper",
+  "fixture": "cage-tamper",
+  "args": [
+    "cage",
+    "check",
+    "--base",
+    "HEAD~2",
+    "--json"
+  ],
+  "exit": 3,
+  "stdout": {
+    "report_schema": "gantry.cage-check.v1",
+    "status": "violations",
+    "exit_code": 3,
+    "root": "<ROOT>",
+    "base": "<SHA>",
+    "head": "<SHA>",
+    "rules_ref": "<SHA>",
+    "commits": 2,
+    "manifest_zones": 0,
+    "cage_config": {
+      "present": false,
+      "entries": 0
+    },
+    "dependencies": "report",
+    "changes": [
+      {
+        "path": ".env",
+        "rule": "secrets",
+        "source": "builtin",
+        "mode": "revert"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "rule": "ci_config",
+        "source": "builtin",
+        "mode": "revert"
+      },
+      {
+        "path": "package-lock.json",
+        "rule": "lockfile",
+        "source": "builtin",
+        "mode": "report"
+      }
+    ],
+    "limits": [
+      "Checks committed history in base..head only: uncommitted and untracked changes are not seen.",
+      "Rules come from the base commit: .cage.yaml or manifest changes in the range apply once they are merged.",
+      "Paths under .git are never committed; git control shows up only for a core.hooksPath inside the repo.",
+      "Not an attestation receipt: it reports which protected paths changed, not who changed them or why."
+    ]
+  },
+  "stderr_codes": []
+}

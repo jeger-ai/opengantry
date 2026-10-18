@@ -1,0 +1,30 @@
+{
+  "id": "interrogate.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "interrogate",
+    "add a button component",
+    "--msn",
+    "MSN-0102",
+    "--skill-key",
+    "ui",
+    "--gate-command",
+    "echo DONE",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": {
+    "msn_id": "MSN-0102",
+    "status": "halt",
+    "next_question": {
+      "finding_id": "<SHORT_SHA>",
+      "kind": "risk_escalation",
+      "question": "Triage escalated: No confident skill_key match in intent (ambiguous or missing). Which skill_key and TMVC scope authorize this work?",
+      "hypothesis": "Planner assigns explicit skill_key and narrows TMVC in the mission after operator confirmation.",
+      "evidence": "No manifest skill key matched intent text",
+      "risk_tier": "Tier-3"
+    },
+    "remaining_count": 1
+  },
+  "stderr_codes": []
+}

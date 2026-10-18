@@ -1,0 +1,14 @@
+{
+  "id": "arch-cred-unset.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "cred",
+    "unset",
+    "--slot",
+    "docs"
+  ],
+  "exit": 2,
+  "stdout": "",
+  "stderr_codes": []
+}

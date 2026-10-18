@@ -1,0 +1,23 @@
+{
+  "id": "receipt-principal-hmac.no-keyring.bare-git",
+  "fixture": "bare-git",
+  "args": [
+    "receipt",
+    "principal-hmac",
+    "planner@fixture.test",
+    "--org",
+    "org-fixture",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": {
+    "status": "failed",
+    "error_code": "GXT_VERIFY_FAILED",
+    "message": "pepper keyring not found: <HOME>/.config/gantry/pepper-keyring.json",
+    "fix_hints": [
+      "create the keyring or set GANTRY_PEPPER_KEYRING"
+    ],
+    "exit_code": 2
+  },
+  "stderr_codes": []
+}

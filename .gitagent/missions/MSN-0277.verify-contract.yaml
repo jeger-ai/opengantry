@@ -14,6 +14,12 @@
 # CI configs and .env); results are digest-only (check output tails on stderr only); engine in
 # src/cli/lib/verify-standalone/, docs in docs/guides/. gantry verify --mission is unchanged.
 #
+# Amended 2026-10-18 after ADR-0052 step 1 (MSN-0281) landed on main: .gitagent/registry/error-codes.yaml and
+#        test/conformance/ (cases.yaml, golden/) join the contract; interrogation re-run (ADR-0051, ADR-0052 findings).
+# DoD 11 (law of ADR-0052 step 1): the 13 GXT_VERIFY_* codes this mission introduces have error-codes.yaml entries
+#        (since MSN-0277) in the Planner commit; the conformance cases verify.contract.contract-standalone and
+#        verify.contract.gate-json.contract-standalone are un-skipped with --base HEAD~1 and their golden files
+#        recorded; no other golden file changes; npm run test:conformance passes.
 # DoD 1 (contract): verify.yaml with schema: opengantry.verify.v1 and keys base?, scope {allowed_paths?,
 #        forbidden_paths?}, size {max_added_lines?, exclude?}, rules [{name, files, forbid, why?}], checks [{name,
 #        run, expect: exit0|empty, heavy?, quick_run?, failures?}]. Strict: YAML 1.2 core, no aliases, unknown keys,
@@ -70,46 +76,69 @@ gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0277 at 28a9130: verify.yaml opengantry.verify.v1 (base, scope {allowed_paths, forbidden_paths}, size {max_added_lines, exclude}, rules, checks) parsed strictly in src/cli/lib/verify-standalone/contract.ts; wrong schema, unknown keys, a negative budget, an invalid regex, empty rule files, a bad expect, duplicate check names, non-boolean heavy and aliases exit 2 with GXT_VERIFY_CONTRACT_INVALID; commitly.gate.v1 gate.json maps cmd, self_check, approach and size_exclude; cage_protect and checks[].part reported as ignored and noted on stderr"
-    anchor: "1423"
+    anchor: "1454"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0277 re-attested at 578df3a after the review on PR #228 and the amendment (79a3e46): a tracked contract never names its base; without --base, also with base: HEAD in the branch's verify.yaml, it exits 2 with GXT_VERIFY_BASE_REQUIRED; a disk contract without base exits 2 with GXT_VERIFY_BASE_MISSING; the rest as attested at 28a9130"
-    anchor: "1433"
+    trace_quote: "DoD 2 MSN-0277 re-attested at eef3d97 after the third review on PR #228: the contract's directory is resolved with realpath before the tracked check (the file name is kept, so a symlinked verify.yaml is not followed); through a symlinked repository directory a committed contract without --base still exits 2 with GXT_VERIFY_BASE_REQUIRED and with --base is read from the base (source base); a mutation without the realpath fails that test; the rest as attested at 578df3a"
+    anchor: "1472"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0277 re-attested at 578df3a: changed, untracked and numstat paths are read NUL-separated and -U0 diffs run per file, so app/secret/ä \"q\".txt is forbidden, both odd-named files count toward the size and app/api/röutes.py:2 is reported; an added line \"++ x\" is not taken for a header; the default verify.yaml is found from a subdirectory; the rest as attested at 28a9130"
-    anchor: "1434"
+    anchor: "1465"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0277 re-attested at 578df3a: a committed baseline is read from the base commit, so a branch that adds its own failure to verify-baseline.json still fails; a disk baseline for an edited contract exits 2 with GXT_VERIFY_BASELINE_STALE and a corrupt one with GXT_VERIFY_BASELINE_INVALID; the rest as attested at 28a9130"
-    anchor: "1435"
+    anchor: "1466"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0277 re-attested at 578df3a: --check-result also refuses a result measured from another base (the result was measured from …, the base is …); the rest as attested at 28a9130"
-    anchor: "1436"
+    anchor: "1467"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0277 at 28a9130: opengantry.verify-result.v1 with status, mode, head, base, contract {path, sha256, source, format, ignored}, paths, size, rules, checks, problems; --json prints it, --out writes it; neither holds added-line text or check output (CHECK-OUTPUT-MARKER only on stderr as an indented tail)"
-    anchor: "1428"
+    anchor: "1459"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0277 re-attested at 578df3a: src/cli/tests/verify-standalone.test.ts tests 10 and src/cli/tests/verify-standalone-cli.test.ts tests 4, 14 pass 14 (alias test now uses known keys); a mutation reading the baseline from disk fails the baseline test"
-    anchor: "1437"
+    anchor: "1468"
     status: PASS
   - dod_id: "8"
     trace_quote: "DoD 8 MSN-0277 re-attested at 578df3a: ADR-0051 decisions 1, 3, 4 and 5 state that a committed contract needs --base, that paths are read NUL-separated, that a baseline is read from the base and bound to the contract sha256, and that --check-result compares the base"
-    anchor: "1438"
+    anchor: "1469"
     status: PASS
   - dod_id: "9"
-    trace_quote: "DoD 9 MSN-0277 re-attested at 578df3a: docs/guides/verify-contract.md (base only for contracts outside the repo, --base required for committed ones, committed baseline read from the base, GXT_VERIFY_BASELINE_STALE, --check-result checks the base) and docs/CHANGELOG.md updated; assert-docs-structure OK (53 pages, 39 published, 305 relative links checked)"
-    anchor: "1439"
+    trace_quote: "DoD 9 MSN-0277 re-attested at 2bd6af3 after merging main (#227): docs/CHANGELOG.md has one Unreleased section for the cage dependency freeze and the standalone verify contract; the guide unchanged since 578df3a; assert-docs-structure OK (53 pages, 39 published, 313 relative links checked)"
+    anchor: "1474"
     status: PASS
   - dod_id: "10"
-    trace_quote: "DoD 10 MSN-0277 re-attested at 578df3a: ./scripts/dev-validate-core.sh exit 0: tests 936 pass 936 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
-    anchor: "1440"
+    trace_quote: "DoD 10 MSN-0277 re-attested at d374be2 after merging main (#232, ADR-0052 step 1): ./scripts/dev-validate-core.sh exit 0, unit tests pass, conformance suite tests 85 pass 84 fail 0 skipped 1 (mcp-serve); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1476"
+    status: PASS
+  - dod_id: "11"
+    trace_quote: "DoD 11 MSN-0277 at d374be2: .gitagent/registry/error-codes.yaml lists the 13 GXT_VERIFY_* codes of this mission (BASE_INVALID, BASE_MISSING, BASE_REQUIRED, BASELINE_DIRTY, BASELINE_INVALID, BASELINE_NOT_AT_BASE, BASELINE_STALE, CONTRACT_INVALID, CONTRACT_NOT_AT_BASE, GIT_FAILED, NO_HEAD, NOT_GIT, RESULT_UNREADABLE) with since MSN-0277, committed by the Planner in 73a8d3b; test/conformance/cases.yaml un-skips verify.contract.contract-standalone and verify.contract.gate-json.contract-standalone with --base HEAD~1; both golden files recorded (exit 0, status pass, contract source base); no other golden file changed"
+    anchor: "1477"
     status: PASS
 gate_success_substring: dev-validate-core OK
 interrogation:
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0052 stays ACTIVE and unchanged, and this
+      amendment follows its step 1 rules (MSN-0281): the 13 GXT_VERIFY_* codes
+      this mission introduces get .gitagent/registry/error-codes.yaml entries
+      with since MSN-0277 in a Planner commit, and the conformance cases
+      verify.contract.contract-standalone and
+      verify.contract.gate-json.contract-standalone, which MSN-0281 listed as
+      skipped until MSN-0277 lands, are recorded with --base HEAD~1 (the
+      committed contract needs --base). No other golden file changes. The engine
+      stays in src/cli/lib/verify-standalone/ until the ADR-0052 step 3 verify
+      package; its result is digest-only and its run shape is the input that
+      step consolidates."
+    adr_refs:
+      - ADR-0052
   - finding_id: 6502376617f7
     kind: undefined_boundary
     question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
@@ -159,6 +188,19 @@ interrogation:
     adr_refs:
       - ADR-0049
       - ADR-0034
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0051 is this mission's own decision record
+      (written by it, decisions 1-8 as amended after the reviews on #228); the
+      amendment adds no decision, only the registry entries and the conformance
+      cases ADR-0052 step 1 requires for the codes and output this mission
+      introduces."
+    adr_refs:
+      - ADR-0051
   - finding_id: e98547caadb1
     kind: adr_conflict
     question: Intent may relate to ADR-0045. Accept ADR decision, reject
@@ -190,10 +232,11 @@ interrogation:
       are machine-written and stay JSON (decision 2)."
     adr_refs:
       - ADR-0047
-interrogation_sha256: ad34dbe2e99b7025c097e98a03470292dbd9199891aa0be22cadba243f1176f2
+interrogation_sha256: b6ddaaf9b0e0a3b0d0a3f868c277b28318a381792fab85cc2073256d1a7f8b37
 declared_paths:
   - .gitagent/missions/MSN-0277.verify-contract.yaml
   - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/registry/error-codes.yaml
   - EXECUTOR_LOG.md
   - README.md
   - docs/CHANGELOG.md
@@ -205,10 +248,13 @@ declared_paths:
   - src/cli/program-workflow.ts
   - src/cli/tests/verify-standalone-cli.test.ts
   - src/cli/tests/verify-standalone.test.ts
+  - test/conformance/cases.yaml
+  - test/conformance/golden/
 contract:
   tmvc_roots:
     - .gitagent/missions/MSN-0277.verify-contract.yaml
     - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/registry/error-codes.yaml
     - EXECUTOR_LOG.md
     - README.md
     - docs/CHANGELOG.md
@@ -220,6 +266,8 @@ contract:
     - src/cli/program-workflow.ts
     - src/cli/tests/verify-standalone-cli.test.ts
     - src/cli/tests/verify-standalone.test.ts
+    - test/conformance/cases.yaml
+    - test/conformance/golden/
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
@@ -230,4 +278,4 @@ contract:
     - src/core/
     - src/db/schema/
     - templates/
-contract_sha256: 58bdf293adffb1db7dc8a5abd46068a6cd925547395bd9b8a67ec5412f9f07eb
+contract_sha256: adac110865be3b681226715f90fe0a6a45b46d8bf75d11eecc4cf9874fcd24b2

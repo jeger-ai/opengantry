@@ -37,6 +37,7 @@ Every form of the cage prints its limits in its report. Read them before you rel
 - Reads are not detected: an agent can still read `.env` and other secrets. Deny those reads in your agent tool's permissions.
 - Network and API side effects are not detected.
 - Writes outside the protected set, and outside the repository, are not checked.
+- Commands are not blocked. With dependencies frozen, an install the agent runs still executes its install scripts (`postinstall`, build scripts) before the cage restores `package.json` or the lockfile; the freeze keeps the dependency out of the working tree, commits and pull requests, not off your machine. Use your package manager's own controls, such as `ignore-scripts` or a frozen install like `npm ci`, or deny install commands in your agent tool's permissions.
 
 ## Platforms
 

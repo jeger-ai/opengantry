@@ -1,0 +1,16 @@
+{
+  "id": "arch-fetch.file-pointer.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "fetch",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "status": "fallback",
+    "message": "gantry arch fetch: pointer kind is unset, not external. Follow .gitagent/planner/ARCHITECTURE-DISCOVERY.md for manual discovery.",
+    "discovery_skill": ".gitagent/planner/ARCHITECTURE-DISCOVERY.md"
+  },
+  "stderr_codes": []
+}

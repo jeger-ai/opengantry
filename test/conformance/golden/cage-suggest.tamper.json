@@ -1,0 +1,17 @@
+{
+  "id": "cage-suggest.tamper",
+  "fixture": "cage-tamper",
+  "args": [
+    "cage",
+    "suggest",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "root": "<ROOT>",
+    "suggestions": [],
+    "already_covered": 1,
+    "written": null
+  },
+  "stderr_codes": []
+}

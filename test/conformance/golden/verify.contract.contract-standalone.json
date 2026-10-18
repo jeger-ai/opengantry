@@ -1,0 +1,59 @@
+{
+  "id": "verify.contract.contract-standalone",
+  "fixture": "contract-standalone",
+  "args": [
+    "verify",
+    "--contract",
+    "verify.yaml",
+    "--base",
+    "HEAD~1",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "schema": "opengantry.verify-result.v1",
+    "status": "pass",
+    "mode": "full",
+    "head": "<SHA>",
+    "base": "<SHA>",
+    "contract": {
+      "path": "verify.yaml",
+      "sha256": "<SHA256>",
+      "source": "base",
+      "format": "verify_yaml",
+      "ignored": []
+    },
+    "written": "<TS>",
+    "paths": {
+      "changed": [
+        "src/app.ts"
+      ],
+      "outside": [],
+      "forbidden": []
+    },
+    "size": {
+      "added": 1,
+      "max": 200,
+      "files": 1
+    },
+    "rules": [
+      {
+        "name": "no-console",
+        "why": "no debug output in src",
+        "violations": []
+      }
+    ],
+    "checks": [
+      {
+        "name": "unit",
+        "expect": "exit0",
+        "exit": 0,
+        "seconds": 0,
+        "ok": true,
+        "reason": "exit 0"
+      }
+    ],
+    "problems": []
+  },
+  "stderr_codes": []
+}

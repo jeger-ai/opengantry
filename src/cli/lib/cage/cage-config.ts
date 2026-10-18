@@ -24,9 +24,19 @@ export interface CageConfig {
   defaultMode: CageConfigMode;
   /** Top-level `contest_limit:`; null when unset. 0 keeps restoring without ever halting the command. */
   contestLimit: number | null;
+  /**
+   * Top-level `dependencies:`. `revert` freezes dependencies: lockfiles and dependency manifests become
+   * revert-rule paths. `report` (the default) leaves lockfiles report-only and manifests unprotected.
+   */
+  dependencies: CageConfigMode;
 }
 
-export const EMPTY_CAGE_CONFIG: Omit<CageConfig, "present"> = { entries: [], defaultMode: "revert", contestLimit: null };
+export const EMPTY_CAGE_CONFIG: Omit<CageConfig, "present"> = {
+  entries: [],
+  defaultMode: "revert",
+  contestLimit: null,
+  dependencies: "report",
+};
 
 /** Keys that would loosen protection. Named in the error so authors know relaxation is a runtime flag. */
 const SUBTRACTIVE_KEYS: ReadonlySet<string> = new Set([
@@ -45,7 +55,7 @@ const SUBTRACTIVE_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 const ENTRY_KEYS: ReadonlySet<string> = new Set(["path", "glob", "mode"]);
-const TOP_LEVEL_KEYS: ReadonlySet<string> = new Set(["protect", "mode", "contest_limit"]);
+const TOP_LEVEL_KEYS: ReadonlySet<string> = new Set(["protect", "mode", "contest_limit", "dependencies"]);
 
 function configError(message: string): GantryUserError {
   return new GantryUserError(
@@ -90,9 +100,9 @@ function parseEntry(raw: unknown, index: number, defaultMode: CageConfigMode): C
   return { kind, value, mode };
 }
 
-function parseMode(raw: unknown, where: string): CageConfigMode | null {
+function parseMode(raw: unknown, where: string, key = "mode"): CageConfigMode | null {
   if (raw === undefined || raw === null) return null;
-  if (raw !== "revert" && raw !== "report") throw configError(`${where}: mode must be revert or report`);
+  if (raw !== "revert" && raw !== "report") throw configError(`${where}: ${key} must be revert or report`);
   return raw;
 }
 
@@ -125,7 +135,9 @@ export function parseCageConfigText(text: string): CageConfig {
   if (!Array.isArray(protect)) throw configError("protect: must be a list");
   const defaultMode = parseMode(obj.mode, "top level") ?? "revert";
   const contestLimit = parseContestLimit(obj.contest_limit);
-  return { present: true, entries: protect.map((e, i) => parseEntry(e, i, defaultMode)), defaultMode, contestLimit };
+  const dependencies = parseMode(obj.dependencies, "top level", "dependencies") ?? "report";
+  const entries = protect.map((e, i) => parseEntry(e, i, defaultMode));
+  return { present: true, entries, defaultMode, contestLimit, dependencies };
 }
 
 /**
