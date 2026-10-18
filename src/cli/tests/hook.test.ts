@@ -56,10 +56,10 @@ test("pushRangesFromRefLines: deletion contributes nothing, update is remote..lo
 test("gantry hook pre-push: a ref deletion exits 0 without verifying; a range without missions passes", () => {
   const dir = tempRepo();
   const head = sha(dir, "HEAD");
-  const deletion = cli(dir, ["hook", "pre-push"], `(delete) ${ZERO_SHA} refs/heads/old ${head}\n`);
+  const deletion = cli(dir, ["hook", "pre-push", "origin", "git@example.test:o/r.git"], `(delete) ${ZERO_SHA} refs/heads/old ${head}\n`);
   assert.equal(deletion.status, 0);
   assert.match(deletion.out, /nothing to verify/);
-  const update = cli(dir, ["hook", "pre-push"], `refs/heads/x ${head} refs/heads/x ${sha(dir, "HEAD~1")}\n`);
+  const update = cli(dir, ["hook", "pre-push", "origin", "git@example.test:o/r.git"], `refs/heads/x ${head} refs/heads/x ${sha(dir, "HEAD~1")}\n`);
   assert.equal(update.status, 0, update.out);
 });
 

@@ -21,7 +21,8 @@
 #        range: verify --pre-push on changed missions via runVerifyCore, perimeter advisory, gantry check, the
 #        specimen changed-code gate when scripts/check-changed-code.sh exists) and post-checkout (EXECUTOR_LOG.md from
 #        the template on a feature branch); src/cli/program-hook.ts registers gantry hook with the three subcommands;
-#        program.ts wires it; stdin is read only when it is not a TTY.
+#        program.ts wires it; pre-push accepts the remote name and URL git passes; stdin is read only when it is not
+#        a TTY.
 # DoD 3 (hooks): .githooks/pre-commit, pre-push, post-checkout and templates/.githooks/* are byte-identical shims that
 #        cd to the repo root and exec node dist/cli/index.js hook <name> (or gantry on PATH); they stay executable.
 # DoD 4 (law): .gitagent/registry/commands.yaml gains hook, hook post-checkout, hook pre-commit, hook pre-push (since

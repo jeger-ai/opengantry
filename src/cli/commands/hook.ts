@@ -150,9 +150,10 @@ function changedCodeGate(root: string, range: PushRange, changed: readonly strin
 }
 
 /** pre-push: for every pushed range, verify changed missions, advise on governance edits, check the manifest. */
-export async function runHookPrePush(stdinText: string): Promise<void> {
+export async function runHookPrePush(stdinText: string, target: { remote?: string; url?: string } = {}): Promise<void> {
   await runAtCommandBoundaryAsync(1, async () => {
     const root = getRepoRoot();
+    if (target.remote) logInfo(`pre-push: ${target.remote}${target.url ? ` (${target.url})` : ""}`);
     const ranges = pushRanges(root, stdinText);
     if (ranges === "deletion_only") {
       logInfo("pre-push: nothing to verify (ref deletion or nothing new)");

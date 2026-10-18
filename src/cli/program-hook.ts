@@ -17,8 +17,10 @@ export function registerHookCommands(program: Command): void {
   hook
     .command("pre-push")
     .description("Reads git's ref lines on stdin; per pushed range: verify --pre-push on changed missions, perimeter advisory, manifest check")
-    .action(async () => {
-      await runHookPrePush(await hookStdin());
+    .argument("[remote]", "Remote name (passed by git)")
+    .argument("[url]", "Remote URL (passed by git)")
+    .action(async (remote: string | undefined, url: string | undefined) => {
+      await runHookPrePush(await hookStdin(), { remote, url });
     });
 
   hook
