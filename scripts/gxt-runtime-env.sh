@@ -2,37 +2,40 @@
 # Load GXT Executor Runtime Contract into the current shell (any IDE terminal / manual runs).
 set -euo pipefail
 
+# Print the message; the caller returns (when sourced) or exits (when run) right after.
 _gxt_runtime_die() {
   echo "$1" >&2
-  if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-    return 1
-  fi
-  exit 1
+}
+_gxt_runtime_sourced() {
+  [[ "${BASH_SOURCE[0]}" != "${0}" ]]
 }
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [ -z "$ROOT" ]; then
   _gxt_runtime_die "gxt-runtime-env: not inside a git repository"
+  _gxt_runtime_sourced && return 1 || exit 1
 fi
 cd "$ROOT"
 
-MISSION=""
-if ! MISSION="$(scripts/gxt-resolve-mission.sh "${1:-}" 2>/dev/null)"; then
-  _gxt_runtime_die "$(cat <<'EOF'
+MISSION="${1:-}"
+if command -v gantry >/dev/null 2>&1; then
+  GANTRY=(gantry)
+elif [ -f "dist/cli/index.js" ]; then
+  GANTRY=(node dist/cli/index.js)
+else
+  _gxt_runtime_die "gxt-runtime-env: gantry not found (npm ci && npm run build, or npm install -g @jeger-ai/opengantry)"
+  _gxt_runtime_sourced && return 1 || exit 1
+fi
+# Without an argument, gantry resolves the pinned mission (gantry pin <file>; GANTRY_MISSION also works).
+if ! RUNTIME_SH="$("${GANTRY[@]}" runtime env ${MISSION:+--mission "$MISSION"})"; then
+  _gxt_runtime_die "$(cat <<'HINT'
 gxt-runtime-env: no mission file resolved.
-  scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml
+  gantry pin .gitagent/missions/<file>.yaml
   source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml
   export GANTRY_MISSION=.gitagent/missions/<file>.yaml
-EOF
+HINT
 )"
+  _gxt_runtime_sourced && return 1 || exit 1
 fi
-
-if command -v gantry >/dev/null 2>&1; then
-  eval "$(gantry runtime env --mission "$MISSION")"
-elif [ -f "dist/cli/index.js" ]; then
-  eval "$(node dist/cli/index.js runtime env --mission "$MISSION")"
-else
-  _gxt_runtime_die "gxt-runtime-env: gantry not found (npm ci && npm run build)"
-fi
-
+eval "$RUNTIME_SH"
 printf 'GXT runtime loaded: mission=%s skill=%s\n' "$GXT_MISSION_FILE" "${GXT_SKILL_KEY:-unknown}"

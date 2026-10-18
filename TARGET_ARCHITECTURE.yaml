@@ -207,10 +207,7 @@ rules:
     between: [scripts/, templates/scripts/]
     allowed:
       - scripts/dev-validate.sh
-      - scripts/gxt-cursor-env.sh
       - scripts/gxt-manifest-lib.mjs
-      - scripts/gxt-pin-mission.sh
-      - scripts/gxt-resolve-mission.sh
       - scripts/gxt-runtime-env.sh
       - scripts/gxt-shell-agent.sh
       - scripts/lib/glob-match.mjs

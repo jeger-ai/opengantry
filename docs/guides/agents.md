@@ -45,7 +45,7 @@ Do not copy rules into each tool's prompt file. Point each tool at three files:
 
 | Tool | Context | Wrap or bootstrap |
 |------|---------|-------------------|
-| [Cursor](cursor.md) | `.cursor/rules/opengantry-gxt-substrate.mdc`, `.cursor/hooks.json`, `.cursor/mcp.json` | Session-start hook; `scripts/gxt-pin-mission.sh <mission>`; `source scripts/gxt-runtime-env.sh` |
+| [Cursor](cursor.md) | `.cursor/rules/opengantry-gxt-substrate.mdc`, `.cursor/hooks.json`, `.cursor/mcp.json` | Session-start hook; `gantry pin <mission>`; `source scripts/gxt-runtime-env.sh` |
 | [Claude Code](claude-code.md) | `CLAUDE.md` or `.claude/CLAUDE.md` linking the canonical files | `scripts/gxt-shell-agent.sh claude <mission>`; `gantry runtime exec … -- claude "<task>"` |
 | [OpenAI Codex CLI](codex.md) | Root `AGENTS.md`; optional `.codex/config.toml` | `scripts/gxt-shell-agent.sh codex <mission>`; `gantry runtime exec … -- codex exec "<task>"` |
 | [OpenCode](other-agents.md#opencode) | `AGENTS.md`; optional `opencode.json` `instructions` | `scripts/gxt-shell-agent.sh opencode <mission>`; `gantry runtime exec … -- opencode run "<task>"` |

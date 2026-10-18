@@ -75,7 +75,7 @@ export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
   { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },
   { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml" },
-  { audience: "platform", step: "scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml" },
+  { audience: "platform", step: "gantry pin .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "gantry onboarding  # guided walkthrough (strict checks)" },
 ];
 

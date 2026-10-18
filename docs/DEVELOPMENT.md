@@ -66,7 +66,7 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 1. **Triage** — `gantry triage "<intent>"` (escalation → Planner legislates).
 2. **Legislate** — `gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry` (proposes a tighten-only `contract`, prompts `[a]/[e]/[q]` or take `--yes`; runs gap analysis; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file`). MCP: `gxt_propose_contract` → `gxt_draft_legislation` with `interrogation[]` + `contract`. Operator answers are quoted verbatim — never fabricated by agents.
 3. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
-4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml` (or `scripts/gxt-pin-mission.sh …`). When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
+4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml`. When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
 5. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
 6. **Record** — commit the work, then `gantry verify --mission .gitagent/missions/<file>.yaml --record` on the clean tree and commit `.gitagent/runs/MSN-NNNN.json` (RULES §3). Missions that still carry `trace_rows` append PASS quotes to repo-root `EXECUTOR_LOG.md` instead (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
 7. **Verify** — `gantry verify` (pinned) or `gantry verify --mission .gitagent/missions/<file>.yaml`. Optional: `gantry verify --receipt` then `gantry receipt show`.
@@ -106,8 +106,7 @@ gantry triage "<intent>"
 gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry   # or substrate
 # Planner: git commit -m "[MSN-NNNN] legislate …" including mission file
 
-scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml
-# or: gantry pin .gitagent/missions/MSN-NNNN.<slug>.yaml
+gantry pin .gitagent/missions/MSN-NNNN.<slug>.yaml
 # New Agent chat → sessionStart injects GXT_TMVC_* + mission context automatically
 
 source scripts/gxt-runtime-env.sh   # integrated terminal (same pinned mission)
@@ -147,7 +146,7 @@ MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply` (same gates as CLI).
 | Context | `.cursor/rules/` + `AGENTS.md` + `sessionStart` hook | RULES + MANIFEST + pinned mission |
 | Legislation | MCP `gxt_draft_legislation` / `gxt_execute_legislation` | Two-step chat approval before file write |
 | Shell guard | `beforeShellExecution` (fallback) | Blocks casual writes to foreman / RULES; asks on raw `gantry legislate` |
-| Terminal env | `gxt-runtime-env.sh` / `gxt-pin-mission.sh` | Sets `GXT_*` for integrated terminal |
+| Terminal env | `gantry pin` + `source scripts/gxt-runtime-env.sh` (wraps `gantry runtime env`) | Sets `GXT_*` for integrated terminal |
 | Process trap | `gantry runtime exec` | Headless Cursor CLI / CI only |
 
 IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; use `runtime exec` when you need manifest-enforced subprocess boundaries. See INTEGRATIONS **Enforcement boundary**.

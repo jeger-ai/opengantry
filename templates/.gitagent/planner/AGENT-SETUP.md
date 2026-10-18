@@ -93,7 +93,7 @@ Harness-specific checks (after init):
 Tell the user:
 
 - Per-tool recipes: `docs/INTEGRATIONS.md`
-- Pin before work: `scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml`
+- Pin before work: `gantry pin .gitagent/missions/<file>.yaml`
 - Session env: `source scripts/gxt-runtime-env.sh`
 - Human walkthrough: https://opengantry.ai/get-started/
 
