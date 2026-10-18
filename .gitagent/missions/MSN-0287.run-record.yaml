@@ -115,8 +115,8 @@ interrogation:
       ARCH_BASELINE.json (ratchet raise), EXECUTOR_LOG.md (narrative), docs/ and
       test/conformance/ (three fixtures, six cases, goldens, README fixture
       table). packages/core/src/run-record.ts is the core layer;
-      src/cli/lib/verify/ and git-proof.ts are the lib layer;
-      program-workflow.ts is delivery."
+      src/cli/lib/verify/, git-proof.ts and command-reporter.ts are the lib
+      layer; program-workflow.ts is delivery."
     adr_refs:
       - ADR-0052
       - ADR-0024
@@ -211,8 +211,8 @@ interrogation:
       ARCH_BASELINE.json (ratchet raise), EXECUTOR_LOG.md (narrative), docs/ and
       test/conformance/ (three fixtures, six cases, goldens, README fixture
       table). packages/core/src/run-record.ts is the core layer;
-      src/cli/lib/verify/ and git-proof.ts are the lib layer;
-      program-workflow.ts is delivery."
+      src/cli/lib/verify/, git-proof.ts and command-reporter.ts are the lib
+      layer; program-workflow.ts is delivery."
     adr_refs:
       - ADR-0052
       - ADR-0024
@@ -230,7 +230,7 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0047
-interrogation_sha256: ee9a2ce5b7fe3678befcca58cfcc045278b4365f2175b8b45349160355d512b5
+interrogation_sha256: 7bb27f26cb41849ce093ca1b7666c854e569cfe29dca7c97d96d29cf3d6d525f
 declared_paths:
   - .gitagent/missions/MSN-0287.run-record.yaml
   - .gitagent/planner/RULES.md
@@ -248,6 +248,7 @@ declared_paths:
   - packages/core/src/index.ts
   - packages/core/src/run-record.ts
   - packages/core/tests/run-record.test.ts
+  - src/cli/lib/command-reporter.ts
   - src/cli/lib/git/git-proof.ts
   - src/cli/lib/verify/verify-contract.ts
   - src/cli/lib/verify/verify-engine.ts
@@ -258,6 +259,7 @@ declared_paths:
   - src/cli/lib/verify/verify-options.ts
   - src/cli/lib/verify/verify-payload.ts
   - src/cli/lib/verify/verify-phase-clock.ts
+  - src/cli/lib/verify/verify-phase-steps.ts
   - src/cli/lib/verify/verify-run-record.ts
   - src/cli/lib/verify/verify-run.ts
   - src/cli/program-workflow.ts
@@ -288,6 +290,7 @@ contract:
     - docs/concepts/verify.md
     - packages/core/
     - src/cli/commands/verify.ts
+    - src/cli/lib/command-reporter.ts
     - src/cli/lib/git/git-proof.ts
     - src/cli/lib/verify/
     - src/cli/program-workflow.ts
@@ -301,4 +304,4 @@ contract:
   forbidden_zones:
     - .gitagent/foreman/
     - .github/workflows/
-contract_sha256: fe6db5bbdc90b2c26657f6926ae1449d8eaafe507e1938bcb4aa7ff71de156c7
+contract_sha256: a90a486584c571771547be2eb647cf5bd7877655390f3a48d2acb7622077da4e
