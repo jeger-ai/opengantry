@@ -1,0 +1,340 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0286]. Executor must not run until the [MSN-0286] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 3c, structural law. packages/core gains the five rule kinds of B2 with
+# their evaluators (budget against a baseline with the B7 file ceiling, owner, registry, dependency, duplicate) and a
+# general glob matcher; TARGET_ARCHITECTURE.yaml schema 0.4.0 carries them with an explicit kind key; gantry arch
+# check without file arguments judges the whole tree with them and --ratchet writes ARCH_BASELINE.json (lower-only;
+# --allow-raise for a Planner mission); the gate runs gantry arch check (B5) and the gantry skill may use it as a gate;
+# scripts/arch-baseline.mjs and .gxt-quality-baseline.json are deleted and check-changed-code.sh keeps only the test
+# file cap (B7: no per-file ratchet, no grandfathering); the new invocations get conformance goldens. No new dependency.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): the first owner, duplicate and
+# dependency rules list today's state so nothing new may be added (the four glob matchers, the fourteen script copies
+# kept by assert-dogfood-sync.sh, the sixteen dependencies); the budgets start from this mission's counts, written
+# with --ratchet --allow-raise because core grows here; the cage keeps its rule table (separate mission).
+#
+# DoD 1 (core): packages/core/src/law.ts exports StructuralLaw, structuralLaw, BudgetRule, OwnerRule, RegistryRule,
+#        DependencyRule, DuplicateRule, LayerCounts, CountedFile, HashedFile, DeclaredDependency, countLayers,
+#        evaluateBudgets, evaluateOwner, evaluateRegistry, evaluateDependencies, evaluateDuplicates; path-glob.ts gains
+#        globToRegExp and pathMatchesGlobPattern (** any depth, * one segment, ? one char) used by the structural
+#        rules' exclude, owners and applies_to; tests in packages/core/tests/law-structural.test.ts; test:packages passes.
+# DoD 2 (spec): src/cli/lib/arch/cage/target-architecture.ts accepts schema 0.4.0 (0.1.0 to 0.3.0 still parse), parses
+#        budget, owner, registry, dependency and duplicate rules by their kind key and file_ceiling_lines, loads
+#        registry names (entry names plus the last segment of multi-word names) into a StructuralLaw, judges owner and
+#        registry rules per file, and judges budgets, dependencies and duplicates over the whole tree
+#        (checkArchStructure); ratchetArchBaseline writes ARCH_BASELINE.json (schema opengantry.arch-baseline.v1, commit,
+#        file_ceiling_lines, layers), refusing a raise unless allowed; src/cli/tests/arch-structural.test.ts covers the
+#        kinds, a whole-tree run, the partial-list exemption and the ratchet.
+# DoD 3 (command): gantry arch check runs the whole-tree kinds when it walks the scan roots itself, keeps the
+#        per-file behaviour and JSON shape when files are given, and gains --ratchet and --allow-raise (--ratchet with
+#        files exits 2); the conformance suite records arch-check.whole-tree, arch-check.ratchet (tree shows
+#        ARCH_BASELINE.json) and arch-check.ratchet-needs-whole-tree on fresh-init; the existing arch-check golden is
+#        unchanged.
+# DoD 4 (law): TARGET_ARCHITECTURE.yaml schema 0.4.0, file_ceiling_lines 800, six budget rules (tests excluded),
+#        seven owner rules (GantryUserError, isPathUnderRoot, canonicalJson, extractImportSites, classifySpecifier,
+#        validateManifestShape, the glob matchers with their four homes), four registry rules (error codes with env
+#        names for the GXT_ overlap, env, commands, MCP tools), one dependency rule, one duplicate rule listing the
+#        fourteen script copies; gantry arch check (whole tree) passes on this repository after
+#        gantry arch check --ratchet --allow-raise wrote ARCH_BASELINE.json.
+# DoD 5 (gate): scripts/dev-validate-core.sh runs gantry arch check before the conformance suite;
+#        .gitagent/foreman/MANIFEST.json gantry skill gate_commands adds gantry arch check (gantry check OK);
+#        scripts/arch-baseline.mjs and .gxt-quality-baseline.json are deleted; scripts/check-changed-code.sh drops the
+#        450-line production cap and the grandfather lookup and keeps the 900-line test cap.
+# DoD 6 (behaviour): all unit tests pass; conformance passes with no existing golden changed.
+# DoD 7 (docs): docs/ARCHITECTURE.md replaces the complexity-budget table with the structural-law table;
+#        docs/DEVELOPMENT.md baseline and registry rows and the rule about --ratchet; docs/CHANGELOG.md substrate note
+#        and Unreleased bullet.
+# DoD 8 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK); git diff --name-only origin/main...HEAD
+#        lists only paths under contract.tmvc_roots.
+msn_id: MSN-0286
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "8"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/foreman/MANIFEST.json,
+      .gitagent/missions/MSN-0286.structural-rules.yaml, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, TARGET_ARCHITECTURE.yaml, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, packages/core/,
+      scripts/arch-baseline.mjs, scripts/check-changed-code.sh,
+      scripts/dev-validate-core.sh, src/cli/commands/arch.ts,
+      src/cli/lib/arch/cage/target-architecture.ts, src/cli/program-arch.ts,
+      src/cli/tests/arch-structural.test.ts, test/conformance/cases.yaml,
+      test/conformance/golden/, .gxt-quality-baseline.json. src/cli changes:
+      arch/cage/target-architecture.ts parses the five kinds and runs the
+      whole-tree evaluations and the ratchet writer; commands/arch.ts and
+      program-arch.ts add --ratchet; a new
+      src/cli/tests/arch-structural.test.ts. MANIFEST.json changes only the
+      gantry skill gate_commands (adds gantry arch check, B5).
+      .gitagent/planner/RULES.md, .gitagent/registry/, templates/ and
+      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
+      until everything is done): 3c lands B2, B4, B5 and B7 of ADR-0052 as
+      decided (budgets ratchet per layer with an explicit --ratchet commit,
+      never on merge; 800-line per-file sanity ceiling; registries become
+      enforced; the first owner, duplicate and dependency rules list the current
+      state so nothing new may be added). The schema version becomes 0.4.0 so an
+      older CLI fails closed on the new kinds. The cage keeps its rule table
+      (separate mission)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 1ae19e8f75ca
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/foreman/MANIFEST.json,
+      .gitagent/missions/MSN-0286.structural-rules.yaml, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, TARGET_ARCHITECTURE.yaml, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, packages/core/,
+      scripts/arch-baseline.mjs, scripts/check-changed-code.sh,
+      scripts/dev-validate-core.sh, src/cli/commands/arch.ts,
+      src/cli/lib/arch/cage/target-architecture.ts, src/cli/program-arch.ts,
+      src/cli/tests/arch-structural.test.ts, test/conformance/cases.yaml,
+      test/conformance/golden/, .gxt-quality-baseline.json. src/cli changes:
+      arch/cage/target-architecture.ts parses the five kinds and runs the
+      whole-tree evaluations and the ratchet writer; commands/arch.ts and
+      program-arch.ts add --ratchet; a new
+      src/cli/tests/arch-structural.test.ts. MANIFEST.json changes only the
+      gantry skill gate_commands (adds gantry arch check, B5).
+      .gitagent/planner/RULES.md, .gitagent/registry/, templates/ and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are build configuration, the slim package build, law
+      files and docs; packages/cage/src is the cage layer this mission declares:
+      .gitagent/registry/ (YAML registries), ARCH_BASELINE.json and
+      scripts/arch-baseline.mjs (baseline and its generator, removed in step 3),
+      test/conformance/ (fixtures, golden files, node --test runner, no src/cli
+      import), scripts/dev-validate-core.sh and package.json (wire npm run
+      test:conformance into the allowlisted gate), docs/DEVELOPMENT.md and
+      docs/CHANGELOG.md."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml keeps schema 0.3.0; it gains
+      scan_root packages/cage/**, layer cage and three downward-only rules (cage
+      imports no lib, command or delivery module); RULE-CORE-NO-NODE-IO is
+      replaced by five rules forbidding node:fs, node:child_process, node:os,
+      node:net and node:http so core may use node:path; other rules unchanged to
+      src/cli/index.ts, src/cli/program*.ts, src/cli/cage-bin.ts and
+      src/cli/kernel.ts so every src/cli file has a layer and the baseline can
+      count per layer. gantry arch check on the full tree must pass unchanged
+      (DoD 3).
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4dc16b2f40ca
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/foreman/MANIFEST.json,
+      .gitagent/missions/MSN-0286.structural-rules.yaml, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, TARGET_ARCHITECTURE.yaml, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, packages/core/,
+      scripts/arch-baseline.mjs, scripts/check-changed-code.sh,
+      scripts/dev-validate-core.sh, src/cli/commands/arch.ts,
+      src/cli/lib/arch/cage/target-architecture.ts, src/cli/program-arch.ts,
+      src/cli/tests/arch-structural.test.ts, test/conformance/cases.yaml,
+      test/conformance/golden/, .gxt-quality-baseline.json. src/cli changes:
+      arch/cage/target-architecture.ts parses the five kinds and runs the
+      whole-tree evaluations and the ratchet writer; commands/arch.ts and
+      program-arch.ts add --ratchet; a new
+      src/cli/tests/arch-structural.test.ts. MANIFEST.json changes only the
+      gantry skill gate_commands (adds gantry arch check, B5).
+      .gitagent/planner/RULES.md, .gitagent/registry/, templates/ and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are build configuration, the slim package build, law
+      files and docs; packages/cage/src is the cage layer this mission declares:
+      .gitagent/registry/ (YAML registries), ARCH_BASELINE.json and
+      scripts/arch-baseline.mjs (baseline and its generator, removed in step 3),
+      test/conformance/ (fixtures, golden files, node --test runner, no src/cli
+      import), scripts/dev-validate-core.sh and package.json (wire npm run
+      test:conformance into the allowlisted gate), docs/DEVELOPMENT.md and
+      docs/CHANGELOG.md."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is migration step 2a of ADR-0052 (B2 rule
+      kinds, B4 ratchet, B5 gate, B7 ceiling): TARGET_ARCHITECTURE.yaml gains
+      budget, owner, registry, dependency and duplicate rules and schema 0.4.0;
+      ARCH_BASELINE.json is now written by gantry arch check --ratchet
+      (forbid_import_layer, forbid_specifier_substring), so the gate keeps
+      parsing; no B2 rule kind yet. ARCH_BASELINE.json is regenerated because
+      the layer set changed (a Planner edit under B4): lib shrinks by the moved
+      modules, core and git start at their current counts. Operator direction
+      (2026-10-18, continue until everything is done): 3c lands B2, B4, B5 and
+      B7 of ADR-0052 as decided (budgets ratchet per layer with an explicit
+      --ratchet commit, never on merge; 800-line per-file sanity ceiling;
+      registries become enforced; the first owner, duplicate and dependency
+      rules list the current state so nothing new may be added). The schema
+      version becomes 0.4.0 so an older CLI fails closed on the new kinds. The
+      cage keeps its rule table (separate mission)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. No depends_on is declared; this mission has no
+      cross-repository dependency.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path is added; the suite and the baseline
+      generator are offline.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: "Accept. Registries are Level-2 and Level-1 artifacts: a new
+      error code, env name, subcommand, MCP tool or dependency becomes a Planner
+      edit under .gitagent/registry/, which this mission makes a forbidden zone
+      of the gantry skill; no new flight level or role is introduced."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. The contract-standalone fixture exercises gantry verify
+      --contract with verify.yaml and gate.json as shipped by MSN-0277; this
+      mission records its output and changes nothing in it.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml stays YAML (humans write it);
+      ARCH_BASELINE.json stays machine-written JSON, now by gantry arch check
+      --ratchet; the registries, so they are strict YAML
+      (opengantry.registry.v1, YAML 1.2 core, no aliases); the baseline is
+      machine-written JSON (opengantry.arch-baseline.v1) produced by
+      scripts/arch-baseline.mjs and never hand-edited. MANIFEST.json stays JSON;
+      this mission only adds entries to perimeter_protected and
+      gantry.forbidden_zones.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: ec1fab7d9d9602d804578b490def118b45c56fac608f2511b67936cbaa308a83
+declared_paths:
+  - .gitagent/foreman/MANIFEST.json
+  - .gitagent/missions/MSN-0286.structural-rules.yaml
+  - .gxt-quality-baseline.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/
+  - scripts/arch-baseline.mjs
+  - scripts/check-changed-code.sh
+  - scripts/dev-validate-core.sh
+  - src/cli/commands/arch.ts
+  - src/cli/lib/arch/cage/target-architecture.ts
+  - src/cli/program-arch.ts
+  - src/cli/tests/arch-structural.test.ts
+  - test/conformance/cases.yaml
+  - test/conformance/golden/
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/MANIFEST.json
+    - .gitagent/missions/MSN-0286.structural-rules.yaml
+    - .gxt-quality-baseline.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/
+    - scripts/arch-baseline.mjs
+    - scripts/check-changed-code.sh
+    - scripts/dev-validate-core.sh
+    - src/cli/commands/arch.ts
+    - src/cli/lib/arch/cage/target-architecture.ts
+    - src/cli/program-arch.ts
+    - src/cli/tests/arch-structural.test.ts
+    - test/conformance/cases.yaml
+    - test/conformance/golden/
+  forbidden_zones:
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/
+    - .github/workflows/
+    - templates/
+contract_sha256: 29007156bb55582639e0afc3bf2b86f6737d4fd22ae24964140c59daed00934c
