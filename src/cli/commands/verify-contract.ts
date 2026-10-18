@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
 import type { Command } from "commander";
@@ -121,14 +122,14 @@ export async function runVerifyContractCommand(o: VerifyContractCliOptions): Pro
         const verified = signer ? `verify: VERIFIED, signed by ${signer}` : "verify: VERIFIED";
         console.error([...problems.map((p) => `verify: PROBLEM ${p}`), ok ? verified : `verify: FAIL, ${String(problems.length)} problem(s)`].join("\n"));
       }
-      if (!ok) setExitCode(1);
+      if (!ok) setExitCode(EXIT_CODE.FAILURE);
       return Promise.resolve();
     }
     const result = runVerifyContract({ ...base, mode: modeOf(o), onCheck, sign: o.sign });
     if (o.out) writeResult(o.out, result);
     if (json) emitCliJson(result);
     else for (const line of summary(result)) console.error(line);
-    if (result.status !== "pass") setExitCode(1);
+    if (result.status !== "pass") setExitCode(EXIT_CODE.FAILURE);
     return Promise.resolve();
   });
 }

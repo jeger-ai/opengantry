@@ -4,7 +4,7 @@ import type { VerifyOptions } from "./verify-options.js";
 import { CLI_NAME } from "../constants.js";
 import { runBreakGlassAuditFlow } from "../break-glass.js";
 import { errorMessage, logInfo, logWarn, writeStdout } from "../cli-io.js";
-import { CommandReporter } from "../command-reporter.js";
+import { Reporter } from "../reporter.js";
 import { logFixHint } from "../fix-hints.js";
 import { loadPrompts } from "../prompts-loader.js";
 import { isGantryUserError } from "../errors.js";
@@ -98,8 +98,8 @@ export interface VerifyPresentResult {
   remediation?: RemediationSnapshot | null;
 }
 
-function reporterFor(ctx: VerifyPresentContext): CommandReporter {
-  return CommandReporter.forVerify(ctx.options);
+function reporterFor(ctx: VerifyPresentContext): Reporter {
+  return Reporter.forVerify(ctx.options);
 }
 
 function overlayFailurePresentation(
@@ -288,7 +288,7 @@ export function presentHuman(
   const reporter = reporterFor(ctx);
   if (result.ok) {
     tombstoneRemediationSnapshot(ctx.root);
-    reporter.emitVerifySuccess(result, ctx.resolved.missionRel);
+    reporter.emitVerifySuccess(result);
     if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
     return { ok: true, exitCode: 0, remediation: null };
   }

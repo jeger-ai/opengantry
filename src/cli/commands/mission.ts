@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "../lib/constants.js";
 import { formatRepoRelative, logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runUserCommand } from "../lib/command-boundary.js";
@@ -22,7 +23,7 @@ export function runMissionSnapshot(file: string, msnOverride?: string): void {
   const msn = msnOverride ?? mission.msnId;
   if (!msn || !isValidMsnId(msn)) {
     logError("mission snapshot: need MSN-NNNN in mission or pass --msn");
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
   const snapshot = captureStartState(root, manifest, mission.skillKey);

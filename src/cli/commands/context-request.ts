@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import {
   appendContextRequest,
@@ -24,14 +25,14 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
     const reason = options.reason?.trim() ?? "";
     if (reason.length === 0) {
       logError("context-request: --reason is required");
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
 
     const paths = options.paths.map((p) => p.trim()).filter((p) => p.length > 0);
     if (paths.length === 0) {
       logError("context-request: at least one --path is required");
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
 
@@ -42,7 +43,7 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
       logError(
         "context-request: no active mission — pin one with gantry pin <mission> or pass --mission <path>",
       );
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
 
@@ -101,6 +102,6 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
     }
   } catch (e) {
     logError(errorMessage(e));
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
   }
 }

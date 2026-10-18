@@ -16,7 +16,7 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { logInfo } from "../lib/cli-io.js";
-import { enterDocumentStdout, resetOutputContext } from "../lib/output-context.js";
+import { Reporter, resetReporter, withReporter } from "../lib/reporter.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 async function runVerifyFormatInRepo(
@@ -45,19 +45,20 @@ async function runVerifyFormatInRepo(
 }
 
 test("runVerify --format sarif: stdout is a document and diagnostics stay on stderr", async () => {
-  resetOutputContext();
-  enterDocumentStdout();
+  resetReporter();
   try {
-    const { output } = await captureConsoleAsync(async () => {
-      logInfo("gantry verify: debug setup");
-      console.log('{"version":"2.1.0"}');
-    });
+    const { output } = await captureConsoleAsync(() =>
+      withReporter(new Reporter("sarif"), () => {
+        logInfo("gantry verify: debug setup");
+        console.log('{"version":"2.1.0"}');
+      }),
+    );
     assert.equal(output.stdout.trim(), '{"version":"2.1.0"}');
     assert.match(output.stderr, /gantry verify: debug setup/);
     assert.doesNotMatch(output.stdout, /gantry verify:/);
     assert.doesNotMatch(output.stdout, /gantry:/);
   } finally {
-    resetOutputContext();
+    resetReporter();
   }
 });
 

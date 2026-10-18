@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { setExitCode } from "../lib/cli-io.js";
 import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../lib/command-boundary.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "../lib/contract/contract-scan.js";
@@ -65,7 +66,7 @@ export function runContractCheck(options: ContractCheckCliOptions): void {
       scope,
       options.files && options.files.length > 0 ? { files: options.files } : {},
     );
-    if (violations.length > 0) setExitCode(1);
+    if (violations.length > 0) setExitCode(EXIT_CODE.FAILURE);
     return {
       json: {
         ok: violations.length === 0,

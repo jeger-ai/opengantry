@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 import { installTmvcStrictHook, readHooksStatus, uninstallTmvcStrictHook } from "../lib/git/git-hooks.js";
@@ -9,7 +10,7 @@ export function runHooksInstall(): void {
     const result = installTmvcStrictHook(root);
     if (!result.ok) {
       logError(result.message);
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
     if (result.alreadyInstalled) {

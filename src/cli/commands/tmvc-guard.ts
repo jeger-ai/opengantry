@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logWarn, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
@@ -61,7 +62,7 @@ export function runTmvcGuard(options: TmvcGuardCliOptions): void {
         mission: resolved.mission_file,
         skill_key: resolved.skill_key,
       });
-      if (strict && !result.ok && !result.skipped) setExitCode(1);
+      if (strict && !result.ok && !result.skipped) setExitCode(EXIT_CODE.FAILURE);
       return;
     }
 
@@ -84,7 +85,7 @@ export function runTmvcGuard(options: TmvcGuardCliOptions): void {
       // best-effort spool
     }
     if (!result.skipped && !result.ok && strict) {
-      setExitCode(1);
+      setExitCode(EXIT_CODE.FAILURE);
     }
   });
 }

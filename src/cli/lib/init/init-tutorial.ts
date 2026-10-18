@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
 import * as p from "@clack/prompts";
@@ -153,7 +154,7 @@ export async function runInitTutorial(): Promise<void> {
   const manifestPath = path.join(repoRoot, ".gitagent", "foreman", "MANIFEST.json");
   if (!fs.existsSync(manifestPath)) {
     logError("init --tutorial: substrate missing — init must complete before tutorial");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
 

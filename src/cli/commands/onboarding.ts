@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "../lib/constants.js";
@@ -81,7 +82,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   const manifestPath = path.join(root, ".gitagent", "foreman", "MANIFEST.json");
   if (!fs.existsSync(manifestPath)) {
     logError("Run gantry init first — substrate not found.");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     p.outro("Onboarding aborted");
     return;
   }
@@ -95,7 +96,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
     p.log.step("Integration health");
     for (const msg of blockers) logWarn(`  ${msg}`);
     logError("Integration issues detected — run gantry doctor or pass --force to continue.");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     p.outro("Onboarding aborted (integration gates)");
     return;
   }

@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import type { AgentErrorPayload } from "../lib/errors.js";
 import { agentErrorAbsolutePath, serializeAgentErrorPayload } from "../lib/errors.js";
@@ -74,7 +75,7 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
 export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Promise<void> {
   if (options.workerCommand.length === 0) {
     logError("runtime exec: missing executor command. Use -- <worker-command...>");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
 

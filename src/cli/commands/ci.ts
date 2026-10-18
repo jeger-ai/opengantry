@@ -1,4 +1,5 @@
 /** `gantry ci <check>`: the checks CI and the dev gate run (ADR-0052 step 5b; scripts/validate-gxt.sh and verify-pr-missions.sh folded in). */
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "../lib/constants.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary, runAtCommandBoundaryAsync } from "../lib/command-boundary.js";
@@ -31,7 +32,7 @@ function present(result: CiCheckResult): void {
     if (result.failures.includes(line)) logError(line);
     else logInfo(line);
   }
-  if (!result.ok) setExitCode(1);
+  if (!result.ok) setExitCode(EXIT_CODE.FAILURE);
 }
 
 export function runCiMsnRange(options: CiRangeOptions): void {
@@ -68,7 +69,7 @@ export function runCiTrustedAutomation(options: CiTrustedAutomationOptions): voi
       return;
     }
     logError(`TRUSTED-AUTOMATION-DENY: ${verdict.reason}`);
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
   });
 }
 
@@ -85,7 +86,7 @@ export async function runCiVerifyMissions(options: CiRangeOptions): Promise<void
         return;
       case "fail":
         logError(`${CLI_NAME} ci verify-missions FAILED: ${outcome.message}`);
-        setExitCode(1);
+        setExitCode(EXIT_CODE.FAILURE);
         return;
       case "verify": {
         for (const mission of outcome.missions) {

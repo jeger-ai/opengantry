@@ -1,6 +1,7 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { Command } from "commander";
 import { CLI_NAME, CLI_VERSION } from "./lib/constants.js";
-import { registerAudiencePreActionHook } from "./program-audience-hook.js";
+import { registerReporterHook } from "./program-reporter-hook.js";
 import { registerCoreCommands } from "./program-core.js";
 import { registerArchCommands } from "./program-arch.js";
 import { registerMissionCommands } from "./program-mission.js";
@@ -24,7 +25,7 @@ export function buildProgram(): Command {
       return;
     }
     if (err.code === "commander.invalidArgument") {
-      process.exitCode = 2;
+      process.exitCode = EXIT_CODE.USAGE;
     }
     throw err;
   });
@@ -32,7 +33,7 @@ export function buildProgram(): Command {
     "--audience <role>",
     "Tailor stdout/stderr: executor|planner|verifier|platform (also GXT_AUDIENCE env)",
   );
-  registerAudiencePreActionHook(program);
+  registerReporterHook(program);
 
   registerCoreCommands(program);
   registerArchCommands(program);

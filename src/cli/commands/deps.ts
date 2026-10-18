@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
 import { setExitCode } from "../lib/cli-io.js";
@@ -23,7 +24,7 @@ export function reportDependencyResults(
   opts: { headline: string },
 ): CommandPresentation {
   const failed = results.filter((r) => r.code !== "ok");
-  if (failed.length > 0) setExitCode(1);
+  if (failed.length > 0) setExitCode(EXIT_CODE.FAILURE);
   const human =
     results.length === 0
       ? `${opts.headline}: 0 dependency check(s)`

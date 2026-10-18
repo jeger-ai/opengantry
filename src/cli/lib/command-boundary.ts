@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "./constants.js";
 import { errorMessage, logError, logInfo, setExitCode, writeStdout } from "./cli-io.js";
 import { getRepoRoot } from "#git/git.js";
@@ -34,7 +35,7 @@ export function cliFailureEnvelope(e: unknown): CliFailureEnvelope {
 
 function exitCodeFor(e: unknown): number {
   if (isGantryUserError(e)) return e.exitCode;
-  return 1;
+  return EXIT_CODE.FAILURE;
 }
 
 export type CommandPresentation = {
@@ -88,7 +89,7 @@ export async function runUserCommandAsync(
 }
 
 /** Report a command-boundary failure: log the message and set the exit code once. */
-export function reportCommandError(e: unknown, exitCode = 2): void {
+export function reportCommandError(e: unknown, exitCode: number = EXIT_CODE.USAGE): void {
   logError(errorMessage(e));
   setExitCode(exitCode);
 }
@@ -102,7 +103,7 @@ export function resolveRepoRootAtBoundary(cwd?: string): string | null {
     return getRepoRoot(cwd);
   } catch (e) {
     logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return null;
   }
 }

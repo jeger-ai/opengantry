@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
 import { runContractCheck, runContractPropose, runContractShow } from "./commands/contract.js";
@@ -91,7 +92,7 @@ function registerRuntimeExecCommand(runtime: Command): void {
         const to = parseOptionalTimeoutMs(opts.timeoutMs);
         if (!to.ok) {
           logError(to.message);
-          setExitCode(2);
+          setExitCode(EXIT_CODE.USAGE);
           return;
         }
 
@@ -193,7 +194,7 @@ function registerContractCommand(program: Command): void {
       const intent = intentParts.join(" ").trim();
       if (!intent) {
         logError("contract propose: provide intent text");
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       await runContractPropose({

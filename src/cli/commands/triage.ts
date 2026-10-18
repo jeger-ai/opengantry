@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { formatRepoRelative, logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { isValidMsnId } from "../lib/missions/parser.js";
 import { emitActiveMissionFromTemplate } from "../lib/missions/formatter.js";
@@ -27,14 +28,14 @@ export function runTriage(options: TriageRunOptions): void {
 
   if (result.action !== "DIRECT_EXECUTION" || result.skill_key === "NONE") {
     logError("triage: --emit-mission requires DIRECT_EXECUTION with a skill_key");
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
 
   const msn = msnIdOrDefault({ msnId: options.msn });
   if (!isValidMsnId(msn)) {
     logError("triage: --msn must look like MSN-0007");
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
 

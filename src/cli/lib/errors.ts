@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import { readEnvWithLegacy } from "./config-namespace.js";
 import path from "node:path";
@@ -34,12 +35,12 @@ export function reportUserFacingError(e: unknown): void {
     logUnexpectedError(e);
     const legacyHint = hintGitProofFromMessage(e.message);
     if (legacyHint) logFixHint(legacyHint);
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
 
   logError(String(e));
-  setExitCode(1);
+  setExitCode(EXIT_CODE.FAILURE);
 }
 
 export interface UserFacingErrorJson {
@@ -59,7 +60,7 @@ export function userFacingErrorToJson(e: unknown): UserFacingErrorJson {
     };
   }
   const message = errorMessage(e);
-  return { error_code: "GXT_VERIFY_FAILED", message, exit_code: 1 };
+  return { error_code: "GXT_VERIFY_FAILED", message, exit_code: EXIT_CODE.FAILURE };
 }
 
 export interface AgentErrorPayload {
@@ -181,7 +182,7 @@ export function writeInterrogationRequiredError(
 ): AgentErrorPayload {
   return writeAgentErrorFile(repoRoot, {
     status: "interrogation_required",
-    exit_code: 2,
+    exit_code: EXIT_CODE.USAGE,
     flight_id: "",
     msn_id: input.msn_id,
     mission_file: "",

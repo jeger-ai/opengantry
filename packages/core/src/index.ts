@@ -9,6 +9,7 @@ export * from "./mission-types.js";
 export * from "./trace-status.js";
 export * from "./constants.js";
 export * from "./error-codes.js";
+export * from "./exit-codes.js";
 export * from "./law.js";
 export * from "./import-scanner.js";
 export * from "./manifest.js";

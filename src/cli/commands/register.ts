@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { discoverFolderSignature } from "../lib/ast-discovery.js";
 import {
   buildSkillProposal,
@@ -29,6 +30,6 @@ export function runRegister(options: RegisterOptions): void {
     logInfo(formatProposalHuman(proposal));
   } catch (e) {
     logError(e instanceof Error ? e.message : String(e));
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
   }
 }

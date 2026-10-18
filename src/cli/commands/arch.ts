@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import {
   reportCommandError,
@@ -100,7 +101,7 @@ export function runArchCredUnset(options: ArchCredUnsetOptions): void {
   if (repoRoot === null) return;
   if (!removeArchitectureCredential(repoRoot, options.slot)) {
     logError(`gantry arch cred: slot ${options.slot} not found`);
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
   logInfo(`gantry arch cred: removed slot=${options.slot}`);
@@ -126,7 +127,7 @@ export async function runArchFetch(options: ArchFetchOptions = {}): Promise<void
     } else {
       logInfo(result.message);
     }
-    if (result.status === "fallback") setExitCode(1);
+    if (result.status === "fallback") setExitCode(EXIT_CODE.FAILURE);
   });
 }
 
@@ -147,7 +148,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     }
     if (files.length === 0) {
       logError(`gantry ${label} check: no files under scan_roots`);
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
   }
@@ -161,7 +162,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     if (options.ratchet) {
       if (!wholeTree) {
         logError(`gantry ${label} check: --ratchet needs a whole-tree run (no file arguments)`);
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       ratchet = ratchetArchBaseline(loadTargetArchitecture(repoRoot), repoRoot, files, options.allowRaise === true);
@@ -172,7 +173,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
       logInfo(formatArchCheckHuman(result, label));
       if (ratchet) logInfo(formatRatchetHuman(ratchet));
     }
-    if (!result.ok || (ratchet && !ratchet.written)) setExitCode(1);
+    if (!result.ok || (ratchet && !ratchet.written)) setExitCode(EXIT_CODE.FAILURE);
   });
 }
 

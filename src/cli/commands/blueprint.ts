@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "../lib/constants.js";
 import { logInfo, setExitCode } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
@@ -40,7 +41,7 @@ async function runInterview(
       ],
     });
     if (isCancel(choice)) {
-      setExitCode(1);
+      setExitCode(EXIT_CODE.FAILURE);
       return [];
     }
 
@@ -49,7 +50,7 @@ async function runInterview(
       defaultValue: "npm test",
     });
     if (isCancel(gateCommand)) {
-      setExitCode(1);
+      setExitCode(EXIT_CODE.FAILURE);
       return [];
     }
 
@@ -71,7 +72,7 @@ export async function runBlueprintCommand(options: BlueprintOptions = {}): Promi
     const questions = buildBlueprintQuestions(proposal, options.domain);
     if (questions.length < 3) {
       logInfo(`${CLI_NAME} blueprint: insufficient evidence-anchored questions (${questions.length}) — add source files`);
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
 
