@@ -5,12 +5,12 @@ import { runUserCommand, type CommandPresentation } from "../lib/command-boundar
 import { loadWorkspace } from "../lib/workspace.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
-import { fetchMissionDependency } from "../lib/deps/deps-fetch.js";
+import { fetchMissionDependency } from "#plane/deps-fetch.js";
 import {
   checkMissionDependencies,
   type DependencyCheckResult,
 } from "../lib/deps/deps-resolve.js";
-import { gitRun } from "../lib/git/git.js";
+import { gitRun } from "#git/git.js";
 
 function loadMissionDeps(root: string, missionArg?: string) {
   const resolved = resolveMissionArg(root, missionArg);

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { gitChildEnv } from "../lib/git/git.js";
+import { gitChildEnv } from "#git/git.js";
 import { parseCommitlyGate, parseVerifyYaml } from "../lib/verify-standalone/contract.js";
 import { verifyPathMatcher } from "../lib/verify-standalone/diff.js";
 import { checkVerifyResult, runVerifyContract, writeVerifyBaseline } from "../lib/verify-standalone/run.js";

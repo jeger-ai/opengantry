@@ -4,10 +4,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { computeWorkingDigests } from "../lib/working-digests.js";
+import { computeWorkingDigests } from "#plane/digests.js";
 import { runFlightTelemetryDoctorChecks } from "../lib/flight-telemetry-doctor.js";
 import { compareExpectedDigests, runPolicyDigestDoctorChecks } from "../lib/policy-digest-doctor.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { writeRuntimeExecRepo } from "./test-fixtures.js";
 
 test("flight telemetry doctor: defaults to hash_only", () => {

@@ -5,7 +5,7 @@ import { collectDoctorReport } from "./doctor/doctor-core.js";
 import type { DoctorLine } from "./doctor/doctor-types.js";
 import { resolvePinnedMission } from "./missions/resolution.js";
 import { checkSkillManifestSync } from "./skill-sync.js";
-import type { Manifest } from "./types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 export interface StatusReport {
   repo: string;

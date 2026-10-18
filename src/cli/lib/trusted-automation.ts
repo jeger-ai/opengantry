@@ -17,8 +17,8 @@ import {
   type TrustedAutomationRule,
   type TrustedAutomationVerdict,
 } from "#core/trusted-automation.js";
-import type { Manifest } from "./types.js";
-import { gitRunOk } from "./git/git.js";
+import type { Manifest } from "#core/mission-types.js";
+import { gitRunOk } from "#git/git.js";
 
 const CONFIG_REL = ".gitagent/config.json";
 

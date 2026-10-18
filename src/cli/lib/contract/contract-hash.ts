@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import YAML from "yaml";
-import { canonicalJson } from "../canonical-json.js";
+import { canonicalJson } from "#core/canonical-json.js";
 import { GantryUserError } from "../errors.js";
-import { CONTRACT_ARRAY_KEYS, CONTRACT_BOOLEAN_KEYS, type MissionContract } from "./contract-types.js";
+import { CONTRACT_ARRAY_KEYS, CONTRACT_BOOLEAN_KEYS, type MissionContract } from "#core/contract-types.js";
 
 /**
  * POSIX separators, no leading `./`, collapsed slashes. Directory-like segments get a single

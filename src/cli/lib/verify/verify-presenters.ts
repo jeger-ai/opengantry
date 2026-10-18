@@ -1,5 +1,5 @@
 import type { ResolvedMissionArg } from "../mission-arg.js";
-import type { Manifest, ParsedMission } from "../types.js";
+import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { CLI_NAME } from "../constants.js";
 import { runBreakGlassAuditFlow } from "../break-glass.js";
@@ -45,7 +45,7 @@ import {
   tombstoneRemediationSnapshot,
 } from "./verify-remediation-pipeline.js";
 import { readRemediationSnapshot, type RemediationSnapshot } from "../context-feed-store.js";
-import type { GxtErrorCode } from "../gxt-error-codes.js";
+import type { GxtErrorCode } from "#core/error-codes.js";
 
 /** Shared verify orchestration context (load once, present by sink). */
 export interface VerifyPresentContext {
@@ -303,7 +303,7 @@ export function presentHuman(
   });
   const basePresentation = toFailurePresentation(normalized);
   const msnId = ctx.mission.msnId ?? undefined;
-  let presentation = basePresentation;
+  let presentation: typeof basePresentation;
 
   let remediation: RemediationSnapshot | undefined;
   if (ctx.options.fix === true) {

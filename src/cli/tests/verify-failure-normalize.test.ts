@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import type { VerifyPhaseFailure } from "../lib/verify/verify-failure.js";
 import {
   normalizeVerifyPhaseFailure,

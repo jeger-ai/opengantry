@@ -13,9 +13,9 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(scriptDir, "..");
 const libRoot = path.join(repoRoot, "src", "cli", "lib");
 
-const distScanner = path.join(repoRoot, "dist", "cli", "lib", "import-scanner.js");
+const distScanner = path.join(repoRoot, "dist", "packages", "core", "src", "import-scanner.js");
 if (!fs.existsSync(distScanner)) {
-  console.error("lib-cycles: missing dist/cli/lib/import-scanner.js — run npm run build first");
+  console.error("lib-cycles: missing dist/packages/core/src/import-scanner.js — run npm run build first");
   process.exit(1);
 }
 

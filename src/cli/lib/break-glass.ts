@@ -3,8 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitHead, gitRevParse, gitRun } from "./git/git.js";
-import { msnIdOrDefault, type ParsedMission } from "./types.js";
+import { gitHead, gitRevParse, gitRun } from "#git/git.js";
+import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
 import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
 

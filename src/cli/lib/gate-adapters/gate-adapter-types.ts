@@ -1,5 +1,5 @@
 import type { VerifyFinding } from "../verify/verify-finding.js";
-import type { GateAdapterId } from "./gate-adapter-id.js";
+import type { GateAdapterId } from "#core/gate-adapter.js";
 
 export interface GateExecContext {
   cwd: string;

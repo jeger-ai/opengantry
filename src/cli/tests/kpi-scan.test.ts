@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { runKpiScan, verifierOutputSucceeded } from "../lib/kpi-scan.js";
-import type { ParsedMission } from "../lib/types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import { copyMissionSchema, emptyInterrogationMissionFields } from "./test-fixtures.js";
 
 function missionWithVerifiers(root: string): ParsedMission {

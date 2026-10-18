@@ -1,4 +1,4 @@
-import type { KpiFinding } from "./types.js";
+import type { KpiFinding } from "#core/mission-types.js";
 import type { VerifyFinding } from "./verify/verify-finding.js";
 import { verifyFinding } from "./verify/verify-finding.js";
 

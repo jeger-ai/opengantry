@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "../../lib/constants.js";
 import { isLegislativeStub } from "../../lib/missions/formatter.js";
-import type { ParsedMission } from "../../lib/types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 
 function mission(traceRows: ParsedMission["traceRows"]): ParsedMission {
   return {

@@ -1,5 +1,5 @@
 import { loadWorkspace } from "../lib/workspace.js";
-import { pullOrgPolicy } from "../lib/policy/policy-fetch.js";
+import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import {
   configFloorViolations,
   localConfigFloor,
@@ -7,7 +7,7 @@ import {
   resolveOrgPolicyOrThrow,
 } from "../lib/policy/policy-resolve.js";
 import { appendLedgerIfEnabled } from "../lib/ledger/ledger-append.js";
-import { msnIdOrDefault } from "../lib/types.js";
+import { msnIdOrDefault } from "#core/mission-types.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 
 export function runPolicyPull(opts: { json?: boolean }): void {

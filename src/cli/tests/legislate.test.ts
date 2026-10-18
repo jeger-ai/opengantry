@@ -4,11 +4,11 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { runLegislate } from "../commands/legislate.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { execSync } from "node:child_process";
 import { findForbiddenZoneHits } from "../lib/legislate/legislate-forbidden-zone.js";
 import { loadManifest } from "../lib/manifest.js";
-import { stableFindingId } from "../lib/interrogate/findings.js";
+import { stableFindingId } from "#core/interrogation.js";
 import { echoOkInterrogation } from "./test-fixtures.js";
 test("legislate: writes next YAML mission under .gitagent/missions/", () => {
   const ogRoot = getRepoRoot();

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { gitConfigGet, gitConfigSet, gitRunOk } from "./git.js";
+import { gitConfigGet, gitConfigSet, gitRunOk } from "#git/git.js";
 
 /** Local git config that makes `.githooks/pre-commit` pass `--strict`. */
 export const TMVC_GUARD_STRICT_KEY = "gxt.tmvcGuardStrict";

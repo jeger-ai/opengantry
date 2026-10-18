@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { gitChildEnv } from "../lib/git/git.js";
+import { gitChildEnv } from "#git/git.js";
 import { resolveCageRoot, runCage } from "#cage/cage-run.js";
 import { buildCagePlan, classifyCagePath } from "#cage/cage-rules.js";
 import { suggestCageRules } from "#cage/cage-suggest.js";

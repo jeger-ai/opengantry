@@ -1,4 +1,4 @@
-import type { Manifest } from "../types.js";
+import type { Manifest } from "#core/mission-types.js";
 import { mergeInterrogationAnswers } from "./answers.js";
 import { computeGaps, type ComputeGapsInput } from "./gaps.js";
 import {
@@ -9,7 +9,7 @@ import {
   type InterrogationFindingKind,
   type InterrogationRow,
   type PresentedQuestion,
-} from "./findings.js";
+} from "#core/interrogation.js";
 
 export interface RunInterrogateInput {
   root: string;

@@ -1,4 +1,4 @@
-import type { EffectiveScope, MissionContract } from "./contract-types.js";
+import type { EffectiveScope, MissionContract } from "#core/contract-types.js";
 import type { ProposedGate } from "./propose-gate.js";
 
 function csv(values: readonly string[] | undefined, empty: string): string {

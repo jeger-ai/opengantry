@@ -2,7 +2,7 @@
 import { errorMessage, logWarn } from "../cli-io.js";
 import { isGantryUserError } from "../errors.js";
 import { loadGxtConfig, resolveLedgerMode, resolveLedgerSignatureTier } from "../gxt-config.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { appendLedgerEntry as appendWithSign } from "#plane/ledger-append.js";
 import type { LedgerEntry, LedgerEntryKind, LedgerPayloadFor } from "#plane/ledger-entry.js";
 

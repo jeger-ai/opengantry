@@ -6,7 +6,7 @@ import {
   manifestHasSkill,
   resolveManifestSkillKey,
 } from "../lib/skill-key.js";
-import type { Manifest } from "../lib/types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 const manifestGantryOnly: Manifest = {
   schema_version: "0.5.0",

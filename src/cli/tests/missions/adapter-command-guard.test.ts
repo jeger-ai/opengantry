@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { GantryUserError } from "../../lib/errors.js";
-import { GXT_ERROR } from "../../lib/gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import {
   assertTypedAdapterSingleCommand,
   hasUnquotedShellCombinator,

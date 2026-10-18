@@ -4,7 +4,7 @@ import { formatContractBlock } from "../contract/format.js";
 import { proposeContract } from "../contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../legislate/legislate.js";
 import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
-import type { MissionContract } from "../types.js";
+import type { MissionContract } from "#core/mission-types.js";
 import { loadWorkspace } from "../workspace.js";
 
 export interface ProposeContractMcpInput {

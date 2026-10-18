@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { runStart, runStartOrchestration } from "../lib/start-orchestration.js";
 import { handleStartOrchestration } from "../lib/mcp/mcp-start-orchestration.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";

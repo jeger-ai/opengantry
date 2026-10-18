@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getRepoRoot, gitChildEnv } from "../lib/git/git.js";
+import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { runCage } from "#cage/cage-run.js";
 import { loadCageConfig } from "#cage/cage-config.js";
 import {

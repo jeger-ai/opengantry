@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { GantryUserError } from "../errors.js";
-import { gitRun } from "../git/git.js";
+import { gitRun } from "#git/git.js";
 
 /**
  * What a change touched since the base: the files and the lines it added. Committed work is `base...HEAD` (from

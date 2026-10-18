@@ -5,11 +5,11 @@ import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "
 import { REL_AGENT_ERROR_FILE, REL_MANIFEST, CLI_NAME } from "../constants.js";
 import { ENV_PLANNER_EMAILS } from "../config-namespace.js";
 import { agentErrorAbsolutePath } from "../errors.js";
-import { gitConfigGet, gitRunOk } from "../git/git.js";
+import { gitConfigGet, gitRunOk } from "#git/git.js";
 import { resolveTemplateRootFromModule } from "../integration-compat.js";
 import { resolvePlannerEmails } from "../planner-identity.js";
 import { checkSkillManifestSync } from "../skill-sync.js";
-import type { Manifest } from "../types.js";
+import type { Manifest } from "#core/mission-types.js";
 import {
   doctorLinesHasFail,
   pickNextStep,
@@ -31,7 +31,7 @@ import { runArchitectureDriftDoctorChecks } from "../arch/cage/architecture-drif
 import { runFlightTelemetryDoctorChecks } from "../flight-telemetry-doctor.js";
 import { runPolicyDigestDoctorChecks } from "../policy-digest-doctor.js";
 import { runOrgPolicyDoctorChecks } from "../policy/policy-doctor.js";
-import { runLedgerDoctorChecks } from "../ledger/ledger-chain.js";
+import { runLedgerDoctorChecks } from "#plane/ledger-chain.js";
 import {
   runAdapterPreflightDoctorChecks,
   type AdapterPreflightOptions,
@@ -186,7 +186,6 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const lines: DoctorLine[] = [{ level: "ok", message: `repo: ${root}` }];
   let hasFail = false;
   let nextStep: string | null = null;
-  let plannerAllowlistUnset = false;
 
   const skillSync = checkSkillManifestSync(root, manifest);
   if (skillSync.ok) {
@@ -199,7 +198,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
 
   const plannerResult = appendPlannerAllowlistChecks(root, lines, nextStep);
   nextStep = plannerResult.nextStep;
-  plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
+  const plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
   appendAllowedSignersChecks(root, lines);
   appendPlannerSignatureChecks(root, lines);
   appendReceiptSignatureChecks(root, lines);

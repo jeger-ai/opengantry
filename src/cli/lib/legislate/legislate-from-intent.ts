@@ -6,7 +6,7 @@ import { GantryUserError } from "../errors.js";
 import { logInfo } from "../cli-io.js";
 import { resolveSkillKeyForLegislation, runLegislate, type LegislateOptions, type LegislateResult } from "./legislate.js";
 import { loadWorkspace } from "../workspace.js";
-import type { MissionContract } from "../types.js";
+import type { MissionContract } from "#core/mission-types.js";
 
 export interface FromIntentOptions extends LegislateOptions {
   fromIntent?: boolean;

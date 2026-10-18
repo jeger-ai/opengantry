@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import type { RemediationSnapshot } from "../context-feed-store.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import type { VerifyPhaseTiming } from "./verify-phase-clock.js";
 import type { VerifyFinding } from "./verify-finding.js";
 import { writeJsonAtomicSync, readJsonOrNull } from "../atomic-fs.js";

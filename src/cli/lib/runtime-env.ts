@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
-import type { EffectiveScope } from "./contract/contract-types.js";
+import type { EffectiveScope } from "#core/contract-types.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";

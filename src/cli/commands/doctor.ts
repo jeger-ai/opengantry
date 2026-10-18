@@ -8,7 +8,7 @@ import {
 import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
 import type { AdapterPreflightOptions } from "../lib/doctor/doctor-adapter-preflight.js";
 import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor/doctor-types.js";
-import type { TypedGateAdapterId } from "../lib/types.js";
+import type { TypedGateAdapterId } from "#core/mission-types.js";
 import { loadWorkspace } from "../lib/workspace.js";
 
 export interface DoctorOptions {

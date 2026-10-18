@@ -1,4 +1,4 @@
-import type { ParsedMission } from "../types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import type { VerifyFinding } from "./verify-finding.js";
 import type { VerifyFailedPayload } from "./verify-payload.js";
@@ -10,7 +10,7 @@ import {
   REMEDIATION_SCHEMA_VERSION,
 } from "../context-feed-store.js";
 import { writeGateLog } from "../gate-log-writer.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import {
   appendDigestToRing,
   computeFindingsDigest,

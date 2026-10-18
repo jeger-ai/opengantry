@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { GIT_REPO_LOCATION_ENV } from "../lib/git/git.js";
+import { GIT_REPO_LOCATION_ENV } from "#git/git.js";
 
 for (const key of GIT_REPO_LOCATION_ENV) delete process.env[key];
 

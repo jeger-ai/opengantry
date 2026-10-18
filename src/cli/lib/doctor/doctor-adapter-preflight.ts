@@ -5,7 +5,7 @@ import type { DoctorSection } from "./doctor-types.js";
 import { pickNextStep } from "./doctor-types.js";
 import { parseMissionFile } from "../missions/parser.js";
 import { listMissionFiles, readActiveMissionPin } from "../missions/resolution.js";
-import { DEFAULT_GATE_ADAPTER, isTypedGateAdapterId, type TypedGateAdapterId } from "../types.js";
+import { DEFAULT_GATE_ADAPTER, isTypedGateAdapterId, type TypedGateAdapterId } from "#core/mission-types.js";
 
 export interface AdapterPreflightOptions {
   forceAdapter?: TypedGateAdapterId;

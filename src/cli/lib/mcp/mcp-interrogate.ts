@@ -1,6 +1,6 @@
 import { loadWorkspace } from "../workspace.js";
 import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
-import type { InterrogationRow } from "../interrogate/findings.js";
+import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate, type InterrogateResult } from "../interrogate/run.js";
 import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
 import { resolveManifestSkillKey } from "../skill-key.js";

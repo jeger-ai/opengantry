@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { REL_OUT_OF_SCOPE_DIR } from "./constants.js";
-import type { AdrHint } from "./types.js";
+import type { AdrHint } from "#core/mission-types.js";
 
 interface ParsedAdrMeta {
   id: string;

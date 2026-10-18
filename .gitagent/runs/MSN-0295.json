@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0295",
+  "mission_path": ".gitagent/missions/MSN-0295.remove-facades.yaml",
+  "head": "bfbf13869a66c13891b66eb25b5dad6f7a3465b1",
+  "tree": "a28b09171d6574f5cacf9ef64290b60b2ceadf10",
+  "law_sha256": "898515b7a4b99fd41e080f4bd25bd2fde7b151bbe146bfc64acce34ef831b3b3",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 84640,
+      "output_sha256": "42ffe267f4726ce08859561d07209d9cff360f14bad5179923ac2323a1597bb3"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-18T06:00:19.287Z"
+}

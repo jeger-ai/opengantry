@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { verifyFinding } from "../lib/verify/verify-finding.js";
 import {
   applyFindingsRecurrence,
@@ -11,7 +11,7 @@ import {
 import { computeFindingsDigest } from "../lib/verify/verify-finding-fingerprint.js";
 import { buildVerifyResultPayloadFromPhaseResult } from "../lib/verify/verify-payload.js";
 import type { VerifyFailedPayload } from "../lib/verify/verify-payload.js";
-import type { ParsedMission } from "../lib/types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import type { VerifyPhaseSuccess } from "../lib/verify/verify-engine.js";
 import {
   REMEDIATION_SCHEMA_VERSION,

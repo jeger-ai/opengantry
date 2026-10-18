@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { evaluateVerifyPhases } from "../lib/verify/verify-engine.js";
 import { listVerifyRuns, recordVerifyRunBestEffort, readLatestVerifyRunSnapshot } from "../lib/verify/verify-run-ring.js";
 import { presentHuman } from "../lib/verify/verify-presenters.js";

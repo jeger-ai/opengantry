@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { errorMessage } from "./cli-io.js";
 import { scanContractImports } from "./contract/contract-scan.js";
-import type { ContractImportViolation, EffectiveScope } from "./contract/contract-types.js";
+import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
 import { writeAgentErrorPayload } from "./errors.js";
 import { buildForbiddenBaseline, detectForbiddenViolations, type ForbiddenViolation } from "./forbidden-scan.js";
 import { createTelemetryWriter } from "./telemetry-log.js";

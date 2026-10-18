@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseDocument } from "yaml";
 import { GantryUserError } from "../errors.js";
-import { gitRun } from "../git/git.js";
+import { gitRun } from "#git/git.js";
 
 /**
  * The standalone verify contract (ADR-0051): what a change must satisfy, without `.gitagent/`. Humans write

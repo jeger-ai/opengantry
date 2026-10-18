@@ -11,7 +11,7 @@ import type {
   KpiReport,
   LlmVerifierSpec,
   ParsedMission,
-} from "./types.js";
+} from "#core/mission-types.js";
 
 export interface KpiScanFragment {
   exit_code?: number;

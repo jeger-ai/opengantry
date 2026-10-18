@@ -5,14 +5,14 @@ import { CLI_NAME, DEFAULT_KPI_REPORT_DIR, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_P
 import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { GantryUserError } from "../errors.js";
 import { hintMissionNoGate } from "../fix-hints.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { assertTypedAdapterSingleCommand } from "./adapter-command-guard.js";
 import { normalizeTraceStatus } from "../trace.js";
 import {
   INTERROGATION_FINDING_KINDS,
   type InterrogationFindingKind,
   type InterrogationRow,
-} from "../interrogate/findings.js";
+} from "#core/interrogation.js";
 import {
   DEFAULT_GATE_ADAPTER,
   type KpiAggregator,
@@ -24,7 +24,7 @@ import {
   type ParsedMission,
   type TraceRow,
   type YamlMission,
-} from "../types.js";
+} from "#core/mission-types.js";
 import { assertMissionSchemaValid } from "./validator.js";
 import {
   parseMarkdownMission,

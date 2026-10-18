@@ -5,10 +5,10 @@
  */
 import { isMsnEnforcedPath, isValidBypassNote } from "#core/trusted-automation.js";
 import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
-import { gitRunOk } from "./git/git.js";
+import { gitRunOk } from "#git/git.js";
 import { discoverChangedMissions } from "./mission-changed.js";
 import { evaluateTrustedAutomationCommit, evaluateTrustedAutomationRange, manifestMsnEnforcedPrefixes } from "./trusted-automation.js";
-import type { Manifest } from "./types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 export interface CiCheckResult {
   ok: boolean;

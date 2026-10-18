@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { GIT_REPO_LOCATION_ENV, gitChildEnv, withoutGitRepoEnv } from "../lib/git/git.js";
+import { GIT_REPO_LOCATION_ENV, gitChildEnv, withoutGitRepoEnv } from "#git/git.js";
 import { runGate } from "../lib/gate.js";
 import { spawnGateStreaming } from "../lib/gate-adapters/spawn-stream-core.js";
 

@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { runVerify } from "../commands/verify.js";
 import type { VerifyExportFormat } from "../lib/verify/verify-export.js";
 import {

@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ErrorObject, ValidateFunction } from "ajv";
 import YAML from "yaml";
-import { createSchemaValidator } from "../ajv-loader.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import { createSchemaValidator } from "#plane/ajv-loader.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { REL_MISSION_SCHEMA } from "../constants.js";
 
 let compiledValidator: ValidateFunction | null = null;

@@ -36,7 +36,7 @@ flowchart TB
 
 ## Packages (ADR-0052 step 2)
 
-`packages/core`, `packages/git`, `packages/cage` and `packages/plane` are packages in this repository with their own `package.json` (private), `tsconfig.json` and `tests/`. They are not npm workspaces: nothing resolves them through `node_modules`, so the lockfile does not list them. `tsc -b` builds them first (project references) into `dist/packages/<name>/src/`, and every importer reaches them through the root `package.json` `imports` field: `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js` and `#plane/<module>.js`. That map resolves identically in the checkout and in the published tarball, so nothing is published separately and the slim cage bundle inlines them. Inside a package use relative imports; `packages/git` resolves `#core/*` through its `tsconfig.json` `paths` (a package `imports` target must stay inside its own package). The old paths under `src/cli/lib` are re-export facades until step 3 migrates the importers.
+`packages/core`, `packages/git`, `packages/cage` and `packages/plane` are packages in this repository with their own `package.json` (private), `tsconfig.json` and `tests/`. They are not npm workspaces: nothing resolves them through `node_modules`, so the lockfile does not list them. `tsc -b` builds them first (project references) into `dist/packages/<name>/src/`, and every importer reaches them through the root `package.json` `imports` field: `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js` and `#plane/<module>.js`. That map resolves identically in the checkout and in the published tarball, so nothing is published separately and the slim cage bundle inlines them. Inside a package use relative imports; `packages/git` resolves `#core/*` through its `tsconfig.json` `paths` (a package `imports` target must stay inside its own package). Every importer names the package module directly; the few `src/cli/lib` modules that wrap a package function (identity, config, version, logging) are real modules, not facades.
 
 ## One law, one evaluator (ADR-0052 A2, A3)
 
@@ -71,4 +71,4 @@ OpenGantry contributors use the **full GXT stack** — see [`docs/DEVELOPMENT.md
 - `npm run validate` (build, `gantry check`, tests, doctor, changed-code, MSN subjects)
 - Mission + Planner `[MSN-…]` commit when GXT or CLI behavior changes
 - `gantry verify --mission …` with matching `EXECUTOR_LOG.md` trace
-- No new duplicate git spawn helpers (use `gitRun` from [`git/git.ts`](../src/cli/lib/git/git.ts))
+- No new duplicate git spawn helpers (use `gitRun` from [`git/git.ts`](../packages/git/src/git.ts))

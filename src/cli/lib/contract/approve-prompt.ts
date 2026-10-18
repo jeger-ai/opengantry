@@ -7,7 +7,7 @@ import YAML from "yaml";
 import { GantryUserError } from "../errors.js";
 import { formatContractBlock } from "./format.js";
 import { normalizeContract, parseContractYaml } from "./contract-hash.js";
-import type { MissionContract } from "./contract-types.js";
+import type { MissionContract } from "#core/contract-types.js";
 import type { ProposedGate } from "./propose-gate.js";
 
 export type ContractApproval =

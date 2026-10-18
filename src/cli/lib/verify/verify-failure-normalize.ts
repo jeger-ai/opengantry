@@ -1,8 +1,8 @@
-import { GXT_ERROR, gxtCodeFromGantryUserError } from "../gxt-error-codes.js";
-import type { GxtErrorCode } from "../gxt-error-codes.js";
+import { GXT_ERROR, gxtCodeFromGantryUserError } from "#core/error-codes.js";
+import type { GxtErrorCode } from "#core/error-codes.js";
 import { errorMessage, toPosixRel } from "../cli-io.js";
 import { isGantryUserError } from "../errors.js";
-import type { ParsedMission } from "../types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { CLI_NAME } from "../constants.js";
 import { hintsForVerifyPhase, type AudienceTaggedStep } from "./verify-hints.js";

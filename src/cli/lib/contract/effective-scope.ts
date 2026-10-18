@@ -1,12 +1,12 @@
 import { GantryUserError } from "../errors.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
-import type { OrgPolicyBundle } from "../policy/policy-types.js";
+import { GXT_ERROR } from "#core/error-codes.js";
+import type { OrgPolicyBundle } from "#plane/policy-types.js";
 import { resolveOrgPolicy } from "../policy/policy-resolve.js";
 import { resolveManifestSkillKey } from "../skill-key.js";
 import { law, tighten } from "#core/law.js";
-import type { Manifest, ParsedMission } from "../types.js";
+import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
-import type { EffectiveScope, MissionContract } from "./contract-types.js";
+import type { EffectiveScope, MissionContract } from "#core/contract-types.js";
 
 export interface ResolveEffectiveScopeInput {
   manifest: Manifest;

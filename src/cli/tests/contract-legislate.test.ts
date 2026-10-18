@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
 import { createDraftToken, DraftTokenError, verifyDraftToken } from "../lib/draft-token.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
 import { handleExecuteLegislation } from "../lib/mcp/mcp-execute-legislation.js";
 import { handleProposeContract } from "../lib/mcp/mcp-propose-contract.js";

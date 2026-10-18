@@ -1,4 +1,4 @@
-import type { Manifest } from "./types.js";
+import type { Manifest } from "#core/mission-types.js";
 import { resolveManifestSkillKey } from "./skill-key.js";
 import { classifyPath, isPathUnderRoot, law, normalizeRepoRelativePath } from "#core/law.js";
 

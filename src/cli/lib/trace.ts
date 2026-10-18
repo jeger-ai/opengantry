@@ -4,7 +4,7 @@ export {
   isPassStatus,
   isPendingStatus,
   isPassTraceRow,
-} from "./trace-status.js";
+} from "#core/trace-status.js";
 
 export {
   type TraceFailureKind,

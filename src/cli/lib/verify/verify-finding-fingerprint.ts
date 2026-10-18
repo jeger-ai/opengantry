@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { canonicalJson } from "../canonical-json.js";
+import { canonicalJson } from "#core/canonical-json.js";
 import type { VerifyFailedGate, VerifyFinding } from "./verify-finding.js";
 
 export const EVIDENCE_BYTE_LIMIT = 2048 as const;

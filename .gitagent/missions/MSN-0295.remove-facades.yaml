@@ -1,0 +1,1031 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0295]. Executor must not run until the [MSN-0295] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 step 5e, no more facades. The 24 pure re-export modules left under src/cli/lib after
+# the core, git and plane moves are deleted and every importer in src/cli names the package module (#core/*, #git/*,
+# #plane/*) directly, 349 import sites in 229 files; the src/cli/lib modules that wrap a package function with
+# identity, config, version or logging stay as real modules; the two repo-only checker scripts load the core build of
+# the import scanner; no output change.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): A1 said the facades go once the
+# importers migrate; this mission migrates them. No trace rows: the evidence is .gitagent/runs/MSN-0295.json written
+# by gantry verify --record (RULES §3).
+#
+# DoD 1 (importers): no file under src/cli imports a path that was a pure facade; `grep -rn '// Facade' src/cli/lib`
+#        finds only the wrapper modules that keep logic; duplicate imports of one package module are merged.
+# Note: the contract allows dynamic specifiers because seven pre-existing sites sit under the roots (the scan-test
+#        fixtures in contract-scan.test.ts and kernel-exports.test.ts, and the two checker scripts' dynamic load).
+# DoD 2 (removal): the 24 facade files are deleted (git rm); scripts/check-import-layers.mjs and
+#        scripts/check-lib-cycles.mjs resolve dist/packages/core/src/import-scanner.js; src/cli/tests/
+#        org-doctor-offline.test.ts reads packages/plane/src/policy-resolve.ts and ledger-chain.ts.
+# DoD 3 (quality): npm run lint passes (three pre-existing no-useless-assignment findings in rewritten files fixed:
+#        doctor-core.ts, interrogate/gaps.ts, verify-presenters.ts); gantry arch check passes after
+#        gantry arch check --ratchet (lib 208 files, lowered); node scripts/check-lib-cycles.mjs passes.
+# DoD 4 (behaviour): all unit tests pass; conformance passes with no golden changed.
+# DoD 5 (docs, dogfood): docs/ARCHITECTURE.md and docs/DEVELOPMENT.md no longer promise facades; docs/CHANGELOG.md;
+#        this mission is verified by its committed run record; ./scripts/dev-validate-core.sh passes;
+#        git diff --name-only origin/main...HEAD lists only paths under contract.tmvc_roots.
+msn_id: MSN-0295
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged; this mission
+      moves code, it calls no plane.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is ADR-0052 step 5e: the re-export
+      facades under src/cli/lib are removed and every importer names the package
+      module; ARCH_BASELINE.json is lowered with --ratchet (no raise). Operator
+      direction (2026-10-18, continue until everything is done): ADR-0052 A1
+      said the facades go once the importers migrate; this mission migrates
+      them. Behaviour and output are unchanged. The mission has no trace rows:
+      its evidence is .gitagent/runs/MSN-0295.json written by gantry verify
+      --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 85637a096b71
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0295.remove-facades.yaml,
+      .gitagent/runs/MSN-0295.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/ARCHITECTURE.md, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      scripts/check-import-layers.mjs, scripts/check-lib-cycles.mjs,
+      src/cli/commands/contract.ts, src/cli/commands/deps.ts,
+      src/cli/commands/doctor.ts, src/cli/commands/events-push.ts,
+      src/cli/commands/hook.ts, src/cli/commands/interrogate.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/perimeter.ts,
+      src/cli/commands/policy.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/commands/triage.ts, src/cli/commands/verify.ts, src/cli/kernel.ts,
+      src/cli/lib/ajv-loader.ts, src/cli/lib/ast-discovery.ts,
+      src/cli/lib/attest-mission.ts, src/cli/lib/attestation-export.ts,
+      src/cli/lib/attestation-receipt.ts, src/cli/lib/break-glass.ts,
+      src/cli/lib/canonical-json.ts, src/cli/lib/ci-checks.ts,
+      src/cli/lib/command-boundary.ts, src/cli/lib/config-namespace.ts,
+      src/cli/lib/context-feed-remediation.ts, src/cli/lib/context-request.ts,
+      src/cli/lib/contract/approve-prompt.ts,
+      src/cli/lib/contract/contract-hash.ts,
+      src/cli/lib/contract/contract-scan.ts,
+      src/cli/lib/contract/contract-types.ts,
+      src/cli/lib/contract/effective-scope.ts, src/cli/lib/contract/format.ts,
+      src/cli/lib/contract/propose-gate.ts,
+      src/cli/lib/contract/propose-imports.ts, src/cli/lib/contract/propose.ts,
+      src/cli/lib/deps/deps-fetch.ts, src/cli/lib/deps/deps-resolve.ts,
+      src/cli/lib/deps/deps-slug.ts, src/cli/lib/dirty-missions.ts,
+      src/cli/lib/doctor/doctor-adapter-preflight.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/domains/domain-code.ts,
+      src/cli/lib/draft-token.ts, src/cli/lib/errors.ts,
+      src/cli/lib/gate-adapters/gate-adapter-id.ts,
+      src/cli/lib/gate-adapters/gate-adapter-types.ts,
+      src/cli/lib/gate-adapters/parsing-adapter.ts,
+      src/cli/lib/gate-adapters/registry.ts,
+      src/cli/lib/gate-adapters/spawn-stream-core.ts, src/cli/lib/gate.ts,
+      src/cli/lib/git/git-hooks.ts, src/cli/lib/git/git-metrics.ts,
+      src/cli/lib/git/git-proof.ts, src/cli/lib/git/git-staged.ts,
+      src/cli/lib/git/git.ts, src/cli/lib/gxt-error-codes.ts,
+      src/cli/lib/import-scanner.ts, src/cli/lib/interrogate/answers.ts,
+      src/cli/lib/interrogate/findings.ts, src/cli/lib/interrogate/gaps.ts,
+      src/cli/lib/interrogate/gate-integrity.ts, src/cli/lib/interrogate/run.ts,
+      src/cli/lib/kernel-evaluate-scope.ts,
+      src/cli/lib/kpi-advisory-findings.ts, src/cli/lib/kpi-engine.ts,
+      src/cli/lib/kpi-scan.ts, src/cli/lib/ledger/ledger-append.ts,
+      src/cli/lib/ledger/ledger-chain.ts, src/cli/lib/ledger/ledger-entry.ts,
+      src/cli/lib/ledger/ledger-export.ts,
+      src/cli/lib/legislate/legislate-forbidden-zone.ts,
+      src/cli/lib/legislate/legislate-from-intent.ts,
+      src/cli/lib/legislate/legislate-gate-options.ts,
+      src/cli/lib/legislate/legislate.ts, src/cli/lib/mcp/mcp-doctor.ts,
+      src/cli/lib/mcp/mcp-draft-legislation.ts,
+      src/cli/lib/mcp/mcp-governance-shared.ts,
+      src/cli/lib/mcp/mcp-interrogate.ts, src/cli/lib/mcp/mcp-org.ts,
+      src/cli/lib/mcp/mcp-propose-contract.ts,
+      src/cli/lib/mcp/mcp-tools-register.ts, src/cli/lib/mcp/mcp-upgrade.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/mission-changed.ts,
+      src/cli/lib/missions/adapter-command-guard.ts,
+      src/cli/lib/missions/formatter.ts, src/cli/lib/missions/parser.ts,
+      src/cli/lib/missions/validator.ts, src/cli/lib/msn-allocate.ts,
+      src/cli/lib/org-export-config.ts, src/cli/lib/out-of-scope-hint.ts,
+      src/cli/lib/path-glob.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/planner-identity.ts, src/cli/lib/planner-signature.ts,
+      src/cli/lib/policy-digest-doctor.ts, src/cli/lib/policy/policy-bundle.ts,
+      src/cli/lib/policy/policy-fetch.ts, src/cli/lib/policy/policy-types.ts,
+      src/cli/lib/receipt-signing.ts, src/cli/lib/runtime-env.ts,
+      src/cli/lib/runtime-exec.ts, src/cli/lib/skill-key.ts,
+      src/cli/lib/skill-sync.ts, src/cli/lib/staged-tmvc-guard.ts,
+      src/cli/lib/start-orchestration.ts, src/cli/lib/start-snapshot.ts,
+      src/cli/lib/status-report.ts, src/cli/lib/surgeons/banned-import.ts,
+      src/cli/lib/surgeons/import-layer.ts, src/cli/lib/surgeons/registry.ts,
+      src/cli/lib/tmvc-path.ts, src/cli/lib/trace-evidence.ts,
+      src/cli/lib/trace-quote.ts, src/cli/lib/trace-status.ts,
+      src/cli/lib/trace.ts, src/cli/lib/triage-logic.ts,
+      src/cli/lib/trusted-automation.ts, src/cli/lib/types.ts,
+      src/cli/lib/verdict-expected.ts, src/cli/lib/verify-standalone/checks.ts,
+      src/cli/lib/verify-standalone/contract.ts,
+      src/cli/lib/verify-standalone/diff.ts,
+      src/cli/lib/verify-standalone/imports.ts,
+      src/cli/lib/verify-standalone/run.ts,
+      src/cli/lib/verify/verify-contract.ts,
+      src/cli/lib/verify/verify-engine.ts,
+      src/cli/lib/verify/verify-failure-normalize.ts,
+      src/cli/lib/verify/verify-failure.ts,
+      src/cli/lib/verify/verify-finding-fingerprint.ts,
+      src/cli/lib/verify/verify-hints.ts,
+      src/cli/lib/verify/verify-interrogation.ts,
+      src/cli/lib/verify/verify-org-phases.ts,
+      src/cli/lib/verify/verify-payload.ts,
+      src/cli/lib/verify/verify-phase-steps.ts,
+      src/cli/lib/verify/verify-presenters.ts,
+      src/cli/lib/verify/verify-remediation-pipeline.ts,
+      src/cli/lib/verify/verify-run-record.ts,
+      src/cli/lib/verify/verify-run-ring.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/lib/working-digests.ts, src/cli/lib/workspace.ts,
+      src/cli/program-core.ts, src/cli/program-workflow.ts,
+      src/cli/tests/arch-command.test.ts, src/cli/tests/arch-rubric.test.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/asset-catalog-generator.test.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/audience-cli.test.ts, src/cli/tests/audit-rigor.test.ts,
+      src/cli/tests/cage-check.test.ts, src/cli/tests/cage-scope.test.ts,
+      src/cli/tests/cage-suggest.test.ts,
+      src/cli/tests/cage-symlink-root.test.ts,
+      src/cli/tests/cage-watch-decisions.test.ts,
+      src/cli/tests/cage-watch.test.ts, src/cli/tests/cage.test.ts,
+      src/cli/tests/check-import-layers.test.ts,
+      src/cli/tests/check-lib-cycles.test.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/command-io-contract.test.ts,
+      src/cli/tests/context-request.test.ts,
+      src/cli/tests/contract-hash.test.ts,
+      src/cli/tests/contract-legislate.test.ts,
+      src/cli/tests/contract-propose.test.ts,
+      src/cli/tests/contract-runtime.test.ts,
+      src/cli/tests/contract-scan.test.ts,
+      src/cli/tests/contract-schema.test.ts,
+      src/cli/tests/contract-verify.test.ts, src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/deps-slug.test.ts,
+      src/cli/tests/doctor-adapter-preflight.test.ts,
+      src/cli/tests/doctor-substrate-drift.test.ts,
+      src/cli/tests/doctor.test.ts, src/cli/tests/draft-token.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/gate-adapter-registry.test.ts,
+      src/cli/tests/gate-git-env.test.ts, src/cli/tests/git-hooks.test.ts,
+      src/cli/tests/git-proof.test.ts, src/cli/tests/gxt-error-codes.test.ts,
+      src/cli/tests/hook.test.ts, src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/init-profile.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/integration-onboarding-gates.test.ts,
+      src/cli/tests/interrogate-gaps.test.ts,
+      src/cli/tests/interrogate-halt.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/kernel-exports.test.ts, src/cli/tests/kpi-gate.test.ts,
+      src/cli/tests/kpi-scan.test.ts, src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/legislate.test.ts, src/cli/tests/mcp-doctor.test.ts,
+      src/cli/tests/mcp-legislation.test.ts,
+      src/cli/tests/mcp-orchestration.test.ts,
+      src/cli/tests/mcp-runtime.test.ts,
+      src/cli/tests/mcp-tools-register.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/metrics-classification.test.ts,
+      src/cli/tests/metrics.test.ts, src/cli/tests/mission-changed.test.ts,
+      src/cli/tests/mission-schema-parity.test.ts,
+      src/cli/tests/missions/adapter-command-guard.test.ts,
+      src/cli/tests/missions/mission-legislative-stub.test.ts,
+      src/cli/tests/missions/mission-parser.test.ts,
+      src/cli/tests/missions/mission-schema.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/performance-judge.test.ts, src/cli/tests/perimeter.test.ts,
+      src/cli/tests/planner-signature.test.ts,
+      src/cli/tests/policy-digest-doctor.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/receipt-attribution.test.ts,
+      src/cli/tests/report-overview-projector.test.ts,
+      src/cli/tests/runtime.test.ts, src/cli/tests/skill-key.test.ts,
+      src/cli/tests/start-snapshot.test.ts, src/cli/tests/start.test.ts,
+      src/cli/tests/status.test.ts, src/cli/tests/surgeons-registry.test.ts,
+      src/cli/tests/target-architecture.test.ts,
+      src/cli/tests/template-parity.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/test-org-fixtures.ts, src/cli/tests/test-tmpdir-setup.ts,
+      src/cli/tests/trace-evidence.test.ts,
+      src/cli/tests/trusted-automation.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-engine.test.ts, src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-failure-normalize.test.ts,
+      src/cli/tests/verify-failure-presentation.test.ts,
+      src/cli/tests/verify-fix.test.ts, src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-hints.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/verify-org-policy-phase.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts,
+      src/cli/tests/verify-pre-push.test.ts, src/cli/tests/verify-run.test.ts,
+      src/cli/tests/verify-standalone-cli.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts,
+      src/cli/tests/verify-standalone.test.ts,
+      src/cli/tests/verify-surgeon.test.ts, src/cli/tests/verify.test.ts. The 24
+      pure re-export modules under src/cli/lib (canonical-json, gxt-error-codes,
+      import-scanner, path-glob, trace-status, types, contract/contract-types,
+      interrogate/findings, gate-adapters/gate-adapter-id, git/git,
+      git/git-staged, working-digests, ajv-loader, attestation-export,
+      receipt-signing, org-export-config, ledger/{entry,chain,export},
+      policy/{types,bundle,fetch}, deps/{slug,fetch}) are deleted and 349 import
+      sites in 229 src/cli files name #core/*, #git/* or #plane/* directly;
+      scripts/check-import-layers.mjs and check-lib-cycles.mjs load the core
+      build of the import scanner; one test reads the plane sources; three
+      pre-existing no-useless-assignment lint findings in rewritten files are
+      fixed; the wrapper modules with identity, config, version or logging
+      (attestation-receipt, ledger-append, policy-resolve, receipt-attribution,
+      deps-resolve, constants, errors, cli-io) stay. No command, registry or
+      output change. ARCH_BASELINE.json lowered with --ratchet.
+      .gitagent/foreman/, .gitagent/planner/RULES.md, .gitagent/registry/ and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are two repo-only scripts, law, the record and docs;
+      the rest are import-specifier edits in the command, lib and delivery
+      layers and the deleted lib facades."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Verify output formats are unchanged; the hook prints
+      the same human lines the shell hook printed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0295.remove-facades.yaml,
+      .gitagent/runs/MSN-0295.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/ARCHITECTURE.md, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      scripts/check-import-layers.mjs, scripts/check-lib-cycles.mjs,
+      src/cli/commands/contract.ts, src/cli/commands/deps.ts,
+      src/cli/commands/doctor.ts, src/cli/commands/events-push.ts,
+      src/cli/commands/hook.ts, src/cli/commands/interrogate.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/perimeter.ts,
+      src/cli/commands/policy.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/commands/triage.ts, src/cli/commands/verify.ts, src/cli/kernel.ts,
+      src/cli/lib/ajv-loader.ts, src/cli/lib/ast-discovery.ts,
+      src/cli/lib/attest-mission.ts, src/cli/lib/attestation-export.ts,
+      src/cli/lib/attestation-receipt.ts, src/cli/lib/break-glass.ts,
+      src/cli/lib/canonical-json.ts, src/cli/lib/ci-checks.ts,
+      src/cli/lib/command-boundary.ts, src/cli/lib/config-namespace.ts,
+      src/cli/lib/context-feed-remediation.ts, src/cli/lib/context-request.ts,
+      src/cli/lib/contract/approve-prompt.ts,
+      src/cli/lib/contract/contract-hash.ts,
+      src/cli/lib/contract/contract-scan.ts,
+      src/cli/lib/contract/contract-types.ts,
+      src/cli/lib/contract/effective-scope.ts, src/cli/lib/contract/format.ts,
+      src/cli/lib/contract/propose-gate.ts,
+      src/cli/lib/contract/propose-imports.ts, src/cli/lib/contract/propose.ts,
+      src/cli/lib/deps/deps-fetch.ts, src/cli/lib/deps/deps-resolve.ts,
+      src/cli/lib/deps/deps-slug.ts, src/cli/lib/dirty-missions.ts,
+      src/cli/lib/doctor/doctor-adapter-preflight.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/domains/domain-code.ts,
+      src/cli/lib/draft-token.ts, src/cli/lib/errors.ts,
+      src/cli/lib/gate-adapters/gate-adapter-id.ts,
+      src/cli/lib/gate-adapters/gate-adapter-types.ts,
+      src/cli/lib/gate-adapters/parsing-adapter.ts,
+      src/cli/lib/gate-adapters/registry.ts,
+      src/cli/lib/gate-adapters/spawn-stream-core.ts, src/cli/lib/gate.ts,
+      src/cli/lib/git/git-hooks.ts, src/cli/lib/git/git-metrics.ts,
+      src/cli/lib/git/git-proof.ts, src/cli/lib/git/git-staged.ts,
+      src/cli/lib/git/git.ts, src/cli/lib/gxt-error-codes.ts,
+      src/cli/lib/import-scanner.ts, src/cli/lib/interrogate/answers.ts,
+      src/cli/lib/interrogate/findings.ts, src/cli/lib/interrogate/gaps.ts,
+      src/cli/lib/interrogate/gate-integrity.ts, src/cli/lib/interrogate/run.ts,
+      src/cli/lib/kernel-evaluate-scope.ts,
+      src/cli/lib/kpi-advisory-findings.ts, src/cli/lib/kpi-engine.ts,
+      src/cli/lib/kpi-scan.ts, src/cli/lib/ledger/ledger-append.ts,
+      src/cli/lib/ledger/ledger-chain.ts, src/cli/lib/ledger/ledger-entry.ts,
+      src/cli/lib/ledger/ledger-export.ts,
+      src/cli/lib/legislate/legislate-forbidden-zone.ts,
+      src/cli/lib/legislate/legislate-from-intent.ts,
+      src/cli/lib/legislate/legislate-gate-options.ts,
+      src/cli/lib/legislate/legislate.ts, src/cli/lib/mcp/mcp-doctor.ts,
+      src/cli/lib/mcp/mcp-draft-legislation.ts,
+      src/cli/lib/mcp/mcp-governance-shared.ts,
+      src/cli/lib/mcp/mcp-interrogate.ts, src/cli/lib/mcp/mcp-org.ts,
+      src/cli/lib/mcp/mcp-propose-contract.ts,
+      src/cli/lib/mcp/mcp-tools-register.ts, src/cli/lib/mcp/mcp-upgrade.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/mission-changed.ts,
+      src/cli/lib/missions/adapter-command-guard.ts,
+      src/cli/lib/missions/formatter.ts, src/cli/lib/missions/parser.ts,
+      src/cli/lib/missions/validator.ts, src/cli/lib/msn-allocate.ts,
+      src/cli/lib/org-export-config.ts, src/cli/lib/out-of-scope-hint.ts,
+      src/cli/lib/path-glob.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/planner-identity.ts, src/cli/lib/planner-signature.ts,
+      src/cli/lib/policy-digest-doctor.ts, src/cli/lib/policy/policy-bundle.ts,
+      src/cli/lib/policy/policy-fetch.ts, src/cli/lib/policy/policy-types.ts,
+      src/cli/lib/receipt-signing.ts, src/cli/lib/runtime-env.ts,
+      src/cli/lib/runtime-exec.ts, src/cli/lib/skill-key.ts,
+      src/cli/lib/skill-sync.ts, src/cli/lib/staged-tmvc-guard.ts,
+      src/cli/lib/start-orchestration.ts, src/cli/lib/start-snapshot.ts,
+      src/cli/lib/status-report.ts, src/cli/lib/surgeons/banned-import.ts,
+      src/cli/lib/surgeons/import-layer.ts, src/cli/lib/surgeons/registry.ts,
+      src/cli/lib/tmvc-path.ts, src/cli/lib/trace-evidence.ts,
+      src/cli/lib/trace-quote.ts, src/cli/lib/trace-status.ts,
+      src/cli/lib/trace.ts, src/cli/lib/triage-logic.ts,
+      src/cli/lib/trusted-automation.ts, src/cli/lib/types.ts,
+      src/cli/lib/verdict-expected.ts, src/cli/lib/verify-standalone/checks.ts,
+      src/cli/lib/verify-standalone/contract.ts,
+      src/cli/lib/verify-standalone/diff.ts,
+      src/cli/lib/verify-standalone/imports.ts,
+      src/cli/lib/verify-standalone/run.ts,
+      src/cli/lib/verify/verify-contract.ts,
+      src/cli/lib/verify/verify-engine.ts,
+      src/cli/lib/verify/verify-failure-normalize.ts,
+      src/cli/lib/verify/verify-failure.ts,
+      src/cli/lib/verify/verify-finding-fingerprint.ts,
+      src/cli/lib/verify/verify-hints.ts,
+      src/cli/lib/verify/verify-interrogation.ts,
+      src/cli/lib/verify/verify-org-phases.ts,
+      src/cli/lib/verify/verify-payload.ts,
+      src/cli/lib/verify/verify-phase-steps.ts,
+      src/cli/lib/verify/verify-presenters.ts,
+      src/cli/lib/verify/verify-remediation-pipeline.ts,
+      src/cli/lib/verify/verify-run-record.ts,
+      src/cli/lib/verify/verify-run-ring.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/lib/working-digests.ts, src/cli/lib/workspace.ts,
+      src/cli/program-core.ts, src/cli/program-workflow.ts,
+      src/cli/tests/arch-command.test.ts, src/cli/tests/arch-rubric.test.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/asset-catalog-generator.test.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/audience-cli.test.ts, src/cli/tests/audit-rigor.test.ts,
+      src/cli/tests/cage-check.test.ts, src/cli/tests/cage-scope.test.ts,
+      src/cli/tests/cage-suggest.test.ts,
+      src/cli/tests/cage-symlink-root.test.ts,
+      src/cli/tests/cage-watch-decisions.test.ts,
+      src/cli/tests/cage-watch.test.ts, src/cli/tests/cage.test.ts,
+      src/cli/tests/check-import-layers.test.ts,
+      src/cli/tests/check-lib-cycles.test.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/command-io-contract.test.ts,
+      src/cli/tests/context-request.test.ts,
+      src/cli/tests/contract-hash.test.ts,
+      src/cli/tests/contract-legislate.test.ts,
+      src/cli/tests/contract-propose.test.ts,
+      src/cli/tests/contract-runtime.test.ts,
+      src/cli/tests/contract-scan.test.ts,
+      src/cli/tests/contract-schema.test.ts,
+      src/cli/tests/contract-verify.test.ts, src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/deps-slug.test.ts,
+      src/cli/tests/doctor-adapter-preflight.test.ts,
+      src/cli/tests/doctor-substrate-drift.test.ts,
+      src/cli/tests/doctor.test.ts, src/cli/tests/draft-token.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/gate-adapter-registry.test.ts,
+      src/cli/tests/gate-git-env.test.ts, src/cli/tests/git-hooks.test.ts,
+      src/cli/tests/git-proof.test.ts, src/cli/tests/gxt-error-codes.test.ts,
+      src/cli/tests/hook.test.ts, src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/init-profile.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/integration-onboarding-gates.test.ts,
+      src/cli/tests/interrogate-gaps.test.ts,
+      src/cli/tests/interrogate-halt.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/kernel-exports.test.ts, src/cli/tests/kpi-gate.test.ts,
+      src/cli/tests/kpi-scan.test.ts, src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/legislate.test.ts, src/cli/tests/mcp-doctor.test.ts,
+      src/cli/tests/mcp-legislation.test.ts,
+      src/cli/tests/mcp-orchestration.test.ts,
+      src/cli/tests/mcp-runtime.test.ts,
+      src/cli/tests/mcp-tools-register.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/metrics-classification.test.ts,
+      src/cli/tests/metrics.test.ts, src/cli/tests/mission-changed.test.ts,
+      src/cli/tests/mission-schema-parity.test.ts,
+      src/cli/tests/missions/adapter-command-guard.test.ts,
+      src/cli/tests/missions/mission-legislative-stub.test.ts,
+      src/cli/tests/missions/mission-parser.test.ts,
+      src/cli/tests/missions/mission-schema.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/performance-judge.test.ts, src/cli/tests/perimeter.test.ts,
+      src/cli/tests/planner-signature.test.ts,
+      src/cli/tests/policy-digest-doctor.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/receipt-attribution.test.ts,
+      src/cli/tests/report-overview-projector.test.ts,
+      src/cli/tests/runtime.test.ts, src/cli/tests/skill-key.test.ts,
+      src/cli/tests/start-snapshot.test.ts, src/cli/tests/start.test.ts,
+      src/cli/tests/status.test.ts, src/cli/tests/surgeons-registry.test.ts,
+      src/cli/tests/target-architecture.test.ts,
+      src/cli/tests/template-parity.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/test-org-fixtures.ts, src/cli/tests/test-tmpdir-setup.ts,
+      src/cli/tests/trace-evidence.test.ts,
+      src/cli/tests/trusted-automation.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-engine.test.ts, src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-failure-normalize.test.ts,
+      src/cli/tests/verify-failure-presentation.test.ts,
+      src/cli/tests/verify-fix.test.ts, src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-hints.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/verify-org-policy-phase.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts,
+      src/cli/tests/verify-pre-push.test.ts, src/cli/tests/verify-run.test.ts,
+      src/cli/tests/verify-standalone-cli.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts,
+      src/cli/tests/verify-standalone.test.ts,
+      src/cli/tests/verify-surgeon.test.ts, src/cli/tests/verify.test.ts. The 24
+      pure re-export modules under src/cli/lib (canonical-json, gxt-error-codes,
+      import-scanner, path-glob, trace-status, types, contract/contract-types,
+      interrogate/findings, gate-adapters/gate-adapter-id, git/git,
+      git/git-staged, working-digests, ajv-loader, attestation-export,
+      receipt-signing, org-export-config, ledger/{entry,chain,export},
+      policy/{types,bundle,fetch}, deps/{slug,fetch}) are deleted and 349 import
+      sites in 229 src/cli files name #core/*, #git/* or #plane/* directly;
+      scripts/check-import-layers.mjs and check-lib-cycles.mjs load the core
+      build of the import scanner; one test reads the plane sources; three
+      pre-existing no-useless-assignment lint findings in rewritten files are
+      fixed; the wrapper modules with identity, config, version or logging
+      (attestation-receipt, ledger-append, policy-resolve, receipt-attribution,
+      deps-resolve, constants, errors, cli-io) stay. No command, registry or
+      output change. ARCH_BASELINE.json lowered with --ratchet.
+      .gitagent/foreman/, .gitagent/planner/RULES.md, .gitagent/registry/ and
+      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
+      until everything is done): ADR-0052 A1 said the facades go once the
+      importers migrate; this mission migrates them. Behaviour and output are
+      unchanged. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0295.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+interrogation_sha256: f0ed620fd30db2138a58e73cc97904db1c99db8645c2e6dc1763a7277e4ab541
+declared_paths:
+  - .gitagent/missions/MSN-0295.remove-facades.yaml
+  - .gitagent/runs/MSN-0295.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - scripts/check-import-layers.mjs
+  - scripts/check-lib-cycles.mjs
+  - src/cli/commands/contract.ts
+  - src/cli/commands/deps.ts
+  - src/cli/commands/doctor.ts
+  - src/cli/commands/events-push.ts
+  - src/cli/commands/hook.ts
+  - src/cli/commands/interrogate.ts
+  - src/cli/commands/ledger.ts
+  - src/cli/commands/perimeter.ts
+  - src/cli/commands/policy.ts
+  - src/cli/commands/tmvc-guard.ts
+  - src/cli/commands/triage.ts
+  - src/cli/commands/verify.ts
+  - src/cli/kernel.ts
+  - src/cli/lib/ajv-loader.ts
+  - src/cli/lib/ast-discovery.ts
+  - src/cli/lib/attest-mission.ts
+  - src/cli/lib/attestation-export.ts
+  - src/cli/lib/attestation-receipt.ts
+  - src/cli/lib/break-glass.ts
+  - src/cli/lib/canonical-json.ts
+  - src/cli/lib/ci-checks.ts
+  - src/cli/lib/command-boundary.ts
+  - src/cli/lib/config-namespace.ts
+  - src/cli/lib/context-feed-remediation.ts
+  - src/cli/lib/context-request.ts
+  - src/cli/lib/contract/approve-prompt.ts
+  - src/cli/lib/contract/contract-hash.ts
+  - src/cli/lib/contract/contract-scan.ts
+  - src/cli/lib/contract/contract-types.ts
+  - src/cli/lib/contract/effective-scope.ts
+  - src/cli/lib/contract/format.ts
+  - src/cli/lib/contract/propose-gate.ts
+  - src/cli/lib/contract/propose-imports.ts
+  - src/cli/lib/contract/propose.ts
+  - src/cli/lib/deps/deps-fetch.ts
+  - src/cli/lib/deps/deps-resolve.ts
+  - src/cli/lib/deps/deps-slug.ts
+  - src/cli/lib/dirty-missions.ts
+  - src/cli/lib/doctor/doctor-adapter-preflight.ts
+  - src/cli/lib/doctor/doctor-core.ts
+  - src/cli/lib/domains/domain-code.ts
+  - src/cli/lib/draft-token.ts
+  - src/cli/lib/errors.ts
+  - src/cli/lib/gate-adapters/gate-adapter-id.ts
+  - src/cli/lib/gate-adapters/gate-adapter-types.ts
+  - src/cli/lib/gate-adapters/parsing-adapter.ts
+  - src/cli/lib/gate-adapters/registry.ts
+  - src/cli/lib/gate-adapters/spawn-stream-core.ts
+  - src/cli/lib/gate.ts
+  - src/cli/lib/git/git-hooks.ts
+  - src/cli/lib/git/git-metrics.ts
+  - src/cli/lib/git/git-proof.ts
+  - src/cli/lib/git/git-staged.ts
+  - src/cli/lib/git/git.ts
+  - src/cli/lib/gxt-error-codes.ts
+  - src/cli/lib/import-scanner.ts
+  - src/cli/lib/interrogate/answers.ts
+  - src/cli/lib/interrogate/findings.ts
+  - src/cli/lib/interrogate/gaps.ts
+  - src/cli/lib/interrogate/gate-integrity.ts
+  - src/cli/lib/interrogate/run.ts
+  - src/cli/lib/kernel-evaluate-scope.ts
+  - src/cli/lib/kpi-advisory-findings.ts
+  - src/cli/lib/kpi-engine.ts
+  - src/cli/lib/kpi-scan.ts
+  - src/cli/lib/ledger/ledger-append.ts
+  - src/cli/lib/ledger/ledger-chain.ts
+  - src/cli/lib/ledger/ledger-entry.ts
+  - src/cli/lib/ledger/ledger-export.ts
+  - src/cli/lib/legislate/legislate-forbidden-zone.ts
+  - src/cli/lib/legislate/legislate-from-intent.ts
+  - src/cli/lib/legislate/legislate-gate-options.ts
+  - src/cli/lib/legislate/legislate.ts
+  - src/cli/lib/mcp/mcp-doctor.ts
+  - src/cli/lib/mcp/mcp-draft-legislation.ts
+  - src/cli/lib/mcp/mcp-governance-shared.ts
+  - src/cli/lib/mcp/mcp-interrogate.ts
+  - src/cli/lib/mcp/mcp-org.ts
+  - src/cli/lib/mcp/mcp-propose-contract.ts
+  - src/cli/lib/mcp/mcp-tools-register.ts
+  - src/cli/lib/mcp/mcp-upgrade.ts
+  - src/cli/lib/mcp/mcp-write-guard.ts
+  - src/cli/lib/mission-changed.ts
+  - src/cli/lib/missions/adapter-command-guard.ts
+  - src/cli/lib/missions/formatter.ts
+  - src/cli/lib/missions/parser.ts
+  - src/cli/lib/missions/validator.ts
+  - src/cli/lib/msn-allocate.ts
+  - src/cli/lib/org-export-config.ts
+  - src/cli/lib/out-of-scope-hint.ts
+  - src/cli/lib/path-glob.ts
+  - src/cli/lib/perimeter.ts
+  - src/cli/lib/planner-identity.ts
+  - src/cli/lib/planner-signature.ts
+  - src/cli/lib/policy-digest-doctor.ts
+  - src/cli/lib/policy/policy-bundle.ts
+  - src/cli/lib/policy/policy-fetch.ts
+  - src/cli/lib/policy/policy-types.ts
+  - src/cli/lib/receipt-signing.ts
+  - src/cli/lib/runtime-env.ts
+  - src/cli/lib/runtime-exec.ts
+  - src/cli/lib/skill-key.ts
+  - src/cli/lib/skill-sync.ts
+  - src/cli/lib/staged-tmvc-guard.ts
+  - src/cli/lib/start-orchestration.ts
+  - src/cli/lib/start-snapshot.ts
+  - src/cli/lib/status-report.ts
+  - src/cli/lib/surgeons/banned-import.ts
+  - src/cli/lib/surgeons/import-layer.ts
+  - src/cli/lib/surgeons/registry.ts
+  - src/cli/lib/tmvc-path.ts
+  - src/cli/lib/trace-evidence.ts
+  - src/cli/lib/trace-quote.ts
+  - src/cli/lib/trace-status.ts
+  - src/cli/lib/trace.ts
+  - src/cli/lib/triage-logic.ts
+  - src/cli/lib/trusted-automation.ts
+  - src/cli/lib/types.ts
+  - src/cli/lib/verdict-expected.ts
+  - src/cli/lib/verify-standalone/checks.ts
+  - src/cli/lib/verify-standalone/contract.ts
+  - src/cli/lib/verify-standalone/diff.ts
+  - src/cli/lib/verify-standalone/imports.ts
+  - src/cli/lib/verify-standalone/run.ts
+  - src/cli/lib/verify/verify-contract.ts
+  - src/cli/lib/verify/verify-engine.ts
+  - src/cli/lib/verify/verify-failure-normalize.ts
+  - src/cli/lib/verify/verify-failure.ts
+  - src/cli/lib/verify/verify-finding-fingerprint.ts
+  - src/cli/lib/verify/verify-hints.ts
+  - src/cli/lib/verify/verify-interrogation.ts
+  - src/cli/lib/verify/verify-org-phases.ts
+  - src/cli/lib/verify/verify-payload.ts
+  - src/cli/lib/verify/verify-phase-steps.ts
+  - src/cli/lib/verify/verify-presenters.ts
+  - src/cli/lib/verify/verify-remediation-pipeline.ts
+  - src/cli/lib/verify/verify-run-record.ts
+  - src/cli/lib/verify/verify-run-ring.ts
+  - src/cli/lib/verify/verify-run.ts
+  - src/cli/lib/working-digests.ts
+  - src/cli/lib/workspace.ts
+  - src/cli/program-core.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/arch-command.test.ts
+  - src/cli/tests/arch-rubric.test.ts
+  - src/cli/tests/architecture-pointer.test.ts
+  - src/cli/tests/asset-catalog-generator.test.ts
+  - src/cli/tests/attestation-receipt.test.ts
+  - src/cli/tests/audience-cli.test.ts
+  - src/cli/tests/audit-rigor.test.ts
+  - src/cli/tests/cage-check.test.ts
+  - src/cli/tests/cage-scope.test.ts
+  - src/cli/tests/cage-suggest.test.ts
+  - src/cli/tests/cage-symlink-root.test.ts
+  - src/cli/tests/cage-watch-decisions.test.ts
+  - src/cli/tests/cage-watch.test.ts
+  - src/cli/tests/cage.test.ts
+  - src/cli/tests/check-import-layers.test.ts
+  - src/cli/tests/check-lib-cycles.test.ts
+  - src/cli/tests/ci-msn-range.test.ts
+  - src/cli/tests/ci-verify-missions.test.ts
+  - src/cli/tests/command-io-contract.test.ts
+  - src/cli/tests/context-request.test.ts
+  - src/cli/tests/contract-hash.test.ts
+  - src/cli/tests/contract-legislate.test.ts
+  - src/cli/tests/contract-propose.test.ts
+  - src/cli/tests/contract-runtime.test.ts
+  - src/cli/tests/contract-scan.test.ts
+  - src/cli/tests/contract-schema.test.ts
+  - src/cli/tests/contract-verify.test.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/deps-slug.test.ts
+  - src/cli/tests/doctor-adapter-preflight.test.ts
+  - src/cli/tests/doctor-substrate-drift.test.ts
+  - src/cli/tests/doctor.test.ts
+  - src/cli/tests/draft-token.test.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/gate-adapter-registry.test.ts
+  - src/cli/tests/gate-git-env.test.ts
+  - src/cli/tests/git-hooks.test.ts
+  - src/cli/tests/git-proof.test.ts
+  - src/cli/tests/gxt-error-codes.test.ts
+  - src/cli/tests/hook.test.ts
+  - src/cli/tests/import-scanner.test.ts
+  - src/cli/tests/init-profile.test.ts
+  - src/cli/tests/init.test.ts
+  - src/cli/tests/integration-onboarding-gates.test.ts
+  - src/cli/tests/interrogate-gaps.test.ts
+  - src/cli/tests/interrogate-halt.test.ts
+  - src/cli/tests/interrogate-verify-roundtrip.test.ts
+  - src/cli/tests/kernel-exports.test.ts
+  - src/cli/tests/kpi-gate.test.ts
+  - src/cli/tests/kpi-scan.test.ts
+  - src/cli/tests/ledger-verify.test.ts
+  - src/cli/tests/legislate.test.ts
+  - src/cli/tests/mcp-doctor.test.ts
+  - src/cli/tests/mcp-legislation.test.ts
+  - src/cli/tests/mcp-orchestration.test.ts
+  - src/cli/tests/mcp-runtime.test.ts
+  - src/cli/tests/mcp-tools-register.test.ts
+  - src/cli/tests/mcp-write-guard.test.ts
+  - src/cli/tests/metrics-classification.test.ts
+  - src/cli/tests/metrics.test.ts
+  - src/cli/tests/mission-changed.test.ts
+  - src/cli/tests/mission-schema-parity.test.ts
+  - src/cli/tests/missions/adapter-command-guard.test.ts
+  - src/cli/tests/missions/mission-legislative-stub.test.ts
+  - src/cli/tests/missions/mission-parser.test.ts
+  - src/cli/tests/missions/mission-schema.test.ts
+  - src/cli/tests/org-doctor-offline.test.ts
+  - src/cli/tests/performance-judge.test.ts
+  - src/cli/tests/perimeter.test.ts
+  - src/cli/tests/planner-signature.test.ts
+  - src/cli/tests/policy-digest-doctor.test.ts
+  - src/cli/tests/policy-resolve.test.ts
+  - src/cli/tests/quarantine-import.test.ts
+  - src/cli/tests/receipt-attribution.test.ts
+  - src/cli/tests/report-overview-projector.test.ts
+  - src/cli/tests/runtime.test.ts
+  - src/cli/tests/skill-key.test.ts
+  - src/cli/tests/start-snapshot.test.ts
+  - src/cli/tests/start.test.ts
+  - src/cli/tests/status.test.ts
+  - src/cli/tests/surgeons-registry.test.ts
+  - src/cli/tests/target-architecture.test.ts
+  - src/cli/tests/template-parity.test.ts
+  - src/cli/tests/test-fixtures.ts
+  - src/cli/tests/test-org-fixtures.ts
+  - src/cli/tests/test-tmpdir-setup.ts
+  - src/cli/tests/trace-evidence.test.ts
+  - src/cli/tests/trusted-automation.test.ts
+  - src/cli/tests/upgrade-plan-payload.test.ts
+  - src/cli/tests/upgrade.test.ts
+  - src/cli/tests/verify-break-glass.test.ts
+  - src/cli/tests/verify-engine.test.ts
+  - src/cli/tests/verify-export.test.ts
+  - src/cli/tests/verify-failure-normalize.test.ts
+  - src/cli/tests/verify-failure-presentation.test.ts
+  - src/cli/tests/verify-fix.test.ts
+  - src/cli/tests/verify-format-cli.test.ts
+  - src/cli/tests/verify-hints.test.ts
+  - src/cli/tests/verify-interrogation-phase.test.ts
+  - src/cli/tests/verify-json.test.ts
+  - src/cli/tests/verify-org-policy-phase.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts
+  - src/cli/tests/verify-pre-push.test.ts
+  - src/cli/tests/verify-run.test.ts
+  - src/cli/tests/verify-standalone-cli.test.ts
+  - src/cli/tests/verify-standalone-imports.test.ts
+  - src/cli/tests/verify-standalone-sign.test.ts
+  - src/cli/tests/verify-standalone.test.ts
+  - src/cli/tests/verify-surgeon.test.ts
+  - src/cli/tests/verify.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0295.remove-facades.yaml
+    - .gitagent/runs/MSN-0295.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - scripts/check-import-layers.mjs
+    - scripts/check-lib-cycles.mjs
+    - src/cli/commands/contract.ts
+    - src/cli/commands/deps.ts
+    - src/cli/commands/doctor.ts
+    - src/cli/commands/events-push.ts
+    - src/cli/commands/hook.ts
+    - src/cli/commands/interrogate.ts
+    - src/cli/commands/ledger.ts
+    - src/cli/commands/perimeter.ts
+    - src/cli/commands/policy.ts
+    - src/cli/commands/tmvc-guard.ts
+    - src/cli/commands/triage.ts
+    - src/cli/commands/verify.ts
+    - src/cli/kernel.ts
+    - src/cli/lib/ajv-loader.ts
+    - src/cli/lib/ast-discovery.ts
+    - src/cli/lib/attest-mission.ts
+    - src/cli/lib/attestation-export.ts
+    - src/cli/lib/attestation-receipt.ts
+    - src/cli/lib/break-glass.ts
+    - src/cli/lib/canonical-json.ts
+    - src/cli/lib/ci-checks.ts
+    - src/cli/lib/command-boundary.ts
+    - src/cli/lib/config-namespace.ts
+    - src/cli/lib/context-feed-remediation.ts
+    - src/cli/lib/context-request.ts
+    - src/cli/lib/contract/approve-prompt.ts
+    - src/cli/lib/contract/contract-hash.ts
+    - src/cli/lib/contract/contract-scan.ts
+    - src/cli/lib/contract/contract-types.ts
+    - src/cli/lib/contract/effective-scope.ts
+    - src/cli/lib/contract/format.ts
+    - src/cli/lib/contract/propose-gate.ts
+    - src/cli/lib/contract/propose-imports.ts
+    - src/cli/lib/contract/propose.ts
+    - src/cli/lib/deps/deps-fetch.ts
+    - src/cli/lib/deps/deps-resolve.ts
+    - src/cli/lib/deps/deps-slug.ts
+    - src/cli/lib/dirty-missions.ts
+    - src/cli/lib/doctor/doctor-adapter-preflight.ts
+    - src/cli/lib/doctor/doctor-core.ts
+    - src/cli/lib/domains/domain-code.ts
+    - src/cli/lib/draft-token.ts
+    - src/cli/lib/errors.ts
+    - src/cli/lib/gate-adapters/gate-adapter-id.ts
+    - src/cli/lib/gate-adapters/gate-adapter-types.ts
+    - src/cli/lib/gate-adapters/parsing-adapter.ts
+    - src/cli/lib/gate-adapters/registry.ts
+    - src/cli/lib/gate-adapters/spawn-stream-core.ts
+    - src/cli/lib/gate.ts
+    - src/cli/lib/git/git-hooks.ts
+    - src/cli/lib/git/git-metrics.ts
+    - src/cli/lib/git/git-proof.ts
+    - src/cli/lib/git/git-staged.ts
+    - src/cli/lib/git/git.ts
+    - src/cli/lib/gxt-error-codes.ts
+    - src/cli/lib/import-scanner.ts
+    - src/cli/lib/interrogate/answers.ts
+    - src/cli/lib/interrogate/findings.ts
+    - src/cli/lib/interrogate/gaps.ts
+    - src/cli/lib/interrogate/gate-integrity.ts
+    - src/cli/lib/interrogate/run.ts
+    - src/cli/lib/kernel-evaluate-scope.ts
+    - src/cli/lib/kpi-advisory-findings.ts
+    - src/cli/lib/kpi-engine.ts
+    - src/cli/lib/kpi-scan.ts
+    - src/cli/lib/ledger/ledger-append.ts
+    - src/cli/lib/ledger/ledger-chain.ts
+    - src/cli/lib/ledger/ledger-entry.ts
+    - src/cli/lib/ledger/ledger-export.ts
+    - src/cli/lib/legislate/legislate-forbidden-zone.ts
+    - src/cli/lib/legislate/legislate-from-intent.ts
+    - src/cli/lib/legislate/legislate-gate-options.ts
+    - src/cli/lib/legislate/legislate.ts
+    - src/cli/lib/mcp/mcp-doctor.ts
+    - src/cli/lib/mcp/mcp-draft-legislation.ts
+    - src/cli/lib/mcp/mcp-governance-shared.ts
+    - src/cli/lib/mcp/mcp-interrogate.ts
+    - src/cli/lib/mcp/mcp-org.ts
+    - src/cli/lib/mcp/mcp-propose-contract.ts
+    - src/cli/lib/mcp/mcp-tools-register.ts
+    - src/cli/lib/mcp/mcp-upgrade.ts
+    - src/cli/lib/mcp/mcp-write-guard.ts
+    - src/cli/lib/mission-changed.ts
+    - src/cli/lib/missions/adapter-command-guard.ts
+    - src/cli/lib/missions/formatter.ts
+    - src/cli/lib/missions/parser.ts
+    - src/cli/lib/missions/validator.ts
+    - src/cli/lib/msn-allocate.ts
+    - src/cli/lib/org-export-config.ts
+    - src/cli/lib/out-of-scope-hint.ts
+    - src/cli/lib/path-glob.ts
+    - src/cli/lib/perimeter.ts
+    - src/cli/lib/planner-identity.ts
+    - src/cli/lib/planner-signature.ts
+    - src/cli/lib/policy-digest-doctor.ts
+    - src/cli/lib/policy/policy-bundle.ts
+    - src/cli/lib/policy/policy-fetch.ts
+    - src/cli/lib/policy/policy-types.ts
+    - src/cli/lib/receipt-signing.ts
+    - src/cli/lib/runtime-env.ts
+    - src/cli/lib/runtime-exec.ts
+    - src/cli/lib/skill-key.ts
+    - src/cli/lib/skill-sync.ts
+    - src/cli/lib/staged-tmvc-guard.ts
+    - src/cli/lib/start-orchestration.ts
+    - src/cli/lib/start-snapshot.ts
+    - src/cli/lib/status-report.ts
+    - src/cli/lib/surgeons/banned-import.ts
+    - src/cli/lib/surgeons/import-layer.ts
+    - src/cli/lib/surgeons/registry.ts
+    - src/cli/lib/tmvc-path.ts
+    - src/cli/lib/trace-evidence.ts
+    - src/cli/lib/trace-quote.ts
+    - src/cli/lib/trace-status.ts
+    - src/cli/lib/trace.ts
+    - src/cli/lib/triage-logic.ts
+    - src/cli/lib/trusted-automation.ts
+    - src/cli/lib/types.ts
+    - src/cli/lib/verdict-expected.ts
+    - src/cli/lib/verify-standalone/checks.ts
+    - src/cli/lib/verify-standalone/contract.ts
+    - src/cli/lib/verify-standalone/diff.ts
+    - src/cli/lib/verify-standalone/imports.ts
+    - src/cli/lib/verify-standalone/run.ts
+    - src/cli/lib/verify/verify-contract.ts
+    - src/cli/lib/verify/verify-engine.ts
+    - src/cli/lib/verify/verify-failure-normalize.ts
+    - src/cli/lib/verify/verify-failure.ts
+    - src/cli/lib/verify/verify-finding-fingerprint.ts
+    - src/cli/lib/verify/verify-hints.ts
+    - src/cli/lib/verify/verify-interrogation.ts
+    - src/cli/lib/verify/verify-org-phases.ts
+    - src/cli/lib/verify/verify-payload.ts
+    - src/cli/lib/verify/verify-phase-steps.ts
+    - src/cli/lib/verify/verify-presenters.ts
+    - src/cli/lib/verify/verify-remediation-pipeline.ts
+    - src/cli/lib/verify/verify-run-record.ts
+    - src/cli/lib/verify/verify-run-ring.ts
+    - src/cli/lib/verify/verify-run.ts
+    - src/cli/lib/working-digests.ts
+    - src/cli/lib/workspace.ts
+    - src/cli/program-core.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/arch-command.test.ts
+    - src/cli/tests/arch-rubric.test.ts
+    - src/cli/tests/architecture-pointer.test.ts
+    - src/cli/tests/asset-catalog-generator.test.ts
+    - src/cli/tests/attestation-receipt.test.ts
+    - src/cli/tests/audience-cli.test.ts
+    - src/cli/tests/audit-rigor.test.ts
+    - src/cli/tests/cage-check.test.ts
+    - src/cli/tests/cage-scope.test.ts
+    - src/cli/tests/cage-suggest.test.ts
+    - src/cli/tests/cage-symlink-root.test.ts
+    - src/cli/tests/cage-watch-decisions.test.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+    - src/cli/tests/check-import-layers.test.ts
+    - src/cli/tests/check-lib-cycles.test.ts
+    - src/cli/tests/ci-msn-range.test.ts
+    - src/cli/tests/ci-verify-missions.test.ts
+    - src/cli/tests/command-io-contract.test.ts
+    - src/cli/tests/context-request.test.ts
+    - src/cli/tests/contract-hash.test.ts
+    - src/cli/tests/contract-legislate.test.ts
+    - src/cli/tests/contract-propose.test.ts
+    - src/cli/tests/contract-runtime.test.ts
+    - src/cli/tests/contract-scan.test.ts
+    - src/cli/tests/contract-schema.test.ts
+    - src/cli/tests/contract-verify.test.ts
+    - src/cli/tests/deps-resolve.test.ts
+    - src/cli/tests/deps-slug.test.ts
+    - src/cli/tests/doctor-adapter-preflight.test.ts
+    - src/cli/tests/doctor-substrate-drift.test.ts
+    - src/cli/tests/doctor.test.ts
+    - src/cli/tests/draft-token.test.ts
+    - src/cli/tests/findings-circuit-breaker.test.ts
+    - src/cli/tests/gate-adapter-registry.test.ts
+    - src/cli/tests/gate-git-env.test.ts
+    - src/cli/tests/git-hooks.test.ts
+    - src/cli/tests/git-proof.test.ts
+    - src/cli/tests/gxt-error-codes.test.ts
+    - src/cli/tests/hook.test.ts
+    - src/cli/tests/import-scanner.test.ts
+    - src/cli/tests/init-profile.test.ts
+    - src/cli/tests/init.test.ts
+    - src/cli/tests/integration-onboarding-gates.test.ts
+    - src/cli/tests/interrogate-gaps.test.ts
+    - src/cli/tests/interrogate-halt.test.ts
+    - src/cli/tests/interrogate-verify-roundtrip.test.ts
+    - src/cli/tests/kernel-exports.test.ts
+    - src/cli/tests/kpi-gate.test.ts
+    - src/cli/tests/kpi-scan.test.ts
+    - src/cli/tests/ledger-verify.test.ts
+    - src/cli/tests/legislate.test.ts
+    - src/cli/tests/mcp-doctor.test.ts
+    - src/cli/tests/mcp-legislation.test.ts
+    - src/cli/tests/mcp-orchestration.test.ts
+    - src/cli/tests/mcp-runtime.test.ts
+    - src/cli/tests/mcp-tools-register.test.ts
+    - src/cli/tests/mcp-write-guard.test.ts
+    - src/cli/tests/metrics-classification.test.ts
+    - src/cli/tests/metrics.test.ts
+    - src/cli/tests/mission-changed.test.ts
+    - src/cli/tests/mission-schema-parity.test.ts
+    - src/cli/tests/missions/adapter-command-guard.test.ts
+    - src/cli/tests/missions/mission-legislative-stub.test.ts
+    - src/cli/tests/missions/mission-parser.test.ts
+    - src/cli/tests/missions/mission-schema.test.ts
+    - src/cli/tests/org-doctor-offline.test.ts
+    - src/cli/tests/performance-judge.test.ts
+    - src/cli/tests/perimeter.test.ts
+    - src/cli/tests/planner-signature.test.ts
+    - src/cli/tests/policy-digest-doctor.test.ts
+    - src/cli/tests/policy-resolve.test.ts
+    - src/cli/tests/quarantine-import.test.ts
+    - src/cli/tests/receipt-attribution.test.ts
+    - src/cli/tests/report-overview-projector.test.ts
+    - src/cli/tests/runtime.test.ts
+    - src/cli/tests/skill-key.test.ts
+    - src/cli/tests/start-snapshot.test.ts
+    - src/cli/tests/start.test.ts
+    - src/cli/tests/status.test.ts
+    - src/cli/tests/surgeons-registry.test.ts
+    - src/cli/tests/target-architecture.test.ts
+    - src/cli/tests/template-parity.test.ts
+    - src/cli/tests/test-fixtures.ts
+    - src/cli/tests/test-org-fixtures.ts
+    - src/cli/tests/test-tmpdir-setup.ts
+    - src/cli/tests/trace-evidence.test.ts
+    - src/cli/tests/trusted-automation.test.ts
+    - src/cli/tests/upgrade-plan-payload.test.ts
+    - src/cli/tests/upgrade.test.ts
+    - src/cli/tests/verify-break-glass.test.ts
+    - src/cli/tests/verify-engine.test.ts
+    - src/cli/tests/verify-export.test.ts
+    - src/cli/tests/verify-failure-normalize.test.ts
+    - src/cli/tests/verify-failure-presentation.test.ts
+    - src/cli/tests/verify-fix.test.ts
+    - src/cli/tests/verify-format-cli.test.ts
+    - src/cli/tests/verify-hints.test.ts
+    - src/cli/tests/verify-interrogation-phase.test.ts
+    - src/cli/tests/verify-json.test.ts
+    - src/cli/tests/verify-org-policy-phase.test.ts
+    - src/cli/tests/verify-phase-clock.test.ts
+    - src/cli/tests/verify-pre-push.test.ts
+    - src/cli/tests/verify-run.test.ts
+    - src/cli/tests/verify-standalone-cli.test.ts
+    - src/cli/tests/verify-standalone-imports.test.ts
+    - src/cli/tests/verify-standalone-sign.test.ts
+    - src/cli/tests/verify-standalone.test.ts
+    - src/cli/tests/verify-surgeon.test.ts
+    - src/cli/tests/verify.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: 99578e4eedc8b326f39ba117948e62ec31164c72830caf4033ab4f7f51cd274d

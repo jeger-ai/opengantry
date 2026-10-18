@@ -9,7 +9,7 @@ import {
   type SpooledEvent,
 } from "../lib/event-spool.js";
 import { GantryUserError } from "../lib/errors.js";
-import { resolveOrgExportConfig } from "../lib/org-export-config.js";
+import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
 
 export interface EventsPushOptions {

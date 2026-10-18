@@ -5,7 +5,7 @@ import {
   gxtCodeFromGantryUserError,
   isKnownGantryUserErrorCode,
   mapGitProofCodeToGxt,
-} from "../lib/gxt-error-codes.js";
+} from "#core/error-codes.js";
 
 test("mapGitProofCodeToGxt: known git-proof codes map to MISSION_UNSTAMPED", () => {
   assert.equal(mapGitProofCodeToGxt("NO_MSN_COMMITS"), GXT_ERROR.MISSION_UNSTAMPED);
