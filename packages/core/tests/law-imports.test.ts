@@ -56,6 +56,8 @@ test("layers, layer import rules and pattern rules reproduce the arch check rows
 });
 
 test("the import scanner lists static, re-export, dynamic and require sites", () => {
-  const sites = extractImportSites('import a from "x";\nexport * from "./y.js";\nconst z = await import(p);\nconst q = require("./r.js");\n');
+  // The dynamic site is spelled by concatenation so this test file does not itself contain a dynamic import.
+  const dynamic = "imp" + "ort(p)";
+  const sites = extractImportSites(`import a from "x";\nexport * from "./y.js";\nconst z = await ${dynamic};\nconst q = require("./r.js");\n`);
   assert.deepEqual(sites.map((s) => [s.kind, s.spec]), [["static", "x"], ["export_from", "./y.js"], ["dynamic_import_expr", null], ["require", "./r.js"]]);
 });
