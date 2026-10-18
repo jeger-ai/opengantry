@@ -49,15 +49,19 @@ Every question of the form "may this change touch this path" is answered by `pac
 3. Domain modules SHOULD NOT import `commander`.
 4. Hooks and shell scripts MUST NOT reimplement MSN/git-proof logic; call `gantry`.
 
-## Complexity budgets (changed `.ts` only)
+## Structural law (ADR-0052 B2 to B7)
 
-| Rule | Production `src/cli` | Tests `src/cli/tests` |
-|------|----------------------|---------------------|
-| Max file lines | 450 | 900 |
-| Max function lines | 80 | 120 |
-| ESLint complexity | 20 | 25 |
+`TARGET_ARCHITECTURE.yaml` (schema 0.4.0) carries five rule kinds beyond imports and patterns, and `gantry arch check` without file arguments judges the whole tree with them in `dev-validate-core.sh`:
 
-Grandfathered paths (full-file exempt until refactored) live in [`.gxt-quality-baseline.json`](../.gxt-quality-baseline.json).
+| Kind | What it checks | Where the numbers come from |
+|------|----------------|-----------------------------|
+| `budget` | a layer's files, lines and `export` statements may not exceed the baseline row, and no counted file may exceed `file_ceiling_lines` (800) | [`ARCH_BASELINE.json`](../ARCH_BASELINE.json), written only by `gantry arch check --ratchet` |
+| `owner` | a regex may match only in the files that own the concept | the rule's `owners` |
+| `registry` | every name a regex captures must be registered | [`.gitagent/registry/`](../.gitagent/registry/) |
+| `dependency` | every `package.json` dependency must be registered | `dependencies.yaml` |
+| `duplicate` | no file under one tree may be byte-identical to a file under another, beyond the listed pairs | the rule's `allowed` |
+
+Budgets ratchet: counts may go down freely; `--ratchet` records the lower counts in a Planner or release mission, and a count that rose is refused unless that mission passes `--allow-raise`. There is no per-file budget except the ceiling, and no grandfathering. Tests keep a 900-line sanity cap in `check-changed-code.sh`; ESLint keeps complexity 20 and 80 lines per function (25 and 120 in tests).
 
 ## Definition of done
 

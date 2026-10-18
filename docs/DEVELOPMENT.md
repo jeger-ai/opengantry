@@ -156,15 +156,15 @@ IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; 
 
 | Artifact | What it is | Who edits it |
 |----------|------------|--------------|
-| `.gitagent/registry/*.yaml` | One entry per `GXT_*` error code, env name (`prefix`, `role`), subcommand, MCP tool and dependency (runtime and dev), each with `since` | Planner only, in a substrate mission: the directory is `perimeter_protected` and a `gantry` forbidden zone, so `cage check` fails a commit that edits it elsewhere |
-| `ARCH_BASELINE.json` | Per-layer file, line and export counts for the layers of `TARGET_ARCHITECTURE.yaml`, plus the 800-line per-file ceiling | Machine-written: `node scripts/arch-baseline.mjs`; `--check` exits 1 when the tree no longer matches. Counts may only go down until step 3 replaces the script with `gantry arch check --ratchet` |
+| `.gitagent/registry/*.yaml` | One entry per `GXT_*` error code, env name (`prefix`, `role`), subcommand, MCP tool and dependency (runtime and dev), each with `since` | Planner only, in a substrate mission: the directory is `perimeter_protected` and a `gantry` forbidden zone, so `cage check` fails a commit that edits it elsewhere; `gantry arch check` fails a build that uses an unregistered name |
+| `ARCH_BASELINE.json` | Per-layer file, line and export counts for the layers of `TARGET_ARCHITECTURE.yaml`, plus the 800-line per-file ceiling | Machine-written by `gantry arch check --ratchet` (lower-only; `--allow-raise` in a Planner mission that raises a budget); `gantry arch check` fails when a count exceeds it |
 | `test/conformance/` | Golden `--json` output, exit code and `[GXT_*]` stderr codes for every public subcommand on fixture repositories; `spawning-tests.yaml` classifies the unit tests that spawn a process | `npm run test:conformance` (in `dev-validate-core.sh` and `npm run validate`); re-record only with `CONFORMANCE_RECORD=1` inside a mission that says so |
 
 Rules while the rewrite runs:
 
 - A mission that introduces a new error code, env name, subcommand, MCP tool or dependency includes the registry entry in the legislation commit, with the MSN as `since`.
 - A mission that changes CLI output updates the golden files in the same commit and names the change in its intent; a golden diff without that is a regression.
-- `node scripts/arch-baseline.mjs --check` must pass; lowering a count is fine and is locked in later by a Planner mission, never automatically.
+- `gantry arch check` (whole tree, in the gate) must pass: budgets, owners, registries, dependencies and duplicates. Lowering a count is fine and is locked in by `gantry arch check --ratchet` in a Planner mission, never automatically; a mission that must grow a layer runs `--ratchet --allow-raise` and says so in its intent.
 
 ## Packages (ADR-0052 step 2)
 

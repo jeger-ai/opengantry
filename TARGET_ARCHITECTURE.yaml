@@ -1,5 +1,7 @@
-schema_version: "0.3.0"
+schema_version: "0.4.0"
 domain: code
+# ADR-0052 B7: no counted file may exceed this many lines; the layer budgets below ratchet against ARCH_BASELINE.json.
+file_ceiling_lines: 800
 scan_roots:
   - src/cli/**
   - packages/core/**
@@ -103,3 +105,118 @@ rules:
       - src/cli/commands/receipt.ts
       - src/cli/commands/attest.ts
     forbid_pattern: "process\\.exit\\("
+
+  # --- Structural law (ADR-0052 B2 to B7; schema 0.4.0). gantry arch check without file arguments judges the whole tree.
+  # B4: each layer's files, lines and export statements may not exceed its row in ARCH_BASELINE.json. Lowering is free;
+  # `gantry arch check --ratchet` records it in a Planner or release mission. Growth needs `--ratchet --allow-raise`
+  # in a legislated mission. Tests are not counted.
+  - id: BUDGET-CORE
+    kind: budget
+    layer: core
+    exclude: ["**/tests/**"]
+  - id: BUDGET-GIT
+    kind: budget
+    layer: git
+    exclude: ["**/tests/**"]
+  - id: BUDGET-CAGE
+    kind: budget
+    layer: cage
+    exclude: ["**/tests/**"]
+  - id: BUDGET-COMMAND
+    kind: budget
+    layer: command
+    exclude: ["**/tests/**"]
+  - id: BUDGET-LIB
+    kind: budget
+    layer: lib
+    exclude: ["**/tests/**"]
+  - id: BUDGET-DELIVERY
+    kind: budget
+    layer: delivery
+    exclude: ["**/tests/**"]
+  # B2 owner: one concept, one home. The glob-matcher rule lists every matcher that exists today; a fifth is refused.
+  - id: OWNER-USER-ERROR
+    kind: owner
+    pattern: "class GantryUserError\\b"
+    owners: [packages/core/src/user-error.ts]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: OWNER-PATH-UNDER-ROOT
+    kind: owner
+    pattern: "function isPathUnderRoot\\("
+    owners: [packages/core/src/law.ts]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: OWNER-CANONICAL-JSON
+    kind: owner
+    pattern: "function canonicalJson\\("
+    owners: [packages/core/src/canonical-json.ts]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: OWNER-IMPORT-SCANNER
+    kind: owner
+    pattern: "function extractImportSites\\("
+    owners: [packages/core/src/import-scanner.ts]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: OWNER-SPECIFIER
+    kind: owner
+    pattern: "function classifySpecifier\\("
+    owners: [packages/core/src/specifier.ts]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: OWNER-MANIFEST-SHAPE
+    kind: owner
+    pattern: "function validateManifestShape\\("
+    owners: [packages/core/src/manifest.ts]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: OWNER-GLOB-MATCHERS
+    kind: owner
+    pattern: "function (pathMatchesGlob|globToRegExp|cageGlobToRegExp|scopeRegExp|verifyPathMatcher|matchGlob)\\("
+    owners:
+      - packages/core/src/path-glob.ts
+      - packages/cage/src/cage-config.ts
+      - packages/cage/src/cage-scope.ts
+      - src/cli/lib/verify-standalone/diff.ts
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  # B3 registry: a name the code uses must be registered; adding one is a Planner edit under .gitagent/registry/.
+  - id: REGISTRY-ERROR-CODES
+    kind: registry
+    patterns: ['"(GXT_[A-Z0-9_]*[A-Z0-9])"']
+    registries: [.gitagent/registry/error-codes.yaml, .gitagent/registry/env.yaml]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: REGISTRY-ENV
+    kind: registry
+    patterns: ['"(GANTRY_[A-Z0-9_]*[A-Z0-9])"', 'process\\.env\\.(GANTRY_[A-Z0-9_]+)']
+    registries: [.gitagent/registry/env.yaml]
+    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+  - id: REGISTRY-COMMANDS
+    kind: registry
+    patterns: ['\\.command\\("([a-z][a-z-]*)"']
+    registries: [.gitagent/registry/commands.yaml]
+    applies_to: ["src/cli/program*.ts", "src/cli/commands/**", "src/cli/cage-bin.ts"]
+  - id: REGISTRY-MCP-TOOLS
+    kind: registry
+    patterns: ['"(gxt_[a-z_]+)"']
+    registries: [.gitagent/registry/mcp-tools.yaml]
+    applies_to: ["src/cli/lib/mcp/**"]
+  # B2 dependency: every package.json dependency, runtime or dev, is in the dependency registry.
+  - id: DEPENDENCIES
+    kind: dependency
+    registry: .gitagent/registry/dependencies.yaml
+    manifest: package.json
+  # B2 duplicate: scripts/ and templates/scripts/ are kept byte-identical by assert-dogfood-sync.sh until ADR-0052 A8
+  # ends the copy; the pairs that exist today are allowed, a new one is not.
+  - id: DUPLICATE-SCRIPTS-TEMPLATES
+    kind: duplicate
+    between: [scripts/, templates/scripts/]
+    allowed:
+      - scripts/dev-validate.sh
+      - scripts/gxt-cursor-env.sh
+      - scripts/gxt-manifest-lib.mjs
+      - scripts/gxt-pin-mission.sh
+      - scripts/gxt-resolve-mission.sh
+      - scripts/gxt-runtime-env.sh
+      - scripts/gxt-shell-agent.sh
+      - scripts/lib/glob-match.mjs
+      - scripts/lib/manifest-validate.mjs
+      - scripts/lib/trusted-automation.mjs
+      - scripts/mcp-launcher.sh
+      - scripts/validate-gxt.sh
+      - scripts/validate-mcp-dogfood.mjs
+      - scripts/verify-pr-missions.sh

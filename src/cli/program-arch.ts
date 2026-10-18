@@ -33,8 +33,10 @@ export function registerArchCommands(program: Command): void {
     .description("Evaluate TARGET_ARCHITECTURE.yaml import/layer rules for TypeScript paths")
     .argument("[files...]", "Repo-relative or absolute .ts paths")
     .option("--json", "Emit structured violation JSON")
-    .action((files: string[], opts: { json?: boolean }) => {
-      runArchCheckCommand({ files, json: opts.json === true });
+    .option("--ratchet", "Whole-tree run: write ARCH_BASELINE.json from the current counts (lower-only)")
+    .option("--allow-raise", "With --ratchet: write even where a layer grew (Planner missions only)")
+    .action((files: string[], opts: { json?: boolean; ratchet?: boolean; allowRaise?: boolean }) => {
+      runArchCheckCommand({ files, json: opts.json === true, ratchet: opts.ratchet === true, allowRaise: opts.allowRaise === true });
     });
 
   const cred = arch.command("cred").description("Git-ignored credential slots for authenticated architecture sources");

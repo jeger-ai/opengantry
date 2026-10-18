@@ -87,7 +87,8 @@ test("checkArchBoundariesForFiles: detects lib importing commander (dogfood layo
 test("loadTargetArchitecture: loads repository dogfood file", () => {
   const root = getRepoRoot();
   const spec = loadTargetArchitecture(root);
-  assert.equal(spec.schema_version, "0.3.0");
+  assert.equal(spec.schema_version, "0.4.0");
+  assert.ok(spec.rules.some((r) => r.kind === "budget"), "structural rules present (ADR-0052 step 3c)");
   assert.ok(spec.rules.some((r) => r.id === "RULE-LIB-TO-COMMAND"));
   assert.ok(spec.rules.some((r) => r.id === "RULE-COMMAND-NO-JSON-STRINGIFY"));
 });

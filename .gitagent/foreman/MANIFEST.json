@@ -10,7 +10,8 @@
         "npm test",
         "npm run validate",
         "npm run build",
-        "npm run lint"
+        "npm run lint",
+        "gantry arch check"
       ]
     },
     "substrate": {

@@ -78,6 +78,9 @@ cases:
   - { id: arch-pointer.fresh-init, fixture: fresh-init, args: [arch, pointer] }
   - { id: arch-fetch.file-pointer.fresh-init, fixture: fresh-init, args: [arch, fetch, --json] }
   - { id: arch-check.fresh-init, fixture: fresh-init, args: [arch, check, src/app.ts, --json] }
+  - { id: arch-check.whole-tree.fresh-init, fixture: fresh-init, args: [arch, check, --json] }
+  - { id: arch-check.ratchet.fresh-init, fixture: fresh-init, args: [arch, check, --ratchet, --json], record_tree: true }
+  - { id: arch-check.ratchet-needs-whole-tree.fresh-init, fixture: fresh-init, args: [arch, check, src/app.ts, --ratchet, --json] }
   - { id: arch-cred-status.fresh-init, fixture: fresh-init, args: [arch, cred, status] }
   - { id: arch-cred-set.no-stdin.fresh-init, fixture: fresh-init, args: [arch, cred, set, --slot, docs, --kind, bearer] }
   - { id: arch-cred-unset.fresh-init, fixture: fresh-init, args: [arch, cred, unset, --slot, docs] }

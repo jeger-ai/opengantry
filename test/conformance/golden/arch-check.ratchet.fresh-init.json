@@ -1,0 +1,41 @@
+{
+  "id": "arch-check.ratchet.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "check",
+    "--ratchet",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "schema_version": 1,
+    "ok": true,
+    "violations": [],
+    "ratchet": {
+      "written": true,
+      "raised": [],
+      "layers": {
+        "command": {
+          "files": 0,
+          "lines": 0,
+          "exports": 0
+        },
+        "lib": {
+          "files": 0,
+          "lines": 0,
+          "exports": 0
+        },
+        "delivery": {
+          "files": 0,
+          "lines": 0,
+          "exports": 0
+        }
+      }
+    }
+  },
+  "stderr_codes": [],
+  "tree": [
+    "?? ARCH_BASELINE.json"
+  ]
+}
