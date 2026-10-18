@@ -39,33 +39,33 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 1 MSN-0284 at ef2e0f8: packages/core/src/law.ts exports Law, emptyLaw, law, normalizeRepoRelativePath, isPathUnderRoot, unionSorted, tighten (TightenResult with violations roots_escape and roots_in_forbidden; an upper law with no roots accepts any lower roots; sets unioned, roots narrow, stricter tier, lower import switches win), classifyPath (transport, forbidden_zone, inside_roots, outside_roots in that order), isProtectedPath (perimeter glob dialect through path-glob), ChangeSet (staged, range, worktree, write) and evaluatePaths (one finding per path: forbidden_zone, outside_roots, protected_path); packages/core/src/index.ts exports it; the only node: specifier under packages/core/src is still node:path"
+    anchor: "1517"
+    status: PASS
   - dod_id: "2"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 2 MSN-0284 at ef2e0f8: packages/core/tests/law.test.ts holds 5 tests: classification order and ./ normalization, tighten union/narrow/tier, escape and forbidden-root violations plus the empty-upper-roots case and unionSorted, protected globs, evaluatePaths over a staged and a range change set (a protected path outside the roots reports outside_roots); npm run test:packages: tests 12 pass 12 fail 0"
+    anchor: "1518"
+    status: PASS
   - dod_id: "3"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 3 MSN-0284 at ef2e0f8: src/cli/lib/tmvc-path.ts re-exports normalizeRepoRelativePath and isPathUnderRoot from #core/law.js and classifyRepoRelativePath maps classifyPath with GOVERNANCE_TRANSPORT_PATHS as transport paths; src/cli/lib/contract/effective-scope.ts composes law(skill) -> tighten(policy forbidden_zones_add, banned_imports) -> tighten(contract) and maps roots_escape and roots_in_forbidden to the unchanged GXT_CONTRACT_SCOPE_ESCAPE messages and hints (unionSorted and the isPathUnderRoot import removed); src/cli/lib/perimeter.ts isPerimeterProtectedPath calls isProtectedPath(law(perimeter globs)); src/cli/lib/staged-tmvc-guard.ts judges a staged ChangeSet with evaluatePaths; git diff --name-only origin/main...HEAD -- src/cli lists exactly those four files"
+    anchor: "1519"
+    status: PASS
   - dod_id: "4"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 4 MSN-0284 at ef2e0f8: unit tests 964 pass 964 fail 0 unchanged (contract, perimeter, tmvc guard, kernel scope tests included); conformance suite tests 85 pass 84 fail 0 skipped 1, git status shows 0 changed golden files"
+    anchor: "1520"
+    status: PASS
   - dod_id: "5"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 5 MSN-0284 at ef2e0f8: gantry arch check over src/cli and every package: OK; ARCH_BASELINE.json commit bb0f136: core 9/532/80 (law.ts added), git 3/189/21, cage 15/3619/145, command 38/3081/116, lib 241/29486/1420, delivery 12/1804/30; --check OK; regenerated at bb0f136 byte-identical (cmp)"
+    anchor: "1521"
+    status: PASS
   - dod_id: "6"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 6 MSN-0284 at ef2e0f8: docs/ARCHITECTURE.md names the law model in the core row and gains the section One law, one evaluator (ADR-0052 A2, A3); docs/DEVELOPMENT.md core row lists law and a rule that path decisions go through #core/law.js; docs/CHANGELOG.md substrate note Law model (ADR-0052 step 3a)"
+    anchor: "1522"
+    status: PASS
   - dod_id: "7"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+    trace_quote: "DoD 7 MSN-0284 at ef2e0f8: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; git diff --name-only origin/main...HEAD lists only ARCH_BASELINE.json docs/ARCHITECTURE.md docs/CHANGELOG.md docs/DEVELOPMENT.md .gitagent/missions/MSN-0284.law-model.yaml packages/core/src/index.ts packages/core/src/law.ts packages/core/tests/law.test.ts src/cli/lib/contract/effective-scope.ts src/cli/lib/perimeter.ts src/cli/lib/staged-tmvc-guard.ts src/cli/lib/tmvc-path.ts , all under contract.tmvc_roots"
+    anchor: "1523"
+    status: PASS
 interrogation:
   - finding_id: 1ae19e8f75ca
     kind: undefined_boundary
