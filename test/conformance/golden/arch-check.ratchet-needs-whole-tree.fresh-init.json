@@ -1,0 +1,14 @@
+{
+  "id": "arch-check.ratchet-needs-whole-tree.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "check",
+    "src/app.ts",
+    "--ratchet",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": "",
+  "stderr_codes": []
+}

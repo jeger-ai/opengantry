@@ -1,0 +1,16 @@
+{
+  "id": "arch-check.whole-tree.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "arch",
+    "check",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "schema_version": 1,
+    "ok": true,
+    "violations": []
+  },
+  "stderr_codes": []
+}

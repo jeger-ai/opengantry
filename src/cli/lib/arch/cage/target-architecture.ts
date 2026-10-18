@@ -1,7 +1,26 @@
 import fs from "node:fs";
 import path from "node:path";
-import { pathMatchesArchGlob } from "#core/path-glob.js";
-import { archLaw, evaluateLayerImport, evaluatePatternRules, layerForFile as coreLayerForFile, type ArchLaw } from "#core/law.js";
+import { pathMatchesGlobPattern } from "#core/path-glob.js";
+import {
+  archLaw,
+  countLayers,
+  evaluateBudgets,
+  evaluateDependencies,
+  evaluateDuplicates,
+  evaluateLayerImport,
+  evaluateOwner,
+  evaluatePatternRules,
+  evaluateRegistry,
+  layerForFile as coreLayerForFile,
+  structuralLaw,
+  type ArchLaw,
+  type CountedFile,
+  type HashedFile,
+  type LayerCounts,
+  type StructuralLaw,
+} from "#core/law.js";
+import crypto from "node:crypto";
+import { gitRunOk } from "#git/git.js";
 import { getDomainAdapter } from "../../domains/index.js";
 import YAML from "yaml";
 import { CLI_NAME } from "../../constants.js";
@@ -17,10 +36,13 @@ export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
 export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
 export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;
+/** Structural rule kinds (ADR-0052 B2): budget, owner, registry, dependency, duplicate; `file_ceiling_lines`. */
+export const TARGET_ARCHITECTURE_V4_SCHEMA_VERSION = "0.4.0" as const;
 export const SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS = [
   TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
+  TARGET_ARCHITECTURE_V4_SCHEMA_VERSION,
 ] as const;
 
 export type TargetArchitectureSchemaVersion =
@@ -50,7 +72,37 @@ export interface ArchPatternRule extends ArchRuleBase {
   require_pattern?: string;
 }
 
-export type ArchRuleSpec = ArchImportRule | ArchPatternRule;
+export interface ArchBudgetRule extends ArchRuleBase {
+  kind: "budget";
+  layer: string;
+  max_files?: number;
+  max_lines?: number;
+  max_exports?: number;
+  exclude?: string[];
+}
+export interface ArchOwnerRule extends ArchRuleBase {
+  kind: "owner";
+  pattern: string;
+  owners: string[];
+}
+export interface ArchRegistryRule extends ArchRuleBase {
+  kind: "registry";
+  patterns: string[];
+  registries: string[];
+}
+export interface ArchDependencyRule extends ArchRuleBase {
+  kind: "dependency";
+  registry: string;
+  manifest: string;
+}
+export interface ArchDuplicateRule extends ArchRuleBase {
+  kind: "duplicate";
+  between: [string, string];
+  allowed?: string[];
+}
+export type ArchStructuralRule = ArchBudgetRule | ArchOwnerRule | ArchRegistryRule | ArchDependencyRule | ArchDuplicateRule;
+export const ARCH_STRUCTURAL_KINDS = ["budget", "owner", "registry", "dependency", "duplicate"] as const;
+export type ArchRuleSpec = ArchImportRule | ArchPatternRule | ArchStructuralRule;
 
 export interface TargetArchitectureSpec {
   schema_version: TargetArchitectureSchemaVersion;
@@ -59,6 +111,8 @@ export interface TargetArchitectureSpec {
   languages?: string[];
   layers: ArchLayerSpec[];
   rules: ArchRuleSpec[];
+  /** Per-file sanity ceiling in lines for budget-counted files (ADR-0052 B7); absent means none. */
+  file_ceiling_lines?: number;
 }
 
 export interface ArchBoundaryViolation {
@@ -75,8 +129,9 @@ export interface ArchCheckResult {
   violations: ArchBoundaryViolation[];
 }
 
+/** Scan roots and rule globs use core's one general matcher (ADR-0052 B2 owner rule): `**`, `*`, `?`. */
 function globMatches(repoRel: string, glob: string): boolean {
-  return pathMatchesArchGlob(normalizeRepoRelativePath(repoRel), normalizeRepoRelativePath(glob));
+  return pathMatchesGlobPattern(normalizeRepoRelativePath(repoRel), normalizeRepoRelativePath(glob));
 }
 
 /** The spec's layers and rules as the core architecture law. */
@@ -103,6 +158,56 @@ function resolveImportPath(file: string, spec: string): string | null {
     target = `${normalized}.ts`;
   } else target = normalized;
   return target.replace(/\\/g, "/");
+}
+
+function parseOptionalCount(raw: unknown, where: string): number | undefined {
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "number" || !Number.isInteger(raw) || raw < 0) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where} must be a non-negative integer`);
+  return raw;
+}
+
+function requireString(r: Record<string, unknown>, key: string, where: string): string {
+  const v = r[key];
+  if (typeof v !== "string" || !v.trim()) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where}.${key} required`);
+  return v.trim();
+}
+
+/** Structural rules (schema 0.4.0): an explicit `kind` selects the fields; unknown keys are not checked here. */
+function parseStructuralRule(r: Record<string, unknown>, index: number, id: string): ArchStructuralRule {
+  const where = `rules[${String(index)}] "${id}"`;
+  const appliesTo = parseStringArrayField(r.applies_to, "applies_to");
+  const base = { id, from_layer: typeof r.from_layer === "string" ? r.from_layer : "*", ...(appliesTo ? { applies_to: appliesTo } : {}) };
+  switch (r.kind) {
+    case "budget":
+      return {
+        ...base,
+        kind: "budget",
+        layer: requireString(r, "layer", where),
+        max_files: parseOptionalCount(r.max_files, `${where}.max_files`),
+        max_lines: parseOptionalCount(r.max_lines, `${where}.max_lines`),
+        max_exports: parseOptionalCount(r.max_exports, `${where}.max_exports`),
+        ...(parseStringArrayField(r.exclude, "exclude") ? { exclude: parseStringArrayField(r.exclude, "exclude") } : {}),
+      };
+    case "owner":
+      return { ...base, kind: "owner", pattern: requireString(r, "pattern", where), owners: parseStringArrayField(r.owners, "owners", { required: true })! };
+    case "registry": {
+      const patterns = parseStringArrayField(r.patterns, "patterns") ?? (typeof r.pattern === "string" ? [r.pattern] : undefined);
+      const registries = parseStringArrayField(r.registries, "registries") ?? (typeof r.registry === "string" ? [r.registry] : undefined);
+      if (!patterns?.length) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where}.patterns required`);
+      if (!registries?.length) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where}.registries required`);
+      return { ...base, kind: "registry", patterns, registries };
+    }
+    case "dependency":
+      return { ...base, kind: "dependency", registry: requireString(r, "registry", where), manifest: typeof r.manifest === "string" ? r.manifest : "package.json" };
+    case "duplicate": {
+      const between = parseStringArrayField(r.between, "between", { required: true })!;
+      if (between.length !== 2) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where}.between must name two directory prefixes`);
+      const allowed = parseStringArrayField(r.allowed, "allowed");
+      return { ...base, kind: "duplicate", between: [between[0]!, between[1]!], ...(allowed ? { allowed } : {}) };
+    }
+    default:
+      throw new Error(`TARGET_ARCHITECTURE.yaml: ${where} has unknown kind ${String(r.kind)}`);
+  }
 }
 
 function parseSchemaVersion(raw: unknown): TargetArchitectureSchemaVersion {
@@ -210,6 +315,14 @@ function parseArchRule(rule: unknown, index: number): ArchRuleSpec {
   if (typeof r.id !== "string" || !r.id.trim()) {
     throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(index)}].id required`);
   }
+  if (typeof r.kind === "string" && (ARCH_STRUCTURAL_KINDS as readonly string[]).includes(r.kind)) {
+    return parseStructuralRule(r, index, id);
+  }
+  return parseImportOrPatternRule(r, index, id);
+}
+
+/** Import and pattern rules (schemas 0.1.0 to 0.3.0 and unchanged in 0.4.0): the kind is inferred from the fields. */
+function parseImportOrPatternRule(r: Record<string, unknown>, index: number, id: string): ArchImportRule | ArchPatternRule {
   if (typeof r.from_layer !== "string") {
     throw new Error(`TARGET_ARCHITECTURE.yaml: rules[${String(index)}].from_layer required`);
   }
@@ -282,6 +395,7 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
     return { id: l.id.trim(), globs: l.globs.map(String) };
   });
   const rules: ArchRuleSpec[] = o.rules.map((rule, i) => parseArchRule(rule, i));
+  const file_ceiling_lines = parseOptionalCount(o.file_ceiling_lines, "file_ceiling_lines");
   return {
     schema_version,
     ...(domain ? { domain } : {}),
@@ -289,6 +403,7 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
     ...(languages ? { languages } : {}),
     layers,
     rules,
+    ...(file_ceiling_lines !== undefined ? { file_ceiling_lines } : {}),
   };
 }
 
@@ -314,6 +429,8 @@ export function checkArchBoundariesForFiles(
   const languages = resolveArchLanguages(spec);
   const evaluateImports = adapterSupportsImportRules(spec);
   const arch = archLawOfSpec(spec);
+  const structural = structuralLawOfSpec(spec, root);
+  const inScan = (rel: string): boolean => fileMatchesScanRoots(rel, scanRoots);
 
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(root, file);
@@ -323,7 +440,9 @@ export function checkArchBoundariesForFiles(
     if (!fs.existsSync(abs)) continue;
     const src = fs.readFileSync(abs, "utf8");
 
-    violations.push(...evaluatePatternRules(arch, repoRel, src, (rel) => fileMatchesScanRoots(rel, scanRoots)));
+    violations.push(...evaluatePatternRules(arch, repoRel, src, inScan));
+    violations.push(...evaluateOwner(structural, repoRel, src, inScan));
+    violations.push(...evaluateRegistry(structural, repoRel, src, inScan));
 
     if (!evaluateImports) continue;
 
@@ -343,16 +462,185 @@ export function checkArchBoundariesForFiles(
   return { ok: violations.length === 0, violations };
 }
 
+export const ARCH_BASELINE_FILENAME = "ARCH_BASELINE.json" as const;
+export const ARCH_BASELINE_SCHEMA = "opengantry.arch-baseline.v1" as const;
+
+export interface ArchBaseline {
+  schema: typeof ARCH_BASELINE_SCHEMA;
+  commit: string;
+  file_ceiling_lines: number | null;
+  layers: Record<string, LayerCounts>;
+}
+
+/** Registered names of a registry file: every entry name plus the last segment of a multi-word name. */
+function registryNames(repoRoot: string, registryRel: string): string[] {
+  const abs = path.join(repoRoot, registryRel);
+  if (!fs.existsSync(abs)) throw new Error(`TARGET_ARCHITECTURE.yaml: registry ${registryRel} not found`);
+  const doc = YAML.parse(fs.readFileSync(abs, "utf8")) as { entries?: { name?: unknown }[] };
+  const names: string[] = [];
+  for (const e of doc.entries ?? []) {
+    if (typeof e.name !== "string") continue;
+    names.push(e.name);
+    const last = e.name.split(" ").pop();
+    if (last && last !== e.name) names.push(last);
+  }
+  return names;
+}
+
+/** The spec's structural rules as the core structural law, with registries resolved to names. */
+export function structuralLawOfSpec(spec: TargetArchitectureSpec, repoRoot: string): StructuralLaw {
+  const law = structuralLaw({ fileCeilingLines: spec.file_ceiling_lines ?? null });
+  for (const rule of spec.rules) {
+    switch (rule.kind) {
+      case "budget":
+        law.budgetRules.push({ id: rule.id, layer: rule.layer, max_files: rule.max_files, max_lines: rule.max_lines, max_exports: rule.max_exports, exclude: rule.exclude });
+        break;
+      case "owner":
+        law.ownerRules.push({ id: rule.id, pattern: rule.pattern, owners: rule.owners, applies_to: rule.applies_to });
+        break;
+      case "registry":
+        law.registryRules.push({ id: rule.id, patterns: rule.patterns, registries: rule.registries, names: rule.registries.flatMap((r) => registryNames(repoRoot, r)), applies_to: rule.applies_to });
+        break;
+      case "dependency":
+        law.dependencyRules.push({ id: rule.id, registry: rule.registry, manifest: rule.manifest, allowed: registryNames(repoRoot, rule.registry) });
+        break;
+      case "duplicate":
+        law.duplicateRules.push({ id: rule.id, between: rule.between, allowed: rule.allowed });
+        break;
+      default:
+        break;
+    }
+  }
+  return law;
+}
+
+function countedFiles(repoRoot: string, spec: TargetArchitectureSpec, files: readonly string[]): CountedFile[] {
+  const scanRoots = resolveArchScanRoots(spec);
+  const languages = resolveArchLanguages(spec);
+  const out: CountedFile[] = [];
+  for (const file of files) {
+    const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(repoRoot, file);
+    const rel = toPosixRel(repoRoot, abs);
+    if (!fileMatchesScanRoots(rel, scanRoots) || !fileMatchesLanguage(rel, languages, spec.domain) || !fs.existsSync(abs)) continue;
+    out.push({ path: rel, body: fs.readFileSync(abs, "utf8") });
+  }
+  return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+}
+
+function readArchBaseline(repoRoot: string): ArchBaseline | null {
+  const abs = path.join(repoRoot, ARCH_BASELINE_FILENAME);
+  if (!fs.existsSync(abs)) return null;
+  const parsed = JSON.parse(fs.readFileSync(abs, "utf8")) as Partial<ArchBaseline>;
+  if (parsed.schema !== ARCH_BASELINE_SCHEMA || typeof parsed.layers !== "object" || parsed.layers === null) {
+    throw new Error(`${ARCH_BASELINE_FILENAME}: expected schema ${ARCH_BASELINE_SCHEMA} with a layers map`);
+  }
+  return parsed as ArchBaseline;
+}
+
+function hashedFilesUnder(repoRoot: string, prefixes: readonly string[]): HashedFile[] {
+  const out: HashedFile[] = [];
+  const walk = (abs: string): void => {
+    if (!fs.existsSync(abs)) return;
+    for (const ent of fs.readdirSync(abs, { withFileTypes: true })) {
+      const child = path.join(abs, ent.name);
+      if (ent.isDirectory()) {
+        if (ent.name === "node_modules" || ent.name === ".git") continue;
+        walk(child);
+      } else if (ent.isFile()) {
+        out.push({ path: toPosixRel(repoRoot, child), sha256: crypto.createHash("sha256").update(fs.readFileSync(child)).digest("hex") });
+      }
+    }
+  };
+  for (const prefix of prefixes) walk(path.join(repoRoot, prefix));
+  return out;
+}
+
+function declaredDependencies(repoRoot: string, manifestRel: string): { name: string; scope: "runtime" | "dev" }[] {
+  const abs = path.join(repoRoot, manifestRel);
+  if (!fs.existsSync(abs)) return [];
+  const pkg = JSON.parse(fs.readFileSync(abs, "utf8")) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  return [
+    ...Object.keys(pkg.dependencies ?? {}).map((name) => ({ name, scope: "runtime" as const })),
+    ...Object.keys(pkg.devDependencies ?? {}).map((name) => ({ name, scope: "dev" as const })),
+  ];
+}
+
+/**
+ * Whole-tree structural checks (ADR-0052 B2): budgets against ARCH_BASELINE.json, declared dependencies against
+ * their registry, and byte-identical files between two trees. Runs when `gantry arch check` walks the scan roots
+ * itself; a partial file list cannot be judged for shape.
+ */
+export function checkArchStructure(spec: TargetArchitectureSpec, repoRoot: string, files: readonly string[]): ArchCheckResult {
+  const structural = structuralLawOfSpec(spec, repoRoot);
+  const arch = archLawOfSpec(spec);
+  const violations: ArchBoundaryViolation[] = [];
+  if (structural.budgetRules.length > 0) {
+    const baseline = readArchBaseline(repoRoot);
+    violations.push(...evaluateBudgets(structural, arch, countedFiles(repoRoot, spec, files), baseline?.layers ?? {}));
+  }
+  for (const rule of structural.dependencyRules) {
+    violations.push(...evaluateDependencies({ ...structural, dependencyRules: [rule] }, declaredDependencies(repoRoot, rule.manifest)));
+  }
+  for (const rule of structural.duplicateRules) {
+    violations.push(...evaluateDuplicates({ ...structural, duplicateRules: [rule] }, hashedFilesUnder(repoRoot, rule.between)));
+  }
+  return { ok: violations.length === 0, violations };
+}
+
+export interface RatchetResult {
+  written: boolean;
+  path: string;
+  /** Layers whose counts rose above the previous baseline. Empty when the ratchet only lowered or kept counts. */
+  raised: string[];
+  layers: Record<string, LayerCounts>;
+}
+
+/**
+ * Record the current per-layer counts as ARCH_BASELINE.json (ADR-0052 B4). Lower-only: a layer that grew is
+ * refused unless `allowRaise`, which only a Planner mission passes. Counts use each layer's budget-rule excludes.
+ */
+export function ratchetArchBaseline(spec: TargetArchitectureSpec, repoRoot: string, files: readonly string[], allowRaise: boolean): RatchetResult {
+  const structural = structuralLawOfSpec(spec, repoRoot);
+  const arch = archLawOfSpec(spec);
+  const counted = countedFiles(repoRoot, spec, files);
+  const layers: Record<string, LayerCounts> = {};
+  for (const layer of spec.layers) {
+    const rule = structural.budgetRules.find((r) => r.layer === layer.id);
+    layers[layer.id] = countLayers(arch, counted, rule?.exclude ?? [])[layer.id] ?? { files: 0, lines: 0, exports: 0 };
+  }
+  const previous = readArchBaseline(repoRoot);
+  const raised: string[] = [];
+  for (const [id, now] of Object.entries(layers)) {
+    const was = previous?.layers[id];
+    if (was && (now.files > was.files || now.lines > was.lines || now.exports > was.exports)) raised.push(id);
+  }
+  const target = path.join(repoRoot, ARCH_BASELINE_FILENAME);
+  if (raised.length > 0 && !allowRaise) return { written: false, path: target, raised, layers };
+  const head = gitRunOk(repoRoot, ["rev-parse", "HEAD"]);
+  const baseline: ArchBaseline = {
+    schema: ARCH_BASELINE_SCHEMA,
+    commit: head.ok ? head.stdout.trim() : "",
+    file_ceiling_lines: spec.file_ceiling_lines ?? null,
+    layers,
+  };
+  fs.writeFileSync(target, `${JSON.stringify(baseline, null, 2)}\n`);
+  return { written: true, path: target, raised, layers };
+}
+
 export function runArchCheck(
   repoRoot: string,
   files: readonly string[],
-  options: { manifestTmvcRoots?: readonly string[] } = {},
+  options: { manifestTmvcRoots?: readonly string[]; wholeTree?: boolean } = {},
 ): ArchCheckResult {
   const spec = loadTargetArchitecture(repoRoot);
   const absFiles = files.map((f) =>
     path.isAbsolute(f) ? f : path.join(repoRoot, f.replace(/\\/g, path.sep)),
   );
-  return checkArchBoundariesForFiles(spec, repoRoot, absFiles, options);
+  const boundaries = checkArchBoundariesForFiles(spec, repoRoot, absFiles, options);
+  if (!options.wholeTree) return boundaries;
+  const structure = checkArchStructure(spec, repoRoot, absFiles);
+  const violations = [...boundaries.violations, ...structure.violations];
+  return { ok: violations.length === 0, violations };
 }
 
 export function formatArchCheckHuman(result: ArchCheckResult, label: "arch" | "perimeter" = "arch"): string {

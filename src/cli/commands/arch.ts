@@ -9,6 +9,8 @@ import { fetchExternalArchitecture } from "../lib/arch/external/architecture-fet
 import { loadWorkspace } from "../lib/workspace.js";
 import {
   formatArchCheckHuman,
+  ratchetArchBaseline,
+  type RatchetResult,
   loadTargetArchitecture,
   runArchCheck,
   walkPerimeterFiles,
@@ -52,6 +54,9 @@ export interface ArchCheckOptions extends ArchOptions {
   json?: boolean;
   files?: string[];
   label?: "arch" | "perimeter";
+  /** Write ARCH_BASELINE.json from the current counts (whole-tree runs only); lower-only unless allowRaise. */
+  ratchet?: boolean;
+  allowRaise?: boolean;
 }
 
 /** Repo root plus optional credential-slot validation shared by the cred subcommands. */
@@ -131,7 +136,8 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
 
   const label = options.label ?? "arch";
   let files = options.files?.length ? options.files : [];
-  if (files.length === 0) {
+  const wholeTree = files.length === 0;
+  if (wholeTree) {
     try {
       const spec = loadTargetArchitecture(repoRoot);
       files = walkPerimeterFiles(repoRoot, spec);
@@ -150,12 +156,30 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     const { manifest } = loadWorkspace();
     const skill = manifest.skills.gantry ?? Object.values(manifest.skills)[0];
     const manifestTmvcRoots = skill?.tmvc_roots;
-    const result = runArchCheck(repoRoot, files, { manifestTmvcRoots });
+    const result = runArchCheck(repoRoot, files, { manifestTmvcRoots, wholeTree });
+    let ratchet: RatchetResult | null = null;
+    if (options.ratchet) {
+      if (!wholeTree) {
+        logError(`gantry ${label} check: --ratchet needs a whole-tree run (no file arguments)`);
+        setExitCode(2);
+        return;
+      }
+      ratchet = ratchetArchBaseline(loadTargetArchitecture(repoRoot), repoRoot, files, options.allowRaise === true);
+    }
     if (options.json) {
-      writeStdout(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations }, null, 2));
+      writeStdout(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations, ...(ratchet ? { ratchet: { written: ratchet.written, raised: ratchet.raised, layers: ratchet.layers } } : {}) }, null, 2));
     } else {
       logInfo(formatArchCheckHuman(result, label));
+      if (ratchet) logInfo(formatRatchetHuman(ratchet));
     }
-    if (!result.ok) setExitCode(1);
+    if (!result.ok || (ratchet && !ratchet.written)) setExitCode(1);
   });
+}
+
+function formatRatchetHuman(r: RatchetResult): string {
+  if (!r.written) {
+    return `gantry arch check: ratchet refused, counts rose in ${r.raised.join(", ")} (raise the budget in a Planner mission with --allow-raise)`;
+  }
+  const rows = Object.entries(r.layers).map(([id, c]) => `${id} ${String(c.files)}/${String(c.lines)}/${String(c.exports)}`);
+  return `gantry arch check: ratchet wrote ARCH_BASELINE.json (${rows.join(", ")})${r.raised.length > 0 ? `; raised: ${r.raised.join(", ")}` : ""}`;
 }

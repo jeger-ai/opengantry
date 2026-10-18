@@ -53,6 +53,9 @@ echo "dev-validate-core: upgrade-tmp staging guard"
 echo "dev-validate-core: unit tests"
 node --import ./dist/cli/tests/test-tmpdir-setup.js --test "dist/cli/tests/**/*.test.js"
 
+echo "dev-validate-core: structural law (ADR-0052 B2-B5: gantry arch check over the whole tree)"
+"${GANTRY[@]}" arch check
+
 echo "dev-validate-core: conformance suite (ADR-0052 step 1, golden CLI output)"
 npm run test:conformance
 

@@ -29,40 +29,19 @@ fi
 
 echo "check-changed-code: ${#CHANGED[@]} changed file(s) (${BASE_REF}..${HEAD_REF})"
 
-# File line budgets (skip fully grandfathered files for line count only)
-PROD_MAX=450
+# Per-file budgets moved to TARGET_ARCHITECTURE.yaml (ADR-0052 B4, B7): layer budgets ratchet against
+# ARCH_BASELINE.json and the 800-line ceiling is a `budget` rule; `gantry arch check` (whole tree) enforces them in
+# dev-validate-core.sh. Test files keep a sanity cap here because they are outside the counted layers.
 TEST_MAX=900
-BASELINE=".gxt-quality-baseline.json"
-
-is_grandfathered() {
-  local f="$1"
-  node -e "
-    const fs=require('fs');
-    const f=process.argv[1];
-    const b=JSON.parse(fs.readFileSync('.gxt-quality-baseline.json','utf8'));
-    process.exit(b.grandfathered_files.includes(f)?0:1);
-  " "$f" 2>/dev/null
-}
-
 for f in "${CHANGED[@]}"; do
   [[ -f "$f" ]] || continue
-  if is_grandfathered "$f"; then
-    echo "  skip line budget (grandfathered): $f"
-    continue
-  fi
+  [[ "$f" == *"/tests/"* ]] || continue
   lines="$(wc -l <"$f" | tr -d ' ')"
-  if [[ "$f" == *"/tests/"* ]]; then
-    max=$TEST_MAX
-  else
-    max=$PROD_MAX
-  fi
-  if [[ "$lines" -gt "$max" ]]; then
-    echo "check-changed-code FAILED: $f has $lines lines (max $max for changed non-grandfathered file)" >&2
+  if [[ "$lines" -gt "$TEST_MAX" ]]; then
+    echo "check-changed-code FAILED: $f has $lines lines (max $TEST_MAX for a changed test file)" >&2
     exit 1
   fi
 done
-
-# ESLint complexity on changed files that still exist
 EXISTING=()
 for f in "${CHANGED[@]}"; do
   [[ -f "$f" ]] && EXISTING+=("$f")
