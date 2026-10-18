@@ -43,7 +43,7 @@ test("loadManifest: the 3.x JSON form is still read; the YAML form wins when bot
 test("loadManifest: both forms present and different fail closed; advisory readers get null", () => {
   const changed = { ...manifest, risk_keywords: ["delete"] };
   const root = repo({ [REL_MANIFEST_JSON]: JSON.stringify(manifest), [REL_MANIFEST_YAML]: manifestToYaml(changed) });
-  assert.throws(() => loadManifest(root), /GXT_MANIFEST_AMBIGUOUS|both exist and differ/);
+  assert.throws(() => loadManifest(root), /GXT_LAW_FILE_AMBIGUOUS|both exist and differ/);
   assert.equal(readManifestOrNull(root), null);
 });
 

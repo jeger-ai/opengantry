@@ -37,7 +37,7 @@ Third-party agent skill packs and style guides are local IDE preferences, not Op
 
 ## Trusted automation
 
-Low-risk bot maintenance, such as Dependabot workflow pin bumps or security autofix pull requests, should not need a mission per bot commit when the change is narrow. A rule in `.gitagent/config.json` lets such commits pass the mission check without break-glass when **all** its constraints hold:
+Low-risk bot maintenance, such as Dependabot workflow pin bumps or security autofix pull requests, should not need a mission per bot commit when the change is narrow. A rule in `.gitagent/config.yaml` lets such commits pass the mission check without break-glass when **all** its constraints hold:
 
 | Constraint | Meaning |
 |------------|---------|

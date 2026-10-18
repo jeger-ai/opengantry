@@ -125,7 +125,7 @@ When a production hotfix cannot wait for full git-proof + trace mapping:
 4. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
 5. Planner reviews bypass usage post-incident ([Break-glass](reference/break-glass.md)).
 
-**Routine bot autofixes** (GitHub code scanning, Snyk, Dependabot source fixes) are **not** break-glass cases — configure [`trusted_automation`](concepts/enforcement-boundary.md#trusted-automation) in `.gitagent/config.json` instead (`bounded_content` or `workflow_version_pin`).
+**Routine bot autofixes** (GitHub code scanning, Snyk, Dependabot source fixes) are **not** break-glass cases — configure [`trusted_automation`](concepts/enforcement-boundary.md#trusted-automation) in `.gitagent/config.yaml` instead (`bounded_content` or `workflow_version_pin`).
 
 ## Acknowledgments
 

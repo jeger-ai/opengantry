@@ -1,5 +1,5 @@
 /**
- * `.gitagent/config.json` (ADR-0052 step 5c-i): the shape and the tier resolvers are pure. Reading the file and the
+ * `.gitagent/config.yaml` (ADR-0052 step 5c-i; the 3.x config.json is still read): the shape and the tier resolvers are pure. Reading the file and the
  * defensive-profile validation stay with the loader (`src/cli/lib/gxt-config.ts`).
  */
 export type PlannerSignatureTier = "off" | "warn" | "require";
@@ -33,11 +33,15 @@ export interface GxtConfigShape {
   ledger?: LedgerConfig;
 }
 
-/** Parse the file body; a broken file is an empty config, as before. */
+/** The config shape of a parsed document; anything that is not an object is an empty config. */
+export function parseGxtConfigDocument(doc: unknown): GxtConfigShape {
+  return doc && typeof doc === "object" && !Array.isArray(doc) ? (doc as GxtConfigShape) : {};
+}
+
+/** Parse a JSON body; a broken file is an empty config, as before. */
 export function parseGxtConfig(text: string): GxtConfigShape {
   try {
-    const parsed = JSON.parse(text) as GxtConfigShape | null;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    return parseGxtConfigDocument(JSON.parse(text));
   } catch {
     return {};
   }

@@ -1,13 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import { REL_GXT_CONFIG_JSON, REL_GXT_CONFIG_YAML, REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
 import { parseManifestSource } from "#core/manifest-file.js";
 import type { Manifest } from "#core/manifest.js";
 import { getRepoRoot } from "#git/git.js";
 import { CLI_NAME } from "../lib/constants.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { writeManifestYaml } from "../lib/manifest.js";
+import { loadGxtConfig, writeGxtConfigYaml } from "../lib/gxt-config.js";
+import { parseLawFileDocument } from "#core/law-file.js";
+import { parseGxtConfigDocument } from "#core/config.js";
 
 export interface MigrateManifestOptions {
   json?: boolean;
@@ -71,6 +74,49 @@ function report(result: MigrateManifestResult, options: MigrateManifestOptions):
     logInfo(`${CLI_NAME} migrate manifest: ${REL_MANIFEST_YAML} already exists; nothing to do`);
   } else {
     logError(`migrate manifest: no ${REL_MANIFEST_JSON} to migrate (run gantry init first)`);
+    setExitCode(EXIT_CODE.USAGE);
+  }
+}
+
+/**
+ * `gantry migrate config`: `.gitagent/config.json` (3.x) becomes `config.yaml` (ADR-0047 §4). The JSON form is parsed
+ * strictly (a broken file is not migrated), written as YAML and removed.
+ */
+export function runMigrateConfig(options: MigrateManifestOptions = {}): MigrateManifestResult {
+  const root = getRepoRoot();
+  const yamlAbs = path.join(root, ...REL_GXT_CONFIG_YAML.split("/"));
+  const jsonAbs = path.join(root, ...REL_GXT_CONFIG_JSON.split("/"));
+  let result: MigrateManifestResult;
+  if (fs.existsSync(yamlAbs)) {
+    result = { status: "already_yaml", wrote: null, removed: null, perimeter_protected_updated: false };
+  } else if (!fs.existsSync(jsonAbs)) {
+    result = { status: "nothing_to_migrate", wrote: null, removed: null, perimeter_protected_updated: false };
+  } else {
+    const doc = parseLawFileDocument({ rel: REL_GXT_CONFIG_JSON, kind: "json", text: fs.readFileSync(jsonAbs, "utf8") });
+    const config = parseGxtConfigDocument(doc);
+    if (options.dryRun !== true) {
+      writeGxtConfigYaml(root, config);
+      fs.rmSync(jsonAbs);
+      void loadGxtConfig(root);
+    }
+    result = { status: "migrated", wrote: REL_GXT_CONFIG_YAML, removed: REL_GXT_CONFIG_JSON, perimeter_protected_updated: false };
+  }
+  reportLawFile("config", REL_GXT_CONFIG_YAML, REL_GXT_CONFIG_JSON, result, options);
+  return result;
+}
+
+function reportLawFile(verb: string, yamlRel: string, jsonRel: string, result: MigrateManifestResult, options: MigrateManifestOptions): void {
+  if (options.json === true) {
+    writeStdout(JSON.stringify({ ...result, dry_run: options.dryRun === true }, null, 2));
+    return;
+  }
+  const wrote = options.dryRun === true ? "would write" : "wrote";
+  if (result.status === "migrated") {
+    logInfo(`${CLI_NAME} migrate ${verb}: ${wrote} ${yamlRel} and removed ${jsonRel}`);
+  } else if (result.status === "already_yaml") {
+    logInfo(`${CLI_NAME} migrate ${verb}: ${yamlRel} already exists; nothing to do`);
+  } else {
+    logError(`migrate ${verb}: no ${jsonRel} to migrate`);
     setExitCode(EXIT_CODE.USAGE);
   }
 }

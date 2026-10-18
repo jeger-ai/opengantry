@@ -1,4 +1,4 @@
-// Facade (ADR-0052 step 5c-i, A10): the config shape and resolvers live in packages/core; this reads the file.
+// The config shape and resolvers live in packages/core; this reads the file (ADR-0047 dual-read since MSN-0302).
 import fs from "node:fs";
 import path from "node:path";
 export {
@@ -18,17 +18,33 @@ export {
   type PlannerSignatureTier,
   type ReceiptSignatureTier,
 } from "#core/config.js";
-import { parseGxtConfig, type GxtConfigShape } from "#core/config.js";
+import type { GxtConfigShape } from "#core/config.js";
+import { REL_GXT_CONFIG_JSON, REL_GXT_CONFIG_YAML } from "#core/constants.js";
+import { gxtConfigToYaml, parseGxtConfigSource, selectGxtConfigSource } from "#core/config-file.js";
+import type { LawFileSource } from "#core/law-file.js";
 
-/** `.gitagent/config.json` as loaded. A `defensive_profile` block is ignored (parked by ADR-0052 A10). */
+/** `.gitagent/config.yaml` (or the 3.x config.json) as loaded. A `defensive_profile` block is ignored (ADR-0052 A10). */
 export type GxtConfig = GxtConfigShape;
 
+function readText(root: string, rel: string): string | null {
+  const abs = path.join(root, ...rel.split("/"));
+  return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+}
+
+/** The config on disk: the YAML form, else the 3.x JSON form; null when neither exists. */
+export function readGxtConfigSource(root: string): LawFileSource | null {
+  return selectGxtConfigSource(readText(root, REL_GXT_CONFIG_YAML), readText(root, REL_GXT_CONFIG_JSON));
+}
+
 export function loadGxtConfig(root: string): GxtConfig {
-  const configPath = path.join(root, ".gitagent", "config.json");
-  if (!fs.existsSync(configPath)) return {};
-  try {
-    return parseGxtConfig(fs.readFileSync(configPath, "utf8"));
-  } catch {
-    return {};
-  }
+  const source = readGxtConfigSource(root);
+  return source ? parseGxtConfigSource(source) : {};
+}
+
+/** Write the YAML form; returns its absolute path. */
+export function writeGxtConfigYaml(root: string, config: GxtConfig): string {
+  const abs = path.join(root, ...REL_GXT_CONFIG_YAML.split("/"));
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.writeFileSync(abs, gxtConfigToYaml(config), "utf8");
+  return abs;
 }

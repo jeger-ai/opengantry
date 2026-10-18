@@ -4,7 +4,7 @@
 # (override: repository variable GXT_INTEGRATION_BRANCH when integration branch differs).
 # MSN policy (pull_request only): commits touching MSN-enforced paths must have
 # subject [MSN-NNNN] (four digits), a valid gxt-bypass git note, or satisfy
-# repository-declared trusted_automation policy (.gitagent/config.json).
+# repository-declared trusted_automation policy (.gitagent/config.yaml, or the 3.x config.json).
 # Mission purity: scripts/verify-pr-missions.sh — one [MSN-NNNN] per PR commit range.
 # Paths = fixed substrate (.gitagent/, EXECUTOR_LOG.md, .githooks/, gxt-validate.yml)
 #       + all MANIFEST skills[].tmvc_roots (Node via scripts/gxt-manifest-lib.mjs).

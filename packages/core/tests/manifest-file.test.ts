@@ -22,7 +22,7 @@ test("selectManifestSource: YAML first, JSON as the 3.x fallback, nothing when a
 
 test("selectManifestSource: both present and different fails closed", () => {
   const other = `${JSON.stringify({ ...manifest, risk_keywords: ["schema"] }, null, 2)}\n`;
-  assert.throws(() => selectManifestSource(yaml, other), /GXT_MANIFEST_AMBIGUOUS|both exist and differ/);
+  assert.throws(() => selectManifestSource(yaml, other), /GXT_LAW_FILE_AMBIGUOUS|both exist and differ/);
 });
 
 test("manifestToYaml round-trips through the strict parser and keeps strings strings", () => {
