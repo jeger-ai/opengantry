@@ -177,7 +177,7 @@ Rules while the rewrite runs:
 | `packages/plane` | the org plane: `ledger-entry`, `ledger-chain`, `ledger-append`, `ledger-export`, `policy-types`, `policy-bundle`, `policy-resolve`, `policy-fetch`, `deps-slug`, `deps-fetch`, `deps-resolve`, `receipt-signing`, `receipt-attribution`, `attestation-receipt`, `attestation-export`, `org-export-config`, `digests`, `ajv-loader` | core, git |
 
 - Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
-- Import a package module as `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js` or `#plane/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a re-export facade under `src/cli/lib`; the last ones went in ADR-0052 step 5e.
+- Import a package module as `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js` or `#plane/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a re-export facade under `src/cli/lib`; the last ones are gone (rewrite step 5e).
 - Package tests live in `packages/<name>/tests/` and run with `npm run test:packages` (part of `npm test`).
 - A path, scope or import decision is made by `#core/law.js`: build a `Law` or `ArchLaw` and call `classifyPath`, `isProtectedPath`, `evaluatePaths`, `evaluateImportSite`, `evaluateLayerImport` or `evaluatePatternRules`. Do not add another matcher, classifier or rule loop in `src/cli`.
 - A new module belongs in a package when it needs no `fs`, `git` or `child_process` (core) or is the git adapter (git); otherwise it stays in `src/cli` until its package exists.
