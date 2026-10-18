@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { runInit } from "../commands/init.js";
 import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
 import { loadIntegrationCompat } from "../lib/integration-compat.js";

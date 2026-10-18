@@ -4,10 +4,10 @@ import path from "node:path";
 import { REL_POLICY_CACHE, REL_POLICY_POINTER } from "../lib/constants.js";
 import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "../lib/receipt-attribution.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
-import type { LedgerEntry, ReceiptLedgerPayload } from "../lib/ledger/ledger-entry.js";
-import { depsRefForRepo } from "../lib/deps/deps-slug.js";
-import { gitRun } from "../lib/git/git.js";
-import type { OrgPolicyBundle } from "../lib/policy/policy-types.js";
+import type { LedgerEntry, ReceiptLedgerPayload } from "#plane/ledger-entry.js";
+import { depsRefForRepo } from "#plane/deps-slug.js";
+import { gitRun } from "#git/git.js";
+import type { OrgPolicyBundle } from "#plane/policy-types.js";
 import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

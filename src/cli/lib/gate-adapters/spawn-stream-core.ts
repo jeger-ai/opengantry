@@ -9,7 +9,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import { MAX_IO_BUFFER_BYTES, shellForPlatform } from "../gate.js";
-import { withoutGitRepoEnv } from "../git/git.js";
+import { withoutGitRepoEnv } from "#git/git.js";
 import { readGateLogAbs } from "../gate-log-writer.js";
 import type { GateExecContext } from "./gate-adapter-types.js";
 

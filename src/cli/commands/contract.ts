@@ -1,7 +1,7 @@
 import { setExitCode } from "../lib/cli-io.js";
 import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../lib/command-boundary.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "../lib/contract/contract-scan.js";
-import type { ContractImportViolation, EffectiveScope } from "../lib/contract/contract-types.js";
+import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
 import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
 import { GantryUserError } from "../lib/errors.js";
 import { parseMissionFile } from "../lib/missions/parser.js";

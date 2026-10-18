@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { GantryUserError } from "./errors.js";
 import { parseMissionFile, assertMissionGatePresent } from "./missions/parser.js";
-import { REL_ORG_EXPORT_LOCAL, resolveOrgId } from "./org-export-config.js";
+import { REL_ORG_EXPORT_LOCAL, resolveOrgId } from "#plane/org-export-config.js";
 
 /** Canonical digest for a passed verify with zero advisory findings. */
 export const PASSED_FINDINGS_DIGEST = crypto

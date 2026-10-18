@@ -9,10 +9,10 @@ import { runDoctor } from "../commands/doctor.js";
 import { loadIntegrationCompat } from "../lib/integration-compat.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
-import type { Manifest } from "../lib/types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 test("runSubstrateDriftDoctorChecks: behind bundled suggests gantry upgrade", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-drift-behind-"));

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "./cli-io.js";
-import { extractImportSpecifiers } from "./import-scanner.js";
+import { extractImportSpecifiers } from "#core/import-scanner.js";
 
 export interface FolderSignature {
   folderRel: string;

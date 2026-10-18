@@ -1,6 +1,6 @@
 import { errorMessage } from "../cli-io.js";
-import { getRepoRoot } from "../git/git.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import { getRepoRoot } from "#git/git.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import type { McpErrorBody } from "./mcp-governance-shared.js";
 import { McpWriteDeniedError } from "./mcp-write-guard.js";
 import type { UpgradeApplyResult } from "../upgrade/upgrade-apply.js";

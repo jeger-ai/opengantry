@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GantryUserError } from "../lib/errors.js";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import {
   assertSafeFetchRef,
   depsRefForRepo,
   depsSlug,
   gitUrlForRepo,
-} from "../lib/deps/deps-slug.js";
+} from "#plane/deps-slug.js";
 
 test("deps-slug: canonical host/owner/repo becomes a deps ref and https URL", () => {
   assert.equal(depsSlug("github.com/jeger-ai/producer"), "github-com-jeger-ai-producer");

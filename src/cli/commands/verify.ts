@@ -9,7 +9,7 @@ import { loadWorkspace } from "../lib/workspace.js";
 import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
 import { appendEventSpool } from "../lib/event-spool.js";
-import { resolveOrgExportConfig } from "../lib/org-export-config.js";
+import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import { parseMissionFile } from "../lib/missions/parser.js";

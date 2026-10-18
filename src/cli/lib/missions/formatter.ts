@@ -6,7 +6,7 @@ import {
   REL_MISSION_TEMPLATE,
 } from "../constants.js";
 import { isPassStatus, isPendingStatus, normalizeTraceStatus } from "../trace.js";
-import { DEFAULT_GATE_ADAPTER, type ParsedMission, type TraceRow } from "../types.js";
+import { DEFAULT_GATE_ADAPTER, type ParsedMission, type TraceRow } from "#core/mission-types.js";
 
 const TRACE_SECTION_MARKER = "## 4. Verification trace";
 

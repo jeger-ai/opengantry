@@ -1,9 +1,9 @@
-import type { GxtErrorCode } from "../gxt-error-codes.js";
-import { GXT_ERROR } from "../gxt-error-codes.js";
+import type { GxtErrorCode } from "#core/error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
 import { gateOutputIndicatesImportLayer } from "../surgeon.js";
 import type { GateFailure, VerifyPhaseFailure } from "../verify/verify-failure.js";
-import type { Manifest } from "../types.js";
+import type { Manifest } from "#core/mission-types.js";
 import { bannedImportSurgeon } from "./banned-import.js";
 import { importLayerSurgeon } from "./import-layer.js";
 

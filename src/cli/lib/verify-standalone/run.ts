@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { GantryUserError } from "../errors.js";
-import { gitRevParse, gitRun } from "../git/git.js";
+import { gitRevParse, gitRun } from "#git/git.js";
 import {
   parseVerifyBaseline,
   runVerifyCheck,
@@ -16,7 +16,7 @@ import {
   signReceiptMessage,
   verifySignatureWithAllowedSigners,
   type ReceiptSignature,
-} from "../receipt-signing.js";
+} from "#plane/receipt-signing.js";
 import {
   contractError,
   loadVerifyContract,

@@ -6,7 +6,7 @@
 import { CLI_NAME } from "../constants.js";
 import { GantryUserError } from "../errors.js";
 import { hintTypedAdapterCompoundCommand } from "../fix-hints.js";
-import { isTypedGateAdapterId, type GateAdapterId } from "../types.js";
+import { isTypedGateAdapterId, type GateAdapterId } from "#core/mission-types.js";
 
 /**
  * True when command contains an unquoted `&&`, `||`, `;`, or line break.

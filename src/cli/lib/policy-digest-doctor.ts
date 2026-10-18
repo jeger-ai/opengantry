@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { DoctorLine } from "./doctor/doctor-types.js";
-import { computeWorkingDigests } from "./working-digests.js";
+import { computeWorkingDigests } from "#plane/digests.js";
 
 export const EXPECTED_DIGESTS_SCHEMA_VERSION = "0.1.0" as const;
 

@@ -12,10 +12,10 @@ const jsonMode = rawArgs.includes("--json");
 const files = rawArgs.filter((f) => f.endsWith(".ts"));
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const distScanner = path.join(scriptDir, "..", "dist", "cli", "lib", "import-scanner.js");
+const distScanner = path.join(scriptDir, "..", "dist", "packages", "core", "src", "import-scanner.js");
 if (!fs.existsSync(distScanner)) {
   console.error(
-    "import-layers: missing dist/cli/lib/import-scanner.js — run npm run build first",
+    "import-layers: missing dist/packages/core/src/import-scanner.js — run npm run build first",
   );
   process.exit(1);
 }

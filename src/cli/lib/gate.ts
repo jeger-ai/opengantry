@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { withoutGitRepoEnv } from "./git/git.js";
-import type { GateSpec } from "./types.js";
+import { withoutGitRepoEnv } from "#git/git.js";
+import type { GateSpec } from "#core/mission-types.js";
 
 export const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
 

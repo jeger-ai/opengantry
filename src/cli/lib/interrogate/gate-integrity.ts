@@ -1,4 +1,4 @@
-import type { Manifest } from "../types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 const TRIVIAL_GATE_PATTERNS: readonly RegExp[] = [
   /^\s*true\s*$/i,

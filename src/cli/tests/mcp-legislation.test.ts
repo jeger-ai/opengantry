@@ -7,8 +7,8 @@ import { execFileSync, execSync } from "node:child_process";
 import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
 import { handleExecuteLegislation } from "../lib/mcp/mcp-execute-legislation.js";
 import { handleCheckSignature } from "../lib/mcp/mcp-check-signature.js";
-import { getRepoRoot } from "../lib/git/git.js";
-import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
+import { getRepoRoot } from "#git/git.js";
+import { interrogationSha256, stableFindingId } from "#core/interrogation.js";
 
 function mcpLegislationDraftInput(
   overrides: Partial<import("../lib/mcp/mcp-governance-shared.js").DraftLegislationInput> = {},

@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { GantryUserError } from "../errors.js";
-import { gitRun } from "../git/git.js";
-import { extractImportSites } from "../import-scanner.js";
+import { gitRun } from "#git/git.js";
+import { extractImportSites } from "#core/import-scanner.js";
 import type { VerifyContract, VerifyLayer } from "./contract.js";
 import { anyPathOf } from "./diff.js";
 import { extractPythonImports, type PythonImport } from "./python-imports.js";

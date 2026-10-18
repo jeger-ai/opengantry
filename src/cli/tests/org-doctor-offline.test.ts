@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git/git.js";
-import { runLedgerDoctorChecks } from "../lib/ledger/ledger-chain.js";
+import { getRepoRoot } from "#git/git.js";
+import { runLedgerDoctorChecks } from "#plane/ledger-chain.js";
 import { runOrgPolicyDoctorChecks } from "../lib/policy/policy-doctor.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
@@ -12,10 +12,12 @@ import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
 
 test("org doctor sources never clone or fetch", () => {
   const root = path.join(getRepoRoot(), "src/cli/lib");
+  const plane = path.join(getRepoRoot(), "packages/plane/src");
   const files = [
     path.join(root, "policy/policy-doctor.ts"),
     path.join(root, "policy/policy-resolve.ts"),
-    path.join(root, "ledger/ledger-chain.ts"),
+    path.join(plane, "policy-resolve.ts"),
+    path.join(plane, "ledger-chain.ts"),
     path.join(root, "doctor/doctor-core.ts"),
   ];
   for (const file of files) {

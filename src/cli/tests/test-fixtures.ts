@@ -2,10 +2,10 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
-import { gitChildEnv } from "../lib/git/git.js";
-import type { InterrogationRow } from "../lib/interrogate/findings.js";
-import { interrogationSha256, stableFindingId } from "../lib/interrogate/findings.js";
-import type { ParsedMission } from "../lib/types.js";
+import { gitChildEnv } from "#git/git.js";
+import type { InterrogationRow } from "#core/interrogation.js";
+import { interrogationSha256, stableFindingId } from "#core/interrogation.js";
+import type { ParsedMission } from "#core/mission-types.js";
 
 export const EMPTY_INTERROGATION_SHA256 = interrogationSha256([]);
 

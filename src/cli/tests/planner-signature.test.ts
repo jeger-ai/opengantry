@@ -4,12 +4,12 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { assertPlannerMissionProof } from "../lib/git/git-proof.js";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { isGoodGitSignatureStatus } from "../lib/planner-signature.js";
 import { resolvePlannerSignatureTier, loadGxtConfig } from "../lib/gxt-config.js";
 import { GantryUserError } from "../lib/errors.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 
 test("planner-signature: G and U are good", () => {

@@ -18,7 +18,7 @@ import {
   type Manifest,
   type MissionContract,
   type TriageResult,
-} from "../types.js";
+} from "#core/mission-types.js";
 import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "../contract/effective-scope.js";
 import { errorMessage } from "../cli-io.js";
@@ -27,7 +27,7 @@ import { loadWorkspace } from "../workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
 import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
 import { typedAdapterCommandError } from "../missions/adapter-command-guard.js";
-import type { InterrogationRow } from "../interrogate/findings.js";
+import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate } from "../interrogate/run.js";
 import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
 

@@ -1,5 +1,5 @@
 import { checkMissionDependencies } from "../deps/deps-resolve.js";
-import { verifyLedgerChain } from "../ledger/ledger-chain.js";
+import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { parseMissionFile } from "../missions/parser.js";
 import { resolveMissionArg } from "../mission-arg.js";
 import { toMcpError, type McpErrorBody } from "./mcp-governance-shared.js";

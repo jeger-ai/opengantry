@@ -1,4 +1,4 @@
-import { extractImportsWithMeta, extractImportSpecifiers } from "../import-scanner.js";
+import { extractImportsWithMeta, extractImportSpecifiers } from "#core/import-scanner.js";
 import type {
   DiscoveryAnomaly,
   DiscoveryConvention,

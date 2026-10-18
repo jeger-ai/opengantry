@@ -1,5 +1,5 @@
 import { findingsFromRun, type AdapterParseResult } from "./adapter-findings.js";
-import type { TypedGateAdapterId } from "./gate-adapter-id.js";
+import type { TypedGateAdapterId } from "#core/gate-adapter.js";
 import type { GateExecAdapter } from "./gate-adapter-types.js";
 import { spawnGateStreaming } from "./spawn-stream-core.js";
 

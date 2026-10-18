@@ -1,7 +1,7 @@
 import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { GantryUserError } from "../lib/errors.js";
 import { runUserCommand } from "../lib/command-boundary.js";
-import type { InterrogationRow } from "../lib/interrogate/findings.js";
+import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate } from "../lib/interrogate/run.js";
 import { resolveLegislateGateOptions } from "../lib/legislate/legislate-gate-options.js";
 import { resolveManifestSkillKey } from "../lib/skill-key.js";

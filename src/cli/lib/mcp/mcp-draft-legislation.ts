@@ -9,13 +9,13 @@ import {
 import { manifestHasSkill, resolveManifestSkillKey } from "../skill-key.js";
 import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
 import { runInterrogate } from "../interrogate/run.js";
-import { DEFAULT_GATE_ADAPTER } from "../types.js";
+import { DEFAULT_GATE_ADAPTER } from "#core/mission-types.js";
 import { loadWorkspace } from "../workspace.js";
 import { normalizeContract } from "../contract/contract-hash.js";
 import { resolveEffectiveScope } from "../contract/effective-scope.js";
 import { formatContractBlock } from "../contract/format.js";
 import { isGantryUserError } from "../errors.js";
-import type { MissionContract } from "../types.js";
+import type { MissionContract } from "#core/mission-types.js";
 
 function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?: string): string {
   const lines = [

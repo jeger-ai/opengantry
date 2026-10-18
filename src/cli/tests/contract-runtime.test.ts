@@ -6,13 +6,13 @@ import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
 import { agentErrorAbsolutePath } from "../lib/errors.js";
-import { getRepoRoot } from "../lib/git/git.js";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { getRepoRoot } from "#git/git.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { loadManifest } from "../lib/manifest.js";
 import { resolvedRuntimeEnvToJsonPayload, resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { evaluateStagedTmvcGuard } from "../lib/staged-tmvc-guard.js";
-import type { MissionContract } from "../lib/types.js";
+import type { MissionContract } from "#core/mission-types.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 
 const MISSION_REL = ".gitagent/missions/runtime.yaml";

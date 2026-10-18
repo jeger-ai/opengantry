@@ -7,7 +7,7 @@ import {
   extractImportSpecifiers,
   extractImportsWithMeta,
   stripSurgeonQuarantineRegions,
-} from "../lib/import-scanner.js";
+} from "#core/import-scanner.js";
 
 test("extractBindingsFromSnippet: mixed default + named", () => {
   assert.deepEqual(

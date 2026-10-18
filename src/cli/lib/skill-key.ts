@@ -1,4 +1,4 @@
-import type { Manifest } from "./types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 /** Canonical manifest skill key for CLI delivery work (init / specimen). */
 export const CANONICAL_CLI_SKILL_KEY = "gantry" as const;

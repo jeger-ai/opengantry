@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { runStatus } from "../commands/status.js";
 import { pinMissionFile } from "../lib/missions/resolution.js";
 import { writeMiniGantryRepo, gitInitCommit, writeMiniGantryMission } from "./test-fixtures.js";

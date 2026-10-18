@@ -1,4 +1,4 @@
-import type { Manifest, ParsedMission } from "./types.js";
+import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import {
   classifyRepoRelativePath,
   forbiddenZonesForSkill,

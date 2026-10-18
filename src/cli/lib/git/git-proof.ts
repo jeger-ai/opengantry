@@ -2,7 +2,7 @@ import path from "node:path";
 import { GIT_CONFIG_PLANNER_EMAILS } from "../config-namespace.js";
 import { CLI_NAME, MSN_ID_PATTERN } from "../constants.js";
 import { toPosixRel } from "../cli-io.js";
-import { gitRun } from "./git.js";
+import { gitRun } from "#git/git.js";
 import { hintGitProof, type GitProofHintContext } from "../fix-hints.js";
 import { GantryUserError } from "../errors.js";
 import { extractMsnIdFromMissionPath } from "../missions/parser.js";

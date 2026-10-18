@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { importMatchesBan } from "../ast-discovery.js";
 import { layerForFile, loadTargetArchitecture, type TargetArchitectureSpec } from "../arch/cage/target-architecture.js";
-import { extractImportSites } from "../import-scanner.js";
+import { extractImportSites } from "#core/import-scanner.js";
 import { isBuiltinSpecifier } from "./resolve-specifier.js";
 import { listSourcesUnderRoots } from "./contract-scan.js";
 import { normalizeRepoRelativePath } from "../tmvc-path.js";
-import type { OrgPolicyBundle } from "../policy/policy-types.js";
+import type { OrgPolicyBundle } from "#plane/policy-types.js";
 
 export interface WorkspacePackage {
   name: string;

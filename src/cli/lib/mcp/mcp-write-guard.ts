@@ -8,7 +8,7 @@ import {
   tmvcRootsForSkill,
 } from "../tmvc-path.js";
 import { GantryUserError } from "../errors.js";
-import type { Manifest } from "../types.js";
+import type { Manifest } from "#core/mission-types.js";
 import { resolveManifestSkillKey } from "../skill-key.js";
 
 export const MCP_WRITE_DENIED = "MCP_WRITE_DENIED" as const;

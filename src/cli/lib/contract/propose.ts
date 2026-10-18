@@ -1,12 +1,12 @@
 import { loadPolicyBundleQuiet } from "./effective-scope.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
-import type { MissionContract } from "./contract-types.js";
+import type { MissionContract } from "#core/contract-types.js";
 import { existingHintedPaths } from "./intent-path-tokens.js";
 import { proposeGate, type ProposedGate } from "./propose-gate.js";
 import { proposeImports } from "./propose-imports.js";
 import { isPathUnderRoot } from "../tmvc-path.js";
-import type { Manifest } from "../types.js";
-import type { OrgPolicyBundle as PolicyBundle } from "../policy/policy-types.js";
+import type { Manifest } from "#core/mission-types.js";
+import type { OrgPolicyBundle as PolicyBundle } from "#plane/policy-types.js";
 import { resolveManifestSkillKey } from "../skill-key.js";
 
 export interface ProposeContractInput {

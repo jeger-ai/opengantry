@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { allUpgradeEligibleFromCatalog } from "../lib/upgrade/upgrade-plan-catalog.js";
 import { templatePathForAsset } from "../lib/init/init-asset-catalog.js";
 

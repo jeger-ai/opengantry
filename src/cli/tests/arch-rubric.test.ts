@@ -5,7 +5,7 @@ import {
   commitSubjectHasArchOverride,
 } from "../lib/arch-override.js";
 import { evaluateKpiThresholds } from "../lib/kpi-engine.js";
-import type { KpiReport } from "../lib/types.js";
+import type { KpiReport } from "#core/mission-types.js";
 
 test("arch-override: detects token in commit subject", () => {
   assert.equal(commitSubjectHasArchOverride("[MSN-0001] [GXT-ARCH-OVERRIDE] accept rubric"), true);

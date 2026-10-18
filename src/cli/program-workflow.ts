@@ -16,10 +16,10 @@ import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
 import { listDomainKeys } from "./lib/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
-import type { InterrogationRow } from "./lib/interrogate/findings.js";
+import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";
 import { errorMessage, logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
-import { GATE_ADAPTER_IDS, type GateAdapterId } from "./lib/types.js";
+import { GATE_ADAPTER_IDS, type GateAdapterId } from "#core/mission-types.js";
 import { getOutputAudience } from "./lib/output-context.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */

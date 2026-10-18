@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { INTERROGATION_FINDING_KINDS } from "../interrogate/findings.js";
+import { INTERROGATION_FINDING_KINDS } from "#core/interrogation.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { handleCheckSignature } from "./mcp-check-signature.js";
 import { handleDraftLegislation } from "./mcp-draft-legislation.js";
@@ -20,7 +20,7 @@ import { handleDoctor } from "./mcp-doctor.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
-import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "../types.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "#core/mission-types.js";
 
 const interrogationRowSchema = z.object({
   finding_id: z.string(),

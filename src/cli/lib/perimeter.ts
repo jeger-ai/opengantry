@@ -1,7 +1,7 @@
 import path from "node:path";
-import { GXT_ERROR } from "./gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitRevParse, gitRun, gitRunOk } from "./git/git.js";
+import { gitRevParse, gitRun, gitRunOk } from "#git/git.js";
 import {
   commitSubjectHasMsnPrefix,
   listCommitChangedPaths,
@@ -9,7 +9,7 @@ import {
   type MsnCommitRow,
 } from "./git/git-proof.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
-import type { Manifest } from "./types.js";
+import type { Manifest } from "#core/mission-types.js";
 import { isProtectedPath, law } from "#core/law.js";
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",

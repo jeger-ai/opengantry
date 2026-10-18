@@ -1,4 +1,4 @@
-import { GXT_ERROR, type GxtErrorCode } from "../gxt-error-codes.js";
+import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { REL_POLICY_POINTER } from "../constants.js";
 import { checkMissionDependencies, type DependencyCheckResult } from "../deps/deps-resolve.js";
 import {

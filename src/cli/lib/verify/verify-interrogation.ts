@@ -1,7 +1,7 @@
 import YAML from "yaml";
-import { GXT_ERROR } from "../gxt-error-codes.js";
-import type { GxtErrorCode } from "../gxt-error-codes.js";
-import { gitRunOk, gitRevParse } from "../git/git.js";
+import { GXT_ERROR } from "#core/error-codes.js";
+import type { GxtErrorCode } from "#core/error-codes.js";
+import { gitRunOk, gitRevParse } from "#git/git.js";
 import {
   listCommitChangedPaths,
   listMsnSubjectCommits,
@@ -9,11 +9,11 @@ import {
 } from "../git/git-proof.js";
 import { resolvePlannerEmails } from "../planner-identity.js";
 import { isStubOperatorAnswer } from "../interrogate/answers.js";
-import { interrogationSha256 } from "../interrogate/findings.js";
+import { interrogationSha256 } from "#core/interrogation.js";
 import { isLegislativeStub } from "../missions/formatter.js";
 import { missionHasRunRecord } from "./verify-run-record.js";
 import { findPlannerStamp } from "../git/git-proof.js";
-import type { Manifest, ParsedMission } from "../types.js";
+import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import { normalizeRepoRelativePath, pathRiskTier } from "../tmvc-path.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";

@@ -1,6 +1,6 @@
 import { runBreakGlassAuditFlow } from "../break-glass.js";
 import { toPosixRel } from "../cli-io.js";
-import type { Manifest, ParsedMission } from "../types.js";
+import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseResult,
@@ -13,7 +13,7 @@ import {
   normalizeVerifyPhaseFailure,
   type NormalizedVerifyFailure,
 } from "./verify-failure-normalize.js";
-import type { GxtErrorCode } from "../gxt-error-codes.js";
+import type { GxtErrorCode } from "#core/error-codes.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "../kpi-advisory-findings.js";
 import { projectGateFindings } from "./verify-finding-gate-projector.js";
 import {

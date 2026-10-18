@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
-import { getRepoRoot, gitRun } from "../lib/git/git.js";
+import { GXT_ERROR } from "#core/error-codes.js";
+import { getRepoRoot, gitRun } from "#git/git.js";
 import { checkMissionDependencies, checkMissionDependency } from "../lib/deps/deps-resolve.js";
-import { depsRefForRepo } from "../lib/deps/deps-slug.js";
-import { buildLedgerEntry, genesisPrevHash } from "../lib/ledger/ledger-entry.js";
-import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "../lib/ledger/ledger-chain.js";
+import { depsRefForRepo } from "#plane/deps-slug.js";
+import { buildLedgerEntry, genesisPrevHash } from "#plane/ledger-entry.js";
+import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "#plane/ledger-chain.js";
 import { evaluateDependenciesPhase } from "../lib/verify/verify-org-phases.js";
 import { runReleaseCheck } from "../commands/deps.js";
 import {

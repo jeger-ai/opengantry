@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { hintsForVerifyPhase } from "../lib/verify/verify-hints.js";
 
 const mission = ".gitagent/missions/MSN-0001.yaml";

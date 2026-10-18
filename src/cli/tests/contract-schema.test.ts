@@ -4,12 +4,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
-import { getRepoRoot } from "../lib/git/git.js";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { getRepoRoot } from "#git/git.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import { computeGaps } from "../lib/interrogate/gaps.js";
 import { loadManifest } from "../lib/manifest.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
-import type { MissionContract } from "../lib/types.js";
+import type { MissionContract } from "#core/mission-types.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 
 const CONTRACT: MissionContract = {

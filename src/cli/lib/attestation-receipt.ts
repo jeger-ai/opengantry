@@ -21,7 +21,7 @@ import { logWarn } from "./cli-io.js";
 import { CLI_NAME, CLI_VERSION } from "./constants.js";
 import { loadGxtConfig, resolveReceiptSignatureTier } from "./gxt-config.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
-import type { ParsedMission } from "./types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 
 export interface BuildAttestationReceiptInput {
   root: string;

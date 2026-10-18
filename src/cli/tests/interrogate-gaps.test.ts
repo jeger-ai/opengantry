@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { loadManifest } from "../lib/manifest.js";
 import { computeGaps } from "../lib/interrogate/gaps.js";
-import { stableFindingId } from "../lib/interrogate/findings.js";
+import { stableFindingId } from "#core/interrogation.js";
 import { writeManifest } from "./test-fixtures.js";
 
 test("computeGaps: non-allowlisted gate yields missing_test_criteria", () => {

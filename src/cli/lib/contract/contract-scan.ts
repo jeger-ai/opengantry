@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "../cli-io.js";
-import { gitRunOk } from "../git/git.js";
-import { GXT_ERROR, type GxtErrorCode } from "../gxt-error-codes.js";
+import { gitRunOk } from "#git/git.js";
+import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { extractImportSites } from "#core/import-scanner.js";
 import { evaluateImportSite, law } from "#core/law.js";
 import { normalizeRepoRelativePath } from "../tmvc-path.js";
-import type { ContractImportViolation, ContractViolationKind, EffectiveScope } from "./contract-types.js";
+import type { ContractImportViolation, ContractViolationKind, EffectiveScope } from "#core/contract-types.js";
 import { classifySpecifier, loadTsconfigPaths, type TsconfigPaths } from "./resolve-specifier.js";
 
 const SOURCE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]);

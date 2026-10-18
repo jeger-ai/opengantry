@@ -1,4 +1,4 @@
-import type { GateAdapterId } from "./gate-adapter-id.js";
+import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { GateExecAdapter } from "./gate-adapter-types.js";
 import { eslintJsonAdapter } from "./eslint-json-adapter.js";
 import { genericSpawnAdapter } from "./generic-spawn-adapter.js";

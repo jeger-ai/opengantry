@@ -2,7 +2,7 @@ import { errorMessage } from "../cli-io.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import { resolveGateWorkDir } from "../gate.js";
 import { evaluateKpiPhase } from "../kpi-engine.js";
-import { msnIdOrDefault, type GateSpec, type KpiFinding, type Manifest, type ParsedMission } from "../types.js";
+import { msnIdOrDefault, type GateSpec, type KpiFinding, type Manifest, type ParsedMission } from "#core/mission-types.js";
 import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows } from "../trace.js";
 import type {
   GateFailure,

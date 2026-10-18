@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ErrorObject, ValidateFunction } from "ajv";
 import YAML from "yaml";
-import { createSchemaValidator } from "./ajv-loader.js";
+import { createSchemaValidator } from "#plane/ajv-loader.js";
 import { REL_KPI_REPORT_SCHEMA } from "./constants.js";
 import { toPosixRel } from "./cli-io.js";
-import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git/git.js";
+import { gitDiffNameOnlySinceCommit, gitRunOk } from "#git/git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
-import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
+import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
 import type { KpiFailure } from "./verify/verify-failure.js";
 

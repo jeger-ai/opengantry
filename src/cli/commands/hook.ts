@@ -8,7 +8,7 @@ import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "../lib/constants.js";
 import { logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundaryAsync } from "../lib/command-boundary.js";
-import { getRepoRoot, gitRunOk } from "../lib/git/git.js";
+import { getRepoRoot, gitRunOk } from "#git/git.js";
 import {
   TMVC_GUARD_STRICT_KEY,
   parsePrePushRefLines,

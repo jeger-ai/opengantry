@@ -8,7 +8,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import { handleProposeContract } from "../lib/mcp/mcp-propose-contract.js";
 import { registerGxtMcpTools } from "../lib/mcp/mcp-tools-register.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";

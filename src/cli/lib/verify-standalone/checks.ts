@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { GantryUserError } from "../errors.js";
-import { withoutGitRepoEnv } from "../git/git.js";
+import { withoutGitRepoEnv } from "#git/git.js";
 import type { VerifyCheck } from "./contract.js";
 
 export type VerifyMode = "full" | "worktree" | "quick";

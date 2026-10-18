@@ -19,7 +19,7 @@ import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/hooks.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
-import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, msnIdOrDefault, type GateAdapterId, type TypedGateAdapterId } from "./lib/types.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, msnIdOrDefault, type GateAdapterId, type TypedGateAdapterId } from "#core/mission-types.js";
 import { getOutputAudience } from "./lib/output-context.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */

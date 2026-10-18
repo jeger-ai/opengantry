@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import { AIDER_TMVC_SCOPE_REL, ensureAiderConfRead, writeAiderTmvcScope } from "../lib/aider-scope.js";
-import { getRepoRoot } from "../lib/git/git.js";
+import { getRepoRoot } from "#git/git.js";
 import {
   TMVC_GUARD_STRICT_KEY,
   installTmvcStrictHook,

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { REL_HISTORY_DIR, REL_MANIFEST } from "./constants.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
-import type { Manifest } from "./types.js";
+import type { Manifest } from "#core/mission-types.js";
 
 export interface StartStateSnapshot {
   captured_at: string;

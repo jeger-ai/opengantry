@@ -7,19 +7,19 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LEDGER_REF } from "../lib/constants.js";
 import { GantryUserError } from "../lib/errors.js";
-import { getRepoRoot, gitRevParse, gitRun } from "../lib/git/git.js";
-import { GXT_ERROR } from "../lib/gxt-error-codes.js";
+import { getRepoRoot, gitRevParse, gitRun } from "#git/git.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 import {
   buildLedgerEntry,
   entryHash,
   genesisPrevHash,
-} from "../lib/ledger/ledger-entry.js";
+} from "#plane/ledger-entry.js";
 import {
   casUpdateLedgerRef,
   commitLedgerEntry,
   readLedgerTip,
   verifyLedgerChain,
-} from "../lib/ledger/ledger-chain.js";
+} from "#plane/ledger-chain.js";
 import { appendLedgerEntry, appendLedgerIfEnabled } from "../lib/ledger/ledger-append.js";
 import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
 import { captureConsole, PLANNER_EMAIL } from "./test-shared.js";

@@ -3,9 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "./cli-io.js";
 import { CLI_NAME } from "./constants.js";
-import { canonicalJson } from "./canonical-json.js";
-import { gitRun } from "./git/git.js";
-import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId, type MissionContract } from "./types.js";
+import { canonicalJson } from "#core/canonical-json.js";
+import { gitRun } from "#git/git.js";
+import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId, type MissionContract } from "#core/mission-types.js";
 import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
@@ -14,7 +14,7 @@ export const DRAFT_TOKEN_TTL_SECONDS_MAX = 1800;
 export const DRAFT_TOKEN_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
 export const DRAFT_TOKEN_REPLAY_REL = ".gitagent/history/.draft-token-replay.json";
 
-import type { InterrogationRow } from "./interrogate/findings.js";
+import type { InterrogationRow } from "#core/interrogation.js";
 
 export interface DraftLegislationPayload {
   v: 2 | 3;
