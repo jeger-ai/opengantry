@@ -9,6 +9,18 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version from this list. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
+## 4.0
+
+- **4.0.0** The major the rewrite record announced: the same commands, flags, exit codes and `GXT_*` error codes; the deprecated names gone; law files in YAML.
+  - **One env prefix.** Every `GXT_*` session variable is `GANTRY_*` (`GXT_TMVC_ROOTS` is `GANTRY_TMVC_ROOTS_ABSOLUTE`); the legacy CLI alias bin, its env and git-config fallbacks and its skill alias are removed (`gantry`, `GANTRY_*`, `gantry.*` only); `verifyMissionAsync` is removed.
+  - **YAML law files.** `gantry init` writes `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`; the 3.x JSON files are still read; `gantry migrate <file>` converts them and `gantry doctor` says when to.
+  - **Machine-written evidence.** `gantry verify --record` writes a run record a rowless mission is verified by; trace rows are optional.
+  - **Hooks and scripts call the CLI.** One-line hook shims (`gantry hook <name>`), `gantry ci …` in CI, the runtime helper scripts removed.
+  - **Structural law.** `gantry arch check` gains `budget`, `owner`, `registry`, `dependency` and `duplicate` rules with a ratcheting baseline; registries under `.gitagent/registry/`.
+  - **Packages.** `core`, `git`, `cage` and `plane` are workspace packages under one `Law` model; zod replaces ajv; one output reporter; a conformance suite freezes the public commands.
+  - **Parked.** The contract drift index, contract preflight, defensive profiles and virtual capture live under `examples/`; `better-sqlite3`, `sqlite-vec`, `ajv` and `ajv-formats` are gone from the dependencies.
+  - **Cage.** Dependency freeze (`dependencies: revert`, `--lock-deps`), scope mode (`allow_only:`, `--allow-only`), `gantry verify --contract` without `.gitagent/`.
+
 ## 3.9
 
 - **3.9.0** Two new cage commands bring the cage to every agent: `gantry cage check` checks commits and `gantry cage watch` asks you about every change to a protected file on disk.

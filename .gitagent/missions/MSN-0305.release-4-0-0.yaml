@@ -1,0 +1,195 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0305]. Executor must not run until the [MSN-0305] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 step 6, the release: v4.0.0 prepared and not tagged. Version 4.0.0 in package.json,
+# the lockfile, the five workspace packages, the compatibility and substrate version templates and this repository's
+# own substrate version file; CHANGELOG upgrade notes from v3.9.0 and current notes; release notes 4.0.0 entry;
+# SECURITY.md 4.x; three re-recorded goldens. No code change.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): the annotated tag v4.0.0 that
+# publishes to npm is the operator's act; the deletion of src/cli/ is deferred until the verify and missions
+# package cycles are decided by an ADR amendment. No trace rows: the evidence is .gitagent/runs/MSN-0305.json
+# written by gantry verify --record (RULES §3).
+msn_id: MSN-0305
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 396c3b28de8e
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3),
+      a release mission. contract.tmvc_roots: docs/CHANGELOG.md,
+      docs/reference/release-notes.md, docs/SECURITY.md, EXECUTOR_LOG.md,
+      .gitagent/foreman/SUBSTRATE.version.json,
+      .gitagent/missions/MSN-0305.release-4-0-0.yaml,
+      .gitagent/runs/MSN-0305.json, package.json, package-lock.json,
+      packages/cage/package.json, packages/core/package.json,
+      packages/git/package.json, packages/opengantry-cage/package.json,
+      packages/plane/package.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json,
+      test/conformance/golden/attest.mission-pass.json,
+      test/conformance/golden/upgrade-plan.fresh-init.json,
+      test/conformance/golden/verify.sarif.mission-pass.json. Version 4.0.0 in
+      package.json, package-lock.json (root and the cage workspace entries,
+      rewritten in place), the five workspace package.json files,
+      templates/integrations/compatibility.json, the SUBSTRATE.version.json
+      template and this repository's own SUBSTRATE.version.json; CHANGELOG
+      upgrade notes from v3.9.0 and current notes; release notes 4.0.0 entry;
+      SECURITY.md 4.x; three re-recorded goldens (attest, verify sarif, upgrade
+      plan print the version). No source file changes. .github/workflows/, the
+      manifest and RULES.md are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are the tests, goldens, templates, scripts, the law
+      files and registries under .gitagent, the baseline, the record and docs;
+      the new module sits in core (policy-pointer-file), the loader and writer
+      in plane (policy-resolve, policy-fetch), the doctor and verify phases in
+      lib, the migrate verb in command and delivery."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is ADR-0052 step 6, the v4.0.0 release
+      preparation: version, upgrade notes, release notes. Operator direction
+      (2026-10-18, continue until everything is done): ADR-0052 step 6 names
+      v4.0.0 as the release that ships the dual-read of v3 files, the gantry
+      upgrade migration and the renames announced for 4.0. This mission prepares
+      the release on main; the annotated tag v4.0.0 that triggers npm publishing
+      is an outward-facing act the operator performs (CHANGELOG, Maintainers).
+      The deletion of src/cli/ the step also names is deferred: verify and
+      missions cannot become packages until their import cycles with the lib
+      modules are untangled, which needs an ADR amendment the operator decides.
+      The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0305.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output formats are unchanged; the version string inside
+      the SARIF tool block, the attestation receipt and the upgrade plan is
+      4.0.0 (three goldens re-recorded).
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3), a release mission. contract.tmvc_roots:
+      docs/CHANGELOG.md, docs/reference/release-notes.md, docs/SECURITY.md,
+      EXECUTOR_LOG.md, .gitagent/foreman/SUBSTRATE.version.json,
+      .gitagent/missions/MSN-0305.release-4-0-0.yaml,
+      .gitagent/runs/MSN-0305.json, package.json, package-lock.json,
+      packages/cage/package.json, packages/core/package.json,
+      packages/git/package.json, packages/opengantry-cage/package.json,
+      packages/plane/package.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json,
+      test/conformance/golden/attest.mission-pass.json,
+      test/conformance/golden/upgrade-plan.fresh-init.json,
+      test/conformance/golden/verify.sarif.mission-pass.json. Version 4.0.0 in
+      package.json, package-lock.json (root and the cage workspace entries,
+      rewritten in place), the five workspace package.json files,
+      templates/integrations/compatibility.json, the SUBSTRATE.version.json
+      template and this repository's own SUBSTRATE.version.json; CHANGELOG
+      upgrade notes from v3.9.0 and current notes; release notes 4.0.0 entry;
+      SECURITY.md 4.x; three re-recorded goldens (attest, verify sarif, upgrade
+      plan print the version). No source file changes. .github/workflows/, the
+      manifest and RULES.md are forbidden. Operator direction (2026-10-18,
+      continue until everything is done): ADR-0052 step 6 names v4.0.0 as the
+      release that ships the dual-read of v3 files, the gantry upgrade migration
+      and the renames announced for 4.0. This mission prepares the release on
+      main; the annotated tag v4.0.0 that triggers npm publishing is an
+      outward-facing act the operator performs (CHANGELOG, Maintainers). The
+      deletion of src/cli/ the step also names is deferred: verify and missions
+      cannot become packages until their import cycles with the lib modules are
+      untangled, which needs an ADR amendment the operator decides. The mission
+      has no trace rows: its evidence is .gitagent/runs/MSN-0305.json written by
+      gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The four YAML migrations shipped; the upgrade notes
+      tell adopters the gantry migrate commands and that the JSON forms are
+      still read.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 85ca115d7d611e15abfa3e0a243db9239368aabb5af6b014b3b63dd66cf5307e
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0305.release-4-0-0.yaml
+  - .gitagent/runs/MSN-0305.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/SECURITY.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/cage/package.json
+  - packages/core/package.json
+  - packages/git/package.json
+  - packages/opengantry-cage/package.json
+  - packages/plane/package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+  - test/conformance/golden/attest.mission-pass.json
+  - test/conformance/golden/upgrade-plan.fresh-init.json
+  - test/conformance/golden/verify.sarif.mission-pass.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - .gitagent/missions/MSN-0305.release-4-0-0.yaml
+    - .gitagent/runs/MSN-0305.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/SECURITY.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/cage/package.json
+    - packages/core/package.json
+    - packages/git/package.json
+    - packages/opengantry-cage/package.json
+    - packages/plane/package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+    - test/conformance/golden/attest.mission-pass.json
+    - test/conformance/golden/upgrade-plan.fresh-init.json
+    - test/conformance/golden/verify.sarif.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.yaml
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+contract_sha256: 4fc7115ff813d2259a0464b79da7de667b01757285b3f076e6f416f5df18ef50

@@ -14,7 +14,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- Substrate law: `MANIFEST.json` `schema_version` **0.5.0**; CLI **3.9.0** (see `package.json`).
+- Substrate law: `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.0** (see `package.json`).
 - **Architecture boundaries:** maintain `TARGET_ARCHITECTURE.yaml` at repo root; run `gantry arch check <files…>` in mission gates.
 - **Verify exports:** `gantry verify --format sarif|junit` for enterprise CI dashboards (`--json` alias unchanged). Diagnostics go to stderr; the document is the only stdout payload. GitHub Code Scanning and GitLab JUnit wiring: [`CI.md`](CI.md).
 - **Typed adapter gates:** `gate_adapter: tsc|eslint` requires a single command. Unquoted `&&`, `||`, `;`, or line breaks fail closed with `GXT_GATE_ADAPTER_MISCONFIG` ([ADR-0041](../.gitagent/out-of-scope/ADR-0041-gate-adapter-routing.md)).
@@ -51,7 +51,28 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### Unreleased (cage dependency freeze, standalone verify contract and cage scope mode — next release after v3.9.0)
+### From v3.9.0 (packages, structural law, one name, YAML law files — v4.0.0)
+
+v4.0.0 is the major ADR-0052 announced: the same commands, flags, exit codes and `GXT_*` error codes, with the renames and removals 3.x had deprecated done, and the law files humans write in YAML. Upgrade:
+
+```bash
+npm install @jeger-ai/opengantry@4          # or: npm install -g @jeger-ai/opengantry@4
+gantry upgrade plan && gantry upgrade apply --mission .gitagent/missions/<MSN>.upgrade-v4.0.0.yaml   # managed assets: hook shims, CI workflow, runtime scripts
+gantry migrate manifest && gantry migrate config && gantry migrate architecture-pointer && gantry migrate policy-pointer   # each only if the 3.x JSON file exists
+gantry doctor
+```
+
+- **Breaking: one env prefix.** Every `GXT_*` environment variable is `GANTRY_*`: `GANTRY_REPO_ROOT`, `GANTRY_MISSION_FILE`, `GANTRY_MSN_ID`, `GANTRY_SKILL_KEY`, `GANTRY_FORBIDDEN_ZONES`, `GANTRY_ALLOWED_IMPORTS`, `GANTRY_BANNED_IMPORTS`, `GANTRY_EXECUTOR_LOG`, `GANTRY_LAST_ERROR_FILE`, `GANTRY_AUDIENCE`, `GANTRY_BYPASS_SECRET`, `GANTRY_MSN_SCAN_DEPTH`, `GANTRY_REQUIRE_INTERROGATION`, `GANTRY_TMVC_GUARD_STRICT`; `GXT_TMVC_ROOTS` is `GANTRY_TMVC_ROOTS_ABSOLUTE` (`GANTRY_TMVC_ROOTS` keeps its repository-relative list). Scripts and agent instructions that read the old names must switch; `gantry runtime env` prints the new ones and the shipped Cursor session hook reads them. `GXT_*` error codes are unchanged.
+- **Breaking: the `gapman` names are gone.** The `gapman` bin, the `GAPMAN_*` env and `gapman.*` git config fallbacks and the `gapman` skill-key alias are removed (`gantry`, `GANTRY_*`, `gantry.*`); the strict pre-commit flag is `gantry.tmvcGuardStrict`. The deprecated kernel export `verifyMissionAsync` is removed; `verifyMission` stays.
+- **Breaking: law files are YAML.** `gantry init` writes `.gitagent/foreman/MANIFEST.yaml`, `.gitagent/config.yaml`, `.gitagent/ARCHITECTURE.pointer.yaml` and `.gitagent/foreman/POLICY.pointer.yaml`. The 3.x JSON files are still read when the YAML form is absent; both present and different fails closed (`GXT_LAW_FILE_AMBIGUOUS`). `gantry migrate <file>` converts each deterministically and `gantry doctor` warns until it is done.
+- **Breaking: parked features.** The contract drift index, the contract preflight (`gantry contract preflight`, `gxt_preflight_contract`), defensive profiles and virtual capture left the CLI (ADR-0052 A10); their code lives under `examples/`. `better-sqlite3`, `sqlite-vec`, `ajv` and `ajv-formats` are no longer dependencies.
+- **Evidence is machine-written.** A mission with no `trace_rows` is verified by its run record `.gitagent/runs/<MSN>.json`, written by `gantry verify --record` on the tree it ran on (RULES §3). Trace rows in mission YAML are still read for 3.x missions and no longer required.
+- **Hooks and scripts call the CLI.** Each git hook is one line, `gantry hook <name>`; the pre-push hook reads the ref lines git passes. `scripts/validate-gxt.sh`, `verify-pr-missions.sh`, `gxt-manifest-lib.mjs`, `gxt-resolve-mission.sh`, `gxt-pin-mission.sh` and `gxt-cursor-env.sh` are gone; CI and the runtime helpers call `gantry ci …`, `gantry runtime env` and `gantry pin`. `gantry upgrade apply` installs the new shims.
+- **Structure under law.** This repository (and any adopter who wants it) runs `gantry arch check` with `budget`, `owner`, `registry`, `dependency` and `duplicate` rules in `TARGET_ARCHITECTURE.yaml` 0.4.0, against a committed `ARCH_BASELINE.json` that only `--ratchet` moves; registries under `.gitagent/registry/` make a new error code, env name, subcommand, MCP tool or dependency a Planner edit.
+- **Also new:** `gantry ci msn-range|verify-missions|trusted-automation|upgrade-tmp`, `gantry migrate …`, one reporter for human, `--json`, SARIF and JUnit output with `--audience` as a presenter parameter, zod schemas with the YAML JSON-Schema files generated from them, a conformance suite the published commands must pass byte for byte.
+- **Unchanged:** the cage trust model and the diff check, the org policy floor, the ledger, receipts, exit `3` and `4` for the cage, `verifyMission`.
+
+#### The unreleased 3.9 line, now part of 4.0.0 (cage dependency freeze, standalone verify contract and cage scope mode)
 
 - **New, opt-in:** `.cage.yaml` top-level `dependencies: revert`, or `--lock-deps` on `gantry cage -- <cmd>` / `gantry-cage`, `gantry cage watch` and `gantry cage check`, freezes dependencies. Lockfiles become restore-rule paths, and a new built-in `dependency_manifest` rule covers `package.json`, `pyproject.toml`, `Pipfile`, `requirements*.txt`, `Cargo.toml`, `go.mod`, `Gemfile` and `composer.json` at any depth, except under a `vendor/` directory (vendored install output). Without either, nothing changes: lockfiles are listed and kept, manifests are not protected (MSN-0275, [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 9).
 - **Only tightens:** `dependencies: report` is the default; `mode: report` on a frozen path is refused (`GXT_CAGE_CONFIG_INVALID`). `--allow-override <path>` still relaxes one frozen path for one session run, announced. `cage check` reads the setting from the base commit; `--lock-deps` adds to it.
