@@ -1,0 +1,256 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0283]. Executor must not run until the [MSN-0283] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 2b. The cage runtime moves from src/cli/lib/cage to packages/cage
+# (private package, #cage/* imports) and imports only #core and #git. The path helpers toPosixRel, fromPosix,
+# formatRepoRelative and repoAbsPath move to packages/core/src/posix-path.ts (cli-io re-exports them), so core may use
+# node:path but still no fs, child_process, os, net or http. The slim @jeger-ai/opengantry-cage bundle moves to
+# dist/packages/cage/src next to its dist/cli/index.js bin, and the push guard resolves the bin as
+# ../../../cli/index.js from the cage module in both packages. CLI output unchanged, no new dependency.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): step 2b as ADR-0052 step 2
+# requires; no barrel index.ts because two cage modules export the same names (per-module #cage imports).
+#
+# DoD 1 (package): packages/cage with package.json (private, no dependencies), tsconfig.json (composite, outDir
+#        dist/packages/cage, paths for #core and #git, references core and git) and the 15 modules git mv'd from
+#        src/cli/lib/cage (cage-check, cage-config, cage-journal, cage-process, cage-push-guard, cage-report,
+#        cage-revert, cage-rules, cage-run, cage-scope, cage-snapshot, cage-suggest, cage-watch-decisions,
+#        cage-watch-run, cage-watch); src/cli/lib/cage/ no longer exists; no cage module imports ../ or src/cli:
+#        errors -> #core/user-error.js, git -> #git/git.js, constants -> #core/constants.js, manifest shape ->
+#        #core/manifest.js (cage-rules reads MANIFEST.json itself and validates it), Manifest type ->
+#        #core/manifest.js, toPosixRel -> #core/posix-path.js.
+# DoD 2 (core): packages/core/src/posix-path.ts holds toPosixRel, fromPosix, formatRepoRelative and repoAbsPath
+#        (moved from src/cli/lib/cli-io.ts, which re-exports them); core index exports it; core imports node:path
+#        and nothing else from node:.
+# DoD 3 (wiring): root package.json imports maps #cage/* to ./dist/packages/cage/src/*; tsconfig.json references
+#        packages/cage; src/cli/commands/cage.ts and the seven cage tests import #cage/*; tests that spawn a child
+#        importing the journal module use dist/packages/cage/src; prune-dist removes the old dist/cli/lib/cage files.
+# DoD 4 (slim package): packages/opengantry-cage/build.mjs writes the bundle to dist/packages/cage/src/
+#        opengantry-cage.js and the bin dist/cli/index.js imports ../packages/cage/src/opengantry-cage.js;
+#        cage-push-guard.ts resolves the guard entry as ../../../cli/index.js; package-shape and size-budget tests
+#        name the new bundle path; npm run build:cage and npm run test:cage pass (12 tests); the bundle stays under
+#        the size budget and depends on commander only.
+# DoD 5 (law): TARGET_ARCHITECTURE.yaml scan_roots add packages/cage/**, layer cage (packages/cage/src/**), rules
+#        RULE-CAGE-NO-LIB-LAYER, RULE-CAGE-NO-COMMAND-LAYER, RULE-CAGE-NO-DELIVERY-LAYER; RULE-CORE-NO-NODE-IO is
+#        replaced by RULE-CORE-NO-FS, RULE-CORE-NO-CHILD-PROCESS, RULE-CORE-NO-OS, RULE-CORE-NO-NET and
+#        RULE-CORE-NO-HTTP; gantry arch check over src/cli and every package OK; ARCH_BASELINE.json regenerated
+#        with a cage row and a smaller lib row, --check OK, byte-identical at its recorded commit.
+# DoD 6 (behaviour): conformance suite 84 pass, 0 fail, 1 skipped, no golden file changed (the cage goldens
+#        byte-identical); all unit tests pass; test:packages passes.
+# DoD 7 (docs): docs/ARCHITECTURE.md cage row and import rules, docs/DEVELOPMENT.md package table,
+#        docs/CHANGELOG.md substrate note and Unreleased bullet.
+# DoD 8 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK); git diff --name-only origin/main...HEAD
+#        lists only paths under contract.tmvc_roots.
+msn_id: MSN-0283
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "2"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "3"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "4"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "5"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "6"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "7"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+  - dod_id: "8"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
+interrogation:
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml keeps schema 0.3.0; it gains
+      scan_root packages/cage/**, layer cage and three downward-only rules (cage
+      imports no lib, command or delivery module); RULE-CORE-NO-NODE-IO is
+      replaced by five rules forbidding node:fs, node:child_process, node:os,
+      node:net and node:http so core may use node:path; other rules unchanged to
+      src/cli/index.ts, src/cli/program*.ts, src/cli/cage-bin.ts and
+      src/cli/kernel.ts so every src/cli file has a layer and the baseline can
+      count per layer. gantry arch check on the full tree must pass unchanged
+      (DoD 3).
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage rules, modes, caps, scope
+      mode and push guard behave exactly as before; only the module location
+      changes and the conformance cage goldens must stay byte-identical.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0050 unchanged. gantry cage check keeps its rules,
+      exit codes and gantry.cage-check.v1 report; the conformance cage-check
+      goldens must stay byte-identical.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. No depends_on is declared; this mission has no
+      cross-repository dependency.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path is added; the suite and the baseline
+      generator are offline.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. The conformance suite records gantry verify --format
+      sarif and --format junit golden outputs for the mission-pass fixture as
+      part of the v3.9 contract; nothing about the export formats changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0283.cage-package.yaml, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, TARGET_ARCHITECTURE.yaml, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, package.json, packages/cage/,
+      packages/core/src/index.ts, packages/core/src/posix-path.ts,
+      packages/opengantry-cage/build.mjs, packages/opengantry-cage/src/entry.ts,
+      packages/opengantry-cage/README.md,
+      packages/opengantry-cage/tests/package-shape.test.mjs,
+      packages/opengantry-cage/tests/size-budget.test.mjs,
+      src/cli/commands/cage.ts, src/cli/lib/cage/, src/cli/lib/cli-io.ts,
+      src/cli/tests/cage-check.test.ts, src/cli/tests/cage-scope.test.ts,
+      src/cli/tests/cage-suggest.test.ts,
+      src/cli/tests/cage-symlink-root.test.ts,
+      src/cli/tests/cage-watch-decisions.test.ts,
+      src/cli/tests/cage-watch.test.ts, src/cli/tests/cage.test.ts,
+      tsconfig.json. src/cli/lib/cage/ is listed for its deletion (15 modules
+      git mv to packages/cage/src); src/cli/commands/cage.ts and the seven cage
+      tests only change their import specifiers to #cage/*; cli-io.ts re-exports
+      the path helpers from #core/posix-path.js. .gitagent/foreman/, RULES.md,
+      .gitagent/registry/, templates/ and .github/workflows/ are forbidden.
+      Operator direction (2026-10-18, continue until everything is done): step
+      2b ports the cage onto core and git as ADR-0052 step 2 requires; the push
+      guard keeps module-relative resolution of dist/cli/index.js (now
+      ../../../cli/index.js) and the slim bundle moves to the same relative
+      layout, so the cage session hook works in both packages; core may import
+      node:path (pure path arithmetic) but not fs, child_process, os, net or
+      http."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: "Accept. Registries are Level-2 and Level-1 artifacts: a new
+      error code, env name, subcommand, MCP tool or dependency becomes a Planner
+      edit under .gitagent/registry/, which this mission makes a forbidden zone
+      of the gantry skill; no new flight level or role is introduced."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+interrogation_sha256: 84cc39351f82a348fe0e4deeb44e333d5011dface068d56efe1f01f782a38286
+declared_paths:
+  - .gitagent/missions/MSN-0283.cage-package.yaml ARCH_BASELINE.json
+    EXECUTOR_LOG.md TARGET_ARCHITECTURE.yaml docs/ARCHITECTURE.md
+    docs/CHANGELOG.md docs/DEVELOPMENT.md package.json packages/cage/
+    packages/core/src/index.ts packages/core/src/posix-path.ts
+    packages/opengantry-cage/build.mjs packages/opengantry-cage/src/entry.ts
+    packages/opengantry-cage/README.md
+    packages/opengantry-cage/tests/package-shape.test.mjs
+    packages/opengantry-cage/tests/size-budget.test.mjs src/cli/commands/cage.ts
+    src/cli/lib/cage/ src/cli/lib/cli-io.ts src/cli/tests/cage-check.test.ts
+    src/cli/tests/cage-scope.test.ts src/cli/tests/cage-suggest.test.ts
+    src/cli/tests/cage-symlink-root.test.ts
+    src/cli/tests/cage-watch-decisions.test.ts src/cli/tests/cage-watch.test.ts
+    src/cli/tests/cage.test.ts tsconfig.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0283.cage-package.yaml
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - package.json
+    - packages/cage/
+    - packages/core/src/index.ts
+    - packages/core/src/posix-path.ts
+    - packages/opengantry-cage/README.md
+    - packages/opengantry-cage/build.mjs
+    - packages/opengantry-cage/src/entry.ts
+    - packages/opengantry-cage/tests/package-shape.test.mjs
+    - packages/opengantry-cage/tests/size-budget.test.mjs
+    - src/cli/commands/cage.ts
+    - src/cli/lib/cage/
+    - src/cli/lib/cli-io.ts
+    - src/cli/tests/cage-check.test.ts
+    - src/cli/tests/cage-scope.test.ts
+    - src/cli/tests/cage-suggest.test.ts
+    - src/cli/tests/cage-symlink-root.test.ts
+    - src/cli/tests/cage-watch-decisions.test.ts
+    - src/cli/tests/cage-watch.test.ts
+    - src/cli/tests/cage.test.ts
+    - tsconfig.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/
+    - .github/workflows/
+    - templates/
+contract_sha256: c0056453cf2658456de1287456494c510b45000e00231418e9c2d33fe15ea277
