@@ -1,5 +1,5 @@
 import { logInfo, setExitCode } from "../lib/cli-io.js";
-import { enterDocumentStdout, leaveDocumentStdout } from "../lib/output-context.js";
+import { Reporter, currentReporter, withReporter } from "../lib/reporter.js";
 import { initFailurePayload } from "../lib/verify/verify-payload.js";
 import { emitVerifyDocument } from "../lib/verify/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify/verify-options.js";
@@ -109,9 +109,9 @@ function recordVerifyAttempt(root: string, options: VerifyOptions, ok: boolean, 
 }
 
 export async function runVerify(options: VerifyOptions): Promise<void> {
-  const structured = structuredVerifyOutput(options);
-  if (structured) enterDocumentStdout();
-  try {
+  const outer = currentReporter();
+  const reporter = structuredVerifyOutput(options) ? Reporter.forVerify(options) : outer;
+  await withReporter(reporter, async () => {
     try {
       assertVerifyOptionsCompatible(options);
     } catch (e) {
@@ -138,7 +138,5 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
     } catch (e) {
       reportVerifyBoundaryError(e, options);
     }
-  } finally {
-    if (structured) leaveDocumentStdout();
-  }
+  });
 }

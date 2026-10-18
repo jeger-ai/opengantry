@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { findBannedImportsInFolder } from "../lib/ast-discovery.js";
 import { logError, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
@@ -12,7 +13,7 @@ export interface CheckImportsOptions {
 export function runCheckImports(options: CheckImportsOptions): void {
   if (options.ban.length === 0) {
     logError("gantry check-imports: provide at least one --ban specifier");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
 
@@ -22,7 +23,7 @@ export function runCheckImports(options: CheckImportsOptions): void {
 
     if (options.json) {
       emitCliJson({ ok: violations.length === 0, violations });
-      if (violations.length > 0) setExitCode(1);
+      if (violations.length > 0) setExitCode(EXIT_CODE.FAILURE);
       return;
     }
 
@@ -34,6 +35,6 @@ export function runCheckImports(options: CheckImportsOptions): void {
     for (const v of violations) {
       process.stderr.write(`${v.file}: banned import "${v.specifier}"\n`);
     }
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
   });
 }

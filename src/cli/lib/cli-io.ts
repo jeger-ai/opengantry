@@ -1,42 +1,25 @@
-import { CLI_NAME } from "./constants.js";
-import { isDocumentStdout, shouldEmitError, shouldEmitInfo, shouldEmitWarn } from "./output-context.js";
+import { currentReporter } from "./reporter.js";
 
-/** Pipeline payload. Uses `console.log` so it stays off the diagnostic `logInfo` path. */
+/** Pipeline payload: stdout through the current reporter. */
 export function writeStdout(document: string): void {
-  console.log(document);
+  currentReporter().document(document);
 }
 
 export function logInfo(message: string): void {
-  if (isDocumentStdout()) {
-    console.error(message);
-    return;
-  }
-  if (!shouldEmitInfo()) return;
-  console.log(message);
+  currentReporter().info(message);
 }
 
 export function logWarn(message: string): void {
-  if (!shouldEmitWarn()) return;
-  console.error(`${CLI_NAME}: warning: ${message}`);
+  currentReporter().warn(message);
 }
 
 export function logError(message: string): void {
-  if (!shouldEmitError(message)) return;
-  console.error(`${CLI_NAME}: ${message}`);
+  currentReporter().error(message);
 }
 
 /** Red stderr for existing managed-asset conflicts (respects NO_COLOR). */
 export function logManagedAssetConflicts(conflicts: string[]): void {
-  if (!shouldEmitWarn()) return;
-  const useColor = process.env.NO_COLOR === undefined;
-  const red = useColor ? "\x1b[31m" : "";
-  const reset = useColor ? "\x1b[0m" : "";
-  console.error(
-    `${red}${CLI_NAME}: warning: managed files already exist and differ from templates:${reset}`,
-  );
-  for (const rel of conflicts) {
-    console.error(`${red}  - ${rel}${reset}`);
-  }
+  currentReporter().managedAssetConflicts(conflicts);
 }
 
 export { toPosixRel, fromPosix, formatRepoRelative, repoAbsPath } from "#core/posix-path.js";

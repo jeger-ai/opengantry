@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
@@ -39,7 +40,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
           console.log(JSON.stringify(result, null, 2));
         }
         if (result.status === "blocked") {
-          setExitCode(2);
+          setExitCode(EXIT_CODE.USAGE);
         }
       })
       .catch((e) => {
@@ -63,7 +64,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
 
     if (result.status === "downgrade_blocked") {
       logError(result.message ?? "downgrade blocked");
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return;
     }
 
@@ -86,9 +87,9 @@ function handleUpgradeError(e: unknown, json?: boolean): void {
     const payload = { error: e.code, message: e.message, hint: e.hint };
     if (json) console.log(JSON.stringify(payload, null, 2));
     else logError(e.message + (e.hint ? `\nFix: ${e.hint}` : ""));
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
   logError(errorMessage(e));
-  setExitCode(2);
+  setExitCode(EXIT_CODE.USAGE);
 }

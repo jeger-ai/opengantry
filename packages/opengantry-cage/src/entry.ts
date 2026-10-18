@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { CLI_VERSION } from "../../../src/cli/lib/constants.js";
 import { reportUserFacingError } from "../../../src/cli/lib/errors.js";
-import { resetOutputContext } from "../../../src/cli/lib/output-context.js";
+import { resetReporter } from "../../../src/cli/lib/reporter.js";
 import { configureCageCommand, registerCageCommands } from "../../../src/cli/program-cage.js";
 
 /**
@@ -13,7 +13,7 @@ import { configureCageCommand, registerCageCommands } from "../../../src/cli/pro
  * (see packages/cage/src/cage-push-guard.ts). In the full package that file is the gantry CLI; here the
  * same path is the package bin, so the guard subcommand is served from this entry too.
  */
-resetOutputContext();
+resetReporter();
 
 const argv = process.argv;
 const program =

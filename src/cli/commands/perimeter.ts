@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { checkPerimeter } from "../lib/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary } from "../lib/command-boundary.js";
@@ -32,7 +33,7 @@ export function runPerimeter(options: PerimeterOptions): void {
 
     if (options.json) {
       process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-      if (!result.ok) setExitCode(1);
+      if (!result.ok) setExitCode(EXIT_CODE.FAILURE);
       return;
     }
 
@@ -46,7 +47,7 @@ export function runPerimeter(options: PerimeterOptions): void {
     }
 
     if (hard.length > 0) {
-      setExitCode(1);
+      setExitCode(EXIT_CODE.FAILURE);
       return;
     }
 

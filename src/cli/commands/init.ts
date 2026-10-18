@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER, REL_MANIFEST } from "../lib/constants.js";
@@ -128,7 +129,7 @@ function validateInitProfile(
   for (const id of profile.ides) {
     if (!isIntegrationIdeKey(id) || !compat.integrations[id]) {
       logError(`init: unknown IDE key: ${id}`);
-      setExitCode(2);
+      setExitCode(EXIT_CODE.USAGE);
       return false;
     }
   }
@@ -146,7 +147,7 @@ async function resolveInitAssetPlan(
   let force = options.force === true;
   let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
   if (!plan.ok) {
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return null;
   }
   if (plan.conflicts.length === 0) {
@@ -160,7 +161,7 @@ async function resolveInitAssetPlan(
   );
   if (!canPromptInitOverwrite(options)) {
     logError("pass --force to overwrite without prompting");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return null;
   }
 
@@ -173,7 +174,7 @@ async function resolveInitAssetPlan(
   force = true;
   plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
   if (!plan.ok) {
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return null;
   }
   return { plan, force };
@@ -237,7 +238,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   }
   const profile = await resolveProfile(options, repoRoot, templatesRoot);
   if (!profile) {
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
   if (!validateInitProfile(profile, repoRoot, compat)) return;

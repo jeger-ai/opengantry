@@ -14,7 +14,7 @@ import {
   type RemediationSnapshot,
 } from "../lib/context-feed-store.js";
 import { runContextFeed } from "../commands/context-feed.js";
-import { resetOutputContext } from "../lib/output-context.js";
+import { resetReporter } from "../lib/reporter.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
@@ -151,7 +151,7 @@ test("context-feed command: json empty and clear", () => {
     return origWrite(chunk as never, ...(args as never[]));
   }) as typeof process.stdout.write;
   try {
-    resetOutputContext();
+    resetReporter();
     runContextFeed({ json: true });
     assert.match(chunks.at(-1) ?? "", /"status": "empty"/);
     writeRemediationSnapshot(root, sampleSnapshot({ message: "from cmd" }));

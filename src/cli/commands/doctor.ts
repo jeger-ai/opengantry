@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logInfo, setExitCode, errorMessage } from "../lib/cli-io.js";
 import { emitCliJson } from "../lib/command-boundary.js";
 import {
@@ -45,7 +46,7 @@ function emitDoctor(
       logInfo(`Next: ${nextStep}`);
     }
   }
-  if (hasFail) setExitCode(1);
+  if (hasFail) setExitCode(EXIT_CODE.FAILURE);
 }
 
 export function runDoctor(options: DoctorOptions = {}): void {

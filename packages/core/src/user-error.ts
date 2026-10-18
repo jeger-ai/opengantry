@@ -1,4 +1,5 @@
 import { gxtCodeFromGantryUserError } from "./error-codes.js";
+import { EXIT_CODE } from "./exit-codes.js";
 
 /** Expected policy / validation failure — never print a stack at the CLI boundary. */
 export class GantryUserError extends Error {
@@ -6,7 +7,7 @@ export class GantryUserError extends Error {
     readonly code: string,
     message: string,
     readonly hint?: string,
-    readonly exitCode = 1,
+    readonly exitCode: number = EXIT_CODE.FAILURE,
   ) {
     super(message);
     this.name = "GantryUserError";

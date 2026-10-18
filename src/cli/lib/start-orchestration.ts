@@ -17,7 +17,7 @@ import {
   type AudienceNextStep,
   type OutputAudience,
 } from "./audience-output.js";
-import { getOutputAudience } from "./output-context.js";
+import { currentReporter } from "./reporter.js";
 import { loadWorkspace } from "./workspace.js";
 
 export interface StartOptions {
@@ -272,7 +272,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const scaffold = scaffoldStartMission(root, manifest, options, msnId, resolvedSkillKey, triage);
   if ("ok" in scaffold) return scaffold;
 
-  const audience = options.audience ?? getOutputAudience();
+  const audience = options.audience ?? currentReporter().audience;
   const tagged = buildTaggedNextSteps(scaffold.missionRel, msnId);
   const filtered = formatTaggedStepsForAudience(tagged, audience);
   const section = audienceSectionTitle(audience);

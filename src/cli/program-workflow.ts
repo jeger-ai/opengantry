@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
@@ -20,7 +21,7 @@ import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";
 import { errorMessage, logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
 import { GATE_ADAPTER_IDS, type GateAdapterId } from "#core/mission-types.js";
-import { getOutputAudience } from "./lib/output-context.js";
+import { currentReporter } from "./lib/reporter.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
 type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths" | "contract"> & {
@@ -142,7 +143,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     breakGlassReason: opts.reason,
     breakGlassCommit: opts.commit,
     fixNonInteractive: opts.nonInteractive,
-    audience: getOutputAudience(),
+    audience: currentReporter().audience,
     receipt: opts.receipt,
     signReceipt: opts.signReceipt,
     exportPath: opts.export,
@@ -186,7 +187,7 @@ function registerLegislateCommand(program: Command): void {
       text = await readStdinIfEmpty(text);
       if (!text) {
         logError("legislate: provide intent text or pipe stdin");
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       const mapped = mapLegislateCommanderOptions(options, text);
@@ -225,7 +226,7 @@ function registerInterrogateCommand(program: Command): void {
       text = await readStdinIfEmpty(text);
       if (!text) {
         logError("interrogate: provide intent text or pipe stdin");
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       runInterrogateCommand(mapInterrogateCommanderOptions(options, text));

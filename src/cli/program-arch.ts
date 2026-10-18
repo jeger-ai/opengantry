@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import type { Command } from "commander";
 import { logError, setExitCode, errorMessage } from "./lib/cli-io.js";
 import { parseArchitectureCredentialKind, type ArchitectureCredentialKind } from "./lib/arch/external/architecture-credential.js";
@@ -60,7 +61,7 @@ export function registerArchCommands(program: Command): void {
         kind = parseArchitectureCredentialKind(opts.kind);
       } catch (e) {
         logError(errorMessage(e));
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       await runArchCredSet({ slot: opts.slot, kind });

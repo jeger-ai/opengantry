@@ -2,6 +2,7 @@
  * `gantry hook <name>` (ADR-0052 A8): the tracked `.githooks/*` scripts are one-line shims that call these, so the
  * hook logic lives in the CLI, is tested like any command, and the pre-push hook reads the ref lines git passes.
  */
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -77,7 +78,7 @@ export async function runHookPreCommit(): Promise<void> {
       logInfo(`pre-commit: ${CLI_NAME} contract check --mission ${mission} (advisory, ${String(staged.length)} staged source file(s))`);
       advisory(() => runContractCheck({ mission, files: staged }));
     }
-    if (blocked) setExitCode(1);
+    if (blocked) setExitCode(EXIT_CODE.FAILURE);
   });
 }
 

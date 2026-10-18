@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { GantryUserError } from "../lib/errors.js";
 import { runUserCommand } from "../lib/command-boundary.js";
@@ -59,7 +60,7 @@ export function runInterrogateCommand(options: InterrogateCliOptions): void {
           ? { msn_id: options.msn.trim(), ...result }
           : result;
       writeStdout(JSON.stringify(payload, null, 2));
-      if (result.status === "halt") setExitCode(2);
+      if (result.status === "halt") setExitCode(EXIT_CODE.USAGE);
       return;
     }
 
@@ -74,6 +75,6 @@ export function runInterrogateCommand(options: InterrogateCliOptions): void {
     logInfo(`question: ${result.next_question.question}`);
     logInfo(`hypothesis: ${result.next_question.hypothesis}`);
     logInfo(`evidence:\n${result.next_question.evidence}`);
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
   });
 }

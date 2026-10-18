@@ -1,0 +1,350 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0298]. Executor must not run until the [MSN-0298] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 A7, one output layer. src/cli/lib/reporter.ts is the Reporter: modes human, json,
+# sarif and junit; the document on stdout, diagnostics on stderr; --audience a presenter parameter. cli-io delegates
+# to the current reporter. src/cli/program-reporter-hook.ts builds one reporter per run from --audience, --json and
+# --format and restores the previous one afterwards, also when the action throws; the AsyncLocalStorage scope,
+# output-context.ts, command-reporter.ts and program-audience-hook.ts are deleted. packages/core/src/exit-codes.ts
+# is the exit-code table (OK 0, FAILURE 1, USAGE 2); every setExitCode(1|2) literal uses it. Tests, docs, baseline
+# raised for core and command. Output, exit codes and the conformance goldens are unchanged.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): in human mode the report is the
+# document, so info lines stay on stdout as in 3.9; in a structured mode stdout carries only the document. No trace
+# rows: the evidence is .gitagent/runs/MSN-0298.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0298
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is ADR-0052 A7 (one output layer): the
+      Reporter with four modes, the exit-code table in core, the
+      AsyncLocalStorage hook and the global output context removed;
+      ARCH_BASELINE.json is raised for core and command with --ratchet
+      --allow-raise. Operator direction (2026-10-18, continue until everything
+      is done): ADR-0052 A7 as decided, with one reading made explicit: in human
+      mode the report is the document, so info lines stay on stdout as in 3.9
+      (moving them to stderr would change every human golden and every script
+      that reads gantry's stdout); in a structured mode stdout carries only the
+      document. The per-file lint rules the ADR mentions no longer existed in
+      eslint.config.js; nothing to remove there. The mission has no trace rows:
+      its evidence is .gitagent/runs/MSN-0298.json written by gantry verify
+      --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. The verify output formats (human, --json, --format
+      sarif|junit) and their documents are unchanged; the SARIF and JUnit
+      builders stay in verify-export.ts; only the reporter that routes
+      diagnostics changed, and the conformance goldens prove the bytes are the
+      same.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      packages/core/src/index.ts, packages/core/src/user-error.ts,
+      packages/opengantry-cage/src/entry.ts, src/cli/cage-bin.ts,
+      src/cli/commands/arch.ts, src/cli/commands/blueprint.ts,
+      src/cli/commands/cage.ts, src/cli/commands/check-imports.ts,
+      src/cli/commands/check.ts, src/cli/commands/ci.ts,
+      src/cli/commands/context-request.ts, src/cli/commands/contract.ts,
+      src/cli/commands/deps.ts, src/cli/commands/doctor.ts,
+      src/cli/commands/events-push.ts, src/cli/commands/hook.ts,
+      src/cli/commands/hooks.ts, src/cli/commands/init.ts,
+      src/cli/commands/interrogate.ts, src/cli/commands/mission.ts,
+      src/cli/commands/onboarding.ts, src/cli/commands/perimeter.ts,
+      src/cli/commands/planner.ts, src/cli/commands/register.ts,
+      src/cli/commands/runtime.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/commands/triage.ts, src/cli/commands/upgrade.ts,
+      src/cli/commands/verify-contract.ts, src/cli/commands/verify.ts,
+      src/cli/index.ts, src/cli/lib/cli-io.ts, src/cli/lib/command-boundary.ts,
+      src/cli/lib/command-reporter.ts, src/cli/lib/errors.ts,
+      src/cli/lib/init/init-plan.ts, src/cli/lib/init/init-tutorial.ts,
+      src/cli/lib/output-context.ts, src/cli/lib/start-orchestration.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/program-arch.ts,
+      src/cli/program-audience-hook.ts, src/cli/program-core.ts,
+      src/cli/program-mission.ts, src/cli/program-workflow.ts,
+      src/cli/program.ts, src/cli/tests/context-feed.test.ts,
+      src/cli/tests/document-stdout-hook.test.ts,
+      src/cli/tests/output-context.test.ts,
+      src/cli/tests/verify-format-cli.test.ts, packages/core/src/exit-codes.ts,
+      src/cli/lib/reporter.ts, src/cli/program-reporter-hook.ts,
+      src/cli/tests/reporter.test.ts,
+      .gitagent/missions/MSN-0298.one-output-layer.yaml,
+      .gitagent/runs/MSN-0298.json. src/cli/lib/reporter.ts (Reporter: mode
+      human|json|sarif|junit, audience; document to stdout; info, warn, error,
+      fixHint; report-only emitInfo/emitError/emitFixHint and the verify
+      presentations; currentReporter, setCurrentReporter, resetReporter,
+      withReporter, reporterFromArgv) replaces src/cli/lib/output-context.ts and
+      src/cli/lib/command-reporter.ts; cli-io delegates to the current reporter;
+      src/cli/program-reporter-hook.ts (no AsyncLocalStorage; a stack of
+      previous reporters restored in postAction and in a parse finally) replaces
+      src/cli/program-audience-hook.ts; commands/verify.ts runs under
+      Reporter.forVerify when --json or --format is set; consumers (index,
+      cage-bin, the slim cage entry, program-core, program-workflow, init-plan,
+      start-orchestration, verify-presenters) use the reporter;
+      packages/core/src/exit-codes.ts (EXIT_CODE OK/FAILURE/USAGE, exported from
+      core) and GantryUserError defaulting to it; every setExitCode(1|2) literal
+      in src/cli and the defaults in errors.ts, command-boundary.ts and
+      program.ts use the table; tests reporter.test.ts, document-stdout-hook,
+      verify-format-cli, context-feed; docs; ARCH_BASELINE.json raised for core
+      and command. Output, exit codes and the conformance goldens are unchanged.
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Operator direction (2026-10-18, continue until everything is
+      done): ADR-0052 A7 as decided, with one reading made explicit: in human
+      mode the report is the document, so info lines stay on stdout as in 3.9
+      (moving them to stderr would change every human golden and every script
+      that reads gantry's stdout); in a structured mode stdout carries only the
+      document. The per-file lint rules the ADR mentions no longer existed in
+      eslint.config.js; nothing to remove there. The mission has no trace rows:
+      its evidence is .gitagent/runs/MSN-0298.json written by gantry verify
+      --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: d24a045df13c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, packages/core/src/index.ts,
+      packages/core/src/user-error.ts, packages/opengantry-cage/src/entry.ts,
+      src/cli/cage-bin.ts, src/cli/commands/arch.ts,
+      src/cli/commands/blueprint.ts, src/cli/commands/cage.ts,
+      src/cli/commands/check-imports.ts, src/cli/commands/check.ts,
+      src/cli/commands/ci.ts, src/cli/commands/context-request.ts,
+      src/cli/commands/contract.ts, src/cli/commands/deps.ts,
+      src/cli/commands/doctor.ts, src/cli/commands/events-push.ts,
+      src/cli/commands/hook.ts, src/cli/commands/hooks.ts,
+      src/cli/commands/init.ts, src/cli/commands/interrogate.ts,
+      src/cli/commands/mission.ts, src/cli/commands/onboarding.ts,
+      src/cli/commands/perimeter.ts, src/cli/commands/planner.ts,
+      src/cli/commands/register.ts, src/cli/commands/runtime.ts,
+      src/cli/commands/tmvc-guard.ts, src/cli/commands/triage.ts,
+      src/cli/commands/upgrade.ts, src/cli/commands/verify-contract.ts,
+      src/cli/commands/verify.ts, src/cli/index.ts, src/cli/lib/cli-io.ts,
+      src/cli/lib/command-boundary.ts, src/cli/lib/command-reporter.ts,
+      src/cli/lib/errors.ts, src/cli/lib/init/init-plan.ts,
+      src/cli/lib/init/init-tutorial.ts, src/cli/lib/output-context.ts,
+      src/cli/lib/start-orchestration.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/program-arch.ts,
+      src/cli/program-audience-hook.ts, src/cli/program-core.ts,
+      src/cli/program-mission.ts, src/cli/program-workflow.ts,
+      src/cli/program.ts, src/cli/tests/context-feed.test.ts,
+      src/cli/tests/document-stdout-hook.test.ts,
+      src/cli/tests/output-context.test.ts,
+      src/cli/tests/verify-format-cli.test.ts, packages/core/src/exit-codes.ts,
+      src/cli/lib/reporter.ts, src/cli/program-reporter-hook.ts,
+      src/cli/tests/reporter.test.ts,
+      .gitagent/missions/MSN-0298.one-output-layer.yaml,
+      .gitagent/runs/MSN-0298.json. src/cli/lib/reporter.ts (Reporter: mode
+      human|json|sarif|junit, audience; document to stdout; info, warn, error,
+      fixHint; report-only emitInfo/emitError/emitFixHint and the verify
+      presentations; currentReporter, setCurrentReporter, resetReporter,
+      withReporter, reporterFromArgv) replaces src/cli/lib/output-context.ts and
+      src/cli/lib/command-reporter.ts; cli-io delegates to the current reporter;
+      src/cli/program-reporter-hook.ts (no AsyncLocalStorage; a stack of
+      previous reporters restored in postAction and in a parse finally) replaces
+      src/cli/program-audience-hook.ts; commands/verify.ts runs under
+      Reporter.forVerify when --json or --format is set; consumers (index,
+      cage-bin, the slim cage entry, program-core, program-workflow, init-plan,
+      start-orchestration, verify-presenters) use the reporter;
+      packages/core/src/exit-codes.ts (EXIT_CODE OK/FAILURE/USAGE, exported from
+      core) and GantryUserError defaulting to it; every setExitCode(1|2) literal
+      in src/cli and the defaults in errors.ts, command-boundary.ts and
+      program.ts use the table; tests reporter.test.ts, document-stdout-hook,
+      verify-format-cli, context-feed; docs; ARCH_BASELINE.json raised for core
+      and command. Output, exit codes and the conformance goldens are unchanged.
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Paths outside any TARGET_ARCHITECTURE layer in this mission are
+      the tests, the baseline, the record and docs; exit-codes.ts is the core
+      layer, reporter.ts and cli-io.ts the lib layer, the hook and the commands
+      the command layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged; its JSON
+      document still goes to stdout alone.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract cage, seal and scan are unchanged; verify
+      --contract keeps its JSON document on stdout and its diagnostics on
+      stderr.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config or file format changes; the reporter writes
+      documents to stdout exactly as before and the only JSON it emits is what
+      commands already emitted.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 45e3b4aed7f9ad53a25373b426e85da96deaa7dfde6389ec9df0aacb7c7396f1
+declared_paths:
+  - .gitagent/missions/MSN-0298.one-output-layer.yaml
+  - .gitagent/runs/MSN-0298.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/exit-codes.ts
+  - packages/core/src/index.ts
+  - packages/core/src/user-error.ts
+  - packages/opengantry-cage/src/entry.ts
+  - src/cli/cage-bin.ts
+  - src/cli/commands/arch.ts
+  - src/cli/commands/blueprint.ts
+  - src/cli/commands/cage.ts
+  - src/cli/commands/check-imports.ts
+  - src/cli/commands/check.ts
+  - src/cli/commands/ci.ts
+  - src/cli/commands/context-request.ts
+  - src/cli/commands/contract.ts
+  - src/cli/commands/deps.ts
+  - src/cli/commands/doctor.ts
+  - src/cli/commands/events-push.ts
+  - src/cli/commands/hook.ts
+  - src/cli/commands/hooks.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/interrogate.ts
+  - src/cli/commands/mission.ts
+  - src/cli/commands/onboarding.ts
+  - src/cli/commands/perimeter.ts
+  - src/cli/commands/planner.ts
+  - src/cli/commands/register.ts
+  - src/cli/commands/runtime.ts
+  - src/cli/commands/tmvc-guard.ts
+  - src/cli/commands/triage.ts
+  - src/cli/commands/upgrade.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/commands/verify.ts
+  - src/cli/index.ts
+  - src/cli/lib/cli-io.ts
+  - src/cli/lib/command-boundary.ts
+  - src/cli/lib/command-reporter.ts
+  - src/cli/lib/errors.ts
+  - src/cli/lib/init/init-plan.ts
+  - src/cli/lib/init/init-tutorial.ts
+  - src/cli/lib/output-context.ts
+  - src/cli/lib/reporter.ts
+  - src/cli/lib/start-orchestration.ts
+  - src/cli/lib/verify/verify-presenters.ts
+  - src/cli/program-arch.ts
+  - src/cli/program-audience-hook.ts
+  - src/cli/program-core.ts
+  - src/cli/program-mission.ts
+  - src/cli/program-reporter-hook.ts
+  - src/cli/program-workflow.ts
+  - src/cli/program.ts
+  - src/cli/tests/context-feed.test.ts
+  - src/cli/tests/document-stdout-hook.test.ts
+  - src/cli/tests/output-context.test.ts
+  - src/cli/tests/reporter.test.ts
+  - src/cli/tests/verify-format-cli.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0298.one-output-layer.yaml
+    - .gitagent/runs/MSN-0298.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/exit-codes.ts
+    - packages/core/src/index.ts
+    - packages/core/src/user-error.ts
+    - packages/opengantry-cage/src/entry.ts
+    - src/cli/cage-bin.ts
+    - src/cli/commands/arch.ts
+    - src/cli/commands/blueprint.ts
+    - src/cli/commands/cage.ts
+    - src/cli/commands/check-imports.ts
+    - src/cli/commands/check.ts
+    - src/cli/commands/ci.ts
+    - src/cli/commands/context-request.ts
+    - src/cli/commands/contract.ts
+    - src/cli/commands/deps.ts
+    - src/cli/commands/doctor.ts
+    - src/cli/commands/events-push.ts
+    - src/cli/commands/hook.ts
+    - src/cli/commands/hooks.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/interrogate.ts
+    - src/cli/commands/mission.ts
+    - src/cli/commands/onboarding.ts
+    - src/cli/commands/perimeter.ts
+    - src/cli/commands/planner.ts
+    - src/cli/commands/register.ts
+    - src/cli/commands/runtime.ts
+    - src/cli/commands/tmvc-guard.ts
+    - src/cli/commands/triage.ts
+    - src/cli/commands/upgrade.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/commands/verify.ts
+    - src/cli/index.ts
+    - src/cli/lib/cli-io.ts
+    - src/cli/lib/command-boundary.ts
+    - src/cli/lib/command-reporter.ts
+    - src/cli/lib/errors.ts
+    - src/cli/lib/init/init-plan.ts
+    - src/cli/lib/init/init-tutorial.ts
+    - src/cli/lib/output-context.ts
+    - src/cli/lib/reporter.ts
+    - src/cli/lib/start-orchestration.ts
+    - src/cli/lib/verify/verify-presenters.ts
+    - src/cli/program-arch.ts
+    - src/cli/program-audience-hook.ts
+    - src/cli/program-core.ts
+    - src/cli/program-mission.ts
+    - src/cli/program-reporter-hook.ts
+    - src/cli/program-workflow.ts
+    - src/cli/program.ts
+    - src/cli/tests/context-feed.test.ts
+    - src/cli/tests/document-stdout-hook.test.ts
+    - src/cli/tests/output-context.test.ts
+    - src/cli/tests/reporter.test.ts
+    - src/cli/tests/verify-format-cli.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+contract_sha256: 0d2fee258ef4fc7abe88aa20eb29a9f4f7f0f4eb1f63f2e3e47417a3a244437e

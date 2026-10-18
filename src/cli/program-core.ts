@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
 import { runCheck } from "./commands/check.js";
 import { runInit } from "./commands/init.js";
@@ -20,7 +21,7 @@ import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/h
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import type { StartOptions } from "./lib/start-orchestration.js";
 import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, msnIdOrDefault, type GateAdapterId, type TypedGateAdapterId } from "#core/mission-types.js";
-import { getOutputAudience } from "./lib/output-context.js";
+import { currentReporter } from "./lib/reporter.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */
 type TriageCliOptions = Omit<TriageRunOptions, "text">;
@@ -77,7 +78,7 @@ function registerStatusCommand(program: Command): void {
       runStatus({
         json: opts.json,
         verbose: opts.verbose,
-        audience: getOutputAudience(),
+        audience: currentReporter().audience,
       });
     });
 }
@@ -184,7 +185,7 @@ function registerDoctorCommand(program: Command): void {
       ) => {
         runDoctor({
           json: opts.json,
-          audience: getOutputAudience(),
+          audience: currentReporter().audience,
           policy: opts.policy ?? policyPositional,
           gateAdapter: opts.gateAdapter,
           adapterBaseline: opts.adapterBaseline,
@@ -246,7 +247,7 @@ function registerTriageCommand(program: Command): void {
       text = await readStdinIfEmpty(text);
       if (!text) {
         logError("triage: provide intent text or pipe stdin");
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       runTriage({ ...options, text });
@@ -277,7 +278,7 @@ function registerStartCommand(program: Command): void {
       text = await readStdinIfEmpty(text);
       if (!text) {
         logError("start: provide intent text or pipe stdin");
-        setExitCode(2);
+        setExitCode(EXIT_CODE.USAGE);
         return;
       }
       const { write, gateAdapter, ...startFlags } = options;
@@ -287,7 +288,7 @@ function registerStartCommand(program: Command): void {
         gateAdapter: gateAdapter as GateAdapterId | undefined,
         intent: text,
         writeMission: write !== false,
-        audience: getOutputAudience(),
+        audience: currentReporter().audience,
       });
     });
 }

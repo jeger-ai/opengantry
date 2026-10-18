@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
 import { logError, readStdinIfEmpty, setExitCode } from "../lib/cli-io.js";
@@ -41,7 +42,7 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
   const command = options.command[0] === "--" ? options.command.slice(1) : options.command;
   if (command.length === 0) {
     logError("cage: missing command. Use: gantry cage -- <command...>");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
   const max = parseNonNegativeInt(options.maxFileBytes);
@@ -49,7 +50,7 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
   const contest = parseNonNegativeInt(options.contestLimit);
   if (!max.ok || !interval.ok || interval.value === 0 || !contest.ok) {
     logError("cage: --max-file-bytes and --contest-limit must be non-negative integers and --watch-interval-ms a positive integer");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
 
@@ -101,7 +102,7 @@ export async function runCageGuardPrePush(options: { root: string; plan?: string
     const event = { at: new Date().toISOString(), event: "push_refused", paths: violations };
     fs.appendFileSync(logPath, `${JSON.stringify(event)}\n`);
   }
-  setExitCode(1);
+  setExitCode(EXIT_CODE.FAILURE);
 }
 
 export interface CageSuggestCliOptions {
@@ -174,7 +175,7 @@ export async function runCageWatchCommand(options: CageWatchCliOptions): Promise
   const max = parseNonNegativeInt(options.maxFileBytes);
   if (!timeout.ok || timeout.value === 0 || !interval.ok || interval.value === 0 || !max.ok) {
     logError("cage watch: --decision-timeout and --watch-interval-ms must be positive integers and --max-file-bytes a non-negative integer");
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
   await runUserCommandAsync({ json: options.json }, async () => {

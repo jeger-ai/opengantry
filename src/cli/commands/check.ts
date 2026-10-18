@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "../lib/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { loadWorkspaceWithSkillSync } from "../lib/workspace.js";
@@ -7,7 +8,7 @@ export function runCheck(): void {
   for (const w of skillSync.warnings) logWarn(w);
   if (!skillSync.ok) {
     for (const e of skillSync.errors) logError(e);
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
   logInfo(`${CLI_NAME} check: MANIFEST OK; skills/ in sync (Rule 4.4)`);

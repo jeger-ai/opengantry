@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import { CLI_NAME } from "../lib/constants.js";
@@ -44,7 +45,7 @@ export function runPlannerSet(options: PlannerSetOptions): void {
   const emails = options.emails.flatMap((e) => e.split(",")).map((e) => e.trim()).filter(Boolean);
   if (emails.length === 0) {
     logError(`${CLI_NAME} planner set: provide at least one email`);
-    setExitCode(2);
+    setExitCode(EXIT_CODE.USAGE);
     return;
   }
 

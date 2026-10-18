@@ -1,3 +1,4 @@
+import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import crypto from "node:crypto";
 import { logInfo, logError, setExitCode } from "../lib/cli-io.js";
@@ -108,7 +109,7 @@ export async function runEventsPush(options: EventsPushOptions): Promise<void> {
   const text = await res.text();
   if (!res.ok) {
     logError(`gantry events push: HTTP ${res.status}: ${text}`);
-    setExitCode(1);
+    setExitCode(EXIT_CODE.FAILURE);
     return;
   }
 

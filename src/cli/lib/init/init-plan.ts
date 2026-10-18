@@ -9,7 +9,7 @@ import {
   INIT_TAGGED_NEXT_STEPS,
   type AudienceNextStep,
 } from "../audience-output.js";
-import { getOutputAudience } from "../output-context.js";
+import { currentReporter } from "../reporter.js";
 import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
 import type { InitProfile } from "./init-profile.js";
@@ -112,7 +112,7 @@ export function logInitNextSteps(profile?: InitProfile): void {
     const hookIdx = tagged.findIndex((t) => t.step.startsWith("git config core.hooksPath"));
     if (hookIdx >= 0) tagged.splice(hookIdx, 1);
   }
-  const audience = getOutputAudience();
+  const audience = currentReporter().audience;
   const filtered = filterTaggedStepsForAudience(audience, tagged).map((step) =>
     formatAudienceNextStep(step, audience),
   );
