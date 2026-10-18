@@ -41,12 +41,12 @@ skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
-    trace_quote: "DoD 1 MSN-0285 re-attested at d501612: packages/core/src/import-scanner.ts (git mv from src/cli/lib/import-scanner.ts, unchanged) and specifier.ts (SpecifierClass, TsconfigPaths, isBuiltinSpecifier, bareSpecifierPackage, classifySpecifier, importMatchesBan; imports node:module and node:path); law.ts exports ImportFindingKind, ImportFinding, ImportSiteLike, evaluateImportSite, Layer, LayerImportRule, PatternRule, LayerFinding, ArchLaw, archLaw, layerForFile, LayerImport, evaluateLayerImport, findPatternMatch, evaluatePatternRules; packages/core/src/index.ts exports import-scanner and specifier"
-    anchor: "1549"
+    trace_quote: "DoD 1 MSN-0285 re-attested at d2e96b5: CodeQL on PR #237 raised four alerts on the moved modules (three js/polynomial-redos in import-scanner.ts, one js/incomplete-sanitization in specifier.ts that was already open on main at resolve-specifier.ts:73); fixed in core: stripSurgeonQuarantineRegions scans START and END markers linearly (an unterminated START is left as is), parseNamedBindingParts takes the token after the last as instead of splitting on \\\\s+as\\\\s+, the named-binding pattern is anchored at ^import with [^{}]+, and the tsconfig alias target uses replaceAll for its star"
+    anchor: "1559"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0285 re-attested at d501612: packages/core/tests/law-imports.test.ts holds 4 tests: specifier classification (builtin, bare with package name, relative, tsconfig alias, ban prefix), evaluateImportSite for dynamic (and allowed dynamic), builtin, banned, unlisted, allowed, forbidden-zone and strict-roots scope escapes, layer lookup with layer import rules by clause and a pattern rule with applies_to plus the (?i) prefix and an invalid pattern, and the scanner's site kinds static, export_from, dynamic_import_expr, require; npm run test:packages: tests 16 pass 16 fail 0 (the scanner fixture is spelled by concatenation so the test file holds no dynamic import for the contract scan)"
-    anchor: "1550"
+    trace_quote: "DoD 2 MSN-0285 re-attested at d2e96b5: packages/core/tests/law-imports.test.ts gains a test for the stripped and unterminated quarantine regions, a 5000-marker input, aliased and typed named bindings, a mixed default-plus-named import and a 2000-fold 'import {' input; npm run test:packages: tests 17 pass 17 fail 0; src/cli/tests/import-scanner, check-import-layers, contract-runtime and contract-legislate pass unchanged"
+    anchor: "1560"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0285 re-attested at d501612: src/cli/lib/import-scanner.ts is a 2-line facade of #core/import-scanner.js; contract/resolve-specifier.ts keeps stripJsonComments and loadTsconfigPaths and re-exports classifySpecifier, isBuiltinSpecifier, bareSpecifierPackage and the types from #core/specifier.js; ast-discovery.ts re-exports importMatchesBan from #core/specifier.js; contract/contract-scan.ts builds a Law from the effective scope (lawOfScope) and calls evaluateImportSite per site with the classifier result (checkSite, checkBareSpecifier, checkResolvedPath and the violation helper removed); arch/cage/target-architecture.ts builds an ArchLaw (archLawOfSpec) and calls layerForFile, evaluatePatternRules and evaluateLayerImport (its private rule loop, recordViolation, compilePerimeterPattern, findPatternMatchLine, checkPatternRulesForFile and fileMatchesAppliesTo removed); git diff --name-only origin/main...HEAD -- src/cli lists exactly those five files; scripts/check-import-layers.mjs and check-lib-cycles.mjs keep importing dist/cli/lib/import-scanner.js through the facade"
@@ -65,8 +65,8 @@ trace_rows:
     anchor: "1554"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0285 re-attested at ef1123f: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 971 pass 971 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; merge of main with the executor log keeping main's lines first and the rows re-anchored"
-    anchor: "1558"
+    trace_quote: "DoD 7 MSN-0285 re-attested at d2e96b5: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 971 pass 971 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1561"
     status: PASS
 interrogation:
   - finding_id: 1ae19e8f75ca
