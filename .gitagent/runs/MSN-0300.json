@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0300",
+  "mission_path": ".gitagent/missions/MSN-0300.one-vocabulary.yaml",
+  "head": "f5ce66fe04eacdb3ec255f53581186916ced948e",
+  "tree": "ccb0e1365b9ea87ec35cfc5c20bd79ab8813c812",
+  "law_sha256": "6bce7fdccba43732077af36453b83caab872c6e626c66ba5c207ef689b0394a1",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 88047,
+      "output_sha256": "8cba955cf33a93bc6aee496df2eb2100eaff3ea2114aa87dafa69fd4efc2a3a2"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-18T07:29:02.752Z"
+}
