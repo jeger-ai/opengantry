@@ -2,11 +2,9 @@ import { errorMessage } from "../cli-io.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import { resolveGateWorkDir } from "../gate.js";
 import { evaluateKpiPhase } from "../kpi-engine.js";
-import { evaluateDefensiveGuardPhase } from "./verify-defensive-phase.js";
 import { msnIdOrDefault, type GateSpec, type KpiFinding, type Manifest, type ParsedMission } from "../types.js";
 import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows } from "../trace.js";
 import type {
-  DefensiveFailure,
   GateFailure,
   GitProofFailure,
   KpiFailure,
@@ -196,30 +194,9 @@ export function evaluateTracePhase(input: PhaseContext): TracePhaseOutcome {
   return { kind: "ok", warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
 }
 
-export type DefensiveOutcome =
-  | { kind: "ok"; warnings: string[]; audits: string[] }
-  | { kind: "fail"; failure: DefensiveFailure };
-
 export type KpiOutcome =
   | { kind: "ok"; warnings: string[]; advisoryFindings: KpiFinding[] }
   | { kind: "fail"; failure: KpiFailure };
-
-export function evaluateDefensivePhase(input: PhaseContext): DefensiveOutcome {
-  const { root, manifest, mission, executorLogPath } = input;
-  if (!mission.skillKey) return { kind: "ok", warnings: [], audits: [] };
-  const defensiveOutcome = evaluateDefensiveGuardPhase(
-    root,
-    manifest,
-    mission.skillKey,
-    executorLogPath,
-  );
-  if (defensiveOutcome.failure) return { kind: "fail", failure: defensiveOutcome.failure };
-  return {
-    kind: "ok",
-    warnings: defensiveOutcome.warnings,
-    audits: defensiveOutcome.audits,
-  };
-}
 
 export function evaluateKpiGatePhase(input: PhaseContext): KpiOutcome {
   const { root, manifest, mission, options, executorLogPath } = input;

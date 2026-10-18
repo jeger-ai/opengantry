@@ -8,7 +8,6 @@ import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "./git/git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
-import { isVirtualScratchPath } from "./virtual-scratch-store.js";
 import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "./types.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
 import type { KpiFailure } from "./verify/verify-failure.js";
@@ -156,11 +155,6 @@ export interface KpiReportStaleResult {
   reason?: string;
 }
 
-function reportRelPath(reportPath: string, repoRoot: string): string {
-  const abs = path.isAbsolute(reportPath) ? reportPath : path.join(repoRoot, reportPath);
-  return toPosixRel(repoRoot, abs);
-}
-
 function resolveKpiAttestationCommit(
   repoRoot: string,
   reportRel: string,
@@ -186,16 +180,6 @@ export function verifyKpiReportFreshness(
 ): KpiReportStaleResult {
   if (options.skipStaleEvidence === true) {
     return { stale: false, advisoryOnly: false, stalePaths: [] };
-  }
-
-  const reportRel = reportRelPath(reportPath, repoRoot);
-  if (isVirtualScratchPath(reportRel)) {
-    return {
-      stale: false,
-      advisoryOnly: false,
-      stalePaths: [],
-      reason: "virtual scratch KPI report — stale-evidence binding skipped",
-    };
   }
 
   const tmvcRoots = tmvcRootsForSkill(manifest, skillKey);

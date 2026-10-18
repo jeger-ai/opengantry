@@ -72,9 +72,9 @@ gantry perimeter check       # domain-neutral alias, same engine
 gantry arch fetch            # resolve an external architecture pointer (kind: external) for offline checks
 ```
 
-## Defensive profiles
+## Defensive profiles (parked)
 
-Defensive profiles add severity-tiered guards on top of the perimeter: net lines changed, file scope, and test-to-code ratio. `gantry init` offers presets during onboarding.
+Defensive profiles (severity-tiered guards on net lines changed, file scope, churn ratio and test-to-code, with `init` presets) are parked outside the CLI since 3.10: [`examples/defensive-profiles/`](https://github.com/jeger-ai/opengantry/tree/main/examples/defensive-profiles). A `defensive_profile` block in `config.json` is ignored, and `ledger.mode` must be set explicitly. The structural law in `TARGET_ARCHITECTURE.yaml` (layer budgets, owner, registry, dependency and duplicate rules) is the deterministic replacement.
 
 ## Not shipped yet
 

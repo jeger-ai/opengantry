@@ -12,7 +12,6 @@ import {
   parseMsnIdFromGitProofMessage,
 } from "../fix-hints.js";
 import type {
-  DefensiveFailure,
   GateFailure,
   GitProofFailure,
   InterrogationFailure,
@@ -118,16 +117,6 @@ function kpiErrorCodeForKind(kind: KpiFailureKind): GxtErrorCode {
       return _exhaustive;
     }
   }
-}
-
-function hintsForDefensivePhase(failure: DefensiveFailure, meta: VerifyHintMeta): VerifyRemediation {
-  const verifyCmdStr = verifyCmd(meta.missionPath);
-  return {
-    error_code: GXT_ERROR.DEFENSIVE_GUARD_FAILED,
-    fix_hints: [failure.defensiveReason, "reduce TMVC diff size or adjust defensive_profile.guards.net_loc_budget"],
-    next_actions: [verifyCmdStr],
-    tagged_steps: [tagStep("executor", "reduce diff churn in mission TMVC roots"), tagStep("verifier", verifyCmdStr)],
-  };
 }
 
 function hintsForKpiPhase(failure: KpiFailure, meta: VerifyHintMeta): VerifyRemediation {
@@ -239,8 +228,6 @@ export function hintsForVerifyPhase(
       return hintsForGitProofPhase(failure, meta);
     case "gate":
       return hintsForGatePhase(failure, meta);
-    case "defensive":
-      return hintsForDefensivePhase(failure, meta);
     case "kpi":
       return hintsForKpiPhase(failure, meta);
     case "trace_pending":

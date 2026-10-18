@@ -13,31 +13,14 @@
         "allowed_actors": [
           "dependabot[bot]@users.noreply.github.com"
         ],
-        "allowed_paths": [".github/workflows/**"],
-        "allowed_structural_changes": ["workflow_version_pin"],
+        "allowed_paths": [
+          ".github/workflows/**"
+        ],
+        "allowed_structural_changes": [
+          "workflow_version_pin"
+        ],
         "max_net_loc": 5
       }
     ]
-  },
-  "defensive_profile": {
-    "enabled": false,
-    "guards": {
-      "net_loc_budget": {
-        "enabled": false,
-        "max_net_loc": 500
-      },
-      "file_scope": {
-        "enabled": false,
-        "max_files": 25
-      },
-      "churn_ratio": {
-        "enabled": false,
-        "max_ratio": 0.75
-      },
-      "test_to_code": {
-        "enabled": false,
-        "min_assertion_delta": 0
-      }
-    }
   }
 }

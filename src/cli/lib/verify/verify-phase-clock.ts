@@ -5,7 +5,6 @@ export const VERIFY_PHASE_IDS = [
   "policy",
   "dependencies",
   "gate",
-  "defensive",
   "kpi",
   "trace",
 ] as const;

@@ -1,10 +1,11 @@
+// Parked with the virtual scratch store (ADR-0052 A10). Ran inside the CLI tree; paths point at this example's src/ and the CLI lib.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { runVerify } from "../commands/verify.js";
-import { verifyKpiReportFreshness } from "../lib/kpi-engine.js";
+import { verifyKpiReportFreshness } from "../../../src/cli/lib/kpi-engine.js";
 import {
   createVirtualFlightId,
   flightDirExists,
@@ -13,17 +14,17 @@ import {
   scavengeStaleVirtualFlights,
   VIRTUAL_GATE_CAPTURE_FILE,
   writeGateCaptureSync,
-} from "../lib/virtual-scratch-store.js";
-import type { Manifest } from "../lib/types.js";
-import { mergeGitignoreFromTemplate } from "../lib/file-merge-gxt.js";
-import { getRepoRoot } from "../lib/git/git.js";
+} from "../src/virtual-scratch-store.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
+import { mergeGitignoreFromTemplate } from "../../../src/cli/lib/file-merge-gxt.js";
+import { getRepoRoot } from "../../../src/cli/lib/git/git.js";
 import {
   copyMissionSchema,
   gitInitCommit,
   writeManifest,
   writeSkillsForManifest,
-} from "./test-fixtures.js";
-import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
+} from "../../../src/cli/tests/test-fixtures.js";
+import { PLANNER_EMAIL, withPlannerEnvAsync } from "../../../src/cli/tests/test-shared.js";
 
 const PLANNER = PLANNER_EMAIL;
 

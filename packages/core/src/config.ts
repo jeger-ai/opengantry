@@ -63,8 +63,13 @@ export function resolveLedgerSignatureTier(config: GxtConfigShape): ReceiptSigna
   return RECEIPT_SIGNATURE_TIERS.includes(tier) ? tier : "off";
 }
 
-/** The explicit ledger mode, or null when the file leaves it to a preset. */
+/** The explicit ledger mode, or null when the file does not set one. */
 export function explicitLedgerMode(config: GxtConfigShape): LedgerMode | null {
   if (config.ledger?.mode === undefined) return null;
   return LEDGER_MODES.includes(config.ledger.mode) ? config.ledger.mode : "off";
+}
+
+/** `ledger.mode`, off when unset (presets no longer imply one; ADR-0052 A10). */
+export function resolveLedgerMode(config: GxtConfigShape): LedgerMode {
+  return explicitLedgerMode(config) ?? "off";
 }

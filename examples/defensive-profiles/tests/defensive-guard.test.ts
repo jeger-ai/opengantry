@@ -1,15 +1,16 @@
+// Parked with the defensive profiles (ADR-0052 A10). Ran inside the CLI tree; paths point at this example's src/ and the CLI lib.
 import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import { evaluateDefensiveGuards } from "../lib/defensive-guard.js";
-import { evaluateDefensiveGuardPhase } from "../lib/verify/verify-defensive-phase.js";
-import { buildDefensiveProfileFromPreset } from "../lib/defensive-profile-presets.js";
-import { gitInitCommit } from "./test-fixtures.js";
-import { PLANNER_EMAIL } from "./test-shared.js";
-import type { Manifest } from "../lib/types.js";
+import { evaluateDefensiveGuards } from "../src/defensive-guard.js";
+import { evaluateDefensiveGuardPhase } from "../src/verify-defensive-phase.js";
+import { buildDefensiveProfileFromPreset } from "../src/defensive-profile-presets.js";
+import { gitInitCommit } from "../../../src/cli/tests/test-fixtures.js";
+import { PLANNER_EMAIL } from "../../../src/cli/tests/test-shared.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
 
 const MANIFEST: Manifest = {
   schema_version: "0.5.0",

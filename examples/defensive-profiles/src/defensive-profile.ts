@@ -1,4 +1,4 @@
-import type { GxtConfig } from "./gxt-config.js";
+import type { GxtConfig } from "../../../src/cli/lib/gxt-config.js";
 import {
   isDefensiveProfilePresetName,
   presetDefaultSeverity,

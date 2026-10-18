@@ -57,12 +57,8 @@ Deterministic gates cannot judge code against documented performance strategies 
 
 An architecture rubric (`ARCHITECTURE_RUBRIC`) works the same way. Use them when a mission touches hot paths and you want a semantic sanity check next to the deterministic gates. Example: [`examples/performance-judge/`](https://github.com/jeger-ai/opengantry/tree/main/examples/performance-judge).
 
-## Virtual scratch
+## Parked: virtual scratch
 
-Some integration checks need transient runtime output, such as API probes, migration dry runs or memory snapshots, without changing the verify engine. An opt-in scratch area at `.gitagent/virtual/` maps such output into the KPI and file-matching gate path.
-
-- It is never committed and never trusted without an explicit mission flag; verify never creates virtual state on its own.
-- `gantry init` adds `.gitagent/virtual/` and `.gitagent/tmp/` to `.gitignore` before anything is written.
-- Writers use one subdirectory per run (`.gitagent/virtual/<flight-id>/`); a passing verify removes its directory, and stale leftovers are cleaned up.
+The opt-in `virtual_capture` scratch area (`.gitagent/virtual/<flight-id>/`, captured gate output, purge on success) is parked outside the CLI since 3.10 in [`examples/virtual-scratch/`](https://github.com/jeger-ai/opengantry/tree/main/examples/virtual-scratch). A mission's `virtual_capture` field is accepted and ignored; `gantry init` still ignores `.gitagent/virtual/` and `.gitagent/tmp/`.
 
 Design notes: [ADR-0020 KPI gate](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md), [ADR-0035 performance judge](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md), [ADR-0046 contract preflight](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md), [virtual scratch record](https://github.com/jeger-ai/opengantry/blob/main/docs/ADR-EPHEMERAL-VIRTUALIZATION.md).

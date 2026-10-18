@@ -50,17 +50,6 @@ describe("verify failure envelope", () => {
       },
     },
     {
-      name: "defensive",
-      failure: {
-        ok: false as const,
-        phase: "defensive" as const,
-        message: "defensive failed",
-        exitCode: 1,
-        executorLogPath: "EXECUTOR_LOG.md",
-        defensiveReason: "net_loc budget exceeded",
-      },
-    },
-    {
       name: "kpi",
       failure: {
         ok: false as const,

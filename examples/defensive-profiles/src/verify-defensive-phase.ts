@@ -1,6 +1,6 @@
-import { evaluateDefensiveGuards, type DefensiveFinding } from "../defensive-guard.js";
-import type { DefensiveFailure } from "./verify-failure.js";
-import type { Manifest } from "../types.js";
+import { evaluateDefensiveGuards, type DefensiveFinding } from "./defensive-guard.js";
+import type { DefensiveFailure } from "../../../src/cli/lib/verify/verify-failure.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
 
 export interface DefensivePhaseOutcome {
   failure: DefensiveFailure | null;

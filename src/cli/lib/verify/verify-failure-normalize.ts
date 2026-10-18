@@ -11,7 +11,6 @@ import {
   type RemediationSnapshot,
 } from "../context-feed-store.js";
 import type {
-  DefensiveFailure,
   GateFailure,
   InterrogationFailure,
   KpiFailure,
@@ -102,24 +101,6 @@ function normalizeGatePhase(
       ...(failure.gateOutput !== undefined ? { stdout: failure.gateOutput } : {}),
       ...(failure.gateExitCode !== undefined ? { exit_code: failure.gateExitCode } : {}),
     },
-  };
-}
-
-function normalizeDefensivePhase(
-  base: NormalizedVerifyFailureBase,
-  failure: DefensiveFailure,
-): NormalizedVerifyFailure {
-  const reason = failure.defensiveReason;
-  return {
-    ...base,
-    headline: "verify: DEFENSIVE GUARD FAILED",
-    detail_lines: [
-      reason,
-      ...(failure.defensiveNetLoc !== undefined
-        ? [`net_loc: ${String(failure.defensiveNetLoc)} (max: ${String(failure.defensiveMaxNetLoc ?? "?")})`]
-        : []),
-    ],
-    failures: [reason],
   };
 }
 
@@ -236,8 +217,6 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       return normalizeGitProofPhase(base);
     case "gate":
       return normalizeGatePhase(base, failure);
-    case "defensive":
-      return normalizeDefensivePhase(base, failure);
     case "kpi":
       return normalizeKpiPhase(base, failure);
     case "trace_pending":

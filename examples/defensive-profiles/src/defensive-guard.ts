@@ -1,15 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
-import { gitRunOk } from "./git/git.js";
-import { normalizeRepoRelativePath } from "./tmvc-path.js";
-import { loadGxtConfig } from "./gxt-config.js";
+import { gitRunOk } from "../../../src/cli/lib/git/git.js";
+import { normalizeRepoRelativePath } from "../../../src/cli/lib/tmvc-path.js";
+import { loadGxtConfig } from "../../../src/cli/lib/gxt-config.js";
 import {
   resolveDefensiveProfile,
   type GuardSeverity,
   type ResolvedDefensiveProfile,
 } from "./defensive-profile.js";
-import type { Manifest } from "./types.js";
-import { resolveManifestSkillKey } from "./skill-key.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
+import { resolveManifestSkillKey } from "../../../src/cli/lib/skill-key.js";
 
 export interface DefensiveFinding {
   guard: string;

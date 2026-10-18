@@ -7,7 +7,6 @@ import type { VerifyFinding } from "./verify-finding.js";
 export type VerifyFailurePhase =
   | "git_proof"
   | "gate"
-  | "defensive"
   | "kpi"
   | "trace_pending"
   | "trace"
@@ -43,15 +42,6 @@ export interface GateFailure extends VerifyFailureBase {
   gateLogPath?: string;
   /** Coarse adapter findings when gate subprocess policy failed. */
   adapterFindings?: VerifyFinding[];
-}
-
-export interface DefensiveFailure extends VerifyFailureBase {
-  phase: "defensive";
-  defensiveReason: string;
-  defensiveNetLoc?: number;
-  defensiveMaxNetLoc?: number;
-  defensiveWarnings?: string[];
-  defensiveAudits?: string[];
 }
 
 export interface KpiFailure extends VerifyFailureBase {
@@ -120,7 +110,6 @@ export interface ContractFailure extends VerifyFailureBase {
 export type VerifyPhaseFailure =
   | GitProofFailure
   | GateFailure
-  | DefensiveFailure
   | KpiFailure
   | TracePendingFailure
   | TraceFailure
