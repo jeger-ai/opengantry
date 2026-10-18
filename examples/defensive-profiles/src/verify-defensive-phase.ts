@@ -1,6 +1,19 @@
-import { evaluateDefensiveGuards, type DefensiveFinding } from "../defensive-guard.js";
-import type { DefensiveFailure } from "./verify-failure.js";
-import type { Manifest } from "../types.js";
+import { evaluateDefensiveGuards, type DefensiveFinding } from "./defensive-guard.js";
+
+/** The verify failure this phase produced until 3.9 (the CLI no longer has a defensive phase). */
+export interface DefensiveFailure {
+  ok: false;
+  phase: "defensive";
+  message: string;
+  exitCode: number;
+  executorLogPath: string;
+  defensiveReason: string;
+  defensiveNetLoc?: number;
+  defensiveMaxNetLoc?: number;
+  defensiveWarnings?: string[];
+  defensiveAudits?: string[];
+}
+import type { Manifest } from "../../../src/cli/lib/types.js";
 
 export interface DefensivePhaseOutcome {
   failure: DefensiveFailure | null;

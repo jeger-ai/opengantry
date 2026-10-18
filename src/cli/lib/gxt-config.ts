@@ -1,16 +1,13 @@
+// Facade (ADR-0052 step 5c-i, A10): the config shape and resolvers live in packages/core; this reads the file.
 import fs from "node:fs";
 import path from "node:path";
-
-import type { DefensiveProfileConfig } from "./defensive-profile.js";
-import { validateDefensiveProfile } from "./defensive-profile.js";
-import { isDefensiveProfilePresetName, presetConfigDefaults } from "./defensive-profile-presets.js";
-
 export {
   FLIGHT_TELEMETRY_BODY_MODES,
   LEDGER_MODES,
   PLANNER_SIGNATURE_TIERS,
   RECEIPT_SIGNATURE_TIERS,
   resolveFlightTelemetryBodyMode,
+  resolveLedgerMode,
   resolveLedgerSignatureTier,
   resolvePlannerSignatureTier,
   resolveReceiptSignatureTier,
@@ -21,34 +18,17 @@ export {
   type PlannerSignatureTier,
   type ReceiptSignatureTier,
 } from "#core/config.js";
-import { explicitLedgerMode, parseGxtConfig, type GxtConfigShape, type LedgerMode } from "#core/config.js";
+import { parseGxtConfig, type GxtConfigShape } from "#core/config.js";
 
-/** The loaded config: the core shape with the defensive profile validated. */
-export interface GxtConfig extends GxtConfigShape {
-  defensive_profile?: DefensiveProfileConfig;
-}
+/** `.gitagent/config.json` as loaded. A `defensive_profile` block is ignored (parked by ADR-0052 A10). */
+export type GxtConfig = GxtConfigShape;
 
 export function loadGxtConfig(root: string): GxtConfig {
   const configPath = path.join(root, ".gitagent", "config.json");
   if (!fs.existsSync(configPath)) return {};
   try {
-    const config = parseGxtConfig(fs.readFileSync(configPath, "utf8")) as GxtConfig;
-    if (config.defensive_profile != null) {
-      config.defensive_profile = validateDefensiveProfile(config.defensive_profile);
-    }
-    return config;
+    return parseGxtConfig(fs.readFileSync(configPath, "utf8"));
   } catch {
     return {};
   }
 }
-
-export function resolveLedgerMode(config: GxtConfig): LedgerMode {
-  const explicit = explicitLedgerMode(config);
-  if (explicit !== null) return explicit;
-  const preset = config.defensive_profile?.preset;
-  if (preset && isDefensiveProfilePresetName(preset)) {
-    return presetConfigDefaults(preset).ledger?.mode ?? "off";
-  }
-  return "off";
-}
-

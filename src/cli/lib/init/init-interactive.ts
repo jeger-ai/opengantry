@@ -13,11 +13,6 @@ import {
   type SkillsPreset,
 } from "./init-profile.js";
 import { defaultArchitectureLocation } from "./init-compose.js";
-import {
-  DEFENSIVE_PROFILE_PRESET_LABELS,
-  DEFENSIVE_PROFILE_PRESET_NAMES,
-  type DefensiveProfilePresetName,
-} from "../defensive-profile-presets.js";
 
 function wizardCancelled<T>(value: T | symbol): value is symbol {
   return p.isCancel(value);
@@ -136,33 +131,6 @@ async function promptInitArchitecture(
   };
 }
 
-async function promptDefensiveProfile(
-  partial: Partial<InitProfile>,
-): Promise<{ defensiveProfilePreset: DefensiveProfilePresetName | null } | null> {
-  const choice = await p.select({
-    message: "Defensive profile baseline",
-    options: [
-      { value: "skip", label: "Skip — keep template defaults (disabled)" },
-      ...DEFENSIVE_PROFILE_PRESET_NAMES.map((value) => ({
-        value,
-        label: DEFENSIVE_PROFILE_PRESET_LABELS[value],
-      })),
-    ],
-    initialValue:
-      partial.defensiveProfilePreset === null
-        ? "skip"
-        : (partial.defensiveProfilePreset ?? "balanced_partner"),
-  });
-  if (wizardCancelled(choice)) {
-    p.cancel("init cancelled");
-    return null;
-  }
-  if (choice === "skip") {
-    return { defensiveProfilePreset: null };
-  }
-  return { defensiveProfilePreset: choice as DefensiveProfilePresetName };
-}
-
 async function promptInitInfrastructure(
   partial: Partial<InitProfile>,
   base: InitProfile,
@@ -220,12 +188,6 @@ export async function runInitInteractiveWizard(
   const architecture = await promptInitArchitecture(partial, base);
   if (!architecture) return null;
 
-  const defensive =
-    partial.defensiveProfilePreset !== undefined
-      ? { defensiveProfilePreset: partial.defensiveProfilePreset }
-      : await promptDefensiveProfile(partial);
-  if (!defensive) return null;
-
   const infrastructure = await promptInitInfrastructure(partial, base);
   if (!infrastructure) return null;
 
@@ -233,21 +195,14 @@ export async function runInitInteractiveWizard(
     ...partial,
     ...integrations,
     ...architecture,
-    ...defensive,
     ...infrastructure,
   });
-
-  const defensiveLine =
-    profile.defensiveProfilePreset == null
-      ? "Defensive profile: disabled (template default)"
-      : `Defensive profile: ${profile.defensiveProfilePreset}`;
 
   p.note(
     [
       `IDEs: ${profile.ides.join(", ")}`,
       `Doc: ${profile.integrationsDocPath}`,
       `Architecture: ${profile.architectureSource}${profile.architectureLocation ? ` → ${profile.architectureLocation}` : ""}`,
-      defensiveLine,
       `Skills: ${profile.skillsPreset}`,
       `Hooks: ${profile.gitHooks ? "yes" : "no"}`,
       `CI: ${profile.ciWorkflow ? "yes" : "no"}`,

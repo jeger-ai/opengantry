@@ -1,8 +1,8 @@
-import type { DefensiveProfileConfig } from "../defensive-profile.js";
+import type { DefensiveProfileConfig } from "./defensive-profile.js";
 import {
   buildDefensiveProfileFromPreset,
   type DefensiveProfilePresetName,
-} from "../defensive-profile-presets.js";
+} from "./defensive-profile-presets.js";
 
 const CONFIG_REL = ".gitagent/config.json";
 

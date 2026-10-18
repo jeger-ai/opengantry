@@ -47,10 +47,10 @@ test("VerifyPhaseClock markFailed records failed status", async () => {
   const clock = new VerifyPhaseClock();
   await clock.timed("gate", () => "ran");
   clock.markFailed("gate");
-  clock.markSkipped("defensive");
+  clock.markSkipped("kpi");
   const timings = clock.finalize();
   assert.equal(timings.find((p) => p.id === "gate")?.status, "failed");
-  assert.equal(timings.find((p) => p.id === "defensive")?.status, "skipped");
+  assert.equal(timings.find((p) => p.id === "kpi")?.status, "skipped");
 });
 
 test("evaluateVerifyPhases marks failed gate phase as failed in timings", async () => {
@@ -84,8 +84,8 @@ test("evaluateVerifyPhases marks failed gate phase as failed in timings", async 
   if (result.ok) return;
   const gate = result.phaseTimings.find((p) => p.id === "gate");
   assert.equal(gate?.status, "failed");
-  const defensive = result.phaseTimings.find((p) => p.id === "defensive");
-  assert.equal(defensive?.status, "skipped");
+  const kpi = result.phaseTimings.find((p) => p.id === "kpi");
+  assert.equal(kpi?.status, "skipped");
 });
 
 test("recordVerifyRunBestEffort appends ring entry after human present failure", async () => {

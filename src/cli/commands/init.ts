@@ -32,10 +32,6 @@ import {
   type PlannedWrite,
 } from "../lib/init/init-plan.js";
 import {
-  isConfigJsonTarget,
-  mergeDefensiveProfileIntoConfigBody,
-} from "../lib/init/init-defensive-profile.js";
-import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../lib/file-merge-gxt.js";
@@ -60,8 +56,6 @@ export interface InitOptions {
   noCi?: boolean;
   archSource?: string;
   archLocation?: string;
-  defensiveProfile?: string;
-  noDefensiveProfile?: boolean;
 }
 
 function planArchitecturePointerWrite(profile: InitProfile, repoRoot: string): PlannedWrite | null {
@@ -141,14 +135,6 @@ function validateInitProfile(
   return true;
 }
 
-/** Profile-aware template transform: merges the chosen defensive preset into config.json. */
-function initBodyTransformForProfile(profile: InitProfile): InitBodyTransform | undefined {
-  const preset = profile.defensiveProfilePreset;
-  if (!preset) return undefined;
-  return (body, targetPath) =>
-    isConfigJsonTarget(targetPath) ? mergeDefensiveProfileIntoConfigBody(body, preset) : body;
-}
-
 async function resolveInitAssetPlan(
   options: InitOptions,
   profile: InitProfile,
@@ -156,7 +142,7 @@ async function resolveInitAssetPlan(
   templatesRoot: string,
   repoRoot: string,
 ) {
-  const transformBody = initBodyTransformForProfile(profile);
+  const transformBody: InitBodyTransform | undefined = undefined;
   let force = options.force === true;
   let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
   if (!plan.ok) {

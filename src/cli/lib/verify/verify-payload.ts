@@ -44,8 +44,6 @@ export interface VerifyPassedPayload {
   git_proof_warnings?: string[];
   kpi_warnings?: string[];
   findings?: VerifyFinding[];
-  defensive_warnings?: string[];
-  defensive_audits?: string[];
   trace_evidence_skipped_uncommitted?: number;
 }
 
@@ -92,8 +90,6 @@ function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: stri
       return [verifyFinding("kpi", hint, { offending_file: failure.kpiReportPath })];
     case "gate":
       return buildGateFindings(root, failure, hint);
-    case "defensive":
-      return [verifyFinding("defensive", failure.defensiveReason || hint)];
     case "git_proof":
       return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
     case "run_record":
@@ -192,12 +188,6 @@ function successPayload(
       : {}),
     ...(result.kpiAdvisoryFindings && result.kpiAdvisoryFindings.length > 0
       ? { findings: kpiFindingsToAdvisoryVerifyFindings(result.kpiAdvisoryFindings) }
-      : {}),
-    ...(result.defensiveWarnings && result.defensiveWarnings.length > 0
-      ? { defensive_warnings: result.defensiveWarnings }
-      : {}),
-    ...(result.defensiveAudits && result.defensiveAudits.length > 0
-      ? { defensive_audits: result.defensiveAudits }
       : {}),
     ...(result.traceEvidenceSkippedUncommitted !== undefined
       ? { trace_evidence_skipped_uncommitted: result.traceEvidenceSkippedUncommitted }

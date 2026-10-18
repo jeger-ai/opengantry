@@ -9,26 +9,18 @@ import { gitRunOk } from "../git/git.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { isLegislativeStub } from "../missions/formatter.js";
 import { defaultExecutorLogPath } from "../trace.js";
-import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "../types.js";
+import type { KpiFinding, Manifest, ParsedMission } from "../types.js";
 import type { VerifyFailurePhase, VerifyPhaseFailure } from "./verify-failure.js";
 import type { TraceVerifyWarning } from "../trace.js";
-import {
-  createVirtualFlightId,
-  purgeVirtualFlightDir,
-  scavengeStaleVirtualFlights,
-  writeGateCaptureSync,
-} from "../virtual-scratch-store.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./verify-phase-clock.js";
 import { evaluateContractPhase } from "./verify-contract.js";
 import { evaluateInterrogationPhase } from "./verify-interrogation.js";
 import {
-  evaluateDefensivePhase,
   evaluateGatePhase,
   evaluateGitProof,
   evaluateKpiGatePhase,
   evaluateTracePhase,
-  type DefensiveOutcome,
   type KpiOutcome,
   type PhaseContext,
   type TracePhaseOutcome,
@@ -71,8 +63,6 @@ export interface VerifyPhaseSuccess {
   gitProofWarnings?: string[];
   kpiWarnings?: string[];
   kpiAdvisoryFindings?: KpiFinding[];
-  defensiveWarnings?: string[];
-  defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
   /** Set when the evidence was the run record (read or, with --record, written): its repo-relative path. */
   runRecordPath?: string;
@@ -85,28 +75,6 @@ export type VerifyPhaseResult =
 
 export function resolveExecutorLogPath(root: string, options: VerifyOptions): string {
   return options.executorLog ? path.resolve(root, options.executorLog) : defaultExecutorLogPath(root);
-}
-
-function beginVirtualCapture(root: string, mission: ParsedMission): string | null {
-  if (!mission.virtualCapture) return null;
-  const flightId = createVirtualFlightId();
-  scavengeStaleVirtualFlights(root, { protectFlightId: flightId });
-  return flightId;
-}
-
-function recordVirtualGateCapture(
-  root: string,
-  flightId: string | null,
-  gate: GateSpec,
-  outcome: { exitCode: number | null; logText: string },
-): void {
-  if (!flightId) return;
-  writeGateCaptureSync(root, flightId, {
-    gate_command: gate.command,
-    exit_code: outcome.exitCode,
-    stdout: outcome.logText,
-    stderr: "",
-  });
 }
 
 function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
@@ -123,8 +91,6 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
       return "contract";
     case "gate":
       return "gate";
-    case "defensive":
-      return "defensive";
     case "kpi":
       return "kpi";
     case "trace":
@@ -148,12 +114,11 @@ function buildFullVerifySuccess(input: {
   executorLogPath: string;
   trace: Extract<TracePhaseOutcome, { kind: "ok" }>;
   gitProofWarnings: string[];
-  defensive: Extract<DefensiveOutcome, { kind: "ok" }>;
   kpi: Extract<KpiOutcome, { kind: "ok" }>;
   phaseTimings: VerifyPhaseTiming[];
   runRecordPath?: string;
 }): VerifyPhaseSuccess {
-  const { proofMsnId, executorLogPath, trace, gitProofWarnings, defensive, kpi, phaseTimings, runRecordPath } =
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, kpi, phaseTimings, runRecordPath } =
     input;
   return {
     ok: true,
@@ -166,8 +131,6 @@ function buildFullVerifySuccess(input: {
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     ...(kpi.warnings.length > 0 ? { kpiWarnings: kpi.warnings } : {}),
     ...(kpi.advisoryFindings.length > 0 ? { kpiAdvisoryFindings: kpi.advisoryFindings } : {}),
-    ...(defensive.warnings.length > 0 ? { defensiveWarnings: defensive.warnings } : {}),
-    ...(defensive.audits.length > 0 ? { defensiveAudits: defensive.audits } : {}),
     traceEvidenceSkippedUncommitted:
       trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
   };
@@ -253,15 +216,10 @@ export async function evaluateVerifyPhases(
 
   if (!mission.gate) return failWithTimings(missingGateFailure(executorLogPath), clock);
 
-  const virtualFlightId = beginVirtualCapture(root, mission);
   const gate = mission.gate;
 
   const gateOutcome = await clock.timed("gate", () => evaluateGatePhase(phaseCtx, gate));
-  recordVirtualGateCapture(root, virtualFlightId, gate, gateOutcome);
   if (gateOutcome.kind === "fail") return failWithTimings(gateOutcome.failure, clock);
-
-  const defensive = await clock.timed("defensive", () => evaluateDefensivePhase(phaseCtx));
-  if (defensive.kind === "fail") return failWithTimings(defensive.failure, clock);
 
   const kpi = await clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
   if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
@@ -273,14 +231,11 @@ export async function evaluateVerifyPhases(
     writeRunRecord(phaseCtx, proofMsnId, { command: gate.command, exit: gateOutcome.exitCode, durationMs: clock.durationOf("gate"), logText: gateOutcome.logText });
   }
 
-  if (virtualFlightId) purgeVirtualFlightDir(root, virtualFlightId);
-
   return buildFullVerifySuccess({
     proofMsnId,
     executorLogPath,
     trace,
     gitProofWarnings,
-    defensive,
     kpi,
     phaseTimings: clock.finalize(),
     ...(runRecordPath ? { runRecordPath } : {}),

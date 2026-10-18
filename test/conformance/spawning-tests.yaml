@@ -62,9 +62,6 @@ entries:
   - file: contract-verify.test.ts
     class: none
     spawns: [git]
-  - file: defensive-guard.test.ts
-    class: none
-    spawns: [git]
   - file: dirty-missions.test.ts
     class: none
     spawns: [git]

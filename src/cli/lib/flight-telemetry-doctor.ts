@@ -1,6 +1,5 @@
 import type { DoctorLine } from "./doctor/doctor-types.js";
 import { loadGxtConfig, resolveFlightTelemetryBodyMode } from "./gxt-config.js";
-import { isDefensiveProfilePresetName } from "./defensive-profile-presets.js";
 
 export function runFlightTelemetryDoctorChecks(root: string): DoctorLine[] {
   const lines: DoctorLine[] = [];
@@ -17,14 +16,6 @@ export function runFlightTelemetryDoctorChecks(root: string): DoctorLine[] {
 
   lines.push({ level: "ok", message: `flight_telemetry.body_mode: ${mode}` });
 
-  const preset = config.defensive_profile?.preset;
-  if (isDefensiveProfilePresetName(preset ?? "") && preset === "strict_enterprise" && mode === "full") {
-    lines.push({
-      level: "warn",
-      message:
-        "strict_enterprise preset with flight_telemetry.body_mode=full stores gate stream bodies in EXECUTOR_LOG",
-    });
-  }
 
   return lines;
 }

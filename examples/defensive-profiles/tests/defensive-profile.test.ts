@@ -1,16 +1,17 @@
+// Parked with the defensive profiles (ADR-0052 A10). Ran inside the CLI tree; paths point at this example's src/ and the CLI lib.
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
   validateDefensiveProfile,
   resolveDefensiveProfile,
   GUARD_SEVERITIES,
-} from "../lib/defensive-profile.js";
+} from "../src/defensive-profile.js";
 import {
   buildDefensiveProfileFromPreset,
   parseDefensiveProfilePreset,
-} from "../lib/defensive-profile-presets.js";
-import { countAssertionTokens } from "../lib/defensive-guard.js";
-import { mergeDefensiveProfileIntoConfigBody } from "../lib/init/init-defensive-profile.js";
+} from "../src/defensive-profile-presets.js";
+import { countAssertionTokens } from "../src/defensive-guard.js";
+import { mergeDefensiveProfileIntoConfigBody } from "../src/init-defensive-profile.js";
 
 test("validateDefensiveProfile: rejects invalid max_net_loc", () => {
   assert.throws(
