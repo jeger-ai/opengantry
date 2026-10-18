@@ -29,7 +29,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### Unreleased (cage dependency freeze — next release after v3.9.0)
+### Unreleased (cage dependency freeze and standalone verify contract — next release after v3.9.0)
 
 - **New, opt-in:** `.cage.yaml` top-level `dependencies: revert`, or `--lock-deps` on `gantry cage -- <cmd>` / `gantry-cage`, `gantry cage watch` and `gantry cage check`, freezes dependencies. Lockfiles become restore-rule paths, and a new built-in `dependency_manifest` rule covers `package.json`, `pyproject.toml`, `Pipfile`, `requirements*.txt`, `Cargo.toml`, `go.mod`, `Gemfile` and `composer.json` at any depth, except under a `vendor/` directory (vendored install output). Without either, nothing changes: lockfiles are listed and kept, manifests are not protected (MSN-0275, [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 9).
 - **Only tightens:** `dependencies: report` is the default; `mode: report` on a frozen path is refused (`GXT_CAGE_CONFIG_INVALID`). `--allow-override <path>` still relaxes one frozen path for one session run, announced. `cage check` reads the setting from the base commit; `--lock-deps` adds to it.
@@ -38,6 +38,9 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 - **Limit:** the freeze restores files; it does not block installs. Install scripts run by an agent's `npm install` have executed before cage restores `package.json`.
 - **Packages (this repository):** `npm run build` now runs `tsc -b`; `dist/packages/` appears next to `dist/cli/`. Hooks, tests and the MCP launcher keep using `dist/cli/index.js`. Adopters are unaffected; the published tarball carries `dist/packages/` (MSN-0282).
 - **Registries and baseline (this repository):** a new `GXT_*` error code, env name, subcommand, MCP tool or dependency needs an entry in `.gitagent/registry/` in the legislation commit; `ARCH_BASELINE.json` counts may not rise. Adopters are unaffected: nothing is shipped in templates yet (MSN-0281, [ADR-0052](../.gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md)).
+- **New: `gantry verify --contract [file]`.** Decides whether a change may land from one contract, without `.gitagent/`: `verify.yaml` (`opengantry.verify.v1`) or a COMMITLY hangar `gate.json` (`commitly.gate.v1`). It checks the paths changed since the base (`allowed_paths`, `forbidden_paths`), added lines against a budget, regex rules over added lines, and check commands (`expect: exit0|empty`, `heavy`, `quick_run`, a `failures` baseline). Modes `--worktree`, `--quick`, `--baseline`, `--check-result`; exit `0` pass, `1` fail, `2` cannot run. Guide: [Verify a change without missions](guides/verify-contract.md); [ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) (MSN-0277).
+- **Trust:** a contract git tracks is read from the base commit and needs `--base` (its own `base:` is ignored), so a pull request can weaken neither its contract nor its baseline; a tracked contract the base does not have exits `2` (`GXT_VERIFY_CONTRACT_NOT_AT_BASE`), a baseline for another contract version too (`GXT_VERIFY_BASELINE_STALE`).
+- **Unchanged:** `gantry verify --mission` and its formats. `--format sarif|junit` with `--contract` exits `2` until the slim package mission.
 
 ### From v3.8.3 (cage check, cage watch, docs layout — v3.9.0)
 
