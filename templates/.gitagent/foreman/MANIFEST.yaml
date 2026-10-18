@@ -37,5 +37,6 @@ perimeter_protected:
   - "**/.gxt-skill.yaml"
   - .gitagent/foreman/MANIFEST.yaml
   - .gitagent/foreman/MANIFEST.yaml
+  - .gitagent/foreman/POLICY.pointer.yaml
   - .gitagent/foreman/POLICY.pointer.json
   - .gitagent/planner/RULES.md

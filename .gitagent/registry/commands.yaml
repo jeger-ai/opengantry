@@ -147,6 +147,9 @@ entries:
   - name: migrate manifest
     since: MSN-0301
     note: ADR-0047 §4 migrate path for the manifest.
+  - name: migrate policy-pointer
+    since: MSN-0304
+    note: ADR-0047 §4 migrate path for .gitagent/foreman/POLICY.pointer.
   - name: mission
     since: MSN-0010
   - name: mission changed

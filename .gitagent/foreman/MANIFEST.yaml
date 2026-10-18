@@ -64,5 +64,6 @@ perimeter_protected:
   - ARCH_BASELINE.json
   - .gitagent/foreman/MANIFEST.yaml
   - .gitagent/foreman/MANIFEST.json
+  - .gitagent/foreman/POLICY.pointer.yaml
   - .gitagent/foreman/POLICY.pointer.json
   - .gitagent/planner/RULES.md

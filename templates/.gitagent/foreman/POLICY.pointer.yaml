@@ -1,0 +1,10 @@
+# OpenGantry org policy pointer: the tracked pin of a signed org policy repository (opt-in). Humans write YAML.
+# Fill source.url, then run gantry policy pull: it fills pinned_commit and bundle_sha256 and caches the bundle.
+schema_version: "1.0.0"
+source:
+  kind: git
+  url: ""
+  ref: refs/heads/main
+bundle_path: ORG-POLICY.yaml
+pinned_commit: ""
+bundle_sha256: ""

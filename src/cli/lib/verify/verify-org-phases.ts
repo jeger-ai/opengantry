@@ -1,5 +1,5 @@
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
-import { REL_POLICY_POINTER } from "../constants.js";
+import { policyPointerRel } from "#plane/policy-resolve.js";
 import { checkMissionDependencies, type DependencyCheckResult } from "../deps/deps-resolve.js";
 import {
   configFloorViolations,
@@ -27,7 +27,7 @@ function policyFailure(input: PhaseContext, code: GxtErrorCode, message: string)
     policyCode: code,
     findings: [
       verifyFinding("policy", message, {
-        offending_file: REL_POLICY_POINTER,
+        offending_file: policyPointerRel(input.root),
         rule_id: code,
       }),
     ],

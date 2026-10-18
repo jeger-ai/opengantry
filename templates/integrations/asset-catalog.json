@@ -14,7 +14,7 @@
     { "targetPath": ".gitagent/config.yaml", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/foreman/BYPASS.sha256", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/foreman/MANIFEST.yaml", "mode": "scaffold_only", "tags": ["core"] },
-    { "targetPath": ".gitagent/foreman/POLICY.pointer.json", "mode": "scaffold_only", "tags": ["core"] },
+    { "targetPath": ".gitagent/foreman/POLICY.pointer.yaml", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/foreman/SUBSTRATE.version.json", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/missions/README.md", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/planner/ARCHITECTURE-ACCESS.md", "mode": "scaffold_only", "tags": ["core"] },

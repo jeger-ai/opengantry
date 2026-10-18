@@ -3,9 +3,10 @@ import path from "node:path";
 import { gitRun } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { REL_POLICY_POINTER } from "#core/constants.js";
+import { REL_POLICY_POINTER_JSON } from "#core/constants.js";
 import { sha256File } from "./digests.js";
-import { loadPolicyPointer, policyPointerPath } from "./policy-resolve.js";
+import { loadPolicyPointer, policyPointerPath, policyPointerRel, readPolicyPointerSource } from "./policy-resolve.js";
+import { policyPointerToYaml } from "#core/policy-pointer-file.js";
 import { cachedBundlePath, parseOrgPolicyBundle } from "./policy-bundle.js";
 import type { PolicyPointer } from "./policy-types.js";
 
@@ -42,14 +43,14 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
   if (state.kind === "absent") {
     throw new GantryUserError(
       GXT_ERROR.INVALID_ARGUMENT,
-      `${REL_POLICY_POINTER} is missing`,
-      "add a POLICY.pointer.json pin",
+      `${REL_POLICY_POINTER_JSON} is missing`,
+      "add a POLICY.pointer.yaml pin",
       2,
     );
   }
   const pointer = state.pointer;
   if (!pointer.source.url.trim()) {
-    throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, "POLICY.pointer.json source.url is empty", undefined, 1);
+    throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, `${policyPointerRel(root)} source.url is empty`, undefined, 1);
   }
   const scratchParent = workRoot ?? path.join(root, ".gitagent", "tmp");
   fs.mkdirSync(scratchParent, { recursive: true });
@@ -98,7 +99,9 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
       pinned_commit: commit,
       bundle_sha256: sha,
     };
-    fs.writeFileSync(policyPointerPath(root), `${JSON.stringify(next, null, 2)}\n`, "utf8");
+    // Written back in the form found: a 3.x JSON pointer stays JSON until gantry migrate policy-pointer runs.
+    const body = readPolicyPointerSource(root)?.kind === "json" ? `${JSON.stringify(next, null, 2)}\n` : policyPointerToYaml(next);
+    fs.writeFileSync(policyPointerPath(root), body, "utf8");
     return {
       pointer: next,
       cache_path: dest,

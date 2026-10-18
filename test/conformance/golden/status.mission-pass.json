@@ -59,7 +59,7 @@
       },
       {
         "level": "ok",
-        "message": ".gitagent/foreman/POLICY.pointer.json: scaffold (unpinned)"
+        "message": ".gitagent/foreman/POLICY.pointer.yaml: scaffold (unpinned)"
       },
       {
         "level": "ok",

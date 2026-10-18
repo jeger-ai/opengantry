@@ -31,7 +31,9 @@ export const REL_PLANNER_SIGNING_PUB = ".gitagent/foreman/PLANNER.signing.pub" a
 /** git config key set by doctor and `gantry perimeter --ci`. */
 export const GIT_CONFIG_ALLOWED_SIGNERS = "gpg.ssh.allowedSignersFile" as const;
 /** Tracked pin of an org policy git source (ADR-0042). */
-export const REL_POLICY_POINTER = ".gitagent/foreman/POLICY.pointer.json" as const;
+/** The org policy pointer: humans write the YAML form since 4.0; the 3.x JSON form is still read. */
+export const REL_POLICY_POINTER_YAML = ".gitagent/foreman/POLICY.pointer.yaml" as const;
+export const REL_POLICY_POINTER_JSON = ".gitagent/foreman/POLICY.pointer.json" as const;
 /** Git-ignored org policy bundle cache (ADR-0042). */
 export const REL_POLICY_CACHE = ".gitagent/history/policy" as const;
 /** Orphan commit chain for digest-only compliance entries (ADR-0043). */

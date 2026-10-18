@@ -10,7 +10,7 @@ import type { OrgPolicyFail } from "../lib/policy/policy-resolve.js";
 import { loadPolicyPointer, resolveOrgPolicy } from "../lib/policy/policy-resolve.js";
 import { getRepoRoot } from "#git/git.js";
 import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
-import { REL_POLICY_POINTER } from "../lib/constants.js";
+import { REL_POLICY_POINTER_JSON } from "../lib/constants.js";
 
 function phaseCtx(root: string): PhaseContext {
   return {
@@ -68,7 +68,7 @@ test("loadPolicyPointer: absent vs scaffold vs pinned", () => {
   assert.equal(loadPolicyPointer(dest).kind, "absent");
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(
-    path.join(dest, REL_POLICY_POINTER),
+    path.join(dest, REL_POLICY_POINTER_JSON),
     JSON.stringify({
       schema_version: "1.0.0",
       source: { kind: "git", url: "", ref: "refs/heads/main" },

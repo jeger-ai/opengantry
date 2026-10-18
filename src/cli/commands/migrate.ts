@@ -7,6 +7,7 @@ import { parseGxtConfigDocument } from "#core/config.js";
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
 import { parseLawFileDocument, type LawFilePair } from "#core/law-file.js";
 import { MANIFEST_FILES, manifestToYaml, parseManifestSource } from "#core/manifest-file.js";
+import { POLICY_POINTER_FILES, policyPointerToYaml } from "#core/policy-pointer-file.js";
 import type { Manifest } from "#core/manifest.js";
 import { getRepoRoot } from "#git/git.js";
 import { CLI_NAME } from "../lib/constants.js";
@@ -125,6 +126,20 @@ export function runMigrateArchitecturePointer(options: MigrateOptions = {}): Mig
         perimeterUpdated: false,
       }),
       notes: () => [],
+    },
+    options,
+  );
+}
+
+export function runMigratePolicyPointer(options: MigrateOptions = {}): MigrateResult {
+  return migrateLawFile(
+    {
+      pair: POLICY_POINTER_FILES,
+      convert: (jsonText) => ({
+        yamlText: policyPointerToYaml(parseLawFileDocument({ rel: POLICY_POINTER_FILES.json, kind: "json", text: jsonText })),
+        perimeterUpdated: false,
+      }),
+      notes: () => ["the pointer is perimeter-protected: commit both changes in a Planner [MSN-…] commit"],
     },
     options,
   );

@@ -41,7 +41,7 @@ export function loadCachedBundle(root: string, pointer: PolicyPointer): OrgPolic
   if (!pointer.pinned_commit.trim() || !pointer.bundle_sha256.trim()) {
     throw new GantryUserError(
       GXT_ERROR.POLICY_UNPINNED,
-      "POLICY.pointer.json is present but unpinned (empty pinned_commit or bundle_sha256)",
+      "the policy pointer is present but unpinned (empty pinned_commit or bundle_sha256)",
       "gantry policy pull",
       1,
     );
