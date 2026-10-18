@@ -243,3 +243,6 @@ entries:
   - name: GXT_VERIFY_RESULT_UNREADABLE
     since: MSN-0277
     defined_in: src/cli/lib/verify-standalone/run.ts
+  - name: GXT_VERIFY_SIGN_NO_KEY
+    since: MSN-0279
+    defined_in: src/cli/lib/verify-standalone/run.ts
