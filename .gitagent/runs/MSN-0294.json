@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0294",
+  "mission_path": ".gitagent/missions/MSN-0294.park-defensive-virtual.yaml",
+  "head": "bf081a4f5ec6ba1a767681953bcfce26ecf39a1c",
+  "tree": "63a2f4b1cc5f55be803c8449782e9281e92ea43e",
+  "law_sha256": "8c95a1b67c69b667dad056b21bd6163bc8c5e28735b1362e298e8dca598e1867",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 129810,
+      "output_sha256": "2b4b1d041f6cee80f70c69228c57281f74c733c9c7c3f48872c6f5eefedf1967"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-18T05:39:24.825Z"
+}
