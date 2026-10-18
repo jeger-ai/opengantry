@@ -10,6 +10,7 @@
 #
 # Operator direction (2026-10-18, "merge and continue until everything is done"): foreman, substrate and flight stay
 # where they are user-facing names the docs teach. Old and new paths are both roots so the deletions are declared.
+# The contract allows dynamic specifiers: repairs/typescript-workspace.ts requires typescript by path, as before.
 # No trace rows: the evidence is .gitagent/runs/MSN-0300.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0300
 skill_key: substrate
@@ -305,4 +306,5 @@ contract:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
     - .github/workflows/
-contract_sha256: 854409aa7f4dba26e8b20f00b4f53908fce66b87b78468b3f5d2bdcc892a0d61
+  allow_dynamic_specifiers: true
+contract_sha256: 7445210d090899df40d98d3d4dc8749aa277701031a0b810aa073ec9bf3d52a0
