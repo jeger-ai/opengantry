@@ -128,11 +128,11 @@ function appendBypassChecks(root: string, lines: DoctorLine[]): void {
       lines.push({
         level: authorized ? "ok" : "warn",
         message: authorized
-          ? "bypass: GXT_BYPASS_SECRET matches anchor"
-          : "bypass: GXT_BYPASS_SECRET does NOT match anchor",
+          ? "bypass: GANTRY_BYPASS_SECRET matches anchor"
+          : "bypass: GANTRY_BYPASS_SECRET does NOT match anchor",
       });
     } else {
-      lines.push({ level: "warn", message: "bypass: GXT_BYPASS_SECRET unset (expected unless in emergency)" });
+      lines.push({ level: "warn", message: "bypass: GANTRY_BYPASS_SECRET unset (expected unless in emergency)" });
     }
   } else if (bypassState === "placeholder") {
     lines.push({ level: "warn", message: "BYPASS.sha256 has no hash line — break-glass not provisioned" });

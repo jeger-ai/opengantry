@@ -234,7 +234,7 @@ function registerGxtRuntimeExecTool(server: McpServer): void {
 function registerGxtResolveMissionTool(server: McpServer): void {
   server.tool(
     "gxt_resolve_mission",
-    "Resolve the active mission: an explicit path, GANTRY_MISSION, GXT_MISSION_FILE, the gantry pin file, then the legacy ACTIVE_MISSION files.",
+    "Resolve the active mission: an explicit path, GANTRY_MISSION, GANTRY_MISSION_FILE, the gantry pin file, then the legacy ACTIVE_MISSION files.",
     {
       mission_file_path: z.string().optional().describe("Optional explicit mission path override"),
     },
@@ -261,7 +261,7 @@ function registerGxtDoctorTool(server: McpServer): void {
 function registerGxtLastErrorTool(server: McpServer): void {
   server.tool(
     "gxt_last_error",
-    "Read machine-oriented remediation from GXT_LAST_ERROR_FILE.",
+    "Read machine-oriented remediation from GANTRY_LAST_ERROR_FILE.",
     {},
     async () => jsonText(handleLastError()),
   );

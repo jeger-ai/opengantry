@@ -2,7 +2,7 @@
 import { MSN_ID_PATTERN } from "#core/constants.js";
 import { gitRun } from "./git.js";
 
-export const ENV_MSN_SCAN_DEPTH = "GXT_MSN_SCAN_DEPTH" as const;
+export const ENV_MSN_SCAN_DEPTH = "GANTRY_MSN_SCAN_DEPTH" as const;
 export const DEFAULT_MSN_SCAN_DEPTH = 200;
 
 /** Resolve git-proof scan depth: explicit option, then env, then default. */

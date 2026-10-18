@@ -47,7 +47,7 @@ Every mission also passes `gantry verify` before merge. See [Enforcement boundar
 ## Check a path
 
 ```bash
-gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml   # export GXT_TMVC_ROOTS, forbidden zones and the log path
+gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml   # export GANTRY_TMVC_ROOTS_ABSOLUTE, forbidden zones and the log path
 gantry tmvc guard --strict                                             # check staged files against the pinned mission
 ```
 

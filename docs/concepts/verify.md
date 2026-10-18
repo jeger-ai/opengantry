@@ -103,7 +103,7 @@ The repair needs TypeScript in the workspace; without it only the repair is disa
 
 ## Output by role
 
-`--audience executor|planner|verifier` (or `GXT_AUDIENCE`) tailors `verify` and `start` output:
+`--audience executor|planner|verifier` (or `GANTRY_AUDIENCE`) tailors `verify` and `start` output:
 
 ```bash
 gantry --audience executor start "…"   # constraint-forward next steps

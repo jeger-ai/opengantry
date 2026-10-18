@@ -5,7 +5,6 @@
   "type": "module",
   "bin": {
     "gantry": "dist/cli/index.js",
-    "gapman": "dist/cli/index.js",
     "gantry-cage": "dist/cli/cage-bin.js",
     "opengantry-cage": "dist/cli/cage-bin.js"
   },
@@ -37,7 +36,6 @@
     "gen:dogfood": "node scripts/gen-dogfood.mjs",
     "build": "npm run gen:version && npm run gen:catalog && tsc -b && node scripts/prune-dist.mjs && npm run gen:schemas && npm run gen:dogfood && npm run build:cage",
     "build:cage": "npm run build -w @jeger-ai/opengantry-cage",
-    "gapman": "node dist/cli/index.js",
     "lint": "eslint \"src/cli/**/*.ts\" \"packages/*/src/**/*.ts\"",
     "lint:json": "eslint --format json \"src/cli/**/*.ts\" \"packages/*/src/**/*.ts\"",
     "check:changed": "./scripts/check-changed-code.sh",

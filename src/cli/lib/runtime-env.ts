@@ -6,7 +6,6 @@ import type { EffectiveScope } from "#core/contract-types.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";
-import { resolveManifestSkillKey } from "./skill-key.js";
 import type { Workspace } from "./workspace.js";
 import { defaultExecutorLogPath } from "./trace.js";
 
@@ -56,7 +55,7 @@ export function resolveRuntimeEnv(workspace: Workspace, missionRepoOrAbsPath: st
     throw new Error(`${CLI_NAME} runtime: mission missing skill_key / Skill key (${mission.rawPath})`);
   }
 
-  const resolvedKey = resolveManifestSkillKey(manifest, skillKey);
+  const resolvedKey = skillKey;
   const skill = manifest.skills[resolvedKey];
   if (!skill) {
     throw new Error(
@@ -98,16 +97,16 @@ function lastErrorFileForRepo(repoRoot: string): string {
 
 export function resolvedRuntimeEnvToJsonPayload(r: ResolvedRuntimeEnv): Record<string, string> {
   return {
-    GXT_REPO_ROOT: r.repo_root,
-    GXT_MISSION_FILE: r.mission_file,
-    GXT_MSN_ID: r.msn_id,
-    GXT_SKILL_KEY: r.skill_key,
-    GXT_TMVC_ROOTS: r.tmvc_roots_joined,
+    GANTRY_REPO_ROOT: r.repo_root,
+    GANTRY_MISSION_FILE: r.mission_file,
+    GANTRY_MSN_ID: r.msn_id,
+    GANTRY_SKILL_KEY: r.skill_key,
+    GANTRY_TMVC_ROOTS_ABSOLUTE: r.tmvc_roots_joined,
     GANTRY_TMVC_ROOTS: r.scope.tmvcRoots.map((root) => root.replace(/\\/g, "/")).join(" "),
-    GXT_FORBIDDEN_ZONES: r.forbidden_zones_joined,
-    GXT_ALLOWED_IMPORTS: r.scope.allowedImports.join("\n"),
-    GXT_BANNED_IMPORTS: r.scope.bannedImports.join("\n"),
-    GXT_EXECUTOR_LOG: r.executor_log,
-    GXT_LAST_ERROR_FILE: lastErrorFileForRepo(r.repo_root),
+    GANTRY_FORBIDDEN_ZONES: r.forbidden_zones_joined,
+    GANTRY_ALLOWED_IMPORTS: r.scope.allowedImports.join("\n"),
+    GANTRY_BANNED_IMPORTS: r.scope.bannedImports.join("\n"),
+    GANTRY_EXECUTOR_LOG: r.executor_log,
+    GANTRY_LAST_ERROR_FILE: lastErrorFileForRepo(r.repo_root),
   };
 }

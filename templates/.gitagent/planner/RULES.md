@@ -58,7 +58,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 6.2 Break-glass (`gantry verify` v0.8.0)
 
-- Emergency bypass MUST NOT rely on forgeable commit-subject strings alone. Authorization requires **`GXT_BYPASS_SECRET`** matching the SHA-256 anchor in [`.gitagent/foreman/BYPASS.sha256`](../foreman/BYPASS.sha256) (never commit the plaintext secret).
+- Emergency bypass MUST NOT rely on forgeable commit-subject strings alone. Authorization requires **`GANTRY_BYPASS_SECRET`** matching the SHA-256 anchor in [`.gitagent/foreman/BYPASS.sha256`](../foreman/BYPASS.sha256) (never commit the plaintext secret).
 - **`gantry verify --break-glass --reason "<text>"`** skips git-proof, gate, and trace when authorized; it MUST write a forensic record as a **`refs/notes/gxt-bypass`** git note (or `--audit-commit` when notes cannot be pushed).
 - PR CI accepts GXT-touched commits that either have a normal **`[MSN-XXXX]`** subject or a valid **gxt-bypass** note on that commit. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.
 - Break-glass does **not** disable **`gantry runtime exec`** forbidden-zone enforcement. Planner MUST review bypass usage post-incident.

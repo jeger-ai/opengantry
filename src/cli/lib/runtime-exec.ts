@@ -306,7 +306,7 @@ export async function runRuntimeExec(
       command: cmd!,
       argv,
       cwd,
-      env: { ...process.env, ...envPayload, GXT_EXECUTOR_LOG: executorLogPath },
+      env: { ...process.env, ...envPayload, GANTRY_EXECUTOR_LOG: executorLogPath },
       streamOutput,
       timeoutMs,
       writer,

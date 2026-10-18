@@ -27,10 +27,10 @@ order: 1
 
 | Tool | Does |
 |------|------|
-| `gxt_resolve_mission` | Resolves the active mission (explicit path, `GANTRY_MISSION`, `GXT_MISSION_FILE`, the `gantry pin` file, legacy `ACTIVE_MISSION` files) |
+| `gxt_resolve_mission` | Resolves the active mission (explicit path, `GANTRY_MISSION`, `GANTRY_MISSION_FILE`, the `gantry pin` file, legacy `ACTIVE_MISSION` files) |
 | `gxt_runtime_env` | Returns the `GXT_*` environment for a mission ([Session variables](session-variables.md)) |
 | `gxt_runtime_exec` | Runs an executor command with the mission environment and forbidden-zone enforcement |
-| `gxt_last_error` | Reads the machine-oriented remediation from `GXT_LAST_ERROR_FILE` |
+| `gxt_last_error` | Reads the machine-oriented remediation from `GANTRY_LAST_ERROR_FILE` |
 | `gxt_verify` | Runs verify and returns the same payload as `gantry verify --json` ([Troubleshooting](../guides/troubleshooting.md#mcp-verify-payload)) |
 | `gxt_scan` | Runs `gantry scan` (`llm_verifiers`) and writes the KPI report for `kpi_gate` |
 | `gxt_attest` | Writes a local digest-only attestation receipt, optionally SSH or GPG signed |
@@ -65,7 +65,6 @@ import {
 |--------|------|
 | `evaluateScope` | Checks one repository-relative path against edit roots and forbidden zones |
 | `verifyMission` | Runs the verify phases and resolves to the structured JSON payload. It returns a `Promise`: always `await` it |
-| `verifyMissionAsync` | Deprecated alias of `verifyMission`. It emits one `DeprecationWarning` (`GXT_DEP_VERIFY_MISSION_ASYNC`) and will be removed in 4.0 |
 | `mintVerdictToken`, `verifyVerdictToken` | HMAC verdict tokens, keyed by the pepper keyring, for hot-path promotion gates |
 
 Only two entry points resolve from the package: `.` (the CLI) and `./kernel`. Deep imports of `dist/cli/lib/*` do not. A reference integration lives in [`examples/iii-integration/`](https://github.com/jeger-ai/opengantry/tree/main/examples/iii-integration).

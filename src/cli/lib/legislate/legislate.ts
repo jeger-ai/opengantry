@@ -11,7 +11,7 @@ import {
   toPosixRel,
 } from "../cli-io.js";
 import { triageIntent, isTriageEscalated } from "../triage-logic.js";
-import { manifestHasSkill, resolveManifestSkillKey } from "../skill-key.js";
+import { manifestHasSkill } from "../skill-key.js";
 import {
   DEFAULT_GATE_ADAPTER,
   type GateAdapterId,
@@ -74,7 +74,7 @@ export function resolveSkillKeyForLegislation(opts: {
       };
     }
     const triage = triageIntent(opts.root, opts.intent, opts.manifest);
-    const canonical = resolveManifestSkillKey(opts.manifest, explicit);
+    const canonical = explicit;
     return { ok: true, skillKey: canonical, triage };
   }
 
@@ -89,7 +89,7 @@ export function resolveSkillKeyForLegislation(opts: {
   }
   return {
     ok: true,
-    skillKey: resolveManifestSkillKey(opts.manifest, triage.skill_key),
+    skillKey: triage.skill_key,
     triage,
   };
 }

@@ -47,7 +47,7 @@ export function runTmvcGuard(options: TmvcGuardCliOptions): void {
       scope: resolved.scope,
     });
 
-    const strict = options.strict === true || process.env.GXT_TMVC_GUARD_STRICT === "1";
+    const strict = options.strict === true || process.env.GANTRY_TMVC_GUARD_STRICT === "1";
 
     if (options.json) {
       emitCliJson({

@@ -7,7 +7,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 ## Goals
 
 1. **Single bootstrap command** — The executor obtains all scope and trace sinks from **`gantry runtime env`**.
-2. **Manifest + contract truth** — `TMVC` roots and **`GXT_FORBIDDEN_ZONES`** start from **[`.gitagent/foreman/MANIFEST.json`](../foreman/MANIFEST.json)** for the mission’s **`skill_key`**, then tighten with the mission **`contract`** block when present ([`RULES.md`](RULES.md) §4, [ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)). Executors MUST treat the **effective** cage as authoritative. They MUST NOT widen scope.
+2. **Manifest + contract truth** — `TMVC` roots and **`GANTRY_FORBIDDEN_ZONES`** start from **[`.gitagent/foreman/MANIFEST.json`](../foreman/MANIFEST.json)** for the mission’s **`skill_key`**, then tighten with the mission **`contract`** block when present ([`RULES.md`](RULES.md) §4, [ADR-0045](../out-of-scope/ADR-0045-mission-contracts.md)). Executors MUST treat the **effective** cage as authoritative. They MUST NOT widen scope.
 3. **Trace sink** — The canonical worker-authored trace path is **`EXECUTOR_LOG.md`** at the repository root unless overridden at verify time (`gantry verify --executor-log`).
 
 ## CLI: `gantry runtime env`
@@ -24,27 +24,27 @@ The `<path>` must be a **file that already exists** under the repo root (or abso
 
 | Variable | Meaning |
 |----------|---------|
-| `GXT_REPO_ROOT` | Absolute path to Git repo root (`git rev-parse --show-toplevel`). |
-| `GXT_MISSION_FILE` | Mission path **relative to repo root**, forward slashes. |
-| `GXT_MSN_ID` | Mission MSN (`MSN-NNNN`), or empty if not yet determinable from the mission file. |
-| `GXT_SKILL_KEY` | Skill key declared in the mission (must exist in manifest `skills`). |
-| `GXT_TMVC_ROOTS` | Absolute paths to **effective** TMVC roots, **newline-separated** (empty string if none). `contract.tmvc_roots` when present, else `skills[skill_key].tmvc_roots`. |
+| `GANTRY_REPO_ROOT` | Absolute path to Git repo root (`git rev-parse --show-toplevel`). |
+| `GANTRY_MISSION_FILE` | Mission path **relative to repo root**, forward slashes. |
+| `GANTRY_MSN_ID` | Mission MSN (`MSN-NNNN`), or empty if not yet determinable from the mission file. |
+| `GANTRY_SKILL_KEY` | Skill key declared in the mission (must exist in manifest `skills`). |
+| `GANTRY_TMVC_ROOTS_ABSOLUTE` | Absolute paths to **effective** TMVC roots, **newline-separated** (empty string if none). `contract.tmvc_roots` when present, else `skills[skill_key].tmvc_roots`. |
 | `GANTRY_TMVC_ROOTS` | The same effective roots as **repo-relative** paths, **space-separated**, for terminal harnesses (`pi` and others) that read one environment variable at startup. |
-| `GXT_FORBIDDEN_ZONES` | Absolute paths forbidden for edits, newline-separated (union of skill, contract, and org-policy zones). Agents SHOULD refuse edits outside `GXT_TMVC_ROOTS` without a logged Context Request per [`RULES.md`](RULES.md). |
-| `GXT_ALLOWED_IMPORTS` | Bare specifiers allowed under the cage, newline-separated (empty = no allowlist). |
-| `GXT_BANNED_IMPORTS` | Bare specifiers banned under the cage, newline-separated (union of contract + org policy). |
-| `GXT_EXECUTOR_LOG` | Absolute path to **`EXECUTOR_LOG.md`** at repo root (same default as `gantry verify` without `--executor-log`). |
-| `GXT_LAST_ERROR_FILE` | Absolute path to **`.gitagent/history/.ignored-last-error.json`** when the last `runtime exec` failed; empty string otherwise. Orchestrators SHOULD feed this JSON back to the agent on the next turn. |
+| `GANTRY_FORBIDDEN_ZONES` | Absolute paths forbidden for edits, newline-separated (union of skill, contract, and org-policy zones). Agents SHOULD refuse edits outside `GANTRY_TMVC_ROOTS_ABSOLUTE` without a logged Context Request per [`RULES.md`](RULES.md). |
+| `GANTRY_ALLOWED_IMPORTS` | Bare specifiers allowed under the cage, newline-separated (empty = no allowlist). |
+| `GANTRY_BANNED_IMPORTS` | Bare specifiers banned under the cage, newline-separated (union of contract + org policy). |
+| `GANTRY_EXECUTOR_LOG` | Absolute path to **`EXECUTOR_LOG.md`** at repo root (same default as `gantry verify` without `--executor-log`). |
+| `GANTRY_LAST_ERROR_FILE` | Absolute path to **`.gitagent/history/.ignored-last-error.json`** when the last `runtime exec` failed; empty string otherwise. Orchestrators SHOULD feed this JSON back to the agent on the next turn. |
 
 **Invariants**
 
-- `GXT_REPO_ROOT` MUST be normalized with `path.resolve`.
-- `GXT_TMVC_ROOTS` / `GXT_FORBIDDEN_ZONES` / `GXT_ALLOWED_IMPORTS` / `GXT_BANNED_IMPORTS` MUST be resolved from the **effective** cage (skill ∪ contract ∪ policy), joined against `GXT_REPO_ROOT`.
-- The executor MUST append trace evidence required by **`gantry verify`** to the file referenced by **`GXT_EXECUTOR_LOG`** (or the path `--executor-log` if the verify step overrides it).
+- `GANTRY_REPO_ROOT` MUST be normalized with `path.resolve`.
+- `GANTRY_TMVC_ROOTS_ABSOLUTE` / `GANTRY_FORBIDDEN_ZONES` / `GANTRY_ALLOWED_IMPORTS` / `GANTRY_BANNED_IMPORTS` MUST be resolved from the **effective** cage (skill ∪ contract ∪ policy), joined against `GANTRY_REPO_ROOT`.
+- The executor MUST append trace evidence required by **`gantry verify`** to the file referenced by **`GANTRY_EXECUTOR_LOG`** (or the path `--executor-log` if the verify step overrides it).
 
 ## Context Request scaffold (`gantry context-request`)
 
-When a executor needs access outside `GXT_TMVC_ROOTS`, append a **PENDING** Context Request to `EXECUTOR_LOG.md` before proceeding:
+When a executor needs access outside `GANTRY_TMVC_ROOTS_ABSOLUTE`, append a **PENDING** Context Request to `EXECUTOR_LOG.md` before proceeding:
 
 ```bash
 gantry context-request --path docs/FOO.md --reason "doc sync for adoption"
@@ -62,16 +62,16 @@ gantry tmvc guard --mission <pinned>
 ```
 
 - **Advisory default:** warnings on `stderr`, exit `0`.
-- **`--strict`** or **`GXT_TMVC_GUARD_STRICT=1`:** block commit on staged paths outside TMVC roots.
-- **`gantry hooks install`** sets local git config `gxt.tmvcGuardStrict=true` so this hook passes `--strict`. `gantry hooks uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
+- **`--strict`** or **`GANTRY_TMVC_GUARD_STRICT=1`:** block commit on staged paths outside TMVC roots.
+- **`gantry hooks install`** sets local git config `gantry.tmvcGuardStrict=true` so this hook passes `--strict`. `gantry hooks uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
 - **No pinned mission:** warn and skip, even when strict is armed.
 - `EXECUTOR_LOG.md` and `.gitagent/missions/.active-mission` are governance transport — never TMVC drift violations.
 
 ## Relationship to verification
 
-**`gantry verify`** performs git-proof Planner legislation, deterministic gate execution, and trace mapping (`--fuzzy-trace` for formatter line drift; `--break-glass` only with `GXT_BYPASS_SECRET`). **`gantry runtime env`** does **not** replace verify; it only standardizes inputs for the executor loop before or during execution.
+**`gantry verify`** performs git-proof Planner legislation, deterministic gate execution, and trace mapping (`--fuzzy-trace` for formatter line drift; `--break-glass` only with `GANTRY_BYPASS_SECRET`). **`gantry runtime env`** does **not** replace verify; it only standardizes inputs for the executor loop before or during execution.
 
-When **`gantry runtime exec`** fails (forbidden zone, timeout, executor error), read **`GXT_LAST_ERROR_FILE`** for the machine-oriented `summary` and `remediation` fields — do not rely on exit code alone.
+When **`gantry runtime exec`** fails (forbidden zone, timeout, executor error), read **`GANTRY_LAST_ERROR_FILE`** for the machine-oriented `summary` and `remediation` fields — do not rely on exit code alone.
 
 ## Optional skill context stamps (advisory only)
 

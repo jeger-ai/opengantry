@@ -106,8 +106,8 @@ test("aggregateFromLogStream: missing planner identity yields zero legislative",
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-noteacher-"));
   initMetricsRepo(dest, ogRoot);
 
-  const prev = process.env.GAPMAN_PLANNER_EMAILS;
-  delete process.env.GAPMAN_PLANNER_EMAILS;
+  const prev = process.env.GANTRY_PLANNER_EMAILS;
+  delete process.env.GANTRY_PLANNER_EMAILS;
   try {
     const missionPath = path.join(dest, ".gitagent", "missions", "MSN-0999.yaml");
     fs.appendFileSync(missionPath, "# no planner env\n");
@@ -116,8 +116,8 @@ test("aggregateFromLogStream: missing planner identity yields zero legislative",
     assert.equal(stream.legislative, 0);
     assert.equal(stream.worker_trace, 0);
   } finally {
-    if (prev === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prev;
+    if (prev === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prev;
   }
 });
 
@@ -126,8 +126,8 @@ test("aggregateFromLogStream: empty planner env entry does not match empty autho
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-metrics-empty-"));
   initMetricsRepo(dest, ogRoot);
 
-  const prev = process.env.GAPMAN_PLANNER_EMAILS;
-  process.env.GAPMAN_PLANNER_EMAILS = "   ,  ";
+  const prev = process.env.GANTRY_PLANNER_EMAILS;
+  process.env.GANTRY_PLANNER_EMAILS = "   ,  ";
   try {
     const missionPath = path.join(dest, ".gitagent", "missions", "MSN-0999.yaml");
     fs.appendFileSync(missionPath, "# empty allowlist\n");
@@ -135,8 +135,8 @@ test("aggregateFromLogStream: empty planner env entry does not match empty autho
     const stream = aggregateAtHead(dest);
     assert.equal(stream.legislative, 0);
   } finally {
-    if (prev === undefined) delete process.env.GAPMAN_PLANNER_EMAILS;
-    else process.env.GAPMAN_PLANNER_EMAILS = prev;
+    if (prev === undefined) delete process.env.GANTRY_PLANNER_EMAILS;
+    else process.env.GANTRY_PLANNER_EMAILS = prev;
   }
 });
 

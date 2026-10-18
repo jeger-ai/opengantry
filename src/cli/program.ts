@@ -31,7 +31,7 @@ export function buildProgram(): Command {
   });
   program.option(
     "--audience <role>",
-    "Tailor stdout/stderr: executor|planner|verifier|platform (also GXT_AUDIENCE env)",
+    "Tailor stdout/stderr: executor|planner|verifier|platform (also GANTRY_AUDIENCE env)",
   );
   registerReporterHook(program);
 

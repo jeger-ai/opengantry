@@ -60,6 +60,6 @@ A mission file without a Planner `[MSN-NNNN]` stamp still fails pre-push.
 
 ## Errors for machines and humans
 
-On a `gantry runtime exec` failure, a one-line human summary goes to stdout and the full JSON to stderr and `.gitagent/history/.ignored-last-error.json`. Orchestrators read the path from `GXT_LAST_ERROR_FILE`, which `gantry runtime env` sets. MCP `gxt_verify` returns `error_code`, `fix_hints` and `next_actions` ([Troubleshooting](troubleshooting.md#mcp-verify-payload)).
+On a `gantry runtime exec` failure, a one-line human summary goes to stdout and the full JSON to stderr and `.gitagent/history/.ignored-last-error.json`. Orchestrators read the path from `GANTRY_LAST_ERROR_FILE`, which `gantry runtime env` sets. MCP `gxt_verify` returns `error_code`, `fix_hints` and `next_actions` ([Troubleshooting](troubleshooting.md#mcp-verify-payload)).
 
 Design notes: [ADR-0032 failure envelope](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0032-failure-envelope.md), [ADR-0040 findings re-entry](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0040-findings-blame-reentry.md).

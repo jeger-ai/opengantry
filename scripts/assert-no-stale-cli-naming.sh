@@ -28,16 +28,7 @@ CODE_PATHS=(
 mapfile -t hits < <(
   rg -i 'gapman|GAPMAN' "${CODE_PATHS[@]}" \
     --glob '!node_modules/**' \
-    --glob '!package.json' \
     --glob '!examples/**/package-lock.json' \
-    --glob '!src/cli/lib/config-namespace.ts' \
-    --glob '!src/cli/lib/skill-key.ts' \
-    --glob '!src/cli/lib/constants.ts' \
-    --glob '!src/cli/tests/config-namespace.test.ts' \
-    --glob '!src/cli/tests/skill-key.test.ts' \
-    --glob '!src/cli/tests/planner-identity.test.ts' \
-    --glob '!src/cli/tests/metrics-classification.test.ts' \
-    --glob '!src/cli/tests/missions/mission-path-resolution.test.ts' \
     --glob '!scripts/assert-no-stale-cli-naming.sh' \
     --glob '!scripts/assert-docs-deterministic.sh' \
     -l 2>/dev/null || true

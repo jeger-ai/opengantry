@@ -198,7 +198,7 @@ rules:
   - id: REGISTRY-ERROR-CODES
     kind: registry
     patterns: ['"(GXT_[A-Z0-9_]*[A-Z0-9])"']
-    registries: [.gitagent/registry/error-codes.yaml, .gitagent/registry/env.yaml]
+    registries: [.gitagent/registry/error-codes.yaml]
     applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: REGISTRY-ENV
     kind: registry

@@ -7,15 +7,16 @@ import { DEFAULT_ACTIVE_MISSION } from "../../lib/constants.js";
 import { buildMissionResolutionCandidates, readActiveMissionPin, resolvePinnedMission } from "../../lib/missions/resolution.js";
 import { pinMissionFile } from "../../lib/missions/resolution.js";
 
-test("buildMissionResolutionCandidates: GANTRY_MISSION wins over GAPMAN_MISSION", () => {
+test("buildMissionResolutionCandidates: GANTRY_MISSION is the first env candidate; a legacy prefix is not read", () => {
   const candidates = buildMissionResolutionCandidates("/repo", {
     profile: "full",
     env: {
       GANTRY_MISSION: "gantry.yaml",
-      GAPMAN_MISSION: "legacy.yaml",
+      OTHER_MISSION: "legacy.yaml",
     },
   });
   assert.equal(candidates[0], "gantry.yaml");
+  assert.ok(!candidates.includes("legacy.yaml"));
 });
 
 test("buildMissionResolutionCandidates full profile ordering", () => {
@@ -24,11 +25,11 @@ test("buildMissionResolutionCandidates full profile ordering", () => {
     explicit: "explicit.yaml",
     profile: "full",
     env: {
-      GAPMAN_MISSION: "gapman.yaml",
-      GXT_MISSION_FILE: "gxt.yaml",
+      GANTRY_MISSION: "gantry.yaml",
+      GANTRY_MISSION_FILE: "gxt.yaml",
     },
   });
-  assert.deepEqual(candidates.slice(0, 3), ["explicit.yaml", "gapman.yaml", "gxt.yaml"]);
+  assert.deepEqual(candidates.slice(0, 3), ["explicit.yaml", "gantry.yaml", "gxt.yaml"]);
   assert.ok(candidates.includes(DEFAULT_ACTIVE_MISSION));
   assert.ok(candidates.includes(".gitagent/missions/ACTIVE_MISSION.yaml"));
 });
@@ -39,14 +40,14 @@ test("resolvePinnedMission: status profile uses GXT env and pin", () => {
   const missionAbs = path.join(dest, ".gitagent/missions/MSN-0001.from-env.yaml");
   fs.writeFileSync(missionAbs, "msn_id: MSN-0001\nskill_key: ui\ngate_command: echo OK\ntrace_rows: []\n", "utf8");
 
-  const prev = process.env.GXT_MISSION_FILE;
-  process.env.GXT_MISSION_FILE = ".gitagent/missions/MSN-0001.from-env.yaml";
+  const prev = process.env.GANTRY_MISSION_FILE;
+  process.env.GANTRY_MISSION_FILE = ".gitagent/missions/MSN-0001.from-env.yaml";
   try {
     const resolved = resolvePinnedMission(dest, { profile: "status" });
     assert.equal(resolved, ".gitagent/missions/MSN-0001.from-env.yaml");
   } finally {
-    if (prev === undefined) delete process.env.GXT_MISSION_FILE;
-    else process.env.GXT_MISSION_FILE = prev;
+    if (prev === undefined) delete process.env.GANTRY_MISSION_FILE;
+    else process.env.GANTRY_MISSION_FILE = prev;
   }
 });
 

@@ -26,7 +26,7 @@ export function runHooksUninstall(): void {
   runUserCommand({ json: false }, () => {
     const { root } = loadWorkspace();
     const result = uninstallTmvcStrictHook(root);
-    logInfo(result.removed ? "hooks uninstall: cleared gxt.tmvcGuardStrict" : "hooks uninstall: strict mode was not armed");
+    logInfo(result.removed ? "hooks uninstall: cleared gantry.tmvcGuardStrict" : "hooks uninstall: strict mode was not armed");
   });
 }
 

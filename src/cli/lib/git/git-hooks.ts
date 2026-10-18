@@ -3,7 +3,7 @@ import path from "node:path";
 import { gitConfigGet, gitConfigSet, gitRunOk } from "#git/git.js";
 
 /** Local git config that makes `.githooks/pre-commit` pass `--strict`. */
-export const TMVC_GUARD_STRICT_KEY = "gxt.tmvcGuardStrict";
+export const TMVC_GUARD_STRICT_KEY = "gantry.tmvcGuardStrict";
 
 /** Tracked hooks directory `gantry init` installs and `core.hooksPath` must name. */
 export const TRACKED_HOOKS_PATH = ".githooks";
@@ -57,7 +57,7 @@ export function installTmvcStrictHook(repoRoot: string): HooksInstallResult {
 
   const alreadyInstalled = localConfig(repoRoot, TMVC_GUARD_STRICT_KEY) === "true";
   if (!alreadyInstalled && !gitConfigSet(repoRoot, TMVC_GUARD_STRICT_KEY, "true")) {
-    return { ok: false, message: "hooks install: failed to set gxt.tmvcGuardStrict" };
+    return { ok: false, message: "hooks install: failed to set gantry.tmvcGuardStrict" };
   }
 
   return { ok: true, alreadyInstalled, hooksPath: TRACKED_HOOKS_PATH };

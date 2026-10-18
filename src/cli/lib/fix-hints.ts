@@ -164,11 +164,11 @@ export function hintTracePendingSteps(
 }
 
 export function hintForbiddenZone(firstPath: string, missionPath: string): string {
-  return `revert changes under ${firstPath}; stay inside GXT_TMVC_ROOTS — gantry runtime exec --mission ${missionPath}`;
+  return `revert changes under ${firstPath}; stay inside GANTRY_TMVC_ROOTS_ABSOLUTE — gantry runtime exec --mission ${missionPath}`;
 }
 
 export function hintRuntimeHumanSummary(summary: string, errorFile: string): string {
-  return `${summary} See ${errorFile} (GXT_LAST_ERROR_FILE).`;
+  return `${summary} See ${errorFile} (GANTRY_LAST_ERROR_FILE).`;
 }
 
 export function hintForTraceKind(

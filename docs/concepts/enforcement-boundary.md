@@ -27,7 +27,7 @@ Regulated teams and headless orchestrators should run executors under the proces
 gantry runtime exec --mission .gitagent/missions/MSN-0001.<slug>.yaml -- <agent command>
 ```
 
-`runtime exec` runs the command with the mission environment and checks edit roots and forbidden zones around it. On failure it prints a one-line summary on stdout and full JSON on stderr and in `.gitagent/history/.ignored-last-error.json`; orchestrators read the path from `GXT_LAST_ERROR_FILE` in `gantry runtime env`. Break-glass never disables its forbidden-zone enforcement.
+`runtime exec` runs the command with the mission environment and checks edit roots and forbidden zones around it. On failure it prints a one-line summary on stdout and full JSON on stderr and in `.gitagent/history/.ignored-last-error.json`; orchestrators read the path from `GANTRY_LAST_ERROR_FILE` in `gantry runtime env`. Break-glass never disables its forbidden-zone enforcement.
 
 ## Zero trust
 

@@ -57,28 +57,6 @@ export async function verifyMission(input: VerifyMissionInput): Promise<VerifyRe
   return buildVerifyResultPayload(input.repoRoot, manifest, mission, options);
 }
 
-let verifyMissionAsyncWarned = false;
-
-/** Test-only: reset the one-shot DeprecationWarning latch. */
-export function resetVerifyMissionAsyncWarningForTests(): void {
-  verifyMissionAsyncWarned = false;
-}
-
-/**
- * @deprecated Use `verifyMission` (now async). Emits DeprecationWarning
- * `GXT_DEP_VERIFY_MISSION_ASYNC` once per process. Removed in 4.0.
- */
-export async function verifyMissionAsync(input: VerifyMissionInput): Promise<VerifyResultPayload> {
-  if (!verifyMissionAsyncWarned) {
-    verifyMissionAsyncWarned = true;
-    process.emitWarning(
-      "verifyMissionAsync is deprecated; use verifyMission (now async). Will be removed in 4.0.",
-      { type: "DeprecationWarning", code: "GXT_DEP_VERIFY_MISSION_ASYNC" },
-    );
-  }
-  return verifyMission(input);
-}
-
 /** Load manifest + mission for middleware scope checks (no verify run). */
 export function loadGovernanceBundle(repoRoot: string, missionRelPath: string) {
   return {

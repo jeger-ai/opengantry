@@ -44,14 +44,6 @@ test("resolvePlannerEmails: git config gantry.plannerEmails", () => {
   assert.equal(r.source, "git_config");
 });
 
-test("resolvePlannerEmails: legacy git config gapman.plannerEmails fallback", () => {
-  const dest = mkRepo();
-  execSync('git config gapman.plannerEmails "legacy@example.com"', { cwd: dest, stdio: "pipe" });
-  const r = resolvePlannerEmails(dest);
-  assert.deepEqual(r.emails, ["legacy@example.com"]);
-  assert.equal(r.source, "git_config");
-});
-
 test("resolvePlannerEmails: env fallback when no repo config", () => {
   const dest = mkRepo();
   const prev = process.env[ENV_PLANNER_EMAILS];

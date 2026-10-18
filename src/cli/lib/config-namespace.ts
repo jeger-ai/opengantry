@@ -1,10 +1,8 @@
 import { gitRunOk } from "#git/git.js";
 
-/** Canonical env/config namespaces (user-facing). Legacy GAPMAN/gantry.* read silently when unset. */
+/** Canonical env and git config namespaces (user-facing). One prefix each since 4.0 (ADR-0052 A9). */
 export const ENV_PREFIX = "GANTRY_" as const;
-export const LEGACY_ENV_PREFIX = "GAPMAN_" as const;
 export const GIT_CONFIG_PREFIX = "gantry." as const;
-export const LEGACY_GIT_CONFIG_PREFIX = "gapman." as const;
 
 export const ENV_PLANNER_EMAILS = "GANTRY_PLANNER_EMAILS" as const;
 export const ENV_MISSION = "GANTRY_MISSION" as const;
@@ -12,14 +10,10 @@ export const ENV_DEBUG = "GANTRY_DEBUG" as const;
 
 export const GIT_CONFIG_PLANNER_EMAILS = "gantry.plannerEmails" as const;
 
-/**
- * Read env var preferring GANTRY_<suffix>, then silent GAPMAN_<suffix> fallback.
- */
-export function readEnvWithLegacy(suffix: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
-  const canonical = env[`${ENV_PREFIX}${suffix}`]?.trim();
-  if (canonical) return canonical;
-  const legacy = env[`${LEGACY_ENV_PREFIX}${suffix}`]?.trim();
-  return legacy || undefined;
+/** Read GANTRY_<suffix>; blank counts as unset. */
+export function readGantryEnv(suffix: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const value = env[`${ENV_PREFIX}${suffix}`]?.trim();
+  return value || undefined;
 }
 
 function readGitConfigKey(repoRoot: string, key: string): string | null {
@@ -30,11 +24,7 @@ function readGitConfigKey(repoRoot: string, key: string): string | null {
   return null;
 }
 
-/**
- * Read git config preferring gantry.<suffix>, then silent gapman.<suffix> fallback.
- */
-export function readGitConfigWithLegacy(repoRoot: string, suffix: string): string | null {
-  const canonical = readGitConfigKey(repoRoot, `${GIT_CONFIG_PREFIX}${suffix}`);
-  if (canonical) return canonical;
-  return readGitConfigKey(repoRoot, `${LEGACY_GIT_CONFIG_PREFIX}${suffix}`);
+/** Read gantry.<suffix> from the local git config, then the global one. */
+export function readGantryGitConfig(repoRoot: string, suffix: string): string | null {
+  return readGitConfigKey(repoRoot, `${GIT_CONFIG_PREFIX}${suffix}`);
 }

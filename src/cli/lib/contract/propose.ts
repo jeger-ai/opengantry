@@ -7,7 +7,6 @@ import { proposeImports } from "./propose-imports.js";
 import { isPathUnderRoot } from "../tmvc-path.js";
 import type { Manifest } from "#core/mission-types.js";
 import type { OrgPolicyBundle as PolicyBundle } from "#plane/policy-types.js";
-import { resolveManifestSkillKey } from "../skill-key.js";
 
 export interface ProposeContractInput {
   root: string;
@@ -67,7 +66,7 @@ function proposeForbidden(
  * normalized contract, gate, and sorted rationale.
  */
 export function proposeContract(input: ProposeContractInput): ProposeContractResult {
-  const skillKey = resolveManifestSkillKey(input.manifest, input.skillKey);
+  const skillKey = input.skillKey;
   const skill = input.manifest.skills[skillKey];
   const skillRoots = (skill?.tmvc_roots ?? []).map(normalizeContractPath);
   const skillForbidden = (skill?.forbidden_zones ?? []).map(normalizeContractPath);

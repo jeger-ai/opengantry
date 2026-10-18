@@ -51,7 +51,7 @@ gantry legislate --from-intent "Fix login spinner" --msn MSN-0001   # propose th
 
 ## The Planner commit
 
-A mission counts as approved only through Git. Among the last 200 commits (`--scan-depth <n>` or `GXT_MSN_SCAN_DEPTH` to change), the **newest** commit whose subject starts with `[MSN-NNNN]` and whose author email is in the Planner allowlist is the Planner stamp, and it must modify the mission file being verified.
+A mission counts as approved only through Git. Among the last 200 commits (`--scan-depth <n>` or `GANTRY_MSN_SCAN_DEPTH` to change), the **newest** commit whose subject starts with `[MSN-NNNN]` and whose author email is in the Planner allowlist is the Planner stamp, and it must modify the mission file being verified.
 
 A later `[MSN-NNNN]` commit by a Planner email that does not touch the mission file therefore breaks verify (`MISSION_FILE_NOT_MODIFIED_BY_PLANNER`) until another Planner commit with that id modifies it, or you legislate under a fresh id. If no `[MSN-NNNN]` commit exists at all, verify fails with `NO_MSN_COMMITS`; if such commits exist but none is from a Planner email, it fails with `NO_PLANNER_MSN_COMMIT`.
 
@@ -73,7 +73,7 @@ contract_sha256: <digest>
 - `contract.tmvc_roots` must be a subset of the skill's roots; a skill with empty roots accepts Planner-declared roots.
 - Forbidden zones and banned imports are the union of skill, contract and org policy.
 - `gantry verify` re-reads the contract from the Planner stamp commit. A difference is `GXT_CONTRACT_TAMPERED`. It also scans import sites, including `import()`, `require()` and `export … from`.
-- `gantry runtime env` exports `GXT_ALLOWED_IMPORTS` and `GXT_BANNED_IMPORTS`; `gantry runtime exec` reports `contract_violation`.
+- `gantry runtime env` exports `GANTRY_ALLOWED_IMPORTS` and `GANTRY_BANNED_IMPORTS`; `gantry runtime exec` reports `contract_violation`.
 
 ```bash
 gantry contract propose "Fix login spinner" --skill-key ui   # deterministic proposal; writes nothing

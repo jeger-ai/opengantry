@@ -39,7 +39,7 @@ export interface VerifyOptions {
   baseRef?: string;
   /** Authoritative mode: fail-closed on KPI stale evidence and perimeter (CI). */
   ci?: boolean;
-  /** Max commits to scan for Planner [MSN-XXXX] stamp (overrides GXT_MSN_SCAN_DEPTH). */
+  /** Max commits to scan for Planner [MSN-XXXX] stamp (overrides GANTRY_MSN_SCAN_DEPTH). */
   scanDepth?: number;
   /** Write attestation receipt after verify (optional path; default .gitagent/history/receipts/). */
   receipt?: boolean | string;

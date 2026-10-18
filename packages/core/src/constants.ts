@@ -54,5 +54,4 @@ export const DEFAULT_ACTIVE_MISSION = ".gitagent/missions/ACTIVE_MISSION.md" as 
 export const MSN_ID_PATTERN = /^MSN-\d{4}$/;
 
 export const CLI_NAME = "gantry";
-export const LEGACY_CLI_NAME = "gapman";
 export const OPENGANTRY_WEBSITE_URL = "https://opengantry.ai" as const;

@@ -150,7 +150,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     requireInterrogation:
       opts.requireInterrogation === true ||
       opts.ci === true ||
-      process.env.GXT_REQUIRE_INTERROGATION === "1",
+      process.env.GANTRY_REQUIRE_INTERROGATION === "1",
   };
 }
 
@@ -277,7 +277,7 @@ function registerVerifyCommand(program: Command): void {
     .option("--ci", "Authoritative mode: fail-closed on KPI report stale evidence (use in CI)")
     .option("--require-interrogation", "Require interrogation block on mission (also default when --ci)")
     .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
-    .option("--break-glass", "Skip all verify gates when GXT_BYPASS_SECRET is authorized")
+    .option("--break-glass", "Skip all verify gates when GANTRY_BYPASS_SECRET is authorized")
     .option("--reason <text>", "Mandatory break-glass reason (min 10 characters)")
     .option("--commit <sha>", "Git commit to attach break-glass note (default HEAD)")
     .option("--audit-commit", "Write break-glass audit as empty commit instead of git note")
@@ -288,7 +288,7 @@ function registerVerifyCommand(program: Command): void {
     .option("--format <fmt>", "Export format: text (default) | json | sarif | junit")
     .option(
       "--scan-depth <number>",
-      "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GXT_MSN_SCAN_DEPTH)",
+      "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GANTRY_MSN_SCAN_DEPTH)",
     )
     .option("--receipt [file]", "Write attestation receipt JSON after verify (default history path)")
     .option("--sign-receipt", "Detach-sign receipt with local SSH/GPG key")

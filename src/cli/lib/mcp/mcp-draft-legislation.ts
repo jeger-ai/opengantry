@@ -6,7 +6,7 @@ import {
   type DraftLegislationResult,
   type McpErrorBody,
 } from "./mcp-governance-shared.js";
-import { manifestHasSkill, resolveManifestSkillKey } from "../skill-key.js";
+import { manifestHasSkill } from "../skill-key.js";
 import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
 import { runInterrogate } from "../interrogate/run.js";
 import { DEFAULT_GATE_ADAPTER } from "#core/mission-types.js";
@@ -92,7 +92,7 @@ export function handleDraftLegislation(
   if (validation) return mcpError(validation.code, validation.message, validation.retryable);
 
   const { root, manifest } = loadWorkspace();
-  const skillKey = resolveManifestSkillKey(manifest, input.skill_key.trim());
+  const skillKey = input.skill_key.trim();
   if (!manifestHasSkill(manifest, skillKey)) {
     return mcpError(
       "UNKNOWN_SKILL",

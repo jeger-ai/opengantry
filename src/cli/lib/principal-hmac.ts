@@ -1,5 +1,5 @@
 import { emitCliJson } from "./command-boundary.js";
-import { readEnvWithLegacy } from "./config-namespace.js";
+import { readGantryEnv } from "./config-namespace.js";
 import { GantryUserError } from "./errors.js";
 import {
   filterEpochs,
@@ -32,7 +32,7 @@ export interface PrincipalHmacOptions {
 }
 
 function resolveOrgId(explicit: string | undefined, entries: PepperKeyringEntry[]): string {
-  const orgId = explicit?.trim() || readEnvWithLegacy("ORG_ID");
+  const orgId = explicit?.trim() || readGantryEnv("ORG_ID");
   if (orgId) return orgId;
 
   const available = listOrgIds(entries);
