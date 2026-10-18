@@ -68,9 +68,6 @@ entries:
   - file: draft-token.test.ts
     class: none
     spawns: [git]
-  - file: embedding-provider.test.ts
-    class: cli
-    spawns: [cli]
   - file: gate-git-env.test.ts
     class: script
     spawns: [script, git]

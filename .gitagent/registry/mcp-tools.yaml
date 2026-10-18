@@ -26,8 +26,6 @@ entries:
     since: MSN-0228
   - name: gxt_policy_status
     since: MSN-0228
-  - name: gxt_preflight_contract
-    since: MSN-0228
   - name: gxt_propose_contract
     since: MSN-0228
   - name: gxt_resolve_mission

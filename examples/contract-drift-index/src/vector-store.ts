@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "./errors.js";
 
 /** OpenAI-sized host vector. The index accepts this array in memory; `gantry contract embed` generates it. */
 export const EMBEDDING_DIMENSIONS = 1536;
