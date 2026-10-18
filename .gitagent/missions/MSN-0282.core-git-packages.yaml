@@ -52,8 +52,8 @@ trace_rows:
     anchor: "1455"
     status: PASS
   - dod_id: "3"
-    trace_quote: "DoD 3 MSN-0282 at 2b43009: tsconfig.base.json holds the shared compiler options (types node added); root tsconfig.json is composite with references packages/core and packages/git; package.json build runs tsc -b; dist/packages/core/src and dist/packages/git/src carry .js, .d.ts and maps; root package.json imports maps #core/* to ./dist/packages/core/src/* and #git/* to ./dist/packages/git/src/*; scripts/prune-dist.mjs maps dist/packages/<name>/<stem> to packages/<name>/<stem>.ts and reports 0 orphans; eslint.config.js lints packages/*/src/**/*.ts with the src/cli rules (lint clean); npm run test:packages runs dist/packages/*/tests/*.test.js and npm test runs it before test:cage; npm run build:cage writes the slim bundle and npm run test:cage: pass 11 fail 0"
-    anchor: "1456"
+    trace_quote: "DoD 3 MSN-0282 re-attested at e075cc4: package.json workspaces now lists packages/opengantry-cage only, so packages/core and packages/git are repository packages reached through the imports map and never through node_modules; npm ci with the unchanged package-lock.json installs cleanly (the first CI run failed with 'Missing: @jeger-ai/opengantry-core@3.9.0 from lock file' because the packages/* glob matched them); git status shows package-lock.json untouched; npm run build:cage still builds through the workspace"
+    anchor: "1462"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0282 at 2b43009: src/cli/lib/canonical-json.ts, path-glob.ts, gxt-error-codes.ts, git/git.ts and git/git-staged.ts are 2-line re-export facades (export * from #core or #git); errors.ts re-exports GantryUserError and isGantryUserError from #core/user-error.js and keeps reportUserFacingError and the agent error file; constants.ts re-exports #core/constants.js plus version.gen; manifest.ts keeps manifestPath and loadManifest and re-exports validateManifestShape; types.ts re-exports TrustThreshold, SkillEntry and Manifest from #core/manifest.js; node check: dist/cli/lib/errors.js GantryUserError === dist/packages/core/src/user-error.js GantryUserError and GXT_ERROR identical across the facade; git diff --name-only origin/main...HEAD -- src/cli lists exactly canonical-json.ts, constants.ts, errors.ts, git/git-staged.ts, git/git.ts, gxt-error-codes.ts, manifest.ts, path-glob.ts, types.ts and tests/prune-dist.test.ts (accepts the tsc -b step and maps dist/packages); no other importer or test changed"
@@ -68,12 +68,12 @@ trace_rows:
     anchor: "1459"
     status: PASS
   - dod_id: "7"
-    trace_quote: "DoD 7 MSN-0282 at 2b43009: docs/ARCHITECTURE.md gains core and git rows in the layers table, a Packages section (tsc -b, #core/#git imports, facades until step 3) and import rule 2 for the packages; docs/DEVELOPMENT.md section Packages (ADR-0052 step 2) with the package table, build, import and test rules; docs/CHANGELOG.md substrate note Packages (ADR-0052 step 2) and an Unreleased bullet"
-    anchor: "1460"
+    trace_quote: "DoD 7 MSN-0282 re-attested at e075cc4: docs/ARCHITECTURE.md, docs/DEVELOPMENT.md and docs/CHANGELOG.md say the packages are not npm workspaces and that adding one changes no lockfile"
+    anchor: "1463"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0282 at 2b43009: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 937 pass 937 fail 0; conformance tests 85 pass 82 fail 0 skipped 3; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; git diff --name-only origin/main...HEAD lists only ARCH_BASELINE.json, docs/ARCHITECTURE.md, docs/CHANGELOG.md, docs/DEVELOPMENT.md, eslint.config.js, the mission file, package.json, packages/core/*, packages/git/*, scripts/arch-baseline.mjs, scripts/prune-dist.mjs, src/cli/lib/*, src/cli/tests/prune-dist.test.ts, TARGET_ARCHITECTURE.yaml, tsconfig.base.json, tsconfig.json, all under contract.tmvc_roots"
-    anchor: "1461"
+    trace_quote: "DoD 8 MSN-0282 re-attested at e075cc4: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 937 pass 937 fail 0; conformance 82 pass 0 fail 3 skipped; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; the changed path set is unchanged (package.json and the three docs were already in it)"
+    anchor: "1464"
     status: PASS
 interrogation:
   - finding_id: 25f6f42f070e
