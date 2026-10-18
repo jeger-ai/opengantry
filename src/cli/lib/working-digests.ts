@@ -2,8 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { TARGET_ARCHITECTURE_FILENAME } from "./arch/cage/target-architecture.js";
-import { REL_MANIFEST } from "./constants.js";
+import { REL_MANIFEST, TARGET_ARCHITECTURE_FILENAME } from "./constants.js";
 
 export function sha256File(absPath: string): string {
   return crypto.createHash("sha256").update(fs.readFileSync(absPath)).digest("hex");

@@ -5,41 +5,34 @@ import type { DefensiveProfileConfig } from "./defensive-profile.js";
 import { validateDefensiveProfile } from "./defensive-profile.js";
 import { isDefensiveProfilePresetName, presetConfigDefaults } from "./defensive-profile-presets.js";
 
-export type PlannerSignatureTier = "off" | "warn" | "require";
-export type ReceiptSignatureTier = PlannerSignatureTier;
-export type FlightTelemetryBodyMode = "hash_only" | "full";
+export {
+  FLIGHT_TELEMETRY_BODY_MODES,
+  LEDGER_MODES,
+  PLANNER_SIGNATURE_TIERS,
+  RECEIPT_SIGNATURE_TIERS,
+  resolveFlightTelemetryBodyMode,
+  resolveLedgerSignatureTier,
+  resolvePlannerSignatureTier,
+  resolveReceiptSignatureTier,
+  type FlightTelemetryBodyMode,
+  type FlightTelemetryConfig,
+  type LedgerConfig,
+  type LedgerMode,
+  type PlannerSignatureTier,
+  type ReceiptSignatureTier,
+} from "#core/config.js";
+import { explicitLedgerMode, parseGxtConfig, type GxtConfigShape, type LedgerMode } from "#core/config.js";
 
-export const PLANNER_SIGNATURE_TIERS: readonly PlannerSignatureTier[] = ["off", "warn", "require"];
-export const RECEIPT_SIGNATURE_TIERS: readonly ReceiptSignatureTier[] = PLANNER_SIGNATURE_TIERS;
-export const FLIGHT_TELEMETRY_BODY_MODES: readonly FlightTelemetryBodyMode[] = ["hash_only", "full"];
-
-export interface FlightTelemetryConfig {
-  body_mode?: FlightTelemetryBodyMode;
-}
-
-export type LedgerMode = "off" | "local";
-export const LEDGER_MODES: readonly LedgerMode[] = ["off", "local"];
-
-export interface LedgerConfig {
-  mode?: LedgerMode;
-  signature?: ReceiptSignatureTier;
-}
-
-export interface GxtConfig {
-  planner_signature?: PlannerSignatureTier;
-  receipt_signature?: ReceiptSignatureTier;
-  flight_telemetry?: FlightTelemetryConfig;
-  trusted_automation?: unknown;
+/** The loaded config: the core shape with the defensive profile validated. */
+export interface GxtConfig extends GxtConfigShape {
   defensive_profile?: DefensiveProfileConfig;
-  ledger?: LedgerConfig;
 }
 
 export function loadGxtConfig(root: string): GxtConfig {
   const configPath = path.join(root, ".gitagent", "config.json");
   if (!fs.existsSync(configPath)) return {};
   try {
-    const parsed = JSON.parse(fs.readFileSync(configPath, "utf8")) as GxtConfig;
-    const config = parsed ?? {};
+    const config = parseGxtConfig(fs.readFileSync(configPath, "utf8")) as GxtConfig;
     if (config.defensive_profile != null) {
       config.defensive_profile = validateDefensiveProfile(config.defensive_profile);
     }
@@ -49,25 +42,9 @@ export function loadGxtConfig(root: string): GxtConfig {
   }
 }
 
-export function resolvePlannerSignatureTier(config: GxtConfig): PlannerSignatureTier {
-  const tier = config.planner_signature ?? "off";
-  return PLANNER_SIGNATURE_TIERS.includes(tier) ? tier : "off";
-}
-
-export function resolveReceiptSignatureTier(config: GxtConfig): ReceiptSignatureTier {
-  const tier = config.receipt_signature ?? "off";
-  return RECEIPT_SIGNATURE_TIERS.includes(tier) ? tier : "off";
-}
-
-export function resolveFlightTelemetryBodyMode(config: GxtConfig): FlightTelemetryBodyMode {
-  const mode = config.flight_telemetry?.body_mode ?? "hash_only";
-  return FLIGHT_TELEMETRY_BODY_MODES.includes(mode) ? mode : "hash_only";
-}
-
 export function resolveLedgerMode(config: GxtConfig): LedgerMode {
-  if (config.ledger?.mode !== undefined) {
-    return LEDGER_MODES.includes(config.ledger.mode) ? config.ledger.mode : "off";
-  }
+  const explicit = explicitLedgerMode(config);
+  if (explicit !== null) return explicit;
   const preset = config.defensive_profile?.preset;
   if (preset && isDefensiveProfilePresetName(preset)) {
     return presetConfigDefaults(preset).ledger?.mode ?? "off";
@@ -75,7 +52,3 @@ export function resolveLedgerMode(config: GxtConfig): LedgerMode {
   return "off";
 }
 
-export function resolveLedgerSignatureTier(config: GxtConfig): ReceiptSignatureTier {
-  const tier = config.ledger?.signature ?? "off";
-  return RECEIPT_SIGNATURE_TIERS.includes(tier) ? tier : "off";
-}

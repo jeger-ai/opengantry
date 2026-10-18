@@ -15,6 +15,8 @@ export const REL_MISSION_TEMPLATE = ".gitagent/planner/MISSION.template.md" as c
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
 /** Committed, machine-written run records: one per mission (ADR-0052 A4, A5). */
 export const REL_RUNS_DIR = ".gitagent/runs" as const;
+/** Root-level architecture law (ADR-0024). */
+export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
 /** Git-ignored attestation receipts for optional hub ingestion. */
 export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
 /** Planner SSH allowed signers for `git log --format=%G?` / perimeter --ci. */
