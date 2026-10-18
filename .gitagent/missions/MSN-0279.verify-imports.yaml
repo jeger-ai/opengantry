@@ -16,6 +16,12 @@
 #        A forbidden zone also bans imports into it, and src/cli/program-workflow.ts (in scope) has always imported
 #        verify-options.js and verify-export.js from there. Mission verify stays untouched: no file under
 #        src/cli/lib/verify/ may change in this mission.
+# Amended 2026-10-18 after ADR-0052 step 1 (MSN-0281) and MSN-0277 landed on main: .gitagent/registry/error-codes.yaml
+#        and test/conformance/golden/ join the contract.
+# DoD 13 (law of ADR-0052 step 1): GXT_VERIFY_SIGN_NO_KEY has an error-codes.yaml entry (since MSN-0279) in the
+#        Planner commit; the golden files verify.contract.contract-standalone and
+#        verify.contract.gate-json.contract-standalone are re-recorded for the result fields of DoD 8 (inherited,
+#        imports, layers, skipped) and no other golden file changes; npm run test:conformance passes.
 # DoD 1 (parsing): JS/TS (.ts .tsx .js .jsx .mjs .cjs .mts .cts) through import-scanner.ts: static imports,
 #        export ... from, require and import() with a string literal. Python (.py) through a new parser: import a.b,
 #        from a.b import c, d, relative from . import x / from ..m import y, parenthesized multi-line imports,
@@ -108,6 +114,10 @@ trace_rows:
     trace_quote: "DoD 12 MSN-0279 re-attested at 2afcbde: ./scripts/dev-validate-core.sh exit 0: tests 943 pass 943 fail 0; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
     anchor: "1504"
     status: PASS
+  - dod_id: "13"
+    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
+    anchor: "1"
+    status: PENDING
 gate_success_substring: dev-validate-core OK
 interrogation:
   - finding_id: 1b8d3219a2c3
@@ -266,6 +276,7 @@ interrogation_sha256: 148c59330ab854ded91aeb91e0060f8d48ceb6192a8de10b6fc71aafd7
 declared_paths:
   - .gitagent/missions/MSN-0279.verify-imports.yaml
   - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/registry/error-codes.yaml
   - EXECUTOR_LOG.md
   - docs/CHANGELOG.md
   - docs/guides/verify-contract.md
@@ -277,10 +288,12 @@ declared_paths:
   - src/cli/tests/verify-standalone-imports.test.ts
   - src/cli/tests/verify-standalone-sign.test.ts
   - src/cli/tests/verify-standalone.test.ts
+  - test/conformance/golden/
 contract:
   tmvc_roots:
     - .gitagent/missions/MSN-0279.verify-imports.yaml
     - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/registry/error-codes.yaml
     - EXECUTOR_LOG.md
     - docs/CHANGELOG.md
     - docs/guides/verify-contract.md
@@ -292,6 +305,7 @@ contract:
     - src/cli/tests/verify-standalone-imports.test.ts
     - src/cli/tests/verify-standalone-sign.test.ts
     - src/cli/tests/verify-standalone.test.ts
+    - test/conformance/golden/
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
@@ -302,4 +316,4 @@ contract:
     - src/core/
     - src/db/schema/
     - templates/
-contract_sha256: ea9cb7cec091f09abb95ebbcca131d7bdf4a613e492a4621e7df8484008e014f
+contract_sha256: 86e984bf1557c2fa6f5f4dd50ab9e0b4764bbd0012609623f712118894a47834
