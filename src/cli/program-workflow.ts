@@ -5,7 +5,7 @@ import { runLegislateFromIntent } from "./lib/legislate/legislate-from-intent.js
 import { isGantryUserError } from "./lib/errors.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
-import { runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
+import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
 import type { VerifyOptions } from "./lib/verify/verify-options.js";
 import type { VerifyExportFormat } from "./lib/verify/verify-export.js";
 import { runScan } from "./commands/scan.js";
@@ -283,7 +283,7 @@ function registerAttestCommand(program: Command): void {
 }
 
 function registerVerifyCommand(program: Command): void {
-  program
+  const cmd = program
     .command("verify")
     .description(
       "Git-proof (Planner + MSN) + deterministic gate + hard-stop trace mapping vs EXECUTOR_LOG.md",
@@ -315,16 +315,9 @@ function registerVerifyCommand(program: Command): void {
     .option("--receipt [file]", "Write attestation receipt JSON after verify (default history path)")
     .option("--sign-receipt", "Detach-sign receipt with local SSH/GPG key")
     .option("--export <file>", "Write hub export envelope after verify (payload_b64 + signature)")
-    .option("--audience <role>", "Tailor output: executor|planner|verifier|platform")
-    .option("--contract [file]", "Standalone verify contract instead of a mission: verify.yaml (default) or a COMMITLY gate.json")
-    .option("--base <ref>", "With --contract: base commit (default: the contract's base:)")
-    .option("--worktree", "With --contract: include uncommitted and untracked work (check before committing)")
-    .option("--quick", "With --contract: skip heavy checks")
-    .option("--baseline", "With --contract: at the base, record which checks already fail")
-    .option("--baseline-file <file>", "With --contract: baseline file (default verify-baseline.json beside the contract)")
-    .option("--check-result <file>", "With --contract: pass only if that result passed in a full run for this HEAD and contract")
-    .option("--out <file>", "With --contract: write the opengantry.verify-result.v1 result to <file>")
-    .action(async (opts: VerifyCliOptions & Omit<VerifyContractCliOptions, "contract" | "mission" | "json" | "format"> & { contract?: string | true }) => {
+    .option("--audience <role>", "Tailor output: executor|planner|verifier|platform");
+  registerVerifyContractOptions(cmd);
+  cmd.action(async (opts: VerifyCliOptions & Omit<VerifyContractCliOptions, "contract" | "mission" | "json" | "format"> & { contract?: string | true }) => {
       if (opts.contract !== undefined) {
         await runVerifyContractCommand({ ...opts, contract: opts.contract });
         return;

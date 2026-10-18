@@ -10,6 +10,9 @@ match_terms:
   - standalone verify
   - check-result
   - baseline
+  - layers
+  - path_aliases
+  - allowed signers
 ---
 
 ## Context
@@ -34,14 +37,26 @@ COMMITLY hangar already runs such a decision for its build handovers. Its `gate.
 7. **No built-in path rules in verify.** CI configs, `.env` and git control are the cage's floor; `cage check` already fails a pull request that touches them. Verify judges what the contract says and nothing else, and the docs tell adopters to run both.
 8. **Separate from missions.** `gantry verify --mission` is unchanged. A verify contract has no Planner seal, no trace and no interrogation, and verify never reads it in mission mode. It is the no-mission rung of the ladder; missions remain Planner-approved scope with evidence a reviewer can check ([ADR-0045](ADR-0045-mission-contracts.md)).
 
+## Amendment: imports, layers and signed results (MSN-0279)
+
+Regex rules over added lines cannot tell an import from a string, and they cannot follow `@app/…` or `from app import api` to the layer it lands in. Follow-up B adds rules that understand imports, makes repository law bind task contracts, and signs results without inventing a schema.
+
+9. **Import and layer rules count only imports the change adds.** `verify.yaml` takes `imports` (`name`, `files`, `forbid` module prefixes, `why`) and `layers` (`name`, `paths`, `may_not_import`). Each changed file's imports at HEAD (from disk with `--worktree`) are compared with the same file at the base, so existing debt never blocks unrelated work. JS/TS import sites come from the shared `import-scanner.ts`, the one scanner the mission contract check also uses; Python statements from a small parser that blanks comments and strings, joins bracketed lines and reads `import` and `from … import`. A forbid entry matches a module that equals it or continues it after `/` (JS/TS) or `.` (Python). Files a rule covers in any other language are listed as `skipped`, never silently passed.
+10. **Imports resolve to files before layers are compared.** Relative JS/TS specifiers try the path, the usual extensions (`.js` swapped for `.ts`) and `index.*`; a specifier that starts with a `path_aliases` key (`"@app/": "client/src/app/"`) is rewritten and resolved the same way, which is how Angular and TypeScript code crosses layers. For Python `from X import Y`, `X/Y.py` and `X/Y/__init__.py` are tried before `X.py` and `X/__init__.py`, so `from app import api` lands in the `api` layer; absolute imports resolve under `python_paths`, relative ones from the importing file's package. Other bare specifiers are packages and never layer imports.
+11. **Repository law binds task contracts.** When the contract is not the repository's own `verify.yaml` (a hangar `gate.json`, a handover contract) and the base commit has one, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules` and `forbidden_paths` are merged in, tighten-only: lists are unioned, and on a conflicting alias the repository's entry wins. `checks`, `size` and `allowed_paths` stay the task's. The result names the inherited file and its sha256. `gate.json` itself gains no keys.
+12. **Signed results reuse the receipt envelope.** `--sign` (with `--out`) adds `signature` in exactly the `ReceiptSignature` shape of `receipt-signing.ts` ([ADR-0036](ADR-0036-receipt-v0-2-signed-attribution.md)): SSH or GPG through the git signing key, over the canonical JSON of the result without that field, `payload_encoding: canonical_json_utf8`. No new signature schema, so the result can become a projection of the single run record proposed in ADR-0052 without a breaking change. `--check-result <file> --allowed-signers <file>` also requires a good SSH signature by a key in an `ssh-keygen` allowed-signers file and names the signer; `receipt-signing.ts` gained that verify path instead of a second signing module.
+
+Limits of the amendment: the shared JS/TS scanner also reports an `import … from` written inside a string literal; Python imports on the same line as a compound statement (`if x: import y`) are not read; aliases are explicit (`tsconfig.json` `paths` are not read); `--allowed-signers` verifies SSH signatures only.
+
 ## Consequences
 
 - A repository can make a pull request's merge depend on `gantry verify --contract` in CI without adopting `.gitagent/`.
 - A COMMITLY hangar handover's `gate.json` can be checked by OpenGantry as it is, which lets the two converge on one engine. Heavy checks run directly; hangar's `run-heavy.js` wrapper is not part of verify.
 - Checks run arbitrary shell commands from the contract. That is the point, and it is why the contract a change is judged by comes from the base commit or from outside the repository.
-- A result is evidence only as far as its sha256 binding goes: it is not signed, and anyone who can write the result file can forge one. `--check-result` protects against stale results, not against forgery.
+- An unsigned result is evidence only as far as its sha256 binding goes: anyone who can write the result file can forge one, and `--check-result` alone protects against stale results, not forgery. A result signed with `--sign` and checked with `--allowed-signers` is attributable to a listed key.
 
 ## Follow-ups (each needs its own Planner mission)
 
-- **B: imports and evidence.** Import and layer rules beyond regexes (a JS/TS import-site scanner, Python import parsing, regex rules for other languages), and signed results.
+- **B: imports and evidence.** Done in MSN-0279 (decisions 9-12).
+- **Sigstore keyless signing** in CI (GitHub Actions OIDC, a transparency-log entry per result), next to the SSH/GPG path, without a network call in the default run.
 - **C: the slim package.** `@jeger-ai/opengantry-verify`, a bin and a library API bundled from the same sources like `@jeger-ai/opengantry-cage`, SARIF and JUnit for contract results, and a release. Until then `--format sarif|junit` with `--contract` exits `2`.
