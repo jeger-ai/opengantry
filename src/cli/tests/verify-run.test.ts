@@ -17,7 +17,7 @@ import {
 } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
-function writeSurgeonReceiptFixture(
+function writeRepairReceiptFixture(
   dest: string,
   ogRoot: string,
   gateCommand: string,
@@ -36,8 +36,8 @@ function writeSurgeonReceiptFixture(
     "utf8",
   );
 
-  const missionRel = ".gitagent/missions/surgeon-receipt.yaml";
-  const traceQuote = "surgeon receipt evidence line";
+  const missionRel = ".gitagent/missions/repair-receipt.yaml";
+  const traceQuote = "repair receipt evidence line";
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, missionRel),
@@ -113,17 +113,17 @@ test("runVerifyCore: returns failure exit code for gate failure", async () => {
   });
 });
 
-test("runVerifyCore: --fix + --receipt writes one passed receipt after surgeon re-eval", async () => {
+test("runVerifyCore: --fix + --receipt writes one passed receipt after repair re-eval", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-receipt-pass-"));
-  const missionRel = writeSurgeonReceiptFixture(
+  const missionRel = writeRepairReceiptFixture(
     dest,
     ogRoot,
     `node ${cli} check-imports src --ban axios`,
     "check-imports: OK",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon receipt mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate repair receipt mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
 
   await withPlannerEnvAsync(async () => {
@@ -150,17 +150,17 @@ test("runVerifyCore: --fix + --receipt writes one passed receipt after surgeon r
   });
 });
 
-test("runVerifyCore: --fix + --receipt writes one failed receipt when surgeon fix still fails gate", async () => {
+test("runVerifyCore: --fix + --receipt writes one failed receipt when repair fix still fails gate", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-receipt-fail-"));
-  const missionRel = writeSurgeonReceiptFixture(
+  const missionRel = writeRepairReceiptFixture(
     dest,
     ogRoot,
     `node ${cli} check-imports src --ban axios; exit 1`,
     "NEVER_MATCHES",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon receipt fail mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate repair receipt fail mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
 
   await withPlannerEnvAsync(async () => {

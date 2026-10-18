@@ -8,7 +8,7 @@ import { Reporter } from "../reporter.js";
 import { logFixHint } from "../fix-hints.js";
 import { loadPrompts } from "../prompts-loader.js";
 import { isGantryUserError } from "../errors.js";
-import { appendSurgeonMutationLog } from "../surgeon.js";
+import { appendRepairMutationLog } from "../repair.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";
 import type { VerifyPhaseTiming } from "./verify-phase-clock.js";
@@ -35,10 +35,10 @@ import {
   type VerifyFailurePresentation,
 } from "./verify-failure-normalize.js";
 import {
-  getSurgeonForErrorCode,
-  resolveSurgeonErrorCode,
-  type SurgeonContext,
-} from "../surgeons/registry.js";
+  getRepairForErrorCode,
+  resolveRepairErrorCode,
+  type RepairContext,
+} from "../repairs/registry.js";
 import { persistRemediationFromFailedPayload } from "../context-feed-remediation.js";
 import {
   persistFailedVerifyRemediation,
@@ -384,8 +384,8 @@ export async function presentFix(
   return { ok: false, exitCode: failure.exitCode };
 }
 
-/** One surgeon mutation pass + phase re-eval only (no nested runVerifyCore). */
-export async function maybeApplySurgeonAndReevaluate(input: {
+/** One repair mutation pass + phase re-eval only (no nested runVerifyCore). */
+export async function maybeApplyRepairAndReevaluate(input: {
   root: string;
   mission: VerifyPresentContext["mission"];
   options: VerifyPresentContext["options"];
@@ -398,14 +398,14 @@ export async function maybeApplySurgeonAndReevaluate(input: {
   const failure = input.result as VerifyPhaseFailure;
   if (failure.phase !== "gate") return input.result;
 
-  const errorCode = resolveSurgeonErrorCode(failure);
+  const errorCode = resolveRepairErrorCode(failure);
   if (!errorCode) return input.result;
 
-  const surgeon = getSurgeonForErrorCode(errorCode);
-  if (!surgeon) return input.result;
+  const repair = getRepairForErrorCode(errorCode);
+  if (!repair) return input.result;
 
   const executorLogPath = failure.executorLogPath;
-  const context: SurgeonContext = {
+  const context: RepairContext = {
     root: input.root,
     failure,
     manifest: input.manifest,
@@ -413,15 +413,15 @@ export async function maybeApplySurgeonAndReevaluate(input: {
     errorCode,
   };
 
-  logWarn(`[Surgeon] Autonomous mutation triggered for error ${errorCode}`);
-  const mutation = await surgeon.applyMutation(context);
+  logWarn(`[Repair] Autonomous mutation triggered for error ${errorCode}`);
+  const mutation = await repair.applyMutation(context);
   if (!mutation.mutated) {
-    logInfo(`${CLI_NAME} verify: [Surgeon] no mutation applied (${mutation.summary})`);
+    logInfo(`${CLI_NAME} verify: [Repair] no mutation applied (${mutation.summary})`);
     return input.result;
   }
 
-  appendSurgeonMutationLog(executorLogPath, mutation.summary);
-  logInfo(`${CLI_NAME} verify: [Surgeon] mutation logged; re-evaluating verify phases (fix disabled)`);
+  appendRepairMutationLog(executorLogPath, mutation.summary);
+  logInfo(`${CLI_NAME} verify: [Repair] mutation logged; re-evaluating verify phases (fix disabled)`);
 
   const reevalOptions: VerifyPresentContext["options"] = {
     ...input.options,

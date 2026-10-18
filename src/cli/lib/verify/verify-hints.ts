@@ -2,7 +2,7 @@ import type { OutputAudience } from "../audience-output.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR, mapGitProofCodeToGxt } from "#core/error-codes.js";
 import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
-import { gateOutputIndicatesImportLayer } from "../surgeon.js";
+import { gateOutputIndicatesImportLayer } from "../repair.js";
 import {
   hintForTraceKind,
   hintGate,

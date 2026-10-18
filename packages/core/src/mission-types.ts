@@ -12,7 +12,7 @@ export type { TrustThreshold, SkillEntry, Manifest } from "./manifest.js";
 
 export type TriageAction = "DIRECT_EXECUTION" | "LEGISLATIVE_ESCALATION";
 
-/** Non-binding ADR hint from `.gitagent/out-of-scope/` (Foreman does not route on this). */
+/** Non-binding ADR hint from `.gitagent/out-of-scope/` (triage does not route on this). */
 export interface AdrHint {
   id: string;
   title?: string;

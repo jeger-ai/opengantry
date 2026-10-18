@@ -2,14 +2,14 @@ import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { parseBannedImportGateOutput } from "../banned-import-violation.js";
 import { quarantineImportDeclaration } from "./quarantine-import.js";
-import type { CodeSurgeon, SurgeonContext, SurgeonMutationResult } from "./registry.js";
+import type { CodeRepair, RepairContext, RepairMutationResult } from "./registry.js";
 
 const QUARANTINE_RULE = "RULE-BANNED-IMPORT";
 
-export const bannedImportSurgeon: CodeSurgeon = {
+export const bannedImportRepair: CodeRepair = {
   errorCode: GXT_ERROR.BANNED_IMPORT_DETECTED,
 
-  async applyMutation(context: SurgeonContext): Promise<SurgeonMutationResult> {
+  async applyMutation(context: RepairContext): Promise<RepairMutationResult> {
     const combined = context.failure.gateOutput ?? "";
     const violations = parseBannedImportGateOutput(combined);
     if (violations.length === 0) {

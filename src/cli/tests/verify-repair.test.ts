@@ -13,7 +13,7 @@ import {
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
-function writeSurgeonFixtureRepo(
+function writeRepairFixtureRepo(
   dest: string,
   ogRoot: string,
   options: { gateCommand: string; gateSubstring: string },
@@ -31,8 +31,8 @@ function writeSurgeonFixtureRepo(
     "utf8",
   );
 
-  const missionRel = ".gitagent/missions/surgeon-ban.yaml";
-  const traceQuote = "surgeon quarantine evidence line";
+  const missionRel = ".gitagent/missions/repair-ban.yaml";
+  const traceQuote = "repair quarantine evidence line";
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, missionRel),
@@ -55,12 +55,12 @@ trace_rows:
 test("runVerify: --fix quarantines banned import, logs mutation, reruns verify", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-surgeon-fix-"));
-  const missionRel = writeSurgeonFixtureRepo(dest, ogRoot, {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-fix-"));
+  const missionRel = writeRepairFixtureRepo(dest, ogRoot, {
     gateCommand: `node ${cli} check-imports src --ban axios`,
     gateSubstring: "check-imports: OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
@@ -85,7 +85,7 @@ test("runVerify: --fix quarantines banned import, logs mutation, reruns verify",
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START/);
       assert.match(executorLog, /\[SURGEON-MUTATION\] banned-import quarantined: src\/bad\.ts:1 -> RULE-BANNED-IMPORT/);
-      assert.match(combined, /\[Surgeon\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
+      assert.match(combined, /\[Repair\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {
       process.chdir(prevCwd);
@@ -97,12 +97,12 @@ test("runVerify: --fix quarantines banned import, logs mutation, reruns verify",
 test("runVerify: without --fix does not quarantine banned import", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-surgeon-plain-"));
-  const missionRel = writeSurgeonFixtureRepo(dest, ogRoot, {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-plain-"));
+  const missionRel = writeRepairFixtureRepo(dest, ogRoot, {
     gateCommand: `node ${cli} check-imports src --ban axios`,
     gateSubstring: "check-imports: OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
@@ -133,12 +133,12 @@ test("runVerify: without --fix does not quarantine banned import", async () => {
 test("runVerify: --fix writes only one SURGEON-MUTATION line on successful rerun", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-surgeon-once-"));
-  const missionRel = writeSurgeonFixtureRepo(dest, ogRoot, {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-once-"));
+  const missionRel = writeRepairFixtureRepo(dest, ogRoot, {
     gateCommand: `node ${cli} check-imports src --ban axios`,
     gateSubstring: "check-imports: OK",
   });
-  gitInitCommit(dest, "[MSN-0999] legislate surgeon mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
 
   const prevCwd = process.cwd();
   await withPlannerEnvAsync(async () => {
@@ -182,8 +182,8 @@ function writeImportLayerFixtureRepo(
     "utf8",
   );
 
-  const missionRel = ".gitagent/missions/surgeon-layer.yaml";
-  const traceQuote = "import layer surgeon quarantine evidence";
+  const missionRel = ".gitagent/missions/repair-layer.yaml";
+  const traceQuote = "import layer repair quarantine evidence";
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, missionRel),
@@ -206,12 +206,12 @@ trace_rows:
 test("runVerify: --fix quarantines import-layer violation from JSON gate", async () => {
   const ogRoot = getRepoRoot();
   const layerScript = path.join(ogRoot, "scripts/check-import-layers.mjs");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-surgeon-layer-"));
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-layer-"));
   const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
     gateCommand: `node ${layerScript} --json src/cli/lib/bad.ts`,
     gateSubstring: '"ok":true',
   });
-  gitInitCommit(dest, "[MSN-0998] legislate import-layer surgeon mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/cli/lib/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
@@ -236,7 +236,7 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START \[RULE-IMPORT-LAYER\]/);
       assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/lib\/bad\.ts/);
-      assert.match(combined, /\[Surgeon\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
+      assert.match(combined, /\[Repair\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {
       process.chdir(prevCwd);

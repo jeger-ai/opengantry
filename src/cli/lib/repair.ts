@@ -2,8 +2,8 @@ import fs from "node:fs";
 
 const MUTATION_PREFIX = "[SURGEON-MUTATION]";
 
-/** Append immutable surgeon mutation line to EXECUTOR_LOG (fail-closed if missing). */
-export function appendSurgeonMutationLog(executorLogPath: string, summary: string): void {
+/** Append immutable repair mutation line to EXECUTOR_LOG (fail-closed if missing). */
+export function appendRepairMutationLog(executorLogPath: string, summary: string): void {
   ensureExecutorLogExists(executorLogPath);
   const line = summary.startsWith(MUTATION_PREFIX) ? summary : `${MUTATION_PREFIX} ${summary}`;
   const suffix = line.endsWith("\n") ? line : `${line}\n`;

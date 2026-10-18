@@ -1,11 +1,11 @@
 import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { extractImportLayerGateReport, type ImportLayerViolation } from "../surgeon.js";
+import { extractImportLayerGateReport, type ImportLayerViolation } from "../repair.js";
 import {
   quarantineImportDeclaration,
   resolveImportDeclarationOffset,
 } from "./quarantine-import.js";
-import type { CodeSurgeon, SurgeonContext, SurgeonMutationResult } from "./registry.js";
+import type { CodeRepair, RepairContext, RepairMutationResult } from "./registry.js";
 
 const QUARANTINE_RULE = "RULE-IMPORT-LAYER";
 
@@ -53,10 +53,10 @@ function groupAndSortBottomToTop(targets: ResolvedTarget[]): Map<string, Resolve
   return byFile;
 }
 
-export const importLayerSurgeon: CodeSurgeon = {
+export const importLayerRepair: CodeRepair = {
   errorCode: GXT_ERROR.IMPORT_LAYER_VIOLATION,
 
-  async applyMutation(context: SurgeonContext): Promise<SurgeonMutationResult> {
+  async applyMutation(context: RepairContext): Promise<RepairMutationResult> {
     const report = extractImportLayerGateReport(context.failure.gateOutput ?? "", "");
     if (!report || report.violations.length === 0) {
       return { mutated: false, summary: "no import-layer violations parsed from gate JSON" };

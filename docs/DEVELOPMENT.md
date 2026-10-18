@@ -193,7 +193,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Compile / types | build / CI | `npm run build` (`tsc`) |
 | Manifest shape | CI / pre-push | `gantry check` |
 | Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
-| Banned imports | mission gate / surgeon | `gantry check-imports` |
+| Banned imports | mission gate / repair | `gantry check-imports` |
 | KPI thresholds | verify (optional) | `gantry scan` + mission `kpi_gate` |
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
 | Run record | verify | `.gitagent/runs/<MSN>.json` written by `gantry verify --record`; missions with `trace_rows` use verbatim quotes from `EXECUTOR_LOG.md` instead |
@@ -284,22 +284,22 @@ Nondeterministic LLM checks produce **committed evidence**; merge stays determin
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
-## Code Surgeon (`verify --fix`, MSN-0047+)
+## Code repair (`verify --fix`, MSN-0047+)
 
 Deterministic quarantine mutations for specific gate failures — an isolation layer, **not** a pass generator:
 
-1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes a registered **Code Surgeon** when gate output matches a known failure:
+1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes a registered **code repair** when gate output matches a known failure:
    - **`GXT_BANNED_IMPORT_DETECTED`** — `gantry check-imports` stderr
    - **`GXT_IMPORT_LAYER_VIOLATION`** — `check-import-layers.mjs --json` structured report
-2. Surgeon **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
-3. On mutation, append **`[SURGEON-MUTATION] …`** to `EXECUTOR_LOG.md`, then **rerun the full verify pipeline with `--fix` disabled**.
+2. The repair **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
+3. On mutation, append **`[SURGEON-MUTATION] …`** to `EXECUTOR_LOG.md` (the marker keeps its historical name, like the `GXT-SURGEON-QUARANTINE` code markers, so existing logs and quarantined files stay recognizable), then **rerun the full verify pipeline with `--fix` disabled**.
 4. Plain `gantry verify` (no `--fix`) remains fail-closed and never mutates TMVC.
 
-**Language boundary:** verify core phases (`git_proof`, `gate`, `kpi`, `trace`) are language-agnostic. Native surgeons require TypeScript in the adopter workspace (or gantry package root); unresolved `typescript` disables surgeon paths only — core verify still runs.
+**Language boundary:** verify core phases (`git_proof`, `gate`, `kpi`, `trace`) are language-agnostic. Native repairs require TypeScript in the adopter workspace (or gantry package root); unresolved `typescript` disables the repair paths only — core verify still runs.
 
-**Import-layer JSON contract:** `node scripts/check-import-layers.mjs --json <files…>` emits `{ schema_version, ok, violations[] }` with stable `rule_id` values. Surgeons parse JSON only — not human stderr.
+**Import-layer JSON contract:** `node scripts/check-import-layers.mjs --json <files…>` emits `{ schema_version, ok, violations[] }` with stable `rule_id` values. Repairs parse JSON only — not human stderr.
 
-Implementation: [`src/cli/lib/surgeons/`](../src/cli/lib/surgeons/) registry + orchestration in `surgeon-orchestration.ts` / `verify-present.ts`.
+Implementation: [`src/cli/lib/repairs/`](../src/cli/lib/repairs/) registry, [`src/cli/lib/repair.ts`](../src/cli/lib/repair.ts) log and gate-report helpers, orchestration in `src/cli/lib/verify/verify-presenters.ts`.
 
 **Release:** see [`CHANGELOG.md`](CHANGELOG.md) § Maintainers for npm publish and release-squash policy.
 

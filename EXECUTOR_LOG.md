@@ -1581,3 +1581,4 @@ MSN-0296 at c340662: zod schemas in core replace ajv; the YAML schema files are 
 MSN-0297 at 26de637: command specification in core binds Commander, MCP tools and the registries; evidence is .gitagent/runs/MSN-0297.json (RULES §3).
 MSN-0298 at 2bfe84b: one output layer (Reporter with human, json, sarif and junit modes; exit-code table in core; AsyncLocalStorage hook and global output context removed); evidence is .gitagent/runs/MSN-0298.json (RULES §3).
 MSN-0299 at 1163f6e: one name (ADR-0052 A9 part one): gapman bin, GAPMAN_/gapman.* fallbacks, skill alias and verifyMissionAsync removed; GXT_* env vars are GANTRY_*; evidence is .gitagent/runs/MSN-0299.json (RULES §3).
+MSN-0300 at 8dd0446: one vocabulary (ADR-0052 A9 part two): surgeon identifiers and modules renamed to repair; Foreman leaves the help texts; evidence is .gitagent/runs/MSN-0300.json (RULES §3).

@@ -27,7 +27,7 @@ import { runRecordRelPath } from "./verify-run-record.js";
 import { logInfo } from "../cli-io.js";
 import {
   resolveVerifySink,
-  maybeApplySurgeonAndReevaluate,
+  maybeApplyRepairAndReevaluate,
   presentBreakGlassHuman,
   presentBreakGlassJson,
   presentFix,
@@ -235,7 +235,7 @@ async function evaluateWithFixLoop(
     });
     if (payload.error_code === GXT_ERROR.FINDINGS_RECURRED) break;
 
-    const next = await maybeApplySurgeonAndReevaluate({
+    const next = await maybeApplyRepairAndReevaluate({
       root: ctx.root,
       mission: ctx.mission,
       options: ctx.options,

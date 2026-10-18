@@ -1,0 +1,310 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0300]. Executor must not run until the [MSN-0300] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 A9, part two: one vocabulary. The code name surgeon leaves the identifiers:
+# src/cli/lib/surgeon.ts becomes repair.ts, src/cli/lib/surgeons/ becomes repairs/, the Surgeon identifiers become
+# Repair names (modules, verify, context-request, the core import scanner, the tests), the human lines of
+# verify --fix say [Repair]. The [SURGEON-MUTATION] log marker and the GXT-SURGEON-QUARANTINE code markers keep
+# their names so existing logs and quarantined files stay recognizable. Help texts and comments drop the word
+# Foreman. docs/DEVELOPMENT.md and CHANGELOG. No other behaviour or output change.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): foreman, substrate and flight stay
+# where they are user-facing names the docs teach. Old and new paths are both roots so the deletions are declared.
+# The contract allows dynamic specifiers: repairs/typescript-workspace.ts requires typescript by path, as before.
+# No trace rows: the evidence is .gitagent/runs/MSN-0300.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0300
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 52f6cb23e62f
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0300.one-vocabulary.yaml,
+      .gitagent/runs/MSN-0300.json, packages/core/src/constants.ts,
+      packages/core/src/import-scanner.ts, packages/core/src/mission-types.ts,
+      packages/core/tests/law-imports.test.ts, src/cli/lib/context-request.ts,
+      src/cli/lib/repairs/banned-import.ts, src/cli/lib/repairs/import-layer.ts,
+      src/cli/lib/repairs/quarantine-import.ts, src/cli/lib/repairs/registry.ts,
+      src/cli/lib/repairs/typescript-workspace.ts, src/cli/lib/repair.ts,
+      src/cli/lib/surgeons/banned-import.ts,
+      src/cli/lib/surgeons/import-layer.ts,
+      src/cli/lib/surgeons/quarantine-import.ts,
+      src/cli/lib/surgeons/registry.ts,
+      src/cli/lib/surgeons/typescript-workspace.ts, src/cli/lib/surgeon.ts,
+      src/cli/lib/triage-logic.ts,
+      src/cli/lib/verify/verify-finding-gate-projector.ts,
+      src/cli/lib/verify/verify-hints.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/program-core.ts, src/cli/program-workflow.ts,
+      src/cli/tests/import-layer-violation.test.ts,
+      src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/repair-mutation-log.test.ts,
+      src/cli/tests/repairs-banned-import.test.ts,
+      src/cli/tests/repairs-import-layer.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/surgeon-mutation-log.test.ts,
+      src/cli/tests/surgeons-banned-import.test.ts,
+      src/cli/tests/surgeons-import-layer.test.ts,
+      src/cli/tests/surgeons-registry.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      src/cli/tests/verify-surgeon.test.ts. A rename only:
+      src/cli/lib/surgeon.ts to repair.ts, src/cli/lib/surgeons/ to repairs/
+      (five modules), the surgeon identifiers to Repair names in those modules,
+      verify-run, verify-presenters, verify-finding-gate-projector,
+      verify-hints, context-request and the core import-scanner
+      (stripRepairQuarantineRegions), the five surgeon test files renamed and
+      their identifiers updated, three other tests touched for the same
+      identifiers; the [SURGEON-MUTATION] log marker and the
+      GXT-SURGEON-QUARANTINE code markers are unchanged; three help texts and
+      three comments drop the word Foreman; docs/DEVELOPMENT.md and CHANGELOG.
+      The old and the new file paths are both roots so the deletions are
+      declared. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are the tests, the record and docs; the renamed
+      modules sit in the lib layer, the import scanner in core, the help texts
+      in the command layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Verify output formats are unchanged; two human lines of
+      verify --fix say [Repair] instead of [Surgeon]; no golden covers them.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: aab21d893f9c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0300.one-vocabulary.yaml,
+      .gitagent/runs/MSN-0300.json, packages/core/src/constants.ts,
+      packages/core/src/import-scanner.ts, packages/core/src/mission-types.ts,
+      packages/core/tests/law-imports.test.ts, src/cli/lib/context-request.ts,
+      src/cli/lib/repairs/banned-import.ts, src/cli/lib/repairs/import-layer.ts,
+      src/cli/lib/repairs/quarantine-import.ts, src/cli/lib/repairs/registry.ts,
+      src/cli/lib/repairs/typescript-workspace.ts, src/cli/lib/repair.ts,
+      src/cli/lib/surgeons/banned-import.ts,
+      src/cli/lib/surgeons/import-layer.ts,
+      src/cli/lib/surgeons/quarantine-import.ts,
+      src/cli/lib/surgeons/registry.ts,
+      src/cli/lib/surgeons/typescript-workspace.ts, src/cli/lib/surgeon.ts,
+      src/cli/lib/triage-logic.ts,
+      src/cli/lib/verify/verify-finding-gate-projector.ts,
+      src/cli/lib/verify/verify-hints.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/program-core.ts, src/cli/program-workflow.ts,
+      src/cli/tests/import-layer-violation.test.ts,
+      src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/repair-mutation-log.test.ts,
+      src/cli/tests/repairs-banned-import.test.ts,
+      src/cli/tests/repairs-import-layer.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/surgeon-mutation-log.test.ts,
+      src/cli/tests/surgeons-banned-import.test.ts,
+      src/cli/tests/surgeons-import-layer.test.ts,
+      src/cli/tests/surgeons-registry.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      src/cli/tests/verify-surgeon.test.ts. A rename only:
+      src/cli/lib/surgeon.ts to repair.ts, src/cli/lib/surgeons/ to repairs/
+      (five modules), the surgeon identifiers to Repair names in those modules,
+      verify-run, verify-presenters, verify-finding-gate-projector,
+      verify-hints, context-request and the core import-scanner
+      (stripRepairQuarantineRegions), the five surgeon test files renamed and
+      their identifiers updated, three other tests touched for the same
+      identifiers; the [SURGEON-MUTATION] log marker and the
+      GXT-SURGEON-QUARANTINE code markers are unchanged; three help texts and
+      three comments drop the word Foreman; docs/DEVELOPMENT.md and CHANGELOG.
+      The old and the new file paths are both roots so the deletions are
+      declared. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are the tests, the record and docs; the renamed
+      modules sit in the lib layer, the import scanner in core, the help texts
+      in the command layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0300.one-vocabulary.yaml,
+      .gitagent/runs/MSN-0300.json, packages/core/src/constants.ts,
+      packages/core/src/import-scanner.ts, packages/core/src/mission-types.ts,
+      packages/core/tests/law-imports.test.ts, src/cli/lib/context-request.ts,
+      src/cli/lib/repairs/banned-import.ts, src/cli/lib/repairs/import-layer.ts,
+      src/cli/lib/repairs/quarantine-import.ts, src/cli/lib/repairs/registry.ts,
+      src/cli/lib/repairs/typescript-workspace.ts, src/cli/lib/repair.ts,
+      src/cli/lib/surgeons/banned-import.ts,
+      src/cli/lib/surgeons/import-layer.ts,
+      src/cli/lib/surgeons/quarantine-import.ts,
+      src/cli/lib/surgeons/registry.ts,
+      src/cli/lib/surgeons/typescript-workspace.ts, src/cli/lib/surgeon.ts,
+      src/cli/lib/triage-logic.ts,
+      src/cli/lib/verify/verify-finding-gate-projector.ts,
+      src/cli/lib/verify/verify-hints.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/program-core.ts, src/cli/program-workflow.ts,
+      src/cli/tests/import-layer-violation.test.ts,
+      src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/repair-mutation-log.test.ts,
+      src/cli/tests/repairs-banned-import.test.ts,
+      src/cli/tests/repairs-import-layer.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/surgeon-mutation-log.test.ts,
+      src/cli/tests/surgeons-banned-import.test.ts,
+      src/cli/tests/surgeons-import-layer.test.ts,
+      src/cli/tests/surgeons-registry.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      src/cli/tests/verify-surgeon.test.ts. A rename only:
+      src/cli/lib/surgeon.ts to repair.ts, src/cli/lib/surgeons/ to repairs/
+      (five modules), the surgeon identifiers to Repair names in those modules,
+      verify-run, verify-presenters, verify-finding-gate-projector,
+      verify-hints, context-request and the core import-scanner
+      (stripRepairQuarantineRegions), the five surgeon test files renamed and
+      their identifiers updated, three other tests touched for the same
+      identifiers; the [SURGEON-MUTATION] log marker and the
+      GXT-SURGEON-QUARANTINE code markers are unchanged; three help texts and
+      three comments drop the word Foreman; docs/DEVELOPMENT.md and CHANGELOG.
+      The old and the new file paths are both roots so the deletions are
+      declared. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
+      until everything is done): ADR-0052 A9 as decided, second part (internal
+      vocabulary out of identifiers). Reading made explicit: surgeon is a code
+      name and goes; foreman, substrate and flight stay where they are
+      user-facing names the docs teach (the .gitagent/foreman/ path, the
+      substrate skill and SUBSTRATE.version.json, flight levels and flight_id),
+      and the persisted markers keep their names so adopters' logs and
+      quarantined files stay recognizable. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0300.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+interrogation_sha256: 7ac9b152866e3a3bf9f09428161de783e6d6e43778709e46fef243776d4de99d
+declared_paths:
+  - .gitagent/missions/MSN-0300.one-vocabulary.yaml
+  - .gitagent/runs/MSN-0300.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/constants.ts
+  - packages/core/src/import-scanner.ts
+  - packages/core/src/mission-types.ts
+  - packages/core/tests/law-imports.test.ts
+  - src/cli/lib/context-request.ts
+  - src/cli/lib/repair.ts
+  - src/cli/lib/repairs/banned-import.ts
+  - src/cli/lib/repairs/import-layer.ts
+  - src/cli/lib/repairs/quarantine-import.ts
+  - src/cli/lib/repairs/registry.ts
+  - src/cli/lib/repairs/typescript-workspace.ts
+  - src/cli/lib/surgeon.ts
+  - src/cli/lib/surgeons/banned-import.ts
+  - src/cli/lib/surgeons/import-layer.ts
+  - src/cli/lib/surgeons/quarantine-import.ts
+  - src/cli/lib/surgeons/registry.ts
+  - src/cli/lib/surgeons/typescript-workspace.ts
+  - src/cli/lib/triage-logic.ts
+  - src/cli/lib/verify/verify-finding-gate-projector.ts
+  - src/cli/lib/verify/verify-hints.ts
+  - src/cli/lib/verify/verify-presenters.ts
+  - src/cli/lib/verify/verify-run.ts
+  - src/cli/program-core.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/import-layer-violation.test.ts
+  - src/cli/tests/import-scanner.test.ts
+  - src/cli/tests/quarantine-import.test.ts
+  - src/cli/tests/repair-mutation-log.test.ts
+  - src/cli/tests/repairs-banned-import.test.ts
+  - src/cli/tests/repairs-import-layer.test.ts
+  - src/cli/tests/repairs-registry.test.ts
+  - src/cli/tests/surgeon-mutation-log.test.ts
+  - src/cli/tests/surgeons-banned-import.test.ts
+  - src/cli/tests/surgeons-import-layer.test.ts
+  - src/cli/tests/surgeons-registry.test.ts
+  - src/cli/tests/verify-repair.test.ts
+  - src/cli/tests/verify-run.test.ts
+  - src/cli/tests/verify-surgeon.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0300.one-vocabulary.yaml
+    - .gitagent/runs/MSN-0300.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/constants.ts
+    - packages/core/src/import-scanner.ts
+    - packages/core/src/mission-types.ts
+    - packages/core/tests/law-imports.test.ts
+    - src/cli/lib/context-request.ts
+    - src/cli/lib/repair.ts
+    - src/cli/lib/repairs/banned-import.ts
+    - src/cli/lib/repairs/import-layer.ts
+    - src/cli/lib/repairs/quarantine-import.ts
+    - src/cli/lib/repairs/registry.ts
+    - src/cli/lib/repairs/typescript-workspace.ts
+    - src/cli/lib/surgeon.ts
+    - src/cli/lib/surgeons/banned-import.ts
+    - src/cli/lib/surgeons/import-layer.ts
+    - src/cli/lib/surgeons/quarantine-import.ts
+    - src/cli/lib/surgeons/registry.ts
+    - src/cli/lib/surgeons/typescript-workspace.ts
+    - src/cli/lib/triage-logic.ts
+    - src/cli/lib/verify/verify-finding-gate-projector.ts
+    - src/cli/lib/verify/verify-hints.ts
+    - src/cli/lib/verify/verify-presenters.ts
+    - src/cli/lib/verify/verify-run.ts
+    - src/cli/program-core.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/import-layer-violation.test.ts
+    - src/cli/tests/import-scanner.test.ts
+    - src/cli/tests/quarantine-import.test.ts
+    - src/cli/tests/repair-mutation-log.test.ts
+    - src/cli/tests/repairs-banned-import.test.ts
+    - src/cli/tests/repairs-import-layer.test.ts
+    - src/cli/tests/repairs-registry.test.ts
+    - src/cli/tests/surgeon-mutation-log.test.ts
+    - src/cli/tests/surgeons-banned-import.test.ts
+    - src/cli/tests/surgeons-import-layer.test.ts
+    - src/cli/tests/surgeons-registry.test.ts
+    - src/cli/tests/verify-repair.test.ts
+    - src/cli/tests/verify-run.test.ts
+    - src/cli/tests/verify-surgeon.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: 7445210d090899df40d98d3d4dc8749aa277701031a0b810aa073ec9bf3d52a0
