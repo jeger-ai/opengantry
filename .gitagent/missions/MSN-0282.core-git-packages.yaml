@@ -60,8 +60,8 @@ trace_rows:
     anchor: "1494"
     status: PASS
   - dod_id: "5"
-    trace_quote: "DoD 5 MSN-0282 re-attested at 2ff6ac0: after merging origin/main (#228, MSN-0277 added src/cli/lib/verify-standalone and src/cli/commands/verify-contract.ts) ARCH_BASELINE.json is regenerated at 80fe0c0: core 7/329/54, git 3/189/21, command 38/3071/116, lib 255/32676/1552, delivery 12/1788/30; --check OK; gantry arch check over src/cli and both packages OK"
-    anchor: "1503"
+    trace_quote: "DoD 5 MSN-0282 re-attested at 2f3bc63: after merging origin/main (#231, MSN-0276 added src/cli/lib/cage/cage-scope.ts) ARCH_BASELINE.json is regenerated at 9a5d487: core 7/329/54, git 3/189/21, command 38/3081/116, lib 256/33128/1569, delivery 12/1804/30; --check OK; gantry arch check OK"
+    anchor: "1505"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0282 at 2b43009: conformance suite tests 85 pass 82 fail 0 skipped 3 with git status showing 0 changed golden files; unit tests 937 pass 937 fail 0"
@@ -72,8 +72,8 @@ trace_rows:
     anchor: "1500"
     status: PASS
   - dod_id: "8"
-    trace_quote: "DoD 8 MSN-0282 re-attested at 2ff6ac0: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 951 pass 951 fail 0; conformance pass/skipped 84/1 (main un-skipped the two verify --contract cases); dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; the contract was re-legislated twice after execution (ten src/cli files instead of src/cli/, then scripts/npm-pack-check.sh added) and the trace rows were re-anchored after the merge of main"
-    anchor: "1504"
+    trace_quote: "DoD 8 MSN-0282 re-attested at 2f3bc63: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; second merge of main (#231) with the executor log keeping main's lines first and the rows re-anchored"
+    anchor: "1506"
     status: PASS
 interrogation:
   - finding_id: 25f6f42f070e
