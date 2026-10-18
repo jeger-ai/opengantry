@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0293",
+  "mission_path": ".gitagent/missions/MSN-0293.park-drift-preflight.yaml",
+  "head": "1d047a038820b5dfed5ef47172becae7597158e3",
+  "tree": "4bd0cec7a1e1d0eeca9f1ae31693447fd46ffbe5",
+  "law_sha256": "d7dc38303db369965abcab9ddea895578644becfa40f800bd91c5b58f47df5d1",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 160836,
+      "output_sha256": "7e2f5d6278323d8511410f5bd83e9ce23f24009f867e49952924cccde14a2f4a"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-18T05:21:15.063Z"
+}
