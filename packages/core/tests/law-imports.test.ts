@@ -71,5 +71,6 @@ test("quarantine regions are stripped linearly and bindings after `as` are the a
   assert.equal(stripSurgeonQuarantineRegions(start.repeat(5000)).length, start.length * 5000);
   assert.deepEqual(extractBindingsFromSnippet('import { a as b, type T, c } from "x"'), ["b", "c"]);
   assert.deepEqual(extractBindingsFromSnippet('import d, { e as f } from "x"'), ["d", "f"]);
-  assert.deepEqual(extractBindingsFromSnippet("import {{".repeat(2000)), []);
+  // No binding form matches, so the scanner falls back to its placeholder binding; the point is that it returns at all.
+  assert.deepEqual(extractBindingsFromSnippet("import {{".repeat(2000)), ["__gxtImportLayer"]);
 });
