@@ -77,7 +77,7 @@
     "typescript-eslint": "^8.71.1"
   },
   "dependencies": {
-    "@clack/prompts": "^0.10.1",
+    "@clack/prompts": "^1.8.1",
     "@modelcontextprotocol/sdk": "^1.31.0",
     "commander": "^15.0.0",
     "yaml": "^2.6.1",
