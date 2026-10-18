@@ -86,3 +86,19 @@ test("--lock-deps restores a lockfile and a dependency manifest, like gantry cag
   assert.equal(fs.readFileSync(path.join(cwd, "package-lock.json"), "utf8"), "{}\n");
   assert.equal(fs.readFileSync(path.join(cwd, "package.json"), "utf8"), '{"name":"fixture"}\n');
 });
+
+test("--allow-only restores a tracked file outside the scope and keeps edits inside it (MSN-0276 DoD 2, 6)", { timeout: 120_000 }, () => {
+  const cwd = scratchRepo();
+  fs.mkdirSync(path.join(cwd, "src", "billing"), { recursive: true });
+  fs.writeFileSync(path.join(cwd, "src", "billing", "invoice.js"), "1\n");
+  fs.writeFileSync(path.join(cwd, "README.md"), "readme\n");
+  execFileSync("git", ["add", "-A"], { cwd });
+  execFileSync("git", ["commit", "-qm", "files"], { cwd });
+  const wander = "const fs=require('fs');fs.writeFileSync('src/billing/invoice.js','2\\n');fs.writeFileSync('README.md','wander\\n');";
+  const r = npxCage(packOnce(), ["--allow-only", "src/billing", "--", "node", "-e", wander], { cwd });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}`);
+  assert.match(r.stderr, /\(scope: src\/billing\)/);
+  assert.match(r.stderr, /reverted\s+modified README\.md \(out_of_scope\)/);
+  assert.equal(fs.readFileSync(path.join(cwd, "README.md"), "utf8"), "readme\n");
+  assert.equal(fs.readFileSync(path.join(cwd, "src", "billing", "invoice.js"), "utf8"), "2\n");
+});

@@ -28,7 +28,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### Unreleased (cage dependency freeze and standalone verify contract — next release after v3.9.0)
+### Unreleased (cage dependency freeze, standalone verify contract and cage scope mode — next release after v3.9.0)
 
 - **New, opt-in:** `.cage.yaml` top-level `dependencies: revert`, or `--lock-deps` on `gantry cage -- <cmd>` / `gantry-cage`, `gantry cage watch` and `gantry cage check`, freezes dependencies. Lockfiles become restore-rule paths, and a new built-in `dependency_manifest` rule covers `package.json`, `pyproject.toml`, `Pipfile`, `requirements*.txt`, `Cargo.toml`, `go.mod`, `Gemfile` and `composer.json` at any depth, except under a `vendor/` directory (vendored install output). Without either, nothing changes: lockfiles are listed and kept, manifests are not protected (MSN-0275, [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 9).
 - **Only tightens:** `dependencies: report` is the default; `mode: report` on a frozen path is refused (`GXT_CAGE_CONFIG_INVALID`). `--allow-override <path>` still relaxes one frozen path for one session run, announced. `cage check` reads the setting from the base commit; `--lock-deps` adds to it.
@@ -40,6 +40,9 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 - **Trust:** a contract git tracks is read from the base commit and needs `--base` (its own `base:` is ignored), so a pull request can weaken neither its contract nor its baseline; a tracked contract the base does not have exits `2` (`GXT_VERIFY_CONTRACT_NOT_AT_BASE`), a baseline for another contract version too (`GXT_VERIFY_BASELINE_STALE`).
 - **Imports and layers:** `imports` and `layers` rules over the JS/TS and Python imports a change adds, with `path_aliases` and `python_paths`; a task contract (`gate.json`, a handover contract) also gets the base `verify.yaml`'s rules, tighten-only. `--sign` signs the result in the receipt signature format; `--check-result --allowed-signers <file>` requires a good SSH signature and names the signer (MSN-0279).
 - **Unchanged:** `gantry verify --mission` and its formats. `--format sarif|junit` with `--contract` exits `2` until the slim package mission.
+- **New, opt-in: scope mode.** `.cage.yaml` top-level `allow_only: [globs]`, or `--allow-only <glob>` (repeatable) on the session, `gantry cage watch` and `gantry cage check`, protects every file git would track outside the allowed area under the new `out_of_scope` rule; with both, a path must match each. Gitignored files outside the area are not policed. Without either, nothing changes (MSN-0276, [ADR-0048](../.gitagent/out-of-scope/ADR-0048-cage-trust-model.md) decision 10).
+- **Scope needs git:** the out-of-scope baseline is a git tree written through a temporary index (your index and refs are untouched; no size cap). Outside a git work tree a scope run exits `2` (`GXT_CAGE_SCOPE_NOT_GIT`); a bad `--allow-only` value exits `2` (`GXT_CAGE_SCOPE_INVALID`).
+- **Report additions:** `scope` and `scope_sources` in the session report, `gantry.cage-check.v1` and `gantry.cage-watch.v1`; the journal records the scope tree and `allow_only` globs (older journals read as unscoped).
 
 ### From v3.8.3 (cage check, cage watch, docs layout — v3.9.0)
 

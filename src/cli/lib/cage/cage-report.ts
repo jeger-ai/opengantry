@@ -1,5 +1,5 @@
 import type { CageRecovery } from "./cage-journal.js";
-import { cageRuleSource, type CageRuleId, type CageRuleSource } from "./cage-rules.js";
+import { cageRuleSource, type CageRuleId, type CageRuleSource, type CageScope } from "./cage-rules.js";
 import type { CageOutcome, CageResolvedChange } from "./cage-revert.js";
 
 export const CAGE_REPORT_SCHEMA = "gantry.cage-report.v1" as const;
@@ -82,6 +82,10 @@ export interface CageReport {
   cage_config: { present: boolean; entries: number; committed: boolean | null };
   /** `revert` when dependencies were frozen (`.cage.yaml` `dependencies: revert` or `--lock-deps`). */
   dependencies: "revert" | "report";
+  /** Allowed-area globs (`.cage.yaml` `allow_only:` then `--allow-only`); null without a scope. */
+  scope: string[] | null;
+  /** Where the scope globs came from; with both, a path must match one glob of each list. */
+  scope_sources: { cage_yaml: string[] | null; flag: string[] | null } | null;
   /** Paths downgraded from revert to report for this run by `--allow-override`. */
   overrides: string[];
   changes: CageReportChange[];
@@ -114,6 +118,7 @@ export interface CageReportInput {
   manifestZones: number;
   cageConfig: CageReport["cage_config"];
   dependencies: CageReport["dependencies"];
+  scope: CageScope | null;
   overrides: readonly string[];
   changes: readonly CageResolvedChange[];
   watch: CageReport["watch"];
@@ -144,6 +149,24 @@ function cageExitCode(status: CageStatus, input: CageReportInput): number {
   return input.commandExitCode ?? RUNTIME_ERROR_EXIT_CODE;
 }
 
+/** `scope` and `scope_sources` for the session, check and watch reports. */
+export function cageScopeReport(scope: CageScope | null): Pick<CageReport, "scope" | "scope_sources"> {
+  if (!scope) return { scope: null, scope_sources: null };
+  return {
+    scope: [...(scope.config ?? []), ...(scope.flag ?? [])],
+    scope_sources: { cage_yaml: scope.config ? [...scope.config] : null, flag: scope.flag ? [...scope.flag] : null },
+  };
+}
+
+/** Start-line suffix naming the freeze and the scope. */
+export function cageStartSuffix(dependencies: "revert" | "report", scope: CageScope | null): string {
+  const parts: string[] = [];
+  if (dependencies === "revert") parts.push("dependencies frozen");
+  const globs = cageScopeReport(scope).scope;
+  if (globs) parts.push(`scope: ${globs.join(", ")}`);
+  return parts.length > 0 ? ` (${parts.join("; ")})` : "";
+}
+
 function toReportChange(c: CageResolvedChange): CageReportChange {
   return {
     path: c.rel,
@@ -151,8 +174,9 @@ function toReportChange(c: CageResolvedChange): CageReportChange {
     rule: c.rule,
     source: cageRuleSource(c.rule),
     overridden: c.overridden,
-    sha256_before: c.before?.sha256 ?? null,
-    sha256_after: c.after?.sha256 ?? null,
+    // An out-of-scope entry whose file vanished before it could be hashed has no digest.
+    sha256_before: c.before?.sha256 || null,
+    sha256_after: c.after?.sha256 || null,
     outcome: c.outcome,
     error_code: c.errorCode,
   };
@@ -180,6 +204,7 @@ export function buildCageReport(input: CageReportInput): CageReport {
     manifest_zones: input.manifestZones,
     cage_config: input.cageConfig,
     dependencies: input.dependencies,
+    ...cageScopeReport(input.scope),
     overrides: [...input.overrides],
     changes: input.changes.map(toReportChange),
     watch: input.watch,

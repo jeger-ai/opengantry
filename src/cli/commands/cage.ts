@@ -3,7 +3,7 @@ import path from "node:path";
 import { logError, readStdinIfEmpty, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
 import { CAGE_SESSION_LOG_ENV, findPushViolations } from "../lib/cage/cage-push-guard.js";
-import { formatCageOverrideBanner, formatCageReport } from "../lib/cage/cage-report.js";
+import { cageStartSuffix, formatCageOverrideBanner, formatCageReport } from "../lib/cage/cage-report.js";
 import { buildCagePlan, parseSerializedCagePlan } from "../lib/cage/cage-rules.js";
 import { resolveCageRoot, runCage } from "../lib/cage/cage-run.js";
 import {
@@ -27,6 +27,7 @@ export interface CageCliOptions {
   allowOverride?: string[];
   contestLimit?: string;
   lockDeps?: boolean;
+  allowOnly?: string[];
 }
 
 function parseNonNegativeInt(raw: string | undefined): { ok: true; value: number | undefined } | { ok: false } {
@@ -62,10 +63,11 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
       allowOverride: options.allowOverride,
       contestLimit: contest.value,
       lockDeps: options.lockDeps,
+      allowOnly: options.allowOnly,
       // The only lines printed before the command starts; nothing is written while it runs except a bell.
-      onStart: ({ sessionLog, protectedFiles, watch, overrides, configCommitted, dependencies }) => {
+      onStart: ({ sessionLog, protectedFiles, watch, overrides, configCommitted, dependencies, scope }) => {
         const mode = watch ? "watching" : "checking at exit";
-        const frozen = dependencies === "revert" ? " (dependencies frozen)" : "";
+        const frozen = cageStartSuffix(dependencies, scope);
         const logPart = sessionLog ? `; live events: ${sessionLog}` : "";
         console.error(`cage: ${mode} ${String(protectedFiles)} protected file(s)${frozen}${logPart}`);
         if (configCommitted === false) {
@@ -135,12 +137,18 @@ export interface CageCheckCliOptions {
   head?: string;
   json?: boolean;
   lockDeps?: boolean;
+  allowOnly?: string[];
 }
 
 /** `gantry cage check --base <ref>`: exit 3 when commits in base..head change paths a revert rule protects. */
 export async function runCageCheckCommand(options: CageCheckCliOptions): Promise<void> {
   await runUserCommandAsync({ json: options.json }, () => {
-    const report = runCageCheck({ base: options.base, head: options.head, lockDeps: options.lockDeps });
+    const report = runCageCheck({
+      base: options.base,
+      head: options.head,
+      lockDeps: options.lockDeps,
+      allowOnly: options.allowOnly,
+    });
     if (options.json) emitCliJson(report);
     else for (const line of formatCageCheckReport(report)) console.error(line);
     if (report.exit_code !== 0) setExitCode(report.exit_code);
@@ -156,6 +164,7 @@ export interface CageWatchCliOptions {
   notify?: boolean;
   json?: boolean;
   lockDeps?: boolean;
+  allowOnly?: string[];
 }
 
 /** `gantry cage watch`: accept or reject every protected change in this terminal until Ctrl-C. */
@@ -175,6 +184,7 @@ export async function runCageWatchCommand(options: CageWatchCliOptions): Promise
       maxFileBytes: max.value,
       notify: options.notify !== false,
       lockDeps: options.lockDeps,
+      allowOnly: options.allowOnly,
       onRecovery: (r) =>
         console.error(`cage watch: recovered an interrupted session (pid ${String(r.previousPid)}): restored ${String(r.restored.length)} protected path(s)`),
     });

@@ -45,6 +45,16 @@ async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Pr
 interface InheritedCageOptions {
   json?: boolean;
   lockDeps?: boolean;
+  allowOnly?: string[];
+}
+
+const ALLOW_ONLY_HELP =
+  "Scope: protect every file git would track outside <glob> (repeatable; a glob matching a directory covers it; intersected with .cage.yaml allow_only)";
+
+/** Repeatable `--allow-only` before and after the subcommand name add up. */
+function withInherited<T extends { allowOnly?: string[] }>(inherited: InheritedCageOptions, own: T): T & InheritedCageOptions {
+  const allowOnly = [...(inherited.allowOnly ?? []), ...(own.allowOnly ?? [])];
+  return { ...inherited, ...own, allowOnly };
 }
 
 const LOCK_DEPS_HELP = "Freeze dependencies: lockfiles and dependency manifests (package.json, pyproject.toml, go.mod, ...) become revert-rule paths for this run";
@@ -55,12 +65,12 @@ async function runCheckArgs(args: string[], inherited: InheritedCageOptions): Pr
     .requiredOption("--base <ref>", "Base commit; its .cage.yaml and manifest forbidden_zones are the rules")
     .option("--head <ref>", "Head commit (default HEAD)")
     .option("--lock-deps", `${LOCK_DEPS_HELP} (adds to the base commit's rules)`)
+    .option("--allow-only <glob>", `${ALLOW_ONLY_HELP} (narrows the base commit's scope)`, collect, [])
     .option("--json", "Emit the digest-only gantry.cage-check.v1 report on stdout");
   sub.parse(args, { from: "user" });
-  await runCageCheckCommand({
-    ...inherited,
-    ...sub.opts<{ base: string; head?: string; json?: boolean; lockDeps?: boolean }>(),
-  });
+  await runCageCheckCommand(
+    withInherited(inherited, sub.opts<{ base: string; head?: string; json?: boolean; lockDeps?: boolean; allowOnly?: string[] }>()),
+  );
 }
 
 async function runWatchArgs(args: string[], inherited: InheritedCageOptions): Promise<void> {
@@ -71,19 +81,23 @@ async function runWatchArgs(args: string[], inherited: InheritedCageOptions): Pr
     .option("--max-file-bytes <n>", "Per-file snapshot cap (default 5 MiB); a larger protected file stops watch before it starts (exit 2)")
     .option("--no-notify", "No desktop notifications (the terminal bell and prompt still alert)")
     .option("--lock-deps", LOCK_DEPS_HELP)
+    .option("--allow-only <glob>", ALLOW_ONLY_HELP, collect, [])
     .option("--json", "Emit the digest-only gantry.cage-watch.v1 report on stdout when the watch stops");
   sub.parse(args, { from: "user" });
-  await runCageWatchCommand({
-    ...inherited,
-    ...sub.opts<{
-      decisionTimeout?: string;
-      watchIntervalMs?: string;
-      maxFileBytes?: string;
-      notify?: boolean;
-      json?: boolean;
-      lockDeps?: boolean;
-    }>(),
-  });
+  await runCageWatchCommand(
+    withInherited(
+      inherited,
+      sub.opts<{
+        decisionTimeout?: string;
+        watchIntervalMs?: string;
+        maxFileBytes?: string;
+        notify?: boolean;
+        json?: boolean;
+        lockDeps?: boolean;
+        allowOnly?: string[];
+      }>(),
+    ),
+  );
 }
 
 /** Shared by `gantry cage` and the standalone `gantry-cage` bin (alias `opengantry-cage`) so they never drift. */
@@ -91,8 +105,8 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
   if (opts.subcommands) {
     cmd.addHelpText(
       "after",
-      "\nCheck commits (pre-push, CI):\n  gantry cage check --base <ref> [--head <ref>] [--lock-deps] [--json]  exit 3 when commits in base..head change protected paths\n" +
-        "\nWatch files while you work (own terminal):\n  gantry cage watch [--decision-timeout <s>] [--no-notify] [--lock-deps] [--json]  accept or reject every protected change\n" +
+      "\nCheck commits (pre-push, CI):\n  gantry cage check --base <ref> [--head <ref>] [--lock-deps] [--allow-only <glob>] [--json]  exit 3 when commits in base..head change protected paths\n" +
+        "\nWatch files while you work (own terminal):\n  gantry cage watch [--decision-timeout <s>] [--no-notify] [--lock-deps] [--allow-only <glob>] [--json]  accept or reject every protected change\n" +
         "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n",
     );
   }
@@ -116,6 +130,7 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
       [],
     )
     .option("--lock-deps", `${LOCK_DEPS_HELP} (or .cage.yaml dependencies: revert)`)
+    .option("--allow-only <glob>", ALLOW_ONLY_HELP, collect, [])
     .allowUnknownOption(true)
     .passThroughOptions()
     .argument("<command...>", "Command to run after --")
@@ -131,9 +146,10 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
           allowOverride?: string[];
           contestLimit?: string;
           lockDeps?: boolean;
+          allowOnly?: string[];
         },
       ) => {
-        const inherited: InheritedCageOptions = { json: cliOpts.json, lockDeps: cliOpts.lockDeps };
+        const inherited: InheritedCageOptions = { json: cliOpts.json, lockDeps: cliOpts.lockDeps, allowOnly: cliOpts.allowOnly };
         if (opts.subcommands && isSuggestInvocation(command)) {
           await runSuggestArgs(command.slice(1), { json: cliOpts.json });
           return;

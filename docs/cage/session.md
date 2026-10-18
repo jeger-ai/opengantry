@@ -17,6 +17,8 @@ Anything after `--` is the command the cage runs. It needs Node.js 24 or newer a
 
 When the task should not add or change packages, add `--lock-deps`: lockfiles and dependency manifests such as `package.json` are then restored like any protected file ([Freeze dependencies](protected-paths.md#freeze-dependencies)), and the start line says `(dependencies frozen)`. `.cage.yaml` `dependencies: revert` does the same for every run.
 
+To keep an agent inside one area of the repository, add `--allow-only <glob>`: every file git would track outside it is restored, and the start line names the scope ([Scope a task](protected-paths.md#scope-a-task)).
+
 | How | Command |
 |-----|---------|
 | One-off, slim package | `npx @jeger-ai/opengantry-cage -- <cmd>` |
