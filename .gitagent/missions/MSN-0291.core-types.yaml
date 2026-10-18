@@ -1,0 +1,257 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0291]. Executor must not run until the [MSN-0291] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 5c-i, shared types into core. The mission, triage, gate and KPI types
+# (types.ts), the contract types, the interrogation finding types with interrogationSha256, the trace-status helpers,
+# the gate-adapter ids and the config shape with its pure tier resolvers move to packages/core as mission-types.ts,
+# contract-types.ts, interrogation.ts, trace-status.ts, gate-adapter.ts and config.ts; TARGET_ARCHITECTURE_FILENAME
+# joins core constants; the old src/cli/lib paths are re-export facades; gxt-config.ts keeps the fs loader and the
+# preset-aware ledger mode. No output change.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): A1 needs the shared types in core
+# before the verify, missions and plane packages can be extracted without importing src/cli/lib; only pure code moves,
+# every importer keeps working through facades. No trace rows: the evidence is .gitagent/runs/MSN-0291.json written
+# by gantry verify --record (RULES §3).
+#
+# DoD 1 (core): packages/core/src/mission-types.ts (TriageResult, GateSpec, KPI types, TraceRow, MissionDependencySpec,
+#        msnIdOrDefault, ParsedMission, YamlMission; re-exports the contract, gate-adapter and manifest types),
+#        contract-types.ts, interrogation.ts (kinds, severity, stableFindingId, interrogationSha256), trace-status.ts,
+#        gate-adapter.ts and config.ts (tiers, LedgerConfig, GxtConfigShape, parseGxtConfig, the four tier resolvers,
+#        explicitLedgerMode); constants.ts exports TARGET_ARCHITECTURE_FILENAME; index.ts exports them all; core imports
+#        nothing beyond node:crypto and node:path; packages/core/tests/shared-types.test.ts passes.
+# DoD 2 (facades): src/cli/lib/types.ts, contract/contract-types.ts, interrogate/findings.ts, trace-status.ts and
+#        gate-adapters/gate-adapter-id.ts re-export the core modules; gxt-config.ts re-exports the core tiers and
+#        resolvers, keeps loadGxtConfig (fs, defensive-profile validation) and resolveLedgerMode (presets) and types
+#        GxtConfig as the core shape with a validated defensive_profile; target-architecture.ts and working-digests.ts
+#        take TARGET_ARCHITECTURE_FILENAME from core.
+# DoD 3 (behaviour): all unit tests pass; conformance passes with no golden changed; gantry arch check passes after
+#        gantry arch check --ratchet --allow-raise (core up, lib down).
+# DoD 4 (docs, dogfood): docs/ARCHITECTURE.md core row and docs/CHANGELOG.md; this mission is verified by its committed
+#        run record; ./scripts/dev-validate-core.sh passes; git diff --name-only origin/main...HEAD lists only paths
+#        under contract.tmvc_roots.
+msn_id: MSN-0291
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept. Ledger entries are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml changes only the duplicate
+      rule's allowed list (six removed pairs); the new files sit in the existing
+      core, command, lib and delivery layers and gantry arch check passes after
+      the ratchet.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 67ac2be17ab4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0039. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0039 before
+      legislation proceeds.
+    operator_answer: Accept. The interrogation finding types and interrogationSha256
+      move to core unchanged (same canonical digest); this mission is legislated
+      through the gate with every file declared.
+    adr_refs:
+      - ADR-0052
+      - ADR-0039
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path is added.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Verify output formats are unchanged; the hook prints
+      the same human lines the shell hook printed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0291.core-types.yaml, .gitagent/runs/MSN-0291.json,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, packages/core/src/config.ts,
+      packages/core/src/constants.ts, packages/core/src/contract-types.ts,
+      packages/core/src/gate-adapter.ts, packages/core/src/index.ts,
+      packages/core/src/interrogation.ts, packages/core/src/mission-types.ts,
+      packages/core/src/trace-status.ts,
+      packages/core/tests/shared-types.test.ts,
+      src/cli/lib/arch/cage/target-architecture.ts,
+      src/cli/lib/contract/contract-types.ts,
+      src/cli/lib/gate-adapters/gate-adapter-id.ts, src/cli/lib/gxt-config.ts,
+      src/cli/lib/interrogate/findings.ts, src/cli/lib/trace-status.ts,
+      src/cli/lib/types.ts, src/cli/lib/working-digests.ts. packages/core gains
+      mission-types.ts, contract-types.ts, interrogation.ts, trace-status.ts,
+      gate-adapter.ts and config.ts (pure: node:crypto and canonical JSON only)
+      plus TARGET_ARCHITECTURE_FILENAME in constants and a core test;
+      src/cli/lib/types.ts, contract/contract-types.ts, interrogate/findings.ts,
+      trace-status.ts and gate-adapters/gate-adapter-id.ts become re-export
+      facades; gxt-config.ts keeps loadGxtConfig and the preset-aware
+      resolveLedgerMode and re-exports the rest from core;
+      target-architecture.ts and working-digests.ts take the filename from core.
+      No command, registry or output change. .gitagent/foreman/,
+      .gitagent/planner/RULES.md, .gitagent/registry/ and .github/workflows/ are
+      forbidden. Operator direction (2026-10-18, continue until everything is
+      done): ADR-0052 A1 needs the shared types in core before the verify,
+      missions and plane packages can be extracted without importing
+      src/cli/lib; this mission moves only pure code (types, digests, tier
+      resolvers), leaves every importer working through facades, and changes no
+      output. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0291.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. No new flight level or role; a new subcommand is a
+      Planner registry edit, which this mission makes under the substrate skill.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract types move to core unchanged; the contract
+      scan, seal and effective scope behave exactly as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f78343603de1
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0291.core-types.yaml,
+      .gitagent/runs/MSN-0291.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/ARCHITECTURE.md, docs/CHANGELOG.md, packages/core/src/config.ts,
+      packages/core/src/constants.ts, packages/core/src/contract-types.ts,
+      packages/core/src/gate-adapter.ts, packages/core/src/index.ts,
+      packages/core/src/interrogation.ts, packages/core/src/mission-types.ts,
+      packages/core/src/trace-status.ts,
+      packages/core/tests/shared-types.test.ts,
+      src/cli/lib/arch/cage/target-architecture.ts,
+      src/cli/lib/contract/contract-types.ts,
+      src/cli/lib/gate-adapters/gate-adapter-id.ts, src/cli/lib/gxt-config.ts,
+      src/cli/lib/interrogate/findings.ts, src/cli/lib/trace-status.ts,
+      src/cli/lib/types.ts, src/cli/lib/working-digests.ts. packages/core gains
+      mission-types.ts, contract-types.ts, interrogation.ts, trace-status.ts,
+      gate-adapter.ts and config.ts (pure: node:crypto and canonical JSON only)
+      plus TARGET_ARCHITECTURE_FILENAME in constants and a core test;
+      src/cli/lib/types.ts, contract/contract-types.ts, interrogate/findings.ts,
+      trace-status.ts and gate-adapters/gate-adapter-id.ts become re-export
+      facades; gxt-config.ts keeps loadGxtConfig and the preset-aware
+      resolveLedgerMode and re-exports the rest from core;
+      target-architecture.ts and working-digests.ts take the filename from core.
+      No command, registry or output change. .gitagent/foreman/,
+      .gitagent/planner/RULES.md, .gitagent/registry/ and .github/workflows/ are
+      forbidden. Paths outside any TARGET_ARCHITECTURE layer in this mission are
+      law, the record and docs; the core files are the core layer and the
+      facades the lib layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+interrogation_sha256: 9e07cf269c652e00d01db9123b07c76ff31d1d6349bc295a4d51640d500dd33e
+declared_paths:
+  - .gitagent/missions/MSN-0291.core-types.yaml
+  - .gitagent/runs/MSN-0291.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - packages/core/src/config.ts
+  - packages/core/src/constants.ts
+  - packages/core/src/contract-types.ts
+  - packages/core/src/gate-adapter.ts
+  - packages/core/src/index.ts
+  - packages/core/src/interrogation.ts
+  - packages/core/src/mission-types.ts
+  - packages/core/src/trace-status.ts
+  - packages/core/tests/shared-types.test.ts
+  - src/cli/lib/arch/cage/target-architecture.ts
+  - src/cli/lib/contract/contract-types.ts
+  - src/cli/lib/gate-adapters/gate-adapter-id.ts
+  - src/cli/lib/gxt-config.ts
+  - src/cli/lib/interrogate/findings.ts
+  - src/cli/lib/trace-status.ts
+  - src/cli/lib/types.ts
+  - src/cli/lib/working-digests.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0291.core-types.yaml
+    - .gitagent/runs/MSN-0291.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - packages/core/src/config.ts
+    - packages/core/src/constants.ts
+    - packages/core/src/contract-types.ts
+    - packages/core/src/gate-adapter.ts
+    - packages/core/src/index.ts
+    - packages/core/src/interrogation.ts
+    - packages/core/src/mission-types.ts
+    - packages/core/src/trace-status.ts
+    - packages/core/tests/shared-types.test.ts
+    - src/cli/lib/arch/cage/target-architecture.ts
+    - src/cli/lib/contract/contract-types.ts
+    - src/cli/lib/gate-adapters/gate-adapter-id.ts
+    - src/cli/lib/gxt-config.ts
+    - src/cli/lib/interrogate/findings.ts
+    - src/cli/lib/trace-status.ts
+    - src/cli/lib/types.ts
+    - src/cli/lib/working-digests.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/
+    - .github/workflows/
+contract_sha256: dcf81836f9b3f94a5b810d95179c269f22d71c95c07e69dcb741d47bff3bf240
