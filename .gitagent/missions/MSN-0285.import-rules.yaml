@@ -45,8 +45,8 @@ trace_rows:
     anchor: "1559"
     status: PASS
   - dod_id: "2"
-    trace_quote: "DoD 2 MSN-0285 re-attested at d2e96b5: packages/core/tests/law-imports.test.ts gains a test for the stripped and unterminated quarantine regions, a 5000-marker input, aliased and typed named bindings, a mixed default-plus-named import and a 2000-fold 'import {' input; npm run test:packages: tests 17 pass 17 fail 0; src/cli/tests/import-scanner, check-import-layers, contract-runtime and contract-legislate pass unchanged"
-    anchor: "1560"
+    trace_quote: "DoD 2 MSN-0285 re-attested at 8f52884: npm run test:packages: tests 17 pass 17 fail 0 (the 2000-fold 'import {' case expects the scanner's __gxtImportLayer placeholder binding, which is the pre-existing fallback when no binding form matches)"
+    anchor: "1562"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0285 re-attested at d501612: src/cli/lib/import-scanner.ts is a 2-line facade of #core/import-scanner.js; contract/resolve-specifier.ts keeps stripJsonComments and loadTsconfigPaths and re-exports classifySpecifier, isBuiltinSpecifier, bareSpecifierPackage and the types from #core/specifier.js; ast-discovery.ts re-exports importMatchesBan from #core/specifier.js; contract/contract-scan.ts builds a Law from the effective scope (lawOfScope) and calls evaluateImportSite per site with the classifier result (checkSite, checkBareSpecifier, checkResolvedPath and the violation helper removed); arch/cage/target-architecture.ts builds an ArchLaw (archLawOfSpec) and calls layerForFile, evaluatePatternRules and evaluateLayerImport (its private rule loop, recordViolation, compilePerimeterPattern, findPatternMatchLine, checkPatternRulesForFile and fileMatchesAppliesTo removed); git diff --name-only origin/main...HEAD -- src/cli lists exactly those five files; scripts/check-import-layers.mjs and check-lib-cycles.mjs keep importing dist/cli/lib/import-scanner.js through the facade"
