@@ -2,6 +2,7 @@
 export * from "./canonical-json.js";
 export * from "./constants.js";
 export * from "./error-codes.js";
+export * from "./law.js";
 export * from "./manifest.js";
 export * from "./path-glob.js";
 export * from "./posix-path.js";

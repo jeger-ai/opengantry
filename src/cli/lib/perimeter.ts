@@ -10,7 +10,7 @@ import {
 } from "./git/git-proof.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "./types.js";
-import { pathMatchesPerimeterGlob } from "./path-glob.js";
+import { isProtectedPath, law } from "#core/law.js";
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",
   ".gitagent/foreman/MANIFEST.json",
@@ -44,8 +44,7 @@ function perimeterGlobs(manifest: Manifest): string[] {
 }
 
 export function isPerimeterProtectedPath(repoRelPath: string, manifest: Manifest): boolean {
-  const globs = perimeterGlobs(manifest);
-  return globs.some((g) => pathMatchesPerimeterGlob(repoRelPath, g));
+  return isProtectedPath(law({ protectedPaths: perimeterGlobs(manifest) }), repoRelPath);
 }
 
 function shallowHistoryReason(baseRef: string, detail: string): string {

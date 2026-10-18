@@ -1,5 +1,6 @@
 import type { Manifest } from "./types.js";
 import { resolveManifestSkillKey } from "./skill-key.js";
+import { classifyPath, isPathUnderRoot, law, normalizeRepoRelativePath } from "#core/law.js";
 
 /** Governance transport files — never TMVC drift violations during pre-commit scans. */
 export const GOVERNANCE_TRANSPORT_PATHS = [
@@ -13,9 +14,7 @@ export type TmvcPathClassification =
   | "outside_tmvc"
   | "forbidden_zone";
 
-export function normalizeRepoRelativePath(repoRel: string): string {
-  return repoRel.replace(/\\/g, "/").replace(/^\.\//, "");
-}
+export { normalizeRepoRelativePath, isPathUnderRoot } from "#core/law.js";
 
 export function isGovernanceTransportPath(repoRel: string): boolean {
   const norm = normalizeRepoRelativePath(repoRel);
@@ -34,14 +33,6 @@ export function forbiddenZonesForSkill(manifest: Manifest, skillKey: string | nu
   const resolved = resolveManifestSkillKey(manifest, skillKey.trim());
   const skill = manifest.skills[resolved];
   return skill ? [...skill.forbidden_zones] : [];
-}
-
-/** True when `repoRel` is exactly `root` or nested under `root/` (POSIX semantics). */
-export function isPathUnderRoot(repoRel: string, root: string): boolean {
-  const normPath = normalizeRepoRelativePath(repoRel);
-  const normRoot = normalizeRepoRelativePath(root).replace(/\/$/, "");
-  if (normPath === normRoot) return true;
-  return normPath.startsWith(`${normRoot}/`);
 }
 
 /** Longest matching manifest.path_risks prefix for a repo-relative path. */
@@ -66,14 +57,18 @@ export function classifyRepoRelativePath(
   tmvcRoots: readonly string[],
   forbiddenZones: readonly string[],
 ): TmvcPathClassification {
-  const norm = normalizeRepoRelativePath(repoRel);
-  if (isGovernanceTransportPath(norm)) return "governance_transport";
-
-  for (const fz of forbiddenZones) {
-    if (isPathUnderRoot(norm, fz)) return "forbidden_zone";
+  const cls = classifyPath(
+    law({ allowedRoots: [...tmvcRoots], forbiddenZones: [...forbiddenZones], transportPaths: [...GOVERNANCE_TRANSPORT_PATHS] }),
+    repoRel,
+  );
+  switch (cls) {
+    case "transport":
+      return "governance_transport";
+    case "forbidden_zone":
+      return "forbidden_zone";
+    case "inside_roots":
+      return "inside_tmvc";
+    case "outside_roots":
+      return "outside_tmvc";
   }
-  for (const root of tmvcRoots) {
-    if (isPathUnderRoot(norm, root)) return "inside_tmvc";
-  }
-  return "outside_tmvc";
 }
