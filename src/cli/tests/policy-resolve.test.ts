@@ -58,7 +58,7 @@ test("configFloorViolations: skip unset signature floors", () => {
 });
 
 test("policy-fetch: uses git init + fetch --depth 1 and has no copyTree", () => {
-  const src = fs.readFileSync(path.join(getRepoRoot(), "src/cli/lib/policy/policy-fetch.ts"), "utf8");
+  const src = fs.readFileSync(path.join(getRepoRoot(), "packages/plane/src/policy-fetch.ts"), "utf8");
   assert.match(src, /fetch", "--depth", "1"/);
   assert.match(src, /FETCH_HEAD:\$\{pointer\.bundle_path\}/);
   assert.doesNotMatch(src, /function copyTree/);
