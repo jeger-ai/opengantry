@@ -1,0 +1,10 @@
+{
+  "id": "onboarding.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "onboarding"
+  ],
+  "exit": 0,
+  "stdout": "┌  gantry onboarding — guided first mission graph\n\u001b[?25l│\n◆  This walkthrough runs the full strict GXT graph. Continue?\n│  ● Yes / ○ No\n└\n",
+  "stderr_codes": []
+}

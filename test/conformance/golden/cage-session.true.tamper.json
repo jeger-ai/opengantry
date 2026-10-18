@@ -1,0 +1,57 @@
+{
+  "id": "cage-session.true.tamper",
+  "fixture": "cage-tamper",
+  "args": [
+    "cage",
+    "--json",
+    "--no-watch",
+    "--",
+    "true"
+  ],
+  "exit": 0,
+  "stdout": {
+    "report_schema": "gantry.cage-report.v1",
+    "status": "ok",
+    "exit_code": 0,
+    "command": "true",
+    "command_exit_code": 0,
+    "command_signal": null,
+    "trapped_signal": null,
+    "runtime_error": null,
+    "recovery": null,
+    "root": "<ROOT>",
+    "revert_mode": "revert",
+    "max_file_bytes": 5242880,
+    "protected_files": 19,
+    "manifest_zones": 0,
+    "cage_config": {
+      "present": false,
+      "entries": 0,
+      "committed": null
+    },
+    "dependencies": "report",
+    "overrides": [],
+    "changes": [],
+    "watch": {
+      "enabled": false,
+      "interval_ms": null,
+      "live_restores": 0,
+      "contested": [],
+      "contest_limit": 3,
+      "halt": null,
+      "session_log": "<TMP>/gantry-cage-<PID>-<SHORT_SHA>.log"
+    },
+    "push_guard": {
+      "enabled": true,
+      "refused_pushes": 0
+    },
+    "limits": [
+      "detects protected-path writes after the command exits; it does not block them while it runs",
+      "reads are not detected: the command can still read .env and other secrets",
+      "network and API side effects are not detected",
+      "writes outside the protected set, and outside the repository, are not checked",
+      "background processes that outlive the command can still write after the check"
+    ]
+  },
+  "stderr_codes": []
+}

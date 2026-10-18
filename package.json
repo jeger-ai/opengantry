@@ -39,6 +39,7 @@
     "pack:check": "./scripts/npm-pack-check.sh",
     "test": "npm run build && node --import ./dist/cli/tests/test-tmpdir-setup.js --test \"dist/cli/tests/**/*.test.js\" && npm run test:cage",
     "test:cage": "node --test --test-concurrency=1 \"packages/opengantry-cage/tests/*.test.mjs\"",
+    "test:conformance": "node --test \"test/conformance/run.test.mjs\"",
     "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
     "gantry": "node dist/cli/index.js"
   },

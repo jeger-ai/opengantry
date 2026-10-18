@@ -1,0 +1,80 @@
+{
+  "id": "doctor.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "doctor",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "lines": [
+      {
+        "level": "ok",
+        "message": "repo: <ROOT>"
+      },
+      {
+        "level": "ok",
+        "message": "manifest + skills/ Rule 4.4 sync"
+      },
+      {
+        "level": "ok",
+        "message": "Planner allowlist (allowlist_local): planner@fixture.test"
+      },
+      {
+        "level": "ok",
+        "message": "planner_signature tier: off"
+      },
+      {
+        "level": "ok",
+        "message": "receipt_signature tier: off"
+      },
+      {
+        "level": "warn",
+        "message": "BYPASS.sha256 has no hash line — break-glass not provisioned"
+      },
+      {
+        "level": "ok",
+        "message": "core.hooksPath=.githooks"
+      },
+      {
+        "level": "warn",
+        "message": "no example.verify.yaml — legislate a mission first"
+      },
+      {
+        "level": "ok",
+        "message": "flight_telemetry.body_mode: hash_only"
+      },
+      {
+        "level": "ok",
+        "message": ".gitagent/foreman/POLICY.pointer.json: scaffold (unpinned)"
+      },
+      {
+        "level": "ok",
+        "message": "refs/gxt/ledger: absent"
+      },
+      {
+        "level": "warn",
+        "message": "architecture pointer kind=unset — agents must ask user before implementing (see ARCHITECTURE-DISCOVERY.md)"
+      },
+      {
+        "level": "ok",
+        "message": "TARGET_ARCHITECTURE.yaml present (schema <SEMVER>)"
+      },
+      {
+        "level": "ok",
+        "message": "adapter preflight: no tsc/eslint missions declared (skipped)"
+      },
+      {
+        "level": "ok",
+        "message": "detected agent wiring: cursor"
+      },
+      {
+        "level": "ok",
+        "message": "substrate version: <SEMVER> (matches bundled gantry)"
+      }
+    ],
+    "next_step": "gantry legislate \"<intent>\" --msn MSN-0001 --skill-key <key>",
+    "exit_code": 0
+  },
+  "stderr_codes": []
+}

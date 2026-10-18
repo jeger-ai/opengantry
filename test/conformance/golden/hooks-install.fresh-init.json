@@ -1,0 +1,12 @@
+{
+  "id": "hooks-install.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "hooks",
+    "install"
+  ],
+  "exit": 2,
+  "stdout": "",
+  "stderr_codes": [],
+  "tree": []
+}

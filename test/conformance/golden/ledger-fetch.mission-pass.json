@@ -1,0 +1,15 @@
+{
+  "id": "ledger-fetch.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "ledger",
+    "fetch",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "error",
+    "stderr": "fatal: 'origin' does not appear to be a git repository\nfatal: Could not read from remote repository.\n\nPlease make sure you have the correct access rights\nand the repository exists.\n"
+  },
+  "stderr_codes": []
+}

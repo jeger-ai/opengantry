@@ -1,0 +1,39 @@
+{
+  "id": "contract-propose.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "contract",
+    "propose",
+    "add a button component",
+    "--skill-key",
+    "ui",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "ok": true,
+    "skill_key": "ui",
+    "contract": {
+      "tmvc_roots": [
+        "src/components/"
+      ],
+      "forbidden_zones": [
+        ".gitagent",
+        ".gitagent/foreman/"
+      ]
+    },
+    "contract_sha256": "<SHA256>",
+    "gate": {
+      "command": "echo DONE",
+      "successSubstring": null
+    },
+    "rationale": [
+      "tmvc_roots fallback to skill roots: src/components/",
+      "forbidden_zones from skill: .gitagent/foreman/",
+      "forbidden_zones from Tier-3 path_risks outside proposed roots: .gitagent",
+      "gate_command from skill allowlist: echo DONE"
+    ],
+    "block": "Scope:\n  src/components/\nForbidden:\n  .gitagent, .gitagent/foreman/\nGate:\n  echo DONE\nAllowed Imports:\n  (any bare specifier)\nBanned Imports:\n  (none)"
+  },
+  "stderr_codes": []
+}

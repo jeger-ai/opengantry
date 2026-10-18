@@ -1,0 +1,14 @@
+{
+  "id": "verify.junit.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "verify",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--format",
+    "junit"
+  ],
+  "exit": 0,
+  "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites name=\"gantry\" tests=\"9\" failures=\"0\">\n  <testsuite name=\"gantry-verify\" tests=\"9\" failures=\"0\">\n    <testcase classname=\"gantry.verify\" name=\"git_proof\"/>\n    <testcase classname=\"gantry.verify\" name=\"contract\"/>\n    <testcase classname=\"gantry.verify\" name=\"interrogation\"/>\n    <testcase classname=\"gantry.verify\" name=\"policy\"/>\n    <testcase classname=\"gantry.verify\" name=\"dependencies\"/>\n    <testcase classname=\"gantry.verify\" name=\"gate\"/>\n    <testcase classname=\"gantry.verify\" name=\"defensive\"/>\n    <testcase classname=\"gantry.verify\" name=\"kpi\"/>\n    <testcase classname=\"gantry.verify\" name=\"trace\"/>\n  </testsuite>\n</testsuites>\n\n",
+  "stderr_codes": []
+}

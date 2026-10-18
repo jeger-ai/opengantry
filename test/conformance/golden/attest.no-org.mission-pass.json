@@ -1,0 +1,21 @@
+{
+  "id": "attest.no-org.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "attest",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": {
+    "status": "failed",
+    "error_code": "GXT_VERIFY_FAILED",
+    "message": "org_id required (GANTRY_ORG_ID or ORG.export.local org_id)",
+    "fix_hints": [
+      "create .gitagent/foreman/ORG.export.local or set GANTRY_ORG_ID"
+    ],
+    "exit_code": 2
+  },
+  "stderr_codes": []
+}

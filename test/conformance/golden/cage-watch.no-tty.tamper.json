@@ -1,0 +1,20 @@
+{
+  "id": "cage-watch.no-tty.tamper",
+  "fixture": "cage-tamper",
+  "args": [
+    "cage",
+    "watch",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": {
+    "status": "failed",
+    "error_code": "GXT_CAGE_WATCH_NO_TTY",
+    "message": "cage watch: stdin is not a terminal; decisions can only be answered in the terminal that runs the watch",
+    "fix_hints": [
+      "Start gantry cage watch in its own terminal window. For scripted agent runs use gantry cage -- <cmd>."
+    ],
+    "exit_code": 2
+  },
+  "stderr_codes": []
+}

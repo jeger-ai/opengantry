@@ -1,0 +1,33 @@
+{
+  "id": "verify.no-mission.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "verify",
+    "--json"
+  ],
+  "exit": 2,
+  "stdout": {
+    "status": "failed",
+    "phase": "init",
+    "message": "gantry: --mission is required (or pin a mission first)",
+    "error_code": "GXT_INVALID_ARGUMENT",
+    "fix_hints": [
+      "gantry pin .gitagent/missions/<file>.yaml  # then re-run without --mission"
+    ],
+    "next_actions": [],
+    "exit_code": 2,
+    "envelope_schema_version": 3,
+    "findings": [
+      {
+        "failed_gate": "init",
+        "offending_file": "",
+        "line": 0,
+        "severity": "error",
+        "resolution_hint": "gantry pin .gitagent/missions/<file>.yaml  # then re-run without --mission",
+        "fingerprint": "<SHA256>",
+        "semantic_fingerprint": "<SHA256>"
+      }
+    ]
+  },
+  "stderr_codes": []
+}

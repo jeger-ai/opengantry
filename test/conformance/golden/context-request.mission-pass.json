@@ -1,0 +1,20 @@
+{
+  "id": "context-request.mission-pass",
+  "fixture": "mission-pass",
+  "args": [
+    "context-request",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--reason",
+    "need the docs folder",
+    "--path",
+    "docs/",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr_codes": [],
+  "tree": [
+    "M EXECUTOR_LOG.md"
+  ]
+}

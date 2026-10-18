@@ -1,0 +1,20 @@
+{
+  "id": "doctor.bare-git",
+  "fixture": "bare-git",
+  "args": [
+    "doctor",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "lines": [
+      {
+        "level": "fail",
+        "message": "gantry: missing .gitagent/foreman/MANIFEST.json"
+      }
+    ],
+    "next_step": null,
+    "exit_code": 1
+  },
+  "stderr_codes": []
+}

@@ -15,6 +15,9 @@ layers:
     globs:
       - src/cli/index.ts
       - src/cli/program.ts
+      - src/cli/program-*.ts
+      - src/cli/cage-bin.ts
+      - src/cli/kernel.ts
 rules:
   - id: RULE-LIB-TO-COMMAND
     from_layer: lib
