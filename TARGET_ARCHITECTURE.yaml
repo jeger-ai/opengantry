@@ -7,6 +7,7 @@ scan_roots:
   - packages/core/**
   - packages/git/**
   - packages/cage/**
+  - packages/plane/**
 languages:
   - typescript
 layers:
@@ -19,6 +20,9 @@ layers:
   - id: cage
     globs:
       - packages/cage/src/**
+  - id: plane
+    globs:
+      - packages/plane/src/**
   - id: command
     globs:
       - src/cli/commands/**
@@ -72,6 +76,18 @@ rules:
   - id: RULE-CAGE-NO-DELIVERY-LAYER
     from_layer: cage
     forbid_import_layer: delivery
+  - id: RULE-PLANE-NO-CAGE-LAYER
+    from_layer: plane
+    forbid_import_layer: cage
+  - id: RULE-PLANE-NO-LIB-LAYER
+    from_layer: plane
+    forbid_import_layer: lib
+  - id: RULE-PLANE-NO-COMMAND-LAYER
+    from_layer: plane
+    forbid_import_layer: command
+  - id: RULE-PLANE-NO-DELIVERY-LAYER
+    from_layer: plane
+    forbid_import_layer: delivery
   - id: RULE-LIB-TO-COMMAND
     from_layer: lib
     forbid_import_layer: command
@@ -121,6 +137,10 @@ rules:
   - id: BUDGET-CAGE
     kind: budget
     layer: cage
+    exclude: ["**/tests/**"]
+  - id: BUDGET-PLANE
+    kind: budget
+    layer: plane
     exclude: ["**/tests/**"]
   - id: BUDGET-COMMAND
     kind: budget

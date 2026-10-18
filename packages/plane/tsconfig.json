@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": ".",
+    "outDir": "../../dist/packages/plane",
+    "tsBuildInfoFile": "../../dist/packages/plane/.tsbuildinfo",
+    "paths": {
+      "#core/*": [
+        "../../dist/packages/core/src/*"
+      ],
+      "#git/*": [
+        "../../dist/packages/git/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../git"
+    }
+  ]
+}
