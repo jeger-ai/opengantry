@@ -179,6 +179,21 @@ async function evaluateOrgControlPhases(
   return deps.kind === "fail" ? deps.failure : null;
 }
 
+/**
+ * Evidence (RULES §3): a mission with trace rows is judged by them (legacy mode); one without rows binds its PASS to
+ * the committed run record, unless this run is the one producing it (--record).
+ */
+function evaluateEvidencePhase(ctx: PhaseContext, proofMsnId: string): TracePhaseOutcome {
+  const useRunRecord = ctx.mission.traceRows.length === 0 && ctx.options.record !== true;
+  if (!useRunRecord) return evaluateTracePhase(ctx);
+  const record = evaluateRunRecordPhase(ctx, proofMsnId);
+  return record.kind === "ok" ? { kind: "ok", warnings: [], skippedUncommitted: 0 } : record;
+}
+
+function missingGateFailure(executorLogPath: string): VerifyPhaseFailure {
+  return { ok: false, phase: "gate", message: "Mission has no gate_command", exitCode: 1, executorLogPath };
+}
+
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
 export async function evaluateVerifyPhases(
   root: string,
@@ -232,18 +247,7 @@ export async function evaluateVerifyPhases(
     };
   }
 
-  if (!mission.gate) {
-    return failWithTimings(
-      {
-        ok: false,
-        phase: "gate",
-        message: "Mission has no gate_command",
-        exitCode: 1,
-        executorLogPath,
-      },
-      clock,
-    );
-  }
+  if (!mission.gate) return failWithTimings(missingGateFailure(executorLogPath), clock);
 
   const virtualFlightId = beginVirtualCapture(root, mission);
   const gate = mission.gate;
@@ -258,21 +262,10 @@ export async function evaluateVerifyPhases(
   const kpi = await clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
   if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
 
-  // Evidence (RULES §3): a mission with trace rows is judged by them (legacy mode); one without rows binds its PASS
-  // to the committed run record, unless this run is the one producing it (--record).
-  const useRunRecord = mission.traceRows.length === 0 && options.record !== true;
-  const trace = await clock.timed("trace", () =>
-    useRunRecord ? evaluateRunRecordPhase(phaseCtx, proofMsnId) : evaluateTracePhase(phaseCtx),
-  );
+  const trace = await clock.timed("trace", () => evaluateEvidencePhase(phaseCtx, proofMsnId));
   if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
-  const traceOutcome: TracePhaseOutcome = trace.kind === "ok" && "recordPath" in trace ? { kind: "ok", warnings: [], skippedUncommitted: 0 } : trace;
   if (options.record === true) {
-    writeRunRecord(phaseCtx, proofMsnId, {
-      command: gate.command,
-      exit: gateOutcome.exitCode,
-      durationMs: clock.durationOf("gate"),
-      logText: gateOutcome.logText,
-    });
+    writeRunRecord(phaseCtx, proofMsnId, { command: gate.command, exit: gateOutcome.exitCode, durationMs: clock.durationOf("gate"), logText: gateOutcome.logText });
   }
 
   if (virtualFlightId) purgeVirtualFlightDir(root, virtualFlightId);
@@ -280,7 +273,7 @@ export async function evaluateVerifyPhases(
   return buildFullVerifySuccess({
     proofMsnId,
     executorLogPath,
-    trace: traceOutcome,
+    trace,
     gitProofWarnings,
     defensive,
     kpi,
