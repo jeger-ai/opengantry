@@ -10,7 +10,8 @@
 # and docs; the env registry has one prefix; REGISTRY-ERROR-CODES reads error-codes.yaml only.
 #
 # Operator direction (2026-10-18, "merge and continue until everything is done"): the 4.0 break the ADR announces,
-# no dual-read of the old env names. RULES.md is a root (Planner law edit: the env name in the bypass rule).
+# no dual-read of the old env names. RULES.md is a root (Planner law edit: the env name in the bypass rule). The
+# contract allows dynamic specifiers: kernel-exports.test.ts requires the built kernel by path, as before.
 # No trace rows: the evidence is .gitagent/runs/MSN-0299.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0299
 skill_key: substrate
@@ -111,11 +112,13 @@ interrogation:
       session-variables explain the rename. RULES.md is a root of this mission
       (Planner law edit: the env name in the bypass rule);
       .gitagent/foreman/MANIFEST.json, POLICY.pointer.json and
-      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
-      layer in this mission are package.json, the goldens, templates, .cursor,
-      scripts, the law files under .gitagent, the registries, the record and
-      docs; the renamed source files sit in their existing core, git, lib and
-      command layers."
+      .github/workflows/ are forbidden. The contract allows dynamic specifiers
+      because kernel-exports.test.ts (a root) requires the built kernel by path,
+      as before this mission. Paths outside any TARGET_ARCHITECTURE layer in
+      this mission are package.json, the goldens, templates, .cursor, scripts,
+      the law files under .gitagent, the registries, the record and docs; the
+      renamed source files sit in their existing core, git, lib and command
+      layers."
     adr_refs:
       - ADR-0052
       - ADR-0024
@@ -213,17 +216,19 @@ interrogation:
       session-variables explain the rename. RULES.md is a root of this mission
       (Planner law edit: the env name in the bypass rule);
       .gitagent/foreman/MANIFEST.json, POLICY.pointer.json and
-      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
-      until everything is done): ADR-0052 A9 as decided, first part (bins,
-      fallbacks, deprecated export, one env prefix); internal vocabulary in
-      identifiers (surgeon and friends) is the second part. GXT_TMVC_ROOTS
-      cannot take the plain GANTRY_ name because GANTRY_TMVC_ROOTS already
-      exists with another format for terminal harnesses, so it becomes
-      GANTRY_TMVC_ROOTS_ABSOLUTE. This is the 4.0 break the ADR announces:
-      sessions, hooks and scripts that read the old names must switch; no
-      dual-read of the old env names, as for GAPMAN_. The mission has no trace
-      rows: its evidence is .gitagent/runs/MSN-0299.json written by gantry
-      verify --record (RULES §3)."
+      .github/workflows/ are forbidden. The contract allows dynamic specifiers
+      because kernel-exports.test.ts (a root) requires the built kernel by path,
+      as before this mission. Operator direction (2026-10-18, continue until
+      everything is done): ADR-0052 A9 as decided, first part (bins, fallbacks,
+      deprecated export, one env prefix); internal vocabulary in identifiers
+      (surgeon and friends) is the second part. GXT_TMVC_ROOTS cannot take the
+      plain GANTRY_ name because GANTRY_TMVC_ROOTS already exists with another
+      format for terminal harnesses, so it becomes GANTRY_TMVC_ROOTS_ABSOLUTE.
+      This is the 4.0 break the ADR announces: sessions, hooks and scripts that
+      read the old names must switch; no dual-read of the old env names, as for
+      GAPMAN_. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0299.json written by gantry verify --record (RULES
+      §3)."
     adr_refs:
       - ADR-0052
       - ADR-0049
@@ -261,7 +266,7 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0047
-interrogation_sha256: b6b60a269c0b0d47e89289b1abce689a2f4306119a8713087c3c7ca98542078a
+interrogation_sha256: a10d5127d1fac22c8205ec2ed5b97c71a0eb6e8fb22fd36fb9eb4a986e20ecf7
 declared_paths:
   - .cursor/hooks/gxt-session-start.sh
   - .gitagent/README.md
@@ -427,4 +432,5 @@ contract:
     - .gitagent/foreman/MANIFEST.json
     - .gitagent/foreman/POLICY.pointer.json
     - .github/workflows/
-contract_sha256: 580d369e0cfa24b423474c6544530fa24b2335836d26347378b5d6745fd32d19
+  allow_dynamic_specifiers: true
+contract_sha256: a9e97cb3ce345fc9028ba2fa729959a14cccfae377a7895117aef4b4716e28b3
