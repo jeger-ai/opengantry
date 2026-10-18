@@ -1,0 +1,601 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0301]. Executor must not run until the [MSN-0301] legislation commit + pin.
+#
+# Legislated intent: the manifest is YAML (ADR-0047 §4 first migration; ADR-0052 step 6 dual-read of v3 files).
+# Core: strict-yaml.ts and manifest-file.ts (MANIFEST.yaml read first, the 3.x MANIFEST.json as fallback, both
+# present and different fails closed with GXT_MANIFEST_AMBIGUOUS). src/cli/lib/manifest.ts dual-reads and every
+# direct reader uses it; the cage and the plane digest read both forms; perimeter defaults protect both paths.
+# gantry migrate manifest writes the YAML form from the JSON form, adds the YAML path to perimeter_protected and
+# removes the JSON form (--dry-run, --json). gantry doctor warns on the JSON form. Templates ship MANIFEST.yaml
+# with comments; docs, hooks, law files and AGENTS.md name it. This repository migrated its own manifest.
+# Tests, three conformance cases, five re-recorded goldens; baseline raised.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): exactly the ADR-0047 bar, the
+# JSON form still read. The contract allows dynamic specifiers for pre-existing require sites under the roots.
+# No trace rows: the evidence is .gitagent/runs/MSN-0301.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0301
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage reads the manifest zones
+      from either form (working tree and at a rev) and fails closed on an
+      invalid or ambiguous manifest as before; the slim bundle gains the yaml
+      parser.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5a8dcfa24ed8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: AGENTS.md, ARCH_BASELINE.json,
+      .cursor/rules/opengantry-gxt-substrate.mdc, docs/cage/protected-paths.md,
+      docs/cage/report.md, docs/CHANGELOG.md, docs/concepts/scope.md,
+      docs/DEVELOPMENT.md, docs/guides/agents.md, docs/guides/claude-code.md,
+      docs/guides/other-agents.md, docs/SECURITY.md, docs/start/how-it-works.md,
+      docs/start/install.md, EXECUTOR_LOG.md, .gitagent/foreman/MANIFEST.json,
+      .gitagent/foreman/MANIFEST.yaml,
+      .gitagent/missions/MSN-0301.manifest-yaml.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md,
+      .gitagent/planner/MISSION.template.md, .gitagent/planner/RULES.md,
+      .gitagent/planner/RUNTIME.md, .gitagent/README.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0301.json, packages/cage/src/cage-check.ts,
+      packages/cage/src/cage-rules.ts, packages/core/src/command-spec.ts,
+      packages/core/src/constants.ts, packages/core/src/error-codes.ts,
+      packages/core/src/index.ts, packages/core/src/manifest-file.ts,
+      packages/core/src/strict-yaml.ts, packages/core/tests/core.test.ts,
+      packages/core/tests/manifest-file.test.ts,
+      packages/plane/src/attestation-receipt.ts, packages/plane/src/digests.ts,
+      scripts/lib/asset-catalog-static.mjs, scripts/validate-mcp-dogfood.sh,
+      src/cli/commands/init.ts, src/cli/commands/migrate.ts,
+      src/cli/commands/onboarding.ts, src/cli/lib/audience-output.ts,
+      src/cli/lib/audit-rigor.ts, src/cli/lib/discovery-proposal.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/init/init-discover.ts,
+      src/cli/lib/init/init-tutorial.ts, src/cli/lib/manifest.ts,
+      src/cli/lib/perimeter.ts, src/cli/lib/register-proposals.ts,
+      src/cli/lib/start-snapshot.ts, src/cli/lib/verify/verify-export.ts,
+      src/cli/program-core.ts, src/cli/program-migrate.ts, src/cli/program.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/draft-token.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/legislate.test.ts, src/cli/tests/manifest-dual-read.test.ts,
+      src/cli/tests/mcp-legislation.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts, src/cli/tests/runtime.test.ts,
+      src/cli/tests/trusted-automation.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts, templates/AGENTS.md,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/docs/ARCHITECTURE.md, templates/.gitagent/foreman/MANIFEST.json,
+      templates/.gitagent/foreman/MANIFEST.yaml,
+      templates/.gitagent/missions/README.md,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/aider/.aider.conf.yml,
+      templates/integrations/antigravity/.agent/rules/gxt.md,
+      templates/integrations/asset-catalog.json,
+      templates/integrations/claude-code/CLAUDE.md,
+      templates/integrations/cline/.clinerules/gxt.md,
+      templates/integrations/junie/.junie/guidelines.md,
+      templates/integrations/opencode/opencode.json,
+      templates/integrations/openhands/.openhands/microagents/gxt.md,
+      templates/integrations/recipes/claude-code.md,
+      templates/integrations/recipes/_preamble.md, templates/skills/gantry.md,
+      templates/skills/logic.md, templates/skills/ui.md,
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/doctor.bare-git.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/migrate-manifest.dry-run.mission-pass.json,
+      test/conformance/golden/migrate-manifest.fresh-init.json,
+      test/conformance/golden/migrate-manifest.mission-pass.json,
+      test/conformance/golden/status.mission-pass.json. Core gains
+      strict-yaml.ts and manifest-file.ts (pure; the yaml package, already a
+      dependency) and the GXT_MANIFEST_AMBIGUOUS code (registry);
+      src/cli/lib/manifest.ts dual-reads and every direct reader of the JSON
+      path goes through it; the cage and the plane digest read both forms;
+      gantry migrate manifest is a new subcommand (registry, command spec,
+      program-migrate.ts, commands/migrate.ts); doctor warns on the JSON form;
+      templates ship MANIFEST.yaml (the JSON template is deleted, the asset
+      catalog follows); docs, AGENTS.md, the Cursor rule, integration templates,
+      RULES.md, RUNTIME.md and MISSION-ARCHITECT.md name MANIFEST.yaml; this
+      repository's own .gitagent/foreman/MANIFEST.json became MANIFEST.yaml
+      through the command (perimeter_protected lists both); tests and five
+      re-recorded goldens plus three new migrate cases; ARCH_BASELINE.json
+      raised. The repository's MANIFEST.json and MANIFEST.yaml and both RULES.md
+      copies are roots (Planner law edits);
+      .gitagent/foreman/POLICY.pointer.json and .github/workflows/ are
+      forbidden. The contract allows dynamic specifiers for the pre-existing
+      require sites under the roots. Paths outside any TARGET_ARCHITECTURE layer
+      in this mission are the tests, goldens, templates, scripts, the law files
+      and registries under .gitagent, the baseline, the record and docs; the new
+      modules sit in core (strict-yaml, manifest-file), lib (manifest), command
+      (commands/migrate) and delivery (program-migrate)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 6f9d4d2bf647
+    kind: adr_conflict
+    question: Intent may relate to ADR-0030. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0030 before
+      legislation proceeds.
+    operator_answer: Accept. The discovery scanner is unchanged; applying a
+      discovery proposal now writes MANIFEST.yaml.
+    adr_refs:
+      - ADR-0052
+      - ADR-0030
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment is unchanged; migrate manifest is
+      a CLI command, no MCP tool.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: b2009765bb8b
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: AGENTS.md, ARCH_BASELINE.json,
+      .cursor/rules/opengantry-gxt-substrate.mdc, docs/cage/protected-paths.md,
+      docs/cage/report.md, docs/CHANGELOG.md, docs/concepts/scope.md,
+      docs/DEVELOPMENT.md, docs/guides/agents.md, docs/guides/claude-code.md,
+      docs/guides/other-agents.md, docs/SECURITY.md, docs/start/how-it-works.md,
+      docs/start/install.md, EXECUTOR_LOG.md, .gitagent/foreman/MANIFEST.json,
+      .gitagent/foreman/MANIFEST.yaml,
+      .gitagent/missions/MSN-0301.manifest-yaml.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md,
+      .gitagent/planner/MISSION.template.md, .gitagent/planner/RULES.md,
+      .gitagent/planner/RUNTIME.md, .gitagent/README.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0301.json, packages/cage/src/cage-check.ts,
+      packages/cage/src/cage-rules.ts, packages/core/src/command-spec.ts,
+      packages/core/src/constants.ts, packages/core/src/error-codes.ts,
+      packages/core/src/index.ts, packages/core/src/manifest-file.ts,
+      packages/core/src/strict-yaml.ts, packages/core/tests/core.test.ts,
+      packages/core/tests/manifest-file.test.ts,
+      packages/plane/src/attestation-receipt.ts, packages/plane/src/digests.ts,
+      scripts/lib/asset-catalog-static.mjs, scripts/validate-mcp-dogfood.sh,
+      src/cli/commands/init.ts, src/cli/commands/migrate.ts,
+      src/cli/commands/onboarding.ts, src/cli/lib/audience-output.ts,
+      src/cli/lib/audit-rigor.ts, src/cli/lib/discovery-proposal.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/init/init-discover.ts,
+      src/cli/lib/init/init-tutorial.ts, src/cli/lib/manifest.ts,
+      src/cli/lib/perimeter.ts, src/cli/lib/register-proposals.ts,
+      src/cli/lib/start-snapshot.ts, src/cli/lib/verify/verify-export.ts,
+      src/cli/program-core.ts, src/cli/program-migrate.ts, src/cli/program.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/draft-token.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/legislate.test.ts, src/cli/tests/manifest-dual-read.test.ts,
+      src/cli/tests/mcp-legislation.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts, src/cli/tests/runtime.test.ts,
+      src/cli/tests/trusted-automation.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts, templates/AGENTS.md,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/docs/ARCHITECTURE.md, templates/.gitagent/foreman/MANIFEST.json,
+      templates/.gitagent/foreman/MANIFEST.yaml,
+      templates/.gitagent/missions/README.md,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/aider/.aider.conf.yml,
+      templates/integrations/antigravity/.agent/rules/gxt.md,
+      templates/integrations/asset-catalog.json,
+      templates/integrations/claude-code/CLAUDE.md,
+      templates/integrations/cline/.clinerules/gxt.md,
+      templates/integrations/junie/.junie/guidelines.md,
+      templates/integrations/opencode/opencode.json,
+      templates/integrations/openhands/.openhands/microagents/gxt.md,
+      templates/integrations/recipes/claude-code.md,
+      templates/integrations/recipes/_preamble.md, templates/skills/gantry.md,
+      templates/skills/logic.md, templates/skills/ui.md,
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/doctor.bare-git.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/migrate-manifest.dry-run.mission-pass.json,
+      test/conformance/golden/migrate-manifest.fresh-init.json,
+      test/conformance/golden/migrate-manifest.mission-pass.json,
+      test/conformance/golden/status.mission-pass.json. Core gains
+      strict-yaml.ts and manifest-file.ts (pure; the yaml package, already a
+      dependency) and the GXT_MANIFEST_AMBIGUOUS code (registry);
+      src/cli/lib/manifest.ts dual-reads and every direct reader of the JSON
+      path goes through it; the cage and the plane digest read both forms;
+      gantry migrate manifest is a new subcommand (registry, command spec,
+      program-migrate.ts, commands/migrate.ts); doctor warns on the JSON form;
+      templates ship MANIFEST.yaml (the JSON template is deleted, the asset
+      catalog follows); docs, AGENTS.md, the Cursor rule, integration templates,
+      RULES.md, RUNTIME.md and MISSION-ARCHITECT.md name MANIFEST.yaml; this
+      repository's own .gitagent/foreman/MANIFEST.json became MANIFEST.yaml
+      through the command (perimeter_protected lists both); tests and five
+      re-recorded goldens plus three new migrate cases; ARCH_BASELINE.json
+      raised. The repository's MANIFEST.json and MANIFEST.yaml and both RULES.md
+      copies are roots (Planner law edits);
+      .gitagent/foreman/POLICY.pointer.json and .github/workflows/ are
+      forbidden. The contract allows dynamic specifiers for the pre-existing
+      require sites under the roots. Paths outside any TARGET_ARCHITECTURE layer
+      in this mission are the tests, goldens, templates, scripts, the law files
+      and registries under .gitagent, the baseline, the record and docs; the new
+      modules sit in core (strict-yaml, manifest-file), lib (manifest), command
+      (commands/migrate) and delivery (program-migrate)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: AGENTS.md,
+      ARCH_BASELINE.json, .cursor/rules/opengantry-gxt-substrate.mdc,
+      docs/cage/protected-paths.md, docs/cage/report.md, docs/CHANGELOG.md,
+      docs/concepts/scope.md, docs/DEVELOPMENT.md, docs/guides/agents.md,
+      docs/guides/claude-code.md, docs/guides/other-agents.md, docs/SECURITY.md,
+      docs/start/how-it-works.md, docs/start/install.md, EXECUTOR_LOG.md,
+      .gitagent/foreman/MANIFEST.json, .gitagent/foreman/MANIFEST.yaml,
+      .gitagent/missions/MSN-0301.manifest-yaml.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md,
+      .gitagent/planner/MISSION.template.md, .gitagent/planner/RULES.md,
+      .gitagent/planner/RUNTIME.md, .gitagent/README.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0301.json, packages/cage/src/cage-check.ts,
+      packages/cage/src/cage-rules.ts, packages/core/src/command-spec.ts,
+      packages/core/src/constants.ts, packages/core/src/error-codes.ts,
+      packages/core/src/index.ts, packages/core/src/manifest-file.ts,
+      packages/core/src/strict-yaml.ts, packages/core/tests/core.test.ts,
+      packages/core/tests/manifest-file.test.ts,
+      packages/plane/src/attestation-receipt.ts, packages/plane/src/digests.ts,
+      scripts/lib/asset-catalog-static.mjs, scripts/validate-mcp-dogfood.sh,
+      src/cli/commands/init.ts, src/cli/commands/migrate.ts,
+      src/cli/commands/onboarding.ts, src/cli/lib/audience-output.ts,
+      src/cli/lib/audit-rigor.ts, src/cli/lib/discovery-proposal.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/init/init-discover.ts,
+      src/cli/lib/init/init-tutorial.ts, src/cli/lib/manifest.ts,
+      src/cli/lib/perimeter.ts, src/cli/lib/register-proposals.ts,
+      src/cli/lib/start-snapshot.ts, src/cli/lib/verify/verify-export.ts,
+      src/cli/program-core.ts, src/cli/program-migrate.ts, src/cli/program.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/ci-verify-missions.test.ts,
+      src/cli/tests/draft-token.test.ts, src/cli/tests/init.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/legislate.test.ts, src/cli/tests/manifest-dual-read.test.ts,
+      src/cli/tests/mcp-legislation.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts, src/cli/tests/runtime.test.ts,
+      src/cli/tests/trusted-automation.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts, templates/AGENTS.md,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/docs/ARCHITECTURE.md, templates/.gitagent/foreman/MANIFEST.json,
+      templates/.gitagent/foreman/MANIFEST.yaml,
+      templates/.gitagent/missions/README.md,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/aider/.aider.conf.yml,
+      templates/integrations/antigravity/.agent/rules/gxt.md,
+      templates/integrations/asset-catalog.json,
+      templates/integrations/claude-code/CLAUDE.md,
+      templates/integrations/cline/.clinerules/gxt.md,
+      templates/integrations/junie/.junie/guidelines.md,
+      templates/integrations/opencode/opencode.json,
+      templates/integrations/openhands/.openhands/microagents/gxt.md,
+      templates/integrations/recipes/claude-code.md,
+      templates/integrations/recipes/_preamble.md, templates/skills/gantry.md,
+      templates/skills/logic.md, templates/skills/ui.md,
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/doctor.bare-git.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/migrate-manifest.dry-run.mission-pass.json,
+      test/conformance/golden/migrate-manifest.fresh-init.json,
+      test/conformance/golden/migrate-manifest.mission-pass.json,
+      test/conformance/golden/status.mission-pass.json. Core gains
+      strict-yaml.ts and manifest-file.ts (pure; the yaml package, already a
+      dependency) and the GXT_MANIFEST_AMBIGUOUS code (registry);
+      src/cli/lib/manifest.ts dual-reads and every direct reader of the JSON
+      path goes through it; the cage and the plane digest read both forms;
+      gantry migrate manifest is a new subcommand (registry, command spec,
+      program-migrate.ts, commands/migrate.ts); doctor warns on the JSON form;
+      templates ship MANIFEST.yaml (the JSON template is deleted, the asset
+      catalog follows); docs, AGENTS.md, the Cursor rule, integration templates,
+      RULES.md, RUNTIME.md and MISSION-ARCHITECT.md name MANIFEST.yaml; this
+      repository's own .gitagent/foreman/MANIFEST.json became MANIFEST.yaml
+      through the command (perimeter_protected lists both); tests and five
+      re-recorded goldens plus three new migrate cases; ARCH_BASELINE.json
+      raised. The repository's MANIFEST.json and MANIFEST.yaml and both RULES.md
+      copies are roots (Planner law edits);
+      .gitagent/foreman/POLICY.pointer.json and .github/workflows/ are
+      forbidden. The contract allows dynamic specifiers for the pre-existing
+      require sites under the roots. Operator direction (2026-10-18, continue
+      until everything is done): the first ADR-0047 §4 migration, MANIFEST.json
+      to MANIFEST.yaml, exactly to the bar the ADR sets: dual-read preferring
+      the YAML form, fail closed when both exist and differ, a doctor hint, a
+      deterministic migrate command, the template switch with the JSON form
+      still read; ADR-0052 step 6 calls this the dual-read of v3 files. The
+      repository migrates its own manifest in the same mission as the proof. The
+      mission has no trace rows: its evidence is .gitagent/runs/MSN-0301.json
+      written by gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is the first migration §4 specifies
+      (MANIFEST.json, the stated first candidate): dual-read preferring
+      MANIFEST.yaml, fail closed when both exist and differ, a doctor hint,
+      gantry migrate manifest as the deterministic path, the template switch;
+      the JSON form stays read. The strict parser follows §1 (core schema,
+      unique keys, no aliases)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 6d26153be801ba787529ccf72c3430787658aa08590993d5dadcc53986dcd85f
+declared_paths:
+  - .cursor/rules/opengantry-gxt-substrate.mdc
+  - .gitagent/README.md
+  - .gitagent/foreman/MANIFEST.json
+  - .gitagent/foreman/MANIFEST.yaml
+  - .gitagent/missions/MSN-0301.manifest-yaml.yaml
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/planner/MISSION.template.md
+  - .gitagent/planner/RULES.md
+  - .gitagent/planner/RUNTIME.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0301.json
+  - AGENTS.md
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/SECURITY.md
+  - docs/cage/protected-paths.md
+  - docs/cage/report.md
+  - docs/concepts/scope.md
+  - docs/guides/agents.md
+  - docs/guides/claude-code.md
+  - docs/guides/other-agents.md
+  - docs/start/how-it-works.md
+  - docs/start/install.md
+  - packages/cage/src/cage-check.ts
+  - packages/cage/src/cage-rules.ts
+  - packages/core/src/command-spec.ts
+  - packages/core/src/constants.ts
+  - packages/core/src/error-codes.ts
+  - packages/core/src/index.ts
+  - packages/core/src/manifest-file.ts
+  - packages/core/src/strict-yaml.ts
+  - packages/core/tests/core.test.ts
+  - packages/core/tests/manifest-file.test.ts
+  - packages/plane/src/attestation-receipt.ts
+  - packages/plane/src/digests.ts
+  - scripts/lib/asset-catalog-static.mjs
+  - scripts/validate-mcp-dogfood.sh
+  - src/cli/commands/init.ts
+  - src/cli/commands/migrate.ts
+  - src/cli/commands/onboarding.ts
+  - src/cli/lib/audience-output.ts
+  - src/cli/lib/audit-rigor.ts
+  - src/cli/lib/discovery-proposal.ts
+  - src/cli/lib/doctor/doctor-core.ts
+  - src/cli/lib/init/init-discover.ts
+  - src/cli/lib/init/init-tutorial.ts
+  - src/cli/lib/manifest.ts
+  - src/cli/lib/perimeter.ts
+  - src/cli/lib/register-proposals.ts
+  - src/cli/lib/start-snapshot.ts
+  - src/cli/lib/verify/verify-export.ts
+  - src/cli/program-core.ts
+  - src/cli/program-migrate.ts
+  - src/cli/program.ts
+  - src/cli/tests/attestation-receipt.test.ts
+  - src/cli/tests/ci-msn-range.test.ts
+  - src/cli/tests/ci-verify-missions.test.ts
+  - src/cli/tests/draft-token.test.ts
+  - src/cli/tests/init.test.ts
+  - src/cli/tests/interrogate-verify-roundtrip.test.ts
+  - src/cli/tests/legislate.test.ts
+  - src/cli/tests/manifest-dual-read.test.ts
+  - src/cli/tests/mcp-legislation.test.ts
+  - src/cli/tests/mcp-write-guard.test.ts
+  - src/cli/tests/runtime.test.ts
+  - src/cli/tests/trusted-automation.test.ts
+  - src/cli/tests/upgrade.test.ts
+  - src/cli/tests/verify-export.test.ts
+  - src/cli/tests/verify-interrogation-phase.test.ts
+  - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+  - templates/.gitagent/foreman/MANIFEST.json
+  - templates/.gitagent/foreman/MANIFEST.yaml
+  - templates/.gitagent/missions/README.md
+  - templates/.gitagent/planner/AGENT-SETUP.md
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - templates/.gitagent/planner/RULES.md
+  - templates/AGENTS.md
+  - templates/docs/ARCHITECTURE.md
+  - templates/integrations/aider/.aider.conf.yml
+  - templates/integrations/antigravity/.agent/rules/gxt.md
+  - templates/integrations/asset-catalog.json
+  - templates/integrations/claude-code/CLAUDE.md
+  - templates/integrations/cline/.clinerules/gxt.md
+  - templates/integrations/junie/.junie/guidelines.md
+  - templates/integrations/opencode/opencode.json
+  - templates/integrations/openhands/.openhands/microagents/gxt.md
+  - templates/integrations/recipes/_preamble.md
+  - templates/integrations/recipes/claude-code.md
+  - templates/skills/gantry.md
+  - templates/skills/logic.md
+  - templates/skills/ui.md
+  - test/conformance/build-fixtures.mjs
+  - test/conformance/cases.yaml
+  - test/conformance/golden/doctor.bare-git.json
+  - test/conformance/golden/doctor.mission-pass.json
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/init.dry-run.bare-git.json
+  - test/conformance/golden/migrate-manifest.dry-run.mission-pass.json
+  - test/conformance/golden/migrate-manifest.fresh-init.json
+  - test/conformance/golden/migrate-manifest.mission-pass.json
+  - test/conformance/golden/status.mission-pass.json
+contract:
+  tmvc_roots:
+    - .cursor/rules/opengantry-gxt-substrate.mdc
+    - .gitagent/README.md
+    - .gitagent/foreman/MANIFEST.json
+    - .gitagent/foreman/MANIFEST.yaml
+    - .gitagent/missions/MSN-0301.manifest-yaml.yaml
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - .gitagent/planner/MISSION.template.md
+    - .gitagent/planner/RULES.md
+    - .gitagent/planner/RUNTIME.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0301.json
+    - AGENTS.md
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/SECURITY.md
+    - docs/cage/protected-paths.md
+    - docs/cage/report.md
+    - docs/concepts/scope.md
+    - docs/guides/agents.md
+    - docs/guides/claude-code.md
+    - docs/guides/other-agents.md
+    - docs/start/how-it-works.md
+    - docs/start/install.md
+    - packages/cage/src/cage-check.ts
+    - packages/cage/src/cage-rules.ts
+    - packages/core/src/command-spec.ts
+    - packages/core/src/constants.ts
+    - packages/core/src/error-codes.ts
+    - packages/core/src/index.ts
+    - packages/core/src/manifest-file.ts
+    - packages/core/src/strict-yaml.ts
+    - packages/core/tests/core.test.ts
+    - packages/core/tests/manifest-file.test.ts
+    - packages/plane/src/attestation-receipt.ts
+    - packages/plane/src/digests.ts
+    - scripts/lib/asset-catalog-static.mjs
+    - scripts/validate-mcp-dogfood.sh
+    - src/cli/commands/init.ts
+    - src/cli/commands/migrate.ts
+    - src/cli/commands/onboarding.ts
+    - src/cli/lib/audience-output.ts
+    - src/cli/lib/audit-rigor.ts
+    - src/cli/lib/discovery-proposal.ts
+    - src/cli/lib/doctor/doctor-core.ts
+    - src/cli/lib/init/init-discover.ts
+    - src/cli/lib/init/init-tutorial.ts
+    - src/cli/lib/manifest.ts
+    - src/cli/lib/perimeter.ts
+    - src/cli/lib/register-proposals.ts
+    - src/cli/lib/start-snapshot.ts
+    - src/cli/lib/verify/verify-export.ts
+    - src/cli/program-core.ts
+    - src/cli/program-migrate.ts
+    - src/cli/program.ts
+    - src/cli/tests/attestation-receipt.test.ts
+    - src/cli/tests/ci-msn-range.test.ts
+    - src/cli/tests/ci-verify-missions.test.ts
+    - src/cli/tests/draft-token.test.ts
+    - src/cli/tests/init.test.ts
+    - src/cli/tests/interrogate-verify-roundtrip.test.ts
+    - src/cli/tests/legislate.test.ts
+    - src/cli/tests/manifest-dual-read.test.ts
+    - src/cli/tests/mcp-legislation.test.ts
+    - src/cli/tests/mcp-write-guard.test.ts
+    - src/cli/tests/runtime.test.ts
+    - src/cli/tests/trusted-automation.test.ts
+    - src/cli/tests/upgrade.test.ts
+    - src/cli/tests/verify-export.test.ts
+    - src/cli/tests/verify-interrogation-phase.test.ts
+    - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+    - templates/.gitagent/foreman/MANIFEST.json
+    - templates/.gitagent/foreman/MANIFEST.yaml
+    - templates/.gitagent/missions/README.md
+    - templates/.gitagent/planner/AGENT-SETUP.md
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+    - templates/.gitagent/planner/RULES.md
+    - templates/AGENTS.md
+    - templates/docs/ARCHITECTURE.md
+    - templates/integrations/aider/.aider.conf.yml
+    - templates/integrations/antigravity/.agent/rules/gxt.md
+    - templates/integrations/asset-catalog.json
+    - templates/integrations/claude-code/CLAUDE.md
+    - templates/integrations/cline/.clinerules/gxt.md
+    - templates/integrations/junie/.junie/guidelines.md
+    - templates/integrations/opencode/opencode.json
+    - templates/integrations/openhands/.openhands/microagents/gxt.md
+    - templates/integrations/recipes/_preamble.md
+    - templates/integrations/recipes/claude-code.md
+    - templates/skills/gantry.md
+    - templates/skills/logic.md
+    - templates/skills/ui.md
+    - test/conformance/build-fixtures.mjs
+    - test/conformance/cases.yaml
+    - test/conformance/golden/doctor.bare-git.json
+    - test/conformance/golden/doctor.mission-pass.json
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/init.dry-run.bare-git.json
+    - test/conformance/golden/migrate-manifest.dry-run.mission-pass.json
+    - test/conformance/golden/migrate-manifest.fresh-init.json
+    - test/conformance/golden/migrate-manifest.mission-pass.json
+    - test/conformance/golden/status.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/POLICY.pointer.json
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: fea674ff942a277c87f33922b98bc6cc4d85060365112950d40e5e8ca83bef7f
