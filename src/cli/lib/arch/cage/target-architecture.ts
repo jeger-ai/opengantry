@@ -32,7 +32,8 @@ import {
 } from "#core/import-scanner.js";
 import { walkDomainFiles } from "../../discovery-scanner.js";
 
-export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
+export { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
+import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
 export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;
