@@ -11,7 +11,7 @@ None of these are needed for basic adoption. Each one is advisory or opt-in: it 
 
 ## Parked: contract preflight and the contract drift index
 
-Two experiments shipped inside the CLI until 3.9 and are parked by [ADR-0052](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md) A10, unchanged but outside the CLI:
+Two experiments shipped inside the CLI until 3.9 and are parked, unchanged but outside the CLI (the rewrite record lists them under its parked features):
 
 - The advisory contract preflight (`gantry contract preflight`, MCP `gxt_preflight_contract`, the optional Jev provider behind `TYPESAFE_API_KEY`) lives in [`examples/jev-preflight/`](https://github.com/jeger-ai/opengantry/tree/main/examples/jev-preflight).
 - The local contract drift index (`gantry contract embed`, `--embedding-file`, `--auto-embed`, `better-sqlite3` and `sqlite-vec`) lives in [`examples/contract-drift-index/`](https://github.com/jeger-ai/opengantry/tree/main/examples/contract-drift-index). The CLI no longer depends on a native module.
@@ -50,4 +50,4 @@ Some integration checks need transient runtime output, such as API probes, migra
 - `gantry init` adds `.gitagent/virtual/` and `.gitagent/tmp/` to `.gitignore` before anything is written.
 - Writers use one subdirectory per run (`.gitagent/virtual/<flight-id>/`); a passing verify removes its directory, and stale leftovers are cleaned up.
 
-Design notes: [ADR-0020 KPI gate](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md), [ADR-0035 performance judge](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md), [ADR-0046 contract preflight](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md), [virtual scratch record](https://github.com/jeger-ai/opengantry/blob/main/docs/ADR-EPHEMERAL-VIRTUALIZATION.md).
+Design notes: [ADR-0020 KPI gate](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md), [ADR-0035 performance judge](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md), [ADR-0046 contract preflight](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md), [virtual scratch record](https://github.com/jeger-ai/opengantry/blob/main/docs/ADR-EPHEMERAL-VIRTUALIZATION.md), ADR-0052.
