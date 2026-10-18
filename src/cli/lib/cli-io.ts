@@ -1,4 +1,3 @@
-import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { isDocumentStdout, shouldEmitError, shouldEmitInfo, shouldEmitWarn } from "./output-context.js";
 
