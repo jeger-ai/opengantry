@@ -13,6 +13,8 @@ export const REL_KPI_REPORT_SCHEMA = ".gitagent/planner/KPI-REPORT.schema.yaml" 
 export const DEFAULT_KPI_REPORT_DIR = ".gitagent/kpi" as const;
 export const REL_MISSION_TEMPLATE = ".gitagent/planner/MISSION.template.md" as const;
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
+/** Committed, machine-written run records: one per mission (ADR-0052 A4, A5). */
+export const REL_RUNS_DIR = ".gitagent/runs" as const;
 /** Git-ignored attestation receipts for optional hub ingestion. */
 export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
 /** Planner SSH allowed signers for `git log --format=%G?` / perimeter --ci. */

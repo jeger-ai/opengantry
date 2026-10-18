@@ -189,6 +189,15 @@ entries:
   - name: GXT_RUNTIME_EXEC_FAILED
     since: commit 26d06cf
     defined_in: src/cli/lib/gxt-error-codes.ts
+  - name: GXT_RUN_RECORD_MISSING
+    since: MSN-0287
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_RUN_RECORD_STALE
+    since: MSN-0287
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_RUN_RECORD_MISMATCH
+    since: MSN-0287
+    defined_in: packages/core/src/error-codes.ts
   - name: GXT_TRACE_AMBIGUOUS
     since: commit 26d06cf
     defined_in: src/cli/lib/gxt-error-codes.ts

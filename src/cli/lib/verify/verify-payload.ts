@@ -96,6 +96,8 @@ function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: stri
       return [verifyFinding("defensive", failure.defensiveReason || hint)];
     case "git_proof":
       return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
+    case "run_record":
+      return [verifyFinding("trace", failure.recordReason, failure.stalePaths?.[0] ? { offending_file: failure.stalePaths[0] } : {})];
     case "policy":
     case "dependencies":
     case "contract":
@@ -116,7 +118,7 @@ export function buildFindingsForFailure(
   failure?: VerifyPhaseFailure,
 ): VerifyFinding[] {
   const hint = normalized.fix_hints[0] ?? normalized.message;
-  const phaseGate = (normalized.phase === "trace_pending" ? "trace" : normalized.phase) as VerifyFailedGate;
+  const phaseGate = (normalized.phase === "trace_pending" || normalized.phase === "run_record" ? "trace" : normalized.phase) as VerifyFailedGate;
   const fromPhase = failure ? findingsFromPhase(root, failure, hint) : null;
   if (fromPhase) return fromPhase;
   if (normalized.failures && normalized.failures.length > 0) {

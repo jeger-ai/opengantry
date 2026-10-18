@@ -25,6 +25,8 @@ export interface VerifyOptions {
   audience?: OutputAudience;
   /** Skip TMVC stale-evidence binding (committed PASS quote lines only). */
   skipStaleEvidence?: boolean;
+  /** After a full pass on a clean committed tree, write .gitagent/runs/<MSN>.json (ADR-0052 A5). */
+  record?: boolean;
   /** Emit a single structured JSON document on stdout (no human logs). */
   json?: boolean;
   /** Write structured JSON payload to a file (pipe-safe; used by kernel sync shim). */

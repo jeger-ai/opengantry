@@ -1,0 +1,21 @@
+{
+  "id": "verify.pre-push.mission-record",
+  "fixture": "mission-record",
+  "args": [
+    "verify",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--pre-push",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "passed",
+    "phase": "full",
+    "exit_code": 0,
+    "msn_id": "MSN-0101",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}

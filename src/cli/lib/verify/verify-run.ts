@@ -23,6 +23,8 @@ import {
 import { GXT_ERROR } from "../gxt-error-codes.js";
 import { persistFailedVerifyRemediation } from "./verify-remediation-pipeline.js";
 import { recordVerifyRunBestEffort } from "./verify-run-ring.js";
+import { runRecordRelPath } from "./verify-run-record.js";
+import { logInfo } from "../cli-io.js";
 import {
   resolveVerifySink,
   maybeApplySurgeonAndReevaluate,
@@ -127,6 +129,9 @@ async function evaluateOrInitFailure(
   try {
     assertMissionGatePresent(ctx.mission);
     const result = await evaluateVerifyPhases(ctx.root, ctx.mission, ctx.options, ctx.manifest);
+    if (ctx.options.record === true && result.ok && result.outcome === "full") {
+      logInfo(`gantry verify --record: wrote ${runRecordRelPath(result.proofMsnId)}; commit it (RULES §3)`);
+    }
     return { ok: true, result };
   } catch (e) {
     return { ok: false, error: e };

@@ -34,6 +34,7 @@ import {
   type TracePhaseOutcome,
 } from "./verify-phase-steps.js";
 import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./verify-org-phases.js";
+import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, runRecordRelPath, writeRunRecord } from "./verify-run-record.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -73,6 +74,8 @@ export interface VerifyPhaseSuccess {
   defensiveWarnings?: string[];
   defensiveAudits?: string[];
   traceEvidenceSkippedUncommitted?: number;
+  /** Set when the evidence was the run record (read or, with --record, written): its repo-relative path. */
+  runRecordPath?: string;
   phaseTimings: VerifyPhaseTiming[];
 }
 
@@ -126,6 +129,7 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
       return "kpi";
     case "trace":
     case "trace_pending":
+    case "run_record":
       return "trace";
     default: {
       const _exhaustive: never = phase;
@@ -147,8 +151,9 @@ function buildFullVerifySuccess(input: {
   defensive: Extract<DefensiveOutcome, { kind: "ok" }>;
   kpi: Extract<KpiOutcome, { kind: "ok" }>;
   phaseTimings: VerifyPhaseTiming[];
+  runRecordPath?: string;
 }): VerifyPhaseSuccess {
-  const { proofMsnId, executorLogPath, trace, gitProofWarnings, defensive, kpi, phaseTimings } =
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, defensive, kpi, phaseTimings, runRecordPath } =
     input;
   return {
     ok: true,
@@ -157,6 +162,7 @@ function buildFullVerifySuccess(input: {
     executorLogPath,
     traceWarnings: trace.warnings,
     phaseTimings,
+    ...(runRecordPath ? { runRecordPath } : {}),
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     ...(kpi.warnings.length > 0 ? { kpiWarnings: kpi.warnings } : {}),
     ...(kpi.advisoryFindings.length > 0 ? { kpiAdvisoryFindings: kpi.advisoryFindings } : {}),
@@ -177,6 +183,21 @@ async function evaluateOrgControlPhases(
   return deps.kind === "fail" ? deps.failure : null;
 }
 
+/**
+ * Evidence (RULES §3): a mission with trace rows is judged by them (legacy mode); one without rows binds its PASS to
+ * the committed run record, unless this run is the one producing it (--record).
+ */
+function evaluateEvidencePhase(ctx: PhaseContext, proofMsnId: string): TracePhaseOutcome {
+  const useRunRecord = ctx.mission.traceRows.length === 0 && ctx.options.record !== true;
+  if (!useRunRecord) return evaluateTracePhase(ctx);
+  const record = evaluateRunRecordPhase(ctx, proofMsnId);
+  return record.kind === "ok" ? { kind: "ok", warnings: [], skippedUncommitted: 0 } : record;
+}
+
+function missingGateFailure(executorLogPath: string): VerifyPhaseFailure {
+  return { ok: false, phase: "gate", message: "Mission has no gate_command", exitCode: 1, executorLogPath };
+}
+
 /** Single source of truth for verify phase evaluation (no logging or exit codes). */
 export async function evaluateVerifyPhases(
   root: string,
@@ -193,6 +214,7 @@ export async function evaluateVerifyPhases(
   );
   if (proof.kind === "fail") return failWithTimings(proof.failure, clock);
   const { proofMsnId, warnings: proofWarnings } = proof;
+  if (options.record === true) assertCleanTreeForRecord(root);
 
   const missionRel = formatRepoRelative(root, mission.rawPath);
   const contract = await clock.timed("contract", () =>
@@ -216,7 +238,8 @@ export async function evaluateVerifyPhases(
   const orgFail = await evaluateOrgControlPhases(clock, phaseCtx);
   if (orgFail) return failWithTimings(orgFail, clock);
 
-  if (options.prePush === true && isLegislativeStub(mission)) {
+  // A mission without trace rows is a legislative stub only until its run record exists (RULES §3).
+  if (options.prePush === true && isLegislativeStub(mission) && !missionHasRunRecord(root, proofMsnId)) {
     return {
       ok: true,
       outcome: "pre_push_stub",
@@ -228,18 +251,7 @@ export async function evaluateVerifyPhases(
     };
   }
 
-  if (!mission.gate) {
-    return failWithTimings(
-      {
-        ok: false,
-        phase: "gate",
-        message: "Mission has no gate_command",
-        exitCode: 1,
-        executorLogPath,
-      },
-      clock,
-    );
-  }
+  if (!mission.gate) return failWithTimings(missingGateFailure(executorLogPath), clock);
 
   const virtualFlightId = beginVirtualCapture(root, mission);
   const gate = mission.gate;
@@ -254,8 +266,12 @@ export async function evaluateVerifyPhases(
   const kpi = await clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
   if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
 
-  const trace = await clock.timed("trace", () => evaluateTracePhase(phaseCtx));
+  const trace = await clock.timed("trace", () => evaluateEvidencePhase(phaseCtx, proofMsnId));
   if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
+  const runRecordPath = mission.traceRows.length === 0 ? runRecordRelPath(proofMsnId) : undefined;
+  if (options.record === true) {
+    writeRunRecord(phaseCtx, proofMsnId, { command: gate.command, exit: gateOutcome.exitCode, durationMs: clock.durationOf("gate"), logText: gateOutcome.logText });
+  }
 
   if (virtualFlightId) purgeVirtualFlightDir(root, virtualFlightId);
 
@@ -267,5 +283,6 @@ export async function evaluateVerifyPhases(
     defensive,
     kpi,
     phaseTimings: clock.finalize(),
+    ...(runRecordPath ? { runRecordPath } : {}),
   });
 }

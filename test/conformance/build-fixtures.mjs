@@ -13,6 +13,9 @@ export const FIXTURE_NAMES = [
   "mission-pass",
   "mission-fail-gate",
   "mission-stale",
+  "mission-record",
+  "mission-record-stale",
+  "mission-norows",
   "cage-tamper",
   "contract-standalone",
 ];
@@ -144,6 +147,49 @@ export function buildMissionPass(root, cli, opts = {}) {
   commitAll(root, "[MSN-0101] Legislate the fixture mission (ui skill, gate echo DONE)");
 }
 
+/** A mission without trace rows: its evidence is the run record (ADR-0052 step 4, RULES §3). */
+function writeMissionNoRows(root, msn, gateCommand, gateSubstring) {
+  const rel = `.gitagent/missions/m-${msn}.yaml`;
+  write(
+    root,
+    rel,
+    `# Fixture mission (conformance suite): judged by .gitagent/runs/${msn}.json, not by trace rows.
+msn_id: ${msn}
+skill_key: ui
+gate_command: ${JSON.stringify(gateCommand)}
+gate_success_substring: ${JSON.stringify(gateSubstring)}
+trace_rows: []
+`,
+  );
+  return rel;
+}
+
+/** mission-pass's substrate with a rowless mission and no run record: verify reports GXT_RUN_RECORD_MISSING. */
+export function buildMissionNoRows(root, cli) {
+  buildFreshInit(root, cli);
+  write(root, ".gitagent/foreman/MANIFEST.json", `${JSON.stringify(MINI_MANIFEST, null, 2)}\n`);
+  for (const f of fs.readdirSync(path.join(root, "skills"))) {
+    if (f !== "ui.md") fs.rmSync(path.join(root, "skills", f));
+  }
+  write(root, "src/components/Button.ts", "export const Button = () => 'button';\n");
+  writeMissionNoRows(root, "MSN-0101", "echo DONE", "DONE");
+  commitAll(root, "[MSN-0101] Legislate the fixture mission (ui skill, rowless, gate echo DONE)");
+}
+
+/** mission-norows, then `gantry verify --record` on the clean tree and a commit of the record. */
+export function buildMissionRecord(root, cli) {
+  buildMissionNoRows(root, cli);
+  runCli(cli, root, ["verify", "--mission", ".gitagent/missions/m-MSN-0101.yaml", "--record"]);
+  commitAll(root, "[MSN-0101] Run record", "executor@fixture.test");
+}
+
+/** mission-record, then a later commit under the skill's TMVC root so the record is stale. */
+export function buildMissionRecordStale(root, cli) {
+  buildMissionRecord(root, cli);
+  write(root, "src/components/Button.ts", "export const Button = () => 'button v2';\n");
+  commitAll(root, "[MSN-0101] Change the component after the record", "executor@fixture.test");
+}
+
 /** Same as mission-pass, with a gate that exits 1. */
 export function buildMissionFailGate(root, cli) {
   buildMissionPass(root, cli, { gate: "sh -c 'echo NOPE; exit 1'", substring: "DONE" });
@@ -232,6 +278,12 @@ export function buildFixture(name, root, cli) {
       return buildMissionFailGate(root, cli);
     case "mission-stale":
       return buildMissionStale(root, cli);
+    case "mission-record":
+      return buildMissionRecord(root, cli);
+    case "mission-record-stale":
+      return buildMissionRecordStale(root, cli);
+    case "mission-norows":
+      return buildMissionNoRows(root, cli);
     case "cage-tamper":
       return buildCageTamper(root);
     case "contract-standalone":

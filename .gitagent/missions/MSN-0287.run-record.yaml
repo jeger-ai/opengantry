@@ -1,0 +1,307 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0287]. Executor must not run until the [MSN-0287] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 4 (A4 one RunRecord, A5 machine-written evidence; both approved by the
+# operator on 2026-10-17). gantry verify --record runs every phase on a clean, committed tree and then writes
+# .gitagent/runs/<MSN>.json (schema opengantry.run-record.v1: head, tree, law digest, the gate check with its exit and
+# output digest, status PASS). A mission without trace_rows is verified by that record: missing, mismatch (MSN, mission
+# path, law digest, head not an ancestor of HEAD) or stale (a path under the effective roots changed since the record's
+# head). Missions with trace rows keep the legacy quote mapping. The Planner stamp becomes the newest Planner-email
+# [MSN] commit that modifies the mission file (RULES §6.1), shared by git-proof, the contract seal and the
+# interrogation digest. Three GXT_RUN_RECORD_* codes are registered. This mission carries no trace rows: it is the
+# first verified by its own run record.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): EXECUTOR_LOG.md stays as optional
+# narrative; the record, not a quote, is the evidence; the baseline is raised with --ratchet --allow-raise because
+# core and lib grow here.
+#
+# DoD 1 (core): packages/core/src/run-record.ts exports RUN_RECORD_SCHEMA, RunRecord, RunRecordCheck, sha256Hex,
+#        runRecordDigest, evaluateRunRecord (missing, mismatch, stale, in that order; pure, git facts supplied by the
+#        loader); packages/core/tests/run-record.test.ts; REL_RUNS_DIR in core constants; core index exports it.
+# DoD 2 (verify): src/cli/lib/verify/verify-run-record.ts loads the record, computes the law digest (effective roots,
+#        forbidden zones, gate, contract digest), checks ancestry and the diff since the record head over the effective
+#        roots (the record itself excepted), and writes the record for --record after asserting a clean tree;
+#        verify-engine runs it in place of the trace phase when the mission has no trace rows; a rowless mission with a
+#        record is no longer a legislative stub for --pre-push or the interrogation digest; RunRecordFailure maps to
+#        GXT_RUN_RECORD_MISSING / STALE / MISMATCH with hints and the trace failed_gate; --record on
+#        gantry verify (program-workflow, VerifyOptions) and a stderr note naming the written file.
+# DoD 3 (stamp): git-proof.ts findPlannerStamp: the stamp is the newest Planner-email [MSN] commit that modifies the
+#        mission file; a later Planner-email [MSN] commit that leaves it alone no longer fails verify;
+#        resolvePlannerStampHash (contract seal, interrogation digest, path drift) uses the same rule;
+#        src/cli/tests/git-proof.test.ts covers both cases.
+# DoD 4 (law): .gitagent/planner/RULES.md and templates/.gitagent/planner/RULES.md §3 name the run record as the
+#        primary evidence and trace rows as legacy, §6.1 defines the stamp as above; .gitagent/registry/error-codes.yaml
+#        gains the three codes (since MSN-0287); ARCH_BASELINE.json raised by gantry arch check --ratchet --allow-raise.
+# DoD 5 (behaviour): conformance fixtures mission-norows, mission-record, mission-record-stale with goldens for
+#        verify (missing, pass, stale), --pre-push on both and --record (tree shows the record); no existing golden
+#        changed; all unit tests pass.
+# DoD 6 (docs): docs/concepts/trace-evidence.md (Run records section with the three codes), docs/concepts/verify.md
+#        (Evidence phase, --record), docs/DEVELOPMENT.md (mission graph step 6, Cursor session, evidence row),
+#        docs/MANIFESTO.md (the executor-never-verifies-itself line), docs/CHANGELOG.md substrate note.
+# DoD 7 (dogfood): this mission has trace_rows: [] and is verified by .gitagent/runs/MSN-0287.json written with
+#        gantry verify --record on the clean committed tree and committed; ./scripts/dev-validate-core.sh passes;
+#        git diff --name-only origin/main...HEAD lists only paths under contract.tmvc_roots.
+msn_id: MSN-0287
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. Planner stamp signing is unchanged; the stamp is still
+      a Planner-email [MSN] commit, now the newest one that modifies the mission
+      file, and the signature check runs on that commit.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is migration step 4 of ADR-0052 (A4 one
+      RunRecord, A5 machine-written evidence, both approved by the operator on
+      2026-10-17): gantry verify --record writes .gitagent/runs/<MSN>.json after
+      a full pass on a clean committed tree, and a mission without trace rows is
+      verified by that record; RULES §3 names the run record as the primary
+      evidence and §6.1 defines the Planner stamp as the newest Planner-email
+      [MSN] commit that modifies the mission file (the open design point
+      recorded for step 4). ARCH_BASELINE.json is raised with --ratchet
+      --allow-raise because core grows by run-record.ts and lib by the
+      run-record phase (a Planner edit under B4). Operator direction
+      (2026-10-18, continue until everything is done; A5 approved 2026-10-17 in
+      ADR-0052): the run record replaces the hand-copied trace quote as the
+      primary evidence; trace rows keep working for existing missions; a mission
+      without trace rows must carry a committed run record whose head is an
+      ancestor of HEAD with no later commit under the skill roots, whose
+      mission, MSN and law digest match, and whose status is PASS; the Planner
+      stamp is the newest Planner-email [MSN] commit that modifies the mission
+      file, so a local executor sharing the Planner identity no longer breaks
+      git-proof; EXECUTOR_LOG.md stays as optional narrative."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9755dd22c944
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0287.run-record.yaml,
+      .gitagent/planner/RULES.md, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/, ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/MANIFESTO.md, docs/concepts/trace-evidence.md,
+      docs/concepts/verify.md, packages/core/, src/cli/commands/verify.ts,
+      src/cli/lib/git/git-proof.ts, src/cli/lib/verify/,
+      src/cli/program-workflow.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/run-record.test.ts, templates/.gitagent/planner/RULES.md,
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/. .gitagent/planner/RULES.md and its template copy
+      change in §3 and §6.1 only (the operator approved A5 on 2026-10-17 in
+      ADR-0052); .gitagent/registry/error-codes.yaml gains
+      GXT_RUN_RECORD_MISSING, GXT_RUN_RECORD_STALE and GXT_RUN_RECORD_MISMATCH
+      (since MSN-0287); .gitagent/runs/ is new and holds machine-written
+      records; src/cli/lib/verify/ gains the run-record phase and the --record
+      writer, git-proof.ts the stamp redefinition. .gitagent/foreman/ and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are law and docs: .gitagent/planner/RULES.md and its
+      template copy (§3 and §6.1), .gitagent/registry/error-codes.yaml (three
+      codes), .gitagent/runs/MSN-0287.json (machine-written record, new),
+      ARCH_BASELINE.json (ratchet raise), EXECUTOR_LOG.md (narrative), docs/ and
+      test/conformance/ (three fixtures, six cases, goldens, README fixture
+      table). packages/core/src/run-record.ts is the core layer;
+      src/cli/lib/verify/, git-proof.ts and command-reporter.ts are the lib
+      layer; program-workflow.ts is delivery."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --format sarif and --format junit are
+      unchanged; a run-record failure projects to the trace gate (failed_gate
+      trace) in the findings envelope, and the mission-pass goldens stay
+      byte-identical.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0287.run-record.yaml, .gitagent/planner/RULES.md,
+      .gitagent/registry/error-codes.yaml, .gitagent/runs/, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      docs/MANIFESTO.md, docs/concepts/trace-evidence.md,
+      docs/concepts/verify.md, packages/core/, src/cli/commands/verify.ts,
+      src/cli/lib/git/git-proof.ts, src/cli/lib/verify/,
+      src/cli/program-workflow.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/run-record.test.ts, templates/.gitagent/planner/RULES.md,
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/. .gitagent/planner/RULES.md and its template copy
+      change in §3 and §6.1 only (the operator approved A5 on 2026-10-17 in
+      ADR-0052); .gitagent/registry/error-codes.yaml gains
+      GXT_RUN_RECORD_MISSING, GXT_RUN_RECORD_STALE and GXT_RUN_RECORD_MISMATCH
+      (since MSN-0287); .gitagent/runs/ is new and holds machine-written
+      records; src/cli/lib/verify/ gains the run-record phase and the --record
+      writer, git-proof.ts the stamp redefinition. .gitagent/foreman/ and
+      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
+      until everything is done; A5 approved 2026-10-17 in ADR-0052): the run
+      record replaces the hand-copied trace quote as the primary evidence; trace
+      rows keep working for existing missions; a mission without trace rows must
+      carry a committed run record whose head is an ancestor of HEAD with no
+      later commit under the skill roots, whose mission, MSN and law digest
+      match, and whose status is PASS; the Planner stamp is the newest
+      Planner-email [MSN] commit that modifies the mission file, so a local
+      executor sharing the Planner identity no longer breaks git-proof;
+      EXECUTOR_LOG.md stays as optional narrative."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment is unchanged; no MCP tool writes
+      .gitagent/runs/ (gxt_verify does not pass --record in this mission), and
+      the record is written only by the verify CLI on the operator's clean tree.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: ead12601de97
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0287.run-record.yaml,
+      .gitagent/planner/RULES.md, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/, ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/MANIFESTO.md, docs/concepts/trace-evidence.md,
+      docs/concepts/verify.md, packages/core/, src/cli/commands/verify.ts,
+      src/cli/lib/git/git-proof.ts, src/cli/lib/verify/,
+      src/cli/program-workflow.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/run-record.test.ts, templates/.gitagent/planner/RULES.md,
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/. .gitagent/planner/RULES.md and its template copy
+      change in §3 and §6.1 only (the operator approved A5 on 2026-10-17 in
+      ADR-0052); .gitagent/registry/error-codes.yaml gains
+      GXT_RUN_RECORD_MISSING, GXT_RUN_RECORD_STALE and GXT_RUN_RECORD_MISMATCH
+      (since MSN-0287); .gitagent/runs/ is new and holds machine-written
+      records; src/cli/lib/verify/ gains the run-record phase and the --record
+      writer, git-proof.ts the stamp redefinition. .gitagent/foreman/ and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are law and docs: .gitagent/planner/RULES.md and its
+      template copy (§3 and §6.1), .gitagent/registry/error-codes.yaml (three
+      codes), .gitagent/runs/MSN-0287.json (machine-written record, new),
+      ARCH_BASELINE.json (ratchet raise), EXECUTOR_LOG.md (narrative), docs/ and
+      test/conformance/ (three fixtures, six cases, goldens, README fixture
+      table). packages/core/src/run-record.ts is the core layer;
+      src/cli/lib/verify/, git-proof.ts and command-reporter.ts are the lib
+      layer; program-workflow.ts is delivery."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The run record is machine-written JSON
+      (opengantry.run-record.v1, written by gantry verify --record, canonical
+      digest via canonicalJson) and never hand-edited; missions stay YAML; the
+      error-code registry stays strict YAML and gains three entries. No file
+      format changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 7bb27f26cb41849ce093ca1b7666c854e569cfe29dca7c97d96d29cf3d6d525f
+declared_paths:
+  - .gitagent/missions/MSN-0287.run-record.yaml
+  - .gitagent/planner/RULES.md
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0287.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/MANIFESTO.md
+  - docs/concepts/trace-evidence.md
+  - docs/concepts/verify.md
+  - packages/core/src/constants.ts
+  - packages/core/src/error-codes.ts
+  - packages/core/src/index.ts
+  - packages/core/src/run-record.ts
+  - packages/core/tests/run-record.test.ts
+  - src/cli/lib/command-reporter.ts
+  - src/cli/lib/git/git-proof.ts
+  - src/cli/lib/verify/verify-contract.ts
+  - src/cli/lib/verify/verify-engine.ts
+  - src/cli/lib/verify/verify-failure-normalize.ts
+  - src/cli/lib/verify/verify-failure.ts
+  - src/cli/lib/verify/verify-hints.ts
+  - src/cli/lib/verify/verify-interrogation.ts
+  - src/cli/lib/verify/verify-options.ts
+  - src/cli/lib/verify/verify-payload.ts
+  - src/cli/lib/verify/verify-phase-clock.ts
+  - src/cli/lib/verify/verify-phase-steps.ts
+  - src/cli/lib/verify/verify-run-record.ts
+  - src/cli/lib/verify/verify-run.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/git-proof.test.ts
+  - src/cli/tests/run-record.test.ts
+  - templates/.gitagent/planner/RULES.md
+  - test/conformance/README.md
+  - test/conformance/build-fixtures.mjs
+  - test/conformance/cases.yaml
+  - test/conformance/golden/verify.mission-norows.json
+  - test/conformance/golden/verify.mission-record-stale.json
+  - test/conformance/golden/verify.mission-record.json
+  - test/conformance/golden/verify.pre-push.mission-norows.json
+  - test/conformance/golden/verify.pre-push.mission-record.json
+  - test/conformance/golden/verify.record.mission-norows.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0287.run-record.yaml
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/MANIFESTO.md
+    - docs/concepts/trace-evidence.md
+    - docs/concepts/verify.md
+    - packages/core/
+    - src/cli/commands/verify.ts
+    - src/cli/lib/command-reporter.ts
+    - src/cli/lib/git/git-proof.ts
+    - src/cli/lib/verify/
+    - src/cli/program-workflow.ts
+    - src/cli/tests/git-proof.test.ts
+    - src/cli/tests/run-record.test.ts
+    - templates/.gitagent/planner/RULES.md
+    - test/conformance/README.md
+    - test/conformance/build-fixtures.mjs
+    - test/conformance/cases.yaml
+    - test/conformance/golden/
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+contract_sha256: a90a486584c571771547be2eb647cf5bd7877655390f3a48d2acb7622077da4e

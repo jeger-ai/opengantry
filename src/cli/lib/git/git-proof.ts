@@ -147,6 +147,17 @@ function commitTouchesMission(changed: string[], repoRelMission: string): boolea
   return changed.some((p) => p.replace(/\\/g, "/") === normMission);
 }
 
+/**
+ * The Planner stamp commit for an MSN (RULES §6.1): the newest commit whose subject begins with [MSN], whose author is
+ * on the Planner allowlist and which modifies the mission file; null when there is none or no allowlist is configured.
+ */
+export function findPlannerStamp(root: string, msnId: string, repoRelMission: string, scanDepth?: number): MsnCommitRow | null {
+  const plannerEmails = resolvePlannerEmails(root).emails;
+  if (plannerEmails.length === 0) return null;
+  const rows = listMsnSubjectCommits(root, msnId, resolveMsnScanDepth(scanDepth)).filter((r) => isPlannerEmail(r.authorEmail, plannerEmails));
+  return rows.find((r) => commitTouchesMission(listCommitChangedPaths(root, r.hash), repoRelMission)) ?? null;
+}
+
 export interface PlannerMissionProofOptions {
   /** Max commits to scan in `git log` (default 200). */
   scanDepth?: number;
@@ -182,9 +193,9 @@ function enforcePlannerStampSignature(
 }
 
 /**
- * Forensic gate (v0.6.2): MSN is read from the mission file; the most recent
- * Planner-authored commit whose subject starts with `[MSN-XXXX]` must modify
- * that mission path. Returns the resolved MSN id.
+ * Forensic gate (v0.6.2, rule amended by ADR-0052 step 4): MSN is read from the mission file; the stamp is the most
+ * recent Planner-authored commit whose subject starts with `[MSN-XXXX]` and which modifies that mission path. Returns
+ * the resolved MSN id.
  */
 export function assertPlannerMissionProof(
   root: string,
@@ -226,8 +237,9 @@ export function assertPlannerMissionProof(
     );
   }
 
-  const stamp = rows.find((r) => isPlannerEmail(r.authorEmail, plannerEmails));
-  if (!stamp) {
+  const plannerRows = rows.filter((r) => isPlannerEmail(r.authorEmail, plannerEmails));
+  const newestPlanner = plannerRows[0];
+  if (!newestPlanner) {
     const latest = rows[0]!;
     throwGitProofError(
       "NO_PLANNER_MSN_COMMIT",
@@ -237,20 +249,22 @@ export function assertPlannerMissionProof(
     );
   }
 
-  const changed = listCommitChangedPaths(root, stamp.hash);
-  if (!commitTouchesMission(changed, repoRelMission)) {
+  // RULES §6.1 (ADR-0052 step 4): the stamp is the newest Planner-email [MSN] commit that modifies the mission file.
+  // Later Planner-email commits that leave the mission alone (an executor sharing the identity) do not displace it.
+  const stamp = plannerRows.find((r) => commitTouchesMission(listCommitChangedPaths(root, r.hash), repoRelMission));
+  if (!stamp) {
     throwGitProofError(
       "MISSION_FILE_NOT_MODIFIED_BY_PLANNER",
-      `The Planner stamp for [${msnId}] is commit ${stamp.hash}: ${stamp.subject.trim()}; it did not change this mission file (${repoRelMission}). ` +
-        `The stamp is the newest (scanning backward) commit authored by a Planner allowlist email (${plannerIdentity.detail}) whose subject begins with [${msnId}]. ` +
-        `Either add a newer Planner commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose only qualifying commits touch this file.`,
+      `No [${msnId}] commit by a Planner allowlist email (${plannerIdentity.detail}) changes this mission file (${repoRelMission}); the newest is ${newestPlanner.hash}: ${newestPlanner.subject.trim()}. ` +
+        `The stamp is the newest commit whose subject begins with [${msnId}], whose author is on the Planner allowlist and which modifies ${repoRelMission}. ` +
+        `Add a Planner commit with that subject that includes ${repoRelMission}, or reuse a distinct MSN whose qualifying commits touch this file.`,
       {
         root,
         missionPath,
         msnId,
         repoRelMission,
-        stampHash: stamp.hash,
-        stampSubject: stamp.subject.trim(),
+        stampHash: newestPlanner.hash,
+        stampSubject: newestPlanner.subject.trim(),
       },
     );
   }

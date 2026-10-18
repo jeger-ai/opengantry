@@ -12,6 +12,7 @@ import type {
   KpiFailure,
   TraceFailure,
   TracePendingFailure,
+  RunRecordFailure,
 } from "./verify-failure.js";
 import type { VerifyOptions } from "./verify-options.js";
 import type { TraceVerifyWarning } from "../trace.js";
@@ -112,7 +113,7 @@ export async function evaluateGatePhase(
 
 export type TracePhaseOutcome =
   | { kind: "ok"; warnings: TraceVerifyWarning[]; skippedUncommitted: number }
-  | { kind: "fail"; failure: TracePendingFailure | TraceFailure };
+  | { kind: "fail"; failure: TracePendingFailure | TraceFailure | RunRecordFailure };
 
 export interface PhaseContext {
   root: string;

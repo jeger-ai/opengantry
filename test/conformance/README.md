@@ -26,6 +26,9 @@ Normalizers replace what legitimately differs between runs: the fixture path (`<
 | `mission-pass` | `fresh-init` with a one-skill manifest and a stamped mission whose gate passes |
 | `mission-fail-gate` | the same mission with a gate that exits 1 |
 | `mission-stale` | `mission-pass` plus a later commit under the skill's TMVC root |
+| `mission-norows` | the same substrate with a mission that has no trace rows and no run record |
+| `mission-record` | `mission-norows` after `gantry verify --record` and a commit of `.gitagent/runs/MSN-0101.json` |
+| `mission-record-stale` | `mission-record` plus a later commit under the skill's TMVC root |
 | `cage-tamper` | commits that change `.env`, a workflow, a lockfile and a source file |
 | `contract-standalone` | `verify.yaml` and `gate.json` without `.gitagent/`; its cases are skipped until MSN-0277 lands |
 

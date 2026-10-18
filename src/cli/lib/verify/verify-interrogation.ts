@@ -11,6 +11,8 @@ import { resolvePlannerEmails } from "../planner-identity.js";
 import { isStubOperatorAnswer } from "../interrogate/answers.js";
 import { interrogationSha256 } from "../interrogate/findings.js";
 import { isLegislativeStub } from "../missions/formatter.js";
+import { missionHasRunRecord } from "./verify-run-record.js";
+import { findPlannerStamp } from "../git/git-proof.js";
 import type { Manifest, ParsedMission } from "../types.js";
 import { normalizeRepoRelativePath, pathRiskTier } from "../tmvc-path.js";
 import type { VerifyOptions } from "./verify-options.js";
@@ -97,11 +99,17 @@ function compareStampedDigest(
   return null;
 }
 
+/**
+ * The Planner stamp hash (RULES §6.1): the newest Planner-email [MSN] commit that modifies the mission file. Without a
+ * mission path the newest Planner-email [MSN] commit is taken, which is the pre-ADR-0052 reading.
+ */
 export function resolvePlannerStampHash(
   root: string,
   proofMsnId: string,
   scanDepth?: number,
+  missionRel?: string,
 ): string | null {
+  if (missionRel) return findPlannerStamp(root, proofMsnId, missionRel, scanDepth)?.hash ?? null;
   const plannerEmails = resolvePlannerEmails(root).emails;
   if (plannerEmails.length === 0) return null;
   const stampRows = listMsnSubjectCommits(root, proofMsnId, resolveMsnScanDepth(scanDepth));
@@ -124,7 +132,7 @@ function evaluatePathDrift(input: PathDriftInput): { failures: string[]; warning
   const warnings: string[] = [];
   const declared = new Set(mission.declaredPaths.map((p) => normalizeRepoRelativePath(p)));
   const normMissionRel = normalizeRepoRelativePath(missionRel);
-  const stampHash = resolvePlannerStampHash(root, msnId, scanDepth);
+  const stampHash = resolvePlannerStampHash(root, msnId, scanDepth, missionRel);
 
   // Shallow clones may yield no MSN commits; drift passes vacuously (GXT_PERIMETER_SHALLOW_HISTORY posture).
   const rows = listMsnSubjectCommits(root, msnId, resolveMsnScanDepth(scanDepth));
@@ -174,8 +182,8 @@ function validateStampedInterrogationDigest(
   input: StampDigestInput,
 ): InterrogationPhaseOutcome | null {
   const { root, proofMsnId, missionRel, mission, options, executorLogPath, warnings } = input;
-  if (isLegislativeStub(mission)) return null;
-  const stampHash = resolvePlannerStampHash(root, proofMsnId, options.scanDepth);
+  if (isLegislativeStub(mission) && !missionHasRunRecord(root, proofMsnId)) return null;
+  const stampHash = resolvePlannerStampHash(root, proofMsnId, options.scanDepth, missionRel);
   if (!stampHash) return null;
   const body = readMissionAtCommit(root, stampHash, missionRel);
   if (body === null) {

@@ -7,5 +7,6 @@ export * from "./import-scanner.js";
 export * from "./manifest.js";
 export * from "./path-glob.js";
 export * from "./posix-path.js";
+export * from "./run-record.js";
 export * from "./specifier.js";
 export * from "./user-error.js";

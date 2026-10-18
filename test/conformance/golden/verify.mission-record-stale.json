@@ -1,0 +1,46 @@
+{
+  "id": "verify.mission-record-stale",
+  "fixture": "mission-record-stale",
+  "args": [
+    "verify",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "status": "failed",
+    "phase": "run_record",
+    "message": "RUN RECORD STALE: skill roots changed since the record at <SHORT_SHA>: src/components/Button.ts",
+    "error_code": "GXT_RUN_RECORD_STALE",
+    "fix_hints": [
+      "skill roots changed since the record at <SHORT_SHA>: src/components/Button.ts",
+      "commit the work, run gantry verify --mission .gitagent/missions/m-MSN-0101.yaml --record on the clean tree, then commit .gitagent/runs/MSN-0101.json (RULES §3)"
+    ],
+    "next_actions": [
+      "gantry verify --mission .gitagent/missions/m-MSN-0101.yaml --record",
+      "git add .gitagent/runs/MSN-0101.json && git commit -m \"[MSN-0101] Run record\"",
+      "gantry verify --mission .gitagent/missions/m-MSN-0101.yaml"
+    ],
+    "exit_code": 1,
+    "envelope_schema_version": 3,
+    "findings": [
+      {
+        "failed_gate": "trace",
+        "offending_file": "src/components/Button.ts",
+        "line": 0,
+        "severity": "error",
+        "resolution_hint": "skill roots changed since the record at <SHORT_SHA>: src/components/Button.ts",
+        "fingerprint": "<SHA256>",
+        "semantic_fingerprint": "<SHA256>"
+      }
+    ],
+    "failures": [
+      "skill roots changed since the record at <SHORT_SHA>: src/components/Button.ts"
+    ],
+    "findings_digest": "<SHA256>",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}

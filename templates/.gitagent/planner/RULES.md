@@ -15,7 +15,9 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 3. Trace-mapped verification (anti-lie)
 
-- For every claimed verifier **PASS**, the Verifier MUST provide a **Trace Reference**: a verbatim substring copied from `EXECUTOR_LOG.md` and an anchor (**line number** or **timestamp**) that ties the quote to the execution trace.
+- **Run record (ADR-0052 step 4, primary):** a mission with no `trace_rows` is judged by its **run record** `.gitagent/runs/<MSN>.json`, written only by **`gantry verify --record`** after every phase passed on a **clean, committed** tree. The record names the commit and tree the checks ran on, the gate command, its exit and the digest of its output, and the digest of the law it enforced (effective roots, forbidden zones, gate, sealed contract). The executor commits the record; nobody edits it. A later `gantry verify` PASS binds to it: a missing record → `GXT_RUN_RECORD_MISSING`; a record for another MSN, mission path, law or a head that is not an ancestor of `HEAD` → `GXT_RUN_RECORD_MISMATCH`; any path under the mission's effective roots changed since the record's head (committed or in the working tree, the record itself excepted) → `GXT_RUN_RECORD_STALE`. A rowless mission counts as a legislative stub only until its record exists.
+- **Trace rows (legacy):** a mission that carries `trace_rows` keeps the rule below. New missions SHOULD use the run record; hand-copied quotes are evidence an agent writes about itself.
+- For every claimed verifier **PASS** in a trace row, the Verifier MUST provide a **Trace Reference**: a verbatim substring copied from `EXECUTOR_LOG.md` and an anchor (**line number** or **timestamp**) that ties the quote to the execution trace.
 - Verifiers MUST NOT use source-code quotations as the sole or primary evidence for PASS; code may supplement only after a valid trace reference exists.
 - If the quoted substring does **not** appear in `EXECUTOR_LOG.md`, or no valid trace reference is provided for a claimed PASS → **Evidence Tampering** → the mission MUST auto-fail (no merge).
 - **`gantry verify` stale-evidence (v1.1+):** for committed PASS quote lines, verify binds the line's attestation commit (`git blame` on `EXECUTOR_LOG.md`) to the mission skill's full `tmvc_roots` via `git diff --name-only`; TMVC drift after attestation → **STALE** (`GXT_TRACE_STALE`). Uncommitted quote lines skip stale check until committed.
@@ -50,8 +52,8 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 - Missions verified by **`gantry verify`** MUST live under **`.gitagent/missions/`** (repo-relative).
 - Before the deterministic gate runs, **`gantry verify`** requires **native Git evidence** that the Planner legislated this mission for its MSN:
-  - Among the last **200** commits (configurable later), the **newest** commit whose subject begins with **`[MSN-XXXX]`** (matching the mission’s MSN) and whose **author email** is listed in **`GANTRY_PLANNER_EMAILS`** (comma-separated allowlist; silent legacy fallback: `GAPMAN_PLANNER_EMAILS`) is the **Planner stamp**.
-  - That stamp commit MUST **modify** the mission file passed to `--mission`.
+  - Among the last **200** commits (configurable later), the **newest** commit whose subject begins with **`[MSN-XXXX]`** (matching the mission’s MSN), whose **author email** is listed in **`GANTRY_PLANNER_EMAILS`** (comma-separated allowlist; silent legacy fallback: `GAPMAN_PLANNER_EMAILS`) **and which modifies the mission file** passed to `--mission` is the **Planner stamp** (ADR-0052 step 4; before it, the newest Planner-email `[MSN]` commit had to be the one modifying the file).
+  - A later `[MSN-XXXX]` commit by a Planner email that leaves the mission file alone (an executor sharing the identity, a merge) does not displace the stamp. When no Planner-email `[MSN-XXXX]` commit modifies the file, verify fails (`MISSION_FILE_NOT_MODIFIED_BY_PLANNER`).
 - Architectural ADRs under [`.gitagent/out-of-scope/`](../out-of-scope/) are the record of prior decisions. **Planner** MUST review relevant ADRs when authoring or amending missions. **`gantry triage`** MAY emit non-binding `adr_hints` when ADR `match_terms` overlap intent; those hints do **not** change Foreman routing (still manifest-only binary).
 
 ## 6.2 Break-glass (`gantry verify` v0.8.0)

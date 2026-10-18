@@ -1,0 +1,22 @@
+{
+  "id": "verify.pre-push.mission-norows",
+  "fixture": "mission-norows",
+  "args": [
+    "verify",
+    "--mission",
+    ".gitagent/missions/m-MSN-0101.yaml",
+    "--pre-push",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "status": "passed",
+    "phase": "pre_push_stub",
+    "exit_code": 0,
+    "message": "Legislative stub OK (git-proof passed).",
+    "msn_id": "MSN-0101",
+    "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
+    "mission_source": "flag"
+  },
+  "stderr_codes": []
+}

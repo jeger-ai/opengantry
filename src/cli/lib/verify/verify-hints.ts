@@ -18,6 +18,7 @@ import type {
   InterrogationFailure,
   KpiFailure,
   KpiFailureKind,
+  RunRecordFailure,
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
@@ -202,6 +203,33 @@ function hintsForInterrogationPhase(failure: InterrogationFailure, meta: VerifyH
   };
 }
 
+function runRecordCode(failure: RunRecordFailure): GxtErrorCode {
+  switch (failure.recordKind) {
+    case "missing":
+      return GXT_ERROR.RUN_RECORD_MISSING;
+    case "stale":
+      return GXT_ERROR.RUN_RECORD_STALE;
+    case "mismatch":
+      return GXT_ERROR.RUN_RECORD_MISMATCH;
+    default: {
+      const _exhaustive: never = failure.recordKind;
+      return _exhaustive;
+    }
+  }
+}
+
+function hintsForRunRecordPhase(failure: RunRecordFailure, meta: VerifyHintMeta): VerifyRemediation {
+  const verify = verifyCmd(meta.missionPath);
+  return {
+    error_code: runRecordCode(failure),
+    fix_hints: [
+      failure.recordReason,
+      `commit the work, run ${verify} --record on the clean tree, then commit ${failure.recordPath} (RULES §3)`,
+    ],
+    next_actions: [`${verify} --record`, `git add ${failure.recordPath} && git commit -m "[${meta.msnId ?? "MSN-NNNN"}] Run record"`, verify],
+  };
+}
+
 export function hintsForVerifyPhase(
   failure: VerifyPhaseFailure,
   meta: VerifyHintMeta,
@@ -219,6 +247,8 @@ export function hintsForVerifyPhase(
       return hintsForTracePendingPhase(failure, meta);
     case "trace":
       return hintsForTracePhase(failure, meta);
+    case "run_record":
+      return hintsForRunRecordPhase(failure, meta);
     case "interrogation":
       return hintsForInterrogationPhase(failure, meta);
     case "policy":
