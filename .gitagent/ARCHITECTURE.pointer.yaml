@@ -1,0 +1,7 @@
+# OpenGantry architecture pointer: where agents find the code layout (kind: file | directory | external | unset).
+# Humans write YAML (ADR-0047). The CLI reads this file; the 3.x ARCHITECTURE.pointer.json is read only when this file is absent.
+
+schema_version: 0.1.0
+kind: file
+location: docs/ARCHITECTURE.md
+read_hint: "Single markdown file: gantry CLI layer layout, import rules, and complexity budgets under src/cli/. Read fully before editing application code."

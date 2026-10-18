@@ -6,7 +6,9 @@ export const REL_MANIFEST_JSON = ".gitagent/foreman/MANIFEST.json" as const;
 export const REL_GXT_CONFIG_YAML = ".gitagent/config.yaml" as const;
 export const REL_GXT_CONFIG_JSON = ".gitagent/config.json" as const;
 /** Agent discovery for code layout (file, directory, or external). */
-export const REL_ARCHITECTURE_POINTER = ".gitagent/ARCHITECTURE.pointer.json" as const;
+/** The architecture pointer: humans write the YAML form since 4.0; the 3.x JSON form is still read. */
+export const REL_ARCHITECTURE_POINTER_YAML = ".gitagent/ARCHITECTURE.pointer.yaml" as const;
+export const REL_ARCHITECTURE_POINTER_JSON = ".gitagent/ARCHITECTURE.pointer.json" as const;
 /** Agent instructions when architecture access requires authentication. */
 export const REL_ARCHITECTURE_ACCESS_SKILL = ".gitagent/planner/ARCHITECTURE-ACCESS.md" as const;
 /** Agent instructions when architecture is unset, stub, or uncertain — ask before implementing. */

@@ -1,0 +1,8 @@
+# OpenGantry architecture pointer: where agents find the code layout. Humans write YAML (ADR-0047).
+# gantry init composes this file; kind is file | directory | external | unset, location the path or URL.
+schema_version: "0.1.0"
+kind: unset
+location: ""
+read_hint: Architecture source not selected. Do NOT invent layer layout or module boundaries. Read .gitagent/planner/ARCHITECTURE-DISCOVERY.md and ask the user before any application code changes.
+discovery:
+  skill: .gitagent/planner/ARCHITECTURE-DISCOVERY.md

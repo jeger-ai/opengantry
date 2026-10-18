@@ -2,7 +2,7 @@
 
 Document repository layout, module boundaries, and dependency direction for agents working in this codebase.
 
-This file is the **default** architecture source when [`.gitagent/ARCHITECTURE.pointer.json`](../.gitagent/ARCHITECTURE.pointer.json) has `"kind": "file"`. You may instead point the pointer at:
+This file is the **default** architecture source when [`.gitagent/ARCHITECTURE.pointer.yaml`](../.gitagent/ARCHITECTURE.pointer.yaml) has `"kind": "file"`. You may instead point the pointer at:
 
 - **`directory`** — e.g. `docs/architecture/` (read `README.md` or index first, then layer notes)
 - **`external`** — e.g. a wiki URL or MCP-backed doc system (follow `read_hint` in the pointer)

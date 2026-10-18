@@ -20,7 +20,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 
 7. **Executor Runtime (v0.7.0+)** — **`gantry runtime env --mission …`** emits the standard env contract ([`teacher/RUNTIME.md`](planner/RUNTIME.md)) so external agents inherit `GANTRY_TMVC_ROOTS_ABSOLUTE`, forbidden zones, and `GANTRY_EXECUTOR_LOG` without hand-configuring each IDE. **`gantry runtime exec`** adds process-boundary forbidden-zone scanning (strongest TMVC trap). IDE Agent Write/Edit remains **advisory** unless wrapped in `runtime exec` — see [`docs/INTEGRATIONS.md`](../docs/INTEGRATIONS.md).
 
-8. **Bootstrap + architecture (v1.1.1)** — **`gantry init`** installs this tree from packaged templates. **[`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json)** tells agents where code layout docs live; **`gantry arch cred`** stores git-ignored tokens for protected external sources. Primary mission format from **`gantry legislate`** is **YAML** under [`missions/`](missions/); Markdown missions remain supported for verify.
+8. **Bootstrap + architecture (v1.1.1)** — **`gantry init`** installs this tree from packaged templates. **[`ARCHITECTURE.pointer.yaml`](ARCHITECTURE.pointer.yaml)** tells agents where code layout docs live; **`gantry arch cred`** stores git-ignored tokens for protected external sources. Primary mission format from **`gantry legislate`** is **YAML** under [`missions/`](missions/); Markdown missions remain supported for verify.
 
 9. **Zero-trust + external IDE skills** — All file changes are untrusted until deterministic gates pass. Third-party agent skill packs are **local IDE edge only** (gitignored); optional `[SKILL-EXEC]` lines in `EXECUTOR_LOG.md` are reviewer context, not verify evidence. See [`teacher/RUNTIME.md`](planner/RUNTIME.md) and [`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md).
 
@@ -29,7 +29,7 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 | Path | Role |
 |------|------|
 | [`foreman/MANIFEST.yaml`](foreman/MANIFEST.yaml) | Map: `schema_version`, skills, `trust_threshold`, `tmvc_roots`, `forbidden_zones`, path risks |
-| [`ARCHITECTURE.pointer.json`](ARCHITECTURE.pointer.json) | Agent discovery for code layout (`kind`, `location`, `read_hint`, optional `access`) |
+| [`ARCHITECTURE.pointer.yaml`](ARCHITECTURE.pointer.yaml) | Agent discovery for code layout (`kind`, `location`, `read_hint`, optional `access`) |
 | [`teacher/ARCHITECTURE-DISCOVERY.md`](planner/ARCHITECTURE-DISCOVERY.md) | When architecture is **unset** or stub — ask user; never invent layout |
 | [`teacher/ARCHITECTURE-ACCESS.md`](planner/ARCHITECTURE-ACCESS.md) | Authenticated external architecture sources |
 | [`foreman/SOUL.md`](foreman/SOUL.md) | Foreman: manifest-only binary router |

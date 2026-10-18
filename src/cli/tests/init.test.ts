@@ -1,3 +1,4 @@
+import { parseStrictYaml } from "#core/strict-yaml.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
@@ -116,9 +117,9 @@ test("distribution: packed gantry init works outside workspace", () => {
     const run = spawnSync(process.execPath, [cli, "init"], { cwd: targetRepo, encoding: "utf8" });
     assert.equal(run.status, 0, (run.stderr || "") + (run.stdout || ""));
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "foreman", "MANIFEST.yaml")), true);
-    assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.json")), true);
-    const pointer = JSON.parse(
-      fs.readFileSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.json"), "utf8"),
+    assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.yaml")), true);
+    const pointer = parseStrictYaml(
+      fs.readFileSync(path.join(targetRepo, ".gitagent", "ARCHITECTURE.pointer.yaml"), "utf8"),
     ) as { kind?: string };
     assert.equal(pointer.kind, "unset");
     assert.equal(fs.existsSync(path.join(targetRepo, ".gitagent", "missions", "README.md")), true);

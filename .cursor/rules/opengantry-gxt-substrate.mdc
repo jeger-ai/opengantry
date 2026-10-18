@@ -37,7 +37,7 @@ Treat these as the **law + routing contract** for agent work. For orientation an
 - **Hooks:** `.cursor/hooks.json` (installed by `gantry init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths (fallback for non-MCP shell paths).
 - **Pin mission:** `gantry pin .gitagent/missions/<file>.yaml` before Agent work.
 - **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission or explicit path).
-- **Code architecture:** `.gitagent/ARCHITECTURE.pointer.json` — if `kind=unset` or stub, read `.gitagent/planner/ARCHITECTURE-DISCOVERY.md` and ask user before coding.
+- **Code architecture:** `.gitagent/ARCHITECTURE.pointer.yaml` — if `kind=unset` or stub, read `.gitagent/planner/ARCHITECTURE-DISCOVERY.md` and ask user before coding.
 - **Human IDE setup:** `docs/INTEGRATIONS.md` (adopter reference — not agent context).
 - **External IDE skills:** local only — copy `.cursor/external-skills.local.example.mdc` → `.cursor/external-skills.local.mdc` (gitignored). Never commit third-party skill packs into GXT substrate.
 

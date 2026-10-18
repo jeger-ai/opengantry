@@ -9,11 +9,11 @@ import {
   type HttpFetcher,
 } from "../lib/arch/external/architecture-fetch.js";
 import { writeArchitectureCredential } from "../lib/arch/external/architecture-credential.js";
-import { REL_ARCHITECTURE_POINTER } from "../lib/constants.js";
+import { REL_ARCHITECTURE_POINTER_JSON } from "../lib/constants.js";
 
 function writePointer(dest: string, body: Record<string, unknown>): void {
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });
-  fs.writeFileSync(path.join(dest, REL_ARCHITECTURE_POINTER), `${JSON.stringify(body, null, 2)}\n`, "utf8");
+  fs.writeFileSync(path.join(dest, REL_ARCHITECTURE_POINTER_JSON), `${JSON.stringify(body, null, 2)}\n`, "utf8");
 }
 
 test("buildAuthHeaders: bearer and basic", () => {

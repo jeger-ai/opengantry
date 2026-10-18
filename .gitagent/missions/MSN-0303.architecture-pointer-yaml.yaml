@@ -1,0 +1,328 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0303]. Executor must not run until the [MSN-0303] legislation commit + pin.
+#
+# Legislated intent: the architecture pointer is YAML (ADR-0047 §4 third migration; ADR-0052 step 6). Core gains
+# architecture-pointer-file.ts over law-file.ts; the lib pointer module dual-reads (YAML first, the 3.x JSON as
+# fallback, both present and different fails closed), init composes the YAML form, doctor warns on the JSON form;
+# the three gantry migrate verbs share one engine and gantry migrate architecture-pointer joins them; templates
+# ship the YAML pointer and example; docs, AGENTS.md, the Cursor rule, integration templates and the law files name
+# the YAML form; this repository migrated its own pointer. Tests, one conformance case, two re-recorded init
+# goldens; baseline raised.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): the same bar as the manifest and
+# the config; the policy pointer follows in the next mission. No trace rows: the evidence is
+# .gitagent/runs/MSN-0303.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0303
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match term example overlaps the
+      path examples/ in this intent and nothing else. No decision of it applies.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 513de46540af
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: AGENTS.md, ARCH_BASELINE.json,
+      .cursor/rules/opengantry-gxt-substrate.mdc, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, docs/start/install.md,
+      EXECUTOR_LOG.md, .gitagent/ARCHITECTURE.pointer.json,
+      .gitagent/ARCHITECTURE.pointer.yaml,
+      .gitagent/missions/MSN-0303.architecture-pointer-yaml.yaml,
+      .gitagent/planner/ARCHITECTURE-ACCESS.md,
+      .gitagent/planner/ARCHITECTURE-DISCOVERY.md,
+      .gitagent/planner/MISSION-ARCHITECT.md, .gitagent/README.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0303.json,
+      packages/core/src/architecture-pointer-file.ts,
+      packages/core/src/command-spec.ts, packages/core/src/constants.ts,
+      packages/core/src/index.ts, src/cli/commands/init.ts,
+      src/cli/commands/migrate.ts,
+      src/cli/lib/arch/external/architecture-pointer.ts,
+      src/cli/lib/init/init-compose.ts, src/cli/program-migrate.ts,
+      src/cli/tests/architecture-fetch.test.ts,
+      src/cli/tests/architecture-pointer-dual-read.test.ts,
+      src/cli/tests/init.test.ts, templates/AGENTS.md,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/docs/ARCHITECTURE.md,
+      templates/.gitagent/ARCHITECTURE.pointer.external.example.json,
+      templates/.gitagent/ARCHITECTURE.pointer.external.example.yaml,
+      templates/.gitagent/ARCHITECTURE.pointer.json,
+      templates/.gitagent/ARCHITECTURE.pointer.yaml,
+      templates/.gitagent/planner/ARCHITECTURE-ACCESS.md,
+      templates/.gitagent/planner/ARCHITECTURE-DISCOVERY.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/integrations/antigravity/.agent/rules/gxt.md,
+      templates/integrations/claude-code/CLAUDE.md,
+      templates/integrations/cline/.clinerules/gxt.md,
+      templates/integrations/junie/.junie/guidelines.md,
+      templates/integrations/openhands/.openhands/microagents/gxt.md,
+      test/conformance/cases.yaml, test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/migrate-architecture-pointer.fresh-init.json. Core
+      gains architecture-pointer-file.ts over law-file.ts and
+      REL_ARCHITECTURE_POINTER_YAML (REL_ARCHITECTURE_POINTER is
+      REL_ARCHITECTURE_POINTER_JSON now); the lib pointer module dual-reads,
+      init composes the YAML form, doctor warns on the JSON form;
+      commands/migrate.ts is one engine for the three verbs and
+      program-migrate.ts registers them from a table; gantry migrate
+      architecture-pointer (registry, command spec); templates ship
+      ARCHITECTURE.pointer.yaml and the external example as YAML (the JSON files
+      are deleted); docs, AGENTS.md, the Cursor rule and its template copy,
+      integration templates, .gitagent/README.md and the planner guides name the
+      YAML form; this repository's own .gitagent/ARCHITECTURE.pointer.json
+      became ARCHITECTURE.pointer.yaml through the command; tests, one new
+      conformance case, the two init goldens; ARCH_BASELINE.json raised. The
+      repository's pointer files and the planner guides are roots;
+      .gitagent/foreman/POLICY.pointer.json and .github/workflows/ are
+      forbidden. Paths outside any TARGET_ARCHITECTURE layer in this mission are
+      the tests, goldens, templates, scripts, the law files and registries under
+      .gitagent, the baseline, the record and docs; the new module sits in core
+      (architecture-pointer-file), the loader in lib (arch/external), the engine
+      in command (commands/migrate) and the registration in delivery
+      (program-migrate)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. Two optional network paths (OpenAI embeddings, TypeSafe
+      System One) leave the CLI; policy pull and deps fetch stay the only
+      explicit network commands.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: AGENTS.md,
+      ARCH_BASELINE.json, .cursor/rules/opengantry-gxt-substrate.mdc,
+      docs/ARCHITECTURE.md, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      docs/start/install.md, EXECUTOR_LOG.md,
+      .gitagent/ARCHITECTURE.pointer.json, .gitagent/ARCHITECTURE.pointer.yaml,
+      .gitagent/missions/MSN-0303.architecture-pointer-yaml.yaml,
+      .gitagent/planner/ARCHITECTURE-ACCESS.md,
+      .gitagent/planner/ARCHITECTURE-DISCOVERY.md,
+      .gitagent/planner/MISSION-ARCHITECT.md, .gitagent/README.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0303.json,
+      packages/core/src/architecture-pointer-file.ts,
+      packages/core/src/command-spec.ts, packages/core/src/constants.ts,
+      packages/core/src/index.ts, src/cli/commands/init.ts,
+      src/cli/commands/migrate.ts,
+      src/cli/lib/arch/external/architecture-pointer.ts,
+      src/cli/lib/init/init-compose.ts, src/cli/program-migrate.ts,
+      src/cli/tests/architecture-fetch.test.ts,
+      src/cli/tests/architecture-pointer-dual-read.test.ts,
+      src/cli/tests/init.test.ts, templates/AGENTS.md,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/docs/ARCHITECTURE.md,
+      templates/.gitagent/ARCHITECTURE.pointer.external.example.json,
+      templates/.gitagent/ARCHITECTURE.pointer.external.example.yaml,
+      templates/.gitagent/ARCHITECTURE.pointer.json,
+      templates/.gitagent/ARCHITECTURE.pointer.yaml,
+      templates/.gitagent/planner/ARCHITECTURE-ACCESS.md,
+      templates/.gitagent/planner/ARCHITECTURE-DISCOVERY.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/integrations/antigravity/.agent/rules/gxt.md,
+      templates/integrations/claude-code/CLAUDE.md,
+      templates/integrations/cline/.clinerules/gxt.md,
+      templates/integrations/junie/.junie/guidelines.md,
+      templates/integrations/openhands/.openhands/microagents/gxt.md,
+      test/conformance/cases.yaml, test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/migrate-architecture-pointer.fresh-init.json. Core
+      gains architecture-pointer-file.ts over law-file.ts and
+      REL_ARCHITECTURE_POINTER_YAML (REL_ARCHITECTURE_POINTER is
+      REL_ARCHITECTURE_POINTER_JSON now); the lib pointer module dual-reads,
+      init composes the YAML form, doctor warns on the JSON form;
+      commands/migrate.ts is one engine for the three verbs and
+      program-migrate.ts registers them from a table; gantry migrate
+      architecture-pointer (registry, command spec); templates ship
+      ARCHITECTURE.pointer.yaml and the external example as YAML (the JSON files
+      are deleted); docs, AGENTS.md, the Cursor rule and its template copy,
+      integration templates, .gitagent/README.md and the planner guides name the
+      YAML form; this repository's own .gitagent/ARCHITECTURE.pointer.json
+      became ARCHITECTURE.pointer.yaml through the command; tests, one new
+      conformance case, the two init goldens; ARCH_BASELINE.json raised. The
+      repository's pointer files and the planner guides are roots;
+      .gitagent/foreman/POLICY.pointer.json and .github/workflows/ are
+      forbidden. Operator direction (2026-10-18, continue until everything is
+      done): the third ADR-0047 §4 migration,
+      .gitagent/ARCHITECTURE.pointer.json to ARCHITECTURE.pointer.yaml, to the
+      same bar (dual-read preferring YAML, fail closed when both differ, a
+      doctor hint, a deterministic migrate verb, the template switch, the JSON
+      form still read). The policy pointer is the fourth and last file, in the
+      next mission. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0303.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. The pointer stays the Application Architect's file;
+      migrating it is a Planner commit.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is the third migration §4 specifies
+      (.gitagent/ARCHITECTURE.pointer.json): dual-read preferring the YAML form,
+      fail closed when both exist and differ, a doctor hint, gantry migrate
+      architecture-pointer as the deterministic path, the template switch; the
+      JSON form stays read."
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 38f057a1a5e5724396743eed6fccc832750a2f24dbb8a34d7f7d82e3d917dc3a
+declared_paths:
+  - .cursor/rules/opengantry-gxt-substrate.mdc
+  - .gitagent/ARCHITECTURE.pointer.json
+  - .gitagent/ARCHITECTURE.pointer.yaml
+  - .gitagent/README.md
+  - .gitagent/missions/MSN-0303.architecture-pointer-yaml.yaml
+  - .gitagent/planner/ARCHITECTURE-ACCESS.md
+  - .gitagent/planner/ARCHITECTURE-DISCOVERY.md
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0303.json
+  - AGENTS.md
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/start/install.md
+  - packages/core/src/architecture-pointer-file.ts
+  - packages/core/src/command-spec.ts
+  - packages/core/src/constants.ts
+  - packages/core/src/index.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/migrate.ts
+  - src/cli/lib/arch/external/architecture-pointer.ts
+  - src/cli/lib/init/init-compose.ts
+  - src/cli/program-migrate.ts
+  - src/cli/tests/architecture-fetch.test.ts
+  - src/cli/tests/architecture-pointer-dual-read.test.ts
+  - src/cli/tests/init.test.ts
+  - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+  - templates/.gitagent/ARCHITECTURE.pointer.external.example.json
+  - templates/.gitagent/ARCHITECTURE.pointer.external.example.yaml
+  - templates/.gitagent/ARCHITECTURE.pointer.json
+  - templates/.gitagent/ARCHITECTURE.pointer.yaml
+  - templates/.gitagent/planner/ARCHITECTURE-ACCESS.md
+  - templates/.gitagent/planner/ARCHITECTURE-DISCOVERY.md
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - templates/AGENTS.md
+  - templates/docs/ARCHITECTURE.md
+  - templates/integrations/antigravity/.agent/rules/gxt.md
+  - templates/integrations/claude-code/CLAUDE.md
+  - templates/integrations/cline/.clinerules/gxt.md
+  - templates/integrations/junie/.junie/guidelines.md
+  - templates/integrations/openhands/.openhands/microagents/gxt.md
+  - test/conformance/cases.yaml
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/init.dry-run.bare-git.json
+  - test/conformance/golden/migrate-architecture-pointer.fresh-init.json
+contract:
+  tmvc_roots:
+    - .cursor/rules/opengantry-gxt-substrate.mdc
+    - .gitagent/ARCHITECTURE.pointer.json
+    - .gitagent/ARCHITECTURE.pointer.yaml
+    - .gitagent/README.md
+    - .gitagent/missions/MSN-0303.architecture-pointer-yaml.yaml
+    - .gitagent/planner/ARCHITECTURE-ACCESS.md
+    - .gitagent/planner/ARCHITECTURE-DISCOVERY.md
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0303.json
+    - AGENTS.md
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/start/install.md
+    - packages/core/src/architecture-pointer-file.ts
+    - packages/core/src/command-spec.ts
+    - packages/core/src/constants.ts
+    - packages/core/src/index.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/migrate.ts
+    - src/cli/lib/arch/external/architecture-pointer.ts
+    - src/cli/lib/init/init-compose.ts
+    - src/cli/program-migrate.ts
+    - src/cli/tests/architecture-fetch.test.ts
+    - src/cli/tests/architecture-pointer-dual-read.test.ts
+    - src/cli/tests/init.test.ts
+    - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+    - templates/.gitagent/ARCHITECTURE.pointer.external.example.json
+    - templates/.gitagent/ARCHITECTURE.pointer.external.example.yaml
+    - templates/.gitagent/ARCHITECTURE.pointer.json
+    - templates/.gitagent/ARCHITECTURE.pointer.yaml
+    - templates/.gitagent/planner/ARCHITECTURE-ACCESS.md
+    - templates/.gitagent/planner/ARCHITECTURE-DISCOVERY.md
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+    - templates/AGENTS.md
+    - templates/docs/ARCHITECTURE.md
+    - templates/integrations/antigravity/.agent/rules/gxt.md
+    - templates/integrations/claude-code/CLAUDE.md
+    - templates/integrations/cline/.clinerules/gxt.md
+    - templates/integrations/junie/.junie/guidelines.md
+    - templates/integrations/openhands/.openhands/microagents/gxt.md
+    - test/conformance/cases.yaml
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/init.dry-run.bare-git.json
+    - test/conformance/golden/migrate-architecture-pointer.fresh-init.json
+  forbidden_zones:
+    - .gitagent/foreman/POLICY.pointer.json
+    - .github/workflows/
+contract_sha256: 53a03d0bbe48c510b175c4c3492fef15ca15c7ff8d0d637b9661a0ca5b7c2620

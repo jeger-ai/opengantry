@@ -1,6 +1,6 @@
 # Architecture discovery (unset or uncertain)
 
-Read this when [`.gitagent/ARCHITECTURE.pointer.json`](../ARCHITECTURE.pointer.json) has **`"kind": "unset"`**, or when pointed architecture docs are missing, empty, or still the init stub.
+Read this when [`.gitagent/ARCHITECTURE.pointer.yaml`](../ARCHITECTURE.pointer.yaml) has **`"kind": "unset"`**, or when pointed architecture docs are missing, empty, or still the init stub.
 
 ## Hard rule
 
@@ -29,7 +29,7 @@ Read this when [`.gitagent/ARCHITECTURE.pointer.json`](../ARCHITECTURE.pointer.j
 
 ## After the user answers
 
-- If they choose a **file** or **folder**, help them write concise architecture notes; update `.gitagent/ARCHITECTURE.pointer.json` accordingly.
+- If they choose a **file** or **folder**, help them write concise architecture notes; update `.gitagent/ARCHITECTURE.pointer.yaml` accordingly.
 - If they choose **external**, set `kind: external`, follow [ARCHITECTURE-ACCESS.md](./ARCHITECTURE-ACCESS.md) for auth.
 - If they want **you to draft** architecture text, treat it as a **proposal** — present for explicit approval before treating it as law.
 

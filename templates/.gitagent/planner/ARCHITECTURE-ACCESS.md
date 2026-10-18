@@ -1,6 +1,6 @@
 # Architecture access (authenticated sources)
 
-Read this **before** fetching external architecture documentation when [`.gitagent/ARCHITECTURE.pointer.json`](../ARCHITECTURE.pointer.json) has `"access": { "required": true }`.
+Read this **before** fetching external architecture documentation when [`.gitagent/ARCHITECTURE.pointer.yaml`](../ARCHITECTURE.pointer.yaml) has `"access": { "required": true }`.
 
 ## Goal
 
@@ -8,7 +8,7 @@ Discover **which tool** hosts architecture docs, **how authentication works**, o
 
 ## 1. Read the pointer
 
-From the repo root, load `.gitagent/ARCHITECTURE.pointer.json`:
+From the repo root, load `.gitagent/ARCHITECTURE.pointer.yaml`:
 
 - `kind`, `location`, `read_hint` — where docs live
 - `access.tool` — expected system (Confluence, Linear, Notion, custom MCP, …)
@@ -66,7 +66,7 @@ Follow `read_hint` and consume layout boundaries. Align edits with `tmvc_roots` 
 
 ## Adopter configuration example
 
-In `ARCHITECTURE.pointer.json`:
+In `ARCHITECTURE.pointer.yaml`:
 
 ```json
 {
