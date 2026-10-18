@@ -12,7 +12,7 @@ Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.git
 
 | Layer | Paths | Responsibility |
 |-------|--------|----------------|
-| **core** (package) | `packages/core/src/**` | pure domain: the law model (`Law`, `tighten`, `classifyPath`, `isProtectedPath`, `ChangeSet`, `evaluatePaths`), error codes, `GantryUserError`, canonical JSON, path globs, POSIX path helpers, manifest shape, constants; `node:path` only, no fs, child_process, os or net |
+| **core** (package) | `packages/core/src/**` | pure domain: the law model (`Law`, `tighten`, `classifyPath`, `isProtectedPath`, `ChangeSet`, `evaluatePaths`, `evaluateImportSite`, `ArchLaw`), the import scanner and specifier classifier, error codes, `GantryUserError`, canonical JSON, path globs, POSIX path helpers, manifest shape, constants; `node:path` only, no fs, child_process, os or net |
 | **git** (package) | `packages/git/src/**` | the single git adapter (`gitRun`, staged index); imports core only |
 | **cage** (package) | `packages/cage/src/**` | the cage runtime: check, watch, session, suggest, push guard; imports core and git only |
 | **CLI delivery** | `src/cli/index.ts`, `src/cli/program*.ts`, `src/cli/commands/**` | argv, stdin, exit codes, human output |
@@ -39,7 +39,7 @@ flowchart TB
 
 ## One law, one evaluator (ADR-0052 A2, A3)
 
-Every question of the form "may this change touch this path" is answered by `packages/core/src/law.ts`: a `Law` holds what a level allows and forbids, `tighten(upper, lower)` composes levels (sets unioned, roots only narrow, stricter tier; violations returned, never thrown), and `evaluatePaths(law, changeSet)` judges a staged index, a commit range, a worktree or one write. The TMVC classification, the effective mission scope (skill, org floor, contract), the perimeter check and the staged guard are thin callers of it. A new path check is a new `ChangeSet` or a new `Law` loader, not a new matcher.
+Every question of the form "may this change touch this path" is answered by `packages/core/src/law.ts`: a `Law` holds what a level allows and forbids, `tighten(upper, lower)` composes levels (sets unioned, roots only narrow, stricter tier; violations returned, never thrown), and `evaluatePaths(law, changeSet)` judges a staged index, a commit range, a worktree or one write. The TMVC classification, the effective mission scope (skill, org floor, contract), the perimeter check and the staged guard are thin callers of it. Imports are judged there too: `evaluateImportSite` (the contract's banned, unlisted, dynamic and scope-escape kinds) and, for `TARGET_ARCHITECTURE.yaml`, `ArchLaw` with `layerForFile`, `evaluateLayerImport` and `evaluatePatternRules`; the import scanner and the specifier classifier are core modules, and the contract scan and `gantry arch check` only walk files, resolve specifiers and call core. A new path or import check is a new `ChangeSet` or a new `Law` loader, not a new matcher.
 
 ## Import rules (enforced in CI for changed files)
 

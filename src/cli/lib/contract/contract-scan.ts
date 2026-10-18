@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { importMatchesBan } from "../ast-discovery.js";
 import { toPosixRel } from "../cli-io.js";
 import { gitRunOk } from "../git/git.js";
 import { GXT_ERROR, type GxtErrorCode } from "../gxt-error-codes.js";
-import { extractImportSites, type ImportSite } from "../import-scanner.js";
-import { isPathUnderRoot, normalizeRepoRelativePath } from "../tmvc-path.js";
+import { extractImportSites } from "#core/import-scanner.js";
+import { evaluateImportSite, law } from "#core/law.js";
+import { normalizeRepoRelativePath } from "../tmvc-path.js";
 import type { ContractImportViolation, ContractViolationKind, EffectiveScope } from "./contract-types.js";
 import { classifySpecifier, loadTsconfigPaths, type TsconfigPaths } from "./resolve-specifier.js";
 
@@ -83,66 +83,16 @@ export function contractViolationCode(kind: ContractViolationKind): GxtErrorCode
   }
 }
 
-function violation(
-  kind: ContractViolationKind,
-  file: string,
-  site: ImportSite,
-  specifier: string,
-  detail: string,
-): ContractImportViolation {
-  return { kind, file, line: site.line, column: site.column, specifier, detail };
-}
-
-function checkBareSpecifier(scope: EffectiveScope, file: string, site: ImportSite, spec: string): ContractImportViolation | null {
-  const banned = scope.bannedImports.find((b) => importMatchesBan(spec, b));
-  if (banned) {
-    return violation("banned", file, site, spec, `import of banned specifier "${spec}" (banned: ${banned})`);
-  }
-  if (scope.allowedImports.length > 0 && !scope.allowedImports.some((a) => importMatchesBan(spec, a))) {
-    return violation("unlisted", file, site, spec, `import "${spec}" is not in contract.allowed_imports`);
-  }
-  return null;
-}
-
-function checkResolvedPath(
-  scope: EffectiveScope,
-  file: string,
-  site: ImportSite,
-  spec: string,
-  resolvedRepoRel: string,
-): ContractImportViolation | null {
-  const forbidden = scope.forbiddenZones.find((fz) => isPathUnderRoot(resolvedRepoRel, fz));
-  if (forbidden) {
-    return violation("scope_escape", file, site, spec, `import resolves into forbidden zone ${forbidden} (${resolvedRepoRel})`);
-  }
-  if (scope.strictRelativeImports && scope.tmvcRoots.length > 0) {
-    const inside = scope.tmvcRoots.some((r) => isPathUnderRoot(resolvedRepoRel, r));
-    if (!inside) {
-      return violation("scope_escape", file, site, spec, `import resolves outside effective TMVC roots (${resolvedRepoRel})`);
-    }
-  }
-  return null;
-}
-
-function checkSite(scope: EffectiveScope, file: string, site: ImportSite, ts: TsconfigPaths | null): ContractImportViolation | null {
-  if (site.spec === null) {
-    if (scope.allowDynamicSpecifiers) return null;
-    return violation("dynamic", file, site, site.expression ?? "", `non-literal ${site.kind === "require_expr" ? "require" : "import"}(${site.expression ?? ""}) is not allowed (contract.allow_dynamic_specifiers=false)`);
-  }
-  const cls = classifySpecifier(site.spec, file, ts);
-  switch (cls.kind) {
-    case "builtin":
-      return null;
-    case "bare":
-      return checkBareSpecifier(scope, file, site, cls.specifier);
-    case "relative":
-    case "alias":
-      return checkResolvedPath(scope, file, site, cls.specifier, cls.resolvedRepoRel);
-    default: {
-      const _exhaustive: never = cls;
-      return _exhaustive;
-    }
-  }
+/** The contract's effective scope as a law: the import discipline core judges each site against. */
+function lawOfScope(scope: EffectiveScope) {
+  return law({
+    allowedRoots: scope.tmvcRoots,
+    forbiddenZones: scope.forbiddenZones,
+    allowedImports: scope.allowedImports,
+    bannedImports: scope.bannedImports,
+    allowDynamicSpecifiers: scope.allowDynamicSpecifiers,
+    strictRelativeImports: scope.strictRelativeImports,
+  });
 }
 
 /** Scan a single source file's import sites against the effective scope. */
@@ -155,9 +105,11 @@ export function scanFileImports(
   const abs = path.join(repoRoot, fileRel);
   if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) return [];
   const norm = normalizeRepoRelativePath(fileRel);
+  const scopeLaw = lawOfScope(scope);
   const out: ContractImportViolation[] = [];
   for (const site of extractImportSites(fs.readFileSync(abs, "utf8"))) {
-    const v = checkSite(scope, norm, site, ts);
+    const classified = site.spec === null ? null : classifySpecifier(site.spec, norm, ts);
+    const v = evaluateImportSite(scopeLaw, norm, site, classified);
     if (v) out.push(v);
   }
   return out;

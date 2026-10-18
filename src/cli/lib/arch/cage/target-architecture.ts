@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { pathMatchesArchGlob } from "../../path-glob.js";
+import { pathMatchesArchGlob } from "#core/path-glob.js";
+import { archLaw, evaluateLayerImport, evaluatePatternRules, layerForFile as coreLayerForFile, type ArchLaw } from "#core/law.js";
 import { getDomainAdapter } from "../../domains/index.js";
 import YAML from "yaml";
 import { CLI_NAME } from "../../constants.js";
@@ -9,7 +10,7 @@ import { normalizeRepoRelativePath } from "../../tmvc-path.js";
 import {
   extractBindingsFromSnippet,
   extractImportsWithMeta,
-} from "../../import-scanner.js";
+} from "#core/import-scanner.js";
 import { walkDomainFiles } from "../../discovery-scanner.js";
 
 export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
@@ -78,14 +79,17 @@ function globMatches(repoRel: string, glob: string): boolean {
   return pathMatchesArchGlob(normalizeRepoRelativePath(repoRel), normalizeRepoRelativePath(glob));
 }
 
+/** The spec's layers and rules as the core architecture law. */
+export function archLawOfSpec(spec: TargetArchitectureSpec): ArchLaw {
+  return archLaw({
+    layers: spec.layers,
+    layerImportRules: spec.rules.filter((r): r is ArchImportRule => r.kind === "import"),
+    patternRules: spec.rules.filter((r): r is ArchPatternRule => r.kind === "pattern"),
+  });
+}
+
 export function layerForFile(spec: TargetArchitectureSpec, repoRel: string): string {
-  const norm = normalizeRepoRelativePath(repoRel);
-  for (const layer of spec.layers) {
-    for (const glob of layer.globs) {
-      if (globMatches(norm, glob)) return layer.id;
-    }
-  }
-  return "other";
+  return coreLayerForFile(archLawOfSpec(spec), repoRel);
 }
 
 function resolveImportPath(file: string, spec: string): string | null {
@@ -169,14 +173,6 @@ export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string
   return scanRoots.some((root) => globMatches(norm, root));
 }
 
-function fileMatchesAppliesTo(
-  repoRel: string,
-  appliesTo: readonly string[] | undefined,
-  scanRoots: readonly string[],
-): boolean {
-  if (appliesTo && appliesTo.length > 0) return appliesTo.some((g) => globMatches(repoRel, g));
-  return fileMatchesScanRoots(repoRel, scanRoots);
-}
 
 function adapterSupportsImportRules(spec: TargetArchitectureSpec): boolean {
   const domain = spec.domain?.trim().toLowerCase();
@@ -188,54 +184,8 @@ function adapterSupportsImportRules(spec: TargetArchitectureSpec): boolean {
   }
 }
 
-function compilePerimeterPattern(pattern: string): RegExp | null {
-  try {
-    if (pattern.startsWith("(?i)")) {
-      return new RegExp(pattern.slice(4), "im");
-    }
-    return new RegExp(pattern, "m");
-  } catch {
-    return null;
-  }
-}
 
-function findPatternMatchLine(body: string, pattern: string): { line: number; column: number; match: string } | null {
-  const re = compilePerimeterPattern(pattern);
-  if (!re) return null;
-  const m = re.exec(body);
-  if (!m || m.index == null) return null;
-  const before = body.slice(0, m.index);
-  const line = before.split(/\r?\n/).length;
-  const lastNl = before.lastIndexOf("\n");
-  const column = m.index - (lastNl === -1 ? 0 : lastNl + 1) + 1;
-  return { line, column, match: m[0] ?? "" };
-}
 
-function checkPatternRulesForFile(
-  violations: ArchBoundaryViolation[],
-  repoRel: string,
-  body: string,
-  rules: readonly ArchRuleSpec[],
-  scanRoots: readonly string[],
-): void {
-  for (const rule of rules) {
-    if (rule.kind !== "pattern") continue;
-    if (!fileMatchesAppliesTo(repoRel, rule.applies_to, scanRoots)) continue;
-
-    if (rule.forbid_pattern) {
-      const hit = findPatternMatchLine(body, rule.forbid_pattern);
-      if (hit) {
-        recordViolation(violations, repoRel, rule.id, hit.match, [], hit.line, hit.column);
-      }
-    }
-    if (rule.require_pattern) {
-      const hit = findPatternMatchLine(body, rule.require_pattern);
-      if (!hit) {
-        recordViolation(violations, repoRel, rule.id, `(missing: ${rule.require_pattern})`, [], 1, 1);
-      }
-    }
-  }
-}
 
 function fileMatchesLanguage(repoRel: string, languages: readonly string[], domain?: string): boolean {
   const norm = normalizeRepoRelativePath(repoRel).toLowerCase();
@@ -351,17 +301,6 @@ export function loadTargetArchitecture(repoRoot: string): TargetArchitectureSpec
   return validateTargetArchitecture(parsed);
 }
 
-function recordViolation(
-  violations: ArchBoundaryViolation[],
-  file: string,
-  ruleId: string,
-  moduleSpecifier: string,
-  bindings: string[],
-  line: number,
-  column: number,
-): void {
-  violations.push({ file, rule_id: ruleId, module_specifier: moduleSpecifier, bindings, line, column });
-}
 
 export function checkArchBoundariesForFiles(
   spec: TargetArchitectureSpec,
@@ -374,6 +313,7 @@ export function checkArchBoundariesForFiles(
   const scanRoots = resolveArchScanRoots(spec, options.manifestTmvcRoots);
   const languages = resolveArchLanguages(spec);
   const evaluateImports = adapterSupportsImportRules(spec);
+  const arch = archLawOfSpec(spec);
 
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(root, file);
@@ -383,34 +323,20 @@ export function checkArchBoundariesForFiles(
     if (!fs.existsSync(abs)) continue;
     const src = fs.readFileSync(abs, "utf8");
 
-    checkPatternRulesForFile(violations, repoRel, src, spec.rules, scanRoots);
+    violations.push(...evaluatePatternRules(arch, repoRel, src, (rel) => fileMatchesScanRoots(rel, scanRoots)));
 
     if (!evaluateImports) continue;
 
-    const fromLayer = layerForFile(spec, repoRel);
-    const imports = extractImportsWithMeta(src, true);
-
-    for (const imp of imports) {
-      const bindings = extractBindingsFromSnippet(imp.snippet);
-      const resolved = resolveImportPath(repoRel, imp.spec);
-      const targetLayer = resolved ? layerForFile(spec, resolved) : "other";
-
-      for (const rule of spec.rules) {
-        if (rule.kind !== "import") continue;
-        if (rule.from_layer !== fromLayer) continue;
-        if (rule.forbid_import_layer && targetLayer === rule.forbid_import_layer) {
-          recordViolation(violations, repoRel, rule.id, imp.spec, bindings, imp.line, imp.column);
-        }
-        if (rule.forbid_specifier_substring && imp.spec.includes(rule.forbid_specifier_substring)) {
-          recordViolation(violations, repoRel, rule.id, imp.spec, bindings, imp.line, imp.column);
-        }
-        if (
-          rule.forbid_resolved_path_substring &&
-          resolved?.includes(rule.forbid_resolved_path_substring)
-        ) {
-          recordViolation(violations, repoRel, rule.id, imp.spec, bindings, imp.line, imp.column);
-        }
-      }
+    for (const imp of extractImportsWithMeta(src, true)) {
+      violations.push(
+        ...evaluateLayerImport(arch, repoRel, {
+          spec: imp.spec,
+          line: imp.line,
+          column: imp.column,
+          bindings: extractBindingsFromSnippet(imp.snippet),
+          resolved: resolveImportPath(repoRel, imp.spec),
+        }),
+      );
     }
   }
 
