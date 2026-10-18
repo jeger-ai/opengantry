@@ -31,13 +31,6 @@ function placeTrackedHook(dest: string): void {
   const hook = path.join(hookDir, "pre-commit");
   fs.copyFileSync(path.join(getRepoRoot(), ".githooks", "pre-commit"), hook);
   fs.chmodSync(hook, 0o755);
-  const scripts = path.join(dest, "scripts");
-  fs.mkdirSync(scripts, { recursive: true });
-  fs.writeFileSync(
-    path.join(scripts, "gxt-resolve-mission.sh"),
-    "#!/bin/sh\nprintf '%s\\n' .gitagent/missions/MSN-0001.example.yaml\n",
-    { mode: 0o755 },
-  );
 }
 
 function placeStubGantry(binDir: string): void {
@@ -117,7 +110,7 @@ test("hooks install reports a missing tracked pre-commit", () => {
   assert.match(result.message, /missing \.githooks\/pre-commit/);
 });
 
-test("strict pre-commit blocks git commit, --no-verify bypasses, and a passing guard allows the commit", () => {
+test("the tracked pre-commit shim delegates to gantry hook pre-commit; its exit code blocks the commit, --no-verify bypasses", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-hooks-commit-"));
   const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-hooks-bin-"));
   const logFile = path.join(dest, "stub.log");
@@ -129,7 +122,7 @@ test("strict pre-commit blocks git commit, --no-verify bypasses, and a passing g
 
   fs.writeFileSync(logFile, "", "utf8");
   assert.notEqual(commitNote(dest, binDir, logFile, "1", false), 0);
-  assert.match(fs.readFileSync(logFile, "utf8"), /--strict/);
+  assert.match(fs.readFileSync(logFile, "utf8"), /^hook pre-commit$/m);
 
   fs.writeFileSync(logFile, "", "utf8");
   assert.equal(commitNote(dest, binDir, logFile, "1", true), 0);
@@ -137,7 +130,7 @@ test("strict pre-commit blocks git commit, --no-verify bypasses, and a passing g
 
   fs.writeFileSync(logFile, "", "utf8");
   assert.equal(commitNote(dest, binDir, logFile, "0", false), 0);
-  assert.match(fs.readFileSync(logFile, "utf8"), /--strict/);
+  assert.match(fs.readFileSync(logFile, "utf8"), /^hook pre-commit$/m);
 });
 
 test("aider scope file lists roots and patches read: once", () => {

@@ -237,9 +237,11 @@ Runs **`dev-validate-core.sh`** (build, `gantry check`, `validate-gxt.sh manifes
 
 Adopters receive `scripts/validate-gxt.sh`, `scripts/gxt-manifest-lib.mjs`, and runtime helpers from the init catalog — not the specimen-only gates above.
 
-**Hooks (automatic when `core.hooksPath=.githooks`):**
+**Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a one-line shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell.
 
-- **pre-push** — `gantry verify --pre-push` for branch-changed missions (legislative stubs pass after git-proof); `gantry check` if manifest/skills changed; advisory `gantry perimeter` when governance files change; changed-code gate for touched `src/cli/**/*.ts`.
+- **pre-commit** — `gantry hook pre-commit`: `tmvc guard` on the staged index for the pinned mission (blocks when `gantry hooks install` armed strict mode or `GXT_TMVC_GUARD_STRICT=1`), then an advisory `contract check` over staged sources.
+- **pre-push** — `gantry hook pre-push` reads the ref lines git passes on stdin: a ref deletion verifies nothing, a new branch compares with its upstream (then main, master, the parent), an update compares `remote..local`. Per range: `gantry verify --pre-push` for changed missions (legislative stubs pass after git-proof; a rowless mission with a run record is verified in full); advisory `gantry perimeter` when governance files change; `gantry check` if manifest/skills changed; the changed-code gate for touched `src/cli/**/*.ts` (specimen only, until step 5b folds it into the CLI).
+- **post-checkout** — `gantry hook post-checkout`: `EXECUTOR_LOG.md` from the template on the first checkout of a feature branch.
 
 ## Releasing
 
