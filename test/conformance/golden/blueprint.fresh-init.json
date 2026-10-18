@@ -6,7 +6,7 @@
     "--yes"
   ],
   "exit": 2,
-  "stdout": "gantry blueprint: insufficient evidence-anchored questions (1) — add source files\n",
+  "stdout": "gantry blueprint: insufficient evidence-anchored questions (0) — add source files\n",
   "stderr_codes": [],
   "tree": []
 }

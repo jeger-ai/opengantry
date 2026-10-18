@@ -63,9 +63,6 @@ jobs:
       - name: gantry check (MANIFEST + Rule 4.4 skills sync)
         run: node dist/cli/index.js check
 
-      - name: Validate Foreman MANIFEST.json (Node parity)
-        run: ./scripts/validate-gxt.sh manifest
-
       - name: gantry unit tests
         run: node --test "dist/cli/tests/**/*.test.js"
 
@@ -134,11 +131,22 @@ jobs:
       - name: Fetch gxt-bypass git notes
         run: git fetch origin 'refs/notes/*:refs/notes/*' || true
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Build gantry
+        run: npm run build
+
       - name: Path-scoped MSN commit subjects
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: ./scripts/validate-gxt.sh msn "$BASE_SHA" "$HEAD_SHA"
+        run: node dist/cli/index.js ci msn-range --base "$BASE_SHA" --head "$HEAD_SHA"
 
   mission_verify:
     if: github.event_name == 'pull_request'
@@ -207,4 +215,4 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: ./scripts/verify-pr-missions.sh
+        run: node dist/cli/index.js ci verify-missions --base "$BASE_SHA" --head "$HEAD_SHA"

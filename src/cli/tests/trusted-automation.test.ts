@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "../lib/git/git.js";
-import { copyManifestLibScripts, gitInitCommit, gitCommit } from "./test-fixtures.js";
+import { gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
 const DEPENDABOT_EMAIL = "dependabot[bot]@users.noreply.github.com";
@@ -13,12 +13,11 @@ const COPILOT_EMAIL = "223556219+Copilot@users.noreply.github.com";
 const SNYK_EMAIL = "snyk-bot@snyk.io";
 const WORKFLOW_REL = ".github/workflows/gxt-validate.yml";
 const CLI_SAMPLE_REL = "src/cli/automation-fixture.ts";
+const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
 
-function symlinkNodeModules(dest: string, ogRoot: string): void {
-  const target = path.join(dest, "node_modules");
-  if (!fs.existsSync(target)) {
-    fs.symlinkSync(path.join(ogRoot, "node_modules"), target, "dir");
-  }
+function cli(dest: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dest, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  return { status: r.status, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
 }
 
 function writeTrustedAutomationConfig(dest: string, maxNetLoc = 5): void {
@@ -89,34 +88,14 @@ function initCliSampleRepo(dest: string, ogRoot: string, sampleBody = "export co
   return execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 }
 
-function copyAutomationScripts(dest: string, ogRoot: string): {
-  validateScript: string;
-  verifyScript: string;
-  lib: string;
-} {
-  fs.mkdirSync(path.join(dest, "scripts"), { recursive: true });
+function copyAutomationScripts(dest: string, ogRoot: string): void {
   fs.mkdirSync(path.join(dest, ".gitagent/foreman"), { recursive: true });
-  fs.copyFileSync(
-    path.join(ogRoot, "scripts/validate-gxt.sh"),
-    path.join(dest, "scripts/validate-gxt.sh"),
-  );
-  fs.copyFileSync(
-    path.join(ogRoot, "scripts/verify-pr-missions.sh"),
-    path.join(dest, "scripts/verify-pr-missions.sh"),
-  );
-  copyManifestLibScripts(dest, ogRoot);
   fs.copyFileSync(
     path.join(ogRoot, ".gitagent/foreman/MANIFEST.json"),
     path.join(dest, ".gitagent/foreman/MANIFEST.json"),
   );
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent/missions/README.md"), "# missions\n", "utf8");
-  symlinkNodeModules(dest, ogRoot);
-  return {
-    validateScript: path.join(dest, "scripts/validate-gxt.sh"),
-    verifyScript: path.join(dest, "scripts/verify-pr-missions.sh"),
-    lib: path.join(dest, "scripts/gxt-manifest-lib.mjs"),
-  };
 }
 
 function workflowYaml(usesLines: string[]): string {
@@ -146,7 +125,7 @@ test("trusted automation: eligible dependabot workflow version pin passes MSN ch
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-msn-ok-"));
   const baseSha = initWorkflowRepo(dest, ogRoot, ["uses: actions/checkout@v4"]);
-  const { validateScript } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
   writeTrustedAutomationConfig(dest);
 
   fs.writeFileSync(
@@ -157,19 +136,16 @@ test("trusted automation: eligible dependabot workflow version pin passes MSN ch
   gitCommit(dest, "deps: bump actions/checkout to v5", DEPENDABOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("bash", [validateScript, "msn", baseSha, headSha], {
-    cwd: dest,
-    encoding: "utf8",
-  });
+  const run = cli(dest, ["ci", "msn-range", "--base", baseSha, "--head", headSha]);
   assert.equal(run.status, 0, (run.stderr || "") + (run.stdout || ""));
-  assert.match(run.stderr || "", /TRUSTED-AUTOMATION-OK/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /TRUSTED-AUTOMATION-OK/i);
 });
 
 test("trusted automation: missing config fails closed for dependabot workflow bump", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-no-config-"));
   const baseSha = initWorkflowRepo(dest, ogRoot, ["uses: actions/checkout@v4"]);
-  const { validateScript } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
   fs.rmSync(path.join(dest, ".gitagent/config.json"));
 
   fs.writeFileSync(
@@ -180,10 +156,7 @@ test("trusted automation: missing config fails closed for dependabot workflow bu
   gitCommit(dest, "deps: bump actions/checkout to v5", DEPENDABOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("bash", [validateScript, "msn", baseSha, headSha], {
-    cwd: dest,
-    encoding: "utf8",
-  });
+  const run = cli(dest, ["ci", "msn-range", "--base", baseSha, "--head", headSha]);
   assert.notEqual(run.status, 0);
 });
 
@@ -194,7 +167,7 @@ test("trusted automation: net_loc boundary 4 passes and 6 fails", () => {
     "uses: actions/checkout@v4",
     "uses: actions/setup-node@v4",
   ]);
-  const { lib: libPass } = copyAutomationScripts(destPass, ogRoot);
+  copyAutomationScripts(destPass, ogRoot);
   writeTrustedAutomationConfig(destPass, 5);
   fs.writeFileSync(
     path.join(destPass, WORKFLOW_REL),
@@ -203,7 +176,7 @@ test("trusted automation: net_loc boundary 4 passes and 6 fails", () => {
   );
   gitCommit(destPass, "deps: two pin bumps", DEPENDABOT_EMAIL);
   const headPass = execSync("git rev-parse HEAD", { cwd: destPass, encoding: "utf8" }).trim();
-  const pass4 = spawnSync("node", [libPass, "eval-commit", destPass, headPass], { encoding: "utf8" });
+  const pass4 = cli(destPass, ["ci", "trusted-automation", "--commit", headPass]);
   assert.equal(pass4.status, 0, (pass4.stderr || "") + (pass4.stdout || ""));
 
   const destFail = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-loc-fail-"));
@@ -212,7 +185,7 @@ test("trusted automation: net_loc boundary 4 passes and 6 fails", () => {
     "uses: actions/setup-node@v4",
     "uses: actions/cache@v4",
   ]);
-  const { lib: libFail } = copyAutomationScripts(destFail, ogRoot);
+  copyAutomationScripts(destFail, ogRoot);
   writeTrustedAutomationConfig(destFail, 5);
   fs.writeFileSync(
     path.join(destFail, WORKFLOW_REL),
@@ -225,16 +198,16 @@ test("trusted automation: net_loc boundary 4 passes and 6 fails", () => {
   );
   gitCommit(destFail, "deps: three pin bumps", DEPENDABOT_EMAIL);
   const headFail = execSync("git rev-parse HEAD", { cwd: destFail, encoding: "utf8" }).trim();
-  const fail6 = spawnSync("node", [libFail, "eval-commit", destFail, headFail], { encoding: "utf8" });
+  const fail6 = cli(destFail, ["ci", "trusted-automation", "--commit", headFail]);
   assert.notEqual(fail6.status, 0);
-  assert.match(fail6.stderr || "", /net_loc 6 exceeds/i);
+  assert.match((fail6.stderr || "") + (fail6.stdout || ""), /net_loc 6 exceeds/i);
 });
 
 test("trusted automation: structural injection outside version pin is denied", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-struct-deny-"));
   initWorkflowRepo(dest, ogRoot, ["uses: actions/checkout@v4"]);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
 
   fs.writeFileSync(
     path.join(dest, WORKFLOW_REL),
@@ -244,21 +217,16 @@ test("trusted automation: structural injection outside version pin is denied", (
   gitCommit(dest, "deps: inject run step", DEPENDABOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.notEqual(run.status, 0);
-  assert.match(run.stderr || "", /structural change outside workflow_version_pin/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /structural change outside workflow_version_pin/i);
 });
 
 test("trusted automation: verify-pr-missions skips mission requirement for eligible diff", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-verify-pr-"));
   const baseSha = initWorkflowRepo(dest, ogRoot, ["uses: actions/checkout@v4"]);
-  const { verifyScript } = copyAutomationScripts(dest, ogRoot);
-  fs.mkdirSync(path.join(dest, "dist/cli"), { recursive: true });
-  const cli = path.join(ogRoot, "dist/cli/index.js");
-  if (fs.existsSync(cli)) {
-    fs.symlinkSync(cli, path.join(dest, "dist/cli/index.js"));
-  }
+  copyAutomationScripts(dest, ogRoot);
 
   fs.writeFileSync(
     path.join(dest, WORKFLOW_REL),
@@ -268,7 +236,7 @@ test("trusted automation: verify-pr-missions skips mission requirement for eligi
   gitCommit(dest, "deps: bump checkout", DEPENDABOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("bash", [verifyScript, baseSha, headSha], { cwd: dest, encoding: "utf8" });
+  const run = cli(dest, ["ci", "verify-missions", "--base", baseSha, "--head", headSha]);
   const combined = (run.stderr || "") + (run.stdout || "");
   assert.equal(run.status, 0, combined);
   assert.match(combined, /trusted automation policy satisfied|TRUSTED-AUTOMATION-OK/i);
@@ -278,7 +246,7 @@ test("trusted automation: evaluation is deterministic regardless of CI env vars"
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-determinism-"));
   initWorkflowRepo(dest, ogRoot, ["uses: actions/checkout@v4"]);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
 
   fs.writeFileSync(
     path.join(dest, WORKFLOW_REL),
@@ -288,13 +256,16 @@ test("trusted automation: evaluation is deterministic regardless of CI env vars"
   gitCommit(dest, "deps: bump checkout", DEPENDABOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const plain = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
-  const spoofed = spawnSync("node", [lib, "eval-commit", dest, headSha], {
+  const plain = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
+  const spoofed = spawnSync(process.execPath, [CLI, "ci", "trusted-automation", "--commit", headSha], {
+    cwd: dest,
     encoding: "utf8",
     env: {
       ...process.env,
+      NO_COLOR: "1",
       GITHUB_ACTOR: "evil-attacker",
       GITHUB_EVENT_PATH: "/tmp/fake-event.json",
+      GITHUB_TOKEN: "fake",
     },
   });
   assert.equal(plain.status, spoofed.status);
@@ -305,22 +276,22 @@ test("trusted automation: bounded_content eligible autofix under src passes MSN 
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-bounded-ok-"));
   initCliSampleRepo(dest, ogRoot);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
 
   fs.writeFileSync(path.join(dest, CLI_SAMPLE_REL), "export const fixture = 2;\n", "utf8");
   gitCommit(dest, "fix: remediate code scanning alert", COPILOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.equal(run.status, 0, (run.stderr || "") + (run.stdout || ""));
-  assert.match(run.stderr || "", /TRUSTED-AUTOMATION-OK/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /TRUSTED-AUTOMATION-OK/i);
 });
 
 test("trusted automation: bounded_content denies substrate paths even when allowed_paths includes them", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-bounded-substrate-"));
   initCliSampleRepo(dest, ogRoot);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
   writeBoundedContentConfig(dest, { allowedPaths: [".gitagent/**", "src/**"] });
 
   fs.mkdirSync(path.join(dest, ".gitagent/missions"), { recursive: true });
@@ -328,9 +299,9 @@ test("trusted automation: bounded_content denies substrate paths even when allow
   gitCommit(dest, "fix: attempt substrate touch", COPILOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.notEqual(run.status, 0);
-  assert.match(run.stderr || "", /substrate hard-deny/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /substrate hard-deny/i);
 });
 
 test("trusted automation: bounded_content denies net_loc above rule budget", () => {
@@ -342,38 +313,38 @@ test("trusted automation: bounded_content denies net_loc above rule budget", () 
   copyAutomationScripts(dest, ogRoot);
   writeBoundedContentConfig(dest, { maxNetLoc: 5 });
   gitInitCommit(dest, "init", PLANNER_EMAIL);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
 
   const bulky = `${"export const fixture = 2;\n"}${"// padding\n".repeat(20)}`;
   fs.writeFileSync(path.join(dest, CLI_SAMPLE_REL), bulky, "utf8");
   gitCommit(dest, "fix: oversized autofix", COPILOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.notEqual(run.status, 0);
-  assert.match(run.stderr || "", /net_loc \d+ exceeds rule security-autofix-bots max_net_loc 5/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /net_loc \d+ exceeds rule security-autofix-bots max_net_loc 5/i);
 });
 
 test("trusted automation: bounded_content denies actor not in allowed_actors", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-bounded-actor-"));
   initCliSampleRepo(dest, ogRoot);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
 
   fs.writeFileSync(path.join(dest, CLI_SAMPLE_REL), "export const fixture = 3;\n", "utf8");
   gitCommit(dest, "fix: unknown bot", "evil-bot@example.com");
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.notEqual(run.status, 0);
-  assert.match(run.stderr || "", /actor evil-bot@example.com not covered/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /actor evil-bot@example.com not covered/i);
 });
 
 test("trusted automation: config load rejects mixed structural kinds on one rule", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-mixed-kind-"));
   initCliSampleRepo(dest, ogRoot);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
   writeBoundedContentConfig(dest, {
     structuralKinds: ["workflow_version_pin", "bounded_content"],
   });
@@ -382,23 +353,23 @@ test("trusted automation: config load rejects mixed structural kinds on one rule
   gitCommit(dest, "fix: mixed kind config", COPILOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.notEqual(run.status, 0);
-  assert.match(run.stderr || "", /exactly one allowed_structural_changes kind/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /exactly one allowed_structural_changes kind/i);
 });
 
 test("trusted automation: config load rejects bounded_content max_net_loc above hard cap 100", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ta-hard-cap-"));
   initCliSampleRepo(dest, ogRoot);
-  const { lib } = copyAutomationScripts(dest, ogRoot);
+  copyAutomationScripts(dest, ogRoot);
   writeBoundedContentConfig(dest, { maxNetLoc: 101 });
 
   fs.writeFileSync(path.join(dest, CLI_SAMPLE_REL), "export const fixture = 5;\n", "utf8");
   gitCommit(dest, "fix: hard cap breach", COPILOT_EMAIL);
   const headSha = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
 
-  const run = spawnSync("node", [lib, "eval-commit", dest, headSha], { encoding: "utf8" });
+  const run = cli(dest, ["ci", "trusted-automation", "--commit", headSha]);
   assert.notEqual(run.status, 0);
-  assert.match(run.stderr || "", /max_net_loc exceeds hard cap 100/i);
+  assert.match((run.stderr || "") + (run.stdout || ""), /max_net_loc exceeds hard cap 100/i);
 });

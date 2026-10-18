@@ -13,7 +13,7 @@
     "cursor"
   ],
   "exit": 0,
-  "stdout": "gantry init: wrote composed docs/INTEGRATIONS.md\ngantry init: wrote composed .gitagent/ARCHITECTURE.pointer.json (kind=unset)\ngantry init: wrote 36 files\nnext steps:\n  edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check\n  gantry planner set \"$(git config user.email)\"\n  gantry start \"<intent>\" --msn MSN-0001 --skill-key <manifest-key>\n  Planner: git commit -m \"[MSN-0001] legislate mission\" including mission file\n  eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"\n  Append gate evidence to EXECUTOR_LOG.md\n  gantry verify --mission .gitagent/missions/<file>.yaml\n  source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml\n  scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml\n  gantry onboarding  # guided walkthrough (strict checks)\n  human IDE setup: docs/INTEGRATIONS.md\ngantry: appended 11 line(s) to .gitignore\ngantry: appended 1 line(s) to .prettierignore\n",
+  "stdout": "gantry init: wrote composed docs/INTEGRATIONS.md\ngantry init: wrote composed .gitagent/ARCHITECTURE.pointer.json (kind=unset)\ngantry init: wrote 31 files\nnext steps:\n  edit .gitagent/foreman/MANIFEST.json (tmvc_roots, forbidden_zones, skills) and run gantry check\n  gantry planner set \"$(git config user.email)\"\n  gantry start \"<intent>\" --msn MSN-0001 --skill-key <manifest-key>\n  Planner: git commit -m \"[MSN-0001] legislate mission\" including mission file\n  eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"\n  Append gate evidence to EXECUTOR_LOG.md\n  gantry verify --mission .gitagent/missions/<file>.yaml\n  source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml\n  scripts/gxt-pin-mission.sh .gitagent/missions/<file>.yaml\n  gantry onboarding  # guided walkthrough (strict checks)\n  human IDE setup: docs/INTEGRATIONS.md\ngantry: appended 11 line(s) to .gitignore\ngantry: appended 1 line(s) to .prettierignore\n",
   "stderr_codes": [],
   "tree": [
     "?? .cursor/hooks.json",
@@ -44,16 +44,11 @@
     "?? docs/ARCHITECTURE.md",
     "?? docs/INTEGRATIONS.md",
     "?? scripts/gxt-cursor-env.sh",
-    "?? scripts/gxt-manifest-lib.mjs",
     "?? scripts/gxt-pin-mission.sh",
     "?? scripts/gxt-resolve-mission.sh",
     "?? scripts/gxt-runtime-env.sh",
     "?? scripts/gxt-shell-agent.sh",
-    "?? scripts/lib/glob-match.mjs",
-    "?? scripts/lib/manifest-validate.mjs",
-    "?? scripts/lib/trusted-automation.mjs",
     "?? scripts/mcp-launcher.sh",
-    "?? scripts/validate-gxt.sh",
     "?? skills/logic.md",
     "?? skills/ui.md"
   ]

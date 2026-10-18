@@ -38,9 +38,9 @@ test("resolveAssetsFromProfile: default catalog covers all core managed paths", 
   )
     .map((a) => a.targetPath)
     .sort();
-  assert.ok(fromCatalog.includes("scripts/validate-gxt.sh"));
-  assert.ok(fromCatalog.includes("scripts/gxt-manifest-lib.mjs"));
-  assert.ok(fromCatalog.includes("scripts/verify-pr-missions.sh"));
+  assert.ok(fromCatalog.includes(".github/workflows/gxt-validate.yml"));
+  assert.ok(fromCatalog.includes("scripts/gxt-runtime-env.sh"));
+  assert.ok(!fromCatalog.includes("scripts/validate-gxt.sh"), "validate-gxt.sh moved into gantry ci (ADR-0052 step 5b)");
   assert.ok(fromCatalog.includes(".githooks/pre-commit"));
   assert.ok(fromCatalog.includes(".cursor/mcp.json"));
   assert.ok(fromCatalog.length >= 20);
