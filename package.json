@@ -20,6 +20,7 @@
   "files": [
     "dist",
     "!dist/cli/tests",
+    "!dist/packages/*/tests",
     "templates",
     "README.md",
     "LICENSE",
