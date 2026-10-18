@@ -42,31 +42,31 @@ gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0285 re-attested at d501612: packages/core/src/import-scanner.ts (git mv from src/cli/lib/import-scanner.ts, unchanged) and specifier.ts (SpecifierClass, TsconfigPaths, isBuiltinSpecifier, bareSpecifierPackage, classifySpecifier, importMatchesBan; imports node:module and node:path); law.ts exports ImportFindingKind, ImportFinding, ImportSiteLike, evaluateImportSite, Layer, LayerImportRule, PatternRule, LayerFinding, ArchLaw, archLaw, layerForFile, LayerImport, evaluateLayerImport, findPatternMatch, evaluatePatternRules; packages/core/src/index.ts exports import-scanner and specifier"
-    anchor: "1531"
+    anchor: "1549"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0285 re-attested at d501612: packages/core/tests/law-imports.test.ts holds 4 tests: specifier classification (builtin, bare with package name, relative, tsconfig alias, ban prefix), evaluateImportSite for dynamic (and allowed dynamic), builtin, banned, unlisted, allowed, forbidden-zone and strict-roots scope escapes, layer lookup with layer import rules by clause and a pattern rule with applies_to plus the (?i) prefix and an invalid pattern, and the scanner's site kinds static, export_from, dynamic_import_expr, require; npm run test:packages: tests 16 pass 16 fail 0 (the scanner fixture is spelled by concatenation so the test file holds no dynamic import for the contract scan)"
-    anchor: "1532"
+    anchor: "1550"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0285 re-attested at d501612: src/cli/lib/import-scanner.ts is a 2-line facade of #core/import-scanner.js; contract/resolve-specifier.ts keeps stripJsonComments and loadTsconfigPaths and re-exports classifySpecifier, isBuiltinSpecifier, bareSpecifierPackage and the types from #core/specifier.js; ast-discovery.ts re-exports importMatchesBan from #core/specifier.js; contract/contract-scan.ts builds a Law from the effective scope (lawOfScope) and calls evaluateImportSite per site with the classifier result (checkSite, checkBareSpecifier, checkResolvedPath and the violation helper removed); arch/cage/target-architecture.ts builds an ArchLaw (archLawOfSpec) and calls layerForFile, evaluatePatternRules and evaluateLayerImport (its private rule loop, recordViolation, compilePerimeterPattern, findPatternMatchLine, checkPatternRulesForFile and fileMatchesAppliesTo removed); git diff --name-only origin/main...HEAD -- src/cli lists exactly those five files; scripts/check-import-layers.mjs and check-lib-cycles.mjs keep importing dist/cli/lib/import-scanner.js through the facade"
-    anchor: "1533"
+    anchor: "1551"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0285 re-attested at d501612: unit tests 964 pass 964 fail 0 unchanged (contract runtime, legislate, arch check, perimeter, surgeon and check-import-layers tests included); conformance suite tests 85 pass 84 fail 0 skipped 1 with git status showing 0 changed golden files (arch-check, perimeter-check, contract-check, check-imports goldens included)"
-    anchor: "1534"
+    anchor: "1552"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0285 re-attested at d501612: gantry arch check over src/cli and every package: OK; node: specifiers under packages/core/src: node:module node:path; ARCH_BASELINE.json commit 74349a8: core 11/1092/112, git 3/189/21, cage 15/3619/145, command 38/3081/116, lib 241/29017/1409, delivery 12/1804/30; --check OK; regenerated at 74349a8 byte-identical (cmp)"
-    anchor: "1535"
+    anchor: "1553"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0285 re-attested at d501612: docs/ARCHITECTURE.md One law, one evaluator section names evaluateImportSite, ArchLaw, layerForFile, evaluateLayerImport and evaluatePatternRules and the scanner and classifier in core; docs/DEVELOPMENT.md core row and the rule that path, scope and import decisions go through #core/law.js; docs/CHANGELOG.md substrate note Import rules in core (ADR-0052 step 3b)"
-    anchor: "1536"
+    anchor: "1554"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0285 re-attested at d501612: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; git diff --name-only origin/main...HEAD lists only ARCH_BASELINE.json docs/ARCHITECTURE.md docs/CHANGELOG.md docs/DEVELOPMENT.md .gitagent/missions/MSN-0285.import-rules.yaml packages/core/src/import-scanner.ts packages/core/src/index.ts packages/core/src/law.ts packages/core/src/specifier.ts packages/core/tests/law-imports.test.ts src/cli/lib/arch/cage/target-architecture.ts src/cli/lib/ast-discovery.ts src/cli/lib/contract/contract-scan.ts src/cli/lib/contract/resolve-specifier.ts src/cli/lib/import-scanner.ts , all under contract.tmvc_roots"
-    anchor: "1537"
+    anchor: "1555"
     status: PASS
 interrogation:
   - finding_id: 1ae19e8f75ca
