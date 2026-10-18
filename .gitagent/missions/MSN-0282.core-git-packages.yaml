@@ -45,35 +45,35 @@ gate_command: ./scripts/dev-validate-core.sh
 trace_rows:
   - dod_id: "1"
     trace_quote: "DoD 1 MSN-0282 at 2b43009: packages/core/package.json (@jeger-ai/opengantry-core, private, no dependencies), tsconfig.json (composite, rootDir ., outDir ../../dist/packages/core, include src and tests), src/canonical-json.ts, path-glob.ts, error-codes.ts (git mv from src/cli/lib/canonical-json.ts, path-glob.ts, gxt-error-codes.ts), constants.ts (the REL_* paths, MSN_ID_PATTERN, CLI_NAME; the generated version stays in src/cli), manifest.ts (TrustThreshold, SkillEntry, Manifest and validateManifestShape, no fs), user-error.ts (GantryUserError, isGantryUserError), index.ts; grep -rn node: packages/core/src finds 0 lines; tests/core.test.ts: 5 tests (canonical JSON key order, GantryUserError code mapping and exit code, manifest shape accept and reject, arch globs, constants) pass under npm run test:packages"
-    anchor: "1454"
+    anchor: "1478"
     status: PASS
   - dod_id: "2"
     trace_quote: "DoD 2 MSN-0282 at 2b43009: packages/git/src/git.ts and git-staged.ts (git mv from src/cli/lib/git), index.ts; git.ts imports CLI_NAME from #core/constants.js and nothing from src/cli; packages/git/tsconfig.json resolves #core/* through paths because a package.json imports target must stay inside its own package; tests/git.test.ts: 2 tests (getRepoRoot and gitRunOk on a temp repository, withoutGitRepoEnv strips exactly GIT_REPO_LOCATION_ENV) pass; test:packages total 7 pass 7 fail 0"
-    anchor: "1455"
+    anchor: "1479"
     status: PASS
   - dod_id: "3"
     trace_quote: "DoD 3 MSN-0282 re-attested at e075cc4: package.json workspaces now lists packages/opengantry-cage only, so packages/core and packages/git are repository packages reached through the imports map and never through node_modules; npm ci with the unchanged package-lock.json installs cleanly (the first CI run failed with 'Missing: @jeger-ai/opengantry-core@3.9.0 from lock file' because the packages/* glob matched them); git status shows package-lock.json untouched; npm run build:cage still builds through the workspace"
-    anchor: "1462"
+    anchor: "1486"
     status: PASS
   - dod_id: "4"
     trace_quote: "DoD 4 MSN-0282 at 2b43009: src/cli/lib/canonical-json.ts, path-glob.ts, gxt-error-codes.ts, git/git.ts and git/git-staged.ts are 2-line re-export facades (export * from #core or #git); errors.ts re-exports GantryUserError and isGantryUserError from #core/user-error.js and keeps reportUserFacingError and the agent error file; constants.ts re-exports #core/constants.js plus version.gen; manifest.ts keeps manifestPath and loadManifest and re-exports validateManifestShape; types.ts re-exports TrustThreshold, SkillEntry and Manifest from #core/manifest.js; node check: dist/cli/lib/errors.js GantryUserError === dist/packages/core/src/user-error.js GantryUserError and GXT_ERROR identical across the facade; git diff --name-only origin/main...HEAD -- src/cli lists exactly canonical-json.ts, constants.ts, errors.ts, git/git-staged.ts, git/git.ts, gxt-error-codes.ts, manifest.ts, path-glob.ts, types.ts and tests/prune-dist.test.ts (accepts the tsc -b step and maps dist/packages); no other importer or test changed"
-    anchor: "1457"
+    anchor: "1481"
     status: PASS
   - dod_id: "5"
     trace_quote: "DoD 5 MSN-0282 at 2b43009: TARGET_ARCHITECTURE.yaml scan_roots src/cli/**, packages/core/**, packages/git/**; layers core (packages/core/src/**), git (packages/git/src/**), command, lib, delivery; rules RULE-CORE-NO-NODE-IO (forbid_specifier_substring node:), RULE-CORE-NO-GIT-LAYER, RULE-CORE-NO-LIB-LAYER, RULE-CORE-NO-COMMAND-LAYER, RULE-GIT-NO-LIB-LAYER, RULE-GIT-NO-COMMAND-LAYER; gantry arch check over every src/cli and packages/*/src *.ts outside tests: OK; scripts/arch-baseline.mjs walks scan_roots; ARCH_BASELINE.json commit 7fe91a4: core files 7 lines 329 exports 54, git files 3 lines 189 exports 21, command 37/2963/114, lib 251/31887/1514 (was 32374/1572), delivery 12/1775/30; --check OK; regenerated at 7fe91a4 byte-identical (cmp)"
-    anchor: "1458"
+    anchor: "1482"
     status: PASS
   - dod_id: "6"
     trace_quote: "DoD 6 MSN-0282 at 2b43009: conformance suite tests 85 pass 82 fail 0 skipped 3 with git status showing 0 changed golden files; unit tests 937 pass 937 fail 0"
-    anchor: "1459"
+    anchor: "1483"
     status: PASS
   - dod_id: "7"
     trace_quote: "DoD 7 MSN-0282 re-attested at e075cc4: docs/ARCHITECTURE.md, docs/DEVELOPMENT.md and docs/CHANGELOG.md say the packages are not npm workspaces and that adding one changes no lockfile"
-    anchor: "1463"
+    anchor: "1487"
     status: PASS
   - dod_id: "8"
     trace_quote: "DoD 8 MSN-0282 re-attested at e075cc4: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 937 pass 937 fail 0; conformance 82 pass 0 fail 3 skipped; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; the changed path set is unchanged (package.json and the three docs were already in it)"
-    anchor: "1464"
+    anchor: "1488"
     status: PASS
 interrogation:
   - finding_id: 25f6f42f070e
@@ -140,8 +140,9 @@ interrogation:
       src/cli/lib/manifest.ts, src/cli/lib/path-glob.ts, src/cli/lib/types.ts,
       src/cli/tests/prune-dist.test.ts, package.json, tsconfig.json,
       tsconfig.base.json, eslint.config.js, scripts/prune-dist.mjs,
-      scripts/arch-baseline.mjs, TARGET_ARCHITECTURE.yaml, ARCH_BASELINE.json,
-      docs/ARCHITECTURE.md, docs/DEVELOPMENT.md, docs/CHANGELOG.md,
+      scripts/npm-pack-check.sh, scripts/arch-baseline.mjs,
+      TARGET_ARCHITECTURE.yaml, ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/DEVELOPMENT.md, docs/CHANGELOG.md,
       .gitagent/missions/MSN-0282.core-git-packages.yaml, EXECUTOR_LOG.md.
       src/cli is narrowed to the ten files the facades touch (the whole
       directory would put seven pre-existing dynamic requires under the
@@ -188,8 +189,9 @@ interrogation:
       src/cli/lib/manifest.ts, src/cli/lib/path-glob.ts, src/cli/lib/types.ts,
       src/cli/tests/prune-dist.test.ts, package.json, tsconfig.json,
       tsconfig.base.json, eslint.config.js, scripts/prune-dist.mjs,
-      scripts/arch-baseline.mjs, TARGET_ARCHITECTURE.yaml, ARCH_BASELINE.json,
-      docs/ARCHITECTURE.md, docs/DEVELOPMENT.md, docs/CHANGELOG.md,
+      scripts/npm-pack-check.sh, scripts/arch-baseline.mjs,
+      TARGET_ARCHITECTURE.yaml, ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/DEVELOPMENT.md, docs/CHANGELOG.md,
       .gitagent/missions/MSN-0282.core-git-packages.yaml, EXECUTOR_LOG.md.
       src/cli is narrowed to the ten files the facades touch (the whole
       directory would put seven pre-existing dynamic requires under the
@@ -240,7 +242,7 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0041
-interrogation_sha256: 0b34133e84fbd87db1e871377551cf87f62f315d73d75c879b5785369837ad29
+interrogation_sha256: 9b5a7f1ef27c7de687e15493cb675bcab95baa2d2be798df63b9d263e7e17c0f
 declared_paths:
   - .gitagent/missions/MSN-0282.core-git-packages.yaml
   - ARCH_BASELINE.json
@@ -254,6 +256,7 @@ declared_paths:
   - packages/core/
   - packages/git/
   - scripts/arch-baseline.mjs
+  - scripts/npm-pack-check.sh
   - scripts/prune-dist.mjs
   - src/cli/lib/canonical-json.ts src/cli/lib/constants.ts src/cli/lib/errors.ts
     src/cli/lib/git/git-staged.ts src/cli/lib/git/git.ts
@@ -276,6 +279,7 @@ contract:
     - packages/core/
     - packages/git/
     - scripts/arch-baseline.mjs
+    - scripts/npm-pack-check.sh
     - scripts/prune-dist.mjs
     - src/cli/lib/canonical-json.ts
     - src/cli/lib/constants.ts
@@ -296,4 +300,4 @@ contract:
     - .github/workflows/
     - packages/opengantry-cage/
     - templates/
-contract_sha256: 443efc097c1cab4e93709169ed9c6625cf28bb46655eca2ff741a4cb709b0b9f
+contract_sha256: 55f4f7465871207b91a31d68ec32972b26de7d1f7e33d7e9104a61d2520ef220
