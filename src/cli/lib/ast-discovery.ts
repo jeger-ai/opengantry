@@ -77,9 +77,8 @@ export function discoverFolderSignature(repoRoot: string, targetDir: string): Fo
 }
 
 /** Return true if specifier matches a banned import pattern (exact or prefix). */
-export function importMatchesBan(specifier: string, banned: string): boolean {
-  return specifier === banned || specifier.startsWith(`${banned}/`);
-}
+export { importMatchesBan } from "#core/specifier.js";
+import { importMatchesBan } from "#core/specifier.js";
 
 /** Scan folder for banned import specifiers. */
 export function findBannedImportsInFolder(

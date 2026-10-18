@@ -170,14 +170,14 @@ Rules while the rewrite runs:
 
 | Package | Holds | Depends on |
 |---------|-------|------------|
-| `packages/core` | pure domain: `law` (Law, tighten, classifyPath, isProtectedPath, ChangeSet, evaluatePaths), `error-codes`, `user-error`, `canonical-json`, `path-glob`, `posix-path`, `manifest` (shape), `constants` | nothing (`node:path` only) |
+| `packages/core` | pure domain: `law` (Law, tighten, classifyPath, isProtectedPath, ChangeSet, evaluatePaths, evaluateImportSite, ArchLaw, evaluateLayerImport, evaluatePatternRules), `import-scanner`, `specifier`, `error-codes`, `user-error`, `canonical-json`, `path-glob`, `posix-path`, `manifest` (shape), `constants` | nothing (`node:path`, `node:module` only) |
 | `packages/git` | `git` (the adapter), `git-staged` | core |
 | `packages/cage` | the cage runtime (15 modules: rules, snapshot, run, watch, check, suggest, journal, push guard, scope) | core, git |
 
 - Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
 - Import a package module as `#core/<module>.js`, `#git/<module>.js` or `#cage/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a facade; the facades left under `src/cli/lib` go away in step 3.
 - Package tests live in `packages/<name>/tests/` and run with `npm run test:packages` (part of `npm test`).
-- A path or scope decision is made by `#core/law.js`: build a `Law` (or `tighten` two) and call `classifyPath`, `isProtectedPath` or `evaluatePaths`. Do not add another matcher or classifier in `src/cli`.
+- A path, scope or import decision is made by `#core/law.js`: build a `Law` or `ArchLaw` and call `classifyPath`, `isProtectedPath`, `evaluatePaths`, `evaluateImportSite`, `evaluateLayerImport` or `evaluatePatternRules`. Do not add another matcher, classifier or rule loop in `src/cli`.
 - A new module belongs in a package when it needs no `fs`, `git` or `child_process` (core) or is the git adapter (git); otherwise it stays in `src/cli` until its package exists.
 
 ## Zero-trust gates (sole trust boundary)
