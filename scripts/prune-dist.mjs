@@ -44,7 +44,10 @@ function sourceFor(root, file) {
   const rel = path.relative(path.join(root, "dist"), file);
   const suffix = OUTPUT_SUFFIXES.find((s) => rel.endsWith(s));
   if (!suffix) return null;
-  return path.join(root, "src", `${rel.slice(0, -suffix.length)}.ts`);
+  const stem = rel.slice(0, -suffix.length);
+  // Workspace packages compile packages/<name>/src/x.ts to dist/packages/<name>/src/x.js (ADR-0052 step 2).
+  if (stem.startsWith(`packages${path.sep}`)) return path.join(root, `${stem}.ts`);
+  return path.join(root, "src", `${stem}.ts`);
 }
 
 /** Removes directories under `dir` (not `dir` itself) that are empty once pruning is done; returns how many. */

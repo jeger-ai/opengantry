@@ -166,6 +166,18 @@ Rules while the rewrite runs:
 - A mission that changes CLI output updates the golden files in the same commit and names the change in its intent; a golden diff without that is a regression.
 - `node scripts/arch-baseline.mjs --check` must pass; lowering a count is fine and is locked in later by a Planner mission, never automatically.
 
+## Packages (ADR-0052 step 2)
+
+| Package | Holds | Depends on |
+|---------|-------|------------|
+| `packages/core` | pure domain: `error-codes`, `user-error`, `canonical-json`, `path-glob`, `manifest` (shape), `constants` | nothing (no `node:` builtin) |
+| `packages/git` | `git` (the adapter), `git-staged` | core |
+
+- Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
+- Import a package module as `#core/<module>.js` or `#git/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a facade; the facades left under `src/cli/lib` go away in step 3.
+- Package tests live in `packages/<name>/tests/` and run with `npm run test:packages` (part of `npm test`).
+- A new module belongs in a package when it needs no `fs`, `git` or `child_process` (core) or is the git adapter (git); otherwise it stays in `src/cli` until its package exists.
+
 ## Zero-trust gates (sole trust boundary)
 
 All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry does not deterministically attribute offline IDE provenance. Security relies on **result-state checks** only:

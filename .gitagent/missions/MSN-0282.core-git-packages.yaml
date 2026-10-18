@@ -1,0 +1,303 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0282]. Executor must not run until the [MSN-0282] legislation commit + pin.
+# Re-legislated after execution: the contract names the ten src/cli files the facades touch instead of src/cli/,
+# because the whole directory put seven pre-existing dynamic requires (not touched here) under the contract's
+# import scan (GXT_CONTRACT_IMPORT_DYNAMIC). Answers, gate and DoDs are unchanged.
+#
+# Legislated intent: ADR-0052 migration step 2a. Two workspace packages, core (pure domain) and git (the git
+# adapter), built by tsc project references into dist/packages/ and reached through the root package.json imports
+# field (#core/*, #git/*), so the checkout and the published tarball resolve them the same way and nothing is
+# published separately. src/cli keeps re-export facades for the moved modules, so no importer and no test changes;
+# step 2b ports the cage onto the packages, step 3 removes the facades. CLI output unchanged (conformance suite).
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): step 2 is split into 2a and 2b so
+# each PR stays reviewable; packages are real (own package.json, tsconfig, tests) but private, per ADR-0052 A1's
+# publishing note.
+#
+# DoD 1 (core): packages/core with package.json (private, no dependencies), tsconfig.json (composite, outDir
+#        dist/packages/core) and src/{canonical-json,constants,error-codes,manifest,path-glob,user-error,index}.ts
+#        moved or extracted from src/cli/lib (git mv keeps history); no node: import anywhere under packages/core/src;
+#        tests/core.test.ts covers canonical JSON, GantryUserError code mapping, manifest shape, arch globs, constants.
+# DoD 2 (git): packages/git with src/{git,git-staged,index}.ts moved from src/cli/lib/git, importing #core only;
+#        tests/git.test.ts covers getRepoRoot, gitRunOk and withoutGitRepoEnv on a temp repository.
+# DoD 3 (build): tsconfig.base.json shared options; root tsconfig.json composite with references to the packages;
+#        npm run build runs tsc -b; dist/packages/{core,git}/src/*.js and .d.ts emitted; root package.json imports
+#        maps #core/* and #git/* to dist/packages; scripts/prune-dist.mjs maps dist/packages/<name>/ back to
+#        packages/<name>/; eslint.config.js lints packages/*/src; npm run test:packages runs dist/packages/*/tests and
+#        npm test includes it; the slim cage (npm run build:cage, npm run test:cage) builds and passes unchanged.
+# DoD 4 (facades): src/cli/lib/{canonical-json,path-glob,gxt-error-codes,git/git,git/git-staged}.ts are re-export
+#        facades; errors.ts, constants.ts, manifest.ts and types.ts import the moved parts from #core; GantryUserError
+#        is one class (dist/cli/lib/errors.js and dist/packages/core/src/user-error.js export the same constructor);
+#        no other src/cli module changes; the only test change is prune-dist.test.ts accepting the tsc -b step.
+# DoD 5 (law): TARGET_ARCHITECTURE.yaml scan_roots add packages/core/** and packages/git/**, layers core and git,
+#        rules RULE-CORE-NO-NODE-IO, RULE-CORE-NO-GIT-LAYER, RULE-CORE-NO-LIB-LAYER, RULE-CORE-NO-COMMAND-LAYER,
+#        RULE-GIT-NO-LIB-LAYER, RULE-GIT-NO-COMMAND-LAYER; gantry arch check over src/cli and both packages OK;
+#        scripts/arch-baseline.mjs walks scan_roots; ARCH_BASELINE.json regenerated with core and git rows and a
+#        smaller lib row, --check OK, byte-identical when regenerated at its recorded commit.
+# DoD 6 (behaviour): conformance suite 82 pass, 0 fail, 3 skipped with no golden file changed; all unit tests pass.
+# DoD 7 (docs): docs/ARCHITECTURE.md layers table and import rules, docs/DEVELOPMENT.md Packages section,
+#        docs/CHANGELOG.md substrate note and Unreleased bullet.
+# DoD 8 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK); git diff --name-only origin/main...HEAD
+#        lists only paths under contract.tmvc_roots.
+msn_id: MSN-0282
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0282 at 2b43009: packages/core/package.json (@jeger-ai/opengantry-core, private, no dependencies), tsconfig.json (composite, rootDir ., outDir ../../dist/packages/core, include src and tests), src/canonical-json.ts, path-glob.ts, error-codes.ts (git mv from src/cli/lib/canonical-json.ts, path-glob.ts, gxt-error-codes.ts), constants.ts (the REL_* paths, MSN_ID_PATTERN, CLI_NAME; the generated version stays in src/cli), manifest.ts (TrustThreshold, SkillEntry, Manifest and validateManifestShape, no fs), user-error.ts (GantryUserError, isGantryUserError), index.ts; grep -rn node: packages/core/src finds 0 lines; tests/core.test.ts: 5 tests (canonical JSON key order, GantryUserError code mapping and exit code, manifest shape accept and reject, arch globs, constants) pass under npm run test:packages"
+    anchor: "1491"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0282 at 2b43009: packages/git/src/git.ts and git-staged.ts (git mv from src/cli/lib/git), index.ts; git.ts imports CLI_NAME from #core/constants.js and nothing from src/cli; packages/git/tsconfig.json resolves #core/* through paths because a package.json imports target must stay inside its own package; tests/git.test.ts: 2 tests (getRepoRoot and gitRunOk on a temp repository, withoutGitRepoEnv strips exactly GIT_REPO_LOCATION_ENV) pass; test:packages total 7 pass 7 fail 0"
+    anchor: "1492"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0282 re-attested at 2ff6ac0: package.json files excludes dist/packages/*/tests; scripts/npm-pack-check.sh rejects test files under dist/cli/ and dist/packages/<name>/ and maps dist/packages/<name>/<stem> to packages/<name>/<stem>.ts for the orphan check; ./scripts/npm-pack-check.sh: pack:check OK (jeger-ai-opengantry-3.9.0.tgz) (the CI npm_pack job had listed every dist/packages file as an orphan)"
+    anchor: "1502"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0282 at 2b43009: src/cli/lib/canonical-json.ts, path-glob.ts, gxt-error-codes.ts, git/git.ts and git/git-staged.ts are 2-line re-export facades (export * from #core or #git); errors.ts re-exports GantryUserError and isGantryUserError from #core/user-error.js and keeps reportUserFacingError and the agent error file; constants.ts re-exports #core/constants.js plus version.gen; manifest.ts keeps manifestPath and loadManifest and re-exports validateManifestShape; types.ts re-exports TrustThreshold, SkillEntry and Manifest from #core/manifest.js; node check: dist/cli/lib/errors.js GantryUserError === dist/packages/core/src/user-error.js GantryUserError and GXT_ERROR identical across the facade; git diff --name-only origin/main...HEAD -- src/cli lists exactly canonical-json.ts, constants.ts, errors.ts, git/git-staged.ts, git/git.ts, gxt-error-codes.ts, manifest.ts, path-glob.ts, types.ts and tests/prune-dist.test.ts (accepts the tsc -b step and maps dist/packages); no other importer or test changed"
+    anchor: "1494"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0282 re-attested at 2f3bc63: after merging origin/main (#231, MSN-0276 added src/cli/lib/cage/cage-scope.ts) ARCH_BASELINE.json is regenerated at 9a5d487: core 7/329/54, git 3/189/21, command 38/3081/116, lib 256/33128/1569, delivery 12/1804/30; --check OK; gantry arch check OK"
+    anchor: "1505"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0282 re-attested at 3f9f6f1: the conformance runner normalizes the receipt id in MSN-NNNN-<12 hex> paths (an all-digit id escaped the short-sha pattern and failed the attest case once inside the pre-push gate); attest.mission-pass re-recorded with MSN-0101-<ID>; compare mode then passed three times in a row: 84 pass, 0 fail, 1 skipped; no other golden changed"
+    anchor: "1507"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "DoD 7 MSN-0282 re-attested at e075cc4: docs/ARCHITECTURE.md, docs/DEVELOPMENT.md and docs/CHANGELOG.md say the packages are not npm workspaces and that adding one changes no lockfile"
+    anchor: "1500"
+    status: PASS
+  - dod_id: "8"
+    trace_quote: "DoD 8 MSN-0282 re-attested at 3f9f6f1: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance pass/skipped 84/1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+    anchor: "1508"
+    status: PASS
+interrogation:
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: "Accept. TARGET_ARCHITECTURE.yaml keeps schema 0.3.0; it gains
+      scan_roots packages/core/** and packages/git/**, layers core and git, and
+      six downward-only import rules (core imports no node: builtin and no git,
+      lib or command module; git imports no lib or command module); existing
+      rules unchanged to src/cli/index.ts, src/cli/program*.ts,
+      src/cli/cage-bin.ts and src/cli/kernel.ts so every src/cli file has a
+      layer and the baseline can count per layer. gantry arch check on the full
+      tree must pass unchanged (DoD 3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. No depends_on is declared; this mission has no
+      cross-repository dependency.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path is added; the suite and the baseline
+      generator are offline.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. The conformance suite records gantry verify --format
+      sarif and --format junit golden outputs for the mission-pass fixture as
+      part of the v3.9 contract; nothing about the export formats changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: packages/core/,
+      packages/git/, src/cli/lib/canonical-json.ts, src/cli/lib/constants.ts,
+      src/cli/lib/errors.ts, src/cli/lib/git/git-staged.ts,
+      src/cli/lib/git/git.ts, src/cli/lib/gxt-error-codes.ts,
+      src/cli/lib/manifest.ts, src/cli/lib/path-glob.ts, src/cli/lib/types.ts,
+      src/cli/tests/prune-dist.test.ts, package.json, tsconfig.json,
+      tsconfig.base.json, eslint.config.js, scripts/prune-dist.mjs,
+      scripts/npm-pack-check.sh, scripts/arch-baseline.mjs,
+      TARGET_ARCHITECTURE.yaml, ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/DEVELOPMENT.md, docs/CHANGELOG.md,
+      .gitagent/missions/MSN-0282.core-git-packages.yaml, EXECUTOR_LOG.md.
+      src/cli is narrowed to the ten files the facades touch (the whole
+      directory would put seven pre-existing dynamic requires under the
+      contract's import scan): canonical-json, path-glob, gxt-error-codes,
+      git/git, git/git-staged re-export from packages; errors.ts, constants.ts,
+      manifest.ts and types.ts import the moved parts from #core.
+      packages/core/src and packages/git/src hold the moved modules.
+      .gitagent/foreman/, RULES.md, templates/, .github/workflows/ and
+      packages/opengantry-cage/ are forbidden. Operator direction (2026-10-18,
+      continue until everything is done): step 2 is split into 2a (core and git
+      packages, this mission) and 2b (cage port) so each PR stays reviewable;
+      packages are real workspace packages with their own package.json, tsconfig
+      and tests, compiled by tsc -b into dist/packages and resolved at runtime
+      through the root package.json imports field, so the published tarball
+      needs no separately published package (ADR-0052 A1 publishing note);
+      facades in src/cli are removed in step 3."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: "Accept. Registries are Level-2 and Level-1 artifacts: a new
+      error code, env name, subcommand, MCP tool or dependency becomes a Planner
+      edit under .gitagent/registry/, which this mission makes a forbidden zone
+      of the gantry skill; no new flight level or role is introduced."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e4dbfef4c95b
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: packages/core/, packages/git/,
+      src/cli/lib/canonical-json.ts, src/cli/lib/constants.ts,
+      src/cli/lib/errors.ts, src/cli/lib/git/git-staged.ts,
+      src/cli/lib/git/git.ts, src/cli/lib/gxt-error-codes.ts,
+      src/cli/lib/manifest.ts, src/cli/lib/path-glob.ts, src/cli/lib/types.ts,
+      src/cli/tests/prune-dist.test.ts, package.json, tsconfig.json,
+      tsconfig.base.json, eslint.config.js, scripts/prune-dist.mjs,
+      scripts/npm-pack-check.sh, scripts/arch-baseline.mjs,
+      TARGET_ARCHITECTURE.yaml, ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/DEVELOPMENT.md, docs/CHANGELOG.md,
+      .gitagent/missions/MSN-0282.core-git-packages.yaml, EXECUTOR_LOG.md.
+      src/cli is narrowed to the ten files the facades touch (the whole
+      directory would put seven pre-existing dynamic requires under the
+      contract's import scan): canonical-json, path-glob, gxt-error-codes,
+      git/git, git/git-staged re-export from packages; errors.ts, constants.ts,
+      manifest.ts and types.ts import the moved parts from #core.
+      packages/core/src and packages/git/src hold the moved modules.
+      .gitagent/foreman/, RULES.md, templates/, .github/workflows/ and
+      packages/opengantry-cage/ are forbidden. Paths outside any
+      TARGET_ARCHITECTURE layer in this mission are build configuration, law
+      files and docs, not application code; packages/core/src and
+      packages/git/src are the new core and git layers this mission declares:
+      .gitagent/registry/ (YAML registries), ARCH_BASELINE.json and
+      scripts/arch-baseline.mjs (baseline and its generator, removed in step 3),
+      test/conformance/ (fixtures, golden files, node --test runner, no src/cli
+      import), scripts/dev-validate-core.sh and package.json (wire npm run
+      test:conformance into the allowlisted gate), docs/DEVELOPMENT.md and
+      docs/CHANGELOG.md."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. package.json, tsconfig.json and the new
+      tsconfig.base.json plus packages/*/package.json and tsconfig.json are
+      third-party formats (npm, TypeScript) and stay JSON; the registries, so
+      they are strict YAML (opengantry.registry.v1, YAML 1.2 core, no aliases);
+      the baseline is machine-written JSON (opengantry.arch-baseline.v1)
+      produced by scripts/arch-baseline.mjs and never hand-edited. MANIFEST.json
+      stays JSON; this mission only adds entries to perimeter_protected and
+      gantry.forbidden_zones.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: "Accept. The gate stays generic and allowlisted:
+      ./scripts/dev-validate-core.sh, which this mission extends to run npm run
+      test:conformance; exit code only; no gate_adapter."
+    adr_refs:
+      - ADR-0052
+      - ADR-0041
+interrogation_sha256: 9b5a7f1ef27c7de687e15493cb675bcab95baa2d2be798df63b9d263e7e17c0f
+declared_paths:
+  - .gitagent/missions/MSN-0282.core-git-packages.yaml
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - eslint.config.js
+  - package.json
+  - packages/core/
+  - packages/git/
+  - scripts/arch-baseline.mjs
+  - scripts/npm-pack-check.sh
+  - scripts/prune-dist.mjs
+  - src/cli/lib/canonical-json.ts src/cli/lib/constants.ts src/cli/lib/errors.ts
+    src/cli/lib/git/git-staged.ts src/cli/lib/git/git.ts
+    src/cli/lib/gxt-error-codes.ts src/cli/lib/manifest.ts
+    src/cli/lib/path-glob.ts src/cli/lib/types.ts
+    src/cli/tests/prune-dist.test.ts
+  - tsconfig.base.json
+  - tsconfig.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0282.core-git-packages.yaml
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - eslint.config.js
+    - package.json
+    - packages/core/
+    - packages/git/
+    - scripts/arch-baseline.mjs
+    - scripts/npm-pack-check.sh
+    - scripts/prune-dist.mjs
+    - src/cli/lib/canonical-json.ts
+    - src/cli/lib/constants.ts
+    - src/cli/lib/errors.ts
+    - src/cli/lib/git/git-staged.ts
+    - src/cli/lib/git/git.ts
+    - src/cli/lib/gxt-error-codes.ts
+    - src/cli/lib/manifest.ts
+    - src/cli/lib/path-glob.ts
+    - src/cli/lib/types.ts
+    - src/cli/tests/prune-dist.test.ts
+    - tsconfig.base.json
+    - tsconfig.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/
+    - .github/workflows/
+    - packages/opengantry-cage/
+    - templates/
+contract_sha256: 55f4f7465871207b91a31d68ec32972b26de7d1f7e33d7e9104a61d2520ef220

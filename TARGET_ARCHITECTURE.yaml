@@ -2,9 +2,17 @@ schema_version: "0.3.0"
 domain: code
 scan_roots:
   - src/cli/**
+  - packages/core/**
+  - packages/git/**
 languages:
   - typescript
 layers:
+  - id: core
+    globs:
+      - packages/core/src/**
+  - id: git
+    globs:
+      - packages/git/src/**
   - id: command
     globs:
       - src/cli/commands/**
@@ -19,6 +27,24 @@ layers:
       - src/cli/cage-bin.ts
       - src/cli/kernel.ts
 rules:
+  - id: RULE-CORE-NO-NODE-IO
+    from_layer: core
+    forbid_specifier_substring: "node:"
+  - id: RULE-CORE-NO-GIT-LAYER
+    from_layer: core
+    forbid_import_layer: git
+  - id: RULE-CORE-NO-LIB-LAYER
+    from_layer: core
+    forbid_import_layer: lib
+  - id: RULE-CORE-NO-COMMAND-LAYER
+    from_layer: core
+    forbid_import_layer: command
+  - id: RULE-GIT-NO-LIB-LAYER
+    from_layer: git
+    forbid_import_layer: lib
+  - id: RULE-GIT-NO-COMMAND-LAYER
+    from_layer: git
+    forbid_import_layer: command
   - id: RULE-LIB-TO-COMMAND
     from_layer: lib
     forbid_import_layer: command

@@ -40,7 +40,11 @@ function orphansIn(root: string): string[] {
       else if (e.isFile()) {
         const rel = path.relative(dist, abs);
         const suffix = [".d.ts.map", ".js.map", ".d.ts", ".js"].find((s) => rel.endsWith(s));
-        if (suffix && !fs.existsSync(path.join(root, "src", `${rel.slice(0, -suffix.length)}.ts`))) out.push(rel);
+        if (!suffix) continue;
+        const stem = rel.slice(0, -suffix.length);
+        // dist/packages/<name>/src/x.js comes from packages/<name>/src/x.ts (ADR-0052 step 2), the rest from src/.
+        const source = stem.startsWith(`packages${path.sep}`) ? path.join(root, `${stem}.ts`) : path.join(root, "src", `${stem}.ts`);
+        if (!fs.existsSync(source)) out.push(rel);
       }
     }
   };
@@ -92,8 +96,8 @@ test("prune-dist: a root without dist/ is fine; --root needs a value (MSN-0273 D
 test("prune-dist: npm run build prunes after tsc, and this repo's dist has no orphan (MSN-0273 DoD 2, DoD 5)", () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")) as { scripts: Record<string, string> };
   const steps = pkg.scripts.build!.split("&&").map((s) => s.trim());
-  const tsc = steps.indexOf("tsc");
-  assert.ok(tsc >= 0, "build runs tsc");
+  const tsc = steps.findIndex((s) => s === "tsc" || s === "tsc -b");
+  assert.ok(tsc >= 0, "build runs tsc (tsc -b with project references since ADR-0052 step 2)");
   assert.equal(steps[tsc + 1], "node scripts/prune-dist.mjs", "the prune runs right after tsc");
   assert.ok(!/rm -rf dist|rmSync\(.dist/.test(pkg.scripts.build!), "the build never wipes dist/");
   assert.deepEqual(orphansIn(REPO_ROOT), [], "npm test builds first, so the prune has already run");

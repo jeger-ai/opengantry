@@ -44,6 +44,7 @@ process.on("exit", () => fs.rmSync(runDir, { recursive: true, force: true }));
 const GLOBAL_NORMALIZERS = [
   [/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})/g, "<TS>"],
   [/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, "<UUID>"],
+  [/\b(MSN-\d{4})-[0-9a-f]{12}\b/g, "$1-<ID>"],
   [/\b[0-9a-f]{64}\b/g, "<SHA256>"],
   [/\b[0-9a-f]{40}\b/g, "<SHA>"],
   [/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,12}\b/g, "<SHORT_SHA>"],
