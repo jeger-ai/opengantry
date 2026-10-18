@@ -9,7 +9,7 @@ import { gitRunOk } from "../git/git.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { isLegislativeStub } from "../missions/formatter.js";
 import { defaultExecutorLogPath } from "../trace.js";
-import type { GateSpec, KpiFinding, Manifest, ParsedMission } from "../types.js";
+import type { KpiFinding, Manifest, ParsedMission } from "../types.js";
 import type { VerifyFailurePhase, VerifyPhaseFailure } from "./verify-failure.js";
 import type { TraceVerifyWarning } from "../trace.js";
 import type { VerifyOptions } from "./verify-options.js";

@@ -91,7 +91,7 @@ export function buildBareGit(root) {
 /** What `gantry init --yes` leaves behind, committed as the substrate commit. */
 export function buildFreshInit(root, cli) {
   buildBareGit(root);
-  runCli(cli, root, ["init", "--yes", "--no-hooks", "--no-ci", "--skills", "minimal", "--no-defensive-profile", "--ides", "cursor"]);
+  runCli(cli, root, ["init", "--yes", "--no-hooks", "--no-ci", "--skills", "minimal", "--ides", "cursor"]);
   commitAll(root, "[MSN-0001] gantry init --yes");
 }
 

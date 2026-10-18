@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { runVerify } from "../commands/verify.js";
+import { runVerify } from "../../../src/cli/commands/verify.js";
 import { verifyKpiReportFreshness } from "../../../src/cli/lib/kpi-engine.js";
 import {
   createVirtualFlightId,

@@ -234,7 +234,8 @@ function resolveEnabledGuard<TConfig>(
 
 /** Fail-closed resolution: profile must be explicitly enabled; guards opt-in per guard. */
 export function resolveDefensiveProfile(config: GxtConfig): ResolvedDefensiveProfile {
-  const raw = config.defensive_profile;
+  // The CLI types the block as unknown since ADR-0052 A10; this example keeps its own shape.
+  const raw = config.defensive_profile as DefensiveProfileConfig | undefined;
   if (!raw?.enabled) {
     return {
       enabled: false,

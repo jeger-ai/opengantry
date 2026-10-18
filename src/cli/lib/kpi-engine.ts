@@ -155,6 +155,11 @@ export interface KpiReportStaleResult {
   reason?: string;
 }
 
+function reportRelPath(reportPath: string, repoRoot: string): string {
+  const abs = path.isAbsolute(reportPath) ? reportPath : path.join(repoRoot, reportPath);
+  return toPosixRel(repoRoot, abs);
+}
+
 function resolveKpiAttestationCommit(
   repoRoot: string,
   reportRel: string,
@@ -182,6 +187,7 @@ export function verifyKpiReportFreshness(
     return { stale: false, advisoryOnly: false, stalePaths: [] };
   }
 
+  const reportRel = reportRelPath(reportPath, repoRoot);
   const tmvcRoots = tmvcRootsForSkill(manifest, skillKey);
   if (tmvcRoots.length === 0) {
     return { stale: false, advisoryOnly: false, stalePaths: [] };

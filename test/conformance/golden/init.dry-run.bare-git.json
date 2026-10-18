@@ -9,7 +9,6 @@
     "--no-ci",
     "--skills",
     "minimal",
-    "--no-defensive-profile",
     "--ides",
     "cursor"
   ],

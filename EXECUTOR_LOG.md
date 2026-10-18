@@ -1575,4 +1575,4 @@ MSN-0290 at 1396773: runtime helper scripts replaced by gantry pin and gantry ru
 MSN-0291 at 3f4889e: mission, contract, interrogation, trace-status, gate-adapter and config types moved to packages/core; evidence is .gitagent/runs/MSN-0291.json (RULES §3).
 MSN-0292 at b6c0370: org plane modules moved to packages/plane; evidence is .gitagent/runs/MSN-0292.json (RULES §3).
 MSN-0293 at 6c1e232: contract preflight and drift index parked under examples/ (ADR-0052 A10); evidence is .gitagent/runs/MSN-0293.json (RULES §3).
-MSN-0294 at pending: defensive profiles and the virtual scratch store parked under examples/ (ADR-0052 A10); evidence is .gitagent/runs/MSN-0294.json (RULES §3).
+MSN-0294 at 0435bb8: defensive profiles and the virtual scratch store parked under examples/ (ADR-0052 A10); evidence is .gitagent/runs/MSN-0294.json (RULES §3).
