@@ -74,10 +74,6 @@ entries:
     since: MSN-0210
   - name: contract check
     since: MSN-0010
-  - name: contract embed
-    since: MSN-0227
-  - name: contract preflight
-    since: MSN-0216
   - name: contract propose
     since: MSN-0210
   - name: contract show

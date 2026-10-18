@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
-import { runContractCheck, runContractEmbed, runContractPreflight, runContractPropose, runContractShow } from "./commands/contract.js";
+import { runContractCheck, runContractPropose, runContractShow } from "./commands/contract.js";
 import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
@@ -188,9 +188,8 @@ function registerContractCommand(program: Command): void {
     .argument("[intent...]", "Planner intent summary")
     .option("--skill-key <key>", "Manifest skill_key")
     .option("--path <paths...>", "Declared paths for TMVC hints")
-    .option("--embedding-file <path>", "Host-supplied float[1536] JSON; updates the local vector index and prints advisory drift warnings")
     .option("--json", "Emit result as JSON on stdout")
-    .action(async (intentParts: string[], opts: { skillKey?: string; path?: string[]; json?: boolean; embeddingFile?: string }) => {
+    .action(async (intentParts: string[], opts: { skillKey?: string; path?: string[]; json?: boolean }) => {
       const intent = intentParts.join(" ").trim();
       if (!intent) {
         logError("contract propose: provide intent text");
@@ -202,11 +201,8 @@ function registerContractCommand(program: Command): void {
         skillKey: opts.skillKey,
         paths: opts.path,
         json: opts.json,
-        embeddingFile: opts.embeddingFile,
       });
     });
-
-  registerContractEmbedCommand(contract);
 
   contract
     .command("show")
@@ -215,47 +211,6 @@ function registerContractCommand(program: Command): void {
     .option("--json", "Emit result as JSON on stdout")
     .action((opts: { mission?: string; json?: boolean }) => {
       runContractShow({ mission: opts.mission, json: opts.json });
-    });
-
-  contract
-    .command("preflight")
-    .description("Advisory skill/path classifier before propose (JSON only; optional Jev)")
-    .argument("[intent...]", "Planner intent summary")
-    .option("--path <paths...>", "Declared path hints")
-    .option("--provider <id>", "heuristic (default) or jev", "heuristic")
-    .action(async (intentParts: string[], opts: { path?: string[]; provider?: string }) => {
-      const intent = intentParts.join(" ").trim();
-      if (!intent) {
-        logError("contract preflight: provide intent text");
-        setExitCode(2);
-        return;
-      }
-      await runContractPreflight({ intent, paths: opts.path, provider: opts.provider });
-    });
-}
-
-function registerContractEmbedCommand(contract: Command): void {
-  contract
-    .command("embed")
-    .description("Write a host float[1536] JSON file from intent text via OpenAI")
-    .argument("[intent...]", "Text to embed")
-    .option("--output <path>", "JSON file to write")
-    .option("--msn <id>", "Mission id stored as msn_id")
-    .option("--summary <text>", "Summary stored beside the vector (defaults to the intent)")
-    .action(async (intentParts: string[], opts: { output?: string; msn?: string; summary?: string }) => {
-      const intent = intentParts.join(" ").trim();
-      if (!intent) {
-        logError("contract embed: provide intent text");
-        setExitCode(2);
-        return;
-      }
-      const output = opts.output?.trim();
-      if (!output) {
-        logError("contract embed: --output is required");
-        setExitCode(2);
-        return;
-      }
-      await runContractEmbed({ intent, output, msn: opts.msn, summary: opts.summary });
     });
 }
 

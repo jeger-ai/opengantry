@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "./errors.js";
 import { openContractVectorStore, type SimilarityHit } from "./vector-store.js";
 
 export const DRIFT_NEIGHBOR_K = 3;

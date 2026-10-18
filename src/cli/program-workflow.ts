@@ -29,8 +29,6 @@ type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interro
   fromIntent?: boolean;
   yes?: boolean;
   contractFile?: string;
-  embeddingFile?: string;
-  autoEmbed?: boolean;
 };
 
 /** Commander maps --path to `path` and --answers to `answers`. */
@@ -183,8 +181,6 @@ function registerLegislateCommand(program: Command): void {
     .option("--from-intent", "Propose a mission contract from intent + repo, then prompt for approval")
     .option("--yes", "Approve the proposed contract without a TTY prompt (required for non-TTY --from-intent)")
     .option("--contract-file <file>", "YAML file with a contract: block (skips propose prompt)")
-    .option("--embedding-file <path>", "Host-supplied float[1536] JSON; advisory drift warnings before approval (--from-intent)")
-    .option("--auto-embed", "Generate a float[1536] from the intent via OpenAI and print advisory drift warnings (--from-intent)")
     .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
       let text = intentParts.join(" ").trim();
       text = await readStdinIfEmpty(text);
@@ -195,7 +191,6 @@ function registerLegislateCommand(program: Command): void {
       }
       const mapped = mapLegislateCommanderOptions(options, text);
       const fromIntent = options.fromIntent === true || Boolean(options.contractFile?.trim());
-      if (rejectLegislateDriftFlags(options, fromIntent)) return;
       try {
         const result = fromIntent
           ? await runLegislateFromIntent({
@@ -203,8 +198,6 @@ function registerLegislateCommand(program: Command): void {
               fromIntent: options.fromIntent === true,
               yes: options.yes === true,
               contractFile: options.contractFile,
-              embeddingFile: options.embeddingFile,
-              autoEmbed: options.autoEmbed === true,
             })
           : runLegislate(mapped);
         if (!result.ok) setExitCode(result.exitCode);
@@ -213,25 +206,6 @@ function registerLegislateCommand(program: Command): void {
         setExitCode(isGantryUserError(e) ? e.exitCode : 2);
       }
     });
-}
-
-function rejectLegislateDriftFlags(options: LegislateCliOptions, fromIntent: boolean): boolean {
-  if (options.autoEmbed === true && options.embeddingFile?.trim()) {
-    logError("legislate: --auto-embed and --embedding-file are mutually exclusive");
-    setExitCode(2);
-    return true;
-  }
-  if (options.embeddingFile?.trim() && !fromIntent) {
-    logError("legislate: --embedding-file requires --from-intent");
-    setExitCode(2);
-    return true;
-  }
-  if (options.autoEmbed === true && !fromIntent) {
-    logError("legislate: --auto-embed requires --from-intent");
-    setExitCode(2);
-    return true;
-  }
-  return false;
 }
 
 function registerInterrogateCommand(program: Command): void {

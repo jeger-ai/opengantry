@@ -1,3 +1,4 @@
+// Parked with the drift index (ADR-0052 A10). These tests ran inside the CLI tree; the ../lib imports below name CLI internals.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -6,13 +7,13 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
 import { contractSha256 } from "../lib/contract/contract-hash.js";
-import { indexProposedContract } from "../lib/contract/contract-drift.js";
+import { indexProposedContract } from "../src/contract-drift.js";
 import { proposeContract } from "../lib/contract/propose.js";
 import {
   EMBEDDING_DIMENSIONS,
   contractVectorDbPath,
   openContractVectorStore,
-} from "../lib/contract/vector-store.js";
+} from "../src/vector-store.js";
 import { getRepoRoot } from "../lib/git/git.js";
 import { loadManifest } from "../lib/manifest.js";
 

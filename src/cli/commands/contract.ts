@@ -8,9 +8,6 @@ import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolvePinnedMission } from "../lib/missions/resolution.js";
 import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
 import { formatContractBlock, formatEffectiveScope } from "../lib/contract/format.js";
-import { TYPESAFE_API_KEY_ENV } from "../lib/contract/preflight-jev.js";
-import { isPreflightProvider, runPreflight } from "../lib/contract/preflight.js";
-import { OpenAiEmbeddingProvider, writeHostEmbeddingFile } from "../lib/contract/embedding-provider.js";
 import { proposeContract } from "../lib/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../lib/legislate/legislate.js";
 import { loadWorkspace } from "../lib/workspace.js";
@@ -88,8 +85,6 @@ export interface ContractProposeCliOptions {
   skillKey?: string;
   paths?: string[];
   json?: boolean;
-  /** Host-supplied float[1536] JSON. Absent: propose stays a pure read. */
-  embeddingFile?: string;
 }
 
 export async function runContractPropose(options: ContractProposeCliOptions): Promise<void> {
@@ -114,19 +109,7 @@ export async function runContractPropose(options: ContractProposeCliOptions): Pr
     const contract = normalizeContract(proposed.contract);
     resolveEffectiveScope({ manifest: workspace.manifest, skillKey: resolved.skillKey, contract });
     const sha = contractSha256(contract);
-    const embeddingFile = options.embeddingFile?.trim();
-    // Load sqlite-vec only for this side path so other commands (including packed init) stay free of the native module.
-    let driftWarnings: string[] | undefined;
-    if (embeddingFile) {
-      const drift = await import("../lib/contract/contract-drift.js");
-      driftWarnings = drift.indexProposedContract({
-        root: workspace.root,
-        contractSha256: sha,
-        host: drift.readHostEmbedding(embeddingFile),
-      });
-    }
     const human = [formatContractBlock(contract, proposed.gate), "", "Rationale:", ...proposed.rationale.map((r) => `  - ${r}`)];
-    if (driftWarnings && driftWarnings.length > 0) human.push("", ...driftWarnings);
     return {
       json: {
         ok: true,
@@ -136,37 +119,8 @@ export async function runContractPropose(options: ContractProposeCliOptions): Pr
         gate: proposed.gate,
         rationale: proposed.rationale,
         block: formatContractBlock(contract, proposed.gate),
-        ...(driftWarnings ? { drift_warnings: driftWarnings } : {}),
       },
       human,
-    };
-  });
-}
-
-export interface ContractEmbedCliOptions {
-  intent: string;
-  output: string;
-  msn?: string;
-  summary?: string;
-}
-
-/** Write a host embedding JSON file. Does not open the vector index. */
-export async function runContractEmbed(options: ContractEmbedCliOptions): Promise<void> {
-  await runUserCommandAsync({}, async (): Promise<CommandPresentation> => {
-    const output = options.output.trim();
-    if (!output) {
-      throw new GantryUserError("INVALID_ARGUMENT", "contract embed: --output is required", undefined, 2);
-    }
-    const embedding = await new OpenAiEmbeddingProvider().generateEmbedding(options.intent);
-    const msnId = options.msn?.trim();
-    writeHostEmbeddingFile(output, {
-      summary: options.summary?.trim() || options.intent.trim(),
-      embedding,
-      ...(msnId ? { msn_id: msnId } : {}),
-    });
-    return {
-      json: { ok: true, output },
-      human: [`contract embed: wrote ${output}`],
     };
   });
 }
@@ -189,36 +143,5 @@ export function runContractShow(options: ContractShowCliOptions): void {
       json: { ok: true, mission: missionRel, msn_id: mission.msnId, contract, contract_sha256: mission.contractSha256 },
       human: formatContractBlock(contract, mission.gate ? { command: mission.gate.command, successSubstring: mission.gate.successSubstring } : null),
     };
-  });
-}
-
-export interface ContractPreflightCliOptions {
-  intent: string;
-  paths?: string[];
-  provider?: string;
-}
-
-/** JSON-only advisory classifier. Always writes structured stdout. */
-export async function runContractPreflight(options: ContractPreflightCliOptions): Promise<void> {
-  await runUserCommandAsync({ json: true }, async (): Promise<CommandPresentation> => {
-    const provider = options.provider ?? "heuristic";
-    if (!isPreflightProvider(provider)) {
-      throw new GantryUserError(
-        "INVALID_ARGUMENT",
-        `contract preflight: unknown provider ${provider}`,
-        "Use heuristic or jev",
-        2,
-      );
-    }
-    const workspace = loadWorkspace();
-    const result = await runPreflight({
-      root: workspace.root,
-      manifest: workspace.manifest,
-      intent: options.intent,
-      paths: options.paths,
-      provider,
-      apiKey: process.env[TYPESAFE_API_KEY_ENV],
-    });
-    return { json: { status: "ok", ...result } };
   });
 }

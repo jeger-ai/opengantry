@@ -1,0 +1,372 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0293]. Executor must not run until the [MSN-0293] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 A10, park the zero-use experiments, part one. The contract preflight (gantry contract
+# preflight, the MCP tool gxt_preflight_contract, the optional Jev provider behind TYPESAFE_API_KEY) moves to
+# examples/jev-preflight/ and the contract drift index (gantry contract embed, --embedding-file, --auto-embed, the
+# sqlite-vec store, the OpenAI embedding provider) moves to examples/contract-drift-index/, both with their tests and a
+# README; better-sqlite3, sqlite-vec and @types/better-sqlite3 leave package.json and the lockfile, so no install
+# builds a native module; the registries drop the entries; the two conformance cases and goldens are deleted; docs and
+# the Mission Architect protocol no longer mention the preflight; gantry contract propose and gxt_propose_contract are
+# unchanged.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): A10 parks, it does not delete;
+# defensive profiles, virtual capture and the performance judge follow in part two. No trace rows: the evidence is
+# .gitagent/runs/MSN-0293.json written by gantry verify --record (RULES §3).
+#
+# DoD 1 (examples): examples/contract-drift-index/{src/vector-store.ts, src/embedding-provider.ts,
+#        src/contract-drift.ts, src/errors.ts, tests/sqlite-vector.test.ts, tests/embedding-provider.test.ts,
+#        package.json, tsconfig.json, README.md} and examples/jev-preflight/{src/preflight.ts, preflight-heuristic.ts,
+#        preflight-jev.ts, preflight-types.ts, mcp-preflight-contract.ts, tests/contract-preflight.test.ts,
+#        tsconfig.json} exist, moved with git mv; the preflight example type-checks against the repo
+#        (npx tsc -p examples/jev-preflight/tsconfig.json); its README records the former CLI and MCP surface.
+# DoD 2 (CLI): gantry contract embed, gantry contract preflight, contract propose --embedding-file, legislate
+#        --embedding-file and --auto-embed, and the MCP tool gxt_preflight_contract are gone; src/cli/lib/contract has
+#        no vector-store, embedding-provider, contract-drift or preflight module; mcp-preflight-contract.ts is gone;
+#        legislate-from-intent.ts has no drift index path; the MCP tool list test expects 20 tools.
+# DoD 3 (dependencies): package.json and package-lock.json have no better-sqlite3, sqlite-vec or @types/better-sqlite3;
+#        npm ci installs no native module; .gitagent/registry/dependencies.yaml matches (DEPENDENCIES rule);
+#        commands.yaml and mcp-tools.yaml drop contract embed, contract preflight and gxt_preflight_contract.
+# DoD 4 (behaviour): all unit tests pass (three test files moved to the examples); conformance passes with the
+#        contract-preflight and contract-embed cases and goldens removed and no other golden changed;
+#        gantry arch check passes after gantry arch check --ratchet (lowered, no raise).
+# DoD 5 (docs, dogfood): docs/reference/experimental.md (one parked section), docs/reference/mcp-tools.md,
+#        docs/reference/session-variables.md, docs/concepts/missions.md, .gitagent/planner/MISSION-ARCHITECT.md and its
+#        template, docs/CHANGELOG.md; this mission is verified by its committed run record;
+#        ./scripts/dev-validate-core.sh passes; git diff --name-only origin/main...HEAD lists only paths under
+#        contract.tmvc_roots.
+msn_id: MSN-0293
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0293.park-drift-preflight.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md, .gitagent/registry/commands.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/registry/mcp-tools.yaml,
+      .gitagent/runs/MSN-0293.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, docs/reference/experimental.md,
+      docs/reference/mcp-tools.md, docs/reference/session-variables.md,
+      examples/contract-drift-index/README.md,
+      examples/contract-drift-index/package.json,
+      examples/contract-drift-index/src/contract-drift.ts,
+      examples/contract-drift-index/src/embedding-provider.ts,
+      examples/contract-drift-index/src/errors.ts,
+      examples/contract-drift-index/src/vector-store.ts,
+      examples/contract-drift-index/tests/embedding-provider.test.ts,
+      examples/contract-drift-index/tests/sqlite-vector.test.ts,
+      examples/contract-drift-index/tsconfig.json,
+      examples/jev-preflight/README.md,
+      examples/jev-preflight/src/mcp-preflight-contract.ts,
+      examples/jev-preflight/src/preflight-heuristic.ts,
+      examples/jev-preflight/src/preflight-jev.ts,
+      examples/jev-preflight/src/preflight-types.ts,
+      examples/jev-preflight/src/preflight.ts,
+      examples/jev-preflight/tests/contract-preflight.test.ts,
+      examples/jev-preflight/tsconfig.json, package-lock.json, package.json,
+      src/cli/commands/contract.ts,
+      src/cli/lib/legislate/legislate-from-intent.ts,
+      src/cli/lib/mcp/mcp-tools-register.ts, src/cli/program-mission.ts,
+      src/cli/program-workflow.ts, src/cli/tests/mcp-tools-register.test.ts,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      test/conformance/cases.yaml,
+      test/conformance/golden/contract-embed.no-key.mission-pass.json,
+      test/conformance/golden/contract-preflight.mission-pass.json,
+      test/conformance/spawning-tests.yaml. Moved out of src/cli:
+      contract/vector-store.ts, embedding-provider.ts and contract-drift.ts (to
+      examples/contract-drift-index/src with a standalone error class,
+      package.json, tsconfig, README and the two tests), contract/preflight*.ts
+      and mcp/mcp-preflight-contract.ts (to examples/jev-preflight/src with the
+      test and a tsconfig; the README records the former CLI surface). Removed
+      from the CLI: gantry contract embed, gantry contract preflight,
+      --embedding-file on contract propose and legislate, --auto-embed on
+      legislate, the MCP tool gxt_preflight_contract; legislate-from-intent.ts
+      loses the drift index path. package.json and package-lock.json drop
+      better-sqlite3, sqlite-vec and @types/better-sqlite3; the commands,
+      mcp-tools and dependencies registries drop their entries; cases.yaml drops
+      two cases and their goldens; spawning-tests.yaml drops three rows; docs
+      (experimental.md, mcp-tools.md, session-variables.md, missions.md,
+      MISSION-ARCHITECT.md and its template, CHANGELOG). ARCH_BASELINE.json
+      lowered with --ratchet. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
+      until everything is done): ADR-0052 A10 as decided; the parked features
+      are not deleted, they live under examples/ with their tests and a README;
+      defensive profiles, virtual capture and the performance judge follow in
+      part two. gantry contract propose and gxt_propose_contract are unchanged
+      and deterministic. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0293.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match term example overlaps the
+      path examples/ in this intent and nothing else. No decision of it applies.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged; this mission
+      moves code, it calls no plane.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 5a4bf18c0690
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots:
+      .gitagent/missions/MSN-0293.park-drift-preflight.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md, .gitagent/registry/commands.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/registry/mcp-tools.yaml,
+      .gitagent/runs/MSN-0293.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, docs/reference/experimental.md,
+      docs/reference/mcp-tools.md, docs/reference/session-variables.md,
+      examples/contract-drift-index/README.md,
+      examples/contract-drift-index/package.json,
+      examples/contract-drift-index/src/contract-drift.ts,
+      examples/contract-drift-index/src/embedding-provider.ts,
+      examples/contract-drift-index/src/errors.ts,
+      examples/contract-drift-index/src/vector-store.ts,
+      examples/contract-drift-index/tests/embedding-provider.test.ts,
+      examples/contract-drift-index/tests/sqlite-vector.test.ts,
+      examples/contract-drift-index/tsconfig.json,
+      examples/jev-preflight/README.md,
+      examples/jev-preflight/src/mcp-preflight-contract.ts,
+      examples/jev-preflight/src/preflight-heuristic.ts,
+      examples/jev-preflight/src/preflight-jev.ts,
+      examples/jev-preflight/src/preflight-types.ts,
+      examples/jev-preflight/src/preflight.ts,
+      examples/jev-preflight/tests/contract-preflight.test.ts,
+      examples/jev-preflight/tsconfig.json, package-lock.json, package.json,
+      src/cli/commands/contract.ts,
+      src/cli/lib/legislate/legislate-from-intent.ts,
+      src/cli/lib/mcp/mcp-tools-register.ts, src/cli/program-mission.ts,
+      src/cli/program-workflow.ts, src/cli/tests/mcp-tools-register.test.ts,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      test/conformance/cases.yaml,
+      test/conformance/golden/contract-embed.no-key.mission-pass.json,
+      test/conformance/golden/contract-preflight.mission-pass.json,
+      test/conformance/spawning-tests.yaml. Moved out of src/cli:
+      contract/vector-store.ts, embedding-provider.ts and contract-drift.ts (to
+      examples/contract-drift-index/src with a standalone error class,
+      package.json, tsconfig, README and the two tests), contract/preflight*.ts
+      and mcp/mcp-preflight-contract.ts (to examples/jev-preflight/src with the
+      test and a tsconfig; the README records the former CLI surface). Removed
+      from the CLI: gantry contract embed, gantry contract preflight,
+      --embedding-file on contract propose and legislate, --auto-embed on
+      legislate, the MCP tool gxt_preflight_contract; legislate-from-intent.ts
+      loses the drift index path. package.json and package-lock.json drop
+      better-sqlite3, sqlite-vec and @types/better-sqlite3; the commands,
+      mcp-tools and dependencies registries drop their entries; cases.yaml drops
+      two cases and their goldens; spawning-tests.yaml drops three rows; docs
+      (experimental.md, mcp-tools.md, session-variables.md, missions.md,
+      MISSION-ARCHITECT.md and its template, CHANGELOG). ARCH_BASELINE.json
+      lowered with --ratchet. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are examples/, package.json, the lockfile,
+      registries, conformance files, law, the record and docs; the src/cli edits
+      are removals in the command, lib and delivery layers."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is ADR-0052 A10, part one: the contract
+      preflight and the contract drift index leave the CLI for examples/, the
+      two native modules leave package.json, and ARCH_BASELINE.json is lowered
+      with --ratchet (no raise). Operator direction (2026-10-18, continue until
+      everything is done): ADR-0052 A10 as decided; the parked features are not
+      deleted, they live under examples/ with their tests and a README;
+      defensive profiles, virtual capture and the performance judge follow in
+      part two. gantry contract propose and gxt_propose_contract are unchanged
+      and deterministic. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0293.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment is unchanged; one read-only
+      advisory tool (gxt_preflight_contract) is removed, no tool is widened.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: b9b235d7d426
+    kind: adr_conflict
+    question: Intent may relate to ADR-0046. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0046 before
+      legislation proceeds.
+    operator_answer: "Accept the record, reject applicability going forward:
+      ADR-0052 A10 (approved 2026-10-17) parks the experimental preflight; its
+      heuristic, Jev provider, fail-open behaviour and MCP handler are preserved
+      unchanged under examples/jev-preflight/ and the CLI and MCP surfaces are
+      removed."
+    adr_refs:
+      - ADR-0052
+      - ADR-0046
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. No new flight level or role; a new subcommand is a
+      Planner registry edit, which this mission makes under the substrate skill.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract cage, seal and scan are unchanged; only
+      the advisory embedding side path of contract propose is removed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No file format changes; the gitignored contracts.sqlite
+      index is no longer written by the CLI.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 710bb380b7d1f70eff56672d51ce413c4f6b9f228baa49a2fcf9d7ebd9f18683
+declared_paths:
+  - .gitagent/missions/MSN-0293.park-drift-preflight.yaml
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/dependencies.yaml
+  - .gitagent/registry/mcp-tools.yaml
+  - .gitagent/runs/MSN-0293.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/reference/experimental.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/session-variables.md
+  - examples/contract-drift-index/README.md
+  - examples/contract-drift-index/package.json
+  - examples/contract-drift-index/src/contract-drift.ts
+  - examples/contract-drift-index/src/embedding-provider.ts
+  - examples/contract-drift-index/src/errors.ts
+  - examples/contract-drift-index/src/vector-store.ts
+  - examples/contract-drift-index/tests/embedding-provider.test.ts
+  - examples/contract-drift-index/tests/sqlite-vector.test.ts
+  - examples/contract-drift-index/tsconfig.json
+  - examples/jev-preflight/README.md
+  - examples/jev-preflight/src/mcp-preflight-contract.ts
+  - examples/jev-preflight/src/preflight-heuristic.ts
+  - examples/jev-preflight/src/preflight-jev.ts
+  - examples/jev-preflight/src/preflight-types.ts
+  - examples/jev-preflight/src/preflight.ts
+  - examples/jev-preflight/tests/contract-preflight.test.ts
+  - examples/jev-preflight/tsconfig.json
+  - package-lock.json
+  - package.json
+  - src/cli/commands/contract.ts
+  - src/cli/lib/legislate/legislate-from-intent.ts
+  - src/cli/lib/mcp/mcp-tools-register.ts
+  - src/cli/program-mission.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/mcp-tools-register.test.ts
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - test/conformance/cases.yaml
+  - test/conformance/golden/contract-embed.no-key.mission-pass.json
+  - test/conformance/golden/contract-preflight.mission-pass.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0293.park-drift-preflight.yaml
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/dependencies.yaml
+    - .gitagent/registry/mcp-tools.yaml
+    - .gitagent/runs/MSN-0293.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/reference/experimental.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/session-variables.md
+    - examples/contract-drift-index/README.md
+    - examples/contract-drift-index/package.json
+    - examples/contract-drift-index/src/contract-drift.ts
+    - examples/contract-drift-index/src/embedding-provider.ts
+    - examples/contract-drift-index/src/errors.ts
+    - examples/contract-drift-index/src/vector-store.ts
+    - examples/contract-drift-index/tests/embedding-provider.test.ts
+    - examples/contract-drift-index/tests/sqlite-vector.test.ts
+    - examples/contract-drift-index/tsconfig.json
+    - examples/jev-preflight/README.md
+    - examples/jev-preflight/src/mcp-preflight-contract.ts
+    - examples/jev-preflight/src/preflight-heuristic.ts
+    - examples/jev-preflight/src/preflight-jev.ts
+    - examples/jev-preflight/src/preflight-types.ts
+    - examples/jev-preflight/src/preflight.ts
+    - examples/jev-preflight/tests/contract-preflight.test.ts
+    - examples/jev-preflight/tsconfig.json
+    - package-lock.json
+    - package.json
+    - src/cli/commands/contract.ts
+    - src/cli/lib/legislate/legislate-from-intent.ts
+    - src/cli/lib/mcp/mcp-tools-register.ts
+    - src/cli/program-mission.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/mcp-tools-register.test.ts
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+    - test/conformance/cases.yaml
+    - test/conformance/golden/contract-embed.no-key.mission-pass.json
+    - test/conformance/golden/contract-preflight.mission-pass.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+contract_sha256: c28d9c727fdd539abbb52a76b6267af6b35e04d18b1de1d92a0839199ef93a9f

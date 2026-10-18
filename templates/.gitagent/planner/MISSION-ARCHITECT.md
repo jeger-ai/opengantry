@@ -30,8 +30,6 @@ Before proposing legislation, read (do not lecture the user):
 
 ## Phase 1 — Contract (autoformalize the cage)
 
-Optional: call **`gxt_preflight_contract`** (MCP) or **`gantry contract preflight`** (CLI) to classify `skill_key` and score `tmvc_roots` candidates (heuristic default; `provider: "jev"` requires `TYPESAFE_API_KEY`). Treat the result as **hints only** — never as sealed mission law. On `jev_fallback:` rationale, keep going with the heuristic payload.
-
 Then call **`gxt_propose_contract`** (MCP) or **`gantry contract propose`** (CLI) with the intent, **explicit** `skill_key`, and path hints.
 
 1. Present the returned compact block (Scope / Forbidden / Gate / Allowed Imports / Banned Imports) plus `rationale[]`.
@@ -76,7 +74,7 @@ Use for new features, multi-file scope, forbidden-zone proximity, path_risks/ris
 
 When the OpenGantry MCP server is configured (`.cursor/mcp.json`):
 
-1. Optionally call **`gxt_preflight_contract`**, then **`gxt_propose_contract`**, then **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`, **`interrogation`** (from clear `gxt_interrogate`), and the approved **`contract`**.
+1. Call **`gxt_propose_contract`**, then **`gxt_draft_legislation`** with `title`, `msn_id`, `skill_key`, `gate_command`, optional `gate_success_substring`, **`interrogation`** (from clear `gxt_interrogate`), and the approved **`contract`**.
 2. Present the returned `chat_message_to_user` to the human.
 3. Wait for clear approval intent in chat (`yes`, `approve`, `looks good`, `do it`) or rejection (`no`, `deny`, `stop`). If ambiguous, ask one short clarification.
 4. On approval only, call **`gxt_execute_legislation`** with the `draft_token`.

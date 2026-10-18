@@ -15,7 +15,6 @@ order: 1
 
 | Tool | Does |
 |------|------|
-| `gxt_preflight_contract` | Experimental, advisory: suggests a `skill_key` and edit-root candidates. Never writes a contract ([Experimental features](experimental.md#contract-preflight)) |
 | `gxt_propose_contract` | Proposes a mission contract from the intent and the repository, read-only and without an LLM |
 | `gxt_interrogate` | Gap analysis: returns one `next_question` (`halt`) or `clear` with `interrogation_sha256` |
 | `gxt_draft_legislation` | Previews mission law without writing; needs a complete interrogation, which the server recomputes; returns a `draft_token` |

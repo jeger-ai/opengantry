@@ -39,7 +39,6 @@ order: 2
 | `GXT_BYPASS_SECRET` | The break-glass secret, matched against `.gitagent/foreman/BYPASS.sha256` ([Break-glass](break-glass.md)) |
 | `GANTRY_ORG_ID`, `GANTRY_ORG_PEPPER`, `GANTRY_ORG_PEPPER_VERSION` | Organization identity and pepper for receipt export and same-org dependency proofs |
 | `GANTRY_SIGNER_PRINCIPAL`, `GANTRY_SIGNER_PRINCIPAL_KIND`, `GANTRY_BRANCH_NAME` | A runner-verified identity and branch for CI export ([CI exporters and receipts](../guides/ci.md#receipt-export-to-a-control-plane)) |
-| `TYPESAFE_API_KEY` | Enables the optional `jev` provider for contract preflight ([Experimental features](experimental.md#contract-preflight)) |
 
 ## Set by the cage
 

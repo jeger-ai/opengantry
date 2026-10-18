@@ -1,0 +1,20 @@
+{
+  "name": "@jeger-ai/example-contract-drift-index",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Parked by ADR-0052 A10: the optional local contract drift index (sqlite-vec + OpenAI embeddings) that shipped inside the gantry CLI until 3.9.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/tests/*.test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "sqlite-vec": "^0.1.9"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "typescript": "^6.0.2"
+  }
+}

@@ -1,8 +1,8 @@
 import { runHeuristicPreflight } from "./preflight-heuristic.js";
 import { runJevPreflight } from "./preflight-jev.js";
 import { isPreflightProvider, type PreflightProvider, type PreflightResult } from "./preflight-types.js";
-import { GantryUserError } from "../errors.js";
-import type { Manifest } from "../types.js";
+import { GantryUserError } from "../../../src/cli/lib/errors.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
 
 export type { PreflightProvider, PreflightResult, TmvcRootCandidate } from "./preflight-types.js";
 export { PREFLIGHT_MIN_CONFIDENCE, PREFLIGHT_PROVIDERS, isPreflightProvider } from "./preflight-types.js";

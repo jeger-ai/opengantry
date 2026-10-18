@@ -1,4 +1,4 @@
-import { normalizeContractPath } from "./contract-hash.js";
+import { normalizeContractPath } from "../../../src/cli/lib/contract/contract-hash.js";
 import { runHeuristicPreflight } from "./preflight-heuristic.js";
 import {
   PREFLIGHT_MIN_CONFIDENCE,
@@ -7,9 +7,9 @@ import {
   type PreflightResult,
   type TmvcRootCandidate,
 } from "./preflight-types.js";
-import { logWarn } from "../cli-io.js";
-import { GantryUserError } from "../errors.js";
-import type { Manifest } from "../types.js";
+import { logWarn } from "../../../src/cli/lib/cli-io.js";
+import { GantryUserError } from "../../../src/cli/lib/errors.js";
+import type { Manifest } from "../../../src/cli/lib/types.js";
 
 export const JEV_SYSTEM_ONE_URL = "https://api.typesafe.ai/v1/systemone";
 export const JEV_MODEL = "jev-latest";

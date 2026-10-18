@@ -36,8 +36,6 @@ cases:
   - { id: legislate.interrogation-required.mission-pass, fixture: mission-pass, args: [legislate, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE], record_tree: true }
   - { id: start.preview.mission-pass, fixture: mission-pass, args: [start, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE, --no-write, --json] }
   - { id: contract-propose.mission-pass, fixture: mission-pass, args: [contract, propose, add a button component, --skill-key, ui, --json] }
-  - { id: contract-preflight.mission-pass, fixture: mission-pass, args: [contract, preflight, add a button component] }
-  - { id: contract-embed.no-key.mission-pass, fixture: mission-pass, args: [contract, embed, add a button component] }
   - { id: contract-show.mission-pass, fixture: mission-pass, args: [contract, show, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: contract-check.mission-pass, fixture: mission-pass, args: [contract, check, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: register.fresh-init, fixture: fresh-init, args: [register, src, --json] }
