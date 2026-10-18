@@ -13,6 +13,8 @@
 #
 # DoD 1 (importers): no file under src/cli imports a path that was a pure facade; `grep -rn '// Facade' src/cli/lib`
 #        finds only the wrapper modules that keep logic; duplicate imports of one package module are merged.
+# Note: the contract allows dynamic specifiers because seven pre-existing sites sit under the roots (the scan-test
+#        fixtures in contract-scan.test.ts and kernel-exports.test.ts, and the two checker scripts' dynamic load).
 # DoD 2 (removal): the 24 facade files are deleted (git rm); scripts/check-import-layers.mjs and
 #        scripts/check-lib-cycles.mjs resolve dist/packages/core/src/import-scanner.js; src/cli/tests/
 #        org-doctor-offline.test.ts reads packages/plane/src/policy-resolve.ts and ledger-chain.ts.
@@ -1025,4 +1027,5 @@ contract:
     - .gitagent/planner/RULES.md
     - .gitagent/registry/
     - .github/workflows/
-contract_sha256: 4361b9e668358d5c3d826853af3239e46e62c923434d3ae115137ce9702bbfed
+  allow_dynamic_specifiers: true
+contract_sha256: 99578e4eedc8b326f39ba117948e62ec31164c72830caf4033ab4f7f51cd274d
