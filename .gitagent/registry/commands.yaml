@@ -98,6 +98,14 @@ entries:
     since: commit 8f81584
   - name: events push
     since: commit 8f81584
+  - name: hook
+    since: MSN-0288
+  - name: hook post-checkout
+    since: MSN-0288
+  - name: hook pre-commit
+    since: MSN-0288
+  - name: hook pre-push
+    since: MSN-0288
   - name: hooks
     since: MSN-0227
   - name: hooks install

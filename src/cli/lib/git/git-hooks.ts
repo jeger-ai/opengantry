@@ -68,3 +68,58 @@ export function uninstallTmvcStrictHook(repoRoot: string): { removed: boolean } 
   if (localConfig(repoRoot, TMVC_GUARD_STRICT_KEY) === null) return { removed: false };
   return { removed: gitRunOk(repoRoot, ["config", "--local", "--unset", TMVC_GUARD_STRICT_KEY]).ok };
 }
+
+// ---- pre-push ref lines (ADR-0052 A8: `gantry hook pre-push` reads what git passes on stdin) ----
+
+/** Git's placeholder for "no object" in pre-push ref lines. */
+export const ZERO_SHA = "0".repeat(40);
+
+export interface PrePushRefLine {
+  localRef: string;
+  localSha: string;
+  remoteRef: string;
+  remoteSha: string;
+}
+
+/** Parse `<local ref> <local sha> <remote ref> <remote sha>` lines; blank or malformed lines are skipped. */
+export function parsePrePushRefLines(text: string): PrePushRefLine[] {
+  const out: PrePushRefLine[] = [];
+  for (const raw of text.split("\n")) {
+    const parts = raw.trim().split(/\s+/);
+    if (parts.length !== 4) continue;
+    const [localRef, localSha, remoteRef, remoteSha] = parts as [string, string, string, string];
+    if (!/^[0-9a-f]{40}$/i.test(localSha) || !/^[0-9a-f]{40}$/i.test(remoteSha)) continue;
+    out.push({ localRef, localSha, remoteRef, remoteSha });
+  }
+  return out;
+}
+
+export interface PushRange {
+  base: string;
+  head: string;
+}
+
+/** The base a pushed head is compared with when the remote has no object: upstream, main, master, then the parent. */
+export function fallbackPushBase(repoRoot: string, head: string): string | null {
+  for (const other of ["@{upstream}", "main", "master"]) {
+    const r = gitRunOk(repoRoot, ["merge-base", head, other]);
+    if (r.ok && r.stdout.trim()) return r.stdout.trim();
+  }
+  const parent = gitRunOk(repoRoot, ["rev-parse", "--verify", `${head}~1^{commit}`]);
+  return parent.ok && parent.stdout.trim() ? parent.stdout.trim() : null;
+}
+
+/**
+ * Ranges to evaluate for a push. A ref deletion (all-zero local sha) contributes nothing; a new remote ref (all-zero
+ * remote sha) compares against `fallbackPushBase`; otherwise `remote sha..local sha`.
+ */
+export function pushRangesFromRefLines(repoRoot: string, lines: readonly PrePushRefLine[]): PushRange[] {
+  const ranges: PushRange[] = [];
+  for (const line of lines) {
+    if (line.localSha === ZERO_SHA) continue;
+    const base = line.remoteSha === ZERO_SHA ? fallbackPushBase(repoRoot, line.localSha) : line.remoteSha;
+    if (!base || base === line.localSha) continue;
+    ranges.push({ base, head: line.localSha });
+  }
+  return ranges;
+}
