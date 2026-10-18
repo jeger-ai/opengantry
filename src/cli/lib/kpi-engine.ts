@@ -1,9 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ErrorObject, ValidateFunction } from "ajv";
-import YAML from "yaml";
-import { createSchemaValidator } from "#plane/ajv-loader.js";
-import { REL_KPI_REPORT_SCHEMA } from "./constants.js";
+import { formatSchemaIssues, kpiReportSchema } from "#core/schemas/index.js";
 import { toPosixRel } from "./cli-io.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "#git/git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
@@ -12,35 +9,10 @@ import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, 
 import type { VerifyOptions } from "./verify/verify-options.js";
 import type { KpiFailure } from "./verify/verify-failure.js";
 
-let compiledValidator: ValidateFunction | null = null;
-let compiledForRoot: string | null = null;
-
-function loadKpiReportSchemaValidator(root: string): ValidateFunction {
-  if (compiledValidator && compiledForRoot === root) {
-    return compiledValidator;
-  }
-  const schemaPath = path.join(root, REL_KPI_REPORT_SCHEMA);
-  const schemaDoc = YAML.parse(fs.readFileSync(schemaPath, "utf8")) as Record<string, unknown>;
-  const validate = createSchemaValidator(schemaDoc);
-  compiledValidator = validate;
-  compiledForRoot = root;
-  return validate;
-}
-
-function formatAjvErrors(errors: ErrorObject[]): string {
-  return errors
-    .map((e) => {
-      const at = e.instancePath || "(root)";
-      return `${at}: ${e.message ?? "invalid"}`;
-    })
-    .join("; ");
-}
-
-export function assertKpiReportSchemaValid(root: string, data: unknown, filePath: string): void {
-  const validate = loadKpiReportSchemaValidator(root);
-  if (validate(data)) return;
-  const detail = formatAjvErrors(validate.errors ?? []);
-  throw new Error(`gantry kpi: ${filePath}: schema validation failed: ${detail}`);
+export function assertKpiReportSchemaValid(_root: string, data: unknown, filePath: string): void {
+  const result = kpiReportSchema.safeParse(data);
+  if (result.success) return;
+  throw new Error(`gantry kpi: ${filePath}: schema validation failed: ${formatSchemaIssues(result.error)}`);
 }
 
 export interface KpiThresholdFailure {

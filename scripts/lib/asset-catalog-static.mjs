@@ -41,6 +41,7 @@ export const REPO_ONLY_SCRIPTS = [
   "validate-mcp-dogfood.mjs",
   "validate-mcp-dogfood.sh",
   "gen-asset-catalog.mjs",
+  "gen-schemas.mjs",
   "gen-version.mjs",
   "prune-dist.mjs",
 ];

@@ -9,6 +9,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 }
 cd "$ROOT"
 
+node scripts/gen-schemas.mjs
 node scripts/gen-dogfood.mjs
 
 MIRRORED=(
@@ -16,6 +17,7 @@ MIRRORED=(
   .github/workflows/gxt-attest-ingest.yml
   .gitagent/planner/MISSION.schema.yaml
   .gitagent/planner/ORG-POLICY.schema.yaml
+  .gitagent/planner/KPI-REPORT.schema.yaml
 )
 
 DIFF_PATHS=(scripts/ templates/scripts/)

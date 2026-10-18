@@ -14,6 +14,7 @@ export * from "./manifest.js";
 export * from "./path-glob.js";
 export * from "./posix-path.js";
 export * from "./run-record.js";
+export * from "./schemas/index.js";
 export * from "./trusted-automation.js";
 export * from "./specifier.js";
 export * from "./user-error.js";
