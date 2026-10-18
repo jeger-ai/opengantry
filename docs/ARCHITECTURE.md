@@ -12,7 +12,7 @@ Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.git
 
 | Layer | Paths | Responsibility |
 |-------|--------|----------------|
-| **core** (package) | `packages/core/src/**` | pure domain: error codes, `GantryUserError`, canonical JSON, path globs, POSIX path helpers, manifest shape, constants; `node:path` only, no fs, child_process, os or net |
+| **core** (package) | `packages/core/src/**` | pure domain: the law model (`Law`, `tighten`, `classifyPath`, `isProtectedPath`, `ChangeSet`, `evaluatePaths`), error codes, `GantryUserError`, canonical JSON, path globs, POSIX path helpers, manifest shape, constants; `node:path` only, no fs, child_process, os or net |
 | **git** (package) | `packages/git/src/**` | the single git adapter (`gitRun`, staged index); imports core only |
 | **cage** (package) | `packages/cage/src/**` | the cage runtime: check, watch, session, suggest, push guard; imports core and git only |
 | **CLI delivery** | `src/cli/index.ts`, `src/cli/program*.ts`, `src/cli/commands/**` | argv, stdin, exit codes, human output |
@@ -36,6 +36,10 @@ flowchart TB
 ## Packages (ADR-0052 step 2)
 
 `packages/core`, `packages/git` and `packages/cage` are packages in this repository with their own `package.json` (private), `tsconfig.json` and `tests/`. They are not npm workspaces: nothing resolves them through `node_modules`, so the lockfile does not list them. `tsc -b` builds them first (project references) into `dist/packages/<name>/src/`, and every importer reaches them through the root `package.json` `imports` field: `#core/<module>.js`, `#git/<module>.js` and `#cage/<module>.js`. That map resolves identically in the checkout and in the published tarball, so nothing is published separately and the slim cage bundle inlines them. Inside a package use relative imports; `packages/git` resolves `#core/*` through its `tsconfig.json` `paths` (a package `imports` target must stay inside its own package). The old paths under `src/cli/lib` are re-export facades until step 3 migrates the importers.
+
+## One law, one evaluator (ADR-0052 A2, A3)
+
+Every question of the form "may this change touch this path" is answered by `packages/core/src/law.ts`: a `Law` holds what a level allows and forbids, `tighten(upper, lower)` composes levels (sets unioned, roots only narrow, stricter tier; violations returned, never thrown), and `evaluatePaths(law, changeSet)` judges a staged index, a commit range, a worktree or one write. The TMVC classification, the effective mission scope (skill, org floor, contract), the perimeter check and the staged guard are thin callers of it. A new path check is a new `ChangeSet` or a new `Law` loader, not a new matcher.
 
 ## Import rules (enforced in CI for changed files)
 

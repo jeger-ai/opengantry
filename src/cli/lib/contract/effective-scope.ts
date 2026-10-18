@@ -3,7 +3,7 @@ import { GXT_ERROR } from "../gxt-error-codes.js";
 import type { OrgPolicyBundle } from "../policy/policy-types.js";
 import { resolveOrgPolicy } from "../policy/policy-resolve.js";
 import { resolveManifestSkillKey } from "../skill-key.js";
-import { isPathUnderRoot } from "../tmvc-path.js";
+import { law, tighten } from "#core/law.js";
 import type { Manifest, ParsedMission } from "../types.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
 import type { EffectiveScope, MissionContract } from "./contract-types.js";
@@ -23,15 +23,7 @@ export function loadPolicyBundleQuiet(root: string): OrgPolicyBundle | null {
   return resolved.bundle;
 }
 
-function unionSorted(...lists: readonly (readonly string[])[]): string[] {
-  const out = new Set<string>();
-  for (const list of lists) for (const v of list) if (v.trim()) out.add(v);
-  return [...out].sort();
-}
-
-function assertSubsetOfSkillRoots(contractRoots: readonly string[], skillRoots: readonly string[], skillKey: string): void {
-  if (skillRoots.length === 0) return;
-  const escaped = contractRoots.filter((r) => !skillRoots.some((s) => isPathUnderRoot(r, s)));
+function assertSubsetOfSkillRoots(escaped: readonly string[], skillRoots: readonly string[], skillKey: string): void {
   if (escaped.length === 0) return;
   throw new GantryUserError(
     GXT_ERROR.CONTRACT_SCOPE_ESCAPE,
@@ -41,8 +33,7 @@ function assertSubsetOfSkillRoots(contractRoots: readonly string[], skillRoots: 
   );
 }
 
-function assertRootsOutsideForbidden(contractRoots: readonly string[], forbidden: readonly string[]): void {
-  const hits = contractRoots.filter((r) => forbidden.some((fz) => isPathUnderRoot(r, fz)));
+function assertRootsOutsideForbidden(hits: readonly string[]): void {
   if (hits.length === 0) return;
   throw new GantryUserError(
     GXT_ERROR.CONTRACT_SCOPE_ESCAPE,
@@ -68,18 +59,26 @@ export function resolveEffectiveScope(input: ResolveEffectiveScopeInput): Effect
   const policyForbidden = (policy?.manifest_constraints?.forbidden_zones_add ?? []).map(normalizeContractPath);
   const policyBanned = (policy?.banned_imports ?? []).map((b) => b.specifier.trim());
 
-  const forbiddenZones = unionSorted(skillForbidden, contract.forbidden_zones ?? [], policyForbidden);
-  const contractRoots = contract.tmvc_roots ?? [];
-  assertSubsetOfSkillRoots(contractRoots, skillRoots, skillKey);
-  assertRootsOutsideForbidden(contractRoots, forbiddenZones);
-
-  return {
-    tmvcRoots: contractRoots.length > 0 ? contractRoots : skillRoots,
-    forbiddenZones,
-    allowedImports: [...(contract.allowed_imports ?? [])],
-    bannedImports: unionSorted(contract.banned_imports ?? [], policyBanned),
+  // Level 1 (skill) tightened by the org floor (policy forbidden zones and banned imports), then by level 0 (contract).
+  const floor = tighten(law({ allowedRoots: skillRoots, forbiddenZones: skillForbidden }), { forbiddenZones: policyForbidden, bannedImports: policyBanned }).law;
+  const merged = tighten(floor, {
+    allowedRoots: contract.tmvc_roots ?? [],
+    forbiddenZones: contract.forbidden_zones ?? [],
+    allowedImports: contract.allowed_imports ?? [],
+    bannedImports: contract.banned_imports ?? [],
     allowDynamicSpecifiers: contract.allow_dynamic_specifiers === true,
     strictRelativeImports: contract.strict_relative_imports === true,
+  });
+  assertSubsetOfSkillRoots(merged.violations.find((v) => v.kind === "roots_escape")?.paths ?? [], skillRoots, skillKey);
+  assertRootsOutsideForbidden(merged.violations.find((v) => v.kind === "roots_in_forbidden")?.paths ?? []);
+
+  return {
+    tmvcRoots: merged.law.allowedRoots,
+    forbiddenZones: merged.law.forbiddenZones,
+    allowedImports: merged.law.allowedImports,
+    bannedImports: merged.law.bannedImports,
+    allowDynamicSpecifiers: merged.law.allowDynamicSpecifiers,
+    strictRelativeImports: merged.law.strictRelativeImports,
     hasContract: input.contract !== null,
   };
 }

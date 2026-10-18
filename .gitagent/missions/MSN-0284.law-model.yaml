@@ -1,0 +1,218 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0284]. Executor must not run until the [MSN-0284] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 3a. The law model lands in packages/core (A2, A3): Law (tier, allowed
+# roots, forbidden zones, protected paths, transport paths, import discipline), tighten(upper, lower) (RULES §4 and §8,
+# ADR-0049 §2: sets unioned, roots only narrow, stricter tier; violations returned, not thrown), classifyPath,
+# isProtectedPath, ChangeSet and evaluatePaths. The first consumers are ported: TMVC path classification, the
+# effective mission scope (skill, org policy floor, contract) and the perimeter protected-path check compute through
+# core, and the staged TMVC guard judges a staged ChangeSet. No CLI output change, no new dependency.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): step 3 is split into 3a (this),
+# 3b (import rules: arch check, contract scan, cage rules on the evaluator) and 3c (B2 rule kinds, ratchet,
+# TARGET_ARCHITECTURE rewrite, gate switch).
+#
+# DoD 1 (model): packages/core/src/law.ts exports Law, emptyLaw, law, normalizeRepoRelativePath, isPathUnderRoot,
+#        unionSorted, tighten (TightenResult with violations roots_escape and roots_in_forbidden; an upper law with no
+#        roots accepts any lower roots), classifyPath (transport, forbidden_zone, inside_roots, outside_roots in that
+#        order), isProtectedPath (perimeter glob dialect), ChangeSet (staged, range, worktree, write) and
+#        evaluatePaths (one finding per path: forbidden_zone, outside_roots, protected_path); core index exports it;
+#        core imports nothing new from node:.
+# DoD 2 (tests): packages/core/tests/law.test.ts covers classification order, tighten union, narrowing, tier,
+#        escape and forbidden-root violations, the empty-upper-roots case, protected globs and evaluatePaths over
+#        staged and range change sets; npm run test:packages passes.
+# DoD 3 (consumers): src/cli/lib/tmvc-path.ts re-exports normalizeRepoRelativePath and isPathUnderRoot from core and
+#        classifies through classifyPath with GOVERNANCE_TRANSPORT_PATHS as transport paths; contract/effective-scope.ts
+#        composes skill -> org floor -> contract with tighten and maps roots_escape and roots_in_forbidden to the
+#        unchanged GXT_CONTRACT_SCOPE_ESCAPE errors, messages and hints; perimeter.ts decides protected paths with
+#        isProtectedPath; staged-tmvc-guard.ts judges a staged ChangeSet with evaluatePaths; no other src/cli change.
+# DoD 4 (behaviour): all unit tests pass unchanged (the contract, perimeter, tmvc guard and kernel tests included);
+#        conformance suite passes with no golden file changed.
+# DoD 5 (law): gantry arch check OK (core imports node:path only); ARCH_BASELINE.json regenerated (core grows by
+#        law.ts, lib shrinks by the moved helpers), --check OK, byte-identical at its recorded commit.
+# DoD 6 (docs): docs/ARCHITECTURE.md names the law model in the core row; docs/DEVELOPMENT.md package table and a
+#        short "one law, one evaluator" rule; docs/CHANGELOG.md substrate note.
+# DoD 7 (gate): ./scripts/dev-validate-core.sh passes (dev-validate-core OK); git diff --name-only origin/main...HEAD
+#        lists only paths under contract.tmvc_roots.
+msn_id: MSN-0284
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows:
+  - dod_id: "1"
+    trace_quote: "DoD 1 MSN-0284 at ef2e0f8: packages/core/src/law.ts exports Law, emptyLaw, law, normalizeRepoRelativePath, isPathUnderRoot, unionSorted, tighten (TightenResult with violations roots_escape and roots_in_forbidden; an upper law with no roots accepts any lower roots; sets unioned, roots narrow, stricter tier, lower import switches win), classifyPath (transport, forbidden_zone, inside_roots, outside_roots in that order), isProtectedPath (perimeter glob dialect through path-glob), ChangeSet (staged, range, worktree, write) and evaluatePaths (one finding per path: forbidden_zone, outside_roots, protected_path); packages/core/src/index.ts exports it; the only node: specifier under packages/core/src is still node:path"
+    anchor: "1517"
+    status: PASS
+  - dod_id: "2"
+    trace_quote: "DoD 2 MSN-0284 at ef2e0f8: packages/core/tests/law.test.ts holds 5 tests: classification order and ./ normalization, tighten union/narrow/tier, escape and forbidden-root violations plus the empty-upper-roots case and unionSorted, protected globs, evaluatePaths over a staged and a range change set (a protected path outside the roots reports outside_roots); npm run test:packages: tests 12 pass 12 fail 0"
+    anchor: "1518"
+    status: PASS
+  - dod_id: "3"
+    trace_quote: "DoD 3 MSN-0284 at ef2e0f8: src/cli/lib/tmvc-path.ts re-exports normalizeRepoRelativePath and isPathUnderRoot from #core/law.js and classifyRepoRelativePath maps classifyPath with GOVERNANCE_TRANSPORT_PATHS as transport paths; src/cli/lib/contract/effective-scope.ts composes law(skill) -> tighten(policy forbidden_zones_add, banned_imports) -> tighten(contract) and maps roots_escape and roots_in_forbidden to the unchanged GXT_CONTRACT_SCOPE_ESCAPE messages and hints (unionSorted and the isPathUnderRoot import removed); src/cli/lib/perimeter.ts isPerimeterProtectedPath calls isProtectedPath(law(perimeter globs)); src/cli/lib/staged-tmvc-guard.ts judges a staged ChangeSet with evaluatePaths; git diff --name-only origin/main...HEAD -- src/cli lists exactly those four files"
+    anchor: "1519"
+    status: PASS
+  - dod_id: "4"
+    trace_quote: "DoD 4 MSN-0284 at ef2e0f8: unit tests 964 pass 964 fail 0 unchanged (contract, perimeter, tmvc guard, kernel scope tests included); conformance suite tests 85 pass 84 fail 0 skipped 1, git status shows 0 changed golden files"
+    anchor: "1520"
+    status: PASS
+  - dod_id: "5"
+    trace_quote: "DoD 5 MSN-0284 at ef2e0f8: gantry arch check over src/cli and every package: OK; ARCH_BASELINE.json commit bb0f136: core 9/532/80 (law.ts added), git 3/189/21, cage 15/3619/145, command 38/3081/116, lib 241/29486/1420, delivery 12/1804/30; --check OK; regenerated at bb0f136 byte-identical (cmp)"
+    anchor: "1521"
+    status: PASS
+  - dod_id: "6"
+    trace_quote: "DoD 6 MSN-0284 at ef2e0f8: docs/ARCHITECTURE.md names the law model in the core row and gains the section One law, one evaluator (ADR-0052 A2, A3); docs/DEVELOPMENT.md core row lists law and a rule that path decisions go through #core/law.js; docs/CHANGELOG.md substrate note Law model (ADR-0052 step 3a)"
+    anchor: "1522"
+    status: PASS
+  - dod_id: "7"
+    trace_quote: "DoD 7 MSN-0284 at ef2e0f8: ./scripts/dev-validate-core.sh origin/main HEAD exit 0: tests 964 pass 964 fail 0; conformance tests 85 pass 84 fail 0 skipped 1; dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN; git diff --name-only origin/main...HEAD lists only ARCH_BASELINE.json docs/ARCHITECTURE.md docs/CHANGELOG.md docs/DEVELOPMENT.md .gitagent/missions/MSN-0284.law-model.yaml packages/core/src/index.ts packages/core/src/law.ts packages/core/tests/law.test.ts src/cli/lib/contract/effective-scope.ts src/cli/lib/perimeter.ts src/cli/lib/staged-tmvc-guard.ts src/cli/lib/tmvc-path.ts , all under contract.tmvc_roots"
+    anchor: "1523"
+    status: PASS
+interrogation:
+  - finding_id: 1ae19e8f75ca
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0284.law-model.yaml,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, packages/core/,
+      src/cli/lib/contract/effective-scope.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/staged-tmvc-guard.ts, src/cli/lib/tmvc-path.ts. Four src/cli
+      modules change, each to call core: tmvc-path.ts (classification,
+      isPathUnderRoot, normalizeRepoRelativePath), contract/effective-scope.ts
+      (tighten), perimeter.ts (isProtectedPath), staged-tmvc-guard.ts
+      (evaluatePaths over a staged ChangeSet). No command, test or output
+      changes. .gitagent/foreman/, RULES.md, .gitagent/registry/, templates/ and
+      .github/workflows/ are forbidden. Paths outside any TARGET_ARCHITECTURE
+      layer in this mission are build configuration, the slim package build, law
+      files and docs; packages/cage/src is the cage layer this mission declares:
+      .gitagent/registry/ (YAML registries), ARCH_BASELINE.json and
+      scripts/arch-baseline.mjs (baseline and its generator, removed in step 3),
+      test/conformance/ (fixtures, golden files, node --test runner, no src/cli
+      import), scripts/dev-validate-core.sh and package.json (wire npm run
+      test:conformance into the allowlisted gate), docs/DEVELOPMENT.md and
+      docs/CHANGELOG.md."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept; the org policy floor (forbidden_zones_add,
+      banned_imports) is applied as the first tighten step over the skill law,
+      before the contract, with the same union semantics as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is migration step 2a of ADR-0052 (A2 one
+      law model, A3 one change-set evaluator, first consumers). No layer or rule
+      changes; the baseline moves only by the new core module
+      (forbid_import_layer, forbid_specifier_substring), so the gate keeps
+      parsing; no B2 rule kind yet. ARCH_BASELINE.json is regenerated because
+      the layer set changed (a Planner edit under B4): lib shrinks by the moved
+      modules, core and git start at their current counts. Operator direction
+      (2026-10-18, continue until everything is done): step 3 is split: 3a lands
+      the Law model and ports the path consumers; 3b ports the import rules
+      (arch check, contract scan) and the cage rules; 3c adds the B2 rule kinds,
+      the ratchet and the TARGET_ARCHITECTURE rewrite. tighten returns
+      violations instead of throwing so each caller keeps its GXT code and
+      message; the effective scope resolver maps roots_escape and
+      roots_in_forbidden to GXT_CONTRACT_SCOPE_ESCAPE exactly as before."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. No depends_on is declared; this mission has no
+      cross-repository dependency.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0284.law-model.yaml, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, docs/ARCHITECTURE.md, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, packages/core/,
+      src/cli/lib/contract/effective-scope.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/staged-tmvc-guard.ts, src/cli/lib/tmvc-path.ts. Four src/cli
+      modules change, each to call core: tmvc-path.ts (classification,
+      isPathUnderRoot, normalizeRepoRelativePath), contract/effective-scope.ts
+      (tighten), perimeter.ts (isProtectedPath), staged-tmvc-guard.ts
+      (evaluatePaths over a staged ChangeSet). No command, test or output
+      changes. .gitagent/foreman/, RULES.md, .gitagent/registry/, templates/ and
+      .github/workflows/ are forbidden. Operator direction (2026-10-18, continue
+      until everything is done): step 3 is split: 3a lands the Law model and
+      ports the path consumers; 3b ports the import rules (arch check, contract
+      scan) and the cage rules; 3c adds the B2 rule kinds, the ratchet and the
+      TARGET_ARCHITECTURE rewrite. tighten returns violations instead of
+      throwing so each caller keeps its GXT code and message; the effective
+      scope resolver maps roots_escape and roots_in_forbidden to
+      GXT_CONTRACT_SCOPE_ESCAPE exactly as before."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept; ADR-0045 is implemented by core tighten now: contract
+      roots must sit inside the skill roots (roots_escape ->
+      GXT_CONTRACT_SCOPE_ESCAPE), forbidden zones and banned imports are unioned
+      with skill and policy; the error codes, messages and hints are unchanged
+      and covered by the existing contract tests."
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: 7bdaecfd4d9be5ee7f8fd8fa120c106e957a7231e636b5ed90dde8819cef4dc0
+declared_paths:
+  - .gitagent/missions/MSN-0284.law-model.yaml
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/
+  - src/cli/lib/contract/effective-scope.ts
+  - src/cli/lib/perimeter.ts
+  - src/cli/lib/staged-tmvc-guard.ts
+  - src/cli/lib/tmvc-path.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0284.law-model.yaml
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/
+    - src/cli/lib/contract/effective-scope.ts
+    - src/cli/lib/perimeter.ts
+    - src/cli/lib/staged-tmvc-guard.ts
+    - src/cli/lib/tmvc-path.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/
+    - .github/workflows/
+    - templates/
+contract_sha256: 42ad401447008ac0b761f194300294f6f0c96502ed62cd479facc299d38861fd
