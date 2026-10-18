@@ -1,0 +1,185 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0288]. Executor must not run until the [MSN-0288] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 5a (A8, hooks call the CLI). gantry hook pre-commit, pre-push and
+# post-checkout carry the logic of the tracked .githooks scripts; the three hooks and their init templates become
+# one-line shims that exec gantry hook <name>. hook pre-push reads the ref lines git passes on stdin: a ref deletion
+# verifies nothing, a new branch compares with its upstream (then main, master, the parent commit), an update compares
+# remote..local; per range it runs verify --pre-push on changed missions, the perimeter advisory when governance files
+# change, gantry check when the manifest or skills change, and the specimen changed-code gate when src/cli changes.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): step 5a is hooks only; the CI and
+# template scripts (validate-gxt.sh, verify-pr-missions.sh, gxt-manifest-lib.mjs, gxt-resolve/pin-mission.sh) move
+# into the CLI in step 5b; cage-guard pre-push stays in the slim bundle until step 6. No trace rows: the evidence is
+# .gitagent/runs/MSN-0288.json written by gantry verify --record (RULES §3).
+#
+# DoD 1 (lib): src/cli/lib/git/git-hooks.ts exports ZERO_SHA, parsePrePushRefLines, fallbackPushBase and
+#        pushRangesFromRefLines (deletion lines contribute nothing; a zero remote sha falls back to upstream, main,
+#        master, then the parent; an update is remote..local).
+# DoD 2 (command): src/cli/commands/hook.ts runs pre-commit (pinned mission or a no-op; tmvc guard, strict from
+#        gxt.tmvcGuardStrict or GXT_TMVC_GUARD_STRICT=1; advisory contract check over staged sources), pre-push (per
+#        range: verify --pre-push on changed missions via runVerifyCore, perimeter advisory, gantry check, the
+#        specimen changed-code gate when scripts/check-changed-code.sh exists) and post-checkout (EXECUTOR_LOG.md from
+#        the template on a feature branch); src/cli/program-hook.ts registers gantry hook with the three subcommands;
+#        program.ts wires it; stdin is read only when it is not a TTY.
+# DoD 3 (hooks): .githooks/pre-commit, pre-push, post-checkout and templates/.githooks/* are byte-identical shims that
+#        cd to the repo root and exec node dist/cli/index.js hook <name> (or gantry on PATH); they stay executable.
+# DoD 4 (law): .gitagent/registry/commands.yaml gains hook, hook post-checkout, hook pre-commit, hook pre-push (since
+#        MSN-0288); gantry arch check (whole tree) passes after gantry arch check --ratchet --allow-raise.
+# DoD 5 (tests): src/cli/tests/hook.test.ts covers the parser, the ranges, hook pre-push with a deletion and with a
+#        range, hook pre-commit without a pin, hook post-checkout on a feature branch, on main and on a file checkout;
+#        src/cli/tests/git-hooks.test.ts asserts the shim delegates to gantry hook pre-commit and propagates its exit
+#        code; all unit tests pass; conformance passes with no golden changed.
+# DoD 6 (docs): docs/DEVELOPMENT.md hooks section, docs/guides/troubleshooting.md, docs/CHANGELOG.md.
+# DoD 7 (dogfood): this mission is verified by its committed run record; ./scripts/dev-validate-core.sh passes;
+#        git diff --name-only origin/main...HEAD lists only paths under contract.tmvc_roots.
+msn_id: MSN-0288
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. No plane call occurs.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0050 unchanged. gantry cage check and its report
+      are not touched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: 9643d0bc591b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0025. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0025 before
+      legislation proceeds.
+    operator_answer: Accept. The architecture rubric judge is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0025
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Verify output formats are unchanged; the hook prints
+      the same human lines the shell hook printed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: df57b7a5cbbf
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0288.gantry-hook.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0288.json,
+      .githooks/post-checkout, .githooks/pre-commit, .githooks/pre-push,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/guides/troubleshooting.md,
+      src/cli/commands/hook.ts, src/cli/lib/git/git-hooks.ts,
+      src/cli/program-hook.ts, src/cli/program.ts,
+      src/cli/tests/git-hooks.test.ts, src/cli/tests/hook.test.ts,
+      templates/.githooks/post-checkout, templates/.githooks/pre-commit,
+      templates/.githooks/pre-push. src/cli changes: commands/hook.ts and
+      program-hook.ts (new), program.ts (one registration line),
+      lib/git/git-hooks.ts (pre-push ref-line parsing and push ranges), two
+      tests. .gitagent/registry/commands.yaml gains hook, hook pre-commit, hook
+      pre-push, hook post-checkout (since MSN-0288). The three tracked hooks and
+      their templates become one-line shims. .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Paths
+      outside any TARGET_ARCHITECTURE layer in this mission are hooks, law and
+      docs: .githooks/* and templates/.githooks/* (shims),
+      .gitagent/registry/commands.yaml (four entries),
+      .gitagent/runs/MSN-0288.json (machine-written record), ARCH_BASELINE.json
+      (ratchet raise), EXECUTOR_LOG.md (narrative), docs/.
+      src/cli/commands/hook.ts is the command layer,
+      src/cli/lib/git/git-hooks.ts the lib layer, src/cli/program-hook.ts and
+      program.ts the delivery layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e2a17b81b981
+    kind: adr_conflict
+    question: Intent may relate to ADR-0035. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0035 before
+      legislation proceeds.
+    operator_answer: Accept. The performance judge is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0035
+interrogation_sha256: 9095923a33fe62df8e972fcc86a39eb302ae7a3b872a91abc1ff1615f47855ad
+declared_paths:
+  - .gitagent/missions/MSN-0288.gantry-hook.yaml
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0288.json
+  - .githooks/post-checkout
+  - .githooks/pre-commit
+  - .githooks/pre-push
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/guides/troubleshooting.md
+  - src/cli/commands/hook.ts
+  - src/cli/lib/git/git-hooks.ts
+  - src/cli/program-hook.ts
+  - src/cli/program.ts
+  - src/cli/tests/git-hooks.test.ts
+  - src/cli/tests/hook.test.ts
+  - templates/.githooks/post-checkout
+  - templates/.githooks/pre-commit
+  - templates/.githooks/pre-push
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0288.gantry-hook.yaml
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0288.json
+    - .githooks/post-checkout/
+    - .githooks/pre-commit/
+    - .githooks/pre-push/
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/guides/troubleshooting.md
+    - src/cli/commands/hook.ts
+    - src/cli/lib/git/git-hooks.ts
+    - src/cli/program-hook.ts
+    - src/cli/program.ts
+    - src/cli/tests/git-hooks.test.ts
+    - src/cli/tests/hook.test.ts
+    - templates/.githooks/post-checkout/
+    - templates/.githooks/pre-commit/
+    - templates/.githooks/pre-push/
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+contract_sha256: 967a1bde92e6f702af4408c6a98df6b16f66e528b98c0b4f059465c933314d58
