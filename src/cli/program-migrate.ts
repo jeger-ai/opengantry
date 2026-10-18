@@ -1,5 +1,12 @@
 import type { Command } from "commander";
-import { runMigrateArchitecturePointer, runMigrateConfig, runMigrateManifest, type MigrateOptions, type MigrateResult } from "./commands/migrate.js";
+import {
+  runMigrateArchitecturePointer,
+  runMigrateConfig,
+  runMigrateManifest,
+  runMigratePolicyPointer,
+  type MigrateOptions,
+  type MigrateResult,
+} from "./commands/migrate.js";
 
 const VERBS: { verb: string; description: string; run: (options: MigrateOptions) => MigrateResult }[] = [
   { verb: "manifest", description: ".gitagent/foreman/MANIFEST.json (3.x) becomes MANIFEST.yaml; the JSON form is removed", run: runMigrateManifest },
@@ -8,6 +15,11 @@ const VERBS: { verb: string; description: string; run: (options: MigrateOptions)
     verb: "architecture-pointer",
     description: ".gitagent/ARCHITECTURE.pointer.json (3.x) becomes ARCHITECTURE.pointer.yaml; the JSON form is removed",
     run: runMigrateArchitecturePointer,
+  },
+  {
+    verb: "policy-pointer",
+    description: ".gitagent/foreman/POLICY.pointer.json (3.x) becomes POLICY.pointer.yaml; the JSON form is removed",
+    run: runMigratePolicyPointer,
   },
 ];
 

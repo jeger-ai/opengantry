@@ -35,11 +35,11 @@ gantry release check --tag v3.2.6
 
 ## Org policy floor
 
-`.gitagent/foreman/POLICY.pointer.json` points at a signed org policy repository, and `gantry policy pull` caches the bundle under `.gitagent/history/policy/` (gitignored). The bundle is a **tighten-only floor**: sets are unioned, risk tiers take the maximum, and signature and telemetry tiers take the stricter value. It can never loosen local rules.
+`.gitagent/foreman/POLICY.pointer.yaml` points at a signed org policy repository, and `gantry policy pull` caches the bundle under `.gitagent/history/policy/` (gitignored). The bundle is a **tighten-only floor**: sets are unioned, risk tiers take the maximum, and signature and telemetry tiers take the stricter value. It can never loosen local rules.
 
 - `gantry policy pull` is the only network path. `gantry doctor` and `gantry verify` read the pointer and the cache only.
 - A missing pointer means no org policy. A present pointer with a missing cache, a hash mismatch or an invalid signer fails closed (`GXT_POLICY_*`).
-- Do not commit a filled `POLICY.pointer.json` until `gantry policy pull` has populated the cache.
+- Do not commit a filled `POLICY.pointer.yaml` until `gantry policy pull` has populated the cache.
 - MCP: `gxt_policy_status` reads the effective policy without fetching.
 
 ## Compliance ledger

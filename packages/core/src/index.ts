@@ -17,6 +17,7 @@ export * from "./law-file.js";
 export * from "./manifest-file.js";
 export * from "./config-file.js";
 export * from "./architecture-pointer-file.js";
+export * from "./policy-pointer-file.js";
 export * from "./strict-yaml.js";
 export * from "./path-glob.js";
 export * from "./posix-path.js";

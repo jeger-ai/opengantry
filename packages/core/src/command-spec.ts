@@ -87,6 +87,7 @@ export const COMMAND_SPEC: readonly CommandSpecEntry[] = [
   { path: "migrate architecture-pointer", since: "MSN-0303", note: "ADR-0047 §4 migrate path for .gitagent/ARCHITECTURE.pointer." },
   { path: "migrate config", since: "MSN-0302", note: "ADR-0047 §4 migrate path for .gitagent/config." },
   { path: "migrate manifest", since: "MSN-0301", note: "ADR-0047 §4 migrate path for the manifest." },
+  { path: "migrate policy-pointer", since: "MSN-0304", note: "ADR-0047 §4 migrate path for .gitagent/foreman/POLICY.pointer." },
   { path: "mission", since: "MSN-0010" },
   { path: "mission changed", since: "MSN-0207" },
   { path: "mission snapshot", since: "MSN-0010" },

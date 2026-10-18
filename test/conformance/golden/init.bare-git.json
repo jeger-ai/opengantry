@@ -25,7 +25,7 @@
     "?? .gitagent/config.yaml",
     "?? .gitagent/foreman/BYPASS.sha256",
     "?? .gitagent/foreman/MANIFEST.yaml",
-    "?? .gitagent/foreman/POLICY.pointer.json",
+    "?? .gitagent/foreman/POLICY.pointer.yaml",
     "?? .gitagent/foreman/SUBSTRATE.version.json",
     "?? .gitagent/missions/README.md",
     "?? .gitagent/planner/ARCHITECTURE-ACCESS.md",

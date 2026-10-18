@@ -1585,3 +1585,4 @@ MSN-0300 at 8dd0446: one vocabulary (ADR-0052 A9 part two): surgeon identifiers 
 MSN-0301 at 7bba71e: the manifest is YAML (dual-read, gantry migrate manifest, templates, docs; this repository migrated); evidence is .gitagent/runs/MSN-0301.json (RULES §3).
 MSN-0302 at 20b81cf: the config is YAML (one law-file reader in core, dual-read, gantry migrate config, template, docs; this repository migrated); evidence is .gitagent/runs/MSN-0302.json (RULES §3).
 MSN-0303 at 054f5b7: the architecture pointer is YAML (dual-read, gantry migrate architecture-pointer, one migrate engine, templates, docs; this repository migrated); evidence is .gitagent/runs/MSN-0303.json (RULES §3).
+MSN-0304 at 5aa24b2: the org policy pointer is YAML (dual-read, policy pull writes the form found, gantry migrate policy-pointer, template, perimeter lists, docs); evidence is .gitagent/runs/MSN-0304.json (RULES §3).

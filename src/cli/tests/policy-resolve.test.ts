@@ -11,7 +11,7 @@ import {
 } from "../lib/policy/policy-resolve.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import type { PolicyConfigFloor } from "#plane/policy-types.js";
-import { REL_POLICY_POINTER } from "../lib/constants.js";
+import { REL_POLICY_POINTER_JSON } from "../lib/constants.js";
 import { getRepoRoot } from "#git/git.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
@@ -81,7 +81,7 @@ test("pullOrgPolicy: caches only the bundle file", () => {
     path.join(consumer, ".gitagent/planner/ORG-POLICY.schema.yaml"),
   );
   fs.writeFileSync(
-    path.join(consumer, REL_POLICY_POINTER),
+    path.join(consumer, REL_POLICY_POINTER_JSON),
     `${JSON.stringify(
       {
         schema_version: "1.0.0",

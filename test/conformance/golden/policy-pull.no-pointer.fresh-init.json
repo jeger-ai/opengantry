@@ -10,7 +10,7 @@
   "stdout": {
     "status": "failed",
     "error_code": "GXT_POLICY_UNPINNED",
-    "message": "POLICY.pointer.json source.url is empty",
+    "message": ".gitagent/foreman/POLICY.pointer.yaml source.url is empty",
     "fix_hints": [],
     "exit_code": 1
   },

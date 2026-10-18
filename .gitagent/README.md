@@ -38,8 +38,8 @@ Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but n
 | [`teacher/MISSION.example.yaml`](planner/MISSION.example.yaml) | Primary structured mission example (YAML; `legislate` default) |
 | [`teacher/MISSION-ARCHITECT.md`](planner/MISSION-ARCHITECT.md) | IDE chat Planner-Assistant: fast-path + legislate-only handoff |
 | [`teacher/MISSION.schema.yaml`](planner/MISSION.schema.yaml) | Structured mission schema (YAML) for `gantry mission validate`; optional `depends_on` (ADR-0044) |
-| [`teacher/ORG-POLICY.schema.yaml`](planner/ORG-POLICY.schema.yaml) | Org policy bundle schema (ADR-0042); pin via `foreman/POLICY.pointer.json` |
-| [`foreman/POLICY.pointer.json`](../templates/.gitagent/foreman/POLICY.pointer.json) | Tracked pin of an org policy git source (template; perimeter-protected) |
+| [`teacher/ORG-POLICY.schema.yaml`](planner/ORG-POLICY.schema.yaml) | Org policy bundle schema (ADR-0042); pin via `foreman/POLICY.pointer.yaml` |
+| [`foreman/POLICY.pointer.yaml`](../templates/.gitagent/foreman/POLICY.pointer.yaml) | Tracked pin of an org policy git source (template; perimeter-protected) |
 | [`teacher/MISSION.template.md`](planner/MISSION.template.md) | Human-readable Markdown reference (verify accepts md+yaml) |
 | [`teacher/commit-template.md`](planner/commit-template.md) | Greppable commit receipt with `[MSN-XXXX]` |
 | [`teacher/EXECUTOR_LOG.template.md`](planner/EXECUTOR_LOG.template.md) | Empty scaffold for repo-root `EXECUTOR_LOG.md` (used by `.githooks/post-checkout`) |

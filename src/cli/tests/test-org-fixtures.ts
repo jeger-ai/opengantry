@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { REL_POLICY_CACHE, REL_POLICY_POINTER } from "../lib/constants.js";
+import { REL_POLICY_CACHE, REL_POLICY_POINTER_JSON } from "../lib/constants.js";
 import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "../lib/receipt-attribution.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
 import type { LedgerEntry, ReceiptLedgerPayload } from "#plane/ledger-entry.js";
@@ -98,7 +98,7 @@ export function writeOrgPolicyRepo(
     pinned_commit: pinnedCommit,
     bundle_sha256: bundleSha,
   };
-  const pointerPath = path.join(dest, REL_POLICY_POINTER);
+  const pointerPath = path.join(dest, REL_POLICY_POINTER_JSON);
   fs.writeFileSync(pointerPath, `${JSON.stringify(pointer, null, 2)}\n`, "utf8");
   return { pointerPath, cachePath, bundleSha, pinnedCommit };
 }
