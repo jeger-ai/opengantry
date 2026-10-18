@@ -1,0 +1,349 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0296]. Executor must not run until the [MSN-0296] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 A6, one schema library. The mission file, the org policy bundle and the KPI report are
+# validated with zod schemas in packages/core/src/schemas (mission-schema, org-policy-schema, kpi-report-schema,
+# formatSchemaIssues keeping the /path: message shape); the three validators use them; ajv and ajv-formats leave
+# package.json, the lockfile and the dependency registry; the plane ajv-loader is deleted; MISSION.schema.yaml,
+# ORG-POLICY.schema.yaml and KPI-REPORT.schema.yaml are generated from the zod schemas by scripts/gen-schemas.mjs
+# (part of npm run build after the prune, before gen:dogfood, which now mirrors KPI-REPORT too) for editors and docs;
+# the CLI no longer reads them at runtime.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): A6 as decided, with the schema files
+# generated rather than deleted because editors and docs link them. No trace rows: the evidence is
+# .gitagent/runs/MSN-0296.json written by gantry verify --record (RULES §3).
+#
+# DoD 1 (core): packages/core/src/schemas/issues.ts (formatSchemaIssues), mission-schema.ts (strict objects, the
+#        msn_id-or-msnId, interrogation_sha256 and contract_sha256 refinements, defaults and descriptions),
+#        org-policy-schema.ts, kpi-report-schema.ts (ISO date-time, integer exit code, number-or-boolean metrics) and
+#        index.ts; the core index exports them; packages/core/tests/schemas.test.ts passes; core imports only zod.
+# DoD 2 (validators): src/cli/lib/missions/validator.ts, src/cli/lib/kpi-engine.ts and packages/plane/src/
+#        policy-bundle.ts call safeParse and format issues as /path: message; the error prefixes are unchanged
+#        (GXT_MISSION_SCHEMA_INVALID ... schema validation failed, gantry kpi ... schema validation failed, org policy
+#        bundle: ...); packages/plane/src/ajv-loader.ts is gone; no module imports ajv.
+# DoD 3 (generation, dependencies): scripts/gen-schemas.mjs writes the three files under templates/.gitagent/planner
+#        from the built core schemas with a generated-file header; package.json build runs gen:version, gen:catalog,
+#        tsc -b, prune-dist, gen:schemas, gen:dogfood, build:cage; gen-dogfood and assert-dogfood-sync mirror and check
+#        KPI-REPORT.schema.yaml too; package.json and package-lock.json have no ajv or ajv-formats;
+#        .gitagent/registry/dependencies.yaml matches (DEPENDENCIES rule); gen-schemas.mjs is a repo-only script.
+# DoD 4 (behaviour): all unit tests pass (the packed-init test copies zod); conformance passes with no golden changed;
+#        gantry arch check passes after gantry arch check --ratchet --allow-raise.
+# DoD 5 (docs, dogfood): docs/ARCHITECTURE.md core row and docs/CHANGELOG.md; this mission is verified by its committed
+#        run record; ./scripts/dev-validate-core.sh passes; git diff --name-only origin/main...HEAD lists only paths
+#        under contract.tmvc_roots.
+msn_id: MSN-0296
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged; this mission
+      moves code, it calls no plane.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept. The org policy bundle keeps its shape and rules; its
+      validation moves from Ajv over ORG-POLICY.schema.yaml to the zod schema in
+      core, same required keys and enums; the producers/kpi_thresholds
+      cross-check stays in policy-bundle.ts.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission is ADR-0052 A6 (one schema library): zod
+      schemas in core replace ajv; ARCH_BASELINE.json is raised for core with
+      --ratchet --allow-raise. Operator direction (2026-10-18, continue until
+      everything is done): ADR-0052 A6 as decided, with one adjustment: the
+      YAML-encoded JSON Schema files are not deleted but generated from zod,
+      because adopters' editors and the docs link them; the CLI no longer reads
+      them. Validation outcomes are unchanged (same strictness, same required
+      keys, same cross-field rules); only the message wording after the path
+      differs. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0296.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 75dcfcca9b3f
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0296.one-schema-library.yaml,
+      .gitagent/planner/KPI-REPORT.schema.yaml,
+      .gitagent/planner/MISSION.schema.yaml,
+      .gitagent/planner/ORG-POLICY.schema.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/runs/MSN-0296.json,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, package-lock.json, package.json,
+      packages/core/src/index.ts, packages/core/src/schemas/index.ts,
+      packages/core/src/schemas/issues.ts,
+      packages/core/src/schemas/kpi-report-schema.ts,
+      packages/core/src/schemas/mission-schema.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/core/tests/schemas.test.ts, packages/plane/src/ajv-loader.ts,
+      packages/plane/src/policy-bundle.ts, scripts/assert-dogfood-sync.sh,
+      scripts/gen-dogfood.mjs, scripts/gen-schemas.mjs,
+      scripts/lib/asset-catalog-static.mjs, src/cli/lib/kpi-engine.ts,
+      src/cli/lib/missions/validator.ts, src/cli/tests/init.test.ts,
+      templates/.gitagent/planner/KPI-REPORT.schema.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml. packages/core gains
+      src/schemas/{issues,mission-schema,org-policy-schema,kpi-report-schema,in\
+      dex}.ts (zod; pure) and a core test; src/cli/lib/missions/validator.ts,
+      src/cli/lib/kpi-engine.ts and packages/plane/src/policy-bundle.ts validate
+      with safeParse and keep the /path: message detail;
+      packages/plane/src/ajv-loader.ts is deleted; scripts/gen-schemas.mjs
+      (repo-only) writes the three YAML JSON-Schema files under
+      templates/.gitagent/planner from the zod schemas and gen-dogfood mirrors
+      them (KPI-REPORT added to the mirror list and to assert-dogfood-sync);
+      package.json: no ajv or ajv-formats, build = gen:version, gen:catalog, tsc
+      -b, prune, gen:schemas, gen:dogfood, build:cage; package-lock.json
+      regenerated; the dependency registry drops ajv and ajv-formats; the
+      packed-init test copies zod; docs. The contract allows dynamic specifiers
+      because gen-schemas.mjs loads the core build by path, like the other repo
+      scripts. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden (.gitagent/registry/dependencies.yaml is
+      a root). Paths outside any TARGET_ARCHITECTURE layer in this mission are
+      the generated schema files and their mirrors, scripts, package.json and
+      the lockfile, the registry, law, the record and docs; the schemas are the
+      core layer, the validators the lib and plane layers."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. Cross-repository dependency checks are unchanged; the
+      aggregated ledger entry is appended by the lib facade with the same
+      payload.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0296.one-schema-library.yaml,
+      .gitagent/planner/KPI-REPORT.schema.yaml,
+      .gitagent/planner/MISSION.schema.yaml,
+      .gitagent/planner/ORG-POLICY.schema.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/runs/MSN-0296.json,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, package-lock.json, package.json,
+      packages/core/src/index.ts, packages/core/src/schemas/index.ts,
+      packages/core/src/schemas/issues.ts,
+      packages/core/src/schemas/kpi-report-schema.ts,
+      packages/core/src/schemas/mission-schema.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/core/tests/schemas.test.ts, packages/plane/src/ajv-loader.ts,
+      packages/plane/src/policy-bundle.ts, scripts/assert-dogfood-sync.sh,
+      scripts/gen-dogfood.mjs, scripts/gen-schemas.mjs,
+      scripts/lib/asset-catalog-static.mjs, src/cli/lib/kpi-engine.ts,
+      src/cli/lib/missions/validator.ts, src/cli/tests/init.test.ts,
+      templates/.gitagent/planner/KPI-REPORT.schema.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml. packages/core gains
+      src/schemas/{issues,mission-schema,org-policy-schema,kpi-report-schema,in\
+      dex}.ts (zod; pure) and a core test; src/cli/lib/missions/validator.ts,
+      src/cli/lib/kpi-engine.ts and packages/plane/src/policy-bundle.ts validate
+      with safeParse and keep the /path: message detail;
+      packages/plane/src/ajv-loader.ts is deleted; scripts/gen-schemas.mjs
+      (repo-only) writes the three YAML JSON-Schema files under
+      templates/.gitagent/planner from the zod schemas and gen-dogfood mirrors
+      them (KPI-REPORT added to the mirror list and to assert-dogfood-sync);
+      package.json: no ajv or ajv-formats, build = gen:version, gen:catalog, tsc
+      -b, prune, gen:schemas, gen:dogfood, build:cage; package-lock.json
+      regenerated; the dependency registry drops ajv and ajv-formats; the
+      packed-init test copies zod; docs. The contract allows dynamic specifiers
+      because gen-schemas.mjs loads the core build by path, like the other repo
+      scripts. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden (.gitagent/registry/dependencies.yaml is
+      a root). Operator direction (2026-10-18, continue until everything is
+      done): ADR-0052 A6 as decided, with one adjustment: the YAML-encoded JSON
+      Schema files are not deleted but generated from zod, because adopters'
+      editors and the docs link them; the CLI no longer reads them. Validation
+      outcomes are unchanged (same strictness, same required keys, same
+      cross-field rules); only the message wording after the path differs. The
+      mission has no trace rows: its evidence is .gitagent/runs/MSN-0296.json
+      written by gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. Humans still write YAML missions and policy bundles;
+      the schema files stay YAML-encoded JSON Schema, now generated; the CLI
+      validates with zod and writes nothing new.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+  - finding_id: f6fa1161fdc5
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0296.one-schema-library.yaml,
+      .gitagent/planner/KPI-REPORT.schema.yaml,
+      .gitagent/planner/MISSION.schema.yaml,
+      .gitagent/planner/ORG-POLICY.schema.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/runs/MSN-0296.json,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, package-lock.json, package.json,
+      packages/core/src/index.ts, packages/core/src/schemas/index.ts,
+      packages/core/src/schemas/issues.ts,
+      packages/core/src/schemas/kpi-report-schema.ts,
+      packages/core/src/schemas/mission-schema.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/core/tests/schemas.test.ts, packages/plane/src/ajv-loader.ts,
+      packages/plane/src/policy-bundle.ts, scripts/assert-dogfood-sync.sh,
+      scripts/gen-dogfood.mjs, scripts/gen-schemas.mjs,
+      scripts/lib/asset-catalog-static.mjs, src/cli/lib/kpi-engine.ts,
+      src/cli/lib/missions/validator.ts, src/cli/tests/init.test.ts,
+      templates/.gitagent/planner/KPI-REPORT.schema.yaml,
+      templates/.gitagent/planner/MISSION.schema.yaml,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml. packages/core gains
+      src/schemas/{issues,mission-schema,org-policy-schema,kpi-report-schema,in\
+      dex}.ts (zod; pure) and a core test; src/cli/lib/missions/validator.ts,
+      src/cli/lib/kpi-engine.ts and packages/plane/src/policy-bundle.ts validate
+      with safeParse and keep the /path: message detail;
+      packages/plane/src/ajv-loader.ts is deleted; scripts/gen-schemas.mjs
+      (repo-only) writes the three YAML JSON-Schema files under
+      templates/.gitagent/planner from the zod schemas and gen-dogfood mirrors
+      them (KPI-REPORT added to the mirror list and to assert-dogfood-sync);
+      package.json: no ajv or ajv-formats, build = gen:version, gen:catalog, tsc
+      -b, prune, gen:schemas, gen:dogfood, build:cage; package-lock.json
+      regenerated; the dependency registry drops ajv and ajv-formats; the
+      packed-init test copies zod; docs. The contract allows dynamic specifiers
+      because gen-schemas.mjs loads the core build by path, like the other repo
+      scripts. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden (.gitagent/registry/dependencies.yaml is
+      a root). Paths outside any TARGET_ARCHITECTURE layer in this mission are
+      the generated schema files and their mirrors, scripts, package.json and
+      the lockfile, the registry, law, the record and docs; the schemas are the
+      core layer, the validators the lib and plane layers."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept. The gate adapter ids move to core unchanged; the gate
+      stays ./scripts/dev-validate-core.sh (allowlisted, exit code only).
+    adr_refs:
+      - ADR-0052
+      - ADR-0041
+interrogation_sha256: f941b8279c54b46b0cf002d9118a0a8370a4b0a39e198030c3136f23dea82c67
+declared_paths:
+  - .gitagent/missions/MSN-0296.one-schema-library.yaml
+  - .gitagent/planner/KPI-REPORT.schema.yaml
+  - .gitagent/planner/MISSION.schema.yaml
+  - .gitagent/planner/ORG-POLICY.schema.yaml
+  - .gitagent/registry/dependencies.yaml
+  - .gitagent/runs/MSN-0296.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - package-lock.json
+  - package.json
+  - packages/core/src/index.ts
+  - packages/core/src/schemas/index.ts
+  - packages/core/src/schemas/issues.ts
+  - packages/core/src/schemas/kpi-report-schema.ts
+  - packages/core/src/schemas/mission-schema.ts
+  - packages/core/src/schemas/org-policy-schema.ts
+  - packages/core/tests/schemas.test.ts
+  - packages/plane/src/ajv-loader.ts
+  - packages/plane/src/policy-bundle.ts
+  - scripts/assert-dogfood-sync.sh
+  - scripts/gen-dogfood.mjs
+  - scripts/gen-schemas.mjs
+  - scripts/lib/asset-catalog-static.mjs
+  - src/cli/lib/kpi-engine.ts
+  - src/cli/lib/missions/validator.ts
+  - src/cli/tests/init.test.ts
+  - templates/.gitagent/planner/KPI-REPORT.schema.yaml
+  - templates/.gitagent/planner/MISSION.schema.yaml
+  - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0296.one-schema-library.yaml
+    - .gitagent/planner/KPI-REPORT.schema.yaml
+    - .gitagent/planner/MISSION.schema.yaml
+    - .gitagent/planner/ORG-POLICY.schema.yaml
+    - .gitagent/registry/dependencies.yaml
+    - .gitagent/runs/MSN-0296.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - package-lock.json
+    - package.json
+    - packages/core/src/index.ts
+    - packages/core/src/schemas/index.ts
+    - packages/core/src/schemas/issues.ts
+    - packages/core/src/schemas/kpi-report-schema.ts
+    - packages/core/src/schemas/mission-schema.ts
+    - packages/core/src/schemas/org-policy-schema.ts
+    - packages/core/tests/schemas.test.ts
+    - packages/plane/src/ajv-loader.ts
+    - packages/plane/src/policy-bundle.ts
+    - scripts/assert-dogfood-sync.sh
+    - scripts/gen-dogfood.mjs
+    - scripts/gen-schemas.mjs
+    - scripts/lib/asset-catalog-static.mjs
+    - src/cli/lib/kpi-engine.ts
+    - src/cli/lib/missions/validator.ts
+    - src/cli/tests/init.test.ts
+    - templates/.gitagent/planner/KPI-REPORT.schema.yaml
+    - templates/.gitagent/planner/MISSION.schema.yaml
+    - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: dcc398eb30233c10964d80c17781565eca3ba4415252ac35a6badcdc19ebbfad
