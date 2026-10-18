@@ -1,0 +1,195 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0290]. Executor must not run until the [MSN-0290] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 migration step 5b-ii (A8, runtime helpers call the CLI). scripts/gxt-resolve-mission.sh,
+# gxt-pin-mission.sh and the deprecated gxt-cursor-env.sh are deleted with their templates; gantry pin and gantry
+# runtime env do their work (explicit path, GANTRY_MISSION, GXT_MISSION_FILE, the pin file, legacy ACTIVE_MISSION
+# files); scripts/gxt-runtime-env.sh is a thin wrapper that evals gantry runtime env and stops on failure whether
+# sourced or run; the Cursor session hook reads gantry runtime env --json and reports no pin when it fails; the init
+# catalog no longer ships the three scripts, so the init goldens are re-recorded; the duplicate rule's allowed list
+# drops three pairs; CLI hints, the MCP tool description, docs, rules and the PR template say gantry pin.
+#
+# Operator direction (2026-10-18, "merge and continue until everything is done"): gxt-runtime-env.sh and
+# gxt-shell-agent.sh stay because a sourced shell helper cannot be a CLI call. No trace rows: the evidence is
+# .gitagent/runs/MSN-0290.json written by gantry verify --record (RULES §3).
+#
+# DoD 1 (removal): scripts/gxt-resolve-mission.sh, scripts/gxt-pin-mission.sh, scripts/gxt-cursor-env.sh and their
+#        templates/scripts copies are deleted; scripts/lib/asset-catalog-static.mjs and templates/integrations/
+#        asset-catalog.json no longer list them; TARGET_ARCHITECTURE.yaml's duplicate rule drops the three pairs;
+#        no file in the repository names them (goldens, archive and logs excepted).
+# DoD 2 (wrapper): templates/scripts/gxt-runtime-env.sh (synced to scripts/) resolves gantry (PATH, then dist),
+#        runs gantry runtime env with an optional --mission and evals its output; on failure it prints the pin hint
+#        and returns 1 when sourced or exits 1 when run; sourced with a real mission it exports GXT_MISSION_FILE and
+#        GXT_SKILL_KEY.
+# DoD 3 (session hook): .cursor/hooks/gxt-session-start.sh and templates/.cursor/hooks/gxt-session-start.sh are
+#        identical; without a pin the hook emits the "No active mission pinned" context; with GANTRY_MISSION or a pin
+#        it emits env plus the mission context from gantry runtime env --json.
+# DoD 4 (CLI strings): context-request.ts, audience-output.ts, start-orchestration.ts and the gxt_resolve_mission
+#        description in mcp-tools-register.ts say gantry pin; gantry arch check (whole tree) passes.
+# DoD 5 (docs, law): docs/DEVELOPMENT.md, docs/guides/agents.md, docs/reference/mcp-tools.md,
+#        docs/reference/session-variables.md, .gitagent/planner/MISSION-ARCHITECT.md and its template, the Cursor
+#        rules and their template, templates/.gitagent/planner/AGENT-SETUP.md, .github/PULL_REQUEST_TEMPLATE.md,
+#        docs/CHANGELOG.md.
+# DoD 6 (tests, dogfood): all unit tests pass; conformance passes with the two init goldens re-recorded and no other
+#        golden changed; this mission is verified by its committed run record; ./scripts/dev-validate-core.sh passes;
+#        git diff --name-only origin/main...HEAD lists only paths under contract.tmvc_roots.
+msn_id: MSN-0290
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .cursor/hooks/gxt-session-start.sh,
+      .cursor/rules/opengantry-gxt-substrate.mdc,
+      .gitagent/missions/MSN-0290.runtime-helpers.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md, .gitagent/runs/MSN-0290.json,
+      .github/PULL_REQUEST_TEMPLATE.md, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      TARGET_ARCHITECTURE.yaml, docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      docs/guides/agents.md, docs/reference/mcp-tools.md,
+      docs/reference/session-variables.md, scripts/gxt-cursor-env.sh,
+      scripts/gxt-pin-mission.sh, scripts/gxt-resolve-mission.sh,
+      scripts/gxt-runtime-env.sh, scripts/lib/asset-catalog-static.mjs,
+      src/cli/commands/context-request.ts, src/cli/lib/audience-output.ts,
+      src/cli/lib/mcp/mcp-tools-register.ts, src/cli/lib/start-orchestration.ts,
+      templates/.cursor/hooks/gxt-session-start.sh,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/integrations/asset-catalog.json,
+      templates/scripts/gxt-cursor-env.sh, templates/scripts/gxt-pin-mission.sh,
+      templates/scripts/gxt-resolve-mission.sh,
+      templates/scripts/gxt-runtime-env.sh,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json. src/cli changes are
+      strings only: the context-request hint, the platform audience steps, the
+      start-orchestration step and the gxt_resolve_mission MCP description now
+      say gantry pin. Deleted: scripts/gxt-resolve-mission.sh,
+      gxt-pin-mission.sh, gxt-cursor-env.sh and their templates/scripts copies.
+      templates/scripts/gxt-runtime-env.sh (synced to scripts/) wraps gantry
+      runtime env; .cursor/hooks/gxt-session-start.sh (the catalog source) and
+      its template read gantry runtime env --json.
+      scripts/lib/asset-catalog-static.mjs and
+      templates/integrations/asset-catalog.json drop the three scripts; the init
+      goldens are re-recorded. TARGET_ARCHITECTURE.yaml's duplicate rule drops
+      three pairs. .gitagent/planner/MISSION-ARCHITECT.md and its template, the
+      Cursor rules, AGENT-SETUP.md, the PR template and the docs say gantry pin.
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Operator direction (2026-10-18, continue until everything is
+      done): ADR-0052 A8 as decided; this is step 5b-ii (runtime helpers).
+      gantry pin and gantry runtime env already resolve the mission in the order
+      the shell script used (explicit path, GANTRY_MISSION, GXT_MISSION_FILE,
+      the pin file, legacy ACTIVE_MISSION files), so the scripts are duplicates.
+      gxt-runtime-env.sh and gxt-shell-agent.sh stay because a sourced shell
+      helper cannot be a CLI call. The mission has no trace rows: its evidence
+      is .gitagent/runs/MSN-0290.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment is unchanged; gxt_resolve_mission
+      keeps its behaviour and only its description changes (it no longer cites a
+      shell script).
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No file format changes; the pin file
+      .gitagent/missions/.active-mission stays a one-line path written by gantry
+      pin.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 781250b9e3c21abc40c57a3b13071356450ee2801deac8a0b031b32adddab557
+declared_paths:
+  - .cursor/hooks/gxt-session-start.sh
+  - .cursor/rules/opengantry-gxt-substrate.mdc
+  - .gitagent/missions/MSN-0290.runtime-helpers.yaml
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/runs/MSN-0290.json
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/guides/agents.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/session-variables.md
+  - scripts/gxt-cursor-env.sh
+  - scripts/gxt-pin-mission.sh
+  - scripts/gxt-resolve-mission.sh
+  - scripts/gxt-runtime-env.sh
+  - scripts/lib/asset-catalog-static.mjs
+  - src/cli/commands/context-request.ts
+  - src/cli/lib/audience-output.ts
+  - src/cli/lib/mcp/mcp-tools-register.ts
+  - src/cli/lib/start-orchestration.ts
+  - templates/.cursor/hooks/gxt-session-start.sh
+  - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+  - templates/.gitagent/planner/AGENT-SETUP.md
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - templates/integrations/asset-catalog.json
+  - templates/scripts/gxt-cursor-env.sh
+  - templates/scripts/gxt-pin-mission.sh
+  - templates/scripts/gxt-resolve-mission.sh
+  - templates/scripts/gxt-runtime-env.sh
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/init.dry-run.bare-git.json
+contract:
+  tmvc_roots:
+    - .cursor/hooks/gxt-session-start.sh
+    - .cursor/rules/opengantry-gxt-substrate.mdc
+    - .gitagent/missions/MSN-0290.runtime-helpers.yaml
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - .gitagent/runs/MSN-0290.json
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/guides/agents.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/session-variables.md
+    - scripts/gxt-cursor-env.sh
+    - scripts/gxt-pin-mission.sh
+    - scripts/gxt-resolve-mission.sh
+    - scripts/gxt-runtime-env.sh
+    - scripts/lib/asset-catalog-static.mjs
+    - src/cli/commands/context-request.ts
+    - src/cli/lib/audience-output.ts
+    - src/cli/lib/mcp/mcp-tools-register.ts
+    - src/cli/lib/start-orchestration.ts
+    - templates/.cursor/hooks/gxt-session-start.sh
+    - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+    - templates/.gitagent/planner/AGENT-SETUP.md
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+    - templates/integrations/asset-catalog.json
+    - templates/scripts/gxt-cursor-env.sh
+    - templates/scripts/gxt-pin-mission.sh
+    - templates/scripts/gxt-resolve-mission.sh
+    - templates/scripts/gxt-runtime-env.sh
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/init.dry-run.bare-git.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+contract_sha256: 85c4a89b92fbf5cfa70818380c9542dc4797f2c6d96f5f8d1b7d3006003ea79b

@@ -28,7 +28,7 @@ order: 1
 
 | Tool | Does |
 |------|------|
-| `gxt_resolve_mission` | Resolves the active mission in the same order as `gxt-resolve-mission.sh` |
+| `gxt_resolve_mission` | Resolves the active mission (explicit path, `GANTRY_MISSION`, `GXT_MISSION_FILE`, the `gantry pin` file, legacy `ACTIVE_MISSION` files) |
 | `gxt_runtime_env` | Returns the `GXT_*` environment for a mission ([Session variables](session-variables.md)) |
 | `gxt_runtime_exec` | Runs an executor command with the mission environment and forbidden-zone enforcement |
 | `gxt_last_error` | Reads the machine-oriented remediation from `GXT_LAST_ERROR_FILE` |

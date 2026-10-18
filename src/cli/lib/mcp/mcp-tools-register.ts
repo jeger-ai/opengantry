@@ -248,7 +248,7 @@ function registerGxtRuntimeExecTool(server: McpServer): void {
 function registerGxtResolveMissionTool(server: McpServer): void {
   server.tool(
     "gxt_resolve_mission",
-    "Resolve active mission using the same order as gxt-resolve-mission.sh.",
+    "Resolve the active mission: an explicit path, GANTRY_MISSION, GXT_MISSION_FILE, the gantry pin file, then the legacy ACTIVE_MISSION files.",
     {
       mission_file_path: z.string().optional().describe("Optional explicit mission path override"),
     },
