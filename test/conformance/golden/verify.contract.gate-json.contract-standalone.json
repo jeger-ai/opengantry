@@ -41,8 +41,20 @@
         "name": "no-console",
         "why": "no debug output in src",
         "violations": []
+      },
+      {
+        "name": "no-console",
+        "why": "no debug output in src",
+        "violations": []
       }
     ],
+    "inherited": {
+      "path": "verify.yaml",
+      "sha256": "<SHA256>"
+    },
+    "imports": [],
+    "layers": [],
+    "skipped": [],
     "checks": [
       {
         "name": "unit",
