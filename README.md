@@ -113,6 +113,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | [The cage](docs/cage/index.md) | `cage check`, `cage watch` and the session cage |
 | [Get started](docs/start/how-it-works.md) | How it works, install, first mission |
 | [Guides](docs/guides/agents.md) | Agents, CI, content, regulated teams, org control plane, troubleshooting |
+| [Verify without missions](docs/guides/verify-contract.md) | `gantry verify --contract`: one `verify.yaml` decides whether a change may land |
 | [Concepts](docs/concepts/missions.md) | Missions, scope, perimeters, verify, trace evidence, enforcement boundary |
 | [Reference](docs/reference/mcp-tools.md) | MCP tools, session variables, metrics, break-glass, [release notes](docs/reference/release-notes.md) |
 | [Manifesto](docs/MANIFESTO.md) | Why: the post-PR software factory, who owns which law, and the ladder from cage to verify to the org plane |
