@@ -15,6 +15,7 @@ import type {
   GateFailure,
   InterrogationFailure,
   KpiFailure,
+  RunRecordFailure,
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
@@ -148,6 +149,15 @@ function normalizeKpiPhase(
   };
 }
 
+function normalizeRunRecordPhase(base: NormalizedVerifyFailureBase, failure: RunRecordFailure): NormalizedVerifyFailure {
+  return {
+    ...base,
+    headline: "verify: RUN RECORD FAILED",
+    detail_lines: [failure.recordReason, ...(failure.stalePaths ?? []).map((p) => `  stale: ${p}`)],
+    failures: [failure.recordReason],
+  };
+}
+
 function normalizeInterrogationPhase(
   base: NormalizedVerifyFailureBase,
   failure: InterrogationFailure,
@@ -234,6 +244,8 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       return normalizeTracePendingPhase(base, failure);
     case "trace":
       return normalizeTracePhase(base, failure);
+    case "run_record":
+      return normalizeRunRecordPhase(base, failure);
     case "interrogation":
       return normalizeInterrogationPhase(base, failure);
     case "policy":

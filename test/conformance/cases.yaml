@@ -64,6 +64,12 @@ cases:
   - { id: verify.mission-fail-gate, fixture: mission-fail-gate, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: verify.ci.mission-stale, fixture: mission-stale, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --ci, --json] }
   - { id: verify.no-mission.fresh-init, fixture: fresh-init, args: [verify, --json] }
+  - { id: verify.mission-record, fixture: mission-record, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: verify.pre-push.mission-record, fixture: mission-record, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --pre-push, --json] }
+  - { id: verify.mission-record-stale, fixture: mission-record-stale, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: verify.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
+  - { id: verify.pre-push.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --pre-push, --json] }
+  - { id: verify.record.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --record, --json], record_tree: true }
   - { id: attest.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json], env: { GANTRY_ORG_ID: org-fixture, GANTRY_ORG_PEPPER: fixture-pepper-0000 } }
   - { id: attest.no-org.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: receipt-list.mission-pass, fixture: mission-pass, args: [receipt, list, --json] }

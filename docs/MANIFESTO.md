@@ -61,7 +61,7 @@ Some guarantees hold at every step and every level, whatever a repository config
 - **Built-in protections are a floor.** Nothing in the working tree can remove or weaken the cage's built-in rules, and project rules can only add.
 - **Lower levels only tighten.** No mission, skill or repository can grant what a level above it withholds.
 - **Law is written outside the agent loop.** A Planner commits and stamps the scope in Git before work starts, and an agent cannot widen its own scope mid-task.
-- **The executor never verifies itself.** The agent that runs the gate is not the one that declares it passed, and every pass cites evidence from the executor log.
+- **The executor never verifies itself.** The agent that runs the gate is not the one that declares it passed, and every pass binds to a run record the CLI wrote about a named tree, not to a claim the agent typed.
 - **The plane sees digests, not code.** Each repository stays its own enforcer. The org plane receives hashes and keyed digests, never source, gate output or plain identities.
 
 ## The crucible: autonomous assembly

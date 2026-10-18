@@ -68,7 +68,7 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 3. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
 4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml` (or `scripts/gxt-pin-mission.sh …`). When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
 5. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
-6. **Trace** — append PASS quotes to repo-root `EXECUTOR_LOG.md` (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
+6. **Record** — commit the work, then `gantry verify --mission .gitagent/missions/<file>.yaml --record` on the clean tree and commit `.gitagent/runs/MSN-NNNN.json` (RULES §3). Missions that still carry `trace_rows` append PASS quotes to repo-root `EXECUTOR_LOG.md` instead (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
 7. **Verify** — `gantry verify` (pinned) or `gantry verify --mission .gitagent/missions/<file>.yaml`. Optional: `gantry verify --receipt` then `gantry receipt show`.
 
 ## Cursor session (this repo)
@@ -112,7 +112,9 @@ scripts/gxt-pin-mission.sh .gitagent/missions/MSN-NNNN.<slug>.yaml
 
 source scripts/gxt-runtime-env.sh   # integrated terminal (same pinned mission)
 # … Cursor Agent work in src/cli/ or legislated scope …
-# Append gate evidence to EXECUTOR_LOG.md
+git commit -am "[MSN-NNNN] …"            # clean tree first
+gantry verify --record   # writes .gitagent/runs/MSN-NNNN.json after a full pass
+git add .gitagent/runs && git commit -m "[MSN-NNNN] Run record"
 
 gantry verify            # uses pin; prints [gantry] Using pinned mission: …
 gantry verify --receipt  # optional attestation receipt (gantry receipt show)
@@ -194,7 +196,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Banned imports | mission gate / surgeon | `gantry check-imports` |
 | KPI thresholds | verify (optional) | `gantry scan` + mission `kpi_gate` |
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
-| Trace mapping | verify | Verbatim quotes from `EXECUTOR_LOG.md` for mission PASS rows |
+| Run record | verify | `.gitagent/runs/<MSN>.json` written by `gantry verify --record`; missions with `trace_rows` use verbatim quotes from `EXECUTOR_LOG.md` instead |
 
 ### Feature-mission adapter gates (ADR-0041)
 

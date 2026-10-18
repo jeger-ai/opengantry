@@ -127,7 +127,7 @@ test("git-proof: accepts Planner stamp when newer [MSN] commit is non-Planner", 
 });
 
 
-test("git-proof: MISSION_FILE_NOT_MODIFIED_BY_PLANNER", () => {
+test("git-proof: a later Planner-email [MSN] commit that leaves the mission alone does not displace the stamp (RULES §6.1)", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
   writeMiniGantryRepo(dest, ogRoot);
@@ -135,6 +135,22 @@ test("git-proof: MISSION_FILE_NOT_MODIFIED_BY_PLANNER", () => {
   fs.writeFileSync(path.join(dest, "noise.txt"), "n", "utf8");
   execSync("git add noise.txt", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "[MSN-0999] noise only"', { cwd: dest, stdio: "pipe" });
+  const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
+  withPlannerEnv(() => {
+    assert.equal(assertPlannerMissionProof(dest, missionAbs), "MSN-0999");
+  });
+});
+
+
+test("git-proof: MISSION_FILE_NOT_MODIFIED_BY_PLANNER when no Planner [MSN] commit touches the mission", () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-gitpf-"));
+  writeMiniGantryRepo(dest, ogRoot);
+  gitInitCommit(dest, "[MSN-0999] mission by someone else", OTHER_EMAIL);
+  execSync(`git config user.email "${PLANNER_EMAIL}"`, { cwd: dest, stdio: "pipe" });
+  fs.writeFileSync(path.join(dest, "noise.txt"), "n", "utf8");
+  execSync("git add noise.txt", { cwd: dest, stdio: "pipe" });
+  execSync('git commit -m "[MSN-0999] planner noise only"', { cwd: dest, stdio: "pipe" });
   const missionAbs = path.join(dest, ".gitagent", "missions", "m.yaml");
   withPlannerEnv(() => {
     assert.throws(

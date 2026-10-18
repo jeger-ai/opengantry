@@ -23,9 +23,9 @@ gantry verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
 | Policy and dependencies | The org policy floor and cross-repository `depends_on`, when configured ([Org control plane](../guides/org-control-plane.md)) |
 | Gate | `gate_command` exits 0, its output contains `gate_success_substring` when set, and typed adapters parse its output |
 | KPI | Optional `kpi_gate` thresholds against committed reports ([Experimental features](../reference/experimental.md#llm-evidence-and-kpi-gate)) |
-| Trace | Every PASS row's quote is in `EXECUTOR_LOG.md` and is not stale ([Trace evidence](trace-evidence.md)) |
+| Evidence | A mission without trace rows: the committed run record `.gitagent/runs/<MSN>.json` matches this mission and law and nothing under the roots changed since it. A mission with rows: every PASS row's quote is in `EXECUTOR_LOG.md` and is not stale ([Trace evidence](trace-evidence.md)) |
 
-Verify fails closed. There is no chat override. `gantry verify --pre-push` checks only the Planner stamp for a mission whose trace rows are still placeholders, so a legislated mission can be pushed for a remote executor.
+Verify fails closed. There is no chat override. `gantry verify --pre-push` checks only the Planner stamp for a mission whose trace rows are still placeholders and which has no run record yet, so a legislated mission can be pushed for a remote executor. `gantry verify --record` runs every phase on a clean, committed tree and then writes the run record for you to commit.
 
 ## The findings envelope
 

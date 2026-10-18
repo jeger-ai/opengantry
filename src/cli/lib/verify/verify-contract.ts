@@ -56,7 +56,7 @@ function contractFailure(
 
 /** Compare the working-tree contract digest with the digest sealed at the Planner stamp. */
 function checkSeal(input: ContractPhaseInput): ContractPhaseOutcome | null {
-  const stampHash = resolvePlannerStampHash(input.root, input.proofMsnId, input.options.scanDepth);
+  const stampHash = resolvePlannerStampHash(input.root, input.proofMsnId, input.options.scanDepth, input.missionRel);
   if (!stampHash) return null;
   const body = readMissionAtCommit(input.root, stampHash, input.missionRel);
   if (body === null) {

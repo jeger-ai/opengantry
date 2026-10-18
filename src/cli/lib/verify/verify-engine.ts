@@ -34,6 +34,7 @@ import {
   type TracePhaseOutcome,
 } from "./verify-phase-steps.js";
 import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./verify-org-phases.js";
+import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, writeRunRecord } from "./verify-run-record.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -126,6 +127,7 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
       return "kpi";
     case "trace":
     case "trace_pending":
+    case "run_record":
       return "trace";
     default: {
       const _exhaustive: never = phase;
@@ -193,6 +195,7 @@ export async function evaluateVerifyPhases(
   );
   if (proof.kind === "fail") return failWithTimings(proof.failure, clock);
   const { proofMsnId, warnings: proofWarnings } = proof;
+  if (options.record === true) assertCleanTreeForRecord(root);
 
   const missionRel = formatRepoRelative(root, mission.rawPath);
   const contract = await clock.timed("contract", () =>
@@ -216,7 +219,8 @@ export async function evaluateVerifyPhases(
   const orgFail = await evaluateOrgControlPhases(clock, phaseCtx);
   if (orgFail) return failWithTimings(orgFail, clock);
 
-  if (options.prePush === true && isLegislativeStub(mission)) {
+  // A mission without trace rows is a legislative stub only until its run record exists (RULES §3).
+  if (options.prePush === true && isLegislativeStub(mission) && !missionHasRunRecord(root, proofMsnId)) {
     return {
       ok: true,
       outcome: "pre_push_stub",
@@ -254,15 +258,29 @@ export async function evaluateVerifyPhases(
   const kpi = await clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
   if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
 
-  const trace = await clock.timed("trace", () => evaluateTracePhase(phaseCtx));
+  // Evidence (RULES §3): a mission with trace rows is judged by them (legacy mode); one without rows binds its PASS
+  // to the committed run record, unless this run is the one producing it (--record).
+  const useRunRecord = mission.traceRows.length === 0 && options.record !== true;
+  const trace = await clock.timed("trace", () =>
+    useRunRecord ? evaluateRunRecordPhase(phaseCtx, proofMsnId) : evaluateTracePhase(phaseCtx),
+  );
   if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
+  const traceOutcome: TracePhaseOutcome = trace.kind === "ok" && "recordPath" in trace ? { kind: "ok", warnings: [], skippedUncommitted: 0 } : trace;
+  if (options.record === true) {
+    writeRunRecord(phaseCtx, proofMsnId, {
+      command: gate.command,
+      exit: gateOutcome.exitCode,
+      durationMs: clock.durationOf("gate"),
+      logText: gateOutcome.logText,
+    });
+  }
 
   if (virtualFlightId) purgeVirtualFlightDir(root, virtualFlightId);
 
   return buildFullVerifySuccess({
     proofMsnId,
     executorLogPath,
-    trace,
+    trace: traceOutcome,
     gitProofWarnings,
     defensive,
     kpi,

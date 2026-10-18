@@ -9,7 +9,28 @@ order: 5
 
 A verifier must cite verbatim execution evidence, not source code alone, or a PASS claim is ungrounded. `EXECUTOR_LOG.md` at the repository root holds that evidence: the executor appends gate output to it, and each mission trace row quotes it.
 
-## The rule
+## Run records
+
+A mission without `trace_rows` is judged by a **run record**, `.gitagent/runs/<MSN>.json`, which the CLI writes and nobody edits:
+
+```bash
+git commit -am "[MSN-0001] Implement the feature"   # the tree must be clean and committed
+gantry verify --mission .gitagent/missions/MSN-0001.feature.yaml --record
+git add .gitagent/runs/MSN-0001.json && git commit -m "[MSN-0001] Run record"
+gantry verify --mission .gitagent/missions/MSN-0001.feature.yaml
+```
+
+`--record` runs every phase, and only after all of them pass does it write the record: the commit and tree the checks ran on, the gate command, its exit and the digest of its output, and a digest of the law it enforced (effective edit roots, forbidden zones, gate, sealed contract). A later verify binds its PASS to that record:
+
+| Code | Meaning |
+|------|---------|
+| `GXT_RUN_RECORD_MISSING` | no record for this MSN; run `gantry verify --record` on the clean tree and commit the file |
+| `GXT_RUN_RECORD_MISMATCH` | the record names another MSN or mission path, the law changed since it, or its head is not an ancestor of `HEAD` |
+| `GXT_RUN_RECORD_STALE` | a path under the mission's effective roots changed since the record's head, committed or in the working tree |
+
+The record is evidence a machine wrote about a tree it can name. Trace rows, below, are the older form: a quote an agent copies from the executor log. Missions that carry rows are still verified by them; new missions should leave `trace_rows` empty and record.
+
+## The rule (trace rows)
 
 - Every claimed PASS needs a **trace reference**: a verbatim substring of `EXECUTOR_LOG.md` and an anchor, a line number or a timestamp, that ties it to the log.
 - Source-code quotes cannot be the sole or primary evidence. Code may supplement a valid trace reference.

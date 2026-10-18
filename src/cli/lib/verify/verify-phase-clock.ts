@@ -43,6 +43,10 @@ export class VerifyPhaseClock {
     }
   }
 
+  durationOf(id: VerifyPhaseId): number {
+    return this.rows.get(id)?.duration_ms ?? 0;
+  }
+
   markFailed(id: VerifyPhaseId): void {
     const row = this.rows.get(id);
     if (row) {

@@ -11,6 +11,7 @@ export type VerifyFailurePhase =
   | "kpi"
   | "trace_pending"
   | "trace"
+  | "run_record"
   | "interrogation"
   | "policy"
   | "dependencies"
@@ -81,6 +82,16 @@ export interface TraceFailure extends VerifyFailureBase {
   stalePaths?: string[];
 }
 
+export type RunRecordFailureKind = "missing" | "mismatch" | "stale";
+export interface RunRecordFailure extends VerifyFailureBase {
+  phase: "run_record";
+  recordKind: RunRecordFailureKind;
+  recordReason: string;
+  /** Repo-relative path of the record (present or expected). */
+  recordPath: string;
+  recordHead?: string;
+  stalePaths?: string[];
+}
 export interface InterrogationFailure extends VerifyFailureBase {
   phase: "interrogation";
   interrogationCode: GxtErrorCode;
@@ -113,6 +124,7 @@ export type VerifyPhaseFailure =
   | KpiFailure
   | TracePendingFailure
   | TraceFailure
+  | RunRecordFailure
   | InterrogationFailure
   | PolicyFailure
   | DependenciesFailure

@@ -90,6 +90,7 @@ interface VerifyCliOptions {
   fuzzyTrace?: boolean;
   strictTrace?: boolean;
   skipStaleEvidence?: boolean;
+  record?: boolean;
   ci?: boolean;
   requireInterrogation?: boolean;
   prePush?: boolean;
@@ -130,6 +131,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     fuzzyTrace: opts.fuzzyTrace,
     strictTrace: opts.strictTrace,
     skipStaleEvidence: opts.skipStaleEvidence,
+    record: opts.record,
     ci: opts.ci,
     prePush: opts.prePush,
     breakGlass: opts.breakGlass,
@@ -296,6 +298,7 @@ function registerVerifyCommand(program: Command): void {
     .option("--fuzzy-trace", "Force content-based anchor matching for all numeric anchors")
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
     .option("--skip-stale-evidence", "Skip TMVC stale-evidence binding for committed PASS trace lines")
+    .option("--record", "After a full pass on a clean committed tree, write .gitagent/runs/<MSN>.json as the mission evidence; commit it")
     .option("--ci", "Authoritative mode: fail-closed on KPI report stale evidence (use in CI)")
     .option("--require-interrogation", "Require interrogation block on mission (also default when --ci)")
     .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
