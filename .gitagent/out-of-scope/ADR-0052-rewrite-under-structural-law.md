@@ -158,3 +158,7 @@ Each step is a Tier-3 Planner mission or a short chain of them, with `[MSN-…]`
 - MSN chain: `plane`, generated `mcp` and `cli`, hooks and templates (step 5).
 - MSN: v4.0.0 release, migration docs, deletion (step 6).
 - Docs: `docs/concepts/structural-law.md` and the `arch check` reference for the new rule kinds, written with step 3.
+
+## Amendments
+
+- [ADR-0054](ADR-0054-finish-the-package-graph.md) (2026-10-20): `core`'s only runtime dependencies are `zod` and `yaml` (B7); `plane` depends on `core` and `git`, and `missions` on `core`, `git`, `verify` and `plane` (A1).
