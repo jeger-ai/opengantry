@@ -1,3 +1,6 @@
+import type { VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
+import type { AudienceTaggedStep } from "#missions/verify/verify-hints.js";
+import { audienceSectionTitle, filterTaggedStepsForAudience, formatAudienceNextStep } from "#missions/audience-output.js";
 import type { ResolvedMissionArg } from "../mission-arg.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
@@ -5,7 +8,6 @@ import type { VerifyOptions } from "#missions/verify/verify-options.js";
 import { CLI_NAME } from "#core/constants.js";
 import { runBreakGlassAuditFlow } from "#missions/break-glass.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
-import { logInfo, logWarn, writeStdout, logFixHint } from "../cli-io.js";
 import { Reporter } from "../reporter.js";
 import { loadPrompts } from "../prompts-loader.js";
 import { appendRepairMutationLog } from "#missions/repair.js";
@@ -140,16 +142,16 @@ export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresent
   const reporter = reporterFor(ctx);
   const outcome = runBreakGlassAuditFlow(ctx.root, ctx.mission, ctx.options);
   if (outcome.kind === "fail") {
-    reporter.emitError(errorMessage(outcome.error));
+    reporter.humanReport().error(errorMessage(outcome.error));
     return { ok: false, exitCode: 2 };
   }
-  reporter.emitInfo(`${CLI_NAME} verify: BREAK-GLASS — all gates skipped (audited on ${outcome.commitSha})`);
-  reporter.emitInfo(`  reason: ${outcome.reason}`);
-  if (outcome.msnId) reporter.emitInfo(`  msn_id: ${outcome.msnId}`);
+  reporter.humanReport().info(`${CLI_NAME} verify: BREAK-GLASS — all gates skipped (audited on ${outcome.commitSha})`);
+  reporter.humanReport().info(`  reason: ${outcome.reason}`);
+  if (outcome.msnId) reporter.humanReport().info(`  msn_id: ${outcome.msnId}`);
   if (outcome.auditCommit) {
-    logFixHint("git push origin HEAD  # audit empty commit (no gxt-bypass note)");
+    reporter.fixHint("git push origin HEAD  # audit empty commit (no gxt-bypass note)");
   } else {
-    logFixHint("git push origin refs/notes/gxt-bypass");
+    reporter.fixHint("git push origin refs/notes/gxt-bypass");
   }
   return { ok: true, exitCode: 0 };
 }
@@ -180,7 +182,7 @@ function emitStructuredPayload(
     fs.writeFileSync(jsonOut, `${doc}\n`, "utf8");
     return;
   }
-  writeStdout(doc);
+  Reporter.forVerify(options).document(doc);
 }
 
 /** Structured verify document on stdout. Diagnostics stay on stderr while document stdout is active. */
@@ -273,11 +275,11 @@ export function presentHumanInitFailure(
     // best-effort remediation feed
   }
   if (isGantryUserError(error)) {
-    reporter.emitError(`[${error.gxtCode}] ${error.message}`);
-    if (error.hint) reporter.emitFixHint(error.hint);
+    reporter.humanReport().error(`[${error.gxtCode}] ${error.message}`);
+    if (error.hint) reporter.humanReport().fixHint(error.hint);
     return { ok: false, exitCode: error.exitCode };
   }
-  reporter.emitError(errorMessage(error));
+  reporter.humanReport().error(errorMessage(error));
   return { ok: false, exitCode: payload.exit_code };
 }
 
@@ -288,11 +290,11 @@ export function presentHuman(
   const reporter = reporterFor(ctx);
   if (result.ok) {
     tombstoneRemediationSnapshot(ctx.root);
-    reporter.emitVerifySuccess(result);
-    if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
+    presentVerifySuccess(reporter, result);
+    if (ctx.receiptPath) reporter.humanReport().info(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
     return { ok: true, exitCode: 0, remediation: null };
   }
-  if (ctx.receiptPath) reporter.emitInfo(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
+  if (ctx.receiptPath) reporter.humanReport().info(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
   const normalized = normalizeVerifyPhaseFailure({
     failure: result,
     missionArg: ctx.resolved.missionRel,
@@ -323,7 +325,7 @@ export function presentHuman(
     presentation = overlayFailurePresentation(basePresentation, persisted.payload);
   }
 
-  reporter.emitFailurePresentation(presentation);
+  presentFailure(reporter, presentation);
   return { ok: false, exitCode: presentation.exit_code, remediation: remediation ?? null };
 }
 
@@ -357,7 +359,7 @@ export async function presentFix(
     msnId: ctx.mission.msnId ?? undefined,
   });
 
-  reporter.emitError(`[${presentation.error_code}] verify failed at phase: ${failure.phase}`);
+  reporter.humanReport().error(`[${presentation.error_code}] verify failed at phase: ${failure.phase}`);
 
   const p = await loadPrompts();
   const choices = remediation.fix_hints.map((hint, i) => ({
@@ -373,14 +375,14 @@ export async function presentFix(
   });
 
   if (p.isCancel(selected) || selected === "quit") {
-    reporter.emitNextSteps(presentation.next_actions, remediation.tagged_steps);
+    presentNextSteps(reporter, presentation.next_actions, remediation.tagged_steps);
     return { ok: false, exitCode: failure.exitCode };
   }
 
   const idx = Number.parseInt(String(selected), 10);
   const hint = presentation.fix_hints[idx];
-  if (hint) reporter.emitFixHint(hint);
-  reporter.emitNextSteps(presentation.next_actions, remediation.tagged_steps);
+  if (hint) reporter.humanReport().fixHint(hint);
+  presentNextSteps(reporter, presentation.next_actions, remediation.tagged_steps);
   return { ok: false, exitCode: failure.exitCode };
 }
 
@@ -413,15 +415,16 @@ export async function maybeApplyRepairAndReevaluate(input: {
     errorCode,
   };
 
-  logWarn(`[Repair] Autonomous mutation triggered for error ${errorCode}`);
+  const reporter = Reporter.forVerify(input.options);
+  reporter.warn(`[Repair] Autonomous mutation triggered for error ${errorCode}`);
   const mutation = await repair.applyMutation(context);
   if (!mutation.mutated) {
-    logInfo(`${CLI_NAME} verify: [Repair] no mutation applied (${mutation.summary})`);
+    reporter.info(`${CLI_NAME} verify: [Repair] no mutation applied (${mutation.summary})`);
     return input.result;
   }
 
   appendRepairMutationLog(executorLogPath, mutation.summary);
-  logInfo(`${CLI_NAME} verify: [Repair] mutation logged; re-evaluating verify phases (fix disabled)`);
+  reporter.info(`${CLI_NAME} verify: [Repair] mutation logged; re-evaluating verify phases (fix disabled)`);
 
   const reevalOptions: VerifyPresentContext["options"] = {
     ...input.options,
@@ -430,4 +433,50 @@ export async function maybeApplyRepairAndReevaluate(input: {
     receipt: undefined,
   };
   return await evaluateVerifyPhases(input.root, input.mission, reevalOptions, input.manifest);
+}
+
+function presentVerifySuccess(reporter: Reporter, result: VerifyPhaseSuccess): void {
+  if (reporter.structured) return;
+  reporter.info(`${CLI_NAME} verify: git-proof OK (Planner legislation for ${result.proofMsnId})`);
+  for (const w of result.gitProofWarnings ?? []) reporter.warn(w);
+  if (result.outcome === "pre_push_stub") {
+    reporter.info(
+      `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,
+    );
+    return;
+  }
+  reporter.info(`${CLI_NAME} verify: gate passed`);
+  for (const w of result.kpiWarnings ?? []) reporter.info(`  ${w}`);
+  for (const warning of result.traceWarnings) {
+    const tag = warning.autoResolved ? "auto-resolved" : "drift";
+    reporter.info(
+      `  trace: line ${tag} DoD ${warning.row.dodId} — declared ${String(warning.declaredLine)}, found ${String(warning.foundLine)}`,
+    );
+  }
+  if (result.traceEvidenceSkippedUncommitted !== undefined) {
+    reporter.info(
+      `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted EXECUTOR_LOG line(s) skipped stale check`,
+    );
+  }
+  if (result.runRecordPath) reporter.info(`${CLI_NAME} verify: run record OK (${result.runRecordPath})`);
+  else reporter.info(`${CLI_NAME} verify: trace mapping OK (${result.executorLogPath})`);
+}
+
+function presentFailure(reporter: Reporter, presentation: VerifyFailurePresentation): void {
+  if (reporter.structured) return;
+  reporter.error(`[${presentation.error_code}] ${presentation.headline}`);
+  for (const line of presentation.detail_lines) {
+    reporter.error(line.startsWith("---") ? line : `  ${line}`);
+  }
+  for (const hint of presentation.fix_hints) reporter.fixHint(hint);
+  presentNextSteps(reporter, presentation.next_actions, presentation.tagged_steps);
+}
+
+function presentNextSteps(reporter: Reporter, steps: string[], tagged?: AudienceTaggedStep[]): void {
+  if (reporter.structured) return;
+  const filtered = tagged && tagged.length > 0 ? filterTaggedStepsForAudience(reporter.audience, tagged) : steps;
+  const formatted = filtered.map((step) => formatAudienceNextStep(step, reporter.audience));
+  const section = audienceSectionTitle(reporter.audience);
+  reporter.info(section && formatted.length > 0 ? `${section}:` : "next actions:");
+  for (const step of formatted) reporter.info(`  ${step}`);
 }

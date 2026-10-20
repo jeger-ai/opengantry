@@ -1,9 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Reporter, currentReporter, reporterFromArgv, resetReporter, withReporter } from "../lib/reporter.js";
+import { Reporter, currentReporter, reporterFromArgv, resetReporter, setReporter } from "../lib/reporter.js";
 import { logError, logInfo, logWarn, writeStdout } from "../lib/cli-io.js";
 import { resolveAudience } from "#missions/audience-output.js";
 import { captureConsoleAsync } from "./test-shared.js";
+
+/** Run fn as the Commander hook runs an action: with reporter current, and the plain human reporter back after. */
+async function asCommand<T>(reporter: Reporter, fn: () => T | Promise<T>): Promise<T> {
+  setReporter(reporter);
+  try {
+    return await fn();
+  } finally {
+    resetReporter();
+  }
+}
 
 test("resolveAudience: CLI overrides env; invalid CLI value is reported", () => {
   assert.equal(resolveAudience("executor", "verifier").audience, "executor");
@@ -14,7 +24,7 @@ test("resolveAudience: CLI overrides env; invalid CLI value is reported", () => 
 
 test("human reporter: info on stdout, warnings and errors on stderr", async () => {
   const { output } = await captureConsoleAsync(() =>
-    withReporter(new Reporter(), () => {
+    asCommand(new Reporter(), () => {
       logInfo("plain");
       logWarn("careful");
       logError("[GXT_GATE_FAILED] no");
@@ -27,7 +37,7 @@ test("human reporter: info on stdout, warnings and errors on stderr", async () =
 
 test("verifier audience: info and uncoded errors are suppressed, coded errors pass", async () => {
   const { output } = await captureConsoleAsync(() =>
-    withReporter(new Reporter("human", "verifier"), () => {
+    asCommand(new Reporter("human", "verifier"), () => {
       logInfo("plain");
       logError("plain failure");
       logError("[GXT_GATE_FAILED] verify failed");
@@ -40,7 +50,7 @@ test("verifier audience: info and uncoded errors are suppressed, coded errors pa
 
 test("structured reporter: stdout carries only the document, even for the verifier audience", async () => {
   const { output } = await captureConsoleAsync(() =>
-    withReporter(new Reporter("json", "verifier"), () => {
+    asCommand(new Reporter("json", "verifier"), () => {
       logInfo("setup");
       logError("plain failure");
       writeStdout("{}");
@@ -51,17 +61,37 @@ test("structured reporter: stdout carries only the document, even for the verifi
   assert.match(output.stderr, /plain failure/);
 });
 
-test("withReporter restores the previous reporter, also when fn throws", async () => {
+test("one reporter per command: set for the action, the plain human reporter back after, also when it throws", async () => {
   resetReporter();
   const inner = new Reporter("sarif");
   await assert.rejects(
-    withReporter(inner, () => {
+    asCommand(inner, () => {
       assert.equal(currentReporter(), inner);
       throw new Error("boom");
     }),
     /boom/,
   );
   assert.equal(currentReporter().structured, false);
+});
+
+test("humanReport: report lines print in human mode and are dropped in a structured mode", async () => {
+  const human = await captureConsoleAsync(async () => {
+    const r = new Reporter().humanReport();
+    r.info("line");
+    r.error("bad");
+    r.fixHint("do it");
+  });
+  assert.match(human.output.stdout, /line/);
+  assert.match(human.output.stdout, /Fix: do it/);
+  assert.match(human.output.stderr, /gantry: bad/);
+  const structured = await captureConsoleAsync(async () => {
+    const r = new Reporter("json").humanReport();
+    r.info("line");
+    r.error("bad");
+    r.fixHint("do it");
+  });
+  assert.equal(structured.output.stdout, "");
+  assert.equal(structured.output.stderr, "");
 });
 
 test("reporterFromArgv: mode from --format or --json, audience from the flag or the env, invalid role reported", () => {

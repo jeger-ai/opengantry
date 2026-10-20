@@ -1,20 +1,16 @@
 import { CLI_NAME } from "#core/constants.js";
-import {
-  audienceSectionTitle,
-  filterTaggedStepsForAudience,
-  formatAudienceNextStep,
-  resolveAudience,
-  type OutputAudience,
-} from "#missions/audience-output.js";
-import type { VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
-import type { VerifyFailurePresentation } from "#missions/verify/verify-failure-normalize.js";
-import type { AudienceTaggedStep } from "#missions/verify/verify-hints.js";
+import { resolveAudience, type OutputAudience } from "#missions/audience-output.js";
 
 /** human: the report is the document. json, sarif, junit: stdout carries only the document. */
 export type ReporterMode = "human" | "json" | "sarif" | "junit";
 
 const STRUCTURED_MODES: readonly string[] = ["json", "sarif", "junit"];
 const GXT_ERROR_PREFIX_RE = /\[GXT_[A-Z0-9_]+\]/;
+
+/** The lines of a human report. */
+export type ReportLines = Pick<Reporter, "info" | "error" | "fixHint">;
+
+const DROPPED_LINES: ReportLines = { info: () => undefined, error: () => undefined, fixHint: () => undefined };
 
 /**
  * The output layer (ADR-0052 A7). One reporter per command run: the document goes to stdout, diagnostics to
@@ -67,17 +63,9 @@ export class Reporter {
     this.info(`Fix: ${hint}`);
   }
 
-  /** Report lines: part of the human report, nothing in a structured mode (the document says it). */
-  emitInfo(message: string): void {
-    if (!this.structured) this.info(message);
-  }
-
-  emitError(message: string): void {
-    if (!this.structured) this.error(message);
-  }
-
-  emitFixHint(hint: string): void {
-    if (!this.structured) this.fixHint(hint);
+  /** The human report: this reporter in human mode; in a structured mode the document says it, so lines are dropped. */
+  humanReport(): ReportLines {
+    return this.structured ? DROPPED_LINES : this;
   }
 
   /** Red stderr for existing managed-asset conflicts (respects NO_COLOR). */
@@ -92,51 +80,6 @@ export class Reporter {
     }
   }
 
-  emitVerifySuccess(result: VerifyPhaseSuccess): void {
-    if (this.structured) return;
-    this.info(`${CLI_NAME} verify: git-proof OK (Planner legislation for ${result.proofMsnId})`);
-    for (const w of result.gitProofWarnings ?? []) this.warn(w);
-    if (result.outcome === "pre_push_stub") {
-      this.info(
-        `${CLI_NAME} verify: legislative stub OK (remote handoff; git-proof passed — run full verify after execution)`,
-      );
-      return;
-    }
-    this.info(`${CLI_NAME} verify: gate passed`);
-    for (const w of result.kpiWarnings ?? []) this.info(`  ${w}`);
-    for (const warning of result.traceWarnings) {
-      const tag = warning.autoResolved ? "auto-resolved" : "drift";
-      this.info(
-        `  trace: line ${tag} DoD ${warning.row.dodId} — declared ${String(warning.declaredLine)}, found ${String(warning.foundLine)}`,
-      );
-    }
-    if (result.traceEvidenceSkippedUncommitted !== undefined) {
-      this.info(
-        `  trace evidence: ${String(result.traceEvidenceSkippedUncommitted)} uncommitted EXECUTOR_LOG line(s) skipped stale check`,
-      );
-    }
-    if (result.runRecordPath) this.info(`${CLI_NAME} verify: run record OK (${result.runRecordPath})`);
-    else this.info(`${CLI_NAME} verify: trace mapping OK (${result.executorLogPath})`);
-  }
-
-  emitFailurePresentation(presentation: VerifyFailurePresentation): void {
-    if (this.structured) return;
-    this.error(`[${presentation.error_code}] ${presentation.headline}`);
-    for (const line of presentation.detail_lines) {
-      this.error(line.startsWith("---") ? line : `  ${line}`);
-    }
-    for (const hint of presentation.fix_hints) this.fixHint(hint);
-    this.emitNextSteps(presentation.next_actions, presentation.tagged_steps);
-  }
-
-  emitNextSteps(steps: string[], tagged?: AudienceTaggedStep[]): void {
-    if (this.structured) return;
-    const filtered = tagged && tagged.length > 0 ? filterTaggedStepsForAudience(this.audience, tagged) : steps;
-    const formatted = filtered.map((step) => formatAudienceNextStep(step, this.audience));
-    const section = audienceSectionTitle(this.audience);
-    this.info(section && formatted.length > 0 ? `${section}:` : "next actions:");
-    for (const step of formatted) this.info(`  ${step}`);
-  }
 }
 
 function structuredMode(format: string | undefined): ReporterMode | undefined {
@@ -152,26 +95,14 @@ export function currentReporter(): Reporter {
   return current;
 }
 
-/** Replace the current reporter and return the previous one. */
-export function setCurrentReporter(reporter: Reporter): Reporter {
-  const previous = current;
+/** Make reporter the current one (the entry point and the Commander hook do, once per command). */
+export function setReporter(reporter: Reporter): void {
   current = reporter;
-  return previous;
 }
 
-/** Back to a plain human reporter (process start; tests that run several commands in one process). */
+/** Back to a plain human reporter (process start; after each command, so commands run in one process do not leak). */
 export function resetReporter(): void {
   current = new Reporter();
-}
-
-/** Run fn with reporter current and restore the previous one afterwards, however fn ends. */
-export async function withReporter<T>(reporter: Reporter, fn: () => T | Promise<T>): Promise<T> {
-  const previous = setCurrentReporter(reporter);
-  try {
-    return await fn();
-  } finally {
-    setCurrentReporter(previous);
-  }
 }
 
 export interface ReporterArgv {
