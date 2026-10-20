@@ -49,7 +49,7 @@ Low-risk bot maintenance, such as Dependabot workflow pin bumps or security auto
 | Kind | Use | Hard cap | Checks |
 |------|-----|----------|--------|
 | `workflow_version_pin` | Dependabot workflow `uses:` bumps | 5 | YAML structure unchanged; only existing `uses:` version segments differ |
-| `bounded_content` | Security autofix bots (code scanning, Snyk and similar) | 100 | Content changes inside `allowed_paths`; any touch under `.gitagent/**` or a manifest `perimeter_protected` path is rejected even if listed |
+| `bounded_content` | Security autofix bots (code scanning, Snyk and similar) | 100 | Content changes inside `allowed_paths`; any touch under `.gitagent/**` or a protected path (the manifest's `perimeter_protected` or its defaults, plus the org floor's `perimeter_protected_add`) is rejected even if listed |
 
 ```json
 {
