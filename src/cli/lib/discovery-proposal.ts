@@ -2,8 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
-import type { Manifest } from "#core/manifest.js";
-import { writeManifestYaml } from "./manifest.js";
+import { writeLawFileYaml } from "./law-files.js";
 import { toPosixRel } from "./cli-io.js";
 import {
   TARGET_ARCHITECTURE_FILENAME,
@@ -115,7 +114,7 @@ export function applyDiscoveryProposal(repoRoot: string, proposal: DiscoveryProp
   const archAbs = path.join(repoRoot, TARGET_ARCHITECTURE_FILENAME);
   fs.writeFileSync(archAbs, archBody, "utf8");
 
-  writeManifestYaml(repoRoot, buildDraftManifest(repoRoot) as unknown as Manifest);
+  writeLawFileYaml(repoRoot, "manifest", buildDraftManifest(repoRoot));
 
   return {
     proposalPath: DISCOVERY_PROPOSAL_REL,

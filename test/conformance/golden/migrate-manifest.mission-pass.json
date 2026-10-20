@@ -11,7 +11,9 @@
     "status": "migrated",
     "wrote": ".gitagent/foreman/MANIFEST.yaml",
     "removed": ".gitagent/foreman/MANIFEST.json",
-    "perimeter_protected_updated": true,
+    "changes": [
+      "perimeter_protected now lists .gitagent/foreman/MANIFEST.yaml"
+    ],
     "dry_run": false
   },
   "stderr_codes": [],

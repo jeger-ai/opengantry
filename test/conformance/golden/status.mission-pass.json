@@ -51,7 +51,7 @@
       },
       {
         "level": "warn",
-        "message": ".gitagent/foreman/MANIFEST.json is the 3.x form; run gantry migrate manifest (MANIFEST.yaml is read first, JSON is still read)"
+        "message": ".gitagent/foreman/MANIFEST.json is the 3.x form; run gantry migrate manifest (the YAML form is read first, JSON is still read)"
       },
       {
         "level": "ok",

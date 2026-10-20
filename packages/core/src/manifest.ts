@@ -1,3 +1,5 @@
+import { parseLawFileDocument, type LawFileSource } from "./law-file.js";
+
 /** Manifest shape (ADR-0052 A2): the Level-1 law file, parsed and validated without touching the filesystem. */
 export type TrustThreshold = "Tier-1" | "Tier-2" | "Tier-3" | string;
 
@@ -73,4 +75,11 @@ export function validateManifestShape(m: unknown): asserts m is Manifest {
   for (const k of Object.keys(skills)) {
     validateSkillEntry(k, skills[k]);
   }
+}
+
+/** The manifest from a law-file source, validated. */
+export function parseManifestSource(source: LawFileSource): Manifest {
+  const raw = parseLawFileDocument(source);
+  validateManifestShape(raw);
+  return raw;
 }
