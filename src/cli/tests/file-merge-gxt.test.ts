@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { mergeGxtFragment } from "../lib/file-merge-gxt.js";
+import { mergeGxtFragment } from "#missions/file-merge-gxt.js";
 
 const HEADER =
   "# OpenGantry (gantry init) — keep EXECUTOR_LOG line numbers stable for trace mapping";

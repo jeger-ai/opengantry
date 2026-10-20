@@ -5,7 +5,7 @@ import {
   listReceipts,
   resolveReceiptPath,
   summarizeReceipt,
-} from "../lib/receipt-inspect.js";
+} from "#missions/receipt-inspect.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ReceiptListOptions {

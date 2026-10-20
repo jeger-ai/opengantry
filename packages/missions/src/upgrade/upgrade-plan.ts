@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "#core/constants.js";
 import { fromPosix, toPosixRel } from "#core/posix-path.js";
-import { logInfo, logWarn } from "../cli-io.js";
+import { SILENT } from "../diagnostics.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../file-merge-gxt.js";
-import { loadIntegrationCompat, resolveTemplateRootFromModule } from "#missions/integration-compat.js";
+import { loadIntegrationCompat, resolveTemplateRootFromModule } from "../integration-compat.js";
 import { resolveAssetsFromProfile } from "../init/init-asset-catalog.js";
 import { planInitAssets } from "../init/init-plan.js";
 import {
@@ -15,7 +15,7 @@ import {
   compareSemver,
   legacyVersionWarning,
   readInstalledSubstrateVersion,
-} from "#missions/substrate-version.js";
+} from "../substrate-version.js";
 import {
   buildUpgradeFileChanges,
   groupUpgradeChangesByCategory,
@@ -34,7 +34,7 @@ import {
   type UpgradeFileChange,
   type UpgradePayload,
   type UpgradePlanResult,
-} from "#missions/upgrade/upgrade-plan-types.js";
+} from "./upgrade-plan-types.js";
 
 function resolveUpgradeVersionGate(
   installed: ReturnType<typeof readInstalledSubstrateVersion>,
@@ -75,23 +75,24 @@ function logUpgradePlanSummary(
   },
 ): void {
   if (options.json) return;
-  logInfo(`${CLI_NAME} upgrade: ${options.dryRun ? "dry-run — would stage" : "staged"} ${opts.plannedWrites.length} file(s) under ${REL_UPGRADE_TMP}/`);
-  for (const rel of opts.plannedWrites) logInfo(`  - ${rel}`);
+  const log = options.log ?? SILENT;
+  log.info(`${CLI_NAME} upgrade: ${options.dryRun ? "dry-run — would stage" : "staged"} ${opts.plannedWrites.length} file(s) under ${REL_UPGRADE_TMP}/`);
+  for (const rel of opts.plannedWrites) log.info(`  - ${rel}`);
   if (opts.fileChanges?.length) {
-    logInfo("Changelog preview:");
+    log.info("Changelog preview:");
     for (const c of opts.fileChanges) {
       const delta =
         c.bytes_before === null
           ? `new ${c.bytes_after} bytes`
           : `${c.bytes_before} → ${c.bytes_after} bytes`;
-      logInfo(`  [${c.action}] ${c.path} (${delta})`);
+      log.info(`  [${c.action}] ${c.path} (${delta})`);
     }
   }
-  if (opts.legacyWarning) logWarn(opts.legacyWarning);
-  logInfo(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
-  logInfo(`${options.dryRun ? "Suggested Planner action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
+  if (opts.legacyWarning) log.warn(opts.legacyWarning);
+  log.info(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
+  log.info(`${options.dryRun ? "Suggested Planner action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
   if (!options.dryRun) {
-    logInfo(`After Planner commit: gantry upgrade --apply --mission ${opts.missionRel}`);
+    log.info(`After Planner commit: gantry upgrade --apply --mission ${opts.missionRel}`);
   }
 }
 
@@ -109,7 +110,7 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);
   const catalogAssets = resolveAssetsFromProfile(profile, compat, templatesRoot);
   const assets = upgradeEligibleAssets(catalogAssets);
-  const plan = planInitAssets(assets, templatesRoot, repoRoot, true);
+  const plan = planInitAssets(assets, templatesRoot, repoRoot, true, undefined, options.log);
   if (!plan.ok) {
     throw new Error(`${CLI_NAME} upgrade: asset planning failed`);
   }
@@ -157,8 +158,8 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   }
 
   const stagedHashes = writeStagedFiles(repoRoot, plan.writes);
-  mergeGitignoreFromTemplate(repoRoot, templatesRoot);
-  mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
+  mergeGitignoreFromTemplate(repoRoot, templatesRoot, options.log);
+  mergePrettierignoreFromTemplate(repoRoot, templatesRoot, options.log);
   const payload: UpgradePayload = {
     from_version: installed.version,
     to_version: bundled,

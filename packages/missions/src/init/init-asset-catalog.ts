@@ -3,7 +3,7 @@ import path from "node:path";
 import {
   loadIntegrationCompat,
   type IntegrationCompatManifest,
-} from "#missions/integration-compat.js";
+} from "../integration-compat.js";
 import type { InitProfile } from "./init-profile.js";
 
 export type InitAssetMode = "scaffold_only" | "managed_strict";

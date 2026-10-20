@@ -1,18 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "#core/constants.js";
-import { logError, logInfo } from "../cli-io.js";
-import {
-  audienceSectionTitle,
-  filterTaggedStepsForAudience,
-  formatAudienceNextStep,
-  INIT_TAGGED_NEXT_STEPS,
-  type AudienceNextStep,
-} from "#missions/audience-output.js";
-import { currentReporter } from "../reporter.js";
+import { SILENT, type Diagnostics } from "../diagnostics.js";
 import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
-import type { InitProfile } from "./init-profile.js";
 
 export interface PlannedWrite {
   absoluteTarget: string;
@@ -37,6 +27,7 @@ export function planInitAssets(
   repoRoot: string,
   force: boolean,
   transformBody?: InitBodyTransform,
+  log: Diagnostics = SILENT,
 ): InitPlanResult {
   const writes: PlannedWrite[] = [];
   const conflicts: string[] = [];
@@ -51,7 +42,7 @@ export function planInitAssets(
     const templateAbs = path.join(templatesRoot, templateRel.split("/").join(path.sep));
     const targetAbs = path.join(repoRoot, asset.targetPath.split("/").join(path.sep));
     if (!fs.existsSync(templateAbs)) {
-      logError(`init: missing template for ${asset.targetPath} at ${templateAbs}`);
+      log.error(`init: missing template for ${asset.targetPath} at ${templateAbs}`);
       return { ok: false, writes, skippedUserMutable, unchanged, conflicts };
     }
     const bodyRaw = fs.readFileSync(templateAbs, "utf8");
@@ -86,37 +77,4 @@ export function applyInitWrites(writes: PlannedWrite[]): void {
     fs.writeFileSync(w.absoluteTarget, w.body, "utf8");
     if (w.executable) fs.chmodSync(w.absoluteTarget, 0o755);
   }
-}
-
-export function logInitSummary(
-  writes: PlannedWrite[],
-  skippedUserMutable: string[],
-  unchanged: string[],
-): void {
-  logInfo(`${CLI_NAME} init: wrote ${writes.length} files`);
-  if (skippedUserMutable.length > 0) {
-    logInfo(`${CLI_NAME} init: preserved ${skippedUserMutable.length} existing user-managed files`);
-  }
-  if (unchanged.length > 0) {
-    logInfo(`${CLI_NAME} init: ${unchanged.length} files already up to date`);
-  }
-}
-
-
-export function logInitNextSteps(profile?: InitProfile): void {
-  const tagged: AudienceNextStep[] = [...INIT_TAGGED_NEXT_STEPS];
-  if (profile?.integrationsDocPath) {
-    tagged.push({ audience: "platform", step: `human IDE setup: ${profile.integrationsDocPath}` });
-  }
-  if (profile?.gitHooks === false) {
-    const hookIdx = tagged.findIndex((t) => t.step.startsWith("git config core.hooksPath"));
-    if (hookIdx >= 0) tagged.splice(hookIdx, 1);
-  }
-  const audience = currentReporter().audience;
-  const filtered = filterTaggedStepsForAudience(audience, tagged).map((step) =>
-    formatAudienceNextStep(step, audience),
-  );
-  const section = audienceSectionTitle(audience) ?? "next steps";
-  logInfo(`${section}:`);
-  for (const step of filtered) logInfo(`  ${step}`);
 }

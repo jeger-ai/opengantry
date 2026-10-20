@@ -5,21 +5,21 @@ import YAML from "yaml";
 import { CLI_NAME } from "#core/constants.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { fromPosix } from "#core/posix-path.js";
-import { logInfo, logWarn } from "../cli-io.js";
-import { promoteFileAtomic } from "#missions/atomic-fs.js";
-import { assertPlannerMissionProof } from "#missions/git/git-proof.js";
+import { SILENT, type Diagnostics } from "../diagnostics.js";
+import { promoteFileAtomic } from "../atomic-fs.js";
+import { assertPlannerMissionProof } from "../git/git-proof.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../file-merge-gxt.js";
-import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
-import { resolveMissionPathRequired } from "#missions/missions/resolution.js";
-import { assertMissionSchemaValid } from "#missions/missions/validator.js";
-import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "#missions/mcp/mcp-write-guard.js";
-import { loadManifest } from "#missions/manifest.js";
-import { writeSubstrateVersionFile } from "#missions/substrate-version.js";
+import { resolveTemplateRootFromModule } from "../integration-compat.js";
+import { resolveMissionPathRequired } from "../missions/resolution.js";
+import { assertMissionSchemaValid } from "../missions/validator.js";
+import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../mcp/mcp-write-guard.js";
+import { loadManifest } from "../manifest.js";
+import { writeSubstrateVersionFile } from "../substrate-version.js";
 import { parseUpgradePayloadFromMissionBody } from "./upgrade-plan-scaffold.js";
-import { REL_UPGRADE_TMP, type UpgradePayload } from "#missions/upgrade/upgrade-plan-types.js";
+import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";
 
 export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 
@@ -110,12 +110,15 @@ async function promoteStagedWrites(
 
 export interface RunUpgradeApplyOptions {
   repoRoot: string;
+  /** Progress and summary lines (the CLI passes its log helpers). */
+  log?: Diagnostics;
   mission?: string;
   templatesRoot?: string;
   json?: boolean;
 }
 
 export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<UpgradeApplyResult> {
+  const log = options.log ?? SILENT;
   const repoRoot = path.resolve(options.repoRoot);
   const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
   const missionAbs = resolveMissionPathRequired(repoRoot, { explicit: options.mission });
@@ -134,7 +137,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   }
 
   try {
-    assertPlannerMissionProof(repoRoot, missionAbs, { warn: logWarn });
+    assertPlannerMissionProof(repoRoot, missionAbs, { warn: log.warn });
   } catch (e) {
     return {
       status: "blocked",
@@ -161,8 +164,8 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     applyTmpRoot = staged.applyTmpRoot;
     await promoteStagedWrites(staged.promotions);
 
-    mergeGitignoreFromTemplate(repoRoot, templatesRoot);
-    mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
+    mergeGitignoreFromTemplate(repoRoot, templatesRoot, log);
+    mergePrettierignoreFromTemplate(repoRoot, templatesRoot, log);
     writeSubstrateVersionFile(repoRoot, payload.to_version, "gantry upgrade --apply");
   } catch (e) {
     cleanupApplyTmp(applyTmpRoot);
@@ -182,7 +185,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   ].join("\n");
 
   if (!options.json) {
-    logInfo(message);
+    log.info(message);
   }
 
   return {

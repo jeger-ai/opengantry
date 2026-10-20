@@ -11,9 +11,9 @@ import {
 } from "#missions/integration-compat.js";
 import {
   resolveAssetsFromProfile,
-} from "../lib/init/init-asset-catalog.js";
-import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init/init-compose.js";
-import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "../lib/init/init-profile.js";
+} from "#missions/init/init-asset-catalog.js";
+import { composeIntegrationsDoc, recipeFilesExist } from "#missions/init/init-compose.js";
+import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "#missions/init/init-profile.js";
 import { canPromptInitOverwrite } from "../lib/init/init-interactive.js";
 import type { IntegrationIdeKey } from "#missions/integration-compat.js";
 

@@ -9,6 +9,9 @@ export function logInfo(message: string): void {
   currentReporter().info(message);
 }
 
+/** The CLI's diagnostics sink for domain code (#missions/diagnostics.js). */
+export const CLI_DIAGNOSTICS = { info: logInfo, warn: logWarn, error: logError };
+
 export function logWarn(message: string): void {
   currentReporter().warn(message);
 }

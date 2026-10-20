@@ -1,10 +1,10 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { CLI_DIAGNOSTICS, logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
-import { runUpgradeApply } from "../lib/upgrade/upgrade-apply.js";
-import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
+import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
+import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
 import { toStableUpgradePlanPayloadV1 } from "#missions/upgrade/upgrade-plan-payload.js";
 
 export interface UpgradeOptions {
@@ -31,6 +31,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   if (options.apply) {
     void runUpgradeApply({
       repoRoot,
+      log: CLI_DIAGNOSTICS,
       mission: options.mission,
       templatesRoot,
       json: options.json,
@@ -52,6 +53,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   try {
     const result = runUpgradePlan({
       repoRoot,
+      log: CLI_DIAGNOSTICS,
       templatesRoot,
       msn: options.msn,
       dryRun: options.dryRun,

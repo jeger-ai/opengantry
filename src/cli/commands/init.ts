@@ -1,10 +1,18 @@
+import {
+  audienceSectionTitle,
+  filterTaggedStepsForAudience,
+  formatAudienceNextStep,
+  INIT_TAGGED_NEXT_STEPS,
+  type AudienceNextStep,
+} from "#missions/audience-output.js";
+import { currentReporter } from "../lib/reporter.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
 import { readArchitecturePointerSource } from "#missions/arch/external/architecture-pointer.js";
 import { manifestExists } from "#missions/manifest.js";
-import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
+import { CLI_DIAGNOSTICS, logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import {
   isIntegrationIdeKey,
@@ -12,13 +20,13 @@ import {
   resolveTemplateRootFromModule,
   type IntegrationCompatManifest,
 } from "#missions/integration-compat.js";
-import { resolveAssetsFromProfile } from "../lib/init/init-asset-catalog.js";
+import { resolveAssetsFromProfile } from "#missions/init/init-asset-catalog.js";
 import {
   composeArchitecturePointer,
   serializeArchitecturePointer,
   composeIntegrationsDoc,
   recipeFilesExist,
-} from "../lib/init/init-compose.js";
+} from "#missions/init/init-compose.js";
 import {
   defaultInitProfile,
   mergeInitProfile,
@@ -26,19 +34,17 @@ import {
   shouldRunInteractiveWizard,
   validateIntegrationsDocPath,
   type InitProfile,
-} from "../lib/init/init-profile.js";
+} from "#missions/init/init-profile.js";
 import {
   applyInitWrites,
-  logInitNextSteps,
-  logInitSummary,
   planInitAssets,
   type InitBodyTransform,
   type PlannedWrite,
-} from "../lib/init/init-plan.js";
+} from "#missions/init/init-plan.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
-} from "../lib/file-merge-gxt.js";
+} from "#missions/file-merge-gxt.js";
 import { ensureSubstrateVersionOnInit } from "#missions/substrate-version.js";
 import { ensurePlannerAllowlistOnInit } from "#missions/planner-identity.js";
 
@@ -148,7 +154,7 @@ async function resolveInitAssetPlan(
 ) {
   const transformBody: InitBodyTransform | undefined = undefined;
   let force = options.force === true;
-  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
+  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody, CLI_DIAGNOSTICS);
   if (!plan.ok) {
     setExitCode(EXIT_CODE.USAGE);
     return null;
@@ -175,7 +181,7 @@ async function resolveInitAssetPlan(
   }
 
   force = true;
-  plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
+  plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody, CLI_DIAGNOSTICS);
   if (!plan.ok) {
     setExitCode(EXIT_CODE.USAGE);
     return null;
@@ -235,8 +241,8 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
     const { runInitTutorial } = await import("../lib/init/init-tutorial.js");
     await runInitTutorial();
-    mergeGitignoreFromTemplate(repoRoot, templatesRoot);
-    mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
+    mergeGitignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
+    mergePrettierignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
     return;
   }
   const profile = await resolveProfile(options, repoRoot, templatesRoot);
@@ -278,6 +284,39 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   } else {
     logInitNextSteps(profile);
   }
-  mergeGitignoreFromTemplate(repoRoot, templatesRoot);
-  mergePrettierignoreFromTemplate(repoRoot, templatesRoot);
+  mergeGitignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
+  mergePrettierignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
+}
+
+function logInitSummary(
+  writes: PlannedWrite[],
+  skippedUserMutable: string[],
+  unchanged: string[],
+): void {
+  logInfo(`${CLI_NAME} init: wrote ${writes.length} files`);
+  if (skippedUserMutable.length > 0) {
+    logInfo(`${CLI_NAME} init: preserved ${skippedUserMutable.length} existing user-managed files`);
+  }
+  if (unchanged.length > 0) {
+    logInfo(`${CLI_NAME} init: ${unchanged.length} files already up to date`);
+  }
+}
+
+
+function logInitNextSteps(profile?: InitProfile): void {
+  const tagged: AudienceNextStep[] = [...INIT_TAGGED_NEXT_STEPS];
+  if (profile?.integrationsDocPath) {
+    tagged.push({ audience: "platform", step: `human IDE setup: ${profile.integrationsDocPath}` });
+  }
+  if (profile?.gitHooks === false) {
+    const hookIdx = tagged.findIndex((t) => t.step.startsWith("git config core.hooksPath"));
+    if (hookIdx >= 0) tagged.splice(hookIdx, 1);
+  }
+  const audience = currentReporter().audience;
+  const filtered = filterTaggedStepsForAudience(audience, tagged).map((step) =>
+    formatAudienceNextStep(step, audience),
+  );
+  const section = audienceSectionTitle(audience) ?? "next steps";
+  logInfo(`${section}:`);
+  for (const step of filtered) logInfo(`  ${step}`);
 }
