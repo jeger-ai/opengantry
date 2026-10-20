@@ -12,7 +12,6 @@
   ],
   "scripts": {
     "build": "node build.mjs",
-    "typecheck": "tsc -p tsconfig.json",
     "test": "npm run build && node --test --test-concurrency=1 \"tests/*.test.mjs\""
   },
   "dependencies": {

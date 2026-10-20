@@ -1,5 +1,5 @@
-// Build the slim @jeger-ai/opengantry-cage package: one bundle of the cage runtime (shared src/cli
-// sources, third-party modules inlined) plus the bin entry the session push guard resolves.
+// Build the slim @jeger-ai/opengantry-cage package: one bundle of the cage runtime (the CLI's own cage entry,
+// src/cli/cage-bin.ts, with third-party modules inlined) plus the bin entry the session push guard resolves.
 //
 // Layout contract (do not move): packages/cage/src/cage-push-guard.ts resolves the guard entry as
 // `../../../cli/index.js` relative to its own module. In the bundle that module is
@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
-const entry = join(here, "src", "entry.ts");
+const entry = join(repoRoot, "src", "cli", "cage-bin.ts");
 const bundle = join(here, "dist", "packages", "cage", "src", "opengantry-cage.js");
 const bin = join(here, "dist", "cli", "index.js");
 

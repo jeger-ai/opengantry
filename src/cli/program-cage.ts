@@ -175,7 +175,5 @@ export function registerCageCommands(program: Command): void {
     .command("pre-push")
     .requiredOption("--root <dir>", "Cage root (git work tree)")
     .option("--plan <file>", "Session plan written by gantry cage")
-    .action(async (opts: { root: string; plan?: string }) => {
-      await runCageGuardPrePush(opts);
-    });
+    .action((opts: { root: string; plan?: string }) => runCageGuardPrePush(opts));
 }
