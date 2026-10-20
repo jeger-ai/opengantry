@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { listChangedSourceFiles, scanContractImports } from "../lib/contract/contract-scan.js";
+import { listChangedSourceFiles, scanContractImports } from "#missions/contract/contract-scan.js";
 import { gitInitCommit, gitInitStaged } from "./test-fixtures.js";
 import type { EffectiveScope } from "#core/contract-types.js";
 import { extractImportSites } from "#core/import-scanner.js";
 import { bareSpecifierPackage, classifySpecifier } from "#core/specifier.js";
-import { loadTsconfigPaths } from "../lib/contract/resolve-specifier.js";
+import { loadTsconfigPaths } from "#missions/contract/resolve-specifier.js";
 
 function scope(overrides: Partial<EffectiveScope> = {}): EffectiveScope {
   return {

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { contractSha256, isEmptyContract, normalizeContract, normalizeContractPath } from "../lib/contract/contract-hash.js";
-import { resolveEffectiveScope } from "../lib/contract/effective-scope.js";
+import { contractSha256, isEmptyContract, normalizeContract, normalizeContractPath } from "#missions/contract/contract-hash.js";
+import { resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { Manifest } from "#core/manifest.js";
 

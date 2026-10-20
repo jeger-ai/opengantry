@@ -5,10 +5,10 @@ import path from "node:path";
 import readline from "node:readline/promises";
 import YAML from "yaml";
 import { GantryUserError } from "#core/user-error.js";
-import { formatContractBlock } from "./format.js";
-import { normalizeContract, parseContractYaml } from "./contract-hash.js";
+import { formatContractBlock } from "#missions/contract/format.js";
+import { normalizeContract, parseContractYaml } from "#missions/contract/contract-hash.js";
 import type { MissionContract } from "#core/contract-types.js";
-import type { ProposedGate } from "./propose-gate.js";
+import type { ProposedGate } from "#missions/contract/propose-gate.js";
 
 export type ContractApproval =
   | { action: "approve"; contract: MissionContract }

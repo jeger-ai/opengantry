@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { checkArchStructure, loadTargetArchitecture, ratchetArchBaseline, runArchCheck, walkPerimeterFiles } from "../lib/arch/cage/target-architecture.js";
+import { checkArchStructure, loadTargetArchitecture, ratchetArchBaseline, runArchCheck, walkPerimeterFiles } from "#missions/arch/cage/target-architecture.js";
 
 function repo(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-arch-structural-"));

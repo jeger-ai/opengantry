@@ -9,7 +9,7 @@ import { canonicalJson } from "#core/canonical-json.js";
 import { REL_RUNS_DIR } from "#core/constants.js";
 import { evaluateRunRecord, RUN_RECORD_SCHEMA, sha256Hex, type RunRecord } from "#core/run-record.js";
 import { gitDiffNameOnlySinceCommit, gitRevParse, gitRunOk } from "#git/git.js";
-import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
+import { resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
 import { formatRepoRelative } from "#core/posix-path.js";
 import type { RunRecordFailure } from "./verify-failure.js";

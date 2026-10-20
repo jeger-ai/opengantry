@@ -3,7 +3,7 @@ import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { CLI_NAME } from "#core/constants.js";
 import type { EffectiveScope } from "#core/contract-types.js";
-import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
+import { loadPolicyBundleQuiet, resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";
 import type { Workspace } from "./workspace.js";

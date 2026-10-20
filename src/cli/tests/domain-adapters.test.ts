@@ -3,12 +3,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { runDiscoveryScan } from "../lib/discovery-scanner.js";
-import { getDomainAdapter, listDomainKeys, registerBuiltinDomains } from "../lib/domains/index.js";
+import { runDiscoveryScan } from "#missions/discovery-scanner.js";
+import { getDomainAdapter, listDomainKeys, registerBuiltinDomains } from "#missions/domains/index.js";
 import {
   checkArchBoundariesForFiles,
   validateTargetArchitecture,
-} from "../lib/arch/cage/target-architecture.js";
+} from "#missions/arch/cage/target-architecture.js";
 import YAML from "yaml";
 
 describe("domain adapters", () => {

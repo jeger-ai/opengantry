@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { REL_HISTORY_DIR } from "#core/constants.js";
 import { manifestPath } from "./manifest.js";
-import { tmvcRootsForSkill } from "./tmvc-path.js";
+import { tmvcRootsForSkill } from "#missions/tmvc-path.js";
 import type { Manifest } from "#core/manifest.js";
 
 export interface StartStateSnapshot {

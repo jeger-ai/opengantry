@@ -1,15 +1,15 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { setExitCode } from "../lib/cli-io.js";
 import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../lib/command-boundary.js";
-import { contractViolationCode, formatContractViolation, scanContractImports } from "../lib/contract/contract-scan.js";
+import { contractViolationCode, formatContractViolation, scanContractImports } from "#missions/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
-import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
+import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolvePinnedMission } from "../lib/missions/resolution.js";
-import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
-import { formatContractBlock, formatEffectiveScope } from "../lib/contract/format.js";
-import { proposeContract } from "../lib/contract/propose.js";
+import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
+import { formatContractBlock, formatEffectiveScope } from "#missions/contract/format.js";
+import { proposeContract } from "#missions/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../lib/legislate/legislate.js";
 import { loadWorkspace } from "../lib/workspace.js";
 

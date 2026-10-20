@@ -13,7 +13,7 @@ import { registerCageCommands } from "./program-cage.js";
 import { registerHookCommands } from "./program-hook.js";
 import { registerCiCommands } from "./program-ci.js";
 import { registerMigrateCommands } from "./program-migrate.js";
-import { registerBuiltinDomains } from "./lib/domains/index.js";
+import { registerBuiltinDomains } from "#missions/domains/index.js";
 
 export function buildProgram(): Command {
   registerBuiltinDomains();

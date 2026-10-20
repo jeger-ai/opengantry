@@ -11,9 +11,9 @@ import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options
 import { runInterrogate } from "../interrogate/run.js";
 import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
 import { loadWorkspace } from "../workspace.js";
-import { normalizeContract } from "../contract/contract-hash.js";
-import { resolveEffectiveScope } from "../contract/effective-scope.js";
-import { formatContractBlock } from "../contract/format.js";
+import { normalizeContract } from "#missions/contract/contract-hash.js";
+import { resolveEffectiveScope } from "#missions/contract/effective-scope.js";
+import { formatContractBlock } from "#missions/contract/format.js";
 import { isGantryUserError } from "#core/user-error.js";
 import type { MissionContract } from "#core/contract-types.js";
 

@@ -15,7 +15,7 @@ import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
 import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
-import { listDomainKeys } from "./lib/domains/index.js";
+import { listDomainKeys } from "#missions/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";

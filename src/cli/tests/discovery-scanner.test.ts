@@ -5,8 +5,8 @@ import path from "node:path";
 import YAML from "yaml";
 import { describe, it } from "node:test";
 import { applyDiscoveryProposal, emitDiscoveryProposal } from "../lib/discovery-proposal.js";
-import { runDiscoveryScan, serializeDiscoveryProposal } from "../lib/discovery-scanner.js";
-import { validateTargetArchitecture } from "../lib/arch/cage/target-architecture.js";
+import { runDiscoveryScan, serializeDiscoveryProposal } from "#missions/discovery-scanner.js";
+import { validateTargetArchitecture } from "#missions/arch/cage/target-architecture.js";
 import { runTargetArchitectureDoctorChecks } from "../lib/arch/cage/target-architecture-doctor.js";
 
 function writeFixtureRepo(root: string): void {

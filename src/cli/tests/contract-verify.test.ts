@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { contractSha256 } from "../lib/contract/contract-hash.js";
+import { contractSha256 } from "#missions/contract/contract-hash.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { loadManifest } from "../lib/manifest.js";

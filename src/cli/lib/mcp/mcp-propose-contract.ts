@@ -1,7 +1,7 @@
-import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
-import { resolveEffectiveScope } from "../contract/effective-scope.js";
-import { formatContractBlock } from "../contract/format.js";
-import { proposeContract } from "../contract/propose.js";
+import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
+import { resolveEffectiveScope } from "#missions/contract/effective-scope.js";
+import { formatContractBlock } from "#missions/contract/format.js";
+import { proposeContract } from "#missions/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../legislate/legislate.js";
 import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
 import type { MissionContract } from "#core/contract-types.js";

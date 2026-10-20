@@ -1,9 +1,9 @@
 import YAML from "yaml";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
-import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
-import { contractViolationCode, formatContractViolation, scanContractImports } from "../contract/contract-scan.js";
+import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
+import { contractViolationCode, formatContractViolation, scanContractImports } from "#missions/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope, MissionContract } from "#core/contract-types.js";
-import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
+import { resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
 import type { ContractFailure } from "./verify-failure.js";
