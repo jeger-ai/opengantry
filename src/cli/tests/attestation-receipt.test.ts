@@ -10,8 +10,8 @@ import {
   buildAttestationReceipt,
   computeReceiptSha256,
 } from "../lib/attestation-receipt.js";
-import { REL_MANIFEST_JSON } from "../lib/constants.js";
-import { GantryUserError } from "../lib/errors.js";
+import { REL_MANIFEST_JSON } from "#core/constants.js";
+import { GantryUserError } from "#core/user-error.js";
 import { getRepoRoot, gitConfigGet } from "#git/git.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import {

@@ -13,7 +13,7 @@ import { runAdapterPreflightDoctorChecks } from "../lib/doctor/doctor-adapter-pr
 import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
 import { getRepoRoot } from "#git/git.js";
 import { buildProgram } from "../program.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

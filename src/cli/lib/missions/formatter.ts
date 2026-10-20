@@ -1,12 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import {
-  DEFAULT_ACTIVE_MISSION,
-  LEGISLATE_TRACE_PLACEHOLDER,
-  REL_MISSION_TEMPLATE,
-} from "../constants.js";
+import { DEFAULT_ACTIVE_MISSION, LEGISLATE_TRACE_PLACEHOLDER, REL_MISSION_TEMPLATE } from "#core/constants.js";
 import { isPassStatus, isPendingStatus, normalizeTraceStatus } from "../trace.js";
-import { DEFAULT_GATE_ADAPTER, type ParsedMission, type TraceRow } from "#core/mission-types.js";
+import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
+import { type ParsedMission, type TraceRow } from "#core/mission-types.js";
 
 const TRACE_SECTION_MARKER = "## 4. Verification trace";
 

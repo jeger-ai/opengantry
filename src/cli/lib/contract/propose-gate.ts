@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { SkillEntry } from "#core/mission-types.js";
+import type { SkillEntry } from "#core/manifest.js";
 
 export interface ProposedGate {
   command: string;

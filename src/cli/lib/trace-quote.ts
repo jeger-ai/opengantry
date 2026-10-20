@@ -1,5 +1,5 @@
 import path from "node:path";
-import { LEGISLATE_TRACE_PLACEHOLDER, EXECUTOR_LOG_FILENAME } from "./constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER, EXECUTOR_LOG_FILENAME } from "#core/constants.js";
 import { quoteLineNumbers, type ExecutorLogLineMap, buildExecutorLogLineMapForQuotes } from "./executor-log-line-map.js";
 import type { TraceRow } from "#core/mission-types.js";
 import { isPassTraceRow } from "#core/trace-status.js";

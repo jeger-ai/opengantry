@@ -7,10 +7,8 @@ import { loadWorkspace } from "../lib/workspace.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import { fetchMissionDependency } from "#plane/deps-fetch.js";
-import {
-  checkMissionDependencies,
-  type DependencyCheckResult,
-} from "../lib/deps/deps-resolve.js";
+import { checkMissionDependencies } from "../lib/deps/deps-resolve.js";
+import { type DependencyCheckResult } from "#plane/deps-resolve.js";
 import { gitRun } from "#git/git.js";
 
 function loadMissionDeps(root: string, missionArg?: string) {

@@ -1,4 +1,4 @@
-import { CLI_NAME } from "../constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { logInfo } from "../cli-io.js";
 import {
   applyDiscoveryProposal,

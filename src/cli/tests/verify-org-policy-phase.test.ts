@@ -6,11 +6,11 @@ import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { evaluatePolicyPhase } from "../lib/verify/verify-org-phases.js";
 import type { PhaseContext } from "../lib/verify/verify-phase-steps.js";
-import type { OrgPolicyFail } from "../lib/policy/policy-resolve.js";
-import { loadPolicyPointer, resolveOrgPolicy } from "../lib/policy/policy-resolve.js";
+import type { OrgPolicyFail } from "#plane/policy-resolve.js";
+import { loadPolicyPointer, resolveOrgPolicy } from "#plane/policy-resolve.js";
 import { getRepoRoot } from "#git/git.js";
 import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
-import { REL_POLICY_POINTER_JSON } from "../lib/constants.js";
+import { REL_POLICY_POINTER_JSON } from "#core/constants.js";
 
 function phaseCtx(root: string): PhaseContext {
   return {

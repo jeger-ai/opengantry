@@ -5,7 +5,7 @@ import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { REL_NEXT_REMEDIATION } from "../lib/constants.js";
+import { REL_NEXT_REMEDIATION } from "#core/constants.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
   clearRemediationSnapshot,

@@ -2,11 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { parseGxtConfigDocument } from "#core/config.js";
-import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import { REL_MANIFEST_JSON, REL_MANIFEST_YAML, CLI_NAME } from "#core/constants.js";
 import { LAW_FILES, lawFileToYaml, parseLawFileDocument, type LawFileId } from "#core/law-file.js";
 import { validateManifestShape, type Manifest } from "#core/manifest.js";
 import { getRepoRoot } from "#git/git.js";
-import { CLI_NAME } from "../lib/constants.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { validateArchitecturePointer } from "../lib/arch/external/architecture-pointer.js";
 

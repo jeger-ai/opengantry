@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "../../lib/constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "#core/constants.js";
 import { isLegislativeStub } from "../../lib/missions/formatter.js";
 import type { ParsedMission } from "#core/mission-types.js";
 

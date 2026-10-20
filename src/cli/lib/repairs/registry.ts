@@ -3,7 +3,7 @@ import { GXT_ERROR } from "#core/error-codes.js";
 import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
 import { gateOutputIndicatesImportLayer } from "../repair.js";
 import type { GateFailure, VerifyPhaseFailure } from "../verify/verify-failure.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import { bannedImportRepair } from "./banned-import.js";
 import { importLayerRepair } from "./import-layer.js";
 

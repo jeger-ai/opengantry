@@ -27,16 +27,13 @@ export {
   type VerdictExpectedClaims,
 } from "./lib/verdict-expected.js";
 export { resolveOrgId } from "#plane/org-export-config.js";
-export type {
-  VerifyOptions,
-  GateExecAdapter,
-  GateExecContext,
-  GateExecutionResult,
-} from "./lib/verify/verify-options.js";
+export type { VerifyOptions } from "./lib/verify/verify-options.js";
+export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "./lib/gate-adapters/gate-adapter-types.js";
 export type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
 export { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";
 
-import type { Manifest, ParsedMission } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import { parseMissionFile } from "./lib/missions/parser.js";
 import { loadManifest } from "./lib/manifest.js";
 import type { VerifyOptions } from "./lib/verify/verify-options.js";

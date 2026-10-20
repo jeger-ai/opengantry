@@ -1,12 +1,13 @@
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
-import { policyPointerRel } from "#plane/policy-resolve.js";
-import { checkMissionDependencies, type DependencyCheckResult } from "../deps/deps-resolve.js";
 import {
+  policyPointerRel,
   configFloorViolations,
-  localConfigFloor,
   resolveOrgPolicy,
   type OrgPolicyResolveResult,
-} from "../policy/policy-resolve.js";
+} from "#plane/policy-resolve.js";
+import { checkMissionDependencies } from "../deps/deps-resolve.js";
+import { type DependencyCheckResult } from "#plane/deps-resolve.js";
+import { localConfigFloor } from "../policy/policy-resolve.js";
 import type { DependenciesFailure, PolicyFailure } from "./verify-failure.js";
 import { verifyFinding } from "./verify-finding.js";
 import type { PhaseContext } from "./verify-phase-steps.js";

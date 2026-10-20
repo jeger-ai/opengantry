@@ -10,7 +10,7 @@ import { GXT_ERROR } from "#core/error-codes.js";
 import { loadManifest } from "../lib/manifest.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { REL_PLANNER_ALLOWLIST } from "../lib/planner-identity.js";
-import type { MissionContract } from "#core/mission-types.js";
+import type { MissionContract } from "#core/contract-types.js";
 import { evaluateContractPhase, stampedContractDigest } from "../lib/verify/verify-contract.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 

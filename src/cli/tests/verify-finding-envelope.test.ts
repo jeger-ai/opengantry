@@ -6,7 +6,7 @@ import {
 } from "../lib/verify/verify-failure-normalize.js";
 import { buildFindingsForFailure, toVerifyFailedPayload } from "../lib/verify/verify-payload.js";
 import { buildSarifDocument } from "../lib/verify/verify-export.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "../lib/verify/verify-finding.js";
 
 describe("verify failure envelope", () => {

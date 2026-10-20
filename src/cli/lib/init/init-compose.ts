@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ArchitecturePointer } from "../arch/external/architecture-pointer.js";
 import { LAW_FILES, lawFileToYaml } from "#core/law-file.js";
-import { REL_ARCHITECTURE_DISCOVERY_SKILL } from "../constants.js";
+import { REL_ARCHITECTURE_DISCOVERY_SKILL } from "#core/constants.js";
 import {
   INTEGRATION_IDE_KEYS,
   loadIntegrationCompat,

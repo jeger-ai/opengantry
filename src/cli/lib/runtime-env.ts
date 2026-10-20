@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "./cli-io.js";
-import { CLI_NAME } from "./constants.js";
+import { toPosixRel } from "#core/posix-path.js";
+import { CLI_NAME } from "#core/constants.js";
 import type { EffectiveScope } from "#core/contract-types.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./errors.js";

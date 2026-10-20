@@ -88,15 +88,6 @@ const GANTRY_USER_ERROR_TO_GXT: Record<string, GxtErrorCode> = {
   GATE_ADAPTER_COMPOUND_COMMAND: GXT_ERROR.GATE_ADAPTER_MISCONFIG,
 };
 
-/** Map runtime exec / MCP error codes to stable GXT codes. */
-export function mapRuntimeErrorCodeToGxt(code: string): GxtErrorCode {
-  if (code === "FORBIDDEN_ZONE_VIOLATION" || code === "forbidden_zone_violation") {
-    return GXT_ERROR.FORBIDDEN_ZONE;
-  }
-  if (code === "RUNTIME_EXEC_FAILED") return GXT_ERROR.RUNTIME_EXEC_FAILED;
-  return GANTRY_USER_ERROR_TO_GXT[code] ?? GXT_ERROR.VERIFY_FAILED;
-}
-
 export function mapGitProofCodeToGxt(code: string): GxtErrorCode {
   return GIT_PROOF_TO_GXT[code] ?? GXT_ERROR.MISSION_UNSTAMPED;
 }

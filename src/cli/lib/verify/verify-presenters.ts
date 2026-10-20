@@ -1,13 +1,14 @@
 import type { ResolvedMissionArg } from "../mission-arg.js";
-import type { Manifest, ParsedMission } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify-options.js";
-import { CLI_NAME } from "../constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { runBreakGlassAuditFlow } from "../break-glass.js";
-import { errorMessage, logInfo, logWarn, writeStdout } from "../cli-io.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
+import { logInfo, logWarn, writeStdout } from "../cli-io.js";
 import { Reporter } from "../reporter.js";
 import { logFixHint } from "../fix-hints.js";
 import { loadPrompts } from "../prompts-loader.js";
-import { isGantryUserError } from "../errors.js";
 import { appendRepairMutationLog } from "../repair.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
 import type { VerifyPhaseFailure } from "./verify-failure.js";

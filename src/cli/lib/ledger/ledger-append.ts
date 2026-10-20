@@ -1,6 +1,6 @@
 // Facade (ADR-0052 step 5c-ii): the append lives in packages/plane; config and logging stay here.
-import { errorMessage, logWarn } from "../cli-io.js";
-import { isGantryUserError } from "../errors.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
+import { logWarn } from "../cli-io.js";
 import { loadGxtConfig, resolveLedgerMode, resolveLedgerSignatureTier } from "../gxt-config.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { appendLedgerEntry as appendWithSign } from "#plane/ledger-append.js";

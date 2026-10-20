@@ -2,17 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { createHash } from "node:crypto";
-import { toPosixRel } from "./cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import {
   runDiscoveryScan,
   type DiscoveryProposal,
 } from "./discovery-scanner.js";
-import {
-  TARGET_ARCHITECTURE_FILENAME,
-  TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
-  type ArchRuleSpec,
-  type TargetArchitectureSpec,
-} from "./arch/cage/target-architecture.js";
+import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
+import { TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type ArchRuleSpec, type TargetArchitectureSpec } from "./arch/cage/target-architecture.js";
 import {
   buildVerificationPlan,
   serializeVerificationPlan,

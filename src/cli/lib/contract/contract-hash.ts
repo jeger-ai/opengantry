@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import YAML from "yaml";
 import { canonicalJson } from "#core/canonical-json.js";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { CONTRACT_ARRAY_KEYS, CONTRACT_BOOLEAN_KEYS, type MissionContract } from "#core/contract-types.js";
 
 /**

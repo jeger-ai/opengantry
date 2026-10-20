@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { formatSchemaIssues, kpiReportSchema } from "#core/schemas/index.js";
-import { toPosixRel } from "./cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "#git/git.js";
 import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
-import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp, Manifest } from "#core/mission-types.js";
+import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
 import type { KpiFailure } from "./verify/verify-failure.js";
 

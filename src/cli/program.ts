@@ -1,6 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { Command } from "commander";
-import { CLI_NAME, CLI_VERSION } from "./lib/constants.js";
+import { CLI_NAME } from "#core/constants.js";
+import { CLI_VERSION } from "./lib/version.gen.js";
 import { registerReporterHook } from "./program-reporter-hook.js";
 import { registerCoreCommands } from "./program-core.js";
 import { registerArchCommands } from "./program-arch.js";
@@ -13,8 +14,6 @@ import { registerHookCommands } from "./program-hook.js";
 import { registerCiCommands } from "./program-ci.js";
 import { registerMigrateCommands } from "./program-migrate.js";
 import { registerBuiltinDomains } from "./lib/domains/index.js";
-
-export { CLI_VERSION } from "./lib/constants.js";
 
 export function buildProgram(): Command {
   registerBuiltinDomains();

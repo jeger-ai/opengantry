@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import { formatRepoRelative } from "../cli-io.js";
-import { GantryUserError } from "../errors.js";
+import { formatRepoRelative } from "#core/posix-path.js";
+import { GantryUserError } from "#core/user-error.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import {
   mcpError,

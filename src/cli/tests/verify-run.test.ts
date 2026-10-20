@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { REL_RECEIPTS_DIR } from "../lib/constants.js";
+import { REL_RECEIPTS_DIR } from "#core/constants.js";
 import { getRepoRoot } from "#git/git.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
 import {

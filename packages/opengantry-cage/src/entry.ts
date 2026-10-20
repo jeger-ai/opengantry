@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { CLI_VERSION } from "../../../src/cli/lib/constants.js";
+import { CLI_VERSION } from "../../../src/cli/lib/version.gen.js";
 import { reportUserFacingError } from "../../../src/cli/lib/errors.js";
 import { resetReporter } from "../../../src/cli/lib/reporter.js";
 import { configureCageCommand, registerCageCommands } from "../../../src/cli/program-cage.js";

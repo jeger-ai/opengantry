@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 
 import { GATE_EXEC_ADAPTERS, resolveGateExecAdapter } from "../lib/gate-adapters/registry.js";
 import { getRepoRoot } from "#git/git.js";
-import { GATE_ADAPTER_IDS, isGateAdapterId } from "#core/mission-types.js";
+import { GATE_ADAPTER_IDS, isGateAdapterId } from "#core/gate-adapter.js";
 
 describe("resolveGateExecAdapter", () => {
   it("registers every GateAdapterId", () => {

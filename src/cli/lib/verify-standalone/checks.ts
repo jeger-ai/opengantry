@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { withoutGitRepoEnv } from "#git/git.js";
 import type { VerifyCheck } from "./contract.js";
 

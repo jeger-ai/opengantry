@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { contractSha256, isEmptyContract, normalizeContract, normalizeContractPath } from "../lib/contract/contract-hash.js";
 import { resolveEffectiveScope } from "../lib/contract/effective-scope.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 
 function manifest(skill: { tmvc_roots: string[]; forbidden_zones: string[] }): Manifest {
   return {

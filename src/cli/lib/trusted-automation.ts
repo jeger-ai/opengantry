@@ -15,7 +15,7 @@ import {
   type TrustedAutomationRule,
   type TrustedAutomationVerdict,
 } from "#core/trusted-automation.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import { gitRunOk } from "#git/git.js";
 import { parseLawFileDocument } from "#core/law-file.js";
 import { readGxtConfigSource } from "./gxt-config.js";

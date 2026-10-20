@@ -1,4 +1,4 @@
-import { formatRepoRelative } from "../cli-io.js";
+import { formatRepoRelative } from "#core/posix-path.js";
 import { DraftTokenError, verifyDraftToken } from "../draft-token.js";
 import { runLegislate, type LegislateOptions } from "../legislate/legislate.js";
 import {

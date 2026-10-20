@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { formatRepoRelative } from "./cli-io.js";
-import { REL_RECEIPTS_DIR, MSN_ID_PATTERN } from "./constants.js";
-import { GantryUserError } from "./errors.js";
+import { formatRepoRelative } from "#core/posix-path.js";
+import { REL_RECEIPTS_DIR, MSN_ID_PATTERN } from "#core/constants.js";
+import { GantryUserError } from "#core/user-error.js";
 import type { AttestationReceipt } from "./attestation-receipt.js";
 
 export interface ReceiptListEntry {

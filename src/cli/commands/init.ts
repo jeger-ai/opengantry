@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
-import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "../lib/constants.js";
+import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
 import { readArchitecturePointerSource } from "../lib/arch/external/architecture-pointer.js";
 import { manifestExists } from "../lib/manifest.js";
 import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
@@ -16,8 +16,9 @@ import { resolveAssetsFromProfile } from "../lib/init/init-asset-catalog.js";
 import {
   composeArchitecturePointer,
   serializeArchitecturePointer,
+  composeIntegrationsDoc,
+  recipeFilesExist,
 } from "../lib/init/init-compose.js";
-import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init/init-compose.js";
 import {
   defaultInitProfile,
   mergeInitProfile,

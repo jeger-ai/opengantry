@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "../constants.js";
-import { fromPosix, logInfo, logWarn, toPosixRel } from "../cli-io.js";
+import { CLI_NAME } from "#core/constants.js";
+import { fromPosix, toPosixRel } from "#core/posix-path.js";
+import { logInfo, logWarn } from "../cli-io.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,

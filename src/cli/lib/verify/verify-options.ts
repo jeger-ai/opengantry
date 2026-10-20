@@ -53,5 +53,3 @@ export interface VerifyOptions {
   gateExecAdapter?: GateExecAdapter;
 }
 
-export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "../gate-adapters/gate-adapter-types.js";
-

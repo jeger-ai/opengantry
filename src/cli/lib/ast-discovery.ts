@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "./cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import { extractImportSpecifiers } from "#core/import-scanner.js";
 
 export interface FolderSignature {
@@ -77,7 +77,6 @@ export function discoverFolderSignature(repoRoot: string, targetDir: string): Fo
 }
 
 /** Return true if specifier matches a banned import pattern (exact or prefix). */
-export { importMatchesBan } from "#core/specifier.js";
 import { importMatchesBan } from "#core/specifier.js";
 
 /** Scan folder for banned import specifiers. */

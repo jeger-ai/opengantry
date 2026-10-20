@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "./constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { logInfo } from "./cli-io.js";
 
 function parseFragmentLines(fragmentPath: string): string[] {

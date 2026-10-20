@@ -1,15 +1,15 @@
 import { runLegislate } from "./legislate/legislate.js";
-import { isTriageEscalated } from "./triage-logic.js";
+import { isTriageEscalated, formatTriageHuman, triageIntent } from "./triage-logic.js";
 import { writeInterrogationRequiredError } from "./errors.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { resolveLegislateGateOptions } from "./legislate/legislate-gate-options.js";
 import { runInterrogate } from "./interrogate/run.js";
-import { CLI_NAME } from "./constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { allocateMsn } from "./msn-allocate.js";
 import { isValidMsnId } from "./missions/parser.js";
-import { formatTriageHuman, triageIntent } from "./triage-logic.js";
-import type { GateAdapterId, TriageResult } from "#core/mission-types.js";
+import type { GateAdapterId } from "#core/gate-adapter.js";
+import type { TriageResult } from "#core/mission-types.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
@@ -166,7 +166,7 @@ function startInterrogationHaltResult(
 
 function scaffoldStartMission(
   root: string,
-  manifest: import("#core/mission-types.js").Manifest,
+  manifest: import("#core/manifest.js").Manifest,
   options: StartOptions,
   msnId: string,
   resolvedSkillKey: string,

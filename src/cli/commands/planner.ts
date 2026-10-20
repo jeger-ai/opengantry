@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
-import { CLI_NAME } from "../lib/constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import {
   REL_PLANNER_ALLOWLIST_LOCAL,
   resolvePlannerEmails,

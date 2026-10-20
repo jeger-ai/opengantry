@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GIT_CONFIG_ALLOWED_SIGNERS, REL_PLANNER_SIGNING_PUB } from "./constants.js";
+import { GIT_CONFIG_ALLOWED_SIGNERS, REL_PLANNER_SIGNING_PUB } from "#core/constants.js";
 import { gitConfigGet, gitConfigSet, gitRunOk } from "#git/git.js";
 
 /** `git log --format=%G?` signature letter for a commit. */

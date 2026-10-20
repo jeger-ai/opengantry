@@ -3,10 +3,10 @@
  * Compound `gate_command` (`&&` / `||` / `;`) is rejected before spawn.
  * Routing is never inferred from the command string.
  */
-import { CLI_NAME } from "../constants.js";
-import { GantryUserError } from "../errors.js";
+import { CLI_NAME } from "#core/constants.js";
+import { GantryUserError } from "#core/user-error.js";
 import { hintTypedAdapterCompoundCommand } from "../fix-hints.js";
-import { isTypedGateAdapterId, type GateAdapterId } from "#core/mission-types.js";
+import { isTypedGateAdapterId, type GateAdapterId } from "#core/gate-adapter.js";
 
 /**
  * True when command contains an unquoted `&&`, `||`, `;`, or line break.

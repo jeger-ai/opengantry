@@ -6,15 +6,14 @@ import type { VerifyOptions } from "../lib/verify/verify-options.js";
 import { resolveDefaultChangedBaseRef } from "../lib/mission-changed.js";
 import { discoverChangedMissionFiles } from "../lib/verify/verify-engine.js";
 import { loadWorkspace } from "../lib/workspace.js";
-import { GantryUserError, reportUserFacingError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
+import { reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
 import { appendEventSpool } from "../lib/event-spool.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
-
-export type { VerifyOptions } from "../lib/verify/verify-options.js";
 
 function structuredVerifyOutput(options: VerifyOptions): boolean {
   return options.json === true || options.format !== undefined;

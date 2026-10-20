@@ -4,7 +4,6 @@ import { normalizeRepoRelativePath } from "#core/law.js";
 import type { TsconfigPaths } from "#core/specifier.js";
 
 // The pure classifier lives in core (ADR-0052 step 3b); this module keeps the tsconfig loader and re-exports.
-export { classifySpecifier, isBuiltinSpecifier, bareSpecifierPackage, type SpecifierClass, type TsconfigPaths } from "#core/specifier.js";
 
 function stripJsonComments(raw: string): string {
   const noBlock = raw.replace(/\/\*[\s\S]*?\*\//g, "");

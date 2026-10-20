@@ -1,5 +1,5 @@
-import { LEGISLATE_TRACE_PLACEHOLDER } from "../constants.js";
-import { GantryUserError } from "../errors.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "#core/constants.js";
+import { GantryUserError } from "#core/user-error.js";
 import type { InterrogationFinding, InterrogationRow } from "#core/interrogation.js";
 
 export const INTERROGATION_STUB_ANSWERS = [

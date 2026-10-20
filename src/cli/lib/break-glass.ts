@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "./constants.js";
-import { toPosixRel } from "./cli-io.js";
+import { CLI_NAME } from "#core/constants.js";
+import { toPosixRel } from "#core/posix-path.js";
 import { gitHead, gitRevParse, gitRun } from "#git/git.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify/verify-options.js";

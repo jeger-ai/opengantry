@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import readline from "node:readline/promises";
 import YAML from "yaml";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { formatContractBlock } from "./format.js";
 import { normalizeContract, parseContractYaml } from "./contract-hash.js";
 import type { MissionContract } from "#core/contract-types.js";

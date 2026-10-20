@@ -50,13 +50,6 @@ export interface DependencyCheckLedgerPayload {
   result: string;
 }
 
-export type LedgerPayload =
-  | ReceiptLedgerPayload
-  | VerifyFindingsLedgerPayload
-  | BreakGlassLedgerPayload
-  | PolicyPinLedgerPayload
-  | DependencyCheckLedgerPayload;
-
 export type LedgerPayloadFor<K extends LedgerEntryKind> = K extends "receipt"
   ? ReceiptLedgerPayload
   : K extends "verify_findings"

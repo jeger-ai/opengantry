@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "#core/constants.js";
 import { runVerify } from "../commands/verify.js";
 import {
   writeMiniGantryRepo,

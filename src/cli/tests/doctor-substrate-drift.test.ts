@@ -6,13 +6,12 @@ import os from "node:os";
 import { runSubstrateDriftDoctorChecks } from "../lib/doctor/doctor-substrate.js";
 import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
 import { runDoctor } from "../commands/doctor.js";
-import { loadIntegrationCompat } from "../lib/integration-compat.js";
-import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
+import { loadIntegrationCompat, resolveTemplateRootFromModule } from "../lib/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import { getRepoRoot } from "#git/git.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 
 test("runSubstrateDriftDoctorChecks: behind bundled suggests gantry upgrade", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-drift-behind-"));

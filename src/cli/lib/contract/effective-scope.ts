@@ -1,9 +1,10 @@
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { OrgPolicyBundle } from "#plane/policy-types.js";
-import { resolveOrgPolicy } from "../policy/policy-resolve.js";
+import { resolveOrgPolicy } from "#plane/policy-resolve.js";
 import { isPathUnderRoot, normalizeRepoRelativePath, unionSorted } from "#core/law.js";
-import type { Manifest, ParsedMission } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
 import type { EffectiveScope, MissionContract } from "#core/contract-types.js";
 

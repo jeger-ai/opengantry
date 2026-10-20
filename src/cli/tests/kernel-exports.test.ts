@@ -12,7 +12,8 @@ import {
   verifyVerdictToken,
 } from "../lib/verdict-token.js";
 import type { PepperKeyringEntry } from "../lib/pepper-keyring.js";
-import type { Manifest, ParsedMission } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
+import type { ParsedMission } from "#core/mission-types.js";
 
 test("kernel exports: package subpaths resolve after build", () => {
   const require = createRequire(import.meta.url);

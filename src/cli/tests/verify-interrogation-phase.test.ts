@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { LEGISLATE_TRACE_PLACEHOLDER } from "../lib/constants.js";
+import { LEGISLATE_TRACE_PLACEHOLDER } from "#core/constants.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { getRepoRoot } from "#git/git.js";
 import { isStubOperatorAnswer } from "../lib/interrogate/answers.js";

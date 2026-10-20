@@ -16,7 +16,6 @@ export const REL_ARCHITECTURE_DISCOVERY_SKILL = ".gitagent/planner/ARCHITECTURE-
 /** Git-ignored credential slots for architecture sources (see gantry arch cred). */
 export const REL_ARCHITECTURE_CREDENTIALS_DIR = ".gitagent/history/credentials" as const;
 export const REL_MISSION_SCHEMA = ".gitagent/planner/MISSION.schema.yaml" as const;
-export const REL_KPI_REPORT_SCHEMA = ".gitagent/planner/KPI-REPORT.schema.yaml" as const;
 export const DEFAULT_KPI_REPORT_DIR = ".gitagent/kpi" as const;
 export const REL_MISSION_TEMPLATE = ".gitagent/planner/MISSION.template.md" as const;
 export const REL_HISTORY_DIR = ".gitagent/history" as const;
@@ -38,8 +37,6 @@ export const REL_POLICY_POINTER_JSON = ".gitagent/foreman/POLICY.pointer.json" a
 export const REL_POLICY_CACHE = ".gitagent/history/policy" as const;
 /** Orphan commit chain for digest-only compliance entries (ADR-0043). */
 export const LEDGER_REF = "refs/gxt/ledger" as const;
-/** Fetched foreign ledger refs (ADR-0044). */
-export const LEDGER_DEPS_REF_PREFIX = "refs/gxt/deps/" as const;
 export const LEDGER_GENESIS_HASH = "0".repeat(64);
 /** Git-ignored machine-readable runtime error (see templates/.gitignore.gxt). */
 export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json" as const;
@@ -47,8 +44,6 @@ export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json"
 export const REL_NEXT_REMEDIATION = ".gitagent/tmp/NEXT_REMEDIATION.json" as const;
 /** Default localhost port for `gantry report` (walks +1..+10 on EADDRINUSE when unset). */
 export const DEFAULT_REPORT_PORT = 3134;
-/** Ephemeral runtime snapshot scratch (gitignored; see docs/ADR-EPHEMERAL-VIRTUALIZATION.md). */
-export const REL_VIRTUAL_SCRATCH = ".gitagent/virtual/" as const;
 /** ADR markdown (optional `match_terms` in frontmatter) — triage may emit non-binding hints only. */
 export const REL_OUT_OF_SCOPE_DIR = ".gitagent/out-of-scope" as const;
 export const SKILLS_DIR_NAME = "skills" as const;

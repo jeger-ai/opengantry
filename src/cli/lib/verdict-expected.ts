@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { GantryUserError } from "./errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { parseMissionFile, assertMissionGatePresent } from "./missions/parser.js";
 import { REL_ORG_EXPORT_LOCAL, resolveOrgId } from "#plane/org-export-config.js";
 

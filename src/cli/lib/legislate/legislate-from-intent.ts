@@ -2,11 +2,11 @@ import fs from "node:fs";
 import { approveContractPrompt } from "../contract/approve-prompt.js";
 import { normalizeContract, parseContractYaml } from "../contract/contract-hash.js";
 import { proposeContract } from "../contract/propose.js";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { logInfo } from "../cli-io.js";
 import { resolveSkillKeyForLegislation, runLegislate, type LegislateOptions, type LegislateResult } from "./legislate.js";
 import { loadWorkspace } from "../workspace.js";
-import type { MissionContract } from "#core/mission-types.js";
+import type { MissionContract } from "#core/contract-types.js";
 
 export interface FromIntentOptions extends LegislateOptions {
   fromIntent?: boolean;

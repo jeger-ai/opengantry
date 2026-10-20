@@ -1,4 +1,4 @@
-import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "../constants.js";
+import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "#core/constants.js";
 import { CLI_VERSION } from "../version.gen.js";
 import type { VerifyResultPayload } from "./verify-payload.js";
 

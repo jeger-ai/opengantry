@@ -7,7 +7,8 @@ import { listChangedSourceFiles, scanContractImports } from "../lib/contract/con
 import { gitInitCommit, gitInitStaged } from "./test-fixtures.js";
 import type { EffectiveScope } from "#core/contract-types.js";
 import { extractImportSites } from "#core/import-scanner.js";
-import { bareSpecifierPackage, classifySpecifier, loadTsconfigPaths } from "../lib/contract/resolve-specifier.js";
+import { bareSpecifierPackage, classifySpecifier } from "#core/specifier.js";
+import { loadTsconfigPaths } from "../lib/contract/resolve-specifier.js";
 
 function scope(overrides: Partial<EffectiveScope> = {}): EffectiveScope {
   return {

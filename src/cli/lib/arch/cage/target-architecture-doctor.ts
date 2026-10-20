@@ -1,9 +1,6 @@
 import type { DoctorLine } from "../../doctor/doctor-types.js";
-import {
-  TARGET_ARCHITECTURE_FILENAME,
-  loadTargetArchitecture,
-  targetArchitectureMigrationHint,
-} from "./target-architecture.js";
+import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
+import { loadTargetArchitecture, targetArchitectureMigrationHint } from "./target-architecture.js";
 import fs from "node:fs";
 import path from "node:path";
 

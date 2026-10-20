@@ -36,11 +36,9 @@ import {
   presentJsonFromResult,
   presentJsonInitFailure,
 } from "./verify-presenters.js";
-import type { VerifyPresentContext } from "./verify-presenters.js";
-import type { VerifyPresentResult } from "./verify-presenters.js";
+import type { VerifyPresentContext, VerifyPresentResult } from "./verify-presenters.js";
 
 /** Shared verify orchestration context (load once, present by sink). */
-export type { VerifyPresentContext } from "./verify-presenters.js";
 
 function resolveReceiptOutPath(options: VerifyOptions): string | undefined {
   if (options.receipt === undefined) return undefined;

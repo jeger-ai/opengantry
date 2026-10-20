@@ -8,7 +8,7 @@ import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
 import { gitRunOk } from "#git/git.js";
 import { discoverChangedMissions } from "./mission-changed.js";
 import { evaluateTrustedAutomationCommit, evaluateTrustedAutomationRange, manifestMsnEnforcedPrefixes } from "./trusted-automation.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 
 export interface CiCheckResult {
   ok: boolean;
