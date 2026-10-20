@@ -5,7 +5,7 @@
  * (RULES §4, §8, ADR-0049): sets are unioned, roots may only narrow, tiers take the maximum. `evaluatePaths` judges a
  * `ChangeSet` (staged paths, a commit range, a worktree, or one write) against a law. Pure: no fs, git or process.
  */
-import { pathMatchesPerimeterGlob } from "./path-glob.js";
+import { pathMatchesGlobPattern, patternCoversPath } from "./path-glob.js";
 
 export type RiskTier = "Tier-1" | "Tier-2" | "Tier-3";
 
@@ -135,7 +135,7 @@ export function classifyPath(lawOf: Law, repoRel: string): PathClass {
 
 /** True when a perimeter glob of the law protects the path. */
 export function isProtectedPath(lawOf: Law, repoRel: string): boolean {
-  return lawOf.protectedPaths.some((g) => pathMatchesPerimeterGlob(repoRel, g));
+  return lawOf.protectedPaths.some((g) => patternCoversPath(g, repoRel));
 }
 
 export type ChangeSetKind = "staged" | "range" | "worktree" | "write";
@@ -181,7 +181,6 @@ export function evaluatePaths(lawOf: Law, change: ChangeSet, options: EvaluatePa
 // Import discipline (contract: ADR-0045) and architecture rules (TARGET_ARCHITECTURE: ADR-0024), judged per site.
 
 import { importMatchesBan, type SpecifierClass } from "./specifier.js";
-import { pathMatchesGlobPattern } from "./path-glob.js";
 
 export type ImportFindingKind = "banned" | "unlisted" | "dynamic" | "scope_escape";
 

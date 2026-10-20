@@ -8,10 +8,11 @@ import {
   checkPerimeter,
   listCommitsTouchingPathInRange,
   DEFAULT_PERIMETER_PROTECTED,
+  isPerimeterProtectedPath,
 } from "../lib/perimeter.js";
 import { REL_PLANNER_SIGNING_PUB } from "../lib/constants.js";
 import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
-import { pathMatchesPerimeterGlob } from "#core/path-glob.js";
+import { patternCoversPath } from "#core/path-glob.js";
 import type { Manifest } from "#core/mission-types.js";
 import { gitCommit, gitInitCommit } from "./test-fixtures.js";
 
@@ -23,9 +24,11 @@ const manifest: Manifest = {
   perimeter_protected: [...DEFAULT_PERIMETER_PROTECTED],
 };
 
-test("pathMatchesPerimeterGlob: ** suffix glob", () => {
-  assert.equal(pathMatchesPerimeterGlob("src/db/.gxt-skill.yaml", "**/.gxt-skill.yaml"), true);
-  assert.equal(pathMatchesPerimeterGlob("README.md", "**/.gxt-skill.yaml"), false);
+test("perimeter patterns: ** globs, exact files, and a folder entry protects everything below it", () => {
+  assert.equal(patternCoversPath("**/.gxt-skill.yaml", "src/db/.gxt-skill.yaml"), true);
+  assert.equal(patternCoversPath("**/.gxt-skill.yaml", "README.md"), false);
+  assert.equal(isPerimeterProtectedPath(".gitagent/registry/env.yaml", { ...manifest, perimeter_protected: [".gitagent/registry/"] }), true);
+  assert.equal(isPerimeterProtectedPath(".gitagent/registry.md", { ...manifest, perimeter_protected: [".gitagent/registry/"] }), false);
 });
 
 test("checkPerimeter: local mode is advisory-only (no hard fail on unsigned)", () => {

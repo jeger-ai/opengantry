@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { LAW_FILES, readLawFile } from "#core/law-file.js";
+import { globToRegExp } from "#core/path-glob.js";
 import { parseManifestSource } from "#core/manifest.js";
 import { workingTreeReader } from "#git/repo-text.js";
 import { gitRun } from "#git/git.js";
@@ -11,7 +12,6 @@ import { inCageScope, parseCageScopeFlag, type CageScope } from "./cage-scope.js
 import {
   CAGE_CONFIG_FILE,
   cageConfigCommitted,
-  cageGlobToRegExp,
   loadCageConfig,
   normalizeCageRelPath,
   type CageConfig,
@@ -336,7 +336,7 @@ function addConfigTargets(plan: CagePlan, root: string, config: CageConfig, comm
     if (e.kind === "path") {
       plan.targets.push({ abs: rootJoin(root, e.value), rule: "cage_protect", mode: e.mode, source: "cage_yaml" });
     } else {
-      plan.globs.push({ pattern: e.value, re: cageGlobToRegExp(e.value), mode: e.mode, source: "cage_yaml" });
+      plan.globs.push({ pattern: e.value, re: globToRegExp(e.value), mode: e.mode, source: "cage_yaml" });
     }
   }
   plan.config = {
@@ -439,6 +439,6 @@ export function parseSerializedCagePlan(json: string): CagePlan {
     contestLimit: p.contestLimit ?? null,
     dependencies: p.dependencies ?? "report",
     scope: p.scope ?? null,
-    globs: p.globs.map((g) => ({ ...g, re: cageGlobToRegExp(g.pattern) })),
+    globs: p.globs.map((g) => ({ ...g, re: globToRegExp(g.pattern) })),
   };
 }

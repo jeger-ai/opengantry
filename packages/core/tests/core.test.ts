@@ -4,7 +4,7 @@ import { canonicalJson } from "../src/canonical-json.js";
 import { GXT_ERROR, gxtCodeFromGantryUserError } from "../src/error-codes.js";
 import { GantryUserError, isGantryUserError } from "../src/user-error.js";
 import { validateManifestShape } from "../src/manifest.js";
-import { pathMatchesArchGlob } from "../src/path-glob.js";
+import { pathMatchesGlobPattern, patternCoversPath } from "../src/path-glob.js";
 import { REL_MANIFEST_JSON, MSN_ID_PATTERN } from "../src/constants.js";
 
 test("canonicalJson sorts keys at every depth", () => {
@@ -29,9 +29,18 @@ test("validateManifestShape accepts a minimal manifest and rejects a missing ski
   );
 });
 
-test("arch globs: ** matches any depth under the prefix and nothing outside it", () => {
-  assert.equal(pathMatchesArchGlob("src/a/b.ts", "src/**"), true);
-  assert.equal(pathMatchesArchGlob("docs/x.md", "src/**"), false);
+test("one path matcher: globs match whole paths; a pattern covers the path or a folder above it", () => {
+  assert.equal(pathMatchesGlobPattern("src/a/b.ts", "src/**"), true);
+  assert.equal(pathMatchesGlobPattern("docs/x.md", "src/**"), false);
+  assert.equal(pathMatchesGlobPattern("a/b/c.ts", "a/**.ts"), true);
+  assert.equal(pathMatchesGlobPattern(".\\src\\x.ts", "src/*.ts"), true);
+  assert.equal(pathMatchesGlobPattern("src", "src/**"), false);
+  assert.equal(patternCoversPath(".gitagent/registry/", ".gitagent/registry/env.yaml"), true);
+  assert.equal(patternCoversPath(".gitagent/registry", ".gitagent/registry-old/x"), false);
+  assert.equal(patternCoversPath("**/.gxt-skill.yaml", "src/db/.gxt-skill.yaml"), true);
+  assert.equal(patternCoversPath("**/.gxt-skill.yaml", "src/db/x.gxt-skill.yaml"), false);
+  assert.equal(patternCoversPath("src/*", "src/a/b/c.ts"), true);
+  assert.equal(patternCoversPath(".", "anything/at/all"), true);
 });
 
 test("constants are the law paths the CLI reads", () => {

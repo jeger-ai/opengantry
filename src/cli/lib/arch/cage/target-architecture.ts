@@ -130,11 +130,6 @@ export interface ArchCheckResult {
   violations: ArchBoundaryViolation[];
 }
 
-/** Scan roots and rule globs use core's one general matcher (ADR-0052 B2 owner rule): `**`, `*`, `?`. */
-function globMatches(repoRel: string, glob: string): boolean {
-  return pathMatchesGlobPattern(normalizeRepoRelativePath(repoRel), normalizeRepoRelativePath(glob));
-}
-
 /** The spec's layers and rules as the core architecture law. */
 export function archLawOfSpec(spec: TargetArchitectureSpec): ArchLaw {
   return archLaw({
@@ -276,7 +271,7 @@ function resolveArchLanguages(spec: TargetArchitectureSpec): string[] {
 
 export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string[]): boolean {
   const norm = normalizeRepoRelativePath(repoRel);
-  return scanRoots.some((root) => globMatches(norm, root));
+  return scanRoots.some((root) => pathMatchesGlobPattern(norm, root));
 }
 
 

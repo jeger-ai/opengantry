@@ -38,6 +38,7 @@ test("protected paths use the perimeter glob dialect", () => {
   assert.equal(isProtectedPath(skill, "packages/x/.gxt-skill.yaml"), true);
   assert.equal(isProtectedPath(skill, ".gitagent/planner/RULES.md"), true);
   assert.equal(isProtectedPath(skill, ".gitagent/planner/RULES.md.bak"), false);
+  assert.equal(isProtectedPath(law({ protectedPaths: [".gitagent/registry/"] }), ".gitagent/registry/commands.yaml"), true);
 });
 
 test("evaluatePaths judges a staged change set in order, one finding per path", () => {

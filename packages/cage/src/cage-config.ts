@@ -187,22 +187,3 @@ export function cageConfigCommitted(root: string): boolean | null {
   return status.ok ? status.stdout.trim() === "" : null;
 }
 
-/** `*` and `?` stay inside one path segment; `**` spans any depth (`**\/x` also matches top-level `x`). */
-export function cageGlobToRegExp(glob: string): RegExp {
-  let re = "";
-  for (let i = 0; i < glob.length; i += 1) {
-    const ch = glob[i]!;
-    if (ch === "*" && glob[i + 1] === "*") {
-      const slash = glob[i + 2] === "/";
-      re += slash ? "(?:.*/)?" : ".*";
-      i += slash ? 2 : 1;
-    } else if (ch === "*") {
-      re += "[^/]*";
-    } else if (ch === "?") {
-      re += "[^/]";
-    } else {
-      re += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-    }
-  }
-  return new RegExp(`^${re}$`);
-}

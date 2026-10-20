@@ -1,56 +1,20 @@
-/** Explicit path-glob dialects — callers must declare mode (no silent unify). */
-
-export type PathGlobMode = "perimeter_suffix" | "arch_prefix_tree";
-
-function normalizePath(repoRelPath: string): string {
-  return repoRelPath.replace(/\\/g, "/");
-}
-
-// Perimeter MANIFEST globs: star-star-slash prefix = suffix match; otherwise exact.
-export function pathMatchesGlob(repoRelPath: string, glob: string, mode: PathGlobMode): boolean {
-  const norm = normalizePath(repoRelPath);
-  const g = normalizePath(glob);
-
-  switch (mode) {
-    case "perimeter_suffix":
-      if (g.startsWith("**/")) {
-        const suffix = g.slice(3);
-        return norm.endsWith(suffix) || norm.includes(`/${suffix}`);
-      }
-      return norm === g;
-    case "arch_prefix_tree":
-      if (g.endsWith("/**")) {
-        const prefix = g.slice(0, -3);
-        return norm === prefix || norm.startsWith(`${prefix}/`);
-      }
-      if (g.endsWith("**")) {
-        const prefix = g.slice(0, -2).replace(/\/$/, "");
-        return norm === prefix || norm.startsWith(`${prefix}/`);
-      }
-      return norm === g;
-    default: {
-      const _exhaustive: never = mode;
-      return _exhaustive;
-    }
-  }
-}
-
-/** @deprecated Use pathMatchesGlob with explicit mode — kept for call-site clarity. */
-export function pathMatchesPerimeterGlob(repoRelPath: string, glob: string): boolean {
-  return pathMatchesGlob(repoRelPath, glob, "perimeter_suffix");
-}
-
-/** @deprecated Use pathMatchesGlob with explicit mode — kept for call-site clarity. */
-export function pathMatchesArchGlob(repoRelPath: string, glob: string): boolean {
-  return pathMatchesGlob(repoRelPath, glob, "arch_prefix_tree");
-}
-
 /**
- * General glob to RegExp for repo-relative POSIX paths: `**` any depth (a leading `**\/` also matches the root),
- * `*` one segment, `?` one character; everything else literal. The one general matcher (ADR-0052 B2 `owner`).
+ * The one path matcher (ADR-0052 B2 `owner`). Globs: `*` and `?` inside one segment, `**` any depth (a leading `**\/`
+ * also matches the root); `\` counts as `/`, a leading `./` is ignored. A glob matches whole paths (layers, rules,
+ * cage `glob:`); a pattern covers a path when it matches it or a folder above it (protected paths, scopes, contracts).
  */
+
+function normalize(p: string): string {
+  return p.replace(/\\/g, "/").replace(/^(\.\/)+/, "");
+}
+
+const compiled = new Map<string, RegExp>();
+
+/** The glob as an anchored RegExp (compiled once per glob). */
 export function globToRegExp(glob: string): RegExp {
-  const g = normalizePath(glob).replace(/^\.\//, "");
+  const g = normalize(glob);
+  const cached = compiled.get(g);
+  if (cached) return cached;
   let re = "";
   for (let i = 0; i < g.length; i += 1) {
     const c = g[i]!;
@@ -63,10 +27,24 @@ export function globToRegExp(glob: string): RegExp {
     } else if (c === "?") re += "[^/]";
     else re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
   }
-  return new RegExp(`^${re}$`);
+  const out = new RegExp(`^${re}$`);
+  compiled.set(g, out);
+  return out;
 }
 
-/** True when the general glob matches the repo-relative path. */
+/** True when the glob matches the whole repository-relative path. */
 export function pathMatchesGlobPattern(repoRelPath: string, glob: string): boolean {
-  return globToRegExp(glob).test(normalizePath(repoRelPath).replace(/^\.\//, ""));
+  return globToRegExp(glob).test(normalize(repoRelPath));
+}
+
+/** True when the pattern matches the path or a folder above it; `.` and an empty pattern cover everything. */
+export function patternCoversPath(pattern: string, repoRelPath: string): boolean {
+  let g = normalize(pattern);
+  while (g.endsWith("/")) g = g.slice(0, -1); // a loop: /\/+$/ is quadratic on many slashes (CodeQL)
+  if (g === "" || g === ".") return true;
+  const re = globToRegExp(g);
+  const p = normalize(repoRelPath);
+  if (re.test(p)) return true;
+  for (let i = p.indexOf("/"); i !== -1; i = p.indexOf("/", i + 1)) if (re.test(p.slice(0, i))) return true;
+  return false;
 }

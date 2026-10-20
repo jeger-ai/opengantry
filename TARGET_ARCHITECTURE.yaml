@@ -187,12 +187,9 @@ rules:
     applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-GLOB-MATCHERS
     kind: owner
-    pattern: "function (pathMatchesGlob|globToRegExp|cageGlobToRegExp|scopeRegExp|verifyPathMatcher|matchGlob)\\("
+    pattern: "function (pathMatchesGlob\\w*|\\w*[Gg]lobToRegExp|scopeRegExp|verifyPathMatcher|matchGlob|\\w*[Cc]oversPath)\\("
     owners:
       - packages/core/src/path-glob.ts
-      - packages/cage/src/cage-config.ts
-      - packages/cage/src/cage-scope.ts
-      - src/cli/lib/verify-standalone/diff.ts
     applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   # B3 registry: a name the code uses must be registered; adding one is a Planner edit under .gitagent/registry/.
   - id: REGISTRY-ERROR-CODES
