@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0310",
+  "mission_path": ".gitagent/missions/MSN-0310.core-path-law.yaml",
+  "head": "345e4f828bf9883dde2ce92db1ac36232a4781ba",
+  "tree": "9e86970e84d33e33609f018f257536d7896b72a4",
+  "law_sha256": "1c2824e55706b5aafac808a0eb3e2117ac5491c5710667316de5e47781b4f02e",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 109808,
+      "output_sha256": "77d84ee2de7dc8c9e584b41b0cc834c0a3de48e34b59385c2aca082750295da5"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-20T19:28:06.981Z"
+}
