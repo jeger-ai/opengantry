@@ -1,11 +1,11 @@
+import { scopePathLaw } from "../tmvc-path.js";
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "../cli-io.js";
 import { gitRunOk } from "#git/git.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { extractImportSites } from "#core/import-scanner.js";
-import { evaluateImportSite, law } from "#core/law.js";
-import { normalizeRepoRelativePath } from "../tmvc-path.js";
+import { evaluateImportSite, law, normalizeRepoRelativePath } from "#core/law.js";
 import type { ContractImportViolation, ContractViolationKind, EffectiveScope } from "#core/contract-types.js";
 import { classifySpecifier, loadTsconfigPaths, type TsconfigPaths } from "./resolve-specifier.js";
 
@@ -86,8 +86,7 @@ export function contractViolationCode(kind: ContractViolationKind): GxtErrorCode
 /** The contract's effective scope as a law: the import discipline core judges each site against. */
 function lawOfScope(scope: EffectiveScope) {
   return law({
-    allowedRoots: scope.tmvcRoots,
-    forbiddenZones: scope.forbiddenZones,
+    paths: scopePathLaw(scope.tmvcRoots, scope.forbiddenZones, []),
     allowedImports: scope.allowedImports,
     bannedImports: scope.bannedImports,
     allowDynamicSpecifiers: scope.allowDynamicSpecifiers,

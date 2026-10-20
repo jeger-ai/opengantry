@@ -42,6 +42,8 @@ export interface PathJudgment {
   rule: string;
   source: string;
   effect: PathEffect;
+  /** The rule pattern that covered the path; null when the path fell outside an area. */
+  pattern: string | null;
   /** A runtime override lowered this rule from deny to report. */
   overridden: boolean;
 }
@@ -53,6 +55,7 @@ export function pathLaw(partial: Partial<PathLaw> = {}): PathLaw {
 }
 
 const covers = (patterns: readonly string[], path: string): boolean => patterns.some((p) => patternCoversPath(p, path));
+const coveringPattern = (patterns: readonly string[], path: string): string | null => patterns.find((p) => patternCoversPath(p, path)) ?? null;
 
 /**
  * The rule that decides the path, or null when none applies. Overrides lower an overridable deny to report before
@@ -61,14 +64,17 @@ const covers = (patterns: readonly string[], path: string): boolean => patterns.
 export function judgePath(law: PathLaw, path: string, overrides: readonly string[] = []): PathJudgment | null {
   if (covers(law.exempt, path)) return null;
   const overridden = covers(overrides, path);
-  const hits: { id: string; source: string; effect: PathEffect; overridable: boolean }[] = [
-    ...law.rules.filter((r) => covers(r.patterns, path) && !covers(r.except ?? [], path)),
-    ...law.areas.filter((a) => !covers(a.patterns, path)).map((a) => ({ ...a, effect: "deny" as const })),
+  const hits: { id: string; source: string; effect: PathEffect; overridable: boolean; pattern: string | null }[] = [
+    ...law.rules.flatMap((r) => {
+      const pattern = covers(r.except ?? [], path) ? null : coveringPattern(r.patterns, path);
+      return pattern === null ? [] : [{ ...r, pattern }];
+    }),
+    ...law.areas.filter((a) => !covers(a.patterns, path)).map((a) => ({ ...a, effect: "deny" as const, pattern: null })),
   ];
   let best: PathJudgment | null = null;
   for (const h of hits) {
     const lowered = overridden && h.overridable && h.effect === "deny";
-    const j: PathJudgment = { rule: h.id, source: h.source, effect: lowered ? "report" : h.effect, overridden: lowered };
+    const j: PathJudgment = { rule: h.id, source: h.source, effect: lowered ? "report" : h.effect, pattern: h.pattern, overridden: lowered };
     if (!best || RANK[j.effect] > RANK[best.effect]) best = j;
   }
   return best;

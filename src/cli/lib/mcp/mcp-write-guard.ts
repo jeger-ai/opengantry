@@ -1,12 +1,7 @@
+import { normalizeRepoRelativePath } from "#core/law.js";
+import { judgePath } from "#core/path-law.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
-import {
-  classifyRepoRelativePath,
-  forbiddenZonesForSkill,
-  isGovernanceTransportPath,
-  isPathUnderRoot,
-  normalizeRepoRelativePath,
-  tmvcRootsForSkill,
-} from "../tmvc-path.js";
+import { classifyRepoRelativePath, forbiddenZonesForSkill, scopePathLaw, isGovernanceTransportPath, tmvcRootsForSkill } from "../tmvc-path.js";
 import { GantryUserError } from "../errors.js";
 import type { Manifest } from "#core/mission-types.js";
 
@@ -51,12 +46,9 @@ function allManifestForbiddenZones(manifest: Manifest): string[] {
   return [...zones];
 }
 
+/** The forbidden zone that covers the path, or null. */
 function pathHitsForbiddenZone(repoRel: string, forbiddenZones: readonly string[]): string | null {
-  const norm = normalizeRepoRelativePath(repoRel);
-  for (const fz of forbiddenZones) {
-    if (isPathUnderRoot(norm, fz)) return fz;
-  }
-  return null;
+  return judgePath(scopePathLaw([repoRel], forbiddenZones, []), repoRel)?.pattern ?? null;
 }
 
 /**

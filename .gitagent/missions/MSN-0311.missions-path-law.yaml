@@ -1,0 +1,277 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0311]. Executor must not run until the [MSN-0311] legislation commit + pin.
+#
+# Legislated intent: ADR-0053 migration step 2, mission scope onto the path law. The core Law carries a PathLaw;
+# classifyPath, evaluatePaths, isProtectedPath, tighten and ChangeSet leave core; scopePathLaw in tmvc-path.ts is the
+# mission law and the TMVC classification, staged guard, MCP write guard, contract scan and perimeter judge through
+# it; effective scope computes the same lists directly. No output change (effective scope identical for all 251
+# missions). The cage and standalone verify are forbidden (steps 3 and 4). Baseline lowered.
+#
+# Operator direction (2026-10-20, "start step 2, missions onto the path law"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0311.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0311
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 17bae9bbd0a9
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0311.missions-path-law.yaml,
+      .gitagent/runs/MSN-0311.json, packages/core/src/law.ts,
+      packages/core/src/path-law.ts, packages/core/tests/law-imports.test.ts,
+      packages/core/tests/law.test.ts, packages/core/tests/path-law.test.ts,
+      src/cli/lib/arch/cage/target-architecture.ts,
+      src/cli/lib/contract/contract-scan.ts,
+      src/cli/lib/contract/effective-scope.ts,
+      src/cli/lib/contract/intent-path-tokens.ts,
+      src/cli/lib/contract/propose-imports.ts, src/cli/lib/contract/propose.ts,
+      src/cli/lib/interrogate/gaps.ts, src/cli/lib/kernel-evaluate-scope.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/staged-tmvc-guard.ts, src/cli/lib/tmvc-path.ts,
+      src/cli/lib/verify/verify-interrogation.ts,
+      src/cli/tests/context-request.test.ts. ADR-0053 migration step 2, missions
+      onto the path law: packages/core/src/law.ts loses its path API and carries
+      a PathLaw; path-law.ts judgments name the matching pattern;
+      src/cli/lib/tmvc-path.ts gains scopePathLaw and loses its facade
+      re-export; the staged guard, MCP write guard, contract scan, perimeter,
+      kernel scope check and effective scope judge through the path law; ten
+      importers use core's path helpers directly; tests ported.
+      forbidden-scan.ts is not touched: it walks the zone folders to snapshot
+      files (mechanism, not a judgment). The cage (packages/cage/) and
+      standalone verify (src/cli/lib/verify-standalone/) are forbidden: they are
+      steps 3 and 4. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Behaviour: every suite passes unchanged;
+      effective scope is identical for all 251 missions in this repository
+      (run-record law digests unchanged). ARCH_BASELINE.json lowered only."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 9e5f610759b0
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0311.missions-path-law.yaml,
+      .gitagent/runs/MSN-0311.json, packages/core/src/law.ts,
+      packages/core/src/path-law.ts, packages/core/tests/law-imports.test.ts,
+      packages/core/tests/law.test.ts, packages/core/tests/path-law.test.ts,
+      src/cli/lib/arch/cage/target-architecture.ts,
+      src/cli/lib/contract/contract-scan.ts,
+      src/cli/lib/contract/effective-scope.ts,
+      src/cli/lib/contract/intent-path-tokens.ts,
+      src/cli/lib/contract/propose-imports.ts, src/cli/lib/contract/propose.ts,
+      src/cli/lib/interrogate/gaps.ts, src/cli/lib/kernel-evaluate-scope.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/staged-tmvc-guard.ts, src/cli/lib/tmvc-path.ts,
+      src/cli/lib/verify/verify-interrogation.ts,
+      src/cli/tests/context-request.test.ts. ADR-0053 migration step 2, missions
+      onto the path law: packages/core/src/law.ts loses its path API and carries
+      a PathLaw; path-law.ts judgments name the matching pattern;
+      src/cli/lib/tmvc-path.ts gains scopePathLaw and loses its facade
+      re-export; the staged guard, MCP write guard, contract scan, perimeter,
+      kernel scope check and effective scope judge through the path law; ten
+      importers use core's path helpers directly; tests ported.
+      forbidden-scan.ts is not touched: it walks the zone folders to snapshot
+      files (mechanism, not a judgment). The cage (packages/cage/) and
+      standalone verify (src/cli/lib/verify-standalone/) are forbidden: they are
+      steps 3 and 4. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Behaviour: every suite passes unchanged;
+      effective scope is identical for all 251 missions in this repository
+      (run-record law digests unchanged). ARCH_BASELINE.json lowered only."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. No output changes; conformance goldens unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment is unchanged; the write guard
+      judges through the same path law.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: "Accept. This is migration step 2: the core Law carries a
+      PathLaw and every mission path judgment goes through judgePath; decision 1
+      holds by construction (contract roots must sit inside skill roots, so the
+      contract area is the intersection); decision 2 holds (the perimeter is
+      planner rules). forbidden-scan.ts is mechanism and stays."
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0311.missions-path-law.yaml,
+      .gitagent/runs/MSN-0311.json, packages/core/src/law.ts,
+      packages/core/src/path-law.ts, packages/core/tests/law-imports.test.ts,
+      packages/core/tests/law.test.ts, packages/core/tests/path-law.test.ts,
+      src/cli/lib/arch/cage/target-architecture.ts,
+      src/cli/lib/contract/contract-scan.ts,
+      src/cli/lib/contract/effective-scope.ts,
+      src/cli/lib/contract/intent-path-tokens.ts,
+      src/cli/lib/contract/propose-imports.ts, src/cli/lib/contract/propose.ts,
+      src/cli/lib/interrogate/gaps.ts, src/cli/lib/kernel-evaluate-scope.ts,
+      src/cli/lib/mcp/mcp-write-guard.ts, src/cli/lib/perimeter.ts,
+      src/cli/lib/staged-tmvc-guard.ts, src/cli/lib/tmvc-path.ts,
+      src/cli/lib/verify/verify-interrogation.ts,
+      src/cli/tests/context-request.test.ts. ADR-0053 migration step 2, missions
+      onto the path law: packages/core/src/law.ts loses its path API and carries
+      a PathLaw; path-law.ts judgments name the matching pattern;
+      src/cli/lib/tmvc-path.ts gains scopePathLaw and loses its facade
+      re-export; the staged guard, MCP write guard, contract scan, perimeter,
+      kernel scope check and effective scope judge through the path law; ten
+      importers use core's path helpers directly; tests ported.
+      forbidden-scan.ts is not touched: it walks the zone folders to snapshot
+      files (mechanism, not a judgment). The cage (packages/cage/) and
+      standalone verify (src/cli/lib/verify-standalone/) are forbidden: they are
+      steps 3 and 4. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Behaviour: every suite passes unchanged;
+      effective scope is identical for all 251 missions in this repository
+      (run-record law digests unchanged). ARCH_BASELINE.json lowered only.
+      Operator direction (2026-10-20, \"start step 2, missions onto the path
+      law\"). Decision 1 (areas intersect) holds by construction: effective
+      scope still rejects a contract root outside its skill's roots, so the
+      contract area is the intersection, and the effective lists, which agents
+      receive and run records digest, stay byte-identical; building the law from
+      them avoids a second derivation. forbidden-scan.ts stays as mechanism.
+      Found and not changed here: the org policy's
+      manifest_constraints.perimeter_protected_add is in the schema but applied
+      nowhere. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0311.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged. Standalone verify is not touched (step 4).
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept. The contract cage is unchanged: same effective roots,
+      zones and imports, the same GXT_CONTRACT_SCOPE_ESCAPE errors at
+      legislation, the same import findings and messages."
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: 3d9d23dc90efcd2b18537d0dd0fe422f6f4cd76906c39c9d0c5e99964cab0304
+declared_paths:
+  - .gitagent/missions/MSN-0311.missions-path-law.yaml
+  - .gitagent/runs/MSN-0311.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - packages/core/src/law.ts
+  - packages/core/src/path-law.ts
+  - packages/core/tests/law-imports.test.ts
+  - packages/core/tests/law.test.ts
+  - packages/core/tests/path-law.test.ts
+  - src/cli/lib/arch/cage/target-architecture.ts
+  - src/cli/lib/contract/contract-scan.ts
+  - src/cli/lib/contract/effective-scope.ts
+  - src/cli/lib/contract/intent-path-tokens.ts
+  - src/cli/lib/contract/propose-imports.ts
+  - src/cli/lib/contract/propose.ts
+  - src/cli/lib/interrogate/gaps.ts
+  - src/cli/lib/kernel-evaluate-scope.ts
+  - src/cli/lib/mcp/mcp-write-guard.ts
+  - src/cli/lib/perimeter.ts
+  - src/cli/lib/staged-tmvc-guard.ts
+  - src/cli/lib/tmvc-path.ts
+  - src/cli/lib/verify/verify-interrogation.ts
+  - src/cli/tests/context-request.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0311.missions-path-law.yaml
+    - .gitagent/runs/MSN-0311.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - packages/core/src/law.ts
+    - packages/core/src/path-law.ts
+    - packages/core/tests/law-imports.test.ts
+    - packages/core/tests/law.test.ts
+    - packages/core/tests/path-law.test.ts
+    - src/cli/lib/arch/cage/target-architecture.ts
+    - src/cli/lib/contract/contract-scan.ts
+    - src/cli/lib/contract/effective-scope.ts
+    - src/cli/lib/contract/intent-path-tokens.ts
+    - src/cli/lib/contract/propose-imports.ts
+    - src/cli/lib/contract/propose.ts
+    - src/cli/lib/interrogate/gaps.ts
+    - src/cli/lib/kernel-evaluate-scope.ts
+    - src/cli/lib/mcp/mcp-write-guard.ts
+    - src/cli/lib/perimeter.ts
+    - src/cli/lib/staged-tmvc-guard.ts
+    - src/cli/lib/tmvc-path.ts
+    - src/cli/lib/verify/verify-interrogation.ts
+    - src/cli/tests/context-request.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/cage/
+    - src/cli/lib/verify-standalone/
+contract_sha256: 01afe16f0aded7d37f5bf19b36672210006f0805932690d36325d766c1a04f54

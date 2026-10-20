@@ -1,10 +1,19 @@
+import { pathLaw } from "../src/path-law.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { archLaw, evaluateImportSite, evaluateLayerImport, evaluatePatternRules, findPatternMatch, law, layerForFile } from "../src/law.js";
 import { classifySpecifier, importMatchesBan, isBuiltinSpecifier } from "../src/specifier.js";
 import { extractImportSites } from "../src/import-scanner.js";
 
-const contract = law({ allowedRoots: ["src/cli/"], forbiddenZones: [".gitagent/foreman/"], bannedImports: ["lodash"], allowedImports: [], strictRelativeImports: true });
+const contract = law({
+  paths: pathLaw({
+    areas: [{ id: "outside_roots", source: "scope", patterns: ["src/cli/"], overridable: false }],
+    rules: [{ id: "forbidden_zone", source: "scope", patterns: [".gitagent/foreman/"], effect: "deny", overridable: false }],
+  }),
+  bannedImports: ["lodash"],
+  allowedImports: [],
+  strictRelativeImports: true,
+});
 const site = (spec: string | null, kind = "static", expression?: string) => ({ kind, spec, expression, line: 3, column: 1 });
 
 test("specifier classification: builtin, bare package, relative and tsconfig alias", () => {

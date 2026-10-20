@@ -2,7 +2,7 @@ import { GantryUserError } from "../errors.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { OrgPolicyBundle } from "#plane/policy-types.js";
 import { resolveOrgPolicy } from "../policy/policy-resolve.js";
-import { law, tighten } from "#core/law.js";
+import { isPathUnderRoot, normalizeRepoRelativePath, unionSorted } from "#core/law.js";
 import type { Manifest, ParsedMission } from "#core/mission-types.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
 import type { EffectiveScope, MissionContract } from "#core/contract-types.js";
@@ -58,26 +58,23 @@ export function resolveEffectiveScope(input: ResolveEffectiveScopeInput): Effect
   const policyForbidden = (policy?.manifest_constraints?.forbidden_zones_add ?? []).map(normalizeContractPath);
   const policyBanned = (policy?.banned_imports ?? []).map((b) => b.specifier.trim());
 
-  // Level 1 (skill) tightened by the org floor (policy forbidden zones and banned imports), then by level 0 (contract).
-  const floor = tighten(law({ allowedRoots: skillRoots, forbiddenZones: skillForbidden }), { forbiddenZones: policyForbidden, bannedImports: policyBanned }).law;
-  const merged = tighten(floor, {
-    allowedRoots: contract.tmvc_roots ?? [],
-    forbiddenZones: contract.forbidden_zones ?? [],
-    allowedImports: contract.allowed_imports ?? [],
-    bannedImports: contract.banned_imports ?? [],
-    allowDynamicSpecifiers: contract.allow_dynamic_specifiers === true,
-    strictRelativeImports: contract.strict_relative_imports === true,
-  });
-  assertSubsetOfSkillRoots(merged.violations.find((v) => v.kind === "roots_escape")?.paths ?? [], skillRoots, skillKey);
-  assertRootsOutsideForbidden(merged.violations.find((v) => v.kind === "roots_in_forbidden")?.paths ?? []);
+  // Level 1 (skill), the org floor (policy zones and banned imports), then level 0 (contract). The contract's roots
+  // narrow the skill's: they must sit inside them (an empty skill root list accepts any), so the contract area is
+  // the intersection of both (ADR-0053 decision 1). Sets are unioned; nothing widens.
+  const skillRootsNorm = skillRoots.map(normalizeRepoRelativePath);
+  const contractRoots = (contract.tmvc_roots ?? []).map(normalizeRepoRelativePath);
+  const forbiddenZones = unionSorted(skillForbidden, policyForbidden, contract.forbidden_zones ?? []);
+  const escaped = skillRootsNorm.length > 0 ? contractRoots.filter((r) => !skillRootsNorm.some((u) => isPathUnderRoot(r, u))) : [];
+  assertSubsetOfSkillRoots(escaped, skillRoots, skillKey);
+  assertRootsOutsideForbidden(contractRoots.filter((r) => forbiddenZones.some((fz) => isPathUnderRoot(r, fz))));
 
   return {
-    tmvcRoots: merged.law.allowedRoots,
-    forbiddenZones: merged.law.forbiddenZones,
-    allowedImports: merged.law.allowedImports,
-    bannedImports: merged.law.bannedImports,
-    allowDynamicSpecifiers: merged.law.allowDynamicSpecifiers,
-    strictRelativeImports: merged.law.strictRelativeImports,
+    tmvcRoots: contractRoots.length > 0 ? contractRoots : skillRootsNorm,
+    forbiddenZones,
+    allowedImports: [...(contract.allowed_imports ?? [])],
+    bannedImports: unionSorted(policyBanned, contract.banned_imports ?? []),
+    allowDynamicSpecifiers: contract.allow_dynamic_specifiers === true,
+    strictRelativeImports: contract.strict_relative_imports === true,
     hasContract: input.contract !== null,
   };
 }

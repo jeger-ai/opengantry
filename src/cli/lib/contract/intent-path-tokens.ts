@@ -1,7 +1,7 @@
+import { isPathUnderRoot } from "#core/law.js";
 import fs from "node:fs";
 import path from "node:path";
 import { normalizeContractPath } from "./contract-hash.js";
-import { isPathUnderRoot } from "../tmvc-path.js";
 
 const PATH_TOKEN_RE = /(?:\.{0,2}\/)?[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@-]+)+\/?/g;
 

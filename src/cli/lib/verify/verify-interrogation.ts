@@ -1,3 +1,4 @@
+import { normalizeRepoRelativePath } from "#core/law.js";
 import YAML from "yaml";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
@@ -14,7 +15,7 @@ import { isLegislativeStub } from "../missions/formatter.js";
 import { missionHasRunRecord } from "./verify-run-record.js";
 import { findPlannerStamp } from "../git/git-proof.js";
 import type { Manifest, ParsedMission } from "#core/mission-types.js";
-import { normalizeRepoRelativePath, pathRiskTier } from "../tmvc-path.js";
+import { pathRiskTier } from "../tmvc-path.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
 import type { InterrogationFailure } from "./verify-failure.js";
