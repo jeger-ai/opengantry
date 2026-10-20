@@ -1,3 +1,4 @@
+import { parseLawFileDocument, type LawFileSource } from "./law-file.js";
 /**
  * `.gitagent/config.yaml` (ADR-0052 step 5c-i; the 3.x config.json is still read): the shape and the tier resolvers are pure. Reading the file and the
  * defensive-profile validation stay with the loader (`src/cli/lib/gxt-config.ts`).
@@ -36,6 +37,15 @@ export interface GxtConfigShape {
 /** The config shape of a parsed document; anything that is not an object is an empty config. */
 export function parseGxtConfigDocument(doc: unknown): GxtConfigShape {
   return doc && typeof doc === "object" && !Array.isArray(doc) ? (doc as GxtConfigShape) : {};
+}
+
+/** The config from a law-file source; a broken file is an empty config, as in 3.x. */
+export function parseGxtConfigSource(source: LawFileSource): GxtConfigShape {
+  try {
+    return parseGxtConfigDocument(parseLawFileDocument(source));
+  } catch {
+    return {};
+  }
 }
 
 /** Parse a JSON body; a broken file is an empty config, as before. */

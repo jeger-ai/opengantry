@@ -3,7 +3,9 @@ import path from "node:path";
 import { runArchitecturePointerDoctorChecks } from "../arch/external/architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "../break-glass.js";
 import { REL_AGENT_ERROR_FILE, CLI_NAME } from "../constants.js";
-import { REL_GXT_CONFIG_JSON, REL_GXT_CONFIG_YAML, REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import { REL_MANIFEST_YAML } from "#core/constants.js";
+import { manifestExists } from "../manifest.js";
+import { runLawFileFormDoctorChecks } from "../law-files.js";
 import { ENV_PLANNER_EMAILS } from "../config-namespace.js";
 import { agentErrorAbsolutePath } from "../errors.js";
 import { gitConfigGet, gitRunOk } from "#git/git.js";
@@ -207,24 +209,12 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);
 
-  const hasYaml = fs.existsSync(path.join(root, REL_MANIFEST_YAML));
-  const hasJson = fs.existsSync(path.join(root, REL_MANIFEST_JSON));
-  if (!hasYaml && !hasJson) {
+  if (!manifestExists(root)) {
     lines.push({ level: "fail", message: `${REL_MANIFEST_YAML} missing` });
     hasFail = true;
     nextStep = pickNextStep(nextStep, "gantry init");
-  } else if (!hasYaml) {
-    lines.push({
-      level: "warn",
-      message: `${REL_MANIFEST_JSON} is the 3.x form; run gantry migrate manifest (MANIFEST.yaml is read first, JSON is still read)`,
-    });
   }
-  if (!fs.existsSync(path.join(root, REL_GXT_CONFIG_YAML)) && fs.existsSync(path.join(root, REL_GXT_CONFIG_JSON))) {
-    lines.push({
-      level: "warn",
-      message: `${REL_GXT_CONFIG_JSON} is the 3.x form; run gantry migrate config (config.yaml is read first, JSON is still read)`,
-    });
-  }
+  lines.push(...runLawFileFormDoctorChecks(root));
 
   return { lines, hasFail, nextStep, plannerAllowlistUnset };
 }

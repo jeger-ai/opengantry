@@ -11,7 +11,7 @@
     "status": "already_yaml",
     "wrote": null,
     "removed": null,
-    "perimeter_protected_updated": false,
+    "changes": [],
     "dry_run": false
   },
   "stderr_codes": []

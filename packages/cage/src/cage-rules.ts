@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
-import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
-import { parseManifestSource, selectManifestSource } from "#core/manifest-file.js";
+import { LAW_FILES, readLawFile } from "#core/law-file.js";
+import { parseManifestSource } from "#core/manifest.js";
+import { workingTreeReader } from "#git/repo-text.js";
 import { gitRun } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
@@ -234,9 +235,7 @@ export function cageManifestZones(manifest: Manifest): string[] {
  * so cage fails closed before the wrapped command runs.
  */
 function manifestZones(root: string): string[] {
-  const text = (rel: string): string | null =>
-    fs.existsSync(rootJoin(root, rel)) ? fs.readFileSync(rootJoin(root, rel), "utf8") : null;
-  const source = selectManifestSource(text(REL_MANIFEST_YAML), text(REL_MANIFEST_JSON));
+  const source = readLawFile(LAW_FILES.manifest, workingTreeReader(root));
   return source ? cageManifestZones(parseManifestSource(source)) : [];
 }
 

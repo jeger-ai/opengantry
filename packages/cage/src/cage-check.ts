@@ -1,5 +1,6 @@
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
-import { parseManifestSource, selectManifestSource } from "#core/manifest-file.js";
+import { LAW_FILES, selectLawFileSource } from "#core/law-file.js";
+import { parseManifestSource } from "#core/manifest.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import { gitRevParse, gitRun } from "#git/git.js";
 import { CAGE_CONFIG_FILE, EMPTY_CAGE_CONFIG, parseCageConfigText, type CageConfig } from "./cage-config.js";
@@ -108,7 +109,7 @@ function zonesAt(root: string, rev: string): string[] {
   const json = committedText(root, rev, REL_MANIFEST_JSON);
   if (yaml === null && json === null) return [];
   try {
-    const source = selectManifestSource(yaml, json);
+    const source = selectLawFileSource(LAW_FILES.manifest, yaml, json);
     return source ? cageManifestZones(parseManifestSource(source)) : [];
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

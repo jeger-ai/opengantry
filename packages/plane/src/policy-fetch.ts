@@ -6,7 +6,7 @@ import { GXT_ERROR } from "#core/error-codes.js";
 import { REL_POLICY_POINTER_JSON } from "#core/constants.js";
 import { sha256File } from "./digests.js";
 import { loadPolicyPointer, policyPointerPath, policyPointerRel, readPolicyPointerSource } from "./policy-resolve.js";
-import { policyPointerToYaml } from "#core/policy-pointer-file.js";
+import { LAW_FILES, lawFileToYaml } from "#core/law-file.js";
 import { cachedBundlePath, parseOrgPolicyBundle } from "./policy-bundle.js";
 import type { PolicyPointer } from "./policy-types.js";
 
@@ -100,7 +100,7 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
       bundle_sha256: sha,
     };
     // Written back in the form found: a 3.x JSON pointer stays JSON until gantry migrate policy-pointer runs.
-    const body = readPolicyPointerSource(root)?.kind === "json" ? `${JSON.stringify(next, null, 2)}\n` : policyPointerToYaml(next);
+    const body = readPolicyPointerSource(root)?.kind === "json" ? `${JSON.stringify(next, null, 2)}\n` : lawFileToYaml(LAW_FILES["policy-pointer"], next);
     fs.writeFileSync(policyPointerPath(root), body, "utf8");
     return {
       pointer: next,

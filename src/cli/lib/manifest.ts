@@ -1,25 +1,14 @@
-import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "./constants.js";
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
-import {
-  manifestToYaml,
-  parseManifestDocument,
-  parseManifestSource,
-  selectManifestSource,
-  type ManifestSource,
-} from "#core/manifest-file.js";
-import type { Manifest } from "#core/manifest.js";
+import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
+import { parseManifestSource, type Manifest } from "#core/manifest.js";
+import { lawFileRelAt, readLawFileAt } from "./law-files.js";
 export { validateManifestShape } from "#core/manifest.js";
 
-function readText(root: string, rel: string): string | null {
-  const abs = path.join(root, ...rel.split("/"));
-  return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
-}
-
 /** The manifest on disk: the YAML form, else the 3.x JSON form; null when neither exists (ADR-0047 dual-read). */
-export function readManifestSource(root: string): ManifestSource | null {
-  return selectManifestSource(readText(root, REL_MANIFEST_YAML), readText(root, REL_MANIFEST_JSON));
+export function readManifestSource(root: string): LawFileSource | null {
+  return readLawFileAt(root, "manifest");
 }
 
 export function manifestExists(root: string): boolean {
@@ -28,7 +17,7 @@ export function manifestExists(root: string): boolean {
 
 /** Repository-relative path of the authoritative manifest; the YAML path when none exists yet (what init writes). */
 export function manifestRelPath(root: string): string {
-  return readManifestSource(root)?.rel ?? REL_MANIFEST_YAML;
+  return lawFileRelAt(root, "manifest");
 }
 
 export function manifestPath(root: string): string {
@@ -47,25 +36,8 @@ export function loadManifest(root: string): Manifest {
 export function readManifestDocument(root: string): unknown | null {
   try {
     const source = readManifestSource(root);
-    return source ? parseManifestDocument(source) : null;
+    return source ? parseLawFileDocument(source) : null;
   } catch {
     return null;
   }
-}
-
-/** The manifest, or null when it is missing or invalid (advisory readers). */
-export function readManifestOrNull(root: string): Manifest | null {
-  try {
-    return loadManifest(root);
-  } catch {
-    return null;
-  }
-}
-
-/** Write the YAML form; returns its absolute path. */
-export function writeManifestYaml(root: string, manifest: Manifest): string {
-  const abs = path.join(root, ...REL_MANIFEST_YAML.split("/"));
-  fs.mkdirSync(path.dirname(abs), { recursive: true });
-  fs.writeFileSync(abs, manifestToYaml(manifest), "utf8");
-  return abs;
 }

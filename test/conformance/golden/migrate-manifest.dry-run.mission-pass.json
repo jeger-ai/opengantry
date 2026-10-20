@@ -7,7 +7,7 @@
     "--dry-run"
   ],
   "exit": 0,
-  "stdout": "gantry migrate manifest: would write .gitagent/foreman/MANIFEST.yaml and removed .gitagent/foreman/MANIFEST.json\n  perimeter_protected now lists .gitagent/foreman/MANIFEST.yaml\n  the manifest is perimeter-protected: commit both changes in a Planner [MSN-…] commit\n",
+  "stdout": "gantry migrate manifest: would write .gitagent/foreman/MANIFEST.yaml and removed .gitagent/foreman/MANIFEST.json\n  perimeter_protected now lists .gitagent/foreman/MANIFEST.yaml\n  law files are Planner-owned: commit the change in a Planner [MSN-…] commit\n",
   "stderr_codes": [],
   "tree": []
 }

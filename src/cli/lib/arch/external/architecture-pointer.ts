@@ -8,8 +8,9 @@ import {
   REL_ARCHITECTURE_POINTER_JSON,
   REL_ARCHITECTURE_POINTER_YAML,
 } from "../../constants.js";
-import { selectArchitecturePointerSource } from "#core/architecture-pointer-file.js";
 import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
+import { workingTreeReader } from "#git/repo-text.js";
+import { lawFileRelAt, readLawFileAt } from "../../law-files.js";
 import type { DoctorLine } from "../../doctor/doctor-types.js";
 
 export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
@@ -49,19 +50,14 @@ const VALID_KINDS = new Set<ArchitectureDocKind>(["file", "directory", "external
 const DEFAULT_ACCESS_SKILL = REL_ARCHITECTURE_ACCESS_SKILL;
 const DEFAULT_DISCOVERY_SKILL = REL_ARCHITECTURE_DISCOVERY_SKILL;
 
-function readText(repoRoot: string, rel: string): string | null {
-  const abs = path.join(repoRoot, fromPosix(rel));
-  return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
-}
-
 /** The pointer on disk: the YAML form, else the 3.x JSON form; null when neither exists (ADR-0047 dual-read). */
 export function readArchitecturePointerSource(repoRoot: string): LawFileSource | null {
-  return selectArchitecturePointerSource(readText(repoRoot, REL_ARCHITECTURE_POINTER_YAML), readText(repoRoot, REL_ARCHITECTURE_POINTER_JSON));
+  return readLawFileAt(repoRoot, "architecture-pointer");
 }
 
 /** Absolute path of the authoritative pointer; the YAML path when none exists yet (what init writes). */
 export function architecturePointerPath(repoRoot: string): string {
-  return path.join(repoRoot, fromPosix(readArchitecturePointerSource(repoRoot)?.rel ?? REL_ARCHITECTURE_POINTER_YAML));
+  return path.join(repoRoot, fromPosix(lawFileRelAt(repoRoot, "architecture-pointer")));
 }
 
 function optionalTrimmedString(
@@ -320,20 +316,13 @@ function doctorCheckArchitectureTarget(repoRoot: string, pointer: ArchitecturePo
 
 export function runArchitecturePointerDoctorChecks(repoRoot: string): DoctorLine[] {
   const lines: DoctorLine[] = [];
-  const hasYaml = readText(repoRoot, REL_ARCHITECTURE_POINTER_YAML) !== null;
-  const hasJson = readText(repoRoot, REL_ARCHITECTURE_POINTER_JSON) !== null;
-  if (!hasYaml && !hasJson) {
+  const read = workingTreeReader(repoRoot);
+  if (read(REL_ARCHITECTURE_POINTER_YAML) === null && read(REL_ARCHITECTURE_POINTER_JSON) === null) {
     lines.push({
       level: "warn",
       message: `${REL_ARCHITECTURE_POINTER_YAML} missing — agents cannot discover code layout`,
     });
     return lines;
-  }
-  if (!hasYaml) {
-    lines.push({
-      level: "warn",
-      message: `${REL_ARCHITECTURE_POINTER_JSON} is the 3.x form; run gantry migrate architecture-pointer (the YAML form is read first, JSON is still read)`,
-    });
   }
 
   let pointer: ArchitecturePointer;

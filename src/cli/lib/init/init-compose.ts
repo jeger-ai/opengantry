@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ArchitecturePointer } from "../arch/external/architecture-pointer.js";
-import { architecturePointerToYaml } from "#core/architecture-pointer-file.js";
+import { LAW_FILES, lawFileToYaml } from "#core/law-file.js";
 import { REL_ARCHITECTURE_DISCOVERY_SKILL } from "../constants.js";
 import {
   INTEGRATION_IDE_KEYS,
@@ -81,7 +81,7 @@ export function composeArchitecturePointer(profile: InitProfile): ArchitecturePo
 }
 
 export function serializeArchitecturePointer(pointer: ArchitecturePointer): string {
-  return architecturePointerToYaml(pointer);
+  return lawFileToYaml(LAW_FILES["architecture-pointer"], pointer);
 }
 
 function readRecipe(templatesRoot: string, recipeFile: string): string {

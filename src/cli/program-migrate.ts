@@ -1,39 +1,20 @@
+import path from "node:path";
 import type { Command } from "commander";
-import {
-  runMigrateArchitecturePointer,
-  runMigrateConfig,
-  runMigrateManifest,
-  runMigratePolicyPointer,
-  type MigrateOptions,
-  type MigrateResult,
-} from "./commands/migrate.js";
+import { LAW_FILES, type LawFileId } from "#core/law-file.js";
+import { runMigrate } from "./commands/migrate.js";
 
-const VERBS: { verb: string; description: string; run: (options: MigrateOptions) => MigrateResult }[] = [
-  { verb: "manifest", description: ".gitagent/foreman/MANIFEST.json (3.x) becomes MANIFEST.yaml; the JSON form is removed", run: runMigrateManifest },
-  { verb: "config", description: ".gitagent/config.json (3.x) becomes config.yaml; the JSON form is removed", run: runMigrateConfig },
-  {
-    verb: "architecture-pointer",
-    description: ".gitagent/ARCHITECTURE.pointer.json (3.x) becomes ARCHITECTURE.pointer.yaml; the JSON form is removed",
-    run: runMigrateArchitecturePointer,
-  },
-  {
-    verb: "policy-pointer",
-    description: ".gitagent/foreman/POLICY.pointer.json (3.x) becomes POLICY.pointer.yaml; the JSON form is removed",
-    run: runMigratePolicyPointer,
-  },
-];
-
-/** `gantry migrate <file>`: deterministic format migrations of the law files (ADR-0047). */
+/** `gantry migrate <file>`: one verb per law file, the deterministic ADR-0047 format migration. */
 export function registerMigrateCommands(program: Command): void {
   const migrate = program.command("migrate").description("Deterministic format migrations of the law files (humans write YAML)");
-  for (const { verb, description, run } of VERBS) {
+  for (const id of Object.keys(LAW_FILES) as LawFileId[]) {
+    const file = LAW_FILES[id];
     migrate
-      .command(verb)
-      .description(description)
+      .command(id)
+      .description(`${file.json} (3.x) becomes ${path.posix.basename(file.yaml)}; the JSON form is removed`)
       .option("--dry-run", "Report what would change; write nothing")
       .option("--json", "Machine-readable result on stdout")
       .action((opts: { dryRun?: boolean; json?: boolean }) => {
-        run({ dryRun: opts.dryRun, json: opts.json });
+        runMigrate(id, { dryRun: opts.dryRun, json: opts.json });
       });
   }
 }

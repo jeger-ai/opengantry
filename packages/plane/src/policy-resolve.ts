@@ -1,8 +1,7 @@
-import fs from "node:fs";
 import path from "node:path";
-import { REL_POLICY_POINTER_JSON, REL_POLICY_POINTER_YAML } from "#core/constants.js";
-import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
-import { selectPolicyPointerSource } from "#core/policy-pointer-file.js";
+import { REL_POLICY_POINTER_YAML } from "#core/constants.js";
+import { LAW_FILES, parseLawFileDocument, readLawFile, type LawFileSource } from "#core/law-file.js";
+import { workingTreeReader } from "#git/repo-text.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
@@ -119,14 +118,9 @@ export function configFloorViolations(floor: PolicyConfigFloor, local: PolicyCon
   return out;
 }
 
-function readText(root: string, rel: string): string | null {
-  const abs = path.join(root, ...rel.split("/"));
-  return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
-}
-
 /** The pointer on disk: the YAML form, else the 3.x JSON form; null when neither exists (ADR-0047 dual-read). */
 export function readPolicyPointerSource(root: string): LawFileSource | null {
-  return selectPolicyPointerSource(readText(root, REL_POLICY_POINTER_YAML), readText(root, REL_POLICY_POINTER_JSON));
+  return readLawFile(LAW_FILES["policy-pointer"], workingTreeReader(root));
 }
 
 /** Repository-relative path of the authoritative pointer; the YAML path when none exists. */
@@ -145,8 +139,6 @@ function isPinnedPointer(pointer: PolicyPointer): boolean {
 export function loadPolicyPointer(root: string): PolicyPointerState {
   const file = readPolicyPointerSource(root);
   if (!file) return { kind: "absent" };
-  // The messages below name the file that was read.
-  const REL_POLICY_POINTER_JSON = file.rel;
   let parsed: unknown;
   try {
     parsed = parseLawFileDocument(file);
@@ -159,14 +151,14 @@ export function loadPolicyPointer(root: string): PolicyPointerState {
     );
   }
   if (typeof parsed !== "object" || parsed === null) {
-    throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `${REL_POLICY_POINTER_JSON} must be an object`, undefined, 1);
+    throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `${file.rel} must be an object`, undefined, 1);
   }
   const rec = parsed as Record<string, unknown>;
   const source = rec.source as Record<string, unknown> | undefined;
   if (rec.schema_version !== POLICY_POINTER_SCHEMA_VERSION) {
     throw new GantryUserError(
       GXT_ERROR.POLICY_DRIFT,
-      `${REL_POLICY_POINTER_JSON} schema_version must be ${POLICY_POINTER_SCHEMA_VERSION}`,
+      `${file.rel} schema_version must be ${POLICY_POINTER_SCHEMA_VERSION}`,
       undefined,
       1,
     );
@@ -174,7 +166,7 @@ export function loadPolicyPointer(root: string): PolicyPointerState {
   if (!source || source.kind !== "git" || typeof source.url !== "string" || typeof source.ref !== "string") {
     throw new GantryUserError(
       GXT_ERROR.POLICY_DRIFT,
-      `${REL_POLICY_POINTER_JSON} source must be {kind:git,url,ref}`,
+      `${file.rel} source must be {kind:git,url,ref}`,
       undefined,
       1,
     );
@@ -182,7 +174,7 @@ export function loadPolicyPointer(root: string): PolicyPointerState {
   if (typeof rec.bundle_path !== "string" || typeof rec.pinned_commit !== "string" || typeof rec.bundle_sha256 !== "string") {
     throw new GantryUserError(
       GXT_ERROR.POLICY_DRIFT,
-      `${REL_POLICY_POINTER_JSON} missing bundle_path, pinned_commit, or bundle_sha256`,
+      `${file.rel} missing bundle_path, pinned_commit, or bundle_sha256`,
       undefined,
       1,
     );
