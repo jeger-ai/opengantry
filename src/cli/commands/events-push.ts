@@ -8,7 +8,7 @@ import {
   listSpoolFiles,
   readSpoolEvents,
   type SpooledEvent,
-} from "../lib/event-spool.js";
+} from "#missions/event-spool.js";
 import { GantryUserError } from "#core/user-error.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "#plane/receipt-attribution.js";

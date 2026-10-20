@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   archOverrideAdvisoryMessage,
   commitSubjectHasArchOverride,
-} from "../lib/arch-override.js";
+} from "#missions/arch-override.js";
 import { evaluateKpiThresholds } from "../lib/kpi-engine.js";
 import type { KpiReport } from "#core/mission-types.js";
 

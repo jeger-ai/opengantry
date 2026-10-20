@@ -1,5 +1,5 @@
-import type { AgentErrorPayload } from "../errors.js";
-import { userFacingErrorToJson } from "../errors.js";
+import type { AgentErrorPayload } from "#missions/error-payloads.js";
+import { userFacingErrorToJson } from "#missions/error-payloads.js";
 import type { RuntimeEnvMcpResult } from "./mcp-runtime.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { MissionContract } from "#core/contract-types.js";

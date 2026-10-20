@@ -5,10 +5,10 @@ import fs from "node:fs";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
-import { resolveRuntimeEnv } from "../lib/runtime-env.js";
-import { runRuntimeExec } from "../lib/runtime-exec.js";
-import { hashProcessChunk } from "../lib/runtime-exec-process.js";
-import { agentErrorAbsolutePath } from "../lib/errors.js";
+import { resolveRuntimeEnv } from "#missions/runtime-env.js";
+import { runRuntimeExec } from "#missions/runtime-exec.js";
+import { hashProcessChunk } from "#missions/runtime-exec-process.js";
+import { agentErrorAbsolutePath } from "#missions/error-payloads.js";
 import { copyMissionSchema, writeManifest, writeRuntimeExecRepo } from "./test-fixtures.js";
 import { loadManifest } from "#missions/manifest.js";
 test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () => {

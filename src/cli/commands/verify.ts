@@ -9,11 +9,11 @@ import { loadWorkspace } from "#missions/workspace.js";
 import { GantryUserError } from "#core/user-error.js";
 import { reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
-import { appendEventSpool } from "../lib/event-spool.js";
+import { appendEventSpool } from "#missions/event-spool.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 
 function structuredVerifyOutput(options: VerifyOptions): boolean {
   return options.json === true || options.format !== undefined;

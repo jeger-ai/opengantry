@@ -1,5 +1,5 @@
 import { NPM_PACKAGE_NAME } from "../version.gen.js";
-import { loadIntegrationCompat } from "../integration-compat.js";
+import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import {
   compareSemver,
   legacyVersionWarning,

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { discoverFolderSignature, findBannedImportsInFolder } from "../lib/ast-discovery.js";
-import { buildSkillProposal, suggestSkillKeyFromFolder } from "../lib/register-proposals.js";
+import { discoverFolderSignature, findBannedImportsInFolder } from "#missions/ast-discovery.js";
+import { buildSkillProposal, suggestSkillKeyFromFolder } from "#missions/register-proposals.js";
 
 test("discoverFolderSignature: collects imports and exports", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-ast-"));

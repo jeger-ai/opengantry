@@ -12,14 +12,14 @@ import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../file-merge-gxt.js";
-import { resolveTemplateRootFromModule } from "../integration-compat.js";
+import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { resolveMissionPathRequired } from "#missions/missions/resolution.js";
 import { assertMissionSchemaValid } from "#missions/missions/validator.js";
 import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../mcp/mcp-write-guard.js";
 import { loadManifest } from "#missions/manifest.js";
 import { writeSubstrateVersionFile } from "../substrate-version.js";
 import { parseUpgradePayloadFromMissionBody } from "./upgrade-plan-scaffold.js";
-import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";
+import { REL_UPGRADE_TMP, type UpgradePayload } from "#missions/upgrade/upgrade-plan-types.js";
 
 export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 

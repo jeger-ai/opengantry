@@ -2,15 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
-import { writeLawFileYaml } from "#missions/law-files.js";
+import { writeLawFileYaml } from "./law-files.js";
 import { toPosixRel } from "#core/posix-path.js";
-import { TARGET_ARCHITECTURE_SCHEMA_VERSION, TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type TargetArchitectureSpec } from "#missions/arch/cage/target-architecture.js";
-import { getDomainAdapter } from "#missions/domains/index.js";
+import { TARGET_ARCHITECTURE_SCHEMA_VERSION, TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type TargetArchitectureSpec } from "./arch/cage/target-architecture.js";
+import { getDomainAdapter } from "./domains/index.js";
 import {
   type DiscoveryProposal,
   runDiscoveryScan,
   serializeDiscoveryProposal,
-} from "#missions/discovery-scanner.js";
+} from "./discovery-scanner.js";
 
 export const DISCOVERY_PROPOSAL_REL = ".gitagent/discovery-proposal.json" as const;
 

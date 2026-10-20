@@ -3,7 +3,7 @@ import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { EXECUTOR_LOG_FILENAME } from "#core/constants.js";
 import { gitStagePath } from "#git/git-staged.js";
-import { ensureExecutorLogExists } from "#missions/repair.js";
+import { ensureExecutorLogExists } from "./repair.js";
 
 export type ContextRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED";
 

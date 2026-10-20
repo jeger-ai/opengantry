@@ -9,7 +9,7 @@ import {
   verdictClaimsFor,
   clearVerdictClaimsCache,
   PASSED_FINDINGS_DIGEST,
-} from "../lib/verdict-expected.js";
+} from "#missions/verdict-expected.js";
 
 test("buildVerdictExpectedClaims: mission file hash and gate command (pepper-free org_id)", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-vec-"));

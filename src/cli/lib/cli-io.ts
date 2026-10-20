@@ -17,6 +17,11 @@ export function logError(message: string): void {
   currentReporter().error(message);
 }
 
+/** Human remediation only — never mix with machine JSON streams. */
+export function logFixHint(hint: string): void {
+  currentReporter().fixHint(hint);
+}
+
 /** Red stderr for existing managed-asset conflicts (respects NO_COLOR). */
 export function logManagedAssetConflicts(conflicts: string[]): void {
   currentReporter().managedAssetConflicts(conflicts);

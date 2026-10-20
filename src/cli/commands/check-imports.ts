@@ -1,5 +1,5 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { findBannedImportsInFolder } from "../lib/ast-discovery.js";
+import { findBannedImportsInFolder } from "#missions/ast-discovery.js";
 import { logError, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { loadWorkspace } from "#missions/workspace.js";

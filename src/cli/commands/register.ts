@@ -1,11 +1,11 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { discoverFolderSignature } from "../lib/ast-discovery.js";
+import { discoverFolderSignature } from "#missions/ast-discovery.js";
 import {
   buildSkillProposal,
   formatProposalHuman,
   formatProposalJson,
   suggestSkillKeyFromFolder,
-} from "../lib/register-proposals.js";
+} from "#missions/register-proposals.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { loadWorkspace } from "#missions/workspace.js";
 

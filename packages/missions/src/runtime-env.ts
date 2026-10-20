@@ -3,11 +3,11 @@ import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { CLI_NAME } from "#core/constants.js";
 import type { EffectiveScope } from "#core/contract-types.js";
-import { loadPolicyBundleQuiet, resolveEffectiveScope } from "#missions/contract/effective-scope.js";
-import { agentErrorAbsolutePath } from "./errors.js";
+import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
+import { agentErrorAbsolutePath } from "./error-payloads.js";
 import { parseMissionFile } from "./missions/parser.js";
-import type { Workspace } from "#missions/workspace.js";
-import { defaultExecutorLogPath } from "#missions/trace-quote.js";
+import type { Workspace } from "./workspace.js";
+import { defaultExecutorLogPath } from "./trace-quote.js";
 
 export interface ResolvedRuntimeEnv {
   /** Absolute Git repo root */

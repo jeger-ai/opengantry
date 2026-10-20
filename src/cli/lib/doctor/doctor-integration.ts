@@ -7,7 +7,7 @@ import {
   isBootstrapHookMode,
   loadIntegrationCompat,
   type IntegrationCompatManifest,
-} from "../integration-compat.js";
+} from "#missions/integration-compat.js";
 import type { CommandRunner } from "../adapter-preflight-checks.js";
 import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 

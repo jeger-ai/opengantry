@@ -15,7 +15,7 @@ test("org doctor sources never clone or fetch", () => {
   const plane = path.join(getRepoRoot(), "packages/plane/src");
   const files = [
     path.join(root, "policy/policy-doctor.ts"),
-    path.join(root, "policy/policy-resolve.ts"),
+    path.join(getRepoRoot(), "packages/missions/src/policy/policy-resolve.ts"),
     path.join(plane, "policy-resolve.ts"),
     path.join(plane, "ledger-chain.ts"),
     path.join(root, "doctor/doctor-core.ts"),

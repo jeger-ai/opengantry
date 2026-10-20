@@ -4,7 +4,7 @@ import { handleUpgradePlan } from "../lib/mcp/mcp-upgrade.js";
 import {
   assertStableUpgradePlanPayloadV1,
   STABLE_UPGRADE_PLAN_PAYLOAD_VERSION,
-} from "../lib/upgrade/upgrade-plan-payload.js";
+} from "#missions/upgrade/upgrade-plan-payload.js";
 
 test("mcp upgrade plan: returns stable payload envelope", () => {
   const result = handleUpgradePlan({ dry_run: true });

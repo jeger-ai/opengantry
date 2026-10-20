@@ -7,7 +7,7 @@ import {
 } from "#plane/policy-resolve.js";
 import { checkMissionDependencies } from "../deps/deps-resolve.js";
 import { type DependencyCheckResult } from "#plane/deps-resolve.js";
-import { localConfigFloor } from "../policy/policy-resolve.js";
+import { localConfigFloor } from "#missions/policy/policy-resolve.js";
 import type { DependenciesFailure, PolicyFailure } from "#missions/verify/verify-failure.js";
 import { verifyFinding } from "#missions/verify/verify-finding.js";
 import type { PhaseContext } from "./verify-phase-steps.js";

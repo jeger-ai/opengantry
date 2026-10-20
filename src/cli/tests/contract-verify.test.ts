@@ -8,7 +8,7 @@ import { contractSha256 } from "#missions/contract/contract-hash.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { loadManifest } from "#missions/manifest.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 import { REL_PLANNER_ALLOWLIST } from "#missions/planner-identity.js";
 import type { MissionContract } from "#core/contract-types.js";
 import { evaluateContractPhase, stampedContractDigest } from "../lib/verify/verify-contract.js";

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "#core/constants.js";
-import { buildLegislativeTraceRows, buildMissionYamlScaffold, extractMsnIdFromMissionPath, isValidMsnId } from "../missions/parser.js";
+import { buildLegislativeTraceRows, buildMissionYamlScaffold, extractMsnIdFromMissionPath, isValidMsnId } from "#missions/missions/parser.js";
 import { listMissionFiles } from "#missions/missions/resolution.js";
 import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
 import { logError, logInfo, logWarn } from "../cli-io.js";
@@ -17,7 +17,7 @@ import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { findForbiddenZoneHits } from "#missions/legislate/legislate-forbidden-zone.js";
 import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
-import { typedAdapterCommandError } from "../missions/adapter-command-guard.js";
+import { typedAdapterCommandError } from "#missions/missions/adapter-command-guard.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate } from "#missions/interrogate/run.js";
 import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";

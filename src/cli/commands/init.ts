@@ -11,7 +11,7 @@ import {
   loadIntegrationCompat,
   resolveTemplateRootFromModule,
   type IntegrationCompatManifest,
-} from "../lib/integration-compat.js";
+} from "#missions/integration-compat.js";
 import { resolveAssetsFromProfile } from "../lib/init/init-asset-catalog.js";
 import {
   composeArchitecturePointer,
