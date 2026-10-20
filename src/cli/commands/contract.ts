@@ -1,6 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { setExitCode } from "../lib/cli-io.js";
-import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../lib/command-boundary.js";
+import { setExitCode } from "../output/cli-io.js";
+import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../output/command-boundary.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "#missions/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
 import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
@@ -10,7 +10,7 @@ import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
 import { formatContractBlock, formatEffectiveScope } from "#missions/contract/format.js";
 import { proposeContract } from "#missions/contract/propose.js";
-import { resolveSkillKeyForLegislation } from "../lib/legislate/legislate.js";
+import { resolveSkillKeyForLegislation } from "../flows/legislate.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ContractCheckCliOptions {

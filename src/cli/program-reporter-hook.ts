@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
-import { logError, setExitCode } from "./lib/cli-io.js";
-import { reporterFromArgv, resetReporter, setReporter, type ReporterArgv } from "./lib/reporter.js";
+import { logError, setExitCode } from "./output/cli-io.js";
+import { reporterFromArgv, resetReporter, setReporter, type ReporterArgv } from "./output/reporter.js";
 
 function rootCommand(cmd: Command): Command {
   let current: Command = cmd;

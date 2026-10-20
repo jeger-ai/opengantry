@@ -37,7 +37,7 @@ test("layerForFile: classifies src/cli paths", () => {
   const root = getRepoRoot();
   const spec = loadTargetArchitecture(root);
   assert.equal(layerForFile(spec, "src/cli/commands/verify.ts"), "command");
-  assert.equal(layerForFile(spec, "src/cli/lib/gate.ts"), "lib");
+  assert.equal(layerForFile(spec, "src/cli/flows/verify-run.ts"), "lib");
 });
 
 test("resolveArchScanRoots: prefers explicit scan_roots", () => {

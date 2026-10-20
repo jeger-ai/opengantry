@@ -8,13 +8,13 @@ import {
   onboardingRuntimeEnvHint,
   onboardingStatusHint,
   onboardingVerifyHint,
-} from "../lib/onboarding-flow.js";
-import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
-import { integrationOnboardingBlockers } from "../lib/doctor/doctor-integration.js";
+} from "../init/onboarding-flow.js";
+import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
+import { integrationOnboardingBlockers } from "../doctor/doctor-integration.js";
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { runStartOrchestration } from "../lib/start-orchestration.js";
-import { runVerifyCore } from "../lib/verify/verify-run.js";
+import { runStartOrchestration } from "../flows/start-orchestration.js";
+import { runVerifyCore } from "../flows/verify-run.js";
 
 const EXAMPLE_MISSION = ".gitagent/missions/example.verify.yaml";
 

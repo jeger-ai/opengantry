@@ -5,7 +5,7 @@ import type { GateFailure, VerifyPhaseFailure } from "#missions/verify/verify-fa
 import {
   getRepairForErrorCode,
   resolveRepairErrorCode,
-} from "../lib/repairs/registry.js";
+} from "../doctor/repairs/registry.js";
 
 function gateFailure(output: string): GateFailure {
   return {

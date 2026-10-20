@@ -1,5 +1,5 @@
 import path from "node:path";
-import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
+import { logInfo, setExitCode, writeStdout } from "../output/cli-io.js";
 import { runAuditRigorChecks } from "#missions/audit-rigor.js";
 import { loadWorkspace } from "#missions/workspace.js";
 

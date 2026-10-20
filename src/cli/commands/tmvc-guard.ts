@@ -1,6 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { logWarn, setExitCode } from "../lib/cli-io.js";
-import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
+import { logWarn, setExitCode } from "../output/cli-io.js";
+import { emitCliJson, runUserCommand } from "../output/command-boundary.js";
 import { resolveRuntimeEnv } from "#missions/runtime-env.js";
 import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import {

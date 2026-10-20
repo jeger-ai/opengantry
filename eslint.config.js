@@ -19,7 +19,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/cli/lib/verify-*.ts"],
+    files: ["src/cli/flows/verify-*.ts"],
     rules: {
       "max-params": ["error", 4],
     },

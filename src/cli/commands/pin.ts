@@ -1,5 +1,5 @@
-import { logInfo } from "../lib/cli-io.js";
-import { runUserCommand } from "../lib/command-boundary.js";
+import { logInfo } from "../output/cli-io.js";
+import { runUserCommand } from "../output/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
 import { clearActiveMissionPin, pinActiveMission, readActiveMissionPin } from "#missions/missions/resolution.js";
 import { loadWorkspace } from "#missions/workspace.js";

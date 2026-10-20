@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { findBannedImportsInFolder } from "#missions/ast-discovery.js";
-import { quarantineImportDeclaration } from "../lib/repairs/quarantine-import.js";
+import { quarantineImportDeclaration } from "../doctor/repairs/quarantine-import.js";
 
 function quarantineBannedImportInFile(
   absPath: string,

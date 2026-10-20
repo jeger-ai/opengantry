@@ -1,14 +1,14 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { logInfo, setExitCode } from "../lib/cli-io.js";
+import { logInfo, setExitCode } from "../output/cli-io.js";
 import { errorMessage } from "#core/user-error.js";
-import { emitCliJson } from "../lib/command-boundary.js";
+import { emitCliJson } from "../output/command-boundary.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
   type OutputAudience,
 } from "#missions/audience-output.js";
-import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
-import type { AdapterPreflightOptions } from "../lib/doctor/doctor-adapter-preflight.js";
+import { collectDoctorReport } from "../doctor/doctor-core.js";
+import type { AdapterPreflightOptions } from "../doctor/doctor-adapter-preflight.js";
 import { doctorLinesHasFail, type DoctorLine } from "#missions/doctor/doctor-types.js";
 import type { TypedGateAdapterId } from "#core/gate-adapter.js";
 import { loadWorkspace } from "#missions/workspace.js";

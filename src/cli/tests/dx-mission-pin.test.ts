@@ -5,7 +5,7 @@ import path from "node:path";
 import os from "node:os";
 
 import { REL_RECEIPTS_DIR } from "#core/constants.js";
-import { resolveMissionArg } from "../lib/mission-arg.js";
+import { resolveMissionArg } from "../flows/mission-arg.js";
 import {
   listReceipts,
   resolveReceiptPath,

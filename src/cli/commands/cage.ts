@@ -1,8 +1,8 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
-import { logError, readStdinIfEmpty, setExitCode } from "../lib/cli-io.js";
-import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
+import { logError, readStdinIfEmpty, setExitCode } from "../output/cli-io.js";
+import { emitCliJson, runUserCommandAsync } from "../output/command-boundary.js";
 import { CAGE_SESSION_LOG_ENV, findPushViolations } from "#cage/cage-push-guard.js";
 import { cageStartSuffix, formatCageOverrideBanner, formatCageReport } from "#cage/cage-report.js";
 import { buildCagePlan, parseSerializedCagePlan } from "#cage/cage-rules.js";

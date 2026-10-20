@@ -15,7 +15,7 @@ import {
   formatCageSuggestionsYaml,
   suggestCageRules,
 } from "#cage/cage-suggest.js";
-import { registerGxtMcpTools } from "../lib/mcp/mcp-tools-register.js";
+import { registerGxtMcpTools } from "../mcp/mcp-tools-register.js";
 import { isSuggestInvocation } from "../program-cage.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");

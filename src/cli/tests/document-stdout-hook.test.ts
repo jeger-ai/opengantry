@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Command } from "commander";
-import { logInfo } from "../lib/cli-io.js";
-import { currentReporter, resetReporter } from "../lib/reporter.js";
+import { logInfo } from "../output/cli-io.js";
+import { currentReporter, resetReporter } from "../output/reporter.js";
 import { registerReporterHook } from "../program-reporter-hook.js";
 import { captureConsoleAsync } from "./test-shared.js";
 

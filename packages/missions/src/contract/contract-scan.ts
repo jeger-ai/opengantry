@@ -1,11 +1,11 @@
 import { scopePathLaw } from "../tmvc-path.js";
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "#core/posix-path.js";
+import { toPosixRel, normalizeRepoRelativePath } from "#core/posix-path.js";
 import { gitRunOk } from "#git/git.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { extractImportSites } from "#core/import-scanner.js";
-import { evaluateImportSite, law, normalizeRepoRelativePath } from "#core/law.js";
+import { evaluateImportSite, law } from "#core/law.js";
 import type { ContractImportViolation, ContractViolationKind, EffectiveScope } from "#core/contract-types.js";
 import { classifySpecifier, type TsconfigPaths } from "#core/specifier.js";
 import { loadTsconfigPaths } from "./resolve-specifier.js";

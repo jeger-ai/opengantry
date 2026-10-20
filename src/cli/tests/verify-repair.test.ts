@@ -174,7 +174,7 @@ function writeImportLayerFixtureRepo(
   });
   writeSkillsForManifest(dest, ["ui"]);
 
-  const libDir = path.join(dest, "src", "cli", "lib");
+  const libDir = path.join(dest, "src", "cli", "flows");
   fs.mkdirSync(libDir, { recursive: true });
   fs.writeFileSync(
     path.join(libDir, "bad.ts"),
@@ -208,12 +208,12 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
   const layerScript = path.join(ogRoot, "scripts/check-import-layers.mjs");
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-layer-"));
   const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${layerScript} --json src/cli/lib/bad.ts`,
+    gateCommand: `node ${layerScript} --json src/cli/flows/bad.ts`,
     gateSubstring: '"ok":true',
   });
   gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
 
-  const badPath = path.join(dest, "src/cli/lib/bad.ts");
+  const badPath = path.join(dest, "src/cli/flows/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
   const prevCwd = process.cwd();
 
@@ -235,7 +235,7 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
 
       assert.notEqual(after, before);
       assert.match(after, /GXT-SURGEON-QUARANTINE-START \[RULE-IMPORT-LAYER\]/);
-      assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/lib\/bad\.ts/);
+      assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/flows\/bad\.ts/);
       assert.match(combined, /\[Repair\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
     } finally {

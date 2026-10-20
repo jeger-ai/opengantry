@@ -7,9 +7,9 @@ import { sha256Utf8, type ReceiptLedgerPayload } from "#plane/ledger-entry.js";
 import { exportLedgerJson, exportSoc2Pack } from "#plane/ledger-export.js";
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
-import { resolveMissionArg } from "../lib/mission-arg.js";
+import { resolveMissionArg } from "../flows/mission-arg.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
-import { runUserCommand } from "../lib/command-boundary.js";
+import { runUserCommand } from "../output/command-boundary.js";
 
 export function runLedgerAppend(opts: {
   fromEnvelope?: string;

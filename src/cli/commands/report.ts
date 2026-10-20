@@ -1,8 +1,8 @@
-import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
-import { withReportDemoOverlay } from "../lib/report/report-demo-mode.js";
-import { projectOverviewViewModel } from "../lib/report/report-overview-projector.js";
-import { projectReportViewModel } from "../lib/report/report-projector.js";
-import { runReportServerLoop } from "../lib/report/report-server.js";
+import { emitCliJson, runUserCommandAsync } from "../output/command-boundary.js";
+import { withReportDemoOverlay } from "../report/report-demo-mode.js";
+import { projectOverviewViewModel } from "../report/report-overview-projector.js";
+import { projectReportViewModel } from "../report/report-projector.js";
+import { runReportServerLoop } from "../report/report-server.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 const projectOverview = withReportDemoOverlay(projectOverviewViewModel);

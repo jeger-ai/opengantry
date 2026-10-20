@@ -1,5 +1,6 @@
 import type { Manifest } from "#core/manifest.js";
-import { isPathUnderRoot, normalizeRepoRelativePath } from "#core/law.js";
+import { isPathUnderRoot } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import { judgePath, pathLaw, type PathLaw } from "#core/path-law.js";
 
 /** Governance transport files — never TMVC drift violations during pre-commit scans. */

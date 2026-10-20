@@ -14,7 +14,7 @@ import {
 } from "#missions/init/init-asset-catalog.js";
 import { composeIntegrationsDoc, recipeFilesExist } from "#missions/init/init-compose.js";
 import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "#missions/init/init-profile.js";
-import { canPromptInitOverwrite } from "../lib/init/init-interactive.js";
+import { canPromptInitOverwrite } from "../init/init-interactive.js";
 import type { IntegrationIdeKey } from "#missions/integration-compat.js";
 
 test("integration compat: all IDE keys have manifest entries and recipes", () => {
@@ -109,7 +109,7 @@ test("runIntegrationDoctorChecks: warns on deprecated .cursorrules", async () =>
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
   const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../lib/doctor/doctor-integration.js");
+  const { runIntegrationDoctorChecks } = await import("../doctor/doctor-integration.js");
   const lines = runIntegrationDoctorChecks(dest, templatesRoot);
   assert.ok(lines.some((l) => l.message.includes("deprecated path .cursorrules")));
 });
@@ -123,7 +123,7 @@ test("runIntegrationDoctorChecks: AGENTS.md alone does not detect codex-cli", as
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
   fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
   const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../lib/doctor/doctor-integration.js");
+  const { runIntegrationDoctorChecks } = await import("../doctor/doctor-integration.js");
   const lines = runIntegrationDoctorChecks(dest, templatesRoot);
   const wiring = lines.find((l) => l.message.startsWith("detected agent wiring:"));
   assert.ok(wiring);

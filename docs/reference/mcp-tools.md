@@ -67,4 +67,4 @@ import {
 | `verifyMission` | Runs the verify phases and resolves to the structured JSON payload. It returns a `Promise`: always `await` it |
 | `mintVerdictToken`, `verifyVerdictToken` | HMAC verdict tokens, keyed by the pepper keyring, for hot-path promotion gates |
 
-Only two entry points resolve from the package: `.` (the CLI) and `./kernel`. Deep imports of `dist/cli/lib/*` do not. A reference integration lives in [`examples/iii-integration/`](https://github.com/jeger-ai/opengantry/tree/main/examples/iii-integration).
+Only two entry points resolve from the package: `.` (the CLI) and `./kernel`. Deep imports of `dist/` modules do not. A reference integration lives in [`examples/iii-integration/`](https://github.com/jeger-ai/opengantry/tree/main/examples/iii-integration).

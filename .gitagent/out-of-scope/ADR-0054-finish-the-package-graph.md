@@ -120,6 +120,19 @@ Verify, the one command with several output modes, takes its reporter from its o
 
 Passing a reporter into every other command action would add a parameter to about 300 call sites without removing a concept, so it is not done. `currentReporter()` stays, reachable from delivery code only. This narrowing was taken under the same direction as the other decisions and may be revisited.
 
+## Migration status
+
+All seven steps landed between 2026-10-20 and 2026-10-21, as MSN-0315 to MSN-0325:
+- step 1: MSN-0315;
+- step 2: MSN-0316;
+- step 3: MSN-0317;
+- step 4: MSN-0318;
+- step 5: MSN-0319 to MSN-0323, five sub-areas;
+- step 6: MSN-0324;
+- step 7: MSN-0325.
+
+`src/cli/lib/` is gone. In `TARGET_ARCHITECTURE.yaml` the support layer keeps the id `lib`, because its rule ids are part of the import-layer JSON contract and the adopter templates. Step 7 also widened `scripts/check-lib-cycles.mjs` to `src/cli` and every package. That found one cycle in core (`law.ts` and `specifier.ts`), removed by moving `normalizeRepoRelativePath` to `posix-path.ts`.
+
 ## Non-goals
 
 - Publishing `verify` or `missions` on their own.

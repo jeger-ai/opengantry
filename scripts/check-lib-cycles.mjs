@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Detect runtime import cycles under src/cli/lib using relative import edges.
+ * Detect runtime import cycles in src/cli and in each package's src/ using relative import edges (tests excluded).
  * Ignores `import type` and `export type ... from` (compile-time only).
  * Usage: node scripts/check-lib-cycles.mjs [--json]
  */
@@ -11,7 +11,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const jsonMode = process.argv.includes("--json");
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(scriptDir, "..");
-const libRoot = path.join(repoRoot, "src", "cli", "lib");
+const scanRoots = [
+  path.join(repoRoot, "src", "cli"),
+  ...fs.readdirSync(path.join(repoRoot, "packages")).map((p) => path.join(repoRoot, "packages", p, "src")),
+].filter((dir) => fs.existsSync(dir));
 
 const distScanner = path.join(repoRoot, "dist", "packages", "core", "src", "import-scanner.js");
 if (!fs.existsSync(distScanner)) {
@@ -37,7 +40,7 @@ function resolveImportPath(file, spec) {
   } else {
     target = normalized;
   }
-  if (!target.startsWith(libRoot)) return null;
+  if (!scanRoots.some((root) => target.startsWith(root + path.sep))) return null;
   if (!fs.existsSync(target)) return null;
   return target;
 }
@@ -62,13 +65,13 @@ function listLibFiles() {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const abs = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        walk(abs);
+        if (entry.name !== "tests") walk(abs);
       } else if (entry.isFile() && entry.name.endsWith(".ts")) {
         files.push(abs);
       }
     }
   }
-  walk(libRoot);
+  for (const root of scanRoots) walk(root);
   return files.sort();
 }
 

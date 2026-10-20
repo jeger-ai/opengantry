@@ -4,7 +4,7 @@
  * the actor, the paths, the net line count and the structural kind of the change. Pure: the loader supplies git facts.
  */
 import { pathMatchesGlobPattern } from "./path-glob.js";
-import { normalizeRepoRelativePath } from "./law.js";
+import { normalizeRepoRelativePath } from "./posix-path.js";
 
 export type StructuralChangeKind = "workflow_version_pin" | "bounded_content";
 

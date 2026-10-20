@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { REL_RECEIPTS_DIR } from "#core/constants.js";
 import { getRepoRoot } from "#git/git.js";
-import { runVerifyCore } from "../lib/verify/verify-run.js";
+import { runVerifyCore } from "../flows/verify-run.js";
 import {
   copyMissionSchema,
   gitInitCommit,

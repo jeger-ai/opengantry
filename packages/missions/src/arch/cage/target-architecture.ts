@@ -1,13 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathMatchesGlobPattern } from "#core/path-glob.js";
-import { archLaw, countLayers, evaluateBudgets, evaluateDependencies, evaluateDuplicates, evaluateLayerImport, evaluateOwner, evaluatePatternRules, evaluateRegistry, layerForFile as coreLayerForFile, normalizeRepoRelativePath, structuralLaw, type ArchLaw, type CountedFile, type HashedFile, type LayerCounts, type StructuralLaw } from "#core/law.js";
+import { archLaw, countLayers, evaluateBudgets, evaluateDependencies, evaluateDuplicates, evaluateLayerImport, evaluateOwner, evaluatePatternRules, evaluateRegistry, layerForFile as coreLayerForFile, structuralLaw, type ArchLaw, type CountedFile, type HashedFile, type LayerCounts, type StructuralLaw } from "#core/law.js";
+import { normalizeRepoRelativePath, toPosixRel } from "#core/posix-path.js";
 import crypto from "node:crypto";
 import { gitRunOk } from "#git/git.js";
 import { getDomainAdapter } from "../../domains/index.js";
 import YAML from "yaml";
 import { CLI_NAME, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
-import { toPosixRel } from "#core/posix-path.js";
 import {
   extractBindingsFromSnippet,
   extractImportsWithMeta,

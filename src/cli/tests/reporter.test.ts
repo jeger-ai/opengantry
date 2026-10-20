@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Reporter, currentReporter, reporterFromArgv, resetReporter, setReporter } from "../lib/reporter.js";
-import { logError, logInfo, logWarn, writeStdout } from "../lib/cli-io.js";
+import { Reporter, currentReporter, reporterFromArgv, resetReporter, setReporter } from "../output/reporter.js";
+import { logError, logInfo, logWarn, writeStdout } from "../output/cli-io.js";
 import { resolveAudience } from "#missions/audience-output.js";
 import { captureConsoleAsync } from "./test-shared.js";
 

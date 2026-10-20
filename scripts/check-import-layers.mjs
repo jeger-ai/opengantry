@@ -33,7 +33,7 @@ function normalizeCliPath(file) {
 function layerOf(file) {
   const norm = normalizeCliPath(file);
   if (/(^|\/)src\/cli\/commands\//.test(norm)) return "command";
-  if (/(^|\/)src\/cli\/lib\//.test(norm)) return "lib";
+  if (/(^|\/)src\/cli\/(output|mcp|doctor|report|init|flows)\//.test(norm)) return "lib";
   if (/(^|\/)src\/cli\/tests\/fixtures\//.test(norm)) return "lib";
   if (norm.endsWith("src/cli/index.ts") || norm.endsWith("src/cli/program.ts")) {
     return "delivery";

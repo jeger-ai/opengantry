@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { handleStartOrchestration } from "../lib/mcp/mcp-start-orchestration.js";
+import { handleStartOrchestration } from "../mcp/mcp-start-orchestration.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

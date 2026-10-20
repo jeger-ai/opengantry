@@ -5,20 +5,20 @@ import os from "node:os";
 import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
 import { runLedgerDoctorChecks } from "#plane/ledger-chain.js";
-import { runOrgPolicyDoctorChecks } from "../lib/policy/policy-doctor.js";
+import { runOrgPolicyDoctorChecks } from "../doctor/policy-doctor.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
 
 test("org doctor sources never clone or fetch", () => {
-  const root = path.join(getRepoRoot(), "src/cli/lib");
+  const root = path.join(getRepoRoot(), "src/cli/doctor");
   const plane = path.join(getRepoRoot(), "packages/plane/src");
   const files = [
-    path.join(root, "policy/policy-doctor.ts"),
+    path.join(root, "policy-doctor.ts"),
     path.join(getRepoRoot(), "packages/missions/src/policy/policy-resolve.ts"),
     path.join(plane, "policy-resolve.ts"),
     path.join(plane, "ledger-chain.ts"),
-    path.join(root, "doctor/doctor-core.ts"),
+    path.join(root, "doctor-core.ts"),
   ];
   for (const file of files) {
     const src = fs.readFileSync(file, "utf8");

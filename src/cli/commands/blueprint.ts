@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
-import { logInfo, setExitCode } from "../lib/cli-io.js";
-import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
+import { logInfo, setExitCode } from "../output/cli-io.js";
+import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
 import {
   buildBlueprintQuestions,
   emitBlueprintArtifacts,

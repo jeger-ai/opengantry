@@ -1,4 +1,4 @@
-import { normalizeRepoRelativePath } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import { judgePath } from "#core/path-law.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { classifyRepoRelativePath, forbiddenZonesForSkill, scopePathLaw, isGovernanceTransportPath, tmvcRootsForSkill } from "../tmvc-path.js";

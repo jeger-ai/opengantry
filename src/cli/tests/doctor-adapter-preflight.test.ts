@@ -8,9 +8,9 @@ import {
   hasEslintJsonFormat,
   resolveNpmScript,
   type CommandRunner,
-} from "../lib/adapter-preflight-checks.js";
-import { runAdapterPreflightDoctorChecks } from "../lib/doctor/doctor-adapter-preflight.js";
-import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
+} from "../doctor/adapter-preflight-checks.js";
+import { runAdapterPreflightDoctorChecks } from "../doctor/doctor-adapter-preflight.js";
+import { collectDoctorReport } from "../doctor/doctor-core.js";
 import { getRepoRoot } from "#git/git.js";
 import { buildProgram } from "../program.js";
 import type { Manifest } from "#core/manifest.js";

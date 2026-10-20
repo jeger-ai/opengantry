@@ -3,6 +3,7 @@
  * its paths as one path law (areas, forbidden zones, protected paths, transport; judged by `judgePath`) and the import
  * discipline a contract adds. Pure: no fs, git or process.
  */
+import { normalizeRepoRelativePath } from "./posix-path.js";
 import { pathMatchesGlobPattern } from "./path-glob.js";
 import { judgePath, pathLaw, type PathLaw } from "./path-law.js";
 
@@ -19,11 +20,6 @@ export interface Law {
 
 export function law(partial: Partial<Law> = {}): Law {
   return { paths: pathLaw(), allowedImports: [], bannedImports: [], allowDynamicSpecifiers: false, strictRelativeImports: false, ...partial };
-}
-
-/** Repo-relative POSIX form: backslashes to slashes, no leading `./`. */
-export function normalizeRepoRelativePath(repoRel: string): string {
-  return repoRel.replace(/\\/g, "/").replace(/^\.\//, "");
 }
 
 /** True when `repoRel` is exactly `root` or nested under `root/` (POSIX semantics). */

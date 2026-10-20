@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { uriIsDirectory } from "../lib/sarif-uri.js";
+import { uriIsDirectory } from "../report/sarif-uri.js";
 
 test("sarif-uri: trailing slash and stat both count as directories", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-sarif-uri-"));

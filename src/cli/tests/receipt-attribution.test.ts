@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { canonicalizeRepositoryIdentifier, hmacSha256Hex, pseudonymizeEmail } from "#plane/receipt-attribution.js";
-import { computePrincipalHmacs } from "../lib/principal-hmac.js";
+import { computePrincipalHmacs } from "../flows/principal-hmac.js";
 import type { PepperKeyringEntry } from "#missions/pepper-keyring.js";
 import { getRepoRoot } from "#git/git.js";
 

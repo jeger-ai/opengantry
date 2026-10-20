@@ -8,7 +8,7 @@ import {
   onboardingStatusHint,
   onboardingVerifyHint,
   tutorialTeacherStampBlock,
-} from "../lib/onboarding-flow.js";
+} from "../init/onboarding-flow.js";
 
 test("onboarding hints: align with v0.9.0 adoption loop", () => {
   const mission = ".gitagent/missions/MSN-0001.example.yaml";

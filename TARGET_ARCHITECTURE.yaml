@@ -34,9 +34,15 @@ layers:
   - id: command
     globs:
       - src/cli/commands/**
+  # ADR-0054 decision 7: the CLI's support modules, grouped by role (src/cli/lib/ is gone; the layer keeps its id).
   - id: lib
     globs:
-      - src/cli/lib/**
+      - src/cli/output/**
+      - src/cli/mcp/**
+      - src/cli/doctor/**
+      - src/cli/report/**
+      - src/cli/init/**
+      - src/cli/flows/**
   - id: delivery
     globs:
       - src/cli/index.ts
@@ -210,49 +216,49 @@ rules:
     kind: owner
     pattern: "class GantryUserError\\b"
     owners: [packages/core/src/user-error.ts]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-PATH-UNDER-ROOT
     kind: owner
     pattern: "function isPathUnderRoot\\("
     owners: [packages/core/src/law.ts]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-CANONICAL-JSON
     kind: owner
     pattern: "function canonicalJson\\("
     owners: [packages/core/src/canonical-json.ts]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-IMPORT-SCANNER
     kind: owner
     pattern: "function extractImportSites\\("
     owners: [packages/core/src/import-scanner.ts]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-SPECIFIER
     kind: owner
     pattern: "function classifySpecifier\\("
     owners: [packages/core/src/specifier.ts]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-MANIFEST-SHAPE
     kind: owner
     pattern: "function validateManifestShape\\("
     owners: [packages/core/src/manifest.ts]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-GLOB-MATCHERS
     kind: owner
     pattern: "function (pathMatchesGlob\\w*|\\w*[Gg]lobToRegExp|scopeRegExp|verifyPathMatcher|matchGlob|\\w*[Cc]oversPath)\\("
     owners:
       - packages/core/src/path-glob.ts
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   # B3 registry: a name the code uses must be registered; adding one is a Planner edit under .gitagent/registry/.
   - id: REGISTRY-ERROR-CODES
     kind: registry
     patterns: ['"(GXT_[A-Z0-9_]*[A-Z0-9])"']
     registries: [.gitagent/registry/error-codes.yaml]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: REGISTRY-ENV
     kind: registry
     patterns: ['"(GANTRY_[A-Z0-9_]*[A-Z0-9])"', 'process\\.env\\.(GANTRY_[A-Z0-9_]+)']
     registries: [.gitagent/registry/env.yaml]
-    applies_to: ["src/cli/lib/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
+    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: REGISTRY-COMMANDS
     kind: registry
     patterns: ['\\.command\\("([a-z][a-z-]*)"']
@@ -262,7 +268,7 @@ rules:
     kind: registry
     patterns: ['"(gxt_[a-z_]+)"']
     registries: [.gitagent/registry/mcp-tools.yaml]
-    applies_to: ["src/cli/lib/mcp/**"]
+    applies_to: ["src/cli/mcp/**"]
   # B2 dependency: every package.json dependency, runtime or dev, is in the dependency registry.
   - id: DEPENDENCIES
     kind: dependency

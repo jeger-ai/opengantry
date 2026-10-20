@@ -3,11 +3,11 @@ import fs from "node:fs";
 import type { AgentErrorPayload } from "#missions/error-payloads.js";
 import { agentErrorAbsolutePath, serializeAgentErrorPayload } from "#missions/error-payloads.js";
 import { hintForbiddenZone, hintRuntimeHumanSummary } from "#missions/fix-hints.js";
-import { logFixHint, logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logFixHint, logError, logInfo, setExitCode } from "../output/cli-io.js";
 import { writeAiderTmvcScope } from "#missions/aider-scope.js";
-import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.js";
+import { emitPinnedMissionBanner, resolveMissionArg } from "../flows/mission-arg.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "#missions/runtime-env.js";
-import { emitCliJson, runUserCommand, runUserCommandAsync } from "../lib/command-boundary.js";
+import { emitCliJson, runUserCommand, runUserCommandAsync } from "../output/command-boundary.js";
 import { runRuntimeExec } from "#missions/runtime-exec.js";
 import { loadWorkspace } from "#missions/workspace.js";
 

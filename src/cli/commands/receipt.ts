@@ -1,6 +1,6 @@
-import { logInfo } from "../lib/cli-io.js";
-import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
-import { runPrincipalHmac, type PrincipalHmacOptions } from "../lib/principal-hmac.js";
+import { logInfo } from "../output/cli-io.js";
+import { emitCliJson, runUserCommand } from "../output/command-boundary.js";
+import { runPrincipalHmac, type PrincipalHmacOptions } from "../flows/principal-hmac.js";
 import {
   listReceipts,
   resolveReceiptPath,

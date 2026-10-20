@@ -14,7 +14,7 @@ import {
   STABLE_UPGRADE_PLAN_PAYLOAD_VERSION,
   toStableUpgradePlanPayloadV1,
 } from "#missions/upgrade/upgrade-plan-payload.js";
-import { handleUpgradePlan } from "../lib/mcp/mcp-upgrade.js";
+import { handleUpgradePlan } from "../mcp/mcp-upgrade.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 
 const ogRoot = getRepoRoot();

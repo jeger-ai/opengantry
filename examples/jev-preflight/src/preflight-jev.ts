@@ -7,8 +7,8 @@ import {
   type PreflightResult,
   type TmvcRootCandidate,
 } from "./preflight-types.js";
-import { logWarn } from "../../../src/cli/lib/cli-io.js";
-import { GantryUserError } from "../../../src/cli/lib/errors.js";
+import { logWarn } from "../../../src/cli/output/cli-io.js";
+import { GantryUserError } from "../../../src/cli/output/errors.js";
 import type { Manifest } from "../../../src/cli/lib/types.js";
 
 export const JEV_SYSTEM_ONE_URL = "https://api.typesafe.ai/v1/systemone";

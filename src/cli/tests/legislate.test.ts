@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { runLegislate } from "../lib/legislate/legislate.js";
+import { runLegislate } from "../flows/legislate.js";
 import { getRepoRoot } from "#git/git.js";
 import { execSync } from "node:child_process";
 import { findForbiddenZoneHits } from "#missions/legislate/legislate-forbidden-zone.js";
