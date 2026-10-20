@@ -1,0 +1,151 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0314]. Executor must not run until the [MSN-0314] legislation commit + pin.
+#
+# Legislated intent: record ADR-0054, finish the package graph (verify and missions packages, domain code stops
+# logging, the reporter is passed, the slim cage entry folds into src/cli/cage-bin.ts, org perimeter_protected_add
+# applied); amends ADR-0052 A1 (plane below missions) and B7 (core depends on zod and yaml). Record only.
+#
+# Operator direction (2026-10-20, "just go for it and continue until everything's done"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0314.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0314
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The slim cage package keeps its
+      bin, bundle layout and push guard path; only its entry source moves to
+      src/cli/cage-bin.ts.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept and amend: ADR-0054 completes A1's package graph and
+      amends two clauses, recorded in a new Amendments section of ADR-0052:
+      core's runtime dependencies are zod and yaml (B7), and plane depends on
+      core and git while missions depends on core, git, verify and plane (A1).
+      Budgets keep ratcheting down (B4)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output formats are unchanged; the reporter is passed
+      instead of global with the same modes and channels.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: Accept. This mission lands ADR-0054 itself, status ACTIVE; its
+      migration steps are later missions.
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0314.adr-0054-package-graph.yaml,
+      .gitagent/out-of-scope/ADR-0054-finish-the-package-graph.md,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/runs/MSN-0314.json, EXECUTOR_LOG.md. ADR-0054 itself
+      (.gitagent/out-of-scope/ADR-0054-finish-the-package-graph.md, status
+      ACTIVE) plus an Amendments section at the end of ADR-0052 naming the two
+      amended clauses (A1 plane direction, B7 core dependencies); executor log
+      line. No code, no TARGET_ARCHITECTURE.yaml or baseline change: each
+      migration step is its own mission. src/, packages/, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Operator
+      direction (2026-10-20): \"just go for it and continue until everything's
+      done\", after the review's suggested order item 5 (\"the verify and
+      missions package split, with the ADR amendment that needs\"). The ten
+      decisions are taken as drafted and recommended; the ADR's Operator
+      decisions section says so and leaves each open to revision before its
+      step. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0314.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract cage is unchanged by this record; contract
+      roots and zones become a path law in migration step 2.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The record is markdown; no file format changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 9672b3fe5423717de65959c3033d389213cc7ee40f2b5b328cb8310e2675a8c5
+declared_paths:
+  - .gitagent/missions/MSN-0314.adr-0054-package-graph.yaml
+  - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+  - .gitagent/out-of-scope/ADR-0054-finish-the-package-graph.md
+  - .gitagent/runs/MSN-0314.json
+  - EXECUTOR_LOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0314.adr-0054-package-graph.yaml
+    - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+    - .gitagent/out-of-scope/ADR-0054-finish-the-package-graph.md
+    - .gitagent/runs/MSN-0314.json
+    - EXECUTOR_LOG.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/
+contract_sha256: 9a15454b9ffbee6ce8fb3ea333c084a01d32d206a92ff9497ddfa734d155efc3
