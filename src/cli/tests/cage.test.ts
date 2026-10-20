@@ -9,7 +9,7 @@ import { recoverCageJournal, resolveCageJournalDir } from "#cage/cage-journal.js
 import { listDescendantPids } from "#cage/cage-process.js";
 import { runCage } from "#cage/cage-run.js";
 import { buildCagePlan, cageBasenameRule, classifyCagePath } from "#cage/cage-rules.js";
-import { cageGlobToRegExp } from "#cage/cage-config.js";
+import { globToRegExp } from "#core/path-glob.js";
 import { CAGE_MAX_SCAN_BYTES, CAGE_MAX_TARGETS } from "#cage/cage-snapshot.js";
 import { CAGE_LIMITS, CAGE_LIMITS_SUMMARY, CAGE_UPGRADE_FOOTER, formatCageReport } from "#cage/cage-report.js";
 import { writeManifest } from "./test-fixtures.js";
@@ -337,14 +337,14 @@ test("cage .cage.yaml: protect paths and globs are added to the built-in set; re
 });
 
 test("cage .cage.yaml: globs keep * inside one segment and ** across segments (MSN-0239 DoD 1)", () => {
-  const pem = cageGlobToRegExp("**/*.pem");
+  const pem = globToRegExp("**/*.pem");
   assert.ok(pem.test("a.pem") && pem.test("x/y/a.pem"));
   assert.ok(!pem.test("a.pem.bak"));
-  const one = cageGlobToRegExp("k8s/*.yaml");
+  const one = globToRegExp("k8s/*.yaml");
   assert.ok(one.test("k8s/prod.yaml"));
   assert.ok(!one.test("k8s/prod/app.yaml"));
-  assert.ok(cageGlobToRegExp("db/migrations/**").test("db/migrations/2026/001.sql"));
-  assert.ok(!cageGlobToRegExp("a.b").test("axb"), "regex metacharacters are literal");
+  assert.ok(globToRegExp("db/migrations/**").test("db/migrations/2026/001.sql"));
+  assert.ok(!globToRegExp("a.b").test("axb"), "regex metacharacters are literal");
 });
 
 test("cage .cage.yaml: a top-level mode: default applies only to protect entries without their own; built-ins stay revert (MSN-0244 DoD 1)", async () => {

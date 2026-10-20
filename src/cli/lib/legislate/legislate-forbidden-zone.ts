@@ -1,4 +1,4 @@
-import { pathMatchesPerimeterGlob } from "#core/path-glob.js";
+import { patternCoversPath } from "#core/path-glob.js";
 import type { Manifest } from "#core/mission-types.js";
 
 /** Path-like tokens in intent text (repo-relative). */
@@ -41,7 +41,7 @@ export function findForbiddenZoneHits(
       continue;
     }
     for (const token of tokens) {
-      if (pathMatchesPerimeterGlob(token, zone)) {
+      if (patternCoversPath(zone, token)) {
         hits.add(zone);
         break;
       }

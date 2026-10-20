@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { gitChildEnv } from "#git/git.js";
 import { parseCommitlyGate, parseVerifyYaml } from "../lib/verify-standalone/contract.js";
-import { verifyPathMatcher } from "../lib/verify-standalone/diff.js";
+import { patternCoversPath } from "#core/path-glob.js";
 import { checkVerifyResult, runVerifyContract, writeVerifyBaseline } from "../lib/verify-standalone/run.js";
 
 function git(dest: string, ...args: string[]): string {
@@ -115,7 +115,7 @@ test("verify contract: COMMITLY gate.json (commitly.gate.v1) maps field for fiel
 });
 
 test("verify paths: no wildcard is the path or a folder above it; *, ** and ? are globs (MSN-0277 DoD 3)", () => {
-  const m = (p: string, f: string): boolean => verifyPathMatcher(p)(f);
+  const m = (p: string, f: string): boolean => patternCoversPath(p, f);
   assert.equal(m("app", "app/api/x.py"), true);
   assert.equal(m("app/", "app"), true);
   assert.equal(m("app", "apple/x"), false);

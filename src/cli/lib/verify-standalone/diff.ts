@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { GantryUserError } from "../errors.js";
 import { gitRun } from "#git/git.js";
+import { patternCoversPath } from "#core/path-glob.js";
 
 /**
  * What a change touched since the base: the files and the lines it added. Committed work is `base...HEAD` (from
@@ -113,25 +114,7 @@ export function addedLinesOf(root: string, base: string, files: readonly string[
   return out;
 }
 
-/**
- * A pattern without wildcards is the path or a folder above it ("." is everything); with `*` (one segment),
- * `**` (any depth) or `?` it is a glob over the whole path. The same semantics as COMMITLY hangar's gate.
- */
-export function verifyPathMatcher(pattern: string): (file: string) => boolean {
-  const clean = pattern.replace(/^\.\//, "").replace(/\/+$/, "");
-  if (clean === "." || clean === "") return () => true;
-  if (!/[*?]/.test(clean)) return (file) => file === clean || file.startsWith(`${clean}/`);
-  const source = clean
-    .split("/")
-    .map((seg) => (seg === "**" ? "(?:.*)" : seg.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]")))
-    .join("/")
-    .replace(/\(\?:\.\*\)\//g, "(?:.*/)?")
-    .replace(/\/\(\?:\.\*\)$/, "(?:/.*)?");
-  const re = new RegExp(`^${source}$`);
-  return (file) => re.test(file);
-}
-
+/** A file matches a list when one pattern covers it: the path or a folder above it, or a glob (core path-glob). */
 export function anyPathOf(patterns: readonly string[]): (file: string) => boolean {
-  const matchers = patterns.map(verifyPathMatcher);
-  return (file) => matchers.some((m) => m(file));
+  return (file) => patterns.some((p) => patternCoversPath(p, file));
 }

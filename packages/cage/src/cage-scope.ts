@@ -4,7 +4,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { GantryUserError } from "#core/user-error.js";
 import { gitChildEnv } from "#git/git.js";
-import { cageGlobToRegExp, normalizeCageRelPath } from "./cage-config.js";
+import { patternCoversPath } from "#core/path-glob.js";
+import { normalizeCageRelPath } from "./cage-config.js";
 
 /**
  * Baseline for a cage scope (`.cage.yaml` `allow_only:`, `--allow-only`; ADR-0048 decision 10). Everything git
@@ -24,25 +25,9 @@ export interface CageScope {
   flag: string[] | null;
 }
 
-const scopeRegExps = new Map<string, RegExp>();
-
-function scopeRegExp(glob: string): RegExp {
-  let re = scopeRegExps.get(glob);
-  if (!re) {
-    re = cageGlobToRegExp(glob);
-    scopeRegExps.set(glob, re);
-  }
-  return re;
-}
-
 /** A glob that matches the path, or a directory above it, covers the path. */
 function scopeListCovers(globs: readonly string[], rel: string): boolean {
-  const segs = rel.split("/");
-  for (let i = segs.length; i > 0; i -= 1) {
-    const prefix = segs.slice(0, i).join("/");
-    if (globs.some((g) => scopeRegExp(g).test(prefix))) return true;
-  }
-  return false;
+  return globs.some((g) => patternCoversPath(g, rel));
 }
 
 /** Whether a root-relative path lies in the allowed area; always true without a scope. */
