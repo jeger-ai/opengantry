@@ -1,20 +1,8 @@
 /**
- * The one path matcher (ADR-0052 B2 `owner`). Patterns are repository-relative POSIX globs: `*` and `?` stay inside
- * one path segment, `**` spans any depth (a leading `**\/` also matches at the root, a `**` inside a segment spans
- * too); everything else is literal. Backslashes count as `/`, a leading `./` is ignored.
- *
- * Two questions use it:
- * - does a glob match this path exactly (layers, structural rules, trusted automation, cage `glob:` entries);
- * - does a pattern cover this path, i.e. match the path or a folder above it (protected paths, the cage scope,
- *   verify contract paths), so `src/legacy` and `src/legacy/` cover the whole folder.
+ * The one path matcher (ADR-0052 B2 `owner`). Globs: `*` and `?` inside one segment, `**` any depth (a leading `**\/`
+ * also matches the root); `\` counts as `/`, a leading `./` is ignored. A glob matches whole paths (layers, rules,
+ * cage `glob:`); a pattern covers a path when it matches it or a folder above it (protected paths, scopes, contracts).
  */
-
-/** Drops trailing slashes in linear time (a `/\\/+$/` RegExp is quadratic on many slashes). */
-function trimTrailingSlashes(p: string): string {
-  let end = p.length;
-  while (end > 0 && p[end - 1] === "/") end -= 1;
-  return p.slice(0, end);
-}
 
 function normalize(p: string): string {
   return p.replace(/\\/g, "/").replace(/^(\.\/)+/, "");
@@ -51,12 +39,12 @@ export function pathMatchesGlobPattern(repoRelPath: string, glob: string): boole
 
 /** True when the pattern matches the path or a folder above it; `.` and an empty pattern cover everything. */
 export function patternCoversPath(pattern: string, repoRelPath: string): boolean {
-  const g = trimTrailingSlashes(normalize(pattern));
+  let g = normalize(pattern);
+  while (g.endsWith("/")) g = g.slice(0, -1); // a loop: /\/+$/ is quadratic on many slashes (CodeQL)
   if (g === "" || g === ".") return true;
   const re = globToRegExp(g);
-  const segs = trimTrailingSlashes(normalize(repoRelPath)).split("/");
-  for (let i = segs.length; i > 0; i -= 1) {
-    if (re.test(segs.slice(0, i).join("/"))) return true;
-  }
+  const p = normalize(repoRelPath);
+  if (re.test(p)) return true;
+  for (let i = p.indexOf("/"); i !== -1; i = p.indexOf("/", i + 1)) if (re.test(p.slice(0, i))) return true;
   return false;
 }
