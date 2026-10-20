@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { ENV_BYPASS_SECRET, isBypassSecretAuthorized } from "../lib/break-glass.js";
+import { ENV_BYPASS_SECRET, isBypassSecretAuthorized } from "#missions/break-glass.js";
 import { writeBypassAnchor } from "./test-fixtures.js";
 
 test("isBypassSecretAuthorized: requires env and matching anchor", () => {

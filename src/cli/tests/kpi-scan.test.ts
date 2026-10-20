@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { runKpiScan, verifierOutputSucceeded } from "../lib/kpi-scan.js";
+import { runKpiScan, verifierOutputSucceeded } from "#missions/kpi-scan.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { copyMissionSchema, emptyInterrogationMissionFields } from "./test-fixtures.js";
 

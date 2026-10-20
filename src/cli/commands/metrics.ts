@@ -1,6 +1,6 @@
 import { logInfo } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
-import { collectGitMetrics, formatGitMetricsHuman } from "../lib/git/git-metrics.js";
+import { collectGitMetrics, formatGitMetricsHuman } from "#missions/git/git-metrics.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface MetricsOptions {

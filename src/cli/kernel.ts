@@ -27,18 +27,19 @@ export {
   type VerdictExpectedClaims,
 } from "#missions/verdict-expected.js";
 export { resolveOrgId } from "#plane/org-export-config.js";
-export type { VerifyOptions } from "./lib/verify/verify-options.js";
+export type { VerifyOptions } from "#missions/verify/verify-options.js";
 export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "#missions/gate-adapters/gate-adapter-types.js";
-export type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
-export { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";
+export type { VerifyResultPayload } from "#missions/verify/verify-payload.js";
+export { buildVerifyResultPayload } from "#missions/verify/verify-payload.js";
 
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
 import { loadManifest } from "#missions/manifest.js";
-import type { VerifyOptions } from "./lib/verify/verify-options.js";
-import type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
-import { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";
+import type { VerifyOptions } from "#missions/verify/verify-options.js";
+import type { VerifyResultPayload } from "#missions/verify/verify-payload.js";
+import { buildVerifyResultPayload } from "#missions/verify/verify-payload.js";
+import { logWarn } from "./lib/cli-io.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;
@@ -50,7 +51,7 @@ export interface VerifyMissionInput {
 export async function verifyMission(input: VerifyMissionInput): Promise<VerifyResultPayload> {
   const manifest = loadManifest(input.repoRoot);
   const mission = parseMissionFile(input.repoRoot, input.missionRelPath);
-  const options = input.options ?? {};
+  const options = { warn: logWarn, ...input.options };
   return buildVerifyResultPayload(input.repoRoot, manifest, mission, options);
 }
 

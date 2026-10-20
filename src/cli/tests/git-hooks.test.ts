@@ -11,7 +11,7 @@ import {
   installTmvcStrictHook,
   readHooksStatus,
   uninstallTmvcStrictHook,
-} from "../lib/git/git-hooks.js";
+} from "#missions/git/git-hooks.js";
 
 function initGitRepo(dest: string): void {
   execSync("git init", { cwd: dest, stdio: "pipe" });

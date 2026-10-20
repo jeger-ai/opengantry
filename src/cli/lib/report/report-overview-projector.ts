@@ -5,7 +5,7 @@ import {
   type GitMetricsBundle,
   type GitMetricsReport,
   type MissionTimelineEntry,
-} from "../git/git-metrics.js";
+} from "#missions/git/git-metrics.js";
 import { loadManifest } from "#missions/manifest.js";
 import { MSN_ID_PATTERN } from "#core/constants.js";
 import type { ReportOutcome } from "./report-template-shared.js";

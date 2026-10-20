@@ -2,7 +2,7 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import type { Command } from "commander";
 import { logError, setExitCode } from "./lib/cli-io.js";
 import { errorMessage } from "#core/user-error.js";
-import { parseArchitectureCredentialKind, type ArchitectureCredentialKind } from "./lib/arch/external/architecture-credential.js";
+import { parseArchitectureCredentialKind, type ArchitectureCredentialKind } from "#missions/arch/external/architecture-credential.js";
 import {
   runArchCredSet,
   runArchCredStatus,

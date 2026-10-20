@@ -3,9 +3,9 @@ import { describe, it } from "node:test";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
-} from "../lib/verify/verify-failure-normalize.js";
-import { buildFindingsForFailure, toVerifyFailedPayload } from "../lib/verify/verify-payload.js";
-import { buildSarifDocument } from "../lib/verify/verify-export.js";
+} from "#missions/verify/verify-failure-normalize.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "#missions/verify/verify-payload.js";
+import { buildSarifDocument } from "#missions/verify/verify-export.js";
 import { GantryUserError } from "#core/user-error.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "#missions/verify/verify-finding.js";
 

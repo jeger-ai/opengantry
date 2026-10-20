@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import {
   buildBlueprintQuestions,
   emitBlueprintArtifacts,
-} from "../lib/blueprint-engine.js";
+} from "#missions/blueprint-engine.js";
 import { runDiscoveryScan } from "#missions/discovery-scanner.js";
 import { runArchitectureDriftDoctorChecks } from "../lib/arch/cage/architecture-drift-doctor.js";
 import { VERIFICATION_PLAN_REL } from "#missions/verification-plan.js";

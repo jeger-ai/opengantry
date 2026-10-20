@@ -5,9 +5,9 @@ import YAML from "yaml";
 import { CLI_NAME } from "#core/constants.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { fromPosix } from "#core/posix-path.js";
-import { logInfo } from "../cli-io.js";
+import { logInfo, logWarn } from "../cli-io.js";
 import { promoteFileAtomic } from "#missions/atomic-fs.js";
-import { assertPlannerMissionProof } from "../git/git-proof.js";
+import { assertPlannerMissionProof } from "#missions/git/git-proof.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -15,9 +15,9 @@ import {
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { resolveMissionPathRequired } from "#missions/missions/resolution.js";
 import { assertMissionSchemaValid } from "#missions/missions/validator.js";
-import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../mcp/mcp-write-guard.js";
+import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "#missions/mcp/mcp-write-guard.js";
 import { loadManifest } from "#missions/manifest.js";
-import { writeSubstrateVersionFile } from "../substrate-version.js";
+import { writeSubstrateVersionFile } from "#missions/substrate-version.js";
 import { parseUpgradePayloadFromMissionBody } from "./upgrade-plan-scaffold.js";
 import { REL_UPGRADE_TMP, type UpgradePayload } from "#missions/upgrade/upgrade-plan-types.js";
 
@@ -134,7 +134,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
   }
 
   try {
-    assertPlannerMissionProof(repoRoot, missionAbs);
+    assertPlannerMissionProof(repoRoot, missionAbs, { warn: logWarn });
   } catch (e) {
     return {
       status: "blocked",

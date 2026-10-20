@@ -1,7 +1,8 @@
+import { logWarn } from "../cli-io.js";
 import fs from "node:fs";
 import { formatRepoRelative } from "#core/posix-path.js";
 import { GantryUserError } from "#core/user-error.js";
-import { assertPlannerMissionProof } from "../git/git-proof.js";
+import { assertPlannerMissionProof } from "#missions/git/git-proof.js";
 import {
   mcpError,
   resolveGuardedMissionAbs,
@@ -23,7 +24,7 @@ export function handleCheckSignature(
   }
 
   try {
-    const msnId = assertPlannerMissionProof(root, missionAbs);
+    const msnId = assertPlannerMissionProof(root, missionAbs, { warn: logWarn });
     const rel = formatRepoRelative(root, missionAbs);
     return {
       status: "signature_valid",

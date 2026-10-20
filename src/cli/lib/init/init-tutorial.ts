@@ -4,8 +4,8 @@ import path from "node:path";
 import * as p from "@clack/prompts";
 import { CLI_NAME } from "#core/constants.js";
 import { fromPosix } from "#core/posix-path.js";
-import { logError, logInfo, setExitCode } from "../cli-io.js";
-import { plannerMissionStamped } from "../git/git-proof.js";
+import { logError, logInfo, setExitCode, logWarn } from "../cli-io.js";
+import { plannerMissionStamped } from "#missions/git/git-proof.js";
 import {
   ONBOARDING_ADOPTION_DOC,
   onboardingRuntimeEnvHint,
@@ -56,7 +56,7 @@ async function confirmTeacherStamp(
     });
     if (p.isCancel(ready) || !ready) return false;
 
-    if (plannerMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID })) {
+    if (plannerMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID, warn: logWarn })) {
       p.log.success("Planner stamp OK — [MSN-9001] commit touches this mission file");
       return true;
     }

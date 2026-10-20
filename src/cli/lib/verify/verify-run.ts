@@ -2,14 +2,14 @@ import path from "node:path";
 import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../mission-arg.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "./verify-engine.js";
-import type { VerifyOptions } from "./verify-options.js";
+import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
+import type { VerifyOptions } from "#missions/verify/verify-options.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import { buildAttestationReceipt } from "../attestation-receipt.js";
 import { writeAttestationReceipt } from "#plane/attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
-import { appendLedgerIfEnabled } from "../ledger/ledger-append.js";
-import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
+import { appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
+import { normalizeVerifyPhaseFailure } from "#missions/verify/verify-failure-normalize.js";
 import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
 import {
   buildFindingsForFailure,
@@ -17,12 +17,12 @@ import {
   initFailurePayload,
   toVerifyFailedPayload,
   type VerifyResultPayload,
-} from "./verify-payload.js";
+} from "#missions/verify/verify-payload.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { persistFailedVerifyRemediation } from "./verify-remediation-pipeline.js";
+import { persistFailedVerifyRemediation } from "#missions/verify/verify-remediation-pipeline.js";
 import { recordVerifyRunBestEffort } from "#missions/verify/verify-run-ring.js";
-import { runRecordRelPath } from "./verify-run-record.js";
-import { logInfo } from "../cli-io.js";
+import { runRecordRelPath } from "#missions/verify/verify-run-record.js";
+import { logInfo, logWarn } from "../cli-io.js";
 import {
   resolveVerifySink,
   maybeApplyRepairAndReevaluate,
@@ -188,13 +188,13 @@ async function resolveFinalPhaseResult(
 function appendVerifyOutcomeLedger(ctx: VerifyPresentContext, result: VerifyPhaseResult): void {
   const msnId = msnIdOrDefault(ctx.mission);
   if (result.ok) {
-    appendLedgerIfEnabled(ctx.root, "receipt", msnId, { verify_status: "passed" });
+    appendLedgerIfEnabled(ctx.root, "receipt", msnId, { verify_status: "passed" }, logWarn);
     return;
   }
   appendLedgerIfEnabled(ctx.root, "verify_findings", msnId, {
     failed_gate: result.phase,
     message: result.message,
-  });
+  }, logWarn);
 }
 
 function emitMissionBinding(ctx: VerifyPresentContext, sink: ReturnType<typeof resolveVerifySink>): void {
@@ -246,7 +246,7 @@ async function evaluateWithFixLoop(
 
 /** Unified verify orchestration: load once, evaluate once, present by sink. */
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
-  const ctx = loadVerifyContext(options);
+  const ctx = loadVerifyContext({ warn: logWarn, ...options });
   const sink = resolveVerifySink(ctx.options);
   emitMissionBinding(ctx, sink);
 
@@ -321,6 +321,7 @@ export async function buildVerifyResultPayloadFromOptions(options: VerifyOptions
     const mission = parseMissionFile(root, resolved.missionRel);
     assertMissionGatePresent(mission);
     const payload = await buildVerifyResultPayload(root, manifest, mission, {
+      warn: logWarn,
       ...options,
       mission: resolved.missionRel,
     });

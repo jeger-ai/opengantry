@@ -1,22 +1,22 @@
 import type { ResolvedMissionArg } from "../mission-arg.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyOptions } from "#missions/verify/verify-options.js";
 import { CLI_NAME } from "#core/constants.js";
-import { runBreakGlassAuditFlow } from "../break-glass.js";
+import { runBreakGlassAuditFlow } from "#missions/break-glass.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { logInfo, logWarn, writeStdout, logFixHint } from "../cli-io.js";
 import { Reporter } from "../reporter.js";
 import { loadPrompts } from "../prompts-loader.js";
 import { appendRepairMutationLog } from "#missions/repair.js";
-import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
+import { evaluateVerifyPhases, type VerifyPhaseResult } from "#missions/verify/verify-engine.js";
 import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
 import type { VerifyPhaseTiming } from "#missions/verify/verify-phase-clock.js";
 import {
   buildVerifyExportDocument,
   type JUnitCase,
   type VerifyExportFormat,
-} from "./verify-export.js";
+} from "#missions/verify/verify-export.js";
 import { uriIsDirectory } from "../sarif-uri.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -27,13 +27,13 @@ import {
   initFailurePayload,
   toVerifyFailedPayload,
   type VerifyResultPayload,
-} from "./verify-payload.js";
-import { hintsForVerifyPhase } from "./verify-hints.js";
+} from "#missions/verify/verify-payload.js";
+import { hintsForVerifyPhase } from "#missions/verify/verify-hints.js";
 import {
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
   type VerifyFailurePresentation,
-} from "./verify-failure-normalize.js";
+} from "#missions/verify/verify-failure-normalize.js";
 import {
   getRepairForErrorCode,
   resolveRepairErrorCode,
@@ -43,7 +43,7 @@ import { persistRemediationFromFailedPayload } from "../context-feed-remediation
 import {
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,
-} from "./verify-remediation-pipeline.js";
+} from "#missions/verify/verify-remediation-pipeline.js";
 import { readRemediationSnapshot, type RemediationSnapshot } from "#missions/context-feed-store.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 

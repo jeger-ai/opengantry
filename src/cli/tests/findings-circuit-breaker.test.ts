@@ -7,12 +7,12 @@ import {
   loadPriorDigestRing,
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,
-} from "../lib/verify/verify-remediation-pipeline.js";
+} from "#missions/verify/verify-remediation-pipeline.js";
 import { computeFindingsDigest } from "#missions/verify/verify-finding-fingerprint.js";
-import { buildVerifyResultPayloadFromPhaseResult } from "../lib/verify/verify-payload.js";
-import type { VerifyFailedPayload } from "../lib/verify/verify-payload.js";
+import { buildVerifyResultPayloadFromPhaseResult } from "#missions/verify/verify-payload.js";
+import type { VerifyFailedPayload } from "#missions/verify/verify-payload.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyPhaseSuccess } from "../lib/verify/verify-engine.js";
+import type { VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
   readRemediationSnapshot,

@@ -3,7 +3,7 @@ import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
   type OutputAudience,
-} from "../lib/audience-output.js";
+} from "#missions/audience-output.js";
 import { buildStatusReport, type StatusReport } from "../lib/status-report.js";
 import type { SkillSyncResult } from "#missions/skill-sync.js";
 import { loadWorkspaceWithSkillSync } from "#missions/workspace.js";

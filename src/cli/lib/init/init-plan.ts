@@ -8,7 +8,7 @@ import {
   formatAudienceNextStep,
   INIT_TAGGED_NEXT_STEPS,
   type AudienceNextStep,
-} from "../audience-output.js";
+} from "#missions/audience-output.js";
 import { currentReporter } from "../reporter.js";
 import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";

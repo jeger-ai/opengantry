@@ -5,7 +5,7 @@ import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { MissionContract } from "#core/contract-types.js";
 import type { TriageResult } from "#core/mission-types.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { assertMcpMissionWritePath, McpWriteDeniedError } from "./mcp-write-guard.js";
+import { assertMcpMissionWritePath, McpWriteDeniedError } from "#missions/mcp/mcp-write-guard.js";
 import { resolveMissionFilePath } from "#missions/missions/resolution.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 

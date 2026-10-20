@@ -1,10 +1,10 @@
-import { NPM_PACKAGE_NAME } from "../version.gen.js";
+import { NPM_PACKAGE_NAME } from "#core/version.gen.js";
 import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import {
   compareSemver,
   legacyVersionWarning,
   readInstalledSubstrateVersion,
-} from "../substrate-version.js";
+} from "#missions/substrate-version.js";
 import type { DoctorLine, DoctorSection } from "#missions/doctor/doctor-types.js";
 
 export function runSubstrateDriftDoctorChecks(

@@ -1,10 +1,10 @@
 import { logInfo, setExitCode } from "../lib/cli-io.js";
 import { Reporter, currentReporter, withReporter } from "../lib/reporter.js";
-import { initFailurePayload } from "../lib/verify/verify-payload.js";
+import { initFailurePayload } from "#missions/verify/verify-payload.js";
 import { emitVerifyDocument } from "../lib/verify/verify-presenters.js";
-import type { VerifyOptions } from "../lib/verify/verify-options.js";
+import type { VerifyOptions } from "#missions/verify/verify-options.js";
 import { resolveDefaultChangedBaseRef } from "#missions/mission-changed.js";
-import { discoverChangedMissionFiles } from "../lib/verify/verify-engine.js";
+import { discoverChangedMissionFiles } from "#missions/verify/verify-engine.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { GantryUserError } from "#core/user-error.js";
 import { reportUserFacingError } from "../lib/errors.js";

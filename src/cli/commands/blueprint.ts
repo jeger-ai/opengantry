@@ -7,7 +7,7 @@ import {
   emitBlueprintArtifacts,
   runBlueprintDiscovery,
   type BlueprintInterviewAnswer,
-} from "../lib/blueprint-engine.js";
+} from "#missions/blueprint-engine.js";
 
 export interface BlueprintOptions {
   yes?: boolean;

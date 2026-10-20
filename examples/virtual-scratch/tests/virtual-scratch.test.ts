@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { runVerify } from "../../../src/cli/commands/verify.js";
-import { verifyKpiReportFreshness } from "../../../src/cli/lib/kpi-engine.js";
+import { verifyKpiReportFreshness } from "../../../packages/missions/src/kpi-engine.js";
 import {
   createVirtualFlightId,
   flightDirExists,

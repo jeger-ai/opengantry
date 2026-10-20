@@ -6,7 +6,7 @@ import {
   buildVerifyExportDocument,
   GENERIC_SARIF_FILE,
   JUNIT_SUITE_NAME,
-} from "../lib/verify/verify-export.js";
+} from "#missions/verify/verify-export.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "#missions/verify/verify-finding.js";
 

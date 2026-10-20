@@ -4,8 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { evaluateKpiThresholds, loadKpiReport } from "../lib/kpi-engine.js";
-import { evaluateKpiPhase } from "../lib/kpi-engine.js";
+import { evaluateKpiThresholds, loadKpiReport, evaluateKpiPhase } from "#missions/kpi-engine.js";
 import type { KpiGateSpec, KpiReport } from "#core/mission-types.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 
