@@ -25,6 +25,9 @@
     },
     {
       "path": "packages/plane"
+    },
+    {
+      "path": "packages/verify"
     }
   ]
 }

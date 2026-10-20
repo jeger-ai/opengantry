@@ -16,7 +16,7 @@ import {
   signReceiptMessage,
   verifySignatureWithAllowedSigners,
   type ReceiptSignature,
-} from "#plane/receipt-signing.js";
+} from "#git/receipt-signing.js";
 import {
   contractError,
   loadVerifyContract,

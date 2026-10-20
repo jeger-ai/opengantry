@@ -5,9 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { gitChildEnv } from "#git/git.js";
-import { parseCommitlyGate, parseVerifyYaml } from "../lib/verify-standalone/contract.js";
+import { parseCommitlyGate, parseVerifyYaml } from "#verify/contract.js";
 import { patternCoversPath } from "#core/path-glob.js";
-import { checkVerifyResult, runVerifyContract, writeVerifyBaseline } from "../lib/verify-standalone/run.js";
+import { checkVerifyResult, runVerifyContract, writeVerifyBaseline } from "#verify/run.js";
 
 function git(dest: string, ...args: string[]): string {
   const r = spawnSync(

@@ -12,7 +12,8 @@
     "#core/*": "./dist/packages/core/src/*",
     "#git/*": "./dist/packages/git/src/*",
     "#cage/*": "./dist/packages/cage/src/*",
-    "#plane/*": "./dist/packages/plane/src/*"
+    "#plane/*": "./dist/packages/plane/src/*",
+    "#verify/*": "./dist/packages/verify/src/*"
   },
   "exports": {
     ".": "./dist/cli/index.js",

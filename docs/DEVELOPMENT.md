@@ -167,19 +167,20 @@ Rules while the rewrite runs:
 - A mission that changes CLI output updates the golden files in the same commit and names the change in its intent; a golden diff without that is a regression.
 - `gantry arch check` (whole tree, in the gate) must pass: budgets, owners, registries, dependencies and duplicates. Lowering a count is fine and is locked in by `gantry arch check --ratchet` in a Planner mission, never automatically; a mission that must grow a layer runs `--ratchet --allow-raise` and says so in its intent.
 
-## Packages (ADR-0052 step 2)
+## Packages (ADR-0052 step 2, ADR-0054)
 
 | Package | Holds | Depends on |
 |---------|-------|------------|
-| `packages/core` | pure domain: `path-law` (ADR-0053: areas plus a rule table, `judgePath`, `tightenPathLaw`; consumers move onto it in later missions), `exit-codes` (the exit-code table: OK, FAILURE, USAGE), `law` (Law, tighten, classifyPath, isProtectedPath, ChangeSet, evaluatePaths, evaluateImportSite, ArchLaw, evaluateLayerImport, evaluatePatternRules), `import-scanner`, `specifier`, `error-codes`, `user-error`, `canonical-json`, `path-glob`, `posix-path`, `manifest` (shape), `constants` | nothing (`node:path`, `node:module` only) |
-| `packages/git` | `git` (the adapter), `git-staged`, `msn-commits` | core |
+| `packages/core` | pure domain: `path-law` (ADR-0053: areas plus a rule table, `judgePath`, `tightenPathLaw`; the cage, mission scope and verify judge paths with it), `law` (the mission `Law`: a `PathLaw` plus import discipline, `evaluateImportSite`; `ArchLaw`, `evaluateLayerImport`, `evaluatePatternRules`), `exit-codes` (the exit-code table: OK, FAILURE, USAGE), `import-scanner`, `specifier`, `error-codes`, `user-error`, `canonical-json`, `path-glob`, `posix-path`, `manifest` (shape), `law-file`, `strict-yaml`, `run-record`, `trusted-automation`, `constants`, the shared types (`config`, `contract-types`, `gate-adapter`, `interrogation`, `mission-types`, `trace-status`) and the zod schemas | `zod` and `yaml` only (ADR-0054 decision 1) |
+| `packages/git` | `git` (the adapter), `git-staged`, `msn-commits`, `repo-text`, `receipt-signing` (ssh or gpg signatures with the git signing key) | core |
 | `packages/cage` | the cage runtime (15 modules: rules, snapshot, run, watch, check, suggest, journal, push guard, scope) | core, git |
-| `packages/plane` | the org plane: `ledger-entry`, `ledger-chain`, `ledger-append`, `ledger-export`, `policy-types`, `policy-bundle`, `policy-resolve`, `policy-fetch`, `deps-slug`, `deps-fetch`, `deps-resolve`, `receipt-signing`, `receipt-attribution`, `attestation-receipt`, `attestation-export`, `org-export-config`, `digests`, `ajv-loader` | core, git |
+| `packages/plane` | the org plane: `ledger-entry`, `ledger-chain`, `ledger-append`, `ledger-export`, `policy-types`, `policy-bundle`, `policy-resolve`, `policy-fetch`, `deps-slug`, `deps-fetch`, `deps-resolve`, `receipt-attribution`, `attestation-receipt`, `attestation-export`, `org-export-config`, `digests` | core, git |
+| `packages/verify` | the standalone verify contract engine (ADR-0051): `contract`, `diff`, `checks`, `imports`, `python-imports`, `run` | core, git |
 
 - Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
-- Import a package module as `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js` or `#plane/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a re-export facade under `src/cli/lib`; the last ones are gone (rewrite step 5e).
+- Import a package module as `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js`, `#plane/<module>.js` or `#verify/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a re-export facade under `src/cli/lib`; the last ones are gone (rewrite step 5e).
 - Package tests live in `packages/<name>/tests/` and run with `npm run test:packages` (part of `npm test`).
-- A path, scope or import decision is made by `#core/law.js`: build a `Law` or `ArchLaw` and call `classifyPath`, `isProtectedPath`, `evaluatePaths`, `evaluateImportSite`, `evaluateLayerImport` or `evaluatePatternRules`. Do not add another matcher, classifier or rule loop in `src/cli`.
+- A path decision is made by `#core/path-law.js` (build a `PathLaw`, call `judgePath`); an import or layer decision by `#core/law.js` (`evaluateImportSite`, `evaluateLayerImport`, `evaluatePatternRules`). Do not add another matcher, classifier or rule loop in `src/cli`.
 - A new module belongs in a package when it needs no `fs`, `git` or `child_process` (core) or is the git adapter (git); otherwise it stays in `src/cli` until its package exists.
 
 ## Zero-trust gates (sole trust boundary)

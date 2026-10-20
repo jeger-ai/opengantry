@@ -27,7 +27,7 @@ import {
   verifyReceiptAgainstCanonical,
   type ReceiptSignature,
   type ReceiptSignatureVerifyStatus,
-} from "./receipt-signing.js";
+} from "#git/receipt-signing.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { computeWorkingDigests } from "./digests.js";
 

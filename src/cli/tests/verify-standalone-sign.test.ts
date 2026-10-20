@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
-import { checkVerifyResult, runVerifyContract } from "../lib/verify-standalone/run.js";
+import { checkVerifyResult, runVerifyContract } from "#verify/run.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
 const HAS_SSH_KEYGEN = spawnSync("ssh-keygen", ["-?"], { encoding: "utf8" }).error === undefined;
