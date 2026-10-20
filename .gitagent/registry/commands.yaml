@@ -2,7 +2,7 @@
 schema: opengantry.registry.v1
 kind: commands
 law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
-note: Every gantry subcommand, public and hidden. since names the first commit that registered the leaf name in src/cli (registrar basis; for a leaf name used by several groups it is the earliest).
+note: Every gantry subcommand, public and hidden. dispatch names the command a verb is parsed by when it is not a Commander subcommand (gantry cage <verb>); src/cli/tests/registry-surface.test.ts holds the Commander tree to this file. since names the first commit that registered the leaf name in src/cli (registrar basis; for a leaf name used by several groups it is the earliest).
 bins:
   - name: gantry
     package: "@jeger-ai/opengantry"
@@ -41,13 +41,13 @@ entries:
     since: MSN-0233
   - name: cage check
     since: MSN-0267
-    note: Dispatched inside gantry cage, not a Commander subcommand.
+    dispatch: cage
   - name: cage suggest
     since: MSN-0240
-    note: Dispatched inside gantry cage, not a Commander subcommand.
+    dispatch: cage
   - name: cage watch
     since: MSN-0237
-    note: Dispatched inside gantry cage, not a Commander subcommand.
+    dispatch: cage
   - name: cage-guard pre-push
     hidden: true
     since: MSN-0237
