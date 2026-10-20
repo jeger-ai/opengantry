@@ -6,7 +6,12 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { runCageCheck } from "#cage/cage-check.js";
-import { cageScanRule } from "#cage/cage-rules.js";
+import { cageFloorRules } from "#cage/cage-rules.js";
+import { judgePath, pathLaw } from "#core/path-law.js";
+
+/** The floor rule a root-relative path gets under a plan with these dependencies. */
+const cageScanRule = (rel: string, dependencies: "report" | "revert"): string | null =>
+  judgePath(pathLaw({ rules: cageFloorRules(dependencies) }), rel)?.rule ?? null;
 import { isCageSubcommandInvocation } from "../program-cage.js";
 import { writeManifest } from "./test-fixtures.js";
 

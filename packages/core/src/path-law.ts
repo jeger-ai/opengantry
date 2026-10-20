@@ -58,8 +58,9 @@ const covers = (patterns: readonly string[], path: string): boolean => patterns.
 const coveringPattern = (patterns: readonly string[], path: string): string | null => patterns.find((p) => patternCoversPath(p, path)) ?? null;
 
 /**
- * The rule that decides the path, or null when none applies. Overrides lower an overridable deny to report before
- * the strictest effect is picked, so a non-overridable rule on the same path still decides it.
+ * The rule that decides the path, or null. Overrides first lower an overridable deny to report, so a non-overridable
+ * rule on the same path still decides it; then the strictest effect wins, then an overridden judgment (a relaxed
+ * deny is announced, not hidden behind a plain report rule), then table order.
  */
 export function judgePath(law: PathLaw, path: string, overrides: readonly string[] = []): PathJudgment | null {
   if (covers(law.exempt, path)) return null;
@@ -75,15 +76,12 @@ export function judgePath(law: PathLaw, path: string, overrides: readonly string
   for (const h of hits) {
     const lowered = overridden && h.overridable && h.effect === "deny";
     const j: PathJudgment = { rule: h.id, source: h.source, effect: lowered ? "report" : h.effect, pattern: h.pattern, overridden: lowered };
-    if (!best || RANK[j.effect] > RANK[best.effect]) best = j;
+    if (!best || RANK[j.effect] > RANK[best.effect] || (RANK[j.effect] === RANK[best.effect] && j.overridden && !best.overridden)) best = j;
   }
   return best;
 }
 
-/**
- * Compose an upper level with a lower one: rules and areas are appended (upper first), exemptions stay the upper
- * level's. A path must satisfy both levels, so a lower level can only narrow (ADR-0049 §2).
- */
+/** Compose levels: rules and areas append (upper first), exemptions stay the upper level's; a lower level only narrows. */
 export function tightenPathLaw(upper: PathLaw, lower: Partial<Pick<PathLaw, "areas" | "rules">>): PathLaw {
   return { areas: [...upper.areas, ...(lower.areas ?? [])], rules: [...upper.rules, ...(lower.rules ?? [])], exempt: [...upper.exempt] };
 }

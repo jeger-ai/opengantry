@@ -4,7 +4,6 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { GantryUserError } from "#core/user-error.js";
 import { gitChildEnv } from "#git/git.js";
-import { patternCoversPath } from "#core/path-glob.js";
 import { normalizeCageRelPath } from "./cage-config.js";
 
 /**
@@ -23,22 +22,6 @@ import { normalizeCageRelPath } from "./cage-config.js";
 export interface CageScope {
   config: string[] | null;
   flag: string[] | null;
-}
-
-/** A glob that matches the path, or a directory above it, covers the path. */
-function scopeListCovers(globs: readonly string[], rel: string): boolean {
-  return globs.some((g) => patternCoversPath(g, rel));
-}
-
-/** Whether a root-relative path lies in the allowed area; always true without a scope. */
-export function inCageScope(plan: { scope: CageScope | null }, rel: string): boolean {
-  const s = plan.scope;
-  if (!s) return true;
-  // Paths under the git dir are git_control's business, never the scope's.
-  if (rel === ".git" || rel.startsWith(".git/") || rel.startsWith("../")) return true;
-  if (s.config && !scopeListCovers(s.config, rel)) return false;
-  if (s.flag && !scopeListCovers(s.flag, rel)) return false;
-  return true;
 }
 
 /** `--allow-only` values, normalized; null when none were given. */

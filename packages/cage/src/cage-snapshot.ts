@@ -3,17 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { GantryUserError } from "#core/user-error.js";
-import {
-  CAGE_SCAN_SKIP_DIRS,
-  applyCageOverride,
-  cagePlanRuleMode,
-  cageScanRule,
-  cageScopeHit,
-  inCageScope,
-  type CagePlan,
-  type CageRuleId,
-  type CageRuleMode,
-} from "./cage-rules.js";
+import { judgePath } from "#core/path-law.js";
+import { CAGE_SCAN_SKIP_DIRS, classifyCagePath, type CagePathRule, type CagePlan, type CageRuleId, type CageRuleMode } from "./cage-rules.js";
 import {
   assertCageScopeGitRoot,
   captureCageScopeTree,
@@ -124,13 +115,9 @@ function countScan(abs: string, st: fs.Stats, ctx: CaptureContext): boolean {
   return ctx.scanned.over;
 }
 
-function readEntry(abs: string, rule: CageRuleId, ruleMode: CageRuleMode, ctx: CaptureContext): CageEntry | null {
+function readEntry(abs: string, rel: string, resolved: CagePathRule, ctx: CaptureContext): CageEntry | null {
   const st = fs.lstatSync(abs);
   if (countScan(abs, st, ctx)) return null;
-  const rel = toPosixRel(ctx.plan.root, abs);
-  // Outside a scope, a report-mode path (an unfrozen lockfile) is restored like everything else there.
-  const scoped = cageScopeHit(ctx.plan, rel, { rule, mode: ruleMode, overridden: false })!;
-  const resolved = applyCageOverride(ctx.plan, rel, scoped)!;
   const mode = resolved.mode;
   const base = { abs, rel, rule: resolved.rule, mode, overridden: resolved.overridden, fileMode: st.mode & 0o7777 };
   if (st.isSymbolicLink()) {
@@ -153,12 +140,18 @@ function readEntry(abs: string, rule: CageRuleId, ruleMode: CageRuleMode, ctx: C
   return { ...base, type: "file", sha256: sha256Hex(bytes), size: bytes.length, bytes, linkTarget: null };
 }
 
-function captureEntry(abs: string, rule: CageRuleId, mode: CageRuleMode, ctx: CaptureContext): void {
-  const existing = ctx.entries.get(abs);
-  // A path matched by several rules keeps the strictest one (revert beats report).
-  if (existing && (existing.mode === "revert" || existing.overridden || mode === "report")) return;
+/**
+ * Capture one file under the rule the plan's law gives it (outside a scope, a report-mode path such as an unfrozen
+ * lockfile is restored like everything else there). A target outside the root keeps its own rule: no root-relative
+ * rule can name it.
+ */
+function captureEntry(abs: string, ctx: CaptureContext, outsideRoot: CagePathRule | null = null): void {
+  if (ctx.entries.has(abs)) return;
+  const rel = toPosixRel(ctx.plan.root, abs);
+  const resolved = rel.startsWith("../") ? outsideRoot : classifyCagePath(ctx.plan, rel);
+  if (!resolved) return;
   try {
-    const entry = readEntry(abs, rule, mode, ctx);
+    const entry = readEntry(abs, rel, resolved, ctx);
     if (entry) ctx.entries.set(abs, entry);
   } catch {
     // Vanished or unreadable between listing and reading: not part of this snapshot.
@@ -190,22 +183,18 @@ function captureTarget(abs: string, rule: CageRuleId, mode: CageRuleMode, ctx: C
   } catch {
     return;
   }
+  const outsideRoot: CagePathRule = { rule, mode, overridden: false };
   if (st.isDirectory()) {
-    walkTree(abs, null, (child) => captureEntry(child, rule, mode, ctx));
+    walkTree(abs, null, (child) => captureEntry(child, ctx, outsideRoot));
     return;
   }
-  captureEntry(abs, rule, mode, ctx);
+  captureEntry(abs, ctx, outsideRoot);
 }
 
-/** Whole-tree scan: built-in basename rules (`.env*`, lockfiles, frozen manifests) and `.cage.yaml` globs. */
-function captureScanned(abs: string, ctx: CaptureContext): void {
-  const rel = toPosixRel(ctx.plan.root, abs);
-  const rule = cageScanRule(rel, ctx.plan.dependencies);
-  if (rule) captureEntry(abs, rule, cagePlanRuleMode(ctx.plan, rule), ctx);
-  if (ctx.plan.globs.length === 0) return;
-  for (const g of ctx.plan.globs) {
-    if (g.re.test(rel)) captureEntry(abs, "cage_protect", g.mode, ctx);
-  }
+/** Whole-tree scan: a file a rule covers (a basename rule, a `.cage.yaml` glob, a path target) is captured. */
+function captureScanned(abs: string, ctx: CaptureContext, rulesOnly: CagePlan["law"]): void {
+  if (judgePath(rulesOnly, toPosixRel(ctx.plan.root, abs)) === null) return;
+  captureEntry(abs, ctx);
 }
 
 function limitsError(ctx: CaptureContext): GantryUserError {
@@ -254,13 +243,14 @@ function budgetError(ctx: CaptureContext): GantryUserError {
 export function addCageScopeEntries(plan: CagePlan, entries: Map<string, CageEntry>, files: readonly CageScopeFile[]): void {
   for (const f of files) {
     const abs = path.join(plan.root, ...f.rel.split("/"));
-    if (entries.has(abs) || inCageScope(plan, f.rel)) continue;
-    const resolved = applyCageOverride(plan, f.rel, { rule: "out_of_scope", mode: "revert", overridden: false })!;
+    if (entries.has(abs)) continue;
+    const resolved = judgePath({ ...plan.law, rules: [] }, f.rel, plan.overrides);
+    if (!resolved) continue;
     entries.set(abs, {
       abs,
       rel: f.rel,
-      rule: "out_of_scope",
-      mode: resolved.mode,
+      rule: resolved.rule as CageRuleId,
+      mode: resolved.effect === "deny" ? "revert" : "report",
       overridden: resolved.overridden,
       type: f.type,
       sha256: "",
@@ -295,7 +285,9 @@ export function takeCageSnapshot(plan: CagePlan, opts: CageSnapshotOptions): Cag
     caps: { tooLarge: [], wantedBytes: 0 },
   };
   for (const target of plan.targets) captureTarget(target.abs, target.rule, target.mode, ctx);
-  walkTree(plan.root, CAGE_SCAN_SKIP_DIRS, (abs) => captureScanned(abs, ctx));
+  // Areas decide out-of-scope files below (blob ids, no bytes); the scan only captures what a rule covers.
+  const rulesOnly = { ...plan.law, areas: [] };
+  walkTree(plan.root, CAGE_SCAN_SKIP_DIRS, (abs) => captureScanned(abs, ctx, rulesOnly));
   if (ctx.scanned.over) throw limitsError(ctx);
   if (ctx.opts.keepBytes) {
     if (ctx.caps.tooLarge.length > 0) throw fileTooLargeError(ctx);

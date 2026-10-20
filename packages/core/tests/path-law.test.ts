@@ -40,6 +40,7 @@ test("a dependency freeze adds deny rules; the strictest effect outranks the rep
   assert.equal(rule(frozen, "package.json")?.rule, "dependency_manifest");
   assert.equal(rule(frozen, "py/requirements-dev.txt")?.rule, "dependency_manifest");
   assert.equal(rule(frozen, "vendor/x/package.json"), null);
+  assert.deepEqual(rule(frozen, "package-lock.json", ["package-lock.json"]), { rule: "lockfile", source: "builtin", effect: "report", pattern: "**/package-lock.json", overridden: true }, "an override on a frozen lockfile is announced, not hidden behind the report rule");
 });
 
 test("overrides lower an overridable deny to report and never touch harness rules", () => {
