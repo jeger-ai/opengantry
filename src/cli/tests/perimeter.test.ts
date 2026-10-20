@@ -10,11 +10,13 @@ import {
   DEFAULT_PERIMETER_PROTECTED,
   isPerimeterProtectedPath,
 } from "../lib/perimeter.js";
-import { REL_PLANNER_SIGNING_PUB } from "#core/constants.js";
 import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
 import { patternCoversPath } from "#core/path-glob.js";
 import type { Manifest } from "#core/manifest.js";
 import { gitCommit, gitInitCommit } from "./test-fixtures.js";
+import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
+import { getRepoRoot } from "#git/git.js";
+import { REL_PLANNER_SIGNING_PUB, REL_POLICY_POINTER_JSON } from "#core/constants.js";
 
 const manifest: Manifest = {
   schema_version: "0.5.0",
@@ -27,8 +29,8 @@ const manifest: Manifest = {
 test("perimeter patterns: ** globs, exact files, and a folder entry protects everything below it", () => {
   assert.equal(patternCoversPath("**/.gxt-skill.yaml", "src/db/.gxt-skill.yaml"), true);
   assert.equal(patternCoversPath("**/.gxt-skill.yaml", "README.md"), false);
-  assert.equal(isPerimeterProtectedPath(".gitagent/registry/env.yaml", { ...manifest, perimeter_protected: [".gitagent/registry/"] }), true);
-  assert.equal(isPerimeterProtectedPath(".gitagent/registry.md", { ...manifest, perimeter_protected: [".gitagent/registry/"] }), false);
+  assert.equal(isPerimeterProtectedPath(".gitagent/registry/env.yaml", [".gitagent/registry/"]), true);
+  assert.equal(isPerimeterProtectedPath(".gitagent/registry.md", [".gitagent/registry/"]), false);
 });
 
 test("checkPerimeter: local mode is advisory-only (no hard fail on unsigned)", () => {
@@ -123,6 +125,38 @@ test("checkPerimeter: CI mode fails closed on missing base ref", () => {
   const result = checkPerimeter(root, manifest, { baseRef: "deadbeef00000000000000000000000000000000", ci: true });
   assert.equal(result.ok, false);
   assert.ok(result.violations.some((v) => /GXT_PERIMETER_SHALLOW_HISTORY/.test(v.reason)));
+});
+
+/** A repository whose org floor adds `docs/policy/` to the perimeter, with an unsigned change to docs/policy/x.md. */
+function orgPerimeterRepo(prefix: string): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  writeOrgPolicyRepo(root, getRepoRoot(), "manifest_constraints:\n  perimeter_protected_add:\n    - docs/policy/\n");
+  fs.mkdirSync(path.join(root, "docs", "policy"), { recursive: true });
+  fs.writeFileSync(path.join(root, "docs", "policy", "x.md"), "a\n", "utf8");
+  gitInitCommit(root, "init", "teacher@test.local");
+  fs.writeFileSync(path.join(root, "docs", "policy", "x.md"), "b\n", "utf8");
+  gitCommit(root, "agent edit", "agent@test.local");
+  return root;
+}
+
+test("checkPerimeter: the org floor's perimeter_protected_add protects its paths (ADR-0042, ADR-0054 decision 10)", () => {
+  const root = orgPerimeterRepo("og-perim-org-");
+  const result = checkPerimeter(root, manifest, { baseRef: "HEAD~1", ci: true });
+  assert.equal(result.ok, false);
+  assert.ok(result.violations.some((v) => v.path === "docs/policy/x.md" && /GXT_PERIMETER_VIOLATION/.test(v.reason)));
+});
+
+test("checkPerimeter: CI mode fails closed when the org floor cannot be read", () => {
+  const root = orgPerimeterRepo("og-perim-org-bad-");
+  const pointer = path.join(root, REL_POLICY_POINTER_JSON);
+  const doc = JSON.parse(fs.readFileSync(pointer, "utf8")) as { bundle_sha256: string };
+  fs.writeFileSync(pointer, JSON.stringify({ ...doc, bundle_sha256: "0".repeat(64) }), "utf8");
+  const ci = checkPerimeter(root, manifest, { baseRef: "HEAD~1", ci: true });
+  assert.equal(ci.ok, false);
+  assert.ok(ci.violations.some((v) => v.path === "(org policy)" && /org policy floor unreadable/.test(v.reason)));
+  const local = checkPerimeter(root, manifest, { baseRef: "HEAD~1", ci: false });
+  assert.equal(local.ok, true);
+  assert.ok(local.advisories.some((a) => /org policy floor unreadable/.test(a)));
 });
 
 test("listCommitsTouchingPathInRange: returns all commits not just last", () => {

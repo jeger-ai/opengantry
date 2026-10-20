@@ -77,6 +77,7 @@ export function writeLedgerEnabledConfig(dest: string, mode: "off" | "local" = "
 export function writeOrgPolicyRepo(
   dest: string,
   ogRoot: string,
+  extraYaml = "",
 ): { pointerPath: string; cachePath: string; bundleSha: string; pinnedCommit: string } {
   fs.mkdirSync(path.join(dest, ".gitagent", "planner"), { recursive: true });
   fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
@@ -84,7 +85,7 @@ export function writeOrgPolicyRepo(
     path.join(ogRoot, ".gitagent/planner/ORG-POLICY.schema.yaml"),
     path.join(dest, ".gitagent/planner/ORG-POLICY.schema.yaml"),
   );
-  const yaml = sampleOrgPolicyYaml();
+  const yaml = sampleOrgPolicyYaml() + extraYaml;
   const pinnedCommit = "a".repeat(40);
   const cacheDir = path.join(dest, REL_POLICY_CACHE, pinnedCommit);
   fs.mkdirSync(cacheDir, { recursive: true });

@@ -17,6 +17,7 @@ import {
 } from "#core/trusted-automation.js";
 import type { Manifest } from "#core/manifest.js";
 import { gitRunOk } from "#git/git.js";
+import { perimeterPaths } from "./perimeter.js";
 import { parseLawFileDocument } from "#core/law-file.js";
 import { readGxtConfigSource } from "./gxt-config.js";
 
@@ -78,8 +79,9 @@ interface StructuralContext {
 function structuralJudge(root: string, manifest: Manifest, files: readonly string[], ctx: StructuralContext) {
   return (rule: TrustedAutomationRule): { ok: boolean; reason: string } => {
     if (rule.structuralKind === "bounded_content") {
-      const globs = manifest.perimeter_protected ?? [];
-      const denied = files.find((f) => isSubstrateHardDeniedPath(f, globs));
+      const perimeter = perimeterPaths(root, manifest);
+      if (perimeter.error !== null) return { ok: false, reason: `rule ${rule.id}: ${perimeter.error}` };
+      const denied = files.find((f) => isSubstrateHardDeniedPath(f, perimeter.paths));
       return denied ? { ok: false, reason: `rule ${rule.id}: substrate hard-deny path not allowed (${denied})` } : { ok: true, reason: "" };
     }
     for (const file of files.filter((f) => /\.ya?ml$/i.test(f))) {

@@ -11,6 +11,7 @@ import {
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "#core/manifest.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
+import { resolveOrgPolicy } from "#plane/policy-resolve.js";
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",
   ".gitagent/foreman/MANIFEST.yaml",
@@ -31,22 +32,24 @@ export interface PerimeterCheckResult {
   advisories: string[];
 }
 
-export type ChangedPathsResult =
+type ChangedPathsResult =
   | { ok: true; paths: string[] }
   | { ok: false; code: string; reason: string };
 
 export const SHALLOW_HISTORY_HINT =
   "Configure CI checkout with fetch-depth: 0 or fetch the base ref explicitly before running gantry perimeter --ci.";
 
-function perimeterGlobs(manifest: Manifest): string[] {
-  return manifest.perimeter_protected?.length
-    ? [...manifest.perimeter_protected]
-    : [...DEFAULT_PERIMETER_PROTECTED];
+/** The manifest's protected paths (or the defaults) plus the org floor's `perimeter_protected_add` (ADR-0042). */
+export function perimeterPaths(repoRoot: string, manifest: Manifest): { paths: string[]; error: string | null } {
+  const own = manifest.perimeter_protected?.length ? manifest.perimeter_protected : DEFAULT_PERIMETER_PROTECTED;
+  const org = resolveOrgPolicy(repoRoot);
+  if (!org.ok) return { paths: [...own], error: `org policy floor unreadable: ${org.message}` };
+  return { paths: [...own, ...(org.bundle?.manifest_constraints?.perimeter_protected_add ?? [])], error: null };
 }
 
-export function isPerimeterProtectedPath(repoRelPath: string, manifest: Manifest): boolean {
+export function isPerimeterProtectedPath(repoRelPath: string, protectedPaths: readonly string[]): boolean {
   const perimeter = pathLaw({
-    rules: [{ id: "protected_path", source: "manifest", patterns: perimeterGlobs(manifest), effect: "planner", overridable: false }],
+    rules: [{ id: "protected_path", source: "manifest", patterns: [...protectedPaths], effect: "planner", overridable: false }],
   });
   return judgePath(perimeter, repoRelPath)?.effect === "planner";
 }
@@ -58,7 +61,7 @@ function shallowHistoryReason(baseRef: string, detail: string): string {
   );
 }
 
-export function listChangedPathsSinceBase(repoRoot: string, baseRef: string): ChangedPathsResult {
+function listChangedPathsSinceBase(repoRoot: string, baseRef: string): ChangedPathsResult {
   if (!gitRevParse(repoRoot, baseRef)) {
     return {
       ok: false,
@@ -265,31 +268,22 @@ function checkProtectedPathLocal(
   );
 }
 
+/** A check that cannot run: CI fails closed, a local run reports it as an advisory. */
+function preconditionFailed(subject: string, reason: string, ci: boolean | undefined): PerimeterCheckResult {
+  if (ci !== true) return { ok: true, violations: [], advisories: [reason] };
+  return { ok: false, violations: [{ path: subject, commit: "unknown", reason, advisoryOnly: false }], advisories: [] };
+}
+
 export function checkPerimeter(
   repoRoot: string,
   manifest: Manifest,
   options: PerimeterCheckOptions,
 ): PerimeterCheckResult {
   const changedResult = listChangedPathsSinceBase(repoRoot, options.baseRef);
-  if (!changedResult.ok) {
-    if (options.ci === true) {
-      return {
-        ok: false,
-        violations: [
-          {
-            path: "(range)",
-            commit: "unknown",
-            reason: changedResult.reason,
-            advisoryOnly: false,
-          },
-        ],
-        advisories: [],
-      };
-    }
-    return { ok: true, violations: [], advisories: [changedResult.reason] };
-  }
-
-  const protectedChanged = changedResult.paths.filter((p) => isPerimeterProtectedPath(p, manifest));
+  if (!changedResult.ok) return preconditionFailed("(range)", changedResult.reason, options.ci);
+  const perimeter = perimeterPaths(repoRoot, manifest);
+  if (perimeter.error !== null) return preconditionFailed("(org policy)", perimeter.error, options.ci);
+  const protectedChanged = changedResult.paths.filter((p) => isPerimeterProtectedPath(p, perimeter.paths));
   if (protectedChanged.length === 0) {
     return { ok: true, violations: [], advisories: [] };
   }
