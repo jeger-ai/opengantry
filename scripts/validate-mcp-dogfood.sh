@@ -10,7 +10,7 @@ on_err() {
 }
 trap 'on_err $LINENO' ERR
 
-if [[ ! -f dist/cli/lib/mcp/mcp-draft-legislation.js ]]; then
+if [[ ! -f dist/cli/mcp/mcp-draft-legislation.js ]]; then
   npm run build
 fi
 

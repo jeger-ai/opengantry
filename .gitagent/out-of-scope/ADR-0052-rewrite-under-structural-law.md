@@ -118,7 +118,7 @@ The rewrite buys nothing on its own; the code was clean once before. What keeps 
 
 **B6. This record is hinted on every structural intent.** The `match_terms` above make `gantry triage` surface this ADR whenever an intent mentions a new evaluator, scope check, error code, env var, dependency or refactor, so the Planner sees the registry obligation before legislating.
 
-**B7. v4 targets, recorded as the first baseline.** Production code at or under 20k lines across all layers; a per-file sanity ceiling of 800 lines that does not ratchet, so a cohesive parser or state machine of 400 lines is never split to satisfy a cap; no flat `lib/`; `core` with zero runtime dependencies; the same public subcommands minus hidden internal ones; one evaluator, one run record, one schema library, one env prefix. These are the numbers the ratchet starts from.
+**B7. v4 targets, recorded as the first baseline.** Production code at or under 20k lines across all layers; a per-file sanity ceiling of 800 lines that does not ratchet, so a cohesive parser or state machine of 400 lines is never split to satisfy a cap; no flat `lib/`; `core` with zero runtime dependencies (amended by ADR-0054: `zod` and `yaml` only); the same public subcommands minus hidden internal ones; one evaluator, one run record, one schema library, one env prefix. These are the numbers the ratchet starts from.
 
 ### Migration
 

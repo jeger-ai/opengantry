@@ -1,5 +1,5 @@
 import test from "node:test";
-import { logWarn } from "../lib/cli-io.js";
+import { logWarn } from "../output/cli-io.js";
 import assert from "node:assert/strict";
 import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";

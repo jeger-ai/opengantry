@@ -5,8 +5,7 @@ import { runContractCheck, runContractPropose, runContractShow } from "./command
 import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
-import { parseOptionalTimeoutMs } from "./lib/cli-io.js";
-import { logError, setExitCode } from "./lib/cli-io.js";
+import { parseOptionalTimeoutMs, logError, setExitCode } from "./output/cli-io.js";
 
 function registerMissionCommand(program: Command): void {
   const mission = program.command("mission").description("Mission validation + integrity snapshot");

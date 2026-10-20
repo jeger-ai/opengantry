@@ -5,8 +5,8 @@ import os from "node:os";
 import path from "node:path";
 
 import { computeWorkingDigests } from "#plane/digests.js";
-import { runFlightTelemetryDoctorChecks } from "../lib/flight-telemetry-doctor.js";
-import { compareExpectedDigests, runPolicyDigestDoctorChecks } from "../lib/policy-digest-doctor.js";
+import { runFlightTelemetryDoctorChecks } from "../doctor/flight-telemetry-doctor.js";
+import { compareExpectedDigests, runPolicyDigestDoctorChecks } from "../doctor/policy-digest-doctor.js";
 import { getRepoRoot } from "#git/git.js";
 import { writeRuntimeExecRepo } from "./test-fixtures.js";
 

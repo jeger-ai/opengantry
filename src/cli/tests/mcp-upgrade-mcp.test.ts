@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { handleUpgradePlan } from "../lib/mcp/mcp-upgrade.js";
+import { handleUpgradePlan } from "../mcp/mcp-upgrade.js";
 import {
   assertStableUpgradePlanPayloadV1,
   STABLE_UPGRADE_PLAN_PAYLOAD_VERSION,

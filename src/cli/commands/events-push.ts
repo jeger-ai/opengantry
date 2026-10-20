@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import crypto from "node:crypto";
-import { logInfo, logError, setExitCode } from "../lib/cli-io.js";
+import { logInfo, logError, setExitCode } from "../output/cli-io.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import {
   clearSpoolFiles,

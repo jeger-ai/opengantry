@@ -8,9 +8,9 @@ import {
   applyReportDemoOverview,
   withReportDemoOverlay,
   REL_REPORT_DEMO_FLAG,
-} from "../lib/report/report-demo-mode.js";
-import { DEMO_REPO_NAME, DEMO_TIMELINE } from "../lib/report/report-demo-fixtures.js";
-import { projectOverviewViewModel } from "../lib/report/report-overview-projector.js";
+} from "../report/report-demo-mode.js";
+import { DEMO_REPO_NAME, DEMO_TIMELINE } from "../report/report-demo-fixtures.js";
+import { projectOverviewViewModel } from "../report/report-overview-projector.js";
 import { buildGxtExtensionMetadata } from "#missions/git/git-metrics.js";
 
 test("isReportDemoMode: false when flag missing", () => {

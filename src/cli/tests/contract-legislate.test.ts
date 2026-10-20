@@ -7,9 +7,9 @@ import { spawnSync } from "node:child_process";
 import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
 import { createDraftToken, DraftTokenError, verifyDraftToken } from "#missions/draft-token.js";
 import { getRepoRoot } from "#git/git.js";
-import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
-import { handleExecuteLegislation } from "../lib/mcp/mcp-execute-legislation.js";
-import { handleProposeContract } from "../lib/mcp/mcp-propose-contract.js";
+import { handleDraftLegislation } from "../mcp/mcp-draft-legislation.js";
+import { handleExecuteLegislation } from "../mcp/mcp-execute-legislation.js";
+import { handleProposeContract } from "../mcp/mcp-propose-contract.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
 import { copyMissionSchema, echoOkInterrogation, emptyDraftTokenInterrogationFields, gitInitCommit, writeManifest } from "./test-fixtures.js";
 

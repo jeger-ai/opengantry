@@ -7,8 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "#core/constants.js";
-import { logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
-import { runAtCommandBoundaryAsync } from "../lib/command-boundary.js";
+import { logInfo, logWarn, setExitCode } from "../output/cli-io.js";
+import { runAtCommandBoundaryAsync } from "../output/command-boundary.js";
 import { getRepoRoot, gitRunOk } from "#git/git.js";
 import {
   TMVC_GUARD_STRICT_KEY,
@@ -20,7 +20,7 @@ import {
 import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import { checkPerimeter } from "#missions/perimeter.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { runVerifyCore } from "../lib/verify/verify-run.js";
+import { runVerifyCore } from "../flows/verify-run.js";
 import { runCheck } from "./check.js";
 import { runContractCheck } from "./contract.js";
 import { runTmvcGuard } from "./tmvc-guard.js";

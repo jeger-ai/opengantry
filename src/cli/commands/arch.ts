@@ -1,12 +1,12 @@
 import { CLI_NAME, REL_ARCHITECTURE_CREDENTIALS_DIR } from "#core/constants.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, writeStdout } from "../output/cli-io.js";
 import {
   reportCommandError,
   resolveRepoRootAtBoundary,
   runAtCommandBoundary,
   runAtCommandBoundaryAsync,
-} from "../lib/command-boundary.js";
+} from "../output/command-boundary.js";
 import { fetchExternalArchitecture } from "#missions/arch/external/architecture-fetch.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import {

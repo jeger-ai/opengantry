@@ -1,8 +1,8 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
-import { runLegislate, type LegislateOptions } from "./lib/legislate/legislate.js";
-import { runLegislateFromIntent } from "./lib/legislate/legislate-from-intent.js";
+import { runLegislate, type LegislateOptions } from "./flows/legislate.js";
+import { runLegislateFromIntent } from "./flows/legislate-from-intent.js";
 import { isGantryUserError, errorMessage } from "#core/user-error.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
@@ -19,9 +19,9 @@ import { listDomainKeys } from "#missions/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";
-import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
+import { logError, readStdinIfEmpty, setExitCode } from "./output/cli-io.js";
 import { GATE_ADAPTER_IDS, type GateAdapterId } from "#core/gate-adapter.js";
-import { currentReporter } from "./lib/reporter.js";
+import { currentReporter } from "./output/reporter.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */
 type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths" | "contract"> & {

@@ -1,11 +1,11 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
-import { setExitCode, logWarn } from "../lib/cli-io.js";
-import { runUserCommand, type CommandPresentation } from "../lib/command-boundary.js";
+import { setExitCode, logWarn } from "../output/cli-io.js";
+import { runUserCommand, type CommandPresentation } from "../output/command-boundary.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
-import { resolveMissionArg } from "../lib/mission-arg.js";
+import { resolveMissionArg } from "../flows/mission-arg.js";
 import { fetchMissionDependency } from "#plane/deps-fetch.js";
 import { checkMissionDependencies } from "#missions/deps/deps-resolve.js";
 import { type DependencyCheckResult } from "#plane/deps-resolve.js";

@@ -1,4 +1,4 @@
-import { normalizeRepoRelativePath } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import YAML from "yaml";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { GxtErrorCode } from "#core/error-codes.js";

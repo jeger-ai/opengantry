@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { normalizeRepoRelativePath } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import type { TsconfigPaths } from "#core/specifier.js";
 
 // The pure classifier lives in core (ADR-0052 step 3b); this module keeps the tsconfig loader and re-exports.

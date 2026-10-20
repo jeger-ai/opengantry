@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isPathUnderRoot, law, normalizeRepoRelativePath, unionSorted } from "../src/law.js";
+import { isPathUnderRoot, law, unionSorted } from "../src/law.js";
+import { normalizeRepoRelativePath } from "../src/posix-path.js";
 
 test("path primitives: roots by prefix, normalized POSIX paths, sorted unions", () => {
   assert.equal(isPathUnderRoot("src/cli/x.ts", "src/cli/"), true);

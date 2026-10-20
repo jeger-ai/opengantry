@@ -21,3 +21,8 @@ export function formatRepoRelative(repoRoot: string, absolutePath: string): stri
 export function repoAbsPath(repoRoot: string, posixRel: string): string {
   return path.join(repoRoot, fromPosix(posixRel));
 }
+
+/** Repo-relative POSIX form: backslashes to slashes, no leading `./`. */
+export function normalizeRepoRelativePath(repoRel: string): string {
+  return repoRel.replace(/\\/g, "/").replace(/^\.\//, "");
+}

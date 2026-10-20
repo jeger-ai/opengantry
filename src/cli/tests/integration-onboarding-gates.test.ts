@@ -8,7 +8,7 @@ import {
   classifyIntegrationProfileState,
   integrationOnboardingBlockers,
   runIntegrationDoctorChecks,
-} from "../lib/doctor/doctor-integration.js";
+} from "../doctor/doctor-integration.js";
 import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import { writeIntegrationFixtureState } from "./test-fixtures.js";
 

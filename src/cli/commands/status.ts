@@ -1,10 +1,10 @@
-import { logError, logInfo, logWarn, setExitCode, writeStdout } from "../lib/cli-io.js";
+import { logError, logInfo, logWarn, setExitCode, writeStdout } from "../output/cli-io.js";
 import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
   type OutputAudience,
 } from "#missions/audience-output.js";
-import { buildStatusReport, type StatusReport } from "../lib/status-report.js";
+import { buildStatusReport, type StatusReport } from "../report/status-report.js";
 import type { SkillSyncResult } from "#missions/skill-sync.js";
 import { loadWorkspaceWithSkillSync } from "#missions/workspace.js";
 

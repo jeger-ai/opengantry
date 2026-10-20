@@ -1,4 +1,4 @@
-import { runStart, type StartOptions } from "../lib/start-orchestration.js";
+import { runStart, type StartOptions } from "../flows/start-orchestration.js";
 
 export type { StartOptions };
 

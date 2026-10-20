@@ -15,8 +15,8 @@ import {
   writeMiniGantryMission,
   gitInitCommit,
 } from "./test-fixtures.js";
-import { logInfo } from "../lib/cli-io.js";
-import { Reporter, resetReporter, setReporter } from "../lib/reporter.js";
+import { logInfo } from "../output/cli-io.js";
+import { Reporter, resetReporter, setReporter } from "../output/reporter.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
 /** Run fn as the Commander hook runs an action: with reporter current, and the plain human reporter back after. */

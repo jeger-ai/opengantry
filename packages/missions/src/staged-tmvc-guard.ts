@@ -1,4 +1,4 @@
-import { normalizeRepoRelativePath } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import { classifyRepoRelativePath, forbiddenZonesForSkill, tmvcRootsForSkill, type TmvcPathClassification } from "./tmvc-path.js";
 import type { EffectiveScope } from "#core/contract-types.js";
 import { gitStagedNameOnly } from "#git/git-staged.js";

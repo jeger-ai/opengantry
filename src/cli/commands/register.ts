@@ -6,7 +6,7 @@ import {
   formatProposalJson,
   suggestSkillKeyFromFolder,
 } from "#missions/register-proposals.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode } from "../output/cli-io.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface RegisterOptions {

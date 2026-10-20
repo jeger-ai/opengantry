@@ -1,4 +1,4 @@
-import { normalizeRepoRelativePath } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import fs from "node:fs";
 import path from "node:path";
 import { importMatchesBan, isBuiltinSpecifier } from "#core/specifier.js";

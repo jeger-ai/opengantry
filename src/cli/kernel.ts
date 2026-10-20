@@ -1,6 +1,6 @@
 /**
  * Curated in-process API for external runtimes (iii worker, daemons).
- * Do not deep-import dist/cli/lib/* — use this entry only.
+ * Do not deep-import dist/ modules — use this entry only.
  */
 export {
   evaluateScope,
@@ -39,7 +39,7 @@ import { loadManifest } from "#missions/manifest.js";
 import type { VerifyOptions } from "#missions/verify/verify-options.js";
 import type { VerifyResultPayload } from "#missions/verify/verify-payload.js";
 import { buildVerifyResultPayload } from "#missions/verify/verify-payload.js";
-import { logWarn } from "./lib/cli-io.js";
+import { logWarn } from "./output/cli-io.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;

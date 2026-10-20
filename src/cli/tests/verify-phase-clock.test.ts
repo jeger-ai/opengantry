@@ -6,7 +6,7 @@ import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
 import { evaluateVerifyPhases } from "#missions/verify/verify-engine.js";
 import { listVerifyRuns, recordVerifyRunBestEffort, readLatestVerifyRunSnapshot } from "#missions/verify/verify-run-ring.js";
-import { presentHuman } from "../lib/verify/verify-presenters.js";
+import { presentHuman } from "../flows/verify-presenters.js";
 import { VerifyPhaseClock } from "#missions/verify/verify-phase-clock.js";
 import { loadManifest } from "#missions/manifest.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";

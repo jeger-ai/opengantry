@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
+import { logInfo, setExitCode, writeStdout } from "../output/cli-io.js";
 import { GantryUserError } from "#core/user-error.js";
-import { runUserCommand } from "../lib/command-boundary.js";
+import { runUserCommand } from "../output/command-boundary.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate } from "#missions/interrogate/run.js";
 import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";

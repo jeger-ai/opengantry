@@ -1,4 +1,4 @@
-import { normalizeRepoRelativePath } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import { layerForFile, loadTargetArchitecture, resolveArchScanRoots, fileMatchesScanRoots } from "../arch/cage/target-architecture.js";
 import { findForbiddenZoneHits } from "../legislate/legislate-forbidden-zone.js";
 import { triageIntent, isTriageEscalated } from "../triage-logic.js";

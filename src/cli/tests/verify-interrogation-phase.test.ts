@@ -14,7 +14,7 @@ import { parseMissionFile } from "#missions/missions/parser.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { loadManifest } from "#missions/manifest.js";
 import { evaluateInterrogationPhase } from "#missions/verify/verify-interrogation.js";
-import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
+import { handleDraftLegislation } from "../mcp/mcp-draft-legislation.js";
 import { copyMissionSchema, gitCommit, gitInitCommit, writeManifest } from "./test-fixtures.js";
 
 const PLANNER = "planner@example.com";

@@ -8,21 +8,21 @@ import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
 import { runPin, runUnpin } from "./commands/pin.js";
 import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
-import type { PrincipalHmacOptions } from "./lib/principal-hmac.js";
+import type { PrincipalHmacOptions } from "./flows/principal-hmac.js";
 import { runContextFeed } from "./commands/context-feed.js";
 import { runReport } from "./commands/report.js";
 import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
-import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
+import { logError, readStdinIfEmpty, setExitCode } from "./output/cli-io.js";
 import type { InitOptions } from "./commands/init.js";
 import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/hooks.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
-import type { StartOptions } from "./lib/start-orchestration.js";
+import type { StartOptions } from "./flows/start-orchestration.js";
 import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, type GateAdapterId, type TypedGateAdapterId } from "#core/gate-adapter.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
-import { currentReporter } from "./lib/reporter.js";
+import { currentReporter } from "./output/reporter.js";
 
 /** Commander-parsed triage flags (intent text is a positional arg). */
 type TriageCliOptions = Omit<TriageRunOptions, "text">;

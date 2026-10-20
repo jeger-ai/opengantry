@@ -10,7 +10,7 @@ import { loadManifest, manifestExists, manifestRelPath } from "#missions/manifes
 import { loadGxtConfig } from "#missions/gxt-config.js";
 import { loadTrustedAutomationRules } from "#missions/trusted-automation.js";
 import { architecturePointerPath, loadArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
-import { runOrgPolicyDoctorChecks } from "../lib/policy/policy-doctor.js";
+import { runOrgPolicyDoctorChecks } from "../doctor/policy-doctor.js";
 import { runLawFileFormDoctorChecks, writeLawFileYaml } from "#missions/law-files.js";
 import { migratedManifest } from "../commands/migrate.js";
 

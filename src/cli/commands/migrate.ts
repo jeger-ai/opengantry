@@ -6,7 +6,7 @@ import { REL_MANIFEST_JSON, REL_MANIFEST_YAML, CLI_NAME } from "#core/constants.
 import { LAW_FILES, lawFileToYaml, parseLawFileDocument, type LawFileId } from "#core/law-file.js";
 import { validateManifestShape, type Manifest } from "#core/manifest.js";
 import { getRepoRoot } from "#git/git.js";
-import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
+import { logError, logInfo, setExitCode, writeStdout } from "../output/cli-io.js";
 import { validateArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
 
 export interface MigrateOptions {

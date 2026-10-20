@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { handleVerify } from "../lib/mcp/mcp-runtime.js";
+import { handleVerify } from "../mcp/mcp-runtime.js";
 import { writeMiniGantryRepo, writeMiniGantryMission, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 

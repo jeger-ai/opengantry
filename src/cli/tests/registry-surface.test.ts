@@ -11,7 +11,7 @@ import type { Command } from "commander";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getRepoRoot } from "#git/git.js";
 import { buildProgram } from "../program.js";
-import { registerGxtMcpTools } from "../lib/mcp/mcp-tools-register.js";
+import { registerGxtMcpTools } from "../mcp/mcp-tools-register.js";
 
 interface CommandEntry {
   name: string;

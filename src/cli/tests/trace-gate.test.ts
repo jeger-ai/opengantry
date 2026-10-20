@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { verifyTraceRows } from "#missions/trace-quote.js";
 import { gatePassed } from "#missions/gate.js";
-import { parseOptionalTimeoutMs } from "../lib/cli-io.js";
+import { parseOptionalTimeoutMs } from "../output/cli-io.js";
 
 test("verifyTraceRows: anchor line must contain quote", () => {
   const log = "line one\nline two evidence here\n";

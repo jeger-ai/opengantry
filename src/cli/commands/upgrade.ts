@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { CLI_DIAGNOSTICS, logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { CLI_DIAGNOSTICS, logError, logInfo, setExitCode } from "../output/cli-io.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
-import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
+import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";

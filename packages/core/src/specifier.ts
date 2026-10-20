@@ -1,6 +1,6 @@
 import { builtinModules } from "node:module";
 import path from "node:path";
-import { normalizeRepoRelativePath } from "./law.js";
+import { normalizeRepoRelativePath } from "./posix-path.js";
 
 /** Module specifier classification and the import ban matcher (ADR-0052 A3): pure, no filesystem; tsconfig paths are passed in. */
 export type SpecifierClass =

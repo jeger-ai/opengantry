@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { importLayerRepair } from "../lib/repairs/import-layer.js";
-import type { RepairContext } from "../lib/repairs/registry.js";
+import { importLayerRepair } from "../doctor/repairs/import-layer.js";
+import type { RepairContext } from "../doctor/repairs/registry.js";
 import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
 
 test("importLayerRepair: applies bottom-to-top quarantine from gate JSON", async () => {

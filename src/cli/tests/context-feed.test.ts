@@ -14,7 +14,7 @@ import {
   type RemediationSnapshot,
 } from "#missions/context-feed-store.js";
 import { runContextFeed } from "../commands/context-feed.js";
-import { resetReporter } from "../lib/reporter.js";
+import { resetReporter } from "../output/reporter.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

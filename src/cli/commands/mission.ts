@@ -1,8 +1,8 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
 import { formatRepoRelative } from "#core/posix-path.js";
-import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
-import { runUserCommand } from "../lib/command-boundary.js";
+import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
+import { runUserCommand } from "../output/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
 import { discoverChangedMissions } from "#missions/mission-changed.js";
 import { assertMissionGatePresent, isValidMsnId, parseMissionFile } from "#missions/missions/parser.js";

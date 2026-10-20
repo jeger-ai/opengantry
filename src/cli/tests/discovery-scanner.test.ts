@@ -7,7 +7,7 @@ import { describe, it } from "node:test";
 import { applyDiscoveryProposal, emitDiscoveryProposal } from "#missions/discovery-proposal.js";
 import { runDiscoveryScan, serializeDiscoveryProposal } from "#missions/discovery-scanner.js";
 import { validateTargetArchitecture } from "#missions/arch/cage/target-architecture.js";
-import { runTargetArchitectureDoctorChecks } from "../lib/arch/cage/target-architecture-doctor.js";
+import { runTargetArchitectureDoctorChecks } from "../doctor/target-architecture-doctor.js";
 
 function writeFixtureRepo(root: string): void {
   fs.mkdirSync(path.join(root, "src", "services"), { recursive: true });
