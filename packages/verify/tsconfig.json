@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": ".",
+    "outDir": "../../dist/packages/verify",
+    "tsBuildInfoFile": "../../dist/packages/verify/.tsbuildinfo",
+    "paths": {
+      "#core/*": [
+        "../../dist/packages/core/src/*"
+      ],
+      "#git/*": [
+        "../../dist/packages/git/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../git"
+    }
+  ]
+}

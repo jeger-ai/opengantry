@@ -5,13 +5,13 @@ import type { Command } from "commander";
 import { setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
-import { outputTail, type CheckRun, type VerifyMode } from "../lib/verify-standalone/checks.js";
+import { outputTail, type CheckRun, type VerifyMode } from "#verify/checks.js";
 import {
   checkVerifyResult,
   runVerifyContract,
   writeVerifyBaseline,
   type VerifyContractResult,
-} from "../lib/verify-standalone/run.js";
+} from "#verify/run.js";
 
 /** `gantry verify --contract [file]` options (ADR-0051). */
 export interface VerifyContractCliOptions {

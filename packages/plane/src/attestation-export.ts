@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { AttestationReceipt } from "./attestation-receipt.js";
-import { canonicalReceiptUtf8, type ReceiptSignature } from "./receipt-signing.js";
+import { canonicalReceiptUtf8, type ReceiptSignature } from "#git/receipt-signing.js";
 
 export const ATTESTATION_EXPORT_SCHEMA_VERSION = "1.0.0" as const;
 

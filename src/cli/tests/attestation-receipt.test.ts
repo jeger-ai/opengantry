@@ -19,7 +19,7 @@ import {
   verifyReceiptAgainstCanonical,
   signReceiptHash,
   verifyReceiptSignature,
-} from "#plane/receipt-signing.js";
+} from "#git/receipt-signing.js";
 import { writeRuntimeExecRepo, writeOrgExportConfig, gitInitCommit, isolateOrgAttributionEnv } from "./test-fixtures.js";
 
 test("canonicalJson: deterministic key order", () => {

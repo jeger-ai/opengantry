@@ -211,46 +211,46 @@ entries:
     defined_in: src/cli/lib/gxt-error-codes.ts
   - name: GXT_VERIFY_BASELINE_DIRTY
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_BASELINE_INVALID
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/checks.ts
+    defined_in: packages/verify/src/checks.ts
   - name: GXT_VERIFY_BASELINE_NOT_AT_BASE
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_BASELINE_STALE
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/checks.ts
+    defined_in: packages/verify/src/checks.ts
   - name: GXT_VERIFY_BASE_INVALID
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_BASE_MISSING
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_BASE_REQUIRED
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_CONTRACT_INVALID
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/contract.ts
+    defined_in: packages/verify/src/contract.ts
   - name: GXT_VERIFY_CONTRACT_NOT_AT_BASE
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/contract.ts
+    defined_in: packages/verify/src/contract.ts
   - name: GXT_VERIFY_FAILED
     since: commit 26d06cf
     defined_in: src/cli/lib/gxt-error-codes.ts
   - name: GXT_VERIFY_GIT_FAILED
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/diff.ts
+    defined_in: packages/verify/src/diff.ts
   - name: GXT_VERIFY_NOT_GIT
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_NO_HEAD
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_RESULT_UNREADABLE
     since: MSN-0277
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
   - name: GXT_VERIFY_SIGN_NO_KEY
     since: MSN-0279
-    defined_in: src/cli/lib/verify-standalone/run.ts
+    defined_in: packages/verify/src/run.ts
