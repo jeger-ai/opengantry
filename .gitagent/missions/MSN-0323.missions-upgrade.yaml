@@ -1,0 +1,302 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0323]. Executor must not run until the [MSN-0323] legislation commit + pin.
+#
+# Legislated intent: ADR-0054 migration step 5e. A Diagnostics sink carries init planning, file merge and upgrade
+# output (the CLI passes CLI_DIAGNOSTICS); init printers move to the init command; then 12 modules (init assets, file
+# merges, upgrade engine, receipt inspection, start snapshot, context-feed remediation) move to missions.
+#
+# Operator direction (2026-10-20, "just go for it and continue until everything's done"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0323.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0323
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 323be23c4394
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md,
+      examples/virtual-scratch/tests/virtual-scratch.test.ts, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0323.missions-upgrade.yaml,
+      .gitagent/runs/MSN-0323.json,
+      packages/missions/src/context-feed-remediation.ts,
+      packages/missions/src/diagnostics.ts,
+      packages/missions/src/file-merge-gxt.ts,
+      packages/missions/src/init/init-asset-catalog.ts,
+      packages/missions/src/init/init-compose.ts,
+      packages/missions/src/init/init-plan.ts,
+      packages/missions/src/init/init-profile.ts,
+      packages/missions/src/receipt-inspect.ts,
+      packages/missions/src/start-snapshot.ts,
+      packages/missions/src/upgrade/upgrade-apply.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/missions/src/upgrade/upgrade-plan-scaffold.ts,
+      packages/missions/src/upgrade/upgrade-plan.ts,
+      packages/missions/src/upgrade/upgrade-plan-types.ts,
+      src/cli/commands/init.ts, src/cli/commands/mission.ts,
+      src/cli/commands/receipt.ts, src/cli/commands/upgrade.ts,
+      src/cli/lib/cli-io.ts, src/cli/lib/init/init-interactive.ts,
+      src/cli/lib/mcp/mcp-upgrade.ts, src/cli/lib/verify/verify-presenters.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/dx-mission-pin.test.ts,
+      src/cli/tests/file-merge-gxt.test.ts, src/cli/tests/init-profile.test.ts,
+      src/cli/tests/start-snapshot.test.ts,
+      src/cli/tests/template-parity.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts.
+      ADR-0054 migration step 5e: the Diagnostics sink and CLI_DIAGNOSTICS; init
+      planning, file merges and the upgrade engine report through it; init
+      printers into commands/init.ts; git mv of 12 delivery-free lib modules
+      into packages/missions/src (layout kept); importers; an example test;
+      docs/DEVELOPMENT.md; ARCH_BASELINE.json (missions and command raised by
+      moved code only, a Planner raise; lib lowered); CHANGELOG; executor log.
+      allow_dynamic_specifiers is true because moved and changed files already
+      contain non-literal import and require sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Accept. Reports stay digest-only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: 9643d0bc591b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0025. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0025 before
+      legislation proceeds.
+    operator_answer: Accept. The architecture rubric judge is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0025
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. CLI output is unchanged (the CLI wires the sink to its
+      reporter); conformance goldens unchanged. A library caller of
+      buildVerifyResultPayload without a sink no longer gets stderr lines.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept. MCP write containment is unchanged; the MCP modules
+      import the error payloads from #missions."
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: "Accept. This is migration step 5e (decisions 4 and 6): a
+      Diagnostics sink for init planning, file merges and the upgrade engine;
+      init printers to the init command; then the init assets and upgrade
+      sub-area moves to packages/missions; CLI output unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      examples/virtual-scratch/tests/virtual-scratch.test.ts, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0323.missions-upgrade.yaml,
+      .gitagent/runs/MSN-0323.json,
+      packages/missions/src/context-feed-remediation.ts,
+      packages/missions/src/diagnostics.ts,
+      packages/missions/src/file-merge-gxt.ts,
+      packages/missions/src/init/init-asset-catalog.ts,
+      packages/missions/src/init/init-compose.ts,
+      packages/missions/src/init/init-plan.ts,
+      packages/missions/src/init/init-profile.ts,
+      packages/missions/src/receipt-inspect.ts,
+      packages/missions/src/start-snapshot.ts,
+      packages/missions/src/upgrade/upgrade-apply.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/missions/src/upgrade/upgrade-plan-scaffold.ts,
+      packages/missions/src/upgrade/upgrade-plan.ts,
+      packages/missions/src/upgrade/upgrade-plan-types.ts,
+      src/cli/commands/init.ts, src/cli/commands/mission.ts,
+      src/cli/commands/receipt.ts, src/cli/commands/upgrade.ts,
+      src/cli/lib/cli-io.ts, src/cli/lib/init/init-interactive.ts,
+      src/cli/lib/mcp/mcp-upgrade.ts, src/cli/lib/verify/verify-presenters.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/dx-mission-pin.test.ts,
+      src/cli/tests/file-merge-gxt.test.ts, src/cli/tests/init-profile.test.ts,
+      src/cli/tests/start-snapshot.test.ts,
+      src/cli/tests/template-parity.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts.
+      ADR-0054 migration step 5e: the Diagnostics sink and CLI_DIAGNOSTICS; init
+      planning, file merges and the upgrade engine report through it; init
+      printers into commands/init.ts; git mv of 12 delivery-free lib modules
+      into packages/missions/src (layout kept); importers; an example test;
+      docs/DEVELOPMENT.md; ARCH_BASELINE.json (missions and command raised by
+      moved code only, a Planner raise; lib lowered); CHANGELOG; executor log.
+      allow_dynamic_specifiers is true because moved and changed files already
+      contain non-literal import and require sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Operator
+      direction (2026-10-20, \"just go for it and continue until everything's
+      done\"); ADR-0054 decisions 4 and 6, migration step 5e. The upgrade engine
+      reports progress lines, so it takes a three-level Diagnostics (one object,
+      silent by default) rather than three callbacks; step 5d's single warn
+      sinks stay where only warnings exist. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0323.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: Accept. Receipts are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0036
+  - finding_id: e2a17b81b981
+    kind: adr_conflict
+    question: Intent may relate to ADR-0035. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0035 before
+      legislation proceeds.
+    operator_answer: Accept. The performance judge is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0035
+interrogation_sha256: 5ef3a59d389e8088f974d7120bfa60cf3b8433b5cbce73ac8a24fe84e7c62f69
+declared_paths:
+  - .gitagent/missions/MSN-0323.missions-upgrade.yaml
+  - .gitagent/runs/MSN-0323.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - examples/virtual-scratch/tests/virtual-scratch.test.ts
+  - packages/missions/src/context-feed-remediation.ts
+  - packages/missions/src/diagnostics.ts
+  - packages/missions/src/file-merge-gxt.ts
+  - packages/missions/src/init/init-asset-catalog.ts
+  - packages/missions/src/init/init-compose.ts
+  - packages/missions/src/init/init-plan.ts
+  - packages/missions/src/init/init-profile.ts
+  - packages/missions/src/receipt-inspect.ts
+  - packages/missions/src/start-snapshot.ts
+  - packages/missions/src/upgrade/upgrade-apply.ts
+  - packages/missions/src/upgrade/upgrade-plan-catalog.ts
+  - packages/missions/src/upgrade/upgrade-plan-scaffold.ts
+  - packages/missions/src/upgrade/upgrade-plan-types.ts
+  - packages/missions/src/upgrade/upgrade-plan.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/mission.ts
+  - src/cli/commands/receipt.ts
+  - src/cli/commands/upgrade.ts
+  - src/cli/lib/cli-io.ts
+  - src/cli/lib/init/init-interactive.ts
+  - src/cli/lib/mcp/mcp-upgrade.ts
+  - src/cli/lib/verify/verify-presenters.ts
+  - src/cli/tests/architecture-pointer.test.ts
+  - src/cli/tests/dx-mission-pin.test.ts
+  - src/cli/tests/file-merge-gxt.test.ts
+  - src/cli/tests/init-profile.test.ts
+  - src/cli/tests/start-snapshot.test.ts
+  - src/cli/tests/template-parity.test.ts
+  - src/cli/tests/upgrade-plan-payload.test.ts
+  - src/cli/tests/upgrade.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0323.missions-upgrade.yaml
+    - .gitagent/runs/MSN-0323.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - examples/virtual-scratch/tests/virtual-scratch.test.ts
+    - packages/missions/src/context-feed-remediation.ts
+    - packages/missions/src/diagnostics.ts
+    - packages/missions/src/file-merge-gxt.ts
+    - packages/missions/src/init/init-asset-catalog.ts
+    - packages/missions/src/init/init-compose.ts
+    - packages/missions/src/init/init-plan.ts
+    - packages/missions/src/init/init-profile.ts
+    - packages/missions/src/receipt-inspect.ts
+    - packages/missions/src/start-snapshot.ts
+    - packages/missions/src/upgrade/upgrade-apply.ts
+    - packages/missions/src/upgrade/upgrade-plan-catalog.ts
+    - packages/missions/src/upgrade/upgrade-plan-scaffold.ts
+    - packages/missions/src/upgrade/upgrade-plan-types.ts
+    - packages/missions/src/upgrade/upgrade-plan.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/mission.ts
+    - src/cli/commands/receipt.ts
+    - src/cli/commands/upgrade.ts
+    - src/cli/lib/cli-io.ts
+    - src/cli/lib/init/init-interactive.ts
+    - src/cli/lib/mcp/mcp-upgrade.ts
+    - src/cli/lib/verify/verify-presenters.ts
+    - src/cli/tests/architecture-pointer.test.ts
+    - src/cli/tests/dx-mission-pin.test.ts
+    - src/cli/tests/file-merge-gxt.test.ts
+    - src/cli/tests/init-profile.test.ts
+    - src/cli/tests/start-snapshot.test.ts
+    - src/cli/tests/template-parity.test.ts
+    - src/cli/tests/upgrade-plan-payload.test.ts
+    - src/cli/tests/upgrade.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/cage/
+  allow_dynamic_specifiers: true
+contract_sha256: c5ddb4476733d60bee33ab65f1b032bc6ec92ec701c54f6d2123ff4fb1224879
