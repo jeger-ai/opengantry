@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
 import { CLI_NAME, DEFAULT_KPI_REPORT_DIR, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_PATTERN, REL_MISSION_SCHEMA } from "#core/constants.js";
-import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
+import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { GantryUserError } from "#core/user-error.js";
 import { hintMissionNoGate } from "../fix-hints.js";
 import { GXT_ERROR } from "#core/error-codes.js";
@@ -15,10 +15,10 @@ import {
 } from "#core/interrogation.js";
 import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
 import { type KpiAggregator, type KpiAggregatorOp, type KpiGateSpec, type KpiThreshold, type KpiThresholdOp, type LlmVerifierSpec, type ParsedMission, type TraceRow, type YamlMission } from "#core/mission-types.js";
-import { assertMissionSchemaValid } from "#missions/missions/validator.js";
+import { assertMissionSchemaValid } from "./validator.js";
 import {
   parseMarkdownMission,
-} from "#missions/missions/formatter.js";
+} from "./formatter.js";
 
 export function isValidMsnId(id: string): boolean {
   return MSN_ID_PATTERN.test(id.trim());

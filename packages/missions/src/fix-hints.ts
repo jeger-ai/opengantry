@@ -1,13 +1,7 @@
-import { logInfo } from "./cli-io.js";
-import { plannerIdentitySetupHint } from "#missions/planner-identity.js";
-import type { TraceFailureKind } from "#missions/trace-quote.js";
+import { plannerIdentitySetupHint } from "./planner-identity.js";
+import type { TraceFailureKind } from "./trace-quote.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
-
-/** Human remediation only — never mix with machine JSON streams. */
-export function logFixHint(hint: string): void {
-  logInfo(`Fix: ${hint}`);
-}
 
 export interface GitProofHintContext {
   root?: string;

@@ -7,7 +7,7 @@ import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../file-merge-gxt.js";
-import { loadIntegrationCompat, resolveTemplateRootFromModule } from "../integration-compat.js";
+import { loadIntegrationCompat, resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { resolveAssetsFromProfile } from "../init/init-asset-catalog.js";
 import { planInitAssets } from "../init/init-plan.js";
 import {
@@ -34,7 +34,7 @@ import {
   type UpgradeFileChange,
   type UpgradePayload,
   type UpgradePlanResult,
-} from "./upgrade-plan-types.js";
+} from "#missions/upgrade/upgrade-plan-types.js";
 
 function resolveUpgradeVersionGate(
   installed: ReturnType<typeof readInstalledSubstrateVersion>,

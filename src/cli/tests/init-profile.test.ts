@@ -8,14 +8,14 @@ import {
   INTEGRATION_IDE_KEYS,
   loadIntegrationCompat,
   validateIntegrationCompat,
-} from "../lib/integration-compat.js";
+} from "#missions/integration-compat.js";
 import {
   resolveAssetsFromProfile,
 } from "../lib/init/init-asset-catalog.js";
 import { composeIntegrationsDoc, recipeFilesExist } from "../lib/init/init-compose.js";
 import { defaultInitProfile, shouldRunInteractiveWizard, type InitProfile } from "../lib/init/init-profile.js";
 import { canPromptInitOverwrite } from "../lib/init/init-interactive.js";
-import type { IntegrationIdeKey } from "../lib/integration-compat.js";
+import type { IntegrationIdeKey } from "#missions/integration-compat.js";
 
 test("integration compat: all IDE keys have manifest entries and recipes", () => {
   const root = getRepoRoot();

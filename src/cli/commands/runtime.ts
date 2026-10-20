@@ -1,14 +1,14 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
-import type { AgentErrorPayload } from "../lib/errors.js";
-import { agentErrorAbsolutePath, serializeAgentErrorPayload } from "../lib/errors.js";
-import { hintForbiddenZone, hintRuntimeHumanSummary, logFixHint } from "../lib/fix-hints.js";
-import { writeAiderTmvcScope } from "../lib/aider-scope.js";
-import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import type { AgentErrorPayload } from "#missions/error-payloads.js";
+import { agentErrorAbsolutePath, serializeAgentErrorPayload } from "#missions/error-payloads.js";
+import { hintForbiddenZone, hintRuntimeHumanSummary } from "#missions/fix-hints.js";
+import { logFixHint, logError, logInfo, setExitCode } from "../lib/cli-io.js";
+import { writeAiderTmvcScope } from "#missions/aider-scope.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.js";
-import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
+import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "#missions/runtime-env.js";
 import { emitCliJson, runUserCommand, runUserCommandAsync } from "../lib/command-boundary.js";
-import { runRuntimeExec } from "../lib/runtime-exec.js";
+import { runRuntimeExec } from "#missions/runtime-exec.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface RuntimeEnvCliOptions {

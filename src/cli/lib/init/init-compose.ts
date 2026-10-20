@@ -7,7 +7,7 @@ import {
   INTEGRATION_IDE_KEYS,
   loadIntegrationCompat,
   type IntegrationCompatManifest,
-} from "../integration-compat.js";
+} from "#missions/integration-compat.js";
 import type { ArchitectureSourceKind, InitProfile } from "./init-profile.js";
 
 const DEFAULT_FILE_LOCATION = "docs/ARCHITECTURE.md";

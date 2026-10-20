@@ -11,7 +11,7 @@ import { getRepoRoot } from "#git/git.js";
 import { stableFindingId } from "#core/interrogation.js";
 import { runInterrogate } from "#missions/interrogate/run.js";
 import { loadManifest } from "#missions/manifest.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 import { evaluateInterrogationPhase } from "../lib/verify/verify-interrogation.js";
 import { copyMissionSchema, writeOrgExportConfig, isolateOrgAttributionEnv } from "./test-fixtures.js";
 

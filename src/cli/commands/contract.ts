@@ -5,7 +5,7 @@ import { contractViolationCode, formatContractViolation, scanContractImports } f
 import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
 import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
 import { formatContractBlock, formatEffectiveScope } from "#missions/contract/format.js";

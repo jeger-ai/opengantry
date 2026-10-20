@@ -8,7 +8,7 @@ import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { computeGaps } from "#missions/interrogate/gaps.js";
 import { loadManifest } from "#missions/manifest.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 import type { MissionContract } from "#core/contract-types.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 

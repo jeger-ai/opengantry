@@ -11,7 +11,7 @@ import { VerifyPhaseClock } from "#missions/verify/verify-phase-clock.js";
 import { loadManifest } from "#missions/manifest.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 import { buildVerifyResultPayload } from "../lib/verify/verify-payload.js";
 import { evaluateGatePhase } from "../lib/verify/verify-phase-steps.js";
 import type { GateExecAdapter } from "#missions/gate-adapters/gate-adapter-types.js";

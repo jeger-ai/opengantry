@@ -1,0 +1,161 @@
+import fs from "node:fs";
+import path from "node:path";
+import { EXIT_CODE } from "#core/exit-codes.js";
+import { GXT_ERROR } from "#core/error-codes.js";
+import { REL_AGENT_ERROR_FILE } from "#core/constants.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
+import type { ContractImportViolation } from "#core/contract-types.js";
+import type { ForbiddenViolation } from "./forbidden-scan.js";
+import type { RuntimeExecResult } from "./runtime-exec.js";
+import type { ResolvedRuntimeEnv } from "./runtime-env.js";
+
+/** Machine-readable errors: the user-facing error as JSON (MCP, --json) and the agent error file runtime exec writes. */
+export interface UserFacingErrorJson {
+  error_code: string;
+  message: string;
+  hint?: string;
+  exit_code: number;
+}
+
+export function userFacingErrorToJson(e: unknown): UserFacingErrorJson {
+  if (isGantryUserError(e)) {
+    return {
+      error_code: e.gxtCode,
+      message: e.message,
+      hint: e.hint,
+      exit_code: e.exitCode,
+    };
+  }
+  const message = errorMessage(e);
+  return { error_code: "GXT_VERIFY_FAILED", message, exit_code: EXIT_CODE.FAILURE };
+}
+
+export interface AgentErrorPayload {
+  v: 1;
+  ts: string;
+  status: RuntimeExecResult["status"] | "interrogation_required";
+  exit_code: number;
+  flight_id: string;
+  msn_id: string;
+  mission_file: string;
+  skill_key: string;
+  error_file: string;
+  violations: ForbiddenViolation[];
+  contract_violations?: ContractImportViolation[];
+  summary: string;
+  remediation: string[];
+}
+
+function writeAgentErrorFile(
+  repoRoot: string,
+  fields: Omit<AgentErrorPayload, "v" | "ts" | "error_file">,
+): AgentErrorPayload {
+  const errorFile = agentErrorAbsolutePath(repoRoot);
+  fs.mkdirSync(path.dirname(errorFile), { recursive: true });
+  const payload: AgentErrorPayload = {
+    v: 1,
+    ts: new Date().toISOString(),
+    error_file: errorFile,
+    ...fields,
+  };
+  fs.writeFileSync(errorFile, JSON.stringify(payload, null, 2), "utf8");
+  return payload;
+}
+
+export function agentErrorAbsolutePath(repoRoot: string): string {
+  return path.join(repoRoot, REL_AGENT_ERROR_FILE);
+}
+
+export function serializeAgentErrorPayload(payload: AgentErrorPayload): string {
+  return JSON.stringify(payload);
+}
+
+function buildSummary(result: RuntimeExecResult): string {
+  switch (result.status) {
+    case "forbidden_zone_violation":
+      return `Forbidden-zone violation: ${String(result.violations.length)} path(s) changed outside policy.`;
+    case "contract_violation":
+      return `Mission contract violation: ${String(result.contractViolations.length)} import site(s) outside the sealed cage.`;
+    case "timeout":
+      return "Executor exceeded the configured timeout and was terminated.";
+    case "worker_failed":
+      return `Executor exited with code ${String(result.workerExitCode ?? "unknown")}.`;
+    case "runtime_error":
+      return "Runtime orchestration failed before or during executor execution.";
+    case "success":
+      return "Flight succeeded.";
+    default: {
+      const _exhaustive: never = result.status;
+      return `Flight ended with status ${_exhaustive}`;
+    }
+  }
+}
+
+function buildRemediation(
+  result: RuntimeExecResult,
+  resolved: ResolvedRuntimeEnv,
+): string[] {
+  const steps: string[] = [];
+  if (result.status === "forbidden_zone_violation") {
+    for (const v of result.violations.slice(0, 5)) {
+      steps.push(`Revert or avoid changes to forbidden path: ${v.path} (${v.kind})`);
+    }
+    steps.push("Confine edits to GANTRY_TMVC_ROOTS_ABSOLUTE unless a Context Request is approved in EXECUTOR_LOG.md");
+  }
+  if (result.status === "contract_violation") {
+    for (const v of result.contractViolations.slice(0, 5)) {
+      steps.push(`${v.file}:${String(v.line)} — ${v.detail}`);
+    }
+    steps.push("Use only GANTRY_ALLOWED_IMPORTS / avoid GANTRY_BANNED_IMPORTS; re-legislate the mission if the contract must widen");
+  }
+  if (result.status === "timeout") {
+    steps.push("Increase --timeout-ms or reduce executor scope; retry with a smaller command");
+  }
+  if (result.status === "worker_failed") {
+    steps.push("Inspect executor stderr in EXECUTOR_LOG.md flight JSONL and fix the failing command");
+  }
+  steps.push(`Mission: ${resolved.mission_file}; skill: ${resolved.skill_key}`);
+  return steps;
+}
+
+export function writeAgentErrorPayload(
+  repoRoot: string,
+  resolved: ResolvedRuntimeEnv,
+  result: RuntimeExecResult,
+): AgentErrorPayload {
+  return writeAgentErrorFile(repoRoot, {
+    status: result.status,
+    exit_code: result.exitCode,
+    flight_id: result.flightId,
+    msn_id: resolved.msn_id,
+    mission_file: resolved.mission_file,
+    skill_key: resolved.skill_key,
+    violations: result.violations,
+    ...(result.contractViolations.length > 0 ? { contract_violations: result.contractViolations } : {}),
+    summary: buildSummary(result),
+    remediation: buildRemediation(result, resolved),
+  });
+}
+
+export function writeInterrogationRequiredError(
+  repoRoot: string,
+  input: {
+    msn_id: string;
+    skill_key: string;
+    finding_id: string;
+    question: string;
+    remediation: string[];
+  },
+): AgentErrorPayload {
+  return writeAgentErrorFile(repoRoot, {
+    status: "interrogation_required",
+    exit_code: EXIT_CODE.USAGE,
+    flight_id: "",
+    msn_id: input.msn_id,
+    mission_file: "",
+    skill_key: input.skill_key,
+    violations: [],
+    summary: `${GXT_ERROR.INTERROGATION_REQUIRED}: ${input.finding_id} — ${input.question}`,
+    remediation: input.remediation,
+  });
+}

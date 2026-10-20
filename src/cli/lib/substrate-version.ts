@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "#core/posix-path.js";
 import { NPM_PACKAGE_NAME } from "./version.gen.js";
-import { loadIntegrationCompat } from "./integration-compat.js";
+import { loadIntegrationCompat } from "#missions/integration-compat.js";
 
 export const REL_SUBSTRATE_VERSION = ".gitagent/foreman/SUBSTRATE.version.json" as const;
 

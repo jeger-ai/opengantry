@@ -1,14 +1,14 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { logWarn, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
-import { resolveRuntimeEnv } from "../lib/runtime-env.js";
+import { resolveRuntimeEnv } from "#missions/runtime-env.js";
 import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,
 } from "#missions/staged-tmvc-guard.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { appendEventSpool } from "../lib/event-spool.js";
+import { appendEventSpool } from "#missions/event-spool.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
 

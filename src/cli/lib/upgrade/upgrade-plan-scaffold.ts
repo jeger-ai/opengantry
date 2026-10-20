@@ -4,10 +4,10 @@ import path from "node:path";
 import YAML from "yaml";
 import { CLI_NAME } from "#core/constants.js";
 import { fromPosix, toPosixRel } from "#core/posix-path.js";
-import { allocateMsn } from "../msn-allocate.js";
-import { buildLegislativeTraceRows, buildMissionYamlScaffold, isValidMsnId } from "../missions/parser.js";
+import { allocateMsn } from "#missions/msn-allocate.js";
+import { buildLegislativeTraceRows, buildMissionYamlScaffold, isValidMsnId } from "#missions/missions/parser.js";
 import type { PlannedWrite } from "../init/init-plan.js";
-import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";
+import { REL_UPGRADE_TMP, type UpgradePayload } from "#missions/upgrade/upgrade-plan-types.js";
 
 function sha256Buffer(buf: Buffer): string {
   return crypto.createHash("sha256").update(buf).digest("hex");

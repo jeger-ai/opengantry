@@ -11,7 +11,7 @@ import {
 } from "../lib/onboarding-flow.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { integrationOnboardingBlockers } from "../lib/doctor/doctor-integration.js";
-import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
+import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";

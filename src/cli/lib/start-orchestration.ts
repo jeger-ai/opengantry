@@ -1,13 +1,13 @@
 import { runLegislate } from "./legislate/legislate.js";
 import { isTriageEscalated, formatTriageHuman, triageIntent } from "#missions/triage-logic.js";
-import { writeInterrogationRequiredError } from "./errors.js";
+import { writeInterrogationRequiredError } from "#missions/error-payloads.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";
 import { runInterrogate } from "#missions/interrogate/run.js";
 import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
-import { allocateMsn } from "./msn-allocate.js";
-import { isValidMsnId } from "./missions/parser.js";
+import { allocateMsn } from "#missions/msn-allocate.js";
+import { isValidMsnId } from "#missions/missions/parser.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { TriageResult } from "#core/mission-types.js";
 import {

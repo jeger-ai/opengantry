@@ -1,6 +1,6 @@
 import path from "node:path";
 import { extractMsnIdFromMissionPath, isValidMsnId } from "./missions/parser.js";
-import { listMissionFiles } from "#missions/missions/resolution.js";
+import { listMissionFiles } from "./missions/resolution.js";
 import { gitLogSubjects } from "#git/git.js";
 
 export const WORK_MSN_BAND_MAX = 8999;

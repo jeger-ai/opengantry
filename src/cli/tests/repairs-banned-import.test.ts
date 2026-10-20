@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { findBannedImportsInFolder } from "../lib/ast-discovery.js";
+import { findBannedImportsInFolder } from "#missions/ast-discovery.js";
 import { quarantineImportDeclaration } from "../lib/repairs/quarantine-import.js";
 
 function quarantineBannedImportInFile(

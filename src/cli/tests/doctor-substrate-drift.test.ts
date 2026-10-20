@@ -6,7 +6,7 @@ import os from "node:os";
 import { runSubstrateDriftDoctorChecks } from "../lib/doctor/doctor-substrate.js";
 import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
 import { runDoctor } from "../commands/doctor.js";
-import { loadIntegrationCompat, resolveTemplateRootFromModule } from "../lib/integration-compat.js";
+import { loadIntegrationCompat, resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import { getRepoRoot } from "#git/git.js";
 import { writeMiniGantryRepo, gitInitCommit } from "./test-fixtures.js";

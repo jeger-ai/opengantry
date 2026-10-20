@@ -8,7 +8,7 @@ import {
   assertStableUpgradePlanPayloadV1,
   toStableUpgradePlanPayloadV1,
   type StableUpgradePlanPayloadV1,
-} from "../upgrade/upgrade-plan-payload.js";
+} from "#missions/upgrade/upgrade-plan-payload.js";
 import { runUpgradeApply } from "../upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "../upgrade/upgrade-plan.js";
 

@@ -6,7 +6,7 @@ import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
 import { sha256Utf8, type ReceiptLedgerPayload } from "#plane/ledger-entry.js";
 import { exportLedgerJson, exportSoc2Pack } from "#plane/ledger-export.js";
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
-import { parseMissionFile } from "../lib/missions/parser.js";
+import { parseMissionFile } from "#missions/missions/parser.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 import { runUserCommand } from "../lib/command-boundary.js";

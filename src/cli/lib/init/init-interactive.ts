@@ -4,7 +4,7 @@ import {
   integrationWizardLabel,
   loadIntegrationCompat,
   type IntegrationIdeKey,
-} from "../integration-compat.js";
+} from "#missions/integration-compat.js";
 import {
   defaultInitProfile,
   mergeInitProfile,

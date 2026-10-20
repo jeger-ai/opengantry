@@ -1,5 +1,5 @@
 import path from "node:path";
-import { assertMissionGatePresent, parseMissionFile } from "../missions/parser.js";
+import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../mission-arg.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "./verify-engine.js";

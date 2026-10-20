@@ -5,7 +5,7 @@ import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
 import { discoverChangedMissions } from "#missions/mission-changed.js";
-import { assertMissionGatePresent, isValidMsnId, parseMissionFile } from "../lib/missions/parser.js";
+import { assertMissionGatePresent, isValidMsnId, parseMissionFile } from "#missions/missions/parser.js";
 import { captureStartState, writeSnapshot } from "../lib/start-snapshot.js";
 import { loadWorkspace } from "#missions/workspace.js";
 

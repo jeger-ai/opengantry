@@ -15,7 +15,7 @@ import {
   type NormalizedVerifyFailure,
 } from "./verify-failure-normalize.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
-import { kpiFindingsToAdvisoryVerifyFindings } from "../kpi-advisory-findings.js";
+import { kpiFindingsToAdvisoryVerifyFindings } from "#missions/kpi-advisory-findings.js";
 import { projectGateFindings } from "#missions/verify/verify-finding-gate-projector.js";
 import {
   VERIFY_ENVELOPE_SCHEMA_VERSION,

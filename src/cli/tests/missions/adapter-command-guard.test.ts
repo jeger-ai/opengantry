@@ -7,7 +7,7 @@ import {
   assertTypedAdapterSingleCommand,
   hasUnquotedShellCombinator,
   typedAdapterCommandError,
-} from "../../lib/missions/adapter-command-guard.js";
+} from "#missions/missions/adapter-command-guard.js";
 
 describe("hasUnquotedShellCombinator", () => {
   it("detects unquoted &&, ||, and ;", () => {

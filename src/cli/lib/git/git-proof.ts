@@ -3,15 +3,15 @@ import { GIT_CONFIG_PLANNER_EMAILS } from "#missions/config-namespace.js";
 import { CLI_NAME, MSN_ID_PATTERN } from "#core/constants.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitRun } from "#git/git.js";
-import { hintGitProof, type GitProofHintContext } from "../fix-hints.js";
+import { hintGitProof, type GitProofHintContext } from "#missions/fix-hints.js";
 import { GantryUserError } from "#core/user-error.js";
-import { extractMsnIdFromMissionPath } from "../missions/parser.js";
+import { extractMsnIdFromMissionPath } from "#missions/missions/parser.js";
 import { resolvePlannerEmails } from "#missions/planner-identity.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
 import { resolvePlannerSignatureTier } from "#core/config.js";
 import { checkPlannerStampSignature } from "#missions/planner-signature.js";
 import { logWarn } from "../cli-io.js";
-import { archOverrideAdvisoryMessage, commitSubjectHasArchOverride } from "../arch-override.js";
+import { archOverrideAdvisoryMessage, commitSubjectHasArchOverride } from "#missions/arch-override.js";
 
 function throwGitProofError(
   code: string,

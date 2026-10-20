@@ -5,12 +5,12 @@ import {
   INTEGRATION_IDE_KEYS,
   loadIntegrationCompat,
   type IntegrationCompatManifest,
-} from "../integration-compat.js";
+} from "#missions/integration-compat.js";
 import { loadInitAssetCatalog, type InitAssetSpec } from "../init/init-asset-catalog.js";
 import { defaultInitProfile, type InitProfile } from "../init/init-profile.js";
 import { toPosixRel } from "#core/posix-path.js";
 import type { PlannedWrite } from "../init/init-plan.js";
-import type { UpgradeFileChange } from "./upgrade-plan-types.js";
+import type { UpgradeFileChange } from "#missions/upgrade/upgrade-plan-types.js";
 
 /** managed_strict substrate assets eligible for gantry upgrade (excludes user law / missions). */
 export function upgradeEligibleAssets(assets: InitAssetSpec[]): InitAssetSpec[] {

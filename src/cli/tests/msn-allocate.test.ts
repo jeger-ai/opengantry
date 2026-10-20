@@ -9,7 +9,7 @@ import {
   UPGRADE_MSN_BAND_MIN,
   allocateMsn,
   collectUsedMsnIds,
-} from "../lib/msn-allocate.js";
+} from "#missions/msn-allocate.js";
 
 test("allocateMsn work band: max+1 from mission files", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-msn-work-"));

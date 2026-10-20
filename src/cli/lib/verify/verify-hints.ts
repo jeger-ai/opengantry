@@ -10,7 +10,7 @@ import {
   hintTracePendingSteps,
   parseGitProofCode,
   parseMsnIdFromGitProofMessage,
-} from "../fix-hints.js";
+} from "#missions/fix-hints.js";
 import type {
   GateFailure,
   GitProofFailure,

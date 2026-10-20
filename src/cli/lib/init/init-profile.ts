@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { IntegrationIdeKey } from "../integration-compat.js";
+import type { IntegrationIdeKey } from "#missions/integration-compat.js";
 
 export type SkillsPreset = "minimal" | "specimen";
 

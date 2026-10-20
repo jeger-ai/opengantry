@@ -9,7 +9,7 @@ import {
   integrationOnboardingBlockers,
   runIntegrationDoctorChecks,
 } from "../lib/doctor/doctor-integration.js";
-import { loadIntegrationCompat } from "../lib/integration-compat.js";
+import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import { writeIntegrationFixtureState } from "./test-fixtures.js";
 
 const templatesRoot = path.join(getRepoRoot(), "templates");

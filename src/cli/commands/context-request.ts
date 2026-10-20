@@ -4,10 +4,10 @@ import {
   appendContextRequest,
   stageExecutorLogIfRequested,
   executorLogRepoRelative,
-} from "../lib/context-request.js";
+} from "#missions/context-request.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { errorMessage } from "#core/user-error.js";
-import { resolveRuntimeEnv } from "../lib/runtime-env.js";
+import { resolveRuntimeEnv } from "#missions/runtime-env.js";
 import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import { loadWorkspace } from "#missions/workspace.js";
 

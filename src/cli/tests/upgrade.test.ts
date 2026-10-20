@@ -7,15 +7,14 @@ import { execSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
 import { runInit } from "../commands/init.js";
 import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
-import { loadIntegrationCompat } from "../lib/integration-compat.js";
+import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import { upgradeEligibleAssets } from "../lib/upgrade/upgrade-plan-catalog.js";
 import { resolveAssetsFromProfile } from "../lib/init/init-asset-catalog.js";
 import { defaultInitProfile } from "../lib/init/init-profile.js";
 import { copyMissionSchema, gitInitCommit } from "./test-fixtures.js";
-import { withPlannerEnvAsync } from "./test-shared.js";
+import { withPlannerEnvAsync, PLANNER_EMAIL } from "./test-shared.js";
 import { runUpgradeApply } from "../lib/upgrade/upgrade-apply.js";
-import { PLANNER_EMAIL } from "./test-shared.js";
 
 const ogRoot = getRepoRoot();
 const templatesRoot = path.join(ogRoot, "templates");

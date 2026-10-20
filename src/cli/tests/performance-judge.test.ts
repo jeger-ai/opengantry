@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
-import { kpiFindingsToAdvisoryVerifyFindings } from "../lib/kpi-advisory-findings.js";
+import { kpiFindingsToAdvisoryVerifyFindings } from "#missions/kpi-advisory-findings.js";
 import { evaluateKpiThresholds } from "../lib/kpi-engine.js";
 import type { KpiFinding, KpiReport } from "#core/mission-types.js";
 

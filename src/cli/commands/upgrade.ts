@@ -2,10 +2,10 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
-import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
+import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { runUpgradeApply } from "../lib/upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
-import { toStableUpgradePlanPayloadV1 } from "../lib/upgrade/upgrade-plan-payload.js";
+import { toStableUpgradePlanPayloadV1 } from "#missions/upgrade/upgrade-plan-payload.js";
 
 export interface UpgradeOptions {
   apply?: boolean;

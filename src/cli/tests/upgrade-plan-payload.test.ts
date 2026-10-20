@@ -7,13 +7,13 @@ import { execSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
 import { runInit } from "../commands/init.js";
 import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
-import { loadIntegrationCompat } from "../lib/integration-compat.js";
+import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
 import {
   assertStableUpgradePlanPayloadV1,
   STABLE_UPGRADE_PLAN_PAYLOAD_VERSION,
   toStableUpgradePlanPayloadV1,
-} from "../lib/upgrade/upgrade-plan-payload.js";
+} from "#missions/upgrade/upgrade-plan-payload.js";
 import { handleUpgradePlan } from "../lib/mcp/mcp-upgrade.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 
