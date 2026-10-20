@@ -1,11 +1,5 @@
-import {
-  forbiddenZonesForSkill,
-  GOVERNANCE_TRANSPORT_PATHS,
-  normalizeRepoRelativePath,
-  tmvcRootsForSkill,
-  type TmvcPathClassification,
-} from "./tmvc-path.js";
-import { evaluatePaths, law } from "#core/law.js";
+import { normalizeRepoRelativePath } from "#core/law.js";
+import { classifyRepoRelativePath, forbiddenZonesForSkill, tmvcRootsForSkill, type TmvcPathClassification } from "./tmvc-path.js";
 import type { EffectiveScope } from "#core/contract-types.js";
 import { gitStagedNameOnly } from "#git/git-staged.js";
 import type { Manifest } from "#core/mission-types.js";
@@ -65,12 +59,8 @@ export function evaluateStagedTmvcGuard(options: StagedTmvcGuardOptions): Staged
     : forbiddenZonesForSkill(options.manifest, options.skillKey);
   const stagedPaths = gitStagedNameOnly(options.repoRoot).map(normalizeRepoRelativePath);
 
-  const findings = evaluatePaths(
-    law({ allowedRoots: tmvcRoots, forbiddenZones, transportPaths: [...GOVERNANCE_TRANSPORT_PATHS] }),
-    { kind: "staged", paths: stagedPaths },
-  );
-  const violations = findings
-    .map((f) => toViolation(f.path, f.rule === "forbidden_zone" ? "forbidden_zone" : "outside_tmvc"))
+  const violations = stagedPaths
+    .map((p) => toViolation(p, classifyRepoRelativePath(p, tmvcRoots, forbiddenZones)))
     .filter((v): v is StagedTmvcViolation => v !== null);
 
   return {

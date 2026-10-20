@@ -1,10 +1,6 @@
+import { normalizeRepoRelativePath } from "#core/law.js";
 import type { Manifest, ParsedMission } from "#core/mission-types.js";
-import {
-  classifyRepoRelativePath,
-  forbiddenZonesForSkill,
-  normalizeRepoRelativePath,
-  tmvcRootsForSkill,
-} from "./tmvc-path.js";
+import { classifyRepoRelativePath, forbiddenZonesForSkill, tmvcRootsForSkill } from "./tmvc-path.js";
 
 export type ScopeEvaluationKind = "allowed" | "forbidden_zone" | "outside_tmvc";
 

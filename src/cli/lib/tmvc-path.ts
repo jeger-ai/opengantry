@@ -1,5 +1,6 @@
 import type { Manifest } from "#core/mission-types.js";
-import { classifyPath, isPathUnderRoot, law, normalizeRepoRelativePath } from "#core/law.js";
+import { isPathUnderRoot, normalizeRepoRelativePath } from "#core/law.js";
+import { judgePath, pathLaw, type PathLaw } from "#core/path-law.js";
 
 /** Governance transport files — never TMVC drift violations during pre-commit scans. */
 export const GOVERNANCE_TRANSPORT_PATHS = [
@@ -12,8 +13,6 @@ export type TmvcPathClassification =
   | "inside_tmvc"
   | "outside_tmvc"
   | "forbidden_zone";
-
-export { normalizeRepoRelativePath, isPathUnderRoot } from "#core/law.js";
 
 export function isGovernanceTransportPath(repoRel: string): boolean {
   const norm = normalizeRepoRelativePath(repoRel);
@@ -51,23 +50,31 @@ export function pathRiskTier(manifest: Manifest, repoRel: string): string {
   return bestTier;
 }
 
+/**
+ * The mission scope as a path law (ADR-0053): the effective roots are the area, the effective forbidden zones are
+ * deny rules, governance transport is exempt. Built from the effective lists, which are already composed
+ * tighten-only (contract roots inside skill roots, zones unioned with the org floor).
+ */
+export function scopePathLaw(
+  tmvcRoots: readonly string[],
+  forbiddenZones: readonly string[],
+  exempt: readonly string[] = GOVERNANCE_TRANSPORT_PATHS,
+): PathLaw {
+  return pathLaw({
+    areas: [{ id: "outside_roots", source: "scope", patterns: [...tmvcRoots], overridable: false }],
+    rules: [{ id: "forbidden_zone", source: "scope", patterns: [...forbiddenZones], effect: "deny", overridable: false }],
+    exempt: [...exempt],
+  });
+}
+
+/** Transport first, then forbidden zones, then roots (the TMVC order). */
 export function classifyRepoRelativePath(
   repoRel: string,
   tmvcRoots: readonly string[],
   forbiddenZones: readonly string[],
 ): TmvcPathClassification {
-  const cls = classifyPath(
-    law({ allowedRoots: [...tmvcRoots], forbiddenZones: [...forbiddenZones], transportPaths: [...GOVERNANCE_TRANSPORT_PATHS] }),
-    repoRel,
-  );
-  switch (cls) {
-    case "transport":
-      return "governance_transport";
-    case "forbidden_zone":
-      return "forbidden_zone";
-    case "inside_roots":
-      return "inside_tmvc";
-    case "outside_roots":
-      return "outside_tmvc";
-  }
+  if (isGovernanceTransportPath(repoRel)) return "governance_transport";
+  const judged = judgePath(scopePathLaw(tmvcRoots, forbiddenZones), repoRel);
+  if (!judged) return "inside_tmvc";
+  return judged.rule === "forbidden_zone" ? "forbidden_zone" : "outside_tmvc";
 }

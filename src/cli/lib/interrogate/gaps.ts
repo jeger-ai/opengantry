@@ -1,8 +1,9 @@
+import { normalizeRepoRelativePath } from "#core/law.js";
 import { layerForFile, loadTargetArchitecture, resolveArchScanRoots, fileMatchesScanRoots } from "../arch/cage/target-architecture.js";
 import { findForbiddenZoneHits } from "../legislate/legislate-forbidden-zone.js";
 import { triageIntent, isTriageEscalated } from "../triage-logic.js";
 import type { Manifest } from "#core/mission-types.js";
-import { normalizeRepoRelativePath, pathRiskTier } from "../tmvc-path.js";
+import { pathRiskTier } from "../tmvc-path.js";
 import {
   compareFindingSeverity,
   stableFindingId,
