@@ -52,7 +52,7 @@ describe("gate-adapters import-direction contract (ADR-0041)", () => {
   });
 
   it("registry is consumed only by verify-phase-steps", () => {
-    const lib = path.join(getRepoRoot(), "src", "cli", "lib");
+    const lib = path.join(getRepoRoot(), "packages", "missions", "src");
     const importers: string[] = [];
     const walk = (dir: string): void => {
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {

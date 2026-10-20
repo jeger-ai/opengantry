@@ -7,7 +7,7 @@ import { LAW_FILES, lawFileToYaml, parseLawFileDocument, type LawFileId } from "
 import { validateManifestShape, type Manifest } from "#core/manifest.js";
 import { getRepoRoot } from "#git/git.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
-import { validateArchitecturePointer } from "../lib/arch/external/architecture-pointer.js";
+import { validateArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
 
 export interface MigrateOptions {
   json?: boolean;

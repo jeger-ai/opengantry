@@ -4,7 +4,7 @@ import {
   archOverrideAdvisoryMessage,
   commitSubjectHasArchOverride,
 } from "#missions/arch-override.js";
-import { evaluateKpiThresholds } from "../lib/kpi-engine.js";
+import { evaluateKpiThresholds } from "#missions/kpi-engine.js";
 import type { KpiReport } from "#core/mission-types.js";
 
 test("arch-override: detects token in commit subject", () => {

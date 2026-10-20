@@ -1,4 +1,5 @@
-import { checkMissionDependencies } from "../deps/deps-resolve.js";
+import { logWarn } from "../cli-io.js";
+import { checkMissionDependencies } from "#missions/deps/deps-resolve.js";
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
 import { resolveMissionArg } from "../mission-arg.js";
@@ -51,7 +52,7 @@ export function handleDepsCheck(missionFilePath?: string): OrgMcpResult<{
     const { root } = loadWorkspace();
     const resolved = resolveMissionArg(root, missionFilePath);
     const mission = parseMissionFile(root, resolved.missionRel);
-    const results = checkMissionDependencies(root, mission);
+    const results = checkMissionDependencies(root, mission, logWarn);
     return orgOk({ mission_file_path: resolved.missionRel, results });
   } catch (e) {
     return orgErr(e);

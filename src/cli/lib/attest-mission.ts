@@ -1,10 +1,11 @@
+import { logWarn } from "./cli-io.js";
 import { buildAttestationReceipt } from "./attestation-receipt.js";
 import { writeAttestationReceipt, type AttestationReceipt } from "#plane/attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { AttestationHarnessMode } from "#plane/receipt-attribution.js";
 import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
-import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
+import { appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 
 export interface AttestMissionOptions {
@@ -46,7 +47,7 @@ export function attestMission(options: AttestMissionOptions): AttestMissionResul
     verify_status: "attest_only",
     receipt_sha256: receipt.receipt_sha256,
     signed: Boolean(receipt.signature),
-  });
+  }, logWarn);
   return {
     repo_root: root,
     receipt,

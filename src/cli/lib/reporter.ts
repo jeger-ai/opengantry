@@ -5,10 +5,10 @@ import {
   formatAudienceNextStep,
   resolveAudience,
   type OutputAudience,
-} from "./audience-output.js";
-import type { VerifyPhaseSuccess } from "./verify/verify-engine.js";
-import type { VerifyFailurePresentation } from "./verify/verify-failure-normalize.js";
-import type { AudienceTaggedStep } from "./verify/verify-hints.js";
+} from "#missions/audience-output.js";
+import type { VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
+import type { VerifyFailurePresentation } from "#missions/verify/verify-failure-normalize.js";
+import type { AudienceTaggedStep } from "#missions/verify/verify-hints.js";
 
 /** human: the report is the document. json, sarif, junit: stdout carries only the document. */
 export type ReporterMode = "human" | "json" | "sarif" | "junit";

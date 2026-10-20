@@ -1,11 +1,11 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { checkPerimeter } from "../lib/perimeter.js";
+import { checkPerimeter } from "#missions/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary } from "../lib/command-boundary.js";
 import { gitRevParse } from "#git/git.js";
 import { ensurePlannerAllowedSignersFile } from "#missions/planner-signature.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import type { PerimeterViolation } from "../lib/perimeter.js";
+import type { PerimeterViolation } from "#missions/perimeter.js";
 
 export interface PerimeterOptions {
   baseRef?: string;

@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { runDoctor } from "../commands/doctor.js";
 import { getRepoRoot } from "#git/git.js";
-import { ENV_BYPASS_SECRET } from "../lib/break-glass.js";
+import { ENV_BYPASS_SECRET } from "#missions/break-glass.js";
 import { writeMiniGantryRepo, writeBypassAnchor, gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

@@ -9,7 +9,7 @@ import {
   readInstalledSubstrateVersion,
   writeSubstrateVersionFile,
   REL_SUBSTRATE_VERSION,
-} from "../lib/substrate-version.js";
+} from "#missions/substrate-version.js";
 
 test("compareSemver: orders major.minor.patch", () => {
   assert.ok(compareSemver("0.8.1", "0.8.0") > 0);

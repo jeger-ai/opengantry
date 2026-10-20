@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { assertPlannerMissionProof } from "../lib/git/git-proof.js";
+import { assertPlannerMissionProof } from "#missions/git/git-proof.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { isGoodGitSignatureStatus } from "#missions/planner-signature.js";
 import { resolvePlannerSignatureTier } from "#core/config.js";

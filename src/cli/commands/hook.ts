@@ -16,9 +16,9 @@ import {
   pushRangesFromRefLines,
   fallbackPushBase,
   type PushRange,
-} from "../lib/git/git-hooks.js";
+} from "#missions/git/git-hooks.js";
 import { resolvePinnedMission } from "#missions/missions/resolution.js";
-import { checkPerimeter } from "../lib/perimeter.js";
+import { checkPerimeter } from "#missions/perimeter.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
 import { runCheck } from "./check.js";

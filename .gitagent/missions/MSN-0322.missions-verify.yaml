@@ -1,0 +1,717 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0322]. Executor must not run until the [MSN-0322] legislation commit + pin.
+#
+# Legislated intent: ADR-0054 migration step 5d. Domain diagnostics go through a warn sink the CLI wires to its
+# reporter; the arch cred printer moves to its command; the version file is generated into core; then 31 modules
+# (mission verify engine, git-proof, perimeter, trusted automation, break-glass, KPI, ledger append) move to missions.
+#
+# Operator direction (2026-10-20, "just go for it and continue until everything's done"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0322.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0322
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept. The ledger is unchanged; a failed append still warns in
+      the CLI, through the sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: Accept. Break-glass is unchanged; its ledger warning goes
+      through verify's warn sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0021
+  - finding_id: 35b80a242419
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md,
+      examples/virtual-scratch/tests/virtual-scratch.test.ts, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0322.missions-verify.yaml,
+      .gitagent/runs/MSN-0322.json, .gitignore,
+      packages/missions/src/arch/external/architecture-credential.ts,
+      packages/missions/src/arch/external/architecture-fetch.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/audience-output.ts,
+      packages/missions/src/audit-rigor.ts,
+      packages/missions/src/blueprint-engine.ts,
+      packages/missions/src/break-glass.ts, packages/missions/src/ci-checks.ts,
+      packages/missions/src/deps/deps-resolve.ts,
+      packages/missions/src/git/git-hooks.ts,
+      packages/missions/src/git/git-metrics.ts,
+      packages/missions/src/git/git-proof.ts,
+      packages/missions/src/kpi-engine.ts, packages/missions/src/kpi-scan.ts,
+      packages/missions/src/ledger/ledger-append.ts,
+      packages/missions/src/mcp/mcp-write-guard.ts,
+      packages/missions/src/perimeter.ts,
+      packages/missions/src/substrate-version.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/missions/src/verify/verify-contract.ts,
+      packages/missions/src/verify/verify-engine.ts,
+      packages/missions/src/verify/verify-export.ts,
+      packages/missions/src/verify/verify-failure-normalize.ts,
+      packages/missions/src/verify/verify-hints.ts,
+      packages/missions/src/verify/verify-interrogation.ts,
+      packages/missions/src/verify/verify-options.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/missions/src/verify/verify-payload.ts,
+      packages/missions/src/verify/verify-phase-steps.ts,
+      packages/missions/src/verify/verify-remediation-pipeline.ts,
+      packages/missions/src/verify/verify-run-record.ts,
+      packages/opengantry-cage/build.mjs, scripts/assert-cli-version-parity.sh,
+      scripts/gen-version.mjs, src/cli/cage-bin.ts, src/cli/commands/arch.ts,
+      src/cli/commands/audit-rigor.ts, src/cli/commands/blueprint.ts,
+      src/cli/commands/ci.ts, src/cli/commands/deps.ts,
+      src/cli/commands/doctor.ts, src/cli/commands/hooks.ts,
+      src/cli/commands/hook.ts, src/cli/commands/init.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/mcp-serve.ts,
+      src/cli/commands/metrics.ts, src/cli/commands/migrate.ts,
+      src/cli/commands/perimeter.ts, src/cli/commands/policy.ts,
+      src/cli/commands/scan.ts, src/cli/commands/status.ts,
+      src/cli/commands/verify.ts, src/cli/kernel.ts,
+      src/cli/lib/arch/cage/architecture-drift-doctor.ts,
+      src/cli/lib/attestation-receipt.ts, src/cli/lib/attest-mission.ts,
+      src/cli/lib/context-feed-remediation.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/doctor/doctor-substrate.ts,
+      src/cli/lib/init/init-compose.ts, src/cli/lib/init/init-plan.ts,
+      src/cli/lib/init/init-tutorial.ts, src/cli/lib/mcp/mcp-check-signature.ts,
+      src/cli/lib/mcp/mcp-execute-legislation.ts,
+      src/cli/lib/mcp/mcp-governance-shared.ts, src/cli/lib/mcp/mcp-org.ts,
+      src/cli/lib/mcp/mcp-runtime.ts, src/cli/lib/mcp/mcp-upgrade.ts,
+      src/cli/lib/receipt-attribution.ts, src/cli/lib/reporter.ts,
+      src/cli/lib/report/report-overview-projector.ts,
+      src/cli/lib/start-orchestration.ts, src/cli/lib/upgrade/upgrade-apply.ts,
+      src/cli/lib/upgrade/upgrade-plan.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/program-arch.ts, src/cli/program.ts, src/cli/program-workflow.ts,
+      src/cli/tests/architecture-credential.test.ts,
+      src/cli/tests/architecture-fetch.test.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/arch-rubric.test.ts, src/cli/tests/audience-output.test.ts,
+      src/cli/tests/audit-rigor.test.ts, src/cli/tests/blueprint.test.ts,
+      src/cli/tests/break-glass.test.ts, src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/contract-verify.test.ts, src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/doctor-substrate-drift.test.ts,
+      src/cli/tests/doctor.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/gate-adapter-registry.test.ts,
+      src/cli/tests/git-hooks.test.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/hook.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/kpi-gate.test.ts, src/cli/tests/kpi-report-stale.test.ts,
+      src/cli/tests/kpi-scan.test.ts, src/cli/tests/law-files-dual-read.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/metrics-classification.test.ts,
+      src/cli/tests/metrics.test.ts, src/cli/tests/performance-judge.test.ts,
+      src/cli/tests/perimeter.test.ts, src/cli/tests/planner-signature.test.ts,
+      src/cli/tests/report-demo-mode.test.ts, src/cli/tests/reporter.test.ts,
+      src/cli/tests/run-record.test.ts, src/cli/tests/substrate-version.test.ts,
+      src/cli/tests/test-org-fixtures.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-failure-normalize.test.ts,
+      src/cli/tests/verify-failure-presentation.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts,
+      src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-hints.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/verify-org-policy-phase.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts. ADR-0054 migration step 5d: the
+      warn sink in VerifyOptions, git-proof, the ledger append, dependency
+      checks and break-glass, wired to logWarn at every CLI entry point; the
+      arch cred printer into commands/arch.ts; the generated version file into
+      packages/core/src (gen script, .gitignore, slim cage build check, version
+      parity script, importers); git mv of 31 delivery-free lib modules into
+      packages/missions/src (layout kept); tests, an example test and docs
+      follow; ARCH_BASELINE.json (missions, command, core and delivery raised by
+      moved code only, a Planner raise; lib lowered); CHANGELOG; executor log.
+      allow_dynamic_specifiers is true because moved and changed files already
+      contain non-literal import and require sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage package is forbidden in this mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept. Effective scope still applies the org floor; it now
+      imports plane from the missions package (ADR-0054 decision 2).
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner identity and stamp modules move unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 67ac2be17ab4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0039. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0039 before
+      legislation proceeds.
+    operator_answer: Accept. The interrogation modules move unchanged; legislation
+      and gaps behave as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0039
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. Cross-repository dependency checks are unchanged; their
+      ledger warning goes through the caller's sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. CLI output is unchanged (the CLI wires the sink to its
+      reporter); conformance goldens unchanged. A library caller of
+      buildVerifyResultPayload without a sink no longer gets stderr lines.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: 9f551c7bd116
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, substrate —
+      escalate to Teacher. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      examples/virtual-scratch/tests/virtual-scratch.test.ts, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0322.missions-verify.yaml,
+      .gitagent/runs/MSN-0322.json, .gitignore,
+      packages/missions/src/arch/external/architecture-credential.ts,
+      packages/missions/src/arch/external/architecture-fetch.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/audience-output.ts,
+      packages/missions/src/audit-rigor.ts,
+      packages/missions/src/blueprint-engine.ts,
+      packages/missions/src/break-glass.ts, packages/missions/src/ci-checks.ts,
+      packages/missions/src/deps/deps-resolve.ts,
+      packages/missions/src/git/git-hooks.ts,
+      packages/missions/src/git/git-metrics.ts,
+      packages/missions/src/git/git-proof.ts,
+      packages/missions/src/kpi-engine.ts, packages/missions/src/kpi-scan.ts,
+      packages/missions/src/ledger/ledger-append.ts,
+      packages/missions/src/mcp/mcp-write-guard.ts,
+      packages/missions/src/perimeter.ts,
+      packages/missions/src/substrate-version.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/missions/src/verify/verify-contract.ts,
+      packages/missions/src/verify/verify-engine.ts,
+      packages/missions/src/verify/verify-export.ts,
+      packages/missions/src/verify/verify-failure-normalize.ts,
+      packages/missions/src/verify/verify-hints.ts,
+      packages/missions/src/verify/verify-interrogation.ts,
+      packages/missions/src/verify/verify-options.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/missions/src/verify/verify-payload.ts,
+      packages/missions/src/verify/verify-phase-steps.ts,
+      packages/missions/src/verify/verify-remediation-pipeline.ts,
+      packages/missions/src/verify/verify-run-record.ts,
+      packages/opengantry-cage/build.mjs, scripts/assert-cli-version-parity.sh,
+      scripts/gen-version.mjs, src/cli/cage-bin.ts, src/cli/commands/arch.ts,
+      src/cli/commands/audit-rigor.ts, src/cli/commands/blueprint.ts,
+      src/cli/commands/ci.ts, src/cli/commands/deps.ts,
+      src/cli/commands/doctor.ts, src/cli/commands/hooks.ts,
+      src/cli/commands/hook.ts, src/cli/commands/init.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/mcp-serve.ts,
+      src/cli/commands/metrics.ts, src/cli/commands/migrate.ts,
+      src/cli/commands/perimeter.ts, src/cli/commands/policy.ts,
+      src/cli/commands/scan.ts, src/cli/commands/status.ts,
+      src/cli/commands/verify.ts, src/cli/kernel.ts,
+      src/cli/lib/arch/cage/architecture-drift-doctor.ts,
+      src/cli/lib/attestation-receipt.ts, src/cli/lib/attest-mission.ts,
+      src/cli/lib/context-feed-remediation.ts,
+      src/cli/lib/doctor/doctor-core.ts, src/cli/lib/doctor/doctor-substrate.ts,
+      src/cli/lib/init/init-compose.ts, src/cli/lib/init/init-plan.ts,
+      src/cli/lib/init/init-tutorial.ts, src/cli/lib/mcp/mcp-check-signature.ts,
+      src/cli/lib/mcp/mcp-execute-legislation.ts,
+      src/cli/lib/mcp/mcp-governance-shared.ts, src/cli/lib/mcp/mcp-org.ts,
+      src/cli/lib/mcp/mcp-runtime.ts, src/cli/lib/mcp/mcp-upgrade.ts,
+      src/cli/lib/receipt-attribution.ts, src/cli/lib/reporter.ts,
+      src/cli/lib/report/report-overview-projector.ts,
+      src/cli/lib/start-orchestration.ts, src/cli/lib/upgrade/upgrade-apply.ts,
+      src/cli/lib/upgrade/upgrade-plan.ts,
+      src/cli/lib/verify/verify-presenters.ts, src/cli/lib/verify/verify-run.ts,
+      src/cli/program-arch.ts, src/cli/program.ts, src/cli/program-workflow.ts,
+      src/cli/tests/architecture-credential.test.ts,
+      src/cli/tests/architecture-fetch.test.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/arch-rubric.test.ts, src/cli/tests/audience-output.test.ts,
+      src/cli/tests/audit-rigor.test.ts, src/cli/tests/blueprint.test.ts,
+      src/cli/tests/break-glass.test.ts, src/cli/tests/ci-msn-range.test.ts,
+      src/cli/tests/contract-verify.test.ts, src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/doctor-substrate-drift.test.ts,
+      src/cli/tests/doctor.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/gate-adapter-registry.test.ts,
+      src/cli/tests/git-hooks.test.ts, src/cli/tests/git-proof.test.ts,
+      src/cli/tests/hook.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/kpi-gate.test.ts, src/cli/tests/kpi-report-stale.test.ts,
+      src/cli/tests/kpi-scan.test.ts, src/cli/tests/law-files-dual-read.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/metrics-classification.test.ts,
+      src/cli/tests/metrics.test.ts, src/cli/tests/performance-judge.test.ts,
+      src/cli/tests/perimeter.test.ts, src/cli/tests/planner-signature.test.ts,
+      src/cli/tests/report-demo-mode.test.ts, src/cli/tests/reporter.test.ts,
+      src/cli/tests/run-record.test.ts, src/cli/tests/substrate-version.test.ts,
+      src/cli/tests/test-org-fixtures.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-failure-normalize.test.ts,
+      src/cli/tests/verify-failure-presentation.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts,
+      src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-hints.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/verify-org-policy-phase.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts. ADR-0054 migration step 5d: the
+      warn sink in VerifyOptions, git-proof, the ledger append, dependency
+      checks and break-glass, wired to logWarn at every CLI entry point; the
+      arch cred printer into commands/arch.ts; the generated version file into
+      packages/core/src (gen script, .gitignore, slim cage build check, version
+      parity script, importers); git mv of 31 delivery-free lib modules into
+      packages/missions/src (layout kept); tests, an example test and docs
+      follow; ARCH_BASELINE.json (missions, command, core and delivery raised by
+      moved code only, a Planner raise; lib lowered); CHANGELOG; executor log.
+      allow_dynamic_specifiers is true because moved and changed files already
+      contain non-literal import and require sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Operator
+      direction (2026-10-20, \"just go for it and continue until everything's
+      done\"); ADR-0054 decisions 4, 6 and 7, migration step 5d. Choices: a warn
+      sink (an optional callback in the options that already flow) rather than
+      returning warnings through every result type, so CLI output stays
+      byte-identical; the generated CLI version constants live in core (pure
+      constants, needed by verify export, receipts and the substrate check); the
+      pure audience vocabulary moves with verify options. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0322.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept. MCP write containment is unchanged; the MCP modules
+      import the error payloads from #missions."
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: b88a6c3319b0
+    kind: adr_conflict
+    question: Intent may relate to ADR-0031. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0031 before
+      legislation proceeds.
+    operator_answer: Accept. Blueprint output is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0031
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: "Accept. This is migration step 5d (decisions 4, 6 and 7):
+      domain diagnostics go through a warn sink the CLI wires to the reporter,
+      the version file is generated into core, and the mission verify engine
+      sub-area moves to packages/missions. Deviation: the audience vocabulary
+      (pure) moves with verify options, which carry the audience."
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. Mission scope composition is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract code moves unchanged; contract
+      hashing, scan and effective scope behave as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: c256a6ed086c78c42c56d30714eed32793042e61eacd4a156e8d2cbe1ec4d08d
+declared_paths:
+  - .gitagent/missions/MSN-0322.missions-verify.yaml
+  - .gitagent/runs/MSN-0322.json
+  - .gitignore
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - examples/virtual-scratch/tests/virtual-scratch.test.ts
+  - packages/missions/src/arch/external/architecture-credential.ts
+  - packages/missions/src/arch/external/architecture-fetch.ts
+  - packages/missions/src/arch/external/architecture-pointer.ts
+  - packages/missions/src/audience-output.ts
+  - packages/missions/src/audit-rigor.ts
+  - packages/missions/src/blueprint-engine.ts
+  - packages/missions/src/break-glass.ts
+  - packages/missions/src/ci-checks.ts
+  - packages/missions/src/deps/deps-resolve.ts
+  - packages/missions/src/git/git-hooks.ts
+  - packages/missions/src/git/git-metrics.ts
+  - packages/missions/src/git/git-proof.ts
+  - packages/missions/src/kpi-engine.ts
+  - packages/missions/src/kpi-scan.ts
+  - packages/missions/src/ledger/ledger-append.ts
+  - packages/missions/src/mcp/mcp-write-guard.ts
+  - packages/missions/src/perimeter.ts
+  - packages/missions/src/substrate-version.ts
+  - packages/missions/src/trusted-automation.ts
+  - packages/missions/src/verify/verify-contract.ts
+  - packages/missions/src/verify/verify-engine.ts
+  - packages/missions/src/verify/verify-export.ts
+  - packages/missions/src/verify/verify-failure-normalize.ts
+  - packages/missions/src/verify/verify-hints.ts
+  - packages/missions/src/verify/verify-interrogation.ts
+  - packages/missions/src/verify/verify-options.ts
+  - packages/missions/src/verify/verify-org-phases.ts
+  - packages/missions/src/verify/verify-payload.ts
+  - packages/missions/src/verify/verify-phase-steps.ts
+  - packages/missions/src/verify/verify-remediation-pipeline.ts
+  - packages/missions/src/verify/verify-run-record.ts
+  - packages/opengantry-cage/build.mjs
+  - scripts/assert-cli-version-parity.sh
+  - scripts/gen-version.mjs
+  - src/cli/cage-bin.ts
+  - src/cli/commands/arch.ts
+  - src/cli/commands/audit-rigor.ts
+  - src/cli/commands/blueprint.ts
+  - src/cli/commands/ci.ts
+  - src/cli/commands/deps.ts
+  - src/cli/commands/doctor.ts
+  - src/cli/commands/hook.ts
+  - src/cli/commands/hooks.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/ledger.ts
+  - src/cli/commands/mcp-serve.ts
+  - src/cli/commands/metrics.ts
+  - src/cli/commands/migrate.ts
+  - src/cli/commands/perimeter.ts
+  - src/cli/commands/policy.ts
+  - src/cli/commands/scan.ts
+  - src/cli/commands/status.ts
+  - src/cli/commands/verify.ts
+  - src/cli/kernel.ts
+  - src/cli/lib/arch/cage/architecture-drift-doctor.ts
+  - src/cli/lib/attest-mission.ts
+  - src/cli/lib/attestation-receipt.ts
+  - src/cli/lib/context-feed-remediation.ts
+  - src/cli/lib/doctor/doctor-core.ts
+  - src/cli/lib/doctor/doctor-substrate.ts
+  - src/cli/lib/init/init-compose.ts
+  - src/cli/lib/init/init-plan.ts
+  - src/cli/lib/init/init-tutorial.ts
+  - src/cli/lib/mcp/mcp-check-signature.ts
+  - src/cli/lib/mcp/mcp-execute-legislation.ts
+  - src/cli/lib/mcp/mcp-governance-shared.ts
+  - src/cli/lib/mcp/mcp-org.ts
+  - src/cli/lib/mcp/mcp-runtime.ts
+  - src/cli/lib/mcp/mcp-upgrade.ts
+  - src/cli/lib/receipt-attribution.ts
+  - src/cli/lib/report/report-overview-projector.ts
+  - src/cli/lib/reporter.ts
+  - src/cli/lib/start-orchestration.ts
+  - src/cli/lib/upgrade/upgrade-apply.ts
+  - src/cli/lib/upgrade/upgrade-plan.ts
+  - src/cli/lib/verify/verify-presenters.ts
+  - src/cli/lib/verify/verify-run.ts
+  - src/cli/program-arch.ts
+  - src/cli/program-workflow.ts
+  - src/cli/program.ts
+  - src/cli/tests/arch-rubric.test.ts
+  - src/cli/tests/architecture-credential.test.ts
+  - src/cli/tests/architecture-fetch.test.ts
+  - src/cli/tests/architecture-pointer.test.ts
+  - src/cli/tests/audience-output.test.ts
+  - src/cli/tests/audit-rigor.test.ts
+  - src/cli/tests/blueprint.test.ts
+  - src/cli/tests/break-glass.test.ts
+  - src/cli/tests/ci-msn-range.test.ts
+  - src/cli/tests/contract-verify.test.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/doctor-substrate-drift.test.ts
+  - src/cli/tests/doctor.test.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/gate-adapter-registry.test.ts
+  - src/cli/tests/git-hooks.test.ts
+  - src/cli/tests/git-proof.test.ts
+  - src/cli/tests/hook.test.ts
+  - src/cli/tests/interrogate-verify-roundtrip.test.ts
+  - src/cli/tests/kpi-gate.test.ts
+  - src/cli/tests/kpi-report-stale.test.ts
+  - src/cli/tests/kpi-scan.test.ts
+  - src/cli/tests/law-files-dual-read.test.ts
+  - src/cli/tests/ledger-verify.test.ts
+  - src/cli/tests/mcp-write-guard.test.ts
+  - src/cli/tests/metrics-classification.test.ts
+  - src/cli/tests/metrics.test.ts
+  - src/cli/tests/performance-judge.test.ts
+  - src/cli/tests/perimeter.test.ts
+  - src/cli/tests/planner-signature.test.ts
+  - src/cli/tests/report-demo-mode.test.ts
+  - src/cli/tests/reporter.test.ts
+  - src/cli/tests/run-record.test.ts
+  - src/cli/tests/substrate-version.test.ts
+  - src/cli/tests/test-org-fixtures.ts
+  - src/cli/tests/upgrade-plan-payload.test.ts
+  - src/cli/tests/upgrade.test.ts
+  - src/cli/tests/verify-break-glass.test.ts
+  - src/cli/tests/verify-export.test.ts
+  - src/cli/tests/verify-failure-normalize.test.ts
+  - src/cli/tests/verify-failure-presentation.test.ts
+  - src/cli/tests/verify-finding-envelope.test.ts
+  - src/cli/tests/verify-format-cli.test.ts
+  - src/cli/tests/verify-hints.test.ts
+  - src/cli/tests/verify-interrogation-phase.test.ts
+  - src/cli/tests/verify-json.test.ts
+  - src/cli/tests/verify-org-policy-phase.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0322.missions-verify.yaml
+    - .gitagent/runs/MSN-0322.json
+    - .gitignore
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - examples/virtual-scratch/tests/virtual-scratch.test.ts
+    - packages/missions/src/arch/external/architecture-credential.ts
+    - packages/missions/src/arch/external/architecture-fetch.ts
+    - packages/missions/src/arch/external/architecture-pointer.ts
+    - packages/missions/src/audience-output.ts
+    - packages/missions/src/audit-rigor.ts
+    - packages/missions/src/blueprint-engine.ts
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/ci-checks.ts
+    - packages/missions/src/deps/deps-resolve.ts
+    - packages/missions/src/git/git-hooks.ts
+    - packages/missions/src/git/git-metrics.ts
+    - packages/missions/src/git/git-proof.ts
+    - packages/missions/src/kpi-engine.ts
+    - packages/missions/src/kpi-scan.ts
+    - packages/missions/src/ledger/ledger-append.ts
+    - packages/missions/src/mcp/mcp-write-guard.ts
+    - packages/missions/src/perimeter.ts
+    - packages/missions/src/substrate-version.ts
+    - packages/missions/src/trusted-automation.ts
+    - packages/missions/src/verify/verify-contract.ts
+    - packages/missions/src/verify/verify-engine.ts
+    - packages/missions/src/verify/verify-export.ts
+    - packages/missions/src/verify/verify-failure-normalize.ts
+    - packages/missions/src/verify/verify-hints.ts
+    - packages/missions/src/verify/verify-interrogation.ts
+    - packages/missions/src/verify/verify-options.ts
+    - packages/missions/src/verify/verify-org-phases.ts
+    - packages/missions/src/verify/verify-payload.ts
+    - packages/missions/src/verify/verify-phase-steps.ts
+    - packages/missions/src/verify/verify-remediation-pipeline.ts
+    - packages/missions/src/verify/verify-run-record.ts
+    - packages/opengantry-cage/build.mjs
+    - scripts/assert-cli-version-parity.sh
+    - scripts/gen-version.mjs
+    - src/cli/cage-bin.ts
+    - src/cli/commands/arch.ts
+    - src/cli/commands/audit-rigor.ts
+    - src/cli/commands/blueprint.ts
+    - src/cli/commands/ci.ts
+    - src/cli/commands/deps.ts
+    - src/cli/commands/doctor.ts
+    - src/cli/commands/hook.ts
+    - src/cli/commands/hooks.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/ledger.ts
+    - src/cli/commands/mcp-serve.ts
+    - src/cli/commands/metrics.ts
+    - src/cli/commands/migrate.ts
+    - src/cli/commands/perimeter.ts
+    - src/cli/commands/policy.ts
+    - src/cli/commands/scan.ts
+    - src/cli/commands/status.ts
+    - src/cli/commands/verify.ts
+    - src/cli/kernel.ts
+    - src/cli/lib/arch/cage/architecture-drift-doctor.ts
+    - src/cli/lib/attest-mission.ts
+    - src/cli/lib/attestation-receipt.ts
+    - src/cli/lib/context-feed-remediation.ts
+    - src/cli/lib/doctor/doctor-core.ts
+    - src/cli/lib/doctor/doctor-substrate.ts
+    - src/cli/lib/init/init-compose.ts
+    - src/cli/lib/init/init-plan.ts
+    - src/cli/lib/init/init-tutorial.ts
+    - src/cli/lib/mcp/mcp-check-signature.ts
+    - src/cli/lib/mcp/mcp-execute-legislation.ts
+    - src/cli/lib/mcp/mcp-governance-shared.ts
+    - src/cli/lib/mcp/mcp-org.ts
+    - src/cli/lib/mcp/mcp-runtime.ts
+    - src/cli/lib/mcp/mcp-upgrade.ts
+    - src/cli/lib/receipt-attribution.ts
+    - src/cli/lib/report/report-overview-projector.ts
+    - src/cli/lib/reporter.ts
+    - src/cli/lib/start-orchestration.ts
+    - src/cli/lib/upgrade/upgrade-apply.ts
+    - src/cli/lib/upgrade/upgrade-plan.ts
+    - src/cli/lib/verify/verify-presenters.ts
+    - src/cli/lib/verify/verify-run.ts
+    - src/cli/program-arch.ts
+    - src/cli/program-workflow.ts
+    - src/cli/program.ts
+    - src/cli/tests/arch-rubric.test.ts
+    - src/cli/tests/architecture-credential.test.ts
+    - src/cli/tests/architecture-fetch.test.ts
+    - src/cli/tests/architecture-pointer.test.ts
+    - src/cli/tests/audience-output.test.ts
+    - src/cli/tests/audit-rigor.test.ts
+    - src/cli/tests/blueprint.test.ts
+    - src/cli/tests/break-glass.test.ts
+    - src/cli/tests/ci-msn-range.test.ts
+    - src/cli/tests/contract-verify.test.ts
+    - src/cli/tests/deps-resolve.test.ts
+    - src/cli/tests/doctor-substrate-drift.test.ts
+    - src/cli/tests/doctor.test.ts
+    - src/cli/tests/findings-circuit-breaker.test.ts
+    - src/cli/tests/gate-adapter-registry.test.ts
+    - src/cli/tests/git-hooks.test.ts
+    - src/cli/tests/git-proof.test.ts
+    - src/cli/tests/hook.test.ts
+    - src/cli/tests/interrogate-verify-roundtrip.test.ts
+    - src/cli/tests/kpi-gate.test.ts
+    - src/cli/tests/kpi-report-stale.test.ts
+    - src/cli/tests/kpi-scan.test.ts
+    - src/cli/tests/law-files-dual-read.test.ts
+    - src/cli/tests/ledger-verify.test.ts
+    - src/cli/tests/mcp-write-guard.test.ts
+    - src/cli/tests/metrics-classification.test.ts
+    - src/cli/tests/metrics.test.ts
+    - src/cli/tests/performance-judge.test.ts
+    - src/cli/tests/perimeter.test.ts
+    - src/cli/tests/planner-signature.test.ts
+    - src/cli/tests/report-demo-mode.test.ts
+    - src/cli/tests/reporter.test.ts
+    - src/cli/tests/run-record.test.ts
+    - src/cli/tests/substrate-version.test.ts
+    - src/cli/tests/test-org-fixtures.ts
+    - src/cli/tests/upgrade-plan-payload.test.ts
+    - src/cli/tests/upgrade.test.ts
+    - src/cli/tests/verify-break-glass.test.ts
+    - src/cli/tests/verify-export.test.ts
+    - src/cli/tests/verify-failure-normalize.test.ts
+    - src/cli/tests/verify-failure-presentation.test.ts
+    - src/cli/tests/verify-finding-envelope.test.ts
+    - src/cli/tests/verify-format-cli.test.ts
+    - src/cli/tests/verify-hints.test.ts
+    - src/cli/tests/verify-interrogation-phase.test.ts
+    - src/cli/tests/verify-json.test.ts
+    - src/cli/tests/verify-org-policy-phase.test.ts
+    - src/cli/tests/verify-phase-clock.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/cage/
+  allow_dynamic_specifiers: true
+contract_sha256: dd7be1d6aee2d8c3abd4d1bef6aed650b870acd11d1af17b35ca6244a6e53dce

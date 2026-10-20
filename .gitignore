@@ -6,7 +6,7 @@
 # gantry / Node build
 node_modules/
 dist/
-src/cli/lib/version.gen.ts
+packages/core/src/version.gen.ts
 
 # OpenGantry (gantry init)
 .gitagent/foreman/PLANNER.allowlist.local

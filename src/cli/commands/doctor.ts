@@ -6,7 +6,7 @@ import {
   audienceSectionTitle,
   filterTaggedStepsForAudience,
   type OutputAudience,
-} from "../lib/audience-output.js";
+} from "#missions/audience-output.js";
 import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
 import type { AdapterPreflightOptions } from "../lib/doctor/doctor-adapter-preflight.js";
 import { doctorLinesHasFail, type DoctorLine } from "#missions/doctor/doctor-types.js";

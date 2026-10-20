@@ -15,7 +15,7 @@ import {
   compareSemver,
   legacyVersionWarning,
   readInstalledSubstrateVersion,
-} from "../substrate-version.js";
+} from "#missions/substrate-version.js";
 import {
   buildUpgradeFileChanges,
   groupUpgradeChangesByCategory,

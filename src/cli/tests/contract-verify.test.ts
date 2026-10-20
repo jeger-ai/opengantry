@@ -11,7 +11,7 @@ import { loadManifest } from "#missions/manifest.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
 import { REL_PLANNER_ALLOWLIST } from "#missions/planner-identity.js";
 import type { MissionContract } from "#core/contract-types.js";
-import { evaluateContractPhase, stampedContractDigest } from "../lib/verify/verify-contract.js";
+import { evaluateContractPhase, stampedContractDigest } from "#missions/verify/verify-contract.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 
 const PLANNER = "planner@example.com";

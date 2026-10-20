@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { runArchitecturePointerDoctorChecks } from "../arch/external/architecture-pointer.js";
-import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "../break-glass.js";
+import { runArchitecturePointerDoctorChecks } from "#missions/arch/external/architecture-pointer.js";
+import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "#missions/break-glass.js";
 import { REL_AGENT_ERROR_FILE, CLI_NAME, REL_MANIFEST_YAML } from "#core/constants.js";
 import { manifestExists } from "#missions/manifest.js";
 import { runLawFileFormDoctorChecks } from "#missions/law-files.js";

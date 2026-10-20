@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { runAuditRigorChecks } from "../lib/audit-rigor.js";
+import { runAuditRigorChecks } from "#missions/audit-rigor.js";
 import { getRepoRoot } from "#git/git.js";
 
 test("audit-rigor: strict tsconfig passes in isolated sandbox", () => {

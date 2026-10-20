@@ -1,8 +1,9 @@
+import { logWarn } from "../lib/cli-io.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import { configFloorViolations, orgPolicySnapshot, resolveOrgPolicyOrThrow } from "#plane/policy-resolve.js";
 import { localConfigFloor } from "#missions/policy/policy-resolve.js";
-import { appendLedgerIfEnabled } from "../lib/ledger/ledger-append.js";
+import { appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 
@@ -14,7 +15,7 @@ export function runPolicyPull(opts: { json?: boolean }): void {
       policy_id: result.pointer.bundle_sha256,
       bundle_sha256: result.bundle_sha256,
       pinned_commit: result.pinned_commit,
-    });
+    }, logWarn);
     return {
       json: { status: "ok", ...result },
       human: `gantry policy pull: pinned ${result.pinned_commit} sha=${result.bundle_sha256.slice(0, 12)}`,

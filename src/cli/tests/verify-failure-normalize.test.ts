@@ -6,8 +6,8 @@ import {
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
   toRemediationSnapshot,
-} from "../lib/verify/verify-failure-normalize.js";
-import { buildFindingsForFailure, toVerifyFailedPayload } from "../lib/verify/verify-payload.js";
+} from "#missions/verify/verify-failure-normalize.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "#missions/verify/verify-payload.js";
 import { REMEDIATION_SCHEMA_VERSION } from "#missions/context-feed-store.js";
 
 const missionArg = ".gitagent/missions/MSN-0001.yaml";

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { CLI_VERSION } from "./lib/version.gen.js";
+import { CLI_VERSION } from "#core/version.gen.js";
 import { reportUserFacingError } from "./lib/errors.js";
 import { resetReporter } from "./lib/reporter.js";
 import { configureCageCommand, registerCageCommands } from "./program-cage.js";

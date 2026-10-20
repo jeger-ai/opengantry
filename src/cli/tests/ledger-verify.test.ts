@@ -1,4 +1,5 @@
 import test from "node:test";
+import { logWarn } from "../lib/cli-io.js";
 import assert from "node:assert/strict";
 import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";
@@ -20,7 +21,7 @@ import {
   readLedgerTip,
   verifyLedgerChain,
 } from "#plane/ledger-chain.js";
-import { appendLedgerEntry, appendLedgerIfEnabled } from "../lib/ledger/ledger-append.js";
+import { appendLedgerEntry, appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
 import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
 import { captureConsole, PLANNER_EMAIL } from "./test-shared.js";
 import { appendLedgerFixture, writeLedgerEnabledConfig } from "./test-org-fixtures.js";
@@ -218,7 +219,7 @@ test("ledger-append: failure under ledger.mode=local warns and verify still repo
   const corrupt = commitBlobAsEntry(dest, tip, "not-json\n");
   assert.equal(casUpdateLedgerRef(dest, corrupt, tip), true);
   const { result, output } = captureConsole(() =>
-    appendLedgerIfEnabled(dest, "receipt", "MSN-0101", { verify_status: "passed" }),
+    appendLedgerIfEnabled(dest, "receipt", "MSN-0101", { verify_status: "passed" }, logWarn),
   );
   assert.equal(result, null);
   assert.match(output.stderr, /GXT_LEDGER_CHAIN_BROKEN/);
@@ -244,7 +245,7 @@ test("ledger-append: stdin/mktree commit is byte-identical entry.json and prev c
 });
 
 function appendInChild(root: string, msnId: string): Promise<{ status: number | null; stderr: string }> {
-  const appendJs = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../lib/ledger/ledger-append.js");
+  const appendJs = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../packages/missions/src/ledger/ledger-append.js");
   const script = `
     import { appendLedgerEntry } from ${JSON.stringify(pathToFileURL(appendJs).href)};
     appendLedgerEntry(${JSON.stringify(root)}, {

@@ -11,7 +11,7 @@ import {
 } from "../lib/report/report-demo-mode.js";
 import { DEMO_REPO_NAME, DEMO_TIMELINE } from "../lib/report/report-demo-fixtures.js";
 import { projectOverviewViewModel } from "../lib/report/report-overview-projector.js";
-import { buildGxtExtensionMetadata } from "../lib/git/git-metrics.js";
+import { buildGxtExtensionMetadata } from "#missions/git/git-metrics.js";
 
 test("isReportDemoMode: false when flag missing", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-demo-off-"));

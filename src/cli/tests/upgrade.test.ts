@@ -8,7 +8,7 @@ import { getRepoRoot } from "#git/git.js";
 import { runInit } from "../commands/init.js";
 import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
 import { loadIntegrationCompat } from "#missions/integration-compat.js";
-import { writeSubstrateVersionFile } from "../lib/substrate-version.js";
+import { writeSubstrateVersionFile } from "#missions/substrate-version.js";
 import { upgradeEligibleAssets } from "../lib/upgrade/upgrade-plan-catalog.js";
 import { resolveAssetsFromProfile } from "../lib/init/init-asset-catalog.js";
 import { defaultInitProfile } from "../lib/init/init-profile.js";

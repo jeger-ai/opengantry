@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { REL_POLICY_CACHE, REL_POLICY_POINTER_JSON } from "#core/constants.js";
 import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "#plane/receipt-attribution.js";
-import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
+import { appendLedgerEntry } from "#missions/ledger/ledger-append.js";
 import type { LedgerEntry, ReceiptLedgerPayload } from "#plane/ledger-entry.js";
 import { depsRefForRepo } from "#plane/deps-slug.js";
 import { gitRun } from "#git/git.js";

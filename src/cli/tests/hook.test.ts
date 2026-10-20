@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
-import { ZERO_SHA, parsePrePushRefLines, pushRangesFromRefLines } from "../lib/git/git-hooks.js";
+import { ZERO_SHA, parsePrePushRefLines, pushRangesFromRefLines } from "#missions/git/git-hooks.js";
 import { getRepoRoot } from "#git/git.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");

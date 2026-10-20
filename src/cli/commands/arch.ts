@@ -1,3 +1,4 @@
+import { CLI_NAME, REL_ARCHITECTURE_CREDENTIALS_DIR } from "#core/constants.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import {
@@ -6,7 +7,7 @@ import {
   runAtCommandBoundary,
   runAtCommandBoundaryAsync,
 } from "../lib/command-boundary.js";
-import { fetchExternalArchitecture } from "../lib/arch/external/architecture-fetch.js";
+import { fetchExternalArchitecture } from "#missions/arch/external/architecture-fetch.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import {
   formatArchCheckHuman,
@@ -19,16 +20,17 @@ import {
 import {
   loadArchitecturePointer,
   summarizeArchitecturePointer,
-} from "../lib/arch/external/architecture-pointer.js";
+} from "#missions/arch/external/architecture-pointer.js";
 import {
-  logCredentialStatus,
+  listArchitectureCredentialSlots,
+  loadArchitectureCredential,
   parseCredentialValuesFromStdin,
   readStdinCredentialPayload,
   removeArchitectureCredential,
   validateCredentialSlot,
   writeArchitectureCredential,
   type ArchitectureCredentialKind,
-} from "../lib/arch/external/architecture-credential.js";
+} from "#missions/arch/external/architecture-credential.js";
 
 export interface ArchOptions {
   cwd?: string;
@@ -183,4 +185,26 @@ function formatRatchetHuman(r: RatchetResult): string {
   }
   const rows = Object.entries(r.layers).map(([id, c]) => `${id} ${String(c.files)}/${String(c.lines)}/${String(c.exports)}`);
   return `gantry arch check: ratchet wrote ARCH_BASELINE.json (${rows.join(", ")})${r.raised.length > 0 ? `; raised: ${r.raised.join(", ")}` : ""}`;
+}
+
+function logCredentialStatus(repoRoot: string, slot?: string): void {
+  if (slot) {
+    const record = loadArchitectureCredential(repoRoot, slot);
+    if (!record) {
+      logInfo(`${CLI_NAME} arch cred: slot ${slot} not stored`);
+      return;
+    }
+    logInfo(`${CLI_NAME} arch cred: slot=${record.slot} kind=${record.kind} stored_at=${record.stored_at}`);
+    return;
+  }
+  const slots = listArchitectureCredentialSlots(repoRoot);
+  if (slots.length === 0) {
+    logInfo(`${CLI_NAME} arch cred: no slots stored under ${REL_ARCHITECTURE_CREDENTIALS_DIR}`);
+    return;
+  }
+  for (const s of slots) {
+    const record = loadArchitectureCredential(repoRoot, s);
+    if (!record) continue;
+    logInfo(`  - ${record.slot} (${record.kind}, ${record.stored_at})`);
+  }
 }

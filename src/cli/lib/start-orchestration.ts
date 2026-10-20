@@ -16,7 +16,7 @@ import {
   formatAudienceNextStep,
   type AudienceNextStep,
   type OutputAudience,
-} from "./audience-output.js";
+} from "#missions/audience-output.js";
 import { currentReporter } from "./reporter.js";
 import { loadWorkspace } from "#missions/workspace.js";
 

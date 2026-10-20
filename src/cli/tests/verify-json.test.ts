@@ -14,7 +14,7 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
-import type { VerifyFailedPayload } from "../lib/verify/verify-payload.js";
+import type { VerifyFailedPayload } from "#missions/verify/verify-payload.js";
 
 function parseStdoutJson(stdout: string): Record<string, unknown> {
   const trimmed = stdout.trim();

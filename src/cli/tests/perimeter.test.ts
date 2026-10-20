@@ -9,7 +9,7 @@ import {
   listCommitsTouchingPathInRange,
   DEFAULT_PERIMETER_PROTECTED,
   isPerimeterProtectedPath,
-} from "../lib/perimeter.js";
+} from "#missions/perimeter.js";
 import { ensurePlannerAllowedSignersFile } from "#missions/planner-signature.js";
 import { patternCoversPath } from "#core/path-glob.js";
 import type { Manifest } from "#core/manifest.js";

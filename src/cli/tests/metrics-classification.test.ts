@@ -12,7 +12,7 @@ import {
   streamLogRecords,
   GXT_METRICS_CLASSIFICATION_MODE,
   GXT_METRICS_EXTENSION_SCHEMA_VERSION,
-} from "../lib/git/git-metrics.js";
+} from "#missions/git/git-metrics.js";
 import {
   copyMissionSchema,
   writeManifest,

@@ -5,12 +5,12 @@ import os from "node:os";
 import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { getRepoRoot, gitRun } from "#git/git.js";
-import { checkMissionDependencies } from "../lib/deps/deps-resolve.js";
+import { checkMissionDependencies } from "#missions/deps/deps-resolve.js";
 import { checkMissionDependency } from "#plane/deps-resolve.js";
 import { depsRefForRepo } from "#plane/deps-slug.js";
 import { buildLedgerEntry, genesisPrevHash } from "#plane/ledger-entry.js";
 import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "#plane/ledger-chain.js";
-import { evaluateDependenciesPhase } from "../lib/verify/verify-org-phases.js";
+import { evaluateDependenciesPhase } from "#missions/verify/verify-org-phases.js";
 import { runReleaseCheck } from "../commands/deps.js";
 import {
   copyMissionSchema,
