@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { gitRunOk } from "../../../src/cli/lib/git/git.js";
-import { normalizeRepoRelativePath } from "../../../src/cli/lib/tmvc-path.js";
+import { normalizeRepoRelativePath } from "../../../packages/missions/src/tmvc-path.js";
 import { loadGxtConfig } from "../../../src/cli/lib/gxt-config.js";
 import {
   resolveDefensiveProfile,

@@ -11,8 +11,8 @@ import { DEFAULT_GATE_ADAPTER, type GateAdapterId } from "#core/gate-adapter.js"
 import { type Manifest } from "#core/manifest.js";
 import { type MissionContract } from "#core/contract-types.js";
 import { type TriageResult } from "#core/mission-types.js";
-import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
-import { loadPolicyBundleQuiet, resolveEffectiveScope } from "../contract/effective-scope.js";
+import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
+import { loadPolicyBundleQuiet, resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { loadWorkspace } from "../workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";

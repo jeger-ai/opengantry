@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { classifyRepoRelativePath, isGovernanceTransportPath } from "../lib/tmvc-path.js";
+import { classifyRepoRelativePath, isGovernanceTransportPath } from "#missions/tmvc-path.js";
 import {
   appendContextRequest,
   formatContextRequestLine,

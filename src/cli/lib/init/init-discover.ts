@@ -5,7 +5,7 @@ import {
   emitDiscoveryProposal,
   type DiscoveryApplyResult,
 } from "../discovery-proposal.js";
-import type { DiscoveryProposal } from "../discovery-scanner.js";
+import type { DiscoveryProposal } from "#missions/discovery-scanner.js";
 
 export interface InitDiscoverOptions {
   yes?: boolean;

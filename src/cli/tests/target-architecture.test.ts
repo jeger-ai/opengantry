@@ -11,7 +11,7 @@ import {
   resolveArchScanRoots,
   targetArchitectureMigrationHint,
   validateTargetArchitecture,
-} from "../lib/arch/cage/target-architecture.js";
+} from "#missions/arch/cage/target-architecture.js";
 
 test("validateTargetArchitecture: accepts dogfood spec shape", () => {
   const spec = validateTargetArchitecture({

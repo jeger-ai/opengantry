@@ -1,4 +1,4 @@
-import { normalizeContractPath } from "../../../src/cli/lib/contract/contract-hash.js";
+import { normalizeContractPath } from "../../../packages/missions/src/contract/contract-hash.js";
 import { runHeuristicPreflight } from "./preflight-heuristic.js";
 import {
   PREFLIGHT_MIN_CONFIDENCE,

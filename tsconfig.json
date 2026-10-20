@@ -28,6 +28,9 @@
     },
     {
       "path": "packages/verify"
+    },
+    {
+      "path": "packages/missions"
     }
   ]
 }

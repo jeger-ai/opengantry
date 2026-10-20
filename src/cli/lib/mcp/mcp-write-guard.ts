@@ -1,7 +1,7 @@
 import { normalizeRepoRelativePath } from "#core/law.js";
 import { judgePath } from "#core/path-law.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
-import { classifyRepoRelativePath, forbiddenZonesForSkill, scopePathLaw, isGovernanceTransportPath, tmvcRootsForSkill } from "../tmvc-path.js";
+import { classifyRepoRelativePath, forbiddenZonesForSkill, scopePathLaw, isGovernanceTransportPath, tmvcRootsForSkill } from "#missions/tmvc-path.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
 

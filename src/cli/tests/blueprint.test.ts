@@ -8,7 +8,7 @@ import {
   buildBlueprintQuestions,
   emitBlueprintArtifacts,
 } from "../lib/blueprint-engine.js";
-import { runDiscoveryScan } from "../lib/discovery-scanner.js";
+import { runDiscoveryScan } from "#missions/discovery-scanner.js";
 import { runArchitectureDriftDoctorChecks } from "../lib/arch/cage/architecture-drift-doctor.js";
 import { VERIFICATION_PLAN_REL } from "../lib/verification-plan.js";
 

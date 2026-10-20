@@ -13,7 +13,8 @@
     "#git/*": "./dist/packages/git/src/*",
     "#cage/*": "./dist/packages/cage/src/*",
     "#plane/*": "./dist/packages/plane/src/*",
-    "#verify/*": "./dist/packages/verify/src/*"
+    "#verify/*": "./dist/packages/verify/src/*",
+    "#missions/*": "./dist/packages/missions/src/*"
   },
   "exports": {
     ".": "./dist/cli/index.js",

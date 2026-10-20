@@ -6,9 +6,9 @@ import { toPosixRel } from "#core/posix-path.js";
 import {
   runDiscoveryScan,
   type DiscoveryProposal,
-} from "./discovery-scanner.js";
+} from "#missions/discovery-scanner.js";
 import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
-import { TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type ArchRuleSpec, type TargetArchitectureSpec } from "./arch/cage/target-architecture.js";
+import { TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type ArchRuleSpec, type TargetArchitectureSpec } from "#missions/arch/cage/target-architecture.js";
 import {
   buildVerificationPlan,
   serializeVerificationPlan,
@@ -20,7 +20,7 @@ import {
   type DomainBlueprintQuestion,
   type DomainEnforcementChoice,
   type DomainKey,
-} from "./domains/index.js";
+} from "#missions/domains/index.js";
 
 export const ARCHITECTURE_MD_FILENAME = "ARCHITECTURE.md" as const;
 

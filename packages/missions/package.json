@@ -1,0 +1,8 @@
+{
+  "name": "@jeger-ai/opengantry-missions",
+  "version": "4.0.0",
+  "private": true,
+  "description": "OpenGantry missions (ADR-0052 A1, ADR-0054): the governed substrate. Builds a mission's effective law from the manifest, the contract, the org floor and TARGET_ARCHITECTURE.yaml. Depends on core, git, verify and plane.",
+  "type": "module",
+  "license": "Apache-2.0"
+}

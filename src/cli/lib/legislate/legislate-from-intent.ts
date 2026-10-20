@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { approveContractPrompt } from "../contract/approve-prompt.js";
-import { normalizeContract, parseContractYaml } from "../contract/contract-hash.js";
-import { proposeContract } from "../contract/propose.js";
+import { normalizeContract, parseContractYaml } from "#missions/contract/contract-hash.js";
+import { proposeContract } from "#missions/contract/propose.js";
 import { GantryUserError } from "#core/user-error.js";
 import { logInfo } from "../cli-io.js";
 import { resolveSkillKeyForLegislation, runLegislate, type LegislateOptions, type LegislateResult } from "./legislate.js";

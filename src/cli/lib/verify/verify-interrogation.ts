@@ -16,7 +16,7 @@ import { isLegislativeStub } from "../missions/formatter.js";
 import { missionHasRunRecord } from "./verify-run-record.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import { pathRiskTier } from "../tmvc-path.js";
+import { pathRiskTier } from "#missions/tmvc-path.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
 import type { InterrogationFailure } from "./verify-failure.js";

@@ -9,6 +9,7 @@ scan_roots:
   - packages/cage/**
   - packages/plane/**
   - packages/verify/**
+  - packages/missions/**
 languages:
   - typescript
 layers:
@@ -27,6 +28,9 @@ layers:
   - id: verify
     globs:
       - packages/verify/src/**
+  - id: missions
+    globs:
+      - packages/missions/src/**
   - id: command
     globs:
       - src/cli/commands/**
@@ -108,6 +112,25 @@ rules:
   - id: RULE-VERIFY-NO-DELIVERY-LAYER
     from_layer: verify
     forbid_import_layer: delivery
+  # ADR-0054 decisions 2 and 6: missions depends on core, git, verify and plane.
+  - id: RULE-MISSIONS-NO-CAGE-LAYER
+    from_layer: missions
+    forbid_import_layer: cage
+  - id: RULE-MISSIONS-NO-LIB-LAYER
+    from_layer: missions
+    forbid_import_layer: lib
+  - id: RULE-MISSIONS-NO-COMMAND-LAYER
+    from_layer: missions
+    forbid_import_layer: command
+  - id: RULE-MISSIONS-NO-DELIVERY-LAYER
+    from_layer: missions
+    forbid_import_layer: delivery
+  - id: RULE-PLANE-NO-MISSIONS-LAYER
+    from_layer: plane
+    forbid_import_layer: missions
+  - id: RULE-VERIFY-NO-MISSIONS-LAYER
+    from_layer: verify
+    forbid_import_layer: missions
   - id: RULE-LIB-TO-COMMAND
     from_layer: lib
     forbid_import_layer: command
@@ -165,6 +188,10 @@ rules:
   - id: BUDGET-VERIFY
     kind: budget
     layer: verify
+    exclude: ["**/tests/**"]
+  - id: BUDGET-MISSIONS
+    kind: budget
+    layer: missions
     exclude: ["**/tests/**"]
   - id: BUDGET-COMMAND
     kind: budget

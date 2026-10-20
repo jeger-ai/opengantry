@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";
+import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
 import { createDraftToken, DraftTokenError, verifyDraftToken } from "../lib/draft-token.js";
 import { getRepoRoot } from "#git/git.js";
 import { handleDraftLegislation } from "../lib/mcp/mcp-draft-legislation.js";
