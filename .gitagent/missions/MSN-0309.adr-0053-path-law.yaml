@@ -1,0 +1,128 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0309]. Executor must not run until the [MSN-0309] legislation commit + pin.
+#
+# Legislated intent: land ADR-0053, one path law: the cage, mission scope and standalone verify judge paths with
+# one rule table (areas plus rules with an effect, judged in core; composition only tightens). Status ACTIVE,
+# approved by the operator on 2026-10-20 with the recommended answers (areas intersect, the perimeter joins the
+# table, every cage pattern covers, verify imports and layers stay in verify for now). Decision record only: src/
+# and packages/ are forbidden; the four migration steps are separate missions.
+#
+# Operator direction (2026-10-20, "approved with your recommendations, stamp it"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0309.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0309
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stands. ADR-0053 keeps the built-in floor (a
+      data table in the cage package), additive project rules, runtime-only
+      relaxation that never touches git control or .cage.yaml, and one plan per
+      session. Its one behaviour change, every cage pattern covers, only adds
+      protection, as decisions 1 and 2 of ADR-0048 require.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output formats are unchanged; reports keep their rule names.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0309.adr-0053-path-law.yaml,
+      .gitagent/out-of-scope/ADR-0053-one-path-law.md,
+      .gitagent/runs/MSN-0309.json. A decision-record mission: it lands
+      .gitagent/out-of-scope/ADR-0053-one-path-law.md (status ACTIVE) and its
+      EXECUTOR_LOG.md line, nothing else. src/ and packages/ are forbidden in
+      the contract: the code changes are ADR-0053's migration steps 1 to 4, each
+      its own mission. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Operator direction (2026-10-20):
+      \"approved with your recommendations, stamp it\". ADR-0053 answers item 3
+      of the code-quality review of the ADR-0052 rewrite. The four decisions are
+      recorded in the ADR's Operator decisions section. The mission has no trace
+      rows: its evidence is .gitagent/runs/MSN-0309.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. This mission lands ADR-0053 itself, status ACTIVE, with
+      the operator's four decisions of 2026-10-20 recorded in its Operator
+      decisions section; its migration steps are later missions.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 stands. Standalone verify keeps no built-in
+      path rules (its floor is empty), contracts still come from the base
+      commit, and its import and layer judgment stays in verify for now
+      (ADR-0053 decision 4).
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract cage is unchanged by this record; contract
+      roots and zones become a path law in migration step 2.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: 31e166a739108708327bf2dd6a7815f318d0f7435f022006684844c68feb05dc
+declared_paths:
+  - .gitagent/missions/MSN-0309.adr-0053-path-law.yaml
+  - .gitagent/out-of-scope/ADR-0053-one-path-law.md
+  - .gitagent/runs/MSN-0309.json
+  - EXECUTOR_LOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0309.adr-0053-path-law.yaml
+    - .gitagent/out-of-scope/ADR-0053-one-path-law.md
+    - .gitagent/runs/MSN-0309.json
+    - EXECUTOR_LOG.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/
+contract_sha256: 819458db216e373397de6570c89d81d709ba6f9f65ec78b570a2cd24e859a5c8
