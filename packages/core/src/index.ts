@@ -10,6 +10,7 @@ export * from "./constants.js";
 export * from "./error-codes.js";
 export * from "./exit-codes.js";
 export * from "./law.js";
+export * from "./path-law.js";
 export * from "./import-scanner.js";
 export * from "./manifest.js";
 export * from "./law-file.js";

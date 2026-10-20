@@ -1591,3 +1591,4 @@ MSN-0306 at 7b9d809: one law-file table (core LAW_FILES, git workingTreeReader, 
 MSN-0307 at 0aa2695: one path matcher (core path-glob: a glob engine and patternCoversPath; perimeter, cage and verify matchers removed; a perimeter folder entry now protects its files); evidence is .gitagent/runs/MSN-0307.json (RULES §3).
 MSN-0308 at 34c93a6: the command spec is deleted; the registries are the surface (dispatch and command fields; one test holds Commander and MCP to them); evidence is .gitagent/runs/MSN-0308.json (RULES §3).
 MSN-0309 at f090275: ADR-0053 one path law stamped (ACTIVE, operator decisions of 2026-10-20 recorded); evidence is .gitagent/runs/MSN-0309.json (RULES §3).
+MSN-0310 at dda746a: ADR-0053 step 1, core path law (path-law.ts, judgePath, tightenPathLaw, tests from the cage table and mission classification; no consumer); evidence is .gitagent/runs/MSN-0310.json (RULES §3).
