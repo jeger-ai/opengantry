@@ -5,17 +5,17 @@ import os from "node:os";
 import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
 import { evaluateVerifyPhases } from "../lib/verify/verify-engine.js";
-import { listVerifyRuns, recordVerifyRunBestEffort, readLatestVerifyRunSnapshot } from "../lib/verify/verify-run-ring.js";
+import { listVerifyRuns, recordVerifyRunBestEffort, readLatestVerifyRunSnapshot } from "#missions/verify/verify-run-ring.js";
 import { presentHuman } from "../lib/verify/verify-presenters.js";
-import { VerifyPhaseClock } from "../lib/verify/verify-phase-clock.js";
-import { loadManifest } from "../lib/manifest.js";
+import { VerifyPhaseClock } from "#missions/verify/verify-phase-clock.js";
+import { loadManifest } from "#missions/manifest.js";
 import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { buildVerifyResultPayload } from "../lib/verify/verify-payload.js";
 import { evaluateGatePhase } from "../lib/verify/verify-phase-steps.js";
-import type { GateExecAdapter } from "../lib/gate-adapters/gate-adapter-types.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "../lib/verify/verify-finding.js";
+import type { GateExecAdapter } from "#missions/gate-adapters/gate-adapter-types.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "#missions/verify/verify-finding.js";
 
 test("VerifyPhaseClock timed records failed status and rethrows", async () => {
   const clock = new VerifyPhaseClock();

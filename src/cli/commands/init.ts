@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
 import { readArchitecturePointerSource } from "../lib/arch/external/architecture-pointer.js";
-import { manifestExists } from "../lib/manifest.js";
+import { manifestExists } from "#missions/manifest.js";
 import { logError, logInfo, logManagedAssetConflicts, setExitCode } from "../lib/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../lib/command-boundary.js";
 import {
@@ -40,7 +40,7 @@ import {
   mergePrettierignoreFromTemplate,
 } from "../lib/file-merge-gxt.js";
 import { ensureSubstrateVersionOnInit } from "../lib/substrate-version.js";
-import { ensurePlannerAllowlistOnInit } from "../lib/planner-identity.js";
+import { ensurePlannerAllowlistOnInit } from "#missions/planner-identity.js";
 
 export interface InitOptions {
   force?: boolean;

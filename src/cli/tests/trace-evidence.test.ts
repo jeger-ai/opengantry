@@ -5,12 +5,8 @@ import fs from "node:fs";
 import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
 import { gitDiffNameOnlySinceCommit } from "#git/git.js";
-import {
-  parseBlamePorcelainByLine,
-  UNCOMMITTED_BLAME_COMMIT,
-  verifyTraceEvidenceFreshness,
-} from "../lib/trace.js";
-import { verifyTraceRows } from "../lib/trace.js";
+import { parseBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT, verifyTraceEvidenceFreshness } from "#missions/trace-evidence.js";
+import { verifyTraceRows } from "#missions/trace-quote.js";
 import { copyMissionSchema, gitInitCommit, writeManifest, writeSkillsForManifest } from "./test-fixtures.js";
 
 const TEACHER = "teacher@example.com";

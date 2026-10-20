@@ -1,5 +1,5 @@
 import { emitCliJson } from "./command-boundary.js";
-import { readGantryEnv } from "./config-namespace.js";
+import { readGantryEnv } from "#missions/config-namespace.js";
 import { GantryUserError } from "#core/user-error.js";
 import {
   filterEpochs,
@@ -7,12 +7,8 @@ import {
   loadPepperKeyring,
   listOrgIds,
   type PepperKeyringEntry,
-} from "./pepper-keyring.js";
-import {
-  canonicalizeRepositoryIdentifier,
-  hmacSha256Hex,
-  type SignerPrincipalKind,
-} from "./receipt-attribution.js";
+} from "#missions/pepper-keyring.js";
+import { canonicalizeRepositoryIdentifier, hmacSha256Hex, type SignerPrincipalKind } from "#plane/receipt-attribution.js";
 
 export interface PrincipalHmacResult {
   pepper_version: number;

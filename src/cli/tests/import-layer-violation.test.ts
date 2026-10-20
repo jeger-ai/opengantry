@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   gateOutputIndicatesImportLayer,
   parseImportLayerGateJson,
-} from "../lib/repair.js";
+} from "#missions/repair.js";
 
 test("parseImportLayerGateJson: valid failure report", () => {
   const json = JSON.stringify({

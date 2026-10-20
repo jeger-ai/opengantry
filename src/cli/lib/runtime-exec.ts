@@ -4,12 +4,13 @@ import { errorMessage } from "#core/user-error.js";
 import { scanContractImports } from "#missions/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
 import { writeAgentErrorPayload } from "./errors.js";
-import { buildForbiddenBaseline, detectForbiddenViolations, type ForbiddenViolation } from "./forbidden-scan.js";
+import { buildForbiddenBaseline, detectForbiddenViolations, type ForbiddenViolation } from "#missions/forbidden-scan.js";
 import { createTelemetryWriter } from "./telemetry-log.js";
 import { resolvedRuntimeEnvToJsonPayload, resolveRuntimeEnv } from "./runtime-env.js";
 import { hashProcessChunk, spawnWithStreamCapture } from "./runtime-exec-process.js";
-import { loadGxtConfig, resolveFlightTelemetryBodyMode } from "./gxt-config.js";
-import type { Workspace } from "./workspace.js";
+import { loadGxtConfig } from "#missions/gxt-config.js";
+import { resolveFlightTelemetryBodyMode } from "#core/config.js";
+import type { Workspace } from "#missions/workspace.js";
 
 export interface RuntimeExecResult {
   status:

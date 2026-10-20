@@ -14,7 +14,7 @@ import {
   serializeVerificationPlan,
   VERIFICATION_PLAN_REL,
   type VerificationGateCommand,
-} from "./verification-plan.js";
+} from "#missions/verification-plan.js";
 import {
   getDomainAdapter,
   type DomainBlueprintQuestion,

@@ -8,7 +8,7 @@ import {
   type VerifyPhaseSuccess,
 } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-options.js";
-import type { VerifyPhaseFailure, GateFailure } from "./verify-failure.js";
+import type { VerifyPhaseFailure, GateFailure } from "#missions/verify/verify-failure.js";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
@@ -16,13 +16,13 @@ import {
 } from "./verify-failure-normalize.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "../kpi-advisory-findings.js";
-import { projectGateFindings } from "./verify-finding-gate-projector.js";
+import { projectGateFindings } from "#missions/verify/verify-finding-gate-projector.js";
 import {
   VERIFY_ENVELOPE_SCHEMA_VERSION,
   verifyFinding,
   type VerifyFinding,
   type VerifyFailedGate,
-} from "./verify-finding.js";
+} from "#missions/verify/verify-finding.js";
 
 export interface VerifyTraceWarningJson {
   dod_id: string;

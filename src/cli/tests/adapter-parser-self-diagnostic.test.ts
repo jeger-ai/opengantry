@@ -7,9 +7,9 @@ import { describe, it } from "node:test";
 import {
   eslintFindingsFromRun,
   parseEslintJsonOutput,
-} from "../lib/gate-adapters/eslint-json-adapter.js";
-import type { GateExecContext } from "../lib/gate-adapters/gate-adapter-types.js";
-import { parseTscOutput, tscFindingsFromRun } from "../lib/gate-adapters/tsc-adapter.js";
+} from "#missions/gate-adapters/eslint-json-adapter.js";
+import type { GateExecContext } from "#missions/gate-adapters/gate-adapter-types.js";
+import { parseTscOutput, tscFindingsFromRun } from "#missions/gate-adapters/tsc-adapter.js";
 
 function ctxIn(dir: string, successSubstring: string | null = null): GateExecContext {
   return {

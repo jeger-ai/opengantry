@@ -3,9 +3,9 @@ import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { GantryUserError } from "#core/user-error.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 import type { InterrogationRow } from "#core/interrogation.js";
-import { runInterrogate } from "../lib/interrogate/run.js";
-import { resolveLegislateGateOptions } from "../lib/legislate/legislate-gate-options.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { runInterrogate } from "#missions/interrogate/run.js";
+import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import fs from "node:fs";
 
 export interface InterrogateCliOptions {

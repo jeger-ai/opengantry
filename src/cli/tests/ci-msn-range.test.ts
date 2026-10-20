@@ -8,7 +8,7 @@ import { getRepoRoot } from "#git/git.js";
 import { writeBypassGitNote } from "../lib/break-glass.js";
 import { gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
-import { loadManifest } from "../lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import { manifestMsnEnforcedPrefixes } from "../lib/trusted-automation.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");

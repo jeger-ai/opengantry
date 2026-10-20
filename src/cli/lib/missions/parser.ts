@@ -7,7 +7,7 @@ import { GantryUserError } from "#core/user-error.js";
 import { hintMissionNoGate } from "../fix-hints.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { assertTypedAdapterSingleCommand } from "./adapter-command-guard.js";
-import { normalizeTraceStatus } from "../trace.js";
+import { normalizeTraceStatus } from "#core/trace-status.js";
 import {
   INTERROGATION_FINDING_KINDS,
   type InterrogationFindingKind,
@@ -15,10 +15,10 @@ import {
 } from "#core/interrogation.js";
 import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
 import { type KpiAggregator, type KpiAggregatorOp, type KpiGateSpec, type KpiThreshold, type KpiThresholdOp, type LlmVerifierSpec, type ParsedMission, type TraceRow, type YamlMission } from "#core/mission-types.js";
-import { assertMissionSchemaValid } from "./validator.js";
+import { assertMissionSchemaValid } from "#missions/missions/validator.js";
 import {
   parseMarkdownMission,
-} from "./formatter.js";
+} from "#missions/missions/formatter.js";
 
 export function isValidMsnId(id: string): boolean {
   return MSN_ID_PATTERN.test(id.trim());

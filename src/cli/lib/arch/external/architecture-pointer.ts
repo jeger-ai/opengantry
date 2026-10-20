@@ -6,8 +6,8 @@ import { fromPosix } from "#core/posix-path.js";
 import { REL_ARCHITECTURE_ACCESS_SKILL, REL_ARCHITECTURE_DISCOVERY_SKILL, REL_ARCHITECTURE_POINTER_JSON, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
 import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
 import { workingTreeReader } from "#git/repo-text.js";
-import { lawFileRelAt, readLawFileAt } from "../../law-files.js";
-import type { DoctorLine } from "../../doctor/doctor-types.js";
+import { lawFileRelAt, readLawFileAt } from "#missions/law-files.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 
 export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
 

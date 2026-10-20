@@ -3,7 +3,7 @@ import { withReportDemoOverlay } from "../lib/report/report-demo-mode.js";
 import { projectOverviewViewModel } from "../lib/report/report-overview-projector.js";
 import { projectReportViewModel } from "../lib/report/report-projector.js";
 import { runReportServerLoop } from "../lib/report/report-server.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 const projectOverview = withReportDemoOverlay(projectOverviewViewModel);
 

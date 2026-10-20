@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { verifyFinding } from "../lib/verify/verify-finding.js";
+import { verifyFinding } from "#missions/verify/verify-finding.js";
 import {
   applyFindingsRecurrence,
   loadPriorDigestRing,
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,
 } from "../lib/verify/verify-remediation-pipeline.js";
-import { computeFindingsDigest } from "../lib/verify/verify-finding-fingerprint.js";
+import { computeFindingsDigest } from "#missions/verify/verify-finding-fingerprint.js";
 import { buildVerifyResultPayloadFromPhaseResult } from "../lib/verify/verify-payload.js";
 import type { VerifyFailedPayload } from "../lib/verify/verify-payload.js";
 import type { ParsedMission } from "#core/mission-types.js";
@@ -17,7 +17,7 @@ import {
   REMEDIATION_SCHEMA_VERSION,
   readRemediationSnapshot,
   writeRemediationSnapshot,
-} from "../lib/context-feed-store.js";
+} from "#missions/context-feed-store.js";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

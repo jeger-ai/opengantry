@@ -8,7 +8,7 @@ import {
   createDraftToken,
   verifyDraftToken,
   DraftTokenError,
-} from "../lib/draft-token.js";
+} from "#missions/draft-token.js";
 import { canonicalJson } from "#core/canonical-json.js";
 import { getRepoRoot } from "#git/git.js";
 import { emptyDraftTokenInterrogationFields } from "./test-fixtures.js";

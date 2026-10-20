@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ENV_PLANNER_EMAILS, GIT_CONFIG_PLANNER_EMAILS, readGantryEnv, readGantryGitConfig } from "../lib/config-namespace.js";
+import { ENV_PLANNER_EMAILS, GIT_CONFIG_PLANNER_EMAILS, readGantryEnv, readGantryGitConfig } from "#missions/config-namespace.js";
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";

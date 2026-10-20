@@ -6,12 +6,12 @@ import path from "node:path";
 
 import { createRequire } from "node:module";
 
-import { evaluateScope, isPromoteClassFunctionId } from "../lib/kernel-evaluate-scope.js";
+import { evaluateScope, isPromoteClassFunctionId } from "#missions/kernel-evaluate-scope.js";
 import {
   mintVerdictToken,
   verifyVerdictToken,
-} from "../lib/verdict-token.js";
-import type { PepperKeyringEntry } from "../lib/pepper-keyring.js";
+} from "#missions/verdict-token.js";
+import type { PepperKeyringEntry } from "#missions/pepper-keyring.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 

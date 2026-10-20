@@ -1,17 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import { writeAgentErrorPayload, type AgentErrorPayload } from "../errors.js";
-import type { ForbiddenViolation } from "../forbidden-scan.js";
+import type { ForbiddenViolation } from "#missions/forbidden-scan.js";
 import type { RuntimeExecResult } from "../runtime-exec.js";
 import { errorMessage } from "#core/user-error.js";
 import { buildVerifyResultPayloadFromOptions } from "../verify/verify-run.js";
 import type { VerifyResultPayload } from "../verify/verify-payload.js";
 import { parseMissionFile } from "../missions/parser.js";
-import { pinActiveMission, resolvePinnedMission } from "../missions/resolution.js";
+import { pinActiveMission, resolvePinnedMission } from "#missions/missions/resolution.js";
 import { runKpiScan } from "../kpi-scan.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../runtime-env.js";
 import { runRuntimeExec } from "../runtime-exec.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import {
   mcpError,
   resolveGuardedMissionAbs,

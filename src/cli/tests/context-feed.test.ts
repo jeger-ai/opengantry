@@ -12,7 +12,7 @@ import {
   readRemediationSnapshot,
   writeRemediationSnapshot,
   type RemediationSnapshot,
-} from "../lib/context-feed-store.js";
+} from "#missions/context-feed-store.js";
 import { runContextFeed } from "../commands/context-feed.js";
 import { resetReporter } from "../lib/reporter.js";
 import { gitInitCommit } from "./test-fixtures.js";

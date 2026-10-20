@@ -1,4 +1,4 @@
-import { manifestExists } from "../lib/manifest.js";
+import { manifestExists } from "#missions/manifest.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -12,7 +12,7 @@ import {
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { integrationOnboardingBlockers } from "../lib/doctor/doctor-integration.js";
 import { resolveTemplateRootFromModule } from "../lib/integration-compat.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { runStartOrchestration } from "../lib/start-orchestration.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
 

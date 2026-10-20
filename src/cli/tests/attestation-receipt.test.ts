@@ -6,10 +6,8 @@ import path from "node:path";
 
 import { buildAttestationExportEnvelope } from "#plane/attestation-export.js";
 import { canonicalJson } from "#core/canonical-json.js";
-import {
-  buildAttestationReceipt,
-  computeReceiptSha256,
-} from "../lib/attestation-receipt.js";
+import { buildAttestationReceipt } from "../lib/attestation-receipt.js";
+import { computeReceiptSha256 } from "#plane/attestation-receipt.js";
 import { REL_MANIFEST_JSON } from "#core/constants.js";
 import { GantryUserError } from "#core/user-error.js";
 import { getRepoRoot, gitConfigGet } from "#git/git.js";

@@ -15,10 +15,10 @@ import { gitReadStagedBlob, gitStagedNameOnly } from "#git/git-staged.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,
-} from "../lib/staged-tmvc-guard.js";
+} from "#missions/staged-tmvc-guard.js";
 import { runContextRequest } from "../commands/context-request.js";
 import { runTmvcGuard } from "../commands/tmvc-guard.js";
-import { loadManifest } from "../lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 
 function initGitRepo(dest: string): void {

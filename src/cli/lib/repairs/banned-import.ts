@@ -1,6 +1,6 @@
 import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { parseBannedImportGateOutput } from "../banned-import-violation.js";
+import { parseBannedImportGateOutput } from "#missions/banned-import-violation.js";
 import { quarantineImportDeclaration } from "./quarantine-import.js";
 import type { CodeRepair, RepairContext, RepairMutationResult } from "./registry.js";
 

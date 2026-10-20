@@ -9,7 +9,7 @@ import {
   type CommandRunner,
 } from "../adapter-preflight-checks.js";
 import { probeCliVersion } from "../doctor/doctor-integration.js";
-import type { DoctorLine, DoctorSection } from "../doctor/doctor-types.js";
+import type { DoctorLine, DoctorSection } from "#missions/doctor/doctor-types.js";
 
 const DEFAULT_TSC_GATE = "npx tsc --noEmit --pretty false";
 

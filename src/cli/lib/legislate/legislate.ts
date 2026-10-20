@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "#core/constants.js";
 import { buildLegislativeTraceRows, buildMissionYamlScaffold, extractMsnIdFromMissionPath, isValidMsnId } from "../missions/parser.js";
-import { listMissionFiles } from "../missions/resolution.js";
+import { listMissionFiles } from "#missions/missions/resolution.js";
 import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
 import { logError, logInfo, logWarn } from "../cli-io.js";
-import { triageIntent, isTriageEscalated } from "../triage-logic.js";
-import { manifestHasSkill } from "../skill-key.js";
+import { triageIntent, isTriageEscalated } from "#missions/triage-logic.js";
+import { manifestHasSkill } from "#missions/skill-key.js";
 import { DEFAULT_GATE_ADAPTER, type GateAdapterId } from "#core/gate-adapter.js";
 import { type Manifest } from "#core/manifest.js";
 import { type MissionContract } from "#core/contract-types.js";
@@ -14,13 +14,13 @@ import { type TriageResult } from "#core/mission-types.js";
 import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
-import { loadWorkspace } from "../workspace.js";
-import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
+import { loadWorkspace } from "#missions/workspace.js";
+import { findForbiddenZoneHits } from "#missions/legislate/legislate-forbidden-zone.js";
 import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
 import { typedAdapterCommandError } from "../missions/adapter-command-guard.js";
 import type { InterrogationRow } from "#core/interrogation.js";
-import { runInterrogate } from "../interrogate/run.js";
-import { resolveLegislateGateOptions } from "./legislate-gate-options.js";
+import { runInterrogate } from "#missions/interrogate/run.js";
+import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";
 
 export type LegislateInterrogation =
   | { source: "draft_token"; rows: InterrogationRow[]; sha256: string }

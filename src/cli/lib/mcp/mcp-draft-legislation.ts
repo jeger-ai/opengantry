@@ -1,16 +1,16 @@
 import { MSN_ID_PATTERN } from "#core/constants.js";
-import { createDraftToken } from "../draft-token.js";
+import { createDraftToken } from "#missions/draft-token.js";
 import {
   mcpError,
   type DraftLegislationInput,
   type DraftLegislationResult,
   type McpErrorBody,
 } from "./mcp-governance-shared.js";
-import { manifestHasSkill } from "../skill-key.js";
-import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
-import { runInterrogate } from "../interrogate/run.js";
+import { manifestHasSkill } from "#missions/skill-key.js";
+import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";
+import { runInterrogate } from "#missions/interrogate/run.js";
 import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { normalizeContract } from "#missions/contract/contract-hash.js";
 import { resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { formatContractBlock } from "#missions/contract/format.js";

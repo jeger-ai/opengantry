@@ -1,6 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
-import { readGantryEnv } from "./config-namespace.js";
+import { readGantryEnv } from "#missions/config-namespace.js";
 import path from "node:path";
 import { logError, setExitCode } from "./cli-io.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
@@ -8,7 +8,7 @@ import { hintGitProofFromMessage, logFixHint } from "./fix-hints.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { REL_AGENT_ERROR_FILE } from "#core/constants.js";
 import type { ContractImportViolation } from "#core/contract-types.js";
-import type { ForbiddenViolation } from "./forbidden-scan.js";
+import type { ForbiddenViolation } from "#missions/forbidden-scan.js";
 import type { RuntimeExecResult } from "./runtime-exec.js";
 import type { ResolvedRuntimeEnv } from "./runtime-env.js";
 

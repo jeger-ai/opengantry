@@ -3,23 +3,19 @@ import YAML from "yaml";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { gitRunOk, gitRevParse } from "#git/git.js";
-import {
-  listCommitChangedPaths,
-  listMsnSubjectCommits,
-  resolveMsnScanDepth,
-  findPlannerStamp,
-} from "../git/git-proof.js";
-import { resolvePlannerEmails } from "../planner-identity.js";
-import { isStubOperatorAnswer } from "../interrogate/answers.js";
+import { listCommitChangedPaths, findPlannerStamp } from "../git/git-proof.js";
+import { listMsnSubjectCommits, resolveMsnScanDepth } from "#git/msn-commits.js";
+import { resolvePlannerEmails } from "#missions/planner-identity.js";
+import { isStubOperatorAnswer } from "#missions/interrogate/answers.js";
 import { interrogationSha256 } from "#core/interrogation.js";
-import { isLegislativeStub } from "../missions/formatter.js";
+import { isLegislativeStub } from "#missions/missions/formatter.js";
 import { missionHasRunRecord } from "./verify-run-record.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { pathRiskTier } from "#missions/tmvc-path.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
-import type { InterrogationFailure } from "./verify-failure.js";
+import type { InterrogationFailure } from "#missions/verify/verify-failure.js";
 
 export interface InterrogationPhaseOutcome {
   failure: InterrogationFailure | null;

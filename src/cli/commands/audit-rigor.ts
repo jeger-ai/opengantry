@@ -1,7 +1,7 @@
 import path from "node:path";
 import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
 import { runAuditRigorChecks } from "../lib/audit-rigor.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface AuditRigorCliOptions {
   json?: boolean;

@@ -1,4 +1,4 @@
-import { ENV_PLANNER_EMAILS } from "../lib/config-namespace.js";
+import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
 
 export const PLANNER_EMAIL = "planner-mini-repo@opengantry.test";
 export const OTHER_EMAIL = "other@opengantry.test";

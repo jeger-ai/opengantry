@@ -8,10 +8,10 @@ import { contractSha256 } from "#missions/contract/contract-hash.js";
 import { agentErrorAbsolutePath } from "../lib/errors.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { loadManifest } from "../lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import { resolvedRuntimeEnvToJsonPayload, resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
-import { evaluateStagedTmvcGuard } from "../lib/staged-tmvc-guard.js";
+import { evaluateStagedTmvcGuard } from "#missions/staged-tmvc-guard.js";
 import type { MissionContract } from "#core/contract-types.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 

@@ -1,6 +1,6 @@
 import type { OutputAudience } from "../audience-output.js";
 import type { VerifyExportFormat } from "./verify-export.js";
-import type { GateExecAdapter } from "../gate-adapters/gate-adapter-types.js";
+import type { GateExecAdapter } from "#missions/gate-adapters/gate-adapter-types.js";
 
 /** High-level verify execution mode — sinks derive from this + export format. */
 export type VerifyMode = "normal" | "pre_push" | "break_glass" | "fix" | "json";

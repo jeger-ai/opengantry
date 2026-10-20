@@ -7,7 +7,7 @@ import {
 import { buildFindingsForFailure, toVerifyFailedPayload } from "../lib/verify/verify-payload.js";
 import { buildSarifDocument } from "../lib/verify/verify-export.js";
 import { GantryUserError } from "#core/user-error.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "../lib/verify/verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "#missions/verify/verify-finding.js";
 
 describe("verify failure envelope", () => {
   const phases = [

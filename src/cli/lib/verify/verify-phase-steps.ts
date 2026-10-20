@@ -1,10 +1,12 @@
 import { errorMessage } from "#core/user-error.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
-import { resolveGateWorkDir } from "../gate.js";
+import { resolveGateWorkDir } from "#missions/gate.js";
 import { evaluateKpiPhase } from "../kpi-engine.js";
 import { msnIdOrDefault, type GateSpec, type KpiFinding, type ParsedMission } from "#core/mission-types.js";
 import { type Manifest } from "#core/manifest.js";
-import { isPendingStatus, verifyTraceEvidenceFreshness, verifyTraceRows } from "../trace.js";
+import { isPendingStatus } from "#core/trace-status.js";
+import { verifyTraceEvidenceFreshness } from "#missions/trace-evidence.js";
+import { verifyTraceRows } from "#missions/trace-quote.js";
 import type {
   GateFailure,
   GitProofFailure,
@@ -12,11 +14,11 @@ import type {
   TraceFailure,
   TracePendingFailure,
   RunRecordFailure,
-} from "./verify-failure.js";
+} from "#missions/verify/verify-failure.js";
 import type { VerifyOptions } from "./verify-options.js";
-import type { TraceVerifyWarning } from "../trace.js";
-import { resolveGateExecAdapter } from "../gate-adapters/registry.js";
-import { ensureGateLogPath, readGateLogText } from "../gate-log-writer.js";
+import type { TraceVerifyWarning } from "#missions/trace-quote.js";
+import { resolveGateExecAdapter } from "#missions/gate-adapters/registry.js";
+import { ensureGateLogPath, readGateLogText } from "#missions/gate-log-writer.js";
 
 function parseDeclaredAnchorLine(anchor: string): number {
   const n = Number.parseInt(anchor.trim(), 10);

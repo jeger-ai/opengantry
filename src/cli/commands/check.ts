@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
-import { loadWorkspaceWithSkillSync } from "../lib/workspace.js";
+import { loadWorkspaceWithSkillSync } from "#missions/workspace.js";
 
 export function runCheck(): void {
   const { skillSync } = loadWorkspaceWithSkillSync();

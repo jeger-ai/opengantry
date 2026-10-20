@@ -5,7 +5,7 @@ import path from "node:path";
 import { pipeline } from "node:stream";
 import { spawn } from "node:child_process";
 import { logInfo } from "../cli-io.js";
-import { REL_GATE_LOGS_DIR } from "../gate-log-writer.js";
+import { REL_GATE_LOGS_DIR } from "#missions/gate-log-writer.js";
 import type { OverviewViewModel } from "./report-overview-projector.js";
 import { renderReportHtml } from "./report-template-html.js";
 import { renderOverviewHtml } from "./report-template-overview.js";

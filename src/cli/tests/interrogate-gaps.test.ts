@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { loadManifest } from "../lib/manifest.js";
-import { computeGaps } from "../lib/interrogate/gaps.js";
+import { loadManifest } from "#missions/manifest.js";
+import { computeGaps } from "#missions/interrogate/gaps.js";
 import { stableFindingId } from "#core/interrogation.js";
 import { writeManifest } from "./test-fixtures.js";
 

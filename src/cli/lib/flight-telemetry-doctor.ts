@@ -1,5 +1,6 @@
-import type { DoctorLine } from "./doctor/doctor-types.js";
-import { loadGxtConfig, resolveFlightTelemetryBodyMode } from "./gxt-config.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
+import { loadGxtConfig } from "#missions/gxt-config.js";
+import { resolveFlightTelemetryBodyMode } from "#core/config.js";
 
 export function runFlightTelemetryDoctorChecks(root: string): DoctorLine[] {
   const lines: DoctorLine[] = [];

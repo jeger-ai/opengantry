@@ -6,8 +6,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { GIT_REPO_LOCATION_ENV, gitChildEnv, withoutGitRepoEnv } from "#git/git.js";
-import { runGate } from "../lib/gate.js";
-import { spawnGateStreaming } from "../lib/gate-adapters/spawn-stream-core.js";
+import { runGate } from "#missions/gate.js";
+import { spawnGateStreaming } from "#missions/gate-adapters/spawn-stream-core.js";
 
 /**
  * MSN-0266. git sets GIT_DIR for hooks run in a linked worktree. The pre-push hook runs gantry verify, and the gate
@@ -15,7 +15,7 @@ import { spawnGateStreaming } from "../lib/gate-adapters/spawn-stream-core.js";
  * repository instead (core.bare=true, a Fixture identity, pushes to its origin). Every repository here is a temp dir.
  */
 
-const GATE_LIB = fileURLToPath(new URL("../lib/gate.js", import.meta.url));
+const GATE_LIB = fileURLToPath(new URL("../../packages/missions/src/gate.js", import.meta.url));
 const PRELOAD = fileURLToPath(new URL("./test-tmpdir-setup.js", import.meta.url));
 /** What the leaking fixtures did: initialise a repo in a fresh temp dir and write config there. */
 const FIXTURE_GATE = `d="$(mktemp -d)" && cd "$d" && git init -q && git config user.name Fixture && git rev-parse --absolute-git-dir`;

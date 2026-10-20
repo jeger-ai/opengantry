@@ -4,7 +4,7 @@ import path from "node:path";
 import { formatRepoRelative } from "#core/posix-path.js";
 import { REL_RECEIPTS_DIR, MSN_ID_PATTERN } from "#core/constants.js";
 import { GantryUserError } from "#core/user-error.js";
-import type { AttestationReceipt } from "./attestation-receipt.js";
+import type { AttestationReceipt } from "#plane/attestation-receipt.js";
 
 export interface ReceiptListEntry {
   path: string;

@@ -6,7 +6,7 @@ import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
 import { LEGISLATE_TRACE_PLACEHOLDER } from "#core/constants.js";
 import { runVerify } from "../commands/verify.js";
-import { resolveGateWorkDir } from "../lib/gate.js";
+import { resolveGateWorkDir } from "#missions/gate.js";
 import { writeMiniGantryRepo, writeMiniGantryMission, gitInitCommit } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 

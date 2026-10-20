@@ -3,8 +3,8 @@ import { checkPerimeter } from "../lib/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary } from "../lib/command-boundary.js";
 import { gitRevParse } from "#git/git.js";
-import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { ensurePlannerAllowedSignersFile } from "#missions/planner-signature.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import type { PerimeterViolation } from "../lib/perimeter.js";
 
 export interface PerimeterOptions {

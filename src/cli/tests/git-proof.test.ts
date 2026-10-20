@@ -4,13 +4,8 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import {
-  commitSubjectHasMsnPrefix,
-  assertPlannerMissionProof,
-  missionPathRepoRelative,
-  ENV_MSN_SCAN_DEPTH,
-  resolveMsnScanDepth,
-} from "../lib/git/git-proof.js";
+import { commitSubjectHasMsnPrefix, ENV_MSN_SCAN_DEPTH, resolveMsnScanDepth } from "#git/msn-commits.js";
+import { assertPlannerMissionProof, missionPathRepoRelative } from "../lib/git/git-proof.js";
 import { GantryUserError } from "#core/user-error.js";
 import { writeMiniGantryRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";

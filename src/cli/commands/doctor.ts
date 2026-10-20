@@ -9,9 +9,9 @@ import {
 } from "../lib/audience-output.js";
 import { collectDoctorReport } from "../lib/doctor/doctor-core.js";
 import type { AdapterPreflightOptions } from "../lib/doctor/doctor-adapter-preflight.js";
-import { doctorLinesHasFail, type DoctorLine } from "../lib/doctor/doctor-types.js";
+import { doctorLinesHasFail, type DoctorLine } from "#missions/doctor/doctor-types.js";
 import type { TypedGateAdapterId } from "#core/gate-adapter.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface DoctorOptions {
   json?: boolean;

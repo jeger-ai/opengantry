@@ -1,8 +1,8 @@
 import type { OutputAudience } from "../audience-output.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR, mapGitProofCodeToGxt } from "#core/error-codes.js";
-import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
-import { gateOutputIndicatesImportLayer } from "../repair.js";
+import { gateOutputIndicatesBannedImport } from "#missions/banned-import-violation.js";
+import { gateOutputIndicatesImportLayer } from "#missions/repair.js";
 import {
   hintForTraceKind,
   hintGate,
@@ -21,7 +21,7 @@ import type {
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
-} from "./verify-failure.js";
+} from "#missions/verify/verify-failure.js";
 
 export interface AudienceTaggedStep {
   audience: OutputAudience;

@@ -12,7 +12,7 @@ import { gitDiffNameOnlySinceCommit, gitRevParse, gitRunOk } from "#git/git.js";
 import { resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
 import { formatRepoRelative } from "#core/posix-path.js";
-import type { RunRecordFailure } from "./verify-failure.js";
+import type { RunRecordFailure } from "#missions/verify/verify-failure.js";
 import type { PhaseContext } from "./verify-phase-steps.js";
 
 export type RunRecordPhaseOutcome = { kind: "ok"; recordPath: string } | { kind: "fail"; failure: RunRecordFailure };

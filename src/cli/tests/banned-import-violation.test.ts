@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   gateOutputIndicatesBannedImport,
   parseBannedImportGateOutput,
-} from "../lib/banned-import-violation.js";
+} from "#missions/banned-import-violation.js";
 
 test("parseBannedImportGateOutput: parses check-imports stderr lines", () => {
   const text = `src/bad.ts: banned import "axios"

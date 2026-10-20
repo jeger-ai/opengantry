@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import { GantryUserError } from "#core/user-error.js";
 import { filterEpochs, getPeppersForOrg, loadPepperKeyring, listOrgIds } from "./pepper-keyring.js";
-import { hmacSha256Hex } from "./receipt-attribution.js";
+import { hmacSha256Hex } from "#plane/receipt-attribution.js";
 
 export const VERDICT_TOKEN_SCHEMA_VERSION = 1 as const;
 

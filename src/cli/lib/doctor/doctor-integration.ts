@@ -9,7 +9,7 @@ import {
   type IntegrationCompatManifest,
 } from "../integration-compat.js";
 import type { CommandRunner } from "../adapter-preflight-checks.js";
-import type { DoctorLine } from "./doctor-types.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 
 export type IntegrationProfileState = "uninitialized" | "configured";
 

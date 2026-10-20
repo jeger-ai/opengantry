@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { LEDGER_REF } from "#core/constants.js";
 import { gitRun } from "#git/git.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";

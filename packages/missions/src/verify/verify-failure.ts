@@ -2,7 +2,7 @@ import type { GxtErrorCode } from "#core/error-codes.js";
 import type { DependencyFailureCode } from "#plane/deps-resolve.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { KpiThresholdOp } from "#core/mission-types.js";
-import type { TraceFailureKind } from "../trace.js";
+import type { TraceFailureKind } from "../trace-quote.js";
 import type { VerifyFinding } from "./verify-finding.js";
 
 export type VerifyFailurePhase =

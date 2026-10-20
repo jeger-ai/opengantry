@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { GATE_EXEC_ADAPTERS, resolveGateExecAdapter } from "../lib/gate-adapters/registry.js";
+import { GATE_EXEC_ADAPTERS, resolveGateExecAdapter } from "#missions/gate-adapters/registry.js";
 import { getRepoRoot } from "#git/git.js";
 import { GATE_ADAPTER_IDS, isGateAdapterId } from "#core/gate-adapter.js";
 
@@ -37,7 +37,7 @@ describe("gate-adapters import-direction contract (ADR-0041)", () => {
   ];
 
   it("adapter modules never import the verify engine layer", () => {
-    const dir = path.join(getRepoRoot(), "src", "cli", "lib", "gate-adapters");
+    const dir = path.join(getRepoRoot(), "packages", "missions", "src", "gate-adapters");
     const files = fs.readdirSync(dir).filter((f) => f.endsWith(".ts"));
     assert.ok(files.length >= 6, `expected adapter modules in ${dir}`);
     for (const file of files) {

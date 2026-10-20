@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { writeJsonAtomicSync } from "../../../src/cli/lib/atomic-fs.js";
-import { promoteFileAtomic } from "../../../src/cli/lib/atomic-fs.js";
+import { writeJsonAtomicSync } from "../../../packages/missions/src/atomic-fs.js";
+import { promoteFileAtomic } from "../../../packages/missions/src/atomic-fs.js";
 import { REL_VIRTUAL_SCRATCH } from "../../../src/cli/lib/constants.js";
 
 export const VIRTUAL_GATE_CAPTURE_FILE = "gate-capture.json" as const;

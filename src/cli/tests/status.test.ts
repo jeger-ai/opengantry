@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
 import { runStatus } from "../commands/status.js";
-import { pinMissionFile } from "../lib/missions/resolution.js";
+import { pinMissionFile } from "#missions/missions/resolution.js";
 import { writeMiniGantryRepo, gitInitCommit, writeMiniGantryMission } from "./test-fixtures.js";
 import { captureConsole, PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";
 

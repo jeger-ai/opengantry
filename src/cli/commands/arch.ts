@@ -7,7 +7,7 @@ import {
   runAtCommandBoundaryAsync,
 } from "../lib/command-boundary.js";
 import { fetchExternalArchitecture } from "../lib/arch/external/architecture-fetch.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import {
   formatArchCheckHuman,
   ratchetArchBaseline,

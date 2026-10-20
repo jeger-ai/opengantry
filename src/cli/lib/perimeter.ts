@@ -2,13 +2,9 @@ import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitRevParse, gitRun, gitRunOk } from "#git/git.js";
-import {
-  commitSubjectHasMsnPrefix,
-  listCommitChangedPaths,
-  listMsnSubjectCommits,
-  type MsnCommitRow,
-} from "./git/git-proof.js";
-import { resolvePlannerEmails } from "./planner-identity.js";
+import { commitSubjectHasMsnPrefix, listMsnSubjectCommits, type MsnCommitRow } from "#git/msn-commits.js";
+import { listCommitChangedPaths } from "./git/git-proof.js";
+import { resolvePlannerEmails } from "#missions/planner-identity.js";
 import type { Manifest } from "#core/manifest.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
 import { resolveOrgPolicy } from "#plane/policy-resolve.js";

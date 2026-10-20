@@ -3,7 +3,7 @@ import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { runKpiScan } from "../lib/kpi-scan.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ScanOptions {
   mission?: string;

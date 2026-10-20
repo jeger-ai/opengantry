@@ -7,7 +7,7 @@ import { canonicalJson } from "#core/canonical-json.js";
 import { gitRun } from "#git/git.js";
 import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId } from "#core/gate-adapter.js";
 import { type MissionContract } from "#core/contract-types.js";
-import { contractSha256, normalizeContract } from "#missions/contract/contract-hash.js";
+import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
 export const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;

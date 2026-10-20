@@ -7,7 +7,7 @@ import {
   statusBadgeLabel,
   type ReportOutcome,
 } from "./report-template-shared.js";
-import type { VerifyLastOutcome } from "../verify/verify-run-ring.js";
+import type { VerifyLastOutcome } from "#missions/verify/verify-run-ring.js";
 
 function renderOutcomeBadge(outcome: ReportOutcome | VerifyLastOutcome): string {
   return `<span class="${statusBadgeClass(outcome)}">${escapeHtml(statusBadgeLabel(outcome))}</span>`;

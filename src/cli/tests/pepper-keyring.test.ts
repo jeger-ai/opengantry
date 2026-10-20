@@ -11,7 +11,7 @@ import {
   listOrgIds,
   loadPepperKeyring,
   type PepperKeyringEntry,
-} from "../lib/pepper-keyring.js";
+} from "#missions/pepper-keyring.js";
 
 function writeKeyring(dir: string, entries: PepperKeyringEntry[]): string {
   const file = path.join(dir, "pepper-keyring.json");

@@ -1,4 +1,4 @@
-import { manifestExists } from "../manifest.js";
+import { manifestExists } from "#missions/manifest.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import * as p from "@clack/prompts";
@@ -16,8 +16,8 @@ import {
   TUTORIAL_MSN_ID,
 } from "../onboarding-flow.js";
 import { runStartOrchestration } from "../start-orchestration.js";
-import { loadWorkspace } from "../workspace.js";
-import { listMissionFiles } from "../missions/resolution.js";
+import { loadWorkspace } from "#missions/workspace.js";
+import { listMissionFiles } from "#missions/missions/resolution.js";
 import { runVerifyCore } from "../verify/verify-run.js";
 
 function findExistingTutorialMission(repoRoot: string): string | null {

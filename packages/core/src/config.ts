@@ -1,7 +1,7 @@
 import { parseLawFileDocument, type LawFileSource } from "./law-file.js";
 /**
  * `.gitagent/config.yaml` (ADR-0052 step 5c-i; the 3.x config.json is still read): the shape and the tier resolvers are pure. Reading the file and the
- * defensive-profile validation stay with the loader (`src/cli/lib/gxt-config.ts`).
+ * defensive-profile validation stay with the loader (`packages/missions/src/gxt-config.ts`).
  */
 export type PlannerSignatureTier = "off" | "warn" | "require";
 export type ReceiptSignatureTier = PlannerSignatureTier;

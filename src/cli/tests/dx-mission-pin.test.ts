@@ -11,9 +11,9 @@ import {
   resolveReceiptPath,
   summarizeReceipt,
 } from "../lib/receipt-inspect.js";
-import { pinMissionFile, readActiveMissionPin } from "../lib/missions/resolution.js";
+import { pinMissionFile, readActiveMissionPin } from "#missions/missions/resolution.js";
 import { GantryUserError } from "#core/user-error.js";
-import type { AttestationReceipt } from "../lib/attestation-receipt.js";
+import type { AttestationReceipt } from "#plane/attestation-receipt.js";
 
 function setupRepo(): { root: string; missionRel: string } {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-dx-"));

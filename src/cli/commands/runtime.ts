@@ -9,7 +9,7 @@ import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.j
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../lib/runtime-env.js";
 import { emitCliJson, runUserCommand, runUserCommandAsync } from "../lib/command-boundary.js";
 import { runRuntimeExec } from "../lib/runtime-exec.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface RuntimeEnvCliOptions {
   mission?: string;

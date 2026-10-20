@@ -1,13 +1,12 @@
-import { handleRuntimeEnv } from "./mcp-runtime.js";
+import { handleRuntimeEnv, handleResolveMission } from "./mcp-runtime.js";
 import {
   resolveGuardedMissionAbs,
   type StartOrchestrationInput,
   type StartOrchestrationMcpResult,
 } from "./mcp-governance-shared.js";
-import { handleResolveMission } from "./mcp-runtime.js";
-import { pinActiveMission } from "../missions/resolution.js";
+import { pinActiveMission } from "#missions/missions/resolution.js";
 import { runStartOrchestration } from "../start-orchestration.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export function handleStartOrchestration(input: StartOrchestrationInput): StartOrchestrationMcpResult {
   const result = runStartOrchestration({

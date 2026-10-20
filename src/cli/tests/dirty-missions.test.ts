@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import { isVerifiableMissionPath, listDirtyMissionPaths } from "../lib/dirty-missions.js";
+import { isVerifiableMissionPath, listDirtyMissionPaths } from "#missions/dirty-missions.js";
 import { gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 

@@ -1,6 +1,6 @@
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyPhaseFailure } from "./verify-failure.js";
-import type { VerifyFinding } from "./verify-finding.js";
+import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
+import type { VerifyFinding } from "#missions/verify/verify-finding.js";
 import type { VerifyFailedPayload } from "./verify-payload.js";
 import {
   clearRemediationSnapshot,
@@ -8,14 +8,14 @@ import {
   writeRemediationSnapshot,
   type RemediationSnapshot,
   REMEDIATION_SCHEMA_VERSION,
-} from "../context-feed-store.js";
-import { writeGateLog } from "../gate-log-writer.js";
+} from "#missions/context-feed-store.js";
+import { writeGateLog } from "#missions/gate-log-writer.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import {
   appendDigestToRing,
   computeFindingsDigest,
   digestRecurredInRing,
-} from "./verify-finding-fingerprint.js";
+} from "#missions/verify/verify-finding-fingerprint.js";
 
 const RECURRENCE_HINT =
   "Identical semantic findings recurred — stop the repair loop and escalate to Planner.";

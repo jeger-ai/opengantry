@@ -1,4 +1,4 @@
-import type { DoctorLine } from "../../doctor/doctor-types.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 import { loadTargetArchitecture, targetArchitectureMigrationHint } from "#missions/arch/cage/target-architecture.js";
 import fs from "node:fs";

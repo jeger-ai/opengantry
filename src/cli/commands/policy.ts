@@ -1,4 +1,4 @@
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import { configFloorViolations, orgPolicySnapshot, resolveOrgPolicyOrThrow } from "#plane/policy-resolve.js";
 import { localConfigFloor } from "../lib/policy/policy-resolve.js";

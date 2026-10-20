@@ -1,5 +1,5 @@
 import path from "node:path";
-import { readJsonOrNull } from "../atomic-fs.js";
+import { readJsonOrNull } from "#missions/atomic-fs.js";
 import {
   DEMO_NEXT_STEP,
   DEMO_PINNED_MISSION,

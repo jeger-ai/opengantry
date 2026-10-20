@@ -7,7 +7,7 @@ import {
   suggestSkillKeyFromFolder,
 } from "../lib/register-proposals.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface RegisterOptions {
   dir: string;

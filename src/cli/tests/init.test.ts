@@ -6,8 +6,8 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
-import { loadManifest } from "../lib/manifest.js";
-import { checkSkillManifestSync } from "../lib/skill-sync.js";
+import { loadManifest } from "#missions/manifest.js";
+import { checkSkillManifestSync } from "#missions/skill-sync.js";
 import { runInit } from "../commands/init.js";
 
 test("skill sync: manifest keys match skills/*.md", () => {

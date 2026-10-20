@@ -1,4 +1,4 @@
-import { readManifestDocument } from "./manifest.js";
+import { readManifestDocument } from "#missions/manifest.js";
 import fs from "node:fs";
 import path from "node:path";
 

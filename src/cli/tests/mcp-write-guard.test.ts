@@ -13,7 +13,7 @@ import {
 import { GXT_ERROR } from "#core/error-codes.js";
 import { handlePinMission } from "../lib/mcp/mcp-runtime.js";
 import { getRepoRoot } from "#git/git.js";
-import { loadManifest } from "../lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 
 function scaffoldRepo(): string {
   const ogRoot = getRepoRoot();

@@ -1,14 +1,15 @@
 import path from "node:path";
-import { GIT_CONFIG_PLANNER_EMAILS } from "../config-namespace.js";
+import { GIT_CONFIG_PLANNER_EMAILS } from "#missions/config-namespace.js";
 import { CLI_NAME, MSN_ID_PATTERN } from "#core/constants.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitRun } from "#git/git.js";
 import { hintGitProof, type GitProofHintContext } from "../fix-hints.js";
 import { GantryUserError } from "#core/user-error.js";
 import { extractMsnIdFromMissionPath } from "../missions/parser.js";
-import { resolvePlannerEmails } from "../planner-identity.js";
-import { loadGxtConfig, resolvePlannerSignatureTier } from "../gxt-config.js";
-import { checkPlannerStampSignature } from "../planner-signature.js";
+import { resolvePlannerEmails } from "#missions/planner-identity.js";
+import { loadGxtConfig } from "#missions/gxt-config.js";
+import { resolvePlannerSignatureTier } from "#core/config.js";
+import { checkPlannerStampSignature } from "#missions/planner-signature.js";
 import { logWarn } from "../cli-io.js";
 import { archOverrideAdvisoryMessage, commitSubjectHasArchOverride } from "../arch-override.js";
 
@@ -26,14 +27,6 @@ function throwGitProofError(
 
 /** Missions verified by `gantry verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
-export {
-  DEFAULT_MSN_SCAN_DEPTH,
-  ENV_MSN_SCAN_DEPTH,
-  commitSubjectHasMsnPrefix,
-  listMsnSubjectCommits,
-  resolveMsnScanDepth,
-  type MsnCommitRow,
-} from "#git/msn-commits.js";
 import { listMsnSubjectCommits, resolveMsnScanDepth, type MsnCommitRow } from "#git/msn-commits.js";
 
 export function missionPathRepoRelative(root: string, missionAbsolutePath: string): string {
