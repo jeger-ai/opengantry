@@ -1,0 +1,192 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0308]. Executor must not run until the [MSN-0308] legislation commit + pin.
+#
+# Legislated intent: ADR-0052 cleanup after the code-quality review, item 4: delete the command spec. Core
+# command-spec.ts and its test go; commands.yaml marks the verbs parsed inside gantry cage (dispatch: cage) and
+# mcp-tools.yaml names the subcommand each tool fronts (command); registry-surface.test.ts holds the Commander tree
+# and the MCP registration to the registries. Docs; baseline lowered. No surface or output change.
+#
+# Operator direction (2026-10-20, "do item 4, delete the command spec"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0308.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0308
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1c7c1311ceee
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0308.no-command-spec.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/registry/mcp-tools.yaml,
+      .gitagent/runs/MSN-0308.json, packages/core/src/command-spec.ts,
+      packages/core/src/index.ts, packages/core/tests/command-spec.test.ts,
+      src/cli/tests/command-spec.test.ts,
+      src/cli/tests/registry-surface.test.ts. Delete
+      packages/core/src/command-spec.ts, its core test and its export; add
+      dispatch: cage to the three cage verbs in .gitagent/registry/commands.yaml
+      and command: <subcommand or null> to every entry of
+      .gitagent/registry/mcp-tools.yaml (registry edits by the Planner in this
+      substrate mission, ADR-0052 B3); replace
+      src/cli/tests/command-spec.test.ts with
+      src/cli/tests/registry-surface.test.ts; docs/DEVELOPMENT.md and the
+      CHANGELOG. No command, tool, output or golden changes. ARCH_BASELINE.json
+      lowered only. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage verbs are unchanged; the
+      registry marks them as parsed inside gantry cage.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 77299d2f6c69
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0308.no-command-spec.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/registry/mcp-tools.yaml,
+      .gitagent/runs/MSN-0308.json, packages/core/src/command-spec.ts,
+      packages/core/src/index.ts, packages/core/tests/command-spec.test.ts,
+      src/cli/tests/command-spec.test.ts,
+      src/cli/tests/registry-surface.test.ts. Delete
+      packages/core/src/command-spec.ts, its core test and its export; add
+      dispatch: cage to the three cage verbs in .gitagent/registry/commands.yaml
+      and command: <subcommand or null> to every entry of
+      .gitagent/registry/mcp-tools.yaml (registry edits by the Planner in this
+      substrate mission, ADR-0052 B3); replace
+      src/cli/tests/command-spec.test.ts with
+      src/cli/tests/registry-surface.test.ts; docs/DEVELOPMENT.md and the
+      CHANGELOG. No command, tool, output or golden changes. ARCH_BASELINE.json
+      lowered only. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP write containment and the twenty tools are
+      unchanged; the tools registry now records the subcommand each tool fronts.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0308.no-command-spec.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/registry/mcp-tools.yaml,
+      .gitagent/runs/MSN-0308.json, packages/core/src/command-spec.ts,
+      packages/core/src/index.ts, packages/core/tests/command-spec.test.ts,
+      src/cli/tests/command-spec.test.ts,
+      src/cli/tests/registry-surface.test.ts. Delete
+      packages/core/src/command-spec.ts, its core test and its export; add
+      dispatch: cage to the three cage verbs in .gitagent/registry/commands.yaml
+      and command: <subcommand or null> to every entry of
+      .gitagent/registry/mcp-tools.yaml (registry edits by the Planner in this
+      substrate mission, ADR-0052 B3); replace
+      src/cli/tests/command-spec.test.ts with
+      src/cli/tests/registry-surface.test.ts; docs/DEVELOPMENT.md and the
+      CHANGELOG. No command, tool, output or golden changes. ARCH_BASELINE.json
+      lowered only. .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Operator direction (2026-10-20, after
+      the code-quality review: "do item 4, delete the command spec"): the spec
+      repeated the registries and fed nothing; the registries become the one
+      list, with the two facts only the spec held (dispatched cage verbs, the
+      subcommand each MCP tool fronts) as fields. Generating Commander and MCP
+      from a spec was the alternative and was not chosen. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0308.json written by gantry
+      verify --record (RULES §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify --contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The registries stay human-written YAML; two fields are added.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 96adf7fba31205a85aae06c4c8a83f42cdec2ff15e5220e0d8307efade675ba8
+declared_paths:
+  - .gitagent/missions/MSN-0308.no-command-spec.yaml
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/mcp-tools.yaml
+  - .gitagent/runs/MSN-0308.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/command-spec.ts
+  - packages/core/src/index.ts
+  - packages/core/tests/command-spec.test.ts
+  - src/cli/tests/command-spec.test.ts
+  - src/cli/tests/registry-surface.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0308.no-command-spec.yaml
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/mcp-tools.yaml
+    - .gitagent/runs/MSN-0308.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/command-spec.ts
+    - packages/core/src/index.ts
+    - packages/core/tests/command-spec.test.ts
+    - src/cli/tests/command-spec.test.ts
+    - src/cli/tests/registry-surface.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+contract_sha256: b18b8f2cd36f36d1363ef9b3231176386d343c73d98c5e7ecacb2067a4a4fd20
