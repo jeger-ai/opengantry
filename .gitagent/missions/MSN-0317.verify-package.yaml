@@ -1,0 +1,347 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0317]. Executor must not run until the [MSN-0317] legislation commit + pin.
+#
+# Legislated intent: ADR-0054 migration step 3. Receipt signing moves from plane to git; the standalone verify engine
+# (ADR-0051) moves from src/cli/lib/verify-standalone/ to packages/verify (core and git only) with its layer, rules
+# and budget in TARGET_ARCHITECTURE.yaml. Code moves, none is added; no output change.
+#
+# Operator direction (2026-10-20, "just go for it and continue until everything's done"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0317.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0317
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml gains the verify layer, its
+      downward-only rules and BUDGET-VERIFY in this Planner mission (ADR-0052
+      B1).
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage package is forbidden in this mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5524ece3c2bc
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0317.verify-package.yaml,
+      .gitagent/registry/error-codes.yaml, .gitagent/runs/MSN-0317.json,
+      package.json, packages/git/src/receipt-signing.ts,
+      packages/plane/src/attestation-export.ts,
+      packages/plane/src/attestation-receipt.ts, packages/verify/package.json,
+      packages/verify/src/checks.ts, packages/verify/src/contract.ts,
+      packages/verify/src/diff.ts, packages/verify/src/imports.ts,
+      packages/verify/src/python-imports.ts, packages/verify/src/run.ts,
+      packages/verify/tsconfig.json, src/cli/commands/verify-contract.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts,
+      src/cli/tests/verify-standalone.test.ts, TARGET_ARCHITECTURE.yaml,
+      tsconfig.json. ADR-0054 migration step 3 (decisions 3 and 5): git mv of
+      receipt-signing.ts to packages/git and of src/cli/lib/verify-standalone/
+      to packages/verify/src; import lines of the importers; the verify
+      package's package.json and tsconfig.json; root package.json imports and
+      tsconfig references; TARGET_ARCHITECTURE.yaml verify layer, rules and
+      budget; ARCH_BASELINE.json (verify row; git raised by the moved module, a
+      Planner raise under --allow-raise; plane and lib lowered);
+      error-codes.yaml defined_in paths; docs/DEVELOPMENT.md package table;
+      CHANGELOG; executor log. No logic changes. The cage package,
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: Accept. A1's verify package exists (core, git). The git budget
+      rises by the moved receipt-signing module only (Planner raise, B4); lib
+      and plane fall by the same amount and verify gets its first row.
+    adr_refs:
+      - ADR-0052
+  - finding_id: 6e8eea0df633
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0317.verify-package.yaml,
+      .gitagent/registry/error-codes.yaml, .gitagent/runs/MSN-0317.json,
+      package.json, packages/git/src/receipt-signing.ts,
+      packages/plane/src/attestation-export.ts,
+      packages/plane/src/attestation-receipt.ts, packages/verify/package.json,
+      packages/verify/src/checks.ts, packages/verify/src/contract.ts,
+      packages/verify/src/diff.ts, packages/verify/src/imports.ts,
+      packages/verify/src/python-imports.ts, packages/verify/src/run.ts,
+      packages/verify/tsconfig.json, src/cli/commands/verify-contract.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts,
+      src/cli/tests/verify-standalone.test.ts, TARGET_ARCHITECTURE.yaml,
+      tsconfig.json. ADR-0054 migration step 3 (decisions 3 and 5): git mv of
+      receipt-signing.ts to packages/git and of src/cli/lib/verify-standalone/
+      to packages/verify/src; import lines of the importers; the verify
+      package's package.json and tsconfig.json; root package.json imports and
+      tsconfig references; TARGET_ARCHITECTURE.yaml verify layer, rules and
+      budget; ARCH_BASELINE.json (verify row; git raised by the moved module, a
+      Planner raise under --allow-raise; plane and lib lowered);
+      error-codes.yaml defined_in paths; docs/DEVELOPMENT.md package table;
+      CHANGELOG; executor log. No logic changes. The cage package,
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Accept. Reports stay digest-only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. No output changes; conformance goldens unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: "Accept. This is migration step 3 (decisions 3 and 5): receipt
+      signing moves to git and the ADR-0051 engine becomes packages/verify with
+      its layer, rules and budget; code moves, none is added."
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0317.verify-package.yaml,
+      .gitagent/registry/error-codes.yaml, .gitagent/runs/MSN-0317.json,
+      package.json, packages/git/src/receipt-signing.ts,
+      packages/plane/src/attestation-export.ts,
+      packages/plane/src/attestation-receipt.ts, packages/verify/package.json,
+      packages/verify/src/checks.ts, packages/verify/src/contract.ts,
+      packages/verify/src/diff.ts, packages/verify/src/imports.ts,
+      packages/verify/src/python-imports.ts, packages/verify/src/run.ts,
+      packages/verify/tsconfig.json, src/cli/commands/verify-contract.ts,
+      src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts,
+      src/cli/tests/verify-standalone.test.ts, TARGET_ARCHITECTURE.yaml,
+      tsconfig.json. ADR-0054 migration step 3 (decisions 3 and 5): git mv of
+      receipt-signing.ts to packages/git and of src/cli/lib/verify-standalone/
+      to packages/verify/src; import lines of the importers; the verify
+      package's package.json and tsconfig.json; root package.json imports and
+      tsconfig references; TARGET_ARCHITECTURE.yaml verify layer, rules and
+      budget; ARCH_BASELINE.json (verify row; git raised by the moved module, a
+      Planner raise under --allow-raise; plane and lib lowered);
+      error-codes.yaml defined_in paths; docs/DEVELOPMENT.md package table;
+      CHANGELOG; executor log. No logic changes. The cage package,
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Operator direction (2026-10-20, \"just go for it and continue
+      until everything's done\"); ADR-0054 decisions 3 and 5, migration step 3.
+      The git budget raise is the Planner's decision in this mission: it is the
+      moved receipt-signing module and nothing else (lines moved 1:1; the
+      repository total is unchanged). Tests of standalone verify stay in
+      src/cli/tests because three of the four spawn the CLI. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0317.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: Accept. Receipt signing moves from plane to git unchanged;
+      receipts and their signatures are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0036
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. Mission scope composition is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 stands. The contract engine moves unchanged to
+      packages/verify; the result schema, signing and exit codes are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract cage is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. .cage.yaml and the manifest keep their formats.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept. Gate adapters are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0041
+interrogation_sha256: 4902dbef8a364044fdb216bd616dd28796b5d2efafb727f52d27f012b41957ef
+declared_paths:
+  - .gitagent/missions/MSN-0317.verify-package.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0317.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - package.json
+  - packages/git/src/receipt-signing.ts
+  - packages/plane/src/attestation-export.ts
+  - packages/plane/src/attestation-receipt.ts
+  - packages/verify/package.json
+  - packages/verify/src/checks.ts
+  - packages/verify/src/contract.ts
+  - packages/verify/src/diff.ts
+  - packages/verify/src/imports.ts
+  - packages/verify/src/python-imports.ts
+  - packages/verify/src/run.ts
+  - packages/verify/tsconfig.json
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/attestation-receipt.test.ts
+  - src/cli/tests/verify-standalone-imports.test.ts
+  - src/cli/tests/verify-standalone-sign.test.ts
+  - src/cli/tests/verify-standalone.test.ts
+  - tsconfig.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0317.verify-package.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0317.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - package.json
+    - packages/git/src/receipt-signing.ts
+    - packages/plane/src/attestation-export.ts
+    - packages/plane/src/attestation-receipt.ts
+    - packages/verify/package.json
+    - packages/verify/src/checks.ts
+    - packages/verify/src/contract.ts
+    - packages/verify/src/diff.ts
+    - packages/verify/src/imports.ts
+    - packages/verify/src/python-imports.ts
+    - packages/verify/src/run.ts
+    - packages/verify/tsconfig.json
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/attestation-receipt.test.ts
+    - src/cli/tests/verify-standalone-imports.test.ts
+    - src/cli/tests/verify-standalone-sign.test.ts
+    - src/cli/tests/verify-standalone.test.ts
+    - tsconfig.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/cage/
+contract_sha256: 82022f3796043c8767d83bb7236f79d593f21ae16c10a20763a731b89d7f9c44
