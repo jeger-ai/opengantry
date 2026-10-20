@@ -10,7 +10,7 @@ import {
   listReceipts,
   resolveReceiptPath,
   summarizeReceipt,
-} from "../lib/receipt-inspect.js";
+} from "#missions/receipt-inspect.js";
 import { pinMissionFile, readActiveMissionPin } from "#missions/missions/resolution.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { AttestationReceipt } from "#plane/attestation-receipt.js";

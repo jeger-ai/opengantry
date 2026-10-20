@@ -39,7 +39,7 @@ import {
   resolveRepairErrorCode,
   type RepairContext,
 } from "../repairs/registry.js";
-import { persistRemediationFromFailedPayload } from "../context-feed-remediation.js";
+import { persistRemediationFromFailedPayload } from "#missions/context-feed-remediation.js";
 import {
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,

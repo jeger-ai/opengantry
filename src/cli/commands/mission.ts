@@ -6,7 +6,7 @@ import { runUserCommand } from "../lib/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
 import { discoverChangedMissions } from "#missions/mission-changed.js";
 import { assertMissionGatePresent, isValidMsnId, parseMissionFile } from "#missions/missions/parser.js";
-import { captureStartState, writeSnapshot } from "../lib/start-snapshot.js";
+import { captureStartState, writeSnapshot } from "#missions/start-snapshot.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export function runMissionValidate(file: string): void {

@@ -10,8 +10,8 @@ import {
   runArchitecturePointerDoctorChecks,
   validateArchitecturePointer,
 } from "#missions/arch/external/architecture-pointer.js";
-import { composeArchitecturePointer } from "../lib/init/init-compose.js";
-import { defaultInitProfile } from "../lib/init/init-profile.js";
+import { composeArchitecturePointer } from "#missions/init/init-compose.js";
+import { defaultInitProfile } from "#missions/init/init-profile.js";
 
 test("validateArchitecturePointer: accepts file, directory, external", () => {
   assert.deepEqual(

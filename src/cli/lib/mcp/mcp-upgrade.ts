@@ -1,16 +1,17 @@
+import { CLI_DIAGNOSTICS } from "../cli-io.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { McpErrorBody } from "./mcp-governance-shared.js";
 import { McpWriteDeniedError } from "#missions/mcp/mcp-write-guard.js";
-import type { UpgradeApplyResult } from "../upgrade/upgrade-apply.js";
+import type { UpgradeApplyResult } from "#missions/upgrade/upgrade-apply.js";
 import {
   assertStableUpgradePlanPayloadV1,
   toStableUpgradePlanPayloadV1,
   type StableUpgradePlanPayloadV1,
 } from "#missions/upgrade/upgrade-plan-payload.js";
-import { runUpgradeApply } from "../upgrade/upgrade-apply.js";
-import { runUpgradePlan } from "../upgrade/upgrade-plan.js";
+import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
+import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
 
 export type UpgradePlanMcpResult =
   | StableUpgradePlanPayloadV1
@@ -47,6 +48,7 @@ export function handleUpgradePlan(input: UpgradePlanMcpInput = {}): UpgradePlanM
   try {
     const result = runUpgradePlan({
       repoRoot,
+      log: CLI_DIAGNOSTICS,
       msn: input.msn_id,
       dryRun: input.dry_run === true,
       json: true,
@@ -64,6 +66,7 @@ export async function handleUpgradeApply(missionFilePath?: string): Promise<Upgr
   try {
     return await runUpgradeApply({
       repoRoot,
+      log: CLI_DIAGNOSTICS,
       mission: missionFilePath,
       json: true,
     });

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { captureStartState } from "../lib/start-snapshot.js";
+import { captureStartState } from "#missions/start-snapshot.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "./test-fixtures.js";
 
 test("captureStartState: records head and manifest hash", () => {

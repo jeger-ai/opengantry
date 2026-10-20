@@ -6,7 +6,7 @@ import os from "node:os";
 import { execSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
 import { runInit } from "../commands/init.js";
-import { runUpgradePlan } from "../lib/upgrade/upgrade-plan.js";
+import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
 import { loadIntegrationCompat } from "#missions/integration-compat.js";
 import { writeSubstrateVersionFile } from "#missions/substrate-version.js";
 import {

@@ -16,7 +16,7 @@ import {
   writeGateCaptureSync,
 } from "../src/virtual-scratch-store.js";
 import type { Manifest } from "../../../src/cli/lib/types.js";
-import { mergeGitignoreFromTemplate } from "../../../src/cli/lib/file-merge-gxt.js";
+import { mergeGitignoreFromTemplate } from "../../../packages/missions/src/file-merge-gxt.js";
 import { getRepoRoot } from "../../../src/cli/lib/git/git.js";
 import {
   copyMissionSchema,

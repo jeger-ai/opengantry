@@ -1,3 +1,4 @@
+import type { Diagnostics } from "../diagnostics.js";
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
 
 export interface UpgradeFileChange {
@@ -38,6 +39,8 @@ export interface UpgradePlanResult {
 
 export interface RunUpgradePlanOptions {
   repoRoot: string;
+  /** Progress and summary lines (the CLI passes its log helpers). */
+  log?: Diagnostics;
   templatesRoot?: string;
   msn?: string;
   dryRun?: boolean;
