@@ -9,6 +9,13 @@
  *   verify contract paths), so `src/legacy` and `src/legacy/` cover the whole folder.
  */
 
+/** Drops trailing slashes in linear time (a `/\\/+$/` RegExp is quadratic on many slashes). */
+function trimTrailingSlashes(p: string): string {
+  let end = p.length;
+  while (end > 0 && p[end - 1] === "/") end -= 1;
+  return p.slice(0, end);
+}
+
 function normalize(p: string): string {
   return p.replace(/\\/g, "/").replace(/^(\.\/)+/, "");
 }
@@ -44,10 +51,10 @@ export function pathMatchesGlobPattern(repoRelPath: string, glob: string): boole
 
 /** True when the pattern matches the path or a folder above it; `.` and an empty pattern cover everything. */
 export function patternCoversPath(pattern: string, repoRelPath: string): boolean {
-  const g = normalize(pattern).replace(/\/+$/, "");
+  const g = trimTrailingSlashes(normalize(pattern));
   if (g === "" || g === ".") return true;
   const re = globToRegExp(g);
-  const segs = normalize(repoRelPath).replace(/\/+$/, "").split("/");
+  const segs = trimTrailingSlashes(normalize(repoRelPath)).split("/");
   for (let i = segs.length; i > 0; i -= 1) {
     if (re.test(segs.slice(0, i).join("/"))) return true;
   }
