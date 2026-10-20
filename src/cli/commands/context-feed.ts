@@ -3,8 +3,8 @@ import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import {
   clearRemediationSnapshot,
   readRemediationSnapshot,
-} from "../lib/context-feed-store.js";
-import { loadWorkspace } from "../lib/workspace.js";
+} from "#missions/context-feed-store.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ContextFeedOptions {
   json?: boolean;

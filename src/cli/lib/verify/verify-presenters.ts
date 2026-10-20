@@ -9,10 +9,10 @@ import { logInfo, logWarn, writeStdout } from "../cli-io.js";
 import { Reporter } from "../reporter.js";
 import { logFixHint } from "../fix-hints.js";
 import { loadPrompts } from "../prompts-loader.js";
-import { appendRepairMutationLog } from "../repair.js";
+import { appendRepairMutationLog } from "#missions/repair.js";
 import { evaluateVerifyPhases, type VerifyPhaseResult } from "./verify-engine.js";
-import type { VerifyPhaseFailure } from "./verify-failure.js";
-import type { VerifyPhaseTiming } from "./verify-phase-clock.js";
+import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
+import type { VerifyPhaseTiming } from "#missions/verify/verify-phase-clock.js";
 import {
   buildVerifyExportDocument,
   type JUnitCase,
@@ -45,7 +45,7 @@ import {
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,
 } from "./verify-remediation-pipeline.js";
-import { readRemediationSnapshot, type RemediationSnapshot } from "../context-feed-store.js";
+import { readRemediationSnapshot, type RemediationSnapshot } from "#missions/context-feed-store.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 
 /** Shared verify orchestration context (load once, present by sink). */

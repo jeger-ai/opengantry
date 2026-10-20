@@ -2,15 +2,15 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import { logWarn, setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
-import { resolvePinnedMission } from "../lib/missions/resolution.js";
+import { resolvePinnedMission } from "#missions/missions/resolution.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,
-} from "../lib/staged-tmvc-guard.js";
-import { loadWorkspace } from "../lib/workspace.js";
+} from "#missions/staged-tmvc-guard.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { appendEventSpool } from "../lib/event-spool.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
-import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
+import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
 
 export interface TmvcGuardCliOptions {
   mission?: string;

@@ -1,16 +1,16 @@
 import type { VerifyFailedPayload } from "./verify/verify-payload.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyPhaseFailure } from "./verify/verify-failure.js";
+import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
 import { toPosixRel } from "#core/posix-path.js";
-import { writeRemediationSnapshot, type RemediationSnapshot } from "./context-feed-store.js";
-import { writeGateLog } from "./gate-log-writer.js";
+import { writeRemediationSnapshot, type RemediationSnapshot } from "#missions/context-feed-store.js";
+import { writeGateLog } from "#missions/gate-log-writer.js";
 import {
   buildCompactRemediationSnapshot,
   loadPriorDigestRing,
   applyFindingsRecurrence,
 } from "./verify/verify-remediation-pipeline.js";
-import { computeFindingsDigest } from "./verify/verify-finding-fingerprint.js";
+import { computeFindingsDigest } from "#missions/verify/verify-finding-fingerprint.js";
 import { buildFindingsForFailure, toVerifyFailedPayload } from "./verify/verify-payload.js";
 import { normalizeVerifyPhaseFailure } from "./verify/verify-failure-normalize.js";
 

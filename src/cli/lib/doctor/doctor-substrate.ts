@@ -5,7 +5,7 @@ import {
   legacyVersionWarning,
   readInstalledSubstrateVersion,
 } from "../substrate-version.js";
-import type { DoctorLine, DoctorSection } from "./doctor-types.js";
+import type { DoctorLine, DoctorSection } from "#missions/doctor/doctor-types.js";
 
 export function runSubstrateDriftDoctorChecks(
   repoRoot: string,

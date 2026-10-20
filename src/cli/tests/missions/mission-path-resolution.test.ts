@@ -9,7 +9,7 @@ import {
   readActiveMissionPin,
   resolvePinnedMission,
   pinMissionFile,
-} from "../../lib/missions/resolution.js";
+} from "#missions/missions/resolution.js";
 
 test("buildMissionResolutionCandidates: GANTRY_MISSION is the first env candidate; a legacy prefix is not read", () => {
   const candidates = buildMissionResolutionCandidates("/repo", {

@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { MAX_IO_BUFFER_BYTES } from "../lib/gate.js";
-import { readGateLogText } from "../lib/gate-log-writer.js";
+import { MAX_IO_BUFFER_BYTES } from "#missions/gate.js";
+import { readGateLogText } from "#missions/gate-log-writer.js";
 
 describe("readGateLogText bounded tail read", () => {
   it("returns full file when under cap", () => {

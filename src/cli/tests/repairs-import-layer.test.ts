@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { importLayerRepair } from "../lib/repairs/import-layer.js";
 import type { RepairContext } from "../lib/repairs/registry.js";
-import type { VerifyPhaseFailure } from "../lib/verify/verify-failure.js";
+import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
 
 test("importLayerRepair: applies bottom-to-top quarantine from gate JSON", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-repair-layer-"));

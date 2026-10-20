@@ -9,7 +9,7 @@ import { hintsForVerifyPhase, type AudienceTaggedStep } from "./verify-hints.js"
 import {
   REMEDIATION_SCHEMA_VERSION,
   type RemediationSnapshot,
-} from "../context-feed-store.js";
+} from "#missions/context-feed-store.js";
 import type {
   GateFailure,
   InterrogationFailure,
@@ -18,7 +18,7 @@ import type {
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
-} from "./verify-failure.js";
+} from "#missions/verify/verify-failure.js";
 
 /** Canonical verify-failure contract — single mapping for all sinks.
  * Gate output lives in the single `gate` field; sink projections rename at their boundary. */

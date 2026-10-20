@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { verifyTraceRows } from "../lib/trace.js";
-import { gatePassed } from "../lib/gate.js";
+import { verifyTraceRows } from "#missions/trace-quote.js";
+import { gatePassed } from "#missions/gate.js";
 import { parseOptionalTimeoutMs } from "../lib/cli-io.js";
 
 test("verifyTraceRows: anchor line must contain quote", () => {

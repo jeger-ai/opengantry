@@ -6,7 +6,7 @@ import path from "node:path";
 import { formatContractBlock } from "#missions/contract/format.js";
 import { proposeContract } from "#missions/contract/propose.js";
 import { getRepoRoot } from "#git/git.js";
-import { loadManifest } from "../lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 
 function fixtureRepo(): string {

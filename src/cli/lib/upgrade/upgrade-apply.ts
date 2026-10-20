@@ -6,17 +6,17 @@ import { CLI_NAME } from "#core/constants.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { fromPosix } from "#core/posix-path.js";
 import { logInfo } from "../cli-io.js";
-import { promoteFileAtomic } from "../atomic-fs.js";
+import { promoteFileAtomic } from "#missions/atomic-fs.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../file-merge-gxt.js";
 import { resolveTemplateRootFromModule } from "../integration-compat.js";
-import { resolveMissionPathRequired } from "../missions/resolution.js";
-import { assertMissionSchemaValid } from "../missions/validator.js";
+import { resolveMissionPathRequired } from "#missions/missions/resolution.js";
+import { assertMissionSchemaValid } from "#missions/missions/validator.js";
 import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../mcp/mcp-write-guard.js";
-import { loadManifest } from "../manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import { writeSubstrateVersionFile } from "../substrate-version.js";
 import { parseUpgradePayloadFromMissionBody } from "./upgrade-plan-scaffold.js";
 import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";

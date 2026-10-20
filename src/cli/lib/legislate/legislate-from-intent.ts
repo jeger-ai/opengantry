@@ -5,7 +5,7 @@ import { proposeContract } from "#missions/contract/propose.js";
 import { GantryUserError } from "#core/user-error.js";
 import { logInfo } from "../cli-io.js";
 import { resolveSkillKeyForLegislation, runLegislate, type LegislateOptions, type LegislateResult } from "./legislate.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import type { MissionContract } from "#core/contract-types.js";
 
 export interface FromIntentOptions extends LegislateOptions {

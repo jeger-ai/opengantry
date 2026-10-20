@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CANONICAL_CLI_SKILL_KEY, manifestHasSkill } from "../lib/skill-key.js";
+import { CANONICAL_CLI_SKILL_KEY, manifestHasSkill } from "#missions/skill-key.js";
 import type { Manifest } from "#core/manifest.js";
 
 const manifest: Manifest = {

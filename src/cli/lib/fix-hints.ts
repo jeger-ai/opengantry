@@ -1,6 +1,6 @@
 import { logInfo } from "./cli-io.js";
-import { plannerIdentitySetupHint } from "./planner-identity.js";
-import type { TraceFailureKind } from "./trace.js";
+import { plannerIdentitySetupHint } from "#missions/planner-identity.js";
+import type { TraceFailureKind } from "#missions/trace-quote.js";
 
 const REL_MISSIONS_PREFIX = ".gitagent/missions/";
 

@@ -8,7 +8,7 @@ import {
   type CheckSignatureResult,
   type McpErrorBody,
 } from "./mcp-governance-shared.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export function handleCheckSignature(
   missionFilePath: string,

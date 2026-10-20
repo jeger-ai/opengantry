@@ -176,7 +176,7 @@ Rules while the rewrite runs:
 | `packages/cage` | the cage runtime (15 modules: rules, snapshot, run, watch, check, suggest, journal, push guard, scope) | core, git |
 | `packages/plane` | the org plane: `ledger-entry`, `ledger-chain`, `ledger-append`, `ledger-export`, `policy-types`, `policy-bundle`, `policy-resolve`, `policy-fetch`, `deps-slug`, `deps-fetch`, `deps-resolve`, `receipt-attribution`, `attestation-receipt`, `attestation-export`, `org-export-config`, `digests` | core, git |
 | `packages/verify` | the standalone verify contract engine (ADR-0051): `contract`, `diff`, `checks`, `imports`, `python-imports`, `run` | core, git |
-| `packages/missions` | the governed substrate (ADR-0054 decision 6), moving in from `src/cli/lib` by sub-area. So far: `contract/` (contract hash and format, effective scope, contract scan, the proposer), `tmvc-path` (the mission path law), `arch/cage/target-architecture` (the `TARGET_ARCHITECTURE.yaml` loader), `domains/` (domain adapters), `discovery-scanner` | core, git, verify, plane |
+| `packages/missions` | the governed substrate (ADR-0054 decision 6), moving in from `src/cli/lib` by sub-area. So far: `contract/` (contract hash and format, effective scope, contract scan, the proposer), `tmvc-path` (the mission path law), `arch/cage/target-architecture` (the `TARGET_ARCHITECTURE.yaml` loader), `domains/` (domain adapters), `discovery-scanner`; the mission core: `missions/` (formatter, resolution, validator), `interrogate/`, `gate-adapters/`, `gate` and `gate-log-writer`, `trace-quote`, `trace-evidence` and the executor-log helpers, `planner-identity`, `planner-signature`, `draft-token`, `verdict-token`, `triage-logic`, the staged guard and forbidden scan, `manifest`, `gxt-config`, `law-files`, `workspace`, and the delivery-free parts of mission verify (findings, fingerprints, failures, the run ring) | core, git, verify, plane |
 
 - Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
 - Import a package module as `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js`, `#plane/<module>.js`, `#verify/<module>.js` or `#missions/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a re-export facade under `src/cli/lib`; the last ones are gone (rewrite step 5e).
@@ -301,7 +301,7 @@ Deterministic quarantine mutations for specific gate failures — an isolation l
 
 **Import-layer JSON contract:** `node scripts/check-import-layers.mjs --json <files…>` emits `{ schema_version, ok, violations[] }` with stable `rule_id` values. Repairs parse JSON only — not human stderr.
 
-Implementation: [`src/cli/lib/repairs/`](../src/cli/lib/repairs/) registry, [`src/cli/lib/repair.ts`](../src/cli/lib/repair.ts) log and gate-report helpers, orchestration in `src/cli/lib/verify/verify-presenters.ts`.
+Implementation: [`src/cli/lib/repairs/`](../src/cli/lib/repairs/) registry, [`packages/missions/src/repair.ts`](../packages/missions/src/repair.ts) log and gate-report helpers, orchestration in `src/cli/lib/verify/verify-presenters.ts`.
 
 **Release:** see [`CHANGELOG.md`](CHANGELOG.md) § Maintainers for npm publish and release-squash policy.
 

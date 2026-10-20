@@ -1,8 +1,8 @@
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
 import type { InterrogationRow } from "#core/interrogation.js";
-import { runInterrogate, type InterrogateResult } from "../interrogate/run.js";
-import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
+import { runInterrogate, type InterrogateResult } from "#missions/interrogate/run.js";
+import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";
 
 export interface InterrogateMcpInput {
   intent: string;

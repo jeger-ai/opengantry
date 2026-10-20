@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
-import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
+import { runLegislate, type LegislateOptions } from "./lib/legislate/legislate.js";
 import { runLegislateFromIntent } from "./lib/legislate/legislate-from-intent.js";
 import { isGantryUserError, errorMessage } from "#core/user-error.js";
 import { runMetrics } from "./commands/metrics.js";

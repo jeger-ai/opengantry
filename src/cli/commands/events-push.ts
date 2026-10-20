@@ -2,7 +2,7 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import crypto from "node:crypto";
 import { logInfo, logError, setExitCode } from "../lib/cli-io.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import {
   clearSpoolFiles,
   listSpoolFiles,
@@ -11,7 +11,7 @@ import {
 } from "../lib/event-spool.js";
 import { GantryUserError } from "#core/user-error.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
-import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
+import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
 
 export interface EventsPushOptions {
   url?: string;

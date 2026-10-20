@@ -6,8 +6,8 @@ import {
   buildPhaseBars,
   projectReportViewModel,
 } from "../lib/report/report-projector.js";
-import { verifyFinding } from "../lib/verify/verify-finding.js";
-import { appendVerifyRunRing } from "../lib/verify/verify-run-ring.js";
+import { verifyFinding } from "#missions/verify/verify-finding.js";
+import { appendVerifyRunRing } from "#missions/verify/verify-run-ring.js";
 import { renderReportHtml } from "../lib/report/report-template-html.js";
 import { jsonScriptIsland } from "../lib/report/report-template-shared.js";
 import fs from "node:fs";

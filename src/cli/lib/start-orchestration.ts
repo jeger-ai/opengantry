@@ -1,9 +1,9 @@
 import { runLegislate } from "./legislate/legislate.js";
-import { isTriageEscalated, formatTriageHuman, triageIntent } from "./triage-logic.js";
+import { isTriageEscalated, formatTriageHuman, triageIntent } from "#missions/triage-logic.js";
 import { writeInterrogationRequiredError } from "./errors.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { resolveLegislateGateOptions } from "./legislate/legislate-gate-options.js";
-import { runInterrogate } from "./interrogate/run.js";
+import { resolveLegislateGateOptions } from "#missions/legislate/legislate-gate-options.js";
+import { runInterrogate } from "#missions/interrogate/run.js";
 import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "./cli-io.js";
 import { allocateMsn } from "./msn-allocate.js";
@@ -18,7 +18,7 @@ import {
   type OutputAudience,
 } from "./audience-output.js";
 import { currentReporter } from "./reporter.js";
-import { loadWorkspace } from "./workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface StartOptions {
   intent: string;

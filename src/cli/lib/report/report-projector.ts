@@ -7,9 +7,9 @@ import {
   readLatestVerifyRunSnapshot,
   readVerifyRunSnapshot,
   type VerifyLastSnapshot,
-} from "../verify/verify-run-ring.js";
-import type { VerifyPhaseTiming } from "../verify/verify-phase-clock.js";
-import type { VerifyFinding } from "../verify/verify-finding.js";
+} from "#missions/verify/verify-run-ring.js";
+import type { VerifyPhaseTiming } from "#missions/verify/verify-phase-clock.js";
+import type { VerifyFinding } from "#missions/verify/verify-finding.js";
 
 export type { ReportOutcome };
 

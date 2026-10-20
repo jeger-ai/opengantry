@@ -10,7 +10,7 @@ import {
   DEFAULT_PERIMETER_PROTECTED,
   isPerimeterProtectedPath,
 } from "../lib/perimeter.js";
-import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";
+import { ensurePlannerAllowedSignersFile } from "#missions/planner-signature.js";
 import { patternCoversPath } from "#core/path-glob.js";
 import type { Manifest } from "#core/manifest.js";
 import { gitCommit, gitInitCommit } from "./test-fixtures.js";

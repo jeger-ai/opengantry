@@ -6,7 +6,7 @@ import {
   type GitMetricsReport,
   type MissionTimelineEntry,
 } from "../git/git-metrics.js";
-import { loadManifest } from "../manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import { MSN_ID_PATTERN } from "#core/constants.js";
 import type { ReportOutcome } from "./report-template-shared.js";
 import { buildStatusReport, type StatusReport } from "../status-report.js";
@@ -17,7 +17,7 @@ import {
   type VerifyLastOutcome,
   type VerifyLastSnapshot,
   type VerifyRunRingEntry,
-} from "../verify/verify-run-ring.js";
+} from "#missions/verify/verify-run-ring.js";
 
 const BLOCKER_LIMIT = 5;
 

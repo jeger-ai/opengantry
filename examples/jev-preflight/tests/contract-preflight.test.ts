@@ -16,7 +16,7 @@ import { runPreflight } from "../src/preflight.js";
 import { jevFallbackRationale, type JevFallbackReason, type PreflightResult } from "../src/preflight-types.js";
 import { handlePreflightContract } from "../src/mcp-preflight-contract.js";
 import { getRepoRoot } from "../../../src/cli/lib/git/git.js";
-import { loadManifest } from "../../../src/cli/lib/manifest.js";
+import { loadManifest } from "../../../packages/missions/src/manifest.js";
 import { copyMissionSchema, gitInitCommit, writeManifest } from "../../../src/cli/tests/test-fixtures.js";
 import { PLANNER_EMAIL } from "../../../src/cli/tests/test-shared.js";
 

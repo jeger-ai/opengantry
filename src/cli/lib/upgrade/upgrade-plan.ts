@@ -36,13 +36,6 @@ import {
   type UpgradePlanResult,
 } from "./upgrade-plan-types.js";
 
-export type {
-  UpgradeFileChange,
-  UpgradePayload,
-  UpgradePlanResult,
-  RunUpgradePlanOptions,
-} from "./upgrade-plan-types.js";
-
 function resolveUpgradeVersionGate(
   installed: ReturnType<typeof readInstalledSubstrateVersion>,
   bundled: string,

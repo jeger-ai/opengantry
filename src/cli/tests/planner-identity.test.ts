@@ -4,8 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { execSync } from "node:child_process";
-import { ENV_PLANNER_EMAILS } from "../lib/config-namespace.js";
-import { REL_PLANNER_ALLOWLIST, REL_PLANNER_ALLOWLIST_LOCAL, ensurePlannerAllowlistOnInit, resolvePlannerEmails, writePlannerAllowlistLocal } from "../lib/planner-identity.js";
+import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
+import { REL_PLANNER_ALLOWLIST, REL_PLANNER_ALLOWLIST_LOCAL, ensurePlannerAllowlistOnInit, resolvePlannerEmails, writePlannerAllowlistLocal } from "#missions/planner-identity.js";
 
 function mkRepo(): string {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-teacher-id-"));

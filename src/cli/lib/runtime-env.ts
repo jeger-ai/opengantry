@@ -6,8 +6,8 @@ import type { EffectiveScope } from "#core/contract-types.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./errors.js";
 import { parseMissionFile } from "./missions/parser.js";
-import type { Workspace } from "./workspace.js";
-import { defaultExecutorLogPath } from "./trace.js";
+import type { Workspace } from "#missions/workspace.js";
+import { defaultExecutorLogPath } from "#missions/trace-quote.js";
 
 export interface ResolvedRuntimeEnv {
   /** Absolute Git repo root */

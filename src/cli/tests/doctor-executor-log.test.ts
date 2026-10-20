@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { runExecutorLogIntegrityDoctorChecks } from "../lib/executor-log-integrity.js";
+import { runExecutorLogIntegrityDoctorChecks } from "#missions/executor-log-integrity.js";
 
 test("runExecutorLogIntegrityDoctorChecks: detects conflict markers and duplicates", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-wl-doc-"));

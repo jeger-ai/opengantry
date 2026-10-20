@@ -19,7 +19,7 @@ import type { Manifest } from "#core/manifest.js";
 import { gitRunOk } from "#git/git.js";
 import { perimeterPaths } from "./perimeter.js";
 import { parseLawFileDocument } from "#core/law-file.js";
-import { readGxtConfigSource } from "./gxt-config.js";
+import { readGxtConfigSource } from "#missions/gxt-config.js";
 
 export function loadTrustedAutomationRules(root: string): TrustedAutomationRule[] {
   const source = readGxtConfigSource(root);

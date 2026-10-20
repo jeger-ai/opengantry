@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { promoteFileAtomic } from "../lib/atomic-fs.js";
+import { promoteFileAtomic } from "#missions/atomic-fs.js";
 
 test("promoteFileAtomic: rename staged file to target", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-atomic-"));

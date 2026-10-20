@@ -1,21 +1,4 @@
 // The config shape and resolvers live in packages/core; this reads the file (ADR-0047 dual-read since MSN-0302).
-export {
-  FLIGHT_TELEMETRY_BODY_MODES,
-  LEDGER_MODES,
-  PLANNER_SIGNATURE_TIERS,
-  RECEIPT_SIGNATURE_TIERS,
-  resolveFlightTelemetryBodyMode,
-  resolveLedgerMode,
-  resolveLedgerSignatureTier,
-  resolvePlannerSignatureTier,
-  resolveReceiptSignatureTier,
-  type FlightTelemetryBodyMode,
-  type FlightTelemetryConfig,
-  type LedgerConfig,
-  type LedgerMode,
-  type PlannerSignatureTier,
-  type ReceiptSignatureTier,
-} from "#core/config.js";
 import { parseGxtConfigSource, type GxtConfigShape } from "#core/config.js";
 import type { LawFileSource } from "#core/law-file.js";
 import { readLawFileAt } from "./law-files.js";

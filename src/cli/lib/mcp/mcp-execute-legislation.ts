@@ -1,5 +1,5 @@
 import { formatRepoRelative } from "#core/posix-path.js";
-import { DraftTokenError, verifyDraftToken } from "../draft-token.js";
+import { DraftTokenError, verifyDraftToken } from "#missions/draft-token.js";
 import { runLegislate, type LegislateOptions } from "../legislate/legislate.js";
 import {
   mcpError,
@@ -8,7 +8,7 @@ import {
   type McpErrorBody,
 } from "./mcp-governance-shared.js";
 import { assertMcpMissionWritePath, McpWriteDeniedError } from "./mcp-write-guard.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export function handleExecuteLegislation(
   draftToken: string,

@@ -10,7 +10,7 @@ import { runRuntimeExec } from "../lib/runtime-exec.js";
 import { hashProcessChunk } from "../lib/runtime-exec-process.js";
 import { agentErrorAbsolutePath } from "../lib/errors.js";
 import { copyMissionSchema, writeManifest, writeRuntimeExecRepo } from "./test-fixtures.js";
-import { loadManifest } from "../lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 test("runtime env: resolves manifest TMVC/forbidden zones for YAML mission", () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-runtime-env-fix"));

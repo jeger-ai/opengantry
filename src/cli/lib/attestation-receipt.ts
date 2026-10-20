@@ -1,14 +1,3 @@
-// Facade (ADR-0052 step 5c-ii): the receipt lives in packages/plane; identity, config and logging stay here.
-export {
-  ATTESTATION_RECEIPT_SCHEMA_VERSION,
-  computeReceiptSha256,
-  defaultReceiptPath,
-  writeAttestationReceipt,
-  type AttestationReceipt,
-  type AttestationVerifyStatus,
-  type PlannerStampReceipt,
-  type ReceiptSignatureVerifyStatus,
-} from "#plane/attestation-receipt.js";
 import {
   buildAttestationReceipt as buildWithIdentity,
   resolvePlannerStampForReceipt as resolveStampWithEmails,
@@ -20,8 +9,9 @@ import type { AttestationHarnessMode } from "#plane/receipt-attribution.js";
 import { logWarn } from "./cli-io.js";
 import { CLI_NAME } from "#core/constants.js";
 import { CLI_VERSION } from "./version.gen.js";
-import { loadGxtConfig, resolveReceiptSignatureTier } from "./gxt-config.js";
-import { resolvePlannerEmails } from "./planner-identity.js";
+import { loadGxtConfig } from "#missions/gxt-config.js";
+import { resolveReceiptSignatureTier } from "#core/config.js";
+import { resolvePlannerEmails } from "#missions/planner-identity.js";
 import type { ParsedMission } from "#core/mission-types.js";
 
 export interface BuildAttestationReceiptInput {

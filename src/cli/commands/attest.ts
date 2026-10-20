@@ -2,7 +2,7 @@ import { logInfo } from "../lib/cli-io.js";
 import { attestMission } from "../lib/attest-mission.js";
 import { emitCliJson, runUserCommand } from "../lib/command-boundary.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../lib/mission-arg.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface AttestOptions {
   mission?: string;

@@ -38,7 +38,7 @@ test("check-import-layers: absolute path fails lib→command import identically"
 
 test("check-import-layers: clean lib file passes", () => {
   const repoRoot = getRepoRoot();
-  const clean = path.join("src", "cli", "lib", "skill-key.ts");
+  const clean = path.join("src", "cli", "lib", "sarif-uri.ts");
   const result = runImportLayersCheck(repoRoot, clean);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /import-layers OK/);
@@ -73,7 +73,7 @@ test("check-import-layers: --json emits structured violations", () => {
 
 test("check-import-layers: --json success payload", () => {
   const repoRoot = getRepoRoot();
-  const clean = path.join("src", "cli", "lib", "skill-key.ts");
+  const clean = path.join("src", "cli", "lib", "sarif-uri.ts");
   const result = runImportLayersCheck(repoRoot, "--json", clean);
   assert.equal(result.status, 0, result.stderr);
   const payload = JSON.parse(result.stdout.trim());

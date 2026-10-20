@@ -6,7 +6,7 @@ import {
   REL_PLANNER_ALLOWLIST_LOCAL,
   resolvePlannerEmails,
   writePlannerAllowlistLocal,
-} from "../lib/planner-identity.js";
+} from "#missions/planner-identity.js";
 
 export interface PlannerShowOptions {
   json?: boolean;

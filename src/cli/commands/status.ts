@@ -5,8 +5,8 @@ import {
   type OutputAudience,
 } from "../lib/audience-output.js";
 import { buildStatusReport, type StatusReport } from "../lib/status-report.js";
-import type { SkillSyncResult } from "../lib/skill-sync.js";
-import { loadWorkspaceWithSkillSync } from "../lib/workspace.js";
+import type { SkillSyncResult } from "#missions/skill-sync.js";
+import { loadWorkspaceWithSkillSync } from "#missions/workspace.js";
 
 export interface StatusOptions {
   json?: boolean;

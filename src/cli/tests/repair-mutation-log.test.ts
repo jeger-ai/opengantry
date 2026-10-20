@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { appendRepairMutationLog } from "../lib/repair.js";
+import { appendRepairMutationLog } from "#missions/repair.js";
 
 test("appendRepairMutationLog: prefixes and appends immutable line", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-repair-log-"));

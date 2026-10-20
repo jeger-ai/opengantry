@@ -8,8 +8,8 @@ import {
   eslintFindingsFromRun,
   eslintJsonAdapter,
   parseEslintJsonOutput,
-} from "../lib/gate-adapters/eslint-json-adapter.js";
-import type { GateExecContext } from "../lib/gate-adapters/gate-adapter-types.js";
+} from "#missions/gate-adapters/eslint-json-adapter.js";
+import type { GateExecContext } from "#missions/gate-adapters/gate-adapter-types.js";
 
 function ctxIn(dir: string, successSubstring: string | null = null): GateExecContext {
   return {

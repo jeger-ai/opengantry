@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import type { GateExecContext } from "../lib/gate-adapters/gate-adapter-types.js";
-import { parseTscOutput, tscAdapter, tscFindingsFromRun } from "../lib/gate-adapters/tsc-adapter.js";
+import type { GateExecContext } from "#missions/gate-adapters/gate-adapter-types.js";
+import { parseTscOutput, tscAdapter, tscFindingsFromRun } from "#missions/gate-adapters/tsc-adapter.js";
 
 function ctxIn(dir: string, successSubstring: string | null = null): GateExecContext {
   return {

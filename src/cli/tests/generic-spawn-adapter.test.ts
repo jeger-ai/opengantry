@@ -4,9 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
-import { genericSpawnAdapter } from "../lib/gate-adapters/generic-spawn-adapter.js";
-import { spawnOrDestroyStream } from "../lib/gate-adapters/spawn-stream-core.js";
-import type { GateExecAdapter } from "../lib/gate-adapters/gate-adapter-types.js";
+import { genericSpawnAdapter } from "#missions/gate-adapters/generic-spawn-adapter.js";
+import { spawnOrDestroyStream } from "#missions/gate-adapters/spawn-stream-core.js";
+import type { GateExecAdapter } from "#missions/gate-adapters/gate-adapter-types.js";
 
 function ctx(dir: string, logPath: string, successSubstring: string | null = null) {
   return { cwd: dir, gateLogPath: logPath, successSubstring };

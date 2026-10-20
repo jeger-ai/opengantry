@@ -3,14 +3,14 @@ import path from "node:path";
 import { runArchitecturePointerDoctorChecks } from "../arch/external/architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "../break-glass.js";
 import { REL_AGENT_ERROR_FILE, CLI_NAME, REL_MANIFEST_YAML } from "#core/constants.js";
-import { manifestExists } from "../manifest.js";
-import { runLawFileFormDoctorChecks } from "../law-files.js";
-import { ENV_PLANNER_EMAILS } from "../config-namespace.js";
+import { manifestExists } from "#missions/manifest.js";
+import { runLawFileFormDoctorChecks } from "#missions/law-files.js";
+import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
 import { agentErrorAbsolutePath } from "../errors.js";
 import { gitConfigGet, gitRunOk } from "#git/git.js";
 import { resolveTemplateRootFromModule } from "../integration-compat.js";
-import { resolvePlannerEmails } from "../planner-identity.js";
-import { checkSkillManifestSync } from "../skill-sync.js";
+import { resolvePlannerEmails } from "#missions/planner-identity.js";
+import { checkSkillManifestSync } from "#missions/skill-sync.js";
 import type { Manifest } from "#core/manifest.js";
 import {
   doctorLinesHasFail,
@@ -18,16 +18,17 @@ import {
   type DoctorCheckResult,
   type DoctorLine,
   type DoctorReport,
-} from "./doctor-types.js";
+} from "#missions/doctor/doctor-types.js";
 import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
-import { runExecutorLogIntegrityDoctorChecks } from "../executor-log-integrity.js";
-import { loadGxtConfig, resolvePlannerSignatureTier, resolveReceiptSignatureTier } from "../gxt-config.js";
+import { runExecutorLogIntegrityDoctorChecks } from "#missions/executor-log-integrity.js";
+import { loadGxtConfig } from "#missions/gxt-config.js";
+import { resolvePlannerSignatureTier, resolveReceiptSignatureTier } from "#core/config.js";
 import {
   ensurePlannerAllowedSignersFile,
   gitCommitSignatureStatus,
   isGoodGitSignatureStatus,
-} from "../planner-signature.js";
+} from "#missions/planner-signature.js";
 import { runTargetArchitectureDoctorChecks } from "../arch/cage/target-architecture-doctor.js";
 import { runArchitectureDriftDoctorChecks } from "../arch/cage/architecture-drift-doctor.js";
 import { runFlightTelemetryDoctorChecks } from "../flight-telemetry-doctor.js";

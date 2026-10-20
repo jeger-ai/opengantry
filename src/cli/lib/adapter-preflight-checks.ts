@@ -2,9 +2,9 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { parseEslintJsonOutput } from "./gate-adapters/eslint-json-adapter.js";
-import { parseTscOutput } from "./gate-adapters/tsc-adapter.js";
-import type { DoctorLine } from "./doctor/doctor-types.js";
+import { parseEslintJsonOutput } from "#missions/gate-adapters/eslint-json-adapter.js";
+import { parseTscOutput } from "#missions/gate-adapters/tsc-adapter.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 
 export interface CommandRunResult {
   status: number | null;

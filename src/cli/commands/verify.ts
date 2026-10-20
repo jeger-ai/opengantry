@@ -3,15 +3,15 @@ import { Reporter, currentReporter, withReporter } from "../lib/reporter.js";
 import { initFailurePayload } from "../lib/verify/verify-payload.js";
 import { emitVerifyDocument } from "../lib/verify/verify-presenters.js";
 import type { VerifyOptions } from "../lib/verify/verify-options.js";
-import { resolveDefaultChangedBaseRef } from "../lib/mission-changed.js";
+import { resolveDefaultChangedBaseRef } from "#missions/mission-changed.js";
 import { discoverChangedMissionFiles } from "../lib/verify/verify-engine.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { GantryUserError } from "#core/user-error.js";
 import { reportUserFacingError } from "../lib/errors.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
 import { appendEventSpool } from "../lib/event-spool.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
-import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
+import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 

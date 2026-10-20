@@ -7,7 +7,7 @@ import { GantryUserError } from "#core/user-error.js";
 import { checkMsnRange, checkUpgradeTmp, missionsForRange, resolveSha, type CiCheckResult } from "../lib/ci-checks.js";
 import { evaluateTrustedAutomationCommit, evaluateTrustedAutomationRange } from "../lib/trusted-automation.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";
-import { loadWorkspace } from "../lib/workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface CiRangeOptions {
   base?: string;

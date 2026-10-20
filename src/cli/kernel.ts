@@ -9,7 +9,7 @@ export {
   type EvaluateScopeInput,
   type ScopeEvaluationResult,
   type ScopeEvaluationKind,
-} from "./lib/kernel-evaluate-scope.js";
+} from "#missions/kernel-evaluate-scope.js";
 
 export {
   mintVerdictToken,
@@ -18,7 +18,7 @@ export {
   type VerdictTokenPayload,
   type MintVerdictTokenInput,
   type VerifyVerdictTokenInput,
-} from "./lib/verdict-token.js";
+} from "#missions/verdict-token.js";
 export {
   buildVerdictExpectedClaims,
   verdictClaimsFor,
@@ -28,14 +28,14 @@ export {
 } from "./lib/verdict-expected.js";
 export { resolveOrgId } from "#plane/org-export-config.js";
 export type { VerifyOptions } from "./lib/verify/verify-options.js";
-export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "./lib/gate-adapters/gate-adapter-types.js";
+export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "#missions/gate-adapters/gate-adapter-types.js";
 export type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
 export { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";
 
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { parseMissionFile } from "./lib/missions/parser.js";
-import { loadManifest } from "./lib/manifest.js";
+import { loadManifest } from "#missions/manifest.js";
 import type { VerifyOptions } from "./lib/verify/verify-options.js";
 import type { VerifyResultPayload } from "./lib/verify/verify-payload.js";
 import { buildVerifyResultPayload } from "./lib/verify/verify-payload.js";

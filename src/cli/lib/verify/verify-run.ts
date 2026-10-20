@@ -1,18 +1,16 @@
 import path from "node:path";
 import { assertMissionGatePresent, parseMissionFile } from "../missions/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../mission-arg.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "./verify-engine.js";
 import type { VerifyOptions } from "./verify-options.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
-import {
-  buildAttestationReceipt,
-  writeAttestationReceipt,
-} from "../attestation-receipt.js";
+import { buildAttestationReceipt } from "../attestation-receipt.js";
+import { writeAttestationReceipt } from "#plane/attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
 import { appendLedgerIfEnabled } from "../ledger/ledger-append.js";
 import { normalizeVerifyPhaseFailure } from "./verify-failure-normalize.js";
-import type { VerifyPhaseFailure } from "./verify-failure.js";
+import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
 import {
   buildFindingsForFailure,
   buildVerifyResultPayload,
@@ -22,7 +20,7 @@ import {
 } from "./verify-payload.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { persistFailedVerifyRemediation } from "./verify-remediation-pipeline.js";
-import { recordVerifyRunBestEffort } from "./verify-run-ring.js";
+import { recordVerifyRunBestEffort } from "#missions/verify/verify-run-ring.js";
 import { runRecordRelPath } from "./verify-run-record.js";
 import { logInfo } from "../cli-io.js";
 import {

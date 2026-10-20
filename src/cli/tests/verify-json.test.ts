@@ -6,7 +6,7 @@ import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { handleVerify } from "../lib/mcp/mcp-runtime.js";
-import { clearRemediationSnapshot } from "../lib/context-feed-store.js";
+import { clearRemediationSnapshot } from "#missions/context-feed-store.js";
 import { runVerify } from "../commands/verify.js";
 import {
   writeMiniGantryRepo,

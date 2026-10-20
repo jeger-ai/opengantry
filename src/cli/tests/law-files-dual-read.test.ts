@@ -6,12 +6,12 @@ import path from "node:path";
 import { LAW_FILES, lawFileToYaml } from "#core/law-file.js";
 import type { Manifest } from "#core/manifest.js";
 import { loadPolicyPointer } from "#plane/policy-resolve.js";
-import { loadManifest, manifestExists, manifestRelPath } from "../lib/manifest.js";
-import { loadGxtConfig } from "../lib/gxt-config.js";
+import { loadManifest, manifestExists, manifestRelPath } from "#missions/manifest.js";
+import { loadGxtConfig } from "#missions/gxt-config.js";
 import { loadTrustedAutomationRules } from "../lib/trusted-automation.js";
 import { architecturePointerPath, loadArchitecturePointer } from "../lib/arch/external/architecture-pointer.js";
 import { runOrgPolicyDoctorChecks } from "../lib/policy/policy-doctor.js";
-import { runLawFileFormDoctorChecks, writeLawFileYaml } from "../lib/law-files.js";
+import { runLawFileFormDoctorChecks, writeLawFileYaml } from "#missions/law-files.js";
 import { migratedManifest } from "../commands/migrate.js";
 
 const M = LAW_FILES.manifest;

@@ -3,12 +3,12 @@ import path from "node:path";
 import { formatSchemaIssues, kpiReportSchema } from "#core/schemas/index.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitDiffNameOnlySinceCommit, gitRunOk } from "#git/git.js";
-import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace.js";
+import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "#missions/trace-evidence.js";
 import { tmvcRootsForSkill } from "#missions/tmvc-path.js";
 import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp } from "#core/mission-types.js";
 import type { Manifest } from "#core/manifest.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
-import type { KpiFailure } from "./verify/verify-failure.js";
+import type { KpiFailure } from "#missions/verify/verify-failure.js";
 
 export function assertKpiReportSchemaValid(_root: string, data: unknown, filePath: string): void {
   const result = kpiReportSchema.safeParse(data);

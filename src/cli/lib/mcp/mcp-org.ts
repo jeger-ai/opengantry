@@ -4,7 +4,7 @@ import { parseMissionFile } from "../missions/parser.js";
 import { resolveMissionArg } from "../mission-arg.js";
 import { toMcpError, type McpErrorBody } from "./mcp-governance-shared.js";
 import { orgPolicySnapshot, resolveOrgPolicy } from "#plane/policy-resolve.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export type OrgMcpResult<T> = ({ status: "ok" } & T) | { status: "error"; error: McpErrorBody };
 

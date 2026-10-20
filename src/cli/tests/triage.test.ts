@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { formatTriageHuman, triageIntent } from "../lib/triage-logic.js";
-import { loadManifest } from "../lib/manifest.js";
+import { formatTriageHuman, triageIntent } from "#missions/triage-logic.js";
+import { loadManifest } from "#missions/manifest.js";
 import { writeManifest, writeFixtureAdr } from "./test-fixtures.js";
 
 test("triage: risk_keyword triggers escalation", () => {

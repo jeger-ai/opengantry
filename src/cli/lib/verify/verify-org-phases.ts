@@ -8,8 +8,8 @@ import {
 import { checkMissionDependencies } from "../deps/deps-resolve.js";
 import { type DependencyCheckResult } from "#plane/deps-resolve.js";
 import { localConfigFloor } from "../policy/policy-resolve.js";
-import type { DependenciesFailure, PolicyFailure } from "./verify-failure.js";
-import { verifyFinding } from "./verify-finding.js";
+import type { DependenciesFailure, PolicyFailure } from "#missions/verify/verify-failure.js";
+import { verifyFinding } from "#missions/verify/verify-finding.js";
 import type { PhaseContext } from "./verify-phase-steps.js";
 
 export type PolicyPhaseOutcome = { kind: "ok" } | { kind: "fail"; failure: PolicyFailure };

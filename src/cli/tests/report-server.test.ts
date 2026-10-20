@@ -10,9 +10,9 @@ import {
   resolveListenPort,
   tryListen,
 } from "../lib/report/report-server.js";
-import { appendVerifyRunRing } from "../lib/verify/verify-run-ring.js";
+import { appendVerifyRunRing } from "#missions/verify/verify-run-ring.js";
 import { projectOverviewViewModel } from "../lib/report/report-overview-projector.js";
-import { REL_GATE_LOGS_DIR } from "../lib/gate-log-writer.js";
+import { REL_GATE_LOGS_DIR } from "#missions/gate-log-writer.js";
 
 async function request(
   port: number,

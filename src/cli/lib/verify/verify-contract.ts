@@ -6,8 +6,8 @@ import type { ContractImportViolation, EffectiveScope, MissionContract } from "#
 import { resolveEffectiveScopeForMission } from "#missions/contract/effective-scope.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
-import type { ContractFailure } from "./verify-failure.js";
-import { verifyFinding, type VerifyFinding } from "./verify-finding.js";
+import type { ContractFailure } from "#missions/verify/verify-failure.js";
+import { verifyFinding, type VerifyFinding } from "#missions/verify/verify-finding.js";
 import { readMissionAtCommit, resolvePlannerStampHash } from "./verify-interrogation.js";
 import type { PhaseContext } from "./verify-phase-steps.js";
 

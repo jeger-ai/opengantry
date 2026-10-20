@@ -5,7 +5,7 @@ import { proposeContract } from "#missions/contract/propose.js";
 import { resolveSkillKeyForLegislation } from "../legislate/legislate.js";
 import { mcpError, type McpErrorBody } from "./mcp-governance-shared.js";
 import type { MissionContract } from "#core/contract-types.js";
-import { loadWorkspace } from "../workspace.js";
+import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ProposeContractMcpInput {
   intent: string;
