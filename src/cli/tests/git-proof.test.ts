@@ -11,7 +11,7 @@ import {
   ENV_MSN_SCAN_DEPTH,
   resolveMsnScanDepth,
 } from "../lib/git/git-proof.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { writeMiniGantryRepo, gitInitCommit, gitInitCommitWithBody } from "./test-fixtures.js";
 import { execSync } from "node:child_process";
 import { PLANNER_EMAIL, OTHER_EMAIL, withPlannerEnv } from "./test-shared.js";

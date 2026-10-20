@@ -4,7 +4,7 @@ import { runUserCommand, runUserCommandAsync, type CommandPresentation } from ".
 import { contractViolationCode, formatContractViolation, scanContractImports } from "../lib/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
 import { resolveEffectiveScope, resolveEffectiveScopeForMission } from "../lib/contract/effective-scope.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { resolvePinnedMission } from "../lib/missions/resolution.js";
 import { contractSha256, normalizeContract } from "../lib/contract/contract-hash.js";

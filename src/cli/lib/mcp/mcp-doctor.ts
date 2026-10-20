@@ -1,9 +1,9 @@
-import { errorMessage } from "../cli-io.js";
+import { errorMessage } from "#core/user-error.js";
 import { collectDoctorReport } from "../doctor/doctor-core.js";
 import type { AdapterPreflightOptions } from "../doctor/doctor-adapter-preflight.js";
 import type { DoctorLine } from "../doctor/doctor-types.js";
 import type { McpRuntimeErrorBody } from "./mcp-runtime.js";
-import type { TypedGateAdapterId } from "#core/mission-types.js";
+import type { TypedGateAdapterId } from "#core/gate-adapter.js";
 import { loadWorkspace } from "../workspace.js";
 
 export interface DoctorMcpInput {

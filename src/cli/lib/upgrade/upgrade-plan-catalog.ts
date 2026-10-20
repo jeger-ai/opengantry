@@ -8,7 +8,7 @@ import {
 } from "../integration-compat.js";
 import { loadInitAssetCatalog, type InitAssetSpec } from "../init/init-asset-catalog.js";
 import { defaultInitProfile, type InitProfile } from "../init/init-profile.js";
-import { toPosixRel } from "../cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import type { PlannedWrite } from "../init/init-plan.js";
 import type { UpgradeFileChange } from "./upgrade-plan-types.js";
 

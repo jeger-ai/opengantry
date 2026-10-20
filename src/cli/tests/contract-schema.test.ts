@@ -9,7 +9,7 @@ import { GXT_ERROR } from "#core/error-codes.js";
 import { computeGaps } from "../lib/interrogate/gaps.js";
 import { loadManifest } from "../lib/manifest.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
-import type { MissionContract } from "#core/mission-types.js";
+import type { MissionContract } from "#core/contract-types.js";
 import { copyMissionSchema, writeManifest } from "./test-fixtures.js";
 
 const CONTRACT: MissionContract = {

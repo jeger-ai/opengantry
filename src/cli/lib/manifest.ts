@@ -1,10 +1,8 @@
 import path from "node:path";
-import { CLI_NAME } from "./constants.js";
-import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
+import { CLI_NAME, REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
 import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
 import { parseManifestSource, type Manifest } from "#core/manifest.js";
 import { lawFileRelAt, readLawFileAt } from "./law-files.js";
-export { validateManifestShape } from "#core/manifest.js";
 
 /** The manifest on disk: the YAML form, else the 3.x JSON form; null when neither exists (ADR-0047 dual-read). */
 export function readManifestSource(root: string): LawFileSource | null {

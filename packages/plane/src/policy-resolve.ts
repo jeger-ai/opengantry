@@ -5,7 +5,7 @@ import { workingTreeReader } from "#git/repo-text.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
-import type { TrustThreshold } from "#core/mission-types.js";
+import type { TrustThreshold } from "#core/manifest.js";
 import { loadCachedBundle } from "./policy-bundle.js";
 import {
   POLICY_POINTER_SCHEMA_VERSION,

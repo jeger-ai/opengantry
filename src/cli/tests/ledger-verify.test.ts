@@ -5,8 +5,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { LEDGER_REF } from "../lib/constants.js";
-import { GantryUserError } from "../lib/errors.js";
+import { LEDGER_REF } from "#core/constants.js";
+import { GantryUserError } from "#core/user-error.js";
 import { getRepoRoot, gitRevParse, gitRun } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import {

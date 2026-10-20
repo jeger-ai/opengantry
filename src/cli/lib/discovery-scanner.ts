@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "./cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import {
   getDomainAdapter,
   isDomainFile,
@@ -16,8 +16,6 @@ export type {
   DiscoveryProposal,
   DiscoveryScanOptions,
 } from "./discovery-types.js";
-
-export { DISCOVERY_SCHEMA_VERSION } from "./discovery-types.js";
 
 import type { DiscoveryProposal, DiscoveryScanOptions } from "./discovery-types.js";
 import { DISCOVERY_SCHEMA_VERSION } from "./discovery-types.js";

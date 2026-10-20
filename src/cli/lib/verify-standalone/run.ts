@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { GantryUserError } from "../errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { gitRevParse, gitRun } from "#git/git.js";
 import {
   parseVerifyBaseline,

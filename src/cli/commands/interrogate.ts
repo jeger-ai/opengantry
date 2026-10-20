@@ -1,6 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { logInfo, setExitCode, writeStdout } from "../lib/cli-io.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { runUserCommand } from "../lib/command-boundary.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import { runInterrogate } from "../lib/interrogate/run.js";

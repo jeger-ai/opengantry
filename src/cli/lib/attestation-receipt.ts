@@ -18,7 +18,8 @@ import {
 } from "#plane/attestation-receipt.js";
 import type { AttestationHarnessMode } from "#plane/receipt-attribution.js";
 import { logWarn } from "./cli-io.js";
-import { CLI_NAME, CLI_VERSION } from "./constants.js";
+import { CLI_NAME } from "#core/constants.js";
+import { CLI_VERSION } from "./version.gen.js";
 import { loadGxtConfig, resolveReceiptSignatureTier } from "./gxt-config.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { ParsedMission } from "#core/mission-types.js";

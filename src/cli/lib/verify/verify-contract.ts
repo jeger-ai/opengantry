@@ -1,10 +1,9 @@
 import YAML from "yaml";
-import { errorMessage } from "../cli-io.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "../contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope, MissionContract } from "#core/contract-types.js";
 import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
-import { isGantryUserError } from "../errors.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
 import type { ContractFailure } from "./verify-failure.js";

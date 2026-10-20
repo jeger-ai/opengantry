@@ -22,11 +22,6 @@ export function logManagedAssetConflicts(conflicts: string[]): void {
   currentReporter().managedAssetConflicts(conflicts);
 }
 
-export { toPosixRel, fromPosix, formatRepoRelative, repoAbsPath } from "#core/posix-path.js";
-export function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
-}
-
 export function setExitCode(code: number): void {
   process.exitCode = code;
 }

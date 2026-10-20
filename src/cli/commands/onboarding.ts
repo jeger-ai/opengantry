@@ -2,7 +2,7 @@ import { manifestExists } from "../lib/manifest.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "../lib/constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import {
   ONBOARDING_ADOPTION_DOC,
   onboardingRuntimeEnvHint,

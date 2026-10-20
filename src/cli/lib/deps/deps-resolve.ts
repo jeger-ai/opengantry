@@ -1,5 +1,4 @@
-// Facade (ADR-0052 step 5c-ii): the checks live in packages/plane; the ledger append stays here.
-export { checkMissionDependency, dependencyCheckLedgerPayload, type DependencyCheckResult, type DependencyFailureCode } from "#plane/deps-resolve.js";
+// The checks live in packages/plane; this module adds the ledger append.
 import { checkMissionDependencies as checkOnly, dependencyCheckLedgerPayload, type DependencyCheckResult } from "#plane/deps-resolve.js";
 import { appendLedgerIfEnabled } from "../ledger/ledger-append.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";

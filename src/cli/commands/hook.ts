@@ -6,7 +6,7 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { CLI_NAME } from "../lib/constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundaryAsync } from "../lib/command-boundary.js";
 import { getRepoRoot, gitRunOk } from "#git/git.js";

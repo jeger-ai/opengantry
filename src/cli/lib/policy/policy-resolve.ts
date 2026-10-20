@@ -1,5 +1,3 @@
-// Facade (ADR-0052 step 5c-ii): the resolver lives in packages/plane; the local floor reads the preset-aware config here.
-export * from "#plane/policy-resolve.js";
 import {
   loadGxtConfig,
   resolveFlightTelemetryBodyMode,

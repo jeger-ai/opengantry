@@ -20,7 +20,7 @@ import { handleDoctor } from "./mcp-doctor.js";
 import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
-import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "#core/mission-types.js";
+import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
 
 const interrogationRowSchema = z.object({
   finding_id: z.string(),

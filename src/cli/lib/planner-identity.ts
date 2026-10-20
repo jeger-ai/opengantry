@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fromPosix } from "./cli-io.js";
-import { CLI_NAME } from "./constants.js";
+import { fromPosix } from "#core/posix-path.js";
+import { CLI_NAME } from "#core/constants.js";
 import {
   ENV_PLANNER_EMAILS,
   GIT_CONFIG_PLANNER_EMAILS,
@@ -9,8 +9,6 @@ import {
   readGantryGitConfig,
 } from "./config-namespace.js";
 import { gitRunOk } from "#git/git.js";
-
-export { ENV_PLANNER_EMAILS } from "./config-namespace.js";
 
 export const REL_PLANNER_ALLOWLIST = ".gitagent/foreman/PLANNER.allowlist" as const;
 export const REL_PLANNER_ALLOWLIST_LOCAL = ".gitagent/foreman/PLANNER.allowlist.local" as const;

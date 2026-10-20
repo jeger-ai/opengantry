@@ -3,7 +3,8 @@ import path from "node:path";
 import YAML from "yaml";
 import type { DoctorLine } from "../../doctor/doctor-types.js";
 import { ARCHITECTURE_MD_FILENAME } from "../../blueprint-engine.js";
-import { TARGET_ARCHITECTURE_FILENAME, validateTargetArchitecture } from "./target-architecture.js";
+import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
+import { validateTargetArchitecture } from "./target-architecture.js";
 import { VERIFICATION_PLAN_REL, type VerificationPlan } from "../../verification-plan.js";
 
 function extractMdRuleIds(mdBody: string): string[] {

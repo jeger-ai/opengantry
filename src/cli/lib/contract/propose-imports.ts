@@ -1,10 +1,9 @@
 import { normalizeRepoRelativePath } from "#core/law.js";
 import fs from "node:fs";
 import path from "node:path";
-import { importMatchesBan } from "../ast-discovery.js";
+import { importMatchesBan, isBuiltinSpecifier } from "#core/specifier.js";
 import { layerForFile, loadTargetArchitecture, type TargetArchitectureSpec } from "../arch/cage/target-architecture.js";
 import { extractImportSites } from "#core/import-scanner.js";
-import { isBuiltinSpecifier } from "./resolve-specifier.js";
 import { listSourcesUnderRoots } from "./contract-scan.js";
 import type { OrgPolicyBundle } from "#plane/policy-types.js";
 

@@ -1,11 +1,12 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fromPosix } from "./cli-io.js";
-import { CLI_NAME } from "./constants.js";
+import { fromPosix } from "#core/posix-path.js";
+import { CLI_NAME } from "#core/constants.js";
 import { canonicalJson } from "#core/canonical-json.js";
 import { gitRun } from "#git/git.js";
-import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId, type MissionContract } from "#core/mission-types.js";
+import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId } from "#core/gate-adapter.js";
+import { type MissionContract } from "#core/contract-types.js";
 import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 
 export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;

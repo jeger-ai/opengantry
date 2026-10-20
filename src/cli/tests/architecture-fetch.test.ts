@@ -9,7 +9,7 @@ import {
   type HttpFetcher,
 } from "../lib/arch/external/architecture-fetch.js";
 import { writeArchitectureCredential } from "../lib/arch/external/architecture-credential.js";
-import { REL_ARCHITECTURE_POINTER_JSON } from "../lib/constants.js";
+import { REL_ARCHITECTURE_POINTER_JSON } from "#core/constants.js";
 
 function writePointer(dest: string, body: Record<string, unknown>): void {
   fs.mkdirSync(path.join(dest, ".gitagent"), { recursive: true });

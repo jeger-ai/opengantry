@@ -4,12 +4,6 @@ import type { NormalizedTraceStatus } from "./trace-status.js";
 import type { InterrogationRow } from "./interrogation.js";
 import type { GateAdapterId } from "./gate-adapter.js";
 
-export type { MissionContract } from "./contract-types.js";
-export type { GateAdapterId, TypedGateAdapterId } from "./gate-adapter.js";
-export { DEFAULT_GATE_ADAPTER, GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, isGateAdapterId, isTypedGateAdapterId } from "./gate-adapter.js";
-
-export type { TrustThreshold, SkillEntry, Manifest } from "./manifest.js";
-
 export type TriageAction = "DIRECT_EXECUTION" | "LEGISLATIVE_ESCALATION";
 
 /** Non-binding ADR hint from `.gitagent/out-of-scope/` (triage does not route on this). */

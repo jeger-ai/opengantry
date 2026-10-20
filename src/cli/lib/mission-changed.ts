@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "./constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { isVerifiableMissionPath } from "./dirty-missions.js";
-import { GantryUserError } from "./errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { gitRevParse, gitRunOk } from "#git/git.js";
 
 const MSN_TAG_RE = /\[(MSN-\d{4})\]/g;

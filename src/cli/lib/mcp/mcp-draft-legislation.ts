@@ -1,4 +1,4 @@
-import { MSN_ID_PATTERN } from "../constants.js";
+import { MSN_ID_PATTERN } from "#core/constants.js";
 import { createDraftToken } from "../draft-token.js";
 import {
   mcpError,
@@ -9,13 +9,13 @@ import {
 import { manifestHasSkill } from "../skill-key.js";
 import { resolveLegislateGateOptions } from "../legislate/legislate-gate-options.js";
 import { runInterrogate } from "../interrogate/run.js";
-import { DEFAULT_GATE_ADAPTER } from "#core/mission-types.js";
+import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
 import { loadWorkspace } from "../workspace.js";
 import { normalizeContract } from "../contract/contract-hash.js";
 import { resolveEffectiveScope } from "../contract/effective-scope.js";
 import { formatContractBlock } from "../contract/format.js";
-import { isGantryUserError } from "../errors.js";
-import type { MissionContract } from "#core/mission-types.js";
+import { isGantryUserError } from "#core/user-error.js";
+import type { MissionContract } from "#core/contract-types.js";
 
 function buildDraftChatMessage(input: DraftLegislationInput, manifestSkillDesc?: string): string {
   const lines = [

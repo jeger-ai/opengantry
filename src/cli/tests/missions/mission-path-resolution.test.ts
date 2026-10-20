@@ -3,9 +3,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { DEFAULT_ACTIVE_MISSION } from "../../lib/constants.js";
-import { buildMissionResolutionCandidates, readActiveMissionPin, resolvePinnedMission } from "../../lib/missions/resolution.js";
-import { pinMissionFile } from "../../lib/missions/resolution.js";
+import { DEFAULT_ACTIVE_MISSION } from "#core/constants.js";
+import {
+  buildMissionResolutionCandidates,
+  readActiveMissionPin,
+  resolvePinnedMission,
+  pinMissionFile,
+} from "../../lib/missions/resolution.js";
 
 test("buildMissionResolutionCandidates: GANTRY_MISSION is the first env candidate; a legacy prefix is not read", () => {
   const candidates = buildMissionResolutionCandidates("/repo", {

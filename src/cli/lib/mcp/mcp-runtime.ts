@@ -3,12 +3,11 @@ import path from "node:path";
 import { writeAgentErrorPayload, type AgentErrorPayload } from "../errors.js";
 import type { ForbiddenViolation } from "../forbidden-scan.js";
 import type { RuntimeExecResult } from "../runtime-exec.js";
-import { errorMessage } from "../cli-io.js";
+import { errorMessage } from "#core/user-error.js";
 import { buildVerifyResultPayloadFromOptions } from "../verify/verify-run.js";
 import type { VerifyResultPayload } from "../verify/verify-payload.js";
 import { parseMissionFile } from "../missions/parser.js";
-import { pinActiveMission } from "../missions/resolution.js";
-import { resolvePinnedMission } from "../missions/resolution.js";
+import { pinActiveMission, resolvePinnedMission } from "../missions/resolution.js";
 import { runKpiScan } from "../kpi-scan.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "../runtime-env.js";
 import { runRuntimeExec } from "../runtime-exec.js";
@@ -23,8 +22,6 @@ import {
 } from "./mcp-governance-shared.js";
 import { attestMission } from "../attest-mission.js";
 import { resolveMissionArg } from "../mission-arg.js";
-
-export type { VerifyResultPayload } from "../verify/verify-payload.js";
 
 export interface McpRuntimeErrorBody {
   code: string;

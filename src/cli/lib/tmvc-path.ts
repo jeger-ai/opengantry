@@ -1,4 +1,4 @@
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import { isPathUnderRoot, normalizeRepoRelativePath } from "#core/law.js";
 import { judgePath, pathLaw, type PathLaw } from "#core/path-law.js";
 

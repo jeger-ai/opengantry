@@ -1,9 +1,10 @@
 import path from "node:path";
-import { EXECUTOR_LOG_FILENAME } from "./constants.js";
-import { toPosixRel } from "./cli-io.js";
+import { EXECUTOR_LOG_FILENAME } from "#core/constants.js";
+import { toPosixRel } from "#core/posix-path.js";
 import { gitDiffNameOnlySinceCommit, gitRun, type GitDiffSinceCommitResult } from "#git/git.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
-import type { Manifest, TraceRow } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
+import type { TraceRow } from "#core/mission-types.js";
 import type { ResolvedQuoteLine } from "./trace-quote.js";
 
 export const UNCOMMITTED_BLAME_COMMIT = "0000000000000000000000000000000000000000";

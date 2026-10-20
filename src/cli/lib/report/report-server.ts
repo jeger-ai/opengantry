@@ -9,7 +9,7 @@ import { REL_GATE_LOGS_DIR } from "../gate-log-writer.js";
 import type { OverviewViewModel } from "./report-overview-projector.js";
 import { renderReportHtml } from "./report-template-html.js";
 import { renderOverviewHtml } from "./report-template-overview.js";
-import { MSN_ID_PATTERN, DEFAULT_REPORT_PORT } from "../constants.js";
+import { MSN_ID_PATTERN, DEFAULT_REPORT_PORT } from "#core/constants.js";
 import {
   projectReportViewModel,
   projectReportViewModelForMission,

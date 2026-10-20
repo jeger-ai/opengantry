@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import { GantryUserError } from "./errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { filterEpochs, getPeppersForOrg, loadPepperKeyring, listOrgIds } from "./pepper-keyring.js";
 import { hmacSha256Hex } from "./receipt-attribution.js";
 

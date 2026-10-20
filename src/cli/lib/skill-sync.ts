@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { SKILLS_DIR_NAME } from "./constants.js";
-import type { Manifest } from "#core/mission-types.js";
+import { SKILLS_DIR_NAME } from "#core/constants.js";
+import type { Manifest } from "#core/manifest.js";
 
 export interface SkillSyncResult {
   ok: boolean;

@@ -1,4 +1,4 @@
-import { NPM_PACKAGE_NAME } from "../constants.js";
+import { NPM_PACKAGE_NAME } from "../version.gen.js";
 import { loadIntegrationCompat } from "../integration-compat.js";
 import {
   compareSemver,

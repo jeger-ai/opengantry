@@ -1,4 +1,6 @@
-import type { GateAdapterId, KpiThreshold, TrustThreshold } from "#core/mission-types.js";
+import type { GateAdapterId } from "#core/gate-adapter.js";
+import type { KpiThreshold } from "#core/mission-types.js";
+import type { TrustThreshold } from "#core/manifest.js";
 import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
 
 export const ORG_POLICY_SCHEMA_VERSION = "1.0.0" as const;

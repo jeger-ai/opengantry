@@ -1,4 +1,5 @@
-import type { Manifest, TriageResult } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
+import type { TriageResult } from "#core/mission-types.js";
 import { collectOutOfScopeAdrHints } from "./out-of-scope-hint.js";
 
 function normalizeIntent(text: string): string {

@@ -2,8 +2,10 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import { CLI_NAME } from "../constants.js";
-import { errorMessage, fromPosix, logInfo } from "../cli-io.js";
+import { CLI_NAME } from "#core/constants.js";
+import { errorMessage, GantryUserError } from "#core/user-error.js";
+import { fromPosix } from "#core/posix-path.js";
+import { logInfo } from "../cli-io.js";
 import { promoteFileAtomic } from "../atomic-fs.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import {
@@ -18,7 +20,6 @@ import { loadManifest } from "../manifest.js";
 import { writeSubstrateVersionFile } from "../substrate-version.js";
 import { parseUpgradePayloadFromMissionBody } from "./upgrade-plan-scaffold.js";
 import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";
-import { GantryUserError } from "../errors.js";
 
 export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 

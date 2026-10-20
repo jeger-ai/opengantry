@@ -1,28 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "../constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { buildLegislativeTraceRows, buildMissionYamlScaffold, extractMsnIdFromMissionPath, isValidMsnId } from "../missions/parser.js";
 import { listMissionFiles } from "../missions/resolution.js";
-import {
-  formatRepoRelative,
-  logError,
-  logInfo,
-  logWarn,
-  toPosixRel,
-} from "../cli-io.js";
+import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
+import { logError, logInfo, logWarn } from "../cli-io.js";
 import { triageIntent, isTriageEscalated } from "../triage-logic.js";
 import { manifestHasSkill } from "../skill-key.js";
-import {
-  DEFAULT_GATE_ADAPTER,
-  type GateAdapterId,
-  type Manifest,
-  type MissionContract,
-  type TriageResult,
-} from "#core/mission-types.js";
+import { DEFAULT_GATE_ADAPTER, type GateAdapterId } from "#core/gate-adapter.js";
+import { type Manifest } from "#core/manifest.js";
+import { type MissionContract } from "#core/contract-types.js";
+import { type TriageResult } from "#core/mission-types.js";
 import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "../contract/effective-scope.js";
-import { errorMessage } from "../cli-io.js";
-import { isGantryUserError } from "../errors.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { loadWorkspace } from "../workspace.js";
 import { findForbiddenZoneHits } from "./legislate-forbidden-zone.js";
 import { warnLegislatePolicyFloor } from "./legislate-policy-warn.js";
@@ -299,8 +290,6 @@ function resolveLegislateGateOptionsFromLegislate(options: LegislateOptions) {
     adapter: options.gateAdapter,
   });
 }
-
-export { resolveLegislateGateOptions } from "./legislate-gate-options.js";
 
 export function runLegislate(options: LegislateOptions): LegislateResult {
   const { root, manifest } = loadWorkspace();

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-import { REL_RECEIPTS_DIR } from "../lib/constants.js";
+import { REL_RECEIPTS_DIR } from "#core/constants.js";
 import { resolveMissionArg } from "../lib/mission-arg.js";
 import {
   listReceipts,
@@ -12,7 +12,7 @@ import {
   summarizeReceipt,
 } from "../lib/receipt-inspect.js";
 import { pinMissionFile, readActiveMissionPin } from "../lib/missions/resolution.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import type { AttestationReceipt } from "../lib/attestation-receipt.js";
 
 function setupRepo(): { root: string; missionRel: string } {

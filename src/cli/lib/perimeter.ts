@@ -1,6 +1,6 @@
 import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { toPosixRel } from "./cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import { gitRevParse, gitRun, gitRunOk } from "#git/git.js";
 import {
   commitSubjectHasMsnPrefix,
@@ -9,7 +9,7 @@ import {
   type MsnCommitRow,
 } from "./git/git-proof.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
 export const DEFAULT_PERIMETER_PROTECTED = [
   "**/.gxt-skill.yaml",

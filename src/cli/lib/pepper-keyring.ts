@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { readGantryEnv } from "./config-namespace.js";
-import { GantryUserError } from "./errors.js";
+import { GantryUserError } from "#core/user-error.js";
 
 export interface PepperKeyringEntry {
   org_id: string;

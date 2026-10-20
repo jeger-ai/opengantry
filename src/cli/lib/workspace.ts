@@ -1,7 +1,7 @@
 import { getRepoRoot } from "#git/git.js";
 import { loadManifest } from "./manifest.js";
 import { checkSkillManifestSync, type SkillSyncResult } from "./skill-sync.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 
 export interface Workspace {
   root: string;

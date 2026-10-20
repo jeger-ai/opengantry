@@ -4,7 +4,7 @@
  * ordering, output caps, and the truncation finding.
  */
 import path from "node:path";
-import { toPosixRel } from "../cli-io.js";
+import { toPosixRel } from "#core/posix-path.js";
 import { MAX_IO_BUFFER_BYTES } from "../gate.js";
 import { readEvidenceSnippet } from "../verify/verify-evidence-snippet.js";
 import { verifyFinding, type VerifyFinding, type VerifyFindingSeverity } from "../verify/verify-finding.js";

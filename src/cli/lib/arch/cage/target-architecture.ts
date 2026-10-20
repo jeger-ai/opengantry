@@ -6,16 +6,14 @@ import crypto from "node:crypto";
 import { gitRunOk } from "#git/git.js";
 import { getDomainAdapter } from "../../domains/index.js";
 import YAML from "yaml";
-import { CLI_NAME } from "../../constants.js";
-import { toPosixRel } from "../../cli-io.js";
+import { CLI_NAME, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
+import { toPosixRel } from "#core/posix-path.js";
 import {
   extractBindingsFromSnippet,
   extractImportsWithMeta,
 } from "#core/import-scanner.js";
 import { walkDomainFiles } from "../../discovery-scanner.js";
 
-export { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
-import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
 export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;

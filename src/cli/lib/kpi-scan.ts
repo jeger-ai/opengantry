@@ -1,10 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { DEFAULT_KPI_REPORT_DIR } from "./constants.js";
-import { GantryUserError } from "./errors.js";
-import { runGate } from "./gate.js";
+import { DEFAULT_KPI_REPORT_DIR } from "#core/constants.js";
+import { GantryUserError } from "#core/user-error.js";
+import { runGate, resolveGateWorkDir } from "./gate.js";
 import { assertKpiReportSchemaValid } from "./kpi-engine.js";
-import { resolveGateWorkDir } from "./gate.js";
 import type {
   KpiAggregator,
   KpiFinding,

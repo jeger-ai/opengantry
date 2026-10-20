@@ -2,8 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { runArchitecturePointerDoctorChecks } from "../arch/external/architecture-pointer.js";
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "../break-glass.js";
-import { REL_AGENT_ERROR_FILE, CLI_NAME } from "../constants.js";
-import { REL_MANIFEST_YAML } from "#core/constants.js";
+import { REL_AGENT_ERROR_FILE, CLI_NAME, REL_MANIFEST_YAML } from "#core/constants.js";
 import { manifestExists } from "../manifest.js";
 import { runLawFileFormDoctorChecks } from "../law-files.js";
 import { ENV_PLANNER_EMAILS } from "../config-namespace.js";
@@ -12,7 +11,7 @@ import { gitConfigGet, gitRunOk } from "#git/git.js";
 import { resolveTemplateRootFromModule } from "../integration-compat.js";
 import { resolvePlannerEmails } from "../planner-identity.js";
 import { checkSkillManifestSync } from "../skill-sync.js";
-import type { Manifest } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import {
   doctorLinesHasFail,
   pickNextStep,

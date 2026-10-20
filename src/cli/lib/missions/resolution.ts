@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { DEFAULT_ACTIVE_MISSION } from "../constants.js";
+import { DEFAULT_ACTIVE_MISSION } from "#core/constants.js";
 import { readGantryEnv } from "../config-namespace.js";
-import { formatRepoRelative } from "../cli-io.js";
-import { GantryUserError } from "../errors.js";
+import { formatRepoRelative } from "#core/posix-path.js";
+import { GantryUserError } from "#core/user-error.js";
 
 export function resolveMissionFilePath(repoRoot: string, missionFilePath: string): string {
   return path.isAbsolute(missionFilePath)

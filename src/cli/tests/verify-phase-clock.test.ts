@@ -14,7 +14,7 @@ import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 import { parseMissionFile } from "../lib/missions/parser.js";
 import { buildVerifyResultPayload } from "../lib/verify/verify-payload.js";
 import { evaluateGatePhase } from "../lib/verify/verify-phase-steps.js";
-import type { GateExecAdapter } from "../lib/verify/verify-options.js";
+import type { GateExecAdapter } from "../lib/gate-adapters/gate-adapter-types.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "../lib/verify/verify-finding.js";
 
 test("VerifyPhaseClock timed records failed status and rethrows", async () => {

@@ -1,7 +1,9 @@
 import type { AgentErrorPayload } from "../errors.js";
 import { userFacingErrorToJson } from "../errors.js";
 import type { RuntimeEnvMcpResult } from "./mcp-runtime.js";
-import type { GateAdapterId, MissionContract, TriageResult } from "#core/mission-types.js";
+import type { GateAdapterId } from "#core/gate-adapter.js";
+import type { MissionContract } from "#core/contract-types.js";
+import type { TriageResult } from "#core/mission-types.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { assertMcpMissionWritePath, McpWriteDeniedError } from "./mcp-write-guard.js";
 import { resolveMissionFilePath } from "../missions/resolution.js";

@@ -4,7 +4,7 @@ import path from "node:path";
 import type { Command } from "commander";
 import { setExitCode } from "../lib/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../lib/command-boundary.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { outputTail, type CheckRun, type VerifyMode } from "../lib/verify-standalone/checks.js";
 import {
   checkVerifyResult,

@@ -1,4 +1,4 @@
-import { errorMessage } from "../cli-io.js";
+import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { McpErrorBody } from "./mcp-governance-shared.js";
@@ -11,7 +11,6 @@ import {
 } from "../upgrade/upgrade-plan-payload.js";
 import { runUpgradeApply } from "../upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "../upgrade/upgrade-plan.js";
-import { GantryUserError } from "../errors.js";
 
 export type UpgradePlanMcpResult =
   | StableUpgradePlanPayloadV1

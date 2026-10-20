@@ -1,9 +1,9 @@
 /** `gantry ci <check>`: the checks CI and the dev gate run (ADR-0052 step 5b; scripts/validate-gxt.sh and verify-pr-missions.sh folded in). */
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { CLI_NAME } from "../lib/constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, setExitCode } from "../lib/cli-io.js";
 import { runAtCommandBoundary, runAtCommandBoundaryAsync } from "../lib/command-boundary.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { checkMsnRange, checkUpgradeTmp, missionsForRange, resolveSha, type CiCheckResult } from "../lib/ci-checks.js";
 import { evaluateTrustedAutomationCommit, evaluateTrustedAutomationRange } from "../lib/trusted-automation.js";
 import { runVerifyCore } from "../lib/verify/verify-run.js";

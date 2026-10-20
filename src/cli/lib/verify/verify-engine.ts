@@ -4,12 +4,13 @@
  * verify-hints (remediation) → verify-presenters (sinks) → verify-run (orchestration).
  */
 import path from "node:path";
-import { formatRepoRelative, toPosixRel } from "../cli-io.js";
+import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
 import { gitRunOk } from "#git/git.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { isLegislativeStub } from "../missions/formatter.js";
 import { defaultExecutorLogPath } from "../trace.js";
-import type { KpiFinding, Manifest, ParsedMission } from "#core/mission-types.js";
+import type { KpiFinding, ParsedMission } from "#core/mission-types.js";
+import type { Manifest } from "#core/manifest.js";
 import type { VerifyFailurePhase, VerifyPhaseFailure } from "./verify-failure.js";
 import type { TraceVerifyWarning } from "../trace.js";
 import type { VerifyOptions } from "./verify-options.js";

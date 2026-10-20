@@ -1,6 +1,7 @@
 import { runBreakGlassAuditFlow } from "../break-glass.js";
-import { toPosixRel } from "../cli-io.js";
-import type { Manifest, ParsedMission } from "#core/mission-types.js";
+import { toPosixRel } from "#core/posix-path.js";
+import type { Manifest } from "#core/manifest.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseResult,

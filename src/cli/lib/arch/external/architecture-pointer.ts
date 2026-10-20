@@ -1,13 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadArchitectureCredential } from "./architecture-credential.js";
-import { errorMessage, fromPosix } from "../../cli-io.js";
-import {
-  REL_ARCHITECTURE_ACCESS_SKILL,
-  REL_ARCHITECTURE_DISCOVERY_SKILL,
-  REL_ARCHITECTURE_POINTER_JSON,
-  REL_ARCHITECTURE_POINTER_YAML,
-} from "../../constants.js";
+import { errorMessage } from "#core/user-error.js";
+import { fromPosix } from "#core/posix-path.js";
+import { REL_ARCHITECTURE_ACCESS_SKILL, REL_ARCHITECTURE_DISCOVERY_SKILL, REL_ARCHITECTURE_POINTER_JSON, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
 import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
 import { workingTreeReader } from "#git/repo-text.js";
 import { lawFileRelAt, readLawFileAt } from "../../law-files.js";

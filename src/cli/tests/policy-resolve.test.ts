@@ -3,15 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import {
-  configFloorViolations,
-  FLOOR_RULES,
-  TIER_RANK,
-  trustTierRank,
-} from "../lib/policy/policy-resolve.js";
+import { configFloorViolations, FLOOR_RULES, TIER_RANK, trustTierRank } from "#plane/policy-resolve.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import type { PolicyConfigFloor } from "#plane/policy-types.js";
-import { REL_POLICY_POINTER_JSON } from "../lib/constants.js";
+import { REL_POLICY_POINTER_JSON } from "#core/constants.js";
 import { getRepoRoot } from "#git/git.js";
 import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";

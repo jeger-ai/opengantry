@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
-import { GIT_CONFIG_ALLOWED_SIGNERS, REL_PLANNER_SIGNING_PUB } from "../lib/constants.js";
+import { GIT_CONFIG_ALLOWED_SIGNERS, REL_PLANNER_SIGNING_PUB } from "#core/constants.js";
 import { getRepoRoot, gitConfigGet } from "#git/git.js";
 import { discoverChangedMissions } from "../lib/mission-changed.js";
 import { ensurePlannerAllowedSignersFile } from "../lib/planner-signature.js";

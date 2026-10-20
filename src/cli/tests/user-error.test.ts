@@ -1,10 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  GantryUserError,
-  isGantryUserError,
-  reportUserFacingError,
-} from "../lib/errors.js";
+import { GantryUserError, isGantryUserError } from "#core/user-error.js";
+import { reportUserFacingError } from "../lib/errors.js";
 import { captureConsole } from "./test-shared.js";
 
 test("GantryUserError: isGantryUserError type guard", () => {

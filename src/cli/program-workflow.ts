@@ -3,7 +3,7 @@ import { Option, type Command } from "commander";
 import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./commands/legislate.js";
 import { runLegislateFromIntent } from "./lib/legislate/legislate-from-intent.js";
-import { isGantryUserError } from "./lib/errors.js";
+import { isGantryUserError, errorMessage } from "#core/user-error.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
 import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
@@ -19,8 +19,8 @@ import { listDomainKeys } from "./lib/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";
-import { errorMessage, logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
-import { GATE_ADAPTER_IDS, type GateAdapterId } from "#core/mission-types.js";
+import { logError, readStdinIfEmpty, setExitCode } from "./lib/cli-io.js";
+import { GATE_ADAPTER_IDS, type GateAdapterId } from "#core/gate-adapter.js";
 import { currentReporter } from "./lib/reporter.js";
 
 /** Commander-parsed legislate flags (intent text is a positional arg). */

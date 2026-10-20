@@ -1,8 +1,5 @@
-import {
-  DEFAULT_GATE_ADAPTER,
-  type GateAdapterId,
-  type GateSpec,
-} from "#core/mission-types.js";
+import { DEFAULT_GATE_ADAPTER, type GateAdapterId } from "#core/gate-adapter.js";
+import { type GateSpec } from "#core/mission-types.js";
 
 /** Shared gate-command defaults for legislate, interrogate, and MCP draft flows. */
 export function resolveLegislateGateOptions(options: {

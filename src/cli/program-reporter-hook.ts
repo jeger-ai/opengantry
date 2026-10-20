@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { CLI_NAME } from "./lib/constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { logError, setExitCode } from "./lib/cli-io.js";
 import { reporterFromArgv, setCurrentReporter, type Reporter, type ReporterArgv } from "./lib/reporter.js";
 

@@ -2,8 +2,9 @@ import { manifestExists } from "../manifest.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import * as p from "@clack/prompts";
-import { CLI_NAME } from "../constants.js";
-import { fromPosix, logError, logInfo, setExitCode } from "../cli-io.js";
+import { CLI_NAME } from "#core/constants.js";
+import { fromPosix } from "#core/posix-path.js";
+import { logError, logInfo, setExitCode } from "../cli-io.js";
 import { plannerMissionStamped } from "../git/git-proof.js";
 import {
   ONBOARDING_ADOPTION_DOC,

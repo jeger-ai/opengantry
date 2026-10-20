@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { toPosixRel } from "./cli-io.js";
-import { EXECUTOR_LOG_FILENAME } from "./constants.js";
+import { toPosixRel } from "#core/posix-path.js";
+import { EXECUTOR_LOG_FILENAME } from "#core/constants.js";
 import { gitStagePath } from "#git/git-staged.js";
 import { ensureExecutorLogExists } from "./repair.js";
 

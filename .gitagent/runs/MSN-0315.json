@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0315",
+  "mission_path": ".gitagent/missions/MSN-0315.facades-go.yaml",
+  "head": "227cd4e0beaae631efc98bbd79e24c1e95553a72",
+  "tree": "8d5079c59e40a0f50b8acb1c67acb636c3a1dc2f",
+  "law_sha256": "2a3cb912f5cc30e9cb81a0ec987d867fb8c8fc6ae032b00477bd73b50bf96596",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 79220,
+      "output_sha256": "3057fa26baa2026f46bb439de30dde6a170fef1438286b5772b693fd1f1a65b9"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-20T21:19:09.949Z"
+}

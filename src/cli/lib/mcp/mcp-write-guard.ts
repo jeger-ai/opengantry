@@ -2,8 +2,8 @@ import { normalizeRepoRelativePath } from "#core/law.js";
 import { judgePath } from "#core/path-law.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { classifyRepoRelativePath, forbiddenZonesForSkill, scopePathLaw, isGovernanceTransportPath, tmvcRootsForSkill } from "../tmvc-path.js";
-import { GantryUserError } from "../errors.js";
-import type { Manifest } from "#core/mission-types.js";
+import { GantryUserError } from "#core/user-error.js";
+import type { Manifest } from "#core/manifest.js";
 
 export const MCP_WRITE_DENIED = "MCP_WRITE_DENIED" as const;
 

@@ -1,6 +1,6 @@
 import { emitCliJson } from "./command-boundary.js";
 import { readGantryEnv } from "./config-namespace.js";
-import { GantryUserError } from "./errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import {
   filterEpochs,
   getPeppersForOrg,

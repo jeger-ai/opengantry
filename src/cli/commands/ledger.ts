@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { loadWorkspace } from "../lib/workspace.js";
-import { LEDGER_REF } from "../lib/constants.js";
+import { LEDGER_REF } from "#core/constants.js";
 import { gitRun } from "#git/git.js";
 import { appendLedgerEntry } from "../lib/ledger/ledger-append.js";
 import { sha256Utf8, type ReceiptLedgerPayload } from "#plane/ledger-entry.js";

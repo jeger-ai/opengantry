@@ -1,7 +1,7 @@
-import { REL_POLICY_POINTER_YAML } from "../constants.js";
+import { REL_POLICY_POINTER_YAML } from "#core/constants.js";
 import type { DoctorLine } from "../doctor/doctor-types.js";
 import { compareExpectedDigests } from "../policy-digest-doctor.js";
-import { loadPolicyPointer, policyPointerRel, resolveOrgPolicy } from "./policy-resolve.js";
+import { loadPolicyPointer, policyPointerRel, resolveOrgPolicy } from "#plane/policy-resolve.js";
 
 /** Offline doctor section. MUST NOT clone or fetch. */
 export function runOrgPolicyDoctorChecks(root: string): DoctorLine[] {

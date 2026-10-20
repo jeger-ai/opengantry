@@ -9,7 +9,7 @@ import {
   readSpoolEvents,
   type SpooledEvent,
 } from "../lib/event-spool.js";
-import { GantryUserError } from "../lib/errors.js";
+import { GantryUserError } from "#core/user-error.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "../lib/receipt-attribution.js";
 

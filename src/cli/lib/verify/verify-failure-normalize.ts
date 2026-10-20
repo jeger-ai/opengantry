@@ -1,10 +1,10 @@
 import { GXT_ERROR, gxtCodeFromGantryUserError } from "#core/error-codes.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
-import { errorMessage, toPosixRel } from "../cli-io.js";
-import { isGantryUserError } from "../errors.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
+import { toPosixRel } from "#core/posix-path.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify-options.js";
-import { CLI_NAME } from "../constants.js";
+import { CLI_NAME } from "#core/constants.js";
 import { hintsForVerifyPhase, type AudienceTaggedStep } from "./verify-hints.js";
 import {
   REMEDIATION_SCHEMA_VERSION,

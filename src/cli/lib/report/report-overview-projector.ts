@@ -7,7 +7,7 @@ import {
   type MissionTimelineEntry,
 } from "../git/git-metrics.js";
 import { loadManifest } from "../manifest.js";
-import { MSN_ID_PATTERN } from "../constants.js";
+import { MSN_ID_PATTERN } from "#core/constants.js";
 import type { ReportOutcome } from "./report-template-shared.js";
 import { buildStatusReport, type StatusReport } from "../status-report.js";
 import {

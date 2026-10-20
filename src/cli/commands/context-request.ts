@@ -5,7 +5,8 @@ import {
   stageExecutorLogIfRequested,
   executorLogRepoRelative,
 } from "../lib/context-request.js";
-import { logError, logInfo, logWarn, setExitCode, errorMessage } from "../lib/cli-io.js";
+import { logError, logInfo, logWarn, setExitCode } from "../lib/cli-io.js";
+import { errorMessage } from "#core/user-error.js";
 import { resolveRuntimeEnv } from "../lib/runtime-env.js";
 import { resolvePinnedMission } from "../lib/missions/resolution.js";
 import { loadWorkspace } from "../lib/workspace.js";

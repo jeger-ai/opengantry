@@ -22,3 +22,8 @@ export class GantryUserError extends Error {
 export function isGantryUserError(e: unknown): e is GantryUserError {
   return e instanceof GantryUserError;
 }
+
+/** The message of anything thrown. */
+export function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
