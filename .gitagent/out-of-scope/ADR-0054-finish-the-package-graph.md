@@ -107,6 +107,19 @@ One mission per step. Goldens are unchanged, except decision 10, whose change ge
 
 The operator asked for every remaining review item to be done without check-ins ("just go for it and continue until everything's done", 2026-10-20). This record takes each decision above as drafted and recommended. The operator may revisit any of them before the step that implements it.
 
+## Amendment (step 6, 2026-10-21)
+
+Decision 8 is narrowed. Once steps 4 and 5 were done, no package could reach the reporter: `TARGET_ARCHITECTURE.yaml` forbids `lib` imports from every package, and domain code reports through a `warn` sink or a `Diagnostics` object instead. What remains global is one reporter per CLI process, inside the delivery layer.
+
+Step 6 deletes what the review named:
+- verify presentation inside `Reporter`;
+- the `emit*` method pairs, replaced by one `humanReport()` channel that drops its lines in a structured mode;
+- the reporter stack (`setCurrentReporter` returning the previous reporter, `withReporter`). The Commander hook now sets one reporter per action and resets it afterwards.
+
+Verify, the one command with several output modes, takes its reporter from its own options (`Reporter.forVerify`) throughout.
+
+Passing a reporter into every other command action would add a parameter to about 300 call sites without removing a concept, so it is not done. `currentReporter()` stays, reachable from delivery code only. This narrowing was taken under the same direction as the other decisions and may be revisited.
+
 ## Non-goals
 
 - Publishing `verify` or `missions` on their own.

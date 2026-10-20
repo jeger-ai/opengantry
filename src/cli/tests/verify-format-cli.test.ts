@@ -16,8 +16,18 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { logInfo } from "../lib/cli-io.js";
-import { Reporter, resetReporter, withReporter } from "../lib/reporter.js";
+import { Reporter, resetReporter, setReporter } from "../lib/reporter.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
+
+/** Run fn as the Commander hook runs an action: with reporter current, and the plain human reporter back after. */
+async function asCommand<T>(reporter: Reporter, fn: () => T | Promise<T>): Promise<T> {
+  setReporter(reporter);
+  try {
+    return await fn();
+  } finally {
+    resetReporter();
+  }
+}
 
 async function runVerifyFormatInRepo(
   dest: string,
@@ -28,13 +38,15 @@ async function runVerifyFormatInRepo(
     process.chdir(dest);
     try {
       process.exitCode = undefined;
-      const { output } = await captureConsoleAsync(async () => {
-        await runVerify({
-          mission: ".gitagent/missions/m.yaml",
-          executorLog: "EXECUTOR_LOG.md",
-          format,
-        });
-      });
+      const { output } = await captureConsoleAsync(() =>
+        asCommand(new Reporter(format), () =>
+          runVerify({
+            mission: ".gitagent/missions/m.yaml",
+            executorLog: "EXECUTOR_LOG.md",
+            format,
+          }),
+        ),
+      );
       const exitCode = typeof process.exitCode === "number" ? process.exitCode : undefined;
       return { stdout: output.stdout.trim(), stderr: output.stderr, exitCode };
     } finally {
@@ -48,7 +60,7 @@ test("runVerify --format sarif: stdout is a document and diagnostics stay on std
   resetReporter();
   try {
     const { output } = await captureConsoleAsync(() =>
-      withReporter(new Reporter("sarif"), () => {
+      asCommand(new Reporter("sarif"), () => {
         logInfo("gantry verify: debug setup");
         console.log('{"version":"2.1.0"}');
       }),

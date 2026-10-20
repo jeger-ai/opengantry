@@ -1,3 +1,4 @@
+import { Reporter } from "../reporter.js";
 import path from "node:path";
 import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../mission-arg.js";
@@ -22,7 +23,7 @@ import { GXT_ERROR } from "#core/error-codes.js";
 import { persistFailedVerifyRemediation } from "#missions/verify/verify-remediation-pipeline.js";
 import { recordVerifyRunBestEffort } from "#missions/verify/verify-run-ring.js";
 import { runRecordRelPath } from "#missions/verify/verify-run-record.js";
-import { logInfo, logWarn } from "../cli-io.js";
+import { logWarn } from "../cli-io.js";
 import {
   resolveVerifySink,
   maybeApplyRepairAndReevaluate,
@@ -126,7 +127,7 @@ async function evaluateOrInitFailure(
     assertMissionGatePresent(ctx.mission);
     const result = await evaluateVerifyPhases(ctx.root, ctx.mission, ctx.options, ctx.manifest);
     if (ctx.options.record === true && result.ok && result.outcome === "full") {
-      logInfo(`gantry verify --record: wrote ${runRecordRelPath(result.proofMsnId)}; commit it (RULES §3)`);
+      Reporter.forVerify(ctx.options).info(`gantry verify --record: wrote ${runRecordRelPath(result.proofMsnId)}; commit it (RULES §3)`);
     }
     return { ok: true, result };
   } catch (e) {
@@ -246,7 +247,8 @@ async function evaluateWithFixLoop(
 
 /** Unified verify orchestration: load once, evaluate once, present by sink. */
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
-  const ctx = loadVerifyContext({ warn: logWarn, ...options });
+  const reporter = Reporter.forVerify(options);
+  const ctx = loadVerifyContext({ warn: (message) => reporter.warn(message), ...options });
   const sink = resolveVerifySink(ctx.options);
   emitMissionBinding(ctx, sink);
 
