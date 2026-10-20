@@ -1,0 +1,122 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0313]. Executor must not run until the [MSN-0313] legislation commit + pin.
+#
+# Legislated intent: ADR-0053 migration step 4, standalone verify onto the path law. allowed_paths is an area and
+# forbidden_paths are deny rules judged by judgePath (no floor, ADR-0051 §7); verify's private anyPathOf helper is
+# removed in favour of core's patternCoversPath. Results, reports and exit codes unchanged.
+#
+# Operator direction (2026-10-20, "just go for it and continue until everything's done"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0313.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0313
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage is not touched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. No output changes; conformance goldens unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0313.verify-path-law.yaml,
+      .gitagent/runs/MSN-0313.json, src/cli/lib/verify-standalone/diff.ts,
+      src/cli/lib/verify-standalone/imports.ts,
+      src/cli/lib/verify-standalone/run.ts. ADR-0053 migration step 4,
+      standalone verify onto the path law: src/cli/lib/verify-standalone/run.ts
+      (judgePaths through judgePath, file selection through patternCoversPath),
+      imports.ts (patternCoversPath), diff.ts (anyPathOf removed), CHANGELOG,
+      executor log, baseline. Verify's contract format, report schema
+      (opengantry.verify-result.v1), exit codes and its import and layer checks
+      are unchanged (ADR-0053 decision 4: imports and layers stay in verify).
+      The cage package is forbidden, as are .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/. ARCH_BASELINE.json
+      lowered only. Operator direction (2026-10-20, \"just go for it and
+      continue until everything's done\", continuing ADR-0053 after step 3).
+      Deviation from the ADR-0053 text: no new core export; verify calls core's
+      existing patternCoversPath directly instead of a shared list helper, which
+      keeps the core export budget. The mission has no trace rows: its evidence
+      is .gitagent/runs/MSN-0313.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 stands. The verify contract format, its
+      no-floor rule (§7), the opengantry.verify-result.v1 report and exit codes
+      are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract cage is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: bf57709a93d08f9535ea6fff4024488908a9125dd93ac07aff3de7b1c2eff7da
+declared_paths:
+  - .gitagent/missions/MSN-0313.verify-path-law.yaml
+  - .gitagent/runs/MSN-0313.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - src/cli/lib/verify-standalone/diff.ts
+  - src/cli/lib/verify-standalone/imports.ts
+  - src/cli/lib/verify-standalone/run.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0313.verify-path-law.yaml
+    - .gitagent/runs/MSN-0313.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - src/cli/lib/verify-standalone/diff.ts
+    - src/cli/lib/verify-standalone/imports.ts
+    - src/cli/lib/verify-standalone/run.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/cage/
+contract_sha256: 08112f946c1d2e415c4417b9639e0613bd958e08265fa0837c97cb4c8718331f

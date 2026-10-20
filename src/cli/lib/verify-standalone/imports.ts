@@ -4,7 +4,7 @@ import { GantryUserError } from "../errors.js";
 import { gitRun } from "#git/git.js";
 import { extractImportSites } from "#core/import-scanner.js";
 import type { VerifyContract, VerifyLayer } from "./contract.js";
-import { anyPathOf } from "./diff.js";
+import { patternCoversPath } from "#core/path-glob.js";
 import { extractPythonImports, type PythonImport } from "./python-imports.js";
 
 /**
@@ -173,7 +173,7 @@ function moduleMatches(module: string, forbid: string, lang: Lang): boolean {
 }
 
 function layerOf(target: string, layers: VerifyLayer[]): VerifyLayer | null {
-  return layers.find((l) => anyPathOf(l.paths)(target)) ?? null;
+  return layers.find((l) => l.paths.some((x) => patternCoversPath(x, target))) ?? null;
 }
 
 /** Import and layer findings for imports the change adds to `changed` files. */
@@ -185,7 +185,7 @@ export function evaluateImports(contract: VerifyContract, changed: readonly stri
   };
   const skipped = new Set<string>();
   for (const file of changed.filter((f) => head.has(f))) {
-    const ruleIdx = contract.imports.map((r, i) => (anyPathOf(r.files)(file) ? i : -1)).filter((i) => i >= 0);
+    const ruleIdx = contract.imports.map((r, i) => (r.files.some((x) => patternCoversPath(x, file)) ? i : -1)).filter((i) => i >= 0);
     const fromLayer = layerOf(file, contract.layers);
     const layered = fromLayer !== null && fromLayer.mayNotImport.length > 0;
     if (ruleIdx.length === 0 && !layered) continue;

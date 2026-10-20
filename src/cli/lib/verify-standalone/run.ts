@@ -25,7 +25,9 @@ import {
   type LoadedVerifyContract,
   type VerifyContract,
 } from "./contract.js";
-import { addedLinesOf, anyPathOf, changedFiles, countAddedLines } from "./diff.js";
+import { addedLinesOf, changedFiles, countAddedLines } from "./diff.js";
+import { patternCoversPath } from "#core/path-glob.js";
+import { judgePath, pathLaw } from "#core/path-law.js";
 import { diskSourceTree, evaluateImports, gitSourceTree, type ImportFindings } from "./imports.js";
 
 export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
@@ -164,10 +166,12 @@ function loadBaseline(p: Prepared, opts: VerifyContractOptions): VerifyBaselineF
 
 function judgePaths(p: Prepared, changed: string[], problems: string[]): VerifyContractResult["paths"] {
   const c = p.loaded.contract;
-  const allowed = c.allowedPaths ? anyPathOf(c.allowedPaths) : () => true;
-  const forbiddenOf = anyPathOf(c.forbiddenPaths);
-  const outside = changed.filter((f) => !allowed(f));
-  const forbidden = changed.filter(forbiddenOf);
+  // allowed_paths is the area, forbidden_paths are deny rules (ADR-0053; no floor, ADR-0051 §7). A file outside the
+  // area and forbidden is listed under both, so each half is judged on its own.
+  const area = pathLaw({ areas: c.allowedPaths ? [{ id: "outside_allowed_paths", source: "verify_contract", patterns: c.allowedPaths, overridable: false }] : [] });
+  const rules = pathLaw({ rules: [{ id: "forbidden_path", source: "verify_contract", patterns: c.forbiddenPaths, effect: "deny", overridable: false }] });
+  const outside = changed.filter((f) => judgePath(area, f) !== null);
+  const forbidden = changed.filter((f) => judgePath(rules, f) !== null);
   if (outside.length > 0) problems.push(`${String(outside.length)} changed file(s) outside allowed_paths: ${outside.join(", ")}`);
   if (forbidden.length > 0) problems.push(`forbidden path(s) changed: ${forbidden.join(", ")}`);
   return { changed, outside, forbidden };
@@ -175,8 +179,7 @@ function judgePaths(p: Prepared, changed: string[], problems: string[]): VerifyC
 
 function judgeSize(p: Prepared, changed: string[], worktree: boolean, problems: string[]): VerifyContractResult["size"] {
   const c = p.loaded.contract;
-  const excluded = anyPathOf(c.sizeExclude);
-  const counted = changed.filter((f) => !excluded(f));
+  const counted = changed.filter((f) => !c.sizeExclude.some((x) => patternCoversPath(x, f)));
   const added = countAddedLines(p.root, p.base, counted, worktree);
   if (c.maxAddedLines !== null && added > c.maxAddedLines) {
     problems.push(`${String(added)} lines added outside size.exclude, the budget is ${String(c.maxAddedLines)}`);
@@ -186,7 +189,7 @@ function judgeSize(p: Prepared, changed: string[], worktree: boolean, problems: 
 
 function judgeRules(p: Prepared, changed: string[], worktree: boolean, problems: string[]): VerifyContractResult["rules"] {
   return p.loaded.contract.rules.map((rule) => {
-    const files = changed.filter(anyPathOf(rule.files));
+    const files = changed.filter((f) => rule.files.some((x) => patternCoversPath(x, f)));
     const forbid = new RegExp(rule.forbid);
     const violations = addedLinesOf(p.root, p.base, files, worktree)
       .filter(({ text }) => forbid.test(text))

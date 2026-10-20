@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { GantryUserError } from "../errors.js";
 import { gitRun } from "#git/git.js";
-import { patternCoversPath } from "#core/path-glob.js";
 
 /**
  * What a change touched since the base: the files and the lines it added. Committed work is `base...HEAD` (from
@@ -114,7 +113,3 @@ export function addedLinesOf(root: string, base: string, files: readonly string[
   return out;
 }
 
-/** A file matches a list when one pattern covers it: the path or a folder above it, or a glob (core path-glob). */
-export function anyPathOf(patterns: readonly string[]): (file: string) => boolean {
-  return (file) => patterns.some((p) => patternCoversPath(p, file));
-}
