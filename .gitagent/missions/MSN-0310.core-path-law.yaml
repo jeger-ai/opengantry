@@ -1,0 +1,177 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0310]. Executor must not run until the [MSN-0310] legislation commit + pin.
+#
+# Legislated intent: ADR-0053 migration step 1, the core path law. packages/core/src/path-law.ts adds PathLaw
+# (areas, a rule table, exemptions), judgePath and tightenPathLaw; its tests encode today's cage rule table and
+# mission classification. No consumer yet (src/ and the other packages are forbidden). Areas carry their own rule
+# name, source and overridability; the core budget rises for this step only.
+#
+# Operator direction (2026-10-20, "start step 1, the core path law"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0310.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0310
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 0e13aa3e1bc8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0310.core-path-law.yaml,
+      .gitagent/runs/MSN-0310.json, packages/core/src/index.ts,
+      packages/core/src/path-law.ts, packages/core/tests/path-law.test.ts.
+      ADR-0053 migration step 1 only: one new core module (path-law.ts), its
+      export, its test, two docs lines, the executor log line and
+      ARCH_BASELINE.json. No consumer changes: src/, packages/cage/,
+      packages/plane/ and packages/git/ are forbidden in the contract, as are
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/. A
+      throwaway script compared judgePath with the cage's classifyCagePath on
+      208 path, dependency-freeze, scope and override combinations: zero
+      differences."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage does not use the module
+      yet; the tests pin its floor, freeze, scope and override semantics for
+      step 3, and judgePath agrees with classifyCagePath on 208 combinations.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp and its signing are unchanged; this
+      mission is stamped by a Planner commit that modifies the mission file.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: Accept. A3's one evaluator for path judgments starts here; B4
+      allows a Planner raise, used for core because the module arrives before
+      the consumers it replaces are deleted.
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. No output changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: "Accept. This is ADR-0053 migration step 1: the core model,
+      judgment and composition, with tests built from today's cage rule table
+      and mission classification and no consumer. Areas are objects with their
+      own name, source and overridability rather than bare pattern lists; the
+      core budget rises for this step only."
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0310.core-path-law.yaml,
+      .gitagent/runs/MSN-0310.json, packages/core/src/index.ts,
+      packages/core/src/path-law.ts, packages/core/tests/path-law.test.ts.
+      ADR-0053 migration step 1 only: one new core module (path-law.ts), its
+      export, its test, two docs lines, the executor log line and
+      ARCH_BASELINE.json. No consumer changes: src/, packages/cage/,
+      packages/plane/ and packages/git/ are forbidden in the contract, as are
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/. A
+      throwaway script compared judgePath with the cage's classifyCagePath on
+      208 path, dependency-freeze, scope and override combinations: zero
+      differences. Operator direction (2026-10-20, \"start step 1, the core path
+      law\"). Two deviations from the ADR-0053 text, both recorded here: areas
+      are objects with their own rule name, source and overridability (the cage
+      scope has two sources and is overridable, mission roots are not), and this
+      step raises the core budget, because it adds the module before any
+      consumer can be deleted; steps 2 to 4 delete the consumers' own models and
+      lower the baseline. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0310.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract cage is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: b9105e74b8d892e4c0586488c289b427e3157bb6523dbb5bc43591ea2f686d79
+declared_paths:
+  - .gitagent/missions/MSN-0310.core-path-law.yaml
+  - .gitagent/runs/MSN-0310.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/index.ts
+  - packages/core/src/path-law.ts
+  - packages/core/tests/path-law.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0310.core-path-law.yaml
+    - .gitagent/runs/MSN-0310.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/index.ts
+    - packages/core/src/path-law.ts
+    - packages/core/tests/path-law.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/cage/
+    - packages/git/
+    - packages/plane/
+    - src/
+contract_sha256: 398d9b4f1315e7686807891a596adb0877a21cac8e2f63a3157616ecff1c1cc9
