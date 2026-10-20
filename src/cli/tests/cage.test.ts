@@ -8,7 +8,12 @@ import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { recoverCageJournal, resolveCageJournalDir } from "#cage/cage-journal.js";
 import { listDescendantPids } from "#cage/cage-process.js";
 import { runCage } from "#cage/cage-run.js";
-import { buildCagePlan, cageBasenameRule, classifyCagePath } from "#cage/cage-rules.js";
+import { buildCagePlan, cageFloorRules, classifyCagePath } from "#cage/cage-rules.js";
+import { judgePath, pathLaw } from "#core/path-law.js";
+
+/** The floor rule a file name gets anywhere in the tree (frozen: dependencies revert). */
+const cageBasenameRule = (name: string, dependencies: "report" | "revert" = "report"): string | null =>
+  judgePath(pathLaw({ rules: cageFloorRules(dependencies) }), `some/dir/${name}`)?.rule ?? null;
 import { globToRegExp } from "#core/path-glob.js";
 import { CAGE_MAX_SCAN_BYTES, CAGE_MAX_TARGETS } from "#cage/cage-snapshot.js";
 import { CAGE_LIMITS, CAGE_LIMITS_SUMMARY, CAGE_UPGRADE_FOOTER, formatCageReport } from "#cage/cage-report.js";

@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { LAW_FILES, readLawFile } from "#core/law-file.js";
-import { globToRegExp } from "#core/path-glob.js";
 import { parseManifestSource } from "#core/manifest.js";
 import { workingTreeReader } from "#git/repo-text.js";
 import { gitRun } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
-import { inCageScope, parseCageScopeFlag, type CageScope } from "./cage-scope.js";
+import { judgePath, pathLaw, type PathEffect, type PathLaw, type PathLawRule } from "#core/path-law.js";
+import { parseCageScopeFlag, type CageScope } from "./cage-scope.js";
 import {
   CAGE_CONFIG_FILE,
   cageConfigCommitted,
@@ -44,7 +44,7 @@ export const CAGE_RULE_MODES: Readonly<Record<CageRuleId, CageRuleMode>> = {
   secrets: "revert",
   git_control: "revert",
   // Package managers legitimately rewrite lockfiles; surface the change, never undo it, unless the plan
-  // freezes dependencies (`.cage.yaml` `dependencies: revert`, `--lock-deps`): see cagePlanRuleMode.
+  // freezes dependencies (`.cage.yaml` `dependencies: revert`, `--lock-deps`): see cageFloorRules.
   lockfile: "report",
   // Only ever matched when dependencies are frozen.
   dependency_manifest: "revert",
@@ -56,7 +56,7 @@ export const CAGE_RULE_MODES: Readonly<Record<CageRuleId, CageRuleMode>> = {
   out_of_scope: "revert",
 };
 
-export { inCageScope, type CageScope };
+export type { CageScope };
 
 /** Rules `--allow-override` can never downgrade: they protect the harness itself. */
 const NON_OVERRIDABLE_RULES: ReadonlySet<CageRuleId> = new Set(["git_control", "cage_config"]);
@@ -70,7 +70,7 @@ export function cageRuleSource(rule: CageRuleId): CageRuleSource {
 /** Root-anchored CI paths (files or directory trees). */
 const CI_CONFIG_PATHS = [".github/workflows", ".gitlab-ci.yml", ".circleci", "azure-pipelines.yml"] as const;
 
-const LOCKFILE_NAMES: ReadonlySet<string> = new Set([
+const LOCKFILE_NAMES = [
   "package-lock.json",
   "npm-shrinkwrap.json",
   "pnpm-lock.yaml",
@@ -84,22 +84,33 @@ const LOCKFILE_NAMES: ReadonlySet<string> = new Set([
   "go.sum",
   "Gemfile.lock",
   "composer.lock",
-]);
+] as const;
 
-/** Dependency manifests, protected only when the plan freezes dependencies. Basename match, anywhere in the tree. */
-const DEPENDENCY_MANIFEST_NAMES: ReadonlySet<string> = new Set([
-  "package.json",
-  "pyproject.toml",
-  "Pipfile",
-  "Cargo.toml",
-  "go.mod",
-  "Gemfile",
-  "composer.json",
-]);
-const REQUIREMENTS_TXT = /^requirements.*\.txt$/;
+/** Dependency manifests, protected only when the plan freezes dependencies. */
+const DEPENDENCY_MANIFEST_NAMES = ["package.json", "pyproject.toml", "Pipfile", "Cargo.toml", "go.mod", "Gemfile", "composer.json", "requirements*.txt"] as const;
 
-/** Rules a dependency freeze switches to revert. */
-const DEPENDENCY_RULES: ReadonlySet<CageRuleId> = new Set(["lockfile", "dependency_manifest"]);
+const anywhere = (names: readonly string[]): string[] => names.map((n) => `**/${n}`);
+
+/**
+ * The built-in rules that are not path targets: secrets and lockfiles anywhere in the tree, and under a dependency
+ * freeze the lockfiles again as revert plus the manifests (ADR-0048 decision 9). Manifests under a `vendor/` folder
+ * are install output (`composer install`, `cargo vendor` write one per package), so the freeze leaves them alone.
+ */
+export function cageFloorRules(dependencies: CageRuleMode): PathLawRule[] {
+  const rule = (id: CageRuleId, patterns: string[], mode: CageRuleMode, except?: string[]): PathLawRule => ({
+    id,
+    source: cageRuleSource(id),
+    patterns,
+    ...(except ? { except } : {}),
+    effect: effectOf(mode),
+    overridable: !NON_OVERRIDABLE_RULES.has(id),
+  });
+  const floor = [rule("secrets", ["**/.env", "**/.env.*"], "revert", ["**/.env.example"]), rule("lockfile", anywhere(LOCKFILE_NAMES), "report")];
+  if (dependencies !== "revert") return floor;
+  return [...floor, rule("lockfile", anywhere(LOCKFILE_NAMES), "revert"), rule("dependency_manifest", anywhere(DEPENDENCY_MANIFEST_NAMES), "revert", ["**/vendor/**"])];
+}
+
+const effectOf = (mode: CageRuleMode): PathEffect => (mode === "revert" ? "deny" : "report");
 
 /** Directory names skipped by the whole-tree basename scan (dependency and VCS bulk). */
 export const CAGE_SCAN_SKIP_DIRS: ReadonlySet<string> = new Set([
@@ -118,10 +129,9 @@ export interface CageTarget {
   source: CageRuleSource;
 }
 
-/** A `.cage.yaml` glob, matched against root-relative POSIX paths found by the whole-tree scan. */
+/** A `.cage.yaml` glob, matched against root-relative POSIX paths (core path-glob, covering). */
 export interface CageGlobTarget {
   pattern: string;
-  re: RegExp;
   mode: CageRuleMode;
   source: "cage_yaml";
 }
@@ -141,6 +151,8 @@ export interface CagePlan {
   dependencies: CageRuleMode;
   /** The allowed area, or null when the whole repository is (no scope). */
   scope: CageScope | null;
+  /** The plan's rules as one path law (ADR-0053), derived from the fields above; every classification judges it. */
+  law: PathLaw;
 }
 
 
@@ -151,35 +163,29 @@ export interface CagePathRule {
   overridden: boolean;
 }
 
-/** Rule for a file found by the whole-tree scan, keyed on its basename. Manifests match only under a freeze. */
-export function cageBasenameRule(name: string, dependencies: CageRuleMode = "report"): CageRuleId | null {
-  if (name === ".env" || (name.startsWith(".env.") && name !== ".env.example")) return "secrets";
-  if (LOCKFILE_NAMES.has(name)) return "lockfile";
-  if (dependencies === "revert" && (DEPENDENCY_MANIFEST_NAMES.has(name) || REQUIREMENTS_TXT.test(name))) {
-    return "dependency_manifest";
-  }
-  return null;
-}
-
-/** Add the `out_of_scope` rule to a path's hit when the path lies outside the scope; a revert hit keeps its own rule. */
-export function cageScopeHit(plan: Pick<CagePlan, "scope">, rel: string, hit: CagePathRule | null): CagePathRule | null {
-  if (inCageScope(plan, rel)) return hit;
-  return stricter(hit, { rule: "out_of_scope", mode: "revert", overridden: false });
-}
-
 /**
- * Rule for a file found by the whole-tree scan, by its root-relative path. Manifests under a `vendor/` directory
- * are install output (`composer install`, `cargo vendor` write one per package), not the project's manifests,
- * so the freeze leaves them alone.
+ * The plan as a path law, in today's precedence: path targets inside the root (CI, git control, `.cage.yaml`, manifest
+ * zones, `.cage.yaml` paths), the floor rules, then `.cage.yaml` globs; equal effects keep the earlier rule. Targets
+ * outside the root (a linked worktree's git dir) stay capture targets the snapshot classifies itself. A scope list is
+ * an area; the git dir and paths outside the root are never out of scope (they are git_control's).
  */
-export function cageScanRule(rel: string, dependencies: CageRuleMode = "report"): CageRuleId | null {
-  const rule = cageBasenameRule(path.posix.basename(rel), dependencies);
-  return rule === "dependency_manifest" && rel.split("/").slice(0, -1).includes("vendor") ? null : rule;
+export function cagePlanLaw(plan: Omit<CagePlan, "law">): PathLaw {
+  const targets = plan.targets.flatMap((t): PathLawRule[] => {
+    const rel = targetRel(plan, t);
+    if (rel === null) return [];
+    return [{ id: t.rule, source: t.source, patterns: [rel], effect: effectOf(t.mode), overridable: !NON_OVERRIDABLE_RULES.has(t.rule) }];
+  });
+  const globs = plan.globs.map((g): PathLawRule => ({ id: "cage_protect", source: g.source, patterns: [g.pattern], effect: effectOf(g.mode), overridable: true }));
+  const lists = plan.scope ? [plan.scope.config, plan.scope.flag].filter((l): l is string[] => l !== null) : [];
+  return pathLaw({
+    rules: [...targets, ...cageFloorRules(plan.dependencies), ...globs],
+    areas: lists.map((l) => ({ id: "out_of_scope", source: cageRuleSource("out_of_scope"), patterns: [...l, ".git", ".."], overridable: true })),
+  });
 }
 
-/** A rule's mode under this plan: a dependency freeze turns the lockfile rule to revert. */
-export function cagePlanRuleMode(plan: Pick<CagePlan, "dependencies">, rule: CageRuleId): CageRuleMode {
-  return DEPENDENCY_RULES.has(rule) ? plan.dependencies : CAGE_RULE_MODES[rule];
+/** Whether a root-relative path lies in the allowed area; always true without a scope. */
+export function inCageScope(plan: Pick<CagePlan, "law">, rel: string): boolean {
+  return judgePath({ ...plan.law, rules: [] }, rel) === null;
 }
 
 function rootJoin(root: string, posixRel: string): string {
@@ -249,41 +255,14 @@ function targetRel(plan: Pick<CagePlan, "root">, t: CageTarget): string | null {
   return rel.startsWith("..") ? null : rel;
 }
 
-function stricter(a: CagePathRule | null, b: CagePathRule): CagePathRule {
-  return a && (a.mode === "revert" || b.mode === "report") ? a : b;
-}
-
-function isOverridden(plan: Pick<CagePlan, "overrides">, rel: string): boolean {
-  return plan.overrides.some((o) => underPath(rel, o));
-}
-
 /**
- * The strictest rule for a root-relative path (revert beats report), then `--allow-override`.
- * Shared by the snapshot, override validation and the push guard so all three agree.
+ * The rule that decides a root-relative path (revert beats report, earlier rules win ties), after `--allow-override`.
+ * Shared by the snapshot, override validation, the push guard and `cage check` so all of them agree.
  */
-export function classifyCagePath(plan: CagePlan, rel: string, opts: { overrides?: boolean } = {}): CagePathRule | null {
-  let hit: CagePathRule | null = null;
-  for (const t of plan.targets) {
-    const base = targetRel(plan, t);
-    if (base !== null && underPath(rel, base)) hit = stricter(hit, { rule: t.rule, mode: t.mode, overridden: false });
-  }
-  const byName = cageScanRule(rel, plan.dependencies);
-  if (byName) hit = stricter(hit, { rule: byName, mode: cagePlanRuleMode(plan, byName), overridden: false });
-  for (const g of plan.globs) {
-    if (g.re.test(rel)) hit = stricter(hit, { rule: "cage_protect", mode: g.mode, overridden: false });
-  }
-  return applyCageOverride(plan, rel, cageScopeHit(plan, rel, hit), opts.overrides !== false);
-}
-
-/** Downgrade a revert rule to report when the path is overridden; harness rules never are. */
-export function applyCageOverride(
-  plan: Pick<CagePlan, "overrides">,
-  rel: string,
-  hit: CagePathRule | null,
-  enabled = true,
-): CagePathRule | null {
-  if (!enabled || !hit || hit.mode !== "revert" || NON_OVERRIDABLE_RULES.has(hit.rule)) return hit;
-  return isOverridden(plan, rel) ? { ...hit, mode: "report", overridden: true } : hit;
+export function classifyCagePath(plan: Pick<CagePlan, "law" | "overrides">, rel: string, opts: { overrides?: boolean } = {}): CagePathRule | null {
+  const judged = judgePath(plan.law, rel, opts.overrides === false ? [] : plan.overrides);
+  if (!judged) return null;
+  return { rule: judged.rule as CageRuleId, mode: judged.effect === "deny" ? "revert" : "report", overridden: judged.overridden };
 }
 
 function overrideError(message: string): GantryUserError {
@@ -336,7 +315,7 @@ function addConfigTargets(plan: CagePlan, root: string, config: CageConfig, comm
     if (e.kind === "path") {
       plan.targets.push({ abs: rootJoin(root, e.value), rule: "cage_protect", mode: e.mode, source: "cage_yaml" });
     } else {
-      plan.globs.push({ pattern: e.value, re: globToRegExp(e.value), mode: e.mode, source: "cage_yaml" });
+      plan.globs.push({ pattern: e.value, mode: e.mode, source: "cage_yaml" });
     }
   }
   plan.config = {
@@ -390,10 +369,14 @@ export function assembleCagePlan(root: string, inputs: CageRuleInputs, opts: Cag
     // Set before the config entries so a report entry on a frozen path is refused as a downgrade.
     dependencies: opts.lockDeps === true || inputs.config.dependencies === "revert" ? "revert" : "report",
     scope: null,
+    law: pathLaw(),
   };
   const flag = parseCageScopeFlag(opts.allowOnly);
   if (inputs.config.allowOnly || flag) plan.scope = { config: inputs.config.allowOnly, flag };
+  // The built-in law first, so a report entry on a built-in revert path is refused as a downgrade.
+  plan.law = cagePlanLaw(plan);
   addConfigTargets(plan, root, inputs.config, inputs.configCommitted);
+  plan.law = cagePlanLaw(plan);
   return plan;
 }
 
@@ -426,19 +409,15 @@ interface SerializedCagePlan {
   scope?: CageScope | null;
 }
 
-/** JSON form for the session push guard, so it checks the exact plan the session started with. */
+/** JSON form for the session push guard, so it checks the exact plan the session started with. The law is derived. */
 export function serializeCagePlan(plan: CagePlan): string {
-  const out: SerializedCagePlan = { ...plan, globs: plan.globs.map((g) => ({ pattern: g.pattern, mode: g.mode, source: g.source })) };
+  const { law: _law, ...fields } = plan;
+  const out: SerializedCagePlan = { ...fields, globs: plan.globs.map((g) => ({ pattern: g.pattern, mode: g.mode, source: g.source })) };
   return JSON.stringify(out);
 }
 
 export function parseSerializedCagePlan(json: string): CagePlan {
   const p = JSON.parse(json) as SerializedCagePlan;
-  return {
-    ...p,
-    contestLimit: p.contestLimit ?? null,
-    dependencies: p.dependencies ?? "report",
-    scope: p.scope ?? null,
-    globs: p.globs.map((g) => ({ ...g, re: globToRegExp(g.pattern) })),
-  };
+  const fields: Omit<CagePlan, "law"> = { ...p, contestLimit: p.contestLimit ?? null, dependencies: p.dependencies ?? "report", scope: p.scope ?? null };
+  return { ...fields, law: cagePlanLaw(fields) };
 }
