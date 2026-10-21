@@ -21,6 +21,7 @@ const rule = (over: Partial<TrustedAutomationRule> = {}): TrustedAutomationRule 
   allowedPaths: [".github/workflows/**"],
   structuralKind: "workflow_version_pin",
   maxNetLoc: 5,
+  allowedRegistries: [],
   ...over,
 });
 
@@ -30,7 +31,7 @@ test("parseTrustedAutomationRules validates shape, kinds and the hard caps", () 
   const ok = parseTrustedAutomationRules({
     trusted_automation: { rules: [{ id: "r", allowed_actors: ["A@X.io"], allowed_paths: ["src/**"], allowed_structural_changes: ["bounded_content"], max_net_loc: 100 }] },
   });
-  assert.deepEqual(ok, [{ id: "r", allowedActors: ["a@x.io"], allowedPaths: ["src/**"], structuralKind: "bounded_content", maxNetLoc: 100 }]);
+  assert.deepEqual(ok, [{ id: "r", allowedActors: ["a@x.io"], allowedPaths: ["src/**"], structuralKind: "bounded_content", maxNetLoc: 100, allowedRegistries: [] }]);
   const bad = (rules: unknown[]) => () => parseTrustedAutomationRules({ trusted_automation: { rules } });
   assert.throws(bad([{ id: "r", allowed_actors: ["a"], allowed_paths: ["p"], allowed_structural_changes: ["workflow_version_pin", "bounded_content"], max_net_loc: 1 }]), /exactly one/);
   assert.throws(bad([{ id: "r", allowed_actors: ["a"], allowed_paths: ["p"], allowed_structural_changes: ["bounded_content"], max_net_loc: 101 }]), /hard cap 100/);

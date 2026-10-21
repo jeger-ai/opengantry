@@ -6,12 +6,17 @@
 import { judgePath, pathLaw, tightenPathLaw, type PathLaw } from "./path-law.js";
 import { normalizeRepoRelativePath } from "./posix-path.js";
 
-export type StructuralChangeKind = "workflow_version_pin" | "bounded_content";
+export type StructuralChangeKind = "workflow_version_pin" | "bounded_content" | "dependency_update";
 
+/** For `dependency_update` the cap counts manifest lines only: lockfiles are generated (ADR-0057). */
 export const STRUCTURAL_KIND_HARD_MAX_NET_LOC: Readonly<Record<StructuralChangeKind, number>> = {
   workflow_version_pin: 5,
   bounded_content: 100,
+  dependency_update: 200,
 };
+
+/** Where a `dependency_update` lockfile entry may resolve unless the rule lists `allowed_registries`. */
+export const DEFAULT_DEPENDENCY_REGISTRIES: readonly string[] = ["https://registry.npmjs.org/"];
 
 export interface TrustedAutomationRule {
   id: string;
@@ -19,6 +24,8 @@ export interface TrustedAutomationRule {
   allowedPaths: string[];
   structuralKind: StructuralChangeKind;
   maxNetLoc: number;
+  /** `dependency_update` only: URL prefixes a changed lockfile entry may resolve to. */
+  allowedRegistries: string[];
 }
 
 /** Paths that always need an `[MSN]` subject, in addition to every skill's `tmvc_roots`. */
@@ -60,7 +67,19 @@ export function parseTrustedAutomationRules(config: unknown): TrustedAutomationR
       allowedPaths: paths.map((p) => normalizeRepoRelativePath(String(p))),
       structuralKind,
       maxNetLoc,
+      allowedRegistries: parseRegistries(id, structuralKind, rule.allowed_registries),
     };
+  });
+}
+
+function parseRegistries(id: string, kind: StructuralChangeKind, raw: unknown): string[] {
+  if (raw === undefined) return kind === "dependency_update" ? [...DEFAULT_DEPENDENCY_REGISTRIES] : [];
+  if (kind !== "dependency_update") fail(`rule ${id}: allowed_registries is for dependency_update`);
+  if (!Array.isArray(raw) || raw.length === 0) fail(`rule ${id}: allowed_registries must be a non-empty list`);
+  return raw.map((r) => {
+    const url = String(r).trim();
+    if (!url.startsWith("https://") || !url.endsWith("/")) fail(`rule ${id}: registry ${url} must be an https:// URL ending in /`);
+    return url;
   });
 }
 
@@ -181,6 +200,8 @@ export interface TrustedAutomationChange {
   files: readonly string[];
   actorEmail: string;
   netLoc: number;
+  /** Lines of `netLoc` in npm lockfiles; a `dependency_update` rule does not count them (ADR-0057). */
+  lockfileLoc?: number;
   /** Structural judgement the loader computes for the rule's kind (reads blobs, knows the perimeter). */
   structural: (rule: TrustedAutomationRule) => { ok: boolean; reason: string };
 }
@@ -203,12 +224,13 @@ export function evaluateAgainstRule(rule: TrustedAutomationRule, change: Trusted
   for (const file of change.files) {
     if (judgePath(allowed, normalizeRepoRelativePath(file)) !== null) return { eligible: false, reason: `path ${file} outside rule ${rule.id} allowed_paths` };
   }
-  if (change.netLoc > rule.maxNetLoc) {
-    return { eligible: false, reason: `net_loc ${String(change.netLoc)} exceeds rule ${rule.id} max_net_loc ${String(rule.maxNetLoc)}` };
+  const counted = rule.structuralKind === "dependency_update" ? change.netLoc - (change.lockfileLoc ?? 0) : change.netLoc;
+  if (counted > rule.maxNetLoc) {
+    return { eligible: false, reason: `net_loc ${String(counted)} exceeds rule ${rule.id} max_net_loc ${String(rule.maxNetLoc)}` };
   }
   const structural = change.structural(rule);
   if (!structural.ok) return { eligible: false, reason: structural.reason };
-  return { eligible: true, reason: `TRUSTED-AUTOMATION-OK: rule=${rule.id} actor=${change.actorEmail} paths=${change.files.join(",")} net_loc=${String(change.netLoc)}` };
+  return { eligible: true, reason: `TRUSTED-AUTOMATION-OK: rule=${rule.id} actor=${change.actorEmail} paths=${change.files.join(",")} net_loc=${String(counted)}` };
 }
 
 /** First eligible rule wins; otherwise the last denial reason (or the fallback) is reported. */

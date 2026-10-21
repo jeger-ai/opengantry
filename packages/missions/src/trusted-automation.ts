@@ -17,6 +17,7 @@ import {
   type TrustedAutomationRule,
   type TrustedAutomationVerdict,
 } from "#core/trusted-automation.js";
+import { dependencyFileKind, lockfileUpdateProblem, manifestUpdateProblem } from "#core/dependency-update.js";
 import type { Manifest } from "#core/manifest.js";
 import { gitRunOk } from "#git/git.js";
 import { perimeterLawFor } from "./perimeter.js";
@@ -78,8 +79,50 @@ interface StructuralContext {
   headSha: string;
 }
 
+/** The npm lockfiles git sees changed, and their added plus deleted lines, for a commit or a range. */
+const LOCKFILE_PATHSPEC = [":(glob)**/package-lock.json", ":(glob)**/npm-shrinkwrap.json"];
+
+function changeArgs(ctx: StructuralContext, what: "--name-only" | "--numstat"): string[] {
+  return ctx.mode === "commit"
+    ? ["show", what, "--format=", ctx.headSha, "--", ...LOCKFILE_PATHSPEC]
+    : ["diff", what, `${ctx.baseSha ?? ""}...${ctx.headSha}`, "--", ...LOCKFILE_PATHSPEC];
+}
+
+function parseJsonOrNull(text: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * `dependency_update` (ADR-0057): every enforced file and every npm lockfile the change touches is a dependency file,
+ * existed before and after, and changed only as a bump (manifest) or a registry update (lockfile).
+ */
+function dependencyUpdateProblem(root: string, rule: TrustedAutomationRule, files: readonly string[], ctx: StructuralContext): string | null {
+  const before = ctx.mode === "commit" ? `${ctx.headSha}^` : (ctx.baseSha ?? "");
+  for (const file of new Set([...files, ...lines(root, changeArgs(ctx, "--name-only"))])) {
+    const kind = dependencyFileKind(file);
+    if (!kind) return `${file} is not a package.json or an npm lockfile`;
+    const b = blobAt(root, before, file);
+    const a = blobAt(root, ctx.headSha, file);
+    if (b === null || a === null) return `${file} was ${b === null ? "added" : "deleted"}`;
+    const bd = parseJsonOrNull(b);
+    const ad = parseJsonOrNull(a);
+    if (bd === null || ad === null) return `${file} is not valid JSON`;
+    const problem = kind === "manifest" ? manifestUpdateProblem(bd, ad) : lockfileUpdateProblem(bd, ad, rule.allowedRegistries);
+    if (problem) return `${file}: ${problem}`;
+  }
+  return null;
+}
+
 function structuralJudge(root: string, manifest: Manifest, files: readonly string[], ctx: StructuralContext) {
   return (rule: TrustedAutomationRule): { ok: boolean; reason: string } => {
+    if (rule.structuralKind === "dependency_update") {
+      const problem = dependencyUpdateProblem(root, rule, files, ctx);
+      return problem ? { ok: false, reason: `rule ${rule.id}: not a dependency update (${problem})` } : { ok: true, reason: "" };
+    }
     if (rule.structuralKind === "bounded_content") {
       const perimeter = perimeterLawFor(root, manifest);
       if (perimeter.error !== null) return { ok: false, reason: `rule ${rule.id}: ${perimeter.error}` };
@@ -112,9 +155,10 @@ export function evaluateTrustedAutomationCommit(root: string, manifest: Manifest
   const actorEmail = commitAuthorEmail(root, sha);
   if (rulesForActor(rules, actorEmail).length === 0) return { eligible: false, reason: `actor ${actorEmail} not covered by trusted_automation policy` };
   const netLoc = numstat(root, ["show", "--numstat", "--format=", sha]);
+  const ctx: StructuralContext = { mode: "commit", baseSha: null, headSha: sha };
   return evaluateTrustedAutomation(
     rules,
-    { files, actorEmail, netLoc, structural: structuralJudge(root, manifest, files, { mode: "commit", baseSha: null, headSha: sha }) },
+    { files, actorEmail, netLoc, lockfileLoc: numstat(root, changeArgs(ctx, "--numstat")), structural: structuralJudge(root, manifest, files, ctx) },
     `commit ${sha} failed trusted_automation policy checks`,
   );
 }
@@ -136,9 +180,10 @@ export function evaluateTrustedAutomationRange(root: string, manifest: Manifest,
   }
   const netLoc = numstat(root, ["diff", "--numstat", `${baseSha}...${headSha}`]);
   const actorEmail = commits.length > 0 ? commitAuthorEmail(root, commits[commits.length - 1]!) : "";
+  const ctx: StructuralContext = { mode: "range", baseSha, headSha };
   return evaluateTrustedAutomation(
     rules,
-    { files: enforced, actorEmail, netLoc, structural: structuralJudge(root, manifest, enforced, { mode: "range", baseSha, headSha }) },
+    { files: enforced, actorEmail, netLoc, lockfileLoc: numstat(root, changeArgs(ctx, "--numstat")), structural: structuralJudge(root, manifest, enforced, ctx) },
     "PR diff failed trusted_automation policy checks",
   );
 }

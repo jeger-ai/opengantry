@@ -37,41 +37,41 @@ Third-party agent skill packs and style guides are local IDE preferences, not Op
 
 ## Trusted automation
 
-Low-risk bot maintenance, such as Dependabot workflow pin bumps or security autofix pull requests, should not need a mission per bot commit when the change is narrow. A rule in `.gitagent/config.yaml` lets such commits pass the mission check without break-glass when **all** its constraints hold:
+Low-risk bot maintenance, such as Dependabot dependency and workflow pin bumps or security autofix pull requests, should not need a mission per bot commit when the change is narrow. A rule in `.gitagent/config.yaml` lets such commits pass the mission check without break-glass when **all** its constraints hold:
 
 | Constraint | Meaning |
 |------------|---------|
 | `allowed_actors` | The commit author email (`git log -1 --format=%ae`) matches an entry you listed |
 | `allowed_paths` | Every changed file the mission check covers matches a glob in the rule |
 | `allowed_structural_changes` | Exactly one kind per rule (below) |
-| `max_net_loc` | Total churn (additions plus deletions), at most the kind's hard cap |
+| `max_net_loc` | Total churn (additions plus deletions), at most the kind's hard cap; for `dependency_update`, npm lockfiles do not count |
+| `allowed_registries` | `dependency_update` only: URL prefixes a changed lockfile entry may resolve to (default `https://registry.npmjs.org/`) |
 
 | Kind | Use | Hard cap | Checks |
 |------|-----|----------|--------|
 | `workflow_version_pin` | Dependabot workflow `uses:` bumps | 5 | YAML structure unchanged; only existing `uses:` version segments differ |
+| `dependency_update` | Dependabot and agent npm dependency bumps | 200 | Only `package.json`, `package-lock.json` and `npm-shrinkwrap.json` files that existed before. `package.json`: the same fields and dependency names; only version strings differ. Lockfiles: every new or changed entry resolves to an allowed registry with an `integrity` hash, no new local links. So a new dependency, a script, a git or tarball URL or another registry is refused. npm only for now |
 | `bounded_content` | Security autofix bots (code scanning, Snyk and similar) | 100 | Content changes inside `allowed_paths`; any touch under `.gitagent/**` or a protected path (the manifest's `perimeter_protected` or its defaults, plus the org floor's `perimeter_protected_add`) is rejected even if listed |
 
-```json
-{
-  "trusted_automation": {
-    "rules": [
-      {
-        "id": "workflow-dependency-bumps",
-        "allowed_actors": ["dependabot[bot]@users.noreply.github.com"],
-        "allowed_paths": [".github/workflows/**"],
-        "allowed_structural_changes": ["workflow_version_pin"],
-        "max_net_loc": 5
-      },
-      {
-        "id": "security-autofix-bots",
-        "allowed_actors": ["223556219+Copilot@users.noreply.github.com", "snyk-bot@snyk.io"],
-        "allowed_paths": ["src/**", "package.json", "package-lock.json"],
-        "allowed_structural_changes": ["bounded_content"],
-        "max_net_loc": 80
-      }
-    ]
-  }
-}
+```yaml
+# .gitagent/config.yaml
+trusted_automation:
+  rules:
+    - id: dependency-bumps
+      allowed_actors: ["49699333+dependabot[bot]@users.noreply.github.com", "dependabot[bot]@users.noreply.github.com"]
+      allowed_paths: ["**/package.json", "**/package-lock.json", "**/npm-shrinkwrap.json"]
+      allowed_structural_changes: [dependency_update]
+      max_net_loc: 50
+    - id: workflow-dependency-bumps
+      allowed_actors: ["49699333+dependabot[bot]@users.noreply.github.com", "dependabot[bot]@users.noreply.github.com"]
+      allowed_paths: [".github/workflows/**"]
+      allowed_structural_changes: [workflow_version_pin]
+      max_net_loc: 5
+    - id: security-autofix-bots
+      allowed_actors: ["223556219+Copilot@users.noreply.github.com", "snyk-bot@snyk.io"]
+      allowed_paths: ["src/**"]
+      allowed_structural_changes: [bounded_content]
+      max_net_loc: 80
 ```
 
 - Evaluation is derived from Git only, never from CI environment variables. Missing or invalid config keeps the full mission workflow.

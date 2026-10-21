@@ -10,6 +10,17 @@ ledger:
 # trusted_automation: commits by these actors may touch MSN-enforced paths without a mission, within the rule.
 trusted_automation:
   rules:
+    - id: dependency-bumps
+      allowed_actors:
+        - dependabot[bot]@users.noreply.github.com
+        - 49699333+dependabot[bot]@users.noreply.github.com
+      allowed_paths:
+        - "**/package.json"
+        - "**/package-lock.json"
+        - "**/npm-shrinkwrap.json"
+      allowed_structural_changes:
+        - dependency_update
+      max_net_loc: 50
     - id: workflow-dependency-bumps
       allowed_actors:
         - dependabot[bot]@users.noreply.github.com
