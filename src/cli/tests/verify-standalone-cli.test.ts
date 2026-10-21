@@ -102,7 +102,8 @@ test("gantry verify --contract: --baseline and --check-result through the CLI (M
 test("gantry verify --contract: usage and setup errors exit 2; gate.json ignored keys are noted (MSN-0277 DoD 1, 5)", () => {
   const { dest, base } = makeRepo("og-verify-cli-errors-");
   const cases: [string[], RegExp][] = [
-    [["--contract", "--base", base, "--format", "sarif"], /--format sarif is not available for contract results yet/],
+    [["--contract", "--base", base, "--format", "html"], /--format must be text, json, sarif or junit \(got html\)/],
+    [["--contract", "--base", base, "--baseline", "--format", "sarif"], /--format sarif projects a run's result/],
     [["--contract", "--mission", "x.yaml", "--base", base], /--contract and --mission are separate modes/],
     [["--contract", "--base", base, "--quick", "--worktree"], /choose one of --worktree, --quick/],
     [["--contract", "--base", "no-such-ref"], /GXT_VERIFY_BASE_INVALID/],
@@ -124,6 +125,42 @@ test("gantry verify --contract: usage and setup errors exit 2; gate.json ignored
   assert.equal(g.status, 0, g.stderr);
   assert.match(g.stderr, /^verify: note: cage_protect in .*gate\.json are for the cage and hangar, not verify; ignored$/m);
   assert.match(g.stderr, /\(disk\)/);
+});
+
+test("gantry verify --contract --format sarif|junit: the result projected on stdout, the summary on stderr (MSN-0340)", () => {
+  const { dest } = makeRepo("og-verify-cli-export-");
+  write(dest, "verify.yaml", "schema: opengantry.verify.v1\nscope: { allowed_paths: [app] }\nrules: [{ name: no print, files: ['app/**'], forbid: 'print[(]', why: logging }]\nchecks:\n  - { name: ok, run: 'true', expect: exit0 }\n  - { name: bad, run: 'exit 3', expect: exit0 }\n");
+  const contractBase = commit(dest, "contract");
+  write(dest, "app/a.py", "x = 1\nprint(1)\n");
+  write(dest, "README.md", "x\n");
+  commit(dest, "work");
+
+  const sarif = verify(dest, "--contract", "--base", contractBase, "--format", "sarif");
+  assert.equal(sarif.status, 1, sarif.stderr);
+  assert.match(sarif.stderr, /^verify: FAIL, 3 problem\(s\)$/m, "the human summary stays on stderr");
+  const log = JSON.parse(sarif.stdout) as { version: string; runs: { results: { ruleId: string; message: { text: string }; locations: { physicalLocation: { artifactLocation: { uri: string }; region?: { startLine: number } } }[] }[] }[] };
+  assert.equal(log.version, "2.1.0");
+  assert.deepEqual(
+    log.runs[0]!.results.map((r) => [r.ruleId, r.locations[0]!.physicalLocation.artifactLocation.uri, r.locations[0]!.physicalLocation.region?.startLine ?? null, r.message.text]),
+    [
+      ["verify/outside-allowed-paths", "README.md", null, "changed outside allowed_paths"],
+      ["verify/rule", "app/a.py", 2, 'rule "no print" (logging)'],
+      ["verify/check", "verify.yaml", null, 'check "bad": exit 3'],
+    ],
+  );
+
+  const junit = verify(dest, "--contract", "--base", contractBase, "--format", "junit");
+  assert.equal(junit.status, 1, junit.stderr);
+  assert.match(junit.stdout, /^<\?xml version="1\.0" encoding="UTF-8"\?>\n<testsuites name="gantry" tests="5" failures="3">$/m);
+  assert.match(junit.stdout, /<testcase classname="gantry\.verify\.contract" name="scope"><failure message="README\.md: outside allowed_paths">/);
+  assert.match(junit.stdout, /<testcase classname="gantry\.verify\.contract" name="size"\/>/);
+  assert.match(junit.stdout, /name="rule: no print"><failure message="app\/a\.py:2">/);
+  assert.match(junit.stdout, /name="check: ok"\/>/);
+  assert.match(junit.stdout, /name="check: bad"><failure message="exit 3">/);
+
+  write(dest, "README.md", "y\n");
+  const dirty = verify(dest, "--contract", "--base", contractBase, "--format", "junit");
+  assert.match(dirty.stdout, /name="uncommitted"><failure message="the tree has uncommitted changes/);
 });
 
 test("gantry verify without --contract is mission verify as before (MSN-0277 DoD 5)", () => {

@@ -97,6 +97,7 @@ gantry verify --contract path/to/gate.json --base main
 | `--sign` | With `--out`: sign the result with your git signing key (SSH or GPG, as for commits) |
 | `--allowed-signers <file>` | With `--check-result`: also require a good SSH signature by a key in this `ssh-keygen` allowed-signers file |
 | `--json` | Print the result on stdout |
+| `--format sarif\|junit` | Print the result as SARIF 2.1.0 or JUnit XML on stdout, for code scanning and test dashboards; the summary stays on stderr |
 
 Without `--worktree`, verify judges the committed state and fails when the tree has uncommitted changes. Each check runs with `sh -c` at the repository root.
 
@@ -134,6 +135,17 @@ gantry verify --contract --base origin/main --check-result out/verify.json --all
   with: { node-version: 24 }
 - run: npx -y -p @jeger-ai/opengantry gantry verify --contract --base ${{ github.event.pull_request.base.sha }}
 ```
+
+To see the problems as code-scanning alerts on the pull request, write SARIF and upload it:
+
+```yaml
+- run: npx -y -p @jeger-ai/opengantry gantry verify --contract --base ${{ github.event.pull_request.base.sha }} --format sarif > verify.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with: { sarif_file: verify.sarif }
+```
+
+SARIF has one result per changed path outside `allowed_paths` (`verify/outside-allowed-paths`) or under `forbidden_paths` (`verify/forbidden-path`), per added line a rule, import rule or layer forbids (`verify/rule`, `verify/import`, `verify/layer`, at that line), and one on the contract for the size budget (`verify/size`), each failing check (`verify/check`) and an uncommitted tree (`verify/uncommitted`). JUnit has a case for scope and size, one per rule, import rule, layer and check, and an `uncommitted` case when the run refused the tree. Neither holds file contents or command output.
 
 Make the job a required status check to block merges on it. Run [`gantry cage check`](../cage/check.md) in the same pipeline: verify judges only what the contract says, and the cage covers CI configs, `.env` files and git hooks.
 

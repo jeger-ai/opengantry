@@ -59,4 +59,5 @@ Limits of the amendment: the shared JS/TS scanner also reports an `import … fr
 
 - **B: imports and evidence.** Done in MSN-0279 (decisions 9-12).
 - **Sigstore keyless signing** in CI (GitHub Actions OIDC, a transparency-log entry per result), next to the SSH/GPG path, without a network call in the default run.
-- **C: the slim package.** `@jeger-ai/opengantry-verify`, a bin and a library API bundled from the same sources like `@jeger-ai/opengantry-cage`, SARIF and JUnit for contract results, and a release. Until then `--format sarif|junit` with `--contract` exits `2`.
+- **SARIF and JUnit for contract results.** Done in MSN-0340: `--format sarif|junit` with `--contract`, projected from the digest-only result by `packages/verify/src/export.ts`, which mission verify's exports share.
+- **C: the slim package.** `@jeger-ai/opengantry-verify`, a bin and a library API bundled from the same sources like `@jeger-ai/opengantry-cage`, and a release.
