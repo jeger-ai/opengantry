@@ -6,12 +6,13 @@ import path from "node:path";
 import { LAW_FILES, lawFileToYaml } from "#core/law-file.js";
 import type { Manifest } from "#core/manifest.js";
 import { loadPolicyPointer } from "#plane/policy-resolve.js";
-import { loadManifest, manifestExists, manifestRelPath } from "#missions/manifest.js";
+import { loadManifest, manifestExists } from "#missions/manifest.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
 import { loadTrustedAutomationRules } from "#missions/trusted-automation.js";
-import { architecturePointerPath, loadArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
+import { loadArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
 import { runOrgPolicyDoctorChecks } from "../doctor/policy-doctor.js";
-import { runLawFileFormDoctorChecks, writeLawFileYaml } from "#missions/law-files.js";
+import { lawFileRelAt, writeLawFileYaml } from "#git/repo-text.js";
+import { runLawFileFormDoctorChecks } from "../doctor/law-file-doctor.js";
 import { migratedManifest } from "../commands/migrate.js";
 
 const M = LAW_FILES.manifest;
@@ -48,12 +49,12 @@ test("every loader reads the 3.x JSON form and doctor names its migrate verb; th
     [LAW_FILES["architecture-pointer"].json]: JSON.stringify(pointer),
     [LAW_FILES["policy-pointer"].json]: JSON.stringify(policy),
   });
-  assert.equal(manifestRelPath(legacy), M.json);
+  assert.equal(lawFileRelAt(legacy, "manifest"), M.json);
   assert.deepEqual(loadManifest(legacy), manifest);
   assert.deepEqual(loadGxtConfig(legacy), config);
   assert.equal(loadTrustedAutomationRules(legacy).length, 1);
   assert.equal(loadArchitecturePointer(legacy).kind, "file");
-  assert.ok(architecturePointerPath(legacy).endsWith("ARCHITECTURE.pointer.json"));
+  assert.equal(lawFileRelAt(legacy, "architecture-pointer"), LAW_FILES["architecture-pointer"].json);
   assert.equal(loadPolicyPointer(legacy).kind, "scaffold");
   assert.ok(runOrgPolicyDoctorChecks(legacy).some((l) => l.message === `${LAW_FILES["policy-pointer"].json}: scaffold (unpinned)`));
   const warned = runLawFileFormDoctorChecks(legacy).map((l) => l.message.split("run gantry migrate ")[1]?.split(" ")[0]);
@@ -64,7 +65,7 @@ test("every loader reads the 3.x JSON form and doctor names its migrate verb; th
   writeLawFileYaml(current, "config", config);
   writeLawFileYaml(current, "architecture-pointer", pointer);
   writeLawFileYaml(current, "policy-pointer", policy);
-  assert.equal(manifestRelPath(current), M.yaml);
+  assert.equal(lawFileRelAt(current, "manifest"), M.yaml);
   assert.deepEqual(loadManifest(current), manifest);
   assert.deepEqual(loadGxtConfig(current), config);
   assert.equal(loadTrustedAutomationRules(current)[0]?.id, "bots");
@@ -76,7 +77,7 @@ test("every loader reads the 3.x JSON form and doctor names its migrate verb; th
 test("absent files: the loaders name the YAML form; both forms present and different fail closed everywhere", () => {
   const none = repo({});
   assert.equal(manifestExists(none), false);
-  assert.equal(manifestRelPath(none), M.yaml);
+  assert.equal(lawFileRelAt(none, "manifest"), M.yaml);
   assert.throws(() => loadManifest(none), /missing \.gitagent\/foreman\/MANIFEST\.yaml/);
   assert.deepEqual(loadGxtConfig(none), {});
   assert.throws(() => loadArchitecturePointer(none), /ARCHITECTURE\.pointer\.yaml missing/);

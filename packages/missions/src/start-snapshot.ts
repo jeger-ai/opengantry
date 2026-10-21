@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { REL_HISTORY_DIR } from "#core/constants.js";
-import { manifestPath } from "./manifest.js";
+import { lawFileRelAt, repoAbs } from "#git/repo-text.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest } from "#core/manifest.js";
 
@@ -77,7 +77,7 @@ export function captureStartState(
   skillKey: string | null,
 ): StartStateSnapshot {
   const headSha = execSync("git rev-parse HEAD", { cwd: repoRoot, encoding: "utf8" }).trim();
-  const manifestBytes = fs.readFileSync(manifestPath(repoRoot));
+  const manifestBytes = fs.readFileSync(repoAbs(repoRoot, lawFileRelAt(repoRoot, "manifest")));
   const roots = tmvcRootsForSkill(manifest, skillKey);
   const trackedFiles = collectRelativeFilePaths(repoRoot, roots);
 

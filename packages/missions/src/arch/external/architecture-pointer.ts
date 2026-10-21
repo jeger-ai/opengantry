@@ -4,9 +4,8 @@ import { loadArchitectureCredential } from "./architecture-credential.js";
 import { errorMessage } from "#core/user-error.js";
 import { fromPosix } from "#core/posix-path.js";
 import { REL_ARCHITECTURE_ACCESS_SKILL, REL_ARCHITECTURE_DISCOVERY_SKILL, REL_ARCHITECTURE_POINTER_JSON, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
-import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
-import { workingTreeReader } from "#git/repo-text.js";
-import { lawFileRelAt, readLawFileAt } from "../../law-files.js";
+import { parseLawFileDocument } from "#core/law-file.js";
+import { readLawFileAt, workingTreeReader } from "#git/repo-text.js";
 import type { DoctorLine } from "../../doctor/doctor-types.js";
 
 export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
@@ -45,16 +44,6 @@ const VALID_KINDS = new Set<ArchitectureDocKind>(["file", "directory", "external
 
 const DEFAULT_ACCESS_SKILL = REL_ARCHITECTURE_ACCESS_SKILL;
 const DEFAULT_DISCOVERY_SKILL = REL_ARCHITECTURE_DISCOVERY_SKILL;
-
-/** The pointer on disk: the YAML form, else the 3.x JSON form; null when neither exists (ADR-0047 dual-read). */
-export function readArchitecturePointerSource(repoRoot: string): LawFileSource | null {
-  return readLawFileAt(repoRoot, "architecture-pointer");
-}
-
-/** Absolute path of the authoritative pointer; the YAML path when none exists yet (what init writes). */
-export function architecturePointerPath(repoRoot: string): string {
-  return path.join(repoRoot, fromPosix(lawFileRelAt(repoRoot, "architecture-pointer")));
-}
 
 function optionalTrimmedString(
   o: Record<string, unknown>,
@@ -173,7 +162,7 @@ export function validateArchitecturePointer(raw: unknown): ArchitecturePointer {
 }
 
 export function loadArchitecturePointer(repoRoot: string): ArchitecturePointer {
-  const source = readArchitecturePointerSource(repoRoot);
+  const source = readLawFileAt(repoRoot, "architecture-pointer");
   if (!source) {
     throw new Error(`${REL_ARCHITECTURE_POINTER_YAML} missing — run gantry init or add the pointer manually`);
   }

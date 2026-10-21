@@ -1,7 +1,5 @@
-import path from "node:path";
-import { REL_POLICY_POINTER_YAML } from "#core/constants.js";
-import { LAW_FILES, parseLawFileDocument, readLawFile, type LawFileSource } from "#core/law-file.js";
-import { workingTreeReader } from "#git/repo-text.js";
+import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
+import { readLawFileAt } from "#git/repo-text.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
@@ -118,27 +116,52 @@ export function configFloorViolations(floor: PolicyConfigFloor, local: PolicyCon
   return out;
 }
 
-/** The pointer on disk: the YAML form, else the 3.x JSON form; null when neither exists (ADR-0047 dual-read). */
-export function readPolicyPointerSource(root: string): LawFileSource | null {
-  return readLawFile(LAW_FILES["policy-pointer"], workingTreeReader(root));
-}
-
-/** Repository-relative path of the authoritative pointer; the YAML path when none exists. */
-export function policyPointerRel(root: string): string {
-  return readPolicyPointerSource(root)?.rel ?? REL_POLICY_POINTER_YAML;
-}
-
-export function policyPointerPath(root: string): string {
-  return path.join(root, ...policyPointerRel(root).split("/"));
-}
-
 function isPinnedPointer(pointer: PolicyPointer): boolean {
   return pointer.source.url.trim().length > 0 && /^[0-9a-f]{40,64}$/i.test(pointer.pinned_commit.trim());
 }
 
-export function loadPolicyPointer(root: string): PolicyPointerState {
-  const file = readPolicyPointerSource(root);
-  if (!file) return { kind: "absent" };
+/** A pointer document validated; `rel` names the file in the messages. */
+export function parsePolicyPointerDocument(rel: string, parsed: unknown): PolicyPointer {
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `${rel} must be an object`, undefined, 1);
+  }
+  const rec = parsed as Record<string, unknown>;
+  const source = rec.source as Record<string, unknown> | undefined;
+  if (rec.schema_version !== POLICY_POINTER_SCHEMA_VERSION) {
+    throw new GantryUserError(
+      GXT_ERROR.POLICY_DRIFT,
+      `${rel} schema_version must be ${POLICY_POINTER_SCHEMA_VERSION}`,
+      undefined,
+      1,
+    );
+  }
+  if (!source || source.kind !== "git" || typeof source.url !== "string" || typeof source.ref !== "string") {
+    throw new GantryUserError(
+      GXT_ERROR.POLICY_DRIFT,
+      `${rel} source must be {kind:git,url,ref}`,
+      undefined,
+      1,
+    );
+  }
+  if (typeof rec.bundle_path !== "string" || typeof rec.pinned_commit !== "string" || typeof rec.bundle_sha256 !== "string") {
+    throw new GantryUserError(
+      GXT_ERROR.POLICY_DRIFT,
+      `${rel} missing bundle_path, pinned_commit, or bundle_sha256`,
+      undefined,
+      1,
+    );
+  }
+  return {
+    schema_version: POLICY_POINTER_SCHEMA_VERSION,
+    source: { kind: "git", url: source.url, ref: source.ref },
+    bundle_path: rec.bundle_path,
+    pinned_commit: rec.pinned_commit,
+    bundle_sha256: rec.bundle_sha256,
+  };
+}
+
+/** The state a pointer file describes: pinned when its url and commit are set, else scaffold. */
+export function policyPointerState(file: LawFileSource): Exclude<PolicyPointerState, { kind: "absent" }> {
   let parsed: unknown;
   try {
     parsed = parseLawFileDocument(file);
@@ -150,44 +173,13 @@ export function loadPolicyPointer(root: string): PolicyPointerState {
       1,
     );
   }
-  if (typeof parsed !== "object" || parsed === null) {
-    throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `${file.rel} must be an object`, undefined, 1);
-  }
-  const rec = parsed as Record<string, unknown>;
-  const source = rec.source as Record<string, unknown> | undefined;
-  if (rec.schema_version !== POLICY_POINTER_SCHEMA_VERSION) {
-    throw new GantryUserError(
-      GXT_ERROR.POLICY_DRIFT,
-      `${file.rel} schema_version must be ${POLICY_POINTER_SCHEMA_VERSION}`,
-      undefined,
-      1,
-    );
-  }
-  if (!source || source.kind !== "git" || typeof source.url !== "string" || typeof source.ref !== "string") {
-    throw new GantryUserError(
-      GXT_ERROR.POLICY_DRIFT,
-      `${file.rel} source must be {kind:git,url,ref}`,
-      undefined,
-      1,
-    );
-  }
-  if (typeof rec.bundle_path !== "string" || typeof rec.pinned_commit !== "string" || typeof rec.bundle_sha256 !== "string") {
-    throw new GantryUserError(
-      GXT_ERROR.POLICY_DRIFT,
-      `${file.rel} missing bundle_path, pinned_commit, or bundle_sha256`,
-      undefined,
-      1,
-    );
-  }
-  const pointer: PolicyPointer = {
-    schema_version: POLICY_POINTER_SCHEMA_VERSION,
-    source: { kind: "git", url: source.url, ref: source.ref },
-    bundle_path: rec.bundle_path,
-    pinned_commit: rec.pinned_commit,
-    bundle_sha256: rec.bundle_sha256,
-  };
-  if (isPinnedPointer(pointer)) return { kind: "pinned", pointer };
-  return { kind: "scaffold", pointer };
+  const pointer = parsePolicyPointerDocument(file.rel, parsed);
+  return isPinnedPointer(pointer) ? { kind: "pinned", pointer } : { kind: "scaffold", pointer };
+}
+
+export function loadPolicyPointer(root: string): PolicyPointerState {
+  const file = readLawFileAt(root, "policy-pointer");
+  return file ? policyPointerState(file) : { kind: "absent" };
 }
 
 export type OrgPolicyOk = {

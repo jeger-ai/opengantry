@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { interrogationSha256, stableFindingId, compareFindingSeverity } from "../src/interrogation.js";
 import { isPassTraceRow, normalizeTraceStatus } from "../src/trace-status.js";
 import { isGateAdapterId, isTypedGateAdapterId } from "../src/gate-adapter.js";
-import { explicitLedgerMode, parseGxtConfig, resolveLedgerSignatureTier, resolvePlannerSignatureTier } from "../src/config.js";
+import { explicitLedgerMode, parseGxtConfigSource, resolveLedgerSignatureTier, resolvePlannerSignatureTier } from "../src/config.js";
 import { msnIdOrDefault } from "../src/mission-types.js";
 
 test("interrogation digest is order-independent in adr_refs and ignores evidence", () => {
@@ -24,6 +24,8 @@ test("gate adapter ids", () => {
   assert.equal(isGateAdapterId("tsc"), true);
   assert.equal(isTypedGateAdapterId("generic"), false);
 });
+
+const parseGxtConfig = (text: string) => parseGxtConfigSource({ rel: "config.json", kind: "json", text });
 
 test("config: parse tolerates junk; tiers fall back to off; explicit ledger mode is null when left to a preset", () => {
   assert.deepEqual(parseGxtConfig("not json"), {});

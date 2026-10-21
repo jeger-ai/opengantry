@@ -4,7 +4,7 @@ import { runArchitecturePointerDoctorChecks } from "#missions/arch/external/arch
 import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "#missions/break-glass.js";
 import { REL_AGENT_ERROR_FILE, CLI_NAME, REL_MANIFEST_YAML } from "#core/constants.js";
 import { manifestExists } from "#missions/manifest.js";
-import { runLawFileFormDoctorChecks } from "#missions/law-files.js";
+import { runLawFileFormDoctorChecks } from "./law-file-doctor.js";
 import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
 import { agentErrorAbsolutePath } from "#missions/error-payloads.js";
 import { gitConfigGet, gitRunOk } from "#git/git.js";
