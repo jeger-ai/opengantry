@@ -31,6 +31,7 @@ Declare scope before an agent starts, approve it in Git, and let `gantry verify`
 - Concepts: [missions](concepts/missions.md), [scope](concepts/scope.md), [perimeters](concepts/perimeters.md), [verify](concepts/verify.md), [trace evidence](concepts/trace-evidence.md), [enforcement boundary](concepts/enforcement-boundary.md)
 - For teams: [CI](guides/ci.md), [regulated teams](guides/regulated-teams.md), [org control plane](guides/org-control-plane.md)
 - [Verify a change without missions](guides/verify-contract.md): one `verify.yaml` with allowed paths, a size budget, rules and your checks
+- [Plans from other frameworks](guides/plan-adapters.md): `gantry adapt` turns a plan step into the contract and the cage scope
 
 ## Look something up
 

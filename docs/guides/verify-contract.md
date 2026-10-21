@@ -88,6 +88,10 @@ The run fails when, over all changed test files together:
 
 Totals are compared, so splitting, moving or renaming a test file passes. Comments are ignored. The result lists each changed test file's counts at the base and at the head; SARIF reports `verify/test-assertions`, `verify/test-markers`, `verify/test-tautologies` and `verify/test-empty-catches` on the file. JS/TS and Python files are read; other test files are listed as skipped. Custom assertion helpers (`assertThat`, `should`) are not counted, so the check raises the bar rather than replacing review. Coverage is not part of it: run your coverage tool as a check.
 
+## From another framework's plan
+
+To get the contract and the cage scope for one step of another framework's plan, use [`gantry adapt`](plan-adapters.md).
+
 ## A task contract answers to the repository
 
 A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules`, `forbidden_paths` and `tests` are added to the task's (a task's `allow_reduction` is the task approver's decision and shows in the result). Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).

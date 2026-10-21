@@ -29,6 +29,7 @@ const API = [
   "VERIFY_BASELINE_SCHEMA",
   "VERIFY_CONTRACT_SCHEMA",
   "VERIFY_RESULT_SCHEMA",
+  "adaptPlan",
   "checkKeylessSignature",
   "checkVerifyResult",
   "parseVerifyContract",

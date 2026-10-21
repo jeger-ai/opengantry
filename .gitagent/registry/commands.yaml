@@ -18,6 +18,8 @@ bins:
     package: "@jeger-ai/opengantry and @jeger-ai/opengantry-verify"
     note: gantry verify --contract with the contract as its argument
 entries:
+  - name: adapt
+    since: MSN-0349
   - name: arch
     since: commit 12461b8
   - name: arch check
