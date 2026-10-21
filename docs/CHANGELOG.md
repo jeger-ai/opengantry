@@ -82,6 +82,12 @@ gantry doctor
   - In verify contracts, `dir/**` no longer matches a file named `dir`.
 - **Planner stamp:** the stamp is now the newest Planner-email `[MSN-…]` commit that modifies the mission file. A later Planner-email commit that leaves the mission file alone no longer displaces it (RULES §3, §6.1).
 - **Config:** a `defensive_profile` block and a mission's `virtual_capture` field are ignored. `ledger.mode` is no longer inferred from a defensive preset, so set it explicitly if you relied on one.
+- **Dependencies:**
+  - `@modelcontextprotocol/sdk` needs at least 1.32.1. Versions up to 1.31.0 have four published advisories, one rated high.
+  - The lockfile carries hono 4.13.13 for a moderate advisory.
+  - `@clack/prompts` 1.8 (the interactive `gantry init` and `verify --fix` prompts) and zod 4.6.7.
+  - For development: eslint 10.13, typescript-eslint 8.72 and `@types/node` 24.19.
+  - The iii integration example's lockfile is refreshed: it pinned 3.8.3 and the vulnerable SDK.
 - **Also new:** `gantry ci msn-range|verify-missions|trusted-automation|upgrade-tmp`, `gantry migrate …`, one reporter for human, `--json`, SARIF and JUnit output with `--audience` as a presenter parameter, zod schemas with the YAML JSON-Schema files generated from them, a conformance suite the published commands must pass byte for byte.
 - **Unchanged:** the cage trust model and the diff check, the ledger, receipts, exit `3` and `4` for the cage, `verifyMission`.
 
