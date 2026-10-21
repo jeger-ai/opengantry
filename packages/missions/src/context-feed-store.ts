@@ -2,10 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { REL_NEXT_REMEDIATION } from "#core/constants.js";
 import { writeJsonAtomicSync } from "./atomic-fs.js";
-import type { VerifyFinding } from "./verify/verify-finding.js";
+import type { VerifyFinding } from "./mission-verify/finding.js";
 
 export const REMEDIATION_SCHEMA_VERSION = 2 as const;
-export const REMEDIATION_SCHEMA_VERSION_LEGACY = 1 as const;
+const REMEDIATION_SCHEMA_VERSION_LEGACY = 1 as const;
 
 export interface RemediationSnapshot {
   schema_version: typeof REMEDIATION_SCHEMA_VERSION | typeof REMEDIATION_SCHEMA_VERSION_LEGACY;
@@ -36,33 +36,8 @@ export interface RemediationSnapshot {
   gate_log_path?: string;
 }
 
-const TMP_PREFIX = "NEXT_REMEDIATION.json.tmp.";
-
-function remediationDir(repoRoot: string): string {
-  return path.join(repoRoot, path.dirname(REL_NEXT_REMEDIATION));
-}
-
 function remediationPath(repoRoot: string): string {
   return path.join(repoRoot, REL_NEXT_REMEDIATION);
-}
-
-/** Remove abandoned temp files older than maxAgeMs (optional scavenger — not on hot write path). */
-export function scavengerStaleRemediationTemps(repoRoot: string, maxAgeMs = 300_000): void {
-  const dir = remediationDir(repoRoot);
-  if (!fs.existsSync(dir)) return;
-  const now = Date.now();
-  for (const entry of fs.readdirSync(dir)) {
-    if (!entry.startsWith(TMP_PREFIX)) continue;
-    const full = path.join(dir, entry);
-    try {
-      const stat = fs.statSync(full);
-      if (now - stat.mtimeMs > maxAgeMs) {
-        fs.unlinkSync(full);
-      }
-    } catch {
-      // ignore per-file errors
-    }
-  }
 }
 
 /** Atomic replace: write temp file in same directory, then rename onto target. */

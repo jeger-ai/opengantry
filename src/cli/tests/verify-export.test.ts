@@ -6,9 +6,9 @@ import {
   buildVerifyExportDocument,
   GENERIC_SARIF_FILE,
   JUNIT_SUITE_NAME,
-} from "#missions/verify/verify-export.js";
+} from "#missions/mission-verify/export.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "#missions/verify/verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "#missions/mission-verify/finding.js";
 
 test("verify-export: SARIF uses rule_id and span columns", () => {
   const sarif = buildSarifDocument({

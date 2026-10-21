@@ -2,7 +2,7 @@ import { LEGISLATE_TRACE_PLACEHOLDER } from "#core/constants.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { InterrogationFinding, InterrogationRow } from "#core/interrogation.js";
 
-export const INTERROGATION_STUB_ANSWERS = [
+const INTERROGATION_STUB_ANSWERS = [
   LEGISLATE_TRACE_PLACEHOLDER,
   "PENDING_OPERATOR_RESPONSE",
   "REPLACE_WITH_OPERATOR_ANSWER",

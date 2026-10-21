@@ -9,7 +9,7 @@ import type { ResolvedQuoteLine } from "./trace-quote.js";
 
 export const UNCOMMITTED_BLAME_COMMIT = "0000000000000000000000000000000000000000";
 
-export interface TraceEvidenceFailure {
+interface TraceEvidenceFailure {
   row: TraceRow;
   attestationCommit: string;
   quoteLine: number;
@@ -17,7 +17,7 @@ export interface TraceEvidenceFailure {
   reason: string;
 }
 
-export interface TraceEvidenceOptions {
+interface TraceEvidenceOptions {
   skipStaleEvidence?: boolean;
 }
 

@@ -19,7 +19,7 @@ export interface InitProfile {
   architectureAuthHint?: string;
 }
 
-export const DEFAULT_INTEGRATIONS_DOC_PATH = "docs/INTEGRATIONS.md";
+const DEFAULT_INTEGRATIONS_DOC_PATH = "docs/INTEGRATIONS.md";
 
 export function defaultInitProfile(): InitProfile {
   return {
@@ -32,14 +32,14 @@ export function defaultInitProfile(): InitProfile {
   };
 }
 
-export function parseArchitectureSource(raw: string): ArchitectureSourceKind {
+function parseArchitectureSource(raw: string): ArchitectureSourceKind {
   if (raw === "unset" || raw === "file" || raw === "directory" || raw === "external") {
     return raw;
   }
   throw new Error("init: --arch-source must be unset, file, directory, or external");
 }
 
-export function parseIdesCsv(raw: string): IntegrationIdeKey[] {
+function parseIdesCsv(raw: string): IntegrationIdeKey[] {
   const parts = raw
     .split(",")
     .map((s) => s.trim())
@@ -99,7 +99,7 @@ export function mergeInitProfile(base: InitProfile, partial: Partial<InitProfile
   };
 }
 
-export function hasFullCliProfile(partial: Partial<InitProfile>): boolean {
+function hasFullCliProfile(partial: Partial<InitProfile>): boolean {
   return (
     partial.ides !== undefined &&
     partial.integrationsDocPath !== undefined &&

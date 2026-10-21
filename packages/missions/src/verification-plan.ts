@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const VERIFICATION_PLAN_SCHEMA_VERSION = 1 as const;
+const VERIFICATION_PLAN_SCHEMA_VERSION = 1 as const;
 export const VERIFICATION_PLAN_REL = ".gitagent/verification_plan.json" as const;
 
 export interface VerificationGateCommand {
@@ -17,7 +17,7 @@ export interface VerificationPlan {
   rule_ids: string[];
 }
 
-export function computeProvenanceChecksum(ruleIds: string[], gateCommands: VerificationGateCommand[]): string {
+function computeProvenanceChecksum(ruleIds: string[], gateCommands: VerificationGateCommand[]): string {
   const payload = JSON.stringify({
     rule_ids: [...ruleIds].sort(),
     gate_commands: [...gateCommands]

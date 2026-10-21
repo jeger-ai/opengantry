@@ -6,17 +6,17 @@ import { gitConfigGet, gitConfigSet, gitRunOk } from "#git/git.js";
 export const TMVC_GUARD_STRICT_KEY = "gantry.tmvcGuardStrict";
 
 /** Tracked hooks directory `gantry init` installs and `core.hooksPath` must name. */
-export const TRACKED_HOOKS_PATH = ".githooks";
+const TRACKED_HOOKS_PATH = ".githooks";
 
 const PRE_COMMIT_REL = `${TRACKED_HOOKS_PATH}/pre-commit`;
 
-export interface HooksStatus {
+interface HooksStatus {
   strictArmed: boolean;
   hooksPath: string | null;
   preCommitPresent: boolean;
 }
 
-export type HooksInstallResult =
+type HooksInstallResult =
   | { ok: true; alreadyInstalled: boolean; hooksPath: string }
   | { ok: false; message: string };
 
@@ -74,7 +74,7 @@ export function uninstallTmvcStrictHook(repoRoot: string): { removed: boolean } 
 /** Git's placeholder for "no object" in pre-push ref lines. */
 export const ZERO_SHA = "0".repeat(40);
 
-export interface PrePushRefLine {
+interface PrePushRefLine {
   localRef: string;
   localSha: string;
   remoteRef: string;

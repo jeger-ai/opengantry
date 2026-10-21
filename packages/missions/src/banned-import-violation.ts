@@ -1,5 +1,5 @@
 /** Parse check-imports gate stderr lines: `path: banned import "specifier"`. */
-export interface BannedImportViolation {
+interface BannedImportViolation {
   file: string;
   specifier: string;
 }

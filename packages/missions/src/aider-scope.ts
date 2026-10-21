@@ -7,7 +7,7 @@ export const AIDER_TMVC_SCOPE_REL = ".gitagent/tmp/aider-tmvc-scope.md";
 
 const AIDER_CONF_REL = ".aider.conf.yml";
 
-export function formatAiderTmvcScope(roots: readonly string[]): string {
+function formatAiderTmvcScope(roots: readonly string[]): string {
   const listed = roots.length === 0 ? "- (none)" : roots.map((root) => `- ${root}`).join("\n");
   return `# Active TMVC\n\nAllowed roots:\n${listed}\n\nDo not edit paths outside these roots.\n`;
 }
@@ -29,7 +29,7 @@ export function ensureAiderConfRead(confBody: string, entry: string): { body: st
   return { body: confBody, changed: false };
 }
 
-export interface AiderScopeWriteResult {
+interface AiderScopeWriteResult {
   scopeFile: string;
   confPatched: boolean;
 }

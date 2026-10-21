@@ -8,7 +8,7 @@ import { proposeImports } from "./propose-imports.js";
 import type { Manifest } from "#core/manifest.js";
 import type { OrgPolicyBundle as PolicyBundle } from "#plane/policy-types.js";
 
-export interface ProposeContractInput {
+interface ProposeContractInput {
   root: string;
   manifest: Manifest;
   intent: string;
@@ -19,7 +19,7 @@ export interface ProposeContractInput {
   gateSuccessSubstring?: string;
 }
 
-export interface ProposeContractResult {
+interface ProposeContractResult {
   contract: MissionContract;
   gate: ProposedGate;
   rationale: string[];

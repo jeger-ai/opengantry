@@ -1,4 +1,4 @@
-/** Commits whose subject starts with `[MSN-NNNN]` (ADR-0052 step 5c-ii; moved from src/cli/lib/git/git-proof.ts). */
+/** Commits whose subject starts with `[MSN-NNNN]` (ADR-0052 step 5c-ii). */
 import { MSN_ID_PATTERN } from "#core/constants.js";
 import { gitRun } from "./git.js";
 

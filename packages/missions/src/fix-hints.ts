@@ -99,7 +99,7 @@ export function hintGitProof(code: string, ctx: GitProofHintContext): string {
   }
 }
 
-export function hintTeacherEmails(repoRoot: string): string {
+function hintTeacherEmails(repoRoot: string): string {
   return plannerIdentitySetupHint(repoRoot);
 }
 
@@ -107,11 +107,11 @@ export function hintGate(command: string, missionPath: string): string {
   return `re-run gate: ${command}  # then gantry verify --mission ${missionPath}`;
 }
 
-export function hintTraceStrictTrace(missionPath: string): string {
+function hintTraceStrictTrace(missionPath: string): string {
   return `remove --strict-trace to allow auto line-drift resolution: gantry verify --mission ${missionPath}`;
 }
 
-export function hintTraceAmbiguous(
+function hintTraceAmbiguous(
   executorLogPath: string,
   missionPath: string,
   traceQuote?: string,
@@ -122,11 +122,11 @@ export function hintTraceAmbiguous(
   return `disambiguate quotes in ${executorLogPath} or re-run: gantry runtime exec --mission ${missionPath} -- <worker>`;
 }
 
-export function hintTraceMissing(executorLogPath: string): string {
+function hintTraceMissing(executorLogPath: string): string {
   return `append verbatim trace_quote to ${executorLogPath} from executor flight evidence`;
 }
 
-export function hintTraceStaleEvidence(executorLogPath: string, missionPath: string): string {
+function hintTraceStaleEvidence(executorLogPath: string, missionPath: string): string {
   return [
     `TMVC drift since EXECUTOR_LOG trace attestation — re-run gate (${missionPath})`,
     `append a fresh unique trace line to ${executorLogPath} and set mission trace_quote to that verbatim line`,
@@ -134,7 +134,7 @@ export function hintTraceStaleEvidence(executorLogPath: string, missionPath: str
   ].join("; ");
 }
 
-export function hintTraceQuoteStillPlaceholder(
+function hintTraceQuoteStillPlaceholder(
   missionPath: string,
   executorLogPath: string,
 ): string {

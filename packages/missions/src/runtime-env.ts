@@ -5,7 +5,7 @@ import { CLI_NAME } from "#core/constants.js";
 import type { EffectiveScope } from "#core/contract-types.js";
 import { loadPolicyBundleQuiet, resolveEffectiveScope } from "./contract/effective-scope.js";
 import { agentErrorAbsolutePath } from "./error-payloads.js";
-import { parseMissionFile } from "./missions/parser.js";
+import { parseMissionFile } from "./mission/parser.js";
 import type { Workspace } from "./workspace.js";
 import { defaultExecutorLogPath } from "./trace-quote.js";
 

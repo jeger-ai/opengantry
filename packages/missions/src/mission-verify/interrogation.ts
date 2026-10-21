@@ -8,16 +8,16 @@ import { listMsnSubjectCommits, resolveMsnScanDepth } from "#git/msn-commits.js"
 import { resolvePlannerEmails } from "../planner-identity.js";
 import { isStubOperatorAnswer } from "../interrogate/answers.js";
 import { interrogationSha256 } from "#core/interrogation.js";
-import { isLegislativeStub } from "../missions/formatter.js";
-import { missionHasRunRecord } from "./verify-run-record.js";
+import { isLegislativeStub } from "../mission/formatter.js";
+import { missionHasRunRecord } from "./run-record.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { pathRiskTier } from "../tmvc-path.js";
-import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyEvaluation } from "./options.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
-import type { InterrogationFailure } from "./verify-failure.js";
+import type { InterrogationFailure } from "./failure.js";
 
-export interface InterrogationPhaseOutcome {
+interface InterrogationPhaseOutcome {
   failure: InterrogationFailure | null;
   warnings: string[];
 }
@@ -171,7 +171,7 @@ interface StampDigestInput {
   proofMsnId: string;
   missionRel: string;
   mission: ParsedMission;
-  options: VerifyOptions;
+  options: VerifyEvaluation;
   executorLogPath: string;
   warnings: string[];
 }
@@ -250,12 +250,12 @@ function validateInterrogationRows(
   return null;
 }
 
-export interface InterrogationPhaseInput {
+interface InterrogationPhaseInput {
   root: string;
   manifest: Manifest;
   mission: ParsedMission;
   missionRel: string;
-  options: VerifyOptions;
+  options: VerifyEvaluation;
   proofMsnId: string;
   executorLogPath: string;
 }

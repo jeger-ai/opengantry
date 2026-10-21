@@ -11,8 +11,8 @@ import { getRepoRoot } from "#git/git.js";
 import { stableFindingId } from "#core/interrogation.js";
 import { runInterrogate } from "#missions/interrogate/run.js";
 import { loadManifest } from "#missions/manifest.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
-import { evaluateInterrogationPhase } from "#missions/verify/verify-interrogation.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
+import { evaluateInterrogationPhase } from "#missions/mission-verify/interrogation.js";
 import { copyMissionSchema, writeOrgExportConfig, isolateOrgAttributionEnv } from "./test-fixtures.js";
 
 function scaffoldGantryLegislateRepo(): string {

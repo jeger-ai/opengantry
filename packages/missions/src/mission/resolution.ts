@@ -53,7 +53,7 @@ export function clearActiveMissionPin(repoRoot: string): boolean {
   return true;
 }
 
-export function resolveMissionFromCandidates(repoRoot: string, candidates: string[]): string | null {
+function resolveMissionFromCandidates(repoRoot: string, candidates: string[]): string | null {
   for (const c of candidates) {
     const trimmed = c.trim();
     if (!trimmed) continue;
@@ -65,9 +65,9 @@ export function resolveMissionFromCandidates(repoRoot: string, candidates: strin
   return null;
 }
 
-export type MissionResolutionProfile = "full" | "status" | "upgrade_apply";
+type MissionResolutionProfile = "full" | "status" | "upgrade_apply";
 
-export interface MissionResolutionOptions {
+interface MissionResolutionOptions {
   explicit?: string;
   profile?: MissionResolutionProfile;
   env?: NodeJS.ProcessEnv;
@@ -146,8 +146,4 @@ export function resolveMissionPathRequired(
     "gantry upgrade --apply: pass --mission <path> to the signed upgrade mission YAML",
     "Example: gantry upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-v0.8.1.yaml",
   );
-}
-
-export function formatResolvedMissionRel(repoRoot: string, absPath: string): string {
-  return formatRepoRelative(repoRoot, absPath);
 }

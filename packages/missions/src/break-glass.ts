@@ -5,7 +5,7 @@ import { CLI_NAME } from "#core/constants.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitHead, gitRevParse, gitRun } from "#git/git.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
-import type { VerifyOptions } from "./verify/verify-options.js";
+import type { VerifyEvaluation } from "./mission-verify/options.js";
 import { appendLedgerIfEnabled, ledgerFailureLine } from "./ledger/ledger-append.js";
 
 export const ENV_BYPASS_SECRET = "GANTRY_BYPASS_SECRET";
@@ -14,7 +14,7 @@ export const GXT_BYPASS_NOTES_REF = "refs/notes/gxt-bypass";
 
 const MIN_REASON_LENGTH = 10;
 
-export interface BypassAuditPayload {
+interface BypassAuditPayload {
   v: 1;
   reason: string;
   ts: string;
@@ -53,7 +53,7 @@ export function isBypassSecretAuthorized(repoRoot: string): boolean {
   return timingSafeEqualHex(sha256Hex(secret), anchor);
 }
 
-export function assertBypassSecretAuthorized(repoRoot: string): void {
+function assertBypassSecretAuthorized(repoRoot: string): void {
   if (isBypassSecretAuthorized(repoRoot)) return;
   const anchorPath = path.join(repoRoot, REL_BYPASS_SHA256);
   if (!fs.existsSync(anchorPath)) {
@@ -71,7 +71,7 @@ export function assertBypassSecretAuthorized(repoRoot: string): void {
   );
 }
 
-export function validateBreakGlassReason(reason: string | undefined): string {
+function validateBreakGlassReason(reason: string | undefined): string {
   const trimmed = reason?.trim() ?? "";
   if (trimmed.length < MIN_REASON_LENGTH) {
     throw new Error(
@@ -81,7 +81,7 @@ export function validateBreakGlassReason(reason: string | undefined): string {
   return trimmed;
 }
 
-export function parseBypassNoteBody(noteBody: string): BypassAuditPayload | null {
+function parseBypassNoteBody(noteBody: string): BypassAuditPayload | null {
   const trimmed = noteBody.trim();
   if (!trimmed) return null;
   try {
@@ -135,7 +135,7 @@ function resolveAuditCommit(root: string, commit?: string): string {
   return sha;
 }
 
-export function runBreakGlassAudit(
+function runBreakGlassAudit(
   root: string,
   options: {
     reason: string;
@@ -170,7 +170,7 @@ export function runBreakGlassAudit(
   return commitSha;
 }
 
-export interface BreakGlassAuditOk {
+interface BreakGlassAuditOk {
   /** A failed ledger append, for the presenter. */
   warnings: string[];
   kind: "ok";
@@ -181,18 +181,18 @@ export interface BreakGlassAuditOk {
   auditCommit: boolean;
 }
 
-export interface BreakGlassAuditFail {
+interface BreakGlassAuditFail {
   kind: "fail";
   error: unknown;
 }
 
-export type BreakGlassAuditOutcome = BreakGlassAuditOk | BreakGlassAuditFail;
+type BreakGlassAuditOutcome = BreakGlassAuditOk | BreakGlassAuditFail;
 
 /** Single break-glass audit path shared by human and JSON presenters. */
 export function runBreakGlassAuditFlow(
   root: string,
   mission: ParsedMission,
-  options: VerifyOptions,
+  options: VerifyEvaluation,
 ): BreakGlassAuditOutcome {
   try {
     const reason = validateBreakGlassReason(options.breakGlassReason);

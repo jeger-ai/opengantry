@@ -9,7 +9,7 @@ import {
   formatVerifyRunWhen,
   projectOverviewViewModel,
 } from "../report/report-overview-projector.js";
-import { appendVerifyRunRing } from "#missions/verify/verify-run-ring.js";
+import { appendVerifyRunRing } from "#missions/mission-verify/run-ring.js";
 import { renderOverviewHtml } from "../report/report-template-overview.js";
 import { gitCommit, gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnv } from "./test-shared.js";

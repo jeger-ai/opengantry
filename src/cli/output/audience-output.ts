@@ -1,5 +1,4 @@
-/** Tailor command output verbosity by role. */
-export type OutputAudience = "executor" | "planner" | "verifier" | "platform";
+import type { OutputAudience } from "#missions/mission-verify/hints.js";
 
 const VALID_AUDIENCES: readonly OutputAudience[] = [
   "executor",

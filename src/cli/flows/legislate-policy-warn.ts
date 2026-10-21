@@ -1,6 +1,6 @@
 import { logWarn } from "../output/cli-io.js";
 import { configFloorViolations, resolveOrgPolicy } from "#plane/policy-resolve.js";
-import { localConfigFloor } from "#missions/policy/policy-resolve.js";
+import { localConfigFloor } from "#missions/gxt-config.js";
 
 /** Warn-only: a draft that would violate the org floor is still written (ADR-0042). */
 export function warnLegislatePolicyFloor(root: string): void {

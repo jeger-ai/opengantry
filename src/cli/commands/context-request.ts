@@ -8,7 +8,7 @@ import {
 import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
 import { errorMessage } from "#core/user-error.js";
 import { resolveRuntimeEnv } from "#missions/runtime-env.js";
-import { resolvePinnedMission } from "#missions/missions/resolution.js";
+import { resolvePinnedMission } from "#missions/mission/resolution.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ContextRequestCliOptions {

@@ -1,7 +1,7 @@
 /**
  * The exit-code table (ADR-0052 A7). A gantry command exits with one of these three codes or passes a child
  * process's code through unchanged (gantry cage, gantry runtime exec, the gate). Commands set it through
- * setExitCode in src/cli/lib/cli-io.ts; there is no other ladder.
+ * setExitCode in src/cli/output/cli-io.ts; there is no other ladder.
  */
 export const EXIT_CODE = Object.freeze({
   /** The command ran and the answer is yes: checks passed, the document was written. */

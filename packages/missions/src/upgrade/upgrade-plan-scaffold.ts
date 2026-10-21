@@ -5,7 +5,7 @@ import YAML from "yaml";
 import { CLI_NAME } from "#core/constants.js";
 import { fromPosix, toPosixRel } from "#core/posix-path.js";
 import { allocateMsn } from "../msn-allocate.js";
-import { buildLegislativeTraceRows, buildMissionYamlScaffold, isValidMsnId } from "../missions/parser.js";
+import { buildLegislativeTraceRows, buildMissionYamlScaffold, isValidMsnId } from "../mission/parser.js";
 import type { PlannedWrite } from "../init/init-plan.js";
 import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";
 
@@ -17,7 +17,7 @@ function semverSlug(version: string): string {
   return version.replace(/[^a-zA-Z0-9._-]+/g, "-");
 }
 
-export function pickNextUpgradeMsn(repoRoot: string): string {
+function pickNextUpgradeMsn(repoRoot: string): string {
   return allocateMsn(repoRoot, { band: "upgrade" });
 }
 

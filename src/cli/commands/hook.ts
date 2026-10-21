@@ -17,7 +17,7 @@ import {
   fallbackPushBase,
   type PushRange,
 } from "#missions/git/git-hooks.js";
-import { resolvePinnedMission } from "#missions/missions/resolution.js";
+import { resolvePinnedMission } from "#missions/mission/resolution.js";
 import { checkPerimeter } from "#missions/perimeter.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { runVerifyCore } from "../flows/verify-run.js";

@@ -1,7 +1,5 @@
-import type { VerifyFailedPayload } from "./verify/verify-payload.js";
+import type { VerifyFailedPayload } from "./mission-verify/payload.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyPhaseFailure } from "./verify/verify-failure.js";
-import type { VerifyOptions } from "./verify/verify-options.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { writeRemediationSnapshot, type RemediationSnapshot } from "./context-feed-store.js";
 import { writeGateLog } from "./gate-log-writer.js";
@@ -9,10 +7,8 @@ import {
   buildCompactRemediationSnapshot,
   loadPriorDigestRing,
   applyFindingsRecurrence,
-} from "./verify/verify-remediation-pipeline.js";
-import { computeFindingsDigest } from "./verify/verify-finding-fingerprint.js";
-import { buildFindingsForFailure, toVerifyFailedPayload } from "./verify/verify-payload.js";
-import { normalizeVerifyPhaseFailure } from "./verify/verify-failure-normalize.js";
+} from "./mission-verify/remediation-pipeline.js";
+import { computeFindingsDigest } from "./mission-verify/finding-fingerprint.js";
 
 function remediationFromPayload(
   root: string,
@@ -39,7 +35,7 @@ function remediationFromPayload(
   });
 }
 
-export function remediationFromFailedPayload(
+function remediationFromFailedPayload(
   root: string,
   mission: ParsedMission | null,
   missionArg: string | undefined,
@@ -56,35 +52,7 @@ export function remediationFromFailedPayload(
   return remediationFromPayload(root, payload, meta);
 }
 
-export function remediationFromPhaseFailure(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
-  failure: VerifyPhaseFailure,
-): RemediationSnapshot {
-  const normalized = normalizeVerifyPhaseFailure({
-    failure,
-    missionArg,
-    options,
-    root,
-    msnId: mission.msnId ?? undefined,
-    mission,
-  });
-  const findings = buildFindingsForFailure(root, normalized, failure);
-  const payload = toVerifyFailedPayload(normalized, failure, findings);
-  return remediationFromPayload(
-    root,
-    payload,
-    {
-      mission_file_path: missionArg,
-      ...(mission.msnId ? { msn_id: mission.msnId } : {}),
-    },
-    findings,
-  );
-}
-
-export function persistRemediationSnapshot(root: string, snapshot: RemediationSnapshot): void {
+function persistRemediationSnapshot(root: string, snapshot: RemediationSnapshot): void {
   try {
     writeRemediationSnapshot(root, snapshot);
   } catch {
@@ -99,18 +67,5 @@ export function persistRemediationFromFailedPayload(
   payload: VerifyFailedPayload,
 ): void {
   persistRemediationSnapshot(root, remediationFromFailedPayload(root, mission, missionArg, payload));
-}
-
-export function persistRemediationFromPhaseFailure(
-  root: string,
-  mission: ParsedMission,
-  missionArg: string,
-  options: VerifyOptions,
-  failure: VerifyPhaseFailure,
-): void {
-  persistRemediationSnapshot(
-    root,
-    remediationFromPhaseFailure(root, mission, missionArg, options, failure),
-  );
 }
 

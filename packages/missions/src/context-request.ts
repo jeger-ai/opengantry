@@ -5,9 +5,9 @@ import { EXECUTOR_LOG_FILENAME } from "#core/constants.js";
 import { gitStagePath } from "#git/git-staged.js";
 import { ensureExecutorLogExists } from "./repair.js";
 
-export type ContextRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+type ContextRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED";
 
-export interface ContextRequestEntry {
+interface ContextRequestEntry {
   status: ContextRequestStatus;
   paths: string[];
   reason: string;
@@ -15,7 +15,7 @@ export interface ContextRequestEntry {
   msnId?: string;
 }
 
-export interface AppendContextRequestOptions {
+interface AppendContextRequestOptions {
   executorLogPath: string;
   entry: ContextRequestEntry;
 }

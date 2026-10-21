@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { assertCleanTreeForRecord, runRecordRelPath } from "#missions/verify/verify-run-record.js";
+import { assertCleanTreeForRecord, runRecordRelPath } from "#missions/mission-verify/run-record.js";
 
 function gitRepo(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-runrec-"));

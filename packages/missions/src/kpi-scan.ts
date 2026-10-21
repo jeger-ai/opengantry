@@ -12,13 +12,13 @@ import type {
   ParsedMission,
 } from "#core/mission-types.js";
 
-export interface KpiScanFragment {
+interface KpiScanFragment {
   exit_code?: number;
   metrics?: Record<string, number | boolean>;
   findings?: KpiFinding[];
 }
 
-export interface KpiScanResult {
+interface KpiScanResult {
   reportPath: string;
   report: KpiReport;
 }
@@ -88,7 +88,7 @@ function applyAggregators(
   return out;
 }
 
-export interface RunKpiScanOptions {
+interface RunKpiScanOptions {
   cwd?: string;
 }
 

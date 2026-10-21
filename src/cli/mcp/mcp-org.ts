@@ -3,7 +3,7 @@ import { reportLedger } from "../output/cli-io.js";
 import { checkAndRecordMissionDependencies } from "#missions/deps/deps-resolve.js";
 import type { DependencyCheckResult } from "#plane/deps-resolve.js";
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
 import { toMcpError, type McpErrorBody } from "./mcp-governance-shared.js";
 import { orgPolicySnapshot, resolveOrgPolicy } from "#plane/policy-resolve.js";

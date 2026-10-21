@@ -7,7 +7,7 @@ import {
   type ExecuteLegislationResult,
   type McpErrorBody,
 } from "./mcp-governance-shared.js";
-import { assertMcpMissionWritePath, McpWriteDeniedError } from "#missions/mcp/mcp-write-guard.js";
+import { assertMcpMissionWritePath, McpWriteDeniedError } from "#missions/substrate-write-guard.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export function handleExecuteLegislation(

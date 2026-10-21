@@ -17,7 +17,7 @@ import {
 } from "./onboarding-flow.js";
 import { runStartOrchestration } from "../flows/start-orchestration.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { listMissionFiles } from "#missions/missions/resolution.js";
+import { listMissionFiles } from "#missions/mission/resolution.js";
 import { runVerifyCore } from "../flows/verify-run.js";
 
 function findExistingTutorialMission(repoRoot: string): string | null {

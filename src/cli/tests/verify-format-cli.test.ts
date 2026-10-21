@@ -9,7 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
 import { runVerify } from "../commands/verify.js";
-import type { VerifyExportFormat } from "#missions/verify/verify-export.js";
+import type { VerifyExportFormat } from "#missions/mission-verify/export.js";
 import {
   writeMiniGantryRepo,
   writeMiniGantryMission,

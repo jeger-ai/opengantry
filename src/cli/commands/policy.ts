@@ -2,7 +2,7 @@ import { reportLedger } from "../output/cli-io.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import { configFloorViolations, orgPolicySnapshot, resolveOrgPolicyOrThrow } from "#plane/policy-resolve.js";
-import { localConfigFloor } from "#missions/policy/policy-resolve.js";
+import { localConfigFloor } from "#missions/gxt-config.js";
 import { appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 import { runUserCommand } from "../output/command-boundary.js";

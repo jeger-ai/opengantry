@@ -8,13 +8,13 @@ import { parseLawFileDocument } from "#core/law-file.js";
 import { readLawFileAt, workingTreeReader } from "#git/repo-text.js";
 import type { DoctorLine } from "../../doctor/doctor-types.js";
 
-export type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
+type ArchitectureDocKind = "file" | "directory" | "external" | "unset";
 
-export interface ArchitectureDiscovery {
+interface ArchitectureDiscovery {
   skill?: string;
 }
 
-export interface ArchitectureAccess {
+interface ArchitectureAccess {
   required: boolean;
   tool?: string;
   skill?: string;
@@ -32,10 +32,10 @@ export interface ArchitecturePointer {
   discovery?: ArchitectureDiscovery;
 }
 
-export const ARCHITECTURE_POINTER_SCHEMA_VERSION = "0.1.0" as const;
+const ARCHITECTURE_POINTER_SCHEMA_VERSION = "0.1.0" as const;
 
 /** Init stub markers — file content matching these still requires discovery. */
-export const ARCHITECTURE_STUB_MARKERS = [
+const ARCHITECTURE_STUB_MARKERS = [
   "Replace this section with your project structure",
   "Your architecture notes",
 ] as const;
@@ -175,7 +175,7 @@ export function loadArchitecturePointer(repoRoot: string): ArchitecturePointer {
   return validateArchitecturePointer(parsed);
 }
 
-export function resolveArchitectureAccessSkill(pointer: ArchitecturePointer): string {
+function resolveArchitectureAccessSkill(pointer: ArchitecturePointer): string {
   return pointer.access?.skill ?? DEFAULT_ACCESS_SKILL;
 }
 
@@ -183,7 +183,7 @@ export function resolveArchitectureDiscoverySkill(pointer: ArchitecturePointer):
   return pointer.discovery?.skill ?? DEFAULT_DISCOVERY_SKILL;
 }
 
-export function architectureFileIsStub(content: string): boolean {
+function architectureFileIsStub(content: string): boolean {
   const trimmed = content.trim();
   if (trimmed.length === 0) return true;
   return ARCHITECTURE_STUB_MARKERS.some((marker) => content.includes(marker));

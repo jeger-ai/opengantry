@@ -6,14 +6,14 @@ import type { ContractImportViolation, EffectiveScope, MissionContract } from "#
 import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
-import type { ContractFailure } from "./verify-failure.js";
-import { verifyFinding, type VerifyFinding } from "./verify-finding.js";
-import { readMissionAtCommit, resolvePlannerStampHash } from "./verify-interrogation.js";
-import type { PhaseContext } from "./verify-phase-steps.js";
+import type { ContractFailure } from "./failure.js";
+import { verifyFinding, type VerifyFinding } from "./finding.js";
+import { readMissionAtCommit, resolvePlannerStampHash } from "./interrogation.js";
+import type { PhaseContext } from "./phase-steps.js";
 
-export type ContractPhaseOutcome = { kind: "ok"; skipped: boolean } | { kind: "fail"; failure: ContractFailure };
+type ContractPhaseOutcome = { kind: "ok"; skipped: boolean } | { kind: "fail"; failure: ContractFailure };
 
-export interface ContractPhaseInput extends PhaseContext {
+interface ContractPhaseInput extends PhaseContext {
   proofMsnId: string;
   missionRel: string;
 }

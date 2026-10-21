@@ -1,4 +1,4 @@
-export type DoctorLevel = "ok" | "warn" | "fail";
+type DoctorLevel = "ok" | "warn" | "fail";
 
 export interface DoctorLine {
   level: DoctorLevel;

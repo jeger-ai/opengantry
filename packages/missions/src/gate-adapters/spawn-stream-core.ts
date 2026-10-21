@@ -13,12 +13,12 @@ import { withoutGitRepoEnv } from "#git/git.js";
 import { readGateLogAbs } from "../gate-log-writer.js";
 import type { GateExecContext } from "./gate-adapter-types.js";
 
-export interface SpawnStreamOptions {
+interface SpawnStreamOptions {
   /** Keep a bounded copy of stdout in memory for structured parsing. */
   captureStdout?: boolean;
 }
 
-export interface SpawnStreamResult {
+interface SpawnStreamResult {
   exitCode: number | null;
   successSubstringMatched: boolean;
   /** Captured stdout (UTF-8); empty when capture disabled. */
@@ -57,7 +57,7 @@ export function spawnOrDestroyStream(
   }
 }
 
-export class BoundedStdoutCapture {
+class BoundedStdoutCapture {
   private readonly chunks: Buffer[] = [];
   private bytes = 0;
   truncated = false;

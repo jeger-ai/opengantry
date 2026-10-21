@@ -4,7 +4,7 @@ import { GIT_CONFIG_ALLOWED_SIGNERS, REL_PLANNER_SIGNING_PUB } from "#core/const
 import { gitConfigGet, gitConfigSet, gitRunOk } from "#git/git.js";
 
 /** `git log --format=%G?` signature letter for a commit. */
-export type GitSignatureStatus = "G" | "U" | "B" | "X" | "Y" | "R" | "E" | "N" | string;
+type GitSignatureStatus = "G" | "U" | "B" | "X" | "Y" | "R" | "E" | "N" | string;
 
 export function gitCommitSignatureStatus(repoRoot: string, commitRef: string): GitSignatureStatus {
   const result = gitRunOk(repoRoot, ["log", "-1", `--format=%G?`, commitRef]);
@@ -18,7 +18,7 @@ export function isGoodGitSignatureStatus(status: GitSignatureStatus): boolean {
   return status === "G" || status === "U";
 }
 
-export interface PlannerStampSignatureCheck {
+interface PlannerStampSignatureCheck {
   ok: boolean;
   status: GitSignatureStatus;
 }
@@ -31,7 +31,7 @@ export function checkPlannerStampSignature(
   return { ok: isGoodGitSignatureStatus(status), status };
 }
 
-export interface AllowedSignersConfig {
+interface AllowedSignersConfig {
   present: boolean;
   configured: boolean;
   path: string | null;

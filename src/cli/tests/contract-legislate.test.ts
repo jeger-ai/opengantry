@@ -10,7 +10,7 @@ import { getRepoRoot } from "#git/git.js";
 import { handleDraftLegislation } from "../mcp/mcp-draft-legislation.js";
 import { handleExecuteLegislation } from "../mcp/mcp-execute-legislation.js";
 import { handleProposeContract } from "../mcp/mcp-propose-contract.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 import { copyMissionSchema, echoOkInterrogation, emptyDraftTokenInterrogationFields, gitInitCommit, writeManifest } from "./test-fixtures.js";
 
 const PLANNER = "planner@example.com";

@@ -3,7 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { toPosixRel } from "#core/posix-path.js";
 
-export interface ForbiddenFileState {
+interface ForbiddenFileState {
   repoRelPath: string;
   exists: boolean;
   size: number;
@@ -11,7 +11,7 @@ export interface ForbiddenFileState {
   sha256: string;
 }
 
-export interface ForbiddenScanBaseline {
+interface ForbiddenScanBaseline {
   repoRoot: string;
   files: Record<string, ForbiddenFileState>;
 }

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "#core/error-codes.js";
-import type { GateFailure, VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
+import type { GateFailure, VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import {
   getRepairForErrorCode,
   resolveRepairErrorCode,

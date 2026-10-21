@@ -17,7 +17,7 @@ import {
   type VerifyLastOutcome,
   type VerifyLastSnapshot,
   type VerifyRunRingEntry,
-} from "#missions/verify/verify-run-ring.js";
+} from "#missions/mission-verify/run-ring.js";
 
 const BLOCKER_LIMIT = 5;
 

@@ -27,7 +27,7 @@ export function resolveSha(root: string, ref: string): string | null {
   return r.ok && r.stdout.trim() ? r.stdout.trim() : null;
 }
 
-export function commitHasBypassNote(root: string, sha: string): boolean {
+function commitHasBypassNote(root: string, sha: string): boolean {
   const r = gitRunOk(root, ["notes", `--ref=${GXT_BYPASS_NOTES_REF}`, "show", sha]);
   return r.ok && isValidBypassNote(r.stdout);
 }
@@ -73,7 +73,7 @@ export function checkUpgradeTmp(root: string): CiCheckResult {
   return { ok: true, lines: ["upgrade-tmp OK (no tracked staging files)"], failures: [] };
 }
 
-export type MissionRangeOutcome =
+type MissionRangeOutcome =
   | { kind: "verify"; missions: string[] }
   | { kind: "none"; message: string }
   | { kind: "trusted"; message: string }

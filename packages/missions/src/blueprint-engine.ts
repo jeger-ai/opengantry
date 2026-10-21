@@ -1,14 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import { createHash } from "node:crypto";
 import { toPosixRel } from "#core/posix-path.js";
 import {
   runDiscoveryScan,
   type DiscoveryProposal,
 } from "./discovery-scanner.js";
 import { TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
-import { TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type ArchRuleSpec, type TargetArchitectureSpec } from "./arch/cage/target-architecture.js";
+import { TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type ArchRuleSpec, type TargetArchitectureSpec } from "./arch/target-architecture.js";
 import {
   buildVerificationPlan,
   serializeVerificationPlan,
@@ -24,7 +23,7 @@ import {
 
 export const ARCHITECTURE_MD_FILENAME = "ARCHITECTURE.md" as const;
 
-export type BlueprintEnforcementChoice = DomainEnforcementChoice;
+type BlueprintEnforcementChoice = DomainEnforcementChoice;
 
 export interface BlueprintInterviewAnswer {
   questionId: string;
@@ -32,9 +31,9 @@ export interface BlueprintInterviewAnswer {
   gateCommand?: string;
 }
 
-export type BlueprintQuestion = DomainBlueprintQuestion;
+type BlueprintQuestion = DomainBlueprintQuestion;
 
-export interface BlueprintArtifacts {
+interface BlueprintArtifacts {
   architectureMdPath: string;
   targetArchitecturePath: string;
   verificationPlanPath: string;
@@ -189,12 +188,4 @@ export function emitBlueprintArtifacts(
 
 export function runBlueprintDiscovery(repoRoot: string, domain?: string): DiscoveryProposal {
   return runDiscoveryScan(repoRoot, { domain });
-}
-
-export function checksumArchitectureMarkdown(mdBody: string, ruleIds: string[]): string {
-  const payload = JSON.stringify({
-    rule_ids: [...ruleIds].sort(),
-    md_sha256: createHash("sha256").update(mdBody).digest("hex"),
-  });
-  return createHash("sha256").update(payload, "utf8").digest("hex");
 }

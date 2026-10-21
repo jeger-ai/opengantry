@@ -3,7 +3,7 @@
  * Maps `results[].messages[]` to envelope v3 findings. Selected only via the
  * mission `gate_adapter: eslint` field, never inferred from the command text.
  */
-import type { VerifyFinding } from "../verify/verify-finding.js";
+import type { VerifyFinding } from "../mission-verify/finding.js";
 import {
   findingsFromRun,
   type AdapterParseResult,
@@ -29,7 +29,7 @@ interface EslintResult {
   messages?: EslintMessage[];
 }
 
-export type EslintParseResult = AdapterParseResult;
+type EslintParseResult = AdapterParseResult;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;

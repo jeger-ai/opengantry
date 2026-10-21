@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { formatRepoRelative } from "#core/posix-path.js";
 import { currentReporter, type Reporter } from "../output/reporter.js";
 import { GantryUserError } from "#core/user-error.js";
-import { resolveMissionFilePath, resolvePinnedMission } from "#missions/missions/resolution.js";
+import { resolveMissionFilePath, resolvePinnedMission } from "#missions/mission/resolution.js";
 
 export type MissionSource = "flag" | "pin";
 

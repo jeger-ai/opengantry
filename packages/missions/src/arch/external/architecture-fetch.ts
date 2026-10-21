@@ -9,9 +9,9 @@ import {
   type ArchitecturePointer,
 } from "./architecture-pointer.js";
 
-export type ArchFetchStatus = "fetched" | "fallback";
+type ArchFetchStatus = "fetched" | "fallback";
 
-export interface ArchFetchResult {
+interface ArchFetchResult {
   status: ArchFetchStatus;
   url?: string;
   body?: string;
@@ -28,7 +28,7 @@ export type HttpFetcher = (
 
 const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
 
-export const defaultHttpFetcher: HttpFetcher = async (url, init) => {
+const defaultHttpFetcher: HttpFetcher = async (url, init) => {
   const response = await fetch(url, init);
   const buf = await response.arrayBuffer();
   if (buf.byteLength > DEFAULT_MAX_BYTES) {
@@ -77,7 +77,7 @@ function fallbackResult(pointer: ArchitecturePointer, message: string): ArchFetc
   };
 }
 
-export interface FetchExternalArchitectureOptions {
+interface FetchExternalArchitectureOptions {
   repoRoot: string;
   fetcher?: HttpFetcher;
 }

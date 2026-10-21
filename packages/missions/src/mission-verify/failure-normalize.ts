@@ -3,9 +3,9 @@ import type { GxtErrorCode } from "#core/error-codes.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { toPosixRel } from "#core/posix-path.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyOptions } from "./verify-options.js";
+import type { VerifyEvaluation } from "./options.js";
 import { CLI_NAME } from "#core/constants.js";
-import { hintsForVerifyPhase, type AudienceTaggedStep } from "./verify-hints.js";
+import { hintsForVerifyPhase, type AudienceTaggedStep } from "./hints.js";
 import {
   REMEDIATION_SCHEMA_VERSION,
   type RemediationSnapshot,
@@ -18,7 +18,7 @@ import type {
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
-} from "./verify-failure.js";
+} from "./failure.js";
 
 /** Canonical verify-failure contract — single mapping for all sinks.
  * Gate output lives in the single `gate` field; sink projections rename at their boundary. */
@@ -40,7 +40,7 @@ export interface NormalizedVerifyFailure {
   msn_id?: string;
 }
 
-export type NormalizedVerifyFailureBase = Pick<
+type NormalizedVerifyFailureBase = Pick<
   NormalizedVerifyFailure,
   | "phase"
   | "message"
@@ -56,7 +56,7 @@ export type NormalizedVerifyFailureBase = Pick<
 export interface VerifyFailurePresentationInput {
   failure: VerifyPhaseFailure;
   missionArg: string;
-  options: Pick<VerifyOptions, "strictTrace" | "audience">;
+  options: Pick<VerifyEvaluation, "strictTrace">;
   root?: string;
   msnId?: string;
 }
@@ -73,10 +73,10 @@ export interface VerifyFailurePresentation {
   trace?: { failures?: string[] };
 }
 
-export interface NormalizePhaseFailureInput {
+interface NormalizePhaseFailureInput {
   failure: VerifyPhaseFailure;
   missionArg: string;
-  options: Pick<VerifyOptions, "strictTrace" | "audience">;
+  options: Pick<VerifyEvaluation, "strictTrace">;
   root?: string;
   msnId?: string;
   mission?: ParsedMission | null;

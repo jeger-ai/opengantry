@@ -2,7 +2,7 @@ import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { McpErrorBody } from "./mcp-governance-shared.js";
-import { McpWriteDeniedError } from "#missions/mcp/mcp-write-guard.js";
+import { McpWriteDeniedError } from "#missions/substrate-write-guard.js";
 import type { UpgradeApplyResult } from "#missions/upgrade/upgrade-apply.js";
 import {
   assertStableUpgradePlanPayloadV1,

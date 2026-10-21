@@ -7,8 +7,8 @@ import { readBlamePorcelainByLine, UNCOMMITTED_BLAME_COMMIT } from "./trace-evid
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { KpiFinding, KpiGateSpec, KpiReport, KpiThreshold, KpiThresholdOp } from "#core/mission-types.js";
 import type { Manifest } from "#core/manifest.js";
-import type { VerifyOptions } from "./verify/verify-options.js";
-import type { KpiFailure } from "./verify/verify-failure.js";
+import type { VerifyEvaluation } from "./mission-verify/options.js";
+import type { KpiFailure } from "./mission-verify/failure.js";
 
 export function assertKpiReportSchemaValid(_root: string, data: unknown, filePath: string): void {
   const result = kpiReportSchema.safeParse(data);
@@ -16,7 +16,7 @@ export function assertKpiReportSchemaValid(_root: string, data: unknown, filePat
   throw new Error(`gantry kpi: ${filePath}: schema validation failed: ${formatSchemaIssues(result.error)}`);
 }
 
-export interface KpiThresholdFailure {
+interface KpiThresholdFailure {
   metric: string;
   op: KpiThresholdOp;
   expected: number;
@@ -114,13 +114,13 @@ export function loadKpiReport(root: string, reportRelPath: string): KpiReport {
 
 
 
-export interface KpiReportStaleOptions {
+interface KpiReportStaleOptions {
   skipStaleEvidence?: boolean;
   /** When true, uncommitted TMVC drift is a hard failure (pre-push / CI). */
   strictStale?: boolean;
 }
 
-export interface KpiReportStaleResult {
+interface KpiReportStaleResult {
   stale: boolean;
   advisoryOnly: boolean;
   stalePaths: string[];
@@ -288,7 +288,7 @@ function thresholdFailure(
   };
 }
 
-export type KpiPhaseOutcome =
+type KpiPhaseOutcome =
   | { kind: "ok"; warnings: string[]; advisoryFindings?: KpiFinding[] }
   | { kind: "fail"; failure: KpiFailure }
   | null;
@@ -342,7 +342,7 @@ export function evaluateKpiPhase(
   manifest: Manifest,
   skillKey: string | null,
   kpiGate: KpiGateSpec,
-  options: VerifyOptions,
+  options: VerifyEvaluation,
   executorLogPath: string,
 ): KpiPhaseOutcome {
   const reportRel = kpiGate.reportPath.replace(/\\/g, "/");

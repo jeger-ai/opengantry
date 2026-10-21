@@ -1,10 +1,10 @@
 import crypto from "node:crypto";
 import { canonicalJson } from "#core/canonical-json.js";
-import type { VerifyFailedGate, VerifyFinding } from "./verify-finding.js";
+import type { VerifyFailedGate, VerifyFinding } from "./finding.js";
 
-export const EVIDENCE_BYTE_LIMIT = 2048 as const;
+const EVIDENCE_BYTE_LIMIT = 2048 as const;
 export const EVIDENCE_TRUNCATION_SENTINEL = "\n[...truncated]" as const;
-export const DIGEST_RING_CAP = 4 as const;
+const DIGEST_RING_CAP = 4 as const;
 
 /** Byte-safe UTF-8 truncation at newline or code-point boundary, then sentinel. */
 export function truncateEvidenceBytes(text: string): string {
@@ -36,7 +36,7 @@ export function normalizeEvidenceForSemantic(text: string): string {
   return withoutHunks.replace(/\s+/g, " ").trim();
 }
 
-export interface FingerprintInput {
+interface FingerprintInput {
   failed_gate: VerifyFailedGate;
   offending_file: string;
   line: number;
@@ -108,23 +108,6 @@ export function finalizeVerifyFinding(
     fingerprint: computeExactFingerprint(fpInput),
     semantic_fingerprint: computeSemanticFingerprint(fpInput),
   };
-}
-
-export function finalizeVerifyFindings(findings: VerifyFinding[]): VerifyFinding[] {
-  return findings.map((f) =>
-    finalizeVerifyFinding({
-      failed_gate: f.failed_gate,
-      offending_file: f.offending_file,
-      line: f.line,
-      severity: f.severity,
-      resolution_hint: f.resolution_hint,
-      ...(f.end_line !== undefined ? { end_line: f.end_line } : {}),
-      ...(f.start_column !== undefined ? { start_column: f.start_column } : {}),
-      ...(f.end_column !== undefined ? { end_column: f.end_column } : {}),
-      ...(f.rule_id !== undefined ? { rule_id: f.rule_id } : {}),
-      ...(f.evidence !== undefined ? { evidence: f.evidence } : {}),
-    }),
-  );
 }
 
 export function computeFindingsDigest(findings: readonly VerifyFinding[]): string {

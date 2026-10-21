@@ -34,7 +34,7 @@ function pickMsnFromYamlRecord(o: Record<string, unknown>): string | null {
 }
 
 /** Parse first YAML frontmatter block (`---` … `---`) when present. */
-export function tryParseYamlFrontmatter(body: string): Record<string, unknown> | null {
+function tryParseYamlFrontmatter(body: string): Record<string, unknown> | null {
   const lines = body.split("\n");
   if (lines[0]?.trim() !== "---") return null;
   let end = -1;
@@ -59,7 +59,7 @@ export function tryParseYamlFrontmatter(body: string): Record<string, unknown> |
 /**
  * Parser-owned mission MSN resolution (YAML, frontmatter, markdown template lines).
  */
-export function extractMsnIdFromMissionBody(body: string, extLower: string): string | null {
+function extractMsnIdFromMissionBody(body: string, extLower: string): string | null {
   if (extLower === ".yaml" || extLower === ".yml") {
     try {
       const doc = YAML.parse(body) as unknown;
@@ -98,14 +98,14 @@ export function extractMsnIdFromMissionPath(missionAbsolutePath: string): string
   return extractMsnIdFromMissionBody(body, ext);
 }
 
-export interface MissionTraceRowStub {
+interface MissionTraceRowStub {
   dod_id: string;
   trace_quote: string;
   anchor: string;
   status: string;
 }
 
-export interface MissionYamlEmitOptions {
+interface MissionYamlEmitOptions {
   header: string;
   doc: Record<string, unknown>;
 }
@@ -127,7 +127,7 @@ export function buildLegislativeTraceRows(): MissionTraceRowStub[] {
   ];
 }
 
-export function ensureMissionSchemaFileExists(root: string): void {
+function ensureMissionSchemaFileExists(root: string): void {
   const schemaPath = path.join(root, REL_MISSION_SCHEMA);
   if (!fs.existsSync(schemaPath)) {
     throw new Error(`gantry: missing MISSION schema at ${REL_MISSION_SCHEMA}`);

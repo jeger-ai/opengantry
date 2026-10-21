@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Reporter, currentReporter, reporterFromArgv, resetReporter } from "../output/reporter.js";
 import { logError, logInfo, logWarn, writeStdout } from "../output/cli-io.js";
-import { resolveAudience } from "#missions/audience-output.js";
+import { resolveAudience } from "../output/audience-output.js";
 import { asCommand, captureConsoleAsync } from "./test-shared.js";
 
 test("resolveAudience: CLI overrides env; invalid CLI value is reported", () => {

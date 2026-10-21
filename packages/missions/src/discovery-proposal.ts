@@ -4,7 +4,7 @@ import YAML from "yaml";
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 import { writeLawFileYaml } from "#git/repo-text.js";
 import { toPosixRel } from "#core/posix-path.js";
-import { TARGET_ARCHITECTURE_SCHEMA_VERSION, TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type TargetArchitectureSpec } from "./arch/cage/target-architecture.js";
+import { TARGET_ARCHITECTURE_SCHEMA_VERSION, TARGET_ARCHITECTURE_V3_SCHEMA_VERSION, type TargetArchitectureSpec } from "./arch/target-architecture.js";
 import { getDomainAdapter } from "./domains/index.js";
 import {
   type DiscoveryProposal,
@@ -12,7 +12,7 @@ import {
   serializeDiscoveryProposal,
 } from "./discovery-scanner.js";
 
-export const DISCOVERY_PROPOSAL_REL = ".gitagent/discovery-proposal.json" as const;
+const DISCOVERY_PROPOSAL_REL = ".gitagent/discovery-proposal.json" as const;
 
 export interface DiscoveryApplyResult {
   proposalPath: string;
@@ -116,10 +116,4 @@ export function applyDiscoveryProposal(repoRoot: string, proposal: DiscoveryProp
     targetArchitecturePath: TARGET_ARCHITECTURE_FILENAME,
     manifestPath: REL_MANIFEST_YAML,
   };
-}
-
-export function loadDiscoveryProposal(repoRoot: string): DiscoveryProposal | null {
-  const abs = proposalPath(repoRoot);
-  if (!fs.existsSync(abs)) return null;
-  return JSON.parse(fs.readFileSync(abs, "utf8")) as DiscoveryProposal;
 }

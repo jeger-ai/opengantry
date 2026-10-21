@@ -14,7 +14,7 @@ export interface PepperKeyringEntry {
   pepper_ref?: string;
 }
 
-export const DEFAULT_PEPPER_KEYRING_REL = ".config/gantry/pepper-keyring.json" as const;
+const DEFAULT_PEPPER_KEYRING_REL = ".config/gantry/pepper-keyring.json" as const;
 
 function expandHome(value: string): string {
   if (value.startsWith("~/")) {
@@ -23,12 +23,12 @@ function expandHome(value: string): string {
   return value;
 }
 
-export function defaultPepperKeyringPath(): string {
+function defaultPepperKeyringPath(): string {
   return path.join(os.homedir(), DEFAULT_PEPPER_KEYRING_REL);
 }
 
 /** Resolve keyring path from explicit flag, GANTRY_PEPPER_KEYRING, or the default user config path. */
-export function resolvePepperKeyringPath(explicit?: string): string {
+function resolvePepperKeyringPath(explicit?: string): string {
   if (explicit?.trim()) return expandHome(explicit.trim());
   const env = readGantryEnv("PEPPER_KEYRING");
   if (env) return expandHome(env);
@@ -136,7 +136,7 @@ export function getPeppersForOrg(entries: PepperKeyringEntry[], orgId: string): 
     .sort((a, b) => a.pepper_version - b.pepper_version);
 }
 
-export function isPepperActive(entry: PepperKeyringEntry, now = new Date()): boolean {
+function isPepperActive(entry: PepperKeyringEntry, now = new Date()): boolean {
   if (entry.active_from) {
     const from = new Date(entry.active_from);
     if (Number.isNaN(from.getTime()) || now < from) return false;

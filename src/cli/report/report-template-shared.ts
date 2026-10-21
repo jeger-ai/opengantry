@@ -1,4 +1,4 @@
-import type { VerifyLastOutcome } from "#missions/verify/verify-run-ring.js";
+import type { VerifyLastOutcome } from "#missions/mission-verify/run-ring.js";
 
 export type ReportOutcome = VerifyLastOutcome | "EMPTY";
 

@@ -1,9 +1,6 @@
 import { logError, logInfo, logWarn, setExitCode, writeStdout } from "../output/cli-io.js";
-import {
-  audienceSectionTitle,
-  filterTaggedStepsForAudience,
-  type OutputAudience,
-} from "#missions/audience-output.js";
+import { audienceSectionTitle, filterTaggedStepsForAudience } from "../output/audience-output.js";
+import type { OutputAudience } from "#missions/mission-verify/hints.js";
 import { buildStatusReport, type StatusReport } from "../report/status-report.js";
 import type { SkillSyncResult } from "#missions/skill-sync.js";
 import { loadWorkspaceWithSkillSync } from "#missions/workspace.js";

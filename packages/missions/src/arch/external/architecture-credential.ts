@@ -33,11 +33,11 @@ export function validateCredentialSlot(slot: string): string {
   return normalized;
 }
 
-export function architectureCredentialsDir(repoRoot: string): string {
+function architectureCredentialsDir(repoRoot: string): string {
   return path.join(repoRoot, REL_ARCHITECTURE_CREDENTIALS_DIR.split("/").join(path.sep));
 }
 
-export function architectureCredentialPath(repoRoot: string, slot: string): string {
+function architectureCredentialPath(repoRoot: string, slot: string): string {
   const safe = validateCredentialSlot(slot);
   return path.join(architectureCredentialsDir(repoRoot), `${safe.replace(/\//g, "__")}.json`);
 }
@@ -74,7 +74,7 @@ export function loadArchitectureCredential(
   return parsed;
 }
 
-export function validateArchitectureCredentialRecord(
+function validateArchitectureCredentialRecord(
   raw: unknown,
   expectedSlot?: string,
 ): ArchitectureCredentialRecord {

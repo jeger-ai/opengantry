@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { validateYamlMission } from "#missions/missions/parser.js";
+import { validateYamlMission } from "#missions/mission/parser.js";
 test("mission schema: rejects unknown top-level keys", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-"));
   const ogRoot = getRepoRoot();

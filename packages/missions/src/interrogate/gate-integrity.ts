@@ -9,17 +9,17 @@ const TRIVIAL_GATE_PATTERNS: readonly RegExp[] = [
 ];
 
 /** Normalize shell command for trivial-gate and allowlist comparison. */
-export function normalizeGateCommand(command: string): string {
+function normalizeGateCommand(command: string): string {
   return command.trim().replace(/\s+/g, " ");
 }
 
-export function isTrivialGateCommand(command: string): boolean {
+function isTrivialGateCommand(command: string): boolean {
   const norm = normalizeGateCommand(command);
   if (norm.length === 0) return true;
   return TRIVIAL_GATE_PATTERNS.some((re) => re.test(norm));
 }
 
-export function gateCommandAllowlisted(manifest: Manifest, skillKey: string, gateCommand: string): boolean {
+function gateCommandAllowlisted(manifest: Manifest, skillKey: string, gateCommand: string): boolean {
   const skill = manifest.skills[skillKey];
   if (!skill?.gate_commands || skill.gate_commands.length === 0) return false;
   const norm = normalizeGateCommand(gateCommand);

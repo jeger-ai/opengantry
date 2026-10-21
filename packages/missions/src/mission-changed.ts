@@ -14,7 +14,7 @@ export function resolveDefaultChangedBaseRef(repoRoot: string): string {
   return "HEAD~1";
 }
 
-export type ChangedMissionsDiscovery =
+type ChangedMissionsDiscovery =
   | {
       kind: "ok";
       missions: string[];

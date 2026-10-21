@@ -4,7 +4,7 @@ import type {
   DiscoveryEdge,
   DiscoveryEvidence,
 } from "../discovery-types.js";
-import type { ArchRuleSpec } from "../arch/cage/target-architecture.js";
+import type { ArchRuleSpec } from "../arch/target-architecture.js";
 
 export type DomainKey = "code" | "content";
 

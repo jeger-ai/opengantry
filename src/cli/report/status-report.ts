@@ -3,7 +3,7 @@ import path from "node:path";
 import { REL_AGENT_ERROR_FILE } from "#core/constants.js";
 import { collectDoctorReport } from "../doctor/doctor-core.js";
 import type { DoctorLine } from "#missions/doctor/doctor-types.js";
-import { resolvePinnedMission } from "#missions/missions/resolution.js";
+import { resolvePinnedMission } from "#missions/mission/resolution.js";
 import { checkSkillManifestSync } from "#missions/skill-sync.js";
 import type { Manifest } from "#core/manifest.js";
 

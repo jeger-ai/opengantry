@@ -1,4 +1,3 @@
-import path from "node:path";
 import { gitRunOk } from "#git/git.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
@@ -17,7 +16,7 @@ export function isVerifiableMissionPath(rel: string): boolean {
 }
 
 /** Resolve merge-base for branch-scoped mission diff (pre-push). */
-export function resolveMergeBase(root: string): string | null {
+function resolveMergeBase(root: string): string | null {
   const upstream = gitRunOk(root, [
     "rev-parse",
     "--abbrev-ref",
@@ -58,10 +57,4 @@ export function listDirtyMissionPaths(repoRoot: string, baseRef?: string): strin
     .filter((p) => isVerifiableMissionPath(p));
 
   return [...new Set(paths)].sort();
-}
-
-export function listDirtyMissionPathsAbsolute(repoRoot: string, baseRef?: string): string[] {
-  return listDirtyMissionPaths(repoRoot, baseRef).map((rel) =>
-    path.join(repoRoot, rel.split("/").join(path.sep)),
-  );
 }

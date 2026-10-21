@@ -11,7 +11,7 @@ import { computeReceiptSha256 } from "#plane/attestation-receipt.js";
 import { REL_MANIFEST_JSON } from "#core/constants.js";
 import { GantryUserError } from "#core/user-error.js";
 import { getRepoRoot, gitConfigGet } from "#git/git.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 import {
   canonicalReceiptUtf8,
   verifyReceiptAgainstCanonical,

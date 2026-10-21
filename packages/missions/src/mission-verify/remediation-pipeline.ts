@@ -1,7 +1,7 @@
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyPhaseFailure } from "./verify-failure.js";
-import type { VerifyFinding } from "./verify-finding.js";
-import type { VerifyFailedPayload } from "./verify-payload.js";
+import type { VerifyPhaseFailure } from "./failure.js";
+import type { VerifyFinding } from "./finding.js";
+import type { VerifyFailedPayload } from "./payload.js";
 import {
   clearRemediationSnapshot,
   readRemediationSnapshot,
@@ -15,7 +15,7 @@ import {
   appendDigestToRing,
   computeFindingsDigest,
   digestRecurredInRing,
-} from "./verify-finding-fingerprint.js";
+} from "./finding-fingerprint.js";
 
 const RECURRENCE_HINT =
   "Identical semantic findings recurred — stop the repair loop and escalate to Planner.";
