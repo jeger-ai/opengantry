@@ -52,7 +52,7 @@ async function promptInitIntegrations(
     message: "Integrations documentation path (repo-relative)",
     initialValue: partial.integrationsDocPath ?? base.integrationsDocPath,
     validate: (v) => {
-      if (!v.trim()) return "path required";
+      if (!v?.trim()) return "path required";
       if (v.includes("..")) return "path must not contain ..";
       return undefined;
     },
@@ -99,7 +99,7 @@ async function promptInitArchitecture(
         partial.architectureLocation ??
         defaultArchitectureLocation(architectureSource as ArchitectureSourceKind),
       validate: (v) => {
-        if (!v.trim()) return "location required";
+        if (!v?.trim()) return "location required";
         if (architectureSource !== "external" && v.includes("..")) return "path must not contain ..";
         return undefined;
       },
