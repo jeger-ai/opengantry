@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0347",
   "mission_path": ".gitagent/missions/MSN-0347.dependency-updates.yaml",
-  "head": "329b5125fca5e2a6389de5a961e88a1e6c143501",
-  "tree": "568841595a66140ca5053a0c6e4c4345414c1398",
+  "head": "3bf1642d8d2a5defb84c1faa6db9788498ef0e7c",
+  "tree": "e324db062de1d1e0db289ce36be5f9db95bb2e30",
   "law_sha256": "853dcccd52f46286569a9644afb550252a85c001b2cbc1ac655366aee9d892f3",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 181455,
-      "output_sha256": "a2a5a84a3aae6473fb3756f4f137ddcb7ebce1bbe7fc290c7ca981f44d3c9b4c"
+      "duration_ms": 145102,
+      "output_sha256": "3720469e4b3c77f482b7dc86db677381c1786e14657f78b6a96c41eb925df981"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-10-21T14:31:34.440Z"
+  "issued_at": "2026-10-21T15:04:21.608Z"
 }
