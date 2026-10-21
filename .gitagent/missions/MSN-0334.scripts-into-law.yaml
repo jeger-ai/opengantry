@@ -1,0 +1,341 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0334]. Executor must not run until the [MSN-0334] legislation commit + pin.
+#
+# Legislated intent: review follow-up 6, the two check scripts into the structural law: kind cycles over alias-aware
+# runtime edges, gantry arch check --json as the import-layer gate and repair input, a top-level exclude in
+# TARGET_ARCHITECTURE.yaml, the dependency rule judging scope and range; the scripts, their tests and fixture deleted.
+#
+# Operator request (2026-10-21, "legislate all of them in that order"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0334.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0334
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0334.scripts-into-law.yaml,
+      .gitagent/runs/MSN-0334.json, packages/core/src/law.ts,
+      packages/core/tests/law-structural.test.ts,
+      packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/repair.ts, scripts/check-changed-code.sh,
+      scripts/check-import-layers.mjs, scripts/check-lib-cycles.mjs,
+      scripts/lib/asset-catalog-static.mjs,
+      src/cli/tests/arch-structural.test.ts,
+      src/cli/tests/asset-catalog-generator.test.ts,
+      src/cli/tests/check-import-layers.test.ts,
+      src/cli/tests/check-lib-cycles.test.ts,
+      src/cli/tests/fixtures/import-layer-violation.ts,
+      src/cli/tests/verify-repair.test.ts, TARGET_ARCHITECTURE.yaml,
+      test/conformance/README.md, test/conformance/spawning-tests.yaml. Review
+      follow-up 6 (scripts into law): packages/core/src/law.ts and its
+      structural test, packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/repair.ts (comment), TARGET_ARCHITECTURE.yaml,
+      scripts/check-changed-code.sh, scripts/lib/asset-catalog-static.mjs, the
+      two deleted scripts and their two deleted tests, the deleted fixture,
+      arch-structural, verify-repair and asset-catalog-generator tests,
+      test/conformance/spawning-tests.yaml and README, docs/DEVELOPMENT.md,
+      CHANGELOG, executor log, ARCH_BASELINE.json (core and missions raised).
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Operator request (2026-10-21): "legislate all of them in that
+      order"; item 6 of the review. Decisions: cycles are judged over the
+      counted files (scan roots minus exclude), one finding per strongly
+      connected set named by its sorted members, so a cycle that spans packages
+      through an alias is found where the relative-only script was blind; the
+      import-layer gate keeps the JSON shape the repair parses, so the repair
+      itself is unchanged; exclude is one top-level list because a budget, an
+      owner and a registry rule all meant the same files; the dependency rule
+      judges scope and range because the registry already records them. Not
+      taken: gaps.ts keeps judging scan roots without exclude (a mission
+      touching a test file is still asked about). The mission has no trace rows:
+      its evidence is .gitagent/runs/MSN-0334.json written by gantry verify
+      --record (RULES §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml gains a top-level exclude and
+      the CYCLES rule; the existing rules are unchanged in effect, their
+      per-rule excludes and applies_to lists folded into the one list.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4007f7dab326
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0334.scripts-into-law.yaml,
+      .gitagent/runs/MSN-0334.json, packages/core/src/law.ts,
+      packages/core/tests/law-structural.test.ts,
+      packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/repair.ts, scripts/check-changed-code.sh,
+      scripts/check-import-layers.mjs, scripts/check-lib-cycles.mjs,
+      scripts/lib/asset-catalog-static.mjs,
+      src/cli/tests/arch-structural.test.ts,
+      src/cli/tests/asset-catalog-generator.test.ts,
+      src/cli/tests/check-import-layers.test.ts,
+      src/cli/tests/check-lib-cycles.test.ts,
+      src/cli/tests/fixtures/import-layer-violation.ts,
+      src/cli/tests/verify-repair.test.ts, TARGET_ARCHITECTURE.yaml,
+      test/conformance/README.md, test/conformance/spawning-tests.yaml. Review
+      follow-up 6 (scripts into law): packages/core/src/law.ts and its
+      structural test, packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/repair.ts (comment), TARGET_ARCHITECTURE.yaml,
+      scripts/check-changed-code.sh, scripts/lib/asset-catalog-static.mjs, the
+      two deleted scripts and their two deleted tests, the deleted fixture,
+      arch-structural, verify-repair and asset-catalog-generator tests,
+      test/conformance/spawning-tests.yaml and README, docs/DEVELOPMENT.md,
+      CHANGELOG, executor log, ARCH_BASELINE.json (core and missions raised).
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp check is unchanged; its advisories
+      are collected and shown once.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. B2 gains the cycles kind and the dependency rule
+      judges scope and range; B4 counts the files exclude keeps; A8: the two
+      repo-only check scripts are gone, their law in gantry arch check. Core and
+      missions rise by the evaluator and the parser, a Planner raise under B4."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. Cross-repository dependency checks are unchanged; their
+      ledger warning goes through the caller's sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output is unchanged; the conformance goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. The MCP write guard judges the skill law; its denials
+      and messages are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. Unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: b72d607819b1
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0334.scripts-into-law.yaml,
+      .gitagent/runs/MSN-0334.json, packages/core/src/law.ts,
+      packages/core/tests/law-structural.test.ts,
+      packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/repair.ts, scripts/check-changed-code.sh,
+      scripts/check-import-layers.mjs, scripts/check-lib-cycles.mjs,
+      scripts/lib/asset-catalog-static.mjs,
+      src/cli/tests/arch-structural.test.ts,
+      src/cli/tests/asset-catalog-generator.test.ts,
+      src/cli/tests/check-import-layers.test.ts,
+      src/cli/tests/check-lib-cycles.test.ts,
+      src/cli/tests/fixtures/import-layer-violation.ts,
+      src/cli/tests/verify-repair.test.ts, TARGET_ARCHITECTURE.yaml,
+      test/conformance/README.md, test/conformance/spawning-tests.yaml. Review
+      follow-up 6 (scripts into law): packages/core/src/law.ts and its
+      structural test, packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/repair.ts (comment), TARGET_ARCHITECTURE.yaml,
+      scripts/check-changed-code.sh, scripts/lib/asset-catalog-static.mjs, the
+      two deleted scripts and their two deleted tests, the deleted fixture,
+      arch-structural, verify-repair and asset-catalog-generator tests,
+      test/conformance/spawning-tests.yaml and README, docs/DEVELOPMENT.md,
+      CHANGELOG, executor log, ARCH_BASELINE.json (core and missions raised).
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: Accept. The package graph is unchanged; cycle detection now
+      sees alias imports, which the direction rules and per-package tsconfig
+      already forbid across packages.
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: "Accept. Levels compose through tightenPathLaw: skill, org
+      floor, contract; nothing widens."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The contract's roots are a second area the mission law
+      intersects; roots_escape stays a legislate-time check.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The notes state the YAML law files and dual read as
+      ADR-0047 and its migration specify; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 89fad091f4533fe53d95be267d6f16fd0fbe62b6434f73e66043049d3d5ba863
+declared_paths:
+  - .gitagent/missions/MSN-0334.scripts-into-law.yaml
+  - .gitagent/runs/MSN-0334.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/law.ts
+  - packages/core/tests/law-structural.test.ts
+  - packages/missions/src/arch/cage/target-architecture.ts
+  - packages/missions/src/repair.ts
+  - scripts/check-changed-code.sh
+  - scripts/check-import-layers.mjs
+  - scripts/check-lib-cycles.mjs
+  - scripts/lib/asset-catalog-static.mjs
+  - src/cli/tests/arch-structural.test.ts
+  - src/cli/tests/asset-catalog-generator.test.ts
+  - src/cli/tests/check-import-layers.test.ts
+  - src/cli/tests/check-lib-cycles.test.ts
+  - src/cli/tests/fixtures/import-layer-violation.ts
+  - src/cli/tests/verify-repair.test.ts
+  - test/conformance/README.md
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0334.scripts-into-law.yaml
+    - .gitagent/runs/MSN-0334.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/law.ts
+    - packages/core/tests/law-structural.test.ts
+    - packages/missions/src/arch/cage/target-architecture.ts
+    - packages/missions/src/repair.ts
+    - scripts/check-changed-code.sh
+    - scripts/check-import-layers.mjs
+    - scripts/check-lib-cycles.mjs
+    - scripts/lib/asset-catalog-static.mjs
+    - src/cli/tests/arch-structural.test.ts
+    - src/cli/tests/asset-catalog-generator.test.ts
+    - src/cli/tests/check-import-layers.test.ts
+    - src/cli/tests/check-lib-cycles.test.ts
+    - src/cli/tests/fixtures/import-layer-violation.ts
+    - src/cli/tests/verify-repair.test.ts
+    - test/conformance/README.md
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: d515aaccc96b19217aa570a5ea27c2d081d98d8eba907ee0c9b316a2ee5530d1
