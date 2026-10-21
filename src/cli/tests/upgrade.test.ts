@@ -18,6 +18,7 @@ import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
 
 const ogRoot = getRepoRoot();
 const templatesRoot = path.join(ogRoot, "templates");
+const PACKAGE = "@jeger-ai/opengantry";
 
 async function seedUpgradeRepo(): Promise<string> {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-upgrade-"));
@@ -61,7 +62,7 @@ test("runUpgradePlan: already current includes npm guidance", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-upgrade-current-"));
   const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
   writeSubstrateVersionFile(dest, bundled, "test");
-  const result = runUpgradePlan({ repoRoot: dest, templatesRoot });
+  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE });
   assert.equal(result.status, "already_current");
   assert.match(result.message ?? "", /npm install @jeger-ai\/opengantry@latest/);
 });
@@ -69,13 +70,13 @@ test("runUpgradePlan: already current includes npm guidance", () => {
 test("runUpgradePlan: downgrade blocked", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-upgrade-down-"));
   writeSubstrateVersionFile(dest, "99.0.0", "test");
-  const result = runUpgradePlan({ repoRoot: dest, templatesRoot });
+  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE });
   assert.equal(result.status, "downgrade_blocked");
 });
 
 test("runUpgradePlan: stages files and writes mission YAML without UPGRADE.manifest.json", async () => {
   const dest = await seedUpgradeRepo();
-  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9001" });
+  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE, msn: "MSN-9001" });
   assert.equal(result.status, "planned");
   assert.ok(result.mission_rel?.includes("MSN-9001.upgrade-v"));
   assert.ok(fs.existsSync(path.join(dest, result.mission_rel!.split("/").join(path.sep))));
@@ -89,8 +90,8 @@ test("runUpgradePlan: stages files and writes mission YAML without UPGRADE.manif
 test("runUpgradeApply: blocked without Planner proof", async () => {
   const dest = await seedUpgradeRepo();
   gitInitCommit(dest, "init", PLANNER_EMAIL);
-  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9002" });
-  const result = await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel });
+  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE, msn: "MSN-9002" });
+  const result = await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot });
   assert.equal(result.status, "blocked");
 });
 
@@ -104,7 +105,7 @@ function commitUpgradeMission(dest: string, missionRel: string, msnId: string): 
 test("runUpgradeApply: succeeds with Planner proof and updates SUBSTRATE", async () => {
   const dest = await seedUpgradeRepo();
   gitInitCommit(dest, "init", PLANNER_EMAIL);
-  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9003" });
+  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE, msn: "MSN-9003" });
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9003");
   let result: Awaited<ReturnType<typeof runUpgradeApply>>;
   await withPlannerEnvAsync(async () => {
@@ -125,7 +126,7 @@ test("runUpgradeApply: legacy repo creates SUBSTRATE.version.json on apply", asy
   const dest = await seedUpgradeRepo();
   gitInitCommit(dest, "init", PLANNER_EMAIL);
   fs.unlinkSync(path.join(dest, ".gitagent/foreman/SUBSTRATE.version.json"));
-  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9004" });
+  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE, msn: "MSN-9004" });
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9004");
   await withPlannerEnvAsync(async () => {
     await runUpgradeApply({ repoRoot: dest, mission: plan.mission_rel, templatesRoot });
@@ -136,7 +137,7 @@ test("runUpgradeApply: legacy repo creates SUBSTRATE.version.json on apply", asy
 test("runUpgradeApply: hash mismatch fails closed", async () => {
   const dest = await seedUpgradeRepo();
   gitInitCommit(dest, "init", PLANNER_EMAIL);
-  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, msn: "MSN-9005" });
+  const plan = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: PACKAGE, msn: "MSN-9005" });
   fs.writeFileSync(path.join(dest, ".gitagent/.upgrade-tmp/.cursor/hooks.json"), '{"tampered":true}\n', "utf8");
   commitUpgradeMission(dest, plan.mission_rel!, "MSN-9005");
   await assert.rejects(
@@ -172,7 +173,7 @@ trace_rows: []
     "utf8",
   );
   await assert.rejects(
-    async () => runUpgradeApply({ repoRoot: dest, mission: missionRel }),
+    async () => runUpgradeApply({ repoRoot: dest, mission: missionRel, templatesRoot }),
     (e: unknown) => e instanceof Error && /GXT_MISSION_SCHEMA_INVALID/.test(e.message),
   );
 });

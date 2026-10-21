@@ -11,9 +11,9 @@ import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command
 import {
   isIntegrationIdeKey,
   loadIntegrationCompat,
-  resolveTemplateRootFromModule,
   type IntegrationCompatManifest,
 } from "#missions/integration-compat.js";
+import { resolveTemplateRootFromModule } from "../init/templates-root.js";
 import { resolveAssetsFromProfile } from "#missions/init/init-asset-catalog.js";
 import {
   composeArchitecturePointer,

@@ -6,7 +6,7 @@ import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
 } from "../file-merge-gxt.js";
-import { loadIntegrationCompat, resolveTemplateRootFromModule } from "../integration-compat.js";
+import { loadIntegrationCompat } from "../integration-compat.js";
 import { resolveAssetsFromProfile } from "../init/init-asset-catalog.js";
 import { planInitAssets } from "../init/init-plan.js";
 import {
@@ -38,6 +38,7 @@ function resolveUpgradeVersionGate(
   installed: ReturnType<typeof readInstalledSubstrateVersion>,
   bundled: string,
   legacyWarning: string | null,
+  packageName: string,
 ): UpgradePlanResult | null {
   if (compareSemver(bundled, installed.version) < 0) {
     return {
@@ -54,7 +55,7 @@ function resolveUpgradeVersionGate(
       from_version: installed.version,
       to_version: bundled,
       installed_source: installed.source,
-      message: alreadyCurrentMessage(installed.version, bundled),
+      message: alreadyCurrentMessage(installed.version, bundled, packageName),
       legacy_warning: legacyWarning,
     };
   }
@@ -64,13 +65,13 @@ function resolveUpgradeVersionGate(
 
 export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResult {
   const repoRoot = path.resolve(options.repoRoot);
-  const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
+  const templatesRoot = options.templatesRoot;
   const compat = loadIntegrationCompat(templatesRoot);
   const bundled = compat.opengantry_version;
   const installed = readInstalledSubstrateVersion(repoRoot);
   const legacyWarning = legacyVersionWarning(installed.source);
 
-  const versionGate = resolveUpgradeVersionGate(installed, bundled, legacyWarning);
+  const versionGate = resolveUpgradeVersionGate(installed, bundled, legacyWarning, options.packageName);
   if (versionGate) return versionGate;
 
   const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);

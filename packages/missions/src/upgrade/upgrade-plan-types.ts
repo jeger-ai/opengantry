@@ -41,7 +41,9 @@ export interface UpgradePlanResult {
 
 export interface RunUpgradePlanOptions {
   repoRoot: string;
-  templatesRoot?: string;
+  templatesRoot: string;
+  /** The npm package the operator installs to get a newer bundled substrate. */
+  packageName: string;
   msn?: string;
   dryRun?: boolean;
 }

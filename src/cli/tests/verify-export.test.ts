@@ -28,7 +28,7 @@ test("verify-export: SARIF uses rule_id and span columns", () => {
         rule_id: "import-layer",
       }),
     ],
-  });
+  }, "0.0.0-test");
   const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
   const results = run.results as Array<Record<string, unknown>>;
   assert.equal(results[0]?.ruleId, "import-layer");
@@ -51,7 +51,7 @@ test("verify-export: SARIF failure uses finding failed_gate as ruleId", () => {
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
     findings: [verifyFinding("gate", "re-run gate")],
-  });
+  }, "0.0.0-test");
   const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
   const results = run.results as Record<string, unknown>[];
   assert.equal(results[0]?.ruleId, "gate");
@@ -105,7 +105,7 @@ test("verify-export: interrogation phase SARIF uses GXT_INTERROGATION ruleId", (
         offending_file: ".gitagent/missions/MSN-0001.yaml",
       }),
     ],
-  });
+  }, "0.0.0-test");
   const run = (sarif.runs as Record<string, unknown>[])[0] as Record<string, unknown>;
   const results = run.results as Record<string, unknown>[];
   assert.equal(results[0]?.ruleId, "interrogation");
@@ -129,7 +129,7 @@ test("verify-export: interrogation phase JUnit names interrogation testcase", ()
 
 test("verify-export: json format round-trips payload", () => {
   const payload = { status: "passed" as const, phase: "full" as const, exit_code: 0 as const };
-  const doc = buildVerifyExportDocument(payload, "json");
+  const doc = buildVerifyExportDocument(payload, "json", "0.0.0-test");
   assert.deepEqual(JSON.parse(doc), payload);
 });
 
@@ -150,7 +150,7 @@ test("verify-export: SARIF file finding keeps a line region", () => {
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
     findings: [verifyFinding("contract", "fix import", { offending_file: "src/foo.ts", line: 4 })],
-  });
+  }, "0.0.0-test");
   const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
   const artifact = physical.artifactLocation as Record<string, string>;
   assert.equal(artifact.uri, "src/foo.ts");
@@ -171,12 +171,12 @@ test("verify-export: SARIF omits region when the caller says the uri is a direct
   const trailing = buildSarifDocument({
     ...base,
     findings: [verifyFinding("contract", "remove dir", { offending_file: "src/new-module/" })],
-  });
+  }, "0.0.0-test");
   const forced = buildSarifDocument(
     {
       ...base,
       findings: [verifyFinding("contract", "remove dir", { offending_file: "src/new-module" })],
-    },
+    }, "0.0.0-test",
     () => true,
   );
   for (const sarif of [trailing, forced]) {
@@ -197,7 +197,7 @@ test("verify-export: SARIF generic failure points at the mission file", () => {
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
     mission_file_path: ".gitagent/missions/m.yaml",
     findings: [verifyFinding("git_proof", "missing Planner stamp")],
-  });
+  }, "0.0.0-test");
   const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
   const artifact = physical.artifactLocation as Record<string, string>;
   assert.equal(artifact.uri, ".gitagent/missions/m.yaml");
@@ -216,7 +216,7 @@ test("verify-export: SARIF gateless failure falls back to the manifest", () => {
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
     findings: [],
-  });
+  }, "0.0.0-test");
   const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
   const artifact = physical.artifactLocation as Record<string, string>;
   assert.equal(artifact.uri, GENERIC_SARIF_FILE);

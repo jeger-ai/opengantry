@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { Command } from "commander";
 import { CLI_NAME } from "#core/constants.js";
-import { CLI_VERSION } from "#core/version.gen.js";
+import { CLI_VERSION } from "./version.gen.js";
 import { registerReporterHook } from "./program-reporter-hook.js";
 import { registerCoreCommands } from "./program-core.js";
 import { registerArchCommands } from "./program-arch.js";

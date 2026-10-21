@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fromPosix } from "#core/posix-path.js";
-import { NPM_PACKAGE_NAME } from "#core/version.gen.js";
 import { loadIntegrationCompat } from "./integration-compat.js";
 
 export const REL_SUBSTRATE_VERSION = ".gitagent/foreman/SUBSTRATE.version.json" as const;
@@ -98,11 +97,11 @@ export function writeSubstrateVersionFile(
   fs.writeFileSync(abs, serializeSubstrateVersionFile(version, installedBy), "utf8");
 }
 
-export function alreadyCurrentMessage(installed: string, bundled: string): string {
+export function alreadyCurrentMessage(installed: string, bundled: string, packageName: string): string {
   return [
     `Substrate is up to date (installed ${installed}, bundled ${bundled}).`,
     "To upgrade to a newer OpenGantry release, first update the package manager dependency",
-    `(e.g. npm install ${NPM_PACKAGE_NAME}@latest) and re-run: gantry upgrade`,
+    `(e.g. npm install ${packageName}@latest) and re-run: gantry upgrade`,
   ].join("\n");
 }
 

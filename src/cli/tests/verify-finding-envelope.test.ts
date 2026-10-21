@@ -104,7 +104,7 @@ describe("verify failure envelope", () => {
     });
     const findings = buildFindingsForFailure("", normalized, failure);
     const payload = toVerifyFailedPayload(normalized, failure, findings);
-    const sarif = buildSarifDocument(payload);
+    const sarif = buildSarifDocument(payload, "0.0.0-test");
     const results = (sarif.runs as Array<{ results: Array<{ properties: { resolution_hint: string } }> }>)[0]!
       .results;
     assert.ok(results[0]!.properties.resolution_hint.length > 0);

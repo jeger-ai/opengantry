@@ -13,7 +13,6 @@ import {
   mergePrettierignoreFromTemplate,
   type MergedFragment,
 } from "../file-merge-gxt.js";
-import { resolveTemplateRootFromModule } from "../integration-compat.js";
 import { resolveMissionPathRequired } from "../mission/resolution.js";
 import { assertMissionSchemaValid } from "../mission/validator.js";
 import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../substrate-write-guard.js";
@@ -121,12 +120,12 @@ async function promoteStagedWrites(
 interface RunUpgradeApplyOptions {
   repoRoot: string;
   mission?: string;
-  templatesRoot?: string;
+  templatesRoot: string;
 }
 
 export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<UpgradeApplyResult> {
   const repoRoot = path.resolve(options.repoRoot);
-  const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
+  const templatesRoot = options.templatesRoot;
   const missionAbs = resolveMissionPathRequired(repoRoot, { explicit: options.mission });
   const missionBody = fs.readFileSync(missionAbs, "utf8");
 

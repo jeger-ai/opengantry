@@ -43,7 +43,7 @@ test("toStableUpgradePlanPayloadV1: pins schema_version", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-stable-payload-"));
   const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
   writeSubstrateVersionFile(dest, bundled, "test");
-  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, dryRun: true });
+  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: "@jeger-ai/opengantry", dryRun: true });
   const payload = toStableUpgradePlanPayloadV1(result);
   assert.equal(payload.schema_version, STABLE_UPGRADE_PLAN_PAYLOAD_VERSION);
   assertStableUpgradePlanPayloadV1(payload);
@@ -51,7 +51,7 @@ test("toStableUpgradePlanPayloadV1: pins schema_version", () => {
 
 test("runUpgradePlan dry-run: stable payload includes file_changes when planned", async () => {
   const dest = await seedUpgradeRepoForPayloadTest();
-  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, dryRun: true });
+  const result = runUpgradePlan({ repoRoot: dest, templatesRoot, packageName: "@jeger-ai/opengantry", dryRun: true });
   const payload = toStableUpgradePlanPayloadV1(result);
   assertStableUpgradePlanPayloadV1(payload);
   if (payload.status === "planned") {

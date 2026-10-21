@@ -8,7 +8,7 @@ import { runLawFileFormDoctorChecks } from "./law-file-doctor.js";
 import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
 import { agentErrorAbsolutePath } from "#missions/error-payloads.js";
 import { gitConfigGet, gitRunOk } from "#git/git.js";
-import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
+import { resolveTemplateRootFromModule } from "../init/templates-root.js";
 import { resolvePlannerEmails } from "#missions/planner-identity.js";
 import { checkSkillManifestSync } from "#missions/skill-sync.js";
 import type { Manifest } from "#core/manifest.js";

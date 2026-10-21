@@ -16,7 +16,7 @@ const entry = join(repoRoot, "src", "cli", "cage-bin.ts");
 const bundle = join(here, "dist", "packages", "cage", "src", "opengantry-cage.js");
 const bin = join(here, "dist", "cli", "index.js");
 
-if (!existsSync(join(repoRoot, "packages", "core", "src", "version.gen.ts"))) {
+if (!existsSync(join(repoRoot, "src", "cli", "version.gen.ts"))) {
   console.error("opengantry-cage build: run `npm run gen:version` (or `npm run build`) at the repo root first");
   process.exit(1);
 }

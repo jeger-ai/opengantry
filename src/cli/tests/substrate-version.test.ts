@@ -46,7 +46,7 @@ test("readInstalledSubstrateVersion: legacy default 0.0.0", () => {
 });
 
 test("alreadyCurrentMessage: includes npm install guidance", () => {
-  const msg = alreadyCurrentMessage("0.8.1", "0.8.1");
+  const msg = alreadyCurrentMessage("0.8.1", "0.8.1", "@jeger-ai/opengantry");
   assert.match(msg, /npm install @jeger-ai\/opengantry@latest/);
   assert.match(msg, /gantry upgrade/);
 });

@@ -6,7 +6,7 @@ import {
 import type { AttestationHarnessMode } from "#plane/receipt-attribution.js";
 import { logWarn } from "../output/cli-io.js";
 import { CLI_NAME } from "#core/constants.js";
-import { CLI_VERSION } from "#core/version.gen.js";
+import { CLI_VERSION } from "../version.gen.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
 import { resolveReceiptSignatureTier } from "#core/config.js";
 import { resolvePlannerEmails } from "#missions/planner-identity.js";

@@ -1,0 +1,266 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0338]. Executor must not run until the [MSN-0338] legislation commit + pin.
+#
+# Legislated intent: review leftovers part 2, delivery facts out of the domain: the templates root resolved in
+# src/cli and required by the domain; version.gen.ts generated into src/cli, the domain takes the version and the
+# package name as parameters.
+#
+# Operator request (2026-10-21, "legislate the leftovers too"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0338.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0338
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The iii integration example's lockfile is refreshed;
+      its offline validation passes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept. The slim cage build checks for src/cli/version.gen.ts;
+      its bundle is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 4a837aaaed5d
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0338.delivery-facts.yaml,
+      .gitagent/runs/MSN-0338.json, .gitignore,
+      packages/missions/src/integration-compat.ts,
+      packages/missions/src/mission-verify/export.ts,
+      packages/missions/src/substrate-version.ts,
+      packages/missions/src/upgrade/upgrade-apply.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/missions/src/upgrade/upgrade-plan.ts,
+      packages/missions/src/upgrade/upgrade-plan-types.ts,
+      packages/opengantry-cage/build.mjs, scripts/assert-cli-version-parity.sh,
+      scripts/gen-version.mjs, src/cli/cage-bin.ts, src/cli/commands/init.ts,
+      src/cli/commands/mcp-serve.ts, src/cli/commands/onboarding.ts,
+      src/cli/commands/upgrade.ts, src/cli/doctor/doctor-core.ts,
+      src/cli/doctor/doctor-substrate.ts, src/cli/flows/attestation-receipt.ts,
+      src/cli/flows/verify-presenters.ts, src/cli/init/templates-root.ts,
+      src/cli/mcp/mcp-upgrade.ts, src/cli/program.ts,
+      src/cli/tests/doctor-substrate-drift.test.ts,
+      src/cli/tests/substrate-version.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts. Review leftovers part 2
+      (delivery facts): src/cli/init/templates-root.ts (new) and
+      src/cli/version.gen.ts (generated, ignored),
+      packages/missions/src/integration-compat.ts, substrate-version.ts,
+      mission-verify/export.ts, upgrade/upgrade-plan.ts, upgrade-apply.ts,
+      upgrade-plan-catalog.ts, upgrade-plan-types.ts, src/cli commands upgrade,
+      onboarding, init, mcp-serve, program.ts, cage-bin.ts, doctor-core,
+      doctor-substrate, flows/attestation-receipt and verify-presenters,
+      mcp/mcp-upgrade, five tests, scripts/gen-version.mjs,
+      scripts/assert-cli-version-parity.sh, packages/opengantry-cage/build.mjs,
+      .gitignore, CHANGELOG, executor log, ARCH_BASELINE.json.
+      .gitagent/foreman/, .gitagent/planner/RULES.md, .github/workflows/ and
+      TARGET_ARCHITECTURE.yaml are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp check is unchanged; its advisories
+      are collected and shown once.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output is unchanged; the conformance goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. The MCP write guard and the MCP upgrade error bodies are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0338.delivery-facts.yaml,
+      .gitagent/runs/MSN-0338.json, .gitignore,
+      packages/missions/src/integration-compat.ts,
+      packages/missions/src/mission-verify/export.ts,
+      packages/missions/src/substrate-version.ts,
+      packages/missions/src/upgrade/upgrade-apply.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/missions/src/upgrade/upgrade-plan.ts,
+      packages/missions/src/upgrade/upgrade-plan-types.ts,
+      packages/opengantry-cage/build.mjs, scripts/assert-cli-version-parity.sh,
+      scripts/gen-version.mjs, src/cli/cage-bin.ts, src/cli/commands/init.ts,
+      src/cli/commands/mcp-serve.ts, src/cli/commands/onboarding.ts,
+      src/cli/commands/upgrade.ts, src/cli/doctor/doctor-core.ts,
+      src/cli/doctor/doctor-substrate.ts, src/cli/flows/attestation-receipt.ts,
+      src/cli/flows/verify-presenters.ts, src/cli/init/templates-root.ts,
+      src/cli/mcp/mcp-upgrade.ts, src/cli/program.ts,
+      src/cli/tests/doctor-substrate-drift.test.ts,
+      src/cli/tests/substrate-version.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts,
+      src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts. Review leftovers part 2
+      (delivery facts): src/cli/init/templates-root.ts (new) and
+      src/cli/version.gen.ts (generated, ignored),
+      packages/missions/src/integration-compat.ts, substrate-version.ts,
+      mission-verify/export.ts, upgrade/upgrade-plan.ts, upgrade-apply.ts,
+      upgrade-plan-catalog.ts, upgrade-plan-types.ts, src/cli commands upgrade,
+      onboarding, init, mcp-serve, program.ts, cage-bin.ts, doctor-core,
+      doctor-substrate, flows/attestation-receipt and verify-presenters,
+      mcp/mcp-upgrade, five tests, scripts/gen-version.mjs,
+      scripts/assert-cli-version-parity.sh, packages/opengantry-cage/build.mjs,
+      .gitignore, CHANGELOG, executor log, ARCH_BASELINE.json.
+      .gitagent/foreman/, .gitagent/planner/RULES.md, .github/workflows/ and
+      TARGET_ARCHITECTURE.yaml are forbidden. Operator request (2026-10-21):
+      \"legislate the leftovers too\"; the review's finding 8 (the domain knows
+      where it is installed; the version generated into the pure package).
+      Decisions: templatesRoot is required rather than defaulted because a
+      hidden default is the defect; the version and package name are parameters
+      because plane already takes its version that way and the generated file
+      belongs where import.meta.url is a delivery fact; doctor-core keeps its
+      optional templatesRoot because it is src/cli. Not taken: the
+      forbidden-scan runtime baseline (decided in the ADR-0053 amendment) and a
+      missions index.ts (a barrel of the remaining exports would be the wildcard
+      surface the review objected to). The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0338.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept. Unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0041
+interrogation_sha256: cd5ab7d0b2d47e4d2e41211fdbdadd14356553882c4b81dc65d06da0e5686023
+declared_paths:
+  - .gitagent/missions/MSN-0338.delivery-facts.yaml
+  - .gitagent/runs/MSN-0338.json
+  - .gitignore
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - packages/missions/src/integration-compat.ts
+  - packages/missions/src/mission-verify/export.ts
+  - packages/missions/src/substrate-version.ts
+  - packages/missions/src/upgrade/upgrade-apply.ts
+  - packages/missions/src/upgrade/upgrade-plan-catalog.ts
+  - packages/missions/src/upgrade/upgrade-plan-types.ts
+  - packages/missions/src/upgrade/upgrade-plan.ts
+  - packages/opengantry-cage/build.mjs
+  - scripts/assert-cli-version-parity.sh
+  - scripts/gen-version.mjs
+  - src/cli/cage-bin.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/mcp-serve.ts
+  - src/cli/commands/onboarding.ts
+  - src/cli/commands/upgrade.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/doctor/doctor-substrate.ts
+  - src/cli/flows/attestation-receipt.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/init/templates-root.ts
+  - src/cli/mcp/mcp-upgrade.ts
+  - src/cli/program.ts
+  - src/cli/tests/doctor-substrate-drift.test.ts
+  - src/cli/tests/substrate-version.test.ts
+  - src/cli/tests/upgrade-plan-payload.test.ts
+  - src/cli/tests/upgrade.test.ts
+  - src/cli/tests/verify-export.test.ts
+  - src/cli/tests/verify-finding-envelope.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0338.delivery-facts.yaml
+    - .gitagent/runs/MSN-0338.json
+    - .gitignore
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - packages/missions/src/integration-compat.ts
+    - packages/missions/src/mission-verify/export.ts
+    - packages/missions/src/substrate-version.ts
+    - packages/missions/src/upgrade/upgrade-apply.ts
+    - packages/missions/src/upgrade/upgrade-plan-catalog.ts
+    - packages/missions/src/upgrade/upgrade-plan-types.ts
+    - packages/missions/src/upgrade/upgrade-plan.ts
+    - packages/opengantry-cage/build.mjs
+    - scripts/assert-cli-version-parity.sh
+    - scripts/gen-version.mjs
+    - src/cli/cage-bin.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/mcp-serve.ts
+    - src/cli/commands/onboarding.ts
+    - src/cli/commands/upgrade.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/doctor/doctor-substrate.ts
+    - src/cli/flows/attestation-receipt.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/init/templates-root.ts
+    - src/cli/mcp/mcp-upgrade.ts
+    - src/cli/program.ts
+    - src/cli/tests/doctor-substrate-drift.test.ts
+    - src/cli/tests/substrate-version.test.ts
+    - src/cli/tests/upgrade-plan-payload.test.ts
+    - src/cli/tests/upgrade.test.ts
+    - src/cli/tests/verify-export.test.ts
+    - src/cli/tests/verify-finding-envelope.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: c3491fc5ba794d3a91a442d050b2b31c2ea88b494faa39b25317cd8a73fe7184
