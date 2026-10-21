@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 import { formatRepoRelative } from "#core/posix-path.js";
-import { logInfo } from "../output/cli-io.js";
+import { currentReporter, type Reporter } from "../output/reporter.js";
 import { GantryUserError } from "#core/user-error.js";
 import { resolveMissionFilePath, resolvePinnedMission } from "#missions/missions/resolution.js";
 
@@ -65,8 +65,9 @@ export function resolveMissionArg(repoRoot: string, explicit?: string): Resolved
 export function emitPinnedMissionBanner(
   resolved: ResolvedMissionArg,
   opts?: { json?: boolean },
+  reporter: Reporter = currentReporter(),
 ): void {
   if (opts?.json) return;
   if (resolved.source !== "pin") return;
-  logInfo(`[gantry] Using pinned mission: ${resolved.missionRel}`);
+  reporter.info(`[gantry] Using pinned mission: ${resolved.missionRel}`);
 }

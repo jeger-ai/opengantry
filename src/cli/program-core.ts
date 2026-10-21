@@ -214,8 +214,8 @@ function registerUpgradeCommand(program: Command): void {
     .description("Preview upgrade file changes without writing staging dir or mission YAML")
     .option("--json", "Emit stable structured JSON (schema_version 1)")
     .option("--msn <id>", "Mission id for preview labels (default: next MSN in 9000-9099 band)")
-    .action((options: UpgradeOptions) => {
-      runUpgrade({ ...options, dryRun: true });
+    .action(async (options: UpgradeOptions) => {
+      await runUpgrade({ ...options, dryRun: true });
     });
 
   upgradeCmd
@@ -223,8 +223,8 @@ function registerUpgradeCommand(program: Command): void {
     .description("Apply a Teacher-signed upgrade mission after hash verification")
     .option("--json", "Emit structured JSON")
     .option("--mission <path>", "Signed upgrade mission YAML (required unless pinned)")
-    .action((options: UpgradeOptions) => {
-      runUpgrade({ ...options, apply: true });
+    .action(async (options: UpgradeOptions) => {
+      await runUpgrade({ ...options, apply: true });
     });
 }
 

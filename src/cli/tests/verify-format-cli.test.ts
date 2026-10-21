@@ -16,18 +16,8 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { logInfo } from "../output/cli-io.js";
-import { Reporter, resetReporter, setReporter } from "../output/reporter.js";
-import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
-
-/** Run fn as the Commander hook runs an action: with reporter current, and the plain human reporter back after. */
-async function asCommand<T>(reporter: Reporter, fn: () => T | Promise<T>): Promise<T> {
-  setReporter(reporter);
-  try {
-    return await fn();
-  } finally {
-    resetReporter();
-  }
-}
+import { Reporter, resetReporter } from "../output/reporter.js";
+import { PLANNER_EMAIL, asCommand, captureConsoleAsync, withPlannerEnvAsync } from "./test-shared.js";
 
 async function runVerifyFormatInRepo(
   dest: string,

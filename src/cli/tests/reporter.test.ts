@@ -1,19 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Reporter, currentReporter, reporterFromArgv, resetReporter, setReporter } from "../output/reporter.js";
+import { Reporter, currentReporter, reporterFromArgv, resetReporter } from "../output/reporter.js";
 import { logError, logInfo, logWarn, writeStdout } from "../output/cli-io.js";
 import { resolveAudience } from "#missions/audience-output.js";
-import { captureConsoleAsync } from "./test-shared.js";
-
-/** Run fn as the Commander hook runs an action: with reporter current, and the plain human reporter back after. */
-async function asCommand<T>(reporter: Reporter, fn: () => T | Promise<T>): Promise<T> {
-  setReporter(reporter);
-  try {
-    return await fn();
-  } finally {
-    resetReporter();
-  }
-}
+import { asCommand, captureConsoleAsync } from "./test-shared.js";
 
 test("resolveAudience: CLI overrides env; invalid CLI value is reported", () => {
   assert.equal(resolveAudience("executor", "verifier").audience, "executor");
@@ -74,24 +64,14 @@ test("one reporter per command: set for the action, the plain human reporter bac
   assert.equal(currentReporter().structured, false);
 });
 
-test("humanReport: report lines print in human mode and are dropped in a structured mode", async () => {
-  const human = await captureConsoleAsync(async () => {
-    const r = new Reporter().humanReport();
-    r.info("line");
-    r.error("bad");
-    r.fixHint("do it");
-  });
-  assert.match(human.output.stdout, /line/);
-  assert.match(human.output.stdout, /Fix: do it/);
-  assert.match(human.output.stderr, /gantry: bad/);
-  const structured = await captureConsoleAsync(async () => {
-    const r = new Reporter("json").humanReport();
-    r.info("line");
-    r.error("bad");
-    r.fixHint("do it");
-  });
-  assert.equal(structured.output.stdout, "");
-  assert.equal(structured.output.stderr, "");
+test("nextSteps: the audience's section title when it has one, the fallback otherwise, steps indented", async () => {
+  const plain = await captureConsoleAsync(async () => new Reporter().nextSteps("next actions", ["a", "b"]));
+  assert.equal(plain.output.stdout.trim(), "next actions:\n  a\n  b");
+  const planner = await captureConsoleAsync(async () =>
+    new Reporter("human", "planner").nextSteps("next actions", [], [{ audience: "planner", step: "stamp it" }, { audience: "executor", step: "run it" }]),
+  );
+  assert.equal(planner.output.stdout.trim(), "Planner next steps:\n  Planner: stamp it");
+  assert.doesNotMatch(planner.output.stdout, /run it/);
 });
 
 test("reporterFromArgv: mode from --format or --json, audience from the flag or the env, invalid role reported", () => {

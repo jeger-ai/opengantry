@@ -2,6 +2,7 @@ import { CLI_NAME, REL_ARCHITECTURE_CREDENTIALS_DIR } from "#core/constants.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../output/cli-io.js";
 import {
+  emitCliJson,
   reportCommandError,
   resolveRepoRootAtBoundary,
   runAtCommandBoundary,
@@ -170,7 +171,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
       ratchet = ratchetArchBaseline(loadTargetArchitecture(repoRoot), repoRoot, files, options.allowRaise === true);
     }
     if (options.json) {
-      writeStdout(JSON.stringify({ schema_version: 1, ok: result.ok, violations: result.violations, ...(ratchet ? { ratchet: { written: ratchet.written, raised: ratchet.raised, layers: ratchet.layers } } : {}) }, null, 2));
+      emitCliJson({ schema_version: 1, ok: result.ok, violations: result.violations, ...(ratchet ? { ratchet: { written: ratchet.written, raised: ratchet.raised, layers: ratchet.layers } } : {}) });
     } else {
       logInfo(formatArchCheckHuman(result, label));
       if (ratchet) logInfo(formatRatchetHuman(ratchet));

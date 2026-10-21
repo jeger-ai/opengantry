@@ -1,6 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, setExitCode } from "../output/cli-io.js";
-import { resolveRepoRootAtBoundary } from "../output/command-boundary.js";
+import { emitCliJson, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
 import { CLI_NAME } from "#core/constants.js";
 import {
   REL_PLANNER_ALLOWLIST_LOCAL,
@@ -24,7 +24,7 @@ export function runPlannerShow(options: PlannerShowOptions = {}): void {
 
   const resolved = resolvePlannerEmails(repoRoot);
   if (options.json) {
-    console.log(JSON.stringify({ ...resolved, repo_root: repoRoot }, null, 2));
+    emitCliJson({ ...resolved, repo_root: repoRoot });
     return;
   }
 

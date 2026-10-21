@@ -1,5 +1,5 @@
 import { setExitCode } from "../output/cli-io.js";
-import { Reporter } from "../output/reporter.js";
+import { Reporter, currentReporter } from "../output/reporter.js";
 import { initFailurePayload } from "#missions/verify/verify-payload.js";
 import { emitVerifyDocument } from "../flows/verify-presenters.js";
 import type { VerifyOptions } from "#missions/verify/verify-options.js";
@@ -20,7 +20,7 @@ function structuredVerifyOutput(options: VerifyOptions): boolean {
 }
 
 /** Boundary reporter: structured document on stdout, human error otherwise. */
-function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
+function reportVerifyBoundaryError(e: unknown, options: VerifyOptions, reporter: Reporter): void {
   if (structuredVerifyOutput(options)) {
     const payload = initFailurePayload(e);
     let root: string | undefined;
@@ -29,7 +29,7 @@ function reportVerifyBoundaryError(e: unknown, options: VerifyOptions): void {
     } catch {
       root = undefined;
     }
-    emitVerifyDocument(payload, options, root === undefined ? {} : { root });
+    emitVerifyDocument(payload, options, reporter, root === undefined ? {} : { root });
     setExitCode(payload.exit_code);
     return;
   }
@@ -66,18 +66,18 @@ function assertVerifyOptionsCompatible(options: VerifyOptions): void {
   }
 }
 
-async function runVerifyChangedMissions(options: VerifyOptions): Promise<void> {
+async function runVerifyChangedMissions(options: VerifyOptions, reporter: Reporter): Promise<void> {
   const { root } = loadWorkspace();
   const baseRef = options.baseRef?.trim() || resolveDefaultChangedBaseRef(root);
   const missions = discoverChangedMissionFiles(root, baseRef);
   if (missions.length === 0) {
-    Reporter.forVerify(options).info(`gantry verify: no changed mission files vs ${baseRef}`);
+    reporter.info(`gantry verify: no changed mission files vs ${baseRef}`);
     return;
   }
   let worstExit = 0;
   for (const mission of missions) {
-    Reporter.forVerify(options).info(`gantry verify: ${mission} (changed vs ${baseRef})`);
-    const result = await runVerifyCore({ ...options, mission, changedMissions: false });
+    reporter.info(`gantry verify: ${mission} (changed vs ${baseRef})`);
+    const result = await runVerifyCore({ ...options, mission, changedMissions: false }, reporter);
     if (!result.ok && result.exitCode > worstExit) {
       worstExit = result.exitCode;
     }
@@ -107,32 +107,36 @@ function recordVerifyAttempt(root: string, options: VerifyOptions, ok: boolean, 
   }
 }
 
-/** The verify command. Its output mode comes from its options (Reporter.forVerify), as the Commander hook builds it. */
+/**
+ * The verify command. Its one reporter comes from its options (--json, --format, --audience); an in-process caller
+ * that sets no audience inherits the command's.
+ */
 export async function runVerify(options: VerifyOptions): Promise<void> {
+  const reporter = Reporter.forVerify({ ...options, audience: options.audience ?? currentReporter().audience });
   try {
     assertVerifyOptionsCompatible(options);
   } catch (e) {
-    reportVerifyBoundaryError(e, options);
+    reportVerifyBoundaryError(e, options, reporter);
     return;
   }
 
   if (options.changedMissions) {
     try {
-      await runVerifyChangedMissions(options);
+      await runVerifyChangedMissions(options, reporter);
     } catch (e) {
-      reportVerifyBoundaryError(e, options);
+      reportVerifyBoundaryError(e, options, reporter);
     }
     return;
   }
 
   try {
-    const result = await runVerifyCore(options);
+    const result = await runVerifyCore(options, reporter);
     const { root } = loadWorkspace();
     recordVerifyAttempt(root, options, result.ok, result.exitCode);
     if (!result.ok) {
       setExitCode(result.exitCode);
     }
   } catch (e) {
-    reportVerifyBoundaryError(e, options);
+    reportVerifyBoundaryError(e, options, reporter);
   }
 }

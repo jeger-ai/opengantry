@@ -1,10 +1,4 @@
-import {
-  audienceSectionTitle,
-  filterTaggedStepsForAudience,
-  formatAudienceNextStep,
-  INIT_TAGGED_NEXT_STEPS,
-  type AudienceNextStep,
-} from "#missions/audience-output.js";
+import { INIT_TAGGED_NEXT_STEPS, type AudienceNextStep } from "#missions/audience-output.js";
 import { currentReporter } from "../output/reporter.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
@@ -316,11 +310,5 @@ function logInitNextSteps(profile?: InitProfile): void {
     const hookIdx = tagged.findIndex((t) => t.step.startsWith("git config core.hooksPath"));
     if (hookIdx >= 0) tagged.splice(hookIdx, 1);
   }
-  const audience = currentReporter().audience;
-  const filtered = filterTaggedStepsForAudience(audience, tagged).map((step) =>
-    formatAudienceNextStep(step, audience),
-  );
-  const section = audienceSectionTitle(audience) ?? "next steps";
-  logInfo(`${section}:`);
-  for (const step of filtered) logInfo(`  ${step}`);
+  currentReporter().nextSteps("next steps", [], tagged);
 }

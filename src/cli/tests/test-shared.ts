@@ -1,3 +1,4 @@
+import { resetReporter, setReporter, type Reporter } from "../output/reporter.js";
 import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
 
 export const PLANNER_EMAIL = "planner-mini-repo@opengantry.test";
@@ -88,5 +89,15 @@ export async function withPlannerEnvAsync<T>(fn: () => T | Promise<T>): Promise<
   } finally {
     if (prev === undefined) delete process.env[ENV_PLANNER_EMAILS];
     else process.env[ENV_PLANNER_EMAILS] = prev;
+  }
+}
+
+/** Run fn as the Commander hook runs an action: with reporter current, and the plain human reporter back after. */
+export async function asCommand<T>(reporter: Reporter, fn: () => T | Promise<T>): Promise<T> {
+  setReporter(reporter);
+  try {
+    return await fn();
+  } finally {
+    resetReporter();
   }
 }
