@@ -16,15 +16,21 @@ function repo(): string {
   w("src/core/law.ts", 'export function isPathUnderRoot(a: string): boolean {\n  return a.length > 0;\n}\nexport const CODE = "GXT_KNOWN";\n');
   w("src/lib/util.ts", 'import "lodash";\nexport const x = 1;\n');
   w("src/lib/dup.ts", "same\n");
+  w("src/lib/tests/t.ts", 'const t = "GXT_UNREGISTERED";\nfunction isPathUnderRoot() {}\nexport const u = 1;\nexport const v = 2;\n');
+  w("src/cyc/a.ts", 'import { b } from "./b.js";\nexport const a = b;\n');
+  w("src/cyc/b.ts", 'import type { a } from "./a.js";\nexport { c } from "./c.js";\nexport const b: typeof a = 1;\n');
+  w("src/cyc/c.ts", 'import { a } from "./a.js";\nexport const c = a;\n');
   w("templates/src/lib/dup.ts", "same\n");
-  w("package.json", JSON.stringify({ name: "fixture", dependencies: { lodash: "1" }, devDependencies: { yaml: "1" } }));
+  w("package.json", JSON.stringify({ name: "fixture", dependencies: { lodash: "1" }, devDependencies: { yaml: "1", zod: "^3" } }));
   w(".gitagent/registry/error-codes.yaml", "schema: opengantry.registry.v1\nkind: error-codes\nentries:\n  - name: GXT_KNOWN\n");
-  w(".gitagent/registry/dependencies.yaml", "schema: opengantry.registry.v1\nkind: dependencies\nentries:\n  - name: lodash\n");
+  w(".gitagent/registry/dependencies.yaml", "schema: opengantry.registry.v1\nkind: dependencies\nentries:\n  - name: lodash\n    scope: runtime\n    range: \"1\"\n  - name: zod\n    scope: dev\n    range: ^4\n");
   w(
     "TARGET_ARCHITECTURE.yaml",
     `schema_version: "0.4.0"
 scan_roots:
   - src/**
+exclude:
+  - "**/tests/**"
 file_ceiling_lines: 3
 layers:
   - id: core
@@ -52,27 +58,35 @@ rules:
   - id: DUP
     kind: duplicate
     between: [src/, templates/src/]
+  - id: CYCLES
+    kind: cycles
 `,
   );
   return root;
 }
 
-test("schema 0.4.0 parses the five structural kinds; a whole-tree check reports owner, registry, dependency, duplicate and ceiling findings", () => {
+test("schema 0.4.0 parses the six structural kinds; a whole-tree check reports owner, registry, dependency, duplicate, cycle and ceiling findings; excluded files are neither judged nor counted", () => {
   const root = repo();
   try {
     const spec = loadTargetArchitecture(root);
-    assert.deepEqual(spec.rules.map((r) => r.kind), ["budget", "budget", "owner", "registry", "dependency", "duplicate"]);
+    assert.deepEqual(spec.rules.map((r) => r.kind), ["budget", "budget", "owner", "registry", "dependency", "duplicate", "cycles"]);
+    assert.deepEqual(spec.exclude, ["**/tests/**"]);
     fs.writeFileSync(path.join(root, "src/lib/copy.ts"), 'function isPathUnderRoot(b: string) {}\nconst c = "GXT_NEW";\n');
     const files = walkPerimeterFiles(root, spec);
+    assert.equal(files.some((f) => f.includes("/tests/")), false);
     const result = runArchCheck(root, files, { wholeTree: true });
     const rows = result.violations.map((v) => `${v.rule_id} ${v.file} ${v.module_specifier}`).sort();
     assert.deepEqual(rows, [
       "B-CORE src/core/law.ts file lines 4 > ceiling 3",
+      "CYCLES src/cyc/a.ts runtime import cycle among src/cyc/a.ts, src/cyc/b.ts, src/cyc/c.ts",
       "DEPS package.json dev dependency yaml is not in .gitagent/registry/dependencies.yaml",
+      "DEPS package.json dev dependency zod range ^3 is registered as ^4 in .gitagent/registry/dependencies.yaml",
       "DUP src/lib/dup.ts byte-identical to templates/src/lib/dup.ts",
       "OWN-ROOT src/lib/copy.ts function isPathUnderRoot( (owned by src/core/law.ts)",
       "REG-CODES src/lib/copy.ts GXT_NEW is not in .gitagent/registry/error-codes.yaml",
     ]);
+    // An excluded file named explicitly is not judged either.
+    assert.deepEqual(runArchCheck(root, [path.join(root, "src/lib/tests/t.ts")], { wholeTree: false }).violations, []);
     // A partial file list judges only per-file rules.
     const partial = runArchCheck(root, [path.join(root, "src/lib/util.ts")], { wholeTree: false });
     assert.deepEqual(partial.violations, []);

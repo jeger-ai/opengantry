@@ -46,4 +46,4 @@ Re-recording changes the contract. Do it only inside a mission whose intent name
 
 Add an entry to `cases.yaml` (id, fixture, args, optional env, normalize, record_tree), run with `CONFORMANCE_RECORD=1` and `CONFORMANCE_ONLY=<id>`, read the new golden file, commit both.
 
-[`spawning-tests.yaml`](spawning-tests.yaml) lists the unit tests under `src/cli/tests` that spawn a process, classified as `cli` (drive `dist/cli/index.js`, CLI contract), `script` (drive a file under `scripts/`, which ADR-0052 A8 removes) or `none` (spawn git only).
+[`spawning-tests.yaml`](spawning-tests.yaml) lists the unit tests under `src/cli/tests` that spawn a process, classified as `cli` (drive `dist/cli/index.js`, CLI contract), `script` (drive a repo-only file under `scripts/`) or `none` (spawn git only).

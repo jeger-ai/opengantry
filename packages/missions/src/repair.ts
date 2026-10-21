@@ -16,7 +16,7 @@ export function ensureExecutorLogExists(executorLogPath: string): void {
   }
 }
 
-/** Structured import-layer gate report (check-import-layers.mjs --json). */
+/** Structured import-layer gate report (`gantry arch check --json`). */
 export interface ImportLayerViolation {
   file: string;
   rule_id: string;

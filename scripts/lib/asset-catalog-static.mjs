@@ -33,8 +33,6 @@ export const STATIC_ASSETS = [
 /** Repo-only scripts — never ship via init catalog (OpenGantry specimen dev gates). */
 export const REPO_ONLY_SCRIPTS = [
   "check-changed-code.sh",
-  "check-import-layers.mjs",
-  "check-lib-cycles.mjs",
   "dev-validate-core.sh",
   "dev-validate.sh",
   "npm-pack-check.sh",

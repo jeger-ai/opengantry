@@ -10,6 +10,9 @@ scan_roots:
   - packages/plane/**
   - packages/verify/**
   - packages/missions/**
+# Files under the scan roots that no rule judges and no budget counts (ADR-0052 B4: tests are not counted).
+exclude:
+  - "**/tests/**"
 languages:
   - typescript
 layers:
@@ -174,91 +177,73 @@ rules:
   # --- Structural law (ADR-0052 B2 to B7; schema 0.4.0). gantry arch check without file arguments judges the whole tree.
   # B4: each layer's files, lines and export statements may not exceed its row in ARCH_BASELINE.json. Lowering is free;
   # `gantry arch check --ratchet` records it in a Planner or release mission. Growth needs `--ratchet --allow-raise`
-  # in a legislated mission. Tests are not counted.
+  # in a legislated mission. Tests are not counted (`exclude` above).
   - id: BUDGET-CORE
     kind: budget
     layer: core
-    exclude: ["**/tests/**"]
   - id: BUDGET-GIT
     kind: budget
     layer: git
-    exclude: ["**/tests/**"]
   - id: BUDGET-CAGE
     kind: budget
     layer: cage
-    exclude: ["**/tests/**"]
   - id: BUDGET-PLANE
     kind: budget
     layer: plane
-    exclude: ["**/tests/**"]
   - id: BUDGET-VERIFY
     kind: budget
     layer: verify
-    exclude: ["**/tests/**"]
   - id: BUDGET-MISSIONS
     kind: budget
     layer: missions
-    exclude: ["**/tests/**"]
   - id: BUDGET-COMMAND
     kind: budget
     layer: command
-    exclude: ["**/tests/**"]
   - id: BUDGET-LIB
     kind: budget
     layer: lib
-    exclude: ["**/tests/**"]
   - id: BUDGET-DELIVERY
     kind: budget
     layer: delivery
-    exclude: ["**/tests/**"]
-  # B2 owner: one concept, one home. The glob-matcher rule lists every matcher that exists today; a fifth is refused.
+  # B2 owner: one concept, one home. A rule without applies_to judges every file under the scan roots that exclude keeps.
   - id: OWNER-USER-ERROR
     kind: owner
     pattern: "class GantryUserError\\b"
     owners: [packages/core/src/user-error.ts]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-PATH-UNDER-ROOT
     kind: owner
     pattern: "function isPathUnderRoot\\("
     owners: [packages/core/src/law.ts]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-CANONICAL-JSON
     kind: owner
     pattern: "function canonicalJson\\("
     owners: [packages/core/src/canonical-json.ts]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-IMPORT-SCANNER
     kind: owner
     pattern: "function extractImportSites\\("
     owners: [packages/core/src/import-scanner.ts]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-SPECIFIER
     kind: owner
     pattern: "function classifySpecifier\\("
     owners: [packages/core/src/specifier.ts]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-MANIFEST-SHAPE
     kind: owner
     pattern: "function validateManifestShape\\("
     owners: [packages/core/src/manifest.ts]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: OWNER-GLOB-MATCHERS
     kind: owner
     pattern: "function (pathMatchesGlob\\w*|\\w*[Gg]lobToRegExp|scopeRegExp|verifyPathMatcher|matchGlob|\\w*[Cc]oversPath)\\("
     owners:
       - packages/core/src/path-glob.ts
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   # B3 registry: a name the code uses must be registered; adding one is a Planner edit under .gitagent/registry/.
   - id: REGISTRY-ERROR-CODES
     kind: registry
     patterns: ['"(GXT_[A-Z0-9_]*[A-Z0-9])"']
     registries: [.gitagent/registry/error-codes.yaml]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: REGISTRY-ENV
     kind: registry
     patterns: ['"(GANTRY_[A-Z0-9_]*[A-Z0-9])"', 'process\\.env\\.(GANTRY_[A-Z0-9_]+)']
     registries: [.gitagent/registry/env.yaml]
-    applies_to: ["src/cli/output/**", "src/cli/mcp/**", "src/cli/doctor/**", "src/cli/report/**", "src/cli/init/**", "src/cli/flows/**", "src/cli/commands/**", "src/cli/program*.ts", "src/cli/index.ts", "src/cli/cage-bin.ts", "src/cli/kernel.ts", "packages/*/src/**"]
   - id: REGISTRY-COMMANDS
     kind: registry
     patterns: ['\\.command\\("([a-z][a-z-]*)"']
@@ -274,6 +259,9 @@ rules:
     kind: dependency
     registry: .gitagent/registry/dependencies.yaml
     manifest: package.json
+  # B2 cycles: no runtime import cycle among the counted files (static imports and re-exports; `import type` is no edge).
+  - id: CYCLES
+    kind: cycles
   # B2 duplicate: scripts/ and templates/scripts/ are kept byte-identical by assert-dogfood-sync.sh; ADR-0052 A8 shrinks
   # the list as scripts move into the CLI (step 5b removed six); the pairs that exist today are allowed, a new one is not.
   - id: DUPLICATE-SCRIPTS-TEMPLATES

@@ -278,12 +278,23 @@ export interface RegistryRule {
   applies_to?: string[];
 }
 
+export interface RegisteredDependency {
+  name: string;
+  scope?: "runtime" | "dev";
+  /** The version range the registry records; the manifest must declare the same string. */
+  range?: string;
+}
+
 export interface DependencyRule {
   id: string;
   registry: string;
   manifest: string;
-  /** Registered dependency names. */
-  allowed: string[];
+  registered: RegisteredDependency[];
+}
+
+/** No runtime import cycle among the counted files (B2 `cycles`). */
+export interface CycleRule {
+  id: string;
 }
 
 export interface DuplicateRule {
@@ -302,10 +313,11 @@ export interface StructuralLaw {
   registryRules: RegistryRule[];
   dependencyRules: DependencyRule[];
   duplicateRules: DuplicateRule[];
+  cycleRules: CycleRule[];
 }
 
 export function structuralLaw(partial: Partial<StructuralLaw>): StructuralLaw {
-  return { fileCeilingLines: null, budgetRules: [], ownerRules: [], registryRules: [], dependencyRules: [], duplicateRules: [], ...partial };
+  return { fileCeilingLines: null, budgetRules: [], ownerRules: [], registryRules: [], dependencyRules: [], duplicateRules: [], cycleRules: [], ...partial };
 }
 
 export interface CountedFile {
@@ -422,14 +434,70 @@ export function evaluateRegistry(structural: StructuralLaw, file: string, body: 
 export interface DeclaredDependency {
   name: string;
   scope: "runtime" | "dev";
+  range: string;
 }
 
-/** A dependency of the manifest must be registered (B2 `dependency`). */
+/** A dependency of the manifest must be registered, in the registered scope and range (B2 `dependency`). */
 export function evaluateDependencies(structural: StructuralLaw, deps: readonly DeclaredDependency[]): LayerFinding[] {
   const out: LayerFinding[] = [];
   for (const rule of structural.dependencyRules) {
-    const allowed = new Set(rule.allowed);
-    for (const d of deps) if (!allowed.has(d.name)) out.push(structuralFinding(rule.manifest, rule.id, `${d.scope} dependency ${d.name} is not in ${rule.registry}`));
+    const registered = new Map(rule.registered.map((r) => [r.name, r]));
+    for (const d of deps) {
+      const entry = registered.get(d.name);
+      const head = `${d.scope} dependency ${d.name}`;
+      if (!entry) out.push(structuralFinding(rule.manifest, rule.id, `${head} is not in ${rule.registry}`));
+      else if (entry.scope !== undefined && entry.scope !== d.scope) out.push(structuralFinding(rule.manifest, rule.id, `${head} is registered as ${entry.scope} in ${rule.registry}`));
+      else if (entry.range !== undefined && entry.range !== d.range) out.push(structuralFinding(rule.manifest, rule.id, `${head} range ${d.range} is registered as ${entry.range} in ${rule.registry}`));
+    }
+  }
+  return out;
+}
+
+export interface ImportEdge {
+  from: string;
+  to: string;
+}
+
+/** One finding per strongly connected set of files (Tarjan), named by its sorted members (B2 `cycles`). */
+export function evaluateCycles(structural: StructuralLaw, edges: readonly ImportEdge[]): LayerFinding[] {
+  const out: LayerFinding[] = [];
+  if (structural.cycleRules.length === 0) return out;
+  const next = new Map<string, string[]>();
+  for (const e of edges) {
+    if (!next.has(e.from)) next.set(e.from, []);
+    if (!next.has(e.to)) next.set(e.to, []);
+    next.get(e.from)!.push(e.to);
+  }
+  const index = new Map<string, number>();
+  const low = new Map<string, number>();
+  const stack: string[] = [];
+  const onStack = new Set<string>();
+  const cycles: string[][] = [];
+  const visit = (v: string): void => {
+    index.set(v, index.size);
+    low.set(v, index.get(v)!);
+    stack.push(v);
+    onStack.add(v);
+    for (const w of next.get(v) ?? []) {
+      if (!index.has(w)) {
+        visit(w);
+        low.set(v, Math.min(low.get(v)!, low.get(w)!));
+      } else if (onStack.has(w)) low.set(v, Math.min(low.get(v)!, index.get(w)!));
+    }
+    if (low.get(v) !== index.get(v)) return;
+    const members: string[] = [];
+    let w: string;
+    do {
+      w = stack.pop()!;
+      onStack.delete(w);
+      members.push(w);
+    } while (w !== v);
+    if (members.length > 1 || (next.get(v) ?? []).includes(v)) cycles.push(members.sort());
+  };
+  for (const v of [...next.keys()].sort()) if (!index.has(v)) visit(v);
+  cycles.sort((a, b) => (a[0]! < b[0]! ? -1 : 1));
+  for (const rule of structural.cycleRules) {
+    for (const members of cycles) out.push(structuralFinding(members[0]!, rule.id, `runtime import cycle among ${members.join(", ")}`));
   }
   return out;
 }
