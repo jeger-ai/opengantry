@@ -20,6 +20,7 @@ No setup and no config. The cage protects CI configs, `.env` files, git hooks an
 - [The cage](cage/index.md): [check commits](cage/check.md), [watch files](cage/watch.md), [cage scripted runs](cage/session.md)
 - [Protected paths](cage/protected-paths.md) and [project rules](cage/cage-yaml.md)
 - [Session report and exit codes](cage/report.md) and [limits](cage/limits.md)
+- [Read guard](cage/read-guard.md): keep secret files out of Claude Code's and Cursor's context
 
 ## Govern agent work: missions and verify
 
