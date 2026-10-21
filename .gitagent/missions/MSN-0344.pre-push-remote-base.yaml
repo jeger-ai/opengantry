@@ -6,6 +6,10 @@
 # master, so a local main behind origin/main no longer pulls already-merged missions into the push range;
 # gantry hook pre-push passes the remote name; listDirtyMissionPaths uses fallbackPushBase instead of its own copy.
 #
+# Amended 2026-10-21: an update push gets the same treatment. Its range was remote sha..local sha, so a branch that
+# merged origin/main verified every mission main brought in (MSN-0342 stale on the push of this branch); the base is
+# now the newest of the remote sha and those merge-bases. Same roots.
+#
 # Operator request (2026-10-21): pushing msn-0341-verify-keyless failed with GXT_RUN_RECORD_STALE on MSN-0339 until
 # `git branch -f main origin/main`. No trace rows: the evidence is .gitagent/runs/MSN-0344.json written by
 # gantry verify --record (RULES §3).
