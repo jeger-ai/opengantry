@@ -62,7 +62,9 @@ export function missionScopeLaw(
   const upper = skillScopeLaw(manifest, skillKey, policy);
   const roots = contract?.tmvc_roots ?? [];
   const lower = scopeLevel("contract", roots, contract?.forbidden_zones ?? []);
-  return tightenPathLaw(upper, { areas: roots.length > 0 ? lower.areas : [], rules: lower.rules });
+  if (roots.length === 0) return tightenPathLaw(upper, { rules: lower.rules });
+  // A skill without roots leaves the area to the Planner (RULES §4): the contract's area replaces its empty one.
+  return tightenPathLaw({ ...upper, areas: upper.areas.filter((a) => a.patterns.length > 0) }, lower);
 }
 
 /** A path's standing under a scope law, in the TMVC vocabulary. */

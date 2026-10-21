@@ -135,6 +135,27 @@ test("staged tmvc guard: uses contract-narrowed scope when provided", () => {
   assert.equal(skillOnly.violations.some((v) => v.path === "src/other/out.ts"), false);
 });
 
+test("staged tmvc guard: a skill without roots judges the contract roots it prints (RULES §4)", () => {
+  const dest = scaffold({ tmvc_roots: ["docs/CHANGELOG.md", "src/ui/"] }, {
+    "docs/CHANGELOG.md": "# x\n",
+    "src/ui/ok.ts": "export {};\n",
+    "src/other/out.ts": "export {};\n",
+  });
+  writeManifest(dest, { ui: { trust_threshold: "Tier-3", tmvc_roots: [], forbidden_zones: [".gitagent/foreman/"] } });
+  execSync("git init -q && git add -A", { cwd: dest, stdio: "pipe" });
+  const manifest = loadManifest(dest);
+  const resolved = resolveRuntimeEnv({ root: dest, manifest }, MISSION_REL);
+  const guard = evaluateStagedTmvcGuard({ repoRoot: dest, manifest, skillKey: "ui", scope: resolved.scope });
+  assert.deepEqual(guard.tmvcRoots, ["docs/CHANGELOG.md", "src/ui/"]);
+  const kinds = new Map(guard.violations.map((v) => [v.path, v.classification]));
+  assert.equal(kinds.has("docs/CHANGELOG.md"), false);
+  assert.equal(kinds.has("src/ui/ok.ts"), false);
+  assert.equal(kinds.get("src/other/out.ts"), "outside_tmvc");
+  // Without a mission an empty skill area still denies every path.
+  const skillOnly = evaluateStagedTmvcGuard({ repoRoot: dest, manifest, skillKey: "ui" });
+  assert.equal(new Map(skillOnly.violations.map((v) => [v.path, v.classification])).get("docs/CHANGELOG.md"), "outside_tmvc");
+});
+
 test("gantry contract check: JSON report lists scope and violations, exit 1 on violation", () => {
   const ogRoot = getRepoRoot();
   const dest = scaffold({ tmvc_roots: ["src/ui/"], banned_imports: ["prisma"] }, {
