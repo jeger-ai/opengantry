@@ -4,6 +4,9 @@ kind: error-codes
 law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
 note: Every GXT_* code the CLI or MCP server can emit, including codes created as literals outside gxt-error-codes.ts. Internal GantryUserError codes map onto these and are not listed.
 entries:
+  - name: GXT_ADAPT_PLAN_INVALID
+    since: MSN-0349
+    defined_in: packages/verify/src/plan-adapters.ts
   - name: GXT_ARCH_BOUNDARY_VIOLATION
     since: MSN-0082
     defined_in: packages/core/src/error-codes.ts

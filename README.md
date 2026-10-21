@@ -90,10 +90,10 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | Goal | Commands |
 |------|----------|
 | Set up | `gantry init`, `gantry onboarding`, `gantry planner set "$(git config user.email)"`, `gantry doctor` |
-| Cage | `gantry cage check --base <ref>`, `gantry cage watch`, `gantry cage -- <cmd>`, `gantry cage suggest --write` |
+| Cage | `gantry cage check --base <ref>`, `gantry cage watch`, `gantry cage -- <cmd>`, `gantry cage suggest --write`, `gantry-cage read-guard` |
 | Legislate | `gantry legislate "<intent>" --msn MSN-NNNN --skill-key <key> --gate-command "<cmd>"`, `gantry legislate --from-intent "<intent>" --msn MSN-NNNN`, `gantry start` |
 | Execute | `gantry pin <mission>`, `eval "$(gantry runtime env)"`, `gantry runtime exec --mission <file> -- <cmd>` |
-| Verify | `gantry verify --mission <file>`, `--json`, `--format sarif\|junit`, `gantry context-feed --json` |
+| Verify | `gantry verify --mission <file>`, `gantry verify --contract [file] --base <ref>`, `--json`, `--format sarif\|junit`, `gantry adapt --from lights-on <plan>`, `gantry context-feed --json` |
 | Inspect | `gantry status --json`, `gantry report`, `gantry metrics` |
 | Perimeters | `gantry init --discover --domain code\|content`, `gantry blueprint`, `gantry arch check`, `gantry perimeter check` |
 | Organization | `gantry policy pull`, `gantry ledger verify`, `gantry deps check`, `gantry attest` |

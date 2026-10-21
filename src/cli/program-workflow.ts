@@ -7,6 +7,7 @@ import { isGantryUserError, errorMessage } from "#core/user-error.js";
 import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
 import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
+import { registerAdaptCommand } from "./commands/adapt.js";
 import type { VerifyOptions } from "./flows/verify-options.js";
 import type { VerifyExportFormat } from "#missions/mission-verify/export.js";
 import { runScan } from "./commands/scan.js";
@@ -408,6 +409,7 @@ export function registerWorkflowCommands(program: Command): void {
   registerInterrogateCommand(program);
   registerAttestCommand(program);
   registerVerifyCommand(program);
+  registerAdaptCommand(program);
   registerScanCommand(program);
   registerEventsCommand(program);
   registerRegisterCommand(program);

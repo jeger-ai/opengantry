@@ -47,7 +47,7 @@ const result = runVerifyContract({ cwd: repo, base: "origin/main" });
 if (result.status === "fail") console.error(result.problems.join("\n"));
 ```
 
-The API: `runVerifyContract`, `checkVerifyResult`, `writeVerifyBaseline`, `parseVerifyContract`, `verifyResultSarif`, `verifyResultJUnit`, `signVerifyResultKeyless`, `checkKeylessSignature`, the schema constants and the result types. Errors are `GantryUserError` with a `GXT_VERIFY_*` code.
+The API: `runVerifyContract`, `checkVerifyResult`, `writeVerifyBaseline`, `parseVerifyContract`, `adaptPlan` (another framework's plan to a `verify.yaml`), `verifyResultSarif`, `verifyResultJUnit`, `signVerifyResultKeyless`, `checkKeylessSignature`, the schema constants and the result types. Errors are `GantryUserError` with a `GXT_VERIFY_*` code.
 
 Results never hold file contents or command output. The only network use is keyless signing and its check, and only when you ask for it.
 

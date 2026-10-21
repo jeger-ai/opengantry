@@ -1,0 +1,212 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0349]. Executor must not run until the [MSN-0349] legislation commit + pin.
+#
+# Legislated intent: plan adapters for v4.0.0 (ADR-0059): gantry adapt turns another framework plan into the
+# verify.yaml for a step and the cage scope for its session; lights-on first.
+#
+# Operator request (2026-10-21, "Full chain like before"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0349.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0349
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. adapt only prints the --allow-only
+      scope the session cage already supports.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. A generated contract can carry a tests section by hand;
+      adapt does not write one.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 8c77ce764675
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/guides/plan-adapters.md, docs/guides/verify-contract.md,
+      docs/index.md, docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0349.gantry-adapt.yaml,
+      .gitagent/out-of-scope/ADR-0059-plan-adapters.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0349.json, packages/opengantry-verify/README.md,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/src/plan-adapters.ts, README.md,
+      src/cli/commands/adapt.ts, src/cli/program-workflow.ts,
+      src/cli/tests/adapt.test.ts, src/cli/verify-lib.ts. New:
+      packages/verify/src/plan-adapters.ts (LIGHTS_ON adapter, adaptPlan),
+      src/cli/commands/adapt.ts, src/cli/tests/adapt.test.ts,
+      docs/guides/plan-adapters.md, ADR-0059. Changed: program-workflow.ts
+      (registers adapt), verify-lib.ts (adaptPlan), the slim verify package test
+      (API list) and README, registries (adapt command, GXT_ADAPT_PLAN_INVALID),
+      docs (verify-contract guide link, docs index, README CLI table),
+      CHANGELOG, release notes, ARCH_BASELINE.json raised for verify, command
+      and delivery."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Existing outputs are unchanged; adapt is a new command
+      with its own output; the conformance goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. No MCP tool is added; adapt is a CLI command and a
+      library function.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. allowed_paths and forbidden_paths are judged by the one
+      path law as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Trusted automation is untouched; the
+      lockfile names in forbidden_paths only keep a plan step from editing them.
+    adr_refs:
+      - ADR-0052
+      - ADR-0057
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: Accept. The adapters live in packages/verify (core and git
+      only); the command is delivery in src/cli.
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Accept; this mission legislates ADR-0059 and implements it.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. The generated contract is an ordinary
+      opengantry.verify.v1 contract, read from the base commit once committed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract cage is unchanged; adapt writes
+      verify contracts, not mission contracts.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The generated verify.yaml is YAML a human reviews and commits.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 0a977924c94801b21160e7da6b6f2d51719b78c3143678a641489c15699daaa3
+declared_paths:
+  - .gitagent/missions/MSN-0349.gantry-adapt.yaml
+  - .gitagent/out-of-scope/ADR-0059-plan-adapters.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0349.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/guides/plan-adapters.md
+  - docs/guides/verify-contract.md
+  - docs/index.md
+  - docs/reference/release-notes.md
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - packages/verify/src/plan-adapters.ts
+  - src/cli/commands/adapt.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/adapt.test.ts
+  - src/cli/verify-lib.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0349.gantry-adapt.yaml
+    - .gitagent/out-of-scope/ADR-0059-plan-adapters.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0349.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/guides/plan-adapters.md
+    - docs/guides/verify-contract.md
+    - docs/index.md
+    - docs/reference/release-notes.md
+    - packages/opengantry-verify/README.md
+    - packages/opengantry-verify/tests/verify-package.test.mjs
+    - packages/verify/src/plan-adapters.ts
+    - src/cli/commands/adapt.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/adapt.test.ts
+    - src/cli/verify-lib.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: ffbc7ebfec5b05c5969b46ab705cd023dd042368a089fd80097e8cf3c501f2dc
