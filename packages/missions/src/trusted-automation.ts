@@ -21,10 +21,10 @@ import type { Manifest } from "#core/manifest.js";
 import { gitRunOk } from "#git/git.js";
 import { perimeterLawFor } from "./perimeter.js";
 import { parseLawFileDocument } from "#core/law-file.js";
-import { readGxtConfigSource } from "./gxt-config.js";
+import { readLawFileAt } from "#git/repo-text.js";
 
 export function loadTrustedAutomationRules(root: string): TrustedAutomationRule[] {
-  const source = readGxtConfigSource(root);
+  const source = readLawFileAt(root, "config");
   if (!source) return [];
   let parsed: unknown;
   try {

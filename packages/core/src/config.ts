@@ -48,15 +48,6 @@ export function parseGxtConfigSource(source: LawFileSource): GxtConfigShape {
   }
 }
 
-/** Parse a JSON body; a broken file is an empty config, as before. */
-export function parseGxtConfig(text: string): GxtConfigShape {
-  try {
-    return parseGxtConfigDocument(JSON.parse(text));
-  } catch {
-    return {};
-  }
-}
-
 export function resolvePlannerSignatureTier(config: GxtConfigShape): PlannerSignatureTier {
   const tier = config.planner_signature ?? "off";
   return PLANNER_SIGNATURE_TIERS.includes(tier) ? tier : "off";

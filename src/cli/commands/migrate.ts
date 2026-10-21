@@ -1,11 +1,11 @@
 import fs from "node:fs";
-import path from "node:path";
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { parseGxtConfigDocument } from "#core/config.js";
 import { REL_MANIFEST_JSON, REL_MANIFEST_YAML, CLI_NAME } from "#core/constants.js";
-import { LAW_FILES, lawFileToYaml, parseLawFileDocument, type LawFileId } from "#core/law-file.js";
+import { LAW_FILES, parseLawFileDocument, type LawFileId } from "#core/law-file.js";
 import { validateManifestShape, type Manifest } from "#core/manifest.js";
 import { getRepoRoot } from "#git/git.js";
+import { readLawFileAt, repoAbs, writeLawFileYaml } from "#git/repo-text.js";
+import { parsePolicyPointerDocument } from "#plane/policy-resolve.js";
 import { logError, logInfo, setExitCode, writeStdout } from "../output/cli-io.js";
 import { validateArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
 
@@ -41,31 +41,33 @@ const PREPARE: Readonly<Record<LawFileId, (doc: unknown) => Migrated>> = {
     validateManifestShape(doc);
     return migratedManifest(doc);
   },
-  config: (doc) => ({ doc: parseGxtConfigDocument(doc), changes: [] }),
+  config: (doc) => {
+    if (!doc || typeof doc !== "object" || Array.isArray(doc)) throw new Error(`${LAW_FILES.config.json} must be an object`);
+    return { doc, changes: [] };
+  },
   "architecture-pointer": (doc) => ({ doc: validateArchitecturePointer(doc), changes: [] }),
-  "policy-pointer": (doc) => ({ doc, changes: [] }),
+  "policy-pointer": (doc) => ({ doc: parsePolicyPointerDocument(LAW_FILES["policy-pointer"].json, doc), changes: [] }),
 };
 
 /**
- * `gantry migrate <file>`: the deterministic path from a 3.x JSON law file to its YAML form (ADR-0047 §4). The JSON
- * form is parsed strictly (a broken file is not migrated), written as YAML and removed. Nothing else changes.
+ * `gantry migrate <file>`: the deterministic path from a 3.x JSON law file to its YAML form (ADR-0047 §4). The file
+ * is read as every reader reads it (the YAML form wins; both present and different fail closed); a JSON form is
+ * parsed strictly (a broken file is not migrated), written as YAML and removed. Nothing else changes.
  */
 export function runMigrate(id: LawFileId, options: MigrateOptions = {}): MigrateResult {
   const file = LAW_FILES[id];
   const root = getRepoRoot();
-  const yamlAbs = path.join(root, ...file.yaml.split("/"));
-  const jsonAbs = path.join(root, ...file.json.split("/"));
+  const source = readLawFileAt(root, id);
   let result: MigrateResult;
-  if (fs.existsSync(yamlAbs)) {
-    result = { status: "already_yaml", wrote: null, removed: null, changes: [] };
-  } else if (!fs.existsSync(jsonAbs)) {
+  if (!source) {
     result = { status: "nothing_to_migrate", wrote: null, removed: null, changes: [] };
+  } else if (source.kind === "yaml") {
+    result = { status: "already_yaml", wrote: null, removed: null, changes: [] };
   } else {
-    const { doc, changes } = PREPARE[id](parseLawFileDocument({ rel: file.json, kind: "json", text: fs.readFileSync(jsonAbs, "utf8") }));
+    const { doc, changes } = PREPARE[id](parseLawFileDocument(source));
     if (options.dryRun !== true) {
-      fs.mkdirSync(path.dirname(yamlAbs), { recursive: true });
-      fs.writeFileSync(yamlAbs, lawFileToYaml(file, doc), "utf8");
-      fs.rmSync(jsonAbs);
+      writeLawFileYaml(root, id, doc);
+      fs.rmSync(repoAbs(root, source.rel));
     }
     result = { status: "migrated", wrote: file.yaml, removed: file.json, changes };
   }

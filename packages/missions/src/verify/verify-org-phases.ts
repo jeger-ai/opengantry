@@ -1,6 +1,6 @@
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
+import { lawFileRelAt } from "#git/repo-text.js";
 import {
-  policyPointerRel,
   configFloorViolations,
   resolveOrgPolicy,
   type OrgPolicyResolveResult,
@@ -29,7 +29,7 @@ function policyFailure(input: PhaseContext, code: GxtErrorCode, message: string)
     policyCode: code,
     findings: [
       verifyFinding("policy", message, {
-        offending_file: policyPointerRel(input.root),
+        offending_file: lawFileRelAt(input.root, "policy-pointer"),
         rule_id: code,
       }),
     ],

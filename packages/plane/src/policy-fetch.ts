@@ -3,9 +3,10 @@ import path from "node:path";
 import { gitRun } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { REL_POLICY_POINTER_JSON } from "#core/constants.js";
+import { REL_POLICY_POINTER_YAML } from "#core/constants.js";
+import { readLawFileAt, repoAbs } from "#git/repo-text.js";
 import { sha256File } from "./digests.js";
-import { loadPolicyPointer, policyPointerPath, policyPointerRel, readPolicyPointerSource } from "./policy-resolve.js";
+import { policyPointerState } from "./policy-resolve.js";
 import { LAW_FILES, lawFileToYaml } from "#core/law-file.js";
 import { cachedBundlePath, parseOrgPolicyBundle } from "./policy-bundle.js";
 import type { PolicyPointer } from "./policy-types.js";
@@ -39,18 +40,18 @@ function writeCachedBundle(root: string, pointer: PolicyPointer, commit: string,
 
 /** Explicit network path (ADR-0026 / ADR-0042). Doctor and verify MUST NOT call this. */
 export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult {
-  const state = loadPolicyPointer(root);
-  if (state.kind === "absent") {
+  const file = readLawFileAt(root, "policy-pointer");
+  if (!file) {
     throw new GantryUserError(
       GXT_ERROR.INVALID_ARGUMENT,
-      `${REL_POLICY_POINTER_JSON} is missing`,
+      `${REL_POLICY_POINTER_YAML} is missing`,
       "add a POLICY.pointer.yaml pin",
       2,
     );
   }
-  const pointer = state.pointer;
+  const { pointer } = policyPointerState(file);
   if (!pointer.source.url.trim()) {
-    throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, `${policyPointerRel(root)} source.url is empty`, undefined, 1);
+    throw new GantryUserError(GXT_ERROR.POLICY_UNPINNED, `${file.rel} source.url is empty`, undefined, 1);
   }
   const scratchParent = workRoot ?? path.join(root, ".gitagent", "tmp");
   fs.mkdirSync(scratchParent, { recursive: true });
@@ -100,8 +101,8 @@ export function pullOrgPolicy(root: string, workRoot?: string): PolicyPullResult
       bundle_sha256: sha,
     };
     // Written back in the form found: a 3.x JSON pointer stays JSON until gantry migrate policy-pointer runs.
-    const body = readPolicyPointerSource(root)?.kind === "json" ? `${JSON.stringify(next, null, 2)}\n` : lawFileToYaml(LAW_FILES["policy-pointer"], next);
-    fs.writeFileSync(policyPointerPath(root), body, "utf8");
+    const body = file.kind === "json" ? `${JSON.stringify(next, null, 2)}\n` : lawFileToYaml(LAW_FILES["policy-pointer"], next);
+    fs.writeFileSync(repoAbs(root, file.rel), body, "utf8");
     return {
       pointer: next,
       cache_path: dest,

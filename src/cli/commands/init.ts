@@ -4,7 +4,7 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
-import { readArchitecturePointerSource } from "#missions/arch/external/architecture-pointer.js";
+import { readLawFileAt } from "#git/repo-text.js";
 import { manifestExists } from "#missions/manifest.js";
 import { logError, logInfo, logManagedAssetConflicts, reportMerged, setExitCode } from "../output/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
@@ -64,7 +64,7 @@ export interface InitOptions {
 }
 
 function planArchitecturePointerWrite(profile: InitProfile, repoRoot: string): PlannedWrite | null {
-  if (readArchitecturePointerSource(repoRoot) !== null) return null;
+  if (readLawFileAt(repoRoot, "architecture-pointer") !== null) return null;
   const targetAbs = path.join(repoRoot, REL_ARCHITECTURE_POINTER_YAML.split("/").join(path.sep));
   const body = serializeArchitecturePointer(composeArchitecturePointer(profile));
   return { absoluteTarget: targetAbs, body, executable: false };

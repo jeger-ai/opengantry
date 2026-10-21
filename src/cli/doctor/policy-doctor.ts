@@ -1,7 +1,8 @@
 import { REL_POLICY_POINTER_YAML } from "#core/constants.js";
 import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 import { compareExpectedDigests } from "./policy-digest-doctor.js";
-import { loadPolicyPointer, policyPointerRel, resolveOrgPolicy } from "#plane/policy-resolve.js";
+import { lawFileRelAt } from "#git/repo-text.js";
+import { loadPolicyPointer, resolveOrgPolicy } from "#plane/policy-resolve.js";
 
 /** Offline doctor section. MUST NOT clone or fetch. */
 export function runOrgPolicyDoctorChecks(root: string): DoctorLine[] {
@@ -10,7 +11,7 @@ export function runOrgPolicyDoctorChecks(root: string): DoctorLine[] {
     case "absent":
       return [{ level: "ok", message: `${REL_POLICY_POINTER_YAML}: absent (opt-in)` }];
     case "scaffold":
-      return [{ level: "ok", message: `${policyPointerRel(root)}: scaffold (unpinned)` }];
+      return [{ level: "ok", message: `${lawFileRelAt(root, "policy-pointer")}: scaffold (unpinned)` }];
     case "pinned": {
       const resolved = resolveOrgPolicy(root);
       if (!resolved.ok) {
