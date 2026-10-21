@@ -9,6 +9,7 @@ import { CLI_VERSION } from "../version.gen.js";
 import { GantryUserError } from "#core/user-error.js";
 import { outputTail, type CheckRun, type VerifyMode } from "#verify/checks.js";
 import { verifyResultJUnit, verifyResultSarif } from "#verify/export.js";
+import { checkKeylessSignature, GITHUB_ACTIONS_ISSUER, keylessLogIndex, signVerifyResultKeyless } from "#verify/keyless.js";
 import {
   checkVerifyResult,
   runVerifyContract,
@@ -27,8 +28,11 @@ export interface VerifyContractCliOptions {
   baselineFile?: string;
   checkResult?: string;
   out?: string;
-  sign?: boolean;
+  /** true: the git signing key; "keyless": Sigstore through the CI's OIDC identity. */
+  sign?: boolean | string;
   allowedSigners?: string;
+  certificateIdentity?: string;
+  certificateOidcIssuer?: string;
   json?: boolean;
   format?: string;
   mission?: string;
@@ -45,8 +49,10 @@ export function registerVerifyContractOptions(cmd: Command): Command {
     .option("--baseline-file <file>", "With --contract: baseline file (default verify-baseline.json beside the contract)")
     .option("--check-result <file>", "With --contract: pass only if that result passed in a full run for this HEAD, base and contract")
     .option("--out <file>", "With --contract: write the opengantry.verify-result.v1 result to <file>")
-    .option("--sign", "With --contract and --out: sign the result with the git signing key")
-    .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file");
+    .option("--sign [method]", "With --contract and --out: sign the result with the git signing key, or `keyless` with Sigstore through the CI's OIDC identity (network)")
+    .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file")
+    .option("--certificate-identity <regexp>", "With --check-result: also require a keyless signature whose certificate identity (workflow URI or email) matches")
+    .option("--certificate-oidc-issuer <url>", `With --certificate-identity: the identity's OIDC issuer (default ${GITHUB_ACTIONS_ISSUER})`);
 }
 
 function usage(message: string): GantryUserError {
@@ -59,8 +65,17 @@ function assertCompatible(o: VerifyContractCliOptions): void {
   if (exportFormat(o) && (o.baseline || o.checkResult)) throw usage(`--format ${String(o.format)} projects a run's result; --baseline and --check-result report as text or json`);
   const modes = [o.worktree && "--worktree", o.quick && "--quick", o.baseline && "--baseline", o.checkResult && "--check-result"].filter(Boolean);
   if (modes.length > 1) throw usage(`choose one of ${modes.join(", ")}`);
+  assertSigning(o);
+}
+
+/** `--sign` and the signature checks of `--check-result` (ADR-0051 decision 12, ADR-0055). */
+function assertSigning(o: VerifyContractCliOptions): void {
+  if (o.sign !== undefined && o.sign !== true && o.sign !== "keyless") throw usage(`--sign takes no value or keyless (got ${String(o.sign)})`);
   if (o.sign && (!o.out || o.baseline || o.checkResult)) throw usage("--sign signs the result written by --out");
   if (o.allowedSigners && !o.checkResult) throw usage("--allowed-signers is for --check-result");
+  if (o.certificateIdentity && !o.checkResult) throw usage("--certificate-identity is for --check-result");
+  if (o.certificateOidcIssuer && !o.certificateIdentity) throw usage("--certificate-oidc-issuer goes with --certificate-identity");
+  if (o.allowedSigners && o.certificateIdentity) throw usage("a result carries one signature: use --allowed-signers or --certificate-identity");
 }
 
 /** sarif or junit: the run's result projected onto stdout; the progress and summary stay on stderr. */
@@ -96,7 +111,9 @@ function summary(result: VerifyContractResult): string[] {
   ];
   if (result.inherited) lines.push(`verify: repository law from ${result.inherited.path} at the base applies too`);
   if (result.skipped.length > 0) lines.push(`verify: note: imports not read (language not supported): ${result.skipped.join(", ")}`);
-  if (result.signature) lines.push(`verify: signed (${result.signature.kind}${result.signature.key_fingerprint ? ` ${result.signature.key_fingerprint}` : ""})`);
+  const sig = result.signature;
+  if (sig?.kind === "sigstore") lines.push(`verify: signed keyless (sigstore, transparency log index ${keylessLogIndex(sig) ?? "none"})`);
+  else if (sig) lines.push(`verify: signed (${sig.kind}${sig.key_fingerprint ? ` ${sig.key_fingerprint}` : ""})`);
   if (result.contract.ignored.length > 0) {
     lines.push(`verify: note: ${result.contract.ignored.join(", ")} in ${result.contract.path} are for the cage and hangar, not verify; ignored`);
   }
@@ -111,10 +128,29 @@ function writeResult(file: string, result: VerifyContractResult): void {
   fs.writeFileSync(abs, `${JSON.stringify(result, null, 2)}\n`);
 }
 
+/** `--check-result`: the stored result against HEAD, the base and the contract, and its signature when asked. */
+async function runCheckResult(o: VerifyContractCliOptions, file: string, base: { contract?: string; base?: string; baselineFile?: string }, json: boolean): Promise<void> {
+  const checked = checkVerifyResult(file, { ...base, allowedSigners: o.allowedSigners });
+  const { problems } = checked;
+  let { signer } = checked;
+  if (o.certificateIdentity) {
+    const keyless = await checkKeylessSignature(checked.result, { identity: o.certificateIdentity, issuer: o.certificateOidcIssuer ?? GITHUB_ACTIONS_ISSUER });
+    if (keyless.problem) problems.push(keyless.problem);
+    signer = keyless.signer;
+  }
+  const ok = problems.length === 0;
+  if (json) emitCliJson({ status: ok ? "verified" : "fail", signer, problems });
+  else {
+    const verified = signer ? `verify: VERIFIED, signed by ${signer}` : "verify: VERIFIED";
+    console.error([...problems.map((p) => `verify: PROBLEM ${p}`), ok ? verified : `verify: FAIL, ${String(problems.length)} problem(s)`].join("\n"));
+  }
+  if (!ok) setExitCode(EXIT_CODE.FAILURE);
+}
+
 /** `gantry verify --contract`: exit 0 pass, 1 fail, 2 when it cannot run. */
 export async function runVerifyContractCommand(o: VerifyContractCliOptions): Promise<void> {
   const json = o.json === true || o.format === "json";
-  await runUserCommandAsync({ json }, () => {
+  await runUserCommandAsync({ json }, async () => {
     assertCompatible(o);
     const base = { contract: o.contract === true ? undefined : o.contract, base: o.base, baselineFile: o.baselineFile };
     const onCheck = json ? undefined : printCheck;
@@ -122,19 +158,14 @@ export async function runVerifyContractCommand(o: VerifyContractCliOptions): Pro
       const report = writeVerifyBaseline({ ...base, onCheck: json ? undefined : printBaselineCheck });
       if (json) emitCliJson(report);
       else console.error(`verify: baseline of ${String(Object.keys(report.checks).length)} check(s) written to ${report.file}`);
-      return Promise.resolve();
+      return;
     }
     if (o.checkResult) {
-      const { ok, problems, signer } = checkVerifyResult(o.checkResult, { ...base, allowedSigners: o.allowedSigners });
-      if (json) emitCliJson({ status: ok ? "verified" : "fail", signer, problems });
-      else {
-        const verified = signer ? `verify: VERIFIED, signed by ${signer}` : "verify: VERIFIED";
-        console.error([...problems.map((p) => `verify: PROBLEM ${p}`), ok ? verified : `verify: FAIL, ${String(problems.length)} problem(s)`].join("\n"));
-      }
-      if (!ok) setExitCode(EXIT_CODE.FAILURE);
-      return Promise.resolve();
+      await runCheckResult(o, o.checkResult, base, json);
+      return;
     }
-    const result = runVerifyContract({ ...base, mode: modeOf(o), onCheck, sign: o.sign });
+    const run = runVerifyContract({ ...base, mode: modeOf(o), onCheck, sign: o.sign === true });
+    const result = o.sign === "keyless" ? await signVerifyResultKeyless(run) : run;
     if (o.out) writeResult(o.out, result);
     if (json) emitCliJson(result);
     else for (const line of summary(result)) console.error(line);
@@ -142,6 +173,5 @@ export async function runVerifyContractCommand(o: VerifyContractCliOptions): Pro
     if (format === "sarif") currentReporter().document(JSON.stringify(verifyResultSarif(result, CLI_VERSION), null, 2));
     if (format === "junit") currentReporter().document(verifyResultJUnit(result));
     if (result.status !== "pass") setExitCode(EXIT_CODE.FAILURE);
-    return Promise.resolve();
   });
 }

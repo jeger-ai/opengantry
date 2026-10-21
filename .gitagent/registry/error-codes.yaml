@@ -269,6 +269,12 @@ entries:
   - name: GXT_VERIFY_RESULT_UNREADABLE
     since: MSN-0277
     defined_in: packages/verify/src/run.ts
+  - name: GXT_VERIFY_SIGN_FAILED
+    since: MSN-0341
+    defined_in: packages/verify/src/keyless.ts
+  - name: GXT_VERIFY_SIGN_NO_IDENTITY
+    since: MSN-0341
+    defined_in: packages/verify/src/keyless.ts
   - name: GXT_VERIFY_SIGN_NO_KEY
     since: MSN-0279
     defined_in: packages/verify/src/run.ts

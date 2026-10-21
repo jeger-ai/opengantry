@@ -95,7 +95,9 @@ gantry verify --contract path/to/gate.json --base main
 | `--out <file>` | Write the result |
 | `--check-result <file>` | Pass only if that result passed in a full run for this HEAD, this base and this contract, on a clean tree |
 | `--sign` | With `--out`: sign the result with your git signing key (SSH or GPG, as for commits) |
+| `--sign keyless` | With `--out`: sign the result with Sigstore through the CI job's OIDC identity, no key needed (network) |
 | `--allowed-signers <file>` | With `--check-result`: also require a good SSH signature by a key in this `ssh-keygen` allowed-signers file |
+| `--certificate-identity <regexp>` | With `--check-result`: also require a keyless signature whose certificate identity matches; `--certificate-oidc-issuer <url>` sets the issuer (default GitHub Actions) |
 | `--json` | Print the result on stdout |
 | `--format sarif\|junit` | Print the result as SARIF 2.1.0 or JUnit XML on stdout, for code scanning and test dashboards; the summary stays on stderr |
 
@@ -126,6 +128,25 @@ gantry verify --contract --base origin/main --out out/verify.json --sign
 gantry verify --contract --base origin/main --check-result out/verify.json --allowed-signers .github/allowed_signers
 ```
 
+### Keyless signatures
+
+In CI there is usually no signing key. `--sign keyless` signs with Sigstore instead: the job's OIDC identity gets a short-lived certificate, and the signature is recorded in the public Rekor transparency log. It needs `permissions: id-token: write` in GitHub Actions, or an OIDC token in `SIGSTORE_ID_TOKEN`; without one, verify stops with `GXT_VERIFY_SIGN_NO_IDENTITY` (exit 2). This is the only part of verify that uses the network, and only when you ask for it.
+
+```yaml
+permissions: { contents: read, id-token: write }
+# ...
+- run: npx -y -p @jeger-ai/opengantry gantry verify --contract --base ${{ github.event.pull_request.base.sha }} --out verify.json --sign keyless
+```
+
+Check it anywhere with the workflow that must have signed it:
+
+```bash
+gantry verify --contract --base origin/main --check-result verify.json \
+  --certificate-identity '^https://github\.com/acme/app/\.github/workflows/verify\.yml@'
+```
+
+The log entry shows the repository and workflow that signed, never the change: the result holds only digests.
+
 ## In CI
 
 ```yaml
@@ -152,9 +173,10 @@ Make the job a required status check to block merges on it. Run [`gantry cage ch
 ## Limits
 
 - Checks run whatever the contract says, with the permissions of the job. That is why the contract comes from the base commit or from outside the repository.
-- An unsigned result is bound to a commit and a contract by sha256 only: `--check-result` catches stale results, not forged ones. Sign it with `--sign` and check it with `--allowed-signers` when the result travels between machines.
+- An unsigned result is bound to a commit and a contract by sha256 only: `--check-result` catches stale results, not forged ones. Sign it with `--sign` and check it with `--allowed-signers` (or `--sign keyless` and `--certificate-identity`) when the result travels between machines.
+- Checking a keyless signature fetches the Sigstore trust root; without network access it fails.
 - Import and layer checks read JS/TS and Python; other languages need regex `rules`.
 
 When the allowed area itself should be approved by someone, and the work traced to evidence a reviewer can check, use [missions](../start/how-it-works.md).
 
-Design notes: [ADR-0051 standalone verify contract](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md).
+Design notes: [ADR-0051 standalone verify contract](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md), [ADR-0055 keyless verify signatures](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md).

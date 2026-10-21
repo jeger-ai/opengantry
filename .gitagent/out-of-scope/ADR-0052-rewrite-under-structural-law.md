@@ -145,7 +145,7 @@ Each step is a Tier-3 Planner mission or a short chain of them, with `[MSN-…]`
 
 - No new user-facing vocabulary. Names that docs teach today are the names in v4.
 - No change to what the cage protects or how it restores.
-- No LLM, embedding or network call in `core`, `git`, `cage`, `verify` or `missions`.
+- No LLM, embedding or network call in `core`, `git`, `cage`, `verify` or `missions`. One opt-in exception: keyless signing of a verify result (`--sign keyless`, `--certificate-identity`) talks to Sigstore, [ADR-0055](ADR-0055-keyless-verify-signatures.md).
 - No per-file ratchets. Budgets are per layer and ratchet; the only per-file rule is the 800-line sanity ceiling of B7, which exists to stop monoliths, not to shape modules.
 - No advisory mode for structural rules.
 

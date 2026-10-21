@@ -1,0 +1,203 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0341]. Executor must not run until the [MSN-0341] legislation commit + pin.
+#
+# Legislated intent: roadmap #9, part two, for v4.0.0: opt-in Sigstore keyless signing of standalone verify
+# results (--sign keyless, --check-result --certificate-identity), ADR-0055 as the one network exception in verify.
+#
+# Operator request (2026-10-21, "Optional, opt-in"; "Approve the full chain"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0341.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0341
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept; this mission legislates ADR-0055 and implements it.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The plane ingestion contract is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 27bd5d8862ad
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/guides/verify-contract.md, docs/reference/release-notes.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0341.verify-keyless.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md,
+      .gitagent/registry/dependencies.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0341.json, package.json, package-lock.json,
+      packages/verify/src/keyless.ts, packages/verify/src/run.ts,
+      src/cli/commands/verify-contract.ts,
+      src/cli/tests/verify-standalone-sign.test.ts,
+      src/cli/tests/verify-standalone.test.ts. packages/verify/src/keyless.ts
+      (new: signVerifyResultKeyless, checkKeylessSignature, hasAmbientIdentity,
+      keylessLogIndex, GITHUB_ACTIONS_ISSUER) and run.ts (signature union,
+      checkVerifyResult returns the parsed result);
+      src/cli/commands/verify-contract.ts (--sign [method],
+      --certificate-identity, --certificate-oidc-issuer); two tests;
+      package.json and package-lock.json (sigstore ^5); registries (dependency,
+      two error codes); ADR-0055 new, ADR-0051 and ADR-0052 amended; the
+      verify-contract guide, CHANGELOG and release notes; ARCH_BASELINE.json
+      raised for verify and command."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp signing is unchanged; keyless signing
+      applies only to standalone verify results.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept, amended by ADR-0055: the non-goal no network call in
+      verify gains one opt-in exception, keyless signing and its check; sigstore
+      is registered in the dependency registry (B3) and loaded lazily. Budgets:
+      verify and command rise (Planner raise under B4)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Cross-repository dependency checks are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Accept. Results stay digest-only; the bundle holds a
+      certificate, a signature and a log entry, never file contents.
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Existing output is unchanged; a keyless signature is a
+      new signature kind in the result and a new summary line; the conformance
+      goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: Accept. verify still depends on core and git only among the
+      packages; sigstore is an external runtime dependency.
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: "Accept and close its Sigstore follow-up: --sign keyless signs
+      the same canonical_json_utf8 payload as --sign; --check-result stays
+      offline for HEAD, base, contract and mode."
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract cage is unchanged; every file this
+      mission touches is a root.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: d16e6399b881c6c2853636703f6dc425a28e4f8ac1a7185f9120b0ca62f40ec3
+declared_paths:
+  - .gitagent/missions/MSN-0341.verify-keyless.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+  - .gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md
+  - .gitagent/registry/dependencies.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0341.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-contract.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/verify/src/keyless.ts
+  - packages/verify/src/run.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/verify-standalone-sign.test.ts
+  - src/cli/tests/verify-standalone.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0341.verify-keyless.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+    - .gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md
+    - .gitagent/registry/dependencies.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0341.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-contract.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/verify/src/keyless.ts
+    - packages/verify/src/run.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/verify-standalone-sign.test.ts
+    - src/cli/tests/verify-standalone.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: fa0bcca50260c5383698d9b9930f69bd14d8db9b5935ded3ca0538daf4fb5a8d
