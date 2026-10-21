@@ -3,7 +3,7 @@
  * `[MSN]` commit subjects with gxt-bypass notes and trusted automation, the mission requirement over a PR range, and
  * the upgrade staging guard. `gantry ci` presents them; CI and the dev gate call `gantry ci`.
  */
-import { isMsnEnforcedPath, isValidBypassNote } from "#core/trusted-automation.js";
+import { isMsnEnforcedPath, isValidBypassNote, msnEnforcedLaw } from "#core/trusted-automation.js";
 import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
 import { gitRunOk } from "#git/git.js";
 import { discoverChangedMissions } from "./mission-changed.js";
@@ -36,11 +36,11 @@ const MSN_SUBJECT_RE = /^\[MSN-\d{4}\]/;
 
 /** Every non-merge commit in base..head that touches an MSN-enforced path needs an [MSN] subject, a bypass note or a trusted-automation verdict. */
 export function checkMsnRange(root: string, manifest: Manifest, baseSha: string, headSha: string): CiCheckResult {
-  const prefixes = manifestMsnEnforcedPrefixes(manifest);
+  const enforced = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
   const out: string[] = [];
   for (const commit of lines(root, ["rev-list", "--no-merges", `${baseSha}..${headSha}`])) {
     const touched = lines(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit]);
-    if (!touched.some((f) => isMsnEnforcedPath(f, prefixes))) continue;
+    if (!touched.some((f) => isMsnEnforcedPath(f, enforced))) continue;
     const subject = gitRunOk(root, ["log", "-1", "--format=%s", commit]).stdout.trim();
     if (MSN_SUBJECT_RE.test(subject)) continue;
     if (commitHasBypassNote(root, commit)) continue;
@@ -81,9 +81,9 @@ export type MissionRangeOutcome =
 
 /** Which missions a PR range must verify in full, or why none is needed, or why the range fails. */
 export function missionsForRange(root: string, manifest: Manifest, baseSha: string, headSha: string): MissionRangeOutcome {
-  const prefixes = manifestMsnEnforcedPrefixes(manifest);
+  const enforced = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
   const diff = lines(root, ["diff", "--name-only", "--diff-filter=ACMRT", `${baseSha}...${headSha}`]);
-  const needsMission = diff.some((f) => isMsnEnforcedPath(f, prefixes));
+  const needsMission = diff.some((f) => isMsnEnforcedPath(f, enforced));
   const changed = discoverChangedMissions(root, { baseRef: baseSha, headRef: headSha });
   if (changed.kind === "contamination") {
     return { kind: "fail", message: `mission contamination: this range carries commits from ${changed.uniqueMsns.map((m) => `[${m}]`).join(", ")}; rebase onto the integration branch` };

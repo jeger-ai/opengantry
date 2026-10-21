@@ -1,7 +1,7 @@
 import { normalizeRepoRelativePath } from "#core/posix-path.js";
-import { judgePath } from "#core/path-law.js";
+import { judgePath, pathLaw } from "#core/path-law.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
-import { classifyRepoRelativePath, forbiddenZonesForSkill, scopePathLaw, isGovernanceTransportPath, tmvcRootsForSkill } from "../tmvc-path.js";
+import { classifyScopePath, forbiddenZoneRules, skillScopeLaw } from "../scope-law.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
 
@@ -46,14 +46,9 @@ function allManifestForbiddenZones(manifest: Manifest): string[] {
   return [...zones];
 }
 
-/** The forbidden zone that covers the path, or null. */
-function pathHitsForbiddenZone(repoRel: string, forbiddenZones: readonly string[]): string | null {
-  return judgePath(scopePathLaw([repoRel], forbiddenZones, []), repoRel)?.pattern ?? null;
-}
-
 /**
- * Validate a repo-relative write target for a skill-scoped MCP mutation.
- * Governance transport paths (EXECUTOR_LOG, active-mission pin) are always allowed.
+ * Validate a repo-relative write target for a skill-scoped MCP mutation against the skill's law: governance
+ * transport is always allowed, a forbidden zone names its pattern, anything outside the roots is denied.
  */
 export function assertMcpSkillWritePath(
   manifest: Manifest,
@@ -62,20 +57,15 @@ export function assertMcpSkillWritePath(
 ): void {
   assertNoPathTraversal(repoRelPath);
   const norm = normalizeRepoRelativePath(repoRelPath);
-  if (isGovernanceTransportPath(norm)) return;
-
-  const resolvedSkill = skillKey;
-  const forbidden = forbiddenZonesForSkill(manifest, resolvedSkill);
-  const hit = pathHitsForbiddenZone(norm, forbidden);
-  if (hit) {
-    throw new McpWriteDeniedError(norm, `path in forbidden zone ${hit}`);
+  const law = skillScopeLaw(manifest, skillKey);
+  switch (classifyScopePath(law, norm)) {
+    case "forbidden_zone":
+      throw new McpWriteDeniedError(norm, `path in forbidden zone ${judgePath(law, norm)?.pattern ?? ""}`);
+    case "outside_tmvc":
+      throw new McpWriteDeniedError(norm, `path outside TMVC roots for skill ${skillKey}`);
+    default:
+      return;
   }
-
-  const tmvc = tmvcRootsForSkill(manifest, resolvedSkill);
-  const classification = classifyRepoRelativePath(norm, tmvc, forbidden);
-  if (classification === "inside_tmvc" || classification === "governance_transport") return;
-
-  throw new McpWriteDeniedError(norm, `path outside TMVC roots for skill ${resolvedSkill}`);
 }
 
 /**
@@ -87,12 +77,12 @@ export function assertMcpSubstrateUpgradeWritePaths(
   plannedWrites: readonly string[],
 ): void {
   const authorized = new Set(plannedWrites.map((p) => normalizeRepoRelativePath(p)));
-  const allForbidden = allManifestForbiddenZones(manifest);
+  const zones = pathLaw({ rules: forbiddenZoneRules("manifest", allManifestForbiddenZones(manifest)) });
 
   for (const relPath of plannedWrites) {
     assertNoPathTraversal(relPath);
     const norm = normalizeRepoRelativePath(relPath);
-    const hit = pathHitsForbiddenZone(norm, allForbidden);
+    const hit = judgePath(zones, norm)?.pattern ?? null;
     if (hit && !authorized.has(norm)) {
       throw new McpWriteDeniedError(norm, `forbidden zone ${hit} not authorized by upgrade mission`);
     }

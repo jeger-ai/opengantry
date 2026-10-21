@@ -1,7 +1,7 @@
 import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import { classifyRepoRelativePath, forbiddenZonesForSkill, tmvcRootsForSkill } from "./tmvc-path.js";
+import { classifyScopePath, skillScopeLaw } from "./scope-law.js";
 
 export type ScopeEvaluationKind = "allowed" | "forbidden_zone" | "outside_tmvc";
 
@@ -23,9 +23,7 @@ export interface EvaluateScopeInput {
 export function evaluateScope(input: EvaluateScopeInput): ScopeEvaluationResult {
   const skillKey = input.mission.skillKey ?? "unknown";
   const norm = normalizeRepoRelativePath(input.repoRelPath);
-  const tmvc = tmvcRootsForSkill(input.manifest, skillKey);
-  const forbidden = forbiddenZonesForSkill(input.manifest, skillKey);
-  const classification = classifyRepoRelativePath(norm, tmvc, forbidden);
+  const classification = classifyScopePath(skillScopeLaw(input.manifest, skillKey), norm);
 
   switch (classification) {
     case "forbidden_zone":

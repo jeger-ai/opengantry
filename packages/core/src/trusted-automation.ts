@@ -3,7 +3,7 @@
  * touches MSN-enforced paths may pass without a mission when a `.gitagent/config.yaml` `trusted_automation` rule covers
  * the actor, the paths, the net line count and the structural kind of the change. Pure: the loader supplies git facts.
  */
-import { pathMatchesGlobPattern } from "./path-glob.js";
+import { judgePath, pathLaw, tightenPathLaw, type PathLaw } from "./path-law.js";
 import { normalizeRepoRelativePath } from "./posix-path.js";
 
 export type StructuralChangeKind = "workflow_version_pin" | "bounded_content";
@@ -22,7 +22,7 @@ export interface TrustedAutomationRule {
 }
 
 /** Paths that always need an `[MSN]` subject, in addition to every skill's `tmvc_roots`. */
-export const FIXED_MSN_ENFORCED_PREFIXES = [".gitagent/", "EXECUTOR_LOG.md", ".githooks/", ".github/workflows/gxt-validate.yml"] as const;
+const FIXED_MSN_ENFORCED_PREFIXES = [".gitagent/", "EXECUTOR_LOG.md", ".githooks/", ".github/workflows/gxt-validate.yml"] as const;
 
 function fail(message: string): never {
   throw new Error(`trusted_automation: ${message}`);
@@ -74,9 +74,13 @@ export function msnEnforcedPrefixes(skillRoots: readonly (readonly string[])[]):
   return [...out];
 }
 
-export function isMsnEnforcedPath(filePath: string, prefixes: readonly string[]): boolean {
-  const p = normalizeRepoRelativePath(filePath);
-  return prefixes.some((prefix) => prefix.length > 0 && (p === prefix || p.startsWith(prefix.endsWith("/") ? prefix : `${prefix}/`)));
+/** The MSN-enforced paths as a law: a hit means the commit needs an `[MSN]` subject. */
+export function msnEnforcedLaw(prefixes: readonly string[]): PathLaw {
+  return pathLaw({ rules: [{ id: "msn_enforced", source: "substrate", patterns: [...prefixes], effect: "report", overridable: false }] });
+}
+
+export function isMsnEnforcedPath(filePath: string, enforced: PathLaw): boolean {
+  return judgePath(enforced, normalizeRepoRelativePath(filePath)) !== null;
 }
 
 /** Total of added and deleted lines in `git ... --numstat` output; binary rows (`-`) are skipped. */
@@ -158,16 +162,18 @@ export function workflowVersionPinOnly(beforeDoc: Json, afterDoc: Json): boolean
   return diffs.every((d) => d.path[d.path.length - 1] === "uses" && isWorkflowVersionPinChange(d.before, d.after));
 }
 
-/** Paths the substrate never delegates to automation: anything under `.gitagent/` and the perimeter-protected globs. */
-export function isSubstrateHardDeniedPath(filePath: string, perimeterGlobs: readonly string[]): boolean {
-  const p = normalizeRepoRelativePath(filePath);
-  if (p === ".gitagent" || p.startsWith(".gitagent/")) return true;
-  return perimeterGlobs.some((g) => pathMatchesGlobPattern(p, normalizeRepoRelativePath(g)));
+/** What the substrate never delegates to automation: `.gitagent/` and the perimeter (the perimeter law tightened). */
+export function substrateHardDenyLaw(perimeter: PathLaw): PathLaw {
+  return tightenPathLaw(perimeter, { rules: [{ id: "substrate", source: "substrate", patterns: [".gitagent/"], effect: "deny", overridable: false }] });
 }
 
-export function pathMatchesAllowed(filePath: string, allowedPaths: readonly string[]): boolean {
-  const p = normalizeRepoRelativePath(filePath);
-  return allowedPaths.some((pattern) => pathMatchesGlobPattern(p, pattern));
+export function isSubstrateHardDeniedPath(filePath: string, hardDeny: PathLaw): boolean {
+  return judgePath(hardDeny, normalizeRepoRelativePath(filePath)) !== null;
+}
+
+/** A rule's `allowed_paths` as an area: a path outside it is not the rule's to allow. Patterns cover (ADR-0053). */
+function allowedPathsLaw(rule: TrustedAutomationRule): PathLaw {
+  return pathLaw({ areas: [{ id: "outside_allowed_paths", source: "trusted_automation", patterns: rule.allowedPaths, overridable: false }] });
 }
 
 export interface TrustedAutomationChange {
@@ -193,8 +199,9 @@ export function evaluateAgainstRule(rule: TrustedAutomationRule, change: Trusted
   const actor = change.actorEmail.toLowerCase();
   if (!rule.allowedActors.includes(actor)) return { eligible: false, reason: `actor ${change.actorEmail} not in rule ${rule.id} allowed_actors` };
   if (change.files.length === 0) return { eligible: false, reason: "no changed files" };
+  const allowed = allowedPathsLaw(rule);
   for (const file of change.files) {
-    if (!pathMatchesAllowed(file, rule.allowedPaths)) return { eligible: false, reason: `path ${file} outside rule ${rule.id} allowed_paths` };
+    if (judgePath(allowed, normalizeRepoRelativePath(file)) !== null) return { eligible: false, reason: `path ${file} outside rule ${rule.id} allowed_paths` };
   }
   if (change.netLoc > rule.maxNetLoc) {
     return { eligible: false, reason: `net_loc ${String(change.netLoc)} exceeds rule ${rule.id} max_net_loc ${String(rule.maxNetLoc)}` };
