@@ -37,7 +37,7 @@ function detectIntegrationPresent(
 }
 
 /** Infer init profile from on-disk substrate assets for upgrade planning. */
-export function inferInitProfileFromRepo(repoRoot: string, templatesRoot?: string): InitProfile {
+export function inferInitProfileFromRepo(repoRoot: string, templatesRoot: string): InitProfile {
   const profile = defaultInitProfile();
   const compat = loadIntegrationCompat(templatesRoot);
   const detected = INTEGRATION_IDE_KEYS.filter((key) =>

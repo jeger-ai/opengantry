@@ -11,6 +11,8 @@ import {
 } from "#missions/upgrade/upgrade-plan-payload.js";
 import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
+import { resolveTemplateRootFromModule } from "../init/templates-root.js";
+import { NPM_PACKAGE_NAME } from "../version.gen.js";
 
 export type UpgradePlanMcpResult =
   | StableUpgradePlanPayloadV1
@@ -47,6 +49,8 @@ export function handleUpgradePlan(input: UpgradePlanMcpInput = {}): UpgradePlanM
   try {
     const result = runUpgradePlan({
       repoRoot,
+      templatesRoot: resolveTemplateRootFromModule(),
+      packageName: NPM_PACKAGE_NAME,
       msn: input.msn_id,
       dryRun: input.dry_run === true,
     });
@@ -64,6 +68,7 @@ export async function handleUpgradeApply(missionFilePath?: string): Promise<Upgr
     return await runUpgradeApply({
       repoRoot,
       mission: missionFilePath,
+      templatesRoot: resolveTemplateRootFromModule(),
     });
   } catch (e) {
     return mcpErrorBody(e);

@@ -11,7 +11,7 @@ cd "$ROOT"
 
 PKG_VERSION="$(node -p "require('./package.json').version")"
 
-GEN_FILE="packages/core/src/version.gen.ts"
+GEN_FILE="src/cli/version.gen.ts"
 if [[ ! -f "$GEN_FILE" ]]; then
   echo "assert-cli-version-parity: ${GEN_FILE} missing — run npm run gen:version" >&2
   exit 1

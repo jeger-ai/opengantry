@@ -3,7 +3,8 @@ import { logError, logInfo, logWarn, reportMerged, setExitCode } from "../output
 import { CLI_NAME } from "#core/constants.js";
 import { REL_UPGRADE_TMP, type UpgradePlanResult } from "#missions/upgrade/upgrade-plan-types.js";
 import { emitCliJson, reportCommandError, resolveRepoRootAtBoundary, runUserCommandAsync } from "../output/command-boundary.js";
-import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
+import { resolveTemplateRootFromModule } from "../init/templates-root.js";
+import { NPM_PACKAGE_NAME } from "../version.gen.js";
 import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
 import { toStableUpgradePlanPayloadV1 } from "#missions/upgrade/upgrade-plan-payload.js";
@@ -46,6 +47,7 @@ export async function runUpgrade(options: UpgradeOptions = {}): Promise<void> {
     const result = runUpgradePlan({
       repoRoot,
       templatesRoot,
+      packageName: NPM_PACKAGE_NAME,
       msn: options.msn,
       dryRun: options.dryRun,
     });

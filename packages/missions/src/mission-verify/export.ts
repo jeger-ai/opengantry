@@ -1,5 +1,4 @@
 import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "#core/constants.js";
-import { CLI_VERSION } from "#core/version.gen.js";
 import type { VerifyResultPayload } from "./payload.js";
 
 export type VerifyExportFormat = "json" | "sarif" | "junit";
@@ -38,13 +37,14 @@ function xmlEscape(value: string): string {
 export function buildVerifyExportDocument(
   payload: VerifyResultPayload,
   format: VerifyExportFormat,
+  cliVersion: string,
   options?: VerifyExportBuildOptions,
 ): string {
   switch (format) {
     case "json":
       return JSON.stringify(payload, null, 2);
     case "sarif":
-      return JSON.stringify(buildSarifDocument(payload, options?.isDirectory), null, 2);
+      return JSON.stringify(buildSarifDocument(payload, cliVersion, options?.isDirectory), null, 2);
     case "junit":
       return buildJUnitXml(payload, options?.junitCases);
     default: {
@@ -99,6 +99,7 @@ function sarifLocation(uri: string, region: Record<string, number> | undefined):
 
 export function buildSarifDocument(
   payload: VerifyResultPayload,
+  cliVersion: string,
   isDirectory?: (uri: string) => boolean,
 ): Record<string, unknown> {
   const results: Record<string, unknown>[] = [];
@@ -147,7 +148,7 @@ export function buildSarifDocument(
         tool: {
           driver: {
             name: CLI_NAME,
-            version: CLI_VERSION,
+            version: cliVersion,
             informationUri: OPENGANTRY_WEBSITE_URL,
           },
         },

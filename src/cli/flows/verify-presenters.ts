@@ -1,4 +1,5 @@
 import type { VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
+import { CLI_VERSION } from "../version.gen.js";
 import type { AudienceTaggedStep } from "#missions/mission-verify/hints.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { Manifest } from "#core/manifest.js";
@@ -165,7 +166,7 @@ function emitStructuredPayload(
 ): void {
   const format: VerifyExportFormat = resolveVerifyExportFormat(options) ?? "json";
   const root = extras?.root;
-  const doc = buildVerifyExportDocument(payload, format, {
+  const doc = buildVerifyExportDocument(payload, format, CLI_VERSION, {
     ...(root ? { isDirectory: (uri: string) => uriIsDirectory(uri, root) } : {}),
     junitCases: extras?.junitCases,
   });

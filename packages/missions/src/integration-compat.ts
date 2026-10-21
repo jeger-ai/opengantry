@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 export const INTEGRATION_IDE_KEYS = [
   "cursor",
@@ -46,18 +45,8 @@ export function isIntegrationIdeKey(key: string): key is IntegrationIdeKey {
   return (INTEGRATION_IDE_KEYS as readonly string[]).includes(key);
 }
 
-export function resolveTemplateRootFromModule(): string {
-  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  const root = path.resolve(moduleDir, "../../../../templates");
-  if (!fs.existsSync(root)) {
-    throw new Error(`missing templates directory at ${root}`);
-  }
-  return root;
-}
-
-export function loadIntegrationCompat(templatesRoot?: string): IntegrationCompatManifest {
-  const root = templatesRoot ?? resolveTemplateRootFromModule();
-  const compatPath = path.join(root, "integrations/compatibility.json");
+export function loadIntegrationCompat(templatesRoot: string): IntegrationCompatManifest {
+  const compatPath = path.join(templatesRoot, "integrations/compatibility.json");
   const raw = JSON.parse(fs.readFileSync(compatPath, "utf8")) as IntegrationCompatManifest;
   validateIntegrationCompat(raw);
   return raw;
