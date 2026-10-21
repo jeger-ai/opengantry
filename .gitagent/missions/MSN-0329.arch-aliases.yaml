@@ -1,0 +1,213 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0329]. Executor must not run until the [MSN-0329] legislation commit + pin.
+#
+# Legislated intent: review follow-up 1. gantry arch check resolves #pkg alias imports (package.json subpath imports
+# and tsconfig paths) through core's classifySpecifier, so the cross-package layer rules can fire. Tests prove the
+# dogfood law catches plane importing missions. One doc row fixed.
+#
+# Operator request (2026-10-21, "legislate all of them in that order"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0329.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0329
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/ARCHITECTURE.md, docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0329.arch-aliases.yaml,
+      .gitagent/runs/MSN-0329.json, packages/core/src/law.ts,
+      packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/contract/resolve-specifier.ts,
+      src/cli/tests/target-architecture.test.ts. Review follow-up 1 (alias-aware
+      arch check): resolve-specifier.ts (alias loader), target-architecture.ts
+      (classifySpecifier-based resolution, private resolver removed), one
+      comment in core's law.ts, two tests in target-architecture.test.ts, one
+      doc row in docs/ARCHITECTURE.md, CHANGELOG, executor log,
+      ARCH_BASELINE.json (missions raised by 29 lines and one export, Planner
+      raise). allow_dynamic_specifiers is true because changed files already
+      contain non-literal import sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Operator
+      request (2026-10-21): \"legislate all of them in that order\", after the
+      code-quality review of MSN-0306..0328. This is item 1. Choices: aliases
+      come from both tsconfig paths and package.json imports (this repository
+      uses only the latter; adopters may use either); the contract scan keeps
+      resolving tsconfig paths only, because letting it resolve #pkg imports
+      would change which mission imports count as scope escapes and needs its
+      own decision; the missions budget raise is the alias loader and is
+      accepted because the rules it unblocks were law without an evaluator. The
+      mission has no trace rows: its evidence is .gitagent/runs/MSN-0329.json
+      written by gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The iii integration example's lockfile is refreshed;
+      its offline validation passes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml is unchanged and forbidden;
+      its existing rules gain reach.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage package is forbidden in this mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner identity and stamp modules move unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. B2's layer rules now see alias imports. The missions
+      budget rises by the alias loader (29 lines, one export), a Planner raise
+      under B4, justified: the rule set the law carries was unenforced without
+      it."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: c6fb0cf48887
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0329.arch-aliases.yaml,
+      .gitagent/runs/MSN-0329.json, packages/core/src/law.ts,
+      packages/missions/src/arch/cage/target-architecture.ts,
+      packages/missions/src/contract/resolve-specifier.ts,
+      src/cli/tests/target-architecture.test.ts. Review follow-up 1 (alias-aware
+      arch check): resolve-specifier.ts (alias loader), target-architecture.ts
+      (classifySpecifier-based resolution, private resolver removed), one
+      comment in core's law.ts, two tests in target-architecture.test.ts, one
+      doc row in docs/ARCHITECTURE.md, CHANGELOG, executor log,
+      ARCH_BASELINE.json (missions raised by 29 lines and one export, Planner
+      raise). allow_dynamic_specifiers is true because changed files already
+      contain non-literal import sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. Mission scope composition is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract code moves unchanged; contract
+      hashing, scan and effective scope behave as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The notes state the YAML law files and dual read as
+      ADR-0047 and its migration specify; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept. Unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0041
+interrogation_sha256: 2ec8f8e84cd48fa7bfb676198dc170cf2567bab333a06a265a3ab519ad53b4ad
+declared_paths:
+  - .gitagent/missions/MSN-0329.arch-aliases.yaml
+  - .gitagent/runs/MSN-0329.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - packages/core/src/law.ts
+  - packages/missions/src/arch/cage/target-architecture.ts
+  - packages/missions/src/contract/resolve-specifier.ts
+  - src/cli/tests/target-architecture.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0329.arch-aliases.yaml
+    - .gitagent/runs/MSN-0329.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - packages/core/src/law.ts
+    - packages/missions/src/arch/cage/target-architecture.ts
+    - packages/missions/src/contract/resolve-specifier.ts
+    - src/cli/tests/target-architecture.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/cage/
+  allow_dynamic_specifiers: true
+contract_sha256: e3e5adb942e693eff67d5f19b85b44c3ae0a2259a49a7b5e1f24c430be9adf38
