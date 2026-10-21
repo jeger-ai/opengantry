@@ -1,0 +1,349 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0330]. Executor must not run until the [MSN-0330] legislation commit + pin.
+#
+# Legislated intent: review follow-up 2. Domain code returns its warnings (git-proof collector, ledger append outcome,
+# dependency check with ledger, init plan's missing template, fragment merges, upgrade results); diagnostics.ts,
+# CLI_DIAGNOSTICS and VerifyOptions.warn go. Fixes the double-printed advisory and the dropped ledger warning.
+#
+# Operator request (2026-10-21, "legislate all of them in that order"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0330.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0330
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept. The ledger is unchanged; a failed append is a result
+      the caller reports, and verify now reports the dependency check's.
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The iii integration example's lockfile is refreshed;
+      its offline validation passes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: Accept. Break-glass is unchanged; its ledger warning goes
+      through verify's warn sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0021
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp check is unchanged; its advisories
+      are collected and shown once.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Accept. Cross-repository dependency checks are unchanged; their
+      ledger warning goes through the caller's sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Accept. Reports stay digest-only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: 9643d0bc591b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0025. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0025 before
+      legislation proceeds.
+    operator_answer: Accept. The architecture rubric judge is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0025
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. One duplicated stderr line goes; the conformance
+      goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept. MCP: gxt_upgrade_apply's result gains warnings and
+      merged; nothing else changes."
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0330.warnings-as-results.yaml,
+      .gitagent/runs/MSN-0330.json, packages/missions/src/break-glass.ts,
+      packages/missions/src/deps/deps-resolve.ts,
+      packages/missions/src/diagnostics.ts,
+      packages/missions/src/file-merge-gxt.ts,
+      packages/missions/src/git/git-proof.ts,
+      packages/missions/src/init/init-plan.ts,
+      packages/missions/src/ledger/ledger-append.ts,
+      packages/missions/src/upgrade/upgrade-apply.ts,
+      packages/missions/src/upgrade/upgrade-plan.ts,
+      packages/missions/src/upgrade/upgrade-plan-types.ts,
+      packages/missions/src/verify/verify-engine.ts,
+      packages/missions/src/verify/verify-options.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/missions/src/verify/verify-phase-steps.ts,
+      src/cli/commands/deps.ts, src/cli/commands/init.ts,
+      src/cli/commands/policy.ts, src/cli/commands/upgrade.ts,
+      src/cli/flows/attestation-receipt.ts, src/cli/flows/attest-mission.ts,
+      src/cli/flows/receipt-attribution.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/init/init-tutorial.ts,
+      src/cli/kernel.ts, src/cli/mcp/mcp-check-signature.ts,
+      src/cli/mcp/mcp-org.ts, src/cli/mcp/mcp-upgrade.ts,
+      src/cli/output/cli-io.ts, src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts.
+      Review follow-up 2 (warnings as return values): git-proof, verify options
+      and phase steps, the ledger append, the dependency check wrapper and
+      phase, break-glass, init planning, the fragment merges, the upgrade plan
+      and apply engines and types, the verify engine's warning aggregation; the
+      CLI's upgrade, init, policy and deps commands, attest, verify-run, the
+      kernel, the MCP upgrade, check-signature and org handlers, the init
+      tutorial, the verify presenters, cli-io; a dead flow wrapper deleted;
+      tests; CHANGELOG; executor log; ARCH_BASELINE.json (command raised by the
+      moved printer, a Planner raise; missions and lib lowered).
+      allow_dynamic_specifiers is true because changed files already contain
+      non-literal import sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Operator
+      request (2026-10-21): \"legislate all of them in that order\"; item 2 of
+      the review. Choices: the git-proof collector is the one channel (a return
+      object would change assertPlannerMissionProof's signature for four callers
+      for no gain); ledger failures stay warnings, never command failures, as
+      before; the dependency phase's ledger warning joins the run's warnings
+      list (which already aggregates interrogation warnings) rather than a new
+      payload field; MCP check-signature keeps printing git-proof advisories to
+      stderr rather than changing its result body; the upgrade apply result
+      gains warnings and merged (additive). The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0330.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: Accept. Receipts are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0036
+  - finding_id: ce2a7262c19b
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0330.warnings-as-results.yaml,
+      .gitagent/runs/MSN-0330.json, packages/missions/src/break-glass.ts,
+      packages/missions/src/deps/deps-resolve.ts,
+      packages/missions/src/diagnostics.ts,
+      packages/missions/src/file-merge-gxt.ts,
+      packages/missions/src/git/git-proof.ts,
+      packages/missions/src/init/init-plan.ts,
+      packages/missions/src/ledger/ledger-append.ts,
+      packages/missions/src/upgrade/upgrade-apply.ts,
+      packages/missions/src/upgrade/upgrade-plan.ts,
+      packages/missions/src/upgrade/upgrade-plan-types.ts,
+      packages/missions/src/verify/verify-engine.ts,
+      packages/missions/src/verify/verify-options.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/missions/src/verify/verify-phase-steps.ts,
+      src/cli/commands/deps.ts, src/cli/commands/init.ts,
+      src/cli/commands/policy.ts, src/cli/commands/upgrade.ts,
+      src/cli/flows/attestation-receipt.ts, src/cli/flows/attest-mission.ts,
+      src/cli/flows/receipt-attribution.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/init/init-tutorial.ts,
+      src/cli/kernel.ts, src/cli/mcp/mcp-check-signature.ts,
+      src/cli/mcp/mcp-org.ts, src/cli/mcp/mcp-upgrade.ts,
+      src/cli/output/cli-io.ts, src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/upgrade-plan-payload.test.ts, src/cli/tests/upgrade.test.ts.
+      Review follow-up 2 (warnings as return values): git-proof, verify options
+      and phase steps, the ledger append, the dependency check wrapper and
+      phase, break-glass, init planning, the fragment merges, the upgrade plan
+      and apply engines and types, the verify engine's warning aggregation; the
+      CLI's upgrade, init, policy and deps commands, attest, verify-run, the
+      kernel, the MCP upgrade, check-signature and org handlers, the init
+      tutorial, the verify presenters, cli-io; a dead flow wrapper deleted;
+      tests; CHANGELOG; executor log; ARCH_BASELINE.json (command raised by the
+      moved printer, a Planner raise; missions and lib lowered).
+      allow_dynamic_specifiers is true because changed files already contain
+      non-literal import sites this mission does not touch.
+      TARGET_ARCHITECTURE.yaml, the cage package, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e2a17b81b981
+    kind: adr_conflict
+    question: Intent may relate to ADR-0035. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0035 before
+      legislation proceeds.
+    operator_answer: Accept. The performance judge is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0035
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The notes state the YAML law files and dual read as
+      ADR-0047 and its migration specify; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: afaa187a857f148b33e0ed79510f7155db99b82860633e60a7e2a28ca50d4d32
+declared_paths:
+  - .gitagent/missions/MSN-0330.warnings-as-results.yaml
+  - .gitagent/runs/MSN-0330.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - packages/missions/src/break-glass.ts
+  - packages/missions/src/deps/deps-resolve.ts
+  - packages/missions/src/diagnostics.ts
+  - packages/missions/src/file-merge-gxt.ts
+  - packages/missions/src/git/git-proof.ts
+  - packages/missions/src/init/init-plan.ts
+  - packages/missions/src/ledger/ledger-append.ts
+  - packages/missions/src/upgrade/upgrade-apply.ts
+  - packages/missions/src/upgrade/upgrade-plan-types.ts
+  - packages/missions/src/upgrade/upgrade-plan.ts
+  - packages/missions/src/verify/verify-engine.ts
+  - packages/missions/src/verify/verify-options.ts
+  - packages/missions/src/verify/verify-org-phases.ts
+  - packages/missions/src/verify/verify-phase-steps.ts
+  - src/cli/commands/deps.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/policy.ts
+  - src/cli/commands/upgrade.ts
+  - src/cli/flows/attest-mission.ts
+  - src/cli/flows/attestation-receipt.ts
+  - src/cli/flows/receipt-attribution.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/init/init-tutorial.ts
+  - src/cli/kernel.ts
+  - src/cli/mcp/mcp-check-signature.ts
+  - src/cli/mcp/mcp-org.ts
+  - src/cli/mcp/mcp-upgrade.ts
+  - src/cli/output/cli-io.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/ledger-verify.test.ts
+  - src/cli/tests/upgrade-plan-payload.test.ts
+  - src/cli/tests/upgrade.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0330.warnings-as-results.yaml
+    - .gitagent/runs/MSN-0330.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/deps/deps-resolve.ts
+    - packages/missions/src/diagnostics.ts
+    - packages/missions/src/file-merge-gxt.ts
+    - packages/missions/src/git/git-proof.ts
+    - packages/missions/src/init/init-plan.ts
+    - packages/missions/src/ledger/ledger-append.ts
+    - packages/missions/src/upgrade/upgrade-apply.ts
+    - packages/missions/src/upgrade/upgrade-plan-types.ts
+    - packages/missions/src/upgrade/upgrade-plan.ts
+    - packages/missions/src/verify/verify-engine.ts
+    - packages/missions/src/verify/verify-options.ts
+    - packages/missions/src/verify/verify-org-phases.ts
+    - packages/missions/src/verify/verify-phase-steps.ts
+    - src/cli/commands/deps.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/policy.ts
+    - src/cli/commands/upgrade.ts
+    - src/cli/flows/attest-mission.ts
+    - src/cli/flows/attestation-receipt.ts
+    - src/cli/flows/receipt-attribution.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/init/init-tutorial.ts
+    - src/cli/kernel.ts
+    - src/cli/mcp/mcp-check-signature.ts
+    - src/cli/mcp/mcp-org.ts
+    - src/cli/mcp/mcp-upgrade.ts
+    - src/cli/output/cli-io.ts
+    - src/cli/tests/deps-resolve.test.ts
+    - src/cli/tests/ledger-verify.test.ts
+    - src/cli/tests/upgrade-plan-payload.test.ts
+    - src/cli/tests/upgrade.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/cage/
+  allow_dynamic_specifiers: true
+contract_sha256: 4f88a47fe79d609ff1dfd87a3a6948be3b559152d2a2d267f355704a28d816ec
