@@ -14,6 +14,9 @@ bins:
   - name: opengantry-cage
     package: "@jeger-ai/opengantry"
     note: alias of gantry-cage
+  - name: gantry-verify
+    package: "@jeger-ai/opengantry and @jeger-ai/opengantry-verify"
+    note: gantry verify --contract with the contract as its argument
 entries:
   - name: arch
     since: commit 12461b8

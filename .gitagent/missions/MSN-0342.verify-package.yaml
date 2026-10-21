@@ -1,0 +1,248 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0342]. Executor must not run until the [MSN-0342] legislation commit + pin.
+#
+# Legislated intent: roadmap #9 part three and #2 for v4.0.0: the publishable slim @jeger-ai/opengantry-verify
+# package (gantry-verify bin, typed library API), published by npm-publish.yml (ADR-0051 follow-up C).
+#
+# Operator request (2026-10-21, "Approve the full chain"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0342.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0342
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept. The slim package carries sigstore as a runtime
+      dependency loaded only for keyless signatures; the declarations type the
+      bundle themselves so consumers never type-check sigstore.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 1a430bc5c69d
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/guides/verify-contract.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0342.verify-package.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0342.json,
+      .github/workflows/npm-publish.yml, package.json, package-lock.json,
+      packages/opengantry-verify/build.mjs,
+      packages/opengantry-verify/package.json,
+      packages/opengantry-verify/README.md,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/package.json, packages/verify/src/keyless.ts,
+      scripts/assert-docs-structure.mjs, src/cli/commands/verify-contract.ts,
+      src/cli/tests/npm-publish-if-new.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts, src/cli/verify-bin.ts,
+      src/cli/verify-lib.ts. New: src/cli/verify-bin.ts (gantry-verify),
+      src/cli/verify-lib.ts (library entry), packages/opengantry-verify
+      (package.json, build.mjs, README, tests). Changed:
+      commands/verify-contract.ts (option registration shared with the
+      standalone bin), packages/verify package name and keyless.ts (own
+      SigstoreBundle type), root package.json (bin, workspace, build:verify,
+      test:verify) and package-lock.json, npm-publish.yml (publish step), the
+      commands registry (bin), assert-docs-structure.mjs (README link check),
+      two tests; docs: DEVELOPMENT (package table, release with three packages,
+      placeholder bootstrap), the verify-contract guide, CHANGELOG, release
+      notes; ADR-0051 and ADR-0052 amended; ARCH_BASELINE.json raised for verify
+      and command."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. gantry verify output is unchanged (the option help text
+      is regrouped, the flags are the same); the new gantry-verify bin prints
+      exactly what gantry verify --contract prints; the conformance goldens are
+      unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: bd38b0d45a76
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/guides/verify-contract.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0342.verify-package.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0342.json,
+      .github/workflows/npm-publish.yml, package.json, package-lock.json,
+      packages/opengantry-verify/build.mjs,
+      packages/opengantry-verify/package.json,
+      packages/opengantry-verify/README.md,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/package.json, packages/verify/src/keyless.ts,
+      scripts/assert-docs-structure.mjs, src/cli/commands/verify-contract.ts,
+      src/cli/tests/npm-publish-if-new.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts, src/cli/verify-bin.ts,
+      src/cli/verify-lib.ts. New: src/cli/verify-bin.ts (gantry-verify),
+      src/cli/verify-lib.ts (library entry), packages/opengantry-verify
+      (package.json, build.mjs, README, tests). Changed:
+      commands/verify-contract.ts (option registration shared with the
+      standalone bin), packages/verify package name and keyless.ts (own
+      SigstoreBundle type), root package.json (bin, workspace, build:verify,
+      test:verify) and package-lock.json, npm-publish.yml (publish step), the
+      commands registry (bin), assert-docs-structure.mjs (README link check),
+      two tests; docs: DEVELOPMENT (package table, release with three packages,
+      placeholder bootstrap), the verify-contract guide, CHANGELOG, release
+      notes; ADR-0051 and ADR-0052 amended; ARCH_BASELINE.json raised for verify
+      and command."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, docs/guides/verify-contract.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0342.verify-package.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0342.json,
+      .github/workflows/npm-publish.yml, package.json, package-lock.json,
+      packages/opengantry-verify/build.mjs,
+      packages/opengantry-verify/package.json,
+      packages/opengantry-verify/README.md,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/package.json, packages/verify/src/keyless.ts,
+      scripts/assert-docs-structure.mjs, src/cli/commands/verify-contract.ts,
+      src/cli/tests/npm-publish-if-new.test.ts,
+      src/cli/tests/verify-standalone-sign.test.ts, src/cli/verify-bin.ts,
+      src/cli/verify-lib.ts. New: src/cli/verify-bin.ts (gantry-verify),
+      src/cli/verify-lib.ts (library entry), packages/opengantry-verify
+      (package.json, build.mjs, README, tests). Changed:
+      commands/verify-contract.ts (option registration shared with the
+      standalone bin), packages/verify package name and keyless.ts (own
+      SigstoreBundle type), root package.json (bin, workspace, build:verify,
+      test:verify) and package-lock.json, npm-publish.yml (publish step), the
+      commands registry (bin), assert-docs-structure.mjs (README link check),
+      two tests; docs: DEVELOPMENT (package table, release with three packages,
+      placeholder bootstrap), the verify-contract guide, CHANGELOG, release
+      notes; ADR-0051 and ADR-0052 amended; ARCH_BASELINE.json raised for verify
+      and command. Operator request (2026-10-21): the open roadmap items belong
+      in v4.0.0, chain approved in full; roadmap #2 is an npmjs.com setting for
+      the operator, the repository side is the new package publish step and the
+      documented placeholder bootstrap so 4.0.0 of the new package carries
+      provenance. Decisions: the bin takes the contract as a positional
+      argument; the library entry lives in src/cli like kernel.ts and is bundled
+      with shared chunks; declarations are copied from the package builds and
+      resolved through the package imports map; yaml is inlined with its ISC
+      license in a footer; commander and sigstore stay runtime dependencies; the
+      internal workspace is renamed like cage-runtime so the published name is
+      free. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0342.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: "Accept and close follow-up C: the slim package with a bin and
+      a library API bundled from the same sources like the slim cage, published
+      from v4.0.0."
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract cage is unchanged; every file this
+      mission touches is a root.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: 598d42e13b5c15edafc00cbffd55de802ba9e4ef009dab1e766bfc2374e56293
+declared_paths:
+  - .gitagent/missions/MSN-0342.verify-package.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0342.json
+  - .github/workflows/npm-publish.yml
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/guides/verify-contract.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/build.mjs
+  - packages/opengantry-verify/package.json
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - packages/verify/package.json
+  - packages/verify/src/keyless.ts
+  - scripts/assert-docs-structure.mjs
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/npm-publish-if-new.test.ts
+  - src/cli/tests/verify-standalone-sign.test.ts
+  - src/cli/verify-bin.ts
+  - src/cli/verify-lib.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0342.verify-package.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0342.json
+    - .github/workflows/npm-publish.yml
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/guides/verify-contract.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/opengantry-verify/README.md
+    - packages/opengantry-verify/build.mjs
+    - packages/opengantry-verify/package.json
+    - packages/opengantry-verify/tests/verify-package.test.mjs
+    - packages/verify/package.json
+    - packages/verify/src/keyless.ts
+    - scripts/assert-docs-structure.mjs
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/npm-publish-if-new.test.ts
+    - src/cli/tests/verify-standalone-sign.test.ts
+    - src/cli/verify-bin.ts
+    - src/cli/verify-lib.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 4b7eb9c72e134af01111fa4921d766f7b799b5ba875c1202693ff5d5035aad84

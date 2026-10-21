@@ -84,6 +84,13 @@ gantry verify --contract --base origin/main      # verify.yaml at the repository
 gantry verify --contract path/to/gate.json --base main
 ```
 
+Without the full CLI, the slim `@jeger-ai/opengantry-verify` package runs the same verify with the contract as its argument, and exports it as a library (`runVerifyContract`, `verifyResultSarif`, …, with type declarations):
+
+```bash
+npx @jeger-ai/opengantry-verify --base origin/main
+npx @jeger-ai/opengantry-verify path/to/gate.json --base main
+```
+
 | Option | What it does |
 |--------|--------------|
 | `--contract [file]` | The contract; default `verify.yaml` at the repository root |
@@ -135,7 +142,7 @@ In CI there is usually no signing key. `--sign keyless` signs with Sigstore inst
 ```yaml
 permissions: { contents: read, id-token: write }
 # ...
-- run: npx -y -p @jeger-ai/opengantry gantry verify --contract --base ${{ github.event.pull_request.base.sha }} --out verify.json --sign keyless
+- run: npx -y @jeger-ai/opengantry-verify --base ${{ github.event.pull_request.base.sha }} --out verify.json --sign keyless
 ```
 
 Check it anywhere with the workflow that must have signed it:
@@ -154,13 +161,13 @@ The log entry shows the repository and workflow that signed, never the change: t
   with: { fetch-depth: 0 }           # the base commit must be present
 - uses: actions/setup-node@v4
   with: { node-version: 24 }
-- run: npx -y -p @jeger-ai/opengantry gantry verify --contract --base ${{ github.event.pull_request.base.sha }}
+- run: npx -y @jeger-ai/opengantry-verify --base ${{ github.event.pull_request.base.sha }}
 ```
 
 To see the problems as code-scanning alerts on the pull request, write SARIF and upload it:
 
 ```yaml
-- run: npx -y -p @jeger-ai/opengantry gantry verify --contract --base ${{ github.event.pull_request.base.sha }} --format sarif > verify.sarif
+- run: npx -y @jeger-ai/opengantry-verify --base ${{ github.event.pull_request.base.sha }} --format sarif > verify.sarif
 - uses: github/codeql-action/upload-sarif@v3
   if: always()
   with: { sarif_file: verify.sarif }

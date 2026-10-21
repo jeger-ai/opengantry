@@ -1,4 +1,3 @@
-import type { Bundle } from "sigstore";
 import { GantryUserError } from "#core/user-error.js";
 import { canonicalReceiptUtf8 } from "#git/receipt-signing.js";
 import type { VerifyContractResult } from "./run.js";
@@ -12,17 +11,27 @@ import type { VerifyContractResult } from "./run.js";
 /** The OIDC issuer of GitHub Actions job tokens, the default `--certificate-oidc-issuer`. */
 export const GITHUB_ACTIONS_ISSUER = "https://token.actions.githubusercontent.com";
 
+/**
+ * A Sigstore bundle as JSON (v0.3: media type, verification material with the certificate and the transparency-log
+ * entries, the message signature). Typed by the fields verify reads, so the declarations do not pull in sigstore's.
+ */
+export interface SigstoreBundle {
+  mediaType: string;
+  verificationMaterial: { tlogEntries: { logIndex: string }[] } & Record<string, unknown>;
+  [field: string]: unknown;
+}
+
 export interface KeylessSignature {
   kind: "sigstore";
   payload_encoding: "canonical_json_utf8";
   /** Signing certificate, signature and transparency-log entry (Sigstore bundle v0.3). */
-  bundle: Bundle;
+  bundle: SigstoreBundle;
 }
 
 /** The part of `sigstore` verify uses; tests pass a stand-in. */
 export interface SigstoreApi {
-  sign(payload: Buffer): Promise<Bundle>;
-  verify(bundle: Bundle, payload: Buffer, options: Record<string, string>): Promise<{ identity?: { subjectAlternativeName?: string } }>;
+  sign(payload: Buffer): Promise<SigstoreBundle>;
+  verify(bundle: SigstoreBundle, payload: Buffer, options: Record<string, string>): Promise<{ identity?: { subjectAlternativeName?: string } }>;
 }
 
 export interface KeylessCheck {
@@ -32,7 +41,8 @@ export interface KeylessCheck {
 }
 
 async function loadSigstore(): Promise<SigstoreApi> {
-  return (await import("sigstore")) as SigstoreApi;
+  // The bundle sigstore returns and takes is the JSON shape SigstoreBundle names.
+  return (await import("sigstore")) as unknown as SigstoreApi;
 }
 
 function message(err: unknown): string {
@@ -64,7 +74,7 @@ export async function signVerifyResultKeyless(
     );
   }
   const sigstore = api ?? (await loadSigstore());
-  let bundle: Bundle;
+  let bundle: SigstoreBundle;
   try {
     bundle = await sigstore.sign(payloadOf(result));
   } catch (err) {
