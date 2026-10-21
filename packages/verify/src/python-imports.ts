@@ -17,7 +17,7 @@ export interface PythonImport {
 }
 
 /** Replace comments and string literals by spaces, keeping newlines so line numbers survive. */
-function blank(source: string): string {
+export function blankPython(source: string): string {
   let out = "";
   let i = 0;
   const n = source.length;
@@ -110,7 +110,7 @@ function parseStatement(stmt: string, line: number): PythonImport[] {
 /** Every import statement in a Python source file, in order. */
 export function extractPythonImports(source: string): PythonImport[] {
   const out: PythonImport[] = [];
-  for (const { line, text } of logicalLines(blank(source))) {
+  for (const { line, text } of logicalLines(blankPython(source))) {
     for (const stmt of text.split(";")) out.push(...parseStatement(stmt, line));
   }
   return out;

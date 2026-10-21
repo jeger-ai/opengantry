@@ -30,6 +30,7 @@ import { patternCoversPath } from "#core/path-glob.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
 import { diskSourceTree, evaluateImports, gitSourceTree, type ImportFindings } from "./imports.js";
 import type { KeylessSignature } from "./keyless.js";
+import { evaluateTestIntegrity, type TestFileCounts, type TestMetric } from "./test-integrity.js";
 
 export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
 export const VERIFY_BASELINE_SCHEMA = "opengantry.verify-baseline.v1" as const;
@@ -63,6 +64,8 @@ export interface VerifyContractResult {
   layers: ImportFindings["layers"];
   /** Files an imports or layers rule covers that verify cannot parse. */
   skipped: string[];
+  /** `tests` (ADR-0058): the changed test files' counts at base and head; null when the contract has no `tests`. */
+  tests: { allow_reduction: string[]; files: TestFileCounts[]; skipped: string[]; worse: TestMetric[] } | null;
   checks: VerifyCheckResult[];
   problems: string[];
   /** `--sign`: the receipt-signing envelope over the canonical result without this field; `--sign keyless`: a Sigstore bundle. */
@@ -217,6 +220,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   const size = judgeSize(p, changed, worktree, problems);
   const rules = judgeRules(p, changed, worktree, problems);
   const found = judgeImports(p, changed, worktree, problems);
+  const tests = judgeTests(p, changed, worktree, problems);
   const baseline = loadBaseline(p, opts);
   const checks = p.loaded.contract.checks.map((check) => {
     const run = runVerifyCheck(p.root, check, mode, baseline);
@@ -240,6 +244,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
     imports: found.imports,
     layers: found.layers,
     skipped: found.skipped,
+    tests,
     checks,
     problems,
   };
@@ -248,6 +253,15 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   const signature = signReceiptMessage(p.root, canonicalReceiptUtf8(JSON.parse(JSON.stringify(result)) as VerifyContractResult), "canonical_json_utf8");
   if (!signature) throw prep("GXT_VERIFY_SIGN_NO_KEY", "--sign needs a git signing key (git config user.signingkey, gpg.format ssh or gpg)");
   return { ...result, signature };
+}
+
+function judgeTests(p: Prepared, changed: string[], worktree: boolean, problems: string[]): VerifyContractResult["tests"] {
+  const rule = p.loaded.contract.tests;
+  if (!rule) return null;
+  const head = worktree ? diskSourceTree(p.root) : gitSourceTree(p.root, p.head);
+  const found = evaluateTestIntegrity(rule, changed, head, gitSourceTree(p.root, p.base));
+  problems.push(...found.problems);
+  return { allow_reduction: rule.allowReduction, files: found.files, skipped: found.skipped, worse: found.worse };
 }
 
 function judgeImports(p: Prepared, changed: string[], worktree: boolean, problems: string[]): ImportFindings {

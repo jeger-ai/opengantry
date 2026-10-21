@@ -55,6 +55,7 @@
     "imports": [],
     "layers": [],
     "skipped": [],
+    "tests": null,
     "checks": [
       {
         "name": "unit",

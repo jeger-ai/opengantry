@@ -69,9 +69,28 @@ python_paths: [src]                        # roots for absolute Python imports (
 - Files a rule covers in another language are listed under `skipped` in the result.
 - Limits: an `import … from` inside a JS/TS string is also counted; a Python import on the same line as `if …:` is not read; `tsconfig.json` paths are not read, so list your aliases.
 
+## Tests that judge the change
+
+An agent that cannot make a test pass can make it stop failing: delete it, add `.skip` or `.only`, assert `expect(true)`, or swallow the error in an empty `catch`. A `tests` section compares the changed test files at the base and at the head:
+
+```yaml
+tests:
+  files: ["**/*.test.ts", "tests/**/test_*.py"]
+  allow_reduction: ["src/legacy/**"]   # optional: test files this contract may thin out or delete
+```
+
+The run fails when, over all changed test files together:
+
+- the number of assertions goes down (`expect(…)`, `assert(…)`, `assert.equal(…)`; Python `assert`, `self.assert…(…)`, `pytest.raises(…)`), apart from files under `allow_reduction`;
+- skip or focus markers are added (`.skip`, `.only`, `.todo`, `xit`, `fdescribe`, `{ only: true }`; `@pytest.mark.skip`, `skipif`, `xfail`, `@unittest.skip`, `pytest.skip(…)`);
+- trivially true assertions are added (`expect(true)`, `assert.ok(true)`; `assert True`);
+- empty catch blocks are added (`catch {}`, `.catch(() => {})`; `except …: pass`).
+
+Totals are compared, so splitting, moving or renaming a test file passes. Comments are ignored. The result lists each changed test file's counts at the base and at the head; SARIF reports `verify/test-assertions`, `verify/test-markers`, `verify/test-tautologies` and `verify/test-empty-catches` on the file. JS/TS and Python files are read; other test files are listed as skipped. Custom assertion helpers (`assertThat`, `should`) are not counted, so the check raises the bar rather than replacing review. Coverage is not part of it: run your coverage tool as a check.
+
 ## A task contract answers to the repository
 
-A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules` and `forbidden_paths` are added to the task's. Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).
+A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules`, `forbidden_paths` and `tests` are added to the task's (a task's `allow_reduction` is the task approver's decision and shows in the result). Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).
 
 ## Who gets to change the contract
 
@@ -182,7 +201,7 @@ Make the job a required status check to block merges on it. Run [`gantry cage ch
 - Checks run whatever the contract says, with the permissions of the job. That is why the contract comes from the base commit or from outside the repository.
 - An unsigned result is bound to a commit and a contract by sha256 only: `--check-result` catches stale results, not forged ones. Sign it with `--sign` and check it with `--allowed-signers` (or `--sign keyless` and `--certificate-identity`) when the result travels between machines.
 - Checking a keyless signature fetches the Sigstore trust root; without network access it fails.
-- Import and layer checks read JS/TS and Python; other languages need regex `rules`.
+- Import, layer and test-integrity checks read JS/TS and Python; other languages need regex `rules`.
 
 When the allowed area itself should be approved by someone, and the work traced to evidence a reviewer can check, use [missions](../start/how-it-works.md).
 
