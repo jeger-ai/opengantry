@@ -3,6 +3,8 @@ import path from "node:path";
 import { pathMatchesGlobPattern } from "#core/path-glob.js";
 import { archLaw, countLayers, evaluateBudgets, evaluateDependencies, evaluateDuplicates, evaluateLayerImport, evaluateOwner, evaluatePatternRules, evaluateRegistry, layerForFile as coreLayerForFile, structuralLaw, type ArchLaw, type CountedFile, type HashedFile, type LayerCounts, type StructuralLaw } from "#core/law.js";
 import { normalizeRepoRelativePath, toPosixRel } from "#core/posix-path.js";
+import { classifySpecifier, type TsconfigPaths } from "#core/specifier.js";
+import { loadImportAliases } from "../../contract/resolve-specifier.js";
 import crypto from "node:crypto";
 import { gitRunOk } from "#git/git.js";
 import { getDomainAdapter } from "../../domains/index.js";
@@ -123,17 +125,13 @@ export function layerForFile(spec: TargetArchitectureSpec, repoRel: string): str
   return coreLayerForFile(archLawOfSpec(spec), repoRel);
 }
 
-function resolveImportPath(file: string, spec: string): string | null {
-  if (!spec.startsWith(".")) return null;
-  const dir = path.dirname(file);
-  let target = path.normalize(path.join(dir, spec));
-  const normalized = target.replace(/\\/g, "/");
-  if (normalized.endsWith(".js")) {
-    target = normalized.slice(0, -3) + ".ts";
-  } else if (!normalized.endsWith(".ts")) {
-    target = `${normalized}.ts`;
-  } else target = normalized;
-  return target.replace(/\\/g, "/");
+/** The source file an import names, for layer membership: relative and alias specifiers resolve, `.js` reads as `.ts`. */
+function resolveImportTarget(file: string, spec: string, aliases: TsconfigPaths | null): string | null {
+  const classified = classifySpecifier(spec, file, aliases);
+  if (classified.kind !== "relative" && classified.kind !== "alias") return null;
+  const target = classified.resolvedRepoRel;
+  if (target.endsWith(".js")) return `${target.slice(0, -3)}.ts`;
+  return target.endsWith(".ts") ? target : `${target}.ts`;
 }
 
 function parseOptionalCount(raw: unknown, where: string): number | undefined {
@@ -407,6 +405,7 @@ export function checkArchBoundariesForFiles(
   const arch = archLawOfSpec(spec);
   const structural = structuralLawOfSpec(spec, root);
   const inScan = (rel: string): boolean => fileMatchesScanRoots(rel, scanRoots);
+  const aliases = evaluateImports ? loadImportAliases(root) : null;
 
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(root, file);
@@ -429,7 +428,7 @@ export function checkArchBoundariesForFiles(
           line: imp.line,
           column: imp.column,
           bindings: extractBindingsFromSnippet(imp.snippet),
-          resolved: resolveImportPath(repoRel, imp.spec),
+          resolved: resolveImportTarget(repoRel, imp.spec, aliases),
         }),
       );
     }

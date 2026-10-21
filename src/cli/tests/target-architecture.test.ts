@@ -84,6 +84,44 @@ test("checkArchBoundariesForFiles: detects lib importing commander (dogfood layo
   assert.equal(result.violations[0]?.rule_id, "RULE-LIB-COMMANDER");
 });
 
+test("checkArchBoundariesForFiles: a package.json subpath import resolves to its layer; an unmapped alias stays other", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-arch-alias-"));
+  fs.writeFileSync(path.join(dest, "package.json"), JSON.stringify({ imports: { "#b/*": "./dist/packages/b/src/*" } }), "utf8");
+  const aFile = path.join(dest, "packages/a/src/x.ts");
+  fs.mkdirSync(path.dirname(aFile), { recursive: true });
+  fs.writeFileSync(aFile, `import { y } from "#b/y.js";\nimport { z } from "#nowhere/z.js";\nexport const x = [y, z];\n`, "utf8");
+  const spec = validateTargetArchitecture({
+    schema_version: "0.2.0",
+    scan_roots: ["packages/**"],
+    layers: [
+      { id: "a", globs: ["packages/a/src/**"] },
+      { id: "b", globs: ["packages/b/src/**"] },
+    ],
+    rules: [
+      { id: "RULE-A-NO-B", from_layer: "a", forbid_import_layer: "b" },
+      { id: "RULE-A-NO-OTHER", from_layer: "a", forbid_import_layer: "other" },
+    ],
+  });
+  const result = checkArchBoundariesForFiles(spec, dest, [aFile]);
+  assert.deepEqual(
+    result.violations.map((v) => [v.rule_id, v.module_specifier]),
+    [["RULE-A-NO-B", "#b/y.js"], ["RULE-A-NO-OTHER", "#nowhere/z.js"]],
+  );
+});
+
+test("arch check: the dogfood law sees this repository's #pkg imports (ADR-0054 direction)", () => {
+  const root = getRepoRoot();
+  const dogfood = loadTargetArchitecture(root);
+  const spec = { ...dogfood, rules: dogfood.rules.filter((r) => r.kind === "import") };
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-arch-dogfood-alias-"));
+  fs.copyFileSync(path.join(root, "package.json"), path.join(dest, "package.json"));
+  const planeFile = path.join(dest, "packages/plane/src/probe.ts");
+  fs.mkdirSync(path.dirname(planeFile), { recursive: true });
+  fs.writeFileSync(planeFile, `import { scopePathLaw } from "#missions/tmvc-path.js";\nexport const probe = scopePathLaw;\n`, "utf8");
+  const result = checkArchBoundariesForFiles(spec, dest, [planeFile]);
+  assert.deepEqual(result.violations.map((v) => v.rule_id), ["RULE-PLANE-NO-MISSIONS-LAYER"]);
+});
+
 test("loadTargetArchitecture: loads repository dogfood file", () => {
   const root = getRepoRoot();
   const spec = loadTargetArchitecture(root);

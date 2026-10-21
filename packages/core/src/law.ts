@@ -170,7 +170,7 @@ export interface LayerImport {
   line: number;
   column: number;
   bindings: string[];
-  /** Repo-relative resolution of a relative specifier, or null when not resolvable (bare, alias). */
+  /** Repo-relative resolution of a relative or alias specifier; null for a bare package or a builtin. */
   resolved: string | null;
 }
 

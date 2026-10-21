@@ -88,6 +88,7 @@ gantry doctor
   - `@clack/prompts` 1.8 (the interactive `gantry init` and `verify --fix` prompts) and zod 4.6.7.
   - For development: eslint 10.13, typescript-eslint 8.72 and `@types/node` 24.19.
   - The iii integration example's lockfile is refreshed: it pinned 3.8.3 and the vulnerable SDK.
+- **`gantry arch check` resolves alias imports.** A `forbid_import_layer` rule now also fires for an import written through a `tsconfig.json` path or a `package.json` subpath import (`#core/…`, `#missions/…`); before, only relative specifiers were resolved, so the cross-package rules of this repository's own law could not fire. An alias no mapping names still counts as a bare package (layer `other`).
 - **Also new:** `gantry ci msn-range|verify-missions|trusted-automation|upgrade-tmp`, `gantry migrate …`, one reporter for human, `--json`, SARIF and JUnit output with `--audience` as a presenter parameter, zod schemas with the YAML JSON-Schema files generated from them, a conformance suite the published commands must pass byte for byte.
 - **Unchanged:** the cage trust model and the diff check, the ledger, receipts, exit `3` and `4` for the cage, `verifyMission`.
 

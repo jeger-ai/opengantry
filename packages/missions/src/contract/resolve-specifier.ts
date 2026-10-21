@@ -29,3 +29,33 @@ export function loadTsconfigPaths(repoRoot: string, tsconfigRel = "tsconfig.json
   return { baseDirRel: baseDirRel === "." ? "" : baseDirRel, paths };
 }
 
+/**
+ * Subpath imports from `<repo>/package.json` `imports` as alias paths: `"#core/*": "./dist/packages/core/src/*"`
+ * becomes `#core/*` → `packages/core/src/*`, because the build mirrors each package's `src/` under `dist/`.
+ * Conditional targets (objects) are skipped. Null when the file or the field is absent.
+ */
+function loadPackageImportAliases(repoRoot: string): TsconfigPaths | null {
+  const abs = path.join(repoRoot, "package.json");
+  if (!fs.existsSync(abs)) return null;
+  let imports: Record<string, unknown> | undefined;
+  try {
+    imports = (JSON.parse(fs.readFileSync(abs, "utf8")) as { imports?: Record<string, unknown> }).imports;
+  } catch {
+    return null;
+  }
+  const paths: Record<string, string[]> = {};
+  for (const [pattern, target] of Object.entries(imports ?? {})) {
+    if (typeof target !== "string") continue;
+    paths[pattern] = [normalizeRepoRelativePath(target).replace(/^dist\//, "")];
+  }
+  return Object.keys(paths).length > 0 ? { baseDirRel: "", paths } : null;
+}
+
+/** Every alias an import may use: tsconfig `paths` first, then `package.json` subpath imports it does not name. */
+export function loadImportAliases(repoRoot: string): TsconfigPaths | null {
+  const ts = loadTsconfigPaths(repoRoot);
+  const pkg = loadPackageImportAliases(repoRoot);
+  if (!ts) return pkg;
+  if (!pkg) return ts;
+  return { baseDirRel: ts.baseDirRel, paths: { ...pkg.paths, ...ts.paths } };
+}
