@@ -1,16 +1,18 @@
 import { CLI_NAME } from "#core/constants.js";
-import { resolveAudience, type OutputAudience } from "#missions/audience-output.js";
+import {
+  audienceSectionTitle,
+  filterTaggedStepsForAudience,
+  formatAudienceNextStep,
+  resolveAudience,
+  type AudienceNextStep,
+  type OutputAudience,
+} from "#missions/audience-output.js";
 
 /** human: the report is the document. json, sarif, junit: stdout carries only the document. */
 export type ReporterMode = "human" | "json" | "sarif" | "junit";
 
 const STRUCTURED_MODES: readonly string[] = ["json", "sarif", "junit"];
 const GXT_ERROR_PREFIX_RE = /\[GXT_[A-Z0-9_]+\]/;
-
-/** The lines of a human report. */
-export type ReportLines = Pick<Reporter, "info" | "error" | "fixHint">;
-
-const DROPPED_LINES: ReportLines = { info: () => undefined, error: () => undefined, fixHint: () => undefined };
 
 /**
  * The output layer (ADR-0052 A7). One reporter per command run: the document goes to stdout, diagnostics to
@@ -27,7 +29,7 @@ export class Reporter {
   /** The reporter of a verify run: --format or --json pick the mode, --audience the presenter. */
   static forVerify(options: { json?: boolean; format?: string; audience?: OutputAudience }): Reporter {
     const mode = structuredMode(options.format) ?? (options.json === true ? "json" : "human");
-    return new Reporter(mode, options.audience ?? currentReporter().audience);
+    return new Reporter(mode, options.audience);
   }
 
   get structured(): boolean {
@@ -63,9 +65,13 @@ export class Reporter {
     this.info(`Fix: ${hint}`);
   }
 
-  /** The human report: this reporter in human mode; in a structured mode the document says it, so lines are dropped. */
-  humanReport(): ReportLines {
-    return this.structured ? DROPPED_LINES : this;
+  /** A next-steps block for this audience: the section title when the audience has one, else `fallback`. */
+  nextSteps(fallback: string, steps: readonly string[], tagged?: readonly AudienceNextStep[]): void {
+    const filtered = tagged && tagged.length > 0 ? filterTaggedStepsForAudience(this.audience, [...tagged]) : [...steps];
+    const lines = filtered.map((step) => formatAudienceNextStep(step, this.audience));
+    const section = audienceSectionTitle(this.audience);
+    this.info(`${section && lines.length > 0 ? section : fallback}:`);
+    for (const line of lines) this.info(`  ${line}`);
   }
 
   /** Red stderr for existing managed-asset conflicts (respects NO_COLOR). */

@@ -1,4 +1,5 @@
 import test from "node:test";
+import { Reporter } from "../output/reporter.js";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -121,6 +122,7 @@ test("recordVerifyRunBestEffort appends ring entry after human present failure",
       root: dest,
       manifest,
       mission,
+      reporter: new Reporter(),
       resolved: {
         missionRel,
         missionAbs: missionPath,

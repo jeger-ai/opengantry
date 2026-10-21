@@ -169,6 +169,10 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
 
 export function registerCageCommands(program: Command): void {
   configureCageCommand(program.command("cage"), { subcommands: true });
+  registerCageGuardCommand(program);
+}
+
+export function registerCageGuardCommand(program: Command): void {
   program
     .command("cage-guard", { hidden: true })
     .description("Internal: checks run by the cage session git hooks")

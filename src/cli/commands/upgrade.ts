@@ -3,7 +3,7 @@ import { logError, logInfo, logWarn, reportMerged, setExitCode } from "../output
 import { CLI_NAME } from "#core/constants.js";
 import { REL_UPGRADE_TMP, type UpgradePlanResult } from "#missions/upgrade/upgrade-plan-types.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
-import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
+import { emitCliJson, reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
@@ -18,7 +18,7 @@ export interface UpgradeOptions {
   cwd?: string;
 }
 
-export function runUpgrade(options: UpgradeOptions = {}): void {
+export async function runUpgrade(options: UpgradeOptions = {}): Promise<void> {
   const repoRoot = resolveRepoRootAtBoundary(options.cwd);
   if (repoRoot === null) return;
 
@@ -31,26 +31,19 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   }
 
   if (options.apply) {
-    void runUpgradeApply({
-      repoRoot,
-      mission: options.mission,
-      templatesRoot,
-    })
-      .then((result) => {
-        if (options.json) {
-          console.log(JSON.stringify(result, null, 2));
-        } else {
-          for (const w of result.warnings ?? []) logWarn(w);
-          if (result.status === "applied") logInfo(result.message);
-          reportMerged(result.merged);
-        }
-        if (result.status === "blocked") {
-          setExitCode(EXIT_CODE.USAGE);
-        }
-      })
-      .catch((e) => {
-        handleUpgradeError(e, options.json);
-      });
+    try {
+      const result = await runUpgradeApply({ repoRoot, mission: options.mission, templatesRoot });
+      if (options.json) {
+        emitCliJson(result);
+      } else {
+        for (const w of result.warnings ?? []) logWarn(w);
+        if (result.status === "applied") logInfo(result.message);
+        reportMerged(result.merged);
+      }
+      if (result.status === "blocked") setExitCode(EXIT_CODE.USAGE);
+    } catch (e) {
+      handleUpgradeError(e, options.json);
+    }
     return;
   }
 
@@ -63,7 +56,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
     });
 
     if (options.json) {
-      console.log(JSON.stringify(toStableUpgradePlanPayloadV1(result), null, 2));
+      emitCliJson(toStableUpgradePlanPayloadV1(result));
     } else if (result.status === "planned") {
       printUpgradePlanSummary(result, options.dryRun === true);
     }
@@ -91,7 +84,7 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
 function handleUpgradeError(e: unknown, json?: boolean): void {
   if (e instanceof GantryUserError) {
     const payload = { error: e.code, message: e.message, hint: e.hint };
-    if (json) console.log(JSON.stringify(payload, null, 2));
+    if (json) emitCliJson(payload);
     else logError(e.message + (e.hint ? `\nFix: ${e.hint}` : ""));
     setExitCode(EXIT_CODE.USAGE);
     return;
