@@ -26,6 +26,7 @@ export {
   type VerifyLayer,
 } from "#verify/contract.js";
 export type { VerifyMode, VerifyCheckResult, CheckRun } from "#verify/checks.js";
+export type { VerifyTestsRule, TestFileCounts, TestMetric } from "#verify/test-integrity.js";
 export { verifyResultSarif, verifyResultJUnit } from "#verify/export.js";
 export {
   signVerifyResultKeyless,

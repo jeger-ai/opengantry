@@ -1,5 +1,7 @@
 import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "#core/constants.js";
+import { patternCoversPath } from "#core/path-glob.js";
 import { UNCOMMITTED_PROBLEM, type VerifyContractResult } from "./run.js";
+import type { TestFileCounts, TestMetric } from "./test-integrity.js";
 
 /**
  * SARIF and JUnit projections (ADR-0052 A1: they belong to verify). The writers are shared with mission verify;
@@ -112,7 +114,28 @@ export function verifyResultSarif(result: VerifyContractResult, cliVersion: stri
     for (const v of l.violations) out.push(error("verify/layer", `layer "${l.name}": ${v.spec} -> ${v.target} (${v.layer})`, v.file, v.line));
   }
   for (const c of result.checks.filter((x) => !x.ok)) out.push(error("verify/check", `check "${c.name}": ${c.reason}`, contract));
+  for (const { metric, file } of worseningFiles(result)) {
+    out.push(error(`verify/test-${metric.replace("_", "-")}`, `${TEST_LABEL[metric]}: ${String(file.base[metric])} -> ${String(file.head[metric])}`, file.file));
+  }
   return sarifLog(cliVersion, out);
+}
+
+const TEST_LABEL: Record<TestMetric, string> = {
+  assertions: "fewer assertions",
+  markers: "skip or focus markers added",
+  tautologies: "trivially true assertions added",
+  empty_catches: "empty catch or except blocks added",
+};
+
+/** The files that moved a metric the run judged worse (an allow_reduction file never counts against assertions). */
+function worseningFiles(result: VerifyContractResult): { metric: TestMetric; file: TestFileCounts }[] {
+  const t = result.tests;
+  if (!t) return [];
+  return t.worse.flatMap((metric) =>
+    t.files
+      .filter((f) => (metric === "assertions" ? f.head[metric] < f.base[metric] && !t.allow_reduction.some((g) => patternCoversPath(g, f.file)) : f.head[metric] > f.base[metric]))
+      .map((file) => ({ metric, file })),
+  );
 }
 
 function failing<T>(items: readonly T[], line: (item: T) => string): string | undefined {
@@ -134,6 +157,10 @@ export function verifyResultJUnit(result: VerifyContractResult): string {
   for (const r of result.imports) cases.push({ name: `import: ${r.name}`, failure: failing(r.violations, (v) => `${v.file}:${String(v.line)} ${v.spec}`) });
   for (const l of result.layers) {
     cases.push({ name: `layer: ${l.name}`, failure: failing(l.violations, (v) => `${v.file}:${String(v.line)} ${v.spec} -> ${v.target} (${v.layer})`) });
+  }
+  if (result.tests) {
+    const worse = worseningFiles(result);
+    cases.push({ name: "tests", failure: failing(worse, ({ metric, file }) => `${file.file}: ${TEST_LABEL[metric]} (${String(file.base[metric])} -> ${String(file.head[metric])})`) });
   }
   for (const c of result.checks) cases.push({ name: `check: ${c.name}`, failure: c.ok ? undefined : c.reason, skipped: c.skipped !== undefined });
   return junitXml("gantry-verify-contract", "gantry.verify.contract", cases);

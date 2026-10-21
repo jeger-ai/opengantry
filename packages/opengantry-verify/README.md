@@ -1,6 +1,6 @@
 # @jeger-ai/opengantry-verify
 
-Decide whether a change may land, from one contract, in any git repository. No `.gitagent/` directory, no missions: a `verify.yaml` (or a COMMITLY `gate.json`) says where the change may write, how large it may be, which added lines, imports and layer edges are forbidden, and which commands must pass.
+Decide whether a change may land, from one contract, in any git repository. No `.gitagent/` directory, no missions: a `verify.yaml` (or a COMMITLY `gate.json`) says where the change may write, how large it may be, which added lines, imports and layer edges are forbidden, that the tests may not be weakened, and which commands must pass.
 
 ```bash
 npx @jeger-ai/opengantry-verify --base origin/main
@@ -16,6 +16,8 @@ rules:
   - { name: no console, files: ["src/**/*.ts"], forbid: "console\\.log\\(", why: use the logger }
 imports:
   - { name: services know no HTTP, files: ["src/billing/services/**"], forbid: [express] }
+tests:
+  files: ["**/*.test.ts"]   # fewer assertions, new .skip/.only, expect(true) or empty catch blocks fail
 checks:
   - { name: unit tests, run: npm test, expect: exit0 }
 ```

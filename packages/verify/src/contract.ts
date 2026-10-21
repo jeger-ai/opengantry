@@ -4,6 +4,7 @@ import path from "node:path";
 import { parseDocument } from "yaml";
 import { GantryUserError } from "#core/user-error.js";
 import { gitRun } from "#git/git.js";
+import type { VerifyTestsRule } from "./test-integrity.js";
 
 /**
  * The standalone verify contract (ADR-0051): what a change must satisfy, without `.gitagent/`. Humans write
@@ -66,6 +67,8 @@ export interface VerifyContract {
   pathAliases: Record<string, string>;
   /** Roots for absolute Python imports; default the repository root. */
   pythonPaths: string[];
+  /** `tests`: test integrity over these test files (ADR-0058); null when the contract has none. */
+  tests: VerifyTestsRule | null;
   /** Keys read but not applied (gate.json `cage_protect`, `part`); reported once on stderr. */
   ignored: string[];
 }
@@ -213,6 +216,14 @@ function parseLayers(raw: unknown): VerifyLayer[] {
   return layers;
 }
 
+function parseTests(raw: unknown): VerifyTestsRule | null {
+  if (raw === undefined || raw === null) return null;
+  const tests = section(raw, "tests", ["files", "allow_reduction"]);
+  const files = strList(tests.files, "tests.files");
+  if (!files || files.length === 0) throw contractError("tests.files must list at least one glob");
+  return { files, allowReduction: strList(tests.allow_reduction, "tests.allow_reduction") ?? [] };
+}
+
 function parseAliases(raw: unknown): Record<string, string> {
   if (raw === undefined || raw === null) return {};
   if (!isObj(raw)) throw contractError("path_aliases must be a mapping of specifier prefix to repository path");
@@ -242,7 +253,7 @@ export function parseVerifyYaml(text: string): VerifyContract {
     throw contractError(`invalid YAML: ${err instanceof Error ? err.message : String(err)}`);
   }
   if (!isObj(data)) throw contractError("expected a mapping");
-  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths"], "top level");
+  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths", "tests"], "top level");
   if (data.schema !== VERIFY_CONTRACT_SCHEMA) throw contractError(`schema must be ${VERIFY_CONTRACT_SCHEMA}`);
   const scope = section(data.scope, "scope", ["allowed_paths", "forbidden_paths"]);
   const size = section(data.size, "size", ["max_added_lines", "exclude"]);
@@ -259,6 +270,7 @@ export function parseVerifyYaml(text: string): VerifyContract {
     layers: parseLayers(data.layers),
     pathAliases: parseAliases(data.path_aliases),
     pythonPaths: (strList(data.python_paths, "python_paths") ?? ["."]).map((p, i) => relPath(p, `python_paths[${String(i)}]`)),
+    tests: parseTests(data.tests),
     ignored: [],
   };
 }
@@ -284,7 +296,17 @@ export function mergeRepositoryLaw(task: VerifyContract, repo: VerifyContract): 
     layers: [...layers.values()],
     pathAliases: { ...task.pathAliases, ...repo.pathAliases },
     pythonPaths: [...new Set([...repo.pythonPaths, ...task.pythonPaths])],
+    tests: mergeTests(repo.tests, task.tests),
   };
+}
+
+/**
+ * The repository's test files stay covered; a task contract adds files, and its `allow_reduction` (the task approver's
+ * explicit decision, reported in the result) joins the repository's.
+ */
+function mergeTests(repo: VerifyTestsRule | null, task: VerifyTestsRule | null): VerifyTestsRule | null {
+  if (!repo || !task) return repo ?? task;
+  return { files: [...new Set([...repo.files, ...task.files])], allowReduction: [...new Set([...repo.allowReduction, ...task.allowReduction])] };
 }
 
 const GATE_KEYS = ["schema", "base", "allowed_paths", "forbidden_paths", "max_added_lines", "size_exclude", "rules", "checks", "cage_protect"];
@@ -340,6 +362,7 @@ export function parseCommitlyGate(text: string): VerifyContract {
     layers: [],
     pathAliases: {},
     pythonPaths: ["."],
+    tests: null,
     ignored: [...ignored].sort(),
   };
 }
