@@ -1,6 +1,6 @@
 ---
 title: "Release notes"
-description: "What changed in each release of @jeger-ai/opengantry, @jeger-ai/opengantry-cage and @jeger-ai/opengantry-verify. Upgrade steps and behaviour changes are in CHANGELOG.md."
+description: "What changed in each release of @jeger-ai/opengantry and its slim cage and verify packages. Upgrade steps and behaviour changes are in CHANGELOG.md."
 section: reference
 order: 6
 ---
