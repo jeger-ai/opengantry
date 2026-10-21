@@ -145,6 +145,7 @@ export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresent
     reporter.humanReport().error(errorMessage(outcome.error));
     return { ok: false, exitCode: 2 };
   }
+  for (const w of outcome.warnings) reporter.warn(w);
   reporter.humanReport().info(`${CLI_NAME} verify: BREAK-GLASS — all gates skipped (audited on ${outcome.commitSha})`);
   reporter.humanReport().info(`  reason: ${outcome.reason}`);
   if (outcome.msnId) reporter.humanReport().info(`  msn_id: ${outcome.msnId}`);

@@ -56,7 +56,10 @@ async function confirmTeacherStamp(
     });
     if (p.isCancel(ready) || !ready) return false;
 
-    if (plannerMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID, warn: logWarn })) {
+    const warnings: string[] = [];
+    const stamped = plannerMissionStamped(repoRoot, missionAbsolute(repoRoot, missionPath), { msnId: TUTORIAL_MSN_ID, warnings });
+    for (const w of warnings) logWarn(w);
+    if (stamped) {
       p.log.success("Planner stamp OK — [MSN-9001] commit touches this mission file");
       return true;
     }

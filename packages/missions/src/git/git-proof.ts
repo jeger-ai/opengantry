@@ -94,10 +94,8 @@ export interface PlannerMissionProofOptions {
   scanDepth?: number;
   /** When set, must match parser-resolved mission MSN (avoids re-resolving identity from disk). */
   msnId?: string;
-  /** Collect non-fatal planner_signature warn-tier messages (verify). */
+  /** Collects the non-fatal advisories (an unsigned stamp under the warn tier, an arch override); the caller shows them. */
   warnings?: string[];
-  /** Where those messages are shown; absent: only collected. */
-  warn?: (message: string) => void;
 }
 
 function enforcePlannerStampSignature(
@@ -122,7 +120,6 @@ function enforcePlannerStampSignature(
   }
   const warning = `${CLI_NAME} verify: ${detail}`;
   options?.warnings?.push(warning);
-  options?.warn?.(warning);
 }
 
 /**
@@ -212,7 +209,6 @@ export function assertPlannerMissionProof(
   if (commitSubjectHasArchOverride(stamp.subject)) {
     const msg = archOverrideAdvisoryMessage(msnId, stamp.hash);
     options?.warnings?.push(msg);
-    options?.warn?.(msg);
   }
 
   return msnId;

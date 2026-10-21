@@ -1,5 +1,4 @@
 import test from "node:test";
-import { logWarn } from "../output/cli-io.js";
 import assert from "node:assert/strict";
 import { execSync, spawn } from "node:child_process";
 import fs from "node:fs";
@@ -21,9 +20,9 @@ import {
   readLedgerTip,
   verifyLedgerChain,
 } from "#plane/ledger-chain.js";
-import { appendLedgerEntry, appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
+import { appendLedgerEntry, appendLedgerIfEnabled, ledgerFailureLine } from "#missions/ledger/ledger-append.js";
 import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
-import { captureConsole, PLANNER_EMAIL } from "./test-shared.js";
+import { PLANNER_EMAIL } from "./test-shared.js";
 import { appendLedgerFixture, writeLedgerEnabledConfig } from "./test-org-fixtures.js";
 
 function freshRepo(): string {
@@ -218,11 +217,9 @@ test("ledger-append: failure under ledger.mode=local warns and verify still repo
   assert.ok(tip);
   const corrupt = commitBlobAsEntry(dest, tip, "not-json\n");
   assert.equal(casUpdateLedgerRef(dest, corrupt, tip), true);
-  const { result, output } = captureConsole(() =>
-    appendLedgerIfEnabled(dest, "receipt", "MSN-0101", { verify_status: "passed" }, logWarn),
-  );
-  assert.equal(result, null);
-  assert.match(output.stderr, /GXT_LEDGER_CHAIN_BROKEN/);
+  const result = appendLedgerIfEnabled(dest, "receipt", "MSN-0101", { verify_status: "passed" });
+  assert.equal(result.kind, "failed");
+  assert.match(ledgerFailureLine(result) ?? "", /GXT_LEDGER_CHAIN_BROKEN/);
   const report = verifyLedgerChain(dest);
   assert.equal(report.ok, false);
   assert.ok(report.errors.length > 0);

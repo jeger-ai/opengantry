@@ -140,11 +140,11 @@ function buildFullVerifySuccess(input: {
 async function evaluateOrgControlPhases(
   clock: VerifyPhaseClock,
   ctx: PhaseContext,
-): Promise<VerifyPhaseFailure | null> {
+): Promise<{ failure: VerifyPhaseFailure } | { warnings: string[] }> {
   const policy = await clock.timed("policy", () => evaluatePolicyPhase(ctx));
-  if (policy.kind === "fail") return policy.failure;
+  if (policy.kind === "fail") return { failure: policy.failure };
   const deps = await clock.timed("dependencies", () => evaluateDependenciesPhase(ctx));
-  return deps.kind === "fail" ? deps.failure : null;
+  return deps.kind === "fail" ? { failure: deps.failure } : { warnings: deps.warnings };
 }
 
 /**
@@ -198,9 +198,9 @@ export async function evaluateVerifyPhases(
     }),
   );
   if (interrogation.failure) return failWithTimings(interrogation.failure, clock);
-  const gitProofWarnings = [...proofWarnings, ...interrogation.warnings];
-  const orgFail = await evaluateOrgControlPhases(clock, phaseCtx);
-  if (orgFail) return failWithTimings(orgFail, clock);
+  const org = await evaluateOrgControlPhases(clock, phaseCtx);
+  if ("failure" in org) return failWithTimings(org.failure, clock);
+  const gitProofWarnings = [...proofWarnings, ...interrogation.warnings, ...org.warnings];
 
   // A mission without trace rows is a legislative stub only until its run record exists (RULES §3).
   if (options.prePush === true && isLegislativeStub(mission) && !missionHasRunRecord(root, proofMsnId)) {

@@ -1,4 +1,3 @@
-import { CLI_DIAGNOSTICS } from "../output/cli-io.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { getRepoRoot } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
@@ -48,10 +47,8 @@ export function handleUpgradePlan(input: UpgradePlanMcpInput = {}): UpgradePlanM
   try {
     const result = runUpgradePlan({
       repoRoot,
-      log: CLI_DIAGNOSTICS,
       msn: input.msn_id,
       dryRun: input.dry_run === true,
-      json: true,
     });
     const payload = toStableUpgradePlanPayloadV1(result);
     assertStableUpgradePlanPayloadV1(payload);
@@ -66,9 +63,7 @@ export async function handleUpgradeApply(missionFilePath?: string): Promise<Upgr
   try {
     return await runUpgradeApply({
       repoRoot,
-      log: CLI_DIAGNOSTICS,
       mission: missionFilePath,
-      json: true,
     });
   } catch (e) {
     return mcpErrorBody(e);

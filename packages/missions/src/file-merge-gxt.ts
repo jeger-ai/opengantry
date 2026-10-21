@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CLI_NAME } from "#core/constants.js";
-import { SILENT, type Diagnostics } from "./diagnostics.js";
+
+/** What a merge did to one file (the CLI reports an appended count). */
+export interface MergedFragment {
+  file: string;
+  appended: number;
+}
 
 function parseFragmentLines(fragmentPath: string): string[] {
   return fs
@@ -16,41 +20,39 @@ export function mergeGxtFragment(
   targetFilename: string,
   templatePath: string,
   headerComment: string,
-  log: Diagnostics = SILENT,
-): void {
-  if (!fs.existsSync(templatePath)) return;
+): MergedFragment {
+  const none = { file: targetFilename, appended: 0 };
+  if (!fs.existsSync(templatePath)) return none;
 
   const fragmentLines = parseFragmentLines(templatePath);
-  if (fragmentLines.length === 0) return;
+  if (fragmentLines.length === 0) return none;
 
   const targetPath = path.join(repoRoot, targetFilename);
   const existing = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, "utf8") : "";
   const existingLines = existing.split(/\r?\n/).map((l) => l.trim());
   const missingLines = fragmentLines.filter((line) => !existingLines.includes(line));
-  if (missingLines.length === 0) return;
+  if (missingLines.length === 0) return none;
 
   const prefix = existing.length > 0 && !existing.endsWith("\n") ? "\n" : existing.length > 0 ? "" : "";
   const block = `${prefix}\n${headerComment}\n${missingLines.join("\n")}\n`;
   fs.writeFileSync(targetPath, existing + block, "utf8");
-  log.info(`${CLI_NAME}: appended ${missingLines.length} line(s) to ${targetFilename}`);
+  return { file: targetFilename, appended: missingLines.length };
 }
 
-export function mergeGitignoreFromTemplate(repoRoot: string, templatesRoot: string, log: Diagnostics = SILENT): void {
-  mergeGxtFragment(
+export function mergeGitignoreFromTemplate(repoRoot: string, templatesRoot: string): MergedFragment {
+  return mergeGxtFragment(
     repoRoot,
     ".gitignore",
     path.join(templatesRoot, ".gitignore.gxt"),
     "# OpenGantry (gantry init) — local forensic paths",
-    log,
   );
 }
 
-export function mergePrettierignoreFromTemplate(repoRoot: string, templatesRoot: string, log: Diagnostics = SILENT): void {
-  mergeGxtFragment(
+export function mergePrettierignoreFromTemplate(repoRoot: string, templatesRoot: string): MergedFragment {
+  return mergeGxtFragment(
     repoRoot,
     ".prettierignore",
     path.join(templatesRoot, ".prettierignore.gxt"),
     "# OpenGantry (gantry init) — keep EXECUTOR_LOG line numbers stable for trace mapping",
-    log,
   );
 }

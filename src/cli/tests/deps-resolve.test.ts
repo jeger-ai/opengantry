@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { getRepoRoot, gitRun } from "#git/git.js";
-import { checkMissionDependencies } from "#missions/deps/deps-resolve.js";
+import { checkAndRecordMissionDependencies } from "#missions/deps/deps-resolve.js";
 import { checkMissionDependency } from "#plane/deps-resolve.js";
 import { depsRefForRepo } from "#plane/deps-slug.js";
 import { buildLedgerEntry, genesisPrevHash } from "#plane/ledger-entry.js";
@@ -243,7 +243,7 @@ test("deps-resolve: checkMissionDependencies aggregates ok results", () => {
   isolateOrgAttributionEnv(() => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-agg-"));
     const fx = writeTwoRepoDependencyFixture(tmp);
-    const results = checkMissionDependencies(fx.consumer, {
+    const { results } = checkAndRecordMissionDependencies(fx.consumer, {
       msnId: "MSN-0204",
       skillKey: "gantry",
       gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },

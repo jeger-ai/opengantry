@@ -19,19 +19,28 @@ export function appendLedgerEntry<K extends LedgerEntryKind>(
   return appendWithSign(root, { ...input, sign: ledgerSignRequested(root, input.sign) });
 }
 
+/** What an append did: the entry, nothing because the ledger is off, or why it failed (the caller reports it). */
+export type LedgerAppendOutcome<K extends LedgerEntryKind> =
+  | { kind: "appended"; entry: Extract<LedgerEntry, { entry_kind: K }> }
+  | { kind: "disabled" }
+  | { kind: "failed"; code: string; message: string };
+
 export function appendLedgerIfEnabled<K extends LedgerEntryKind>(
   root: string,
   kind: K,
   msnId: string,
   payload: LedgerPayloadFor<K>,
-  warn?: (message: string) => void,
-): Extract<LedgerEntry, { entry_kind: K }> | null {
-  if (resolveLedgerMode(loadGxtConfig(root)) !== "local") return null;
+): LedgerAppendOutcome<K> {
+  if (resolveLedgerMode(loadGxtConfig(root)) !== "local") return { kind: "disabled" };
   try {
-    return appendLedgerEntry(root, { kind, msn_id: msnId, payload });
+    return { kind: "appended", entry: appendLedgerEntry(root, { kind, msn_id: msnId, payload }) };
   } catch (e) {
     const code = isGantryUserError(e) ? e.gxtCode : GXT_ERROR.LEDGER_CHAIN_BROKEN;
-    warn?.(`ledger append failed (${code}): ${errorMessage(e)}`);
-    return null;
+    return { kind: "failed", code, message: errorMessage(e) };
   }
+}
+
+/** The warning line for a failed append; null otherwise. */
+export function ledgerFailureLine(outcome: LedgerAppendOutcome<LedgerEntryKind>): string | null {
+  return outcome.kind === "failed" ? `ledger append failed (${outcome.code}): ${outcome.message}` : null;
 }

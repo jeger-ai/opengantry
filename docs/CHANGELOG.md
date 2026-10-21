@@ -89,6 +89,11 @@ gantry doctor
   - For development: eslint 10.13, typescript-eslint 8.72 and `@types/node` 24.19.
   - The iii integration example's lockfile is refreshed: it pinned 3.8.3 and the vulnerable SDK.
 - **`gantry arch check` resolves alias imports.** A `forbid_import_layer` rule now also fires for an import written through a `tsconfig.json` path or a `package.json` subpath import (`#core/…`, `#missions/…`); before, only relative specifiers were resolved, so the cross-package rules of this repository's own law could not fire. An alias no mapping names still counts as a bare package (layer `other`).
+- **Domain code returns its warnings.** The `warn` callback and the `Diagnostics` sink that step 5 of ADR-0054 introduced are gone; what they carried is now data on the result: git-proof advisories in `warnings[]`, a ledger append as `{kind: appended|disabled|failed}`, the dependency check's ledger outcome beside its results, a missing init template on the plan, the lines a `.gitignore`/`.prettierignore` merge appended as `merged`, and the upgrade plan summary printed by the CLI from the result. Visible effects:
+  - **Fix:** a git-proof advisory (an unsigned Planner stamp under the warn tier, an arch override) was printed twice by human `gantry verify`; it is printed once.
+  - **Fix:** a failed ledger append of the dependency check during `gantry verify` was dropped; it is now reported with the run's other warnings.
+  - `gantry upgrade --apply --json` and the MCP `gxt_upgrade_apply` result carry `warnings` and `merged`; `gantry upgrade --json` is unchanged (its stable payload projects fields by name).
+  - Kernel: `VerifyOptions.warn` is gone; `verifyMission` and `buildVerifyResultPayload` return the warnings on the payload as before.
 - **Also new:** `gantry ci msn-range|verify-missions|trusted-automation|upgrade-tmp`, `gantry migrate …`, one reporter for human, `--json`, SARIF and JUnit output with `--audience` as a presenter parameter, zod schemas with the YAML JSON-Schema files generated from them, a conformance suite the published commands must pass byte for byte.
 - **Unchanged:** the cage trust model and the diff check, the ledger, receipts, exit `3` and `4` for the cage, `verifyMission`.
 

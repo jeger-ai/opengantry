@@ -6,8 +6,6 @@ import type { GateExecAdapter } from "../gate-adapters/gate-adapter-types.js";
 export type VerifyMode = "normal" | "pre_push" | "break_glass" | "fix" | "json";
 
 export interface VerifyOptions {
-  /** Where verify's diagnostics go (git-proof advisories, a failed ledger append); the CLI passes its reporter's warn. */
-  warn?: (message: string) => void;
   mission?: string;
   executorLog?: string;
   cwd?: string;
