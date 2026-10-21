@@ -1,12 +1,12 @@
 {
   "schema": "opengantry.arch-baseline.v1",
-  "commit": "6c874242aa2ec10d22291a174bc50827ddbb26f8",
+  "commit": "e2d6d87dd1be5e7897fb993c57cfab659e89e474",
   "file_ceiling_lines": 800,
   "layers": {
     "core": {
-      "files": 28,
-      "lines": 2535,
-      "exports": 241
+      "files": 29,
+      "lines": 2675,
+      "exports": 246
     },
     "git": {
       "files": 5,
@@ -30,7 +30,7 @@
     },
     "missions": {
       "files": 135,
-      "lines": 16378,
+      "lines": 16423,
       "exports": 566
     },
     "command": {
