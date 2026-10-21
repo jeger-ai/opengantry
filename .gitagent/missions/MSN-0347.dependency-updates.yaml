@@ -1,0 +1,189 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0347]. Executor must not run until the [MSN-0347] legislation commit + pin.
+#
+# Legislated intent: issue #193 for v4.0.0 (ADR-0057): npm dependency bumps by a trusted bot pass the mission
+# checks under the trusted-automation kind dependency_update; anything that is more than a bump does not.
+#
+# Operator request (2026-10-21, "Full chain like before"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0347.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0347
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The plane ingestion contract is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 498986d5d743
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/enforcement-boundary.md, docs/reference/release-notes.md,
+      docs/SECURITY.md, EXECUTOR_LOG.md, .gitagent/config.yaml,
+      .gitagent/missions/MSN-0347.dependency-updates.yaml,
+      .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md,
+      .gitagent/runs/MSN-0347.json, packages/core/src/dependency-update.ts,
+      packages/core/src/trusted-automation.ts,
+      packages/core/tests/dependency-update.test.ts,
+      packages/core/tests/trusted-automation.test.ts,
+      packages/missions/src/trusted-automation.ts,
+      src/cli/tests/trusted-automation-deps.test.ts,
+      templates/.gitagent/config.yaml. New:
+      packages/core/src/dependency-update.ts (dependencyFileKind,
+      manifestUpdateProblem, lockfileUpdateProblem) with tests,
+      src/cli/tests/trusted-automation-deps.test.ts, ADR-0057. Changed: core
+      trusted-automation.ts (kind dependency_update, cap 200,
+      allowed_registries, lockfile lines not counted), missions
+      trusted-automation.ts (the structural judge reads every changed dependency
+      file and lockfile), the core test fixture, both config.yaml
+      (dependency-bumps rule), docs (enforcement boundary table and YAML
+      example, SECURITY), CHANGELOG, release notes, ARCH_BASELINE.json raised
+      for core and missions."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4d794fbc2184
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/enforcement-boundary.md, docs/reference/release-notes.md,
+      docs/SECURITY.md, EXECUTOR_LOG.md, .gitagent/config.yaml,
+      .gitagent/missions/MSN-0347.dependency-updates.yaml,
+      .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md,
+      .gitagent/runs/MSN-0347.json, packages/core/src/dependency-update.ts,
+      packages/core/src/trusted-automation.ts,
+      packages/core/tests/dependency-update.test.ts,
+      packages/core/tests/trusted-automation.test.ts,
+      packages/missions/src/trusted-automation.ts,
+      src/cli/tests/trusted-automation-deps.test.ts,
+      templates/.gitagent/config.yaml. New:
+      packages/core/src/dependency-update.ts (dependencyFileKind,
+      manifestUpdateProblem, lockfileUpdateProblem) with tests,
+      src/cli/tests/trusted-automation-deps.test.ts, ADR-0057. Changed: core
+      trusted-automation.ts (kind dependency_update, cap 200,
+      allowed_registries, lockfile lines not counted), missions
+      trusted-automation.ts (the structural judge reads every changed dependency
+      file and lockfile), the core test fixture, both config.yaml
+      (dependency-bumps rule), docs (enforcement boundary table and YAML
+      example, SECURITY), CHANGELOG, release notes, ARCH_BASELINE.json raised
+      for core and missions."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 70deb91aa81f
+    kind: adr_conflict
+    question: Intent may relate to ADR-0028. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0028 before
+      legislation proceeds.
+    operator_answer: "Accept the record, reject applicability going forward:
+      defensive profiles are parked (ADR-0052 A10); trusted automation is not a
+      defensive profile."
+    adr_refs:
+      - ADR-0052
+      - ADR-0028
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Cross-repository dependency checks
+      (depends_on) are a different feature from npm dependency bumps.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Existing outputs are unchanged; a dependency_update
+      verdict uses the existing TRUSTED-AUTOMATION-OK line; the conformance
+      goldens are unchanged (init writes the config template, which golden files
+      do not hash).
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: Accept; this mission legislates ADR-0057 and implements it.
+    adr_refs:
+      - ADR-0052
+      - ADR-0057
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. config.yaml stays YAML and gains one rule in the
+      template; allowed_registries is an optional key of a rule.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 9a13287a3b9cfc56d8769d994159eb374a3f13fe44be4dcadee141d4a732f9b6
+declared_paths:
+  - .gitagent/config.yaml
+  - .gitagent/missions/MSN-0347.dependency-updates.yaml
+  - .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md
+  - .gitagent/runs/MSN-0347.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/SECURITY.md
+  - docs/concepts/enforcement-boundary.md
+  - docs/reference/release-notes.md
+  - packages/core/src/dependency-update.ts
+  - packages/core/src/trusted-automation.ts
+  - packages/core/tests/dependency-update.test.ts
+  - packages/core/tests/trusted-automation.test.ts
+  - packages/missions/src/trusted-automation.ts
+  - src/cli/tests/trusted-automation-deps.test.ts
+  - templates/.gitagent/config.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/config.yaml
+    - .gitagent/missions/MSN-0347.dependency-updates.yaml
+    - .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md
+    - .gitagent/runs/MSN-0347.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/SECURITY.md
+    - docs/concepts/enforcement-boundary.md
+    - docs/reference/release-notes.md
+    - packages/core/src/dependency-update.ts
+    - packages/core/src/trusted-automation.ts
+    - packages/core/tests/dependency-update.test.ts
+    - packages/core/tests/trusted-automation.test.ts
+    - packages/missions/src/trusted-automation.ts
+    - src/cli/tests/trusted-automation-deps.test.ts
+    - templates/.gitagent/config.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 6e690e6735d8ae53da3771dba0a1fdaa22384ce08bb03fa0d4224630ce04b11f
