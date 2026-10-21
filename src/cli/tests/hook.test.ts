@@ -72,6 +72,20 @@ test("pushRangesFromRefLines: a new ref from the remote's main starts at that me
   assert.deepEqual(pushRangesFromRefLines(dir, [fresh], "upstream"), [{ base: sha(dir, "main"), head }]);
 });
 
+test("pushRangesFromRefLines: an update after merging the remote's main starts at that main, not the old remote sha", () => {
+  const dir = tempRepo();
+  const run = (cmd: string) => execSync(cmd, { cwd: dir, stdio: "pipe" });
+  const pushed = sha(dir, "HEAD");
+  run("git checkout -q main");
+  fs.writeFileSync(path.join(dir, "merged.txt"), "merged on main\n");
+  run("git add merged.txt && git commit -q -m merged");
+  run(`git update-ref refs/remotes/origin/main ${sha(dir, "HEAD")}`);
+  run("git checkout -q feature/x && git merge -q --no-edit refs/remotes/origin/main");
+  const head = sha(dir, "HEAD");
+  const upd = { localRef: "refs/heads/feature/x", localSha: head, remoteRef: "refs/heads/feature/x", remoteSha: pushed };
+  assert.deepEqual(pushRangesFromRefLines(dir, [upd], "origin"), [{ base: sha(dir, "refs/remotes/origin/main"), head }]);
+});
+
 test("gantry hook pre-push: a ref deletion exits 0 without verifying; a range without missions passes", () => {
   const dir = tempRepo();
   const head = sha(dir, "HEAD");
