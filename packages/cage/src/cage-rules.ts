@@ -92,8 +92,8 @@ const DEPENDENCY_MANIFEST_NAMES = ["package.json", "pyproject.toml", "Pipfile", 
 const anywhere = (names: readonly string[]): string[] => names.map((n) => `**/${n}`);
 
 /**
- * The built-in rules that are not path targets: secrets and lockfiles anywhere in the tree, and under a dependency
- * freeze the lockfiles again as revert plus the manifests (ADR-0048 decision 9). Manifests under a `vendor/` folder
+ * The built-in rules that are not path targets: secrets and lockfiles anywhere in the tree; under a dependency
+ * freeze the lockfiles revert instead of report and the manifests join them (ADR-0048 decision 9). Manifests under a `vendor/` folder
  * are install output (`composer install`, `cargo vendor` write one per package), so the freeze leaves them alone.
  */
 export function cageFloorRules(dependencies: CageRuleMode): PathLawRule[] {
@@ -105,9 +105,9 @@ export function cageFloorRules(dependencies: CageRuleMode): PathLawRule[] {
     effect: effectOf(mode),
     overridable: !NON_OVERRIDABLE_RULES.has(id),
   });
-  const floor = [rule("secrets", ["**/.env", "**/.env.*"], "revert", ["**/.env.example"]), rule("lockfile", anywhere(LOCKFILE_NAMES), "report")];
+  const floor = [rule("secrets", ["**/.env", "**/.env.*"], "revert", ["**/.env.example"]), rule("lockfile", anywhere(LOCKFILE_NAMES), dependencies)];
   if (dependencies !== "revert") return floor;
-  return [...floor, rule("lockfile", anywhere(LOCKFILE_NAMES), "revert"), rule("dependency_manifest", anywhere(DEPENDENCY_MANIFEST_NAMES), "revert", ["**/vendor/**"])];
+  return [...floor, rule("dependency_manifest", anywhere(DEPENDENCY_MANIFEST_NAMES), "revert", ["**/vendor/**"])];
 }
 
 const effectOf = (mode: CageRuleMode): PathEffect => (mode === "revert" ? "deny" : "report");
@@ -159,6 +159,7 @@ export interface CagePlan {
 /** How one path is protected after overrides; null when no rule matches. */
 export interface CagePathRule {
   rule: CageRuleId;
+  source: CageRuleSource;
   mode: CageRuleMode;
   overridden: boolean;
 }
@@ -167,7 +168,7 @@ export interface CagePathRule {
  * The plan as a path law, in today's precedence: path targets inside the root (CI, git control, `.cage.yaml`, manifest
  * zones, `.cage.yaml` paths), the floor rules, then `.cage.yaml` globs; equal effects keep the earlier rule. Targets
  * outside the root (a linked worktree's git dir) stay capture targets the snapshot classifies itself. A scope list is
- * an area; the git dir and paths outside the root are never out of scope (they are git_control's).
+ * an area; rules come before areas, so the git dir is git_control's even outside the scope.
  */
 export function cagePlanLaw(plan: Omit<CagePlan, "law">): PathLaw {
   const targets = plan.targets.flatMap((t): PathLawRule[] => {
@@ -179,13 +180,8 @@ export function cagePlanLaw(plan: Omit<CagePlan, "law">): PathLaw {
   const lists = plan.scope ? [plan.scope.config, plan.scope.flag].filter((l): l is string[] => l !== null) : [];
   return pathLaw({
     rules: [...targets, ...cageFloorRules(plan.dependencies), ...globs],
-    areas: lists.map((l) => ({ id: "out_of_scope", source: cageRuleSource("out_of_scope"), patterns: [...l, ".git", ".."], overridable: true })),
+    areas: lists.map((l) => ({ id: "out_of_scope", source: cageRuleSource("out_of_scope"), patterns: [...l], overridable: true })),
   });
-}
-
-/** Whether a root-relative path lies in the allowed area; always true without a scope. */
-export function inCageScope(plan: Pick<CagePlan, "law">, rel: string): boolean {
-  return judgePath({ ...plan.law, rules: [] }, rel) === null;
 }
 
 function rootJoin(root: string, posixRel: string): string {
@@ -262,7 +258,7 @@ function targetRel(plan: Pick<CagePlan, "root">, t: CageTarget): string | null {
 export function classifyCagePath(plan: Pick<CagePlan, "law" | "overrides">, rel: string, opts: { overrides?: boolean } = {}): CagePathRule | null {
   const judged = judgePath(plan.law, rel, opts.overrides === false ? [] : plan.overrides);
   if (!judged) return null;
-  return { rule: judged.rule as CageRuleId, mode: judged.effect === "deny" ? "revert" : "report", overridden: judged.overridden };
+  return { rule: judged.rule as CageRuleId, source: judged.source as CageRuleSource, mode: judged.effect === "deny" ? "revert" : "report", overridden: judged.overridden };
 }
 
 function overrideError(message: string): GantryUserError {
@@ -299,7 +295,7 @@ function validateOverrides(plan: CagePlan, raw: readonly string[]): string[] {
 function assertNoBuiltinDowngrade(plan: CagePlan, value: string): void {
   const hit = classifyCagePath(plan, value, { overrides: false });
   // out_of_scope stays revert whatever a report entry says (revert beats report), so it is no downgrade.
-  if (hit && hit.mode === "revert" && hit.rule !== "out_of_scope" && cageRuleSource(hit.rule) === "builtin") {
+  if (hit && hit.mode === "revert" && hit.rule !== "out_of_scope" && hit.source === "builtin") {
     throw new GantryUserError(
       "GXT_CAGE_CONFIG_INVALID",
       `cage: ${CAGE_CONFIG_FILE}: mode: report on ${value} would weaken the built-in ${hit.rule} rule`,

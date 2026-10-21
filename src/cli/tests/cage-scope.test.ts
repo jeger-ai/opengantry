@@ -8,7 +8,7 @@ import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { recoverCageJournal, resolveCageJournalDir } from "#cage/cage-journal.js";
 import { runCage } from "#cage/cage-run.js";
-import { buildCagePlan, classifyCagePath, inCageScope } from "#cage/cage-rules.js";
+import { buildCagePlan, classifyCagePath } from "#cage/cage-rules.js";
 import { runCageWatch } from "#cage/cage-watch-run.js";
 
 const SECRET = "TOKEN=SECRET-MARKER-5e0a";
@@ -142,12 +142,11 @@ test("cage scope: --allow-only does the same without .cage.yaml; the CLI names t
 test("cage scope: .cage.yaml and --allow-only intersect, so neither widens the other (MSN-0276 DoD 2, 6)", POSIX_ONLY, async () => {
   const dest = makeRepo("og-cage-scope-both-", "allow_only:\n  - src\n");
   const plan = buildCagePlan(dest, { allowOnly: ["src/billing", "other"] });
-  assert.equal(inCageScope(plan, "src/billing/invoice.ts"), true);
-  assert.equal(inCageScope(plan, "src/shared/util.ts"), false, "in the config scope, not in the flag scope");
-  assert.equal(inCageScope(plan, "other/b.ts"), false, "in the flag scope, not in the config scope");
-  assert.equal(inCageScope(plan, ".git/config"), true, "the git dir is git_control's");
-  assert.deepEqual(classifyCagePath(plan, "other/b.ts"), { rule: "out_of_scope", mode: "revert", overridden: false });
-  assert.deepEqual(classifyCagePath(plan, ".github/workflows/ci.yml"), { rule: "ci_config", mode: "revert", overridden: false });
+  assert.equal(classifyCagePath(plan, "src/billing/invoice.ts"), null);
+  assert.equal(classifyCagePath(plan, "src/shared/util.ts")?.rule, "out_of_scope", "in the config scope, not in the flag scope");
+  assert.equal(classifyCagePath(plan, ".git/config")?.rule, "git_control", "the git dir is git_control's, not out of scope");
+  assert.deepEqual(classifyCagePath(plan, "other/b.ts"), { rule: "out_of_scope", source: "builtin", mode: "revert", overridden: false });
+  assert.deepEqual(classifyCagePath(plan, ".github/workflows/ci.yml"), { rule: "ci_config", source: "builtin", mode: "revert", overridden: false });
   assert.equal(classifyCagePath(buildCagePlan(dest, { allowOnly: [] }), "other/b.ts")?.rule, "out_of_scope", "config scope alone");
 
   const report = await runCage({

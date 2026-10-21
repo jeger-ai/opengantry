@@ -14,8 +14,8 @@ const floor: PathLawRule[] = [
   deny("cage_protect", "cage_yaml", ["**/*.pem"]),
   { id: "cage_protect", source: "cage_yaml", patterns: ["docs/notes"], effect: "report", overridable: true },
 ];
+// Under a freeze the lockfile rule itself denies (one row, its effect is the freeze), and the manifests join it.
 const freeze: PathLawRule[] = [
-  deny("lockfile", "builtin", ["**/package-lock.json", "**/yarn.lock"]),
   deny("dependency_manifest", "builtin", ["**/package.json", "**/requirements*.txt"], { except: ["**/vendor/**"] }),
 ];
 const cage = pathLaw({ rules: floor });
@@ -35,7 +35,7 @@ test("cage floor: built-in, manifest and .cage.yaml rules with their modes and s
 });
 
 test("a dependency freeze adds deny rules; the strictest effect outranks the report rule, vendor stays free", () => {
-  const frozen = pathLaw({ rules: [...floor, ...freeze] });
+  const frozen = pathLaw({ rules: [...floor.map((r) => (r.id === "lockfile" ? { ...r, effect: "deny" as const } : r)), ...freeze] });
   assert.deepEqual(rule(frozen, "package-lock.json"), { rule: "lockfile", source: "builtin", effect: "deny", pattern: "**/package-lock.json", overridden: false });
   assert.equal(rule(frozen, "package.json")?.rule, "dependency_manifest");
   assert.equal(rule(frozen, "py/requirements-dev.txt")?.rule, "dependency_manifest");
