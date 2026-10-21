@@ -39,8 +39,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
 ## 3.8
 
 - **3.8.3** The standalone cage command is `gantry-cage`; `opengantry-cage` stays as an alias in the full package. Both packages are published through npm trusted publishing with provenance. zod 4 inside the MCP server.
-- **3.8.2** The cage survives being stopped: SIGTERM, SIGHUP and non-terminal SIGINT terminate the agent's whole process tree and restore, and the next run recovers from a `kill -9` through a hash-verified journal. A protected file the snapshot cannot hold now stops the cage with exit `2` instead of running unprotected. The cage ships on its own as `@jeger-ai/opengantry-cage`.
-- **3.8.1** The cage halts an agent that keeps rewriting a protected path (exit `4`, `--contest-limit`, `contest_limit:`). `.cage.yaml` gains a top-level `mode:` default for its own entries.
+- **3.8.2** The cage survives being stopped: SIGTERM, SIGHUP and non-terminal SIGINT terminate the agent's whole process tree and restore, and the next run recovers from a `kill -9` through a hash-verified journal. A protected file the snapshot cannot hold now stops the cage with exit `2` instead of running unprotected. The cage ships on its own as `@jeger-ai/opengantry-cage`. A protected path rewritten again after 3 live restores halts the agent (exit `4`, `--contest-limit`, `contest_limit:`), and `.cage.yaml` gains a top-level `mode:` default for its own entries. No 3.8.1 was published.
 - **3.8.0** Per-project cage rules: `.cage.yaml` adds paths and globs, can only add protection, protects itself and fails closed. `gantry cage suggest` proposes rules for review. `--allow-override <path>` relaxes one path for one run, always announced.
 
 ## 3.7
