@@ -90,14 +90,14 @@ function changedPaths(root: string, range: PushRange, pathspec?: string): string
   return r.stdout.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 }
 
-function pushRanges(root: string, stdinText: string): PushRange[] | "deletion_only" {
+function pushRanges(root: string, stdinText: string, remote?: string): PushRange[] | "deletion_only" {
   const lines = parsePrePushRefLines(stdinText);
   if (lines.length > 0) {
-    const ranges = pushRangesFromRefLines(root, lines);
+    const ranges = pushRangesFromRefLines(root, lines, remote);
     return ranges.length === 0 ? "deletion_only" : ranges;
   }
-  // Manual invocation: compare the checkout with its upstream (or main, master, the parent commit).
-  const base = fallbackPushBase(root, "HEAD");
+  // Manual invocation: compare the checkout with its upstream, the remote's default branch, main or master.
+  const base = fallbackPushBase(root, "HEAD", remote);
   return base ? [{ base, head: "HEAD" }] : [];
 }
 
@@ -155,7 +155,7 @@ export async function runHookPrePush(stdinText: string, target: { remote?: strin
   await runUserCommandAsync({}, async () => {
     const root = getRepoRoot();
     if (target.remote) logInfo(`pre-push: ${target.remote}${target.url ? ` (${target.url})` : ""}`);
-    const ranges = pushRanges(root, stdinText);
+    const ranges = pushRanges(root, stdinText, target.remote);
     if (ranges === "deletion_only") {
       logInfo("pre-push: nothing to verify (ref deletion or nothing new)");
       return;

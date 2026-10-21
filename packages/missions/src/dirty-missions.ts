@@ -1,4 +1,5 @@
 import { gitRunOk } from "#git/git.js";
+import { fallbackPushBase } from "./git/git-hooks.js";
 
 const MISSIONS_PREFIX = ".gitagent/missions/";
 
@@ -15,30 +16,9 @@ export function isVerifiableMissionPath(rel: string): boolean {
   return true;
 }
 
-/** Resolve merge-base for branch-scoped mission diff (pre-push). */
-function resolveMergeBase(root: string): string | null {
-  const upstream = gitRunOk(root, [
-    "rev-parse",
-    "--abbrev-ref",
-    "--symbolic-full-name",
-    "@{upstream}",
-  ]);
-  if (upstream.ok && upstream.stdout.trim()) {
-    const base = gitRunOk(root, ["merge-base", "HEAD", "@{upstream}"]);
-    if (base.ok && base.stdout.trim()) return base.stdout.trim();
-  }
-  for (const ref of ["main", "master"]) {
-    const base = gitRunOk(root, ["merge-base", "HEAD", ref]);
-    if (base.ok && base.stdout.trim()) return base.stdout.trim();
-  }
-  const parent = gitRunOk(root, ["rev-parse", "HEAD~1"]);
-  if (parent.ok && parent.stdout.trim()) return parent.stdout.trim();
-  return null;
-}
-
-/** Repo-relative mission paths changed between base and HEAD. */
+/** Repo-relative mission paths changed between base (default: the pre-push fallback base) and HEAD. */
 export function listDirtyMissionPaths(repoRoot: string, baseRef?: string): string[] {
-  const base = baseRef?.trim() || resolveMergeBase(repoRoot);
+  const base = baseRef?.trim() || fallbackPushBase(repoRoot, "HEAD");
   if (!base) return [];
 
   const r = gitRunOk(repoRoot, [

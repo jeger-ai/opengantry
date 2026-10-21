@@ -1,0 +1,93 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0344]. Executor must not run until the [MSN-0344] legislation commit + pin.
+#
+# Legislated intent: the pre-push base for a new branch prefers the pushed remote's tracking refs. fallbackPushBase
+# takes the newest merge-base among the upstream, refs/remotes/<remote>/HEAD, main and master, and local main and
+# master, so a local main behind origin/main no longer pulls already-merged missions into the push range;
+# gantry hook pre-push passes the remote name; listDirtyMissionPaths uses fallbackPushBase instead of its own copy.
+#
+# Amended 2026-10-21: an update push gets the same treatment. Its range was remote sha..local sha, so a branch that
+# merged origin/main verified every mission main brought in (MSN-0342 stale on the push of this branch); the base is
+# now the newest of the remote sha and those merge-bases. Same roots.
+#
+# Operator request (2026-10-21): pushing msn-0341-verify-keyless failed with GXT_RUN_RECORD_STALE on MSN-0339 until
+# `git branch -f main origin/main`. No trace rows: the evidence is .gitagent/runs/MSN-0344.json written by
+# gantry verify --record (RULES §3).
+msn_id: MSN-0344
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 11d28ec8168a
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/DEVELOPMENT.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0344.pre-push-remote-base.yaml,
+      .gitagent/runs/MSN-0344.json, packages/missions/src/dirty-missions.ts,
+      packages/missions/src/git/git-hooks.ts, src/cli/commands/hook.ts,
+      src/cli/tests/hook.test.ts. packages/missions/src/git/git-hooks.ts
+      (fallbackPushBase takes the remote and picks the newest merge-base among
+      the upstream, refs/remotes/<remote>/HEAD, main, master and local main,
+      master; pushRangesFromRefLines passes the remote);
+      packages/missions/src/dirty-missions.ts (its copy of the old fallback
+      replaced by fallbackPushBase); src/cli/commands/hook.ts (pre-push passes
+      the remote name from argv); src/cli/tests/hook.test.ts (regression: local
+      main behind the remote-tracking main); docs/DEVELOPMENT.md (the pre-push
+      range sentence); ARCH_BASELINE.json only if the ratchet moves."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The cage push guard and cage check are
+      untouched; only gantry hook pre-push (ADR-0052 A8) picks a different base
+      for a new branch.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Reject applicability. MCP write containment is untouched; the
+      change is the git pre-push range base.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+interrogation_sha256: bc9cb49c84396227a1d29495b3949f493125488367a94dbaf766c276db54e9e4
+declared_paths:
+  - .gitagent/missions/MSN-0344.pre-push-remote-base.yaml
+  - .gitagent/runs/MSN-0344.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/DEVELOPMENT.md
+  - packages/missions/src/dirty-missions.ts
+  - packages/missions/src/git/git-hooks.ts
+  - src/cli/commands/hook.ts
+  - src/cli/tests/hook.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0344.pre-push-remote-base.yaml
+    - .gitagent/runs/MSN-0344.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/DEVELOPMENT.md
+    - packages/missions/src/dirty-missions.ts
+    - packages/missions/src/git/git-hooks.ts
+    - src/cli/commands/hook.ts
+    - src/cli/tests/hook.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+contract_sha256: 2d401014f0e912e555e787e38463826573e0b960a027c6a5e8f8f575bfe82fc8
