@@ -1,0 +1,249 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0333]. Executor must not run until the [MSN-0333] legislation commit + pin.
+#
+# Legislated intent: review follow-up 5, the output layer: one reporter per verify run built at the entry and carried
+# on the context; humanReport gone; Reporter.nextSteps; upgrade awaited and JSON through emitCliJson; the slim bin
+# registers only the guard. No output change.
+#
+# Operator request (2026-10-21, "legislate all of them in that order"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0333.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0333
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept. The ledger is unchanged; a failed append is a result
+      the caller reports, and verify now reports the dependency check's.
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0333.output-layer.yaml,
+      .gitagent/runs/MSN-0333.json, src/cli/cage-bin.ts,
+      src/cli/commands/arch.ts, src/cli/commands/init.ts,
+      src/cli/commands/planner.ts, src/cli/commands/upgrade.ts,
+      src/cli/commands/verify.ts, src/cli/flows/mission-arg.ts,
+      src/cli/flows/start-orchestration.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/output/reporter.ts,
+      src/cli/program-cage.ts, src/cli/program-core.ts,
+      src/cli/tests/reporter.test.ts, src/cli/tests/test-shared.ts,
+      src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts. Review follow-up 5 (output
+      layer): reporter.ts, verify-presenters.ts, verify-run.ts, mission-arg.ts,
+      commands/verify.ts, commands/init.ts, start-orchestration.ts,
+      commands/upgrade.ts, commands/arch.ts, commands/planner.ts,
+      program-core.ts, program-cage.ts, cage-bin.ts, four tests, CHANGELOG,
+      executor log, ARCH_BASELINE.json (command and lib lowered, delivery raised
+      by five lines and one export). packages/, TARGET_ARCHITECTURE.yaml,
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Operator request (2026-10-21): \"legislate all of them in that
+      order\"; item 5 of the review. Not taken, with reasons: unifying gantry
+      upgrade's failure envelope with cliFailureEnvelope would turn
+      UPGRADE_MISSION_REQUIRED into GXT_VERIFY_FAILED in the golden output (the
+      raw-code mapping is a separate finding); merging runAtCommandBoundary into
+      runUserCommand would change the messages and exit codes of ci, hook, arch
+      and perimeter failures; one heading for the three next-steps blocks would
+      change golden output, so each caller keeps its heading and shares the
+      printer. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0333.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml is unchanged and forbidden;
+      its existing rules gain reach.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 42db162a9794
+    kind: adr_conflict
+    question: Intent may relate to ADR-0032. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0032 before
+      legislation proceeds.
+    operator_answer: Accept. The failure envelope and the agent error file keep
+      their shape; only the module that writes them moves.
+    adr_refs:
+      - ADR-0052
+      - ADR-0032
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The slim bin's guard mode registers
+      only cage-guard; the push guard path and bin are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp check is unchanged; its advisories
+      are collected and shown once.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 685b7a4e5969
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0333.output-layer.yaml,
+      .gitagent/runs/MSN-0333.json, src/cli/cage-bin.ts,
+      src/cli/commands/arch.ts, src/cli/commands/init.ts,
+      src/cli/commands/planner.ts, src/cli/commands/upgrade.ts,
+      src/cli/commands/verify.ts, src/cli/flows/mission-arg.ts,
+      src/cli/flows/start-orchestration.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/output/reporter.ts,
+      src/cli/program-cage.ts, src/cli/program-core.ts,
+      src/cli/tests/reporter.test.ts, src/cli/tests/test-shared.ts,
+      src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts. Review follow-up 5 (output
+      layer): reporter.ts, verify-presenters.ts, verify-run.ts, mission-arg.ts,
+      commands/verify.ts, commands/init.ts, start-orchestration.ts,
+      commands/upgrade.ts, commands/arch.ts, commands/planner.ts,
+      program-core.ts, program-cage.ts, cage-bin.ts, four tests, CHANGELOG,
+      executor log, ARCH_BASELINE.json (command and lib lowered, delivery raised
+      by five lines and one export). packages/, TARGET_ARCHITECTURE.yaml,
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output is byte-identical; the conformance goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. The MCP write guard judges the skill law; its denials
+      and messages are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: "Accept. Decision 8's narrowed form is now coherent: one
+      reporter per verify run built at the entry and passed down; the process
+      reporter is read at the Commander boundary and by cli-io only."
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The notes state the YAML law files and dual read as
+      ADR-0047 and its migration specify; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: cc39f134a74c71c1f69c34246007987efaee0a7ce444d6027f38297bb25dbdf8
+declared_paths:
+  - .gitagent/missions/MSN-0333.output-layer.yaml
+  - .gitagent/runs/MSN-0333.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - src/cli/cage-bin.ts
+  - src/cli/commands/arch.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/planner.ts
+  - src/cli/commands/upgrade.ts
+  - src/cli/commands/verify.ts
+  - src/cli/flows/mission-arg.ts
+  - src/cli/flows/start-orchestration.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/output/reporter.ts
+  - src/cli/program-cage.ts
+  - src/cli/program-core.ts
+  - src/cli/tests/reporter.test.ts
+  - src/cli/tests/test-shared.ts
+  - src/cli/tests/verify-format-cli.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0333.output-layer.yaml
+    - .gitagent/runs/MSN-0333.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - src/cli/cage-bin.ts
+    - src/cli/commands/arch.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/planner.ts
+    - src/cli/commands/upgrade.ts
+    - src/cli/commands/verify.ts
+    - src/cli/flows/mission-arg.ts
+    - src/cli/flows/start-orchestration.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/output/reporter.ts
+    - src/cli/program-cage.ts
+    - src/cli/program-core.ts
+    - src/cli/tests/reporter.test.ts
+    - src/cli/tests/test-shared.ts
+    - src/cli/tests/verify-format-cli.test.ts
+    - src/cli/tests/verify-phase-clock.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/
+  allow_dynamic_specifiers: true
+contract_sha256: 5cb31e536318567ec190710282fbb992dd2116c7e55fcaf1d7eeac309272564b
