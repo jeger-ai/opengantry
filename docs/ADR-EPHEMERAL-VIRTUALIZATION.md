@@ -6,7 +6,7 @@ publish: false
 
 # ADR: Ephemeral State Virtualization
 
-**Status:** Accepted; parked outside the CLI since 3.10 (`examples/virtual-scratch/`)  
+**Status:** Accepted; parked outside the CLI since 4.0 (`examples/virtual-scratch/`)  
 **Issue:** [#68](https://github.com/jeger-ai/opengantry/issues/68)
 
 ## Context

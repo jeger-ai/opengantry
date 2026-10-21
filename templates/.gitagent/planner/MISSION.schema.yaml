@@ -67,7 +67,7 @@ properties:
       - tsc
   virtual_capture:
     default: false
-    description: Ignored since 3.10 (ADR-0052 A10 parked the virtual scratch store; see examples/virtual-scratch/). Accepted for v3 missions, removed in 4.0.
+    description: Ignored since 4.0 (ADR-0052 A10 parked the virtual scratch store; see examples/virtual-scratch/). Still accepted, so v3 missions keep validating.
     type: boolean
   upgrade_payload:
     type: object
