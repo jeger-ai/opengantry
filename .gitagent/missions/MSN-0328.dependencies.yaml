@@ -1,0 +1,127 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0328]. Executor must not run until the [MSN-0328] legislation commit + pin.
+#
+# Legislated intent: update dependencies before v4.0.0: MCP SDK floor 1.32.1 (advisories), hono 4.13.13, clack 1.8,
+# zod 4.6.7, eslint 10.13, typescript-eslint 8.72, @types/node 24.19; registry ranges; iii example lockfile.
+#
+# Operator request (2026-10-21, "before release we also need to update dependencies"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0328.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0328
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The iii integration example's lockfile is refreshed;
+      its offline validation passes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP behaviour is unchanged; the SDK floor rises to
+      1.32.1 because earlier versions carry published advisories (the MCP
+      dogfood passes).
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots: docs/CHANGELOG.md,
+      docs/reference/release-notes.md,
+      examples/iii-integration/package-lock.json, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0328.dependencies.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/runs/MSN-0328.json,
+      package.json, package-lock.json, src/cli/init/init-interactive.ts.
+      package.json, package-lock.json, the dependency registry, the two
+      validators in src/cli/init/init-interactive.ts, the iii example lockfile,
+      CHANGELOG, release notes, executor log. No dependency added or removed.
+      packages/, .gitagent/foreman/, .gitagent/planner/RULES.md and
+      .github/workflows/ are forbidden. Operator request (2026-10-21): "before
+      release we also need to update dependencies". Taken: every outdated
+      dependency within its major, @clack/prompts across its major (0.10 to 1.8,
+      only a validator type change), the MCP SDK floor raised past its
+      advisories so no install of 4.0.0 resolves a vulnerable SDK. Not taken:
+      @types/node 26 (the engine floor is Node 24). Dependabot PR #272 (hono) is
+      superseded and closed after merge. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0328.json written by gantry verify --record
+      (RULES §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The notes state the YAML law files and dual read as
+      ADR-0047 and its migration specify; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+  - finding_id: fed1d96ee1dc
+    kind: adr_conflict
+    question: Intent may relate to ADR-0041. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0041 before
+      legislation proceeds.
+    operator_answer: Accept. Unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0041
+interrogation_sha256: 08a3505eb6c7f4785e87d481d5e10b9f5bf2cba243e4fca8795b51f0db1ecd33
+declared_paths:
+  - .gitagent/missions/MSN-0328.dependencies.yaml
+  - .gitagent/registry/dependencies.yaml
+  - .gitagent/runs/MSN-0328.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/reference/release-notes.md
+  - examples/iii-integration/package-lock.json
+  - package-lock.json
+  - package.json
+  - src/cli/init/init-interactive.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0328.dependencies.yaml
+    - .gitagent/registry/dependencies.yaml
+    - .gitagent/runs/MSN-0328.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/reference/release-notes.md
+    - examples/iii-integration/package-lock.json
+    - package-lock.json
+    - package.json
+    - src/cli/init/init-interactive.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+contract_sha256: 0785dac623f976bf81c7362917f4300711bd9c6122101be3f4d1da990aef54d3
