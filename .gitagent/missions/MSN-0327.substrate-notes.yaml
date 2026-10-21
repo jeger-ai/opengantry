@@ -1,0 +1,222 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0327]. Executor must not run until the [MSN-0327] legislation commit + pin.
+#
+# Legislated intent: rewrite the CHANGELOG current substrate notes as the current state of 4.0.0 and carry the
+# user-visible changes of the removed rewrite log into the v4.0.0 upgrade notes. Docs only.
+#
+# Operator request (2026-10-21, "fix the stale substrate notes too"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0327.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0327
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept. The ledger is unchanged; a failed append still warns in
+      the CLI, through the sink.
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept. The release notes state that perimeter_protected_add is
+      now applied as ADR-0042 says.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 4f62b90253e9
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: migrate. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0327.substrate-notes.yaml,
+      .gitagent/runs/MSN-0327.json, EXECUTOR_LOG.md, docs/CHANGELOG.md.
+      Documentation only: the Current substrate notes and the From v3.9.0
+      sections of docs/CHANGELOG.md; executor log. src/, packages/,
+      .gitagent/foreman/, .gitagent/planner/RULES.md and .github/workflows/ are
+      forbidden. Operator request (2026-10-21): "fix the stale substrate notes
+      too". The rewrite history stays in the ADRs (0052, 0053, 0054), the
+      mission files and git; the CHANGELOG keeps the current state and the
+      upgrade notes. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0327.json written by gantry verify --record (RULES
+      §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner identity and stamp modules move unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 62033abd6883
+    kind: adr_conflict
+    question: Intent may relate to ADR-0029. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0029 before
+      legislation proceeds.
+    operator_answer: "Accept the record, reject applicability going forward: the
+      presets moved with the defensive profiles to examples/."
+    adr_refs:
+      - ADR-0052
+      - ADR-0029
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: Accept. Documentation only; no code or baseline change.
+    adr_refs:
+      - ADR-0052
+  - finding_id: 70deb91aa81f
+    kind: adr_conflict
+    question: Intent may relate to ADR-0028. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0028 before
+      legislation proceeds.
+    operator_answer: "Accept the record, reject applicability going forward:
+      defensive profiles are parked (ADR-0052 A10)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0028
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output formats are unchanged; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: b9b235d7d426
+    kind: adr_conflict
+    question: Intent may relate to ADR-0046. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0046 before
+      legislation proceeds.
+    operator_answer: "Accept the record, reject applicability going forward: the
+      preflight is parked (ADR-0052 A10)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0046
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: Accept. The release notes describe ADR-0054's outcome; the
+      record is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. Mission scope composition is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract code moves unchanged; contract
+      hashing, scan and effective scope behave as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The notes state the YAML law files and dual read as
+      ADR-0047 and its migration specify; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 95921d7eab993dfed34c27dd0c87bd80da6cc00ea30569f2f56421f408ec5d8a
+declared_paths:
+  - .gitagent/missions/MSN-0327.substrate-notes.yaml
+  - .gitagent/runs/MSN-0327.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0327.substrate-notes.yaml
+    - .gitagent/runs/MSN-0327.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/
+contract_sha256: 0fd5bf5d649ac16f649345bf31304180cc0f1abf7f38fa0b390ca3d93db4be10
