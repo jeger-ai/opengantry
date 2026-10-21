@@ -1,4 +1,3 @@
-import { scopePathLaw } from "../tmvc-path.js";
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel, normalizeRepoRelativePath } from "#core/posix-path.js";
@@ -84,10 +83,10 @@ export function contractViolationCode(kind: ContractViolationKind): GxtErrorCode
   }
 }
 
-/** The contract's effective scope as a law: the import discipline core judges each site against. */
+/** The contract's effective scope as a law: its path law plus the import discipline core judges each site against. */
 function lawOfScope(scope: EffectiveScope) {
   return law({
-    paths: scopePathLaw(scope.tmvcRoots, scope.forbiddenZones, []),
+    paths: scope.law,
     allowedImports: scope.allowedImports,
     bannedImports: scope.bannedImports,
     allowDynamicSpecifiers: scope.allowDynamicSpecifiers,

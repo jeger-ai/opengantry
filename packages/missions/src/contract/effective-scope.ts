@@ -8,6 +8,7 @@ import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
 import type { EffectiveScope, MissionContract } from "#core/contract-types.js";
+import { missionScopeLaw } from "../scope-law.js";
 
 export interface ResolveEffectiveScopeInput {
   manifest: Manifest;
@@ -71,6 +72,7 @@ export function resolveEffectiveScope(input: ResolveEffectiveScopeInput): Effect
   assertRootsOutsideForbidden(contractRoots.filter((r) => forbiddenZones.some((fz) => isPathUnderRoot(r, fz))));
 
   return {
+    law: missionScopeLaw(input.manifest, skillKey, policy, contract),
     tmvcRoots: contractRoots.length > 0 ? contractRoots : skillRootsNorm,
     forbiddenZones,
     allowedImports: [...(contract.allowed_imports ?? [])],

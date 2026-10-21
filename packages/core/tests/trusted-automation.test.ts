@@ -1,9 +1,12 @@
+import { pathLaw } from "../src/path-law.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
   evaluateTrustedAutomation,
   isMsnEnforcedPath,
   isSubstrateHardDeniedPath,
+  msnEnforcedLaw,
+  substrateHardDenyLaw,
   isValidBypassNote,
   msnEnforcedPrefixes,
   parseNumstatTotal,
@@ -38,11 +41,12 @@ test("parseTrustedAutomationRules validates shape, kinds and the hard caps", () 
 test("MSN-enforced prefixes: fixed substrate paths plus skill roots; matching is by segment", () => {
   const prefixes = msnEnforcedPrefixes([["src/cli/", "package.json"], []]);
   assert.ok(prefixes.includes(".gitagent/") && prefixes.includes("src/cli/") && prefixes.includes("package.json"));
-  assert.equal(isMsnEnforcedPath("src/cli/a.ts", prefixes), true);
-  assert.equal(isMsnEnforcedPath("src/client/a.ts", prefixes), false);
-  assert.equal(isMsnEnforcedPath("package.json", prefixes), true);
-  assert.equal(isMsnEnforcedPath("package.json.bak", prefixes), false);
-  assert.equal(isMsnEnforcedPath(".github/workflows/gxt-validate.yml", prefixes), true);
+  const enforced = msnEnforcedLaw(prefixes);
+  assert.equal(isMsnEnforcedPath("src/cli/a.ts", enforced), true);
+  assert.equal(isMsnEnforcedPath("src/client/a.ts", enforced), false);
+  assert.equal(isMsnEnforcedPath("package.json", enforced), true);
+  assert.equal(isMsnEnforcedPath("package.json.bak", enforced), false);
+  assert.equal(isMsnEnforcedPath(".github/workflows/gxt-validate.yml", enforced), true);
 });
 
 test("numstat totals skip binary rows; bypass notes need v 1 and a ten-character reason", () => {
@@ -66,9 +70,10 @@ test("workflowVersionPinOnly accepts version bumps in uses: and nothing else", (
 });
 
 test("substrate hard-deny: .gitagent and perimeter globs are never delegated", () => {
-  assert.equal(isSubstrateHardDeniedPath(".gitagent/foreman/MANIFEST.json", []), true);
-  assert.equal(isSubstrateHardDeniedPath("skills/ui/.gxt-skill.yaml", ["**/.gxt-skill.yaml"]), true);
-  assert.equal(isSubstrateHardDeniedPath("src/a.ts", ["**/.gxt-skill.yaml"]), false);
+  const perimeter = pathLaw({ rules: [{ id: "protected_path", source: "manifest", patterns: ["**/.gxt-skill.yaml"], effect: "planner", overridable: false }] });
+  assert.equal(isSubstrateHardDeniedPath(".gitagent/foreman/MANIFEST.json", substrateHardDenyLaw(pathLaw())), true);
+  assert.equal(isSubstrateHardDeniedPath("skills/ui/.gxt-skill.yaml", substrateHardDenyLaw(perimeter)), true);
+  assert.equal(isSubstrateHardDeniedPath("src/a.ts", substrateHardDenyLaw(perimeter)), false);
 });
 
 test("evaluateTrustedAutomation: actor, paths, net_loc and the structural judgement, first eligible rule wins", () => {

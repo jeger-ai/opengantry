@@ -1,3 +1,4 @@
+import type { PathLaw } from "./path-law.js";
 /** Planner-sealed mission cage (ADR-0045). All fields optional; absent = inherit skill/policy. */
 export interface MissionContract {
   tmvc_roots?: string[];
@@ -10,6 +11,8 @@ export interface MissionContract {
 
 /** Effective cage after merging skill roots, mission contract, and org policy (tighten-only). */
 export interface EffectiveScope {
+  /** The scope as one path law (ADR-0053): the skill level, the org floor and the contract composed tighten-only. */
+  law: PathLaw;
   /** Repo-relative TMVC roots (contract narrowing when present, else skill roots). */
   tmvcRoots: string[];
   /** Union of skill, contract, and policy forbidden zones. */

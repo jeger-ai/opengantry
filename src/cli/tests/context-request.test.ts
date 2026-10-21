@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { classifyRepoRelativePath, isGovernanceTransportPath } from "#missions/tmvc-path.js";
+import { classifyScopePath, skillScopeLaw } from "#missions/scope-law.js";
 import {
   appendContextRequest,
   formatContextRequestLine,
@@ -57,22 +57,22 @@ trace_rows: []
   return { missionRel };
 }
 
-test("tmvc-path: governance transport passthrough", () => {
-  assert.equal(isGovernanceTransportPath("EXECUTOR_LOG.md"), true);
-  assert.equal(isGovernanceTransportPath(".gitagent/missions/.active-mission"), true);
-  assert.equal(isGovernanceTransportPath("src/cli/foo.ts"), false);
-});
+const scopeManifest = {
+  schema_version: "0.5.0",
+  skills: { s: { trust_threshold: "Tier-1" as const, tmvc_roots: ["src/cli/"], forbidden_zones: [".gitagent/foreman/"] } },
+  path_risks: {},
+  risk_keywords: [],
+};
 
-test("tmvc-path: classify inside, outside, forbidden", () => {
-  const roots = ["src/cli/"];
-  const fz = [".gitagent/foreman/"];
-  assert.equal(classifyRepoRelativePath("src/cli/lib/foo.ts", roots, fz), "inside_tmvc");
-  assert.equal(classifyRepoRelativePath("README.md", roots, fz), "outside_tmvc");
-  assert.equal(
-    classifyRepoRelativePath(".gitagent/foreman/MANIFEST.json", roots, fz),
-    "forbidden_zone",
-  );
-  assert.equal(classifyRepoRelativePath("EXECUTOR_LOG.md", roots, fz), "governance_transport");
+test("scope-law: classify transport, inside, outside, forbidden; an unknown skill may change nothing", () => {
+  const law = skillScopeLaw(scopeManifest, "s");
+  assert.equal(classifyScopePath(law, "EXECUTOR_LOG.md"), "governance_transport");
+  assert.equal(classifyScopePath(law, ".gitagent/missions/.active-mission"), "governance_transport");
+  assert.equal(classifyScopePath(law, "src/cli/lib/foo.ts"), "inside_tmvc");
+  assert.equal(classifyScopePath(law, "README.md"), "outside_tmvc");
+  assert.equal(classifyScopePath(law, ".gitagent/foreman/MANIFEST.json"), "forbidden_zone");
+  assert.equal(classifyScopePath(law, ".gitagent/planner/RULES.md"), "outside_tmvc", "a protected path outside the roots is outside");
+  assert.equal(classifyScopePath(skillScopeLaw(scopeManifest, "nope"), "src/cli/lib/foo.ts"), "outside_tmvc");
 });
 
 test("tmvc-path: isPathUnderRoot", () => {

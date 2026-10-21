@@ -116,6 +116,17 @@ Approved on 2026-10-20, each point as the draft recommended:
 3. **Every cage pattern covers.** A directory named like a protected file protects its contents (point 6). There is no per-rule `match: exact` flag.
 4. **Standalone verify imports and layers stay in verify for now.** Moving that judgment into core's architecture evaluator gets its own record, after migration steps 1 to 4 show the path law holds.
 
+## Amendment (2026-10-21, MSN-0331)
+
+The code-quality review of the migration found that steps 2 to 4 gave every consumer the one judge but not the one law: each still assembled its own rule table at the call site, the perimeter had not joined the mission table (decision 2), `tightenPathLaw` had no caller, and trusted automation answered "may this path change without a mission" with three private matchers. MSN-0331 adds the one builder, `packages/missions/src/scope-law.ts`:
+
+- `skillScopeLaw(manifest, skill, policy)` is the skill level: its roots as an area, its zones as deny rules, the perimeter as `planner` rules with sources `manifest` and `org`, the org floor's zones, governance transport exempt. `missionScopeLaw` tightens it with the contract (a second area, so areas intersect). `EffectiveScope` carries the result as `law`, and the staged guard, the kernel's scope check, the MCP write guard, the contract scan and `gantry perimeter` judge it. A `planner` hit counts as inside for the guards; the perimeter check decides those per commit.
+- Trusted automation's three matchers are laws: the MSN-enforced paths (`msnEnforcedLaw`), a rule's `allowed_paths` as an area, and the hard deny as the perimeter law tightened by `.gitagent/`.
+
+**Decision 5 (operator-directed, "legislate all of them"):** a trusted-automation rule's `allowed_paths` cover, like every other list. A directory entry now allows the files under it; before, only a whole-path glob match allowed a file. This widens what a rule can allow and is recorded here for that reason.
+
+**Not changed, stated:** a skill that declares no roots, or an unknown skill, may change nothing (an empty area denies every path); the import evaluator keeps its own convention that strict mode has nothing to hold an import to in that case. The runtime forbidden-zone baseline (`forbidden-scan.ts`) still walks each zone as a directory, so a zone is a path prefix there; a glob zone is enforced by the staged guard, the MCP guard and the contract scan but not by the runtime baseline. The cage's floor lives in `cage-rules.ts` as `cageFloorRules`, not in a `cage-floor.ts`.
+
 ## Non-goals
 
 - One gate runner for mission gates and verify checks.

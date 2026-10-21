@@ -6,15 +6,9 @@ import { commitSubjectHasMsnPrefix, listMsnSubjectCommits, type MsnCommitRow } f
 import { listCommitChangedPaths } from "./git/git-proof.js";
 import { resolvePlannerEmails } from "./planner-identity.js";
 import type { Manifest } from "#core/manifest.js";
-import { judgePath, pathLaw } from "#core/path-law.js";
+import { judgePath, type PathLaw } from "#core/path-law.js";
+import { perimeterLaw } from "./scope-law.js";
 import { resolveOrgPolicy } from "#plane/policy-resolve.js";
-export const DEFAULT_PERIMETER_PROTECTED = [
-  "**/.gxt-skill.yaml",
-  ".gitagent/foreman/MANIFEST.yaml",
-  ".gitagent/foreman/MANIFEST.json",
-  ".gitagent/planner/RULES.md",
-] as const;
-
 export interface PerimeterViolation {
   path: string;
   commit: string;
@@ -35,19 +29,15 @@ type ChangedPathsResult =
 export const SHALLOW_HISTORY_HINT =
   "Configure CI checkout with fetch-depth: 0 or fetch the base ref explicitly before running gantry perimeter --ci.";
 
-/** The manifest's protected paths (or the defaults) plus the org floor's `perimeter_protected_add` (ADR-0042). */
-export function perimeterPaths(repoRoot: string, manifest: Manifest): { paths: string[]; error: string | null } {
-  const own = manifest.perimeter_protected?.length ? manifest.perimeter_protected : DEFAULT_PERIMETER_PROTECTED;
+/** The perimeter law from the manifest and the org floor; an unreadable floor is an error, so callers fail closed. */
+export function perimeterLawFor(repoRoot: string, manifest: Manifest): { law: PathLaw; error: string | null } {
   const org = resolveOrgPolicy(repoRoot);
-  if (!org.ok) return { paths: [...own], error: `org policy floor unreadable: ${org.message}` };
-  return { paths: [...own, ...(org.bundle?.manifest_constraints?.perimeter_protected_add ?? [])], error: null };
+  if (!org.ok) return { law: perimeterLaw(manifest, null), error: `org policy floor unreadable: ${org.message}` };
+  return { law: perimeterLaw(manifest, org.bundle), error: null };
 }
 
-export function isPerimeterProtectedPath(repoRelPath: string, protectedPaths: readonly string[]): boolean {
-  const perimeter = pathLaw({
-    rules: [{ id: "protected_path", source: "manifest", patterns: [...protectedPaths], effect: "planner", overridable: false }],
-  });
-  return judgePath(perimeter, repoRelPath)?.effect === "planner";
+export function isPerimeterProtectedPath(law: PathLaw, repoRelPath: string): boolean {
+  return judgePath(law, repoRelPath)?.effect === "planner";
 }
 
 function shallowHistoryReason(baseRef: string, detail: string): string {
@@ -277,9 +267,9 @@ export function checkPerimeter(
 ): PerimeterCheckResult {
   const changedResult = listChangedPathsSinceBase(repoRoot, options.baseRef);
   if (!changedResult.ok) return preconditionFailed("(range)", changedResult.reason, options.ci);
-  const perimeter = perimeterPaths(repoRoot, manifest);
+  const perimeter = perimeterLawFor(repoRoot, manifest);
   if (perimeter.error !== null) return preconditionFailed("(org policy)", perimeter.error, options.ci);
-  const protectedChanged = changedResult.paths.filter((p) => isPerimeterProtectedPath(p, perimeter.paths));
+  const protectedChanged = changedResult.paths.filter((p) => isPerimeterProtectedPath(perimeter.law, p));
   if (protectedChanged.length === 0) {
     return { ok: true, violations: [], advisories: [] };
   }

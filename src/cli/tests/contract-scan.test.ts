@@ -6,20 +6,25 @@ import path from "node:path";
 import { listChangedSourceFiles, scanContractImports } from "#missions/contract/contract-scan.js";
 import { gitInitCommit, gitInitStaged } from "./test-fixtures.js";
 import type { EffectiveScope } from "#core/contract-types.js";
+import { pathLaw } from "#core/path-law.js";
+import { forbiddenZoneRules } from "#missions/scope-law.js";
 import { extractImportSites } from "#core/import-scanner.js";
 import { bareSpecifierPackage, classifySpecifier } from "#core/specifier.js";
 import { loadTsconfigPaths } from "#missions/contract/resolve-specifier.js";
 
 function scope(overrides: Partial<EffectiveScope> = {}): EffectiveScope {
+  const lists = { tmvcRoots: ["src/ui/"], forbiddenZones: ["src/db/"], ...overrides };
   return {
-    tmvcRoots: ["src/ui/"],
-    forbiddenZones: ["src/db/"],
+    law: pathLaw({
+      areas: [{ id: "outside_roots", source: "skill", patterns: lists.tmvcRoots, overridable: false }],
+      rules: forbiddenZoneRules("skill", lists.forbiddenZones),
+    }),
     allowedImports: [],
     bannedImports: [],
     allowDynamicSpecifiers: false,
     strictRelativeImports: false,
     hasContract: true,
-    ...overrides,
+    ...lists,
   };
 }
 

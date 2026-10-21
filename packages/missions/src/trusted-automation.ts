@@ -7,7 +7,9 @@ import {
   evaluateTrustedAutomation,
   isMsnEnforcedPath,
   isSubstrateHardDeniedPath,
+  msnEnforcedLaw,
   msnEnforcedPrefixes,
+  substrateHardDenyLaw,
   parseNumstatTotal,
   parseTrustedAutomationRules,
   rulesForActor,
@@ -17,7 +19,7 @@ import {
 } from "#core/trusted-automation.js";
 import type { Manifest } from "#core/manifest.js";
 import { gitRunOk } from "#git/git.js";
-import { perimeterPaths } from "./perimeter.js";
+import { perimeterLawFor } from "./perimeter.js";
 import { parseLawFileDocument } from "#core/law-file.js";
 import { readGxtConfigSource } from "./gxt-config.js";
 
@@ -79,9 +81,10 @@ interface StructuralContext {
 function structuralJudge(root: string, manifest: Manifest, files: readonly string[], ctx: StructuralContext) {
   return (rule: TrustedAutomationRule): { ok: boolean; reason: string } => {
     if (rule.structuralKind === "bounded_content") {
-      const perimeter = perimeterPaths(root, manifest);
+      const perimeter = perimeterLawFor(root, manifest);
       if (perimeter.error !== null) return { ok: false, reason: `rule ${rule.id}: ${perimeter.error}` };
-      const denied = files.find((f) => isSubstrateHardDeniedPath(f, perimeter.paths));
+      const hardDeny = substrateHardDenyLaw(perimeter.law);
+      const denied = files.find((f) => isSubstrateHardDeniedPath(f, hardDeny));
       return denied ? { ok: false, reason: `rule ${rule.id}: substrate hard-deny path not allowed (${denied})` } : { ok: true, reason: "" };
     }
     for (const file of files.filter((f) => /\.ya?ml$/i.test(f))) {
@@ -103,8 +106,8 @@ function structuralJudge(root: string, manifest: Manifest, files: readonly strin
 export function evaluateTrustedAutomationCommit(root: string, manifest: Manifest, sha: string): TrustedAutomationVerdict {
   const rules = loadTrustedAutomationRules(root);
   if (rules.length === 0) return { eligible: false, reason: "no trusted_automation policy configured" };
-  const prefixes = manifestMsnEnforcedPrefixes(manifest);
-  const files = commitChangedFiles(root, sha).filter((f) => isMsnEnforcedPath(f, prefixes));
+  const enforced = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
+  const files = commitChangedFiles(root, sha).filter((f) => isMsnEnforcedPath(f, enforced));
   if (files.length === 0) return { eligible: false, reason: "commit does not touch MSN-enforced paths" };
   const actorEmail = commitAuthorEmail(root, sha);
   if (rulesForActor(rules, actorEmail).length === 0) return { eligible: false, reason: `actor ${actorEmail} not covered by trusted_automation policy` };
@@ -120,12 +123,12 @@ export function evaluateTrustedAutomationCommit(root: string, manifest: Manifest
 export function evaluateTrustedAutomationRange(root: string, manifest: Manifest, baseSha: string, headSha: string): TrustedAutomationVerdict {
   const rules = loadTrustedAutomationRules(root);
   if (rules.length === 0) return { eligible: false, reason: "no trusted_automation policy configured" };
-  const prefixes = manifestMsnEnforcedPrefixes(manifest);
-  const enforced = lines(root, ["diff", "--name-only", "--diff-filter=ACMRT", `${baseSha}...${headSha}`]).filter((f) => isMsnEnforcedPath(f, prefixes));
+  const enforcedLaw = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
+  const enforced = lines(root, ["diff", "--name-only", "--diff-filter=ACMRT", `${baseSha}...${headSha}`]).filter((f) => isMsnEnforcedPath(f, enforcedLaw));
   if (enforced.length === 0) return { eligible: false, reason: "range does not touch MSN-enforced paths" };
   const commits = lines(root, ["rev-list", "--no-merges", `${baseSha}..${headSha}`]);
   for (const commit of commits) {
-    if (!commitChangedFiles(root, commit).some((f) => isMsnEnforcedPath(f, prefixes))) continue;
+    if (!commitChangedFiles(root, commit).some((f) => isMsnEnforcedPath(f, enforcedLaw))) continue;
     const actor = commitAuthorEmail(root, commit);
     if (rulesForActor(rules, actor).length === 0) {
       return { eligible: false, reason: `commit ${commit.slice(0, 7)}: actor ${actor} not covered by trusted_automation policy` };
