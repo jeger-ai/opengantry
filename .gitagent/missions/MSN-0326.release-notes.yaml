@@ -1,0 +1,150 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0326]. Executor must not run until the [MSN-0326] legislation commit + pin.
+#
+# Legislated intent: update the v4.0.0 release notes and upgrade notes with the changes merged after the release
+# prep (one path law, org perimeter, verify warn sink, slim cage entry, verify and missions packages). Docs only.
+#
+# Operator request (2026-10-21, "update the release notes for v4.0.0"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0326.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0326
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage package is forbidden in this mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept. The release notes state that perimeter_protected_add is
+      now applied as ADR-0042 says.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0050 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Output formats are unchanged; documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. The release notes state ADR-0053's one behaviour change
+      (decision 3); the record is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: bd21bb80f529
+    kind: adr_conflict
+    question: Intent may relate to ADR-0054. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0054 before
+      legislation proceeds.
+    operator_answer: Accept. The release notes describe ADR-0054's outcome; the
+      record is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0054
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0326.release-notes.yaml,
+      .gitagent/runs/MSN-0326.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/reference/release-notes.md. Documentation only: the 4.0.0 entry of
+      docs/reference/release-notes.md and the From v3.9.0 section of
+      docs/CHANGELOG.md; executor log. src/, packages/, .gitagent/foreman/,
+      .gitagent/planner/RULES.md and .github/workflows/ are forbidden. Operator
+      request (2026-10-21): "update the release notes for v4.0.0". The notes
+      cover what changed for users since the release prep (#257); the internal
+      package moves are named only where they change something visible (kernel,
+      slim package) or for contributors to this repository. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0326.json written by gantry
+      verify --record (RULES §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract code moves unchanged; contract
+      hashing, scan and effective scope behave as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: ea6c26560190f2e407d4f055c24a35d90ea00301756f01df0eb7e6e8912b1153
+declared_paths:
+  - .gitagent/missions/MSN-0326.release-notes.yaml
+  - .gitagent/runs/MSN-0326.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/reference/release-notes.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0326.release-notes.yaml
+    - .gitagent/runs/MSN-0326.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/reference/release-notes.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - packages/
+    - src/
+contract_sha256: b29842b7884be2ca44599c8fa781707b8a2e82a31fab7b480fcd5cf5038d5870

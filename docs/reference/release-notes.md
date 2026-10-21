@@ -17,7 +17,9 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
   - **Machine-written evidence.** `gantry verify --record` writes a run record a rowless mission is verified by; trace rows are optional.
   - **Hooks and scripts call the CLI.** One-line hook shims (`gantry hook <name>`), `gantry ci …` in CI, the runtime helper scripts removed.
   - **Structural law.** `gantry arch check` gains `budget`, `owner`, `registry`, `dependency` and `duplicate` rules with a ratcheting baseline; registries under `.gitagent/registry/`.
-  - **Packages.** `core`, `git`, `cage` and `plane` are workspace packages under one `Law` model; zod replaces ajv; one output reporter; a conformance suite freezes the public commands.
+  - **Packages.** `core`, `git`, `cage`, `plane`, `verify` and `missions` are workspace packages; `src/cli` is only the command line and the MCP server. Zod replaces ajv, there is one output reporter, and a conformance suite freezes the public commands.
+  - **One path law.** The cage, mission scope and `gantry verify --contract` decide whether a path may change with one rule table in core. One behaviour change: a directory named like a protected file (`.env/`, `x.pem/`) now has its contents protected too.
+  - **Org perimeter applied.** The org policy's `manifest_constraints.perimeter_protected_add` was accepted and ignored. Its paths are now protected by `gantry perimeter` and by trusted automation, and an org policy that cannot be read fails `gantry perimeter --ci`.
   - **Parked.** The contract drift index, contract preflight, defensive profiles and virtual capture live under `examples/`; `better-sqlite3`, `sqlite-vec`, `ajv` and `ajv-formats` are gone from the dependencies.
   - **Cage.** Dependency freeze (`dependencies: revert`, `--lock-deps`), scope mode (`allow_only:`, `--allow-only`), `gantry verify --contract` without `.gitagent/`.
 
