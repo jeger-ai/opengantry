@@ -1,5 +1,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { logError, readStdinIfEmpty, setExitCode } from "../output/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../output/command-boundary.js";
@@ -16,6 +17,7 @@ import {
 import { CAGE_CONFIG_FILE } from "#cage/cage-config.js";
 import { formatCageCheckReport, runCageCheck } from "#cage/cage-check.js";
 import { formatCageWatchReport, runCageWatch } from "#cage/cage-watch-run.js";
+import { readGuard } from "#cage/read-guard.js";
 
 export interface CageCliOptions {
   command: string[];
@@ -193,4 +195,13 @@ export async function runCageWatchCommand(options: CageWatchCliOptions): Promise
     else for (const line of formatCageWatchReport(report)) console.error(line);
     if (report.exit_code !== 0) setExitCode(report.exit_code);
   });
+}
+
+/** `gantry-cage read-guard`: one agent hook call on stdin, the agent's decision on stdout (ADR-0056). */
+export async function runReadGuardCommand(): Promise<void> {
+  const text = process.stdin.isTTY ? "" : await readStdinIfEmpty("");
+  const outcome = readGuard(text, { home: os.homedir(), cwd: process.cwd() });
+  process.stdout.write(outcome.stdout);
+  process.stderr.write(outcome.stderr);
+  process.exitCode = outcome.exitCode;
 }

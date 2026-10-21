@@ -69,6 +69,6 @@ Lockfiles are listed but do not fail the check, prompt or get restored, unless y
 
 ## Know the limits
 
-The check sees committed history only. The watch lets a change stand until you decide it. The session cage restores rather than blocks. None of them sees reads or network calls. Read [Limits](limits.md) before relying on any of them.
+The check sees committed history only. The watch lets a change stand until you decide it. The session cage restores rather than blocks. None of them sees reads or network calls; the [read guard](read-guard.md) keeps secret files out of Claude Code's and Cursor's context. Read [Limits](limits.md) before relying on any of them.
 
 When you want scope enforced on every write and Planner-approved work checked in CI, continue with [how OpenGantry works](../start/how-it-works.md).

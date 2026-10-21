@@ -15,6 +15,8 @@ To have every change to a protected file (a gitignored `.env`, `.git/hooks`) put
 
 This is the same session `gantry cage` that ships in [`@jeger-ai/opengantry`](https://www.npmjs.com/package/@jeger-ai/opengantry), built from the same sources as a slim standalone package: no native modules, no install scripts, `commander` is the only runtime dependency. Use the full package for missions, `gantry verify`, MCP and everything else.
 
+The same bin is a read guard for Claude Code and Cursor: registered as their hook, `gantry-cage read-guard` refuses tool calls that would read `.env` files, git credentials, SSH keys or cloud credentials, so they stay out of the model's context ([read guard](https://opengantry.ai/docs/cage/read-guard/)).
+
 Platforms: Linux and macOS, both tested in CI. Windows is not supported yet: there the cage cannot reliably stop every process the agent started.
 
 Options: `--json`, `--report-only`, `--no-watch`, `--watch-interval-ms <n>`, `--max-file-bytes <n>`, `--contest-limit <n>`, `--allow-override <path>`, `--lock-deps` (freeze lockfiles and dependency manifests such as `package.json` for this run; `.cage.yaml` `dependencies: revert` does the same for every run), `--allow-only <glob>` (scope: restore every file git would track outside the glob; repeatable; `.cage.yaml` `allow_only:` for a standing area). `cage suggest` (proposing `.cage.yaml` rules) lives in the full package: `npx -p @jeger-ai/opengantry gantry cage suggest --write`.

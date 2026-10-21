@@ -1,0 +1,172 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0343]. Executor must not run until the [MSN-0343] legislation commit + pin.
+#
+# Legislated intent: roadmap #7 for v4.0.0: the agent read guard (ADR-0056), gantry-cage read-guard as a Claude Code
+# and Cursor hook that keeps secret files out of the model context, with one secret list shared with the cage.
+#
+# Operator request (2026-10-21, "Agent hooks"; "Approve the full chain"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0343.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0343
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 0e359cef0129
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/cage/index.md,
+      docs/cage/limits.md, docs/cage/read-guard.md, docs/CHANGELOG.md,
+      docs/index.md, docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0343.read-guard.yaml,
+      .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md,
+      .gitagent/out-of-scope/ADR-0056-agent-read-guard.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0343.json,
+      packages/cage/src/cage-rules.ts, packages/cage/src/read-guard.ts,
+      packages/core/src/secret-paths.ts,
+      packages/core/tests/secret-paths.test.ts,
+      packages/opengantry-cage/README.md,
+      packages/opengantry-cage/tests/read-guard.test.mjs, README.md,
+      src/cli/cage-bin.ts, src/cli/commands/cage.ts, src/cli/program-cage.ts,
+      src/cli/tests/read-guard.test.ts. New: packages/core/src/secret-paths.ts
+      (SECRET_ENV_PATTERNS, SECRET_ENV_EXCEPT, judgeSecretPath) with tests,
+      packages/cage/src/read-guard.ts (readGuard: Claude Code and Cursor
+      protocols), src/cli/tests/read-guard.test.ts, the slim cage read-guard
+      test, docs/cage/read-guard.md, ADR-0056. Changed: cage-rules.ts (secrets
+      rule reads the core list), commands/cage.ts (runReadGuardCommand),
+      program-cage.ts (registerReadGuardCommand, also on gantry), cage-bin.ts
+      (read-guard dispatch), the commands registry, docs (cage index and limits,
+      docs index, README, slim cage README, CHANGELOG, release notes), ADR-0022
+      amended, ARCH_BASELINE.json raised for core, cage, command and delivery."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 1fabdeffaa6e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0056. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0056 before
+      legislation proceeds.
+    operator_answer: Accept; this mission legislates ADR-0056 and implements it.
+    adr_refs:
+      - ADR-0052
+      - ADR-0056
+  - finding_id: 209851d5d37d
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/cage/index.md,
+      docs/cage/limits.md, docs/cage/read-guard.md, docs/CHANGELOG.md,
+      docs/index.md, docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0343.read-guard.yaml,
+      .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md,
+      .gitagent/out-of-scope/ADR-0056-agent-read-guard.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0343.json,
+      packages/cage/src/cage-rules.ts, packages/cage/src/read-guard.ts,
+      packages/core/src/secret-paths.ts,
+      packages/core/tests/secret-paths.test.ts,
+      packages/opengantry-cage/README.md,
+      packages/opengantry-cage/tests/read-guard.test.mjs, README.md,
+      src/cli/cage-bin.ts, src/cli/commands/cage.ts, src/cli/program-cage.ts,
+      src/cli/tests/read-guard.test.ts. New: packages/core/src/secret-paths.ts
+      (SECRET_ENV_PATTERNS, SECRET_ENV_EXCEPT, judgeSecretPath) with tests,
+      packages/cage/src/read-guard.ts (readGuard: Claude Code and Cursor
+      protocols), src/cli/tests/read-guard.test.ts, the slim cage read-guard
+      test, docs/cage/read-guard.md, ADR-0056. Changed: cage-rules.ts (secrets
+      rule reads the core list), commands/cage.ts (runReadGuardCommand),
+      program-cage.ts (registerReadGuardCommand, also on gantry), cage-bin.ts
+      (read-guard dispatch), the commands registry, docs (cage index and limits,
+      docs index, README, slim cage README, CHANGELOG, release notes), ADR-0022
+      amended, ARCH_BASELINE.json raised for core, cage, command and delivery."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 stands. The cage secrets rule is unchanged
+      (same patterns, now read from core/secret-paths.ts so the read guard
+      cannot drift from it); the read guard adds the read side and changes no
+      write protection.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0050 unchanged. cage check classifies with the same
+      rules and reports as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+interrogation_sha256: d8b6b95570d3b21c6ee4a4be507516bc90de3f0892d33393568b13713cbba0cd
+declared_paths:
+  - .gitagent/missions/MSN-0343.read-guard.yaml
+  - .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md
+  - .gitagent/out-of-scope/ADR-0056-agent-read-guard.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0343.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/cage/index.md
+  - docs/cage/limits.md
+  - docs/cage/read-guard.md
+  - docs/index.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-rules.ts
+  - packages/cage/src/read-guard.ts
+  - packages/core/src/secret-paths.ts
+  - packages/core/tests/secret-paths.test.ts
+  - packages/opengantry-cage/README.md
+  - packages/opengantry-cage/tests/read-guard.test.mjs
+  - src/cli/cage-bin.ts
+  - src/cli/commands/cage.ts
+  - src/cli/program-cage.ts
+  - src/cli/tests/read-guard.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0343.read-guard.yaml
+    - .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md
+    - .gitagent/out-of-scope/ADR-0056-agent-read-guard.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0343.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/cage/index.md
+    - docs/cage/limits.md
+    - docs/cage/read-guard.md
+    - docs/index.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-rules.ts
+    - packages/cage/src/read-guard.ts
+    - packages/core/src/secret-paths.ts
+    - packages/core/tests/secret-paths.test.ts
+    - packages/opengantry-cage/README.md
+    - packages/opengantry-cage/tests/read-guard.test.mjs
+    - src/cli/cage-bin.ts
+    - src/cli/commands/cage.ts
+    - src/cli/program-cage.ts
+    - src/cli/tests/read-guard.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 0887b807df0a7fcdc0cdc828aaedcdbe5c4104f622b31fec272f4b6e565081c4

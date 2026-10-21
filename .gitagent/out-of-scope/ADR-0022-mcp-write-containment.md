@@ -26,3 +26,4 @@ Issue #14 proposed a filesystem write proxy for MCP tools. `gxt_runtime_exec` al
 - MCP cannot legislate or pin missions outside `.gitagent/missions/`.
 - Upgrade apply cannot promote staged files into manifest forbidden zones unless the signed upgrade mission lists them in `planned_writes`.
 - `gxt_runtime_exec` forbidden-zone enforcement remains unchanged and complementary.
+- Reads: [ADR-0056](ADR-0056-agent-read-guard.md) keeps secret files out of the model's context at the agent's own tool boundary (Claude Code and Cursor hooks), still without a global proxy.
