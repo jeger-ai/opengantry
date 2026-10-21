@@ -1,0 +1,86 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0346]. Executor must not run until the [MSN-0346] legislation commit + pin.
+#
+# Legislated intent: v4.0.0 release cleanup: no 3.10 ever shipped (schema description and docs say 4.0), the
+# manifesto cites arXiv:2604.08407 (roadmap #8 leftover), the CHANGELOG heading for the post-3.9.0 work.
+#
+# Operator request (2026-10-21, "Full chain like before"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0346.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0346
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      docs/ADR-EPHEMERAL-VIRTUALIZATION.md, docs/CHANGELOG.md,
+      docs/concepts/perimeters.md, docs/MANIFESTO.md,
+      docs/reference/experimental.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0346.v4-cleanup.yaml,
+      .gitagent/planner/MISSION.schema.yaml, .gitagent/runs/MSN-0346.json,
+      packages/core/src/schemas/mission-schema.ts,
+      templates/.gitagent/planner/MISSION.schema.yaml. Text only:
+      packages/core/src/schemas/mission-schema.ts (virtual_capture description),
+      the two generated MISSION.schema.yaml copies,
+      docs/ADR-EPHEMERAL-VIRTUALIZATION.md, docs/concepts/perimeters.md,
+      docs/reference/experimental.md, docs/MANIFESTO.md (one paragraph with the
+      arXiv citation), docs/CHANGELOG.md (one heading). No behaviour change.
+      Operator request (2026-10-21): the release should be cleaned up and
+      include more features; the second chain is approved in full. Decisions:
+      the field stays accepted (no schema break), only its description is
+      corrected; the citation goes into From reviewer to referee, where the
+      manifesto argues for a deterministic referee. The mission has no trace
+      rows: its evidence is .gitagent/runs/MSN-0346.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The plane ingestion contract is
+      untouched; only a schema field description and docs change.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+interrogation_sha256: d299cdee7b01e134676273a5f132ebe31c34980b3af50aff2faca1a8e16cb592
+declared_paths:
+  - .gitagent/missions/MSN-0346.v4-cleanup.yaml
+  - .gitagent/planner/MISSION.schema.yaml
+  - .gitagent/runs/MSN-0346.json
+  - EXECUTOR_LOG.md
+  - docs/ADR-EPHEMERAL-VIRTUALIZATION.md
+  - docs/CHANGELOG.md
+  - docs/MANIFESTO.md
+  - docs/concepts/perimeters.md
+  - docs/reference/experimental.md
+  - packages/core/src/schemas/mission-schema.ts
+  - templates/.gitagent/planner/MISSION.schema.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0346.v4-cleanup.yaml
+    - .gitagent/planner/MISSION.schema.yaml
+    - .gitagent/runs/MSN-0346.json
+    - EXECUTOR_LOG.md
+    - docs/ADR-EPHEMERAL-VIRTUALIZATION.md
+    - docs/CHANGELOG.md
+    - docs/MANIFESTO.md
+    - docs/concepts/perimeters.md
+    - docs/reference/experimental.md
+    - packages/core/src/schemas/mission-schema.ts
+    - templates/.gitagent/planner/MISSION.schema.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: b362122128a4da9cc23b3ea1a1326ba791f1c090d5afb25408dd7271635b2f92

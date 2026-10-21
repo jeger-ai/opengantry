@@ -20,6 +20,8 @@ Today agents write code, open pull requests and wait for human engineers or AI r
 
 Governance has to move from the outer loop, the pull request after the fact, into the inner loop, where agents generate code. Execution is a graph: intent fans out to parallel executors, and OpenGantry referees each edge. "Inner" and "outer" say where work runs, not an order of steps.
 
+Trusting the model is not enough either. Between an agent and the model sit API routers and proxies, and published attacks on that path tamper with what the agent receives and does ([arXiv:2604.08407](https://arxiv.org/abs/2604.08407)). A referee on your machine and in your CI judges the files that changed against the law, whoever or whatever produced them.
+
 A reviewer leaves comments and asks the agent to fix a structural mistake. A referee returns an exit code. Its rules are machine-checkable: edit scope, forbidden zones, import layers, content patterns and the mission's own gate command. When a rule is broken the work does not land, and the agent gets a structured finding it can act on. [Enforcement boundary](concepts/enforcement-boundary.md) separates the mechanisms that fail closed from the ones that only guide.
 
 ## Who owns which law
