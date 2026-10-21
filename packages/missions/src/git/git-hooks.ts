@@ -99,25 +99,35 @@ export interface PushRange {
   head: string;
 }
 
-/** The base a pushed head is compared with when the remote has no object: upstream, main, master, then the parent. */
-export function fallbackPushBase(repoRoot: string, head: string): string | null {
-  for (const other of ["@{upstream}", "main", "master"]) {
+/**
+ * The base a pushed head is compared with when the remote has no object: the newest merge-base (fewest commits to the
+ * head, ties to the earlier ref) with the upstream, the pushed remote's HEAD, main and master remote-tracking refs, then
+ * local main and master, so a local main behind its remote does not pull merged missions in; else the parent commit.
+ */
+export function fallbackPushBase(repoRoot: string, head: string, remote = "origin"): string | null {
+  const tracking = ["HEAD", "main", "master"].map((b) => `refs/remotes/${remote}/${b}`);
+  let best: { base: string; distance: number } | null = null;
+  for (const other of ["@{upstream}", ...tracking, "main", "master"]) {
     const r = gitRunOk(repoRoot, ["merge-base", head, other]);
-    if (r.ok && r.stdout.trim()) return r.stdout.trim();
+    const base = r.ok ? r.stdout.trim() : "";
+    const count = base ? gitRunOk(repoRoot, ["rev-list", "--count", `${base}..${head}`]) : null;
+    const distance = count?.ok ? Number(count.stdout.trim()) : Number.POSITIVE_INFINITY;
+    if (base && (!best || distance < best.distance)) best = { base, distance };
   }
+  if (best) return best.base;
   const parent = gitRunOk(repoRoot, ["rev-parse", "--verify", `${head}~1^{commit}`]);
   return parent.ok && parent.stdout.trim() ? parent.stdout.trim() : null;
 }
 
 /**
  * Ranges to evaluate for a push. A ref deletion (all-zero local sha) contributes nothing; a new remote ref (all-zero
- * remote sha) compares against `fallbackPushBase`; otherwise `remote sha..local sha`.
+ * remote sha) compares against `fallbackPushBase` for `remote`; otherwise `remote sha..local sha`.
  */
-export function pushRangesFromRefLines(repoRoot: string, lines: readonly PrePushRefLine[]): PushRange[] {
+export function pushRangesFromRefLines(repoRoot: string, lines: readonly PrePushRefLine[], remote?: string): PushRange[] {
   const ranges: PushRange[] = [];
   for (const line of lines) {
     if (line.localSha === ZERO_SHA) continue;
-    const base = line.remoteSha === ZERO_SHA ? fallbackPushBase(repoRoot, line.localSha) : line.remoteSha;
+    const base = line.remoteSha === ZERO_SHA ? fallbackPushBase(repoRoot, line.localSha, remote) : line.remoteSha;
     if (!base || base === line.localSha) continue;
     ranges.push({ base, head: line.localSha });
   }

@@ -53,6 +53,25 @@ test("pushRangesFromRefLines: deletion contributes nothing, update is remote..lo
   assert.deepEqual(pushRangesFromRefLines(dir, [fresh]), [{ base: sha(dir, "main"), head }]);
 });
 
+test("pushRangesFromRefLines: a new ref from the remote's main starts at that merge-base when local main lags", () => {
+  const dir = tempRepo("main");
+  const run = (cmd: string) => execSync(cmd, { cwd: dir, stdio: "pipe" });
+  fs.writeFileSync(path.join(dir, "merged.txt"), "already merged\n");
+  run("git add merged.txt && git commit -q -m merged");
+  const remoteMain = sha(dir, "HEAD");
+  run(`git update-ref refs/remotes/upstream/main ${remoteMain}`);
+  run("git reset -q --hard HEAD~1");
+  run("git checkout -q -b feature/y refs/remotes/upstream/main");
+  fs.writeFileSync(path.join(dir, "c.txt"), "c\n");
+  run("git add c.txt && git commit -q -m four");
+  const head = sha(dir, "HEAD");
+  const fresh = { localRef: "refs/heads/feature/y", localSha: head, remoteRef: "refs/heads/feature/y", remoteSha: ZERO_SHA };
+  assert.deepEqual(pushRangesFromRefLines(dir, [fresh], "upstream"), [{ base: remoteMain, head }]);
+  // A remote-tracking ref older than local main loses to it: the newest merge-base wins.
+  run(`git update-ref refs/remotes/upstream/main ${sha(dir, "main~1")}`);
+  assert.deepEqual(pushRangesFromRefLines(dir, [fresh], "upstream"), [{ base: sha(dir, "main"), head }]);
+});
+
 test("gantry hook pre-push: a ref deletion exits 0 without verifying; a range without missions passes", () => {
   const dir = tempRepo();
   const head = sha(dir, "HEAD");
