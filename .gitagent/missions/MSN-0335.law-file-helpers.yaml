@@ -1,0 +1,297 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0335]. Executor must not run until the [MSN-0335] legislation commit + pin.
+#
+# Legislated intent: review follow-up 7a, the law files read in one place: readLawFileAt, lawFileRelAt,
+# writeLawFileYaml and repoAbs in git/repo-text; nine per-file wrappers and core parseGxtConfig deleted; the
+# 3.x-form doctor check with the doctor; gantry migrate on the dual read with config and policy pointer validated.
+#
+# Operator request (2026-10-21, "legislate all of them in that order"). No trace rows: the
+# evidence is .gitagent/runs/MSN-0335.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0335
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The iii integration example's lockfile is refreshed;
+      its offline validation passes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Accept. The pointer's state and shape are the same checks split
+      in two; policy pull and the policy doctor name the file they read.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. The Planner stamp check is unchanged; its advisories
+      are collected and shown once.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. The conformance goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. The MCP write guard judges the skill law; its denials
+      and messages are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c381e0aea4c3
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks: src/cli/.
+      Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0335.law-file-helpers.yaml,
+      .gitagent/runs/MSN-0335.json, packages/core/src/config.ts,
+      packages/core/tests/shared-types.test.ts, packages/git/src/repo-text.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/discovery-proposal.ts,
+      packages/missions/src/gxt-config.ts, packages/missions/src/law-files.ts,
+      packages/missions/src/manifest.ts,
+      packages/missions/src/start-snapshot.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/plane/src/policy-fetch.ts, packages/plane/src/policy-resolve.ts,
+      src/cli/commands/init.ts, src/cli/commands/migrate.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/doctor/law-file-doctor.ts,
+      src/cli/doctor/policy-doctor.ts,
+      src/cli/tests/law-files-dual-read.test.ts. Review follow-up 7a (law-file
+      helpers): packages/git/src/repo-text.ts,
+      packages/missions/src/law-files.ts (deleted), manifest.ts, gxt-config.ts,
+      trusted-automation.ts, start-snapshot.ts, discovery-proposal.ts,
+      verify/verify-org-phases.ts, arch/external/architecture-pointer.ts,
+      packages/plane/src/policy-resolve.ts and policy-fetch.ts,
+      packages/core/src/config.ts and its test, src/cli/commands/init.ts and
+      migrate.ts, src/cli/doctor/doctor-core.ts, policy-doctor.ts and the new
+      law-file-doctor.ts, the dual-read test, docs/DEVELOPMENT.md, CHANGELOG,
+      executor log, ARCH_BASELINE.json (git, lib and command raised; missions,
+      plane and core lowered). .gitagent/foreman/, .gitagent/planner/RULES.md,
+      .github/workflows/ and TARGET_ARCHITECTURE.yaml are forbidden. Operator
+      request (2026-10-21): \"legislate all of them in that order\"; item 7 of
+      the review, first part. Decisions: the helpers live in git/repo-text
+      because they read and write the working tree at a root, which is that
+      module's job; the doctor warning moves to src/cli/doctor because every
+      doctor check lives there; migrate reads through the dual read so it cannot
+      report already_yaml over two differing forms; the 3.x config and policy
+      pointer are validated before migration because the manifest and the
+      architecture pointer already were. Not taken: a lawFileAbsAt helper
+      (repoAbs with lawFileRelAt is the same two words). The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0335.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: "Accept. Levels compose through tightenPathLaw: skill, org
+      floor, contract; nothing widens."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. The dual read is unchanged in rule and now has one
+      implementation; gantry migrate reads through it, so two differing forms
+      fail closed as every reader does, and a 3.x config or policy pointer is
+      validated before its YAML form is written.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+  - finding_id: f78343603de1
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0335.law-file-helpers.yaml,
+      .gitagent/runs/MSN-0335.json, packages/core/src/config.ts,
+      packages/core/tests/shared-types.test.ts, packages/git/src/repo-text.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/discovery-proposal.ts,
+      packages/missions/src/gxt-config.ts, packages/missions/src/law-files.ts,
+      packages/missions/src/manifest.ts,
+      packages/missions/src/start-snapshot.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/plane/src/policy-fetch.ts, packages/plane/src/policy-resolve.ts,
+      src/cli/commands/init.ts, src/cli/commands/migrate.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/doctor/law-file-doctor.ts,
+      src/cli/doctor/policy-doctor.ts,
+      src/cli/tests/law-files-dual-read.test.ts. Review follow-up 7a (law-file
+      helpers): packages/git/src/repo-text.ts,
+      packages/missions/src/law-files.ts (deleted), manifest.ts, gxt-config.ts,
+      trusted-automation.ts, start-snapshot.ts, discovery-proposal.ts,
+      verify/verify-org-phases.ts, arch/external/architecture-pointer.ts,
+      packages/plane/src/policy-resolve.ts and policy-fetch.ts,
+      packages/core/src/config.ts and its test, src/cli/commands/init.ts and
+      migrate.ts, src/cli/doctor/doctor-core.ts, policy-doctor.ts and the new
+      law-file-doctor.ts, the dual-read test, docs/DEVELOPMENT.md, CHANGELOG,
+      executor log, ARCH_BASELINE.json (git, lib and command raised; missions,
+      plane and core lowered). .gitagent/foreman/, .gitagent/planner/RULES.md,
+      .github/workflows/ and TARGET_ARCHITECTURE.yaml are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: f8f97ef1085b
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0335.law-file-helpers.yaml,
+      .gitagent/runs/MSN-0335.json, packages/core/src/config.ts,
+      packages/core/tests/shared-types.test.ts, packages/git/src/repo-text.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/discovery-proposal.ts,
+      packages/missions/src/gxt-config.ts, packages/missions/src/law-files.ts,
+      packages/missions/src/manifest.ts,
+      packages/missions/src/start-snapshot.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/missions/src/verify/verify-org-phases.ts,
+      packages/plane/src/policy-fetch.ts, packages/plane/src/policy-resolve.ts,
+      src/cli/commands/init.ts, src/cli/commands/migrate.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/doctor/law-file-doctor.ts,
+      src/cli/doctor/policy-doctor.ts,
+      src/cli/tests/law-files-dual-read.test.ts. Review follow-up 7a (law-file
+      helpers): packages/git/src/repo-text.ts,
+      packages/missions/src/law-files.ts (deleted), manifest.ts, gxt-config.ts,
+      trusted-automation.ts, start-snapshot.ts, discovery-proposal.ts,
+      verify/verify-org-phases.ts, arch/external/architecture-pointer.ts,
+      packages/plane/src/policy-resolve.ts and policy-fetch.ts,
+      packages/core/src/config.ts and its test, src/cli/commands/init.ts and
+      migrate.ts, src/cli/doctor/doctor-core.ts, policy-doctor.ts and the new
+      law-file-doctor.ts, the dual-read test, docs/DEVELOPMENT.md, CHANGELOG,
+      executor log, ARCH_BASELINE.json (git, lib and command raised; missions,
+      plane and core lowered). .gitagent/foreman/, .gitagent/planner/RULES.md,
+      .github/workflows/ and TARGET_ARCHITECTURE.yaml are forbidden."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+interrogation_sha256: eff300afa3dad4eca91e0abe37c6e4ed88077677c625b2a485d1eda150d89e30
+declared_paths:
+  - .gitagent/missions/MSN-0335.law-file-helpers.yaml
+  - .gitagent/runs/MSN-0335.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/core/src/config.ts
+  - packages/core/tests/shared-types.test.ts
+  - packages/git/src/repo-text.ts
+  - packages/missions/src/arch/external/architecture-pointer.ts
+  - packages/missions/src/discovery-proposal.ts
+  - packages/missions/src/gxt-config.ts
+  - packages/missions/src/law-files.ts
+  - packages/missions/src/manifest.ts
+  - packages/missions/src/start-snapshot.ts
+  - packages/missions/src/trusted-automation.ts
+  - packages/missions/src/verify/verify-org-phases.ts
+  - packages/plane/src/policy-fetch.ts
+  - packages/plane/src/policy-resolve.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/migrate.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/doctor/law-file-doctor.ts
+  - src/cli/doctor/policy-doctor.ts
+  - src/cli/tests/law-files-dual-read.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0335.law-file-helpers.yaml
+    - .gitagent/runs/MSN-0335.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/core/src/config.ts
+    - packages/core/tests/shared-types.test.ts
+    - packages/git/src/repo-text.ts
+    - packages/missions/src/arch/external/architecture-pointer.ts
+    - packages/missions/src/discovery-proposal.ts
+    - packages/missions/src/gxt-config.ts
+    - packages/missions/src/law-files.ts
+    - packages/missions/src/manifest.ts
+    - packages/missions/src/start-snapshot.ts
+    - packages/missions/src/trusted-automation.ts
+    - packages/missions/src/verify/verify-org-phases.ts
+    - packages/plane/src/policy-fetch.ts
+    - packages/plane/src/policy-resolve.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/migrate.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/doctor/law-file-doctor.ts
+    - src/cli/doctor/policy-doctor.ts
+    - src/cli/tests/law-files-dual-read.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: ffc40cb7719166f2449a727ca005cf39732a2389f11b733827be23281f936379
