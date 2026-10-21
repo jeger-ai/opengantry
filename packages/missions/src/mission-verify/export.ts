@@ -1,37 +1,18 @@
-import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "#core/constants.js";
+import { junitXml, sarifLocation, sarifLog, type JUnitCase } from "#verify/export.js";
 import type { VerifyResultPayload } from "./payload.js";
 
 export type VerifyExportFormat = "json" | "sarif" | "junit";
-
-const SARIF_SCHEMA =
-  "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
 
 /** Concrete file for repository-wide results. Directories cannot carry a SARIF region. */
 export const GENERIC_SARIF_FILE = ".gitagent/foreman/MANIFEST.yaml";
 
 export const JUNIT_SUITE_NAME = "gantry-verify";
 
-export interface JUnitCase {
-  name: string;
-  failure?: string;
-  skipped?: boolean;
-}
-
 interface VerifyExportBuildOptions {
   /** Directory check supplied by the caller. Trailing-slash URIs are directories either way. */
   isDirectory?: (uri: string) => boolean;
   /** One JUnit testcase per verify phase. Omit to keep the payload-derived phase list. */
   junitCases?: JUnitCase[];
-}
-
-/** Escape text for both XML attributes and element bodies. */
-function xmlEscape(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
 }
 
 export function buildVerifyExportDocument(
@@ -89,14 +70,6 @@ function genericArtifactUri(
   return GENERIC_SARIF_FILE;
 }
 
-function sarifLocation(uri: string, region: Record<string, number> | undefined): Record<string, unknown> {
-  const physicalLocation: Record<string, unknown> = {
-    artifactLocation: { uri },
-  };
-  if (region) physicalLocation.region = region;
-  return { locations: [{ physicalLocation }] };
-}
-
 export function buildSarifDocument(
   payload: VerifyResultPayload,
   cliVersion: string,
@@ -140,22 +113,7 @@ export function buildSarifDocument(
     }
   }
 
-  return {
-    $schema: SARIF_SCHEMA,
-    version: "2.1.0",
-    runs: [
-      {
-        tool: {
-          driver: {
-            name: CLI_NAME,
-            version: cliVersion,
-            informationUri: OPENGANTRY_WEBSITE_URL,
-          },
-        },
-        results,
-      },
-    ],
-  };
+  return sarifLog(cliVersion, results);
 }
 
 function phaseTestcases(payload: VerifyResultPayload): JUnitCase[] {
@@ -178,25 +136,5 @@ function phaseTestcases(payload: VerifyResultPayload): JUnitCase[] {
 
 export function buildJUnitXml(payload: VerifyResultPayload, casesInput?: JUnitCase[]): string {
   const cases = casesInput && casesInput.length > 0 ? casesInput : phaseTestcases(payload);
-  const failures = cases.filter((c) => c.failure).length;
-  const lines = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<testsuites name="${CLI_NAME}" tests="${String(cases.length)}" failures="${String(failures)}">`,
-    `  <testsuite name="${JUNIT_SUITE_NAME}" tests="${String(cases.length)}" failures="${String(failures)}">`,
-  ];
-  for (const tc of cases) {
-    const name = xmlEscape(tc.name);
-    if (tc.failure) {
-      const escaped = xmlEscape(tc.failure);
-      lines.push(
-        `    <testcase classname="gantry.verify" name="${name}"><failure message="${escaped}">${escaped}</failure></testcase>`,
-      );
-    } else if (tc.skipped) {
-      lines.push(`    <testcase classname="gantry.verify" name="${name}"><skipped/></testcase>`);
-    } else {
-      lines.push(`    <testcase classname="gantry.verify" name="${name}"/>`);
-    }
-  }
-  lines.push("  </testsuite>", "</testsuites>");
-  return `${lines.join("\n")}\n`;
+  return junitXml(JUNIT_SUITE_NAME, "gantry.verify", cases);
 }

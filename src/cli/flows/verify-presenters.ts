@@ -13,11 +13,8 @@ import { loadPrompts } from "./prompts-loader.js";
 import type { VerifyPhaseResult } from "#missions/mission-verify/engine.js";
 import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import type { VerifyPhaseTiming } from "#missions/mission-verify/phase-clock.js";
-import {
-  buildVerifyExportDocument,
-  type JUnitCase,
-  type VerifyExportFormat,
-} from "#missions/mission-verify/export.js";
+import { buildVerifyExportDocument, type VerifyExportFormat } from "#missions/mission-verify/export.js";
+import type { JUnitCase } from "#verify/export.js";
 import { uriIsDirectory } from "../report/sarif-uri.js";
 import fs from "node:fs";
 import path from "node:path";

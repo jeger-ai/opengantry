@@ -14,6 +14,9 @@
       ],
       "#plane/*": [
         "../../dist/packages/plane/src/*"
+      ],
+      "#verify/*": [
+        "../../dist/packages/verify/src/*"
       ]
     }
   },
@@ -29,6 +32,9 @@
     },
     {
       "path": "../plane"
+    },
+    {
+      "path": "../verify"
     }
   ]
 }

@@ -34,6 +34,8 @@ export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
 export const VERIFY_BASELINE_SCHEMA = "opengantry.verify-baseline.v1" as const;
 export const DEFAULT_VERIFY_CONTRACT = "verify.yaml";
 export const DEFAULT_VERIFY_BASELINE = "verify-baseline.json";
+/** The problem of a full or quick run on a tree with uncommitted changes. */
+export const UNCOMMITTED_PROBLEM = "the tree has uncommitted changes: commit first, or use --worktree to include them";
 
 /** Digest-only verify result (ADR-0051): paths, counts and verdicts, never file contents or command output. */
 export interface VerifyContractResult {
@@ -208,7 +210,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   const mode = opts.mode ?? "full";
   const worktree = mode === "worktree";
   const problems: string[] = [];
-  if (!worktree && p.dirty) problems.push("the tree has uncommitted changes: commit first, or use --worktree to include them");
+  if (!worktree && p.dirty) problems.push(UNCOMMITTED_PROBLEM);
   const changed = changedFiles(p.root, p.base, worktree);
   const paths = judgePaths(p, changed, problems);
   const size = judgeSize(p, changed, worktree, problems);

@@ -22,6 +22,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
   - **Org perimeter applied.** The org policy's `manifest_constraints.perimeter_protected_add` was accepted and ignored. Its paths are now protected by `gantry perimeter` and by trusted automation, and an org policy that cannot be read fails `gantry perimeter --ci`.
   - **Parked.** The contract drift index, contract preflight, defensive profiles and virtual capture live under `examples/`; `better-sqlite3`, `sqlite-vec`, `ajv` and `ajv-formats` are gone from the dependencies.
   - **Cage.** Dependency freeze (`dependencies: revert`, `--lock-deps`), scope mode (`allow_only:`, `--allow-only`), `gantry verify --contract` without `.gitagent/`.
+  - **Standalone verify in CI.** `gantry verify --contract --format sarif|junit` prints the result for code scanning and test dashboards.
   - **Dependencies:** `@modelcontextprotocol/sdk` 1.32.1 at least (earlier versions have published advisories), `@clack/prompts` 1.8 and zod 4.6.7; hono 4.13.13 in the lockfile.
 
 ## 3.9

@@ -18,6 +18,8 @@ order: 6
 
 With `json`, `sarif` or `junit`, diagnostics (`gantry verify:` lines) go to **stderr** and the document is the only **stdout** payload. Redirect stdout only; do not pipe stderr into the SARIF or JUnit file. The exit code is still the verify result: `0` pass, `1` fail. These formats cannot be combined with `--fix`.
 
+The same formats work for a contract without missions: `gantry verify --contract … --format sarif` or `--format junit` (`testsuite` named `gantry-verify-contract`); the rule ids are listed in [Verify a change without missions](verify-contract.md#in-ci).
+
 ## Exit codes differ by host
 
 GitHub Code Scanning and GitLab test reports treat a failing `gantry verify` differently.

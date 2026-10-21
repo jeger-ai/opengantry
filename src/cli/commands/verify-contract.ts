@@ -4,8 +4,11 @@ import path from "node:path";
 import type { Command } from "commander";
 import { setExitCode } from "../output/cli-io.js";
 import { emitCliJson, runUserCommandAsync } from "../output/command-boundary.js";
+import { currentReporter } from "../output/reporter.js";
+import { CLI_VERSION } from "../version.gen.js";
 import { GantryUserError } from "#core/user-error.js";
 import { outputTail, type CheckRun, type VerifyMode } from "#verify/checks.js";
+import { verifyResultJUnit, verifyResultSarif } from "#verify/export.js";
 import {
   checkVerifyResult,
   runVerifyContract,
@@ -52,11 +55,17 @@ function usage(message: string): GantryUserError {
 
 function assertCompatible(o: VerifyContractCliOptions): void {
   if (o.mission) throw usage("--contract and --mission are separate modes; use one");
-  if (o.format && o.format !== "json" && o.format !== "text") throw usage(`--format ${o.format} is not available for contract results yet; use --json`);
+  if (o.format && !["text", "json", "sarif", "junit"].includes(o.format)) throw usage(`--format must be text, json, sarif or junit (got ${o.format})`);
+  if (exportFormat(o) && (o.baseline || o.checkResult)) throw usage(`--format ${String(o.format)} projects a run's result; --baseline and --check-result report as text or json`);
   const modes = [o.worktree && "--worktree", o.quick && "--quick", o.baseline && "--baseline", o.checkResult && "--check-result"].filter(Boolean);
   if (modes.length > 1) throw usage(`choose one of ${modes.join(", ")}`);
   if (o.sign && (!o.out || o.baseline || o.checkResult)) throw usage("--sign signs the result written by --out");
   if (o.allowedSigners && !o.checkResult) throw usage("--allowed-signers is for --check-result");
+}
+
+/** sarif or junit: the run's result projected onto stdout; the progress and summary stay on stderr. */
+function exportFormat(o: VerifyContractCliOptions): "sarif" | "junit" | undefined {
+  return o.format === "sarif" || o.format === "junit" ? o.format : undefined;
 }
 
 function modeOf(o: VerifyContractCliOptions): VerifyMode {
@@ -129,6 +138,9 @@ export async function runVerifyContractCommand(o: VerifyContractCliOptions): Pro
     if (o.out) writeResult(o.out, result);
     if (json) emitCliJson(result);
     else for (const line of summary(result)) console.error(line);
+    const format = exportFormat(o);
+    if (format === "sarif") currentReporter().document(JSON.stringify(verifyResultSarif(result, CLI_VERSION), null, 2));
+    if (format === "junit") currentReporter().document(verifyResultJUnit(result));
     if (result.status !== "pass") setExitCode(EXIT_CODE.FAILURE);
     return Promise.resolve();
   });
