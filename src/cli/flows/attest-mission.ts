@@ -1,4 +1,4 @@
-import { logWarn } from "../output/cli-io.js";
+import { reportLedger } from "../output/cli-io.js";
 import { buildAttestationReceipt } from "./attestation-receipt.js";
 import { writeAttestationReceipt, type AttestationReceipt } from "#plane/attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
@@ -43,11 +43,11 @@ export function attestMission(options: AttestMissionOptions): AttestMissionResul
   if (options.exportPath?.trim()) {
     export_path = writeAttestationExportEnvelope(root, receipt, options.exportPath.trim());
   }
-  appendLedgerIfEnabled(root, "receipt", msnIdOrDefault(mission), {
+  reportLedger(appendLedgerIfEnabled(root, "receipt", msnIdOrDefault(mission), {
     verify_status: "attest_only",
     receipt_sha256: receipt.receipt_sha256,
     signed: Boolean(receipt.signature),
-  }, logWarn);
+  }));
   return {
     repo_root: root,
     receipt,

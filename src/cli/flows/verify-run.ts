@@ -1,3 +1,4 @@
+import { reportLedger } from "../output/cli-io.js";
 import { Reporter } from "../output/reporter.js";
 import path from "node:path";
 import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
@@ -23,7 +24,6 @@ import { GXT_ERROR } from "#core/error-codes.js";
 import { persistFailedVerifyRemediation } from "#missions/verify/verify-remediation-pipeline.js";
 import { recordVerifyRunBestEffort } from "#missions/verify/verify-run-ring.js";
 import { runRecordRelPath } from "#missions/verify/verify-run-record.js";
-import { logWarn } from "../output/cli-io.js";
 import {
   resolveVerifySink,
   maybeApplyRepairAndReevaluate,
@@ -189,13 +189,13 @@ async function resolveFinalPhaseResult(
 function appendVerifyOutcomeLedger(ctx: VerifyPresentContext, result: VerifyPhaseResult): void {
   const msnId = msnIdOrDefault(ctx.mission);
   if (result.ok) {
-    appendLedgerIfEnabled(ctx.root, "receipt", msnId, { verify_status: "passed" }, logWarn);
+    reportLedger(appendLedgerIfEnabled(ctx.root, "receipt", msnId, { verify_status: "passed" }));
     return;
   }
-  appendLedgerIfEnabled(ctx.root, "verify_findings", msnId, {
+  reportLedger(appendLedgerIfEnabled(ctx.root, "verify_findings", msnId, {
     failed_gate: result.phase,
     message: result.message,
-  }, logWarn);
+  }));
 }
 
 function emitMissionBinding(ctx: VerifyPresentContext, sink: ReturnType<typeof resolveVerifySink>): void {
@@ -247,8 +247,7 @@ async function evaluateWithFixLoop(
 
 /** Unified verify orchestration: load once, evaluate once, present by sink. */
 export async function runVerifyCore(options: VerifyOptions): Promise<VerifyRunResult> {
-  const reporter = Reporter.forVerify(options);
-  const ctx = loadVerifyContext({ warn: (message) => reporter.warn(message), ...options });
+  const ctx = loadVerifyContext(options);
   const sink = resolveVerifySink(ctx.options);
   emitMissionBinding(ctx, sink);
 
@@ -323,7 +322,6 @@ export async function buildVerifyResultPayloadFromOptions(options: VerifyOptions
     const mission = parseMissionFile(root, resolved.missionRel);
     assertMissionGatePresent(mission);
     const payload = await buildVerifyResultPayload(root, manifest, mission, {
-      warn: logWarn,
       ...options,
       mission: resolved.missionRel,
     });

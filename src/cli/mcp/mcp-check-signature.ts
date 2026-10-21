@@ -24,7 +24,9 @@ export function handleCheckSignature(
   }
 
   try {
-    const msnId = assertPlannerMissionProof(root, missionAbs, { warn: logWarn });
+    const warnings: string[] = [];
+    const msnId = assertPlannerMissionProof(root, missionAbs, { warnings });
+    for (const w of warnings) logWarn(w);
     const rel = formatRepoRelative(root, missionAbs);
     return {
       status: "signature_valid",

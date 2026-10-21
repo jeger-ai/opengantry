@@ -12,7 +12,7 @@ import fs from "node:fs";
 import { CLI_NAME, REL_ARCHITECTURE_POINTER_YAML } from "#core/constants.js";
 import { readArchitecturePointerSource } from "#missions/arch/external/architecture-pointer.js";
 import { manifestExists } from "#missions/manifest.js";
-import { CLI_DIAGNOSTICS, logError, logInfo, logManagedAssetConflicts, setExitCode } from "../output/cli-io.js";
+import { logError, logInfo, logManagedAssetConflicts, reportMerged, setExitCode } from "../output/cli-io.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
 import {
   isIntegrationIdeKey,
@@ -39,6 +39,7 @@ import {
   applyInitWrites,
   planInitAssets,
   type InitBodyTransform,
+  type InitPlanResult,
   type PlannedWrite,
 } from "#missions/init/init-plan.js";
 import {
@@ -154,11 +155,8 @@ async function resolveInitAssetPlan(
 ) {
   const transformBody: InitBodyTransform | undefined = undefined;
   let force = options.force === true;
-  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody, CLI_DIAGNOSTICS);
-  if (!plan.ok) {
-    setExitCode(EXIT_CODE.USAGE);
-    return null;
-  }
+  let plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
+  if (!plan.ok) return planFailed(plan);
   if (plan.conflicts.length === 0) {
     return { plan, force };
   }
@@ -181,11 +179,8 @@ async function resolveInitAssetPlan(
   }
 
   force = true;
-  plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody, CLI_DIAGNOSTICS);
-  if (!plan.ok) {
-    setExitCode(EXIT_CODE.USAGE);
-    return null;
-  }
+  plan = planInitAssets(assets, templatesRoot, repoRoot, force, transformBody);
+  if (!plan.ok) return planFailed(plan);
   return { plan, force };
 }
 
@@ -241,8 +236,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
     const { runInitTutorial } = await import("../init/init-tutorial.js");
     await runInitTutorial();
-    mergeGitignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
-    mergePrettierignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
+    mergeFragments(repoRoot, templatesRoot);
     return;
   }
   const profile = await resolveProfile(options, repoRoot, templatesRoot);
@@ -284,8 +278,18 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
   } else {
     logInitNextSteps(profile);
   }
-  mergeGitignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
-  mergePrettierignoreFromTemplate(repoRoot, templatesRoot, CLI_DIAGNOSTICS);
+  mergeFragments(repoRoot, templatesRoot);
+}
+
+/** Append the gitignore and prettierignore fragments and say what was appended. */
+function mergeFragments(repoRoot: string, templatesRoot: string): void {
+  reportMerged([mergeGitignoreFromTemplate(repoRoot, templatesRoot), mergePrettierignoreFromTemplate(repoRoot, templatesRoot)]);
+}
+
+function planFailed(plan: InitPlanResult): null {
+  if (plan.missingTemplate) logError(`init: missing template for ${plan.missingTemplate.targetPath} at ${plan.missingTemplate.templateAbs}`);
+  setExitCode(EXIT_CODE.USAGE);
+  return null;
 }
 
 function logInitSummary(

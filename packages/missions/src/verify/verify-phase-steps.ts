@@ -52,7 +52,6 @@ export function evaluateGitProof(
       msnId: mission.msnId ?? undefined,
       scanDepth: options.scanDepth,
       warnings: gitProofWarnings,
-      warn: options.warn,
     });
     return { kind: "ok", proofMsnId, warnings: gitProofWarnings };
   } catch (e) {

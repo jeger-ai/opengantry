@@ -1,4 +1,4 @@
-import { logWarn } from "../output/cli-io.js";
+import { reportLedger } from "../output/cli-io.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import { configFloorViolations, orgPolicySnapshot, resolveOrgPolicyOrThrow } from "#plane/policy-resolve.js";
@@ -11,11 +11,11 @@ export function runPolicyPull(opts: { json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const result = pullOrgPolicy(root);
-    appendLedgerIfEnabled(root, "policy_pin", msnIdOrDefault(undefined), {
+    reportLedger(appendLedgerIfEnabled(root, "policy_pin", msnIdOrDefault(undefined), {
       policy_id: result.pointer.bundle_sha256,
       bundle_sha256: result.bundle_sha256,
       pinned_commit: result.pinned_commit,
-    }, logWarn);
+    }));
     return {
       json: { status: "ok", ...result },
       human: `gantry policy pull: pinned ${result.pinned_commit} sha=${result.bundle_sha256.slice(0, 12)}`,

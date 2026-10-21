@@ -1,9 +1,7 @@
 import {
   buildAttestationReceipt as buildWithIdentity,
-  resolvePlannerStampForReceipt as resolveStampWithEmails,
   type AttestationReceipt,
   type AttestationVerifyStatus,
-  type PlannerStampReceipt,
 } from "#plane/attestation-receipt.js";
 import type { AttestationHarnessMode } from "#plane/receipt-attribution.js";
 import { logWarn } from "../output/cli-io.js";
@@ -22,10 +20,6 @@ export interface BuildAttestationReceiptInput {
   errorCode?: string;
   sign?: boolean;
   harnessMode?: AttestationHarnessMode;
-}
-
-export function resolvePlannerStampForReceipt(root: string, msnId: string, orgPepper: string): PlannerStampReceipt | null {
-  return resolveStampWithEmails(root, msnId, orgPepper, resolvePlannerEmails(root).emails);
 }
 
 export function buildAttestationReceipt(input: BuildAttestationReceiptInput): AttestationReceipt {

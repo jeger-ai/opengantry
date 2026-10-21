@@ -6,7 +6,7 @@ import { toPosixRel } from "#core/posix-path.js";
 import { gitHead, gitRevParse, gitRun } from "#git/git.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import type { VerifyOptions } from "./verify/verify-options.js";
-import { appendLedgerIfEnabled } from "./ledger/ledger-append.js";
+import { appendLedgerIfEnabled, ledgerFailureLine } from "./ledger/ledger-append.js";
 
 export const ENV_BYPASS_SECRET = "GANTRY_BYPASS_SECRET";
 export const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";
@@ -171,6 +171,8 @@ export function runBreakGlassAudit(
 }
 
 export interface BreakGlassAuditOk {
+  /** A failed ledger append, for the presenter. */
+  warnings: string[];
   kind: "ok";
   missionRel: string;
   commitSha: string;
@@ -203,12 +205,14 @@ export function runBreakGlassAuditFlow(
       commit: options.breakGlassCommit,
       auditCommit: options.auditCommit === true,
     });
-    appendLedgerIfEnabled(root, "break_glass", msnIdOrDefault(mission), {
+    const ledger = appendLedgerIfEnabled(root, "break_glass", msnIdOrDefault(mission), {
       reason_sha256: crypto.createHash("sha256").update(reason).digest("hex"),
       error_code: "BREAK_GLASS",
-    }, options.warn);
+    });
+    const warning = ledgerFailureLine(ledger);
     return {
       kind: "ok",
+      warnings: warning === null ? [] : [warning],
       missionRel,
       commitSha,
       reason,

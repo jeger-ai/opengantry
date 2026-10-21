@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { SILENT, type Diagnostics } from "../diagnostics.js";
 import type { InitAsset } from "./init-asset-catalog.js";
 import { templatePathForAsset, type InitAssetSpec } from "./init-asset-catalog.js";
 
@@ -12,6 +11,8 @@ export interface PlannedWrite {
 
 export interface InitPlanResult {
   ok: boolean;
+  /** Why planning stopped: the asset whose template is not under the templates root. */
+  missingTemplate?: { targetPath: string; templateAbs: string };
   writes: PlannedWrite[];
   skippedUserMutable: string[];
   unchanged: string[];
@@ -27,7 +28,6 @@ export function planInitAssets(
   repoRoot: string,
   force: boolean,
   transformBody?: InitBodyTransform,
-  log: Diagnostics = SILENT,
 ): InitPlanResult {
   const writes: PlannedWrite[] = [];
   const conflicts: string[] = [];
@@ -42,8 +42,7 @@ export function planInitAssets(
     const templateAbs = path.join(templatesRoot, templateRel.split("/").join(path.sep));
     const targetAbs = path.join(repoRoot, asset.targetPath.split("/").join(path.sep));
     if (!fs.existsSync(templateAbs)) {
-      log.error(`init: missing template for ${asset.targetPath} at ${templateAbs}`);
-      return { ok: false, writes, skippedUserMutable, unchanged, conflicts };
+      return { ok: false, writes, skippedUserMutable, unchanged, conflicts, missingTemplate: { targetPath: asset.targetPath, templateAbs } };
     }
     const bodyRaw = fs.readFileSync(templateAbs, "utf8");
     const body = transformBody ? transformBody(bodyRaw, asset.targetPath) : bodyRaw;

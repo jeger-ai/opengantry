@@ -1,5 +1,7 @@
-import { logWarn } from "../output/cli-io.js";
-import { checkMissionDependencies } from "#missions/deps/deps-resolve.js";
+
+import { reportLedger } from "../output/cli-io.js";
+import { checkAndRecordMissionDependencies } from "#missions/deps/deps-resolve.js";
+import type { DependencyCheckResult } from "#plane/deps-resolve.js";
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
@@ -46,13 +48,14 @@ export function handleLedgerVerify(
 
 export function handleDepsCheck(missionFilePath?: string): OrgMcpResult<{
   mission_file_path: string;
-  results: ReturnType<typeof checkMissionDependencies>;
+  results: DependencyCheckResult[];
 }> {
   try {
     const { root } = loadWorkspace();
     const resolved = resolveMissionArg(root, missionFilePath);
     const mission = parseMissionFile(root, resolved.missionRel);
-    const results = checkMissionDependencies(root, mission, logWarn);
+    const { results, ledger } = checkAndRecordMissionDependencies(root, mission);
+    if (ledger) reportLedger(ledger);
     return orgOk({ mission_file_path: resolved.missionRel, results });
   } catch (e) {
     return orgErr(e);

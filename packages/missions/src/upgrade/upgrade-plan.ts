@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLI_NAME } from "#core/constants.js";
 import { fromPosix, toPosixRel } from "#core/posix-path.js";
-import { SILENT } from "../diagnostics.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
@@ -31,7 +30,6 @@ import {
 import {
   REL_UPGRADE_TMP,
   type RunUpgradePlanOptions,
-  type UpgradeFileChange,
   type UpgradePayload,
   type UpgradePlanResult,
 } from "./upgrade-plan-types.js";
@@ -64,38 +62,6 @@ function resolveUpgradeVersionGate(
   return null;
 }
 
-function logUpgradePlanSummary(
-  options: RunUpgradePlanOptions,
-  opts: {
-    plannedWrites: string[];
-    legacyWarning: string | null;
-    missionRel: string;
-    suggestedHumanAction: string;
-    fileChanges?: UpgradeFileChange[];
-  },
-): void {
-  if (options.json) return;
-  const log = options.log ?? SILENT;
-  log.info(`${CLI_NAME} upgrade: ${options.dryRun ? "dry-run — would stage" : "staged"} ${opts.plannedWrites.length} file(s) under ${REL_UPGRADE_TMP}/`);
-  for (const rel of opts.plannedWrites) log.info(`  - ${rel}`);
-  if (opts.fileChanges?.length) {
-    log.info("Changelog preview:");
-    for (const c of opts.fileChanges) {
-      const delta =
-        c.bytes_before === null
-          ? `new ${c.bytes_after} bytes`
-          : `${c.bytes_before} → ${c.bytes_after} bytes`;
-      log.info(`  [${c.action}] ${c.path} (${delta})`);
-    }
-  }
-  if (opts.legacyWarning) log.warn(opts.legacyWarning);
-  log.info(`${options.dryRun ? "Would write" : "Wrote upgrade"} mission: ${opts.missionRel}`);
-  log.info(`${options.dryRun ? "Suggested Planner action" : "Review staged diff, then"}:\n${opts.suggestedHumanAction}`);
-  if (!options.dryRun) {
-    log.info(`After Planner commit: gantry upgrade --apply --mission ${opts.missionRel}`);
-  }
-}
-
 export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResult {
   const repoRoot = path.resolve(options.repoRoot);
   const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
@@ -110,9 +76,10 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   const profile = inferInitProfileFromRepo(repoRoot, templatesRoot);
   const catalogAssets = resolveAssetsFromProfile(profile, compat, templatesRoot);
   const assets = upgradeEligibleAssets(catalogAssets);
-  const plan = planInitAssets(assets, templatesRoot, repoRoot, true, undefined, options.log);
+  const plan = planInitAssets(assets, templatesRoot, repoRoot, true);
   if (!plan.ok) {
-    throw new Error(`${CLI_NAME} upgrade: asset planning failed`);
+    const missing = plan.missingTemplate ? ` (missing template for ${plan.missingTemplate.targetPath} at ${plan.missingTemplate.templateAbs})` : "";
+    throw new Error(`${CLI_NAME} upgrade: asset planning failed${missing}`);
   }
 
   if (plan.writes.length === 0) {
@@ -152,14 +119,10 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
     changes_by_category: groupUpgradeChangesByCategory(fileChanges),
   };
 
-  if (options.dryRun) {
-    logUpgradePlanSummary(options, { plannedWrites, legacyWarning, missionRel, suggestedHumanAction, fileChanges });
-    return shared;
-  }
+  if (options.dryRun) return shared;
 
   const stagedHashes = writeStagedFiles(repoRoot, plan.writes);
-  mergeGitignoreFromTemplate(repoRoot, templatesRoot, options.log);
-  mergePrettierignoreFromTemplate(repoRoot, templatesRoot, options.log);
+  const merged = [mergeGitignoreFromTemplate(repoRoot, templatesRoot), mergePrettierignoreFromTemplate(repoRoot, templatesRoot)];
   const payload: UpgradePayload = {
     from_version: installed.version,
     to_version: bundled,
@@ -173,12 +136,5 @@ export function runUpgradePlan(options: RunUpgradePlanOptions): UpgradePlanResul
   fs.mkdirSync(path.dirname(missionAbs), { recursive: true });
   fs.writeFileSync(missionAbs, missionBody, "utf8");
 
-  logUpgradePlanSummary(options, {
-    plannedWrites,
-    legacyWarning,
-    missionRel,
-    suggestedHumanAction,
-  });
-
-  return { ...shared, mission_path: missionAbs };
+  return { ...shared, mission_path: missionAbs, merged };
 }

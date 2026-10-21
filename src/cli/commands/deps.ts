@@ -1,13 +1,13 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
-import { setExitCode, logWarn } from "../output/cli-io.js";
+import { setExitCode, reportLedger } from "../output/cli-io.js";
 import { runUserCommand, type CommandPresentation } from "../output/command-boundary.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { parseMissionFile } from "#missions/missions/parser.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
 import { fetchMissionDependency } from "#plane/deps-fetch.js";
-import { checkMissionDependencies } from "#missions/deps/deps-resolve.js";
+import { checkAndRecordMissionDependencies } from "#missions/deps/deps-resolve.js";
 import { type DependencyCheckResult } from "#plane/deps-resolve.js";
 import { gitRun } from "#git/git.js";
 
@@ -46,7 +46,9 @@ export function runDepsCheck(opts: { mission?: string; json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const { mission } = loadMissionDeps(root, opts.mission);
-    return reportDependencyResults(checkMissionDependencies(root, mission, logWarn), {
+    const { results, ledger } = checkAndRecordMissionDependencies(root, mission);
+    if (ledger) reportLedger(ledger);
+    return reportDependencyResults(results, {
       headline: "gantry deps check",
     });
   });
@@ -64,7 +66,9 @@ export function runReleaseCheck(opts: { tag?: string; json?: boolean }): void {
       const abs = path.join(root, rel);
       if (!fs.existsSync(abs)) continue;
       const mission = parseMissionFile(root, rel);
-      results.push(...checkMissionDependencies(root, mission, logWarn));
+      const checked = checkAndRecordMissionDependencies(root, mission);
+      if (checked.ledger) reportLedger(checked.ledger);
+      results.push(...checked.results);
     }
     return reportDependencyResults(results, { headline: "gantry release check" });
   });

@@ -1,4 +1,8 @@
 import { currentReporter } from "./reporter.js";
+import { CLI_NAME } from "#core/constants.js";
+import { ledgerFailureLine, type LedgerAppendOutcome } from "#missions/ledger/ledger-append.js";
+import type { LedgerEntryKind } from "#plane/ledger-entry.js";
+import type { MergedFragment } from "#missions/file-merge-gxt.js";
 
 /** Pipeline payload: stdout through the current reporter. */
 export function writeStdout(document: string): void {
@@ -8,9 +12,6 @@ export function writeStdout(document: string): void {
 export function logInfo(message: string): void {
   currentReporter().info(message);
 }
-
-/** The CLI's diagnostics sink for domain code (#missions/diagnostics.js). */
-export const CLI_DIAGNOSTICS = { info: logInfo, warn: logWarn, error: logError };
 
 export function logWarn(message: string): void {
   currentReporter().warn(message);
@@ -63,4 +64,13 @@ export function readStdinIfEmpty(text: string): Promise<string> {
     process.stdin.on("end", () => resolve(data.trim()));
     process.stdin.on("error", reject);
   });
+}
+
+export function reportLedger(outcome: LedgerAppendOutcome<LedgerEntryKind>): void {
+  const line = ledgerFailureLine(outcome);
+  if (line !== null) logWarn(line);
+}
+
+export function reportMerged(merged: readonly MergedFragment[] | undefined): void {
+  for (const m of merged ?? []) if (m.appended > 0) logInfo(`${CLI_NAME}: appended ${m.appended} line(s) to ${m.file}`);
 }

@@ -1,5 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { CLI_DIAGNOSTICS, logError, logInfo, setExitCode } from "../output/cli-io.js";
+import { logError, logInfo, logWarn, reportMerged, setExitCode } from "../output/cli-io.js";
+import { CLI_NAME } from "#core/constants.js";
+import { REL_UPGRADE_TMP, type UpgradePlanResult } from "#missions/upgrade/upgrade-plan-types.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
@@ -31,14 +33,16 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   if (options.apply) {
     void runUpgradeApply({
       repoRoot,
-      log: CLI_DIAGNOSTICS,
       mission: options.mission,
       templatesRoot,
-      json: options.json,
     })
       .then((result) => {
         if (options.json) {
           console.log(JSON.stringify(result, null, 2));
+        } else {
+          for (const w of result.warnings ?? []) logWarn(w);
+          if (result.status === "applied") logInfo(result.message);
+          reportMerged(result.merged);
         }
         if (result.status === "blocked") {
           setExitCode(EXIT_CODE.USAGE);
@@ -53,15 +57,15 @@ export function runUpgrade(options: UpgradeOptions = {}): void {
   try {
     const result = runUpgradePlan({
       repoRoot,
-      log: CLI_DIAGNOSTICS,
       templatesRoot,
       msn: options.msn,
       dryRun: options.dryRun,
-      json: options.json,
     });
 
     if (options.json) {
       console.log(JSON.stringify(toStableUpgradePlanPayloadV1(result), null, 2));
+    } else if (result.status === "planned") {
+      printUpgradePlanSummary(result, options.dryRun === true);
     }
 
     if (result.status === "downgrade_blocked") {
@@ -94,4 +98,23 @@ function handleUpgradeError(e: unknown, json?: boolean): void {
   }
   logError(errorMessage(e));
   setExitCode(EXIT_CODE.USAGE);
+}
+
+/** The human report of a staged or dry-run plan. */
+function printUpgradePlanSummary(result: UpgradePlanResult, dryRun: boolean): void {
+  const plannedWrites = result.planned_writes ?? [];
+  logInfo(`${CLI_NAME} upgrade: ${dryRun ? "dry-run — would stage" : "staged"} ${plannedWrites.length} file(s) under ${REL_UPGRADE_TMP}/`);
+  for (const rel of plannedWrites) logInfo(`  - ${rel}`);
+  if (dryRun && result.file_changes?.length) {
+    logInfo("Changelog preview:");
+    for (const c of result.file_changes) {
+      const delta = c.bytes_before === null ? `new ${c.bytes_after} bytes` : `${c.bytes_before} → ${c.bytes_after} bytes`;
+      logInfo(`  [${c.action}] ${c.path} (${delta})`);
+    }
+  }
+  reportMerged(result.merged);
+  if (result.legacy_warning) logWarn(result.legacy_warning);
+  logInfo(`${dryRun ? "Would write" : "Wrote upgrade"} mission: ${result.mission_rel ?? ""}`);
+  logInfo(`${dryRun ? "Suggested Planner action" : "Review staged diff, then"}:\n${result.suggested_human_action ?? ""}`);
+  if (!dryRun) logInfo(`After Planner commit: gantry upgrade --apply --mission ${result.mission_rel ?? ""}`);
 }

@@ -1,4 +1,4 @@
-import type { Diagnostics } from "../diagnostics.js";
+import type { MergedFragment } from "../file-merge-gxt.js";
 export const REL_UPGRADE_TMP = ".gitagent/.upgrade-tmp" as const;
 
 export interface UpgradeFileChange {
@@ -35,14 +35,13 @@ export interface UpgradePlanResult {
   legacy_warning?: string | null;
   file_changes?: UpgradeFileChange[];
   changes_by_category?: Record<string, UpgradeFileChange[]>;
+  /** The .gitignore and .prettierignore fragment merges a staged plan did. */
+  merged?: MergedFragment[];
 }
 
 export interface RunUpgradePlanOptions {
   repoRoot: string;
-  /** Progress and summary lines (the CLI passes its log helpers). */
-  log?: Diagnostics;
   templatesRoot?: string;
   msn?: string;
   dryRun?: boolean;
-  json?: boolean;
 }

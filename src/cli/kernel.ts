@@ -39,7 +39,6 @@ import { loadManifest } from "#missions/manifest.js";
 import type { VerifyOptions } from "#missions/verify/verify-options.js";
 import type { VerifyResultPayload } from "#missions/verify/verify-payload.js";
 import { buildVerifyResultPayload } from "#missions/verify/verify-payload.js";
-import { logWarn } from "./output/cli-io.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;
@@ -51,7 +50,7 @@ export interface VerifyMissionInput {
 export async function verifyMission(input: VerifyMissionInput): Promise<VerifyResultPayload> {
   const manifest = loadManifest(input.repoRoot);
   const mission = parseMissionFile(input.repoRoot, input.missionRelPath);
-  const options = { warn: logWarn, ...input.options };
+  const options = input.options ?? {};
   return buildVerifyResultPayload(input.repoRoot, manifest, mission, options);
 }
 

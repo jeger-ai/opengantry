@@ -5,12 +5,12 @@ import YAML from "yaml";
 import { CLI_NAME } from "#core/constants.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { fromPosix } from "#core/posix-path.js";
-import { SILENT, type Diagnostics } from "../diagnostics.js";
 import { promoteFileAtomic } from "../atomic-fs.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import {
   mergeGitignoreFromTemplate,
   mergePrettierignoreFromTemplate,
+  type MergedFragment,
 } from "../file-merge-gxt.js";
 import { resolveTemplateRootFromModule } from "../integration-compat.js";
 import { resolveMissionPathRequired } from "../missions/resolution.js";
@@ -28,6 +28,10 @@ export interface UpgradeApplyResult {
   message: string;
   to_version?: string;
   applied_paths?: string[];
+  /** Git-proof advisories on the upgrade mission's stamp. */
+  warnings?: string[];
+  /** The .gitignore and .prettierignore fragment merges. */
+  merged?: MergedFragment[];
 }
 
 function sha256File(absPath: string): string {
@@ -108,17 +112,13 @@ async function promoteStagedWrites(
   }
 }
 
-export interface RunUpgradeApplyOptions {
+interface RunUpgradeApplyOptions {
   repoRoot: string;
-  /** Progress and summary lines (the CLI passes its log helpers). */
-  log?: Diagnostics;
   mission?: string;
   templatesRoot?: string;
-  json?: boolean;
 }
 
 export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<UpgradeApplyResult> {
-  const log = options.log ?? SILENT;
   const repoRoot = path.resolve(options.repoRoot);
   const templatesRoot = options.templatesRoot ?? resolveTemplateRootFromModule();
   const missionAbs = resolveMissionPathRequired(repoRoot, { explicit: options.mission });
@@ -136,8 +136,9 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     );
   }
 
+  const warnings: string[] = [];
   try {
-    assertPlannerMissionProof(repoRoot, missionAbs, { warn: log.warn });
+    assertPlannerMissionProof(repoRoot, missionAbs, { warnings });
   } catch (e) {
     return {
       status: "blocked",
@@ -164,8 +165,6 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     applyTmpRoot = staged.applyTmpRoot;
     await promoteStagedWrites(staged.promotions);
 
-    mergeGitignoreFromTemplate(repoRoot, templatesRoot, log);
-    mergePrettierignoreFromTemplate(repoRoot, templatesRoot, log);
     writeSubstrateVersionFile(repoRoot, payload.to_version, "gantry upgrade --apply");
   } catch (e) {
     cleanupApplyTmp(applyTmpRoot);
@@ -177,6 +176,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     }
   }
 
+  const merged: MergedFragment[] = [mergeGitignoreFromTemplate(repoRoot, templatesRoot), mergePrettierignoreFromTemplate(repoRoot, templatesRoot)];
   const appliedPaths = payload.planned_writes;
   const message = [
     `${CLI_NAME} upgrade: applied substrate ${payload.from_version} → ${payload.to_version}`,
@@ -184,14 +184,12 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     "Next: restart Cursor, confirm MCP enabled, run gantry doctor.",
   ].join("\n");
 
-  if (!options.json) {
-    log.info(message);
-  }
-
   return {
     status: "applied",
     message,
     to_version: payload.to_version,
     applied_paths: appliedPaths,
+    warnings,
+    merged,
   };
 }
