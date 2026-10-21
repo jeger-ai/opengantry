@@ -14,6 +14,9 @@ bins:
   - name: opengantry-cage
     package: "@jeger-ai/opengantry"
     note: alias of gantry-cage
+  - name: gantry-verify
+    package: "@jeger-ai/opengantry and @jeger-ai/opengantry-verify"
+    note: gantry verify --contract with the contract as its argument
 entries:
   - name: arch
     since: commit 12461b8
@@ -180,6 +183,9 @@ entries:
     since: MSN-0200
   - name: policy status
     since: MSN-0010
+  - name: read-guard
+    since: MSN-0343
+    note: "Agent hook (ADR-0056); gantry-cage read-guard in the slim package."
   - name: receipt
     since: MSN-0140
   - name: receipt list

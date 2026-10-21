@@ -8,6 +8,7 @@ import { gitRun } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
 import { judgePath, pathLaw, type PathEffect, type PathLaw, type PathLawRule } from "#core/path-law.js";
+import { SECRET_ENV_EXCEPT, SECRET_ENV_PATTERNS } from "#core/secret-paths.js";
 import { parseCageScopeFlag, type CageScope } from "./cage-scope.js";
 import {
   CAGE_CONFIG_FILE,
@@ -105,7 +106,7 @@ export function cageFloorRules(dependencies: CageRuleMode): PathLawRule[] {
     effect: effectOf(mode),
     overridable: !NON_OVERRIDABLE_RULES.has(id),
   });
-  const floor = [rule("secrets", ["**/.env", "**/.env.*"], "revert", ["**/.env.example"]), rule("lockfile", anywhere(LOCKFILE_NAMES), dependencies)];
+  const floor = [rule("secrets", [...SECRET_ENV_PATTERNS], "revert", [...SECRET_ENV_EXCEPT]), rule("lockfile", anywhere(LOCKFILE_NAMES), dependencies)];
   if (dependencies !== "revert") return floor;
   return [...floor, rule("dependency_manifest", anywhere(DEPENDENCY_MANIFEST_NAMES), "revert", ["**/vendor/**"])];
 }

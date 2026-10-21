@@ -1,6 +1,7 @@
 name: npm publish
 
-# Publishes @jeger-ai/opengantry and the @jeger-ai/opengantry-cage workspace for a release tag.
+# Publishes @jeger-ai/opengantry and the @jeger-ai/opengantry-cage and @jeger-ai/opengantry-verify workspaces for a
+# release tag.
 # Each publish skips a version that is already on npm (scripts/npm-publish-if-new.sh), so a partial
 # release can be finished without failing on the package that already went out (MSN-0257).
 #
@@ -89,3 +90,6 @@ jobs:
 
       - name: Publish @jeger-ai/opengantry-cage to npm (skipped if this version is already published)
         run: ./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-cage
+
+      - name: Publish @jeger-ai/opengantry-verify to npm (skipped if this version is already published)
+        run: ./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-verify

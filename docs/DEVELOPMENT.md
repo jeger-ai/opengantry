@@ -175,10 +175,10 @@ Rules while the rewrite runs:
 | `packages/git` | `git` (the adapter), `git-staged`, `msn-commits`, `repo-text` (the working tree and the law files at a root), `receipt-signing` (ssh or gpg signatures with the git signing key) | core |
 | `packages/cage` | the cage runtime (15 modules: rules, snapshot, run, watch, check, suggest, journal, push guard, scope) | core, git |
 | `packages/plane` | the org plane: `ledger-entry`, `ledger-chain`, `ledger-append`, `ledger-export`, `policy-types`, `policy-bundle`, `policy-resolve`, `policy-fetch`, `deps-slug`, `deps-fetch`, `deps-resolve`, `receipt-attribution`, `attestation-receipt`, `attestation-export`, `org-export-config`, `digests` | core, git |
-| `packages/verify` | the standalone verify contract engine (ADR-0051): `contract`, `diff`, `checks`, `imports`, `python-imports`, `run`, and `export` (the SARIF and JUnit writers mission verify shares, and the contract result projections) | core, git |
+| `packages/verify` | the standalone verify contract engine (ADR-0051): `contract`, `diff`, `checks`, `imports`, `python-imports`, `run`, `export` (the SARIF and JUnit writers mission verify shares, and the contract result projections) and `keyless` (Sigstore signatures, ADR-0055); published through the slim `packages/opengantry-verify`, which bundles `src/cli/verify-bin.ts` (`gantry-verify`) and `src/cli/verify-lib.ts` (the library API) | core, git |
 | `packages/missions` | the governed substrate (ADR-0054 decision 6), moved in from `src/cli/lib` by sub-area: `contract/` (contract hash and format, effective scope, contract scan, the proposer), `tmvc-path` (the mission path law), `arch/target-architecture` (the `TARGET_ARCHITECTURE.yaml` loader), `domains/` (domain adapters), `discovery-scanner`; the mission core: `mission/` (parser, formatter, resolution, validator), `interrogate/`, `gate-adapters/`, `gate` and `gate-log-writer`, `trace-quote`, `trace-evidence` and the executor-log helpers, `planner-identity`, `planner-signature`, `draft-token`, `verdict-token`, `triage-logic`, the staged guard and forbidden scan, `manifest`, `gxt-config`, `workspace`, `mission-verify/` (the engine, phases, failures, hints, findings, fingerprints, payload, run record and ring); then `runtime-env`, `runtime-exec`, `error-payloads`, `fix-hints` (hint text), `msn-allocate`, proposals, the event spool and telemetry log, the upgrade plan payload; then `git/git-proof`, `perimeter`, `trusted-automation`, `substrate-write-guard`, `break-glass`, the KPI engine, the ledger append, the external architecture sources, init asset planning and the upgrade engine. Domain code never logs: its warnings are return values the CLI prints; `VerifyEvaluation` is what it evaluates, the CLI's `VerifyOptions` (`src/cli/flows/verify-options.ts`) adds presentation and recording | core, git, verify, plane |
 
-- Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage only), so adding one changes no lockfile.
+- Build: `npm run build` runs `tsc -b`; the packages compile into `dist/packages/<name>/src/`. They are not npm workspaces (`workspaces` lists the slim cage and verify packages only), so adding one changes no lockfile.
 - Import a package module as `#core/<module>.js`, `#git/<module>.js`, `#cage/<module>.js`, `#plane/<module>.js`, `#verify/<module>.js` or `#missions/<module>.js` (root `package.json` `imports`). Do not deep-import `dist/packages/*` and do not add a re-export facade; the last ones are gone (ADR-0054 steps 1 and 5b).
 - Package tests live in `packages/<name>/tests/` and run with `npm run test:packages` (part of `npm test`).
 - A path decision is made by `#core/path-law.js` (build a `PathLaw`, call `judgePath`); an import or layer decision by `#core/law.js` (`evaluateImportSite`, `evaluateLayerImport`, `evaluatePatternRules`). Do not add another matcher, classifier or rule loop in `src/cli`.
@@ -245,18 +245,24 @@ Adopters receive the runtime helpers from the init catalog, not the specimen-onl
 
 ## Releasing
 
-A release is its own mission that bumps every version site (including `packages/opengantry-cage/package.json`) and turns the **Unreleased** entries into the release's: the list in `docs/reference/release-notes.md` and the upgrade notes in `docs/CHANGELOG.md` (MSN-0246, MSN-0256; release highlights moved to the release notes in MSN-0270). After it merges:
+A release is its own mission that bumps every version site (including `packages/opengantry-cage/package.json` and `packages/opengantry-verify/package.json`) and turns the **Unreleased** entries into the release's: the list in `docs/reference/release-notes.md` and the upgrade notes in `docs/CHANGELOG.md` (MSN-0246, MSN-0256; release highlights moved to the release notes in MSN-0270). After it merges:
 
 ```bash
 git tag -a v<version> <merge-commit> -m "OpenGantry v<version>"
 git push origin v<version>
 ```
 
-The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which publishes `@jeger-ai/opengantry` and then `@jeger-ai/opengantry-cage`. Each publish goes through `scripts/npm-publish-if-new.sh` and is skipped when that version is already on npm.
+The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which publishes `@jeger-ai/opengantry`, then `@jeger-ai/opengantry-cage`, then `@jeger-ai/opengantry-verify`. Each publish goes through `scripts/npm-publish-if-new.sh` and is skipped when that version is already on npm.
 
 - **Authentication is npm trusted publishing (MSN-0259).** npm exchanges the job's GitHub OIDC token for a short-lived publish token and attaches provenance; the workflow holds no npm token or secret and needs npm 11.5.1 or newer, which it checks. Each package needs a trusted publisher on npmjs.com, under the package's settings: provider **GitHub Actions**, repository **`jeger-ai/opengantry`**, workflow **`npm-publish.yml`**. A package without one fails to publish with an auth error (`E404`, `ENEEDAUTH`, `E401` or `EOTP`), and the script names the missing setting; there is no token to fall back to.
 - **Why a publish was refused (MSN-0261):** after the `::error::` hint, the job log lists npm's own trusted-publishing lines for that package (the `oidc` lines from npm's debug log, nothing else from it). `Failed token exchange request with body message: …` means npm refused the exchange: the package has no trusted publisher, or a field differs from the workflow (organization, repository, workflow file name, environment), and the message says which. `Skipped because incorrect permissions for id-token within GitHub workflow` means the job lacks `id-token: write`. `Successfully retrieved and set token` means authentication worked and the failure is elsewhere in npm's output. No `oidc` lines means npm did not attempt trusted publishing (not running in GitHub Actions, or npm older than 11.5.1).
-- **New packages:** trusted publishing can only be configured for a package that exists, so the first version of a new package is published by hand (below), then the trusted publisher is added before the next release.
+- **New packages:** trusted publishing can only be configured for a package that exists, so the first version of a new package is published by hand (below), then the trusted publisher is added before the next release. To give the first real release provenance too, publish a placeholder by hand before tagging, add the trusted publisher, then tag; deprecate the placeholder afterwards:
+
+```bash
+cd packages/opengantry-verify && npm version 0.0.0-bootstrap.0 --no-git-tag-version && npm publish --access public --tag bootstrap
+git checkout -- package.json   # back to the release version; nothing is committed
+npm deprecate @jeger-ai/opengantry-verify@0.0.0-bootstrap.0 "placeholder for the trusted publisher; install 4.0.0 or later"
+```
 - **Once releases publish from CI:** set both packages to disallow tokens on npmjs.com and delete any `NPM_TOKEN` repository secret.
 - **Partial release:** if one package published and the other failed, do not re-run the tag run (it uses the workflow file at the tagged commit) and never move the tag. Fix the cause, then start a run from `main` with the tag. It refuses unless the tag matches `package.json` and everything that gets published on `main` is identical to the tag; the package already on npm is skipped. Provenance for that run names the `main` commit it used.
 
@@ -264,7 +270,7 @@ The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which pu
 gh workflow run npm-publish.yml -f tag=v<version>
 ```
 
-- **Emergency local publish** (no provenance): from a clean checkout of the tag, after `npm run build`, run `npm publish --access public` for the root package or add `--workspace @jeger-ai/opengantry-cage`. `publishConfig` no longer forces provenance, so this works outside CI; npm asks for two-factor approval in the browser or for `--otp <code>`.
+- **Emergency local publish** (no provenance): from a clean checkout of the tag, after `npm run build`, run `npm publish --access public` for the root package or add `--workspace @jeger-ai/opengantry-cage` (or `@jeger-ai/opengantry-verify`). `publishConfig` no longer forces provenance, so this works outside CI; npm asks for two-factor approval in the browser or for `--otp <code>`.
 
 ## LLM evidence + KPI gate
 

@@ -1,0 +1,62 @@
+{
+  "name": "@jeger-ai/opengantry-verify",
+  "version": "4.0.0",
+  "description": "Decide whether a change may land from one contract (verify.yaml or a COMMITLY gate.json): scope, size, line rules, import and layer rules, required checks, signed digest-only results. Slim standalone build of `gantry verify --contract` from @jeger-ai/opengantry, with a library API.",
+  "type": "module",
+  "bin": {
+    "gantry-verify": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "imports": {
+    "#core/*": "./dist/types/core/*",
+    "#git/*": "./dist/types/git/*",
+    "#verify/*": "./dist/types/verify/*"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "npm run build && node --test --test-concurrency=1 \"tests/*.test.mjs\""
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "sigstore": "^5.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "verify",
+    "ai-agents",
+    "guardrail",
+    "ci",
+    "sarif",
+    "sigstore",
+    "opengantry",
+    "gantry"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeger-ai/opengantry.git",
+    "directory": "packages/opengantry-verify"
+  },
+  "author": "Juergen Eger",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/jeger-ai/opengantry/issues"
+  },
+  "homepage": "https://opengantry.ai"
+}

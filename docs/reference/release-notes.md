@@ -1,6 +1,6 @@
 ---
 title: "Release notes"
-description: "What changed in each release of @jeger-ai/opengantry and @jeger-ai/opengantry-cage. Upgrade steps and behaviour changes are in CHANGELOG.md."
+description: "What changed in each release of @jeger-ai/opengantry and its slim cage and verify packages. Upgrade steps and behaviour changes are in CHANGELOG.md."
 section: reference
 order: 6
 ---
@@ -22,7 +22,8 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
   - **Org perimeter applied.** The org policy's `manifest_constraints.perimeter_protected_add` was accepted and ignored. Its paths are now protected by `gantry perimeter` and by trusted automation, and an org policy that cannot be read fails `gantry perimeter --ci`.
   - **Parked.** The contract drift index, contract preflight, defensive profiles and virtual capture live under `examples/`; `better-sqlite3`, `sqlite-vec`, `ajv` and `ajv-formats` are gone from the dependencies.
   - **Cage.** Dependency freeze (`dependencies: revert`, `--lock-deps`), scope mode (`allow_only:`, `--allow-only`), `gantry verify --contract` without `.gitagent/`.
-  - **Standalone verify in CI.** `gantry verify --contract --format sarif|junit` prints the result for code scanning and test dashboards; `--sign keyless` signs it with Sigstore through the CI job's OIDC identity, and `--check-result --certificate-identity` checks who signed it.
+  - **Standalone verify in CI.** `gantry verify --contract --format sarif|junit` prints the result for code scanning and test dashboards; `--sign keyless` signs it with Sigstore through the CI job's OIDC identity, and `--check-result --certificate-identity` checks who signed it. The new package `@jeger-ai/opengantry-verify` ships it on its own: `npx @jeger-ai/opengantry-verify --base origin/main`, and a typed library API.
+  - **Read guard.** `gantry-cage read-guard` is a Claude Code and Cursor hook that refuses tool calls reading `.env` files, git credentials, SSH keys and cloud credentials, so they never reach the model.
   - **Dependencies:** `@modelcontextprotocol/sdk` 1.32.1 at least (earlier versions have published advisories), `@clack/prompts` 1.8 and zod 4.6.7; hono 4.13.13 in the lockfile.
 
 ## 3.9

@@ -4,6 +4,7 @@ import {
   runCageCommand,
   runCageGuardPrePush,
   runCageSuggestCommand,
+  runReadGuardCommand,
   runCageWatchCommand,
 } from "./commands/cage.js";
 
@@ -170,6 +171,7 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
 export function registerCageCommands(program: Command): void {
   configureCageCommand(program.command("cage"), { subcommands: true });
   registerCageGuardCommand(program);
+  registerReadGuardCommand(program);
 }
 
 export function registerCageGuardCommand(program: Command): void {
@@ -180,4 +182,14 @@ export function registerCageGuardCommand(program: Command): void {
     .requiredOption("--root <dir>", "Cage root (git work tree)")
     .option("--plan <file>", "Session plan written by gantry cage")
     .action((opts: { root: string; plan?: string }) => runCageGuardPrePush(opts));
+}
+
+/** `gantry-cage read-guard`: the agent hook that keeps secret files out of the model's context (ADR-0056). */
+export function registerReadGuardCommand(program: Command): void {
+  program
+    .command("read-guard")
+    .description("Agent hook (Claude Code PreToolUse, Cursor beforeReadFile/beforeShellExecution): refuse tool calls that would read secret files")
+    .action(async () => {
+      await runReadGuardCommand();
+    });
 }

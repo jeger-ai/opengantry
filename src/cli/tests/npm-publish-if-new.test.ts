@@ -197,7 +197,11 @@ test("npm-publish.yml: tag pushes and a guarded workflow_dispatch; both publishe
   const publishes = steps.filter((s) => s.name?.startsWith("Publish "));
   assert.deepEqual(
     publishes.map((s) => s.run),
-    ["./scripts/npm-publish-if-new.sh", "./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-cage"],
+    [
+      "./scripts/npm-publish-if-new.sh",
+      "./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-cage",
+      "./scripts/npm-publish-if-new.sh --workspace @jeger-ai/opengantry-verify",
+    ],
   );
   for (const s of publishes) assert.equal(s.env, undefined, `${s.name ?? ""} carries no token env (trusted publishing, MSN-0259)`);
   assert.ok(!steps.some((s) => /(^|\n)\s*npm publish\b/.test(s.run ?? "")), "no bare npm publish step remains");
@@ -293,8 +297,8 @@ test("npm-publish.yml npm version check: passes from npm 11.5.1, fails below (MS
   }
 });
 
-test("publishConfig: both packages publish public without forcing provenance, so a local emergency publish works (MSN-0259 DoD 3)", () => {
-  for (const rel of ["package.json", path.join("packages", "opengantry-cage", "package.json")]) {
+test("publishConfig: every published package is public without forcing provenance, so a local emergency publish works (MSN-0259 DoD 3)", () => {
+  for (const rel of ["package.json", path.join("packages", "opengantry-cage", "package.json"), path.join("packages", "opengantry-verify", "package.json")]) {
     const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, rel), "utf8")) as { publishConfig: Record<string, unknown> };
     assert.deepEqual(pkg.publishConfig, { access: "public" }, rel);
   }
