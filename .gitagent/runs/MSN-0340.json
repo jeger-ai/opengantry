@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0340",
+  "mission_path": ".gitagent/missions/MSN-0340.verify-contract-sarif-junit.yaml",
+  "head": "e1c7c6e361c8b07363df2258d3dfffe6932bc8aa",
+  "tree": "d0628db638819312650b5326f2638cfbefbe3d64",
+  "law_sha256": "e109957b20cbf2255fcae9347919b8147d2c8c1ce811fe3d5d200f846f44e05f",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 208608,
+      "output_sha256": "40168390aceb43f819c065a690e66108a9a76e02efb5a1708338852a33e7e28c"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-21T11:59:17.246Z"
+}
