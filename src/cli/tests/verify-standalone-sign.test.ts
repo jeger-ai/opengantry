@@ -5,8 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
-import type { Bundle } from "sigstore";
-import { checkKeylessSignature, GITHUB_ACTIONS_ISSUER, signVerifyResultKeyless, type SigstoreApi } from "#verify/keyless.js";
+import { checkKeylessSignature, GITHUB_ACTIONS_ISSUER, signVerifyResultKeyless, type SigstoreApi, type SigstoreBundle } from "#verify/keyless.js";
 import { checkVerifyResult, runVerifyContract } from "#verify/run.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
@@ -111,7 +110,7 @@ function fakeSigstore(identity: string): SigstoreApi & { signed: Buffer[] } {
     signed,
     sign(payload) {
       signed.push(payload);
-      return Promise.resolve({ fake: payload.toString("base64"), verificationMaterial: { tlogEntries: [{ logIndex: "42" }] } } as unknown as Bundle);
+      return Promise.resolve({ fake: payload.toString("base64"), verificationMaterial: { tlogEntries: [{ logIndex: "42" }] } } as unknown as SigstoreBundle);
     },
     verify(bundle, payload, options) {
       if ((bundle as unknown as { fake: string }).fake !== payload.toString("base64")) return Promise.reject(new Error("signature mismatch"));

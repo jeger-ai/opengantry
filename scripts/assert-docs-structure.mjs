@@ -237,7 +237,7 @@ export function checkDocs(root) {
     if (startLinks > 1) fail("cage-link", file, null, `cage page links into start/ ${startLinks} times (max 1)`);
   }
 
-  const extra = [path.join(root, "README.md"), path.join(root, "packages/opengantry-cage/README.md")];
+  const extra = [path.join(root, "README.md"), path.join(root, "packages/opengantry-cage/README.md"), path.join(root, "packages/opengantry-verify/README.md")];
   const examples = path.join(root, "examples");
   if (existsSync(examples)) {
     for (const name of readdirSync(examples).sort()) {

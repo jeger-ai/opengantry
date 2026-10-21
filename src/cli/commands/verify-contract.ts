@@ -38,18 +38,22 @@ export interface VerifyContractCliOptions {
   mission?: string;
 }
 
-/** The `--contract` family of `gantry verify` (ADR-0051), registered in one place. */
-export function registerVerifyContractOptions(cmd: Command): Command {
+/**
+ * The `--contract` family of `gantry verify` (ADR-0051), registered in one place. `standalone` is the `gantry-verify`
+ * bin, where the contract is the positional argument and every option is about it.
+ */
+export function registerVerifyContractOptions(cmd: Command, { standalone = false } = {}): Command {
+  const w = (text: string): string => (standalone ? text : `With --contract: ${text}`);
+  if (!standalone) cmd.option("--contract [file]", "Standalone verify contract instead of a mission: verify.yaml (default) or a COMMITLY gate.json");
   return cmd
-    .option("--contract [file]", "Standalone verify contract instead of a mission: verify.yaml (default) or a COMMITLY gate.json")
-    .option("--base <ref>", "With --contract: base commit (required for a committed contract)")
-    .option("--worktree", "With --contract: include uncommitted and untracked work (check before committing)")
-    .option("--quick", "With --contract: skip heavy checks")
-    .option("--baseline", "With --contract: at the base, record which checks already fail")
-    .option("--baseline-file <file>", "With --contract: baseline file (default verify-baseline.json beside the contract)")
-    .option("--check-result <file>", "With --contract: pass only if that result passed in a full run for this HEAD, base and contract")
-    .option("--out <file>", "With --contract: write the opengantry.verify-result.v1 result to <file>")
-    .option("--sign [method]", "With --contract and --out: sign the result with the git signing key, or `keyless` with Sigstore through the CI's OIDC identity (network)")
+    .option("--base <ref>", w("base commit (required for a committed contract)"))
+    .option("--worktree", w("include uncommitted and untracked work (check before committing)"))
+    .option("--quick", w("skip heavy checks"))
+    .option("--baseline", w("at the base, record which checks already fail"))
+    .option("--baseline-file <file>", w("baseline file (default verify-baseline.json beside the contract)"))
+    .option("--check-result <file>", w("pass only if that result passed in a full run for this HEAD, base and contract"))
+    .option("--out <file>", w("write the opengantry.verify-result.v1 result to <file>"))
+    .option("--sign [method]", `${standalone ? "With --out" : "With --contract and --out"}: sign the result with the git signing key, or \`keyless\` with Sigstore through the CI's OIDC identity (network)`)
     .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file")
     .option("--certificate-identity <regexp>", "With --check-result: also require a keyless signature whose certificate identity (workflow URI or email) matches")
     .option("--certificate-oidc-issuer <url>", `With --certificate-identity: the identity's OIDC issuer (default ${GITHUB_ACTIONS_ISSUER})`);
