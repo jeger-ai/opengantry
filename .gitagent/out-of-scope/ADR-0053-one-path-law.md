@@ -127,6 +127,14 @@ The code-quality review of the migration found that steps 2 to 4 gave every cons
 
 **Not changed, stated:** a skill that declares no roots, or an unknown skill, may change nothing (an empty area denies every path); the import evaluator keeps its own convention that strict mode has nothing to hold an import to in that case. The runtime forbidden-zone baseline (`forbidden-scan.ts`) still walks each zone as a directory, so a zone is a path prefix there; a glob zone is enforced by the staged guard, the MCP guard and the contract scan but not by the runtime baseline. The cage's floor lives in `cage-rules.ts` as `cageFloorRules`, not in a `cage-floor.ts`.
 
+## Amendment (2026-10-21, MSN-0345)
+
+**An empty skill area under a contract is the Planner's to declare.** The rule above (an empty area denies every path) held for the skill law alone, but `missionScopeLaw` also kept that empty area when a contract added its roots, and the intersection denied every path. RULES §4 says the opposite ("empty skill roots accept Planner-declared roots"), and `resolveEffectiveScope` already followed RULES: it accepts any contract roots under such a skill and reports them as the effective roots. So every mission under the rootless `substrate` skill (MSN-0339 to MSN-0343) had a staged guard that printed a path among the effective roots and flagged the same path as outside them.
+
+- When the contract declares roots and the skill declares none, the contract's area replaces the skill's empty area. Areas still intersect wherever the skill has roots (decision 1), and the `roots_escape` check is unchanged.
+- An empty skill area without contract roots, or an unknown skill, still denies every path. That covers the skill law alone (the kernel scope check, the MCP write guard), a rootless contract and a guard run without a mission.
+- The law and the printed effective roots now come from the same rule. Run-record law digests hash the root and zone lists, not the law, so existing records stay valid.
+
 ## Non-goals
 
 - One gate runner for mission gates and verify checks.
