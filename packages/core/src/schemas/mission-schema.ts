@@ -87,7 +87,7 @@ export const missionSchema = z
     virtual_capture: z
       .boolean()
       .default(false)
-      .describe("Ignored since 3.10 (ADR-0052 A10 parked the virtual scratch store; see examples/virtual-scratch/). Accepted for v3 missions, removed in 4.0."),
+      .describe("Ignored since 4.0 (ADR-0052 A10 parked the virtual scratch store; see examples/virtual-scratch/). Still accepted, so v3 missions keep validating."),
     upgrade_payload: z
       .object({
         from_version: z.string(),

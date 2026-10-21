@@ -44,6 +44,6 @@ An architecture rubric (`ARCHITECTURE_RUBRIC`) works the same way. Use them when
 
 ## <a id="virtual-scratch"></a>Parked: virtual scratch
 
-The opt-in `virtual_capture` scratch area (`.gitagent/virtual/<flight-id>/`, captured gate output, purge on success) is parked outside the CLI since 3.10 in [`examples/virtual-scratch/`](https://github.com/jeger-ai/opengantry/tree/main/examples/virtual-scratch). A mission's `virtual_capture` field is accepted and ignored; `gantry init` still ignores `.gitagent/virtual/` and `.gitagent/tmp/`.
+The opt-in `virtual_capture` scratch area (`.gitagent/virtual/<flight-id>/`, captured gate output, purge on success) is parked outside the CLI since 4.0 in [`examples/virtual-scratch/`](https://github.com/jeger-ai/opengantry/tree/main/examples/virtual-scratch). A mission's `virtual_capture` field is accepted and ignored; `gantry init` still ignores `.gitagent/virtual/` and `.gitagent/tmp/`.
 
 Design notes: [ADR-0020 KPI gate](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md), [ADR-0035 performance judge](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md), [ADR-0046 contract preflight](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0046-experimental-contract-preflight.md), [virtual scratch record](https://github.com/jeger-ai/opengantry/blob/main/docs/ADR-EPHEMERAL-VIRTUALIZATION.md), ADR-0052.
