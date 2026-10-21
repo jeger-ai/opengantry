@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { pathMatchesGlobPattern } from "../src/path-glob.js";
-import { archLaw, countLayers, evaluateBudgets, evaluateDependencies, evaluateDuplicates, evaluateOwner, evaluateRegistry, structuralLaw } from "../src/law.js";
+import { archLaw, countLayers, evaluateBudgets, evaluateCycles, evaluateDependencies, evaluateDuplicates, evaluateOwner, evaluateRegistry, structuralLaw } from "../src/law.js";
 
 const arch = archLaw({ layers: [{ id: "core", globs: ["packages/core/src/**"] }, { id: "lib", globs: ["src/cli/lib/**"] }] });
 const files = [
@@ -53,14 +53,41 @@ test("registry: every captured name must be registered, once per file", () => {
 
 test("dependencies and duplicates", () => {
   const law = structuralLaw({
-    dependencyRules: [{ id: "DEP", registry: "dependencies.yaml", manifest: "package.json", allowed: ["yaml"] }],
+    dependencyRules: [{ id: "DEP", registry: "dependencies.yaml", manifest: "package.json", registered: [{ name: "yaml", scope: "runtime", range: "^2" }, { name: "zod" }, { name: "ts", scope: "dev" }] }],
     duplicateRules: [{ id: "DUP", between: ["scripts/", "templates/scripts/"], allowed: ["scripts/ok.sh"] }],
   });
-  assert.deepEqual(evaluateDependencies(law, [{ name: "yaml", scope: "runtime" }, { name: "lodash", scope: "dev" }]).map((f) => f.module_specifier), ["dev dependency lodash is not in dependencies.yaml"]);
+  const deps = [
+    { name: "yaml", scope: "runtime" as const, range: "^2" },
+    { name: "zod", scope: "dev" as const, range: "^4" },
+    { name: "ts", scope: "runtime" as const, range: "^6" },
+    { name: "lodash", scope: "dev" as const, range: "1" },
+  ];
+  assert.deepEqual(evaluateDependencies(law, deps).map((f) => f.module_specifier), [
+    "runtime dependency ts is registered as dev in dependencies.yaml",
+    "dev dependency lodash is not in dependencies.yaml",
+  ]);
+  assert.deepEqual(evaluateDependencies(law, [{ name: "yaml", scope: "runtime", range: "^3" }]).map((f) => f.module_specifier), ["runtime dependency yaml range ^3 is registered as ^2 in dependencies.yaml"]);
   const dup = evaluateDuplicates(law, [
     { path: "scripts/ok.sh", sha256: "1" }, { path: "templates/scripts/ok.sh", sha256: "1" },
     { path: "scripts/new.sh", sha256: "2" }, { path: "templates/scripts/new.sh", sha256: "2" },
     { path: "scripts/own.sh", sha256: "3" },
   ]);
   assert.deepEqual(dup.map((f) => [f.file, f.module_specifier]), [["scripts/new.sh", "byte-identical to templates/scripts/new.sh"]]);
+});
+
+test("cycles: one finding per strongly connected set, named by its sorted members; a tree and a self-loop", () => {
+  const law = structuralLaw({ cycleRules: [{ id: "CYC" }] });
+  const edges = [
+    { from: "a.ts", to: "b.ts" }, { from: "b.ts", to: "c.ts" }, { from: "c.ts", to: "a.ts" },
+    { from: "b.ts", to: "d.ts" }, { from: "d.ts", to: "e.ts" },
+    { from: "x.ts", to: "y.ts" }, { from: "y.ts", to: "x.ts" },
+    { from: "self.ts", to: "self.ts" },
+  ];
+  assert.deepEqual(evaluateCycles(law, edges).map((f) => [f.file, f.module_specifier]), [
+    ["a.ts", "runtime import cycle among a.ts, b.ts, c.ts"],
+    ["self.ts", "runtime import cycle among self.ts"],
+    ["x.ts", "runtime import cycle among x.ts, y.ts"],
+  ]);
+  assert.deepEqual(evaluateCycles(law, [{ from: "a.ts", to: "b.ts" }, { from: "b.ts", to: "c.ts" }]), []);
+  assert.deepEqual(evaluateCycles(structuralLaw({}), edges), []);
 });

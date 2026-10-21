@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Hard-fail quality gates for changed TypeScript only (complexity + import layers + file size).
+# Hard-fail quality gates for changed TypeScript only (lint, import layers, test file size).
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
@@ -58,10 +58,6 @@ for f in "${EXISTING[@]}"; do
 done
 if [[ "${#LAYER_FILES[@]}" -gt 0 ]]; then
   node dist/cli/index.js arch check "${LAYER_FILES[@]}"
-fi
-
-if [[ "${#EXISTING[@]}" -gt 0 ]]; then
-  node scripts/check-lib-cycles.mjs
 fi
 
 echo "check-changed-code OK"

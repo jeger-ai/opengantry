@@ -20,5 +20,5 @@ test("gen-asset-catalog: runs and produces valid catalog without repo-only scrip
   assert.equal(unique.size, targets.length, "catalog must not contain duplicate targetPath values");
   assert.ok(unique.has("AGENTS.md"));
   assert.equal(unique.has("scripts/gen-asset-catalog.mjs"), false);
-  assert.equal(unique.has("scripts/check-import-layers.mjs"), false);
+  assert.equal(unique.has("scripts/check-changed-code.sh"), false);
 });

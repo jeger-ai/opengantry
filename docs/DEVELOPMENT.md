@@ -225,13 +225,11 @@ npm run validate
 
 Runs **`dev-validate-core.sh`** (build, `gantry check`, `gantry ci upgrade-tmp`, tests, doctor, MCP dogfood, changed-code, `gantry ci msn-range` vs `origin/main`) then **`gantry ci verify-missions`** (full `gantry verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
 
-**Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `check-import-layers.mjs`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` in [`scripts/lib/asset-catalog-static.mjs`](../scripts/lib/asset-catalog-static.mjs) — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
+**Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` in [`scripts/lib/asset-catalog-static.mjs`](../scripts/lib/asset-catalog-static.mjs) — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
 
 | Script | Why repo-only |
 |--------|----------------|
-| `check-changed-code.sh` | Dogfood complexity/import-layer gate on PR diff |
-| `check-import-layers.mjs` | Legacy import scanner; dogfood delegates to `gantry arch check` |
-| `check-lib-cycles.mjs` | Specimen maintainability gate |
+| `check-changed-code.sh` | Dogfood lint and import-layer gate on the PR diff (`gantry arch check` over the changed files; the whole-tree run in `dev-validate-core.sh` judges budgets, cycles, dependencies and duplicates) |
 | `dev-validate-core.sh` / `dev-validate.sh` | Full validation superset for maintainers |
 | `gen-asset-catalog.mjs` / `gen-dogfood.mjs` / `gen-version.mjs` | Build-time generators |
 | `validate-mcp-dogfood.sh` | MCP integration dogfood harness |
@@ -292,14 +290,14 @@ Deterministic quarantine mutations for specific gate failures — an isolation l
 
 1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes a registered **code repair** when gate output matches a known failure:
    - **`GXT_BANNED_IMPORT_DETECTED`** — `gantry check-imports` stderr
-   - **`GXT_IMPORT_LAYER_VIOLATION`** — `check-import-layers.mjs --json` structured report
+   - **`GXT_IMPORT_LAYER_VIOLATION`** — `gantry arch check --json` structured report
 2. The repair **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
 3. On mutation, append **`[SURGEON-MUTATION] …`** to `EXECUTOR_LOG.md` (the marker keeps its historical name, like the `GXT-SURGEON-QUARANTINE` code markers, so existing logs and quarantined files stay recognizable), then **rerun the full verify pipeline with `--fix` disabled**.
 4. Plain `gantry verify` (no `--fix`) remains fail-closed and never mutates TMVC.
 
 **Language boundary:** verify core phases (`git_proof`, `gate`, `kpi`, `trace`) are language-agnostic. Native repairs require TypeScript in the adopter workspace (or gantry package root); unresolved `typescript` disables the repair paths only — core verify still runs.
 
-**Import-layer JSON contract:** `node scripts/check-import-layers.mjs --json <files…>` emits `{ schema_version, ok, violations[] }` with stable `rule_id` values. Repairs parse JSON only — not human stderr.
+**Import-layer JSON contract:** `gantry arch check --json <files…>` emits `{ schema_version, ok, violations[] }` with the rule ids of `TARGET_ARCHITECTURE.yaml`. Repairs parse JSON only — not human stderr.
 
 Implementation: [`src/cli/doctor/repairs/`](../src/cli/doctor/repairs/) registry, [`packages/missions/src/repair.ts`](../packages/missions/src/repair.ts) log and gate-report helpers, orchestration in `src/cli/flows/verify-presenters.ts`.
 

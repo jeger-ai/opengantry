@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathMatchesGlobPattern } from "#core/path-glob.js";
-import { archLaw, countLayers, evaluateBudgets, evaluateDependencies, evaluateDuplicates, evaluateLayerImport, evaluateOwner, evaluatePatternRules, evaluateRegistry, layerForFile as coreLayerForFile, structuralLaw, type ArchLaw, type CountedFile, type HashedFile, type LayerCounts, type StructuralLaw } from "#core/law.js";
+import { archLaw, countLayers, evaluateBudgets, evaluateCycles, evaluateDependencies, evaluateDuplicates, evaluateLayerImport, evaluateOwner, evaluatePatternRules, evaluateRegistry, layerForFile as coreLayerForFile, structuralLaw, type ArchLaw, type CountedFile, type DeclaredDependency, type HashedFile, type ImportEdge, type LayerCounts, type RegisteredDependency, type StructuralLaw } from "#core/law.js";
 import { normalizeRepoRelativePath, toPosixRel } from "#core/posix-path.js";
 import { classifySpecifier, type TsconfigPaths } from "#core/specifier.js";
 import { loadImportAliases } from "../../contract/resolve-specifier.js";
@@ -12,6 +12,7 @@ import YAML from "yaml";
 import { CLI_NAME, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 import {
   extractBindingsFromSnippet,
+  extractImportSites,
   extractImportsWithMeta,
 } from "#core/import-scanner.js";
 import { walkDomainFiles } from "../../discovery-scanner.js";
@@ -19,7 +20,7 @@ import { walkDomainFiles } from "../../discovery-scanner.js";
 export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
 export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;
-/** Structural rule kinds (ADR-0052 B2): budget, owner, registry, dependency, duplicate; `file_ceiling_lines`. */
+/** Structural rule kinds (ADR-0052 B2): budget, owner, registry, dependency, duplicate, cycles; `file_ceiling_lines`; `exclude`. */
 export const TARGET_ARCHITECTURE_V4_SCHEMA_VERSION = "0.4.0" as const;
 export const SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS = [
   TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION,
@@ -83,14 +84,19 @@ export interface ArchDuplicateRule extends ArchRuleBase {
   between: [string, string];
   allowed?: string[];
 }
-export type ArchStructuralRule = ArchBudgetRule | ArchOwnerRule | ArchRegistryRule | ArchDependencyRule | ArchDuplicateRule;
-export const ARCH_STRUCTURAL_KINDS = ["budget", "owner", "registry", "dependency", "duplicate"] as const;
+export interface ArchCycleRule extends ArchRuleBase {
+  kind: "cycles";
+}
+export type ArchStructuralRule = ArchBudgetRule | ArchOwnerRule | ArchRegistryRule | ArchDependencyRule | ArchDuplicateRule | ArchCycleRule;
+export const ARCH_STRUCTURAL_KINDS = ["budget", "owner", "registry", "dependency", "duplicate", "cycles"] as const;
 export type ArchRuleSpec = ArchImportRule | ArchPatternRule | ArchStructuralRule;
 
 export interface TargetArchitectureSpec {
   schema_version: TargetArchitectureSchemaVersion;
   domain?: string;
   scan_roots?: string[];
+  /** Globs of files under the scan roots that no rule judges and no budget counts, such as tests. */
+  exclude?: string[];
   languages?: string[];
   layers: ArchLayerSpec[];
   rules: ArchRuleSpec[];
@@ -152,7 +158,8 @@ function parseStructuralRule(r: Record<string, unknown>, index: number, id: stri
   const appliesTo = parseStringArrayField(r.applies_to, "applies_to");
   const base = { id, from_layer: typeof r.from_layer === "string" ? r.from_layer : "*", ...(appliesTo ? { applies_to: appliesTo } : {}) };
   switch (r.kind) {
-    case "budget":
+    case "budget": {
+      const exclude = parseStringArrayField(r.exclude, "exclude");
       return {
         ...base,
         kind: "budget",
@@ -160,13 +167,14 @@ function parseStructuralRule(r: Record<string, unknown>, index: number, id: stri
         max_files: parseOptionalCount(r.max_files, `${where}.max_files`),
         max_lines: parseOptionalCount(r.max_lines, `${where}.max_lines`),
         max_exports: parseOptionalCount(r.max_exports, `${where}.max_exports`),
-        ...(parseStringArrayField(r.exclude, "exclude") ? { exclude: parseStringArrayField(r.exclude, "exclude") } : {}),
+        ...(exclude ? { exclude } : {}),
       };
+    }
     case "owner":
       return { ...base, kind: "owner", pattern: requireString(r, "pattern", where), owners: parseStringArrayField(r.owners, "owners", { required: true })! };
     case "registry": {
-      const patterns = parseStringArrayField(r.patterns, "patterns") ?? (typeof r.pattern === "string" ? [r.pattern] : undefined);
-      const registries = parseStringArrayField(r.registries, "registries") ?? (typeof r.registry === "string" ? [r.registry] : undefined);
+      const patterns = parseStringArrayField(r.patterns, "patterns");
+      const registries = parseStringArrayField(r.registries, "registries");
       if (!patterns?.length) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where}.patterns required`);
       if (!registries?.length) throw new Error(`TARGET_ARCHITECTURE.yaml: ${where}.registries required`);
       return { ...base, kind: "registry", patterns, registries };
@@ -179,6 +187,8 @@ function parseStructuralRule(r: Record<string, unknown>, index: number, id: stri
       const allowed = parseStringArrayField(r.allowed, "allowed");
       return { ...base, kind: "duplicate", between: [between[0]!, between[1]!], ...(allowed ? { allowed } : {}) };
     }
+    case "cycles":
+      return { ...base, kind: "cycles" };
     default:
       throw new Error(`TARGET_ARCHITECTURE.yaml: ${where} has unknown kind ${String(r.kind)}`);
   }
@@ -247,9 +257,9 @@ function resolveArchLanguages(spec: TargetArchitectureSpec): string[] {
   return ["typescript"];
 }
 
-export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string[]): boolean {
+export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string[], exclude: readonly string[] = []): boolean {
   const norm = normalizeRepoRelativePath(repoRel);
-  return scanRoots.some((root) => pathMatchesGlobPattern(norm, root));
+  return scanRoots.some((root) => pathMatchesGlobPattern(norm, root)) && !exclude.some((glob) => pathMatchesGlobPattern(norm, normalizeRepoRelativePath(glob)));
 }
 
 
@@ -353,6 +363,7 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
     throw new Error("TARGET_ARCHITECTURE.yaml: rules must be an array");
   }
   const scan_roots = parseStringArrayField(o.scan_roots, "scan_roots");
+  const exclude = parseStringArrayField(o.exclude, "exclude");
   const languages = parseStringArrayField(o.languages, "languages");
   const domain = typeof o.domain === "string" ? o.domain.trim() : undefined;
   const layers: ArchLayerSpec[] = o.layers.map((layer, i) => {
@@ -374,6 +385,7 @@ export function validateTargetArchitecture(raw: unknown): TargetArchitectureSpec
     schema_version,
     ...(domain ? { domain } : {}),
     ...(scan_roots ? { scan_roots } : {}),
+    ...(exclude ? { exclude } : {}),
     ...(languages ? { languages } : {}),
     layers,
     rules,
@@ -404,13 +416,13 @@ export function checkArchBoundariesForFiles(
   const evaluateImports = adapterSupportsImportRules(spec);
   const arch = archLawOfSpec(spec);
   const structural = structuralLawOfSpec(spec, root);
-  const inScan = (rel: string): boolean => fileMatchesScanRoots(rel, scanRoots);
+  const inScan = (rel: string): boolean => fileMatchesScanRoots(rel, scanRoots, spec.exclude);
   const aliases = evaluateImports ? loadImportAliases(root) : null;
 
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(root, file);
     const repoRel = toPosixRel(root, abs);
-    if (!fileMatchesScanRoots(repoRel, scanRoots)) continue;
+    if (!inScan(repoRel)) continue;
     if (!fileMatchesLanguage(repoRel, languages, spec.domain)) continue;
     if (!fs.existsSync(abs)) continue;
     const src = fs.readFileSync(abs, "utf8");
@@ -447,19 +459,32 @@ export interface ArchBaseline {
   layers: Record<string, LayerCounts>;
 }
 
-/** Registered names of a registry file: every entry name plus the last segment of a multi-word name. */
-function registryNames(repoRoot: string, registryRel: string): string[] {
+function registryEntries(repoRoot: string, registryRel: string): Record<string, unknown>[] {
   const abs = path.join(repoRoot, registryRel);
   if (!fs.existsSync(abs)) throw new Error(`TARGET_ARCHITECTURE.yaml: registry ${registryRel} not found`);
-  const doc = YAML.parse(fs.readFileSync(abs, "utf8")) as { entries?: { name?: unknown }[] };
+  const doc = YAML.parse(fs.readFileSync(abs, "utf8")) as { entries?: Record<string, unknown>[] };
+  return (doc.entries ?? []).filter((e) => typeof e.name === "string");
+}
+
+/** Registered names of a registry file: every entry name plus the last segment of a multi-word name. */
+function registryNames(repoRoot: string, registryRel: string): string[] {
   const names: string[] = [];
-  for (const e of doc.entries ?? []) {
-    if (typeof e.name !== "string") continue;
-    names.push(e.name);
-    const last = e.name.split(" ").pop();
-    if (last && last !== e.name) names.push(last);
+  for (const e of registryEntries(repoRoot, registryRel)) {
+    const name = e.name as string;
+    names.push(name);
+    const last = name.split(" ").pop();
+    if (last && last !== name) names.push(last);
   }
   return names;
+}
+
+/** The dependency registry's entries with the scope and range they record. */
+function registeredDependencies(repoRoot: string, registryRel: string): RegisteredDependency[] {
+  return registryEntries(repoRoot, registryRel).map((e) => ({
+    name: e.name as string,
+    ...(e.scope === "runtime" || e.scope === "dev" ? { scope: e.scope } : {}),
+    ...(typeof e.range === "string" ? { range: e.range } : {}),
+  }));
 }
 
 /** The spec's structural rules as the core structural law, with registries resolved to names. */
@@ -477,10 +502,13 @@ export function structuralLawOfSpec(spec: TargetArchitectureSpec, repoRoot: stri
         law.registryRules.push({ id: rule.id, patterns: rule.patterns, registries: rule.registries, names: rule.registries.flatMap((r) => registryNames(repoRoot, r)), applies_to: rule.applies_to });
         break;
       case "dependency":
-        law.dependencyRules.push({ id: rule.id, registry: rule.registry, manifest: rule.manifest, allowed: registryNames(repoRoot, rule.registry) });
+        law.dependencyRules.push({ id: rule.id, registry: rule.registry, manifest: rule.manifest, registered: registeredDependencies(repoRoot, rule.registry) });
         break;
       case "duplicate":
         law.duplicateRules.push({ id: rule.id, between: rule.between, allowed: rule.allowed });
+        break;
+      case "cycles":
+        law.cycleRules.push({ id: rule.id });
         break;
       default:
         break;
@@ -496,7 +524,7 @@ function countedFiles(repoRoot: string, spec: TargetArchitectureSpec, files: rea
   for (const file of files) {
     const abs = path.isAbsolute(file) ? path.resolve(file) : path.join(repoRoot, file);
     const rel = toPosixRel(repoRoot, abs);
-    if (!fileMatchesScanRoots(rel, scanRoots) || !fileMatchesLanguage(rel, languages, spec.domain) || !fs.existsSync(abs)) continue;
+    if (!fileMatchesScanRoots(rel, scanRoots, spec.exclude) || !fileMatchesLanguage(rel, languages, spec.domain) || !fs.existsSync(abs)) continue;
     out.push({ path: rel, body: fs.readFileSync(abs, "utf8") });
   }
   return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -530,29 +558,46 @@ function hashedFilesUnder(repoRoot: string, prefixes: readonly string[]): Hashed
   return out;
 }
 
-function declaredDependencies(repoRoot: string, manifestRel: string): { name: string; scope: "runtime" | "dev" }[] {
+function declaredDependencies(repoRoot: string, manifestRel: string): DeclaredDependency[] {
   const abs = path.join(repoRoot, manifestRel);
   if (!fs.existsSync(abs)) return [];
   const pkg = JSON.parse(fs.readFileSync(abs, "utf8")) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
   return [
-    ...Object.keys(pkg.dependencies ?? {}).map((name) => ({ name, scope: "runtime" as const })),
-    ...Object.keys(pkg.devDependencies ?? {}).map((name) => ({ name, scope: "dev" as const })),
+    ...Object.entries(pkg.dependencies ?? {}).map(([name, range]) => ({ name, scope: "runtime" as const, range })),
+    ...Object.entries(pkg.devDependencies ?? {}).map(([name, range]) => ({ name, scope: "dev" as const, range })),
   ];
 }
 
+/** Runtime import edges among the counted files: static imports and re-exports, alias-aware; `import type` is not an edge. */
+function runtimeImportEdges(repoRoot: string, counted: readonly CountedFile[]): ImportEdge[] {
+  const aliases = loadImportAliases(repoRoot);
+  const paths = new Set(counted.map((f) => f.path));
+  const edges: ImportEdge[] = [];
+  for (const f of counted) {
+    for (const site of extractImportSites(f.body)) {
+      if ((site.kind !== "static" && site.kind !== "export_from") || !site.spec || /^(?:import|export)\s+type\b/.test(site.snippet)) continue;
+      const to = resolveImportTarget(f.path, site.spec, aliases);
+      if (to && paths.has(to)) edges.push({ from: f.path, to });
+    }
+  }
+  return edges;
+}
+
 /**
- * Whole-tree structural checks (ADR-0052 B2): budgets against ARCH_BASELINE.json, declared dependencies against
- * their registry, and byte-identical files between two trees. Runs when `gantry arch check` walks the scan roots
- * itself; a partial file list cannot be judged for shape.
+ * Whole-tree structural checks (ADR-0052 B2): budgets against ARCH_BASELINE.json, runtime import cycles, declared
+ * dependencies against their registry, and byte-identical files between two trees. Runs when `gantry arch check`
+ * walks the scan roots itself; a partial file list cannot be judged for shape.
  */
 export function checkArchStructure(spec: TargetArchitectureSpec, repoRoot: string, files: readonly string[]): ArchCheckResult {
   const structural = structuralLawOfSpec(spec, repoRoot);
   const arch = archLawOfSpec(spec);
   const violations: ArchBoundaryViolation[] = [];
+  const counted = structural.budgetRules.length > 0 || structural.cycleRules.length > 0 ? countedFiles(repoRoot, spec, files) : [];
   if (structural.budgetRules.length > 0) {
     const baseline = readArchBaseline(repoRoot);
-    violations.push(...evaluateBudgets(structural, arch, countedFiles(repoRoot, spec, files), baseline?.layers ?? {}));
+    violations.push(...evaluateBudgets(structural, arch, counted, baseline?.layers ?? {}));
   }
+  if (structural.cycleRules.length > 0) violations.push(...evaluateCycles(structural, runtimeImportEdges(repoRoot, counted)));
   for (const rule of structural.dependencyRules) {
     violations.push(...evaluateDependencies({ ...structural, dependencyRules: [rule] }, declaredDependencies(repoRoot, rule.manifest)));
   }
@@ -633,6 +678,6 @@ export function walkPerimeterFiles(repoRoot: string, spec: TargetArchitectureSpe
   const all = walkDomainFiles(repoRoot, adapter.fileExtensions);
   return all.filter((abs) => {
     const rel = toPosixRel(repoRoot, abs);
-    return fileMatchesScanRoots(rel, scanRoots);
+    return fileMatchesScanRoots(rel, scanRoots, spec.exclude);
   });
 }

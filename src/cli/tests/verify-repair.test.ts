@@ -181,6 +181,22 @@ function writeImportLayerFixtureRepo(
     `import { runVerify } from "../commands/verify.js";\nexport const x = runVerify;\n`,
     "utf8",
   );
+  fs.writeFileSync(
+    path.join(dest, "TARGET_ARCHITECTURE.yaml"),
+    `schema_version: "0.4.0"
+scan_roots: [src/cli/**]
+layers:
+  - id: command
+    globs: [src/cli/commands/**]
+  - id: lib
+    globs: [src/cli/flows/**]
+rules:
+  - id: RULE-LIB-TO-COMMAND
+    from_layer: lib
+    forbid_import_layer: command
+`,
+    "utf8",
+  );
 
   const missionRel = ".gitagent/missions/repair-layer.yaml";
   const traceQuote = "import layer repair quarantine evidence";
@@ -205,11 +221,11 @@ trace_rows:
 
 test("runVerify: --fix quarantines import-layer violation from JSON gate", async () => {
   const ogRoot = getRepoRoot();
-  const layerScript = path.join(ogRoot, "scripts/check-import-layers.mjs");
+  const cli = path.join(ogRoot, "dist/cli/index.js");
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-layer-"));
   const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${layerScript} --json src/cli/flows/bad.ts`,
-    gateSubstring: '"ok":true',
+    gateCommand: `node ${cli} arch check --json src/cli/flows/bad.ts`,
+    gateSubstring: '"ok": true',
   });
   gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
 
