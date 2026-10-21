@@ -1,0 +1,176 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0340]. Executor must not run until the [MSN-0340] legislation commit + pin.
+#
+# Legislated intent: roadmap #9, part one, for v4.0.0: gantry verify --contract --format sarif|junit, with the
+# SARIF and JUnit writers moved into packages/verify and shared by mission verify (output unchanged).
+#
+# Operator request (2026-10-21, "Approve the full chain"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0340.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0340
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2066fe9c2b13
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/guides/ci.md, docs/guides/verify-contract.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0340.verify-contract-sarif-junit.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/runs/MSN-0340.json, packages/missions/package.json,
+      packages/missions/src/mission-verify/export.ts,
+      packages/missions/tsconfig.json, packages/verify/src/export.ts,
+      packages/verify/src/run.ts, src/cli/commands/verify-contract.ts,
+      src/cli/flows/verify-presenters.ts,
+      src/cli/tests/verify-standalone-cli.test.ts. packages/verify/src/export.ts
+      (new: sarifLog, sarifLocation, junitXml, verifyResultSarif,
+      verifyResultJUnit) and run.ts (UNCOMMITTED_PROBLEM); missions
+      mission-verify/export.ts reuses the writers, its package.json and tsconfig
+      declare verify; src/cli commands/verify-contract.ts (--format
+      sarif|junit), flows/verify-presenters.ts (JUnitCase from verify); one CLI
+      test; docs: the verify-contract guide, the CI guide, DEVELOPMENT package
+      table, CHANGELOG and release notes; ADR-0051 follow-ups amended;
+      ARCH_BASELINE.json raised for verify and command."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 55a0758fc2dc
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, docs/guides/ci.md, docs/guides/verify-contract.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0340.verify-contract-sarif-junit.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/runs/MSN-0340.json, packages/missions/package.json,
+      packages/missions/src/mission-verify/export.ts,
+      packages/missions/tsconfig.json, packages/verify/src/export.ts,
+      packages/verify/src/run.ts, src/cli/commands/verify-contract.ts,
+      src/cli/flows/verify-presenters.ts,
+      src/cli/tests/verify-standalone-cli.test.ts. packages/verify/src/export.ts
+      (new: sarifLog, sarifLocation, junitXml, verifyResultSarif,
+      verifyResultJUnit) and run.ts (UNCOMMITTED_PROBLEM); missions
+      mission-verify/export.ts reuses the writers, its package.json and tsconfig
+      declare verify; src/cli commands/verify-contract.ts (--format
+      sarif|junit), flows/verify-presenters.ts (JUnitCase from verify); one CLI
+      test; docs: the verify-contract guide, the CI guide, DEVELOPMENT package
+      table, CHANGELOG and release notes; ADR-0051 follow-ups amended;
+      ARCH_BASELINE.json raised for verify and command."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept. Mission verify output is unchanged: its SARIF and
+      JUnit documents are byte-identical and the conformance goldens are
+      unchanged. The new contract formats add output; JSON and --out are
+      unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. Path judgments are unchanged; the projections only read the result.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: "Accept and amend its follow-ups: SARIF and JUnit for contract
+      results land here (one of the parts follow-up C listed); the slim package
+      and Sigstore keyless signing stay follow-ups (MSN-0341, MSN-0342). The
+      result stays digest-only: neither projection holds file contents or
+      command output."
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission contract cage is unchanged; this mission is
+      legislated with every file it touches as a root.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No law file format changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 69911b8b5c9a453520ffba3afb2b640c9a388a21cbdb6ce5b0256ac290d845eb
+declared_paths:
+  - .gitagent/missions/MSN-0340.verify-contract-sarif-junit.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/runs/MSN-0340.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/guides/ci.md
+  - docs/guides/verify-contract.md
+  - docs/reference/release-notes.md
+  - packages/missions/package.json
+  - packages/missions/src/mission-verify/export.ts
+  - packages/missions/tsconfig.json
+  - packages/verify/src/export.ts
+  - packages/verify/src/run.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/tests/verify-standalone-cli.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0340.verify-contract-sarif-junit.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/runs/MSN-0340.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/guides/ci.md
+    - docs/guides/verify-contract.md
+    - docs/reference/release-notes.md
+    - packages/missions/package.json
+    - packages/missions/src/mission-verify/export.ts
+    - packages/missions/tsconfig.json
+    - packages/verify/src/export.ts
+    - packages/verify/src/run.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/tests/verify-standalone-cli.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 790f3bcdbc374dd8f91965fdfcd8a694b4cf95a01dde516c4b1eadd006d0d080
