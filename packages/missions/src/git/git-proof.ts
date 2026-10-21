@@ -3,9 +3,10 @@ import { GIT_CONFIG_PLANNER_EMAILS } from "../config-namespace.js";
 import { CLI_NAME, MSN_ID_PATTERN } from "#core/constants.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitRun } from "#git/git.js";
+import { listMsnSubjectCommits, resolveMsnScanDepth, type MsnCommitRow } from "#git/msn-commits.js";
 import { hintGitProof, type GitProofHintContext } from "../fix-hints.js";
 import { GantryUserError } from "#core/user-error.js";
-import { extractMsnIdFromMissionPath } from "../missions/parser.js";
+import { extractMsnIdFromMissionPath } from "../mission/parser.js";
 import { resolvePlannerEmails } from "../planner-identity.js";
 import { loadGxtConfig } from "../gxt-config.js";
 import { resolvePlannerSignatureTier } from "#core/config.js";
@@ -26,7 +27,6 @@ function throwGitProofError(
 
 /** Missions verified by `gantry verify` must live under this repo-relative prefix. */
 export const REL_MISSIONS_PREFIX = ".gitagent/missions/" as const;
-import { listMsnSubjectCommits, resolveMsnScanDepth, type MsnCommitRow } from "#git/msn-commits.js";
 
 export function missionPathRepoRelative(root: string, missionAbsolutePath: string): string {
   const absMission = path.resolve(missionAbsolutePath);
@@ -40,7 +40,7 @@ export function missionPathRepoRelative(root: string, missionAbsolutePath: strin
   return toPosixRel(absRoot, absMission);
 }
 
-export function assertMissionUnderMissionsDir(repoRelMissionPath: string): void {
+function assertMissionUnderMissionsDir(repoRelMissionPath: string): void {
   const norm = repoRelMissionPath.replace(/\\/g, "/");
   if (!norm.startsWith(REL_MISSIONS_PREFIX)) {
     throwGitProofError(

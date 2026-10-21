@@ -1,4 +1,4 @@
-export const VERIFY_PHASE_IDS = [
+const VERIFY_PHASE_IDS = [
   "git_proof",
   "contract",
   "interrogation",
@@ -11,7 +11,7 @@ export const VERIFY_PHASE_IDS = [
 
 export type VerifyPhaseId = (typeof VERIFY_PHASE_IDS)[number];
 
-export type VerifyPhaseTimingStatus = "passed" | "failed" | "skipped";
+type VerifyPhaseTimingStatus = "passed" | "failed" | "skipped";
 
 export interface VerifyPhaseTiming {
   id: VerifyPhaseId;

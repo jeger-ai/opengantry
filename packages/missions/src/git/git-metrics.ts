@@ -9,7 +9,7 @@ const MISSIONS_PREFIX = ".gitagent/missions/";
 
 const diffCache = new Map<string, string[]>();
 
-export interface LogRecord {
+interface LogRecord {
   hash: string;
   subject: string;
   email: string;
@@ -20,7 +20,7 @@ export interface LogRecord {
 export const GXT_METRICS_CLASSIFICATION_MODE = "PATH_TOUCH_PROXY" as const;
 export const GXT_METRICS_EXTENSION_SCHEMA_VERSION = 1 as const;
 
-export interface GxtExtensionMetadata {
+interface GxtExtensionMetadata {
   classification_mode: typeof GXT_METRICS_CLASSIFICATION_MODE;
   schema_version: typeof GXT_METRICS_EXTENSION_SCHEMA_VERSION;
 }
@@ -59,7 +59,7 @@ function parseMsnFromYamlContent(content: string): string | null {
   return null;
 }
 
-export function msnFromMissionPath(rel: string): string | null {
+function msnFromMissionPath(rel: string): string | null {
   const norm = rel.trim().replace(/\\/g, "/");
   if (!norm.startsWith(MISSIONS_PREFIX)) return null;
   if (!/\.(ya?ml|md)$/i.test(norm)) return null;
@@ -68,7 +68,7 @@ export function msnFromMissionPath(rel: string): string | null {
   return null;
 }
 
-export function listMissionMsnIdsAtRef(root: string, ref: string): Set<string> {
+function listMissionMsnIdsAtRef(root: string, ref: string): Set<string> {
   const ids = new Set<string>();
   const tree = gitRunOk(root, ["ls-tree", "-r", "--name-only", ref, MISSIONS_PREFIX]);
   if (!tree.ok) return ids;
@@ -108,7 +108,7 @@ export function streamLogRecords(root: string, ref: string): LogRecord[] {
   return records;
 }
 
-export function countBypassNotes(root: string): number {
+function countBypassNotes(root: string): number {
   const r = gitRunOk(root, ["notes", `--ref=${GXT_BYPASS_NOTES_REF}`, "list"]);
   if (!r.ok || !r.stdout.trim()) return 0;
   return r.stdout.split("\n").filter((l) => l.trim().length > 0).length;
@@ -231,7 +231,7 @@ export function aggregateFromLogStream(
   };
 }
 
-export function computeTurnaround(
+function computeTurnaround(
   firstSeen: Map<string, number>,
   lastSeen: Map<string, number>,
 ): { mean: number | null; median: number | null; samples: number } {
@@ -247,7 +247,7 @@ export function computeTurnaround(
   return { mean: sum / deltas.length, median: median(deltas), samples: deltas.length };
 }
 
-export const MISSION_TIMELINE_LIMIT = 15;
+const MISSION_TIMELINE_LIMIT = 15;
 
 export interface MissionTimelineEntry {
   msn_id: string;

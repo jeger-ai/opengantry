@@ -6,7 +6,7 @@ import { REL_RECEIPTS_DIR, MSN_ID_PATTERN } from "#core/constants.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { AttestationReceipt } from "#plane/attestation-receipt.js";
 
-export interface ReceiptListEntry {
+interface ReceiptListEntry {
   path: string;
   msn_id: string;
   verify_status: string;
@@ -117,7 +117,7 @@ export function resolveReceiptPath(
   };
 }
 
-export interface ReceiptShowSummary {
+interface ReceiptShowSummary {
   path: string;
   msn_id: string;
   verify_status: string;

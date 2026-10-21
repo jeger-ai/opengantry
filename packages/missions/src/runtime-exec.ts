@@ -30,7 +30,7 @@ export interface RuntimeExecResult {
   flightId: string;
 }
 
-export function emptyWorkerCommandResult(): RuntimeExecResult {
+function emptyWorkerCommandResult(): RuntimeExecResult {
   return {
     status: "runtime_error",
     exitCode: 2,
@@ -43,7 +43,7 @@ export function emptyWorkerCommandResult(): RuntimeExecResult {
   };
 }
 
-export function buildRuntimeExecResult(input: {
+function buildRuntimeExecResult(input: {
   violations: ForbiddenViolation[];
   contractViolations: ContractImportViolation[];
   timedOut: boolean;
@@ -76,7 +76,7 @@ export function buildRuntimeExecResult(input: {
   return { ...base, status: "success", exitCode: 0 };
 }
 
-export function runtimeErrorResult(
+function runtimeErrorResult(
   executorLogPath: string,
   flightId: string,
 ): RuntimeExecResult {
@@ -94,13 +94,13 @@ export function runtimeErrorResult(
 
 type TelemetryWriter = ReturnType<typeof createTelemetryWriter>;
 
-export interface WorkerCaptureResult {
+interface WorkerCaptureResult {
   code: number | null;
   signal: NodeJS.Signals | null;
   timedOut: boolean;
 }
 
-export async function captureWorkerProcess(input: {
+async function captureWorkerProcess(input: {
   command: string;
   argv: string[];
   cwd: string;
@@ -160,7 +160,7 @@ export async function captureWorkerProcess(input: {
   return { code: exit.code, signal: exit.signal, timedOut: exit.timedOut };
 }
 
-export interface RuntimeExecOptions {
+interface RuntimeExecOptions {
   mission: string;
   workerCommand: string[];
   cwd?: string;

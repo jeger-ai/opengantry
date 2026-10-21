@@ -8,7 +8,7 @@ import {
   checkArchBoundariesForFiles,
   loadTargetArchitecture,
   walkPerimeterFiles,
-} from "#missions/arch/cage/target-architecture.js";
+} from "#missions/arch/target-architecture.js";
 
 const fixtureRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

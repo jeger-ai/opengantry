@@ -1,12 +1,6 @@
 import { CLI_NAME } from "#core/constants.js";
-import {
-  audienceSectionTitle,
-  filterTaggedStepsForAudience,
-  formatAudienceNextStep,
-  resolveAudience,
-  type AudienceNextStep,
-  type OutputAudience,
-} from "#missions/audience-output.js";
+import { audienceSectionTitle, filterTaggedStepsForAudience, formatAudienceNextStep, resolveAudience, type AudienceNextStep } from "./audience-output.js";
+import type { OutputAudience } from "#missions/mission-verify/hints.js";
 
 /** human: the report is the document. json, sarif, junit: stdout carries only the document. */
 export type ReporterMode = "human" | "json" | "sarif" | "junit";

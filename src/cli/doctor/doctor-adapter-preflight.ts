@@ -4,8 +4,8 @@ import { runEslintPreflight } from "./preflight/eslint.js";
 import { runTscPreflight } from "./preflight/tsc.js";
 import type { DoctorSection } from "#missions/doctor/doctor-types.js";
 import { pickNextStep } from "#missions/doctor/doctor-types.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
-import { listMissionFiles, readActiveMissionPin } from "#missions/missions/resolution.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
+import { listMissionFiles, readActiveMissionPin } from "#missions/mission/resolution.js";
 import { DEFAULT_GATE_ADAPTER, isTypedGateAdapterId, type TypedGateAdapterId } from "#core/gate-adapter.js";
 
 export interface AdapterPreflightOptions {

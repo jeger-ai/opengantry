@@ -9,7 +9,7 @@ import {
   assertMcpSkillWritePath,
   assertMcpSubstrateUpgradeWritePaths,
   McpWriteDeniedError,
-} from "#missions/mcp/mcp-write-guard.js";
+} from "#missions/substrate-write-guard.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { handlePinMission } from "../mcp/mcp-runtime.js";
 import { getRepoRoot } from "#git/git.js";

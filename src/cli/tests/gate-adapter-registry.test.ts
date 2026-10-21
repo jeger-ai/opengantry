@@ -28,12 +28,12 @@ describe("resolveGateExecAdapter", () => {
 
 describe("gate-adapters import-direction contract (ADR-0041)", () => {
   const forbidden = [
-    "verify-phase-steps",
-    "verify-engine",
-    "verify-options",
-    "verify-payload",
-    "verify-failure",
-    "verify-finding-gate-projector",
+    "mission-verify/phase-steps",
+    "mission-verify/engine",
+    "mission-verify/options",
+    "mission-verify/payload",
+    "mission-verify/failure",
+    "mission-verify/finding-gate-projector",
   ];
 
   it("adapter modules never import the verify engine layer", () => {
@@ -51,7 +51,7 @@ describe("gate-adapters import-direction contract (ADR-0041)", () => {
     }
   });
 
-  it("registry is consumed only by verify-phase-steps", () => {
+  it("registry is consumed only by mission-verify/phase-steps", () => {
     const lib = path.join(getRepoRoot(), "packages", "missions", "src");
     const importers: string[] = [];
     const walk = (dir: string): void => {
@@ -64,6 +64,6 @@ describe("gate-adapters import-direction contract (ADR-0041)", () => {
       }
     };
     walk(lib);
-    assert.deepEqual(importers.sort(), ["verify-phase-steps.ts"]);
+    assert.deepEqual(importers.sort(), ["phase-steps.ts"]);
   });
 });

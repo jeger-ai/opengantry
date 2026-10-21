@@ -26,7 +26,7 @@ export interface ImportLayerViolation {
   column: number;
 }
 
-export interface ImportLayerGateReport {
+interface ImportLayerGateReport {
   schema_version: number;
   ok: boolean;
   violations: ImportLayerViolation[];

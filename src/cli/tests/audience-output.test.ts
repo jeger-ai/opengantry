@@ -5,7 +5,7 @@ import {
   formatAudienceNextStep,
   resolveAudience,
   type AudienceNextStep,
-} from "#missions/audience-output.js";
+} from "../output/audience-output.js";
 
 test("filterTaggedStepsForAudience: preserves concrete mission-specific steps", () => {
   const concrete: AudienceNextStep[] = [

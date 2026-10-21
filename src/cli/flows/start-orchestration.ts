@@ -7,16 +7,11 @@ import { runInterrogate } from "#missions/interrogate/run.js";
 import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
 import { allocateMsn } from "#missions/msn-allocate.js";
-import { isValidMsnId } from "#missions/missions/parser.js";
+import { isValidMsnId } from "#missions/mission/parser.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { TriageResult } from "#core/mission-types.js";
-import {
-  audienceSectionTitle,
-  filterTaggedStepsForAudience,
-  formatAudienceNextStep,
-  type AudienceNextStep,
-  type OutputAudience,
-} from "#missions/audience-output.js";
+import { audienceSectionTitle, filterTaggedStepsForAudience, formatAudienceNextStep, type AudienceNextStep } from "../output/audience-output.js";
+import type { OutputAudience } from "#missions/mission-verify/hints.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface StartOptions {

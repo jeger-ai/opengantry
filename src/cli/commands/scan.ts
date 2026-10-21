@@ -2,7 +2,7 @@ import { logInfo } from "../output/cli-io.js";
 import { emitCliJson, runUserCommand } from "../output/command-boundary.js";
 import { runKpiScan } from "#missions/kpi-scan.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../flows/mission-arg.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface ScanOptions {

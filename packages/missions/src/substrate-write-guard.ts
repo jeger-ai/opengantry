@@ -1,7 +1,7 @@
 import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
-import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
-import { classifyScopePath, forbiddenZoneRules, skillScopeLaw } from "../scope-law.js";
+import { REL_MISSIONS_PREFIX } from "./git/git-proof.js";
+import { classifyScopePath, forbiddenZoneRules, skillScopeLaw } from "./scope-law.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
 

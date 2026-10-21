@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "#core/error-codes.js";
-import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
+import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import {
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
   toRemediationSnapshot,
-} from "#missions/verify/verify-failure-normalize.js";
-import { buildFindingsForFailure, toVerifyFailedPayload } from "#missions/verify/verify-payload.js";
+} from "#missions/mission-verify/failure-normalize.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "#missions/mission-verify/payload.js";
 import { REMEDIATION_SCHEMA_VERSION } from "#missions/context-feed-store.js";
 
 const missionArg = ".gitagent/missions/MSN-0001.yaml";

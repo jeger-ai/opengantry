@@ -2,7 +2,7 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import { logWarn, setExitCode } from "../output/cli-io.js";
 import { emitCliJson, runUserCommand } from "../output/command-boundary.js";
 import { resolveRuntimeEnv } from "#missions/runtime-env.js";
-import { resolvePinnedMission } from "#missions/missions/resolution.js";
+import { resolvePinnedMission } from "#missions/mission/resolution.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,

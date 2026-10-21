@@ -4,7 +4,7 @@ import { writeAttestationReceipt, type AttestationReceipt } from "#plane/attesta
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { AttestationHarnessMode } from "#plane/receipt-attribution.js";
-import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
+import { assertMissionGatePresent, parseMissionFile } from "#missions/mission/parser.js";
 import { appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 

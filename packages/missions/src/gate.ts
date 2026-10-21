@@ -5,7 +5,7 @@ import type { GateSpec } from "#core/mission-types.js";
 
 export const MAX_IO_BUFFER_BYTES = 20 * 1024 * 1024;
 
-export interface GateWorkDirOptions {
+interface GateWorkDirOptions {
   cwd?: string;
 }
 
@@ -14,7 +14,7 @@ export function resolveGateWorkDir(root: string, options: GateWorkDirOptions = {
   return options.cwd ? path.resolve(root, options.cwd) : root;
 }
 
-export interface GateRunResult {
+interface GateRunResult {
   exitCode: number | null;
   stdout: string;
   stderr: string;

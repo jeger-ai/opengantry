@@ -5,12 +5,12 @@ import { normalizeContractPath } from "./contract-hash.js";
 
 const PATH_TOKEN_RE = /(?:\.{0,2}\/)?[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@-]+)+\/?/g;
 
-export function existsRepoPath(root: string, rel: string): boolean {
+function existsRepoPath(root: string, rel: string): boolean {
   return fs.existsSync(path.join(root, rel));
 }
 
 /** Path-like tokens from intent prose (same regex as contract propose). */
-export function intentPathTokens(intent: string): string[] {
+function intentPathTokens(intent: string): string[] {
   const out: string[] = [];
   for (const m of intent.matchAll(PATH_TOKEN_RE)) {
     const norm = normalizeContractPath(m[0]!);
@@ -19,7 +19,7 @@ export function intentPathTokens(intent: string): string[] {
   return out;
 }
 
-export function intersectWithSkillRoots(
+function intersectWithSkillRoots(
   candidates: readonly string[],
   skillRoots: readonly string[],
 ): string[] {

@@ -4,7 +4,7 @@ import { MAX_IO_BUFFER_BYTES } from "./gate.js";
 
 export const REL_GATE_LOGS_DIR = ".gitagent/tmp/gate-logs" as const;
 
-export function gateLogRelPath(msnId: string): string {
+function gateLogRelPath(msnId: string): string {
   const safe = msnId.replace(/[^A-Za-z0-9-]/g, "_");
   return `${REL_GATE_LOGS_DIR}/${safe}.last.log`;
 }

@@ -10,7 +10,7 @@ import {
   resolveListenPort,
   tryListen,
 } from "../report/report-server.js";
-import { appendVerifyRunRing } from "#missions/verify/verify-run-ring.js";
+import { appendVerifyRunRing } from "#missions/mission-verify/run-ring.js";
 import { projectOverviewViewModel } from "../report/report-overview-projector.js";
 import { REL_GATE_LOGS_DIR } from "#missions/gate-log-writer.js";
 

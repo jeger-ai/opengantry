@@ -16,7 +16,7 @@ import {
 let builtinsRegistered = false;
 
 /** Idempotent built-in adapter registration (safe to call explicitly). */
-export function ensureBuiltinDomains(): void {
+function ensureBuiltinDomains(): void {
   if (builtinsRegistered) return;
   registerDomainAdapter(codeDomainAdapter);
   registerDomainAdapter(contentDomainAdapter);

@@ -11,7 +11,7 @@ import {
   type PresentedQuestion,
 } from "#core/interrogation.js";
 
-export interface RunInterrogateInput {
+interface RunInterrogateInput {
   root: string;
   manifest: Manifest;
   intent: string;

@@ -3,7 +3,7 @@ import type { UpgradeFileChange, UpgradePlanResult } from "./upgrade-plan-types.
 /** Wire contract version for automation consumers (MCP, CI). Bump only with migration. */
 export const STABLE_UPGRADE_PLAN_PAYLOAD_VERSION = 1 as const;
 
-export interface StableUpgradeFileChangeV1 {
+interface StableUpgradeFileChangeV1 {
   path: string;
   action: "add" | "update";
   bytes_before: number | null;

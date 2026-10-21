@@ -1,4 +1,3 @@
-import type { OutputAudience } from "../audience-output.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR, mapGitProofCodeToGxt } from "#core/error-codes.js";
 import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
@@ -21,14 +20,17 @@ import type {
   TraceFailure,
   TracePendingFailure,
   VerifyPhaseFailure,
-} from "./verify-failure.js";
+} from "./failure.js";
+
+/** The role a next step is written for. */
+export type OutputAudience = "executor" | "planner" | "verifier" | "platform";
 
 export interface AudienceTaggedStep {
   audience: OutputAudience;
   step: string;
 }
 
-export interface VerifyRemediation {
+interface VerifyRemediation {
   error_code: GxtErrorCode;
   fix_hints: string[];
   next_actions: string[];
@@ -36,7 +38,7 @@ export interface VerifyRemediation {
 }
 
 /** Mission/repo coordinates shared by every remediation, independent of the failing phase. */
-export interface VerifyHintMeta {
+interface VerifyHintMeta {
   missionPath: string;
   root?: string;
   msnId?: string;

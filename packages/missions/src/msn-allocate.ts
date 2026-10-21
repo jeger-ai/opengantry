@@ -1,15 +1,15 @@
 import path from "node:path";
-import { extractMsnIdFromMissionPath, isValidMsnId } from "./missions/parser.js";
-import { listMissionFiles } from "./missions/resolution.js";
+import { extractMsnIdFromMissionPath, isValidMsnId } from "./mission/parser.js";
+import { listMissionFiles } from "./mission/resolution.js";
 import { gitLogSubjects } from "#git/git.js";
 
 export const WORK_MSN_BAND_MAX = 8999;
 export const UPGRADE_MSN_BAND_MIN = 9000;
-export const UPGRADE_MSN_BAND_MAX = 9099;
+const UPGRADE_MSN_BAND_MAX = 9099;
 
-export type MsnBand = "work" | "upgrade";
+type MsnBand = "work" | "upgrade";
 
-export interface CollectUsedMsnIdsOptions {
+interface CollectUsedMsnIdsOptions {
   band?: MsnBand | "all";
   includeGitHistory?: boolean;
 }

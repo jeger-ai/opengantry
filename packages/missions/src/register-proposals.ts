@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { FolderSignature } from "./ast-discovery.js";
 
-export interface SkillProposal {
+interface SkillProposal {
   skill_key: string;
   tmvc_roots: string[];
   desc: string;

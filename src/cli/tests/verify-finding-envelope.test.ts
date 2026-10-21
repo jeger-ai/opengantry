@@ -3,11 +3,11 @@ import { describe, it } from "node:test";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
-} from "#missions/verify/verify-failure-normalize.js";
-import { buildFindingsForFailure, toVerifyFailedPayload } from "#missions/verify/verify-payload.js";
-import { buildSarifDocument } from "#missions/verify/verify-export.js";
+} from "#missions/mission-verify/failure-normalize.js";
+import { buildFindingsForFailure, toVerifyFailedPayload } from "#missions/mission-verify/payload.js";
+import { buildSarifDocument } from "#missions/mission-verify/export.js";
 import { GantryUserError } from "#core/user-error.js";
-import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "#missions/verify/verify-finding.js";
+import { VERIFY_ENVELOPE_SCHEMA_VERSION } from "#missions/mission-verify/finding.js";
 
 describe("verify failure envelope", () => {
   const phases = [

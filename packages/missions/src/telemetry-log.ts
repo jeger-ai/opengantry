@@ -3,7 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { appendEventSpool } from "./event-spool.js";
 
-export interface TelemetryContext {
+interface TelemetryContext {
   flight_id: string;
   msn_id: string;
   mission_file: string;
@@ -11,7 +11,7 @@ export interface TelemetryContext {
   worker_command: string[];
 }
 
-export interface TelemetryEvent {
+interface TelemetryEvent {
   type: string;
   v: 1;
   ts: string;

@@ -7,7 +7,7 @@ import { lawFileRelAt, repoAbs } from "#git/repo-text.js";
 import { tmvcRootsForSkill } from "./tmvc-path.js";
 import type { Manifest } from "#core/manifest.js";
 
-export interface StartStateSnapshot {
+interface StartStateSnapshot {
   captured_at: string;
   head_sha: string;
   branch: string;

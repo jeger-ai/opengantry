@@ -5,7 +5,7 @@ import type {
   DiscoveryEdge,
   DiscoveryEvidence,
 } from "../discovery-scanner.js";
-import type { ArchRuleSpec } from "../arch/cage/target-architecture.js";
+import type { ArchRuleSpec } from "../arch/target-architecture.js";
 import {
   type DomainAdapter,
   type DomainBlueprintQuestion,

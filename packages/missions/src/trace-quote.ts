@@ -20,7 +20,7 @@ function missingQuoteKind(traceQuote: string): TraceFailureKind {
   return traceQuote.trim() === LEGISLATE_TRACE_PLACEHOLDER ? "placeholder_quote" : "quote_missing";
 }
 
-export interface TraceVerifyFailure {
+interface TraceVerifyFailure {
   row: TraceRow;
   /** Set at construction — every failure site knows its own kind. */
   kind: TraceFailureKind;
@@ -34,7 +34,7 @@ export interface TraceVerifyWarning {
   autoResolved?: boolean;
 }
 
-export interface TraceVerifyOptions {
+interface TraceVerifyOptions {
   /** Force fuzzy for all numeric anchors. */
   fuzzyNumericAnchor?: boolean;
   /** Disable auto-retry on line drift only. */
@@ -46,14 +46,14 @@ export interface ResolvedQuoteLine {
   lineNumber: number;
 }
 
-export interface TraceVerifyResult {
+interface TraceVerifyResult {
   failures: TraceVerifyFailure[];
   warnings: TraceVerifyWarning[];
   resolvedLines: ResolvedQuoteLine[];
   map: ExecutorLogLineMap | null;
 }
 
-export function resolveQuoteLineNumber(
+function resolveQuoteLineNumber(
   map: ExecutorLogLineMap,
   row: TraceRow,
   resolvedLineByDodId: ReadonlyMap<string, number>,

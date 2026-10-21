@@ -10,7 +10,7 @@ import { normalizeContract, normalizeContractPath } from "./contract-hash.js";
 import type { EffectiveScope, MissionContract } from "#core/contract-types.js";
 import { missionScopeLaw } from "../scope-law.js";
 
-export interface ResolveEffectiveScopeInput {
+interface ResolveEffectiveScopeInput {
   manifest: Manifest;
   skillKey: string;
   contract: MissionContract | null;

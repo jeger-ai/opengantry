@@ -13,15 +13,15 @@ import {
   type MergedFragment,
 } from "../file-merge-gxt.js";
 import { resolveTemplateRootFromModule } from "../integration-compat.js";
-import { resolveMissionPathRequired } from "../missions/resolution.js";
-import { assertMissionSchemaValid } from "../missions/validator.js";
-import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../mcp/mcp-write-guard.js";
+import { resolveMissionPathRequired } from "../mission/resolution.js";
+import { assertMissionSchemaValid } from "../mission/validator.js";
+import { assertMcpSubstrateUpgradeWritePaths, McpWriteDeniedError } from "../substrate-write-guard.js";
 import { loadManifest } from "../manifest.js";
 import { writeSubstrateVersionFile } from "../substrate-version.js";
 import { parseUpgradePayloadFromMissionBody } from "./upgrade-plan-scaffold.js";
 import { REL_UPGRADE_TMP, type UpgradePayload } from "./upgrade-plan-types.js";
 
-export const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
+const REL_UPGRADE_APPLY_TMP = ".gitagent/.upgrade-apply-tmp" as const;
 
 export interface UpgradeApplyResult {
   status: "applied" | "blocked";

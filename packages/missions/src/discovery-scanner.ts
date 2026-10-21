@@ -55,11 +55,6 @@ export function walkDomainFiles(repoRoot: string, extensions: readonly string[])
   return files.sort();
 }
 
-/** @deprecated Use walkDomainFiles with adapter extensions */
-export function walkSourceFiles(repoRoot: string): string[] {
-  return walkDomainFiles(repoRoot, getDomainAdapter("code").fileExtensions);
-}
-
 function loadFileRecords(repoRoot: string, absFiles: string[]): DomainFileRecord[] {
   return absFiles.map((abs) => {
     const body = fs.readFileSync(abs, "utf8");

@@ -101,7 +101,7 @@ function parseTraceTable(body: string): TraceRow[] {
   return rows;
 }
 
-export interface EmitMissionOptions {
+interface EmitMissionOptions {
   skillKey: string;
   msnId: string;
   outPath?: string;

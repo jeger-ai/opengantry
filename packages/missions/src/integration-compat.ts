@@ -17,10 +17,10 @@ export const INTEGRATION_IDE_KEYS = [
 export type IntegrationIdeKey = (typeof INTEGRATION_IDE_KEYS)[number];
 
 /** How session bootstrap is invoked for this integration (not all tools run project hooks). */
-export const BOOTSTRAP_MODES = ["hook", "shell_wrapper", "manual_recipe"] as const;
-export type BootstrapMode = (typeof BOOTSTRAP_MODES)[number];
+const BOOTSTRAP_MODES = ["hook", "shell_wrapper", "manual_recipe"] as const;
+type BootstrapMode = (typeof BOOTSTRAP_MODES)[number];
 
-export interface IntegrationCompatEntry {
+interface IntegrationCompatEntry {
   display_name: string;
   verified_date: string;
   docs_url: string;
@@ -83,10 +83,6 @@ export function validateIntegrationCompat(manifest: IntegrationCompatManifest): 
 
 export function isBootstrapHookMode(entry: IntegrationCompatEntry): boolean {
   return entry.bootstrap_mode === "hook";
-}
-
-export function isBootstrapShellWrapperMode(entry: IntegrationCompatEntry): boolean {
-  return entry.bootstrap_mode === "shell_wrapper";
 }
 
 export function integrationWizardLabel(entry: IntegrationCompatEntry): string {

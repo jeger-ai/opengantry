@@ -1,8 +1,8 @@
 import { parseBannedImportGateOutput } from "../banned-import-violation.js";
 import { extractImportLayerGateReport } from "../repair.js";
-import { readEvidenceSnippet } from "./verify-evidence-snippet.js";
-import { verifyFinding, type VerifyFinding } from "./verify-finding.js";
-import type { GateFailure } from "./verify-failure.js";
+import { readEvidenceSnippet } from "./evidence-snippet.js";
+import { verifyFinding, type VerifyFinding } from "./finding.js";
+import type { GateFailure } from "./failure.js";
 
 export function projectGateFindings(
   root: string,

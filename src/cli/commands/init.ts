@@ -1,4 +1,4 @@
-import { INIT_TAGGED_NEXT_STEPS, type AudienceNextStep } from "#missions/audience-output.js";
+import { INIT_TAGGED_NEXT_STEPS, type AudienceNextStep } from "../output/audience-output.js";
 import { currentReporter } from "../output/reporter.js";
 import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";

@@ -4,8 +4,8 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
-import { assertMissionGatePresent, parseMissionFile, extractMsnIdFromMissionPath } from "#missions/missions/parser.js";
-import { isMarkdownTableSeparatorRow, parseMarkdownMission } from "#missions/missions/formatter.js";
+import { assertMissionGatePresent, parseMissionFile, extractMsnIdFromMissionPath } from "#missions/mission/parser.js";
+import { isMarkdownTableSeparatorRow, parseMarkdownMission } from "#missions/mission/formatter.js";
 
 test("parseMarkdownMission: Success alias maps substring", () => {
   const body = `# Mission: MSN-0001

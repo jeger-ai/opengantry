@@ -4,10 +4,10 @@ import { pathMatchesGlobPattern } from "#core/path-glob.js";
 import { archLaw, countLayers, evaluateBudgets, evaluateCycles, evaluateDependencies, evaluateDuplicates, evaluateLayerImport, evaluateOwner, evaluatePatternRules, evaluateRegistry, layerForFile as coreLayerForFile, structuralLaw, type ArchLaw, type CountedFile, type DeclaredDependency, type HashedFile, type ImportEdge, type LayerCounts, type RegisteredDependency, type StructuralLaw } from "#core/law.js";
 import { normalizeRepoRelativePath, toPosixRel } from "#core/posix-path.js";
 import { classifySpecifier, type TsconfigPaths } from "#core/specifier.js";
-import { loadImportAliases } from "../../contract/resolve-specifier.js";
+import { loadImportAliases } from "../contract/resolve-specifier.js";
 import crypto from "node:crypto";
 import { gitRunOk } from "#git/git.js";
-import { getDomainAdapter } from "../../domains/index.js";
+import { getDomainAdapter } from "../domains/index.js";
 import YAML from "yaml";
 import { CLI_NAME, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 import {
@@ -15,24 +15,24 @@ import {
   extractImportSites,
   extractImportsWithMeta,
 } from "#core/import-scanner.js";
-import { walkDomainFiles } from "../../discovery-scanner.js";
+import { walkDomainFiles } from "../discovery-scanner.js";
 
-export const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
+const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
 export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;
 /** Structural rule kinds (ADR-0052 B2): budget, owner, registry, dependency, duplicate, cycles; `file_ceiling_lines`; `exclude`. */
-export const TARGET_ARCHITECTURE_V4_SCHEMA_VERSION = "0.4.0" as const;
-export const SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS = [
+const TARGET_ARCHITECTURE_V4_SCHEMA_VERSION = "0.4.0" as const;
+const SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS = [
   TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_V3_SCHEMA_VERSION,
   TARGET_ARCHITECTURE_V4_SCHEMA_VERSION,
 ] as const;
 
-export type TargetArchitectureSchemaVersion =
+type TargetArchitectureSchemaVersion =
   (typeof SUPPORTED_TARGET_ARCHITECTURE_SCHEMA_VERSIONS)[number];
 
-export interface ArchLayerSpec {
+interface ArchLayerSpec {
   id: string;
   globs: string[];
 }
@@ -43,20 +43,20 @@ interface ArchRuleBase {
   applies_to?: string[];
 }
 
-export interface ArchImportRule extends ArchRuleBase {
+interface ArchImportRule extends ArchRuleBase {
   kind: "import";
   forbid_import_layer?: string;
   forbid_specifier_substring?: string;
   forbid_resolved_path_substring?: string;
 }
 
-export interface ArchPatternRule extends ArchRuleBase {
+interface ArchPatternRule extends ArchRuleBase {
   kind: "pattern";
   forbid_pattern?: string;
   require_pattern?: string;
 }
 
-export interface ArchBudgetRule extends ArchRuleBase {
+interface ArchBudgetRule extends ArchRuleBase {
   kind: "budget";
   layer: string;
   max_files?: number;
@@ -64,31 +64,31 @@ export interface ArchBudgetRule extends ArchRuleBase {
   max_exports?: number;
   exclude?: string[];
 }
-export interface ArchOwnerRule extends ArchRuleBase {
+interface ArchOwnerRule extends ArchRuleBase {
   kind: "owner";
   pattern: string;
   owners: string[];
 }
-export interface ArchRegistryRule extends ArchRuleBase {
+interface ArchRegistryRule extends ArchRuleBase {
   kind: "registry";
   patterns: string[];
   registries: string[];
 }
-export interface ArchDependencyRule extends ArchRuleBase {
+interface ArchDependencyRule extends ArchRuleBase {
   kind: "dependency";
   registry: string;
   manifest: string;
 }
-export interface ArchDuplicateRule extends ArchRuleBase {
+interface ArchDuplicateRule extends ArchRuleBase {
   kind: "duplicate";
   between: [string, string];
   allowed?: string[];
 }
-export interface ArchCycleRule extends ArchRuleBase {
+interface ArchCycleRule extends ArchRuleBase {
   kind: "cycles";
 }
-export type ArchStructuralRule = ArchBudgetRule | ArchOwnerRule | ArchRegistryRule | ArchDependencyRule | ArchDuplicateRule | ArchCycleRule;
-export const ARCH_STRUCTURAL_KINDS = ["budget", "owner", "registry", "dependency", "duplicate", "cycles"] as const;
+type ArchStructuralRule = ArchBudgetRule | ArchOwnerRule | ArchRegistryRule | ArchDependencyRule | ArchDuplicateRule | ArchCycleRule;
+const ARCH_STRUCTURAL_KINDS = ["budget", "owner", "registry", "dependency", "duplicate", "cycles"] as const;
 export type ArchRuleSpec = ArchImportRule | ArchPatternRule | ArchStructuralRule;
 
 export interface TargetArchitectureSpec {
@@ -104,7 +104,7 @@ export interface TargetArchitectureSpec {
   file_ceiling_lines?: number;
 }
 
-export interface ArchBoundaryViolation {
+interface ArchBoundaryViolation {
   file: string;
   rule_id: string;
   module_specifier: string;
@@ -113,13 +113,13 @@ export interface ArchBoundaryViolation {
   column: number;
 }
 
-export interface ArchCheckResult {
+interface ArchCheckResult {
   ok: boolean;
   violations: ArchBoundaryViolation[];
 }
 
 /** The spec's layers and rules as the core architecture law. */
-export function archLawOfSpec(spec: TargetArchitectureSpec): ArchLaw {
+function archLawOfSpec(spec: TargetArchitectureSpec): ArchLaw {
   return archLaw({
     layers: spec.layers,
     layerImportRules: spec.rules.filter((r): r is ArchImportRule => r.kind === "import"),
@@ -221,7 +221,7 @@ function parseStringArrayField(
   return raw.map(String);
 }
 
-export function isLegacyTargetArchitectureSchema(version: string): boolean {
+function isLegacyTargetArchitectureSchema(version: string): boolean {
   return version === TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION;
 }
 
@@ -449,10 +449,10 @@ export function checkArchBoundariesForFiles(
   return { ok: violations.length === 0, violations };
 }
 
-export const ARCH_BASELINE_FILENAME = "ARCH_BASELINE.json" as const;
-export const ARCH_BASELINE_SCHEMA = "opengantry.arch-baseline.v1" as const;
+const ARCH_BASELINE_FILENAME = "ARCH_BASELINE.json" as const;
+const ARCH_BASELINE_SCHEMA = "opengantry.arch-baseline.v1" as const;
 
-export interface ArchBaseline {
+interface ArchBaseline {
   schema: typeof ARCH_BASELINE_SCHEMA;
   commit: string;
   file_ceiling_lines: number | null;
@@ -488,7 +488,7 @@ function registeredDependencies(repoRoot: string, registryRel: string): Register
 }
 
 /** The spec's structural rules as the core structural law, with registries resolved to names. */
-export function structuralLawOfSpec(spec: TargetArchitectureSpec, repoRoot: string): StructuralLaw {
+function structuralLawOfSpec(spec: TargetArchitectureSpec, repoRoot: string): StructuralLaw {
   const law = structuralLaw({ fileCeilingLines: spec.file_ceiling_lines ?? null });
   for (const rule of spec.rules) {
     switch (rule.kind) {

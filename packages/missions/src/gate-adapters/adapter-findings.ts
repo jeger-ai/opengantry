@@ -6,12 +6,12 @@
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { MAX_IO_BUFFER_BYTES } from "../gate.js";
-import { readEvidenceSnippet } from "../verify/verify-evidence-snippet.js";
-import { verifyFinding, type VerifyFinding, type VerifyFindingSeverity } from "../verify/verify-finding.js";
+import { readEvidenceSnippet } from "../mission-verify/evidence-snippet.js";
+import { verifyFinding, type VerifyFinding, type VerifyFindingSeverity } from "../mission-verify/finding.js";
 import type { GateExecContext } from "./gate-adapter-types.js";
 
 /** Hard cap on findings per gate run; the remainder is summarized in one finding. */
-export const MAX_ADAPTER_FINDINGS = 200;
+const MAX_ADAPTER_FINDINGS = 200;
 
 export interface ParsedDiagnostic {
   file: string;
@@ -29,7 +29,7 @@ function findingsRoot(ctx: GateExecContext): string {
 }
 
 /** Repo-relative POSIX path from an absolute or cwd-relative tool path. */
-export function normalizeOffendingFile(ctx: GateExecContext, file: string): string {
+function normalizeOffendingFile(ctx: GateExecContext, file: string): string {
   const trimmed = file.trim();
   if (trimmed.length === 0) return "";
   const abs = path.isAbsolute(trimmed) ? trimmed : path.resolve(ctx.cwd, trimmed);
@@ -37,7 +37,7 @@ export function normalizeOffendingFile(ctx: GateExecContext, file: string): stri
   return rel.startsWith("..") ? abs.split(path.sep).join("/") : rel;
 }
 
-export function diagnosticToFinding(ctx: GateExecContext, d: ParsedDiagnostic): VerifyFinding {
+function diagnosticToFinding(ctx: GateExecContext, d: ParsedDiagnostic): VerifyFinding {
   const offendingFile = normalizeOffendingFile(ctx, d.file);
   const evidence = readEvidenceSnippet(findingsRoot(ctx), offendingFile, d.line, d.column);
   return verifyFinding("gate", d.message, {
@@ -61,7 +61,7 @@ function compareDiagnostics(a: ParsedDiagnostic, b: ParsedDiagnostic): number {
 }
 
 /** Sorted, capped findings so `findings_digest` is stable across runs. */
-export function diagnosticsToFindings(
+function diagnosticsToFindings(
   ctx: GateExecContext,
   toolId: string,
   diagnostics: ParsedDiagnostic[],
@@ -81,7 +81,7 @@ export function diagnosticsToFindings(
   return kept;
 }
 
-export function stdoutTruncatedFinding(toolId: string): VerifyFinding {
+function stdoutTruncatedFinding(toolId: string): VerifyFinding {
   const mib = Math.round(MAX_IO_BUFFER_BYTES / (1024 * 1024));
   return verifyFinding(
     "gate",
@@ -90,7 +90,7 @@ export function stdoutTruncatedFinding(toolId: string): VerifyFinding {
   );
 }
 
-export function genericGateFailureFinding(exitCode: number | null, matched: boolean): VerifyFinding {
+function genericGateFailureFinding(exitCode: number | null, matched: boolean): VerifyFinding {
   return verifyFinding(
     "gate",
     exitCode === 0 && !matched ? "gate success substring not found in output" : "gate command failed",

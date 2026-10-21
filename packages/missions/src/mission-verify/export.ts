@@ -1,6 +1,6 @@
 import { CLI_NAME, OPENGANTRY_WEBSITE_URL } from "#core/constants.js";
 import { CLI_VERSION } from "#core/version.gen.js";
-import type { VerifyResultPayload } from "./verify-payload.js";
+import type { VerifyResultPayload } from "./payload.js";
 
 export type VerifyExportFormat = "json" | "sarif" | "junit";
 
@@ -18,7 +18,7 @@ export interface JUnitCase {
   skipped?: boolean;
 }
 
-export interface VerifyExportBuildOptions {
+interface VerifyExportBuildOptions {
   /** Directory check supplied by the caller. Trailing-slash URIs are directories either way. */
   isDirectory?: (uri: string) => boolean;
   /** One JUnit testcase per verify phase. Omit to keep the payload-derived phase list. */
@@ -26,7 +26,7 @@ export interface VerifyExportBuildOptions {
 }
 
 /** Escape text for both XML attributes and element bodies. */
-export function xmlEscape(value: string): string {
+function xmlEscape(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

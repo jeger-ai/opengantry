@@ -8,12 +8,12 @@ import {
 import { checkAndRecordMissionDependencies } from "../deps/deps-resolve.js";
 import { ledgerFailureLine } from "../ledger/ledger-append.js";
 import { type DependencyCheckResult } from "#plane/deps-resolve.js";
-import { localConfigFloor } from "../policy/policy-resolve.js";
-import type { DependenciesFailure, PolicyFailure } from "./verify-failure.js";
-import { verifyFinding } from "./verify-finding.js";
-import type { PhaseContext } from "./verify-phase-steps.js";
+import { localConfigFloor } from "../gxt-config.js";
+import type { DependenciesFailure, PolicyFailure } from "./failure.js";
+import { verifyFinding } from "./finding.js";
+import type { PhaseContext } from "./phase-steps.js";
 
-export type PolicyPhaseOutcome = { kind: "ok" } | { kind: "fail"; failure: PolicyFailure };
+type PolicyPhaseOutcome = { kind: "ok" } | { kind: "fail"; failure: PolicyFailure };
 
 type DependenciesPhaseOutcome =
   | { kind: "ok"; warnings: string[] }

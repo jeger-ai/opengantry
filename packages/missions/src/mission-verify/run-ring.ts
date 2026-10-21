@@ -3,8 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import type { RemediationSnapshot } from "../context-feed-store.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import type { VerifyPhaseTiming } from "./verify-phase-clock.js";
-import type { VerifyFinding } from "./verify-finding.js";
+import type { VerifyPhaseTiming } from "./phase-clock.js";
+import type { VerifyFinding } from "./finding.js";
 import { writeJsonAtomicSync, readJsonOrNull } from "../atomic-fs.js";
 
 type RecordableVerifyResult =
@@ -13,7 +13,7 @@ type RecordableVerifyResult =
 
 export const REL_VERIFY_RUNS_DIR = ".gitagent/tmp/verify-runs" as const;
 export const VERIFY_RUN_RING_MAX = 20;
-export const VERIFY_LAST_SCHEMA_VERSION = 1 as const;
+const VERIFY_LAST_SCHEMA_VERSION = 1 as const;
 
 export type VerifyLastOutcome = "PASS" | "FAIL" | "ABORT";
 
@@ -43,7 +43,7 @@ export interface VerifyRunRingEntry {
 }
 
 /** Sortable run filename: 13-digit ms + 6-hex nonce. */
-export const RUN_FILE = /^(\d{13}-[0-9a-f]{6})\.json$/;
+const RUN_FILE = /^(\d{13}-[0-9a-f]{6})\.json$/;
 
 function runsDir(repoRoot: string): string {
   return path.join(repoRoot, REL_VERIFY_RUNS_DIR);
@@ -81,7 +81,7 @@ function isVerifyLastSnapshot(parsed: unknown): parsed is VerifyLastSnapshot {
   );
 }
 
-export function compactVerifyRunFromSnapshot(
+function compactVerifyRunFromSnapshot(
   id: string,
   snapshot: VerifyLastSnapshot,
 ): VerifyRunRingEntry {
@@ -163,7 +163,7 @@ export function findLatestVerifyRunForMission(
   return null;
 }
 
-export function snapshotFromVerifyResult(
+function snapshotFromVerifyResult(
   result: RecordableVerifyResult,
   remediation: RemediationSnapshot | null,
 ): VerifyLastSnapshot | null {

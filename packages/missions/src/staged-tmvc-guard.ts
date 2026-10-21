@@ -5,12 +5,12 @@ import type { EffectiveScope } from "#core/contract-types.js";
 import { gitStagedNameOnly } from "#git/git-staged.js";
 import type { Manifest } from "#core/manifest.js";
 
-export interface StagedTmvcViolation {
+interface StagedTmvcViolation {
   path: string;
   classification: Exclude<TmvcPathClassification, "governance_transport" | "inside_tmvc">;
 }
 
-export interface StagedTmvcGuardResult {
+interface StagedTmvcGuardResult {
   ok: boolean;
   skipped: boolean;
   skipReason?: string;
@@ -20,7 +20,7 @@ export interface StagedTmvcGuardResult {
   forbiddenZones: string[];
 }
 
-export interface StagedTmvcGuardOptions {
+interface StagedTmvcGuardOptions {
   repoRoot: string;
   manifest: Manifest;
   skillKey: string | null;

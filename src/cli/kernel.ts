@@ -27,18 +27,18 @@ export {
   type VerdictExpectedClaims,
 } from "#missions/verdict-expected.js";
 export { resolveOrgId } from "#plane/org-export-config.js";
-export type { VerifyOptions } from "#missions/verify/verify-options.js";
+export type { VerifyOptions } from "./flows/verify-options.js";
 export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "#missions/gate-adapters/gate-adapter-types.js";
-export type { VerifyResultPayload } from "#missions/verify/verify-payload.js";
-export { buildVerifyResultPayload } from "#missions/verify/verify-payload.js";
+export type { VerifyResultPayload } from "#missions/mission-verify/payload.js";
+export { buildVerifyResultPayload } from "#missions/mission-verify/payload.js";
 
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 import { loadManifest } from "#missions/manifest.js";
-import type { VerifyOptions } from "#missions/verify/verify-options.js";
-import type { VerifyResultPayload } from "#missions/verify/verify-payload.js";
-import { buildVerifyResultPayload } from "#missions/verify/verify-payload.js";
+import type { VerifyOptions } from "./flows/verify-options.js";
+import type { VerifyResultPayload } from "#missions/mission-verify/payload.js";
+import { buildVerifyResultPayload } from "#missions/mission-verify/payload.js";
 
 export interface VerifyMissionInput {
   repoRoot: string;

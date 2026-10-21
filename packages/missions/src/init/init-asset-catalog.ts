@@ -6,7 +6,7 @@ import {
 } from "../integration-compat.js";
 import type { InitProfile } from "./init-profile.js";
 
-export type InitAssetMode = "scaffold_only" | "managed_strict";
+type InitAssetMode = "scaffold_only" | "managed_strict";
 
 export interface InitAsset {
   targetPath: string;
@@ -14,7 +14,7 @@ export interface InitAsset {
   executable?: boolean;
 }
 
-export type InitAssetTag =
+type InitAssetTag =
   | "core"
   | "skill-minimal"
   | "skill-specimen"

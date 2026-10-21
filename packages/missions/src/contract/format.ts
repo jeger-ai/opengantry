@@ -5,7 +5,7 @@ function csv(values: readonly string[] | undefined, empty: string): string {
   return values && values.length > 0 ? values.join(", ") : empty;
 }
 
-export interface CageFormatInput {
+interface CageFormatInput {
   tmvcRoots?: readonly string[];
   forbiddenZones?: readonly string[];
   allowedImports?: readonly string[];
@@ -20,7 +20,7 @@ export interface CageFormatInput {
 }
 
 /** Four cage lists + flags. Check, show, and propose share this. */
-export function formatCage(input: CageFormatInput): string {
+function formatCage(input: CageFormatInput): string {
   const lines = [
     "Scope:",
     `  ${csv(input.tmvcRoots, input.emptyRoots ?? "(inherit skill roots)")}`,

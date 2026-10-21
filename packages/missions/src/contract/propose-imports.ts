@@ -2,12 +2,12 @@ import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import fs from "node:fs";
 import path from "node:path";
 import { importMatchesBan, isBuiltinSpecifier } from "#core/specifier.js";
-import { layerForFile, loadTargetArchitecture, type TargetArchitectureSpec } from "../arch/cage/target-architecture.js";
+import { layerForFile, loadTargetArchitecture, type TargetArchitectureSpec } from "../arch/target-architecture.js";
 import { extractImportSites } from "#core/import-scanner.js";
 import { listSourcesUnderRoots } from "./contract-scan.js";
 import type { OrgPolicyBundle } from "#plane/policy-types.js";
 
-export interface WorkspacePackage {
+interface WorkspacePackage {
   name: string;
   dir: string;
 }
@@ -34,7 +34,7 @@ function expandWorkspaceGlob(root: string, glob: string): string[] {
 }
 
 /** Workspace packages from root `package.json` `workspaces` (no npm expand). */
-export function listWorkspacePackages(root: string): WorkspacePackage[] {
+function listWorkspacePackages(root: string): WorkspacePackage[] {
   const abs = path.join(root, "package.json");
   if (!fs.existsSync(abs)) return [];
   let parsed: { workspaces?: string[] | { packages?: string[] } };
@@ -92,14 +92,14 @@ function archBannedForRoots(root: string, proposedRoots: readonly string[]): str
   return [...out].sort();
 }
 
-export interface ProposeImportsInput {
+interface ProposeImportsInput {
   root: string;
   proposedRoots: readonly string[];
   forbiddenZones: readonly string[];
   policy: OrgPolicyBundle | null;
 }
 
-export interface ProposeImportsResult {
+interface ProposeImportsResult {
   allowed_imports: string[];
   banned_imports: string[];
   extraForbidden: string[];

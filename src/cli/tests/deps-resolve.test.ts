@@ -10,7 +10,7 @@ import { checkMissionDependency } from "#plane/deps-resolve.js";
 import { depsRefForRepo } from "#plane/deps-slug.js";
 import { buildLedgerEntry, genesisPrevHash } from "#plane/ledger-entry.js";
 import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "#plane/ledger-chain.js";
-import { evaluateDependenciesPhase } from "#missions/verify/verify-org-phases.js";
+import { evaluateDependenciesPhase } from "#missions/mission-verify/org-phases.js";
 import { runReleaseCheck } from "../commands/deps.js";
 import {
   copyMissionSchema,

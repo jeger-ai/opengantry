@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-export const EVENT_SPOOL_DIR = ".gitagent/history/events";
+const EVENT_SPOOL_DIR = ".gitagent/history/events";
 
 export interface SpooledEvent {
   event_id: string;

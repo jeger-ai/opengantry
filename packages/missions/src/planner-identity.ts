@@ -13,7 +13,7 @@ import { gitRunOk } from "#git/git.js";
 export const REL_PLANNER_ALLOWLIST = ".gitagent/foreman/PLANNER.allowlist" as const;
 export const REL_PLANNER_ALLOWLIST_LOCAL = ".gitagent/foreman/PLANNER.allowlist.local" as const;
 
-export type PlannerIdentitySource =
+type PlannerIdentitySource =
   | "allowlist_file"
   | "allowlist_local"
   | "git_config"
@@ -21,7 +21,7 @@ export type PlannerIdentitySource =
   | "git_user_email"
   | "unset";
 
-export interface ResolvedPlannerIdentity {
+interface ResolvedPlannerIdentity {
   emails: string[];
   source: PlannerIdentitySource;
   /** Human-readable detail for doctor / errors */
@@ -112,7 +112,7 @@ export function resolvePlannerEmails(repoRoot: string): ResolvedPlannerIdentity 
   return { emails: [], source: "unset", detail: "no Planner identity configured" };
 }
 
-export function serializePlannerAllowlist(emails: string[]): string {
+function serializePlannerAllowlist(emails: string[]): string {
   const unique = [...new Set(emails.map((e) => e.trim().toLowerCase()).filter((e) => e.includes("@")))];
   return `${unique.join("\n")}\n`;
 }

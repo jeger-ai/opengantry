@@ -9,15 +9,15 @@ import { DEFAULT_GATE_ADAPTER, isGateAdapterId, type GateAdapterId } from "#core
 import { type MissionContract } from "#core/contract-types.js";
 import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 
-export const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
-export const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;
-export const DRAFT_TOKEN_TTL_SECONDS_MAX = 1800;
-export const DRAFT_TOKEN_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
-export const DRAFT_TOKEN_REPLAY_REL = ".gitagent/history/.draft-token-replay.json";
+const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
+const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;
+const DRAFT_TOKEN_TTL_SECONDS_MAX = 1800;
+const DRAFT_TOKEN_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
+const DRAFT_TOKEN_REPLAY_REL = ".gitagent/history/.draft-token-replay.json";
 
 import type { InterrogationRow } from "#core/interrogation.js";
 
-export interface DraftLegislationPayload {
+interface DraftLegislationPayload {
   v: 2 | 3;
   draft_id: string;
   iat: number;
@@ -38,7 +38,7 @@ export interface DraftLegislationPayload {
   contract_sha256?: string;
 }
 
-export type DraftTokenErrorCode =
+type DraftTokenErrorCode =
   | "TOKEN_MALFORMED"
   | "TOKEN_SIGNATURE_INVALID"
   | "TOKEN_EXPIRED"
@@ -64,7 +64,7 @@ function base64UrlEncode(buf: Buffer): string {
 function base64UrlDecode(raw: string): Buffer {
   return Buffer.from(raw, "base64url");
 }
-export function computeRepoFingerprint(root: string): string {
+function computeRepoFingerprint(root: string): string {
   const absRoot = path.resolve(root);
   const head = gitRun(absRoot, ["rev-parse", "HEAD"]);
   const toplevel = gitRun(absRoot, ["rev-parse", "--show-toplevel"]);

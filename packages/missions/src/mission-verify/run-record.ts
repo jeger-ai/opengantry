@@ -12,10 +12,10 @@ import { gitDiffNameOnlySinceCommit, gitRevParse, gitRunOk } from "#git/git.js";
 import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
 import { formatRepoRelative } from "#core/posix-path.js";
-import type { RunRecordFailure } from "./verify-failure.js";
-import type { PhaseContext } from "./verify-phase-steps.js";
+import type { RunRecordFailure } from "./failure.js";
+import type { PhaseContext } from "./phase-steps.js";
 
-export type RunRecordPhaseOutcome = { kind: "ok"; recordPath: string } | { kind: "fail"; failure: RunRecordFailure };
+type RunRecordPhaseOutcome = { kind: "ok"; recordPath: string } | { kind: "fail"; failure: RunRecordFailure };
 
 export function runRecordRelPath(msnId: string): string {
   return `${REL_RUNS_DIR}/${msnId}.json`;
@@ -36,7 +36,7 @@ function readRunRecord(root: string, rel: string): RunRecord | null {
 }
 
 /** The law the checks enforced: scope, gate and the sealed contract. A change to any of it invalidates the record. */
-export function missionLawSha256(ctx: PhaseContext): string {
+function missionLawSha256(ctx: PhaseContext): string {
   const scope = resolveEffectiveScopeForMission(ctx.root, ctx.manifest, ctx.mission);
   return sha256Hex(
     canonicalJson({
@@ -106,7 +106,7 @@ export function assertCleanTreeForRecord(root: string): void {
   );
 }
 
-export interface RunRecordGateResult {
+interface RunRecordGateResult {
   command: string;
   exit: number | null;
   durationMs: number;

@@ -8,7 +8,7 @@ import { getDomainAdapter, listDomainKeys, registerBuiltinDomains } from "#missi
 import {
   checkArchBoundariesForFiles,
   validateTargetArchitecture,
-} from "#missions/arch/cage/target-architecture.js";
+} from "#missions/arch/target-architecture.js";
 import YAML from "yaml";
 
 describe("domain adapters", () => {

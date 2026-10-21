@@ -11,7 +11,7 @@ import {
   resolveReceiptPath,
   summarizeReceipt,
 } from "#missions/receipt-inspect.js";
-import { pinMissionFile, readActiveMissionPin } from "#missions/missions/resolution.js";
+import { pinMissionFile, readActiveMissionPin } from "#missions/mission/resolution.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { AttestationReceipt } from "#plane/attestation-receipt.js";
 

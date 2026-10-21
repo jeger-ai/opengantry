@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { GantryUserError } from "#core/user-error.js";
-import { parseMissionFile, assertMissionGatePresent } from "./missions/parser.js";
+import { parseMissionFile, assertMissionGatePresent } from "./mission/parser.js";
 import { REL_ORG_EXPORT_LOCAL, resolveOrgId } from "#plane/org-export-config.js";
 
 /** Canonical digest for a passed verify with zero advisory findings. */

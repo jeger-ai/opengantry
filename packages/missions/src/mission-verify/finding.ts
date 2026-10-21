@@ -1,4 +1,4 @@
-import { finalizeVerifyFinding } from "./verify-finding-fingerprint.js";
+import { finalizeVerifyFinding } from "./finding-fingerprint.js";
 
 export const VERIFY_ENVELOPE_SCHEMA_VERSION = 3 as const;
 
@@ -32,7 +32,7 @@ export interface VerifyFinding {
   semantic_fingerprint: string;
 }
 
-export interface VerifyFindingInput {
+interface VerifyFindingInput {
   offending_file?: string;
   line?: number;
   end_line?: number;

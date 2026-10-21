@@ -16,7 +16,7 @@ export interface PerimeterViolation {
   advisoryOnly: boolean;
 }
 
-export interface PerimeterCheckResult {
+interface PerimeterCheckResult {
   ok: boolean;
   violations: PerimeterViolation[];
   advisories: string[];
@@ -71,7 +71,7 @@ function listChangedPathsSinceBase(repoRoot: string, baseRef: string): ChangedPa
   return { ok: true, paths };
 }
 
-export type CommitsInRangeResult =
+type CommitsInRangeResult =
   | { ok: true; commits: string[] }
   | { ok: false; code: string; reason: string };
 
@@ -151,7 +151,7 @@ function extractMsnFromRecentCommits(repoRoot: string, hash: string): string | n
   return m?.[1] ?? null;
 }
 
-export interface PerimeterCheckOptions {
+interface PerimeterCheckOptions {
   baseRef: string;
   /** Authoritative CI mode: require verified cryptographic signature. */
   ci?: boolean;

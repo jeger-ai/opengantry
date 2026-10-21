@@ -10,7 +10,7 @@ import type { RuntimeExecResult } from "./runtime-exec.js";
 import type { ResolvedRuntimeEnv } from "./runtime-env.js";
 
 /** Machine-readable errors: the user-facing error as JSON (MCP, --json) and the agent error file runtime exec writes. */
-export interface UserFacingErrorJson {
+interface UserFacingErrorJson {
   error_code: string;
   message: string;
   hint?: string;

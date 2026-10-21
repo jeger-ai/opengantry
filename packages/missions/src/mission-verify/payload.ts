@@ -6,32 +6,32 @@ import {
   evaluateVerifyPhases,
   type VerifyPhaseResult,
   type VerifyPhaseSuccess,
-} from "./verify-engine.js";
-import type { VerifyOptions } from "./verify-options.js";
-import type { VerifyPhaseFailure, GateFailure } from "./verify-failure.js";
+} from "./engine.js";
+import type { VerifyEvaluation } from "./options.js";
+import type { VerifyPhaseFailure, GateFailure } from "./failure.js";
 import {
   normalizeInitFailure,
   normalizeVerifyPhaseFailure,
   type NormalizedVerifyFailure,
-} from "./verify-failure-normalize.js";
+} from "./failure-normalize.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { kpiFindingsToAdvisoryVerifyFindings } from "../kpi-advisory-findings.js";
-import { projectGateFindings } from "./verify-finding-gate-projector.js";
+import { projectGateFindings } from "./finding-gate-projector.js";
 import {
   VERIFY_ENVELOPE_SCHEMA_VERSION,
   verifyFinding,
   type VerifyFinding,
   type VerifyFailedGate,
-} from "./verify-finding.js";
+} from "./finding.js";
 
-export interface VerifyTraceWarningJson {
+interface VerifyTraceWarningJson {
   dod_id: string;
   declared_line: number;
   found_line: number;
   auto_resolved?: boolean;
 }
 
-export interface VerifyPassedPayload {
+interface VerifyPassedPayload {
   status: "passed";
   phase: "full" | "pre_push_stub" | "break_glass";
   exit_code: 0;
@@ -199,7 +199,7 @@ function successPayload(
 export function buildBreakGlassPayload(
   root: string,
   mission: ParsedMission,
-  options: VerifyOptions,
+  options: VerifyEvaluation,
 ): VerifyResultPayload {
   const outcome = runBreakGlassAuditFlow(root, mission, options);
   if (outcome.kind === "fail") {
@@ -225,7 +225,7 @@ export function initFailurePayload(e: unknown): VerifyFailedPayload {
 export function buildVerifyResultPayloadFromPhaseResult(
   root: string,
   mission: ParsedMission,
-  _options: VerifyOptions,
+  _options: VerifyEvaluation,
   result: VerifyPhaseResult,
 ): VerifyResultPayload {
   const missionRel = missionRelPath(root, mission);
@@ -248,7 +248,7 @@ export async function buildVerifyResultPayload(
   root: string,
   manifest: Manifest,
   mission: ParsedMission,
-  options: VerifyOptions,
+  options: VerifyEvaluation,
 ): Promise<VerifyResultPayload> {
   try {
     const result = await evaluateVerifyPhases(root, mission, options, manifest);

@@ -12,7 +12,7 @@ import { loadTsconfigPaths } from "./resolve-specifier.js";
 const SOURCE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]);
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", "coverage"]);
 
-export function isScannableSource(fileRel: string): boolean {
+function isScannableSource(fileRel: string): boolean {
   const ext = path.extname(fileRel).toLowerCase();
   return SOURCE_EXT.has(ext) && !fileRel.endsWith(".d.ts");
 }
@@ -95,7 +95,7 @@ function lawOfScope(scope: EffectiveScope) {
 }
 
 /** Scan a single source file's import sites against the effective scope. */
-export function scanFileImports(
+function scanFileImports(
   repoRoot: string,
   fileRel: string,
   scope: EffectiveScope,
@@ -114,7 +114,7 @@ export function scanFileImports(
   return out;
 }
 
-export interface ScanContractImportsOptions {
+interface ScanContractImportsOptions {
   /** Explicit repo-relative files; defaults to every source file under the effective TMVC roots. */
   files?: readonly string[];
 }

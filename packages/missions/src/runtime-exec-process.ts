@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 
-export interface SpawnStreamCaptureOptions {
+interface SpawnStreamCaptureOptions {
   command: string;
   argv: string[];
   cwd: string;
@@ -14,7 +14,7 @@ export interface SpawnStreamCaptureOptions {
   onRuntimeError?: (message: string, errno: string | null) => void;
 }
 
-export interface SpawnStreamCaptureResult {
+interface SpawnStreamCaptureResult {
   code: number | null;
   signal: NodeJS.Signals | null;
   timedOut: boolean;

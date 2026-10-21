@@ -3,30 +3,30 @@ import { getRepairForErrorCode, resolveRepairErrorCode, type RepairContext } fro
 import { appendRepairMutationLog } from "#missions/repair.js";
 import { CLI_NAME } from "#core/constants.js";
 import path from "node:path";
-import { assertMissionGatePresent, parseMissionFile } from "#missions/missions/parser.js";
+import { assertMissionGatePresent, parseMissionFile } from "#missions/mission/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "./mission-arg.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
-import type { VerifyOptions } from "#missions/verify/verify-options.js";
+import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
+import type { VerifyOptions } from "./verify-options.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import { buildAttestationReceipt } from "./attestation-receipt.js";
 import { writeAttestationReceipt } from "#plane/attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
 import { appendLedgerIfEnabled, ledgerFailureLine, type LedgerAppendOutcome } from "#missions/ledger/ledger-append.js";
 import type { LedgerEntryKind } from "#plane/ledger-entry.js";
-import { normalizeVerifyPhaseFailure } from "#missions/verify/verify-failure-normalize.js";
-import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
+import { normalizeVerifyPhaseFailure } from "#missions/mission-verify/failure-normalize.js";
+import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import {
   buildFindingsForFailure,
   buildVerifyResultPayload,
   initFailurePayload,
   toVerifyFailedPayload,
   type VerifyResultPayload,
-} from "#missions/verify/verify-payload.js";
+} from "#missions/mission-verify/payload.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { persistFailedVerifyRemediation } from "#missions/verify/verify-remediation-pipeline.js";
-import { recordVerifyRunBestEffort } from "#missions/verify/verify-run-ring.js";
-import { runRecordRelPath } from "#missions/verify/verify-run-record.js";
+import { persistFailedVerifyRemediation } from "#missions/mission-verify/remediation-pipeline.js";
+import { recordVerifyRunBestEffort } from "#missions/mission-verify/run-ring.js";
+import { runRecordRelPath } from "#missions/mission-verify/run-record.js";
 import {
   resolveVerifySink,
   presentBreakGlassHuman,

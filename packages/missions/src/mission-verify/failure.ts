@@ -3,7 +3,7 @@ import type { DependencyFailureCode } from "#plane/deps-resolve.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { KpiThresholdOp } from "#core/mission-types.js";
 import type { TraceFailureKind } from "../trace-quote.js";
-import type { VerifyFinding } from "./verify-finding.js";
+import type { VerifyFinding } from "./finding.js";
 
 export type VerifyFailurePhase =
   | "git_proof"
@@ -73,7 +73,7 @@ export interface TraceFailure extends VerifyFailureBase {
   stalePaths?: string[];
 }
 
-export type RunRecordFailureKind = "missing" | "mismatch" | "stale";
+type RunRecordFailureKind = "missing" | "mismatch" | "stale";
 export interface RunRecordFailure extends VerifyFailureBase {
   phase: "run_record";
   recordKind: RunRecordFailureKind;

@@ -4,7 +4,7 @@ import path from "node:path";
 import { setExitCode, reportLedger } from "../output/cli-io.js";
 import { runUserCommand, type CommandPresentation } from "../output/command-boundary.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
 import { fetchMissionDependency } from "#plane/deps-fetch.js";
 import { checkAndRecordMissionDependencies } from "#missions/deps/deps-resolve.js";

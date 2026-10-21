@@ -1,22 +1,22 @@
 /**
- * Verify pipeline order: engine (this module, evaluates phases — no logging or
- * exit codes) → verify-failure-normalize (canonical failure contract) →
- * verify-hints (remediation) → verify-presenters (sinks) → verify-run (orchestration).
+ * Verify pipeline order: engine (this module, evaluates phases — no logging or exit codes) → failure-normalize
+ * (canonical failure contract) → hints (remediation) → the CLI's verify-presenters (sinks) and verify-run
+ * (orchestration) in src/cli/flows.
  */
 import path from "node:path";
 import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
 import { gitRunOk } from "#git/git.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
-import { isLegislativeStub } from "../missions/formatter.js";
+import { isLegislativeStub } from "../mission/formatter.js";
 import { defaultExecutorLogPath } from "../trace-quote.js";
 import type { KpiFinding, ParsedMission } from "#core/mission-types.js";
 import type { Manifest } from "#core/manifest.js";
-import type { VerifyFailurePhase, VerifyPhaseFailure } from "./verify-failure.js";
+import type { VerifyFailurePhase, VerifyPhaseFailure } from "./failure.js";
 import type { TraceVerifyWarning } from "../trace-quote.js";
-import type { VerifyOptions } from "./verify-options.js";
-import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./verify-phase-clock.js";
-import { evaluateContractPhase } from "./verify-contract.js";
-import { evaluateInterrogationPhase } from "./verify-interrogation.js";
+import type { VerifyEvaluation } from "./options.js";
+import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./phase-clock.js";
+import { evaluateContractPhase } from "./contract.js";
+import { evaluateInterrogationPhase } from "./interrogation.js";
 import {
   evaluateGatePhase,
   evaluateGitProof,
@@ -25,9 +25,9 @@ import {
   type KpiOutcome,
   type PhaseContext,
   type TracePhaseOutcome,
-} from "./verify-phase-steps.js";
-import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./verify-org-phases.js";
-import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, runRecordRelPath, writeRunRecord } from "./verify-run-record.js";
+} from "./phase-steps.js";
+import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./org-phases.js";
+import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, runRecordRelPath, writeRunRecord } from "./run-record.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -74,7 +74,7 @@ export type VerifyPhaseResult =
   | (VerifyPhaseFailure & { phaseTimings: VerifyPhaseTiming[] })
   | VerifyPhaseSuccess;
 
-export function resolveExecutorLogPath(root: string, options: VerifyOptions): string {
+export function resolveExecutorLogPath(root: string, options: VerifyEvaluation): string {
   return options.executorLog ? path.resolve(root, options.executorLog) : defaultExecutorLogPath(root);
 }
 
@@ -166,7 +166,7 @@ function missingGateFailure(executorLogPath: string): VerifyPhaseFailure {
 export async function evaluateVerifyPhases(
   root: string,
   mission: ParsedMission,
-  options: VerifyOptions,
+  options: VerifyEvaluation,
   manifest: Manifest,
 ): Promise<VerifyPhaseResult> {
   const clock = new VerifyPhaseClock();

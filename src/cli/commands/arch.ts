@@ -17,7 +17,7 @@ import {
   loadTargetArchitecture,
   runArchCheck,
   walkPerimeterFiles,
-} from "#missions/arch/cage/target-architecture.js";
+} from "#missions/arch/target-architecture.js";
 import {
   loadArchitecturePointer,
   summarizeArchitecturePointer,

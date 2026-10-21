@@ -6,14 +6,14 @@ import { loadIntegrationCompat } from "./integration-compat.js";
 
 export const REL_SUBSTRATE_VERSION = ".gitagent/foreman/SUBSTRATE.version.json" as const;
 
-export type SubstrateVersionSource = "substrate_file" | "legacy_compat" | "legacy_default";
+type SubstrateVersionSource = "substrate_file" | "legacy_compat" | "legacy_default";
 
-export interface InstalledSubstrateVersion {
+interface InstalledSubstrateVersion {
   version: string;
   source: SubstrateVersionSource;
 }
 
-export interface SubstrateVersionFile {
+interface SubstrateVersionFile {
   schema_version: string;
   opengantry_version: string;
   installed_at: string;
@@ -41,7 +41,7 @@ export function compareSemver(a: string, b: string): number {
   return 0;
 }
 
-export function readRepoCompatVersion(repoRoot: string): string | null {
+function readRepoCompatVersion(repoRoot: string): string | null {
   const compatPath = path.join(repoRoot, "integrations/compatibility.json");
   if (!fs.existsSync(compatPath)) return null;
   try {
@@ -75,7 +75,7 @@ export function readInstalledSubstrateVersion(repoRoot: string): InstalledSubstr
   return { version: "0.0.0", source: "legacy_default" };
 }
 
-export function serializeSubstrateVersionFile(
+function serializeSubstrateVersionFile(
   version: string,
   installedBy: string,
 ): string {

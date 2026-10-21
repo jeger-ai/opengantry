@@ -2,21 +2,21 @@ import { readManifestDocument } from "./manifest.js";
 import fs from "node:fs";
 import path from "node:path";
 
-export type AuditRigorLevel = "ok" | "warn" | "fail";
+type AuditRigorLevel = "ok" | "warn" | "fail";
 
-export interface AuditRigorLine {
+interface AuditRigorLine {
   level: AuditRigorLevel;
   check_id: string;
   message: string;
 }
 
-export interface AuditRigorReport {
+interface AuditRigorReport {
   workspace_root: string;
   lines: AuditRigorLine[];
   exit_code: number;
 }
 
-export interface AuditRigorOptions {
+interface AuditRigorOptions {
   /** When true, warnings elevate to failures. */
   strict?: boolean;
 }

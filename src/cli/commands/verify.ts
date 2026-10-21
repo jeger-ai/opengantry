@@ -1,10 +1,10 @@
 import { setExitCode } from "../output/cli-io.js";
 import { Reporter, currentReporter } from "../output/reporter.js";
-import { initFailurePayload } from "#missions/verify/verify-payload.js";
+import { initFailurePayload } from "#missions/mission-verify/payload.js";
 import { emitVerifyDocument } from "../flows/verify-presenters.js";
-import type { VerifyOptions } from "#missions/verify/verify-options.js";
+import type { VerifyOptions } from "../flows/verify-options.js";
 import { resolveDefaultChangedBaseRef } from "#missions/mission-changed.js";
-import { discoverChangedMissionFiles } from "#missions/verify/verify-engine.js";
+import { discoverChangedMissionFiles } from "#missions/mission-verify/engine.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { GantryUserError } from "#core/user-error.js";
 import { reportUserFacingError } from "../output/errors.js";
@@ -13,7 +13,7 @@ import { appendEventSpool } from "#missions/event-spool.js";
 import { resolveOrgExportConfig } from "#plane/org-export-config.js";
 import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
-import { parseMissionFile } from "#missions/missions/parser.js";
+import { parseMissionFile } from "#missions/mission/parser.js";
 
 function structuredVerifyOutput(options: VerifyOptions): boolean {
   return options.json === true || options.format !== undefined;

@@ -1,22 +1,22 @@
-import type { VerifyPhaseSuccess } from "#missions/verify/verify-engine.js";
-import type { AudienceTaggedStep } from "#missions/verify/verify-hints.js";
+import type { VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
+import type { AudienceTaggedStep } from "#missions/mission-verify/hints.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
-import type { VerifyOptions } from "#missions/verify/verify-options.js";
+import type { VerifyOptions } from "./verify-options.js";
 import { CLI_NAME } from "#core/constants.js";
 import { runBreakGlassAuditFlow } from "#missions/break-glass.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { Reporter } from "../output/reporter.js";
 import { loadPrompts } from "./prompts-loader.js";
-import type { VerifyPhaseResult } from "#missions/verify/verify-engine.js";
-import type { VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
-import type { VerifyPhaseTiming } from "#missions/verify/verify-phase-clock.js";
+import type { VerifyPhaseResult } from "#missions/mission-verify/engine.js";
+import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
+import type { VerifyPhaseTiming } from "#missions/mission-verify/phase-clock.js";
 import {
   buildVerifyExportDocument,
   type JUnitCase,
   type VerifyExportFormat,
-} from "#missions/verify/verify-export.js";
+} from "#missions/mission-verify/export.js";
 import { uriIsDirectory } from "../report/sarif-uri.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -27,18 +27,18 @@ import {
   initFailurePayload,
   toVerifyFailedPayload,
   type VerifyResultPayload,
-} from "#missions/verify/verify-payload.js";
-import { hintsForVerifyPhase } from "#missions/verify/verify-hints.js";
+} from "#missions/mission-verify/payload.js";
+import { hintsForVerifyPhase } from "#missions/mission-verify/hints.js";
 import {
   normalizeVerifyPhaseFailure,
   toFailurePresentation,
   type VerifyFailurePresentation,
-} from "#missions/verify/verify-failure-normalize.js";
+} from "#missions/mission-verify/failure-normalize.js";
 import { persistRemediationFromFailedPayload } from "#missions/context-feed-remediation.js";
 import {
   persistFailedVerifyRemediation,
   tombstoneRemediationSnapshot,
-} from "#missions/verify/verify-remediation-pipeline.js";
+} from "#missions/mission-verify/remediation-pipeline.js";
 import { readRemediationSnapshot, type RemediationSnapshot } from "#missions/context-feed-store.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
 

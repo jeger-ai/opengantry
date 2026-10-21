@@ -14,8 +14,8 @@ import type {
   TraceFailure,
   TracePendingFailure,
   RunRecordFailure,
-} from "./verify-failure.js";
-import type { VerifyOptions } from "./verify-options.js";
+} from "./failure.js";
+import type { VerifyEvaluation } from "./options.js";
 import type { TraceVerifyWarning } from "../trace-quote.js";
 import { resolveGateExecAdapter } from "../gate-adapters/registry.js";
 import { ensureGateLogPath, readGateLogText } from "../gate-log-writer.js";
@@ -36,14 +36,14 @@ function gitProofFailure(executorLogPath: string, message: string): GitProofFail
   };
 }
 
-export type GitProofOutcome =
+type GitProofOutcome =
   | { kind: "ok"; proofMsnId: string; warnings: string[] }
   | { kind: "fail"; failure: GitProofFailure };
 
 export function evaluateGitProof(
   root: string,
   mission: ParsedMission,
-  options: VerifyOptions,
+  options: VerifyEvaluation,
   executorLogPath: string,
 ): GitProofOutcome {
   try {
@@ -59,7 +59,7 @@ export function evaluateGitProof(
   }
 }
 
-export type GatePhaseOutcome =
+type GatePhaseOutcome =
   | { kind: "ok"; exitCode: number | null; gateLogPath: string; logText: string }
   | { kind: "fail"; exitCode: number | null; gateLogPath: string; logText: string; failure: GateFailure };
 
@@ -120,7 +120,7 @@ export interface PhaseContext {
   root: string;
   manifest: Manifest;
   mission: ParsedMission;
-  options: VerifyOptions;
+  options: VerifyEvaluation;
   executorLogPath: string;
 }
 

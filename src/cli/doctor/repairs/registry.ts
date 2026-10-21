@@ -2,7 +2,7 @@ import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { gateOutputIndicatesBannedImport } from "#missions/banned-import-violation.js";
 import { gateOutputIndicatesImportLayer } from "#missions/repair.js";
-import type { GateFailure, VerifyPhaseFailure } from "#missions/verify/verify-failure.js";
+import type { GateFailure, VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import type { Manifest } from "#core/manifest.js";
 import { bannedImportRepair } from "./banned-import.js";
 import { importLayerRepair } from "./import-layer.js";

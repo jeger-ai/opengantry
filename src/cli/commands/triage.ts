@@ -1,8 +1,8 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { formatRepoRelative } from "#core/posix-path.js";
 import { logError, logInfo, setExitCode } from "../output/cli-io.js";
-import { isValidMsnId } from "#missions/missions/parser.js";
-import { emitActiveMissionFromTemplate } from "#missions/missions/formatter.js";
+import { isValidMsnId } from "#missions/mission/parser.js";
+import { emitActiveMissionFromTemplate } from "#missions/mission/formatter.js";
 import { formatTriageHuman, formatTriageJson, triageIntent } from "#missions/triage-logic.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 import { loadWorkspace } from "#missions/workspace.js";
