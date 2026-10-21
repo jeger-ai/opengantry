@@ -99,25 +99,43 @@ export interface PushRange {
   head: string;
 }
 
-/** The base a pushed head is compared with when the remote has no object: upstream, main, master, then the parent. */
-export function fallbackPushBase(repoRoot: string, head: string): string | null {
-  for (const other of ["@{upstream}", "main", "master"]) {
-    const r = gitRunOk(repoRoot, ["merge-base", head, other]);
-    if (r.ok && r.stdout.trim()) return r.stdout.trim();
-  }
+/** Of `bases`, the one with the fewest commits to `head` (ties to the earlier); bases that do not resolve are skipped. */
+function closestBase(repoRoot: string, head: string, bases: readonly string[]): string | null {
+  const scored = bases.map((base) => ({ base, r: gitRunOk(repoRoot, ["rev-list", "--count", `${base}..${head}`]) }));
+  const ok = scored.filter((x) => x.r.ok).map((x) => ({ base: x.base, n: Number(x.r.stdout.trim()) }));
+  return ok.reduce<{ base: string; n: number } | null>((best, x) => (!best || x.n < best.n ? x : best), null)?.base ?? null;
+}
+
+/** Merge-bases with the upstream, `<remote>/HEAD|main|master`, then local main, master (a stale local main loses). */
+function remoteMergeBases(repoRoot: string, head: string, remote: string): string[] {
+  const refs = ["@{upstream}", ...["HEAD", "main", "master"].map((b) => `refs/remotes/${remote}/${b}`), "main", "master"];
+  const found = refs.map((o) => gitRunOk(repoRoot, ["merge-base", head, o])).filter((r) => r.ok);
+  return found.map((r) => r.stdout.trim()).filter((b) => b.length > 0);
+}
+
+/** Base for a new remote ref: the newest of `remoteMergeBases`, else the parent. A manual run assumes `origin`. */
+export function fallbackPushBase(repoRoot: string, head: string, remote = "origin"): string | null {
+  const best = closestBase(repoRoot, head, remoteMergeBases(repoRoot, head, remote));
+  if (best) return best;
   const parent = gitRunOk(repoRoot, ["rev-parse", "--verify", `${head}~1^{commit}`]);
   return parent.ok && parent.stdout.trim() ? parent.stdout.trim() : null;
 }
 
 /**
  * Ranges to evaluate for a push. A ref deletion (all-zero local sha) contributes nothing; a new remote ref (all-zero
- * remote sha) compares against `fallbackPushBase`; otherwise `remote sha..local sha`.
+ * remote sha) compares against `fallbackPushBase` for `remote`; an update compares `remote sha..local sha`, unless the
+ * head merged the remote's main since: then the newest merge-base the remote sha lacks, so main's missions stay out.
  */
-export function pushRangesFromRefLines(repoRoot: string, lines: readonly PrePushRefLine[]): PushRange[] {
+export function pushRangesFromRefLines(repoRoot: string, lines: readonly PrePushRefLine[], remote = "origin"): PushRange[] {
   const ranges: PushRange[] = [];
   for (const line of lines) {
     if (line.localSha === ZERO_SHA) continue;
-    const base = line.remoteSha === ZERO_SHA ? fallbackPushBase(repoRoot, line.localSha) : line.remoteSha;
+    const merged = (m: string) => !gitRunOk(repoRoot, ["merge-base", "--is-ancestor", m, line.remoteSha]).ok;
+    const base =
+      line.remoteSha === ZERO_SHA
+        ? fallbackPushBase(repoRoot, line.localSha, remote)
+        : (closestBase(repoRoot, line.localSha, remoteMergeBases(repoRoot, line.localSha, remote).filter(merged)) ??
+          line.remoteSha);
     if (!base || base === line.localSha) continue;
     ranges.push({ base, head: line.localSha });
   }
