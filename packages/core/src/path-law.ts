@@ -59,8 +59,7 @@ const coveringPattern = (patterns: readonly string[], path: string): string | nu
 
 /**
  * The rule that decides the path, or null. Overrides first lower an overridable deny to report, so a non-overridable
- * rule on the same path still decides it; then the strictest effect wins, then an overridden judgment (a relaxed
- * deny is announced, not hidden behind a plain report rule), then table order.
+ * rule on the same path still decides it; then the strictest effect wins, then table order.
  */
 export function judgePath(law: PathLaw, path: string, overrides: readonly string[] = []): PathJudgment | null {
   if (covers(law.exempt, path)) return null;
@@ -76,7 +75,7 @@ export function judgePath(law: PathLaw, path: string, overrides: readonly string
   for (const h of hits) {
     const lowered = overridden && h.overridable && h.effect === "deny";
     const j: PathJudgment = { rule: h.id, source: h.source, effect: lowered ? "report" : h.effect, pattern: h.pattern, overridden: lowered };
-    if (!best || RANK[j.effect] > RANK[best.effect] || (RANK[j.effect] === RANK[best.effect] && j.overridden && !best.overridden)) best = j;
+    if (!best || RANK[j.effect] > RANK[best.effect]) best = j;
   }
   return best;
 }

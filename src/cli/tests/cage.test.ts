@@ -772,8 +772,8 @@ test("cage dependency freeze: off by default, lockfiles are kept and manifests a
     assert.equal(cageBasenameRule(name, "revert"), "dependency_manifest", name);
   }
   const frozen = buildCagePlan(dest, { lockDeps: true });
-  assert.deepEqual(classifyCagePath(frozen, "svc/go.mod"), { rule: "dependency_manifest", mode: "revert", overridden: false });
-  assert.deepEqual(classifyCagePath(frozen, "Cargo.lock"), { rule: "lockfile", mode: "revert", overridden: false });
+  assert.deepEqual(classifyCagePath(frozen, "svc/go.mod"), { rule: "dependency_manifest", source: "builtin", mode: "revert", overridden: false });
+  assert.deepEqual(classifyCagePath(frozen, "Cargo.lock"), { rule: "lockfile", source: "builtin", mode: "revert", overridden: false });
   assert.equal(classifyCagePath(buildCagePlan(dest), "svc/go.mod"), null);
 });
 

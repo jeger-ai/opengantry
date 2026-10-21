@@ -9,7 +9,6 @@ import { cageScopeReport } from "./cage-report.js";
 import {
   assembleCagePlan,
   cageManifestZones,
-  cageRuleSource,
   canonicalCageRoot,
   classifyCagePath,
   type CagePlan,
@@ -152,7 +151,7 @@ export function runCageCheck(opts: CageCheckOptions): CageCheckReport {
   const changes: CageCheckChange[] = [];
   for (const rel of paths) {
     const hit = classifyCagePath(plan, rel, { overrides: false });
-    if (hit) changes.push({ path: rel, rule: hit.rule, source: cageRuleSource(hit.rule), mode: hit.mode });
+    if (hit) changes.push({ path: rel, rule: hit.rule, source: hit.source, mode: hit.mode });
   }
   changes.sort((a, b) => a.path.localeCompare(b.path));
   const failed = changes.some((c) => c.mode === "revert");

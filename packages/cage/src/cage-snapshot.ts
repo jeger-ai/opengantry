@@ -4,7 +4,7 @@ import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { GantryUserError } from "#core/user-error.js";
 import { judgePath } from "#core/path-law.js";
-import { CAGE_SCAN_SKIP_DIRS, classifyCagePath, type CagePathRule, type CagePlan, type CageRuleId, type CageRuleMode } from "./cage-rules.js";
+import { CAGE_SCAN_SKIP_DIRS, cageRuleSource, classifyCagePath, type CagePathRule, type CagePlan, type CageRuleId, type CageRuleMode } from "./cage-rules.js";
 import {
   assertCageScopeGitRoot,
   captureCageScopeTree,
@@ -183,7 +183,7 @@ function captureTarget(abs: string, rule: CageRuleId, mode: CageRuleMode, ctx: C
   } catch {
     return;
   }
-  const outsideRoot: CagePathRule = { rule, mode, overridden: false };
+  const outsideRoot: CagePathRule = { rule, source: cageRuleSource(rule), mode, overridden: false };
   if (st.isDirectory()) {
     walkTree(abs, null, (child) => captureEntry(child, ctx, outsideRoot));
     return;
