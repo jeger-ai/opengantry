@@ -1,0 +1,120 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0350]. Executor must not run until the [MSN-0350] legislation commit + pin.
+#
+# Legislated intent: ADR-0060 for v4.0.0: no OpenGantry OS sandbox; generate the agents own sandbox settings from
+# the cage law (4.1 command), Claude Code first; a pointer in ADR-0048. Records only.
+#
+# Operator request (2026-10-21, "Full chain like before"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0350.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0350
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0055 unchanged. Keyless signing is unrelated to the sandbox.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 1fabdeffaa6e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0056. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0056 before
+      legislation proceeds.
+    operator_answer: Accept. The read guard secret list is the source for the
+      generated denyRead and Read deny rules.
+    adr_refs:
+      - ADR-0052
+      - ADR-0056
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The plane ingestion contract is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept and add a pointer: the trust model stands (restore, not
+      block); blocking at the OS level is left to the agents own sandboxes
+      configured from the cage law."
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Test integrity is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes; the record only decides how a
+      future command writes the agents network allowlist.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. The generated policy will come from the one path law
+      (cage floor, .cage.yaml, forbidden zones, contract forbidden_paths).
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: Accept; this mission records ADR-0060 (a decision, no code).
+    adr_refs:
+      - ADR-0052
+      - ADR-0060
+interrogation_sha256: 0e1daf98689763ed03a9bbd9b5d2035c01b3db88467465d5fefc625c37f7aae6
+declared_paths:
+  - .gitagent/missions/MSN-0350.sandbox-policy-adr.yaml
+  - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+  - .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md
+  - .gitagent/runs/MSN-0350.json
+  - EXECUTOR_LOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0350.sandbox-policy-adr.yaml
+    - .gitagent/out-of-scope/ADR-0048-cage-trust-model.md
+    - .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md
+    - .gitagent/runs/MSN-0350.json
+    - EXECUTOR_LOG.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/
+    - src/
+contract_sha256: 06863fea35f66138d40f2c9f9e454fcc8ea693ce6f97bd279d74ac43fb2e9877
