@@ -80,6 +80,7 @@
     "@clack/prompts": "^1.8.1",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "commander": "^15.0.0",
+    "sigstore": "^5.0.0",
     "yaml": "^2.6.1",
     "zod": "^4.6.7"
   },

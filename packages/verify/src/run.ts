@@ -29,6 +29,7 @@ import { addedLinesOf, changedFiles, countAddedLines } from "./diff.js";
 import { patternCoversPath } from "#core/path-glob.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
 import { diskSourceTree, evaluateImports, gitSourceTree, type ImportFindings } from "./imports.js";
+import type { KeylessSignature } from "./keyless.js";
 
 export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
 export const VERIFY_BASELINE_SCHEMA = "opengantry.verify-baseline.v1" as const;
@@ -64,8 +65,8 @@ export interface VerifyContractResult {
   skipped: string[];
   checks: VerifyCheckResult[];
   problems: string[];
-  /** `--sign`: the receipt-signing envelope over the canonical result without this field. */
-  signature?: ReceiptSignature;
+  /** `--sign`: the receipt-signing envelope over the canonical result without this field; `--sign keyless`: a Sigstore bundle. */
+  signature?: ReceiptSignature | KeylessSignature;
 }
 
 export interface VerifyContractOptions {
@@ -296,7 +297,7 @@ export function writeVerifyBaseline(opts: VerifyContractOptions = {}): VerifyBas
 export function checkVerifyResult(
   resultFile: string,
   opts: VerifyContractOptions & { allowedSigners?: string } = {},
-): { ok: boolean; problems: string[]; signer: string | null } {
+): { ok: boolean; problems: string[]; signer: string | null; result: Partial<VerifyContractResult> } {
   const p = prepare(opts);
   let result: Partial<VerifyContractResult>;
   try {
@@ -317,13 +318,14 @@ export function checkVerifyResult(
   if (opts.allowedSigners) {
     const signers = path.resolve(opts.cwd ?? process.cwd(), opts.allowedSigners);
     if (!result.signature) problems.push("the result is not signed");
+    else if (result.signature.kind === "sigstore") problems.push("the result is signed keyless (Sigstore): check it with --certificate-identity");
     else {
       const v = verifySignatureWithAllowedSigners(canonicalReceiptUtf8(result), result.signature, signers);
       if (v.status === "good") signer = v.principal;
       else problems.push(`the signature does not verify against ${opts.allowedSigners} (${v.status})`);
     }
   }
-  return { ok: problems.length === 0, problems, signer };
+  return { ok: problems.length === 0, problems, signer, result };
 }
 
 export type { VerifyBaselineFailures };
