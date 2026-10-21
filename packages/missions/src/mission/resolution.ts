@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { EXIT_CODE } from "#core/exit-codes.js";
 import path from "node:path";
 import { DEFAULT_ACTIVE_MISSION } from "#core/constants.js";
 import { readGantryEnv } from "../config-namespace.js";
@@ -145,5 +146,6 @@ export function resolveMissionPathRequired(
     "UPGRADE_MISSION_REQUIRED",
     "gantry upgrade --apply: pass --mission <path> to the signed upgrade mission YAML",
     "Example: gantry upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-v0.8.1.yaml",
+    EXIT_CODE.USAGE,
   );
 }

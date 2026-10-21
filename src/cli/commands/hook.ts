@@ -8,7 +8,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "#core/constants.js";
 import { logInfo, logWarn, setExitCode } from "../output/cli-io.js";
-import { runAtCommandBoundaryAsync } from "../output/command-boundary.js";
+import { runUserCommandAsync } from "../output/command-boundary.js";
 import { getRepoRoot, gitRunOk } from "#git/git.js";
 import {
   TMVC_GUARD_STRICT_KEY,
@@ -58,7 +58,7 @@ function advisory(fn: () => void): void {
 
 /** pre-commit: TMVC guard on the staged index (strict blocks), then an advisory contract import scan. */
 export async function runHookPreCommit(): Promise<void> {
-  await runAtCommandBoundaryAsync(1, async () => {
+  await runUserCommandAsync({}, async () => {
     const root = getRepoRoot();
     const mission = resolvePinnedMission(root, { profile: "full" });
     if (!mission) {
@@ -152,7 +152,7 @@ function changedCodeGate(root: string, range: PushRange, changed: readonly strin
 
 /** pre-push: for every pushed range, verify changed missions, advise on governance edits, check the manifest. */
 export async function runHookPrePush(stdinText: string, target: { remote?: string; url?: string } = {}): Promise<void> {
-  await runAtCommandBoundaryAsync(1, async () => {
+  await runUserCommandAsync({}, async () => {
     const root = getRepoRoot();
     if (target.remote) logInfo(`pre-push: ${target.remote}${target.url ? ` (${target.url})` : ""}`);
     const ranges = pushRanges(root, stdinText);

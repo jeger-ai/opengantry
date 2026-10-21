@@ -8,9 +8,13 @@
   ],
   "exit": 2,
   "stdout": {
-    "error": "UPGRADE_MISSION_REQUIRED",
+    "status": "failed",
+    "error_code": "GXT_UPGRADE_MISSION_REQUIRED",
     "message": "gantry upgrade --apply: pass --mission <path> to the signed upgrade mission YAML",
-    "hint": "Example: gantry upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-<SEMVER>.yaml"
+    "fix_hints": [
+      "Example: gantry upgrade --apply --mission .gitagent/missions/MSN-9001.upgrade-<SEMVER>.yaml"
+    ],
+    "exit_code": 2
   },
   "stderr_codes": []
 }

@@ -272,8 +272,7 @@ export function runStartOrchestration(options: StartOptions): StartResult {
   const section = audienceSectionTitle(audience);
 
   if (!suppressStartOutput(options)) {
-    logInfo("next steps:");
-    if (section) logInfo(`${section}:`);
+    logInfo(`${section && filtered.length > 0 ? section : "next steps"}:`);
     for (const step of filtered) logInfo(`  ${step}`);
   }
 

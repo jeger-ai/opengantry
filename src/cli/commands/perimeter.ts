@@ -1,7 +1,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { checkPerimeter } from "#missions/perimeter.js";
 import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
-import { runAtCommandBoundary } from "../output/command-boundary.js";
+import { runUserCommand } from "../output/command-boundary.js";
 import { gitRevParse } from "#git/git.js";
 import { ensurePlannerAllowedSignersFile } from "#missions/planner-signature.js";
 import { loadWorkspace } from "#missions/workspace.js";
@@ -23,7 +23,7 @@ function resolveBaseRef(root: string, baseRef?: string): string {
 }
 
 export function runPerimeter(options: PerimeterOptions): void {
-  runAtCommandBoundary(1, () => {
+  runUserCommand({}, () => {
     const { root, manifest } = loadWorkspace();
     const baseRef = resolveBaseRef(root, options.baseRef);
     if (options.ci === true) {

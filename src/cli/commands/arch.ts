@@ -5,8 +5,8 @@ import {
   emitCliJson,
   reportCommandError,
   resolveRepoRootAtBoundary,
-  runAtCommandBoundary,
-  runAtCommandBoundaryAsync,
+  runUserCommand,
+  runUserCommandAsync,
 } from "../output/command-boundary.js";
 import { fetchExternalArchitecture } from "#missions/arch/external/architecture-fetch.js";
 import { loadWorkspace } from "#missions/workspace.js";
@@ -81,7 +81,7 @@ function resolveCredCommandRoot(cwd?: string, slot?: string): string | null {
 export function runArchPointer(options: ArchOptions = {}): void {
   const repoRoot = resolveRepoRootAtBoundary(options.cwd);
   if (repoRoot === null) return;
-  runAtCommandBoundary(2, () => {
+  runUserCommand({ exitCode: EXIT_CODE.USAGE }, () => {
     const pointer = loadArchitecturePointer(repoRoot);
     logInfo(summarizeArchitecturePointer(pointer));
   });
@@ -91,7 +91,7 @@ export async function runArchCredSet(options: ArchCredSetOptions): Promise<void>
   const repoRoot = resolveCredCommandRoot(options.cwd, options.slot);
   if (repoRoot === null) return;
 
-  await runAtCommandBoundaryAsync(2, async () => {
+  await runUserCommandAsync({ exitCode: EXIT_CODE.USAGE }, async () => {
     const stdin = await readStdinCredentialPayload();
     const values = parseCredentialValuesFromStdin(options.kind, stdin);
     writeArchitectureCredential(repoRoot, options.slot, options.kind, values);
@@ -120,7 +120,7 @@ export async function runArchFetch(options: ArchFetchOptions = {}): Promise<void
   const repoRoot = resolveRepoRootAtBoundary(options.cwd);
   if (repoRoot === null) return;
 
-  await runAtCommandBoundaryAsync(2, async () => {
+  await runUserCommandAsync({ exitCode: EXIT_CODE.USAGE }, async () => {
     const result = await fetchExternalArchitecture({ repoRoot });
     if (options.json) {
       writeStdout(JSON.stringify(result, null, 2));
@@ -156,7 +156,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     }
   }
 
-  runAtCommandBoundary(2, () => {
+  runUserCommand({ exitCode: EXIT_CODE.USAGE }, () => {
     const { manifest } = loadWorkspace();
     const skill = manifest.skills.gantry ?? Object.values(manifest.skills)[0];
     const manifestTmvcRoots = skill?.tmvc_roots;
