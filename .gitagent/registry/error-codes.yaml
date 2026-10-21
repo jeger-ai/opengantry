@@ -209,6 +209,24 @@ entries:
   - name: GXT_TRACE_STALE
     since: MSN-0025
     defined_in: packages/core/src/error-codes.ts
+  - name: GXT_UPGRADE_EMPTY_MANIFEST
+    since: MSN-0337
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_UPGRADE_HASH_MISMATCH
+    since: MSN-0337
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_UPGRADE_INVALID_MISSION
+    since: MSN-0337
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_UPGRADE_MISSION_REQUIRED
+    since: MSN-0337
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_UPGRADE_STAGING_DRIFT
+    since: MSN-0337
+    defined_in: packages/core/src/error-codes.ts
+  - name: GXT_UPGRADE_STAGING_MISSING
+    since: MSN-0337
+    defined_in: packages/core/src/error-codes.ts
   - name: GXT_VERIFY_BASELINE_DIRTY
     since: MSN-0277
     defined_in: packages/verify/src/run.ts

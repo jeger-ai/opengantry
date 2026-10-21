@@ -2,8 +2,7 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import { logError, logInfo, logWarn, reportMerged, setExitCode } from "../output/cli-io.js";
 import { CLI_NAME } from "#core/constants.js";
 import { REL_UPGRADE_TMP, type UpgradePlanResult } from "#missions/upgrade/upgrade-plan-types.js";
-import { errorMessage, GantryUserError } from "#core/user-error.js";
-import { emitCliJson, reportCommandError, resolveRepoRootAtBoundary } from "../output/command-boundary.js";
+import { emitCliJson, reportCommandError, resolveRepoRootAtBoundary, runUserCommandAsync } from "../output/command-boundary.js";
 import { resolveTemplateRootFromModule } from "#missions/integration-compat.js";
 import { runUpgradeApply } from "#missions/upgrade/upgrade-apply.js";
 import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
@@ -30,8 +29,8 @@ export async function runUpgrade(options: UpgradeOptions = {}): Promise<void> {
     return;
   }
 
-  if (options.apply) {
-    try {
+  await runUserCommandAsync({ json: options.json, exitCode: EXIT_CODE.USAGE }, async () => {
+    if (options.apply) {
       const result = await runUpgradeApply({ repoRoot, mission: options.mission, templatesRoot });
       if (options.json) {
         emitCliJson(result);
@@ -41,13 +40,9 @@ export async function runUpgrade(options: UpgradeOptions = {}): Promise<void> {
         reportMerged(result.merged);
       }
       if (result.status === "blocked") setExitCode(EXIT_CODE.USAGE);
-    } catch (e) {
-      handleUpgradeError(e, options.json);
+      return;
     }
-    return;
-  }
 
-  try {
     const result = runUpgradePlan({
       repoRoot,
       templatesRoot,
@@ -64,33 +59,12 @@ export async function runUpgrade(options: UpgradeOptions = {}): Promise<void> {
     if (result.status === "downgrade_blocked") {
       logError(result.message ?? "downgrade blocked");
       setExitCode(EXIT_CODE.USAGE);
-      return;
-    }
-
-    if (result.status === "already_current") {
+    } else if (result.status === "already_current") {
       logInfo(result.message ?? "already current");
-      return;
-    }
-
-    if (result.status === "no_changes") {
+    } else if (result.status === "no_changes") {
       logInfo(result.message ?? "no changes");
-      return;
     }
-  } catch (e) {
-    handleUpgradeError(e, options.json);
-  }
-}
-
-function handleUpgradeError(e: unknown, json?: boolean): void {
-  if (e instanceof GantryUserError) {
-    const payload = { error: e.code, message: e.message, hint: e.hint };
-    if (json) emitCliJson(payload);
-    else logError(e.message + (e.hint ? `\nFix: ${e.hint}` : ""));
-    setExitCode(EXIT_CODE.USAGE);
-    return;
-  }
-  logError(errorMessage(e));
-  setExitCode(EXIT_CODE.USAGE);
+  });
 }
 
 /** The human report of a staged or dry-run plan. */

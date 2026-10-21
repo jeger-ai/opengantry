@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
+import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
 import { errorMessage, GantryUserError } from "#core/user-error.js";
 import { fromPosix } from "#core/posix-path.js";
@@ -45,6 +46,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
       "UPGRADE_STAGING_MISSING",
       `${CLI_NAME} upgrade --apply: staging directory missing at ${REL_UPGRADE_TMP}/ — re-run gantry upgrade`,
       `Run \`gantry upgrade\` to regenerate staged files before apply.`,
+      EXIT_CODE.USAGE,
     );
   }
 
@@ -53,6 +55,8 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
     throw new GantryUserError(
       "UPGRADE_EMPTY_MANIFEST",
       `${CLI_NAME} upgrade --apply: upgrade_payload.staged_hashes is empty`,
+      undefined,
+      EXIT_CODE.USAGE,
     );
   }
 
@@ -63,6 +67,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
         "UPGRADE_STAGING_DRIFT",
         `${CLI_NAME} upgrade --apply: missing staged file ${relPath} under ${REL_UPGRADE_TMP}/`,
         "Re-run gantry upgrade to regenerate staging after mission was signed.",
+        EXIT_CODE.USAGE,
       );
     }
     const actual = sha256File(stageAbs);
@@ -71,6 +76,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
         "UPGRADE_HASH_MISMATCH",
         `${CLI_NAME} upgrade --apply: staged file hash mismatch for ${relPath}`,
         "Staging directory was modified after plan. Re-run gantry upgrade and re-sign the mission.",
+        EXIT_CODE.USAGE,
       );
     }
   }
@@ -133,6 +139,8 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     throw new GantryUserError(
       "UPGRADE_INVALID_MISSION",
       errorMessage(e),
+      undefined,
+      EXIT_CODE.USAGE,
     );
   }
 
@@ -151,7 +159,7 @@ export async function runUpgradeApply(options: RunUpgradeApplyOptions): Promise<
     assertMcpSubstrateUpgradeWritePaths(manifest, payload.planned_writes);
   } catch (e) {
     if (e instanceof McpWriteDeniedError) {
-      throw new GantryUserError(e.code, e.message, e.hint);
+      throw new GantryUserError(e.code, e.message, e.hint, e.exitCode);
     }
     throw e;
   }

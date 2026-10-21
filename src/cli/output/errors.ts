@@ -12,8 +12,8 @@ function logUnexpectedError(error: Error): void {
   }
 }
 
-/** User-facing failure reporter: message + optional Fix: hint, no stack by default. */
-export function reportUserFacingError(e: unknown): void {
+/** User-facing failure reporter: message + optional Fix: hint, no stack by default; `exitCode` is for errors that carry none. */
+export function reportUserFacingError(e: unknown, exitCode: number = EXIT_CODE.FAILURE): void {
   if (isGantryUserError(e)) {
     logError(`[${e.gxtCode}] ${e.message}`);
     if (e.hint) logFixHint(e.hint);
@@ -25,10 +25,10 @@ export function reportUserFacingError(e: unknown): void {
     logUnexpectedError(e);
     const legacyHint = hintGitProofFromMessage(e.message);
     if (legacyHint) logFixHint(legacyHint);
-    setExitCode(EXIT_CODE.FAILURE);
+    setExitCode(exitCode);
     return;
   }
 
   logError(String(e));
-  setExitCode(EXIT_CODE.FAILURE);
+  setExitCode(exitCode);
 }

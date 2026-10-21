@@ -35,9 +35,25 @@ export function cliFailureEnvelope(e: unknown): CliFailureEnvelope {
   };
 }
 
-function exitCodeFor(e: unknown): number {
+/** How a command runs its body: JSON on stdout or human lines; `exitCode` for an error that carries none. */
+export interface CommandRunOptions {
+  json?: boolean;
+  exitCode?: number;
+}
+
+function exitCodeFor(e: unknown, fallback: number): number {
   if (isGantryUserError(e)) return e.exitCode;
-  return EXIT_CODE.FAILURE;
+  return fallback;
+}
+
+function reportCommandFailure(opts: CommandRunOptions, e: unknown): void {
+  const fallback = opts.exitCode ?? EXIT_CODE.FAILURE;
+  if (opts.json) {
+    emitCliJson(cliFailureEnvelope(e));
+    setExitCode(exitCodeFor(e, fallback));
+  } else {
+    reportUserFacingError(e, fallback);
+  }
 }
 
 export type CommandPresentation = {
@@ -58,35 +74,25 @@ function presentCommand(opts: { json?: boolean }, view: CommandPresentation): vo
 }
 
 /** Run a sync command body with one JSON-aware error and success boundary. */
-export function runUserCommand(opts: { json?: boolean }, fn: () => CommandPresentation | void): void {
+export function runUserCommand(opts: CommandRunOptions, fn: () => CommandPresentation | void): void {
   try {
     const view = fn();
     if (view !== undefined) presentCommand(opts, view);
   } catch (e) {
-    if (opts.json) {
-      emitCliJson(cliFailureEnvelope(e));
-      setExitCode(exitCodeFor(e));
-    } else {
-      reportUserFacingError(e);
-    }
+    reportCommandFailure(opts, e);
   }
 }
 
 /** Async variant of {@link runUserCommand}. */
 export async function runUserCommandAsync(
-  opts: { json?: boolean },
+  opts: CommandRunOptions,
   fn: () => Promise<CommandPresentation | void>,
 ): Promise<void> {
   try {
     const view = await fn();
     if (view !== undefined) presentCommand(opts, view);
   } catch (e) {
-    if (opts.json) {
-      emitCliJson(cliFailureEnvelope(e));
-      setExitCode(exitCodeFor(e));
-    } else {
-      reportUserFacingError(e);
-    }
+    reportCommandFailure(opts, e);
   }
 }
 
@@ -107,26 +113,5 @@ export function resolveRepoRootAtBoundary(cwd?: string): string | null {
     logError(e instanceof Error ? e.message.replace(`${CLI_NAME}: `, "") : String(e));
     setExitCode(EXIT_CODE.USAGE);
     return null;
-  }
-}
-
-/** Run a command body; any thrown error is reported once with the given exit code. */
-export function runAtCommandBoundary(exitCode: number, fn: () => void): void {
-  try {
-    fn();
-  } catch (e) {
-    reportCommandError(e, exitCode);
-  }
-}
-
-/** Async variant of {@link runAtCommandBoundary}. */
-export async function runAtCommandBoundaryAsync(
-  exitCode: number,
-  fn: () => Promise<void>,
-): Promise<void> {
-  try {
-    await fn();
-  } catch (e) {
-    reportCommandError(e, exitCode);
   }
 }

@@ -220,29 +220,39 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     return;
   }
 
-  if (
-    options.tutorial === true &&
-    !options.dryRun &&
-    !options.force &&
-    substrateAlreadyPresent(repoRoot)
-  ) {
+  const tutorialOnly = options.tutorial === true && !options.dryRun && !options.force && substrateAlreadyPresent(repoRoot);
+  if (tutorialOnly) {
     logInfo(`${CLI_NAME} init: substrate already present — tutorial only (skip re-scaffold)`);
+  } else {
+    const profile = await scaffoldSubstrate(options, repoRoot, templatesRoot, compat);
+    if (profile === null) return;
+    if (!options.tutorial) logInitNextSteps(profile);
+  }
+  if (options.tutorial) {
     // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
     const { runInitTutorial } = await import("../init/init-tutorial.js");
     await runInitTutorial();
-    mergeFragments(repoRoot, templatesRoot);
-    return;
   }
+  mergeFragments(repoRoot, templatesRoot);
+}
+
+/** Plan and write the substrate; null when that failed or a dry run only reported (both already said so). */
+async function scaffoldSubstrate(
+  options: InitOptions,
+  repoRoot: string,
+  templatesRoot: string,
+  compat: IntegrationCompatManifest,
+): Promise<InitProfile | null> {
   const profile = await resolveProfile(options, repoRoot, templatesRoot);
   if (!profile) {
     setExitCode(EXIT_CODE.FAILURE);
-    return;
+    return null;
   }
-  if (!validateInitProfile(profile, repoRoot, compat)) return;
+  if (!validateInitProfile(profile, repoRoot, compat)) return null;
 
   const assets = resolveAssetsFromProfile(profile, compat, templatesRoot);
   const assetPlan = await resolveInitAssetPlan(options, profile, assets, templatesRoot, repoRoot);
-  if (!assetPlan) return;
+  if (!assetPlan) return null;
 
   const { plan } = assetPlan;
   const docWrite = planIntegrationsDocWrite(profile, templatesRoot, repoRoot, compat);
@@ -252,7 +262,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
 
   if (options.dryRun) {
     logInitDryRun(repoRoot, profile, allWrites, docWrite, pointerWrite);
-    return;
+    return null;
   }
 
   applyInitWrites(allWrites);
@@ -265,14 +275,7 @@ export async function runInit(options: InitOptions = {}): Promise<void> {
     logInfo(`${CLI_NAME} init: wrote composed ${REL_ARCHITECTURE_POINTER_YAML} (kind=${profile.architectureSource})`);
   }
   logInitSummary(plan.writes, plan.skippedUserMutable, plan.unchanged);
-  if (options.tutorial) {
-    // Lazy-load: init-tutorial pulls @clack/prompts; only used with --tutorial.
-    const { runInitTutorial } = await import("../init/init-tutorial.js");
-    await runInitTutorial();
-  } else {
-    logInitNextSteps(profile);
-  }
-  mergeFragments(repoRoot, templatesRoot);
+  return profile;
 }
 
 /** Append the gitignore and prettierignore fragments and say what was appended. */

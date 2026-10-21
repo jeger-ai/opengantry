@@ -2,7 +2,7 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, setExitCode } from "../output/cli-io.js";
-import { runAtCommandBoundary, runAtCommandBoundaryAsync } from "../output/command-boundary.js";
+import { runUserCommand, runUserCommandAsync } from "../output/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
 import { checkMsnRange, checkUpgradeTmp, missionsForRange, resolveSha, type CiCheckResult } from "#missions/ci-checks.js";
 import { evaluateTrustedAutomationCommit, evaluateTrustedAutomationRange } from "#missions/trusted-automation.js";
@@ -36,7 +36,7 @@ function present(result: CiCheckResult): void {
 }
 
 export function runCiMsnRange(options: CiRangeOptions): void {
-  runAtCommandBoundary(1, () => {
+  runUserCommand({}, () => {
     const { root, manifest } = loadWorkspace();
     const { baseSha, headSha } = resolveRange(root, options);
     present(checkMsnRange(root, manifest, baseSha, headSha));
@@ -44,7 +44,7 @@ export function runCiMsnRange(options: CiRangeOptions): void {
 }
 
 export function runCiUpgradeTmp(): void {
-  runAtCommandBoundary(1, () => {
+  runUserCommand({}, () => {
     const { root } = loadWorkspace();
     present(checkUpgradeTmp(root));
   });
@@ -56,7 +56,7 @@ export interface CiTrustedAutomationOptions extends CiRangeOptions {
 
 /** Prints the trusted-automation verdict for one commit or a range; exit 0 when eligible, 1 otherwise. */
 export function runCiTrustedAutomation(options: CiTrustedAutomationOptions): void {
-  runAtCommandBoundary(1, () => {
+  runUserCommand({}, () => {
     const { root, manifest } = loadWorkspace();
     const verdict = options.commit?.trim()
       ? evaluateTrustedAutomationCommit(root, manifest, resolveSha(root, options.commit.trim()) ?? options.commit.trim())
@@ -75,7 +75,7 @@ export function runCiTrustedAutomation(options: CiTrustedAutomationOptions): voi
 
 /** Full verify on every mission file the range changed; a range that touches enforced paths needs one unless automation is trusted. */
 export async function runCiVerifyMissions(options: CiRangeOptions): Promise<void> {
-  await runAtCommandBoundaryAsync(1, async () => {
+  await runUserCommandAsync({}, async () => {
     const { root, manifest } = loadWorkspace();
     const { baseSha, headSha } = resolveRange(root, options);
     const outcome = missionsForRange(root, manifest, baseSha, headSha);
