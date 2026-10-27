@@ -50,7 +50,7 @@ Low-risk bot maintenance, such as Dependabot dependency and workflow pin bumps o
 | Kind | Use | Hard cap | Checks |
 |------|-----|----------|--------|
 | `workflow_version_pin` | Dependabot workflow `uses:` bumps | 5 | YAML structure unchanged; only existing `uses:` version segments differ |
-| `dependency_update` | Dependabot and agent npm dependency bumps | 200 | Only `package.json`, `package-lock.json` and `npm-shrinkwrap.json` files that existed before. `package.json`: the same fields and dependency names; only version strings differ. Lockfiles: every new or changed entry resolves to an allowed registry with an `integrity` hash, no new local links. So a new dependency, a script, a git or tarball URL or another registry is refused. npm only for now |
+| `dependency_update` | Dependabot and agent npm dependency bumps | 200 | Only `package.json`, `package-lock.json` and `npm-shrinkwrap.json` files that existed before. `package.json`: the same fields and dependency names; only version strings differ. Lockfiles: every new or changed install entry resolves to an allowed registry with an `integrity` hash; a local folder's entry (a `file:` dependency) may change but not appear, and links may not change. So a new dependency, a script, a git or tarball URL or another registry is refused. npm only for now |
 | `bounded_content` | Security autofix bots (code scanning, Snyk and similar) | 100 | Content changes inside `allowed_paths`; any touch under `.gitagent/**` or a protected path (the manifest's `perimeter_protected` or its defaults, plus the org floor's `perimeter_protected_add`) is rejected even if listed |
 
 ```yaml

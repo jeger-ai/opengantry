@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { dependencyFileKind, lockfileUpdateProblem, manifestUpdateProblem } from "../src/dependency-update.js";
-import { evaluateAgainstRule, parseTrustedAutomationRules, type TrustedAutomationRule } from "../src/trusted-automation.js";
+import { evaluateAgainstRule, evaluateTrustedAutomation, parseTrustedAutomationRules, type TrustedAutomationRule } from "../src/trusted-automation.js";
 
 const NPM = ["https://registry.npmjs.org/"];
 const pkg = (deps: Record<string, string>, extra: Record<string, unknown> = {}) => ({ name: "app", version: "1.0.0", scripts: { test: "node --test" }, dependencies: deps, ...extra });
@@ -66,4 +66,41 @@ test("dependency update: file kinds, the rule's registries, and lockfile lines n
   const change = { files: ["package.json"], actorEmail: "bot@x", netLoc: 900, lockfileLoc: 890, structural: () => ({ ok: true, reason: "" }) };
   assert.equal(evaluateAgainstRule(rule, change).eligible, true, "10 manifest lines; the 890 lockfile lines do not count");
   assert.match(evaluateAgainstRule(rule, { ...change, lockfileLoc: 800 }).reason, /net_loc 100 exceeds rule deps max_net_loc 20/);
+});
+
+test("dependency update: a local folder's entry (a file: dependency) may change, not appear, link or resolve elsewhere (MSN-0351)", () => {
+  // The iii integration example's shape: @jeger-ai/opengantry installed from file:../../, so the lockfile holds the
+  // repository root as the local package "../.." and a link to it.
+  const root = (deps: Record<string, string>) => ({ name: "@jeger-ai/opengantry", version: "4.0.0", dependencies: deps });
+  const iii = (local: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
+    lock({
+      "": { name: "example", version: "1.0.0", dependencies: { "@jeger-ai/opengantry": "file:../..", a: "^1.0.0" } },
+      "../..": local,
+      "node_modules/@jeger-ai/opengantry": { resolved: "../..", link: true },
+      "node_modules/a": reg("a", "1.0.0"),
+      ...extra,
+    });
+  const before = iii(root({ commander: "^15.0.0" }));
+  assert.equal(lockfileUpdateProblem(before, iii(root({ commander: "^15.0.0", sigstore: "^5.0.0" })), NPM), null, "the repository's own package.json changed");
+  assert.match(lockfileUpdateProblem(before, iii(root({}), { "../other": root({}) }), NPM) ?? "", /\.\.\/other: a new local package/);
+  assert.match(lockfileUpdateProblem(before, iii({ ...root({}), resolved: "https://evil.example/x.tgz" }), NPM) ?? "", /\.\.\/\.\.: a local package that now links or resolves elsewhere/);
+  assert.match(
+    lockfileUpdateProblem(before, iii(root({}), { "node_modules/@jeger-ai/opengantry": { resolved: "../../elsewhere", link: true } }), NPM) ?? "",
+    /a new or changed link to a local package/,
+  );
+  assert.match(lockfileUpdateProblem(before, iii(root({}), { "../../node_modules/z": { version: "1.0.0", resolved: "https://evil.example/z.tgz", integrity: "x" } }), NPM) ?? "", /resolves outside the allowed registries/, "an install location under a local folder is judged like any other");
+});
+
+test("trusted automation: when no rule allows a change, every rule's reason is reported (MSN-0351)", () => {
+  const rules = parseTrustedAutomationRules({
+    trusted_automation: {
+      rules: [
+        { id: "deps", allowed_actors: ["bot@x"], allowed_paths: ["**/package.json"], allowed_structural_changes: ["dependency_update"], max_net_loc: 20 },
+        { id: "pins", allowed_actors: ["bot@x"], allowed_paths: [".github/workflows/**"], allowed_structural_changes: ["workflow_version_pin"], max_net_loc: 5 },
+      ],
+    },
+  });
+  const verdict = evaluateTrustedAutomation(rules, { files: ["package.json"], actorEmail: "bot@x", netLoc: 4, structural: (r) => ({ ok: false, reason: `rule ${r.id}: no` }) }, "fallback");
+  assert.equal(verdict.eligible, false);
+  assert.equal(verdict.reason, "rule deps: no; path package.json outside rule pins allowed_paths");
 });
