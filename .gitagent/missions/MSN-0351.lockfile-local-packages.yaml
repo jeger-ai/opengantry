@@ -1,0 +1,146 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0351]. Executor must not run until the [MSN-0351] legislation commit + pin.
+#
+# Legislated intent: fix the dependency_update kind (ADR-0057) after Dependabot #309: an existing local folder entry
+# in an npm lockfile may change; every trusted-automation rule reason is reported when none allows a change.
+#
+# Operator request (2026-10-27, "yes, legislate and land MSN-0351"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0351.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0351
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 0d51984ee249
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/enforcement-boundary.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0351.lockfile-local-packages.yaml,
+      .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md,
+      .gitagent/runs/MSN-0351.json, packages/core/src/dependency-update.ts,
+      packages/core/src/trusted-automation.ts,
+      packages/core/tests/dependency-update.test.ts.
+      packages/core/src/dependency-update.ts (local folder entries: may change,
+      not appear, link or resolve), packages/core/src/trusted-automation.ts
+      (every rule reason reported),
+      packages/core/tests/dependency-update.test.ts (the iii example shape, the
+      joined reasons), ADR-0057 amended, docs/concepts/enforcement-boundary.md,
+      docs/CHANGELOG.md, ARCH_BASELINE.json raised for core."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Test integrity is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Cross-repository dependency checks
+      (depends_on) are not npm lockfiles.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: "Accept and amend decision 2: an existing local folder entry in
+      a lockfile may change (it describes source already in the repository; what
+      it pulls in is judged as node_modules entries); a new local folder, or one
+      that links or resolves elsewhere, is refused. Every rule reason is now
+      reported when none allows the change."
+    adr_refs:
+      - ADR-0052
+      - ADR-0057
+  - finding_id: db4a881ab72c
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/concepts/enforcement-boundary.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0351.lockfile-local-packages.yaml,
+      .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md,
+      .gitagent/runs/MSN-0351.json, packages/core/src/dependency-update.ts,
+      packages/core/src/trusted-automation.ts,
+      packages/core/tests/dependency-update.test.ts.
+      packages/core/src/dependency-update.ts (local folder entries: may change,
+      not appear, link or resolve), packages/core/src/trusted-automation.ts
+      (every rule reason reported),
+      packages/core/tests/dependency-update.test.ts (the iii example shape, the
+      joined reasons), ADR-0057 amended, docs/concepts/enforcement-boundary.md,
+      docs/CHANGELOG.md, ARCH_BASELINE.json raised for core. Operator request
+      (2026-10-27, "yes, legislate and land MSN-0351"): fix the
+      dependency_update kind before v4.0.0 after Dependabot pull request #309
+      failed on the iii integration example file: dependency. Decisions: allow
+      changes to existing local folder entries only, keep refusing new local
+      folders, changed links and local entries that start to resolve elsewhere;
+      report every rule reason. Checked against the real #309 commit:
+      TRUSTED-AUTOMATION-OK. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0351.json written by gantry verify --record (RULES
+      §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+interrogation_sha256: c9a541b8149d646e0b54af5fbbf22efd5f02c9a6bc93cf9ede81ae9d05e05d7a
+declared_paths:
+  - .gitagent/missions/MSN-0351.lockfile-local-packages.yaml
+  - .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md
+  - .gitagent/runs/MSN-0351.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/enforcement-boundary.md
+  - packages/core/src/dependency-update.ts
+  - packages/core/src/trusted-automation.ts
+  - packages/core/tests/dependency-update.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0351.lockfile-local-packages.yaml
+    - .gitagent/out-of-scope/ADR-0057-dependency-update-automation.md
+    - .gitagent/runs/MSN-0351.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/enforcement-boundary.md
+    - packages/core/src/dependency-update.ts
+    - packages/core/src/trusted-automation.ts
+    - packages/core/tests/dependency-update.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 064ae6b2ebe68024d76f6c60de8a913420b00606530bbfa8a849a73751dc4664
