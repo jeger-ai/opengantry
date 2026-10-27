@@ -233,13 +233,14 @@ export function evaluateAgainstRule(rule: TrustedAutomationRule, change: Trusted
   return { eligible: true, reason: `TRUSTED-AUTOMATION-OK: rule=${rule.id} actor=${change.actorEmail} paths=${change.files.join(",")} net_loc=${String(counted)}` };
 }
 
-/** First eligible rule wins; otherwise the last denial reason (or the fallback) is reported. */
+/** First eligible rule wins; otherwise every rule's denial reason (or the fallback) is reported. */
 export function evaluateTrustedAutomation(rules: readonly TrustedAutomationRule[], change: TrustedAutomationChange, fallbackReason: string): TrustedAutomationVerdict {
-  let last = fallbackReason;
+  const reasons: string[] = [];
   for (const rule of rulesForActor(rules, change.actorEmail)) {
     const verdict = evaluateAgainstRule(rule, change);
     if (verdict.eligible) return verdict;
-    last = verdict.reason;
+    reasons.push(verdict.reason);
   }
-  return { eligible: false, reason: last };
+  // Every rule's reason: the one that came closest is often not the last one tried.
+  return { eligible: false, reason: reasons.length > 0 ? reasons.join("; ") : fallbackReason };
 }

@@ -3,7 +3,8 @@ import { canonicalJson } from "./canonical-json.js";
 /**
  * The `dependency_update` structural kind of trusted automation (ADR-0057): what a dependency bot may change without
  * a mission. A `package.json` may only change the version strings of dependencies it already declares; an npm lockfile
- * may change freely, but every entry that is new or changed must resolve to an allowed registry with an integrity hash.
+ * may change freely, but every install entry that is new or changed must resolve to an allowed registry with an
+ * integrity hash, and a local folder's entry may change but not appear.
  * So a bot can bump, and nothing can add a package, a script, a git or tarball dependency, or another registry.
  */
 
@@ -76,6 +77,23 @@ function entryProblem(where: string, entry: Json, registries: readonly string[])
   return null;
 }
 
+/** A `packages` key that is a folder on disk (a `file:` dependency or workspace source), not an install location. */
+function isLocalPackage(key: string): boolean {
+  return !key.startsWith("node_modules/") && !key.includes("/node_modules/");
+}
+
+/**
+ * A local folder's entry describes source already in the repository, and changes when that source's package.json does;
+ * what it pulls in appears as `node_modules/…` entries, which are judged against the registries. A new local package
+ * or one that suddenly resolves somewhere is not a bump.
+ */
+function localPackageProblem(key: string, before: Json, after: Json): string | null {
+  if (before === undefined) return `${key}: a new local package`;
+  if (!isObject(after)) return `${key}: not an object`;
+  if (after.link === true || typeof after.resolved === "string") return `${key}: a local package that now links or resolves elsewhere`;
+  return null;
+}
+
 /** lockfileVersion 2's legacy `dependencies` tree: every new or changed entry, at any depth. */
 function legacyProblem(where: string, before: Json, after: Json, registries: readonly string[]): string | null {
   if (!isObject(after)) return null;
@@ -111,7 +129,7 @@ export function lockfileUpdateProblem(before: Json, after: Json, registries: rea
   if (root) return `the root entry: ${root}`;
   for (const [key, entry] of Object.entries(ap)) {
     if (key === "" || same(bp[key], entry)) continue;
-    const problem = entryProblem(key, entry, registries);
+    const problem = isLocalPackage(key) ? localPackageProblem(key, bp[key], entry) : entryProblem(key, entry, registries);
     if (problem) return problem;
   }
   return legacyProblem("dependencies", before.dependencies, after.dependencies, registries);
