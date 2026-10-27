@@ -18,7 +18,7 @@ entries:
     since: MSN-0010
   - name: sigstore
     scope: runtime
-    range: ^5.0.0
+    range: ^4.1.1
     since: MSN-0341
   - name: yaml
     scope: runtime

@@ -258,11 +258,17 @@ The tag runs [`npm-publish.yml`](../.github/workflows/npm-publish.yml), which pu
 - **Why a publish was refused (MSN-0261):** after the `::error::` hint, the job log lists npm's own trusted-publishing lines for that package (the `oidc` lines from npm's debug log, nothing else from it). `Failed token exchange request with body message: …` means npm refused the exchange: the package has no trusted publisher, or a field differs from the workflow (organization, repository, workflow file name, environment), and the message says which. `Skipped because incorrect permissions for id-token within GitHub workflow` means the job lacks `id-token: write`. `Successfully retrieved and set token` means authentication worked and the failure is elsewhere in npm's output. No `oidc` lines means npm did not attempt trusted publishing (not running in GitHub Actions, or npm older than 11.5.1).
 - **New packages:** trusted publishing can only be configured for a package that exists, so the first version of a new package is published by hand (below), then the trusted publisher is added before the next release. To give the first real release provenance too, publish a placeholder by hand before tagging, add the trusted publisher, then tag; deprecate the placeholder afterwards:
 
+Run these from the repository root, one at a time. `npm version` in a workspace also rewrites the root `package-lock.json`, so both files are restored afterwards. npm asks for two-factor approval in the browser for the publish and the deprecate, and a new package can take a few minutes to become visible, so wait until `npm view @jeger-ai/opengantry-verify` answers before deprecating:
+
 ```bash
-cd packages/opengantry-verify && npm version 0.0.0-bootstrap.0 --no-git-tag-version && npm publish --access public --tag bootstrap
-git checkout -- package.json   # back to the release version; nothing is committed
+cd packages/opengantry-verify
+npm version 0.0.0-bootstrap.0 --no-git-tag-version
+npm publish --access public --tag bootstrap
+git checkout -- package.json ../../package-lock.json   # back to the release version; nothing is committed
 npm deprecate @jeger-ai/opengantry-verify@0.0.0-bootstrap.0 "placeholder for the trusted publisher; install 4.0.0 or later"
 ```
+
+On npmjs.com the trusted publisher form allows only `npm stage publish` unless **Allow npm publish** is checked; `npm-publish.yml` runs `npm publish`, so check it (dist-tags are not needed: the publish moves `latest`).
 - **Once releases publish from CI:** set both packages to disallow tokens on npmjs.com and delete any `NPM_TOKEN` repository secret.
 - **Partial release:** if one package published and the other failed, do not re-run the tag run (it uses the workflow file at the tagged commit) and never move the tag. Fix the cause, then start a run from `main` with the tag. It refuses unless the tag matches `package.json` and everything that gets published on `main` is identical to the tag; the package already on npm is skipped. Provenance for that run names the `main` commit it used.
 
