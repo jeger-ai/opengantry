@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { contractSha256, isEmptyContract, normalizeContract, normalizeContractPath } from "#missions/contract/contract-hash.js";
+import { contractSha256, normalizeContract, normalizeContractPath } from "#missions/contract/contract-hash.js";
 import { resolveEffectiveScope } from "#missions/contract/effective-scope.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { Manifest } from "#core/manifest.js";
@@ -37,8 +37,6 @@ test("contract hash: normalizeContract omits empty lists and false booleans", ()
     allow_dynamic_specifiers: true,
   });
   assert.deepEqual(norm, { allowed_imports: ["zod"], allow_dynamic_specifiers: true });
-  assert.equal(isEmptyContract({ tmvc_roots: [] }), true);
-  assert.equal(isEmptyContract(norm), false);
 });
 
 test("contract hash: normalizeContractPath collapses ./, backslashes, duplicate slashes; dirs keep one trailing /", () => {

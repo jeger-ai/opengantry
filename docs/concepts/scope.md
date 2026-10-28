@@ -44,6 +44,18 @@ Declaring scope is not the same as enforcing it. How strongly a scope holds depe
 
 Every mission also passes `gantry verify` before merge. See [Enforcement boundary](enforcement-boundary.md) for the full picture.
 
+## Changed paths at verify
+
+Whatever held the scope while the executor worked, `gantry verify` judges what the mission's commits changed. Its contract phase lists the paths changed from the Planner stamp to the head the evidence is bound to: the run record's head for a mission verified by its record, `HEAD` with `--record` and for missions with trace rows. A later mission's commits on the same branch stay out of an earlier mission's judgement. Each path is judged by the same path law as the staged guard and `gantry runtime exec`:
+
+| Path | Result |
+|------|--------|
+| In an effective forbidden zone (skill, org policy or contract) | Verify fails with `GXT_FORBIDDEN_ZONE`, one finding per path |
+| Outside the effective roots | A warning; it does not fail |
+| The mission file, its run record `.gitagent/runs/<MSN>.json`, `EXECUTOR_LOG.md` | Not judged |
+
+A forbidden zone under `.gitagent/`, such as `.gitagent/foreman/`, still fails, but nothing under `.gitagent/` warns as outside the roots. A mission whose skill has no roots and that has no contract roots gets no outside-roots warnings. When the record's head is not in the clone's history, verify fails closed: fetch the full history (`fetch-depth: 0` in CI).
+
 ## Check a path
 
 ```bash

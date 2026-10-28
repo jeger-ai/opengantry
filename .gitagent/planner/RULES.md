@@ -30,6 +30,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - Executors MAY discover and edit files only under the **effective** TMVC roots (recursive within each root) unless the mission explicitly allows expansion steps.
 - Any access **outside** the effective TMVC boundary MUST be preceded by a **Context Request** recorded in `EXECUTOR_LOG.md` (path, reason, proposed files). The Verifier MUST accept or reject before such access proceeds.
 - Expansion into any **effective forbidden_zones** path MUST NOT proceed; escalate to Planner or fail closed per mission.
+- **`gantry verify`** judges the paths the mission's commits changed, from the Planner stamp to the run record's head: a change inside an effective forbidden zone fails the mission (`GXT_FORBIDDEN_ZONE`); a change outside the effective roots is a warning (`.gitagent/**` and `EXECUTOR_LOG.md` are not judged against the roots).
 
 ## 4.5 Interrogation record (legislation gate)
 

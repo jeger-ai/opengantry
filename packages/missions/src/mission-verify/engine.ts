@@ -24,7 +24,7 @@ import {
   type TracePhaseOutcome,
 } from "./phase-steps.js";
 import { evaluateDependenciesPhase, evaluatePolicyPhase } from "./org-phases.js";
-import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionHasRunRecord, runRecordRelPath, writeRunRecord } from "./run-record.js";
+import { assertCleanTreeForRecord, evaluateRunRecordPhase, missionRunRecord, runRecordRelPath, writeRunRecord } from "./run-record.js";
 
 const MISSION_EXTENSIONS = new Set([".yaml", ".yml", ".md"]);
 
@@ -159,10 +159,10 @@ export async function evaluateVerifyPhases(
   if (interrogation.failure) return interrogation.failure;
   const org = await evaluateOrgControlPhases(phaseCtx);
   if ("failure" in org) return org.failure;
-  const gitProofWarnings = [...proofWarnings, ...interrogation.warnings, ...org.warnings];
+  const gitProofWarnings = [...proofWarnings, ...(contract.warnings ?? []), ...interrogation.warnings, ...org.warnings];
 
   // A mission without trace rows is a legislative stub only until its run record exists (RULES §3).
-  if (options.prePush === true && isLegislativeStub(mission) && !missionHasRunRecord(root, proofMsnId)) {
+  if (options.prePush === true && isLegislativeStub(mission) && !missionRunRecord(root, proofMsnId)) {
     return {
       ok: true,
       outcome: "pre_push_stub",

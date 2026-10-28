@@ -51,11 +51,6 @@ export function contractSha256(contract: MissionContract): string {
   return crypto.createHash("sha256").update(canonicalJson(normalizeContract(contract)), "utf8").digest("hex");
 }
 
-/** True when the contract has no effective constraint at all. */
-export function isEmptyContract(contract: MissionContract): boolean {
-  return Object.keys(normalizeContract(contract)).length === 0;
-}
-
 /** Accept a bare contract object or `{ contract: … }` YAML document. */
 export function parseContractYaml(body: string): MissionContract {
   const doc = YAML.parse(body) as { contract?: MissionContract } | MissionContract | null;

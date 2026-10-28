@@ -19,7 +19,7 @@ gantry verify --mission .gitagent/missions/MSN-0001.<slug>.yaml
 |-------|--------|
 | Git proof | The Planner stamp commit modifies this mission ([Missions](missions.md#the-planner-commit)) |
 | Interrogation | Every computed gap finding has an operator answer |
-| Contract | The sealed contract matches the stamp commit, and import sites respect it |
+| Contract | The sealed contract matches the stamp commit; the paths changed since the stamp stay out of the forbidden zones; import sites respect the contract ([Scope](scope.md#changed-paths-at-verify)) |
 | Policy and dependencies | The org policy floor and cross-repository `depends_on`, when configured ([Org control plane](../guides/org-control-plane.md)) |
 | Gate | `gate_command` exits 0, its output contains `gate_success_substring` when set, and typed adapters parse its output |
 | Evidence | A mission without trace rows: the committed run record `.gitagent/runs/<MSN>.json` matches this mission and law and nothing under the roots changed since it. A mission with rows: every PASS row's quote is in `EXECUTOR_LOG.md` and is not stale ([Trace evidence](trace-evidence.md)) |
