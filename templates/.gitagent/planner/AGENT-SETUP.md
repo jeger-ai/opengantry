@@ -51,15 +51,6 @@ gantry doctor
 
 Agent sandboxes without CI: add `--no-ci`.
 
-## Optional: brownfield discovery
-
-When the user has an **existing** codebase or published copy to scan before legislating:
-
-```bash
-gantry init --discover --domain code    # or content
-gantry blueprint --domain code --yes
-```
-
 ## Optional: first mission graph
 
 ```bash
@@ -69,7 +60,7 @@ gantry init --tutorial
 Or:
 
 ```bash
-gantry start "First scoped change" --msn MSN-0001 --skill-key logic --gate-command "npm test"
+gantry legislate "First scoped change" --msn MSN-0001 --skill-key logic --gate-command "npm test"
 ```
 
 Planner must `[MSN-0001]` commit the mission YAML before execution. See `docs/ADOPTION.md`.

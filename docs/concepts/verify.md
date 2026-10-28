@@ -89,7 +89,7 @@ With `json`, `sarif` or `junit`, diagnostics go to stderr and the document is th
 
 ## `gantry verify --fix`
 
-`--fix` invokes a deterministic repair for two known gate failures, banned imports (`GXT_BANNED_IMPORT_DETECTED`) and import-layer violations (`GXT_IMPORT_LAYER_VIOLATION`). It quarantines the offending import through the TypeScript AST: it removes the live `import`, adds `GXT-SURGEON-QUARANTINE` markers and lazy roadblocks instead of silent deletion, appends a `[SURGEON-MUTATION]` line to `EXECUTOR_LOG.md`, and reruns full verify without `--fix`. It is an isolation layer, not a way to make a gate pass. Plain `gantry verify` never changes files.
+`--fix` invokes a deterministic repair for one known gate failure, an import-layer violation (`GXT_IMPORT_LAYER_VIOLATION`) reported by `gantry arch check --json`. It quarantines the offending import through the TypeScript AST: it removes the live `import`, adds `GXT-SURGEON-QUARANTINE` markers and lazy roadblocks instead of silent deletion, appends a `[SURGEON-MUTATION]` line to `EXECUTOR_LOG.md`, and reruns full verify without `--fix`. It is an isolation layer, not a way to make a gate pass. Plain `gantry verify` never changes files.
 
 The repair needs TypeScript in the workspace; without it only the repair is disabled. `--fix` cannot be combined with `--json`, `sarif` or `junit`; `--json --fix` returns `GXT_INVALID_ARGUMENT` (exit 2).
 

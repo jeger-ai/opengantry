@@ -16,7 +16,6 @@ cases:
   - { id: doctor.bare-git, fixture: bare-git, args: [doctor, --json] }
   - { id: planner-show.fresh-init, fixture: fresh-init, args: [planner, show, --json] }
   - { id: planner-set.bare-git, fixture: bare-git, args: [planner, set, planner@fixture.test], record_tree: true }
-  - { id: domains.fresh-init, fixture: fresh-init, args: [domains] }
   - { id: release-check.fresh-init, fixture: fresh-init, args: [release, check, --json] }
 
   # --- init, onboarding, upgrade, blueprint ---
@@ -32,20 +31,16 @@ cases:
   - { id: migrate-policy-pointer.fresh-init, fixture: fresh-init, args: [migrate, policy-pointer, --json] }
   - { id: upgrade-plan.fresh-init, fixture: fresh-init, args: [upgrade, plan, --json] }
   - { id: upgrade-apply.no-mission.fresh-init, fixture: fresh-init, args: [upgrade, apply, --json] }
-  - { id: blueprint.fresh-init, fixture: fresh-init, args: [blueprint, --yes], record_tree: true }
   - { id: hooks-status.fresh-init, fixture: fresh-init, args: [hooks, status] }
   - { id: hooks-install.fresh-init, fixture: fresh-init, args: [hooks, install], record_tree: true }
   - { id: hooks-uninstall.fresh-init, fixture: fresh-init, args: [hooks, uninstall], record_tree: true }
 
   # --- legislation ---
-  - { id: triage.fresh-init, fixture: fresh-init, args: [triage, add a button component, --json] }
   - { id: interrogate.mission-pass, fixture: mission-pass, args: [interrogate, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE, --json] }
   - { id: legislate.interrogation-required.mission-pass, fixture: mission-pass, args: [legislate, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE], record_tree: true }
-  - { id: start.preview.mission-pass, fixture: mission-pass, args: [start, add a button component, --msn, MSN-0102, --skill-key, ui, --gate-command, echo DONE, --no-write, --json] }
   - { id: contract-propose.mission-pass, fixture: mission-pass, args: [contract, propose, add a button component, --skill-key, ui, --json] }
   - { id: contract-show.mission-pass, fixture: mission-pass, args: [contract, show, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: contract-check.mission-pass, fixture: mission-pass, args: [contract, check, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
-  - { id: register.fresh-init, fixture: fresh-init, args: [register, src, --json] }
 
   # --- mission lifecycle ---
   - { id: mission-validate.mission-pass, fixture: mission-pass, args: [mission, validate, --file, .gitagent/missions/m-MSN-0101.yaml] }
@@ -91,7 +86,6 @@ cases:
   - { id: arch-cred-set.no-stdin.fresh-init, fixture: fresh-init, args: [arch, cred, set, --slot, docs, --kind, bearer] }
   - { id: arch-cred-unset.fresh-init, fixture: fresh-init, args: [arch, cred, unset, --slot, docs] }
   - { id: perimeter-check.mission-pass, fixture: mission-pass, args: [perimeter, check, src/components/Button.ts, --json] }
-  - { id: check-imports.fresh-init, fixture: fresh-init, args: [check-imports, src, --ban, lodash, --json] }
 
   # --- organization plane ---
   - { id: policy-pull.no-pointer.fresh-init, fixture: fresh-init, args: [policy, pull, --json] }

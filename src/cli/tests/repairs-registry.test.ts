@@ -18,13 +18,6 @@ function gateFailure(output: string): GateFailure {
   };
 }
 
-test("resolveRepairErrorCode: maps banned-import gate stderr", () => {
-  const code = resolveRepairErrorCode(
-    gateFailure('src/bad.ts: banned import "axios"\n'),
-  );
-  assert.equal(code, GXT_ERROR.BANNED_IMPORT_DETECTED);
-});
-
 test("resolveRepairErrorCode: non-gate phase returns null", () => {
   const failure: VerifyPhaseFailure = {
     ok: false,
@@ -37,12 +30,6 @@ test("resolveRepairErrorCode: non-gate phase returns null", () => {
     traceQuote: "DoD 1 MSN-0001: quote",
   };
   assert.equal(resolveRepairErrorCode(failure), null);
-});
-
-test("getRepairForErrorCode: BANNED_IMPORT_DETECTED registered", () => {
-  const repair = getRepairForErrorCode(GXT_ERROR.BANNED_IMPORT_DETECTED);
-  assert.ok(repair);
-  assert.equal(repair!.errorCode, GXT_ERROR.BANNED_IMPORT_DETECTED);
 });
 
 test("resolveRepairErrorCode: maps import-layer gate JSON", () => {

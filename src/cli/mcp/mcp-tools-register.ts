@@ -16,7 +16,6 @@ import {
   handleVerify,
 } from "./mcp-runtime.js";
 import { handleDoctor } from "./mcp-doctor.js";
-import { handleStartOrchestration } from "./mcp-start-orchestration.js";
 import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
 import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
 import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
@@ -254,25 +253,6 @@ function registerGxtLastErrorTool(server: McpServer): void {
   );
 }
 
-function registerGxtStartOrchestrationTool(server: McpServer): void {
-  server.tool(
-    "gxt_start_orchestration",
-    "Goal-first flow: triage → legislate stub → optional pin/runtime env hints.",
-    {
-      intent: z.string().describe("What the developer wants to build"),
-      msn_id: z.string().optional().describe("Mission id (auto-suggested when omitted)"),
-      skill_key: z.string().optional().describe("Override manifest skill_key"),
-      gate_command: z.string().optional().describe("Deterministic gate command"),
-      gate_success_substring: z.string().optional().describe("Gate success substring"),
-      gate_adapter: gateAdapterSchema,
-      pin_if_needed: z.boolean().optional().describe("Pin mission after scaffold"),
-      emit_runtime_env: z.boolean().optional().describe("Include gxt_runtime_env payload"),
-      write_mission: z.boolean().optional().describe("Write mission YAML (default true)"),
-    },
-    async (args) => jsonText(handleStartOrchestration(args)),
-  );
-}
-
 function registerGxtPolicyStatusTool(server: McpServer): void {
   server.tool(
     "gxt_policy_status",
@@ -342,7 +322,6 @@ export function registerGxtMcpTools(server: McpServer): void {
   registerGxtResolveMissionTool(server);
   registerGxtDoctorTool(server);
   registerGxtLastErrorTool(server);
-  registerGxtStartOrchestrationTool(server);
   registerGxtPolicyStatusTool(server);
   registerGxtLedgerVerifyTool(server);
   registerGxtDepsCheckTool(server);

@@ -90,7 +90,7 @@ export function buildStatusReport(root: string, manifest: Manifest): StatusRepor
   if (pinnedMission) {
     nextStep = `gantry verify --mission ${pinnedMission}`;
   } else if (verifyReadiness === "needs_mission") {
-    nextStep = nextStep ?? 'gantry start "<intent>" --msn MSN-0001 --skill-key <key>';
+    nextStep = nextStep ?? 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key> --gate-command "npm test"';
   }
 
   const hasFail = !skillSync.ok || doctorReport.hasFail;

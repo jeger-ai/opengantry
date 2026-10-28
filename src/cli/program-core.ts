@@ -1,4 +1,3 @@
-import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
 import { runCheck } from "./commands/check.js";
 import { runInit } from "./commands/init.js";
@@ -9,25 +8,11 @@ import { runOnboarding } from "./commands/onboarding.js";
 import { runPin, runUnpin } from "./commands/pin.js";
 import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
 import type { PrincipalHmacOptions } from "./flows/principal-hmac.js";
-import { runStart } from "./commands/start.js";
-import { runTriage, type TriageRunOptions } from "./commands/triage.js";
-import { logError, readStdinIfEmpty, setExitCode } from "./output/cli-io.js";
 import type { InitOptions } from "./commands/init.js";
-import { runBlueprintCommand } from "./commands/blueprint.js";
 import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/hooks.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
-import type { StartOptions } from "./flows/start-orchestration.js";
-import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS, type GateAdapterId, type TypedGateAdapterId } from "#core/gate-adapter.js";
-import { msnIdOrDefault } from "#core/mission-types.js";
+import { TYPED_GATE_ADAPTER_IDS, type TypedGateAdapterId } from "#core/gate-adapter.js";
 import { currentReporter } from "./output/reporter.js";
-
-/** Commander-parsed triage flags (intent text is a positional arg). */
-type TriageCliOptions = Omit<TriageRunOptions, "text">;
-
-/** Commander `--no-write` maps to `write`; start adapter maps to `writeMission`. */
-type StartCliOptions = Omit<StartOptions, "intent" | "writeMission" | "audience" | "silent"> & {
-  write?: boolean;
-};
 
 /** Shared `gantry init` Commander flags (used by init command registration). */
 function addInitOptions(cmd: Command): Command {
@@ -44,12 +29,6 @@ function addInitOptions(cmd: Command): Command {
     .option("--no-ci", "Skip CI workflow")
     .option("--arch-source <kind>", "Architecture source: unset | file | directory | external")
     .option("--arch-location <path>", "Architecture file path, folder, or external URL")
-    .option(
-      "--discover",
-      "Run fast-path architecture discovery (emits proposal only until confirmed)",
-    )
-    .option("--discover-stdout", "Emit discovery proposal JSON to stdout (implies --discover)")
-    .option("--domain <key>", "Domain adapter for discovery (code | content)", "code")
     .option(
       "--tutorial",
       "After init, run guided first mission graph (Planner stamp + verify walkthrough)",
@@ -196,8 +175,7 @@ function registerInitCommand(program: Command): void {
   addInitOptions(
     program.command("init").description("Bootstrap OpenGantry substrate assets into current git repository"),
   ).action(async (opts: InitOptions) => {
-      const discover = opts.discover === true || opts.discoverStdout === true;
-      await runInit({ ...opts, discover, discoverStdout: opts.discoverStdout });
+      await runInit(opts);
     });
 }
 
@@ -225,72 +203,6 @@ function registerUpgradeCommand(program: Command): void {
     });
 }
 
-function registerTriageCommand(program: Command): void {
-  program
-    .command("triage")
-    .description("Triage an intent from the manifest (skill, tier, keywords)")
-    .argument("[intent...]", "User intent text")
-    .option("--json", "Print JSON only")
-    .option(
-      "--emit-mission",
-      "Write .gitagent/missions/ACTIVE_MISSION.md from template (DIRECT_EXECUTION only)",
-    )
-    .option("--msn <id>", "Mission id for --emit-mission", msnIdOrDefault(undefined))
-    .option(
-      "--out <file>",
-      "Mission output path for --emit-mission (default .gitagent/missions/ACTIVE_MISSION.md; use under .gitagent/missions/ for gantry verify)",
-    )
-    .action(async (intentParts: string[], options: TriageCliOptions, _cmd: Command) => {
-      let text = intentParts.join(" ").trim();
-      text = await readStdinIfEmpty(text);
-      if (!text) {
-        logError("triage: provide intent text or pipe stdin");
-        setExitCode(EXIT_CODE.USAGE);
-        return;
-      }
-      runTriage({ ...options, text });
-    });
-}
-
-function registerStartCommand(program: Command): void {
-  program
-    .command("start")
-    .description("Goal-first orchestration: triage → legislate stub → runtime next steps")
-    .argument("[intent...]", "What you want to build")
-    .option("--msn <id>", "Mission id (auto-suggested when omitted)")
-    .option("--skill-key <key>", "Override the manifest skill_key")
-    .option("--gate-command <cmd>", "Deterministic gate command")
-    .option("--gate-success-substring <text>", "Gate success substring")
-    .addOption(
-      new Option(
-        "--gate-adapter <id>",
-        "Explicit gate output parser: generic (default) | eslint | tsc",
-      ).choices([...GATE_ADAPTER_IDS]),
-    )
-    .option("--no-write", "Skip writing mission file (preview only)")
-    .option("--allow-duplicate", "Allow duplicate msn_id (branch migration only)")
-    .option("--json", "Emit structured JSON on success")
-    .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
-    .action(async (intentParts: string[], options: StartCliOptions, _cmd: Command) => {
-      let text = intentParts.join(" ").trim();
-      text = await readStdinIfEmpty(text);
-      if (!text) {
-        logError("start: provide intent text or pipe stdin");
-        setExitCode(EXIT_CODE.USAGE);
-        return;
-      }
-      const { write, gateAdapter, ...startFlags } = options;
-      // Adapter: Commander --no-write → writeMission; audience from output context (not CLI flag).
-      runStart({
-        ...startFlags,
-        gateAdapter: gateAdapter as GateAdapterId | undefined,
-        intent: text,
-        writeMission: write !== false,
-        audience: currentReporter().audience,
-      });
-    });
-}
-
 function registerOnboardingCommand(program: Command): void {
   program
     .command("onboarding")
@@ -298,19 +210,6 @@ function registerOnboardingCommand(program: Command): void {
     .option("--force", "Continue despite integration health blockers on configured (broken) state")
     .action(async (opts: { force?: boolean }) => {
       await runOnboarding({ force: opts.force });
-    });
-}
-
-function registerBlueprintCommand(program: Command): void {
-  program
-    .command("blueprint")
-    .description(
-      "Co-author ARCHITECTURE.md, TARGET_ARCHITECTURE.yaml, and verification_plan.json from discovery interview",
-    )
-    .option("--yes", "Accept defaults without interactive prompts")
-    .option("--domain <key>", "Domain adapter (code | content)", "code")
-    .action(async (opts: { yes?: boolean; domain?: string }) => {
-      await runBlueprintCommand({ yes: opts.yes, domain: opts.domain });
     });
 }
 
@@ -368,10 +267,7 @@ export function registerCoreCommands(program: Command): void {
   registerDoctorCommand(program);
   registerInitCommand(program);
   registerUpgradeCommand(program);
-  registerTriageCommand(program);
-  registerStartCommand(program);
   registerOnboardingCommand(program);
-  registerBlueprintCommand(program);
   registerPlannerCommand(program);
   registerHooksCommand(program);
 }

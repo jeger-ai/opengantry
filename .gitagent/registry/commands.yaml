@@ -38,8 +38,6 @@ entries:
     since: commit 12461b8
   - name: attest
     since: MSN-0133
-  - name: blueprint
-    since: MSN-0111
   - name: cage
     since: MSN-0233
   - name: cage check
@@ -57,8 +55,6 @@ entries:
     note: "Internal: run by the cage session git hooks. Folds into gantry hook in ADR-0052 step 5."
   - name: check
     since: MSN-0010
-  - name: check-imports
-    since: MSN-0045
   - name: ci
     since: MSN-0289
   - name: ci msn-range
@@ -89,8 +85,6 @@ entries:
     since: MSN-0010
   - name: doctor
     since: commit 3709795
-  - name: domains
-    since: MSN-0120
   - name: events
     since: commit 8f81584
   - name: events push
@@ -190,8 +184,6 @@ entries:
     since: MSN-0148
   - name: receipt show
     since: MSN-9000
-  - name: register
-    since: MSN-0045
   - name: release
     since: MSN-0200
   - name: release check
@@ -202,16 +194,12 @@ entries:
     since: commit 274f923
   - name: runtime exec
     since: commit 10c0b2e
-  - name: start
-    since: commit 26d06cf
   - name: status
     since: MSN-0010
   - name: tmvc
     since: commit 3062fcc
   - name: tmvc guard
     since: commit 3062fcc
-  - name: triage
-    since: MSN-0010
   - name: unpin
     since: MSN-0140
   - name: upgrade

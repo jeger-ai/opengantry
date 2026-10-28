@@ -79,7 +79,7 @@ async function scaffoldTutorialMission(
   repoRoot: string,
   skillKey: string,
 ): Promise<string | null> {
-  p.log.step("Step 2 — Scaffold tutorial mission (gantry start)");
+  p.log.step("Step 2 — Scaffold tutorial mission (gantry legislate)");
   const existing = findExistingTutorialMission(repoRoot);
   if (existing) {
     p.log.message(`Using existing tutorial mission: ${existing}`);

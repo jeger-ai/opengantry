@@ -58,7 +58,6 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     "gxt_resolve_mission",
     "gxt_doctor",
     "gxt_last_error",
-    "gxt_start_orchestration",
     "gxt_upgrade_plan",
     "gxt_upgrade_apply",
     "gxt_policy_status",

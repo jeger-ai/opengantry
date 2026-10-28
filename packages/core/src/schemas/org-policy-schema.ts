@@ -38,7 +38,7 @@ export const orgPolicySchema = z
         z
           .object({
             specifier: nonEmpty,
-            scope: z.enum(["changed", "all"]).default("changed").describe("changed = gantry check-imports on the mission diff; all = whole tree."),
+            scope: z.enum(["changed", "all"]).default("changed").describe("changed = files in the mission diff; all = whole tree."),
           })
           .strict(),
       )

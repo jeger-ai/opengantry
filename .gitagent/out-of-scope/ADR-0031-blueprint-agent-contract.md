@@ -1,7 +1,7 @@
 ---
 id: ADR-0031
 title: Blueprint agent contract — tri-artifact co-authoring
-status: ACTIVE
+status: SUPERSEDED
 match_terms:
   - blueprint
   - verification_plan
@@ -50,3 +50,5 @@ On blueprint completion (human sign-off), emit three synchronized artifacts:
 
 - Blueprint depends on ADR-0030 scanner.
 - AI judge (#62) shipped in v3.1.0 (ADR-0035); contract schema is forward-compatible with judge findings envelope (ADR-0032).
+
+Superseded by [ADR-0061](ADR-0061-simplify-before-4-0.md) (MSN-0356): `gantry blueprint`, `.gitagent/verification_plan.json` and the doctor's blueprint drift check were removed in 4.0. `TARGET_ARCHITECTURE.yaml` is written by hand; the mission's `gate_command` names the checks.

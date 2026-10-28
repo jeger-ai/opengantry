@@ -1,7 +1,7 @@
 ---
 id: ADR-0033
 title: Pluggable domain adapters for discovery, blueprint, and perimeter checks
-status: ACTIVE
+status: SUPERSEDED
 match_terms:
   - domain adapter
   - content domain
@@ -46,3 +46,5 @@ Adapters are **built-in modules** under `src/cli/lib/domains/`. External npm plu
 - v0.1/0.2 perimeter YAML remains valid
 - Content governance example ships under `examples/content-governance/`
 - Accounting/legal adapters documented as custom `gate_command` recipes in `docs/DOMAINS.md`
+
+Superseded by [ADR-0061](ADR-0061-simplify-before-4-0.md) (MSN-0356): the adapter registry, discovery and blueprint hooks and `gantry domains` were removed in 4.0. The `domain: code|content` key in `TARGET_ARCHITECTURE.yaml` remains and picks the files and rules `gantry perimeter check` applies.

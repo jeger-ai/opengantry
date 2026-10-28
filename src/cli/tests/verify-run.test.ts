@@ -29,10 +29,27 @@ function writeRepairReceiptFixture(
   });
   writeSkillsForManifest(dest, ["ui"]);
 
-  fs.mkdirSync(path.join(dest, "src"), { recursive: true });
+  const libDir = path.join(dest, "src", "cli", "flows");
+  fs.mkdirSync(libDir, { recursive: true });
   fs.writeFileSync(
-    path.join(dest, "src", "bad.ts"),
-    `import axios from "axios";\nexport const x = 1;\n`,
+    path.join(libDir, "bad.ts"),
+    `import { runVerify } from "../commands/verify.js";\nexport const x = runVerify;\n`,
+    "utf8",
+  );
+  fs.writeFileSync(
+    path.join(dest, "TARGET_ARCHITECTURE.yaml"),
+    `schema_version: "0.4.0"
+scan_roots: [src/cli/**]
+layers:
+  - id: command
+    globs: [src/cli/commands/**]
+  - id: lib
+    globs: [src/cli/flows/**]
+rules:
+  - id: RULE-LIB-TO-COMMAND
+    from_layer: lib
+    forbid_import_layer: command
+`,
     "utf8",
   );
 
@@ -44,7 +61,7 @@ function writeRepairReceiptFixture(
     `msn_id: MSN-0999
 skill_key: ui
 gate_command: ${gateCommand}
-gate_success_substring: "${gateSubstring}"
+gate_success_substring: '${gateSubstring}'
 trace_rows:
   - dod_id: "1"
     trace_quote: "${traceQuote}"
@@ -120,8 +137,8 @@ test("runVerifyCore: --fix + --receipt writes one passed receipt after repair re
   const missionRel = writeRepairReceiptFixture(
     dest,
     ogRoot,
-    `node ${cli} check-imports src --ban axios`,
-    "check-imports: OK",
+    `node ${cli} arch check --json src/cli/flows/bad.ts`,
+    '"ok": true',
   );
   gitInitCommit(dest, "[MSN-0999] legislate repair receipt mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
@@ -157,7 +174,7 @@ test("runVerifyCore: --fix + --receipt writes one failed receipt when repair fix
   const missionRel = writeRepairReceiptFixture(
     dest,
     ogRoot,
-    `node ${cli} check-imports src --ban axios; exit 1`,
+    `node ${cli} arch check --json src/cli/flows/bad.ts; exit 1`,
     "NEVER_MATCHES",
   );
   gitInitCommit(dest, "[MSN-0999] legislate repair receipt fail mission", PLANNER_EMAIL);

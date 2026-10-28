@@ -17,7 +17,7 @@ About 15 minutes from an empty repository to a verified, scoped change. Every st
 | 2 | Scaffold | `gantry init --tutorial` | `gantry init --yes --no-ci` |
 | 3 | Planner identity | `gantry planner set "$(git config user.email)"` | same (needs `git config user.email`) |
 | 4 | Health check | `gantry onboarding` | `gantry doctor --json`, exit 0 |
-| 5 | Legislate | `gantry start "First change" --msn MSN-0001 --skill-key logic --gate-command "npm test"` | `gantry legislate "First change" --msn MSN-0001 --skill-key logic --gate-command "npm test"` |
+| 5 | Legislate | `gantry legislate "First change" --msn MSN-0001 --skill-key logic --gate-command "npm test"` | same, plus `--yes` |
 | 6 | Planner commit | Review the YAML, then `git commit -m "[MSN-0001] legislate mission"` | same |
 | 7 | Executor env | `eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.*.yaml)"` | `gantry runtime env --mission … --json` |
 | 8 | Make the change | Edit inside the mission's `tmvc_roots` | `gantry runtime exec --mission … -- <agent command>`, so the agent runs inside the process boundary |
@@ -31,7 +31,7 @@ Use the mission id and file name that step 5 wrote.
 
 ```bash
 # 1. The Planner reviews the mission before any executor runs
-gantry start "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
+gantry legislate "Fix login spinner" --msn MSN-0001 --skill-key ui --gate-command "npm test"
 git add .gitagent/missions/MSN-0001.<slug>.yaml
 git commit -m "[MSN-0001] legislate mission"
 
@@ -46,7 +46,7 @@ git log --grep='MSN-0001' --oneline
 gantry status --json --verbose
 ```
 
-`gantry start` is the interactive front end to `gantry legislate`; both write the same mission file. `gantry legislate --from-intent "<story>"` proposes the scope from the repository and asks you to approve it ([Missions](../concepts/missions.md)).
+`gantry legislate --from-intent "<story>"` proposes the scope from the repository and asks you to approve it ([Missions](../concepts/missions.md)).
 
 Pinning is optional but saves typing: `gantry pin <file>` makes `verify`, `scan`, `attest` and `runtime env` default to that mission, `gantry pin` with no argument shows the pin, and `gantry unpin` clears it.
 

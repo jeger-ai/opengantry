@@ -68,7 +68,7 @@ export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
   },
   { audience: "platform", step: "git config core.hooksPath .githooks" },
   { audience: "planner", step: 'gantry planner set "$(git config user.email)"' },
-  { audience: "planner", step: 'gantry start "<intent>" --msn MSN-0001 --skill-key <manifest-key>' },
+  { audience: "planner", step: 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <manifest-key> --gate-command "npm test"' },
   { audience: "planner", step: 'Planner: git commit -m "[MSN-0001] legislate mission" including mission file' },
   { audience: "executor", step: "eval \"$(gantry runtime env --mission .gitagent/missions/<file>.yaml)\"" },
   { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },

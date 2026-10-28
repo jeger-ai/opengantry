@@ -1,11 +1,11 @@
 ---
 title: "Perimeters and domain adapters"
-description: "TARGET_ARCHITECTURE.yaml rules for import layers and content patterns, the discover and blueprint phases, and the built-in code and content adapters."
+description: "TARGET_ARCHITECTURE.yaml rules for import layers and content patterns, and the built-in code and content domains."
 section: concepts
 order: 3
 ---
 
-# Perimeters and domain adapters
+# Perimeters and domains
 
 A mission authorizes scope. It should not authorize architecture violations or unbounded churn. A **perimeter** is the machine-checkable rule set in `TARGET_ARCHITECTURE.yaml` that `gantry arch check` and `gantry perimeter check` enforce.
 
@@ -13,32 +13,18 @@ OpenGantry enforces architectural boundaries such as import layers and content p
 
 ## The same graph, any domain
 
-The mission and verify graph, trace mapping, the failure envelope and `gate_command` are domain-neutral. **Domain adapters** plug deterministic discovery, blueprint and perimeter checks into it:
+The mission and verify graph, trace mapping, the failure envelope and `gate_command` are domain-neutral. The `domain` key in `TARGET_ARCHITECTURE.yaml` picks which files the perimeter check reads and which rules apply:
 
 | Key | Corpus | Rules |
 |-----|--------|-------|
 | `code` | `.ts`, `.js`, … | Import layers (`forbid_import_layer`, `forbid_specifier_substring`, …) |
 | `content` | `.md`, `.html`, `.txt`, `.json` | Patterns (`forbid_pattern`, `require_pattern`) |
 
-`gantry domains` lists them. For accounting, legal or other corpora without an adapter, use `gate_command` scripts and edit-root globs, and document the patterns in your repository's `ARCHITECTURE.md`.
+For accounting, legal or other corpora without a built-in domain, use `gate_command` scripts and edit-root globs, and document the patterns in your repository's `ARCHITECTURE.md`.
 
-## Three phases
+## Writing the rules
 
-| Phase | Command | Output |
-|-------|---------|--------|
-| Context ingestion | `gantry init --discover --domain code\|content` | `.gitagent/discovery-proposal.json`, evidence-anchored; nothing becomes law until confirmed |
-| Rules of engagement | `gantry blueprint --domain code\|content` | `ARCHITECTURE.md`, `TARGET_ARCHITECTURE.yaml`, `.gitagent/verification_plan.json` |
-| Audit | `gantry verify --json` | Pass, or `findings[]` ([Verify](verify.md)) |
-
-**Discovery is fast.** It uses streaming regex per file, not a whole-repository compiler graph, and is budgeted to finish a 5,000-file monorepo in under five seconds (pinned in CI). It proposes conventions and anomalies with `file:line` snippets.
-
-**Blueprint turns confirmed conventions into rules.** The verification plan lists `gate_commands` and `required_skills`, so an external executor can build missing tooling before it starts coding.
-
-## Everything in the trust path is binary
-
-- **Enforcement:** a rule matches or it does not, and reruns on an unchanged tree are byte-identical.
-- **Content discovery:** verbatim boilerplate blocks (at least two files, exact byte match) and YAML frontmatter keys only, no statistical "dominant terminology" that would flip on unrelated edits.
-- **Code discovery:** coverage percentages are advisory proposal metadata; humans confirm before a rule becomes law.
+You write `TARGET_ARCHITECTURE.yaml` by hand and review it like code; there is no generator. `gantry verify --json` reports a violation as a finding with `offending_file` and `line` ([Verify](verify.md)). Enforcement is binary: a rule matches or it does not, and reruns on an unchanged tree are byte-identical.
 
 ## Perimeter file
 

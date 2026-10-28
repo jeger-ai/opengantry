@@ -41,24 +41,6 @@ describe("verify-finding-gate-projector", () => {
     assert.ok(findings[0]!.fingerprint);
   });
 
-  it("projects banned-import stderr lines", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-gate-ban-"));
-    const failure: GateFailure = {
-      ok: false,
-      phase: "gate",
-      message: "gate failed",
-      exitCode: 1,
-      executorLogPath: "EXECUTOR_LOG.md",
-      gateOutput: 'src/bad.ts: banned import "fs"',
-      gateExitCode: 1,
-    };
-    const findings = projectGateFindings(root, failure);
-    assert.ok(findings);
-    assert.equal(findings.length, 1);
-    assert.equal(findings[0]!.offending_file, "src/bad.ts");
-    assert.equal(findings[0]!.rule_id, "banned-import");
-  });
-
   it("omits evidence on ENOENT without throwing", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-gate-enoent-"));
     const report = JSON.stringify({

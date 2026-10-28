@@ -26,7 +26,7 @@ Before proposing legislation, read (do not lecture the user):
 - `.gitagent/ARCHITECTURE.pointer.yaml` — code layout (if `kind=unset`, follow ARCHITECTURE-DISCOVERY.md and ask)
 - Optional: `.gitagent/out-of-scope/` ADRs when scope is ambiguous
 
-**Do not** run `gantry triage` in chat. Reason from manifest + architecture directly.
+Reason from manifest + architecture directly.
 
 ## Phase 1 — Contract (autoformalize the cage)
 

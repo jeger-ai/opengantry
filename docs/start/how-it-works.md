@@ -75,15 +75,14 @@ You keep `npm test` and your CI. OpenGantry makes them usable when an agent runs
 
 ## Three phases, any domain
 
-The graph is the same for TypeScript imports and for marketing copy. Domain adapters supply the rules:
+The graph is the same for TypeScript imports and for marketing copy. The `domain` in `TARGET_ARCHITECTURE.yaml` picks the rules:
 
-| Phase | Command | Output |
-|-------|---------|--------|
-| Context ingestion | `gantry init --discover --domain code\|content` | `.gitagent/discovery-proposal.json` |
-| Rules of engagement | `gantry blueprint --domain code\|content` | `ARCHITECTURE.md`, `TARGET_ARCHITECTURE.yaml`, `verification_plan.json` |
-| Audit | `gantry verify --json` | Pass, or the `findings[]` envelope |
+| Step | Command | Output |
+|------|---------|--------|
+| Rules | Write `TARGET_ARCHITECTURE.yaml` with `domain: code\|content` | Import-layer or pattern rules, reviewed like code |
+| Audit | `gantry perimeter check`, or `gantry verify --json` | Pass, or the `findings[]` envelope |
 
-Details: [Perimeters and domain adapters](../concepts/perimeters.md).
+Details: [Perimeters and domains](../concepts/perimeters.md).
 
 ## Where the cage fits
 

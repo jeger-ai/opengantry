@@ -28,5 +28,5 @@ export function onboardingStatusHint(): string {
 }
 
 export function onboardingStartHint(): string {
-  return 'gantry start "<intent>" --msn MSN-0001 --skill-key <key> --gate-command "npm test"';
+  return 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key> --gate-command "npm test"';
 }

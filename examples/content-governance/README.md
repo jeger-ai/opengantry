@@ -20,7 +20,6 @@ Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates th
 
 ```bash
 # From repository root (after npm run build)
-node dist/cli/index.js init --discover --domain content --yes --cwd examples/content-governance
 node dist/cli/index.js perimeter check --cwd examples/content-governance
 # Expect violations — fix files, rerun until OK
 ```

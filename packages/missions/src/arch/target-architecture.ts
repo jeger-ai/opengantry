@@ -7,7 +7,7 @@ import { classifySpecifier, type TsconfigPaths } from "#core/specifier.js";
 import { loadImportAliases } from "../contract/resolve-specifier.js";
 import crypto from "node:crypto";
 import { gitRunOk } from "#git/git.js";
-import { getDomainAdapter } from "../domains/index.js";
+import { domainSpec, walkDomainFiles } from "./domains.js";
 import YAML from "yaml";
 import { CLI_NAME, TARGET_ARCHITECTURE_FILENAME } from "#core/constants.js";
 import {
@@ -15,7 +15,6 @@ import {
   extractImportSites,
   extractImportsWithMeta,
 } from "#core/import-scanner.js";
-import { walkDomainFiles } from "../discovery-scanner.js";
 
 const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
 export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
@@ -264,12 +263,10 @@ export function fileMatchesScanRoots(repoRel: string, scanRoots: readonly string
 
 
 function adapterSupportsImportRules(spec: TargetArchitectureSpec): boolean {
-  const domain = spec.domain?.trim().toLowerCase();
-  if (!domain) return getDomainAdapter("code").supportsImportRules;
   try {
-    return getDomainAdapter(domain).supportsImportRules;
+    return domainSpec(spec.domain ?? "code").importRules;
   } catch {
-    return getDomainAdapter("code").supportsImportRules;
+    return domainSpec("code").importRules;
   }
 }
 
@@ -672,10 +669,8 @@ export function formatArchCheckHuman(result: ArchCheckResult, label: "arch" | "p
 }
 
 export function walkPerimeterFiles(repoRoot: string, spec: TargetArchitectureSpec): string[] {
-  const domain = spec.domain?.toLowerCase() ?? "code";
-  const adapter = getDomainAdapter(domain);
   const scanRoots = resolveArchScanRoots(spec);
-  const all = walkDomainFiles(repoRoot, adapter.fileExtensions);
+  const all = walkDomainFiles(repoRoot, domainSpec(spec.domain ?? "code").extensions);
   return all.filter((abs) => {
     const rel = toPosixRel(repoRoot, abs);
     return fileMatchesScanRoots(rel, scanRoots, spec.exclude);

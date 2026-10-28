@@ -13,10 +13,8 @@ import { registerCageCommands } from "./program-cage.js";
 import { registerHookCommands } from "./program-hook.js";
 import { registerCiCommands } from "./program-ci.js";
 import { registerMigrateCommands } from "./program-migrate.js";
-import { registerBuiltinDomains } from "#missions/domains/index.js";
 
 export function buildProgram(): Command {
-  registerBuiltinDomains();
   const program = new Command();
   program.enablePositionalOptions(true);
   program.name(CLI_NAME).description("OpenGantry GXT CLI").version(CLI_VERSION);
