@@ -15,7 +15,6 @@ import {
   type NormalizedVerifyFailure,
 } from "./failure-normalize.js";
 import type { GxtErrorCode } from "#core/error-codes.js";
-import { kpiFindingsToAdvisoryVerifyFindings } from "../kpi-advisory-findings.js";
 import { projectGateFindings } from "./finding-gate-projector.js";
 import {
   VERIFY_ENVELOPE_SCHEMA_VERSION,
@@ -43,7 +42,6 @@ interface VerifyPassedPayload {
   audit_commit?: string;
   trace_warnings?: VerifyTraceWarningJson[];
   git_proof_warnings?: string[];
-  kpi_warnings?: string[];
   findings?: VerifyFinding[];
   trace_evidence_skipped_uncommitted?: number;
 }
@@ -87,8 +85,6 @@ function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: stri
           line: failure.declaredLine ?? 0,
         }),
       ];
-    case "kpi":
-      return [verifyFinding("kpi", hint, { offending_file: failure.kpiReportPath })];
     case "gate":
       return buildGateFindings(root, failure, hint);
     case "git_proof":
@@ -183,12 +179,6 @@ function successPayload(
     ...(traceWarnings ? { trace_warnings: traceWarnings } : {}),
     ...(result.gitProofWarnings && result.gitProofWarnings.length > 0
       ? { git_proof_warnings: result.gitProofWarnings }
-      : {}),
-    ...(result.kpiWarnings && result.kpiWarnings.length > 0
-      ? { kpi_warnings: result.kpiWarnings }
-      : {}),
-    ...(result.kpiAdvisoryFindings && result.kpiAdvisoryFindings.length > 0
-      ? { findings: kpiFindingsToAdvisoryVerifyFindings(result.kpiAdvisoryFindings) }
       : {}),
     ...(result.traceEvidenceSkippedUncommitted !== undefined
       ? { trace_evidence_skipped_uncommitted: result.traceEvidenceSkippedUncommitted }

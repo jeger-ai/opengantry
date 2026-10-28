@@ -18,29 +18,9 @@ Two experiments shipped inside the CLI until 3.9 and are parked, unchanged but o
 
 Call `gantry contract propose` (MCP `gxt_propose_contract`) directly; it is deterministic and needs neither.
 
-## LLM evidence and KPI gate
+## <a id="llm-evidence-and-kpi-gate"></a><a id="advisory-performance-judge"></a>Removed: KPI gate and rubric judges
 
-Some checks are nondeterministic, such as an LLM rubric, but merge must stay deterministic. The answer is committed evidence:
-
-1. The mission declares optional `llm_verifiers` and a `kpi_gate`.
-2. The executor runs `gantry scan --mission …` (MCP `gxt_scan`). Each verifier prints JSON on stdout and must exit `0` with a non-empty `metrics` map of numbers or booleans; it may add a `findings` array and an `exit_code`. A failed optional verifier is recorded as `{id}::__verifier_ok: false`; a failed required verifier fails the scan.
-3. The report is committed to `.gitagent/kpi/MSN-NNNN.json`.
-4. `gantry verify` runs the gate, then evaluates `kpi_gate.thresholds` against the committed report, then trace mapping.
-
-KPI reports go stale like trace evidence: locally that is a warning, and with `--pre-push` or `--ci` it fails closed when the mission's roots changed after the report commit.
-
-## Advisory performance judge
-
-Deterministic gates cannot judge code against documented performance strategies such as pooling, blocking I/O or memoization.
-
-| Piece | Role |
-|-------|------|
-| `PERFORMANCE.md` | Your strategies, written by humans; no empirical service levels unless a benchmark gate enforces them |
-| `PERFORMANCE_RUBRIC.md` | Rule ids mapped to review questions for your own `llm_verifiers` |
-| `gantry scan` | Runs the verifier and writes KPI `findings[]` to `.gitagent/kpi/MSN-*.json` |
-| `gantry verify` | Shows advisory warnings and structured `findings[]` on a PASS; never turns a FAIL into a PASS |
-
-An architecture rubric (`ARCHITECTURE_RUBRIC`) works the same way. Use them when a mission touches hot paths and you want a semantic sanity check next to the deterministic gates. Example: [`examples/performance-judge/`](https://github.com/jeger-ai/opengantry/tree/main/examples/performance-judge).
+`gantry scan`, a mission's `llm_verifiers`, `kpi_gate` and `aggregators`, the committed KPI reports and the architecture and performance rubrics were removed in 4.0. A mission or org policy that still declares them is refused, so a gate nobody runs any more cannot pass silently. Run your producer as the mission's `gate_command` or as a `checks:` command in a verify contract, and let it exit non-zero when it fails. [`examples/performance-judge/`](https://github.com/jeger-ai/opengantry/tree/main/examples/performance-judge) shows a heuristic check written that way.
 
 ## <a id="virtual-scratch"></a>Parked: virtual scratch
 

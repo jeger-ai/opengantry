@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0355",
+  "mission_path": ".gitagent/missions/MSN-0355.remove-kpi-gate.yaml",
+  "head": "c897fb44d0fba4f96200a50185863f8bc467ea10",
+  "tree": "9b35d5c9cb87b51797f1743fa66e1ae5e5f8dc8c",
+  "law_sha256": "62f88c137e2d94891b5658396b0c04b07639f68a049bd533195e5a9f2157420f",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 132268,
+      "output_sha256": "5f03cf3bf6dd20e615fb0867ff5d5b775d079d3534e6685a75f90c5ae0afe22c"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-28T11:04:31.501Z"
+}

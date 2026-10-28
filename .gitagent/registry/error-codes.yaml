@@ -127,18 +127,6 @@ entries:
   - name: GXT_INVALID_ARGUMENT
     since: MSN-0031
     defined_in: packages/core/src/error-codes.ts
-  - name: GXT_KPI_GATE_FAILED
-    since: MSN-0045
-    defined_in: packages/core/src/error-codes.ts
-  - name: GXT_KPI_REPORT_INVALID
-    since: MSN-0045
-    defined_in: packages/core/src/error-codes.ts
-  - name: GXT_KPI_REPORT_MISSING
-    since: MSN-0045
-    defined_in: packages/core/src/error-codes.ts
-  - name: GXT_KPI_REPORT_STALE
-    since: MSN-0045
-    defined_in: packages/core/src/error-codes.ts
   - name: GXT_LAW_FILE_AMBIGUOUS
     since: MSN-0302
     defined_in: packages/core/src/error-codes.ts

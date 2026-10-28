@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import YAML from "yaml";
-import { CLI_NAME, DEFAULT_KPI_REPORT_DIR, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_PATTERN, REL_MISSION_SCHEMA } from "#core/constants.js";
+import { CLI_NAME, LEGISLATE_TRACE_PLACEHOLDER, MSN_ID_PATTERN, REL_MISSION_SCHEMA } from "#core/constants.js";
 import { contractSha256, normalizeContract } from "../contract/contract-hash.js";
 import { GantryUserError } from "#core/user-error.js";
 import { hintMissionNoGate } from "../fix-hints.js";
@@ -14,7 +14,7 @@ import {
   type InterrogationRow,
 } from "#core/interrogation.js";
 import { DEFAULT_GATE_ADAPTER } from "#core/gate-adapter.js";
-import { type KpiAggregator, type KpiAggregatorOp, type KpiGateSpec, type KpiThreshold, type KpiThresholdOp, type LlmVerifierSpec, type ParsedMission, type TraceRow, type YamlMission } from "#core/mission-types.js";
+import { type ParsedMission, type TraceRow, type YamlMission } from "#core/mission-types.js";
 import { assertMissionSchemaValid } from "./validator.js";
 import {
   parseMarkdownMission,
@@ -135,41 +135,6 @@ function ensureMissionSchemaFileExists(root: string): void {
   YAML.parse(fs.readFileSync(schemaPath, "utf8"));
 }
 
-function defaultKpiReportPath(msnId: string): string {
-  return `${DEFAULT_KPI_REPORT_DIR}/${msnId}.json`;
-}
-
-function parsedKpiGateFromYaml(data: YamlMission, msnId: string): KpiGateSpec | null {
-  const raw = data.kpi_gate;
-  if (!raw) return null;
-  const thresholds: KpiThreshold[] = raw.thresholds.map((t) => ({
-    metric: t.metric,
-    op: t.op as KpiThresholdOp,
-    value: t.value,
-  }));
-  return {
-    reportPath: raw.report_path?.trim() || defaultKpiReportPath(msnId),
-    thresholds,
-  };
-}
-
-function parsedLlmVerifiersFromYaml(data: YamlMission): LlmVerifierSpec[] {
-  return (data.llm_verifiers ?? []).map((v) => ({
-    id: v.id,
-    command: v.command,
-    provider: v.provider,
-    required: v.required === true,
-  }));
-}
-
-function parsedAggregatorsFromYaml(data: YamlMission): KpiAggregator[] {
-  return (data.aggregators ?? []).map((a) => ({
-    key: a.key,
-    op: a.op as KpiAggregatorOp,
-    sources: [...a.sources],
-  }));
-}
-
 function parseInterrogationRows(rows: NonNullable<YamlMission["interrogation"]>): InterrogationRow[] {
   return rows.map((r) => {
     if (!INTERROGATION_FINDING_KINDS.includes(r.kind as InterrogationFindingKind)) {
@@ -224,10 +189,7 @@ function parsedMissionFromYaml(absPath: string, data: YamlMission): ParsedMissio
       successSubstring: data.gate_success_substring ?? null,
       adapter: data.gate_adapter ?? DEFAULT_GATE_ADAPTER,
     },
-    kpiGate: parsedKpiGateFromYaml(data, msnId),
     virtualCapture: data.virtual_capture === true,
-    llmVerifiers: parsedLlmVerifiersFromYaml(data),
-    aggregators: parsedAggregatorsFromYaml(data),
     traceRows,
     interrogation,
     interrogationSha256: data.interrogation_sha256 ?? null,

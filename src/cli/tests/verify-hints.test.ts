@@ -52,23 +52,6 @@ test("hintsForVerifyPhase: gate detects import layer violation", () => {
   assert.equal(remediation.error_code, GXT_ERROR.IMPORT_LAYER_VIOLATION);
 });
 
-test("hintsForVerifyPhase: kpi stale maps error code", () => {
-  const remediation = hintsForVerifyPhase(
-    {
-      ok: false,
-      phase: "kpi",
-      message: "KPI report stale",
-      exitCode: 1,
-      executorLogPath: "EXECUTOR_LOG.md",
-      kpiKind: "stale",
-      kpiReason: "KPI report STALE (attested at abc1234)",
-      kpiReportPath: ".gitagent/kpi/MSN-0001.json",
-    },
-    meta,
-  );
-  assert.equal(remediation.error_code, GXT_ERROR.KPI_REPORT_STALE);
-});
-
 test("hintsForVerifyPhase: trace_pending includes executor steps", () => {
   const remediation = hintsForVerifyPhase(
     {

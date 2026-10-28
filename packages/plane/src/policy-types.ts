@@ -1,5 +1,4 @@
 import type { GateAdapterId } from "#core/gate-adapter.js";
-import type { KpiThreshold } from "#core/mission-types.js";
 import type { TrustThreshold } from "#core/manifest.js";
 import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
 
@@ -46,8 +45,6 @@ export interface OrgPolicyBundle {
   signers?: PolicySigner[];
   mandatory_gates?: PolicyMandatoryGate[];
   banned_imports?: PolicyBannedImport[];
-  producers?: Record<string, string>;
-  kpi_thresholds?: KpiThreshold[];
   config_floor?: PolicyConfigFloor;
   manifest_constraints?: PolicyManifestConstraints;
   expected_digests?: {

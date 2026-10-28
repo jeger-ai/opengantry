@@ -13,10 +13,6 @@ test("mission schema: rejects unknown top-level keys", () => {
     path.join(ogRoot, ".gitagent", "planner", "MISSION.schema.yaml"),
     path.join(root, ".gitagent", "planner", "MISSION.schema.yaml"),
   );
-  fs.copyFileSync(
-    path.join(ogRoot, ".gitagent", "planner", "KPI-REPORT.schema.yaml"),
-    path.join(root, ".gitagent", "planner", "KPI-REPORT.schema.yaml"),
-  );
   const body = `msn_id: MSN-0990
 skill_key: gantry
 gate_command: echo OK
@@ -28,7 +24,7 @@ trace_rows: []
   assert.throws(() => validateYamlMission(root, file, body), /GXT_MISSION_SCHEMA_INVALID/);
 });
 
-test("mission schema: kpi_gate and llm_verifiers pass validateYamlMission", () => {
+test("mission schema: kpi_gate, llm_verifiers and aggregators are refused as removed in 4.0 (MSN-0355)", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-kpi-"));
   const ogRoot = getRepoRoot();
   fs.mkdirSync(path.join(root, ".gitagent", "planner"), { recursive: true });
@@ -56,10 +52,7 @@ trace_rows: []
 `;
   const file = path.join(root, "kpi-mission.yaml");
   fs.writeFileSync(file, body, "utf8");
-  const parsed = validateYamlMission(root, file, body);
-  assert.equal(parsed.kpiGate?.reportPath, ".gitagent/kpi/MSN-0991.json");
-  assert.equal(parsed.llmVerifiers.length, 1);
-  assert.equal(parsed.aggregators[0]?.op, "max");
+  assert.throws(() => validateYamlMission(root, file, body), /GXT_MISSION_SCHEMA_INVALID: .*kpi_gate, llm_verifiers, aggregators were removed in 4\.0 \(ADR-0061\)/);
 });
 
 test("mission schema: example.verify.yaml passes validateYamlMission", () => {

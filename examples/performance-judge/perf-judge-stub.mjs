@@ -49,4 +49,6 @@ if (fixturePath && fs.existsSync(fixturePath)) {
   }
 }
 
-console.log(JSON.stringify({ metrics, findings, exit_code: 0 }));
+// A check command: findings on stdout as JSON, exit 1 when there are any, so a gate or a verify contract check fails.
+console.log(JSON.stringify({ metrics, findings, exit_code: findings.length > 0 ? 1 : 0 }));
+process.exitCode = findings.length > 0 ? 1 : 0;

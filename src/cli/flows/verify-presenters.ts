@@ -388,7 +388,6 @@ function presentVerifySuccess(reporter: Reporter, result: VerifyPhaseSuccess): v
     return;
   }
   reporter.info(`${CLI_NAME} verify: gate passed`);
-  for (const w of result.kpiWarnings ?? []) reporter.info(`  ${w}`);
   for (const warning of result.traceWarnings) {
     const tag = warning.autoResolved ? "auto-resolved" : "drift";
     reporter.info(

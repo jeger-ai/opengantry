@@ -1,4 +1,4 @@
-/** Mission, triage, gate and KPI types shared by every package (ADR-0052 step 5c-i; pure). */
+/** Mission, triage and gate types shared by every package (ADR-0052 step 5c-i; pure). */
 import type { MissionContract } from "./contract-types.js";
 import type { NormalizedTraceStatus } from "./trace-status.js";
 import type { InterrogationRow } from "./interrogation.js";
@@ -35,51 +35,6 @@ export interface GateSpec {
   adapter: GateAdapterId;
 }
 
-export type KpiThresholdOp = "<=" | ">=" | "==" | "<" | ">";
-
-export interface KpiThreshold {
-  metric: string;
-  op: KpiThresholdOp;
-  value: number;
-}
-
-export interface KpiGateSpec {
-  reportPath: string;
-  thresholds: KpiThreshold[];
-}
-
-export type KpiAggregatorOp = "max" | "min" | "sum";
-
-export interface KpiAggregator {
-  key: string;
-  op: KpiAggregatorOp;
-  sources: string[];
-}
-
-export interface LlmVerifierSpec {
-  id: string;
-  command: string;
-  provider?: string;
-  required: boolean;
-}
-
-export interface KpiFinding {
-  id?: string;
-  doc_anchor?: string;
-  severity: "info" | "warn" | "error";
-  path: string;
-  line?: number;
-  message: string;
-}
-
-export interface KpiReport {
-  msn_id: string;
-  generated_at: string;
-  exit_code: number;
-  metrics: Record<string, number | boolean>;
-  findings?: KpiFinding[];
-}
-
 export interface TraceRow {
   dodId: string;
   traceQuote: string;
@@ -108,11 +63,8 @@ export interface ParsedMission {
   msnId: string | null;
   skillKey: string | null;
   gate: GateSpec | null;
-  kpiGate: KpiGateSpec | null;
   /** Opt-in ephemeral gate capture under .gitagent/virtual/ (issue #68). */
   virtualCapture: boolean;
-  llmVerifiers: LlmVerifierSpec[];
-  aggregators: KpiAggregator[];
   traceRows: TraceRow[];
   interrogation: InterrogationRow[];
   interrogationSha256: string | null;
@@ -133,17 +85,6 @@ export interface YamlMission {
   gate_success_substring?: string | null;
   gate_adapter?: GateAdapterId;
   virtual_capture?: boolean;
-  kpi_gate?: {
-    report_path?: string;
-    thresholds: Array<{ metric: string; op: string; value: number }>;
-  };
-  llm_verifiers?: Array<{
-    id: string;
-    command: string;
-    provider?: string;
-    required?: boolean;
-  }>;
-  aggregators?: Array<{ key: string; op: string; sources: string[] }>;
   trace_rows?: Array<{
     dod_id: string;
     trace_quote: string;

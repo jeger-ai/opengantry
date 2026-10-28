@@ -15,7 +15,6 @@ export const STATIC_ASSETS = [
   { targetPath: ".gitagent/planner/MISSION.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/planner/ORG-POLICY.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/foreman/POLICY.pointer.yaml", mode: "scaffold_only", tags: ["core"] },
-  { targetPath: ".gitagent/planner/KPI-REPORT.schema.yaml", mode: "managed_strict", tags: ["core"] },
   { targetPath: ".gitagent/planner/EXECUTOR_LOG.template.md", mode: "managed_strict", tags: ["core"] },
   { targetPath: "skills/ui.md", mode: "scaffold_only", tags: ["skill-minimal", "skill-specimen"] },
   { targetPath: "skills/logic.md", mode: "scaffold_only", tags: ["skill-minimal", "skill-specimen"] },

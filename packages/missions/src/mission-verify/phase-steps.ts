@@ -1,8 +1,7 @@
 import { errorMessage } from "#core/user-error.js";
 import { assertPlannerMissionProof } from "../git/git-proof.js";
 import { resolveGateWorkDir } from "../gate.js";
-import { evaluateKpiPhase } from "../kpi-engine.js";
-import { msnIdOrDefault, type GateSpec, type KpiFinding, type ParsedMission } from "#core/mission-types.js";
+import { msnIdOrDefault, type GateSpec, type ParsedMission } from "#core/mission-types.js";
 import { type Manifest } from "#core/manifest.js";
 import { isPendingStatus } from "#core/trace-status.js";
 import { verifyTraceEvidenceFreshness } from "../trace-evidence.js";
@@ -10,7 +9,6 @@ import { verifyTraceRows } from "../trace-quote.js";
 import type {
   GateFailure,
   GitProofFailure,
-  KpiFailure,
   TraceFailure,
   TracePendingFailure,
   RunRecordFailure,
@@ -195,30 +193,4 @@ export function evaluateTracePhase(input: PhaseContext): TracePhaseOutcome {
   }
 
   return { kind: "ok", warnings: traceResult.warnings, skippedUncommitted: evidence.skippedUncommitted };
-}
-
-export type KpiOutcome =
-  | { kind: "ok"; warnings: string[]; advisoryFindings: KpiFinding[] }
-  | { kind: "fail"; failure: KpiFailure };
-
-export function evaluateKpiGatePhase(input: PhaseContext): KpiOutcome {
-  const { root, manifest, mission, options, executorLogPath } = input;
-  if (!mission.kpiGate) return { kind: "ok", warnings: [], advisoryFindings: [] };
-  const kpiOutcome = evaluateKpiPhase(
-    root,
-    manifest,
-    mission.skillKey,
-    mission.kpiGate,
-    options,
-    executorLogPath,
-  );
-  if (kpiOutcome?.kind === "fail") return { kind: "fail", failure: kpiOutcome.failure };
-  if (kpiOutcome?.kind === "ok") {
-    return {
-      kind: "ok",
-      warnings: kpiOutcome.warnings,
-      advisoryFindings: kpiOutcome.advisoryFindings ?? [],
-    };
-  }
-  return { kind: "ok", warnings: [], advisoryFindings: [] };
 }

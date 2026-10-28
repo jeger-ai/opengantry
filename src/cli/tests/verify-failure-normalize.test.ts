@@ -47,32 +47,6 @@ test("normalizeVerifyPhaseFailure: gate parity across sinks", () => {
   assert.equal(remediation.schema_version, REMEDIATION_SCHEMA_VERSION);
 });
 
-test("normalizeVerifyPhaseFailure: kpi includes snapshot kpi block", () => {
-  const failure: VerifyPhaseFailure = {
-    ok: false,
-    phase: "kpi",
-    message: "kpi fail",
-    exitCode: 1,
-    executorLogPath: "EXECUTOR_LOG.md",
-    kpiKind: "threshold",
-    kpiReason: "threshold miss",
-    kpiMetric: "complexity",
-    kpiOp: "<=",
-    kpiExpected: 10,
-    kpiActual: 12,
-    kpiReportPath: ".gitagent/kpi/MSN-0001.json",
-  };
-  const normalized = normalizeVerifyPhaseFailure({ failure, missionArg, options: {} });
-  const findings = buildFindingsForFailure("", normalized, failure);
-  const payload = toVerifyFailedPayload(normalized, failure, findings);
-  const remediation = toRemediationSnapshot(normalized);
-
-  assert.deepEqual(payload.failures, ["threshold miss"]);
-  assert.deepEqual(remediation.failures, ["threshold miss"]);
-  assert.equal(remediation.kpi?.metric, "complexity");
-  assert.equal(remediation.kpi?.actual, 12);
-});
-
 test("normalizeVerifyPhaseFailure: trace failures aligned", () => {
   const failure: VerifyPhaseFailure = {
     ok: false,

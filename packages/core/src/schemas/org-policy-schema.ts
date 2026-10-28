@@ -43,17 +43,6 @@ export const orgPolicySchema = z
           .strict(),
       )
       .default([]),
-    producers: z
-      .record(z.string(), nonEmpty)
-      .default({})
-      .describe("Map of KPI metric name to producer command. kpi_thresholds[].metric MUST name a key in this object."),
-    kpi_thresholds: z
-      .array(
-        z
-          .object({ metric: nonEmpty.describe("MUST match a key in producers."), op: z.enum(["<=", ">=", "==", "<", ">"]), value: z.number() })
-          .strict(),
-      )
-      .default([]),
     config_floor: z
       .object({
         planner_signature: tier.optional(),

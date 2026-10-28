@@ -9,7 +9,6 @@ import { getRepoRoot } from "#git/git.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 import { runCheck } from "../commands/check.js";
 import { runRegister } from "../commands/register.js";
-import { runScan } from "../commands/scan.js";
 
 function captureStdoutWrite<T>(fn: () => T): { result: T; stdout: string } {
   const chunks: string[] = [];
@@ -61,19 +60,6 @@ function scaffoldMiniRepo(): string {
   fs.mkdirSync(path.join(dest, "src", "cli", "lib"), { recursive: true });
   fs.writeFileSync(path.join(dest, "src", "cli", "lib", "sample.ts"), "export const ok = 1;\n", "utf8");
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
-  fs.writeFileSync(
-    path.join(dest, ".gitagent", "missions", "MSN-0001.scan.yaml"),
-    [
-      "msn_id: MSN-0001",
-      "skill_key: gantry",
-      "gate_command: echo ok",
-      "llm_verifiers:",
-      "  - id: stub",
-      "    command: node -e \"console.log(JSON.stringify({metrics:{ok:1}}))\"",
-      "    required: true",
-    ].join("\n"),
-    "utf8",
-  );
   execSync("git add -A", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
   return dest;
@@ -105,26 +91,6 @@ test("command I/O contract: gantry register happy path json", () => {
     const payload = JSON.parse(stdout.trim());
     assert.equal(typeof payload.skill_key, "string");
     assert.ok(Array.isArray(payload.tmvc_roots));
-  } finally {
-    process.chdir(prev);
-    process.exitCode = undefined;
-  }
-});
-
-test("command I/O contract: gantry scan happy path json", () => {
-  const dest = scaffoldMiniRepo();
-  const prev = process.cwd();
-  process.chdir(dest);
-  try {
-    process.exitCode = undefined;
-    const { stdout } = captureStdoutWrite(() =>
-      runScan({ mission: ".gitagent/missions/MSN-0001.scan.yaml", json: true }),
-    );
-    assert.equal(process.exitCode, undefined);
-    const payload = JSON.parse(stdout.trim());
-    assert.equal(payload.status, "ok");
-    assert.equal(typeof payload.report_path, "string");
-    assert.equal(typeof payload.report.metrics["stub::ok"], "number");
   } finally {
     process.chdir(prev);
     process.exitCode = undefined;

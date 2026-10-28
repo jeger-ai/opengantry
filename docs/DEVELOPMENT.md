@@ -196,7 +196,6 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Manifest shape | CI / pre-push | `gantry check` |
 | Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
 | Banned imports | mission gate / repair | `gantry check-imports` |
-| KPI thresholds | verify (optional) | `gantry scan` + mission `kpi_gate` |
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
 | Run record | verify | `.gitagent/runs/<MSN>.json` written by `gantry verify --record`; missions with `trace_rows` use verbatim quotes from `EXECUTOR_LOG.md` instead |
 
@@ -278,21 +277,10 @@ gh workflow run npm-publish.yml -f tag=v<version>
 
 - **Emergency local publish** (no provenance): from a clean checkout of the tag, after `npm run build`, run `npm publish --access public` for the root package or add `--workspace @jeger-ai/opengantry-cage` (or `@jeger-ai/opengantry-verify`). `publishConfig` no longer forces provenance, so this works outside CI; npm asks for two-factor approval in the browser or for `--otp <code>`.
 
-## LLM evidence + KPI gate
+## Other governance checks
 
-Nondeterministic LLM checks produce **committed evidence**; merge stays deterministic:
-
-1. Mission declares optional `llm_verifiers` + `kpi_gate` (see [`.gitagent/planner/MISSION.schema.yaml`](../.gitagent/planner/MISSION.schema.yaml)).
-2. Executor runs **`gantry scan --mission …`** — each verifier command must print **JSON on stdout** (trailing whitespace/newlines tolerated). Success contract per verifier:
-   - process exit code `0`
-   - parseable JSON object with a non-empty `metrics` map (`Record<string, number | boolean>`)
-   - optional `findings` array and `exit_code` field in JSON (fragment `exit_code` can raise report `exit_code` even when the process exits 0)
-   - failed optional verifiers set `{id}::__verifier_ok: false` in the committed report; required verifiers fail the scan when the contract is not met
-3. **`gantry verify`** runs shell `gate_command`, then evaluates `kpi_gate.thresholds` against [`.gitagent/kpi/MSN-NNNN.json`](../.gitagent/planner/KPI-REPORT.schema.yaml), then trace mapping.
-4. KPI stale binding mirrors trace evidence: local warnings only; **`--pre-push`** / **`--ci`** fail-closed when TMVC drifts after the report commit.
-5. **Advisory rubric findings** (`ARCHITECTURE_RUBRIC`, `PERFORMANCE_RUBRIC`) surface as `kpi_warnings` and structured `findings[]` on verify **PASS** — they never flip FAIL→PASS. See [ADR-0025](../.gitagent/out-of-scope/ADR-0025-architecture-rubric-judge.md) and [ADR-0035](../.gitagent/out-of-scope/ADR-0035-performance-rubric-judge.md). Example stub: [`examples/performance-judge/`](../examples/performance-judge/).
-6. **`gantry register <dir>`** proposes skills from AST footprints; Planner still owns manifest edits (Rule 4.4).
-7. **`gantry perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
+1. **`gantry register <dir>`** proposes skills from AST footprints; Planner still owns manifest edits (Rule 4.4).
+2. **`gantry perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 

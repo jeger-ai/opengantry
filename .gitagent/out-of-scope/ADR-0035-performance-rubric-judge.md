@@ -1,7 +1,7 @@
 ---
 id: ADR-0035
 title: PERFORMANCE_RUBRIC advisory LLM judge
-status: ACTIVE
+status: SUPERSEDED
 match_terms:
   - PERFORMANCE_RUBRIC
   - performance judge
@@ -35,3 +35,7 @@ Issue #62: deterministic gates verify structural integrity but cannot evaluate c
 - Deterministic gates retain sole PASS/FAIL authority.
 - No LLM API calls inside the gantry CLI.
 - Judge findings reuse ADR-0032 envelope shape on verify PASS for agent consumption.
+
+## Superseded
+
+Superseded by [ADR-0061](ADR-0061-simplify-before-4-0.md) (MSN-0355): the performance rubric, `llm_verifiers`, the KPI gate and `gantry scan` were removed in 4.0. A heuristic check runs as a gate or verify contract check instead (`examples/performance-judge/`).

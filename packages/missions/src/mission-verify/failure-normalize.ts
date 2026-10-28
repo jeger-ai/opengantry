@@ -13,7 +13,6 @@ import {
 import type {
   GateFailure,
   InterrogationFailure,
-  KpiFailure,
   RunRecordFailure,
   TraceFailure,
   TracePendingFailure,
@@ -34,7 +33,6 @@ export interface NormalizedVerifyFailure {
   detail_lines: string[];
   failures?: string[];
   gate?: RemediationSnapshot["gate"];
-  kpi?: RemediationSnapshot["kpi"];
   trace?: { failures?: string[] };
   mission_file_path?: string;
   msn_id?: string;
@@ -100,32 +98,6 @@ function normalizeGatePhase(
     gate: {
       ...(failure.gateOutput !== undefined ? { stdout: failure.gateOutput } : {}),
       ...(failure.gateExitCode !== undefined ? { exit_code: failure.gateExitCode } : {}),
-    },
-  };
-}
-
-function normalizeKpiPhase(
-  base: NormalizedVerifyFailureBase,
-  failure: KpiFailure,
-): NormalizedVerifyFailure {
-  const reason = failure.kpiReason;
-  return {
-    ...base,
-    headline: "verify: KPI GATE FAILED",
-    detail_lines: [
-      reason,
-      ...(failure.kpiMetric
-        ? [`metric: ${failure.kpiMetric} ${failure.kpiOp ?? ""} ${String(failure.kpiExpected ?? "")} (actual: ${String(failure.kpiActual ?? "missing")})`]
-        : []),
-      `report: ${failure.kpiReportPath}`,
-    ],
-    failures: [reason],
-    kpi: {
-      ...(failure.kpiMetric ? { metric: failure.kpiMetric } : {}),
-      ...(failure.kpiOp ? { op: failure.kpiOp } : {}),
-      ...(failure.kpiExpected !== undefined ? { expected: failure.kpiExpected } : {}),
-      ...(failure.kpiActual !== undefined ? { actual: failure.kpiActual } : {}),
-      report_path: failure.kpiReportPath,
     },
   };
 }
@@ -217,8 +189,6 @@ export function normalizeVerifyPhaseFailure(input: NormalizePhaseFailureInput): 
       return normalizeGitProofPhase(base);
     case "gate":
       return normalizeGatePhase(base, failure);
-    case "kpi":
-      return normalizeKpiPhase(base, failure);
     case "trace_pending":
       return normalizeTracePendingPhase(base, failure);
     case "trace":
@@ -328,6 +298,5 @@ export function toRemediationSnapshot(normalized: NormalizedVerifyFailure): Reme
     next_actions: normalized.next_actions,
     ...(normalized.failures ? { failures: normalized.failures } : {}),
     ...(normalized.gate ? { gate: normalized.gate } : {}),
-    ...(normalized.kpi ? { kpi: normalized.kpi } : {}),
   };
 }

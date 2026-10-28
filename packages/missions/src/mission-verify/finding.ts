@@ -9,7 +9,6 @@ export type VerifyFailedGate =
   | "trace"
   | "git_proof"
   | "defensive"
-  | "kpi"
   | "init"
   | "arch"
   | "interrogation"

@@ -5,7 +5,6 @@ const VERIFY_PHASE_IDS = [
   "policy",
   "dependencies",
   "gate",
-  "kpi",
   "trace",
 ] as const;
 

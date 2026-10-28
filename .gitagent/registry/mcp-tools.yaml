@@ -49,9 +49,6 @@ entries:
   - name: gxt_runtime_exec
     since: MSN-0228
     command: "runtime exec"
-  - name: gxt_scan
-    since: MSN-0228
-    command: scan
   - name: gxt_start_orchestration
     since: MSN-0228
     command: start

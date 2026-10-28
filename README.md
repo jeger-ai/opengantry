@@ -104,7 +104,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 
 - **Not an agent.** It does not chat, plan features or open pull requests by itself.
 - **Not a hosted console.** Gates and cages run on your machine and in your CI; verify uploads no source.
-- **Not an LLM judge for merge.** Gates stay deterministic; optional LLM evidence is committed separately.
+- **Not an LLM judge for merge.** Gates stay deterministic: your commands, their exit codes.
 
 ## Documentation
 

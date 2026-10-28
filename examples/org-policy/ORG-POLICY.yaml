@@ -28,12 +28,6 @@ banned_imports:
     scope: changed
   - specifier: "@jeger-ai/opengantry/dist/*"
     scope: changed
-producers:
-  security_vulnerabilities: npm audit --json
-kpi_thresholds:
-  - metric: security_vulnerabilities
-    op: "<="
-    value: 0
 config_floor:
   planner_signature: warn
   receipt_signature: warn

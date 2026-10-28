@@ -1,14 +1,12 @@
 import type { GxtErrorCode } from "#core/error-codes.js";
 import type { DependencyFailureCode } from "#plane/deps-resolve.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
-import type { KpiThresholdOp } from "#core/mission-types.js";
 import type { TraceFailureKind } from "../trace-quote.js";
 import type { VerifyFinding } from "./finding.js";
 
 export type VerifyFailurePhase =
   | "git_proof"
   | "gate"
-  | "kpi"
   | "trace_pending"
   | "trace"
   | "run_record"
@@ -16,8 +14,6 @@ export type VerifyFailurePhase =
   | "policy"
   | "dependencies"
   | "contract";
-
-export type KpiFailureKind = "missing" | "invalid" | "stale" | "threshold" | "exit_code";
 
 interface VerifyFailureBase {
   ok: false;
@@ -43,18 +39,6 @@ export interface GateFailure extends VerifyFailureBase {
   gateLogPath?: string;
   /** Coarse adapter findings when gate subprocess policy failed. */
   adapterFindings?: VerifyFinding[];
-}
-
-export interface KpiFailure extends VerifyFailureBase {
-  phase: "kpi";
-  kpiKind: KpiFailureKind;
-  kpiReason: string;
-  kpiReportPath: string;
-  kpiMetric?: string;
-  kpiOp?: KpiThresholdOp;
-  kpiExpected?: number;
-  kpiActual?: number | boolean;
-  kpiStalePaths?: string[];
 }
 
 export interface TracePendingFailure extends VerifyFailureBase {
@@ -111,7 +95,6 @@ export interface ContractFailure extends VerifyFailureBase {
 export type VerifyPhaseFailure =
   | GitProofFailure
   | GateFailure
-  | KpiFailure
   | TracePendingFailure
   | TraceFailure
   | RunRecordFailure

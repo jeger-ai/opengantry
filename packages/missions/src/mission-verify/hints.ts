@@ -14,8 +14,6 @@ import type {
   GateFailure,
   GitProofFailure,
   InterrogationFailure,
-  KpiFailure,
-  KpiFailureKind,
   RunRecordFailure,
   TraceFailure,
   TracePendingFailure,
@@ -98,42 +96,6 @@ function hintsForGatePhase(failure: GateFailure, meta: VerifyHintMeta): VerifyRe
     next_actions: [`re-run gate: ${gate}`, verifyCmdStr],
     tagged_steps: [
       tagStep("executor", `re-run gate: ${gate}`),
-      tagStep("verifier", verifyCmdStr),
-    ],
-  };
-}
-
-function kpiErrorCodeForKind(kind: KpiFailureKind): GxtErrorCode {
-  switch (kind) {
-    case "missing":
-      return GXT_ERROR.KPI_REPORT_MISSING;
-    case "invalid":
-      return GXT_ERROR.KPI_REPORT_INVALID;
-    case "stale":
-      return GXT_ERROR.KPI_REPORT_STALE;
-    case "threshold":
-    case "exit_code":
-      return GXT_ERROR.KPI_GATE_FAILED;
-    default: {
-      const _exhaustive: never = kind;
-      return _exhaustive;
-    }
-  }
-}
-
-function hintsForKpiPhase(failure: KpiFailure, meta: VerifyHintMeta): VerifyRemediation {
-  const mission = meta.missionPath;
-  const verifyCmdStr = verifyCmd(mission);
-  return {
-    error_code: kpiErrorCodeForKind(failure.kpiKind),
-    fix_hints: [
-      `gantry scan --mission ${mission}`,
-      `commit updated KPI report under .gitagent/kpi/`,
-      verifyCmdStr,
-    ],
-    next_actions: [`gantry scan --mission ${mission}`, verifyCmdStr],
-    tagged_steps: [
-      tagStep("executor", `gantry scan --mission ${mission}`),
       tagStep("verifier", verifyCmdStr),
     ],
   };
@@ -230,8 +192,6 @@ export function hintsForVerifyPhase(
       return hintsForGitProofPhase(failure, meta);
     case "gate":
       return hintsForGatePhase(failure, meta);
-    case "kpi":
-      return hintsForKpiPhase(failure, meta);
     case "trace_pending":
       return hintsForTracePendingPhase(failure, meta);
     case "trace":
