@@ -64,6 +64,13 @@ Kept, because the product's promise depends on them: the cage in all forms and t
 
 Mission verify becomes "load the mission as a law, run the contract engine": scope, forbidden zones, imports and layers and the gate command are the law; the mission-only parts are the Planner git-proof, interrogation and the run record. The mission verify phases, failure normalizer, remediation pipeline, run ring and finding fingerprints shrink to what the result needs. Findings, SARIF and JUnit come from one result type. Exit codes, error codes and the conformance goldens stay, unless a mission names a change.
 
+Operator decisions for phase 1 (2026-10-28), in three serial missions (the write-only verify-run ring and the phase clock; one failure shape; one finding and export type with the mission law on the shared primitives):
+
+- Mission verify judges the paths changed from the Planner stamp to the run record's head (`.gitagent/**` and `EXECUTOR_LOG.md` exempt): a forbidden zone fails, a path outside the roots is a warning in 4.0.
+- Findings lose `fingerprint` and `semantic_fingerprint`; `findings_digest` and `GXT_FINDINGS_RECURRED` stay.
+- Mission `verify --json` becomes digest-only in this phase: the gate's output is referenced by its log path, and findings carry no source text.
+- `verify --fix` keeps its interactive prompts.
+
 ### Phase 2: one record
 
 The run record (ADR-0052 A4) is the only evidence. The attestation receipt, the hub export envelope and the ledger entry become projections of it. The verdict token, its expected-claims helper and the HMAC pepper keyring are removed with their kernel exports (`mintVerdictToken`, `verifyVerdictToken`, …); `verifyMission` and `evaluateScope` stay. The draft token of the MCP handoff stays, because it is what makes the two-step approval work.
