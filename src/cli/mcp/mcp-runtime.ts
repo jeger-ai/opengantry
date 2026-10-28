@@ -18,8 +18,6 @@ import {
   type PinMissionResult,
   type ResolveMissionResult,
 } from "./mcp-governance-shared.js";
-import { attestMission } from "../flows/attest-mission.js";
-import { resolveMissionArg } from "../flows/mission-arg.js";
 
 export interface McpRuntimeErrorBody {
   code: string;
@@ -169,28 +167,5 @@ export function handleResolveMission(explicit?: string): ResolveMissionResult {
     status: "unpinned",
     mission_file_path: null,
     message: "No active mission pinned. Run Mission Architect / gxt_draft_legislation first.",
-  };
-}
-
-export function handleAttest(input: {
-  mission_file_path: string;
-  out?: string;
-  sign?: boolean;
-}): Record<string, unknown> {
-  const { root } = loadWorkspace();
-  const resolved = resolveMissionArg(root, input.mission_file_path);
-  const result = attestMission({
-    root,
-    resolved,
-    out: input.out,
-    sign: input.sign === true,
-  });
-  return {
-    status: "ok",
-    repo_root: result.repo_root,
-    receipt: result.receipt,
-    receipt_path: result.receipt_path,
-    mission_file_path: result.mission_file_path,
-    mission_source: result.mission_source,
   };
 }

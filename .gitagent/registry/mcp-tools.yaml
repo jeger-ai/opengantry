@@ -4,15 +4,9 @@ kind: mcp-tools
 law: "ADR-0052 B3: adding an entry is a Planner edit in a substrate mission; the step-3 evaluator fails a build that uses a name not listed here."
 note: Tools registered by gantry mcp serve (ADR-0022 write containment applies). command names the subcommand a tool fronts (null when it has none); src/cli/tests/registry-surface.test.ts holds the MCP registration and the commands registry to this file.
 entries:
-  - name: gxt_attest
-    since: MSN-0228
-    command: attest
   - name: gxt_check_signature
     since: MSN-0228
     command: verify
-  - name: gxt_deps_check
-    since: MSN-0228
-    command: "deps check"
   - name: gxt_doctor
     since: MSN-0228
     command: doctor
@@ -28,15 +22,9 @@ entries:
   - name: gxt_last_error
     since: MSN-0228
     command: null
-  - name: gxt_ledger_verify
-    since: MSN-0228
-    command: "ledger verify"
   - name: gxt_pin_mission
     since: MSN-0228
     command: "mission pin"
-  - name: gxt_policy_status
-    since: MSN-0228
-    command: "policy status"
   - name: gxt_propose_contract
     since: MSN-0228
     command: "contract propose"
@@ -49,12 +37,6 @@ entries:
   - name: gxt_runtime_exec
     since: MSN-0228
     command: "runtime exec"
-  - name: gxt_upgrade_apply
-    since: MSN-0228
-    command: "upgrade apply"
-  - name: gxt_upgrade_plan
-    since: MSN-0228
-    command: "upgrade plan"
   - name: gxt_verify
     since: MSN-0228
     command: verify

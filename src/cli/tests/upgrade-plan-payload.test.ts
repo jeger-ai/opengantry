@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
 import { runInit } from "../commands/init.js";
 import { runUpgradePlan } from "#missions/upgrade/upgrade-plan.js";
@@ -14,7 +14,6 @@ import {
   STABLE_UPGRADE_PLAN_PAYLOAD_VERSION,
   toStableUpgradePlanPayloadV1,
 } from "#missions/upgrade/upgrade-plan-payload.js";
-import { handleUpgradePlan } from "../mcp/mcp-upgrade.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 
 const ogRoot = getRepoRoot();
@@ -63,12 +62,15 @@ test("runUpgradePlan dry-run: stable payload includes file_changes when planned"
   }
 });
 
-test("mcp upgrade plan: returns stable payload envelope", () => {
-  const result = handleUpgradePlan({ dry_run: true });
-  if ("error" in result) {
-    assert.ok(result.error.code);
-    return;
-  }
-  assert.equal(result.schema_version, STABLE_UPGRADE_PLAN_PAYLOAD_VERSION);
-  assertStableUpgradePlanPayloadV1(result);
+test("gantry upgrade plan --stage: stages managed files and writes the upgrade mission", async () => {
+  const dest = await seedUpgradeRepoForPayloadTest();
+  const cli = path.join(ogRoot, "dist/cli/index.js");
+  const r = spawnSync("node", [cli, "upgrade", "plan", "--stage", "--json"], { cwd: dest, encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+  const payload = JSON.parse(r.stdout) as { status: string; mission_rel?: string };
+  assert.equal(payload.status, "planned");
+  assert.ok(payload.mission_rel && fs.existsSync(path.join(dest, payload.mission_rel)), "upgrade mission written");
+  assert.ok(fs.existsSync(path.join(dest, ".gitagent", ".upgrade-tmp")), "staging directory written");
+  const preview = spawnSync("node", [cli, "upgrade", "plan", "--json"], { cwd: dest, encoding: "utf8" });
+  assert.equal(preview.status, 0, preview.stderr);
 });

@@ -40,7 +40,6 @@ gantry deps check --since v3.2.6
 - `gantry policy pull` is the only network path. `gantry doctor` and `gantry verify` read the pointer and the cache only.
 - A missing pointer means no org policy. A present pointer with a missing cache, a hash mismatch or an invalid signer fails closed (`GXT_POLICY_*`).
 - Do not commit a filled `POLICY.pointer.yaml` until `gantry policy pull` has populated the cache.
-- MCP: `gxt_policy_status` reads the effective policy without fetching.
 
 ## Compliance ledger
 

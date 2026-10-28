@@ -101,7 +101,7 @@ export function alreadyCurrentMessage(installed: string, bundled: string, packag
   return [
     `Substrate is up to date (installed ${installed}, bundled ${bundled}).`,
     "To upgrade to a newer OpenGantry release, first update the package manager dependency",
-    `(e.g. npm install ${packageName}@latest) and re-run: gantry upgrade`,
+    `(e.g. npm install ${packageName}@latest) and re-run: gantry upgrade plan`,
   ].join("\n");
 }
 

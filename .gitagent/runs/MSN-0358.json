@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0358",
+  "mission_path": ".gitagent/missions/MSN-0358.mcp-trim.yaml",
+  "head": "d2ad1900d8a0b814c81d009adec1dbf135c106d3",
+  "tree": "011b6070cf4ffc4e1666d1aa8fad04c8686690af",
+  "law_sha256": "593926890cf9788adab2c01042cd2e9c13ca4a267b323b6f82fe2292893c4ff9",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 106964,
+      "output_sha256": "674a2b01c4c90dc896b43b2e24382c5f71fe3c3ef11a2b2959163d304278fa3d"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-28T13:41:43.707Z"
+}

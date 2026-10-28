@@ -129,9 +129,7 @@ function registerDoctorCommand(program: Command): void {
 function registerInitCommand(program: Command): void {
   addInitOptions(
     program.command("init").description("Bootstrap OpenGantry substrate assets into current git repository"),
-  ).action(async (opts: InitOptions) => {
-      await runInit(opts);
-    });
+  ).action(async (opts: InitOptions) => runInit(opts));
 }
 
 function registerUpgradeCommand(program: Command): void {
@@ -141,11 +139,12 @@ function registerUpgradeCommand(program: Command): void {
 
   upgradeCmd
     .command("plan")
-    .description("Preview upgrade file changes without writing staging dir or mission YAML")
+    .description("Preview upgrade file changes; with --stage, write the staging dir and draft the upgrade mission")
     .option("--json", "Emit stable structured JSON (schema_version 1)")
-    .option("--msn <id>", "Mission id for preview labels (default: next MSN in 9000-9099 band)")
-    .action(async (options: UpgradeOptions) => {
-      await runUpgrade({ ...options, dryRun: true });
+    .option("--msn <id>", "Mission id for the upgrade mission (default: next MSN in 9000-9099 band)")
+    .option("--stage", `Stage managed files under .gitagent/.upgrade-tmp/ and write the upgrade mission YAML`)
+    .action(async (options: UpgradeOptions & { stage?: boolean }) => {
+      await runUpgrade({ ...options, dryRun: options.stage !== true });
     });
 
   upgradeCmd

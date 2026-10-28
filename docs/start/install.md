@@ -78,7 +78,12 @@ Upgrades use only the installed package; nothing is fetched. After updating it:
    gantry upgrade plan --json
    ```
 
-2. Stage the managed files under `.gitagent/.upgrade-tmp/` and draft an upgrade mission in the 9000–9099 band with the MCP tool `gxt_upgrade_plan` (`dry_run: false`). The CLI has no staging command today; `gantry upgrade plan` only previews.
+2. Stage the managed files under `.gitagent/.upgrade-tmp/` and draft an upgrade mission in the 9000–9099 band:
+
+   ```bash
+   gantry upgrade plan --stage
+   ```
+
 3. Review the staged diff, then Planner-commit the mission YAML only (the staging directory is gitignored):
 
    ```bash
