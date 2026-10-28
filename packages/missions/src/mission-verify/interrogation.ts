@@ -15,7 +15,9 @@ import type { ParsedMission } from "#core/mission-types.js";
 import { pathRiskTier } from "../tmvc-path.js";
 import type { VerifyEvaluation } from "./options.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
-import type { InterrogationFailure } from "./failure.js";
+import type { CodedFailure } from "./failure.js";
+
+type InterrogationFailure = CodedFailure<"interrogation">;
 
 interface InterrogationPhaseOutcome {
   failure: InterrogationFailure | null;
@@ -34,8 +36,8 @@ function interrogationFailure(
     message,
     exitCode: 1,
     executorLogPath,
-    interrogationCode: code,
-    ...(warnings.length > 0 ? { interrogationWarnings: warnings } : {}),
+    code,
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }
 

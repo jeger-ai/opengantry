@@ -118,7 +118,7 @@ test("interrogation tamper: verify fails GXT_INTERROGATION_MISMATCH when answer 
     });
     assert.ok(outcome.failure);
     if (!outcome.failure) return;
-    assert.equal(outcome.failure.interrogationCode, GXT_ERROR.INTERROGATION_MISMATCH);
+    assert.equal(outcome.failure.code, GXT_ERROR.INTERROGATION_MISMATCH);
   } finally {
     process.chdir(prevCwd);
   }

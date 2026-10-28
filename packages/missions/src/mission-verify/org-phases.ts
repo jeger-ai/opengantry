@@ -9,24 +9,24 @@ import { checkAndRecordMissionDependencies } from "../deps/deps-resolve.js";
 import { ledgerFailureLine } from "../ledger/ledger-append.js";
 import { type DependencyCheckResult } from "#plane/deps-resolve.js";
 import { localConfigFloor } from "../gxt-config.js";
-import type { DependenciesFailure, PolicyFailure } from "./failure.js";
+import type { CodedFailure } from "./failure.js";
 import { verifyFinding } from "./finding.js";
 import type { PhaseContext } from "./phase-steps.js";
 
-type PolicyPhaseOutcome = { kind: "ok" } | { kind: "fail"; failure: PolicyFailure };
+type PolicyPhaseOutcome = { kind: "ok" } | { kind: "fail"; failure: CodedFailure<"policy"> };
 
 type DependenciesPhaseOutcome =
   | { kind: "ok"; warnings: string[] }
-  | { kind: "fail"; failure: DependenciesFailure };
+  | { kind: "fail"; failure: CodedFailure<"dependencies"> };
 
-function policyFailure(input: PhaseContext, code: GxtErrorCode, message: string): PolicyFailure {
+function policyFailure(input: PhaseContext, code: GxtErrorCode, message: string): CodedFailure<"policy"> {
   return {
     ok: false,
     phase: "policy",
     message: code === GXT_ERROR.POLICY_FLOOR_VIOLATION ? `${code}: ${message}` : message,
     exitCode: 1,
     executorLogPath: input.executorLogPath,
-    policyCode: code,
+    code,
     findings: [
       verifyFinding("policy", message, {
         offending_file: lawFileRelAt(input.root, "policy-pointer"),
@@ -70,7 +70,7 @@ export function evaluateDependenciesPhase(input: PhaseContext): DependenciesPhas
       message: `${failed.code}: ${failed.message}`,
       exitCode: 1,
       executorLogPath: input.executorLogPath,
-      dependencyCode: failed.code,
+      code: failed.code,
       findings: [
         verifyFinding("dependencies", failed.message, {
           offending_file: input.mission.rawPath,

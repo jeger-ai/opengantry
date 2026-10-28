@@ -1,7 +1,7 @@
 /**
- * Verify pipeline order: engine (this module, evaluates phases — no logging or exit codes) → failure-normalize
- * (canonical failure contract) → hints (remediation) → the CLI's verify-presenters (sinks) and verify-run
- * (orchestration) in src/cli/flows.
+ * Verify pipeline order: engine (this module, evaluates phases — no logging or exit codes) → payload (each phase
+ * failure becomes its final shape once, via hints) → the CLI's verify-run (orchestration) and verify-presenters
+ * (sinks) in src/cli/flows.
  */
 import path from "node:path";
 import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
@@ -11,7 +11,7 @@ import { isLegislativeStub } from "../mission/formatter.js";
 import { defaultExecutorLogPath } from "../trace-quote.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import type { Manifest } from "#core/manifest.js";
-import type { VerifyFailurePhase, VerifyPhaseFailure } from "./failure.js";
+import type { VerifyPhaseFailure } from "./failure.js";
 import type { TraceVerifyWarning } from "../trace-quote.js";
 import type { VerifyEvaluation } from "./options.js";
 import { evaluateContractPhase } from "./contract.js";
@@ -75,34 +75,10 @@ export function resolveExecutorLogPath(root: string, options: VerifyEvaluation):
   return options.executorLog ? path.resolve(root, options.executorLog) : defaultExecutorLogPath(root);
 }
 
-function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
-  switch (phase) {
-    case "git_proof":
-      return "git_proof";
-    case "interrogation":
-      return "interrogation";
-    case "policy":
-      return "policy";
-    case "dependencies":
-      return "dependencies";
-    case "contract":
-      return "contract";
-    case "gate":
-      return "gate";
-    case "trace":
-    case "trace_pending":
-    case "run_record":
-      return "trace";
-    default: {
-      const _exhaustive: never = phase;
-      return _exhaustive;
-    }
-  }
-}
-
 /** Phases run in order and stop at the first failure: earlier ones passed, later ones were skipped. */
 export function verifyPhaseStatuses(result: VerifyPhaseResult): { id: VerifyPhaseId; status: VerifyPhaseStatus }[] {
-  const failedAt = result.ok ? -1 : VERIFY_PHASE_IDS.indexOf(failurePhaseToClockId(result.phase));
+  const failedPhase = result.ok ? null : result.phase === "trace_pending" || result.phase === "run_record" ? "trace" : result.phase;
+  const failedAt = failedPhase === null ? -1 : VERIFY_PHASE_IDS.indexOf(failedPhase);
   return VERIFY_PHASE_IDS.map((id, i) => {
     if (result.ok) return { id, status: result.outcome === "pre_push_stub" && (id === "gate" || id === "trace") ? "skipped" : "passed" };
     return { id, status: i < failedAt ? "passed" : i === failedAt ? "failed" : "skipped" };

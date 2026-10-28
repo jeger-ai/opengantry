@@ -43,7 +43,7 @@ test("evaluatePolicyPhase: UNPINNED from missing cache reaches VerifyPhaseFailur
   assert.equal(outcome.kind, "fail");
   if (outcome.kind !== "fail") return;
   assert.equal(outcome.failure.phase, "policy");
-  assert.equal(outcome.failure.policyCode, GXT_ERROR.POLICY_UNPINNED);
+  assert.equal(outcome.failure.code, GXT_ERROR.POLICY_UNPINNED);
   assert.equal(outcome.failure.findings?.[0]?.rule_id, GXT_ERROR.POLICY_UNPINNED);
 });
 
@@ -56,7 +56,7 @@ test("evaluatePolicyPhase: SIGNATURE_INVALID code reaches VerifyPhaseFailure wit
   const outcome = evaluatePolicyPhase(phaseCtx("/tmp"), () => fail);
   assert.equal(outcome.kind, "fail");
   if (outcome.kind !== "fail") return;
-  assert.equal(outcome.failure.policyCode, GXT_ERROR.POLICY_SIGNATURE_INVALID);
+  assert.equal(outcome.failure.code, GXT_ERROR.POLICY_SIGNATURE_INVALID);
   assert.doesNotMatch(fail.message, /UNPINNED/);
 });
 

@@ -1,58 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GXT_ERROR } from "#core/error-codes.js";
-import type { GateFailure, VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
-import {
-  getRepairForErrorCode,
-  resolveRepairErrorCode,
-} from "../doctor/repairs/registry.js";
-
-function gateFailure(output: string): GateFailure {
-  return {
-    ok: false,
-    phase: "gate",
-    message: "GATE FAILED",
-    exitCode: 1,
-    executorLogPath: "EXECUTOR_LOG.md",
-    gateOutput: output,
-  };
-}
-
-test("resolveRepairErrorCode: non-gate phase returns null", () => {
-  const failure: VerifyPhaseFailure = {
-    ok: false,
-    phase: "trace",
-    message: "trace fail",
-    exitCode: 1,
-    executorLogPath: "EXECUTOR_LOG.md",
-    traceKind: "quote_missing",
-    traceReason: "trace fail",
-    traceQuote: "DoD 1 MSN-0001: quote",
-  };
-  assert.equal(resolveRepairErrorCode(failure), null);
-});
-
-test("resolveRepairErrorCode: maps import-layer gate JSON", () => {
-  const json = JSON.stringify({
-    schema_version: 1,
-    ok: false,
-    violations: [
-      {
-        file: "src/cli/lib/bad.ts",
-        rule_id: "RULE-LIB-TO-COMMAND",
-        module_specifier: "../commands/verify.js",
-        bindings: ["runVerify"],
-        line: 1,
-        column: 1,
-      },
-    ],
-  });
-  const code = resolveRepairErrorCode(gateFailure(""));
-  assert.equal(code, null);
-  const withStdout = resolveRepairErrorCode(gateFailure(json));
-  assert.equal(withStdout, GXT_ERROR.IMPORT_LAYER_VIOLATION);
-});
+import { getRepairForErrorCode } from "../doctor/repairs/registry.js";
 
 test("getRepairForErrorCode: IMPORT_LAYER_VIOLATION registered", () => {
   assert.ok(getRepairForErrorCode(GXT_ERROR.IMPORT_LAYER_VIOLATION));
+});
+
+test("getRepairForErrorCode: a plain gate failure has no repair", () => {
+  assert.equal(getRepairForErrorCode(GXT_ERROR.GATE_FAILED), undefined);
 });

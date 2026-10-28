@@ -1,5 +1,6 @@
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR, mapGitProofCodeToGxt } from "#core/error-codes.js";
+import { CLI_NAME } from "#core/constants.js";
 import { gateOutputIndicatesImportLayer } from "../repair.js";
 import {
   hintForTraceKind,
@@ -10,9 +11,9 @@ import {
   parseMsnIdFromGitProofMessage,
 } from "../fix-hints.js";
 import type {
+  CodedFailure,
   GateFailure,
   GitProofFailure,
-  InterrogationFailure,
   RunRecordFailure,
   TraceFailure,
   TracePendingFailure,
@@ -27,8 +28,12 @@ export interface AudienceTaggedStep {
   step: string;
 }
 
+/** What a phase failure says: its code, the human headline and details, and the remediation. */
 interface VerifyRemediation {
   error_code: GxtErrorCode;
+  headline: string;
+  detail_lines: string[];
+  failures?: string[];
   fix_hints: string[];
   next_actions: string[];
   tagged_steps?: AudienceTaggedStep[];
@@ -52,11 +57,11 @@ function verifyCmd(mission: string): string {
 function hintsForGitProofPhase(failure: GitProofFailure, meta: VerifyHintMeta): VerifyRemediation {
   const mission = meta.missionPath;
   const verifyCmdStr = verifyCmd(mission);
-  const code = parseGitProofCode(failure.gitProofMessage);
+  const code = parseGitProofCode(failure.message);
   const gitCtx = {
     root: meta.root,
     missionPath: mission,
-    msnId: meta.msnId ?? parseMsnIdFromGitProofMessage(failure.gitProofMessage),
+    msnId: meta.msnId ?? parseMsnIdFromGitProofMessage(failure.message),
     repoRelMission: mission,
   };
   const hint = code ? hintGitProof(code, gitCtx) : verifyCmdStr;
@@ -73,6 +78,8 @@ function hintsForGitProofPhase(failure: GitProofFailure, meta: VerifyHintMeta): 
   }
   return {
     error_code: code ? mapGitProofCodeToGxt(code) : GXT_ERROR.MISSION_UNSTAMPED,
+    headline: failure.message,
+    detail_lines: [],
     fix_hints: [hint],
     next_actions: nextActions,
     tagged_steps,
@@ -89,6 +96,11 @@ function hintsForGatePhase(failure: GateFailure, meta: VerifyHintMeta): VerifyRe
     : GXT_ERROR.GATE_FAILED;
   return {
     error_code: errorCode,
+    headline: "verify: GATE FAILED",
+    detail_lines: [
+      ...(failure.gateOutput !== undefined ? [`--- output ---\n${failure.gateOutput}`] : []),
+      ...(failure.gateExitCode !== undefined ? [`exit code: ${String(failure.gateExitCode)}`] : []),
+    ],
     fix_hints: [hintGate(gate, mission)],
     next_actions: [`re-run gate: ${gate}`, verifyCmdStr],
     tagged_steps: [
@@ -103,6 +115,8 @@ function hintsForTracePendingPhase(failure: TracePendingFailure, meta: VerifyHin
   const steps = hintTracePendingSteps(failure.executorLogPath, mission, failure.gateCommand);
   return {
     error_code: GXT_ERROR.TRACE_PENDING,
+    headline: `${CLI_NAME} verify: legislative stub complete (git-proof OK) — executor must execute, append ${failure.executorLogPath}, set trace row PASS, then re-verify`,
+    detail_lines: [],
     fix_hints: steps.slice(0, 3),
     next_actions: steps,
     tagged_steps: [
@@ -128,6 +142,9 @@ function hintsForTracePhase(failure: TraceFailure, meta: VerifyHintMeta): Verify
         : GXT_ERROR.TRACE_MISSING;
   return {
     error_code: errorCode,
+    headline: "verify: TRACE MAPPING FAILED (Evidence Tampering / missing evidence)",
+    detail_lines: [`DoD trace failure: ${failure.message}`],
+    failures: [`DoD trace: ${failure.message}`],
     fix_hints: hints,
     next_actions: [verifyCmdStr, `gantry verify --mission ${mission} --fix`],
     tagged_steps: [
@@ -137,10 +154,13 @@ function hintsForTracePhase(failure: TraceFailure, meta: VerifyHintMeta): Verify
   };
 }
 
-function hintsForInterrogationPhase(failure: InterrogationFailure, meta: VerifyHintMeta): VerifyRemediation {
+function hintsForInterrogationPhase(failure: CodedFailure<"interrogation">, meta: VerifyHintMeta): VerifyRemediation {
   const verifyCmdStr = verifyCmd(meta.missionPath);
   return {
-    error_code: failure.interrogationCode,
+    error_code: failure.code,
+    headline: "verify: INTERROGATION GATE FAILED",
+    detail_lines: [failure.message, ...(failure.warnings ?? [])],
+    failures: [failure.message],
     fix_hints: [failure.message, "re-run gantry interrogate and update mission interrogation block on record"],
     next_actions: [
       `gantry interrogate "<intent>" --msn ${meta.msnId ?? "MSN-NNNN"} --skill-key gantry`,
@@ -153,25 +173,19 @@ function hintsForInterrogationPhase(failure: InterrogationFailure, meta: VerifyH
   };
 }
 
-function runRecordCode(failure: RunRecordFailure): GxtErrorCode {
-  switch (failure.recordKind) {
-    case "missing":
-      return GXT_ERROR.RUN_RECORD_MISSING;
-    case "stale":
-      return GXT_ERROR.RUN_RECORD_STALE;
-    case "mismatch":
-      return GXT_ERROR.RUN_RECORD_MISMATCH;
-    default: {
-      const _exhaustive: never = failure.recordKind;
-      return _exhaustive;
-    }
-  }
-}
+const RUN_RECORD_CODES = {
+  missing: GXT_ERROR.RUN_RECORD_MISSING,
+  stale: GXT_ERROR.RUN_RECORD_STALE,
+  mismatch: GXT_ERROR.RUN_RECORD_MISMATCH,
+} as const;
 
 function hintsForRunRecordPhase(failure: RunRecordFailure, meta: VerifyHintMeta): VerifyRemediation {
   const verify = verifyCmd(meta.missionPath);
   return {
-    error_code: runRecordCode(failure),
+    error_code: RUN_RECORD_CODES[failure.recordKind],
+    headline: "verify: RUN RECORD FAILED",
+    detail_lines: [failure.recordReason, ...(failure.stalePaths ?? []).map((p) => `  stale: ${p}`)],
+    failures: [failure.recordReason],
     fix_hints: [
       failure.recordReason,
       `commit the work, run ${verify} --record on the clean tree, then commit ${failure.recordPath} (RULES §3)`,
@@ -180,6 +194,28 @@ function hintsForRunRecordPhase(failure: RunRecordFailure, meta: VerifyHintMeta)
   };
 }
 
+function hintsForContractPhase(failure: CodedFailure<"contract">, meta: VerifyHintMeta): VerifyRemediation {
+  const details = (failure.findings ?? []).map((f) =>
+    f.offending_file ? `${f.offending_file}:${String(f.line)} ${f.resolution_hint}` : f.resolution_hint,
+  );
+  return {
+    error_code: failure.code,
+    headline: "verify: MISSION CONTRACT FAILED",
+    detail_lines: details.length > 0 ? details : [failure.message],
+    failures: details.length > 0 ? details : [failure.message],
+    fix_hints: [
+      failure.message,
+      "Edits must stay inside the Planner-sealed contract; do not hand-edit contract/contract_sha256 — re-legislate to widen scope",
+    ],
+    next_actions: [`gantry contract check --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
+    tagged_steps: [
+      tagStep("executor", `gantry contract check --mission ${meta.missionPath}`),
+      tagStep("planner", "re-legislate with a wider contract only if the escape is intended"),
+    ],
+  };
+}
+
+/** Map an engine phase failure to what it says: one switch for every sink. */
 export function hintsForVerifyPhase(
   failure: VerifyPhaseFailure,
   meta: VerifyHintMeta,
@@ -199,29 +235,24 @@ export function hintsForVerifyPhase(
       return hintsForInterrogationPhase(failure, meta);
     case "policy":
       return {
-        error_code: failure.policyCode,
+        error_code: failure.code,
+        headline: "verify: POLICY FLOOR FAILED",
+        detail_lines: [failure.message],
+        failures: [failure.message],
         fix_hints: [failure.message, "gantry policy pull", "gantry policy status --json"],
         next_actions: [`gantry policy pull`, verifyCmd(meta.missionPath)],
       };
     case "dependencies":
       return {
-        error_code: failure.dependencyCode,
+        error_code: failure.code,
+        headline: "verify: DEPENDENCY GATE FAILED",
+        detail_lines: [failure.message],
+        failures: [failure.message],
         fix_hints: [failure.message, "gantry deps fetch --mission <yaml>"],
         next_actions: [`gantry deps fetch --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
       };
     case "contract":
-      return {
-        error_code: failure.contractCode,
-        fix_hints: [
-          failure.message,
-          "Edits must stay inside the Planner-sealed contract; do not hand-edit contract/contract_sha256 — re-legislate to widen scope",
-        ],
-        next_actions: [`gantry contract check --mission ${meta.missionPath}`, verifyCmd(meta.missionPath)],
-        tagged_steps: [
-          tagStep("executor", `gantry contract check --mission ${meta.missionPath}`),
-          tagStep("planner", "re-legislate with a wider contract only if the escape is intended"),
-        ],
-      };
+      return hintsForContractPhase(failure, meta);
     default: {
       const _exhaustive: never = failure;
       return _exhaustive;
