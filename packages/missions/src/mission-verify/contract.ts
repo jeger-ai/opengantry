@@ -6,12 +6,12 @@ import type { ContractImportViolation, EffectiveScope, MissionContract } from "#
 import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import { SHALLOW_HISTORY_HINT } from "../perimeter.js";
-import type { ContractFailure } from "./failure.js";
+import type { CodedFailure } from "./failure.js";
 import { verifyFinding, type VerifyFinding } from "./finding.js";
 import { readMissionAtCommit, resolvePlannerStampHash } from "./interrogation.js";
 import type { PhaseContext } from "./phase-steps.js";
 
-type ContractPhaseOutcome = { kind: "ok"; skipped: boolean } | { kind: "fail"; failure: ContractFailure };
+type ContractPhaseOutcome = { kind: "ok"; skipped: boolean } | { kind: "fail"; failure: CodedFailure<"contract"> };
 
 interface ContractPhaseInput extends PhaseContext {
   proofMsnId: string;
@@ -44,7 +44,7 @@ function contractFailure(
       message: `${code}: ${message}`,
       exitCode: 1,
       executorLogPath: input.executorLogPath,
-      contractCode: code,
+      code,
       findings:
         findings.length > 0
           ? findings

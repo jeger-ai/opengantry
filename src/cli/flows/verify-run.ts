@@ -1,108 +1,40 @@
 import { Reporter } from "../output/reporter.js";
-import { getRepairForErrorCode, resolveRepairErrorCode, type RepairContext } from "../doctor/repairs/registry.js";
+import { getRepairForErrorCode, type RepairContext } from "../doctor/repairs/registry.js";
 import { appendRepairMutationLog } from "#missions/repair.js";
 import { CLI_NAME } from "#core/constants.js";
 import path from "node:path";
 import { assertMissionGatePresent, parseMissionFile } from "#missions/mission/parser.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "./mission-arg.js";
 import { loadWorkspace } from "#missions/workspace.js";
-import { evaluateVerifyPhases, resolveExecutorLogPath, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
+import { evaluateVerifyPhases, type VerifyPhaseResult } from "#missions/mission-verify/engine.js";
 import type { VerifyOptions } from "./verify-options.js";
-import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
+import { msnIdOrDefault } from "#core/mission-types.js";
 import { buildAttestationReceipt } from "./attestation-receipt.js";
 import { writeAttestationReceipt } from "#plane/attestation-receipt.js";
 import { writeAttestationExportEnvelope } from "#plane/attestation-export.js";
 import { appendLedgerIfEnabled, ledgerFailureLine, type LedgerAppendOutcome } from "#missions/ledger/ledger-append.js";
 import type { LedgerEntryKind } from "#plane/ledger-entry.js";
-import { normalizeVerifyPhaseFailure } from "#missions/mission-verify/failure-normalize.js";
 import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import {
-  buildFindingsForFailure,
   buildVerifyResultPayload,
   initFailurePayload,
-  toVerifyFailedPayload,
+  verifyFailure,
   type VerifyResultPayload,
 } from "#missions/mission-verify/payload.js";
-import { GXT_ERROR } from "#core/error-codes.js";
-import { persistFailedVerifyRemediation } from "#missions/mission-verify/remediation-pipeline.js";
+import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
+import { persistVerifyFailure } from "#missions/mission-verify/remediation-pipeline.js";
 import { runRecordRelPath } from "#missions/mission-verify/run-record.js";
 import {
   resolveVerifySink,
   presentBreakGlassHuman,
   presentBreakGlassJson,
-  presentFix,
+  presentFixInteractive,
   presentHuman,
   presentHumanInitFailure,
   presentJsonFromResult,
   presentJsonInitFailure,
 } from "./verify-presenters.js";
-import type { VerifyPresentContext, VerifyPresentResult } from "./verify-presenters.js";
-
-/** Shared verify orchestration context (load once, present by sink). */
-
-function resolveReceiptOutPath(options: VerifyOptions): string | undefined {
-  if (options.receipt === undefined) return undefined;
-  if (typeof options.receipt === "string" && options.receipt.trim()) {
-    return options.receipt.trim();
-  }
-  return undefined;
-}
-
-export function maybeWriteVerifyReceipt(input: {
-  root: string;
-  mission: ParsedMission;
-  missionArg: string;
-  options: VerifyOptions;
-  result: VerifyPhaseResult;
-  breakGlass?: boolean;
-}): { receiptPath: string | null; exportPath: string | null } {
-  if (!wantsReceiptOrExport(input.options)) {
-    return { receiptPath: null, exportPath: null };
-  }
-
-  const verifyStatus = input.breakGlass === true ? "failed" : input.result.ok ? "passed" : "failed";
-  let errorCode: string | undefined;
-  if (input.breakGlass === true) {
-    errorCode = "BREAK_GLASS";
-    if (input.options.breakGlassReason?.trim()) {
-      errorCode = `BREAK_GLASS:${input.options.breakGlassReason.trim().slice(0, 120)}`;
-    }
-  } else if (!input.result.ok) {
-    const normalized = normalizeVerifyPhaseFailure({
-      failure: input.result as VerifyPhaseFailure,
-      missionArg: input.missionArg,
-      options: input.options,
-      root: input.root,
-      msnId: input.mission.msnId ?? undefined,
-      mission: input.mission,
-    });
-    errorCode = normalized.error_code;
-  }
-
-  const receipt = buildAttestationReceipt({
-    root: input.root,
-    mission: input.mission,
-    missionArg: input.missionArg,
-    verifyStatus,
-    errorCode,
-    sign: input.options.signReceipt === true,
-  });
-
-  let receiptPath: string | null = null;
-  if (input.options.receipt !== undefined) {
-    const explicitOut = resolveReceiptOutPath(input.options);
-    const written = writeAttestationReceipt(input.root, receipt, explicitOut);
-    receiptPath = path.resolve(input.root, written);
-  }
-
-  let exportPath: string | null = null;
-  const exportOut = input.options.exportPath?.trim();
-  if (exportOut) {
-    exportPath = writeAttestationExportEnvelope(input.root, receipt, exportOut);
-  }
-
-  return { receiptPath, exportPath };
-}
+import type { VerifyPresentContext, VerifyPresentResult, VerifyRun } from "./verify-presenters.js";
 
 export interface VerifyRunResult {
   ok: boolean;
@@ -137,54 +69,39 @@ async function evaluateOrInitFailure(
   }
 }
 
-function breakGlassPhaseStub(ctx: VerifyPresentContext): VerifyPhaseSuccess {
-  return {
-    ok: true,
-    outcome: "full",
-    proofMsnId: msnIdOrDefault(ctx.mission),
-    executorLogPath: resolveExecutorLogPath(ctx.root, ctx.options),
-    traceWarnings: [],
-  };
+function breakGlassErrorCode(options: VerifyOptions): string {
+  const reason = options.breakGlassReason?.trim();
+  return reason ? `BREAK_GLASS:${reason.slice(0, 120)}` : "BREAK_GLASS";
 }
 
-function tryWriteReceiptIfRequested(
+/** Write --receipt / --export for the run's verdict: an error code (failing phase or break-glass) or passed. */
+function writeReceiptIfRequested(
   ctx: VerifyPresentContext,
-  phaseResult: VerifyPhaseResult,
-  breakGlass = false,
-): { ok: true; receiptPath?: string; exportPath?: string } | { ok: false; error: unknown } {
-  if (!wantsReceiptOrExport(ctx.options)) return { ok: true };
+  errorCode: string | undefined,
+): { ok: true } | { ok: false; error: unknown } {
+  const { options } = ctx;
+  const exportOut = options.exportPath?.trim();
+  if (options.receipt === undefined && !exportOut) return { ok: true };
   try {
-    const written = maybeWriteVerifyReceipt({
+    const receipt = buildAttestationReceipt({
       root: ctx.root,
       mission: ctx.mission,
       missionArg: ctx.resolved.missionRel,
-      options: ctx.options,
-      result: phaseResult,
-      breakGlass,
+      verifyStatus: errorCode === undefined ? "passed" : "failed",
+      errorCode,
+      sign: options.signReceipt === true,
     });
-    return {
-      ok: true,
-      receiptPath: written.receiptPath ?? undefined,
-      exportPath: written.exportPath ?? undefined,
-    };
+    let receiptPath: string | undefined;
+    if (options.receipt !== undefined) {
+      const explicitOut = typeof options.receipt === "string" && options.receipt.trim() ? options.receipt.trim() : undefined;
+      receiptPath = path.resolve(ctx.root, writeAttestationReceipt(ctx.root, receipt, explicitOut));
+    }
+    if (exportOut) writeAttestationExportEnvelope(ctx.root, receipt, exportOut);
+    ctx.receiptPath = receiptPath;
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: e };
   }
-}
-
-function wantsReceiptOrExport(options: VerifyOptions): boolean {
-  return options.receipt !== undefined || !!options.exportPath?.trim();
-}
-
-async function resolveFinalPhaseResult(
-  ctx: VerifyPresentContext,
-  sink: ReturnType<typeof resolveVerifySink>,
-  initial: VerifyPhaseResult,
-): Promise<VerifyPhaseResult> {
-  if (sink !== "fix_interactive" && sink !== "fix_noninteractive") {
-    return initial;
-  }
-  return evaluateWithFixLoop(ctx, initial);
 }
 
 function warnOnLedgerFailure(ctx: VerifyPresentContext, outcome: LedgerAppendOutcome<LedgerEntryKind>): void {
@@ -204,167 +121,77 @@ function appendVerifyOutcomeLedger(ctx: VerifyPresentContext, result: VerifyPhas
   }));
 }
 
-function emitMissionBinding(ctx: VerifyPresentContext, sink: ReturnType<typeof resolveVerifySink>): void {
-  emitPinnedMissionBanner(ctx.resolved, { json: sink === "json" || sink === "break_glass_json" }, ctx.reporter);
-}
-
-async function evaluateWithFixLoop(
-  ctx: VerifyPresentContext,
-  initial: VerifyPhaseResult,
-): Promise<VerifyPhaseResult> {
+/**
+ * Settle the run: each failure becomes its final shape once and is persisted (findings breaker); with --fix a gate
+ * failure is repaired and the phases re-evaluated until it passes, recurs or no repair applies.
+ */
+async function settleRun(ctx: VerifyPresentContext, initial: VerifyPhaseResult, fix: boolean): Promise<VerifyRun> {
   let result = initial;
-  if (!ctx.options.fix) return result;
-
   while (!result.ok) {
-    const failure = result as VerifyPhaseFailure;
-    const normalized = normalizeVerifyPhaseFailure({
-      failure,
-      missionArg: ctx.resolved.missionRel,
-      options: ctx.options,
-      root: ctx.root,
-      msnId: ctx.mission.msnId ?? undefined,
-      mission: ctx.mission,
-    });
-    const findings = buildFindingsForFailure(ctx.root, normalized, failure);
-    const { payload } = persistFailedVerifyRemediation({
-      root: ctx.root,
-      mission: ctx.mission,
-      missionRel: ctx.resolved.missionRel,
-      payload: toVerifyFailedPayload(normalized, failure, findings),
-      findings,
-      failure,
-    });
-    if (payload.error_code === GXT_ERROR.FINDINGS_RECURRED) break;
-
-    const next = await maybeApplyRepairAndReevaluate({
-      reporter: ctx.reporter,
-      root: ctx.root,
-      mission: ctx.mission,
-      options: ctx.options,
-      manifest: ctx.manifest,
-      result,
-    });
-    if (next === result) break;
+    const failure = verifyFailure(ctx.root, ctx.mission, result);
+    const persisted = persistVerifyFailure(
+      ctx.root,
+      failure.payload,
+      { mission_file_path: ctx.resolved.missionRel, ...(ctx.mission.msnId ? { msn_id: ctx.mission.msnId } : {}) },
+      result.phase === "gate" ? result.gateLogPath : undefined,
+    );
+    const recurred = persisted.error_code === GXT_ERROR.FINDINGS_RECURRED;
+    const next = fix && !recurred ? await repairAndReevaluate(ctx, result, failure.payload.error_code) : result;
+    if (next === result) return { ok: false, result, failure, persisted };
     result = next;
   }
-  return result;
+  return { ok: true, result };
 }
 
-/** One repair mutation pass + phase re-eval only (no nested runVerifyCore). */
-async function maybeApplyRepairAndReevaluate(input: {
-  root: string;
-  reporter: Reporter;
-  mission: VerifyPresentContext["mission"];
-  options: VerifyPresentContext["options"];
-  manifest: VerifyPresentContext["manifest"];
-  result: VerifyPhaseResult;
-}): Promise<VerifyPhaseResult> {
-  if (input.result.ok) return input.result;
-  if (input.options.fix !== true) return input.result;
-
-  const failure = input.result as VerifyPhaseFailure;
-  if (failure.phase !== "gate") return input.result;
-
-  const errorCode = resolveRepairErrorCode(failure);
-  if (!errorCode) return input.result;
-
+/** One repair mutation pass + phase re-eval only (no nested runVerifyCore). Repairs parse gate output. */
+async function repairAndReevaluate(
+  ctx: VerifyPresentContext,
+  failure: VerifyPhaseFailure,
+  errorCode: GxtErrorCode,
+): Promise<VerifyPhaseResult> {
   const repair = getRepairForErrorCode(errorCode);
-  if (!repair) return input.result;
+  if (failure.phase !== "gate" || !repair) return failure;
 
   const executorLogPath = failure.executorLogPath;
-  const context: RepairContext = {
-    root: input.root,
-    failure,
-    manifest: input.manifest,
-    executorLogPath,
-    errorCode,
-  };
-
-  const reporter = input.reporter;
+  const context: RepairContext = { root: ctx.root, failure, manifest: ctx.manifest, executorLogPath, errorCode };
+  const reporter = ctx.reporter;
   reporter.warn(`[Repair] Autonomous mutation triggered for error ${errorCode}`);
   const mutation = await repair.applyMutation(context);
   if (!mutation.mutated) {
     reporter.info(`${CLI_NAME} verify: [Repair] no mutation applied (${mutation.summary})`);
-    return input.result;
+    return failure;
   }
 
   appendRepairMutationLog(executorLogPath, mutation.summary);
   reporter.info(`${CLI_NAME} verify: [Repair] mutation logged; re-evaluating verify phases (fix disabled)`);
 
-  const reevalOptions: VerifyPresentContext["options"] = {
-    ...input.options,
-    fix: false,
-    fixNonInteractive: false,
-    receipt: undefined,
-  };
-  return await evaluateVerifyPhases(input.root, input.mission, reevalOptions, input.manifest);
+  const reevalOptions: VerifyOptions = { ...ctx.options, fix: false, fixNonInteractive: false, receipt: undefined };
+  return await evaluateVerifyPhases(ctx.root, ctx.mission, reevalOptions, ctx.manifest);
 }
 
 /** Unified verify orchestration: load once, evaluate once, present by sink. The reporter is the run's one. */
 export async function runVerifyCore(options: VerifyOptions, reporter: Reporter = Reporter.forVerify(options)): Promise<VerifyRunResult> {
   const ctx = loadVerifyContext(options, reporter);
   const sink = resolveVerifySink(ctx.options);
-  emitMissionBinding(ctx, sink);
+  const json = sink === "json" || sink === "break_glass_json";
+  emitPinnedMissionBanner(ctx.resolved, { json }, ctx.reporter);
+  const initFailure = (error: unknown): VerifyPresentResult =>
+    json ? presentJsonInitFailure(ctx, error) : presentHumanInitFailure(ctx, error);
 
-  switch (sink) {
-    case "break_glass_json": {
-      const receiptWrite = tryWriteReceiptIfRequested(ctx, breakGlassPhaseStub(ctx), true);
-      if (!receiptWrite.ok) {
-        return presentJsonInitFailure(ctx, receiptWrite.error);
-      }
-      ctx.receiptPath = receiptWrite.receiptPath;
-      return presentBreakGlassJson(ctx);
-    }
-    case "break_glass_human": {
-      const receiptWrite = tryWriteReceiptIfRequested(ctx, breakGlassPhaseStub(ctx), true);
-      if (!receiptWrite.ok) {
-        return presentHumanInitFailure(ctx, receiptWrite.error);
-      }
-      ctx.receiptPath = receiptWrite.receiptPath;
-      return presentBreakGlassHuman(ctx);
-    }
-    case "json": {
-      const evaluated = await evaluateOrInitFailure(ctx);
-      if (!evaluated.ok) {
-        return presentJsonInitFailure(ctx, evaluated.error);
-      }
-      const receiptWrite = tryWriteReceiptIfRequested(ctx, evaluated.result);
-      if (!receiptWrite.ok) {
-        return presentJsonInitFailure(ctx, receiptWrite.error);
-      }
-      ctx.receiptPath = receiptWrite.receiptPath;
-      appendVerifyOutcomeLedger(ctx, evaluated.result);
-      return presentJsonFromResult(ctx, evaluated.result);
-    }
-    case "fix_interactive":
-    case "fix_noninteractive":
-    case "human": {
-      const evaluated = await evaluateOrInitFailure(ctx);
-      if (!evaluated.ok) {
-        return presentHumanInitFailure(ctx, evaluated.error);
-      }
-      const finalPhase = await resolveFinalPhaseResult(ctx, sink, evaluated.result);
-      const receiptWrite = tryWriteReceiptIfRequested(ctx, finalPhase);
-      if (!receiptWrite.ok) {
-        return presentHumanInitFailure(ctx, receiptWrite.error);
-      }
-      ctx.receiptPath = receiptWrite.receiptPath;
-      appendVerifyOutcomeLedger(ctx, finalPhase);
-      let presented: VerifyPresentResult;
-      if (sink === "fix_interactive") {
-        presented = await presentFix(ctx, finalPhase, false);
-      } else if (sink === "fix_noninteractive") {
-        presented = await presentFix(ctx, finalPhase, true);
-      } else {
-        presented = presentHuman(ctx, finalPhase);
-      }
-      return presented;
-    }
-    default: {
-      const _exhaustive: never = sink;
-      return _exhaustive;
-    }
+  if (sink === "break_glass_json" || sink === "break_glass_human") {
+    const receiptWrite = writeReceiptIfRequested(ctx, breakGlassErrorCode(ctx.options));
+    if (!receiptWrite.ok) return initFailure(receiptWrite.error);
+    return sink === "break_glass_json" ? presentBreakGlassJson(ctx) : presentBreakGlassHuman(ctx);
   }
+
+  const evaluated = await evaluateOrInitFailure(ctx);
+  if (!evaluated.ok) return initFailure(evaluated.error);
+  const run = await settleRun(ctx, evaluated.result, sink === "fix_interactive" || sink === "fix_noninteractive");
+  const receiptWrite = writeReceiptIfRequested(ctx, run.ok ? undefined : run.failure.payload.error_code);
+  if (!receiptWrite.ok) return initFailure(receiptWrite.error);
+  appendVerifyOutcomeLedger(ctx, run.result);
+  if (sink === "json") return presentJsonFromResult(ctx, run);
+  return sink === "fix_interactive" ? await presentFixInteractive(ctx, run) : presentHuman(ctx, run);
 }
 
 export async function buildVerifyResultPayloadFromOptions(options: VerifyOptions): Promise<VerifyResultPayload> {

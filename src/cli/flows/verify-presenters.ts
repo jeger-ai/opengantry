@@ -1,6 +1,5 @@
 import { verifyPhaseStatuses, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
 import { CLI_VERSION } from "../version.gen.js";
-import type { AudienceTaggedStep } from "#missions/mission-verify/hints.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
@@ -17,26 +16,14 @@ import { uriIsDirectory } from "../report/sarif-uri.js";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  buildFindingsForFailure,
   buildVerifyResultPayloadFromPhaseResult,
   buildBreakGlassPayload,
   initFailurePayload,
-  toVerifyFailedPayload,
+  type VerifyFailedPayload,
+  type VerifyFailure,
   type VerifyResultPayload,
 } from "#missions/mission-verify/payload.js";
-import { hintsForVerifyPhase } from "#missions/mission-verify/hints.js";
-import {
-  normalizeVerifyPhaseFailure,
-  toFailurePresentation,
-  type VerifyFailurePresentation,
-} from "#missions/mission-verify/failure-normalize.js";
-import { persistRemediationFromFailedPayload } from "#missions/context-feed-remediation.js";
-import {
-  persistFailedVerifyRemediation,
-  tombstoneRemediationSnapshot,
-} from "#missions/mission-verify/remediation-pipeline.js";
-import { readRemediationSnapshot, type RemediationSnapshot } from "#missions/context-feed-store.js";
-import type { GxtErrorCode } from "#core/error-codes.js";
+import { clearRemediationSnapshot, persistVerifyFailure } from "#missions/mission-verify/remediation-pipeline.js";
 
 /** Shared verify orchestration context (load once, present by sink). */
 export interface VerifyPresentContext {
@@ -48,7 +35,7 @@ export interface VerifyPresentContext {
   options: VerifyOptions;
   /** The run's one reporter, built from the options at the entry point. */
   reporter: Reporter;
-  /** Set after tryWriteReceiptIfRequested when --receipt was requested. */
+  /** Set after writeReceiptIfRequested when --receipt was requested. */
   receiptPath?: string;
 }
 
@@ -88,40 +75,16 @@ export function resolveVerifySink(options: {
 export interface VerifyPresentResult {
   ok: boolean;
   exitCode: number;
-  remediation?: RemediationSnapshot | null;
 }
 
-function overlayFailurePresentation(
-  base: VerifyFailurePresentation,
-  overlay: { error_code: GxtErrorCode; fix_hints: string[]; next_actions: string[] },
-): VerifyFailurePresentation {
-  return {
-    ...base,
-    error_code: overlay.error_code,
-    fix_hints: overlay.fix_hints,
-    next_actions: overlay.next_actions,
-  };
-}
-
-function presentationFromPersistedSnapshot(
-  root: string,
-  msnId: string | undefined,
-  base: VerifyFailurePresentation,
-): VerifyFailurePresentation {
-  const snapshot = readRemediationSnapshot(root);
-  if (!snapshot || (msnId !== undefined && snapshot.msn_id !== msnId)) {
-    return base;
-  }
-  return overlayFailurePresentation(base, {
-    error_code: snapshot.error_code as GxtErrorCode,
-    fix_hints: snapshot.fix_hints,
-    next_actions: snapshot.next_actions,
-  });
-}
+/** A settled run: a failure carries its shape as built and its payload as persisted (findings breaker applied). */
+export type VerifyRun =
+  | { ok: true; result: VerifyPhaseSuccess }
+  | { ok: false; result: VerifyPhaseFailure; failure: VerifyFailure; persisted: VerifyFailedPayload };
 
 export function presentBreakGlassJson(ctx: VerifyPresentContext): VerifyPresentResult {
   const payload = buildBreakGlassPayload(ctx.root, ctx.mission, ctx.options);
-  emitStructuredPayload(payload, ctx.options, ctx.reporter, { root: ctx.root });
+  emitVerifyDocument(payload, ctx.options, ctx.reporter, { root: ctx.root });
   return { ok: payload.exit_code === 0, exitCode: payload.exit_code };
 }
 
@@ -153,7 +116,8 @@ function junitCasesFor(result: VerifyPhaseResult, payload: VerifyResultPayload):
   });
 }
 
-function emitStructuredPayload(
+/** Structured verify document on stdout. Diagnostics stay on stderr while document stdout is active. */
+export function emitVerifyDocument(
   payload: VerifyResultPayload,
   options: VerifyPresentContext["options"],
   reporter: Reporter,
@@ -174,16 +138,6 @@ function emitStructuredPayload(
   reporter.document(doc);
 }
 
-/** Structured verify document on stdout. Diagnostics stay on stderr while document stdout is active. */
-export function emitVerifyDocument(
-  payload: VerifyResultPayload,
-  options: VerifyPresentContext["options"],
-  reporter: Reporter,
-  extras?: { root?: string; junitCases?: JUnitCase[] },
-): void {
-  emitStructuredPayload(payload, options, reporter, extras);
-}
-
 /** Attach resolved mission + receipt path from the loaded verify context. */
 function withContextFields<T extends VerifyResultPayload>(
   payload: T,
@@ -197,59 +151,32 @@ function withContextFields<T extends VerifyResultPayload>(
   };
 }
 
-export function presentJsonFromResult(
-  ctx: VerifyPresentContext,
-  result: VerifyPhaseResult,
-): VerifyPresentResult {
-  if (result.ok) {
-    tombstoneRemediationSnapshot(ctx.root);
-    const payload = withContextFields(
-      buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, ctx.options, result),
-      ctx,
-    );
-    emitStructuredPayload(payload, ctx.options, ctx.reporter, {
-      root: ctx.root,
-      junitCases: junitCasesFor(result, payload),
-    });
-    return { ok: true, exitCode: 0, remediation: null };
-  }
-  const failure = result as VerifyPhaseFailure;
-  const normalized = normalizeVerifyPhaseFailure({
-    failure,
-    missionArg: ctx.resolved.missionRel,
-    options: ctx.options,
+export function presentJsonFromResult(ctx: VerifyPresentContext, run: VerifyRun): VerifyPresentResult {
+  if (run.ok) clearRemediationSnapshot(ctx.root);
+  const payload = withContextFields(
+    run.ok ? buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, run.result) : run.persisted,
+    ctx,
+  );
+  emitVerifyDocument(payload, ctx.options, ctx.reporter, {
     root: ctx.root,
-    msnId: ctx.mission.msnId ?? undefined,
-    mission: ctx.mission,
+    junitCases: junitCasesFor(run.result, payload),
   });
-  const findings = buildFindingsForFailure(ctx.root, normalized, failure);
-  const { payload, snapshot } = persistFailedVerifyRemediation({
-    root: ctx.root,
-    mission: ctx.mission,
-    missionRel: ctx.resolved.missionRel,
-    payload: toVerifyFailedPayload(normalized, failure, findings),
-    findings,
-    failure,
-  });
-  const fullPayload = withContextFields(payload, ctx);
-  emitStructuredPayload(fullPayload, ctx.options, ctx.reporter, {
-    root: ctx.root,
-    junitCases: junitCasesFor(result, fullPayload),
-  });
-  return { ok: false, exitCode: payload.exit_code, remediation: snapshot };
+  return { ok: run.ok, exitCode: payload.exit_code };
+}
+
+/** Init failures feed the remediation snapshot too (no msn_id, so the findings breaker never trips). */
+function persistedInitFailure(ctx: VerifyPresentContext, error: unknown): VerifyFailedPayload {
+  const payload = withContextFields(initFailurePayload(error), ctx);
+  persistVerifyFailure(ctx.root, payload, { mission_file_path: ctx.options.mission });
+  return payload;
 }
 
 export function presentJsonInitFailure(
   ctx: VerifyPresentContext,
   error: unknown,
 ): VerifyPresentResult {
-  const payload = withContextFields(initFailurePayload(error), ctx);
-  try {
-    persistRemediationFromFailedPayload(ctx.root, null, ctx.options.mission, payload);
-  } catch {
-    // best-effort remediation feed
-  }
-  emitStructuredPayload(payload, ctx.options, ctx.reporter, { root: ctx.root });
+  const payload = persistedInitFailure(ctx, error);
+  emitVerifyDocument(payload, ctx.options, ctx.reporter, { root: ctx.root });
   return { ok: false, exitCode: payload.exit_code };
 }
 
@@ -258,12 +185,7 @@ export function presentHumanInitFailure(
   error: unknown,
 ): VerifyPresentResult {
   const reporter = ctx.reporter;
-  const payload = withContextFields(initFailurePayload(error), ctx);
-  try {
-    persistRemediationFromFailedPayload(ctx.root, null, ctx.options.mission, payload);
-  } catch {
-    // best-effort remediation feed
-  }
+  const payload = persistedInitFailure(ctx, error);
   if (isGantryUserError(error)) {
     reporter.error(`[${error.gxtCode}] ${error.message}`);
     if (error.hint) reporter.fixHint(error.hint);
@@ -273,86 +195,34 @@ export function presentHumanInitFailure(
   return { ok: false, exitCode: payload.exit_code };
 }
 
-export function presentHuman(
-  ctx: VerifyPresentContext,
-  result: VerifyPhaseResult,
-): VerifyPresentResult {
+export function presentHuman(ctx: VerifyPresentContext, run: VerifyRun): VerifyPresentResult {
   const reporter = ctx.reporter;
-  if (result.ok) {
-    tombstoneRemediationSnapshot(ctx.root);
-    presentVerifySuccess(reporter, result);
+  if (run.ok) {
+    clearRemediationSnapshot(ctx.root);
+    presentVerifySuccess(reporter, run.result);
     if (ctx.receiptPath) reporter.info(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
-    return { ok: true, exitCode: 0, remediation: null };
+    return { ok: true, exitCode: 0 };
   }
   if (ctx.receiptPath) reporter.info(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
-  const normalized = normalizeVerifyPhaseFailure({
-    failure: result,
-    missionArg: ctx.resolved.missionRel,
-    options: ctx.options,
-    root: ctx.root,
-    msnId: ctx.mission.msnId ?? undefined,
-    mission: ctx.mission,
-  });
-  const basePresentation = toFailurePresentation(normalized);
-  const msnId = ctx.mission.msnId ?? undefined;
-  let presentation: typeof basePresentation;
-
-  let remediation: RemediationSnapshot | undefined;
-  if (ctx.options.fix === true) {
-    presentation = presentationFromPersistedSnapshot(ctx.root, msnId, basePresentation);
-  } else {
-    const failure = result as VerifyPhaseFailure;
-    const findings = buildFindingsForFailure(ctx.root, normalized, failure);
-    const persisted = persistFailedVerifyRemediation({
-      root: ctx.root,
-      mission: ctx.mission,
-      missionRel: ctx.resolved.missionRel,
-      payload: toVerifyFailedPayload(normalized, failure, findings),
-      findings,
-      failure,
-    });
-    remediation = persisted.snapshot;
-    presentation = overlayFailurePresentation(basePresentation, persisted.payload);
+  const { failure, persisted } = run;
+  reporter.error(`[${persisted.error_code}] ${failure.headline}`);
+  for (const line of failure.detail_lines) {
+    reporter.error(line.startsWith("---") ? line : `  ${line}`);
   }
-
-  presentFailure(reporter, presentation);
-  return { ok: false, exitCode: presentation.exit_code, remediation: remediation ?? null };
+  for (const hint of persisted.fix_hints) reporter.fixHint(hint);
+  reporter.nextSteps("next actions", persisted.next_actions, failure.tagged_steps);
+  return { ok: false, exitCode: persisted.exit_code };
 }
 
-export async function presentFix(
-  ctx: VerifyPresentContext,
-  result: VerifyPhaseResult,
-  nonInteractive: boolean,
-): Promise<VerifyPresentResult> {
-  if (result.ok || nonInteractive) {
-    return presentHuman(ctx, result);
-  }
-
-  const failure = result as VerifyPhaseFailure;
+/** Interactive --fix: choose among the phase's own hints; code and next steps are the persisted ones. */
+export async function presentFixInteractive(ctx: VerifyPresentContext, run: VerifyRun): Promise<VerifyPresentResult> {
+  if (run.ok) return presentHuman(ctx, run);
+  const { failure, persisted } = run;
   const reporter = ctx.reporter;
-  const normalized = normalizeVerifyPhaseFailure({
-    failure,
-    missionArg: ctx.resolved.missionRel,
-    options: ctx.options,
-    root: ctx.root,
-    msnId: ctx.mission.msnId ?? undefined,
-    mission: ctx.mission,
-  });
-  const presentation = presentationFromPersistedSnapshot(
-    ctx.root,
-    ctx.mission.msnId ?? undefined,
-    toFailurePresentation(normalized),
-  );
-  const remediation = hintsForVerifyPhase(failure, {
-    missionPath: ctx.resolved.missionRel,
-    root: ctx.root,
-    msnId: ctx.mission.msnId ?? undefined,
-  });
-
-  reporter.error(`[${presentation.error_code}] verify failed at phase: ${failure.phase}`);
+  reporter.error(`[${persisted.error_code}] verify failed at phase: ${persisted.phase}`);
 
   const p = await loadPrompts();
-  const choices = remediation.fix_hints.map((hint, i) => ({
+  const choices = failure.payload.fix_hints.map((hint, i) => ({
     value: String(i),
     label: hint.length > 100 ? `${hint.slice(0, 97)}…` : hint,
     hint,
@@ -364,16 +234,12 @@ export async function presentFix(
     options: choices,
   });
 
-  if (p.isCancel(selected) || selected === "quit") {
-    presentNextSteps(reporter, presentation.next_actions, remediation.tagged_steps);
-    return { ok: false, exitCode: failure.exitCode };
+  if (!p.isCancel(selected) && selected !== "quit") {
+    const hint = persisted.fix_hints[Number.parseInt(String(selected), 10)];
+    if (hint) reporter.fixHint(hint);
   }
-
-  const idx = Number.parseInt(String(selected), 10);
-  const hint = presentation.fix_hints[idx];
-  if (hint) reporter.fixHint(hint);
-  presentNextSteps(reporter, presentation.next_actions, remediation.tagged_steps);
-  return { ok: false, exitCode: failure.exitCode };
+  reporter.nextSteps("next actions", persisted.next_actions, failure.tagged_steps);
+  return { ok: false, exitCode: persisted.exit_code };
 }
 
 function presentVerifySuccess(reporter: Reporter, result: VerifyPhaseSuccess): void {
@@ -399,17 +265,4 @@ function presentVerifySuccess(reporter: Reporter, result: VerifyPhaseSuccess): v
   }
   if (result.runRecordPath) reporter.info(`${CLI_NAME} verify: run record OK (${result.runRecordPath})`);
   else reporter.info(`${CLI_NAME} verify: trace mapping OK (${result.executorLogPath})`);
-}
-
-function presentFailure(reporter: Reporter, presentation: VerifyFailurePresentation): void {
-  reporter.error(`[${presentation.error_code}] ${presentation.headline}`);
-  for (const line of presentation.detail_lines) {
-    reporter.error(line.startsWith("---") ? line : `  ${line}`);
-  }
-  for (const hint of presentation.fix_hints) reporter.fixHint(hint);
-  presentNextSteps(reporter, presentation.next_actions, presentation.tagged_steps);
-}
-
-function presentNextSteps(reporter: Reporter, steps: string[], tagged?: AudienceTaggedStep[]): void {
-  reporter.nextSteps("next actions", steps, tagged);
 }

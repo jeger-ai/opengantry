@@ -1,19 +1,7 @@
 import type { GxtErrorCode } from "#core/error-codes.js";
-import type { DependencyFailureCode } from "#plane/deps-resolve.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { TraceFailureKind } from "../trace-quote.js";
 import type { VerifyFinding } from "./finding.js";
-
-export type VerifyFailurePhase =
-  | "git_proof"
-  | "gate"
-  | "trace_pending"
-  | "trace"
-  | "run_record"
-  | "interrogation"
-  | "policy"
-  | "dependencies"
-  | "contract";
 
 interface VerifyFailureBase {
   ok: false;
@@ -22,10 +10,7 @@ interface VerifyFailureBase {
   executorLogPath: string;
 }
 
-export interface GitProofFailure extends VerifyFailureBase {
-  phase: "git_proof";
-  gitProofMessage: string;
-}
+export type GitProofFailure = VerifyFailureBase & { phase: "git_proof" };
 
 export interface GateFailure extends VerifyFailureBase {
   phase: "gate";
@@ -41,55 +26,29 @@ export interface GateFailure extends VerifyFailureBase {
   adapterFindings?: VerifyFinding[];
 }
 
-export interface TracePendingFailure extends VerifyFailureBase {
-  phase: "trace_pending";
-  gateCommand?: string;
-}
-
-export interface TraceFailure extends VerifyFailureBase {
+export type TraceFailure = VerifyFailureBase & {
   phase: "trace";
   traceKind: TraceFailureKind;
-  traceReason: string;
   traceQuote: string;
   /** 1-based declared line from mission trace anchor when numeric; else 0. */
   declaredLine?: number;
-  attestationCommit?: string;
-  stalePaths?: string[];
-}
-
-type RunRecordFailureKind = "missing" | "mismatch" | "stale";
-export interface RunRecordFailure extends VerifyFailureBase {
+};
+export type TracePendingFailure = VerifyFailureBase & { phase: "trace_pending"; gateCommand?: string };
+export type RunRecordFailure = VerifyFailureBase & {
   phase: "run_record";
-  recordKind: RunRecordFailureKind;
+  recordKind: "missing" | "mismatch" | "stale";
   recordReason: string;
   /** Repo-relative path of the record (present or expected). */
   recordPath: string;
-  recordHead?: string;
   stalePaths?: string[];
-}
-export interface InterrogationFailure extends VerifyFailureBase {
-  phase: "interrogation";
-  interrogationCode: GxtErrorCode;
-  interrogationWarnings?: string[];
-}
-
-export interface PolicyFailure extends VerifyFailureBase {
-  phase: "policy";
-  policyCode: GxtErrorCode;
+};
+/** Phases whose check names its own error code. */
+export type CodedFailure<P extends "interrogation" | "policy" | "dependencies" | "contract"> = VerifyFailureBase & {
+  phase: P;
+  code: GxtErrorCode;
   findings?: VerifyFinding[];
-}
-
-export interface DependenciesFailure extends VerifyFailureBase {
-  phase: "dependencies";
-  dependencyCode: DependencyFailureCode;
-  findings?: VerifyFinding[];
-}
-
-export interface ContractFailure extends VerifyFailureBase {
-  phase: "contract";
-  contractCode: GxtErrorCode;
-  findings?: VerifyFinding[];
-}
+  warnings?: string[];
+};
 
 /** Discriminated on `phase` — phase-specific fields exist only on their variant. */
 export type VerifyPhaseFailure =
@@ -98,7 +57,7 @@ export type VerifyPhaseFailure =
   | TracePendingFailure
   | TraceFailure
   | RunRecordFailure
-  | InterrogationFailure
-  | PolicyFailure
-  | DependenciesFailure
-  | ContractFailure;
+  | CodedFailure<"interrogation">
+  | CodedFailure<"policy">
+  | CodedFailure<"dependencies">
+  | CodedFailure<"contract">;

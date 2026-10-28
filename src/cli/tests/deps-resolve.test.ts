@@ -193,7 +193,7 @@ test("deps-resolve: verify phase emits v3 finding and mapped code", () => {
     });
     assert.equal(outcome.kind, "fail");
     if (outcome.kind !== "fail") return;
-    assert.equal(outcome.failure.dependencyCode, GXT_ERROR.DEPENDENCY_UNFETCHED);
+    assert.equal(outcome.failure.code, GXT_ERROR.DEPENDENCY_UNFETCHED);
     assert.equal(outcome.failure.findings?.[0]?.rule_id, GXT_ERROR.DEPENDENCY_UNFETCHED);
   });
 });

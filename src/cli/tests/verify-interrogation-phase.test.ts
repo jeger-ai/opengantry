@@ -147,7 +147,7 @@ trace_rows: []
   const mission = parseMissionFile(dest, missionRel);
   const manifest = loadManifest(dest);
   const outcome = runInterrogationPhaseInTest(dest, manifest, mission, missionRel, { requireInterrogation: true }, "MSN-0931");
-  assert.equal(outcome.failure?.interrogationCode, GXT_ERROR.INTERROGATION_REQUIRED);
+  assert.equal(outcome.failure?.code, GXT_ERROR.INTERROGATION_REQUIRED);
 });
 
 test("evaluateInterrogationPhase: stub operator answer fails on legislative stub mission", () => {
@@ -163,7 +163,7 @@ test("evaluateInterrogationPhase: stub operator answer fails on legislative stub
   const mission = parseMissionFile(dest, missionRel);
   const manifest = loadManifest(dest);
   const outcome = runInterrogationPhaseInTest(dest, manifest, mission, missionRel, {}, "MSN-0932");
-  assert.equal(outcome.failure?.interrogationCode, GXT_ERROR.INTERROGATION_STUB);
+  assert.equal(outcome.failure?.code, GXT_ERROR.INTERROGATION_STUB);
 });
 
 test("evaluateInterrogationPhase: missing interrogation_sha256 fails closed", () => {
@@ -189,7 +189,7 @@ test("evaluateInterrogationPhase: missing interrogation_sha256 fails closed", ()
   };
   const manifest = loadManifest(dest);
   const outcome = runInterrogationPhaseInTest(dest, manifest, mission, missionRel, {}, "MSN-0933");
-  assert.equal(outcome.failure?.interrogationCode, GXT_ERROR.INTERROGATION_MISMATCH);
+  assert.equal(outcome.failure?.code, GXT_ERROR.INTERROGATION_MISMATCH);
 });
 
 test("path drift: mission file in stamp commit is excluded", () => {
@@ -209,7 +209,7 @@ test("path drift: mission file edited in later executor commit fires", () => {
   const mission = parseMissionFile(dest, missionRel);
   const manifest = loadManifest(dest);
   const outcome = runInterrogationPhaseInTest(dest, manifest, mission, missionRel, {}, msnId);
-  assert.equal(outcome.failure?.interrogationCode, GXT_ERROR.INTERROGATION_PATH_DRIFT);
+  assert.equal(outcome.failure?.code, GXT_ERROR.INTERROGATION_PATH_DRIFT);
 });
 
 test("path drift: spoofed planner commit with Tier-3 app path still fires", () => {
@@ -224,7 +224,7 @@ test("path drift: spoofed planner commit with Tier-3 app path still fires", () =
   const mission = parseMissionFile(dest, missionRel);
   const manifest = loadManifest(dest);
   const outcome = runInterrogationPhaseInTest(dest, manifest, mission, missionRel, {}, msnId);
-  assert.equal(outcome.failure?.interrogationCode, GXT_ERROR.INTERROGATION_PATH_DRIFT);
+  assert.equal(outcome.failure?.code, GXT_ERROR.INTERROGATION_PATH_DRIFT);
 });
 
 test("handleDraftLegislation: incomplete interrogation returns INTERROGATION_INCOMPLETE", () => {

@@ -86,7 +86,6 @@ export function evaluateRunRecordPhase(ctx: PhaseContext, msnId: string): RunRec
       recordKind: finding.kind,
       recordReason: finding.reason,
       recordPath: recordRel,
-      ...(record?.head ? { recordHead: record.head } : {}),
       ...(finding.stalePaths ? { stalePaths: finding.stalePaths } : {}),
     },
   };

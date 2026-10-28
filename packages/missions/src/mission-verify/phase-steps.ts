@@ -30,7 +30,6 @@ function gitProofFailure(executorLogPath: string, message: string): GitProofFail
     message,
     exitCode: 1,
     executorLogPath,
-    gitProofMessage: message,
   };
 }
 
@@ -157,7 +156,6 @@ export function evaluateTracePhase(input: PhaseContext): TracePhaseOutcome {
         executorLogPath,
         traceKind: first.kind,
         traceQuote: first.row.traceQuote,
-        traceReason: first.reason,
         declaredLine: parseDeclaredAnchorLine(first.row.anchor),
       },
     };
@@ -184,10 +182,7 @@ export function evaluateTracePhase(input: PhaseContext): TracePhaseOutcome {
         executorLogPath,
         traceKind: "stale_evidence",
         traceQuote: first.row.traceQuote,
-        traceReason: first.reason,
         declaredLine: parseDeclaredAnchorLine(first.row.anchor),
-        attestationCommit: first.attestationCommit,
-        stalePaths: first.stalePaths,
       },
     };
   }

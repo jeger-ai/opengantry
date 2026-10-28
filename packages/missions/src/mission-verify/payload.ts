@@ -2,6 +2,9 @@ import { runBreakGlassAuditFlow } from "../break-glass.js";
 import { toPosixRel } from "#core/posix-path.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
+import { GXT_ERROR, gxtCodeFromGantryUserError, type GxtErrorCode } from "#core/error-codes.js";
+import { errorMessage, isGantryUserError } from "#core/user-error.js";
+import { extractImportLayerGateReport } from "../repair.js";
 import {
   evaluateVerifyPhases,
   type VerifyPhaseResult,
@@ -9,18 +12,12 @@ import {
 } from "./engine.js";
 import type { VerifyEvaluation } from "./options.js";
 import type { VerifyPhaseFailure, GateFailure } from "./failure.js";
-import {
-  normalizeInitFailure,
-  normalizeVerifyPhaseFailure,
-  type NormalizedVerifyFailure,
-} from "./failure-normalize.js";
-import type { GxtErrorCode } from "#core/error-codes.js";
-import { projectGateFindings } from "./finding-gate-projector.js";
+import { readEvidenceSnippet } from "./evidence-snippet.js";
+import { hintsForVerifyPhase, type AudienceTaggedStep } from "./hints.js";
 import {
   VERIFY_ENVELOPE_SCHEMA_VERSION,
   verifyFinding,
   type VerifyFinding,
-  type VerifyFailedGate,
 } from "./finding.js";
 
 interface VerifyTraceWarningJson {
@@ -61,83 +58,102 @@ export interface VerifyFailedPayload {
   mission_source?: "flag" | "pin";
   receipt_path?: string;
   stdout?: string;
-  stderr?: string;
   failures?: string[];
 }
 
 export type VerifyResultPayload = VerifyPassedPayload | VerifyFailedPayload;
 
-function buildGateFindings(root: string, failure: GateFailure, hint: string): VerifyFinding[] {
-  if (failure.gateAdapter !== undefined && failure.gateAdapter !== "generic") {
-    return failure.adapterFindings?.length
-      ? failure.adapterFindings
-      : [verifyFinding("gate", hint)];
-  }
-  return projectGateFindings(root, failure) ?? failure.adapterFindings ?? [verifyFinding("gate", hint)];
+/** A failed phase in its final shape, built once per failure: the payload plus what only the human sinks print. */
+export interface VerifyFailure {
+  payload: VerifyFailedPayload;
+  headline: string;
+  detail_lines: string[];
+  tagged_steps?: AudienceTaggedStep[];
 }
 
-function findingsFromPhase(root: string, failure: VerifyPhaseFailure, hint: string): VerifyFinding[] | null {
+/** Import-layer gate JSON becomes one finding per violation; other gate output has no structured findings. */
+function importLayerFindings(root: string, failure: GateFailure): VerifyFinding[] | undefined {
+  const report = extractImportLayerGateReport(failure.gateOutput ?? "", "");
+  if (!report || report.ok !== false || report.violations.length === 0) return undefined;
+  return report.violations.map((v) => {
+    const evidence = readEvidenceSnippet(root, v.file, v.line, v.column);
+    return verifyFinding("gate", `${v.rule_id}: ${v.module_specifier}`, {
+      offending_file: v.file,
+      line: v.line,
+      start_column: v.column,
+      rule_id: v.rule_id,
+      ...(evidence !== undefined ? { evidence } : {}),
+    });
+  });
+}
+
+function phaseFindings(root: string, failure: VerifyPhaseFailure, hint: string): VerifyFinding[] | undefined {
   switch (failure.phase) {
     case "trace":
-      return [
-        verifyFinding("trace", hint, {
-          offending_file: failure.executorLogPath,
-          line: failure.declaredLine ?? 0,
-        }),
-      ];
+      return [verifyFinding("trace", hint, { offending_file: failure.executorLogPath, line: failure.declaredLine ?? 0 })];
     case "gate":
-      return buildGateFindings(root, failure, hint);
+      if (failure.gateAdapter !== undefined && failure.gateAdapter !== "generic") {
+        return failure.adapterFindings?.length ? failure.adapterFindings : undefined;
+      }
+      return importLayerFindings(root, failure) ?? failure.adapterFindings;
     case "git_proof":
-      return [verifyFinding("git_proof", failure.gitProofMessage || hint)];
+      return [verifyFinding("git_proof", failure.message || hint)];
     case "run_record":
       return [verifyFinding("trace", failure.recordReason, failure.stalePaths?.[0] ? { offending_file: failure.stalePaths[0] } : {})];
-    case "policy":
-    case "dependencies":
-    case "contract":
-      return failure.findings?.length ? failure.findings : null;
-    case "interrogation":
     case "trace_pending":
-      return null;
-    default: {
-      const _exhaustive: never = failure;
-      return _exhaustive;
-    }
+      return undefined;
+    default:
+      return failure.findings?.length ? failure.findings : undefined;
   }
 }
 
-export function buildFindingsForFailure(
-  root: string,
-  normalized: NormalizedVerifyFailure,
-  failure?: VerifyPhaseFailure,
-): VerifyFinding[] {
-  const hint = normalized.fix_hints[0] ?? normalized.message;
-  const phaseGate = (normalized.phase === "trace_pending" || normalized.phase === "run_record" ? "trace" : normalized.phase) as VerifyFailedGate;
-  const fromPhase = failure ? findingsFromPhase(root, failure, hint) : null;
-  if (fromPhase) return fromPhase;
-  if (normalized.failures && normalized.failures.length > 0) {
-    return normalized.failures.map((f) => verifyFinding(phaseGate, f));
-  }
-  return [verifyFinding(phaseGate, hint)];
+/** The one normalization of a phase failure: code, hints, findings and human text together. */
+export function verifyFailure(root: string, mission: ParsedMission, failure: VerifyPhaseFailure): VerifyFailure {
+  const said = hintsForVerifyPhase(failure, {
+    missionPath: missionRelPath(root, mission),
+    root,
+    msnId: mission.msnId ?? undefined,
+  });
+  const hint = said.fix_hints[0] ?? failure.message;
+  const gate = failure.phase === "trace_pending" || failure.phase === "run_record" ? "trace" : failure.phase;
+  const findings =
+    phaseFindings(root, failure, hint) ?? (said.failures?.length ? said.failures : [hint]).map((f) => verifyFinding(gate, f));
+  const stdout = failure.phase === "gate" ? failure.gateOutput : undefined;
+  return {
+    payload: {
+      status: "failed",
+      phase: failure.phase,
+      message: failure.message,
+      error_code: said.error_code,
+      fix_hints: said.fix_hints,
+      next_actions: said.next_actions,
+      exit_code: failure.exitCode,
+      envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
+      findings,
+      ...(stdout !== undefined ? { stdout } : {}),
+      ...(said.failures ? { failures: said.failures } : {}),
+    },
+    headline: said.headline,
+    detail_lines: said.detail_lines,
+    tagged_steps: said.tagged_steps,
+  };
 }
 
-export function toVerifyFailedPayload(
-  normalized: NormalizedVerifyFailure,
-  failure: VerifyPhaseFailure | undefined,
-  findings: VerifyFinding[],
-): VerifyFailedPayload {
+/** Init/pre-phase errors (mission load, receipt write) as a failed payload. */
+export function initFailurePayload(e: unknown): VerifyFailedPayload {
+  const userError = isGantryUserError(e) ? e : null;
+  const message = userError ? userError.message : errorMessage(e);
+  const fixHints = userError?.hint ? [userError.hint] : [];
   return {
     status: "failed",
-    phase: normalized.phase,
-    message: normalized.message,
-    error_code: normalized.error_code,
-    fix_hints: normalized.fix_hints,
-    next_actions: normalized.next_actions,
-    exit_code: normalized.exit_code,
+    phase: "init",
+    message,
+    error_code: userError ? gxtCodeFromGantryUserError(userError.code) : GXT_ERROR.PARSE_ERROR,
+    fix_hints: fixHints,
+    next_actions: [],
+    exit_code: userError ? userError.exitCode : 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
-    findings,
-    ...(normalized.gate?.stdout !== undefined ? { stdout: normalized.gate.stdout } : {}),
-    ...(normalized.gate?.stderr !== undefined ? { stderr: normalized.gate.stderr } : {}),
-    ...(normalized.failures ? { failures: normalized.failures } : {}),
+    findings: [verifyFinding("init", fixHints[0] ?? message)],
   };
 }
 
@@ -206,32 +222,12 @@ export function buildBreakGlassPayload(
   };
 }
 
-export function initFailurePayload(e: unknown): VerifyFailedPayload {
-  const normalized = normalizeInitFailure(e);
-  const findings = buildFindingsForFailure("", normalized);
-  return toVerifyFailedPayload(normalized, undefined, findings);
-}
-
 export function buildVerifyResultPayloadFromPhaseResult(
   root: string,
   mission: ParsedMission,
-  _options: VerifyEvaluation,
   result: VerifyPhaseResult,
 ): VerifyResultPayload {
-  const missionRel = missionRelPath(root, mission);
-  if (result.ok) {
-    return successPayload(root, mission, result);
-  }
-  const normalized = normalizeVerifyPhaseFailure({
-    failure: result,
-    missionArg: missionRel,
-    options: _options,
-    root,
-    msnId: mission.msnId ?? undefined,
-    mission,
-  });
-  const findings = buildFindingsForFailure(root, normalized, result);
-  return toVerifyFailedPayload(normalized, result, findings);
+  return result.ok ? successPayload(root, mission, result) : verifyFailure(root, mission, result).payload;
 }
 
 export async function buildVerifyResultPayload(
@@ -242,7 +238,7 @@ export async function buildVerifyResultPayload(
 ): Promise<VerifyResultPayload> {
   try {
     const result = await evaluateVerifyPhases(root, mission, options, manifest);
-    return buildVerifyResultPayloadFromPhaseResult(root, mission, options, result);
+    return buildVerifyResultPayloadFromPhaseResult(root, mission, result);
   } catch (e) {
     return initFailurePayload(e);
   }

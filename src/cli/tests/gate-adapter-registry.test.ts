@@ -33,7 +33,6 @@ describe("gate-adapters import-direction contract (ADR-0041)", () => {
     "mission-verify/options",
     "mission-verify/payload",
     "mission-verify/failure",
-    "mission-verify/finding-gate-projector",
   ];
 
   it("adapter modules never import the verify engine layer", () => {

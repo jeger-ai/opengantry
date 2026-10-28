@@ -83,7 +83,7 @@ test("verify contract: banned import in cage fails GXT_CONTRACT_IMPORT_BANNED wi
   const r = runPhase(dest);
   assert.equal(r.kind, "fail");
   if (r.kind !== "fail") return;
-  assert.equal(r.failure.contractCode, GXT_ERROR.CONTRACT_IMPORT_BANNED);
+  assert.equal(r.failure.code, GXT_ERROR.CONTRACT_IMPORT_BANNED);
   assert.equal(r.failure.findings?.[0]?.offending_file, "src/ui/a.ts");
   assert.equal(r.failure.findings?.[0]?.line, 2);
   assert.equal(r.failure.findings?.[0]?.failed_gate, "contract");
@@ -96,7 +96,7 @@ test("verify contract: relative import into a forbidden zone fails GXT_CONTRACT_
   );
   const r = runPhase(dest);
   assert.equal(r.kind, "fail");
-  if (r.kind === "fail") assert.equal(r.failure.contractCode, GXT_ERROR.CONTRACT_SCOPE_ESCAPE);
+  if (r.kind === "fail") assert.equal(r.failure.code, GXT_ERROR.CONTRACT_SCOPE_ESCAPE);
 });
 
 test("verify contract: contract edited after Planner stamp (hash re-sealed locally) fails GXT_CONTRACT_TAMPERED", () => {
@@ -106,7 +106,7 @@ test("verify contract: contract edited after Planner stamp (hash re-sealed local
   const r = runPhase(dest);
   assert.equal(r.kind, "fail");
   if (r.kind !== "fail") return;
-  assert.equal(r.failure.contractCode, GXT_ERROR.CONTRACT_TAMPERED);
+  assert.equal(r.failure.code, GXT_ERROR.CONTRACT_TAMPERED);
   assert.match(r.failure.message, /contract changed after Planner stamp/);
 });
 
