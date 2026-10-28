@@ -85,5 +85,5 @@ function printUpgradePlanSummary(result: UpgradePlanResult, dryRun: boolean): vo
   if (result.legacy_warning) logWarn(result.legacy_warning);
   logInfo(`${dryRun ? "Would write" : "Wrote upgrade"} mission: ${result.mission_rel ?? ""}`);
   logInfo(`${dryRun ? "Suggested Planner action" : "Review staged diff, then"}:\n${result.suggested_human_action ?? ""}`);
-  if (!dryRun) logInfo(`After Planner commit: gantry upgrade --apply --mission ${result.mission_rel ?? ""}`);
+  if (!dryRun) logInfo(`After Planner commit: gantry upgrade apply --mission ${result.mission_rel ?? ""}`);
 }

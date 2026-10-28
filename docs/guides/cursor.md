@@ -54,7 +54,7 @@ Agent edits are advisory. Legislation goes through the MCP two-step gate, the sh
 
 ## Upgrades
 
-After updating `@jeger-ai/opengantry`, `gxt_upgrade_plan` stages the substrate upgrade and drafts its mission, and `gxt_upgrade_apply` applies it after the Planner commit ([Install](../start/install.md#upgrade-the-substrate)). Reload MCP afterwards.
+After updating `@jeger-ai/opengantry`, `gantry upgrade plan --stage` stages the substrate upgrade and drafts its mission, and `gantry upgrade apply` applies it after the Planner commit ([Install](../start/install.md#upgrade-the-substrate)). Reload MCP afterwards.
 
 ## Gotchas
 

@@ -43,7 +43,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   if (!fs.existsSync(tmpRoot)) {
     throw new GantryUserError(
       "UPGRADE_STAGING_MISSING",
-      `${CLI_NAME} upgrade --apply: staging directory missing at ${REL_UPGRADE_TMP}/ — re-run gantry upgrade`,
+      `${CLI_NAME} upgrade apply: staging directory missing at ${REL_UPGRADE_TMP}/ — re-run gantry upgrade plan --stage`,
       `Run \`gantry upgrade\` to regenerate staged files before apply.`,
       EXIT_CODE.USAGE,
     );
@@ -53,7 +53,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
   if (entries.length === 0) {
     throw new GantryUserError(
       "UPGRADE_EMPTY_MANIFEST",
-      `${CLI_NAME} upgrade --apply: upgrade_payload.staged_hashes is empty`,
+      `${CLI_NAME} upgrade apply: upgrade_payload.staged_hashes is empty`,
       undefined,
       EXIT_CODE.USAGE,
     );
@@ -64,7 +64,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
     if (!fs.existsSync(stageAbs)) {
       throw new GantryUserError(
         "UPGRADE_STAGING_DRIFT",
-        `${CLI_NAME} upgrade --apply: missing staged file ${relPath} under ${REL_UPGRADE_TMP}/`,
+        `${CLI_NAME} upgrade apply: missing staged file ${relPath} under ${REL_UPGRADE_TMP}/`,
         "Re-run gantry upgrade to regenerate staging after mission was signed.",
         EXIT_CODE.USAGE,
       );
@@ -73,7 +73,7 @@ function verifyStagedHashes(repoRoot: string, payload: UpgradePayload): void {
     if (actual !== expectedHash) {
       throw new GantryUserError(
         "UPGRADE_HASH_MISMATCH",
-        `${CLI_NAME} upgrade --apply: staged file hash mismatch for ${relPath}`,
+        `${CLI_NAME} upgrade apply: staged file hash mismatch for ${relPath}`,
         "Staging directory was modified after plan. Re-run gantry upgrade and re-sign the mission.",
         EXIT_CODE.USAGE,
       );

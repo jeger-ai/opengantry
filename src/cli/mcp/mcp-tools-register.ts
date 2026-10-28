@@ -7,7 +7,6 @@ import { handleProposeContract } from "./mcp-propose-contract.js";
 import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
 import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
 import {
-  handleAttest,
   handleLastError,
   handlePinMission,
   handleResolveMission,
@@ -16,8 +15,6 @@ import {
   handleVerify,
 } from "./mcp-runtime.js";
 import { handleDoctor } from "./mcp-doctor.js";
-import { handleUpgradeApply, handleUpgradePlan } from "./mcp-upgrade.js";
-import { handleDepsCheck, handleLedgerVerify, handlePolicyStatus } from "./mcp-org.js";
 import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
 
 const interrogationRowSchema = z.object({
@@ -175,26 +172,6 @@ function registerGxtVerifyTool(server: McpServer): void {
   );
 }
 
-function registerGxtAttestTool(server: McpServer): void {
-  server.tool(
-    "gxt_attest",
-    "Emit local attestation receipt JSON (digests only; optional SSH/GPG signature).",
-    {
-      mission_file_path: z.string().describe("Repo-relative mission path"),
-      out: z.string().optional().describe("Receipt output path override"),
-      sign: z.boolean().optional().describe("Detach-sign receipt with local SSH/GPG key"),
-    },
-    async (args) =>
-      jsonText(
-        handleAttest({
-          mission_file_path: args.mission_file_path,
-          out: args.out,
-          sign: args.sign,
-        }),
-      ),
-  );
-}
-
 function registerGxtRuntimeExecTool(server: McpServer): void {
   server.tool(
     "gxt_runtime_exec",
@@ -253,60 +230,6 @@ function registerGxtLastErrorTool(server: McpServer): void {
   );
 }
 
-function registerGxtPolicyStatusTool(server: McpServer): void {
-  server.tool(
-    "gxt_policy_status",
-    "Read-only effective org policy (pointer + cache). Never fetches. Use gantry policy pull for network.",
-    {},
-    async () => jsonText(handlePolicyStatus()),
-  );
-}
-
-function registerGxtLedgerVerifyTool(server: McpServer): void {
-  server.tool(
-    "gxt_ledger_verify",
-    "Read-only verify of refs/gxt/ledger hash chain. Never fetches or appends.",
-    {
-      require_signatures: z.boolean().optional().describe("Fail when a ledger commit is unsigned"),
-    },
-    async (args) => jsonText(handleLedgerVerify(args.require_signatures === true)),
-  );
-}
-
-function registerGxtDepsCheckTool(server: McpServer): void {
-  server.tool(
-    "gxt_deps_check",
-    "Read-only evaluate mission depends_on against fetched refs/gxt/deps/* . Never fetches.",
-    {
-      mission_file_path: z.string().optional().describe("Repo-relative mission YAML path"),
-    },
-    async (args) => jsonText(handleDepsCheck(args.mission_file_path)),
-  );
-}
-
-function registerGxtUpgradePlanTool(server: McpServer): void {
-  server.tool(
-    "gxt_upgrade_plan",
-    "Plan substrate upgrade preview (stable JSON schema_version 1). Set dry_run true to preview without staging.",
-    {
-      msn_id: z.string().optional().describe("Optional MSN-NNNN in upgrade band (9000-9099)"),
-      dry_run: z.boolean().optional().describe("Preview plan without writing files"),
-    },
-    async (args) => jsonText(handleUpgradePlan({ msn_id: args.msn_id, dry_run: args.dry_run })),
-  );
-}
-
-function registerGxtUpgradeApplyTool(server: McpServer): void {
-  server.tool(
-    "gxt_upgrade_apply",
-    "Apply Teacher-signed substrate upgrade after staged hash verification.",
-    {
-      mission_file_path: z.string().optional().describe("Signed upgrade mission YAML path"),
-    },
-    async (args) => jsonText(await handleUpgradeApply(args.mission_file_path)),
-  );
-}
-
 /** Register all OpenGantry GXT MCP tools on the given server instance. */
 export function registerGxtMcpTools(server: McpServer): void {
   registerGxtInterrogateTool(server);
@@ -317,14 +240,8 @@ export function registerGxtMcpTools(server: McpServer): void {
   registerGxtPinMissionTool(server);
   registerGxtRuntimeEnvTool(server);
   registerGxtVerifyTool(server);
-  registerGxtAttestTool(server);
   registerGxtRuntimeExecTool(server);
   registerGxtResolveMissionTool(server);
   registerGxtDoctorTool(server);
   registerGxtLastErrorTool(server);
-  registerGxtPolicyStatusTool(server);
-  registerGxtLedgerVerifyTool(server);
-  registerGxtDepsCheckTool(server);
-  registerGxtUpgradePlanTool(server);
-  registerGxtUpgradeApplyTool(server);
 }

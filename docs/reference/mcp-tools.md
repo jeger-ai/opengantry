@@ -31,18 +31,9 @@ order: 1
 | `gxt_runtime_exec` | Runs an executor command with the mission environment and forbidden-zone enforcement |
 | `gxt_last_error` | Reads the machine-oriented remediation from `GANTRY_LAST_ERROR_FILE` |
 | `gxt_verify` | Runs verify and returns the same payload as `gantry verify --json` ([Troubleshooting](../guides/troubleshooting.md#mcp-verify-payload)) |
-| `gxt_attest` | Writes a local digest-only attestation receipt, optionally SSH or GPG signed |
 | `gxt_doctor` | Read-only readiness check, including typed gate adapters; never inspects `gate_command` to guess one |
 
-### Organization and upgrades
-
-| Tool | Does |
-|------|------|
-| `gxt_policy_status` | Read-only effective org policy from the pointer and cache; never fetches |
-| `gxt_ledger_verify` | Read-only check of the `refs/gxt/ledger` hash chain; never fetches or appends |
-| `gxt_deps_check` | Read-only check of a mission's `depends_on` against fetched `refs/gxt/deps/*`; never fetches |
-| `gxt_upgrade_plan` | Plans a substrate upgrade; with `dry_run: true` it previews without staging |
-| `gxt_upgrade_apply` | Applies a Planner-signed substrate upgrade after verifying the staged hashes |
+The organization plane (`policy`, `ledger`, `deps`, `attest`) and `upgrade` are CLI-only: they write receipts, fetch refs or rewrite managed files, which a human runs.
 
 The cage has no MCP tool: `gantry cage check`, `gantry cage watch`, `gantry cage suggest` and the session cage are not exposed to agents through MCP.
 

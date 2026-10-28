@@ -128,16 +128,15 @@ Tier-3 lifecycle updates use the installed `gantry` package only (no remote fetc
 ```bash
 npm install @jeger-ai/opengantry@latest   # when a newer release exists
 gantry upgrade plan --json          # preview file changes (stable schema_version 1)
-gantry upgrade                     # stage managed_strict assets + draft MSN-900x mission YAML
+gantry upgrade plan --stage        # stage managed_strict assets + draft MSN-900x mission YAML
 # Review .gitagent/.upgrade-tmp/ diff; commit mission YAML only (tmp is gitignored)
 git add .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
 git commit -m "[MSN-9001] approve substrate upgrade to vX.Y.Z"
 gantry upgrade apply --mission .gitagent/missions/MSN-9001.upgrade-vX.Y.Z.yaml
-# Legacy: gantry upgrade --apply --mission … and --dry-run still work
 gantry doctor
 ```
 
-MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply` (same gates as CLI).
+Upgrades are CLI-only; MCP has no upgrade tool.
 
 | Layer | Mechanism | OpenGantry repo |
 |-------|-----------|-----------------|
