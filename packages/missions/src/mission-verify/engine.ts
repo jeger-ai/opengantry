@@ -14,7 +14,6 @@ import type { Manifest } from "#core/manifest.js";
 import type { VerifyFailurePhase, VerifyPhaseFailure } from "./failure.js";
 import type { TraceVerifyWarning } from "../trace-quote.js";
 import type { VerifyEvaluation } from "./options.js";
-import { VerifyPhaseClock, type VerifyPhaseId, type VerifyPhaseTiming } from "./phase-clock.js";
 import { evaluateContractPhase } from "./contract.js";
 import { evaluateInterrogationPhase } from "./interrogation.js";
 import {
@@ -63,12 +62,14 @@ export interface VerifyPhaseSuccess {
   traceEvidenceSkippedUncommitted?: number;
   /** Set when the evidence was the run record (read or, with --record, written): its repo-relative path. */
   runRecordPath?: string;
-  phaseTimings: VerifyPhaseTiming[];
 }
 
-export type VerifyPhaseResult =
-  | (VerifyPhaseFailure & { phaseTimings: VerifyPhaseTiming[] })
-  | VerifyPhaseSuccess;
+export type VerifyPhaseResult = VerifyPhaseFailure | VerifyPhaseSuccess;
+
+/** The verify phases in run order; a result's phase statuses follow from it (JUnit cases). */
+const VERIFY_PHASE_IDS = ["git_proof", "contract", "interrogation", "policy", "dependencies", "gate", "trace"] as const;
+export type VerifyPhaseId = (typeof VERIFY_PHASE_IDS)[number];
+export type VerifyPhaseStatus = "passed" | "failed" | "skipped";
 
 export function resolveExecutorLogPath(root: string, options: VerifyEvaluation): string {
   return options.executorLog ? path.resolve(root, options.executorLog) : defaultExecutorLogPath(root);
@@ -99,9 +100,13 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
   }
 }
 
-function failWithTimings(failure: VerifyPhaseFailure, clock: VerifyPhaseClock): VerifyPhaseResult {
-  clock.markFailed(failurePhaseToClockId(failure.phase));
-  return { ...failure, phaseTimings: clock.finalize() };
+/** Phases run in order and stop at the first failure: earlier ones passed, later ones were skipped. */
+export function verifyPhaseStatuses(result: VerifyPhaseResult): { id: VerifyPhaseId; status: VerifyPhaseStatus }[] {
+  const failedAt = result.ok ? -1 : VERIFY_PHASE_IDS.indexOf(failurePhaseToClockId(result.phase));
+  return VERIFY_PHASE_IDS.map((id, i) => {
+    if (result.ok) return { id, status: result.outcome === "pre_push_stub" && (id === "gate" || id === "trace") ? "skipped" : "passed" };
+    return { id, status: i < failedAt ? "passed" : i === failedAt ? "failed" : "skipped" };
+  });
 }
 
 function buildFullVerifySuccess(input: {
@@ -109,18 +114,15 @@ function buildFullVerifySuccess(input: {
   executorLogPath: string;
   trace: Extract<TracePhaseOutcome, { kind: "ok" }>;
   gitProofWarnings: string[];
-  phaseTimings: VerifyPhaseTiming[];
   runRecordPath?: string;
 }): VerifyPhaseSuccess {
-  const { proofMsnId, executorLogPath, trace, gitProofWarnings, phaseTimings, runRecordPath } =
-    input;
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, runRecordPath } = input;
   return {
     ok: true,
     outcome: "full",
     proofMsnId,
     executorLogPath,
     traceWarnings: trace.warnings,
-    phaseTimings,
     ...(runRecordPath ? { runRecordPath } : {}),
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     traceEvidenceSkippedUncommitted:
@@ -128,13 +130,10 @@ function buildFullVerifySuccess(input: {
   };
 }
 
-async function evaluateOrgControlPhases(
-  clock: VerifyPhaseClock,
-  ctx: PhaseContext,
-): Promise<{ failure: VerifyPhaseFailure } | { warnings: string[] }> {
-  const policy = await clock.timed("policy", () => evaluatePolicyPhase(ctx));
+async function evaluateOrgControlPhases(ctx: PhaseContext): Promise<{ failure: VerifyPhaseFailure } | { warnings: string[] }> {
+  const policy = await evaluatePolicyPhase(ctx);
   if (policy.kind === "fail") return { failure: policy.failure };
-  const deps = await clock.timed("dependencies", () => evaluateDependenciesPhase(ctx));
+  const deps = await evaluateDependenciesPhase(ctx);
   return deps.kind === "fail" ? { failure: deps.failure } : { warnings: deps.warnings };
 }
 
@@ -160,25 +159,19 @@ export async function evaluateVerifyPhases(
   options: VerifyEvaluation,
   manifest: Manifest,
 ): Promise<VerifyPhaseResult> {
-  const clock = new VerifyPhaseClock();
   const executorLogPath = resolveExecutorLogPath(root, options);
   const phaseCtx: PhaseContext = { root, manifest, mission, options, executorLogPath };
 
-  const proof = await clock.timed("git_proof", () =>
-    evaluateGitProof(root, mission, options, executorLogPath),
-  );
-  if (proof.kind === "fail") return failWithTimings(proof.failure, clock);
+  const proof = await evaluateGitProof(root, mission, options, executorLogPath);
+  if (proof.kind === "fail") return proof.failure;
   const { proofMsnId, warnings: proofWarnings } = proof;
   if (options.record === true) assertCleanTreeForRecord(root);
 
   const missionRel = formatRepoRelative(root, mission.rawPath);
-  const contract = await clock.timed("contract", () =>
-    evaluateContractPhase({ ...phaseCtx, proofMsnId, missionRel }),
-  );
-  if (contract.kind === "fail") return failWithTimings(contract.failure, clock);
+  const contract = evaluateContractPhase({ ...phaseCtx, proofMsnId, missionRel });
+  if (contract.kind === "fail") return contract.failure;
 
-  const interrogation = await clock.timed("interrogation", () =>
-    evaluateInterrogationPhase({
+  const interrogation = await evaluateInterrogationPhase({
       root,
       manifest,
       mission,
@@ -186,11 +179,10 @@ export async function evaluateVerifyPhases(
       options,
       proofMsnId,
       executorLogPath,
-    }),
-  );
-  if (interrogation.failure) return failWithTimings(interrogation.failure, clock);
-  const org = await evaluateOrgControlPhases(clock, phaseCtx);
-  if ("failure" in org) return failWithTimings(org.failure, clock);
+  });
+  if (interrogation.failure) return interrogation.failure;
+  const org = await evaluateOrgControlPhases(phaseCtx);
+  if ("failure" in org) return org.failure;
   const gitProofWarnings = [...proofWarnings, ...interrogation.warnings, ...org.warnings];
 
   // A mission without trace rows is a legislative stub only until its run record exists (RULES §3).
@@ -201,23 +193,24 @@ export async function evaluateVerifyPhases(
       proofMsnId,
       executorLogPath,
       traceWarnings: [],
-      phaseTimings: clock.finalize(),
       ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
     };
   }
 
-  if (!mission.gate) return failWithTimings(missingGateFailure(executorLogPath), clock);
+  if (!mission.gate) return missingGateFailure(executorLogPath);
 
   const gate = mission.gate;
 
-  const gateOutcome = await clock.timed("gate", () => evaluateGatePhase(phaseCtx, gate));
-  if (gateOutcome.kind === "fail") return failWithTimings(gateOutcome.failure, clock);
+  const gateStart = Date.now();
+  const gateOutcome = await evaluateGatePhase(phaseCtx, gate);
+  const gateMs = Date.now() - gateStart;
+  if (gateOutcome.kind === "fail") return gateOutcome.failure;
 
-  const trace = await clock.timed("trace", () => evaluateEvidencePhase(phaseCtx, proofMsnId));
-  if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
+  const trace = evaluateEvidencePhase(phaseCtx, proofMsnId);
+  if (trace.kind === "fail") return trace.failure;
   const runRecordPath = mission.traceRows.length === 0 ? runRecordRelPath(proofMsnId) : undefined;
   if (options.record === true) {
-    writeRunRecord(phaseCtx, proofMsnId, { command: gate.command, exit: gateOutcome.exitCode, durationMs: clock.durationOf("gate"), logText: gateOutcome.logText });
+    writeRunRecord(phaseCtx, proofMsnId, { command: gate.command, exit: gateOutcome.exitCode, durationMs: gateMs, logText: gateOutcome.logText });
   }
 
   return buildFullVerifySuccess({
@@ -225,7 +218,6 @@ export async function evaluateVerifyPhases(
     executorLogPath,
     trace,
     gitProofWarnings,
-    phaseTimings: clock.finalize(),
     ...(runRecordPath ? { runRecordPath } : {}),
   });
 }

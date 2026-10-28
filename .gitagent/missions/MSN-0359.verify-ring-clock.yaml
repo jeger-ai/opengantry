@@ -1,0 +1,199 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0359]. Executor must not run until the [MSN-0359] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 1, first mission: remove the write-only verify-run ring and the
+# phase clock; record the operator's phase 1 decisions in ADR-0061.
+#
+# Operator request (2026-10-28, ADR-0061 phase 1 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0359.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0359
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane CI ingestion contract is unchanged; verify's
+      JSON and JUnit output stay the same.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept. The cage check and watch are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: Accept. Structural law budgets only go down (ARCH_BASELINE.json
+      lowered with --ratchet); the run record keeps its schema and gate
+      duration.
+    adr_refs:
+      - ADR-0052
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Deleted tests cover only the deleted ring and clock; a
+      new test pins the phase statuses that feed JUnit. No assertion on kept
+      code is weakened.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept. No conformance golden changes: the JUnit phase cases
+      are reproduced exactly from the fixed phase order."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0359.verify-ring-clock.yaml,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/runs/MSN-0359.json,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/mission-verify/phase-clock.ts,
+      packages/missions/src/mission-verify/run-ring.ts,
+      src/cli/flows/verify-presenters.ts, src/cli/flows/verify-run.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts,
+      src/cli/tests/verify-phase-statuses.test.ts,
+      src/cli/tests/verify-run-ring.test.ts. Deleted:
+      packages/missions/src/mission-verify/run-ring.ts and phase-clock.ts, the
+      run-ring and phase-clock tests. Added: the verify phase status test.
+      Changed: the mission verify engine (phase statuses from the fixed order,
+      gate timing for the run record), the CLI verify run and presenters (no
+      ring writes; JUnit cases from the phase statuses), the circuit-breaker
+      test fixture, ADR-0061 (phase 1 decisions), DEVELOPMENT, CHANGELOG,
+      ARCH_BASELINE.json lowered. Operator decisions (2026-10-28): ADR-0061
+      approved in full; for phase 1 the operator chose: forbidden-zone paths in
+      the mission's change fail and paths outside the roots warn in 4.0;
+      findings lose fingerprint and semantic_fingerprint (findings_digest and
+      GXT_FINDINGS_RECURRED stay); mission verify --json becomes digest-only in
+      phase 1; verify --fix keeps its interactive prompts. This first mission
+      only deletes the write-only ring and the phase clock and records those
+      decisions; it changes no output. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0359.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: this mission starts phase 1 and records the
+      operator's phase 1 decisions in the ADR."
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: f1af1c724118
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0359.verify-ring-clock.yaml,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/runs/MSN-0359.json,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/mission-verify/phase-clock.ts,
+      packages/missions/src/mission-verify/run-ring.ts,
+      src/cli/flows/verify-presenters.ts, src/cli/flows/verify-run.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/verify-phase-clock.test.ts,
+      src/cli/tests/verify-phase-statuses.test.ts,
+      src/cli/tests/verify-run-ring.test.ts. Deleted:
+      packages/missions/src/mission-verify/run-ring.ts and phase-clock.ts, the
+      run-ring and phase-clock tests. Added: the verify phase status test.
+      Changed: the mission verify engine (phase statuses from the fixed order,
+      gate timing for the run record), the CLI verify run and presenters (no
+      ring writes; JUnit cases from the phase statuses), the circuit-breaker
+      test fixture, ADR-0061 (phase 1 decisions), DEVELOPMENT, CHANGELOG,
+      ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config file format changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 5bc2c070b647e363e39efdce7d159860e2e0fcd4aeb3a387b07c0a5f91458c2a
+declared_paths:
+  - .gitagent/missions/MSN-0359.verify-ring-clock.yaml
+  - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+  - .gitagent/runs/MSN-0359.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - packages/missions/src/mission-verify/engine.ts
+  - packages/missions/src/mission-verify/phase-clock.ts
+  - packages/missions/src/mission-verify/run-ring.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/verify-phase-clock.test.ts
+  - src/cli/tests/verify-phase-statuses.test.ts
+  - src/cli/tests/verify-run-ring.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0359.verify-ring-clock.yaml
+    - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+    - .gitagent/runs/MSN-0359.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - packages/missions/src/mission-verify/engine.ts
+    - packages/missions/src/mission-verify/phase-clock.ts
+    - packages/missions/src/mission-verify/run-ring.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/tests/findings-circuit-breaker.test.ts
+    - src/cli/tests/verify-phase-clock.test.ts
+    - src/cli/tests/verify-phase-statuses.test.ts
+    - src/cli/tests/verify-run-ring.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 907c90054a780449bfeb0bacb7bda9af608cf8493e1df33ae71dced4fbf80902

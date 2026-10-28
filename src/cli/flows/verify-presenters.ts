@@ -1,4 +1,4 @@
-import type { VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
+import { verifyPhaseStatuses, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
 import { CLI_VERSION } from "../version.gen.js";
 import type { AudienceTaggedStep } from "#missions/mission-verify/hints.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
@@ -10,9 +10,7 @@ import { runBreakGlassAuditFlow } from "#missions/break-glass.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { Reporter } from "../output/reporter.js";
 import { loadPrompts } from "./prompts-loader.js";
-import type { VerifyPhaseResult } from "#missions/mission-verify/engine.js";
 import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
-import type { VerifyPhaseTiming } from "#missions/mission-verify/phase-clock.js";
 import { buildVerifyExportDocument, type VerifyExportFormat } from "#missions/mission-verify/export.js";
 import type { JUnitCase } from "#verify/export.js";
 import { uriIsDirectory } from "../report/sarif-uri.js";
@@ -146,9 +144,9 @@ export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresent
   return { ok: true, exitCode: 0 };
 }
 
-function junitCasesFor(timings: VerifyPhaseTiming[], payload: VerifyResultPayload): JUnitCase[] {
+function junitCasesFor(result: VerifyPhaseResult, payload: VerifyResultPayload): JUnitCase[] {
   const failureText = payload.status === "failed" ? payload.message : undefined;
-  return timings.map((row) => {
+  return verifyPhaseStatuses(result).map((row) => {
     if (row.status === "skipped") return { name: row.id, skipped: true };
     if (row.status === "failed") return { name: row.id, failure: failureText ?? "failed" };
     return { name: row.id };
@@ -211,7 +209,7 @@ export function presentJsonFromResult(
     );
     emitStructuredPayload(payload, ctx.options, ctx.reporter, {
       root: ctx.root,
-      junitCases: junitCasesFor(result.phaseTimings, payload),
+      junitCases: junitCasesFor(result, payload),
     });
     return { ok: true, exitCode: 0, remediation: null };
   }
@@ -236,7 +234,7 @@ export function presentJsonFromResult(
   const fullPayload = withContextFields(payload, ctx);
   emitStructuredPayload(fullPayload, ctx.options, ctx.reporter, {
     root: ctx.root,
-    junitCases: junitCasesFor(result.phaseTimings, fullPayload),
+    junitCases: junitCasesFor(result, fullPayload),
   });
   return { ok: false, exitCode: payload.exit_code, remediation: snapshot };
 }

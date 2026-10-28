@@ -25,7 +25,6 @@ import {
 } from "#missions/mission-verify/payload.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { persistFailedVerifyRemediation } from "#missions/mission-verify/remediation-pipeline.js";
-import { recordVerifyRunBestEffort } from "#missions/mission-verify/run-ring.js";
 import { runRecordRelPath } from "#missions/mission-verify/run-record.js";
 import {
   resolveVerifySink,
@@ -145,7 +144,6 @@ function breakGlassPhaseStub(ctx: VerifyPresentContext): VerifyPhaseSuccess {
     proofMsnId: msnIdOrDefault(ctx.mission),
     executorLogPath: resolveExecutorLogPath(ctx.root, ctx.options),
     traceWarnings: [],
-    phaseTimings: [],
   };
 }
 
@@ -336,9 +334,7 @@ export async function runVerifyCore(options: VerifyOptions, reporter: Reporter =
       }
       ctx.receiptPath = receiptWrite.receiptPath;
       appendVerifyOutcomeLedger(ctx, evaluated.result);
-      const presented = presentJsonFromResult(ctx, evaluated.result);
-      recordVerifyRunBestEffort(ctx.root, evaluated.result, presented.remediation ?? null);
-      return presented;
+      return presentJsonFromResult(ctx, evaluated.result);
     }
     case "fix_interactive":
     case "fix_noninteractive":
@@ -362,7 +358,6 @@ export async function runVerifyCore(options: VerifyOptions, reporter: Reporter =
       } else {
         presented = presentHuman(ctx, finalPhase);
       }
-      recordVerifyRunBestEffort(ctx.root, finalPhase, presented.remediation ?? null);
       return presented;
     }
     default: {

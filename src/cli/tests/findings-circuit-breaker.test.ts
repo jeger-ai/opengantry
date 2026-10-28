@@ -60,7 +60,6 @@ function successPhase(msnId: string): VerifyPhaseSuccess {
     proofMsnId: msnId,
     executorLogPath: "EXECUTOR_LOG.md",
     traceWarnings: [],
-    phaseTimings: [],
   };
 }
 
