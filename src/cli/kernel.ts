@@ -11,22 +11,6 @@ export {
   type ScopeEvaluationKind,
 } from "#missions/kernel-evaluate-scope.js";
 
-export {
-  mintVerdictToken,
-  verifyVerdictToken,
-  VERDICT_TOKEN_SCHEMA_VERSION,
-  type VerdictTokenPayload,
-  type MintVerdictTokenInput,
-  type VerifyVerdictTokenInput,
-} from "#missions/verdict-token.js";
-export {
-  buildVerdictExpectedClaims,
-  verdictClaimsFor,
-  clearVerdictClaimsCache,
-  PASSED_FINDINGS_DIGEST,
-  type VerdictExpectedClaims,
-} from "#missions/verdict-expected.js";
-export { resolveOrgId } from "#plane/org-export-config.js";
 export type { VerifyOptions } from "./flows/verify-options.js";
 export type { GateExecAdapter, GateExecContext, GateExecutionResult } from "#missions/gate-adapters/gate-adapter-types.js";
 export type { VerifyResultPayload } from "#missions/mission-verify/payload.js";

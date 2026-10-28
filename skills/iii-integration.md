@@ -15,7 +15,7 @@ iii worker add opengantry
 
 **Cold-path lint:** [`iii-architecture`](./iii-architecture.md) — iii-aligned profile (TypeScript allowed, `request_format` / `response_format`, `iii.worker.yaml` bundle rules). Run via `run-iii-architecture.mjs` before hot verify in CI. `gantry::verify` is kernel `verifyMission` only. See `examples/iii-integration/BEST-PRACTICES.md`.
 
-**Fail-closed:** promote-class calls require a prior `gantry::verify` pass and valid verdict token. Missing `.gitagent` does not unlock governance.
+**Fail-closed:** promote-class calls require a prior `gantry::verify` pass. Missing `.gitagent` does not unlock governance.
 
 **Paths:** middleware requires `context.worktree_path` or `context.repo_root`; `gantry::verify` requires absolute `repo_root`. Lease store: `<repo_root>/.gitagent/leases.json`. Sandboxed `iii worker add` only mounts the worker folder at `/workspace`; host `npm start` is required to read an adopter `repo_root` until iii supports extra mounts.
 

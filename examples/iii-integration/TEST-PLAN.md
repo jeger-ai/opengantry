@@ -23,11 +23,10 @@ Worker hot-path tests (`npm test`, `npm run demo`, `npm run loadtest`) run from 
 
 | ID | Area | Check | Pass criteria |
 |----|------|-------|---------------|
-| T1-01 | Kernel | `@jeger-ai/opengantry/kernel` exports | `evaluateScope`, `mintVerdictToken`, `verifyVerdictToken` callable |
-| T1-02 | Verdict | HMAC round-trip | `mintVerdictToken` + `verifyVerdictToken` with keyring |
+| T1-01 | Kernel | `@jeger-ai/opengantry/kernel` exports | `evaluateScope`, `verifyMission` callable |
 | T1-03 | Namespace | Reserved `gantry::*` | `isReservedGovernanceFunctionId("gantry::verify")` true; `demo::work` false |
-| T1-04 | Middleware | Fail-closed promote | `src::promote` without verdict → throws `GantryDenied` |
-| T1-05 | Middleware | Promote with verdict | Valid token + `worktree_path` → forward succeeds |
+| T1-04 | Middleware | Fail-closed promote | `src::promote` without a passing verify → throws `GantryDenied` |
+| T1-05 | Middleware | Promote after verify | Passing verify + `worktree_path` → forward succeeds |
 | T1-06 | Paths | Missing repo path | No `worktree_path` / `repo_root` → throws hard error |
 | T1-07 | Leases | Durable store | Upsert writes `<repo>/.gitagent/leases.json` |
 | T1-09 | Verify | Absolute `repo_root` | Relative path rejected; `target-repo` absolute path accepted |

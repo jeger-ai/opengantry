@@ -176,8 +176,6 @@ entries:
     since: MSN-0140
   - name: receipt list
     since: MSN-0140
-  - name: receipt principal-hmac
-    since: MSN-0148
   - name: receipt show
     since: MSN-9000
   - name: runtime

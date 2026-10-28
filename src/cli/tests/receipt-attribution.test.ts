@@ -4,8 +4,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { canonicalizeRepositoryIdentifier, hmacSha256Hex, pseudonymizeEmail } from "#plane/receipt-attribution.js";
-import { computePrincipalHmacs } from "../flows/principal-hmac.js";
-import type { PepperKeyringEntry } from "#missions/pepper-keyring.js";
 import { getRepoRoot } from "#git/git.js";
 
 const ROOT = getRepoRoot();
@@ -65,20 +63,4 @@ test("attribution vectors: exact hex per field kind", () => {
     }
     assert.equal(actual, row.hmac, `${row.field} hmac mismatch for ${row.input}`);
   }
-});
-
-test("principal-hmac: multi-epoch output preserves canonical_input", () => {
-  const peppers: PepperKeyringEntry[] = [
-    { org_id: "org-test", pepper_version: 1, pepper: "epoch-one-pepper" },
-    { org_id: "org-test", pepper_version: 2, pepper: "epoch-two-pepper" },
-  ];
-  const results = computePrincipalHmacs(peppers, "signer@example.com");
-  assert.equal(results.length, 2);
-  assert.deepEqual(
-    results.map((r) => r.pepper_version),
-    [1, 2],
-  );
-  assert.ok(results.every((r) => r.canonical_input === "signer@example.com"));
-  assert.match(results[0]?.hmac ?? "", /^[a-f0-9]{64}$/);
-  assert.notEqual(results[0]?.hmac, results[1]?.hmac);
 });
