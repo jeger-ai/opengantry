@@ -29,7 +29,7 @@ function reportVerifyBoundaryError(e: unknown, options: VerifyOptions, reporter:
     } catch {
       root = undefined;
     }
-    emitVerifyDocument(payload, options, reporter, root === undefined ? {} : { root });
+    emitVerifyDocument(payload, options, reporter, { root });
     setExitCode(payload.exit_code);
     return;
   }

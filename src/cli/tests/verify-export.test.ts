@@ -1,14 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  buildJUnitXml,
-  buildSarifDocument,
-  buildVerifyExportDocument,
-  GENERIC_SARIF_FILE,
-  JUNIT_SUITE_NAME,
-} from "#missions/mission-verify/export.js";
+import { junitXml, sarifLog, type JUnitCase } from "#verify/export.js";
+import { payloadExportFindings, payloadJUnitCases, type VerifyResultPayload } from "#missions/mission-verify/payload.js";
+import type { VerifyPhaseResult } from "#missions/mission-verify/engine.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { VERIFY_ENVELOPE_SCHEMA_VERSION, verifyFinding } from "#missions/mission-verify/finding.js";
+
+const GENERIC_SARIF_FILE = ".gitagent/foreman/MANIFEST.yaml";
+const JUNIT_SUITE_NAME = "gantry-verify";
+
+/** The mission SARIF document as `gantry verify --format sarif` builds it. */
+function buildSarifDocument(
+  payload: VerifyResultPayload,
+  cliVersion: string,
+  isDirectory: (uri: string) => boolean = (uri) => uri.endsWith("/"),
+): Record<string, unknown> {
+  return sarifLog(cliVersion, payloadExportFindings(payload, isDirectory));
+}
+
+/** The mission JUnit document as `gantry verify --format junit` builds it. */
+function buildJUnitXml(payload: VerifyResultPayload, input?: VerifyPhaseResult | JUnitCase[]): string {
+  const cases = Array.isArray(input) ? input : payloadJUnitCases(payload, input);
+  return junitXml(JUNIT_SUITE_NAME, "gantry.verify", cases);
+}
 
 test("verify-export: SARIF uses rule_id and span columns", () => {
   const sarif = buildSarifDocument({
@@ -58,16 +72,25 @@ test("verify-export: SARIF failure uses finding failed_gate as ruleId", () => {
 });
 
 test("verify-export: JUnit pass emits phase testcases", () => {
-  const xml = buildJUnitXml({
-    status: "passed",
-    phase: "full",
-    exit_code: 0,
-    msn_id: "MSN-0001",
-    mission_file_path: ".gitagent/missions/m.yaml",
-  });
+  const xml = buildJUnitXml(
+    {
+      status: "passed",
+      phase: "full",
+      exit_code: 0,
+      msn_id: "MSN-0001",
+      mission_file_path: ".gitagent/missions/m.yaml",
+    },
+    { ok: true, outcome: "full", proofMsnId: "MSN-0001", executorLogPath: "EXECUTOR_LOG.md", traceWarnings: [] },
+  );
   assert.match(xml, /testsuites/);
   assert.match(xml, /testcase classname="gantry.verify" name="git_proof"/);
   assert.doesNotMatch(xml, /<failure/);
+});
+
+test("verify-export: JUnit without phase results has one case for the payload phase", () => {
+  const xml = buildJUnitXml({ status: "passed", phase: "break_glass", exit_code: 0 });
+  assert.match(xml, /tests="1"/);
+  assert.match(xml, /name="break_glass"\/>/);
 });
 
 test("verify-export: JUnit fail includes failure element", () => {
@@ -125,12 +148,6 @@ test("verify-export: interrogation phase JUnit names interrogation testcase", ()
   });
   assert.match(xml, /name="interrogation"/);
   assert.match(xml, /<failure/);
-});
-
-test("verify-export: json format round-trips payload", () => {
-  const payload = { status: "passed" as const, phase: "full" as const, exit_code: 0 as const };
-  const doc = buildVerifyExportDocument(payload, "json", "0.0.0-test");
-  assert.deepEqual(JSON.parse(doc), payload);
 });
 
 function sarifLocations(sarif: Record<string, unknown>): Array<Record<string, unknown>> {
@@ -205,17 +222,17 @@ test("verify-export: SARIF generic failure points at the mission file", () => {
   assert.equal((sarif as { version: string }).version, "2.1.0");
 });
 
-test("verify-export: SARIF gateless failure falls back to the manifest", () => {
+test("verify-export: SARIF failure without a mission file falls back to the manifest", () => {
   const sarif = buildSarifDocument({
     status: "failed",
-    phase: "gate",
-    message: "GATE FAILED",
-    error_code: GXT_ERROR.GATE_FAILED,
+    phase: "init",
+    message: "bad mission",
+    error_code: GXT_ERROR.PARSE_ERROR,
     fix_hints: [],
     next_actions: [],
     exit_code: 1,
     envelope_schema_version: VERIFY_ENVELOPE_SCHEMA_VERSION,
-    findings: [],
+    findings: [verifyFinding("init", "bad mission")],
   }, "0.0.0-test");
   const physical = sarifLocations(sarif)[0]?.physicalLocation as Record<string, unknown>;
   const artifact = physical.artifactLocation as Record<string, string>;

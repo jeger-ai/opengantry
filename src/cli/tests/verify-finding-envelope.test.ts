@@ -3,9 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { initFailurePayload, verifyFailure } from "#missions/mission-verify/payload.js";
+import { initFailurePayload, payloadExportFindings, verifyFailure } from "#missions/mission-verify/payload.js";
 import type { GateFailure, VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
-import { buildSarifDocument } from "#missions/mission-verify/export.js";
+import { sarifLog } from "#verify/export.js";
 import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import type { ParsedMission } from "#core/mission-types.js";
@@ -39,6 +39,7 @@ const gateFailure: GateFailure = {
   gateCommand: "npm test",
   gateOutput: "FAIL",
   gateExitCode: 1,
+  gateLogPath: ".gitagent/tmp/gate-logs/MSN-0001.last.log",
 };
 
 describe("verify failure envelope", () => {
@@ -77,8 +78,7 @@ describe("verify failure envelope", () => {
       const finding = payload.findings[0]!;
       assert.equal(finding.failed_gate, name);
       assert.ok(finding.resolution_hint.length > 0);
-      assert.ok(finding.fingerprint.length > 0);
-      assert.ok(finding.semantic_fingerprint.length > 0);
+      assert.equal("fingerprint" in finding || "semantic_fingerprint" in finding, false);
       if (name === "trace") {
         assert.equal(finding.line, 7);
       }
@@ -87,12 +87,14 @@ describe("verify failure envelope", () => {
     });
   }
 
-  it("gate payload carries the gate output and code; the human text its headline", () => {
+  it("gate payload carries the gate log path and code, never the output; the human text its headline and output", () => {
     const failure = verifyFailure(root, envelopeMission(), { ...gateFailure, gateOutput: "fail out\nfail err" });
     assert.equal(failure.payload.error_code, GXT_ERROR.GATE_FAILED);
-    assert.equal(failure.payload.stdout, "fail out\nfail err");
+    assert.equal(failure.payload.gate_log_path, ".gitagent/tmp/gate-logs/MSN-0001.last.log");
+    assert.doesNotMatch(JSON.stringify(failure.payload), /fail out|fail err/);
     assert.equal(failure.payload.failures, undefined);
     assert.equal(failure.headline, "verify: GATE FAILED");
+    assert.ok(failure.detail_lines.some((l) => l.includes("fail out\nfail err")));
     assert.ok(failure.payload.fix_hints.length > 0);
     assert.ok(failure.payload.next_actions.length > 0);
   });
@@ -127,9 +129,9 @@ describe("verify failure envelope", () => {
     assert.ok(tagged_steps && tagged_steps.length > 0);
   });
 
-  for (const [name, file, line, evidence] of [
-    ["projects import-layer JSON violations with evidence", "src/cli/lib/foo.ts", 3, "import { x } from \"../commands/bar.js\";"],
-    ["omits evidence on ENOENT without throwing", "missing/deleted.ts", 1, undefined],
+  for (const [name, file, line] of [
+    ["projects import-layer JSON violations to file, line and rule, without source text", "src/cli/lib/foo.ts", 3],
+    ["projects a violation in a deleted file without throwing", "missing/deleted.ts", 1],
   ] as const) {
     it(`gate: ${name}`, () => {
       const repo = fs.mkdtempSync(path.join(os.tmpdir(), "og-gate-proj-"));
@@ -143,8 +145,8 @@ describe("verify failure envelope", () => {
       assert.equal(payload.findings[0]!.offending_file, file);
       assert.equal(payload.findings[0]!.line, line);
       assert.equal(payload.findings[0]!.rule_id, "import-layer");
-      assert.equal(payload.findings[0]!.evidence, evidence);
-      assert.ok(payload.findings[0]!.fingerprint);
+      assert.equal("evidence" in payload.findings[0]!, false);
+      assert.doesNotMatch(JSON.stringify(payload), /import \{ x \}/);
     });
   }
 
@@ -156,7 +158,7 @@ describe("verify failure envelope", () => {
 
   it("maps findings to SARIF results with rule_id", () => {
     const { payload } = verifyFailure(root, envelopeMission("/m"), gateFailure);
-    const sarif = buildSarifDocument(payload, "0.0.0-test");
+    const sarif = sarifLog("0.0.0-test", payloadExportFindings(payload, () => false));
     const results = (sarif.runs as Array<{ results: Array<{ properties: { resolution_hint: string } }> }>)[0]!
       .results;
     assert.ok(results[0]!.properties.resolution_hint.length > 0);

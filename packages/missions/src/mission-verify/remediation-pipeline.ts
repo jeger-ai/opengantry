@@ -3,7 +3,7 @@ import path from "node:path";
 import { REL_NEXT_REMEDIATION } from "#core/constants.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { writeJsonAtomicSync } from "../atomic-fs.js";
-import { appendDigestToRing, computeFindingsDigest, digestRecurredInRing } from "./finding-fingerprint.js";
+import { appendDigestToRing, computeFindingsDigest } from "./finding-fingerprint.js";
 import type { VerifyFinding } from "./finding.js";
 import type { VerifyFailedPayload } from "./payload.js";
 
@@ -78,12 +78,11 @@ export function persistVerifyFailure(
   root: string,
   payload: VerifyFailedPayload,
   meta: { mission_file_path?: string; msn_id?: string },
-  gateLogPath?: string,
 ): VerifyFailedPayload {
   const prior = meta.msn_id ? readRemediationSnapshot(root) : null;
   const ring = prior?.msn_id === meta.msn_id ? (prior?.digest_ring ?? []) : [];
   const digest = computeFindingsDigest(payload.findings);
-  const recurred = digestRecurredInRing(ring, digest);
+  const recurred = ring.includes(digest);
   const next: VerifyFailedPayload = recurred
     ? {
         ...payload,
@@ -107,7 +106,7 @@ export function persistVerifyFailure(
     findings: next.findings,
     findings_digest: digest,
     digest_ring: recurred ? ring : appendDigestToRing(ring, digest),
-    ...(gateLogPath ? { gate_log_path: gateLogPath } : {}),
+    ...(next.gate_log_path ? { gate_log_path: next.gate_log_path } : {}),
   });
   return next;
 }

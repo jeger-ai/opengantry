@@ -1,12 +1,11 @@
 /**
  * Shared helpers for tool adapters that turn parsed diagnostics into envelope
- * v3 findings (ADR-0040/ADR-0041): path normalization, evidence, deterministic
- * ordering, output caps, and the truncation finding.
+ * v3 findings (ADR-0040/ADR-0041): path normalization, deterministic ordering,
+ * output caps, and the truncation finding.
  */
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { MAX_IO_BUFFER_BYTES } from "../gate.js";
-import { readEvidenceSnippet } from "../mission-verify/evidence-snippet.js";
 import { verifyFinding, type VerifyFinding, type VerifyFindingSeverity } from "../mission-verify/finding.js";
 import type { GateExecContext } from "./gate-adapter-types.js";
 
@@ -38,17 +37,14 @@ function normalizeOffendingFile(ctx: GateExecContext, file: string): string {
 }
 
 function diagnosticToFinding(ctx: GateExecContext, d: ParsedDiagnostic): VerifyFinding {
-  const offendingFile = normalizeOffendingFile(ctx, d.file);
-  const evidence = readEvidenceSnippet(findingsRoot(ctx), offendingFile, d.line, d.column);
   return verifyFinding("gate", d.message, {
-    offending_file: offendingFile,
+    offending_file: normalizeOffendingFile(ctx, d.file),
     line: d.line,
     ...(d.endLine !== undefined ? { end_line: d.endLine } : {}),
     ...(d.column > 0 ? { start_column: d.column } : {}),
     ...(d.endColumn !== undefined ? { end_column: d.endColumn } : {}),
     severity: d.severity,
     rule_id: d.ruleId,
-    ...(evidence !== undefined ? { evidence } : {}),
   });
 }
 

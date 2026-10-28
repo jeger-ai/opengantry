@@ -1,58 +1,26 @@
-import {
-  truncateEvidenceBytes,
-  normalizeEvidenceForSemantic,
-  computeExactFingerprint,
-  computeSemanticFingerprint,
-  finalizeVerifyFinding,
-  computeFindingsDigest,
-  appendDigestToRing,
-  digestRecurredInRing,
-  EVIDENCE_TRUNCATION_SENTINEL,
-} from "#missions/mission-verify/finding-fingerprint.js";
+import { appendDigestToRing, computeFindingsDigest } from "#missions/mission-verify/finding-fingerprint.js";
+import { verifyFinding } from "#missions/mission-verify/finding.js";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 describe("verify-finding-fingerprint", () => {
-  it("truncates at byte boundary with sentinel", () => {
-    const long = "x".repeat(3000);
-    const out = truncateEvidenceBytes(long);
-    assert.ok(out.endsWith(EVIDENCE_TRUNCATION_SENTINEL));
-    assert.ok(Buffer.byteLength(out, "utf8") <= 2048 + Buffer.byteLength(EVIDENCE_TRUNCATION_SENTINEL, "utf8"));
+  it("the findings digest ignores line drift", () => {
+    const at = (line: number) => [verifyFinding("gate", "fix", { offending_file: "src/a.ts", line, rule_id: "tsc" })];
+    assert.equal(computeFindingsDigest(at(40)), computeFindingsDigest(at(43)));
   });
 
-  it("semantic fingerprint ignores line drift in evidence", () => {
-    const evidence = "error TS2345: Type 'string' is not assignable";
-    const a = computeSemanticFingerprint({
-      failed_gate: "gate",
-      offending_file: "src/a.ts",
-      line: 40,
-      rule_id: "tsc",
-      evidence,
-    });
-    const b = computeSemanticFingerprint({
-      failed_gate: "gate",
-      offending_file: "src/a.ts",
-      line: 43,
-      rule_id: "tsc",
-      evidence,
-    });
-    assert.equal(a, b);
+  it("the findings digest keeps the value it had with per-finding fingerprints, so an existing ring still trips", () => {
+    const findings = [
+      verifyFinding("gate", "x", { offending_file: "src/a.ts", line: 3, rule_id: "TS2322" }),
+      verifyFinding("gate", "gate command failed"),
+    ];
+    assert.equal(computeFindingsDigest(findings), "eea6efcfcd1fb0f43bf1fa5d4c095c792c4916cda84fc0ae6d7ecfe012b06139");
   });
 
-  it("exact fingerprint changes when line changes", () => {
-    const a = computeExactFingerprint({
-      failed_gate: "gate",
-      offending_file: "src/a.ts",
-      line: 40,
-      rule_id: "tsc",
-    });
-    const b = computeExactFingerprint({
-      failed_gate: "gate",
-      offending_file: "src/a.ts",
-      line: 43,
-      rule_id: "tsc",
-    });
-    assert.notEqual(a, b);
+  it("the findings digest changes with the rule or the file", () => {
+    const base = computeFindingsDigest([verifyFinding("gate", "fix", { offending_file: "src/a.ts", rule_id: "tsc" })]);
+    assert.notEqual(base, computeFindingsDigest([verifyFinding("gate", "fix", { offending_file: "src/a.ts", rule_id: "eslint" })]));
+    assert.notEqual(base, computeFindingsDigest([verifyFinding("gate", "fix", { offending_file: "src/b.ts", rule_id: "tsc" })]));
   });
 
   it("ring detects A-B-A flap", () => {
@@ -60,45 +28,21 @@ describe("verify-finding-fingerprint", () => {
     const dB = "digest-b";
     let ring = appendDigestToRing([], dA);
     ring = appendDigestToRing(ring, dB);
-    assert.equal(digestRecurredInRing(ring, dB), true);
-    assert.equal(digestRecurredInRing(ring, dA), true);
-    assert.equal(digestRecurredInRing(ring, "digest-c"), false);
+    assert.equal(ring.includes(dB), true);
+    assert.equal(ring.includes(dA), true);
+    assert.equal(ring.includes("digest-c"), false);
   });
 
-  it("finalize attaches fingerprints", () => {
-    const f = finalizeVerifyFinding({
-      failed_gate: "gate",
-      offending_file: "f.ts",
-      line: 1,
-      severity: "error",
-      resolution_hint: "fix",
-    });
-    assert.ok(f.fingerprint.length > 0);
-    assert.ok(f.semantic_fingerprint.length > 0);
-  });
-
-  it("normalizeEvidence strips diff hunk headers", () => {
-    const raw = "@@ -10,3 +13,4 @@\n const x = 1;";
-    const norm = normalizeEvidenceForSemantic(raw);
-    assert.ok(!norm.includes("@@"));
+  it("the ring moves a repeated digest to the end and keeps four", () => {
+    assert.deepEqual(appendDigestToRing(["a", "b", "c", "d"], "e"), ["b", "c", "d", "e"]);
+    assert.deepEqual(appendDigestToRing(["a", "b", "c"], "a"), ["b", "c", "a"]);
   });
 
   it("computeFindingsDigest sorts unique semantic keys", () => {
-    const f1 = finalizeVerifyFinding({
-      failed_gate: "gate",
-      offending_file: "a.ts",
-      line: 0,
-      severity: "error",
-      resolution_hint: "a",
-    });
-    const f2 = finalizeVerifyFinding({
-      failed_gate: "gate",
-      offending_file: "b.ts",
-      line: 0,
-      severity: "error",
-      resolution_hint: "b",
-    });
+    const f1 = verifyFinding("gate", "a", { offending_file: "a.ts" });
+    const f2 = verifyFinding("gate", "b", { offending_file: "b.ts" });
     const digest = computeFindingsDigest([f1, f2]);
     assert.equal(digest, computeFindingsDigest([f2, f1]));
+    assert.equal(digest, computeFindingsDigest([f1, f2, f1]));
   });
 });

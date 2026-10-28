@@ -1,0 +1,280 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0361]. Executor must not run until the [MSN-0361] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 1, mission 3a: one finding and export type; no per-finding
+# fingerprints or evidence; digest-only mission verify JSON (gate_log_path instead of gate output).
+#
+# Operator request (2026-10-28, ADR-0061 phase 1 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0361.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0361
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/concepts/verify.md, docs/DEVELOPMENT.md,
+      docs/guides/agent-graphs.md, docs/guides/troubleshooting.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0361.digest-only-findings.yaml,
+      .gitagent/runs/MSN-0361.json,
+      packages/missions/src/gate-adapters/adapter-findings.ts,
+      packages/missions/src/mission-verify/contract.ts,
+      packages/missions/src/mission-verify/evidence-snippet.ts,
+      packages/missions/src/mission-verify/export.ts,
+      packages/missions/src/mission-verify/finding-fingerprint.ts,
+      packages/missions/src/mission-verify/finding.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/mission-verify/remediation-pipeline.ts,
+      packages/verify/src/export.ts, src/cli/commands/verify.ts,
+      src/cli/flows/verify-options.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/program-workflow.ts,
+      src/cli/tests/eslint-json-adapter.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/tsc-adapter.test.ts, src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts,
+      src/cli/tests/verify-finding-fingerprint.test.ts,
+      src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      test/conformance/golden/verify.ci.mission-stale.json,
+      test/conformance/golden/verify.mission-fail-gate.json,
+      test/conformance/golden/verify.mission-norows.json,
+      test/conformance/golden/verify.mission-record-stale.json,
+      test/conformance/golden/verify.no-mission.fresh-init.json,
+      test/conformance/run.test.mjs. Deleted:
+      packages/missions/src/mission-verify/export.ts and evidence-snippet.ts.
+      Changed: packages/verify export (one ExportFinding type, one sarifLog),
+      the contract verify command's SARIF build, mission verify finding,
+      fingerprint (digest only), payload (export findings and JUnit cases,
+      gate_log_path), failure, hints, phase steps, contract and remediation
+      modules, the CLI verify run and presenters, MCP runtime, the conformance
+      normalizer (absolute temp paths only), tests, five verify goldens, docs
+      (verify concept, agent graphs, troubleshooting, DEVELOPMENT, CHANGELOG),
+      ARCH_BASELINE.json lowered. Operator decisions (2026-10-28, ADR-0061 phase
+      1): findings lose fingerprint and semantic_fingerprint while
+      findings_digest and GXT_FINDINGS_RECURRED stay; mission verify --json
+      becomes digest-only in phase 1 (the operator chose this over deferring it
+      to phase 2). Consequences recorded: the findings digest is computed from
+      gate, file and rule (unchanged for findings that had no evidence; findings
+      that carried evidence now digest without it, so a ring written before the
+      upgrade does not match once); parsed diagnostics (tsc and eslint messages)
+      and import specifiers stay in resolution_hint as rule data; human terminal
+      output still prints the gate output. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0361.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 42db162a9794
+    kind: adr_conflict
+    question: Intent may relate to ADR-0032. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0032 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: envelope_schema_version becomes 4 because
+      fields are removed and renamed; the envelope keeps status, phase,
+      error_code, findings[] (failed_gate, offending_file, line, rule_id,
+      resolution_hint), fix_hints, next_actions, findings_digest and
+      envelope_schema_version; per-finding fingerprint, semantic_fingerprint and
+      evidence are removed and the gate output is referenced by gate_log_path,
+      so agents read the log file instead of stdout."
+    adr_refs:
+      - ADR-0052
+      - ADR-0032
+  - finding_id: 55cf8dadc1bd
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/verify.md, docs/DEVELOPMENT.md, docs/guides/agent-graphs.md,
+      docs/guides/troubleshooting.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0361.digest-only-findings.yaml,
+      .gitagent/runs/MSN-0361.json,
+      packages/missions/src/gate-adapters/adapter-findings.ts,
+      packages/missions/src/mission-verify/contract.ts,
+      packages/missions/src/mission-verify/evidence-snippet.ts,
+      packages/missions/src/mission-verify/export.ts,
+      packages/missions/src/mission-verify/finding-fingerprint.ts,
+      packages/missions/src/mission-verify/finding.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/mission-verify/remediation-pipeline.ts,
+      packages/verify/src/export.ts, src/cli/commands/verify.ts,
+      src/cli/flows/verify-options.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/program-workflow.ts,
+      src/cli/tests/eslint-json-adapter.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/tsc-adapter.test.ts, src/cli/tests/verify-export.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts,
+      src/cli/tests/verify-finding-fingerprint.test.ts,
+      src/cli/tests/verify-format-cli.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      test/conformance/golden/verify.ci.mission-stale.json,
+      test/conformance/golden/verify.mission-fail-gate.json,
+      test/conformance/golden/verify.mission-norows.json,
+      test/conformance/golden/verify.mission-record-stale.json,
+      test/conformance/golden/verify.no-mission.fresh-init.json,
+      test/conformance/run.test.mjs. Deleted:
+      packages/missions/src/mission-verify/export.ts and evidence-snippet.ts.
+      Changed: packages/verify export (one ExportFinding type, one sarifLog),
+      the contract verify command's SARIF build, mission verify finding,
+      fingerprint (digest only), payload (export findings and JUnit cases,
+      gate_log_path), failure, hints, phase steps, contract and remediation
+      modules, the CLI verify run and presenters, MCP runtime, the conformance
+      normalizer (absolute temp paths only), tests, five verify goldens, docs
+      (verify concept, agent graphs, troubleshooting, DEVELOPMENT, CHANGELOG),
+      ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Tests that asserted the removed fields now assert their
+      absence; a new test proves a failed --json payload carries no gate output
+      and no evidence; a digest test pins the value the old code produced for
+      findings without evidence.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with named output changes: verify.mission-fail-gate
+      (fingerprints removed; stdout replaced by gate_log_path),
+      verify.ci.mission-stale, verify.no-mission.fresh-init,
+      verify.mission-record-stale and verify.mission-norows (fingerprints
+      removed); all five show envelope_schema_version 4. The conformance
+      normalizer masks only absolute temp paths. Every other golden is
+      unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP gxt_verify returns the digest-only payload
+      (gate_log_path instead of gate output); write containment is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: aaba7dc586f8
+    kind: adr_conflict
+    question: Intent may relate to ADR-0040. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0040 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: NEXT_REMEDIATION.json keeps schema v2 but
+      carries gate_log_path and findings without evidence or fingerprints."
+    adr_refs:
+      - ADR-0052
+      - ADR-0040
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config file format changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 090f00e3fb325ad7bef42d5b3ab8a16d64b655849aac6c361260fed01c13328d
+declared_paths:
+  - .gitagent/missions/MSN-0361.digest-only-findings.yaml
+  - .gitagent/runs/MSN-0361.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/concepts/verify.md
+  - docs/guides/agent-graphs.md
+  - docs/guides/troubleshooting.md
+  - packages/missions/src/gate-adapters/adapter-findings.ts
+  - packages/missions/src/mission-verify/contract.ts
+  - packages/missions/src/mission-verify/evidence-snippet.ts
+  - packages/missions/src/mission-verify/export.ts
+  - packages/missions/src/mission-verify/finding-fingerprint.ts
+  - packages/missions/src/mission-verify/finding.ts
+  - packages/missions/src/mission-verify/payload.ts
+  - packages/missions/src/mission-verify/remediation-pipeline.ts
+  - packages/verify/src/export.ts
+  - src/cli/commands/verify.ts
+  - src/cli/flows/verify-options.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/eslint-json-adapter.test.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/tsc-adapter.test.ts
+  - src/cli/tests/verify-export.test.ts
+  - src/cli/tests/verify-finding-envelope.test.ts
+  - src/cli/tests/verify-finding-fingerprint.test.ts
+  - src/cli/tests/verify-format-cli.test.ts
+  - src/cli/tests/verify-json.test.ts
+  - test/conformance/golden/verify.ci.mission-stale.json
+  - test/conformance/golden/verify.mission-fail-gate.json
+  - test/conformance/golden/verify.mission-norows.json
+  - test/conformance/golden/verify.mission-record-stale.json
+  - test/conformance/golden/verify.no-mission.fresh-init.json
+  - test/conformance/run.test.mjs
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0361.digest-only-findings.yaml
+    - .gitagent/runs/MSN-0361.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/concepts/verify.md
+    - docs/guides/agent-graphs.md
+    - docs/guides/troubleshooting.md
+    - packages/missions/src/gate-adapters/adapter-findings.ts
+    - packages/missions/src/mission-verify/contract.ts
+    - packages/missions/src/mission-verify/evidence-snippet.ts
+    - packages/missions/src/mission-verify/export.ts
+    - packages/missions/src/mission-verify/finding-fingerprint.ts
+    - packages/missions/src/mission-verify/finding.ts
+    - packages/missions/src/mission-verify/payload.ts
+    - packages/missions/src/mission-verify/remediation-pipeline.ts
+    - packages/verify/src/export.ts
+    - src/cli/commands/verify.ts
+    - src/cli/flows/verify-options.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/eslint-json-adapter.test.ts
+    - src/cli/tests/findings-circuit-breaker.test.ts
+    - src/cli/tests/tsc-adapter.test.ts
+    - src/cli/tests/verify-export.test.ts
+    - src/cli/tests/verify-finding-envelope.test.ts
+    - src/cli/tests/verify-finding-fingerprint.test.ts
+    - src/cli/tests/verify-format-cli.test.ts
+    - src/cli/tests/verify-json.test.ts
+    - test/conformance/golden/verify.ci.mission-stale.json
+    - test/conformance/golden/verify.mission-fail-gate.json
+    - test/conformance/golden/verify.mission-norows.json
+    - test/conformance/golden/verify.mission-record-stale.json
+    - test/conformance/golden/verify.no-mission.fresh-init.json
+    - test/conformance/run.test.mjs
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 28ba88037232efee0c4753b226919d0b66ba1a1f073d78354e036c3a9af81063

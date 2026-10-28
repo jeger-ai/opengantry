@@ -61,7 +61,8 @@ function normalize(text, caseDir, extra) {
   for (const p of new Set([caseDir, real])) out = out.split(p).join("<ROOT>");
   out = out.split(repoRoot).join("<CLI_ROOT>");
   for (const h of new Set([homeDir, fs.realpathSync(homeDir)])) out = out.split(h).join("<HOME>");
-  out = out.split(os.tmpdir()).join("<TMP>");
+  // Only an absolute temp path: `.gitagent/tmp/...` stays as written where the temp directory is `/tmp`.
+  out = out.replace(new RegExp(`(?<![\\w.])${os.tmpdir().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "g"), "<TMP>");
   for (const [re, rep] of GLOBAL_NORMALIZERS) out = out.replace(re, rep);
   for (const n of extra ?? []) out = out.replace(new RegExp(n.pattern, "g"), n.replace ?? "<X>");
   return out;

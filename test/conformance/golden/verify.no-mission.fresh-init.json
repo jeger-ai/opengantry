@@ -16,16 +16,14 @@
     ],
     "next_actions": [],
     "exit_code": 2,
-    "envelope_schema_version": 3,
+    "envelope_schema_version": 4,
     "findings": [
       {
         "failed_gate": "init",
         "offending_file": "",
         "line": 0,
         "severity": "error",
-        "resolution_hint": "gantry mission pin .gitagent/missions/<file>.yaml  # then re-run without --mission",
-        "fingerprint": "<SHA256>",
-        "semantic_fingerprint": "<SHA256>"
+        "resolution_hint": "gantry mission pin .gitagent/missions/<file>.yaml  # then re-run without --mission"
       }
     ]
   },

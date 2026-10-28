@@ -8,7 +8,6 @@ import { runVerify } from "./commands/verify.js";
 import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
 import { registerAdaptCommand } from "./commands/adapt.js";
 import type { VerifyOptions } from "./flows/verify-options.js";
-import type { VerifyExportFormat } from "#missions/mission-verify/export.js";
 import { runEventsPush } from "./commands/events-push.js";
 import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
@@ -105,7 +104,7 @@ interface VerifyCliOptions {
   export?: string;
 }
 
-function parseVerifyExportFormat(raw?: string): VerifyExportFormat | undefined {
+function parseVerifyExportFormat(raw?: string): VerifyOptions["format"] {
   if (!raw?.trim()) return undefined;
   const v = raw.trim().toLowerCase();
   if (v === "text") return undefined;

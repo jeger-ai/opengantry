@@ -1,6 +1,4 @@
-import { finalizeVerifyFinding } from "./finding-fingerprint.js";
-
-export const VERIFY_ENVELOPE_SCHEMA_VERSION = 3 as const;
+export const VERIFY_ENVELOPE_SCHEMA_VERSION = 4 as const;
 
 export type VerifyFindingSeverity = "error" | "warning";
 
@@ -16,6 +14,7 @@ export type VerifyFailedGate =
   | "dependencies"
   | "contract";
 
+/** A finding names a rule at a file and line; it never carries source or gate output text. */
 export interface VerifyFinding {
   failed_gate: VerifyFailedGate;
   offending_file: string;
@@ -26,37 +25,13 @@ export interface VerifyFinding {
   start_column?: number;
   end_column?: number;
   rule_id?: string;
-  evidence?: string;
-  fingerprint: string;
-  semantic_fingerprint: string;
 }
 
-interface VerifyFindingInput {
-  offending_file?: string;
-  line?: number;
-  end_line?: number;
-  start_column?: number;
-  end_column?: number;
-  severity?: VerifyFindingSeverity;
-  rule_id?: string;
-  evidence?: string;
-}
-
+/** A finding with the coordinates given; the rest default to no file, line 0 and error. */
 export function verifyFinding(
   failed_gate: VerifyFailedGate,
   resolution_hint: string,
-  opts: VerifyFindingInput = {},
+  opts: Partial<Omit<VerifyFinding, "failed_gate" | "resolution_hint">> = {},
 ): VerifyFinding {
-  return finalizeVerifyFinding({
-    failed_gate,
-    offending_file: opts.offending_file ?? "",
-    line: opts.line ?? 0,
-    severity: opts.severity ?? "error",
-    resolution_hint,
-    ...(opts.end_line !== undefined ? { end_line: opts.end_line } : {}),
-    ...(opts.start_column !== undefined ? { start_column: opts.start_column } : {}),
-    ...(opts.end_column !== undefined ? { end_column: opts.end_column } : {}),
-    ...(opts.rule_id !== undefined ? { rule_id: opts.rule_id } : {}),
-    ...(opts.evidence !== undefined ? { evidence: opts.evidence } : {}),
-  });
+  return { failed_gate, offending_file: "", line: 0, severity: "error", resolution_hint, ...opts };
 }

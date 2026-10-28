@@ -4,15 +4,26 @@ import { UNCOMMITTED_PROBLEM, type VerifyContractResult } from "./run.js";
 import type { TestFileCounts, TestMetric } from "./test-integrity.js";
 
 /**
- * SARIF and JUnit projections (ADR-0052 A1: they belong to verify). The writers are shared with mission verify;
- * the contract projections below read only the digest-only result, so neither format holds file contents or
- * command output.
+ * SARIF and JUnit projections (ADR-0052 A1: they belong to verify). Both engines project onto these writers: the
+ * contract run below, mission verify through its payload's findings. Both read digest-only results, so neither
+ * format holds file contents or command output.
  */
 
 const SARIF_SCHEMA =
   "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
 
-type SarifRegion = Record<string, number>;
+/**
+ * A finding of either engine as SARIF reads it: a rule, its level and message, and the file and region it points at
+ * (no file: a result without a location). A mission finding repeats its resolution hint as a property.
+ */
+export interface ExportFinding {
+  ruleId: string;
+  level: "error" | "warning";
+  text: string;
+  uri?: string;
+  region?: Record<string, number>;
+  hint?: string;
+}
 
 export interface JUnitCase {
   name: string;
@@ -30,33 +41,17 @@ function xmlEscape(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-/** `locations` of one SARIF result: one artifact, with a region when the file has lines to point at. */
-export function sarifLocation(uri: string, region: SarifRegion | undefined): Record<string, unknown> {
-  const physicalLocation: Record<string, unknown> = {
-    artifactLocation: { uri },
-  };
-  if (region) physicalLocation.region = region;
-  return { locations: [{ physicalLocation }] };
-}
-
-/** A SARIF 2.1.0 log with one run of the gantry tool. */
-export function sarifLog(cliVersion: string, results: Record<string, unknown>[]): Record<string, unknown> {
-  return {
-    $schema: SARIF_SCHEMA,
-    version: "2.1.0",
-    runs: [
-      {
-        tool: {
-          driver: {
-            name: CLI_NAME,
-            version: cliVersion,
-            informationUri: OPENGANTRY_WEBSITE_URL,
-          },
-        },
-        results,
-      },
-    ],
-  };
+/** A SARIF 2.1.0 log with one run of the gantry tool and one result per finding. */
+export function sarifLog(cliVersion: string, findings: readonly ExportFinding[]): Record<string, unknown> {
+  const results = findings.map((f) => ({
+    ruleId: f.ruleId,
+    level: f.level,
+    message: { text: f.text },
+    ...(f.uri === undefined ? {} : { locations: [{ physicalLocation: { artifactLocation: { uri: f.uri }, ...(f.region ? { region: f.region } : {}) } }] }),
+    ...(f.hint === undefined ? {} : { properties: { resolution_hint: f.hint } }),
+  }));
+  const driver = { name: CLI_NAME, version: cliVersion, informationUri: OPENGANTRY_WEBSITE_URL };
+  return { $schema: SARIF_SCHEMA, version: "2.1.0", runs: [{ tool: { driver }, results }] };
 }
 
 /** A JUnit XML document with one suite. */
@@ -86,8 +81,8 @@ function why(text: string | null): string {
   return text ? ` (${text})` : "";
 }
 
-function error(ruleId: string, text: string, uri: string, line?: number): Record<string, unknown> {
-  return { ruleId, level: "error", message: { text }, ...sarifLocation(uri, line ? { startLine: line } : undefined) };
+function error(ruleId: string, text: string, uri: string, line?: number): ExportFinding {
+  return { ruleId, level: "error", text, uri, ...(line ? { region: { startLine: line } } : {}) };
 }
 
 /**
@@ -97,7 +92,7 @@ function error(ruleId: string, text: string, uri: string, line?: number): Record
  */
 export function verifyResultSarif(result: VerifyContractResult, cliVersion: string): Record<string, unknown> {
   const contract = result.contract.path;
-  const out: Record<string, unknown>[] = [];
+  const out: ExportFinding[] = [];
   if (result.problems.includes(UNCOMMITTED_PROBLEM)) out.push(error("verify/uncommitted", UNCOMMITTED_PROBLEM, contract));
   for (const f of result.paths.outside) out.push(error("verify/outside-allowed-paths", "changed outside allowed_paths", f));
   for (const f of result.paths.forbidden) out.push(error("verify/forbidden-path", "forbidden path changed", f));

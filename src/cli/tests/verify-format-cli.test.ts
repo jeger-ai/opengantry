@@ -9,7 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
 import { runVerify } from "../commands/verify.js";
-import type { VerifyExportFormat } from "#missions/mission-verify/export.js";
+import type { VerifyOptions } from "../flows/verify-options.js";
 import {
   writeMiniGantryRepo,
   writeMiniGantryMission,
@@ -21,7 +21,7 @@ import { PLANNER_EMAIL, asCommand, captureConsoleAsync, withPlannerEnvAsync } fr
 
 async function runVerifyFormatInRepo(
   dest: string,
-  format: VerifyExportFormat,
+  format: NonNullable<VerifyOptions["format"]>,
 ): Promise<{ stdout: string; stderr: string; exitCode: number | undefined }> {
   const prevCwd = process.cwd();
   return withPlannerEnvAsync(async () => {

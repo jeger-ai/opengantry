@@ -26,7 +26,7 @@ function sampleFailedPayload(findings = [verifyFinding("gate", "fix it")]): Veri
     fix_hints: ["rerun"],
     next_actions: [],
     exit_code: 1,
-    envelope_schema_version: 3,
+    envelope_schema_version: 4,
     findings,
   };
 }
