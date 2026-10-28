@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0359",
+  "mission_path": ".gitagent/missions/MSN-0359.verify-ring-clock.yaml",
+  "head": "9a7d5a20296a384b1431cef4ec95f3dbf05dc336",
+  "tree": "0ebb06ffc93f4afa9a740c179cfa476b8d08bf61",
+  "law_sha256": "f34a49c55193982a55b5b2278664bda9ce1f7a1c6a3b3233db4f8dce3becde2a",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 107920,
+      "output_sha256": "d63b1ffcbae50974d44e519421368c386eb680be1761868780d2cf02d7f5de4a"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-28T20:47:03.473Z"
+}
