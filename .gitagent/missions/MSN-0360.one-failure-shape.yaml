@@ -1,0 +1,248 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0360]. Executor must not run until the [MSN-0360] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 1, second mission: one failure shape; the normalizer and the
+# remediation overlay go; NEXT_REMEDIATION.json and GXT_FINDINGS_RECURRED stay; no output changes.
+#
+# Operator request (2026-10-28, ADR-0061 phase 1). No trace rows: the evidence is
+# .gitagent/runs/MSN-0360.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0360
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0360.one-failure-shape.yaml,
+      .gitagent/runs/MSN-0360.json,
+      packages/missions/src/context-feed-remediation.ts,
+      packages/missions/src/context-feed-store.ts,
+      packages/missions/src/gate-log-writer.ts,
+      packages/missions/src/mission-verify/contract.ts,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/mission-verify/failure-normalize.ts,
+      packages/missions/src/mission-verify/failure.ts,
+      packages/missions/src/mission-verify/finding-gate-projector.ts,
+      packages/missions/src/mission-verify/hints.ts,
+      packages/missions/src/mission-verify/interrogation.ts,
+      packages/missions/src/mission-verify/org-phases.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/mission-verify/phase-steps.ts,
+      packages/missions/src/mission-verify/remediation-pipeline.ts,
+      packages/missions/src/mission-verify/run-record.ts,
+      src/cli/doctor/repairs/registry.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/tests/contract-verify.test.ts,
+      src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/gate-adapter-registry.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/verify-failure-normalize.test.ts,
+      src/cli/tests/verify-failure-presentation.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts,
+      src/cli/tests/verify-finding-gate-projector.test.ts,
+      src/cli/tests/verify-hints.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/verify-org-policy-phase.test.ts. Deleted:
+      mission-verify/failure-normalize.ts and finding-gate-projector.ts,
+      missions context-feed-store.ts and context-feed-remediation.ts,
+      writeGateLog, the normalizer, presentation and projector tests (their
+      behavioural assertions moved to the finding envelope and hints tests).
+      Changed: mission verify failure, hints, payload, engine, phase steps,
+      contract, org phases, interrogation, run record and remediation modules,
+      gate log writer, the CLI verify run and presenters, the repairs registry,
+      MCP runtime, tests, ARCH_BASELINE.json lowered. Operator decisions
+      (2026-10-28): ADR-0061 phase 1 approved, with verify --fix keeping its
+      interactive prompts and GXT_FINDINGS_RECURRED kept. This mission is
+      behaviour-preserving: every conformance golden is unchanged without
+      re-recording, and CLI output for 15 failure, pass, fix, receipt and
+      recurrence scenarios was compared byte for byte before and after.
+      Remediation snapshot I/O stays best-effort (an unreadable snapshot reads
+      as none). The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0360.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 7fbbb85b600c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0360.one-failure-shape.yaml,
+      .gitagent/runs/MSN-0360.json,
+      packages/missions/src/context-feed-remediation.ts,
+      packages/missions/src/context-feed-store.ts,
+      packages/missions/src/gate-log-writer.ts,
+      packages/missions/src/mission-verify/contract.ts,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/mission-verify/failure-normalize.ts,
+      packages/missions/src/mission-verify/failure.ts,
+      packages/missions/src/mission-verify/finding-gate-projector.ts,
+      packages/missions/src/mission-verify/hints.ts,
+      packages/missions/src/mission-verify/interrogation.ts,
+      packages/missions/src/mission-verify/org-phases.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/mission-verify/phase-steps.ts,
+      packages/missions/src/mission-verify/remediation-pipeline.ts,
+      packages/missions/src/mission-verify/run-record.ts,
+      src/cli/doctor/repairs/registry.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/tests/contract-verify.test.ts,
+      src/cli/tests/deps-resolve.test.ts,
+      src/cli/tests/findings-circuit-breaker.test.ts,
+      src/cli/tests/gate-adapter-registry.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/verify-failure-normalize.test.ts,
+      src/cli/tests/verify-failure-presentation.test.ts,
+      src/cli/tests/verify-finding-envelope.test.ts,
+      src/cli/tests/verify-finding-gate-projector.test.ts,
+      src/cli/tests/verify-hints.test.ts,
+      src/cli/tests/verify-interrogation-phase.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/verify-org-policy-phase.test.ts. Deleted:
+      mission-verify/failure-normalize.ts and finding-gate-projector.ts,
+      missions context-feed-store.ts and context-feed-remediation.ts,
+      writeGateLog, the normalizer, presentation and projector tests (their
+      behavioural assertions moved to the finding envelope and hints tests).
+      Changed: mission verify failure, hints, payload, engine, phase steps,
+      contract, org phases, interrogation, run record and remediation modules,
+      gate log writer, the CLI verify run and presenters, the repairs registry,
+      MCP runtime, tests, ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. No conformance golden changes; the goldens pass without
+      re-recording.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP gxt_verify returns the same payload; write
+      containment is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: aaba7dc586f8
+    kind: adr_conflict
+    question: Intent may relate to ADR-0040. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0040 before
+      legislation proceeds.
+    operator_answer: Accept. NEXT_REMEDIATION.json keeps schema v2, is written on
+      failure and tombstoned on pass; legacy v1 snapshots are no longer read.
+    adr_refs:
+      - ADR-0052
+      - ADR-0040
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config file format changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 17b95ae070a3b3d445c3bec5596309f0791d9743977be0e9f95b8a5006041a8f
+declared_paths:
+  - .gitagent/missions/MSN-0360.one-failure-shape.yaml
+  - .gitagent/runs/MSN-0360.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - packages/missions/src/context-feed-remediation.ts
+  - packages/missions/src/context-feed-store.ts
+  - packages/missions/src/gate-log-writer.ts
+  - packages/missions/src/mission-verify/contract.ts
+  - packages/missions/src/mission-verify/engine.ts
+  - packages/missions/src/mission-verify/failure-normalize.ts
+  - packages/missions/src/mission-verify/failure.ts
+  - packages/missions/src/mission-verify/finding-gate-projector.ts
+  - packages/missions/src/mission-verify/hints.ts
+  - packages/missions/src/mission-verify/interrogation.ts
+  - packages/missions/src/mission-verify/org-phases.ts
+  - packages/missions/src/mission-verify/payload.ts
+  - packages/missions/src/mission-verify/phase-steps.ts
+  - packages/missions/src/mission-verify/remediation-pipeline.ts
+  - packages/missions/src/mission-verify/run-record.ts
+  - src/cli/doctor/repairs/registry.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/tests/contract-verify.test.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/findings-circuit-breaker.test.ts
+  - src/cli/tests/gate-adapter-registry.test.ts
+  - src/cli/tests/interrogate-verify-roundtrip.test.ts
+  - src/cli/tests/repairs-registry.test.ts
+  - src/cli/tests/verify-failure-normalize.test.ts
+  - src/cli/tests/verify-failure-presentation.test.ts
+  - src/cli/tests/verify-finding-envelope.test.ts
+  - src/cli/tests/verify-finding-gate-projector.test.ts
+  - src/cli/tests/verify-hints.test.ts
+  - src/cli/tests/verify-interrogation-phase.test.ts
+  - src/cli/tests/verify-json.test.ts
+  - src/cli/tests/verify-org-policy-phase.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0360.one-failure-shape.yaml
+    - .gitagent/runs/MSN-0360.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - packages/missions/src/context-feed-remediation.ts
+    - packages/missions/src/context-feed-store.ts
+    - packages/missions/src/gate-log-writer.ts
+    - packages/missions/src/mission-verify/contract.ts
+    - packages/missions/src/mission-verify/engine.ts
+    - packages/missions/src/mission-verify/failure-normalize.ts
+    - packages/missions/src/mission-verify/failure.ts
+    - packages/missions/src/mission-verify/finding-gate-projector.ts
+    - packages/missions/src/mission-verify/hints.ts
+    - packages/missions/src/mission-verify/interrogation.ts
+    - packages/missions/src/mission-verify/org-phases.ts
+    - packages/missions/src/mission-verify/payload.ts
+    - packages/missions/src/mission-verify/phase-steps.ts
+    - packages/missions/src/mission-verify/remediation-pipeline.ts
+    - packages/missions/src/mission-verify/run-record.ts
+    - src/cli/doctor/repairs/registry.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/tests/contract-verify.test.ts
+    - src/cli/tests/deps-resolve.test.ts
+    - src/cli/tests/findings-circuit-breaker.test.ts
+    - src/cli/tests/gate-adapter-registry.test.ts
+    - src/cli/tests/interrogate-verify-roundtrip.test.ts
+    - src/cli/tests/repairs-registry.test.ts
+    - src/cli/tests/verify-failure-normalize.test.ts
+    - src/cli/tests/verify-failure-presentation.test.ts
+    - src/cli/tests/verify-finding-envelope.test.ts
+    - src/cli/tests/verify-finding-gate-projector.test.ts
+    - src/cli/tests/verify-hints.test.ts
+    - src/cli/tests/verify-interrogation-phase.test.ts
+    - src/cli/tests/verify-json.test.ts
+    - src/cli/tests/verify-org-policy-phase.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: a96e07a218525ec943f74ea52e64ad84a2faa1770fcf91e8638e107c013a3dea
