@@ -115,7 +115,7 @@ test("runVerify --json: init parse failure uses flat envelope with GXT_PARSE_ERR
   assert.equal(typeof payload.message, "string");
 });
 
-test("runVerify --json: stdout purity — gate output only in JSON payload", async () => {
+test("runVerify --json: digest-only — the gate output is in the gate log, never in the payload or the feed", async () => {
   const ogRoot = getRepoRoot();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-json-leak-"));
   writeMiniGantryRepo(dest, ogRoot);
@@ -123,7 +123,8 @@ test("runVerify --json: stdout purity — gate output only in JSON payload", asy
     dest,
     "MSN-0999",
     "evidence A",
-    `bash -lc "echo LEAKED_GATE_OUTPUT; exit 1"`,
+    // The output (lower case) differs from the command text (upper case), which the fix hints quote.
+    `bash -lc "echo LEAKED_GATE_OUTPUT | tr A-Z a-z; exit 1"`,
     "DONE",
     "m.yaml",
   );
@@ -132,8 +133,17 @@ test("runVerify --json: stdout purity — gate output only in JSON payload", asy
     executorLog: "EXECUTOR_LOG.md",
   });
   assert.equal(payload.status, "failed");
-  assert.ok(String(payload.stdout).includes("LEAKED_GATE_OUTPUT"));
-  assert.ok(!stdout.startsWith("LEAKED_GATE_OUTPUT"));
+  assert.equal(payload.phase, "gate");
+  assert.equal(payload.gate_log_path, ".gitagent/tmp/gate-logs/MSN-0999.last.log");
+  assert.match(fs.readFileSync(path.join(dest, String(payload.gate_log_path)), "utf8"), /leaked_gate_output/);
+  assert.ok(!stdout.includes("leaked_gate_output"), "the payload carries no gate output text");
+  assert.equal("stdout" in payload, false);
+  const findings = payload.findings as Array<Record<string, unknown>>;
+  assert.ok(findings.length > 0);
+  assert.equal(findings.some((f) => "evidence" in f || "fingerprint" in f || "semantic_fingerprint" in f), false);
+  const feed = fs.readFileSync(path.join(dest, ".gitagent/tmp/NEXT_REMEDIATION.json"), "utf8");
+  assert.doesNotMatch(feed, /leaked_gate_output/);
+  assert.equal((JSON.parse(feed) as { gate_log_path?: string }).gate_log_path, payload.gate_log_path);
 });
 
 test("runVerify --json gate failure matches handleVerify field subset", async () => {
@@ -162,6 +172,8 @@ test("runVerify --json gate failure matches handleVerify field subset", async ()
       assert.equal(payload.error_code, mcp.error_code);
       assert.deepEqual(payload.fix_hints, mcp.fix_hints);
       assert.deepEqual(payload.next_actions, mcp.next_actions);
+      assert.equal(mcp.gate_log_path, ".gitagent/tmp/gate-logs/MSN-0999.last.log");
+      assert.equal(payload.gate_log_path, mcp.gate_log_path);
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;
@@ -288,7 +300,8 @@ test("runVerify --json: gate_adapter tsc populates line-level findings with a st
   assert.equal(findings[0]!.line, 2);
   assert.equal(findings[0]!.start_column, 5);
   assert.equal(findings[0]!.rule_id, "TS2322");
-  assert.equal(findings[0]!.evidence, "n: number = 'x';");
+  assert.equal("evidence" in findings[0]!, false);
+  assert.ok(!first.stdout.includes("n: number = 'x'"), "the payload carries no source text");
   assert.equal(typeof first.payload.findings_digest, "string");
   assert.equal(first.payload.findings_digest, second.payload.findings_digest);
 });

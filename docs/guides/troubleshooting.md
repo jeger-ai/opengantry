@@ -46,7 +46,9 @@ Run the failing command with `--json` to get the `GXT_*` error code and its `fix
 `gxt_verify` returns the same flat payload as `gantry verify --json`:
 
 - Success: `{ "status": "passed", "phase": "full" | "pre_push_stub" | "break_glass", "exit_code": 0, … }`
-- Failure: `{ "status": "failed", "phase": "<phase>", "error_code": "GXT_*", "fix_hints": [], "next_actions": [], "exit_code": N, … }`
+- Failure: `{ "status": "failed", "phase": "<phase>", "error_code": "GXT_*", "fix_hints": [], "next_actions": [], "exit_code": N, "findings": [], … }`
+
+The payload holds no gate output and no source text. A failed gate sets `gate_log_path`, the repository-relative path of the gate's log; each finding names its `offending_file` and `line`. Read those files for the detail.
 
 Initialization and parse failures use `status: "failed"` with `phase: "init"`. Other MCP tools (`gxt_runtime_env`, `gxt_runtime_exec`) still return `{ "status": "error" }`.
 

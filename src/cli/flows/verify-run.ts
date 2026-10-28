@@ -129,12 +129,10 @@ async function settleRun(ctx: VerifyPresentContext, initial: VerifyPhaseResult, 
   let result = initial;
   while (!result.ok) {
     const failure = verifyFailure(ctx.root, ctx.mission, result);
-    const persisted = persistVerifyFailure(
-      ctx.root,
-      failure.payload,
-      { mission_file_path: ctx.resolved.missionRel, ...(ctx.mission.msnId ? { msn_id: ctx.mission.msnId } : {}) },
-      result.phase === "gate" ? result.gateLogPath : undefined,
-    );
+    const persisted = persistVerifyFailure(ctx.root, failure.payload, {
+      mission_file_path: ctx.resolved.missionRel,
+      ...(ctx.mission.msnId ? { msn_id: ctx.mission.msnId } : {}),
+    });
     const recurred = persisted.error_code === GXT_ERROR.FINDINGS_RECURRED;
     const next = fix && !recurred ? await repairAndReevaluate(ctx, result, failure.payload.error_code) : result;
     if (next === result) return { ok: false, result, failure, persisted };

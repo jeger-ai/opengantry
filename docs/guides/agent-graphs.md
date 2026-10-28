@@ -19,27 +19,29 @@ For external autonomous agents, such as a Hermes-style runner, a CI bot or a cus
 ```json
 {
   "status": "failed",
-  "envelope_schema_version": 3,
+  "envelope_schema_version": 4,
   "findings": [
     {
       "failed_gate": "gate",
       "offending_file": "",
       "line": 0,
       "severity": "error",
-      "resolution_hint": "run gate (npm test); append evidence to EXECUTOR_LOG.md",
-      "fingerprint": "<sha256>",
-      "semantic_fingerprint": "<sha256>"
+      "resolution_hint": "gate command failed"
     }
-  ]
+  ],
+  "gate_log_path": ".gitagent/tmp/gate-logs/MSN-0001.last.log",
+  "findings_digest": "<sha256>"
 }
 ```
+
+The payload carries no gate output and no source text. The executor reads the gate's output from the log at `gate_log_path` and the code at each finding's `offending_file` and `line`.
 
 ## Surfaces
 
 | Surface | Format |
 |---------|--------|
-| `.gitagent/tmp/NEXT_REMEDIATION.json` | Compact copy of the latest failure: `findings[]`, semantic `findings_digest`, `gate_log_path`, no stdout or stderr |
-| `gantry verify --json` | The full failure payload with `findings[]` |
+| `.gitagent/tmp/NEXT_REMEDIATION.json` | Compact copy of the latest failure: `findings[]`, `findings_digest`, `gate_log_path` |
+| `gantry verify --json` | The full failure payload with `findings[]` and `gate_log_path` |
 | `gantry verify --format sarif` | SARIF 2.1.0 with `properties.resolution_hint` |
 | `gantry verify --format junit` | JUnit XML (`testsuites` / `gantry-verify`) |
 | MCP `gxt_verify` | The same JSON payload as `--json` |

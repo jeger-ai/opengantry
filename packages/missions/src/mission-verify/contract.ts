@@ -91,7 +91,6 @@ function violationFindings(violations: readonly ContractImportViolation[]): Veri
       line: v.line,
       start_column: v.column,
       rule_id: contractViolationCode(v.kind),
-      evidence: v.specifier,
     }),
   );
 }

@@ -70,7 +70,7 @@ describe("eslintFindingsFromRun", () => {
     assert.deepEqual(findings, []);
   });
 
-  it("produces sorted v3 findings with repo-relative paths, rule ids, and evidence", () => {
+  it("produces sorted v3 findings with repo-relative paths and rule ids, without source text", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-eslint-map-"));
     fs.mkdirSync(path.join(dir, "src"));
     fs.writeFileSync(path.join(dir, "src", "a.ts"), "const x = 1;\nconst y = 2;\nif (x == y) {}\n");
@@ -95,10 +95,9 @@ describe("eslintFindingsFromRun", () => {
     assert.equal(eq.severity, "warning");
     assert.equal(eq.end_line, 3);
     assert.equal(eq.end_column, 7);
-    assert.equal(eq.evidence, "x == y) {}");
     assert.equal(findings[0]!.rule_id, "eslint/parse");
-    assert.equal(findings[2]!.evidence, "y = 1;");
     assert.equal(findings.every((f) => f.failed_gate === "gate"), true);
+    assert.equal(findings.some((f) => "evidence" in f), false, "findings carry no source text");
   });
 
   it("truncated stdout yields the truncation finding, never the --format json hint", () => {

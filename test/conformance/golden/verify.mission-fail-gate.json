@@ -21,19 +21,17 @@
       "gantry verify --mission .gitagent/missions/m-MSN-0101.yaml"
     ],
     "exit_code": 1,
-    "envelope_schema_version": 3,
+    "envelope_schema_version": 4,
     "findings": [
       {
         "failed_gate": "gate",
         "offending_file": "",
         "line": 0,
         "severity": "error",
-        "resolution_hint": "gate command failed",
-        "fingerprint": "<SHA256>",
-        "semantic_fingerprint": "<SHA256>"
+        "resolution_hint": "gate command failed"
       }
     ],
-    "stdout": "NOPE\n",
+    "gate_log_path": ".gitagent/tmp/gate-logs/MSN-0101.last.log",
     "findings_digest": "<SHA256>",
     "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
     "mission_source": "flag"

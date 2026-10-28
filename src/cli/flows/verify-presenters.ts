@@ -1,4 +1,4 @@
-import { verifyPhaseStatuses, type VerifyPhaseResult, type VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
+import type { VerifyPhaseResult, VerifyPhaseSuccess } from "#missions/mission-verify/engine.js";
 import { CLI_VERSION } from "../version.gen.js";
 import type { ResolvedMissionArg } from "./mission-arg.js";
 import type { Manifest } from "#core/manifest.js";
@@ -10,8 +10,7 @@ import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import { Reporter } from "../output/reporter.js";
 import { loadPrompts } from "./prompts-loader.js";
 import type { VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
-import { buildVerifyExportDocument, type VerifyExportFormat } from "#missions/mission-verify/export.js";
-import type { JUnitCase } from "#verify/export.js";
+import { junitXml, sarifLog } from "#verify/export.js";
 import { uriIsDirectory } from "../report/sarif-uri.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -19,6 +18,8 @@ import {
   buildVerifyResultPayloadFromPhaseResult,
   buildBreakGlassPayload,
   initFailurePayload,
+  payloadExportFindings,
+  payloadJUnitCases,
   type VerifyFailedPayload,
   type VerifyFailure,
   type VerifyResultPayload,
@@ -48,7 +49,7 @@ export type VerifySink =
   | "human";
 
 /** Structured export format for verify output (json default when --json). */
-export function resolveVerifyExportFormat(options: { format?: VerifyExportFormat; json?: boolean }): VerifyExportFormat | undefined {
+export function resolveVerifyExportFormat(options: { format?: VerifyOptions["format"]; json?: boolean }): VerifyOptions["format"] {
   if (options.format) return options.format;
   if (options.json === true) return "json";
   return undefined;
@@ -56,7 +57,7 @@ export function resolveVerifyExportFormat(options: { format?: VerifyExportFormat
 
 export function resolveVerifySink(options: {
   breakGlass?: boolean;
-  format?: VerifyExportFormat;
+  format?: VerifyOptions["format"];
   json?: boolean;
   jsonOut?: string;
   fix?: boolean;
@@ -107,28 +108,22 @@ export function presentBreakGlassHuman(ctx: VerifyPresentContext): VerifyPresent
   return { ok: true, exitCode: 0 };
 }
 
-function junitCasesFor(result: VerifyPhaseResult, payload: VerifyResultPayload): JUnitCase[] {
-  const failureText = payload.status === "failed" ? payload.message : undefined;
-  return verifyPhaseStatuses(result).map((row) => {
-    if (row.status === "skipped") return { name: row.id, skipped: true };
-    if (row.status === "failed") return { name: row.id, failure: failureText ?? "failed" };
-    return { name: row.id };
-  });
-}
-
-/** Structured verify document on stdout. Diagnostics stay on stderr while document stdout is active. */
+/**
+ * Structured verify document (JSON, SARIF or JUnit) on stdout, or the file --json-out names. Diagnostics stay on
+ * stderr while document stdout is active. JUnit has a case per phase when the phases ran (`result`).
+ */
 export function emitVerifyDocument(
   payload: VerifyResultPayload,
   options: VerifyPresentContext["options"],
   reporter: Reporter,
-  extras?: { root?: string; junitCases?: JUnitCase[] },
+  { root, result }: { root?: string; result?: VerifyPhaseResult } = {},
 ): void {
-  const format: VerifyExportFormat = resolveVerifyExportFormat(options) ?? "json";
-  const root = extras?.root;
-  const doc = buildVerifyExportDocument(payload, format, CLI_VERSION, {
-    ...(root ? { isDirectory: (uri: string) => uriIsDirectory(uri, root) } : {}),
-    junitCases: extras?.junitCases,
-  });
+  const format = resolveVerifyExportFormat(options) ?? "json";
+  const isDirectory = (uri: string): boolean => (root ? uriIsDirectory(uri, root) : uri.endsWith("/"));
+  const doc =
+    format === "junit"
+      ? junitXml("gantry-verify", "gantry.verify", payloadJUnitCases(payload, result))
+      : JSON.stringify(format === "sarif" ? sarifLog(CLI_VERSION, payloadExportFindings(payload, isDirectory)) : payload, null, 2);
   const jsonOut = options.jsonOut?.trim();
   if (jsonOut) {
     fs.mkdirSync(path.dirname(jsonOut), { recursive: true });
@@ -157,10 +152,7 @@ export function presentJsonFromResult(ctx: VerifyPresentContext, run: VerifyRun)
     run.ok ? buildVerifyResultPayloadFromPhaseResult(ctx.root, ctx.mission, run.result) : run.persisted,
     ctx,
   );
-  emitVerifyDocument(payload, ctx.options, ctx.reporter, {
-    root: ctx.root,
-    junitCases: junitCasesFor(run.result, payload),
-  });
+  emitVerifyDocument(payload, ctx.options, ctx.reporter, { root: ctx.root, result: run.result });
   return { ok: run.ok, exitCode: payload.exit_code };
 }
 

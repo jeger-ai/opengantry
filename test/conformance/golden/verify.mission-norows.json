@@ -23,16 +23,14 @@
       "gantry verify --mission .gitagent/missions/m-MSN-0101.yaml"
     ],
     "exit_code": 1,
-    "envelope_schema_version": 3,
+    "envelope_schema_version": 4,
     "findings": [
       {
         "failed_gate": "trace",
         "offending_file": "",
         "line": 0,
         "severity": "error",
-        "resolution_hint": "no run record for MSN-0101",
-        "fingerprint": "<SHA256>",
-        "semantic_fingerprint": "<SHA256>"
+        "resolution_hint": "no run record for MSN-0101"
       }
     ],
     "failures": [

@@ -36,13 +36,15 @@ On failure, verify returns `findings[]`. Each finding names:
 | `offending_file`, `line` | Where, when a structured producer reports it |
 | `severity` | For example `error` |
 | `resolution_hint` | What to do next |
-| `rule_id`, `evidence` | The rule and the matching text, when the producer supplies them |
-| `fingerprint`, `semantic_fingerprint` | Stable digests to detect a finding that keeps coming back |
+| `rule_id` | The rule, when the producer supplies it |
+| `end_line`, `start_column`, `end_column` | The span, when the producer reports one |
+
+Findings carry no source text and the payload carries no gate output: read the file at `offending_file` and `line`, and the gate's output in the log at `gate_log_path`.
 
 ```json
 {
   "status": "failed",
-  "envelope_schema_version": 3,
+  "envelope_schema_version": 4,
   "findings": [
     {
       "failed_gate": "arch",
@@ -55,11 +57,11 @@ On failure, verify returns `findings[]`. Each finding names:
 }
 ```
 
-Structured producers, such as import-layer JSON, banned-import output and the typed adapters below, fill in file and line. A generic gate gives one coarse finding plus `gate_log_path`, the full log on disk. The same shape comes back from `--json`, SARIF, JUnit and the MCP tool `gxt_verify`.
+Structured producers, such as import-layer JSON, banned-import output and the typed adapters below, fill in file and line. A generic gate gives one coarse finding. A failed gate also sets `gate_log_path` (`.gitagent/tmp/gate-logs/<msn_id>.last.log`), the full log on disk. The same shape comes back from `--json`, SARIF, JUnit and the MCP tool `gxt_verify`.
 
 ## Feed findings back to an agent
 
-`gantry verify --json` returns the failure with `findings[]`; hand those back to the agent. A compact copy of the latest failure is kept in `.gitagent/tmp/NEXT_REMEDIATION.json` (gitignored) with `findings[]`, a semantic `findings_digest` and `gate_log_path` (`.gitagent/tmp/gate-logs/<msn_id>.last.log`), but no raw stdout or stderr; a passing verify clears it. A finding whose semantic digest repeats ends the retry loop with `GXT_FINDINGS_RECURRED` ([Agent graphs](../guides/agent-graphs.md)).
+`gantry verify --json` returns the failure with `findings[]`; hand those back to the agent. A compact copy of the latest failure is kept in `.gitagent/tmp/NEXT_REMEDIATION.json` (gitignored) with `findings[]`, a `findings_digest` and `gate_log_path`; a passing verify clears it. The digest covers each finding's gate, file and rule, not its line. A digest that repeats ends the retry loop with `GXT_FINDINGS_RECURRED` ([Agent graphs](../guides/agent-graphs.md)).
 
 ## Typed gate adapters
 

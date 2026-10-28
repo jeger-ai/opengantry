@@ -69,7 +69,7 @@ describe("parseTscOutput", () => {
 });
 
 describe("tscFindingsFromRun", () => {
-  it("maps diagnostics to sorted v3 findings with evidence", () => {
+  it("maps diagnostics to sorted v3 findings without source text", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-tsc-map-"));
     fs.mkdirSync(path.join(dir, "src", "(group)"), { recursive: true });
     fs.writeFileSync(path.join(dir, "src", "(group)", "a.ts"), "export {};\n\nlet n: number = 'x';\n");
@@ -89,8 +89,7 @@ describe("tscFindingsFromRun", () => {
         ["src/c.ts", 1, 1, "TS6133", "warning"],
       ],
     );
-    assert.equal(findings[0]!.evidence, "n: number = 'x';");
-    assert.equal(findings[2]!.evidence, "const x = 1;");
+    assert.equal(findings.some((f) => "evidence" in f), false, "findings carry no source text");
   });
 
   it("exit != 0 with zero diagnostics falls back to one generic finding", () => {
