@@ -1,0 +1,363 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0357]. Executor must not run until the [MSN-0357] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 0, fourth batch (CLI): remove status and check; merge pin and unpin
+# into mission, hooks into hook, release check into deps check --since.
+#
+# Operator request (2026-10-28, ADR-0061 cut list approved in full). No trace rows: the evidence is
+# .gitagent/runs/MSN-0357.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0357
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane CI ingestion contract is unchanged; the
+      release gate calls deps check --since instead of release check, with the
+      same output.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Accept. The cage check and watch are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: 5363848c1dfd
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json,
+      .cursor/hooks/gxt-session-start.sh,
+      .cursor/rules/opengantry-gxt-substrate.mdc, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/concepts/missions.md, docs/concepts/scope.md,
+      docs/DEVELOPMENT.md, docs/guides/agents.md,
+      docs/guides/org-control-plane.md, docs/guides/other-agents.md,
+      docs/guides/troubleshooting.md, docs/reference/mcp-tools.md,
+      docs/reference/release-notes.md, docs/start/first-mission.md,
+      docs/start/install.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0357.cli-merges.yaml,
+      .gitagent/planner/MISSION-ARCHITECT.md, .gitagent/planner/RUNTIME.md,
+      .gitagent/README.md, .gitagent/registry/commands.yaml,
+      .gitagent/registry/mcp-tools.yaml, .gitagent/runs/MSN-0357.json,
+      .github/PULL_REQUEST_TEMPLATE.md, .github/workflows/gxt-validate.yml,
+      packages/missions/src/mission/resolution.ts, README.md,
+      scripts/dev-validate-core.sh, scripts/gxt-runtime-env.sh,
+      scripts/release-gate-publish.sh, src/cli/commands/check.ts,
+      src/cli/commands/context-request.ts, src/cli/commands/contract.ts,
+      src/cli/commands/deps.ts, src/cli/commands/hooks.ts,
+      src/cli/commands/hook.ts, src/cli/commands/pin.ts,
+      src/cli/commands/status.ts, src/cli/doctor/doctor-core.ts,
+      src/cli/flows/mission-arg.ts, src/cli/flows/start-orchestration.ts,
+      src/cli/init/init-tutorial.ts, src/cli/init/onboarding-flow.ts,
+      src/cli/mcp/mcp-tools-register.ts, src/cli/output/audience-output.ts,
+      src/cli/program-core.ts, src/cli/program-hook.ts,
+      src/cli/program-mission.ts, src/cli/program-org.ts,
+      src/cli/report/status-report.ts, src/cli/tests/audience-cli.test.ts,
+      src/cli/tests/command-io-contract.test.ts,
+      src/cli/tests/deps-resolve.test.ts, src/cli/tests/status.test.ts,
+      templates/.cursor/hooks/gxt-session-start.sh,
+      templates/.cursor/rules/opengantry-gxt-substrate.mdc,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/.github/workflows/gxt-validate.yml,
+      templates/integrations/recipes/aider.md,
+      templates/scripts/gxt-runtime-env.sh, test/conformance/cases.yaml,
+      test/conformance/golden/check.fresh-init.json,
+      test/conformance/golden/deps-check-since.fresh-init.json,
+      test/conformance/golden/deps-status.mission-pass.json,
+      test/conformance/golden/doctor.fresh-init.json,
+      test/conformance/golden/hook-install.fresh-init.json,
+      test/conformance/golden/hooks-install.fresh-init.json,
+      test/conformance/golden/hooks-status.fresh-init.json,
+      test/conformance/golden/hook-status.fresh-init.json,
+      test/conformance/golden/hooks-uninstall.fresh-init.json,
+      test/conformance/golden/hook-uninstall.fresh-init.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/mission-pin.mission-pass.json,
+      test/conformance/golden/mission-unpin.mission-pass.json,
+      test/conformance/golden/pin.mission-pass.json,
+      test/conformance/golden/release-check.fresh-init.json,
+      test/conformance/golden/status.fresh-init.json,
+      test/conformance/golden/status.mission-pass.json,
+      test/conformance/golden/unpin.mission-pass.json,
+      test/conformance/golden/verify.no-mission.fresh-init.json,
+      test/conformance/spawning-tests.yaml. Deleted: commands status and check,
+      report/status-report, the status and command I/O contract tests, the
+      check, status and deps status conformance cases and goldens. Changed:
+      program core, mission, hook and org registration, the pin, hooks, deps and
+      hook (pre-push) commands, doctor core, contract and context-request hints,
+      mission-arg, start-orchestration, init tutorial, onboarding flow, audience
+      output, MCP tool description, missions resolution message, tests
+      (audience, deps-resolve), registries (commands, MCP tools), conformance
+      cases (renamed hook, mission pin, deps check --since) and goldens (six
+      renamed, doctor, init, verify no-mission re-recorded), spawning-tests
+      inventory, CI workflow (template and copy), dev-validate-core and
+      release-gate-publish scripts, gxt-runtime-env (template and copy), the
+      Cursor session hook and rule (template and copy), the PR template, planner
+      docs (MISSION-ARCHITECT, RUNTIME, AGENT-SETUP, aider recipe),
+      .gitagent/README, docs (README, ARCHITECTURE, DEVELOPMENT, first mission,
+      install, missions, scope, agents, other agents, cursor, org control plane,
+      regulated teams, troubleshooting, MCP tools, release notes, CHANGELOG),
+      ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. Planner stamp signing is untouched; the CI workflow
+      only loses its separate check step (doctor already runs the same sync).
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: release check becomes deps check --since
+      <ref> with the same range and results; the deps status alias goes."
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with named output changes: the check, status and deps
+      status cases and goldens are deleted; the hooks, pin, unpin and release
+      check cases are renamed to hook, mission pin, mission unpin and deps check
+      --since with goldens that differ only in the command name; the doctor
+      golden's next step names the skills fix; the init and verify no-mission
+      goldens name gantry mission pin and gantry doctor. Every other golden is
+      unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission is phase 0, fourth batch (the CLI half),
+      of ADR-0061; the MCP trim follows in its own mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Accept. Plan adapters (gantry adapt) are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config file format changes; the pre-push manifest
+      trigger now also matches MANIFEST.yaml.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: bcc09d6d95202ad6a6866de511ab186a153ca1df42132faccc2d377a557bad55
+declared_paths:
+  - .cursor/hooks/gxt-session-start.sh
+  - .cursor/rules/opengantry-gxt-substrate.mdc
+  - .gitagent/README.md
+  - .gitagent/missions/MSN-0357.cli-merges.yaml
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/planner/RUNTIME.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/mcp-tools.yaml
+  - .gitagent/runs/MSN-0357.json
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - .github/workflows/gxt-validate.yml
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/concepts/missions.md
+  - docs/concepts/scope.md
+  - docs/guides/agents.md
+  - docs/guides/org-control-plane.md
+  - docs/guides/other-agents.md
+  - docs/guides/troubleshooting.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/release-notes.md
+  - docs/start/first-mission.md
+  - docs/start/install.md
+  - packages/missions/src/mission/resolution.ts
+  - scripts/dev-validate-core.sh
+  - scripts/gxt-runtime-env.sh
+  - scripts/release-gate-publish.sh
+  - src/cli/commands/check.ts
+  - src/cli/commands/context-request.ts
+  - src/cli/commands/contract.ts
+  - src/cli/commands/deps.ts
+  - src/cli/commands/hook.ts
+  - src/cli/commands/hooks.ts
+  - src/cli/commands/pin.ts
+  - src/cli/commands/status.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/flows/mission-arg.ts
+  - src/cli/flows/start-orchestration.ts
+  - src/cli/init/init-tutorial.ts
+  - src/cli/init/onboarding-flow.ts
+  - src/cli/mcp/mcp-tools-register.ts
+  - src/cli/output/audience-output.ts
+  - src/cli/program-core.ts
+  - src/cli/program-hook.ts
+  - src/cli/program-mission.ts
+  - src/cli/program-org.ts
+  - src/cli/report/status-report.ts
+  - src/cli/tests/audience-cli.test.ts
+  - src/cli/tests/command-io-contract.test.ts
+  - src/cli/tests/deps-resolve.test.ts
+  - src/cli/tests/status.test.ts
+  - templates/.cursor/hooks/gxt-session-start.sh
+  - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+  - templates/.gitagent/planner/AGENT-SETUP.md
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - templates/.github/workflows/gxt-validate.yml
+  - templates/integrations/recipes/aider.md
+  - templates/scripts/gxt-runtime-env.sh
+  - test/conformance/cases.yaml
+  - test/conformance/golden/check.fresh-init.json
+  - test/conformance/golden/deps-check-since.fresh-init.json
+  - test/conformance/golden/deps-status.mission-pass.json
+  - test/conformance/golden/doctor.fresh-init.json
+  - test/conformance/golden/hook-install.fresh-init.json
+  - test/conformance/golden/hook-status.fresh-init.json
+  - test/conformance/golden/hook-uninstall.fresh-init.json
+  - test/conformance/golden/hooks-install.fresh-init.json
+  - test/conformance/golden/hooks-status.fresh-init.json
+  - test/conformance/golden/hooks-uninstall.fresh-init.json
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/mission-pin.mission-pass.json
+  - test/conformance/golden/mission-unpin.mission-pass.json
+  - test/conformance/golden/pin.mission-pass.json
+  - test/conformance/golden/release-check.fresh-init.json
+  - test/conformance/golden/status.fresh-init.json
+  - test/conformance/golden/status.mission-pass.json
+  - test/conformance/golden/unpin.mission-pass.json
+  - test/conformance/golden/verify.no-mission.fresh-init.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .cursor/hooks/gxt-session-start.sh
+    - .cursor/rules/opengantry-gxt-substrate.mdc
+    - .gitagent/README.md
+    - .gitagent/missions/MSN-0357.cli-merges.yaml
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - .gitagent/planner/RUNTIME.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/mcp-tools.yaml
+    - .gitagent/runs/MSN-0357.json
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/gxt-validate.yml
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/concepts/missions.md
+    - docs/concepts/scope.md
+    - docs/guides/agents.md
+    - docs/guides/org-control-plane.md
+    - docs/guides/other-agents.md
+    - docs/guides/troubleshooting.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/release-notes.md
+    - docs/start/first-mission.md
+    - docs/start/install.md
+    - packages/missions/src/mission/resolution.ts
+    - scripts/dev-validate-core.sh
+    - scripts/gxt-runtime-env.sh
+    - scripts/release-gate-publish.sh
+    - src/cli/commands/check.ts
+    - src/cli/commands/context-request.ts
+    - src/cli/commands/contract.ts
+    - src/cli/commands/deps.ts
+    - src/cli/commands/hook.ts
+    - src/cli/commands/hooks.ts
+    - src/cli/commands/pin.ts
+    - src/cli/commands/status.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/flows/mission-arg.ts
+    - src/cli/flows/start-orchestration.ts
+    - src/cli/init/init-tutorial.ts
+    - src/cli/init/onboarding-flow.ts
+    - src/cli/mcp/mcp-tools-register.ts
+    - src/cli/output/audience-output.ts
+    - src/cli/program-core.ts
+    - src/cli/program-hook.ts
+    - src/cli/program-mission.ts
+    - src/cli/program-org.ts
+    - src/cli/report/status-report.ts
+    - src/cli/tests/audience-cli.test.ts
+    - src/cli/tests/command-io-contract.test.ts
+    - src/cli/tests/deps-resolve.test.ts
+    - src/cli/tests/status.test.ts
+    - templates/.cursor/hooks/gxt-session-start.sh
+    - templates/.cursor/rules/opengantry-gxt-substrate.mdc
+    - templates/.gitagent/planner/AGENT-SETUP.md
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+    - templates/.github/workflows/gxt-validate.yml
+    - templates/integrations/recipes/aider.md
+    - templates/scripts/gxt-runtime-env.sh
+    - test/conformance/cases.yaml
+    - test/conformance/golden/check.fresh-init.json
+    - test/conformance/golden/deps-check-since.fresh-init.json
+    - test/conformance/golden/deps-status.mission-pass.json
+    - test/conformance/golden/doctor.fresh-init.json
+    - test/conformance/golden/hook-install.fresh-init.json
+    - test/conformance/golden/hook-status.fresh-init.json
+    - test/conformance/golden/hook-uninstall.fresh-init.json
+    - test/conformance/golden/hooks-install.fresh-init.json
+    - test/conformance/golden/hooks-status.fresh-init.json
+    - test/conformance/golden/hooks-uninstall.fresh-init.json
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/mission-pin.mission-pass.json
+    - test/conformance/golden/mission-unpin.mission-pass.json
+    - test/conformance/golden/pin.mission-pass.json
+    - test/conformance/golden/release-check.fresh-init.json
+    - test/conformance/golden/status.fresh-init.json
+    - test/conformance/golden/status.mission-pass.json
+    - test/conformance/golden/unpin.mission-pass.json
+    - test/conformance/golden/verify.no-mission.fresh-init.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 86f326ce00c6b6827db36980b507fafdd3a638e0bfe56c0fea725fbda6b80713
