@@ -27,7 +27,7 @@ source scripts/gxt-runtime-env.sh .gitagent/missions/MSN-0001.<slug>.yaml
 gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml --json
 ```
 
-On a `runtime exec` failure, read the file named by `GANTRY_LAST_ERROR_FILE` for machine-oriented remediation. After a verify failure, read `gantry context-feed --json` ([Verify](../concepts/verify.md#feed-findings-back-to-an-agent)). The variables these commands set are listed in [Session variables](../reference/session-variables.md).
+On a `runtime exec` failure, read the file named by `GANTRY_LAST_ERROR_FILE` for machine-oriented remediation. After a verify failure, read `findings[]` from `gantry verify --json` ([Verify](../concepts/verify.md#feed-findings-back-to-an-agent)). The variables these commands set are listed in [Session variables](../reference/session-variables.md).
 
 ## Point every tool at the same law
 

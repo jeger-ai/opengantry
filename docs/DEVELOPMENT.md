@@ -355,7 +355,6 @@ Local `npm run validate` is the full superset (includes `gantry ci verify-missio
 2. `./scripts/check-changed-code.sh origin/main HEAD` (when you changed `src/cli`)
 3. `gantry doctor` → exit 0 with warnings allowed
 4. Formatter drift: `gantry verify` passes without `--fuzzy-trace`
-5. `gantry metrics --json` identical on two consecutive runs at same ref (including `gxt_extension_metadata`)
 
 ## Code quality (changed files only)
 

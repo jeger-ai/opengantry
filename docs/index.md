@@ -35,6 +35,6 @@ Declare scope before an agent starts, approve it in Git, and let `gantry verify`
 
 ## Look something up
 
-[MCP tools and kernel](reference/mcp-tools.md), [session variables](reference/session-variables.md), [metrics and report](reference/metrics-and-report.md), [break-glass](reference/break-glass.md), [release notes](reference/release-notes.md), [security policy](SECURITY.md) and [troubleshooting](guides/troubleshooting.md).
+[MCP tools and kernel](reference/mcp-tools.md), [session variables](reference/session-variables.md), [break-glass](reference/break-glass.md), [release notes](reference/release-notes.md), [security policy](SECURITY.md) and [troubleshooting](guides/troubleshooting.md).
 
 Why it exists: [The Post-PR Software Factory](MANIFESTO.md).

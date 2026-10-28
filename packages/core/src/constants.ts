@@ -42,8 +42,6 @@ export const LEDGER_GENESIS_HASH = "0".repeat(64);
 export const REL_AGENT_ERROR_FILE = ".gitagent/history/.ignored-last-error.json" as const;
 /** Git-ignored verify failure remediation feed for IDE/agent loops (atomic swap writes). */
 export const REL_NEXT_REMEDIATION = ".gitagent/tmp/NEXT_REMEDIATION.json" as const;
-/** Default localhost port for `gantry report` (walks +1..+10 on EADDRINUSE when unset). */
-export const DEFAULT_REPORT_PORT = 3134;
 /** ADR markdown (optional `match_terms` in frontmatter) — triage may emit non-binding hints only. */
 export const REL_OUT_OF_SCOPE_DIR = ".gitagent/out-of-scope" as const;
 export const SKILLS_DIR_NAME = "skills" as const;

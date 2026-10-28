@@ -13,7 +13,6 @@ moved_to:
   - concepts/when-to-adopt.md
   - guides/org-control-plane.md
   - reference/break-glass.md
-  - reference/metrics-and-report.md
   - reference/experimental.md
 ---
 
@@ -33,5 +32,4 @@ This page was split by topic into the cage, concepts, guides and reference secti
 | <a id="what-opengantry-is-not"></a>What OpenGantry is not | [concepts/when-to-adopt.md](concepts/when-to-adopt.md) |
 | <a id="hybrid-hub-and-spoke-metadata-plane"></a>Hub and spoke | [guides/org-control-plane.md](guides/org-control-plane.md) |
 | <a id="break-glass"></a>Break-glass | [reference/break-glass.md](reference/break-glass.md) |
-| <a id="metrics-gantry-metrics"></a><a id="inspection-dashboard-gantry-report"></a>Metrics, report | [reference/metrics-and-report.md](reference/metrics-and-report.md) |
 | <a id="llm-evidence--kpi-gate"></a><a id="ephemeral-virtualization"></a><a id="experimental-contract-preflight"></a><a id="advisory-performance-judge"></a>KPI gate, performance judge (virtual scratch and preflight parked) | [reference/experimental.md](reference/experimental.md) |

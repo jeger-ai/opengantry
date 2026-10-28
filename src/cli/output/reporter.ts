@@ -114,7 +114,7 @@ export interface ReporterArgv {
 /**
  * The reporter for a command invocation. Precedence for the audience: --audience, then GANTRY_AUDIENCE. A
  * --format of json, sarif or junit, or --json, selects a structured mode; any other --format is a human
- * document (gantry report --format html).
+ * document.
  */
 export function reporterFromArgv(
   argv: ReporterArgv,

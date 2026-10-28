@@ -14,7 +14,6 @@ moved_to:
   - guides/troubleshooting.md
   - guides/agent-graphs.md
   - reference/break-glass.md
-  - reference/metrics-and-report.md
 ---
 
 # Adoption runbook (moved)
@@ -34,4 +33,3 @@ This page was split into the cage, start, guides, concepts and reference section
 | <a id="verify-troubleshooting"></a><a id="mcp-verify-envelope"></a>Verify troubleshooting, MCP verify envelope | [guides/troubleshooting.md](guides/troubleshooting.md) |
 | <a id="agent-errors-machine-vs-human"></a>Agent errors | [guides/agent-graphs.md](guides/agent-graphs.md) |
 | <a id="break-glass-emergency-only"></a><a id="technical-setup"></a>Break-glass | [reference/break-glass.md](reference/break-glass.md) |
-| <a id="metrics"></a><a id="metrics-json-envelope"></a>Metrics | [reference/metrics-and-report.md](reference/metrics-and-report.md) |
