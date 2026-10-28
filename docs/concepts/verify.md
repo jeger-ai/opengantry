@@ -39,7 +39,7 @@ On failure, verify returns `findings[]`. Each finding names:
 | `rule_id` | The rule, when the producer supplies it |
 | `end_line`, `start_column`, `end_column` | The span, when the producer reports one |
 
-Findings carry no source text and the payload carries no gate output: read the file at `offending_file` and `line`, and the gate's output in the log at `gate_log_path`.
+Findings carry no source text and the payload carries no gate output. When a structured producer reports `offending_file` and `line`, read the code there; when the payload has `gate_log_path`, the gate's output is in that log.
 
 ```json
 {
@@ -57,7 +57,7 @@ Findings carry no source text and the payload carries no gate output: read the f
 }
 ```
 
-Structured producers, such as import-layer JSON, banned-import output and the typed adapters below, fill in file and line. A generic gate gives one coarse finding. A failed gate also sets `gate_log_path` (`.gitagent/tmp/gate-logs/<msn_id>.last.log`), the full log on disk. The same shape comes back from `--json`, SARIF, JUnit and the MCP tool `gxt_verify`.
+Structured producers, such as import-layer JSON and the typed adapters below, fill in file and line. A generic gate gives one coarse finding with an empty `offending_file` and `line` 0. A failed gate that produced output sets `gate_log_path` (`.gitagent/tmp/gate-logs/<msn_id>.last.log`), the full log on disk. `--json` and the MCP tool `gxt_verify` return this JSON envelope; `--format sarif` and `--format junit` carry the same findings in their own schemas.
 
 ## Feed findings back to an agent
 
