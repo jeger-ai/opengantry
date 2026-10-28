@@ -72,7 +72,6 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - When `.gitagent/foreman/POLICY.pointer.yaml` is present, Executors and Verifiers MUST treat the cached org policy bundle as a **tighten-only floor** ([ADR-0042](../out-of-scope/ADR-0042-org-policy-bundle.md)): sets are unioned, risk tiers take the maximum, signature and telemetry tiers take the stricter value. Policy MUST NOT loosen local law.
 - **`gantry policy pull`** is the only network path for policy. **`gantry doctor`** and **`gantry verify`** MUST read the pointer plus `.gitagent/history/policy/` cache only — no sockets.
 - A present pointer with missing cache, sha mismatch, or invalid signer is fail-closed (`GXT_POLICY_*`). A missing pointer is opt-in (no failure).
-- `kpi_thresholds[].metric` MUST name a key in the bundle `producers` map.
 - Receipt schema stays **0.2.0**; policy digests belong in ledger entries ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)), not receipts.
 
 ## 9. Compliance ledger (v3.3.0)

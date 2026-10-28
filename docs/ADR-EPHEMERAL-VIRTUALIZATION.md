@@ -11,7 +11,7 @@ publish: false
 
 ## Context
 
-OpenGantry's verification engine is file-state native (KPI reports, trace quotes, git-proof). Some integration checks need transient runtime outputs (API probes, migration dry-runs, memory snapshots) without rewriting the core engine.
+OpenGantry's verification engine is file-state native (trace quotes, run records, git-proof). Some integration checks need transient runtime outputs (API probes, migration dry-runs, memory snapshots) without rewriting the core engine.
 
 ## Decision
 
@@ -32,6 +32,5 @@ Introduce an **opt-in virtual scratch contract** at `.gitagent/virtual/` that ma
 
 ## References
 
-- KPI gate: `.gitagent/planner/KPI-REPORT.schema.yaml`
 - Runtime exec telemetry: `gantry runtime exec`
 - Related backlog: [#68](https://github.com/jeger-ai/opengantry/issues/68)

@@ -20,7 +20,6 @@
     { "targetPath": ".gitagent/planner/ARCHITECTURE-ACCESS.md", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/planner/ARCHITECTURE-DISCOVERY.md", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/planner/EXECUTOR_LOG.template.md", "mode": "managed_strict", "tags": ["core"] },
-    { "targetPath": ".gitagent/planner/KPI-REPORT.schema.yaml", "mode": "managed_strict", "tags": ["core"] },
     { "targetPath": ".gitagent/planner/MISSION-ARCHITECT.md", "mode": "scaffold_only", "tags": ["core"] },
     { "targetPath": ".gitagent/planner/MISSION.schema.yaml", "mode": "managed_strict", "tags": ["core"] },
     { "targetPath": ".gitagent/planner/ORG-POLICY.schema.yaml", "mode": "managed_strict", "tags": ["core"] },

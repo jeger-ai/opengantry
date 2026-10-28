@@ -58,7 +58,6 @@ cases:
   - { id: runtime-exec.mission-pass, fixture: mission-pass, args: [runtime, exec, --mission, .gitagent/missions/m-MSN-0101.yaml, --json, --no-stream, --, echo, executor-ran] }
   - { id: tmvc-guard.mission-pass, fixture: mission-pass, args: [tmvc, guard, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: context-request.mission-pass, fixture: mission-pass, args: [context-request, --mission, .gitagent/missions/m-MSN-0101.yaml, --reason, need the docs folder, --path, docs/, --json], record_tree: true }
-  - { id: scan.mission-pass, fixture: mission-pass, args: [scan, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
 
   # --- verify and evidence ---
   - { id: verify.mission-pass, fixture: mission-pass, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }

@@ -19,7 +19,7 @@ export interface VerifyEvaluation {
   record?: boolean;
   /** Base ref for --changed-missions (default: merge-base with origin/HEAD or main). */
   baseRef?: string;
-  /** Authoritative mode: fail-closed on KPI stale evidence and perimeter (CI). */
+  /** Authoritative mode: fail-closed on perimeter and interrogation (CI). */
   ci?: boolean;
   /** Max commits to scan for Planner [MSN-XXXX] stamp (overrides GANTRY_MSN_SCAN_DEPTH). */
   scanDepth?: number;

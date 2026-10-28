@@ -9,7 +9,6 @@ import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyCon
 import { registerAdaptCommand } from "./commands/adapt.js";
 import type { VerifyOptions } from "./flows/verify-options.js";
 import type { VerifyExportFormat } from "#missions/mission-verify/export.js";
-import { runScan } from "./commands/scan.js";
 import { runEventsPush } from "./commands/events-push.js";
 import { runRegister } from "./commands/register.js";
 import { runCheckImports } from "./commands/check-imports.js";
@@ -274,7 +273,7 @@ function registerVerifyCommand(program: Command): void {
     .option("--strict-trace", "Disable auto line-drift resolution (strict line numbers only)")
     .option("--skip-stale-evidence", "Skip TMVC stale-evidence binding for committed PASS trace lines")
     .option("--record", "After a full pass on a clean committed tree, write .gitagent/runs/<MSN>.json as the mission evidence; commit it")
-    .option("--ci", "Authoritative mode: fail-closed on KPI report stale evidence (use in CI)")
+    .option("--ci", "Authoritative mode: fail-closed on perimeter and interrogation checks (use in CI)")
     .option("--require-interrogation", "Require interrogation block on mission (also default when --ci)")
     .option("--pre-push", "Pre-push handoff: git-proof only for legislative stubs; full verify otherwise")
     .option("--break-glass", "Skip all verify gates when GANTRY_BYPASS_SECRET is authorized")
@@ -301,20 +300,6 @@ function registerVerifyCommand(program: Command): void {
         return;
       }
       await runVerify(verifyOptionsFromCli(opts));
-    });
-}
-
-function registerScanCommand(program: Command): void {
-  program
-    .command("scan")
-    .description(
-      "Run llm_verifiers and write committed KPI report JSON for verify kpi_gate (see examples/performance-judge/)",
-    )
-    .option("--mission <path>", "Mission file with llm_verifiers configured (defaults to pinned mission)")
-    .option("--cwd <dir>", "Working directory for verifier commands")
-    .option("--json", "Emit structured JSON")
-    .action((opts: { mission?: string; cwd?: string; json?: boolean }) => {
-      runScan(opts);
     });
 }
 
@@ -396,7 +381,6 @@ export function registerWorkflowCommands(program: Command): void {
   registerAttestCommand(program);
   registerVerifyCommand(program);
   registerAdaptCommand(program);
-  registerScanCommand(program);
   registerEventsCommand(program);
   registerRegisterCommand(program);
   registerCheckImportsCommand(program);

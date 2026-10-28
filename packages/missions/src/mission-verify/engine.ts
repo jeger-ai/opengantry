@@ -9,7 +9,7 @@ import { gitRunOk } from "#git/git.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { isLegislativeStub } from "../mission/formatter.js";
 import { defaultExecutorLogPath } from "../trace-quote.js";
-import type { KpiFinding, ParsedMission } from "#core/mission-types.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import type { Manifest } from "#core/manifest.js";
 import type { VerifyFailurePhase, VerifyPhaseFailure } from "./failure.js";
 import type { TraceVerifyWarning } from "../trace-quote.js";
@@ -20,9 +20,7 @@ import { evaluateInterrogationPhase } from "./interrogation.js";
 import {
   evaluateGatePhase,
   evaluateGitProof,
-  evaluateKpiGatePhase,
   evaluateTracePhase,
-  type KpiOutcome,
   type PhaseContext,
   type TracePhaseOutcome,
 } from "./phase-steps.js";
@@ -62,8 +60,6 @@ export interface VerifyPhaseSuccess {
   executorLogPath: string;
   traceWarnings: TraceVerifyWarning[];
   gitProofWarnings?: string[];
-  kpiWarnings?: string[];
-  kpiAdvisoryFindings?: KpiFinding[];
   traceEvidenceSkippedUncommitted?: number;
   /** Set when the evidence was the run record (read or, with --record, written): its repo-relative path. */
   runRecordPath?: string;
@@ -92,8 +88,6 @@ function failurePhaseToClockId(phase: VerifyFailurePhase): VerifyPhaseId {
       return "contract";
     case "gate":
       return "gate";
-    case "kpi":
-      return "kpi";
     case "trace":
     case "trace_pending":
     case "run_record":
@@ -115,11 +109,10 @@ function buildFullVerifySuccess(input: {
   executorLogPath: string;
   trace: Extract<TracePhaseOutcome, { kind: "ok" }>;
   gitProofWarnings: string[];
-  kpi: Extract<KpiOutcome, { kind: "ok" }>;
   phaseTimings: VerifyPhaseTiming[];
   runRecordPath?: string;
 }): VerifyPhaseSuccess {
-  const { proofMsnId, executorLogPath, trace, gitProofWarnings, kpi, phaseTimings, runRecordPath } =
+  const { proofMsnId, executorLogPath, trace, gitProofWarnings, phaseTimings, runRecordPath } =
     input;
   return {
     ok: true,
@@ -130,8 +123,6 @@ function buildFullVerifySuccess(input: {
     phaseTimings,
     ...(runRecordPath ? { runRecordPath } : {}),
     ...(gitProofWarnings.length > 0 ? { gitProofWarnings } : {}),
-    ...(kpi.warnings.length > 0 ? { kpiWarnings: kpi.warnings } : {}),
-    ...(kpi.advisoryFindings.length > 0 ? { kpiAdvisoryFindings: kpi.advisoryFindings } : {}),
     traceEvidenceSkippedUncommitted:
       trace.skippedUncommitted > 0 ? trace.skippedUncommitted : undefined,
   };
@@ -222,9 +213,6 @@ export async function evaluateVerifyPhases(
   const gateOutcome = await clock.timed("gate", () => evaluateGatePhase(phaseCtx, gate));
   if (gateOutcome.kind === "fail") return failWithTimings(gateOutcome.failure, clock);
 
-  const kpi = await clock.timed("kpi", () => evaluateKpiGatePhase(phaseCtx));
-  if (kpi.kind === "fail") return failWithTimings(kpi.failure, clock);
-
   const trace = await clock.timed("trace", () => evaluateEvidencePhase(phaseCtx, proofMsnId));
   if (trace.kind === "fail") return failWithTimings(trace.failure, clock);
   const runRecordPath = mission.traceRows.length === 0 ? runRecordRelPath(proofMsnId) : undefined;
@@ -237,7 +225,6 @@ export async function evaluateVerifyPhases(
     executorLogPath,
     trace,
     gitProofWarnings,
-    kpi,
     phaseTimings: clock.finalize(),
     ...(runRecordPath ? { runRecordPath } : {}),
   });

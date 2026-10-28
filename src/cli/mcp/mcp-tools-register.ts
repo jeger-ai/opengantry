@@ -13,7 +13,6 @@ import {
   handleResolveMission,
   handleRuntimeEnv,
   handleRuntimeExec,
-  handleScan,
   handleVerify,
 } from "./mcp-runtime.js";
 import { handleDoctor } from "./mcp-doctor.js";
@@ -163,7 +162,7 @@ function registerGxtVerifyTool(server: McpServer): void {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
       skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
-      ci: z.boolean().optional().describe("Authoritative CI mode for KPI stale binding"),
+      ci: z.boolean().optional().describe("Authoritative CI mode (perimeter and interrogation fail closed)"),
     },
     async (args) =>
       jsonText(
@@ -194,18 +193,6 @@ function registerGxtAttestTool(server: McpServer): void {
           sign: args.sign,
         }),
       ),
-  );
-}
-
-function registerGxtScanTool(server: McpServer): void {
-  server.tool(
-    "gxt_scan",
-    "Run gantry scan (llm_verifiers) and write KPI report for verify kpi_gate.",
-    {
-      mission_file_path: z.string().describe("Repo-relative mission path"),
-      cwd: z.string().optional().describe("Working directory for verifier commands"),
-    },
-    async (args) => jsonText(handleScan(args.mission_file_path, args.cwd)),
   );
 }
 
@@ -351,7 +338,6 @@ export function registerGxtMcpTools(server: McpServer): void {
   registerGxtRuntimeEnvTool(server);
   registerGxtVerifyTool(server);
   registerGxtAttestTool(server);
-  registerGxtScanTool(server);
   registerGxtRuntimeExecTool(server);
   registerGxtResolveMissionTool(server);
   registerGxtDoctorTool(server);

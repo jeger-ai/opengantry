@@ -1,21 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
-import { kpiFindingsToAdvisoryVerifyFindings } from "#missions/kpi-advisory-findings.js";
-import { evaluateKpiThresholds } from "#missions/kpi-engine.js";
-import type { KpiFinding, KpiReport } from "#core/mission-types.js";
 
 const repoRoot = getRepoRoot();
 const stub = path.join(repoRoot, "examples/performance-judge/perf-judge-stub.mjs");
 const fixtures = path.join(repoRoot, "examples/performance-judge/fixtures");
 
-function runStub(fixtureName: string): { findings: KpiFinding[] } {
-  const out = execFileSync("node", [stub, path.join(fixtures, fixtureName)], {
-    encoding: "utf8",
-  });
-  return JSON.parse(out) as { findings: KpiFinding[] };
+interface PerfFinding {
+  id: string;
+}
+
+/** Runs the stub as a check command: findings as JSON on stdout, exit 1 when there are any. */
+function runStub(fixtureName: string): { findings: PerfFinding[] } {
+  const r = spawnSync("node", [stub, path.join(fixtures, fixtureName)], { encoding: "utf8" });
+  const out = JSON.parse(r.stdout) as { findings: PerfFinding[] };
+  assert.equal(r.status, out.findings.length > 0 ? 1 : 0, "exit 1 exactly when there are findings");
+  return out;
 }
 
 test("perf-judge stub: dirty pooling emits PERF-POOLING", () => {
@@ -46,45 +48,4 @@ test("perf-judge stub: dirty memoization emits PERF-MEMOIZATION", () => {
 test("perf-judge stub: clean memoization is silent", () => {
   const { findings } = runStub("clean-memoization.js");
   assert.equal(findings.length, 0);
-});
-
-test("kpi advisory findings do not affect threshold evaluation", () => {
-  const report: KpiReport = {
-    msn_id: "MSN-0062",
-    generated_at: "2026-01-01T00:00:00.000Z",
-    metrics: { "perf_judge::reviewed": 1 },
-    findings: [
-      {
-        id: "PERF-POOLING",
-        severity: "error",
-        path: "src/x.ts",
-        message: "advisory only",
-        doc_anchor: "PERFORMANCE.md#connection-pooling",
-      },
-    ],
-    exit_code: 0,
-  };
-  const failures = evaluateKpiThresholds(report, [
-    { metric: "perf_judge::reviewed", op: ">=", value: 1 },
-  ]);
-  assert.equal(failures.length, 0);
-});
-
-test("kpiFindingsToAdvisoryVerifyFindings: maps to verify envelope", () => {
-  const rows = kpiFindingsToAdvisoryVerifyFindings([
-    {
-      id: "PERF-POOLING",
-      severity: "warn",
-      path: "src/db.ts",
-      line: 4,
-      message: "pooling violation",
-      doc_anchor: "PERFORMANCE.md#connection-pooling",
-    },
-  ]);
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0]!.failed_gate, "kpi");
-  assert.equal(rows[0]!.severity, "warning");
-  assert.equal(rows[0]!.offending_file, "src/db.ts");
-  assert.match(rows[0]!.resolution_hint, /PERF-POOLING/);
-  assert.match(rows[0]!.resolution_hint, /PERFORMANCE\.md/);
 });

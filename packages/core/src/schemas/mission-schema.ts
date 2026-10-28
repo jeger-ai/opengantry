@@ -37,10 +37,6 @@ export const traceRowSchema = z
   })
   .strict();
 
-export const kpiThresholdSchema = z
-  .object({ metric: nonEmpty, op: z.enum(["<=", ">=", "==", "<", ">"]), value: z.number() })
-  .strict();
-
 export const interrogationRowSchema = z
   .object({
     finding_id: z.string().min(8),
@@ -101,20 +97,6 @@ export const missionSchema = z
       .strict()
       .optional(),
     trace_rows: z.array(traceRowSchema).default([]),
-    kpi_gate: z
-      .object({ report_path: nonEmpty.optional(), thresholds: z.array(kpiThresholdSchema).min(1) })
-      .strict()
-      .optional(),
-    llm_verifiers: z
-      .array(
-        z
-          .object({ id: nonEmpty, command: nonEmpty, provider: z.string().optional(), required: z.boolean().default(false) })
-          .strict(),
-      )
-      .optional(),
-    aggregators: z
-      .array(z.object({ key: nonEmpty, op: z.enum(["max", "min", "sum"]), sources: z.array(nonEmpty).min(1) }).strict())
-      .optional(),
     interrogation: z.array(interrogationRowSchema).default([]),
     interrogation_sha256: sha256.optional(),
     declared_paths: z.array(nonEmpty).optional(),

@@ -32,7 +32,6 @@ order: 1
 | `gxt_runtime_exec` | Runs an executor command with the mission environment and forbidden-zone enforcement |
 | `gxt_last_error` | Reads the machine-oriented remediation from `GANTRY_LAST_ERROR_FILE` |
 | `gxt_verify` | Runs verify and returns the same payload as `gantry verify --json` ([Troubleshooting](../guides/troubleshooting.md#mcp-verify-payload)) |
-| `gxt_scan` | Runs `gantry scan` (`llm_verifiers`) and writes the KPI report for `kpi_gate` |
 | `gxt_attest` | Writes a local digest-only attestation receipt, optionally SSH or GPG signed |
 | `gxt_doctor` | Read-only readiness check, including typed gate adapters; never inspects `gate_command` to guess one |
 

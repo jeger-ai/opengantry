@@ -6,9 +6,7 @@ import type { RuntimeExecResult } from "#missions/runtime-exec.js";
 import { errorMessage } from "#core/user-error.js";
 import { buildVerifyResultPayloadFromOptions } from "../flows/verify-run.js";
 import type { VerifyResultPayload } from "#missions/mission-verify/payload.js";
-import { parseMissionFile } from "#missions/mission/parser.js";
 import { pinActiveMission, resolvePinnedMission } from "#missions/mission/resolution.js";
-import { runKpiScan } from "#missions/kpi-scan.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "#missions/runtime-env.js";
 import { runRuntimeExec } from "#missions/runtime-exec.js";
 import { loadWorkspace } from "#missions/workspace.js";
@@ -75,31 +73,6 @@ export async function handleVerify(
     skipStaleEvidence,
     ci,
   });
-}
-
-export interface KpiScanMcpResult {
-  status: "ok" | "error";
-  report_path?: string;
-  report?: unknown;
-  error?: McpRuntimeErrorBody;
-}
-
-export function handleScan(missionFilePath: string, cwd?: string): KpiScanMcpResult {
-  try {
-    const workspace = loadWorkspace();
-    const mission = parseMissionFile(workspace.root, missionFilePath);
-    const result = runKpiScan(workspace.root, mission, { cwd });
-    return { status: "ok", report_path: result.reportPath, report: result.report };
-  } catch (e) {
-    return {
-      status: "error",
-      error: {
-        code: "SCAN_FAILED",
-        message: errorMessage(e),
-        retryable: true,
-      },
-    };
-  }
 }
 
 export type RuntimeExecMcpInput = {

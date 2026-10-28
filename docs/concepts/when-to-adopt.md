@@ -53,6 +53,6 @@ OpenGantry does not aim for always-on improvisation, does not treat unscoped IDE
 - **Not an agent.** It does not chat, plan features or open pull requests by itself.
 - **Not a hosted execution console.** Gates and cages run on your machine and in your CI. Verify uploads no source.
 - **Not Gantry.io.** There is no bundled hosted observability dashboard. An optional future metadata hub would receive digests only.
-- **Not an LLM judge for merge.** Gates stay deterministic. LLM evidence is optional and committed separately with `gantry scan`.
+- **Not an LLM judge for merge.** Gates stay deterministic: shell commands with an exit code.
 - **Not an MCP execution firewall.** Sandboxing and skill-hash checks belong to a complementary proxy ([Enforcement boundary](enforcement-boundary.md#opengantry-and-an-execution-firewall)).
 - **Not a full prompt or diff recorder by default.** Hash-only telemetry and digest receipts prove outcomes without shipping raw content.

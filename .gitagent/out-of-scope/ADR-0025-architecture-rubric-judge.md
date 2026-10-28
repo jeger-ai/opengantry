@@ -1,7 +1,7 @@
 ---
 id: ADR-0025
 title: ARCHITECTURE_RUBRIC advisory LLM judge
-status: ACTIVE
+status: SUPERSEDED
 match_terms:
   - ARCHITECTURE_RUBRIC
   - LLM judge
@@ -24,3 +24,7 @@ Issue #16: non-deterministic architecture review via `ARCHITECTURE_RUBRIC.md` wi
 
 - Deterministic gates (`gate_command`, `kpi_gate` thresholds, trace) retain sole PASS/FAIL authority.
 - No LLM API calls inside the gantry CLI.
+
+## Superseded
+
+Superseded by [ADR-0061](ADR-0061-simplify-before-4-0.md) (MSN-0355): the architecture rubric, `llm_verifiers`, the KPI gate and `gantry scan` were removed in 4.0. A heuristic check runs as a gate or verify contract check instead (`examples/performance-judge/`).

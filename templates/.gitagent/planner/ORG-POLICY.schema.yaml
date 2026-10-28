@@ -81,40 +81,6 @@ properties:
       required:
         - specifier
       additionalProperties: false
-  producers:
-    default: {}
-    description: Map of KPI metric name to producer command. kpi_thresholds[].metric MUST name a key in this object.
-    type: object
-    propertyNames:
-      type: string
-    additionalProperties:
-      type: string
-      minLength: 1
-  kpi_thresholds:
-    default: []
-    type: array
-    items:
-      type: object
-      properties:
-        metric:
-          type: string
-          minLength: 1
-          description: MUST match a key in producers.
-        op:
-          type: string
-          enum:
-            - <=
-            - ">="
-            - ==
-            - <
-            - ">"
-        value:
-          type: number
-      required:
-        - metric
-        - op
-        - value
-      additionalProperties: false
   config_floor:
     type: object
     properties:

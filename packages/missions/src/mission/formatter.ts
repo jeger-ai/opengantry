@@ -37,10 +37,7 @@ export function parseMarkdownMission(filePath: string, body: string): ParsedMiss
             adapter: DEFAULT_GATE_ADAPTER,
           }
         : null,
-    kpiGate: null,
     virtualCapture: false,
-    llmVerifiers: [],
-    aggregators: [],
     traceRows: parseTraceTable(body),
     interrogation: [],
     interrogationSha256: null,

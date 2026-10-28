@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatSchemaIssues, kpiReportSchema, missionSchema, orgPolicySchema } from "../src/schemas/index.js";
+import { formatSchemaIssues, missionSchema, orgPolicySchema } from "../src/schemas/index.js";
 
 const mission = { msn_id: "MSN-0001", skill_key: "ui", gate_command: "npm test", trace_rows: [] };
 
@@ -28,11 +28,3 @@ test("org policy schema: required keys, enums and strict objects", () => {
   assert.equal(orgPolicySchema.safeParse({ ...ok, mandatory_gates: [{ id: "g", command: "c", adapter: "tsc" }] }).success, true);
 });
 
-test("kpi report schema: date-time, integer exit code, numeric or boolean metrics", () => {
-  const ok = { msn_id: "MSN-0001", generated_at: "2026-01-01T00:00:00Z", exit_code: 0, metrics: { a: 1, b: true } };
-  assert.equal(kpiReportSchema.safeParse(ok).success, true);
-  assert.equal(kpiReportSchema.safeParse({ ...ok, generated_at: "yesterday" }).success, false);
-  assert.equal(kpiReportSchema.safeParse({ ...ok, exit_code: 1.5 }).success, false);
-  assert.equal(kpiReportSchema.safeParse({ ...ok, metrics: { a: "x" } }).success, false);
-  assert.equal(kpiReportSchema.safeParse({ ...ok, findings: [{ severity: "warn", path: "src/a.ts", message: "m", line: 0 }] }).success, false);
-});

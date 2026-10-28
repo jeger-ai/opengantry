@@ -49,19 +49,6 @@ describe("verify failure envelope", () => {
         gitProofMessage: "no planner stamp",
       },
     },
-    {
-      name: "kpi",
-      failure: {
-        ok: false as const,
-        phase: "kpi" as const,
-        message: "kpi failed",
-        exitCode: 1,
-        executorLogPath: "EXECUTOR_LOG.md",
-        kpiKind: "threshold" as const,
-        kpiReason: "metric over threshold",
-        kpiReportPath: ".gitagent/kpi/MSN-0001.json",
-      },
-    },
   ];
 
   for (const { name, failure } of phases) {

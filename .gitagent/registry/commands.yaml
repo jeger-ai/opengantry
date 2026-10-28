@@ -202,8 +202,6 @@ entries:
     since: commit 274f923
   - name: runtime exec
     since: commit 10c0b2e
-  - name: scan
-    since: MSN-0045
   - name: start
     since: commit 26d06cf
   - name: status

@@ -1,28 +1,18 @@
-# Performance judge example (ADR-0035 / #62)
+# Performance judge example
 
-Deterministic BYO verifier stub for the three hazard classes. No network, no LLM — suitable for CI.
+A deterministic heuristic check for three performance hazards (a pool created in a loop, blocking I/O in an async handler, an expensive function recomputed on every call). No network, no model.
 
-## Run stub against a fixture
+It prints its findings as JSON and exits `1` when there are any, so it works as a mission's `gate_command` or as a check in a verify contract:
 
 ```bash
-node examples/performance-judge/perf-judge-stub.mjs examples/performance-judge/fixtures/dirty-pooling.js
-node examples/performance-judge/perf-judge-stub.mjs examples/performance-judge/fixtures/clean-pooling.js
+node examples/performance-judge/perf-judge-stub.mjs examples/performance-judge/fixtures/dirty-pooling.js   # findings, exit 1
+node examples/performance-judge/perf-judge-stub.mjs examples/performance-judge/fixtures/clean-pooling.js   # no findings, exit 0
 ```
-
-Dirty fixtures emit `findings[]` with rubric rule IDs; clean fixtures emit empty findings.
-
-## Wire into a mission
 
 ```yaml
-llm_verifiers:
-  - id: perf_judge
-    command: node examples/performance-judge/perf-judge-stub.mjs examples/performance-judge/fixtures/dirty-pooling.js
-    required: false
-kpi_gate:
-  report_path: .gitagent/kpi/MSN-NNNN.json
-  thresholds: []
+# verify.yaml
+checks:
+  - { name: performance hazards, run: "node examples/performance-judge/perf-judge-stub.mjs src/server.js", expect: exit0 }
 ```
 
-Run `gantry scan --mission …` then `gantry verify`. Advisory findings appear as `kpi_warnings` and structured `findings[]` on PASS — they never flip FAIL→PASS.
-
-For production, replace the stub with a BYO script that reads `PERFORMANCE.md` + the mission diff and emits the same JSON shape.
+The KPI gate and `gantry scan` this example used to feed were removed in 4.0 (ADR-0061).

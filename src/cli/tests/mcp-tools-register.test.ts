@@ -54,7 +54,6 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     "gxt_runtime_env",
     "gxt_verify",
     "gxt_attest",
-    "gxt_scan",
     "gxt_runtime_exec",
     "gxt_resolve_mission",
     "gxt_doctor",

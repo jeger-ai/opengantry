@@ -22,13 +22,6 @@ export interface RemediationSnapshot {
   failures?: string[];
   /** v1 only — omitted on v2 writes (use gate_log_path). */
   gate?: { stdout?: string; stderr?: string; exit_code?: number };
-  kpi?: {
-    metric?: string;
-    op?: string;
-    expected?: number;
-    actual?: number | boolean;
-    report_path?: string;
-  };
   /** v2: compact model re-entry packet (ADR-0040). */
   findings?: VerifyFinding[];
   findings_digest?: string;

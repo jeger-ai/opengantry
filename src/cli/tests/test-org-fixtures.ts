@@ -24,10 +24,6 @@ export function sampleOrgPolicyYaml(overrides?: Partial<OrgPolicyBundle>): strin
     signers: overrides?.signers ?? [],
     mandatory_gates: overrides?.mandatory_gates ?? [],
     banned_imports: overrides?.banned_imports ?? [{ specifier: "lodash", scope: "changed" }],
-    producers: overrides?.producers ?? { security_vulnerabilities: "npm audit --json" },
-    kpi_thresholds: overrides?.kpi_thresholds ?? [
-      { metric: "security_vulnerabilities", op: "<=", value: 0 },
-    ],
     config_floor: overrides?.config_floor ?? {
       planner_signature: "warn",
       receipt_signature: "warn",
@@ -47,12 +43,6 @@ export function sampleOrgPolicyYaml(overrides?: Partial<OrgPolicyBundle>): strin
     "banned_imports:",
     "  - specifier: lodash",
     "    scope: changed",
-    "producers:",
-    "  security_vulnerabilities: npm audit --json",
-    "kpi_thresholds:",
-    "  - metric: security_vulnerabilities",
-    "    op: <=",
-    "    value: 0",
     "config_floor:",
     "  planner_signature: warn",
     "  receipt_signature: warn",

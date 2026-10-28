@@ -18,23 +18,21 @@ export function cachedBundlePath(root: string, pointer: PolicyPointer): string {
 
 export function parseOrgPolicyBundle(_root: string, raw: string): OrgPolicyBundle {
   const data = YAML.parse(raw) as unknown;
+  // ADR-0061: a floor that still names KPI thresholds must not pass with them silently dropped.
+  const removed = ["producers", "kpi_thresholds"].filter((k) => data !== null && typeof data === "object" && k in data);
+  if (removed.length > 0) {
+    throw new GantryUserError(
+      GXT_ERROR.POLICY_DRIFT,
+      `org policy bundle: ${removed.join(" and ")} ${removed.length === 1 ? "was" : "were"} removed in 4.0 (ADR-0061)`,
+      "remove them from the bundle; a KPI producer belongs in a gate command or a verify contract check",
+      1,
+    );
+  }
   const parsed = orgPolicySchema.safeParse(data);
   if (!parsed.success) {
     throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, `org policy bundle: ${formatSchemaIssues(parsed.error)}`, undefined, 1);
   }
-  const bundle = data as OrgPolicyBundle;
-  const producers = bundle.producers ?? {};
-  for (const t of bundle.kpi_thresholds ?? []) {
-    if (!(t.metric in producers)) {
-      throw new GantryUserError(
-        GXT_ERROR.POLICY_DRIFT,
-        `kpi_thresholds metric "${t.metric}" is not declared in producers`,
-        "add producers.<metric> or remove the threshold",
-        1,
-      );
-    }
-  }
-  return bundle;
+  return data as OrgPolicyBundle;
 }
 
 export function loadCachedBundle(root: string, pointer: PolicyPointer): OrgPolicyBundle {

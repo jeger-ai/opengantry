@@ -22,7 +22,6 @@ const schemas = await import(pathToFileURL(core).href);
 const TARGETS = [
   ["MISSION.schema.yaml", "mission.v1_1", "MISSION.schema — JSON Schema for structured missions", schemas.missionSchema],
   ["ORG-POLICY.schema.yaml", "org-policy.v1", "ORG-POLICY.schema — JSON Schema for organization policy bundles (ADR-0042)", schemas.orgPolicySchema],
-  ["KPI-REPORT.schema.yaml", "kpi-report.v2_0", "KPI-REPORT.schema — JSON Schema for committed LLM/scan evidence reports", schemas.kpiReportSchema],
 ];
 
 for (const [file, id, title, schema] of TARGETS) {
