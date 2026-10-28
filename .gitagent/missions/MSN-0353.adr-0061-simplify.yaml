@@ -1,0 +1,168 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0353]. Executor must not run until the [MSN-0353] legislation commit + pin.
+#
+# Legislated intent: ADR-0061, simplify before 4.0: one model, fewer commands (46 to at most 26, MCP 20 to 12), one
+# verify engine, one record, generated shells; at most 30000 lines at the tag. Records only.
+#
+# Operator request (2026-10-28, "clean it up as much as possible"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0353.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0353
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). contract.tmvc_roots: EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0353.adr-0061-simplify.yaml,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/runs/MSN-0353.json. Records only:
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md (new). No code, no
+      docs, no output change. Operator request (2026-10-28): "please create a
+      sophisticated plan to improve the software design and architecture, keep
+      in mind: simplicity is KING" and then "we are not in a rush for 4.0.0
+      release, so we should take care of all the findings and clean it up as
+      much as possible". Decisions: the cuts happen before the 4.0.0 tag; the
+      cut list keeps what the product promise depends on (cage, read guard,
+      verify, adapt, missions, domains as adapters, break-glass, the org plane);
+      the operator may keep any cut item before its mission runs. The mission
+      has no trace rows: its evidence is .gitagent/runs/MSN-0353.json written by
+      gantry verify --record (RULES §3).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept; keyless signing stays and attaches to the one record in phase 2.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane ingestion contract is kept; phase 2 changes
+      what it ingests only through a named mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept and continue: ADR-0061 finishes A2 to A4 (one law
+      model, one evaluator, one run record) and the B7 size goal with deletion
+      rather than moves."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 6f9d4d2bf647
+    kind: adr_conflict
+    question: Intent may relate to ADR-0030. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0030 before
+      legislation proceeds.
+    operator_answer: "Superseded by ADR-0061 phase 0: init --discover and the
+      discovery scanner leave the CLI; the mission that removes them marks
+      ADR-0030 superseded."
+    adr_refs:
+      - ADR-0052
+      - ADR-0030
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept; test integrity stays in the contract engine that
+      mission verify will use in phase 1.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. ADR-0061 removes commands and changes outputs in named
+      missions, each re-recording the goldens it changes; this record itself
+      changes no output.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0061 phase 0 narrows MCP to the legislation
+      handoff, verify and the runtime (12 tools); the write containment at gxt
+      tool boundaries stays for the tools that remain.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: b88a6c3319b0
+    kind: adr_conflict
+    question: Intent may relate to ADR-0031. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0031 before
+      legislation proceeds.
+    operator_answer: "Superseded by ADR-0061 phase 0: blueprint leaves the CLI; the
+      mission that removes it marks ADR-0031 superseded."
+    adr_refs:
+      - ADR-0052
+      - ADR-0031
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission records ADR-0061 (decision and plan, no code).
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: c75db18757f4
+    kind: adr_conflict
+    question: Intent may relate to ADR-0036. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0036 before
+      legislation proceeds.
+    operator_answer: "Accept, to be amended by ADR-0061 phase 2: the attestation
+      receipt and the hub export become projections of the run record."
+    adr_refs:
+      - ADR-0052
+      - ADR-0036
+interrogation_sha256: 26c2808463757301dd18abd6a4acf8c638d6b51dbc0821e7ce38d0f3b4b7e22b
+declared_paths:
+  - .gitagent/missions/MSN-0353.adr-0061-simplify.yaml
+  - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+  - .gitagent/runs/MSN-0353.json
+  - EXECUTOR_LOG.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0353.adr-0061-simplify.yaml
+    - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+    - .gitagent/runs/MSN-0353.json
+    - EXECUTOR_LOG.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/
+    - src/
+contract_sha256: 68009f8cf83b1096e21bb83f6946f57afe03c5db2e92753e9c011280f6475965
