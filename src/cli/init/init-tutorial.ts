@@ -90,7 +90,7 @@ async function scaffoldTutorialMission(
     intent: TUTORIAL_INTENT,
     msn: TUTORIAL_MSN_ID,
     skillKey,
-    gateCommand: "gantry check",
+    gateCommand: "gantry doctor",
     writeMission: true,
     silent: true,
     audience: "planner",

@@ -39,7 +39,7 @@ Declaring scope is not the same as enforcing it. How strongly a scope holds depe
 | How the executor runs | What holds the scope |
 |-----------------------|----------------------|
 | Under `gantry runtime exec` | A process-boundary check of edit roots and forbidden zones for the subprocess |
-| Committing through hooks | `gantry tmvc guard` on staged files: a warning by default, a rejection with `--strict` or `gantry hooks install` |
+| Committing through hooks | `gantry tmvc guard` on staged files: a warning by default, a rejection with `--strict` or `gantry hook install` |
 | In an IDE agent's own edit tool | Advisory only: rules and `AGENTS.md` guide the agent, the kernel does not trap the write |
 
 Every mission also passes `gantry verify` before merge. See [Enforcement boundary](enforcement-boundary.md) for the full picture.

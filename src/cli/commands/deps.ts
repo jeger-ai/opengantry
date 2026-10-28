@@ -42,7 +42,11 @@ export function runDepsFetch(opts: { mission?: string; json?: boolean }): void {
   });
 }
 
-export function runDepsCheck(opts: { mission?: string; json?: boolean }): void {
+export function runDepsCheck(opts: { mission?: string; since?: string; json?: boolean }): void {
+  if (opts.since !== undefined) {
+    runDepsCheckSince(opts.since, opts.json);
+    return;
+  }
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     const { mission } = loadMissionDeps(root, opts.mission);
@@ -54,10 +58,11 @@ export function runDepsCheck(opts: { mission?: string; json?: boolean }): void {
   });
 }
 
-export function runReleaseCheck(opts: { tag?: string; json?: boolean }): void {
-  runUserCommand({ json: opts.json }, () => {
+/** `deps check --since <ref>`: every mission file changed since the ref (a release tag). */
+function runDepsCheckSince(since: string, json: boolean | undefined): void {
+  runUserCommand({ json }, () => {
     const { root } = loadWorkspace();
-    const tag = opts.tag?.trim();
+    const tag = since.trim();
     const range = tag ? `${tag}^..HEAD` : "HEAD";
     const diff = gitRun(root, ["diff", "--name-only", range, "--", ".gitagent/missions/"]);
     const files = diff.stdout.split("\n").map((s) => s.trim()).filter((s) => s.endsWith(".yaml") || s.endsWith(".yml"));
@@ -70,6 +75,6 @@ export function runReleaseCheck(opts: { tag?: string; json?: boolean }): void {
       if (checked.ledger) reportLedger(checked.ledger);
       results.push(...checked.results);
     }
-    return reportDependencyResults(results, { headline: "gantry release check" });
+    return reportDependencyResults(results, { headline: "gantry deps check" });
   });
 }

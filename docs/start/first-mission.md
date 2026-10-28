@@ -36,25 +36,25 @@ git add .gitagent/missions/MSN-0001.<slug>.yaml
 git commit -m "[MSN-0001] legislate mission"
 
 # 2. Pin the mission and load the executor environment
-gantry pin .gitagent/missions/MSN-0001.<slug>.yaml
+gantry mission pin .gitagent/missions/MSN-0001.<slug>.yaml
 eval "$(gantry runtime env)"
 
 # 3. Verify and audit
 gantry verify --fix
 gantry verify --json | jq -r '.error_code // "passed"'
 git log --grep='MSN-0001' --oneline
-gantry status --json --verbose
+gantry doctor
 ```
 
 `gantry legislate --from-intent "<story>"` proposes the scope from the repository and asks you to approve it ([Missions](../concepts/missions.md)).
 
-Pinning is optional but saves typing: `gantry pin <file>` makes `verify`, `scan`, `attest` and `runtime env` default to that mission, `gantry pin` with no argument shows the pin, and `gantry unpin` clears it.
+Pinning is optional but saves typing: `gantry mission pin <file>` makes `verify`, `attest` and `runtime env` default to that mission, `gantry mission pin` with no argument shows the pin, and `gantry mission unpin` clears it.
 
 ## What success looks like
 
 - `gantry verify` exits `0`, with the gate and every trace row PASS.
 - `git log --grep='MSN-'` shows the legislation commit from an allowlisted Planner email.
-- `gantry status --json` reports the pinned or resolved mission.
+- `gantry mission pin` with no argument prints the pinned mission.
 
 ## When a step fails
 

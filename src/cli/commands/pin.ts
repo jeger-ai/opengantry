@@ -18,8 +18,8 @@ export function runPin(options: PinOptions): void {
       if (!pinned) {
         throw new GantryUserError(
           "MISSION_REQUIRED",
-          "gantry pin: no active mission pinned",
-          "gantry pin .gitagent/missions/<file>.yaml",
+          "gantry mission pin: no active mission pinned",
+          "gantry mission pin .gitagent/missions/<file>.yaml",
           1,
         );
       }
@@ -38,11 +38,11 @@ export function runUnpin(): void {
     if (!clearActiveMissionPin(root)) {
       throw new GantryUserError(
         "MISSION_REQUIRED",
-        "gantry unpin: no active mission pinned",
+        "gantry mission unpin: no active mission pinned",
         undefined,
         1,
       );
     }
-    logInfo("gantry unpin: cleared active mission pin");
+    logInfo("gantry mission unpin: cleared active mission pin");
   });
 }

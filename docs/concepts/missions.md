@@ -84,7 +84,7 @@ MCP clients use `gxt_propose_contract`. `gantry contract preflight` can suggest 
 
 ## Pin and hand off
 
-`gantry pin <file>` makes `verify`, `scan`, `attest` and `runtime env` default to that mission; `gantry unpin` clears it. A pushed mission with placeholder trace rows passes `gantry verify --pre-push` after the Planner stamp alone, so a remote agent can pick up the work frame. Full verify, gate and evidence, is still required before merge ([Agent graphs](../guides/agent-graphs.md)).
+`gantry mission pin <file>` makes `verify`, `attest` and `runtime env` default to that mission; `gantry mission unpin` clears it. A pushed mission with placeholder trace rows passes `gantry verify --pre-push` after the Planner stamp alone, so a remote agent can pick up the work frame. Full verify, gate and evidence, is still required before merge ([Agent graphs](../guides/agent-graphs.md)).
 
 ## Risk tiers
 

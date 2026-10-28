@@ -53,8 +53,6 @@ entries:
     hidden: true
     since: MSN-0237
     note: "Internal: run by the cage session git hooks. Folds into gantry hook in ADR-0052 step 5."
-  - name: check
-    since: MSN-0010
   - name: ci
     since: MSN-0289
   - name: ci msn-range
@@ -81,8 +79,6 @@ entries:
     since: MSN-0010
   - name: deps fetch
     since: MSN-0080
-  - name: deps status
-    since: MSN-0010
   - name: doctor
     since: commit 3709795
   - name: events
@@ -97,14 +93,12 @@ entries:
     since: MSN-0288
   - name: hook pre-push
     since: MSN-0288
-  - name: hooks
-    since: MSN-0227
-  - name: hooks install
-    since: MSN-0227
-  - name: hooks status
-    since: MSN-0010
-  - name: hooks uninstall
-    since: MSN-0227
+  - name: hook install
+    since: MSN-0357
+  - name: hook status
+    since: MSN-0357
+  - name: hook uninstall
+    since: MSN-0357
   - name: init
     since: commit 44a4420
   - name: interrogate
@@ -147,8 +141,12 @@ entries:
     since: MSN-0010
   - name: mission changed
     since: MSN-0207
+  - name: mission pin
+    since: MSN-0357
   - name: mission snapshot
     since: MSN-0010
+  - name: mission unpin
+    since: MSN-0357
   - name: mission validate
     since: MSN-0010
   - name: onboarding
@@ -157,8 +155,6 @@ entries:
     since: MSN-0045
   - name: perimeter check
     since: MSN-0010
-  - name: pin
-    since: MSN-0140
   - name: planner
     since: MSN-0075
   - name: planner set
@@ -184,24 +180,16 @@ entries:
     since: MSN-0148
   - name: receipt show
     since: MSN-9000
-  - name: release
-    since: MSN-0200
-  - name: release check
-    since: MSN-0010
   - name: runtime
     since: commit 274f923
   - name: runtime env
     since: commit 274f923
   - name: runtime exec
     since: commit 10c0b2e
-  - name: status
-    since: MSN-0010
   - name: tmvc
     since: commit 3062fcc
   - name: tmvc guard
     since: commit 3062fcc
-  - name: unpin
-    since: MSN-0140
   - name: upgrade
     since: MSN-9000
   - name: upgrade apply

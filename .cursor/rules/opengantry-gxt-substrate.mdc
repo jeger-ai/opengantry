@@ -35,7 +35,7 @@ Treat these as the **law + routing contract** for agent work. For orientation an
 - **Rules:** this file (`alwaysApply: true`) + root `AGENTS.md`.
 - **MCP:** `.cursor/mcp.json` — `gxt_*` tools via `./scripts/mcp-launcher.sh` (byte-identical specimen and adopter command; no `mcp.json` parity exemption).
 - **Hooks:** `.cursor/hooks.json` (installed by `gantry init`) — `sessionStart` mission scope + shell guard for GXT law/manifest paths (fallback for non-MCP shell paths).
-- **Pin mission:** `gantry pin .gitagent/missions/<file>.yaml` before Agent work.
+- **Pin mission:** `gantry mission pin .gitagent/missions/<file>.yaml` before Agent work.
 - **Terminal bootstrap:** `source scripts/gxt-runtime-env.sh` (uses pinned mission or explicit path).
 - **Code architecture:** `.gitagent/ARCHITECTURE.pointer.yaml` — if `kind=unset` or stub, read `.gitagent/planner/ARCHITECTURE-DISCOVERY.md` and ask user before coding.
 - **Human IDE setup:** `docs/INTEGRATIONS.md` (adopter reference — not agent context).

@@ -33,7 +33,7 @@ entries:
     command: "ledger verify"
   - name: gxt_pin_mission
     since: MSN-0228
-    command: pin
+    command: "mission pin"
   - name: gxt_policy_status
     since: MSN-0228
     command: "policy status"
@@ -42,7 +42,7 @@ entries:
     command: "contract propose"
   - name: gxt_resolve_mission
     since: MSN-0228
-    command: pin
+    command: "mission pin"
   - name: gxt_runtime_env
     since: MSN-0228
     command: "runtime env"

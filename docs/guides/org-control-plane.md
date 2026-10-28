@@ -30,7 +30,7 @@ gantry ledger export --format soc2-pack --out .gitagent/history/ledger-export
 # 3. Cross-repository gates: fetch the other repositories' refs before verify
 gantry deps fetch --mission .gitagent/missions/MSN-0042.yaml
 gantry deps check --mission .gitagent/missions/MSN-0042.yaml --json
-gantry release check --tag v3.2.6
+gantry deps check --since v3.2.6
 ```
 
 ## Org policy floor
@@ -66,7 +66,7 @@ With `ledger.mode: local` in `.gitagent/config.yaml`, verify, attest, break-glas
 
 A mission can declare `depends_on[]`: missions in other repositories of the same organization that must be verified first. `gantry deps fetch` is the only network path; verify's `dependencies` phase, `gantry deps check` and doctor read the fetched `refs/gxt/deps/<slug>` refs offline.
 
-Same-org proof recomputes `repository_hash` for the dependency with your `GANTRY_ORG_PEPPER` and requires it to match; a mismatch is `GXT_DEPENDENCY_ORG_MISMATCH`. Unfetched, unsatisfied, unsigned (when required) or stale entries fail closed (`GXT_DEPENDENCY_*`). `gantry release check --tag <tag>` holds a release until its dependencies are verified. Triggering other repositories' workflows is convenience glue, not enforcement. MCP: `gxt_deps_check`.
+Same-org proof recomputes `repository_hash` for the dependency with your `GANTRY_ORG_PEPPER` and requires it to match; a mismatch is `GXT_DEPENDENCY_ORG_MISMATCH`. Unfetched, unsatisfied, unsigned (when required) or stale entries fail closed (`GXT_DEPENDENCY_*`). `gantry deps check --since <tag>` holds a release until its dependencies are verified. Triggering other repositories' workflows is convenience glue, not enforcement. MCP: `gxt_deps_check`.
 
 ## Receipts and telemetry
 

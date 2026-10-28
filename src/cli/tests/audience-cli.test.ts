@@ -6,8 +6,8 @@ import { getRepoRoot } from "#git/git.js";
 
 const CLI = path.join(getRepoRoot(), "dist/cli/index.js");
 
-test("CLI --audience verifier: silent stdout on successful check", () => {
-  const r = spawnSync("node", [CLI, "--audience", "verifier", "check"], {
+test("CLI --audience verifier: silent stdout on a successful command", () => {
+  const r = spawnSync("node", [CLI, "--audience", "verifier", "hook", "status"], {
     encoding: "utf8",
     cwd: getRepoRoot(),
   });
@@ -16,7 +16,7 @@ test("CLI --audience verifier: silent stdout on successful check", () => {
 });
 
 test("CLI --audience verifier: invalid role exits 2", () => {
-  const r = spawnSync("node", [CLI, "--audience", "bot", "check"], {
+  const r = spawnSync("node", [CLI, "--audience", "bot", "hook", "status"], {
     encoding: "utf8",
     cwd: getRepoRoot(),
   });

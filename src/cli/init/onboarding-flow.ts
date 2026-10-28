@@ -24,7 +24,7 @@ export function onboardingVerifyHint(missionPath: string): string {
 }
 
 export function onboardingStatusHint(): string {
-  return "gantry status --json --verbose";
+  return "gantry doctor --json";
 }
 
 export function onboardingStartHint(): string {

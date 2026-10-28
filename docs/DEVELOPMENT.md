@@ -65,7 +65,7 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 
 1. **Legislate** — `gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry` (proposes a tighten-only `contract`, prompts `[a]/[e]/[q]` or take `--yes`; runs gap analysis; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file`). MCP: `gxt_propose_contract` → `gxt_draft_legislation` with `interrogation[]` + `contract`. Operator answers are quoted verbatim — never fabricated by agents.
 2. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
-3. **Pin** — `gantry pin .gitagent/missions/<file>.yaml`. When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
+3. **Pin** — `gantry mission pin .gitagent/missions/<file>.yaml`. When pinned, `verify` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry mission unpin` when switching MSNs.
 4. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
 5. **Record** — commit the work, then `gantry verify --mission .gitagent/missions/<file>.yaml --record` on the clean tree and commit `.gitagent/runs/MSN-NNNN.json` (RULES §3). Missions that still carry `trace_rows` append PASS quotes to repo-root `EXECUTOR_LOG.md` instead (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
 6. **Verify** — `gantry verify` (pinned) or `gantry verify --mission .gitagent/missions/<file>.yaml`. Optional: `gantry verify --receipt` then `gantry receipt show`.
@@ -104,7 +104,7 @@ Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry   # or substrate
 # Planner: git commit -m "[MSN-NNNN] legislate …" including mission file
 
-gantry pin .gitagent/missions/MSN-NNNN.<slug>.yaml
+gantry mission pin .gitagent/missions/MSN-NNNN.<slug>.yaml
 # New Agent chat → sessionStart injects GXT_TMVC_* + mission context automatically
 
 source scripts/gxt-runtime-env.sh   # integrated terminal (same pinned mission)
@@ -144,7 +144,7 @@ MCP: `gxt_upgrade_plan` / `gxt_upgrade_apply` (same gates as CLI).
 | Context | `.cursor/rules/` + `AGENTS.md` + `sessionStart` hook | RULES + MANIFEST + pinned mission |
 | Legislation | MCP `gxt_draft_legislation` / `gxt_execute_legislation` | Two-step chat approval before file write |
 | Shell guard | `beforeShellExecution` (fallback) | Blocks casual writes to foreman / RULES; asks on raw `gantry legislate` |
-| Terminal env | `gantry pin` + `source scripts/gxt-runtime-env.sh` (wraps `gantry runtime env`) | Sets `GXT_*` for integrated terminal |
+| Terminal env | `gantry mission pin` + `source scripts/gxt-runtime-env.sh` (wraps `gantry runtime env`) | Sets `GXT_*` for integrated terminal |
 | Process trap | `gantry runtime exec` | Headless Cursor CLI / CI only |
 
 IDE Agent **Write/Edit** is advisory TMVC — stay within pinned mission scope; use `runtime exec` when you need manifest-enforced subprocess boundaries. See INTEGRATIONS **Enforcement boundary**.
@@ -191,7 +191,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Mission gate | `gantry verify` | Mission `gate_command` + optional `gate_success_substring` + optional `gate_adapter` (`generic` default, `eslint`, `tsc` — ADR-0041). Optional phases: `policy` (ADR-0042), `dependencies` (ADR-0044). |
 | Unit tests | gate / CI | `npm test` (`node:test`) |
 | Compile / types | build / CI | `npm run build` (`tsc`) |
-| Manifest shape | CI / pre-push | `gantry check` |
+| Manifest shape | CI / pre-push | `gantry doctor` (manifest + skills sync) |
 | Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
 | Banned imports | verify `--contract` | `contract.banned_imports` and the org policy floor |
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
@@ -220,7 +220,7 @@ External IDE skill packs are **edge-only** (local, gitignored). They must not be
 npm run validate
 ```
 
-Runs **`dev-validate-core.sh`** (build, `gantry check`, `gantry ci upgrade-tmp`, tests, doctor, MCP dogfood, changed-code, `gantry ci msn-range` vs `origin/main`) then **`gantry ci verify-missions`** (full `gantry verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
+Runs **`dev-validate-core.sh`** (build, `gantry ci upgrade-tmp`, tests, doctor, MCP dogfood, changed-code, `gantry ci msn-range` vs `origin/main`) then **`gantry ci verify-missions`** (full `gantry verify` on branch-changed missions). Mission gates SHOULD use `dev-validate-core.sh` only—not `npm run validate`—to avoid verify/gate recursion.
 
 **Repo-only scripts:** OpenGantry specimen dev gates (`check-changed-code.sh`, `dev-validate-core.sh`, and related helpers) live under `scripts/` but are **not** in the init asset catalog. [`scripts/gen-asset-catalog.mjs`](../scripts/gen-asset-catalog.mjs) enforces this via `REPO_ONLY_SCRIPTS` in [`scripts/lib/asset-catalog-static.mjs`](../scripts/lib/asset-catalog-static.mjs) — the generator fails if any repo-only script leaks into `templates/integrations/asset-catalog.json`.
 
@@ -236,8 +236,8 @@ Adopters receive the runtime helpers from the init catalog, not the specimen-onl
 
 **Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a one-line shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell.
 
-- **pre-commit** — `gantry hook pre-commit`: `tmvc guard` on the staged index for the pinned mission (blocks when `gantry hooks install` armed strict mode or `GANTRY_TMVC_GUARD_STRICT=1`), then an advisory `contract check` over staged sources.
-- **pre-push** — `gantry hook pre-push` reads the ref lines git passes on stdin: a ref deletion verifies nothing, a new branch compares with the newest merge-base among its upstream, the pushed remote's `HEAD`, `main` and `master` remote-tracking branches and local `main`, `master` (else the parent), so a local `main` behind its remote does not pull already-merged missions into the range; an update compares `remote..local`, or, when the branch merged the remote's `main` since, the newest of those merge-bases, so the missions `main` brought are not verified again. Per range: `gantry verify --pre-push` for changed missions (legislative stubs pass after git-proof; a rowless mission with a run record is verified in full); advisory `gantry perimeter` when governance files change; `gantry check` if manifest/skills changed; the changed-code gate for touched `src/cli/**/*.ts` (specimen only, until step 5b folds it into the CLI).
+- **pre-commit** — `gantry hook pre-commit`: `tmvc guard` on the staged index for the pinned mission (blocks when `gantry hook install` armed strict mode or `GANTRY_TMVC_GUARD_STRICT=1`), then an advisory `contract check` over staged sources.
+- **pre-push** — `gantry hook pre-push` reads the ref lines git passes on stdin: a ref deletion verifies nothing, a new branch compares with the newest merge-base among its upstream, the pushed remote's `HEAD`, `main` and `master` remote-tracking branches and local `main`, `master` (else the parent), so a local `main` behind its remote does not pull already-merged missions into the range; an update compares `remote..local`, or, when the branch merged the remote's `main` since, the newest of those merge-bases, so the missions `main` brought are not verified again. Per range: `gantry verify --pre-push` for changed missions (legislative stubs pass after git-proof; a rowless mission with a run record is verified in full); advisory `gantry perimeter` when governance files change; the manifest + skills sync if manifest/skills changed; the changed-code gate for touched `src/cli/**/*.ts` (specimen only, until step 5b folds it into the CLI).
 - **post-checkout** — `gantry hook post-checkout`: `EXECUTOR_LOG.md` from the template on the first checkout of a feature branch.
 
 ## Releasing
@@ -314,7 +314,7 @@ Pull requests run [`.github/workflows/gxt-validate.yml`](../.github/workflows/gx
 | Job | What it enforces |
 |-----|------------------|
 | `pr_governance` | PRs must target the integration branch (`main` here; `default_branch` in init template; override via repo variable `GXT_INTEGRATION_BRANCH`) — blocks stacked mission PRs |
-| `manifest` | `gantry check`, unit tests, `gantry doctor`, `gantry perimeter --ci` on PRs |
+| `manifest` | unit tests, `gantry doctor`, `gantry perimeter --ci` on PRs |
 | `code_quality` | Changed-code gates (`check-changed-code.sh`) on PR diff |
 | `msn_commits` | `[MSN-NNNN]` on commits touching MSN-enforced paths (substrate + MANIFEST `tmvc_roots`); or valid `gxt-bypass` note; or repository `trusted_automation` policy (`gantry ci trusted-automation --commit <sha>`); runs as `gantry ci msn-range` |
 | `mission_verify` | Mission purity (one `[MSN-NNNN]` per `${base}..${head}`); full `gantry verify` on each mission file in triple-dot diff; fails if protected paths change without a mission file unless `trusted_automation` policy passes (`gantry ci trusted-automation --base … --head …`); runs as `gantry ci verify-missions`. Installs the iii integration example's dependencies first when `examples/iii-integration/package-lock.json` exists, as does `gxt-attest-ingest.yml`, so mission gates that run its offline validator work (MSN-0263) |

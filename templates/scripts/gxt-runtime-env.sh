@@ -26,11 +26,11 @@ else
   _gxt_runtime_die "gxt-runtime-env: gantry not found (npm ci && npm run build, or npm install -g @jeger-ai/opengantry)"
   _gxt_runtime_sourced && return 1 || exit 1
 fi
-# Without an argument, gantry resolves the pinned mission (gantry pin <file>; GANTRY_MISSION also works).
+# Without an argument, gantry resolves the pinned mission (gantry mission pin <file>; GANTRY_MISSION also works).
 if ! RUNTIME_SH="$("${GANTRY[@]}" runtime env ${MISSION:+--mission "$MISSION"})"; then
   _gxt_runtime_die "$(cat <<'HINT'
 gxt-runtime-env: no mission file resolved.
-  gantry pin .gitagent/missions/<file>.yaml
+  gantry mission pin .gitagent/missions/<file>.yaml
   source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml
   export GANTRY_MISSION=.gitagent/missions/<file>.yaml
 HINT
