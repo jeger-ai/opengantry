@@ -1,6 +1,3 @@
-import { gitRunOk } from "#git/git.js";
-import { fallbackPushBase } from "./git/git-hooks.js";
-
 const MISSIONS_PREFIX = ".gitagent/missions/";
 
 /** Docs under missions/ are not gantry verify targets (no gate/trace contract). */
@@ -16,25 +13,3 @@ export function isVerifiableMissionPath(rel: string): boolean {
   return true;
 }
 
-/** Repo-relative mission paths changed between base (default: the pre-push fallback base) and HEAD. */
-export function listDirtyMissionPaths(repoRoot: string, baseRef?: string): string[] {
-  const base = baseRef?.trim() || fallbackPushBase(repoRoot, "HEAD");
-  if (!base) return [];
-
-  const r = gitRunOk(repoRoot, [
-    "diff",
-    "--name-only",
-    "--diff-filter=ACMRT",
-    `${base}..HEAD`,
-    "--",
-    MISSIONS_PREFIX,
-  ]);
-  if (!r.ok) return [];
-
-  const paths = r.stdout
-    .split("\n")
-    .map((p) => p.trim().replace(/\\/g, "/"))
-    .filter((p) => isVerifiableMissionPath(p));
-
-  return [...new Set(paths)].sort();
-}

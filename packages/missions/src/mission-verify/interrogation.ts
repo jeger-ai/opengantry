@@ -9,7 +9,7 @@ import { resolvePlannerEmails } from "../planner-identity.js";
 import { isStubOperatorAnswer } from "../interrogate/answers.js";
 import { interrogationSha256 } from "#core/interrogation.js";
 import { isLegislativeStub } from "../mission/formatter.js";
-import { missionHasRunRecord } from "./run-record.js";
+import { missionRunRecord } from "./run-record.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 import { pathRiskTier } from "../tmvc-path.js";
@@ -182,7 +182,7 @@ function validateStampedInterrogationDigest(
   input: StampDigestInput,
 ): InterrogationPhaseOutcome | null {
   const { root, proofMsnId, missionRel, mission, options, executorLogPath, warnings } = input;
-  if (isLegislativeStub(mission) && !missionHasRunRecord(root, proofMsnId)) return null;
+  if (isLegislativeStub(mission) && !missionRunRecord(root, proofMsnId)) return null;
   const stampHash = resolvePlannerStampHash(root, proofMsnId, options.scanDepth, missionRel);
   if (!stampHash) return null;
   const body = readMissionAtCommit(root, stampHash, missionRel);

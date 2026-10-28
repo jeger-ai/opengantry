@@ -21,8 +21,9 @@ export function runRecordRelPath(msnId: string): string {
   return `${REL_RUNS_DIR}/${msnId}.json`;
 }
 
-export function missionHasRunRecord(root: string, msnId: string | null): boolean {
-  return msnId !== null && fs.existsSync(path.join(root, runRecordRelPath(msnId)));
+/** The mission's committed run record, or null when it has none; an unparseable record reads as an invalid one. */
+export function missionRunRecord(root: string, msnId: string | null): RunRecord | null {
+  return msnId === null ? null : readRunRecord(root, runRecordRelPath(msnId));
 }
 
 function readRunRecord(root: string, rel: string): RunRecord | null {

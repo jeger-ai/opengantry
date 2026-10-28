@@ -1,0 +1,238 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0362]. Executor must not run until the [MSN-0362] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 1, mission 3b: verify fails a mission whose change touches a forbidden
+# zone and warns on paths outside the roots; RULES section 4 states it; dead missions exports go.
+#
+# Operator request (2026-10-28, ADR-0061 phase 1 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0362.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0362
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 593f50cf9197
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/scope.md, docs/concepts/verify.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0362.verify-changed-paths.yaml,
+      .gitagent/planner/RULES.md, .gitagent/runs/MSN-0362.json,
+      packages/core/src/constants.ts,
+      packages/missions/src/contract/contract-hash.ts,
+      packages/missions/src/dirty-missions.ts,
+      packages/missions/src/manifest.ts,
+      packages/missions/src/mission/formatter.ts,
+      packages/missions/src/mission-verify/contract.ts,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/mission-verify/interrogation.ts,
+      packages/missions/src/mission-verify/run-record.ts,
+      src/cli/tests/contract-hash.test.ts, src/cli/tests/dirty-missions.test.ts,
+      src/cli/tests/verify-changed-paths.test.ts,
+      templates/.gitagent/planner/RULES.md,
+      test/conformance/spawning-tests.yaml. Changed: mission verify contract
+      phase (changed-path judging over the stamp-to-record window with the
+      effective scope and the path law), engine and interrogation (one
+      run-record reader), run record (missionRunRecord), RULES section 4
+      (template and copy), docs (verify and scope concepts, CHANGELOG). Added:
+      the changed-paths verify test. Deleted dead code:
+      emitActiveMissionFromTemplate and its helpers in the mission formatter,
+      listDirtyMissionPaths, readManifestDocument, isEmptyContract, the core
+      REL_MISSION_TEMPLATE constant, and their tests; the spawning-tests
+      inventory drops dirty-missions; ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. Planner stamp signing is untouched; the new check
+      reuses the stamp git-proof already resolves as the start of its window.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. Structural law budgets only go down: the new check is
+      paid for by deleting dead missions exports (ARCH_BASELINE.json lowered
+      with --ratchet)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept. No conformance golden changes: the fixtures stay
+      inside their scope."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a26c1561874a
+    kind: risk_escalation
+    question: "Triage escalated: Intent references path under path_risks:
+      .gitagent/. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/concepts/scope.md, docs/concepts/verify.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0362.verify-changed-paths.yaml,
+      .gitagent/planner/RULES.md, .gitagent/runs/MSN-0362.json,
+      packages/core/src/constants.ts,
+      packages/missions/src/contract/contract-hash.ts,
+      packages/missions/src/dirty-missions.ts,
+      packages/missions/src/manifest.ts,
+      packages/missions/src/mission/formatter.ts,
+      packages/missions/src/mission-verify/contract.ts,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/mission-verify/interrogation.ts,
+      packages/missions/src/mission-verify/run-record.ts,
+      src/cli/tests/contract-hash.test.ts, src/cli/tests/dirty-missions.test.ts,
+      src/cli/tests/verify-changed-paths.test.ts,
+      templates/.gitagent/planner/RULES.md,
+      test/conformance/spawning-tests.yaml. Changed: mission verify contract
+      phase (changed-path judging over the stamp-to-record window with the
+      effective scope and the path law), engine and interrogation (one
+      run-record reader), run record (missionRunRecord), RULES section 4
+      (template and copy), docs (verify and scope concepts, CHANGELOG). Added:
+      the changed-paths verify test. Deleted dead code:
+      emitActiveMissionFromTemplate and its helpers in the mission formatter,
+      listDirtyMissionPaths, readManifestDocument, isEmptyContract, the core
+      REL_MISSION_TEMPLATE constant, and their tests; the spawning-tests
+      inventory drops dirty-missions; ARCH_BASELINE.json lowered. Operator
+      decisions (2026-10-28, ADR-0061 phase 1): mission verify fails when the
+      mission's change touches a forbidden zone, and paths outside the roots
+      only warn in 4.0, judged from the Planner stamp to the run record's head
+      with .gitagent/** and EXECUTOR_LOG.md exempt. As built, the .gitagent
+      exemption applies to the outside-roots warning only; forbidden zones are
+      judged on every path except the mission's own file, its run record and
+      EXECUTOR_LOG.md, so a zone such as .gitagent/foreman/ still fails
+      (stricter, fail closed). The window ending at the record head keeps a
+      later mission's commits on the same branch out of an earlier mission's
+      judgement. MSN-0354 to MSN-0361 pass the new check. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0362.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. MCP gxt_verify reports the new failure and warning
+      through the same payload.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept. Paths are judged with the one path law (missionScopeLaw
+      and judgePath); no new matcher.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission completes phase 1 of ADR-0061 and carries
+      out the operator's path-judging decision.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Accept. Plan adapters (gantry adapt) are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: the mission contract's forbidden zones and
+      roots are now also judged at verify time over the mission's committed
+      change, not only at runtime and pre-commit."
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: d9a1601e31578292e203599199780a8ee864e6a61949a7a0955f17917889f539
+declared_paths:
+  - .gitagent/missions/MSN-0362.verify-changed-paths.yaml
+  - .gitagent/planner/RULES.md
+  - .gitagent/runs/MSN-0362.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/scope.md
+  - docs/concepts/verify.md
+  - packages/core/src/constants.ts
+  - packages/missions/src/contract/contract-hash.ts
+  - packages/missions/src/dirty-missions.ts
+  - packages/missions/src/manifest.ts
+  - packages/missions/src/mission-verify/contract.ts
+  - packages/missions/src/mission-verify/engine.ts
+  - packages/missions/src/mission-verify/interrogation.ts
+  - packages/missions/src/mission-verify/run-record.ts
+  - packages/missions/src/mission/formatter.ts
+  - src/cli/tests/contract-hash.test.ts
+  - src/cli/tests/dirty-missions.test.ts
+  - src/cli/tests/verify-changed-paths.test.ts
+  - templates/.gitagent/planner/RULES.md
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0362.verify-changed-paths.yaml
+    - .gitagent/planner/RULES.md
+    - .gitagent/runs/MSN-0362.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/scope.md
+    - docs/concepts/verify.md
+    - packages/core/src/constants.ts
+    - packages/missions/src/contract/contract-hash.ts
+    - packages/missions/src/dirty-missions.ts
+    - packages/missions/src/manifest.ts
+    - packages/missions/src/mission-verify/contract.ts
+    - packages/missions/src/mission-verify/engine.ts
+    - packages/missions/src/mission-verify/interrogation.ts
+    - packages/missions/src/mission-verify/run-record.ts
+    - packages/missions/src/mission/formatter.ts
+    - src/cli/tests/contract-hash.test.ts
+    - src/cli/tests/dirty-missions.test.ts
+    - src/cli/tests/verify-changed-paths.test.ts
+    - templates/.gitagent/planner/RULES.md
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 34bd2b10afc72e4d035d56fc88417d67accb77e9208839cf094cb8d8037639fc
