@@ -38,8 +38,6 @@ entries:
     since: commit 12461b8
   - name: attest
     since: MSN-0133
-  - name: audit-rigor
-    since: commit f777025
   - name: blueprint
     since: MSN-0111
   - name: cage
@@ -71,8 +69,6 @@ entries:
     since: MSN-0289
   - name: ci verify-missions
     since: MSN-0289
-  - name: context-feed
-    since: commit f777025
   - name: context-request
     since: commit 3062fcc
   - name: contract
@@ -139,8 +135,6 @@ entries:
     since: MSN-9000
   - name: mcp serve
     since: MSN-9000
-  - name: metrics
-    since: commit 3709795
   - name: migrate
     since: MSN-0301
   - name: migrate architecture-pointer
@@ -202,8 +196,6 @@ entries:
     since: MSN-0200
   - name: release check
     since: MSN-0010
-  - name: report
-    since: MSN-0181
   - name: runtime
     since: commit 274f923
   - name: runtime env

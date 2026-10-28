@@ -64,6 +64,10 @@ gantry migrate manifest && gantry migrate config && gantry migrate architecture-
 gantry doctor
 ```
 
+- **Breaking: commands removed for simplicity ([ADR-0061](../.gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md)).** Each now fails with "unknown command"; use the replacement:
+  - `gantry report` (the localhost dashboard) and `gantry metrics`: `gantry status --json`, `gantry doctor`, SARIF and your CI logs.
+  - `gantry audit-rigor`: no replacement.
+  - `gantry context-feed`: read `findings[]` from `gantry verify --json`; the compact copy in `.gitagent/tmp/NEXT_REMEDIATION.json` is still written and cleared by a passing verify.
 - **Breaking: one env prefix.** Every `GXT_*` environment variable is `GANTRY_*`: `GANTRY_REPO_ROOT`, `GANTRY_MISSION_FILE`, `GANTRY_MSN_ID`, `GANTRY_SKILL_KEY`, `GANTRY_FORBIDDEN_ZONES`, `GANTRY_ALLOWED_IMPORTS`, `GANTRY_BANNED_IMPORTS`, `GANTRY_EXECUTOR_LOG`, `GANTRY_LAST_ERROR_FILE`, `GANTRY_AUDIENCE`, `GANTRY_BYPASS_SECRET`, `GANTRY_MSN_SCAN_DEPTH`, `GANTRY_REQUIRE_INTERROGATION`, `GANTRY_TMVC_GUARD_STRICT`; `GXT_TMVC_ROOTS` is `GANTRY_TMVC_ROOTS_ABSOLUTE` (`GANTRY_TMVC_ROOTS` keeps its repository-relative list). Scripts and agent instructions that read the old names must switch; `gantry runtime env` prints the new ones and the shipped Cursor session hook reads them. `GXT_*` error codes are unchanged.
 - **Breaking: the `gapman` names are gone.** The `gapman` bin, the `GAPMAN_*` env and `gapman.*` git config fallbacks and the `gapman` skill-key alias are removed (`gantry`, `GANTRY_*`, `gantry.*`); the strict pre-commit flag is `gantry.tmvcGuardStrict`. The deprecated kernel export `verifyMissionAsync` is removed; `verifyMission` stays.
 - **Breaking: law files are YAML.** `gantry init` writes `.gitagent/foreman/MANIFEST.yaml`, `.gitagent/config.yaml`, `.gitagent/ARCHITECTURE.pointer.yaml` and `.gitagent/foreman/POLICY.pointer.yaml`. The 3.x JSON files are still read when the YAML form is absent; both present and different fails closed (`GXT_LAW_FILE_AMBIGUOUS`). `gantry migrate <file>` converts each deterministically and `gantry doctor` warns until it is done.

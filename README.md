@@ -94,7 +94,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | Legislate | `gantry legislate "<intent>" --msn MSN-NNNN --skill-key <key> --gate-command "<cmd>"`, `gantry legislate --from-intent "<intent>" --msn MSN-NNNN`, `gantry start` |
 | Execute | `gantry pin <mission>`, `eval "$(gantry runtime env)"`, `gantry runtime exec --mission <file> -- <cmd>` |
 | Verify | `gantry verify --mission <file>`, `gantry verify --contract [file] --base <ref>`, `--json`, `--format sarif\|junit`, `gantry adapt --from lights-on <plan>`, `gantry context-feed --json` |
-| Inspect | `gantry status --json`, `gantry report`, `gantry metrics` |
+| Inspect | `gantry status --json`, `gantry doctor` |
 | Perimeters | `gantry init --discover --domain code\|content`, `gantry blueprint`, `gantry arch check`, `gantry perimeter check` |
 | Organization | `gantry policy pull`, `gantry ledger verify`, `gantry deps check`, `gantry attest` |
 

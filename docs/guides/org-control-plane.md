@@ -50,7 +50,6 @@ With `ledger.mode: local` in `.gitagent/config.yaml`, verify, attest, break-glas
 - Unsigned entries are checksums, not proofs. `ledger.signature: require` demands signed commits.
 - Entries never contain source or gate output.
 - A break-glass bypass without a `break_glass` ledger row is a failed control.
-- These counters are not `gantry metrics`; metrics come from a `git log` pass ([Metrics and report](../reference/metrics-and-report.md)).
 
 `gantry ledger export --format soc2-pack` writes a directory with the chain JSON, the referenced local receipts, and a control mapping:
 

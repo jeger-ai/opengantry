@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0354",
+  "mission_path": ".gitagent/missions/MSN-0354.remove-reporting.yaml",
+  "head": "6211237e2a9092fd1594a5cb7c0e5fc07f14218a",
+  "tree": "ac5c5b96241510e55cc67f2913e8e3269c233df7",
+  "law_sha256": "4067b68a335b3c86989e5fe22720607f5155ce686725b6d9a63ebf5693754589",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 135579,
+      "output_sha256": "dcb3b353aaddd443f22cb43aa5c456e8e8eda6969bce4e8925c8b173c3f70c54"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-28T10:37:43.985Z"
+}

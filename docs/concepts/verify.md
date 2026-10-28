@@ -60,12 +60,7 @@ Structured producers, such as import-layer JSON, banned-import output and the ty
 
 ## Feed findings back to an agent
 
-```bash
-gantry context-feed --json    # compact snapshot of the latest failure; empty when there is none
-gantry context-feed --clear   # clear it after the repair
-```
-
-The snapshot lives in `.gitagent/tmp/NEXT_REMEDIATION.json` (gitignored) with `findings[]`, a semantic `findings_digest` and `gate_log_path` (`.gitagent/tmp/gate-logs/<msn_id>.last.log`), but no raw stdout or stderr. Writes are atomic swaps; under concurrent repair hops the feed is eventually consistent. Use `gantry verify --json` when you need the full payload with inline output. A finding whose semantic digest repeats ends the retry loop with `GXT_FINDINGS_RECURRED` ([Agent graphs](../guides/agent-graphs.md)).
+`gantry verify --json` returns the failure with `findings[]`; hand those back to the agent. A compact copy of the latest failure is kept in `.gitagent/tmp/NEXT_REMEDIATION.json` (gitignored) with `findings[]`, a semantic `findings_digest` and `gate_log_path` (`.gitagent/tmp/gate-logs/<msn_id>.last.log`), but no raw stdout or stderr; a passing verify clears it. A finding whose semantic digest repeats ends the retry loop with `GXT_FINDINGS_RECURRED` ([Agent graphs](../guides/agent-graphs.md)).
 
 ## Typed gate adapters
 
@@ -92,8 +87,6 @@ gate_command: "npm run lint:json"   # must emit eslint --format json
 | `--format junit` | JUnit XML (`testsuite` named `gantry-verify`) |
 
 With `json`, `sarif` or `junit`, diagnostics go to stderr and the document is the only stdout payload. The exit code is still the verify result. CI wiring: [CI exporters](../guides/ci.md).
-
-For human triage, `gantry report` serves a localhost dashboard of recent verify runs ([Metrics and report](../reference/metrics-and-report.md)).
 
 ## `gantry verify --fix`
 

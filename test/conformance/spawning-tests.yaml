@@ -41,9 +41,6 @@ entries:
   - file: config-namespace.test.ts
     class: none
     spawns: [git]
-  - file: context-feed.test.ts
-    class: none
-    spawns: []
   - file: context-request.test.ts
     class: none
     spawns: [git]
@@ -90,9 +87,6 @@ entries:
     class: none
     spawns: [git]
   - file: mcp-write-guard.test.ts
-    class: none
-    spawns: [git]
-  - file: metrics-classification.test.ts
     class: none
     spawns: [git]
   - file: mission-changed.test.ts

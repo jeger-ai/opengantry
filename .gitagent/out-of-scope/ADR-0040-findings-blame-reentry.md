@@ -92,7 +92,7 @@ On each failed verify for a given `msn_id`:
 3. If the current digest is **already in the ring**, abort immediately with `GXT_FINDINGS_RECURRED`. Orchestrators MUST stop the repair loop and escalate to Planner.
 4. Else append the current digest and persist.
 
-PASS and `context-feed --clear` tombstone the ring.
+PASS and `context-feed --clear` tombstone the ring. (ADR-0061, MSN-0354: the `context-feed` command is removed; the snapshot file stays and a PASS still clears it.)
 
 Do **not** abort on exact span hashes. Do **not** reset the ring merely because the digest changed (that misses A/B/A flaps).
 

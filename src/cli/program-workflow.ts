@@ -4,7 +4,6 @@ import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./flows/legislate.js";
 import { runLegislateFromIntent } from "./flows/legislate-from-intent.js";
 import { isGantryUserError, errorMessage } from "#core/user-error.js";
-import { runMetrics } from "./commands/metrics.js";
 import { runVerify } from "./commands/verify.js";
 import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
 import { registerAdaptCommand } from "./commands/adapt.js";
@@ -391,19 +390,6 @@ function registerDomainsCommand(program: Command): void {
     });
 }
 
-function registerMetricsCommand(program: Command): void {
-  program
-    .command("metrics")
-    .description(
-      "Git-native governance metrics (path-touch proxy classification; no local event ledger)",
-    )
-    .option("--json", "Emit stable JSON summary (includes gxt_extension_metadata)")
-    .option("--ref <name>", "Git ref to analyze (default HEAD)", "HEAD")
-    .action((opts: { json?: boolean; ref?: string }) => {
-      runMetrics({ json: opts.json, ref: opts.ref });
-    });
-}
-
 export function registerWorkflowCommands(program: Command): void {
   registerLegislateCommand(program);
   registerInterrogateCommand(program);
@@ -416,5 +402,4 @@ export function registerWorkflowCommands(program: Command): void {
   registerCheckImportsCommand(program);
   registerPerimeterCommand(program);
   registerDomainsCommand(program);
-  registerMetricsCommand(program);
 }

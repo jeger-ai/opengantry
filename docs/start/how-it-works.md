@@ -65,7 +65,7 @@ You keep `npm test` and your CI. OpenGantry makes them usable when an agent runs
 |-------------------|-------------------------|
 | A developer | Reads stderr, parses the stack trace, fixes the code |
 | An agent with plain tests and CI | Misreads unstructured stderr, guesses at fixes and loops while someone senior babysits |
-| An agent with OpenGantry | Same gates; `gantry context-feed --json` returns compact `findings[]` with the file, line and a hint |
+| An agent with OpenGantry | Same gates; `gantry verify --json` returns `findings[]` with the file, line and a hint |
 
 | You already have | Still missing for agents | OpenGantry adds |
 |------------------|--------------------------|-----------------|

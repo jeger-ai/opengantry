@@ -9,9 +9,6 @@ import { runOnboarding } from "./commands/onboarding.js";
 import { runPin, runUnpin } from "./commands/pin.js";
 import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
 import type { PrincipalHmacOptions } from "./flows/principal-hmac.js";
-import { runContextFeed } from "./commands/context-feed.js";
-import { runReport } from "./commands/report.js";
-import { runAuditRigorCommand } from "./commands/audit-rigor.js";
 import { runStart } from "./commands/start.js";
 import { runTriage, type TriageRunOptions } from "./commands/triage.js";
 import { logError, readStdinIfEmpty, setExitCode } from "./output/cli-io.js";
@@ -304,53 +301,6 @@ function registerOnboardingCommand(program: Command): void {
     });
 }
 
-function registerContextFeedCommand(program: Command): void {
-  program
-    .command("context-feed")
-    .description("Read or clear the latest verify remediation snapshot for IDE/agent graphs")
-    .option("--json", "Emit structured remediation payload")
-    .option("--clear", "Atomically clear remediation feed (tombstone swap)")
-    .action((opts: { json?: boolean; clear?: boolean }) => {
-      runContextFeed({ json: opts.json, clear: opts.clear });
-    });
-}
-
-function registerReportCommand(program: Command): void {
-  program
-    .command("report")
-    .description("Localhost project overview (metrics, missions, verify ring) plus last-verify drill-down")
-    .option("--port <n>", "Listen port (default 3134; walks +1..+10 on EADDRINUSE)")
-    .option("--no-open", "Do not open a browser tab")
-    .option("--last", "Open last-verify drill-down (/verify) instead of overview")
-    .option("--json", "Emit overview view model JSON (use with --last for last-verify model)")
-    .action(async (opts: { port?: string; open?: boolean; json?: boolean; last?: boolean }) => {
-      const port =
-        opts.port !== undefined ? Number.parseInt(opts.port, 10) : undefined;
-      await runReport({
-        port: port !== undefined && Number.isFinite(port) ? port : undefined,
-        noOpen: opts.open === false,
-        json: opts.json,
-        last: opts.last,
-      });
-    });
-}
-
-function registerAuditRigorCliCommand(program: Command): void {
-  program
-    .command("audit-rigor")
-    .description("Meta-governance audit: compiler strictness, coverage artifacts, MANIFEST wildcards")
-    .option("--json", "Emit structured report")
-    .option("--strict", "Treat warnings as failures")
-    .option("--workspace <path>", "Workspace root override (tests; default: git repo root)")
-    .action((opts: { json?: boolean; strict?: boolean; workspace?: string }) => {
-      runAuditRigorCommand({
-        json: opts.json,
-        strict: opts.strict,
-        workspace: opts.workspace,
-      });
-    });
-}
-
 function registerBlueprintCommand(program: Command): void {
   program
     .command("blueprint")
@@ -421,9 +371,6 @@ export function registerCoreCommands(program: Command): void {
   registerTriageCommand(program);
   registerStartCommand(program);
   registerOnboardingCommand(program);
-  registerContextFeedCommand(program);
-  registerReportCommand(program);
-  registerAuditRigorCliCommand(program);
   registerBlueprintCommand(program);
   registerPlannerCommand(program);
   registerHooksCommand(program);

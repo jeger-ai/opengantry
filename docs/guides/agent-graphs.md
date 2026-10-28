@@ -15,7 +15,7 @@ For external autonomous agents, such as a Hermes-style runner, a CI bot or a cus
 2. **Blueprint.** `gantry blueprint [--domain code|content]` turns confirmed conventions into `ARCHITECTURE.md`, `TARGET_ARCHITECTURE.yaml` and `.gitagent/verification_plan.json` ([Perimeters](../concepts/perimeters.md)).
 3. **Prepare tooling.** The executor reads `required_skills` from the verification plan and creates missing tooling before coding.
 4. **Legislate.** The mission uses a gate from the plan's `gate_commands`, and a Planner approves it.
-5. **Verify.** `gantry verify --mission … --json`. On failure, read the findings from `gantry context-feed --json` (compact) or the full `--json` payload.
+5. **Verify.** `gantry verify --mission … --json`. On failure, read `findings[]` from that payload.
 6. **Retry.** Route each finding back to the executor as a repair hop until verify exits `0`. When the semantic digest of the findings repeats in the ring buffer, `GXT_FINDINGS_RECURRED` ends the loop.
 
 ```json
@@ -40,7 +40,7 @@ For external autonomous agents, such as a Hermes-style runner, a CI bot or a cus
 
 | Surface | Format |
 |---------|--------|
-| `gantry context-feed --json` | Compact remediation snapshot: `findings[]`, semantic `findings_digest`, `gate_log_path`, no stdout or stderr |
+| `.gitagent/tmp/NEXT_REMEDIATION.json` | Compact copy of the latest failure: `findings[]`, semantic `findings_digest`, `gate_log_path`, no stdout or stderr |
 | `gantry verify --json` | The full failure payload with `findings[]` |
 | `gantry verify --format sarif` | SARIF 2.1.0 with `properties.resolution_hint` |
 | `gantry verify --format junit` | JUnit XML (`testsuites` / `gantry-verify`) |
