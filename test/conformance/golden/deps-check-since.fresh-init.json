@@ -1,9 +1,11 @@
 {
-  "id": "release-check.fresh-init",
+  "id": "deps-check-since.fresh-init",
   "fixture": "fresh-init",
   "args": [
-    "release",
+    "deps",
     "check",
+    "--since",
+    "HEAD",
     "--json"
   ],
   "exit": 0,

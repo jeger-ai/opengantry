@@ -3,6 +3,7 @@ import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
 import { runContractCheck, runContractPropose, runContractShow } from "./commands/contract.js";
 import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
+import { runPin, runUnpin } from "./commands/pin.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
 import { parseOptionalTimeoutMs, logError, setExitCode } from "./output/cli-io.js";
@@ -17,6 +18,18 @@ function registerMissionCommand(program: Command): void {
     .action((opts: { file: string }) => {
       runMissionValidate(opts.file);
     });
+
+  mission
+    .command("pin")
+    .description("Pin the active mission for verify, runtime env and the IDE hooks (no argument = show the pin)")
+    .argument("[file]", "Mission file (.md or .yaml)")
+    .action((file: string | undefined) => {
+      runPin({ mission: file });
+    });
+
+  mission.command("unpin").description("Clear the active mission pin").action(() => {
+    runUnpin();
+  });
 
   mission
     .command("snapshot")

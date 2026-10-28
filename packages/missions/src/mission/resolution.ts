@@ -38,7 +38,7 @@ export function pinActiveMission(repoRoot: string, missionPathOrAbs: string): st
   if (!fs.existsSync(abs)) {
     throw new GantryUserError(
       "MISSION_NOT_FOUND",
-      `gantry pin: mission file not found: ${missionPathOrAbs}`,
+      `gantry mission pin: mission file not found: ${missionPathOrAbs}`,
       undefined,
       2,
     );

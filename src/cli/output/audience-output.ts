@@ -64,7 +64,7 @@ const DEFAULT_NEXT_STEPS: AudienceNextStep[] = [
 export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
   {
     audience: "platform",
-    step: "edit .gitagent/foreman/MANIFEST.yaml (tmvc_roots, forbidden_zones, skills) and run gantry check",
+    step: "edit .gitagent/foreman/MANIFEST.yaml (tmvc_roots, forbidden_zones, skills) and run gantry doctor",
   },
   { audience: "platform", step: "git config core.hooksPath .githooks" },
   { audience: "planner", step: 'gantry planner set "$(git config user.email)"' },
@@ -74,7 +74,7 @@ export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
   { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },
   { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml" },
-  { audience: "platform", step: "gantry pin .gitagent/missions/<file>.yaml" },
+  { audience: "platform", step: "gantry mission pin .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "gantry onboarding  # guided walkthrough (strict checks)" },
 ];
 

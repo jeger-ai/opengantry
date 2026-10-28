@@ -11,9 +11,10 @@ import { depsRefForRepo } from "#plane/deps-slug.js";
 import { buildLedgerEntry, genesisPrevHash } from "#plane/ledger-entry.js";
 import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "#plane/ledger-chain.js";
 import { evaluateDependenciesPhase } from "#missions/mission-verify/org-phases.js";
-import { runReleaseCheck } from "../commands/deps.js";
+import { runDepsCheck } from "../commands/deps.js";
 import {
   copyMissionSchema,
+  gitCommit,
   gitInitCommit,
   isolateOrgAttributionEnv,
   writeManifest,
@@ -259,19 +260,20 @@ test("deps-resolve: checkMissionDependencies aggregates ok results", () => {
   });
 });
 
-test("release check: failed outcome exits non-zero", () => {
+test("deps check --since: failed outcome exits non-zero", () => {
   isolateOrgAttributionEnv(() => {
     const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-fail-"));
     fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
     gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
     writeOrgExportConfig(dest, ORG_FIXTURE_ORG_ID);
     stageReleaseMission(dest);
+    gitCommit(dest, "[MSN-0204] mission");
     const prevCwd = process.cwd();
     const prevExit = process.exitCode;
     process.exitCode = undefined;
     process.chdir(dest);
     try {
-      const { stdout } = captureStdout(() => runReleaseCheck({ json: true }));
+      const { stdout } = captureStdout(() => runDepsCheck({ since: "HEAD", json: true }));
       const body = JSON.parse(stdout) as { status: string; results: { code: string }[] };
       assert.equal(body.status, "failed");
       assert.ok(body.results.some((r) => r.code === GXT_ERROR.DEPENDENCY_UNFETCHED));
@@ -283,17 +285,18 @@ test("release check: failed outcome exits non-zero", () => {
   });
 });
 
-test("release check: ok outcome", () => {
+test("deps check --since: ok outcome", () => {
   isolateOrgAttributionEnv(() => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-ok-"));
     const fx = writeTwoRepoDependencyFixture(tmp);
     stageReleaseMission(fx.consumer, fx.expectedHash);
+    gitCommit(fx.consumer, "[MSN-0204] mission");
     const prevCwd = process.cwd();
     const prevExit = process.exitCode;
     process.exitCode = undefined;
     process.chdir(fx.consumer);
     try {
-      const { stdout } = captureStdout(() => runReleaseCheck({ json: true }));
+      const { stdout } = captureStdout(() => runDepsCheck({ since: "HEAD", json: true }));
       const body = JSON.parse(stdout) as { status: string; results: { code: string }[] };
       assert.equal(body.status, "ok");
       assert.ok(body.results.every((r) => r.code === "ok"));

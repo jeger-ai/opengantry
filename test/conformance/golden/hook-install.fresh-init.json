@@ -1,8 +1,8 @@
 {
-  "id": "hooks-install.fresh-init",
+  "id": "hook-install.fresh-init",
   "fixture": "fresh-init",
   "args": [
-    "hooks",
+    "hook",
     "install"
   ],
   "exit": 2,

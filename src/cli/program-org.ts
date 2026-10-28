@@ -8,7 +8,7 @@ import {
   runLedgerPush,
   runLedgerVerify,
 } from "./commands/ledger.js";
-import { runDepsCheck, runDepsFetch, runReleaseCheck } from "./commands/deps.js";
+import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
 
 function registerPolicyCommands(program: Command): void {
   const policy = program.command("policy").description("Org policy floor (ADR-0042)");
@@ -98,28 +98,12 @@ function registerDepsCommands(program: Command): void {
     });
   deps
     .command("check")
-    .description("Evaluate depends_on against fetched refs")
+    .description("Evaluate depends_on against fetched refs (one mission, or every mission changed since a ref)")
     .option("--mission <path>")
+    .option("--since <ref>", "Check every mission file changed since this ref, e.g. the previous release tag")
     .option("--json", "JSON")
-    .action((o: { mission?: string; json?: boolean }) => {
+    .action((o: { mission?: string; since?: string; json?: boolean }) => {
       runDepsCheck(o);
-    });
-  deps
-    .command("status")
-    .description("Alias for deps check")
-    .option("--mission <path>")
-    .option("--json", "JSON")
-    .action((o: { mission?: string; json?: boolean }) => {
-      runDepsCheck(o);
-    });
-  program
-    .command("release")
-    .command("check")
-    .description("Evaluate depends_on for missions since a tag")
-    .option("--tag <v>", "Previous release tag")
-    .option("--json", "JSON")
-    .action((o: { tag?: string; json?: boolean }) => {
-      runReleaseCheck(o);
     });
 }
 

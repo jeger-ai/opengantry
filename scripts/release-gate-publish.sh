@@ -16,8 +16,8 @@ DRAFT_ID="${3:-}"
 echo "release-gate-publish: preflight version parity"
 ./scripts/assert-cli-version-parity.sh
 if [[ -x dist/cli/index.js ]]; then
-  echo "release-gate-publish: optional gantry release check (depends_on since previous tag)"
-  node dist/cli/index.js release check --tag "${TAG}" --json || echo "release-gate-publish: release check skipped"
+  echo "release-gate-publish: optional gantry deps check --since <tag> (depends_on since previous tag)"
+  node dist/cli/index.js deps check --since "${TAG}" --json || echo "release-gate-publish: deps check skipped"
 fi
 
 if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "${TAG}"; then

@@ -41,12 +41,6 @@ echo "dev-validate-core: assert documentation deterministic metrics"
 echo "dev-validate-core: assert no stale CLI naming drift (implementation paths)"
 ./scripts/assert-no-stale-cli-naming.sh
 
-echo "dev-validate-core: gantry check (Rule 4.4)"
-"${GANTRY[@]}" check
-
-echo "dev-validate-core: Foreman MANIFEST (Node parity)"
-node dist/cli/index.js check >/dev/null && echo "MANIFEST OK (gantry check)"
-
 echo "dev-validate-core: upgrade-tmp staging guard"
 node dist/cli/index.js ci upgrade-tmp
 
@@ -73,4 +67,4 @@ if git rev-parse --verify "${BASE_REF}^{commit}" >/dev/null 2>&1; then
   node dist/cli/index.js ci msn-range --base "${BASE_REF}" --head "${HEAD_REF}"
 fi
 
-echo "dev-validate-core OK — stack: check, manifest, tests, doctor, changed-code, MSN"
+echo "dev-validate-core OK — stack: tests, doctor (manifest + skills sync), changed-code, MSN"

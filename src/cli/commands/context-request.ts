@@ -42,7 +42,7 @@ export function runContextRequest(options: ContextRequestCliOptions): void {
 
     if (!missionRel) {
       logError(
-        "context-request: no active mission — pin one with gantry pin <mission> or pass --mission <path>",
+        "context-request: no active mission — pin one with gantry mission pin <mission> or pass --mission <path>",
       );
       setExitCode(EXIT_CODE.USAGE);
       return;

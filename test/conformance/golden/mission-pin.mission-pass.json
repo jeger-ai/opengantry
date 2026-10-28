@@ -1,7 +1,8 @@
 {
-  "id": "pin.mission-pass",
+  "id": "mission-pin.mission-pass",
   "fixture": "mission-pass",
   "args": [
+    "mission",
     "pin",
     ".gitagent/missions/m-MSN-0101.yaml"
   ],

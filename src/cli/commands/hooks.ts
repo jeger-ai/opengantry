@@ -14,10 +14,10 @@ export function runHooksInstall(): void {
       return;
     }
     if (result.alreadyInstalled) {
-      logInfo(`hooks install: already armed (core.hooksPath=${result.hooksPath})`);
+      logInfo(`hook install: already armed (core.hooksPath=${result.hooksPath})`);
       return;
     }
-    logInfo(`hooks install: armed tmvc guard --strict (core.hooksPath=${result.hooksPath})`);
+    logInfo(`hook install: armed tmvc guard --strict (core.hooksPath=${result.hooksPath})`);
     logInfo("bypass: git commit --no-verify");
   });
 }
@@ -26,7 +26,7 @@ export function runHooksUninstall(): void {
   runUserCommand({ json: false }, () => {
     const { root } = loadWorkspace();
     const result = uninstallTmvcStrictHook(root);
-    logInfo(result.removed ? "hooks uninstall: cleared gantry.tmvcGuardStrict" : "hooks uninstall: strict mode was not armed");
+    logInfo(result.removed ? "hook uninstall: cleared gantry.tmvcGuardStrict" : "hook uninstall: strict mode was not armed");
   });
 }
 
@@ -34,8 +34,8 @@ export function runHooksStatus(): void {
   runUserCommand({ json: false }, () => {
     const { root } = loadWorkspace();
     const status = readHooksStatus(root);
-    logInfo(`hooks status: strict=${status.strictArmed ? "armed" : "off"}`);
-    logInfo(`hooks status: core.hooksPath=${status.hooksPath ?? "unset"}`);
-    logInfo(`hooks status: pre-commit=${status.preCommitPresent ? "present" : "missing"}`);
+    logInfo(`hook status: strict=${status.strictArmed ? "armed" : "off"}`);
+    logInfo(`hook status: core.hooksPath=${status.hooksPath ?? "unset"}`);
+    logInfo(`hook status: pre-commit=${status.preCommitPresent ? "present" : "missing"}`);
   });
 }

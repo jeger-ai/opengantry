@@ -15,7 +15,7 @@ export interface ResolvedMissionArg {
 }
 
 const MISSION_REQUIRED_HINT =
-  "gantry pin .gitagent/missions/<file>.yaml  # then re-run without --mission";
+  "gantry mission pin .gitagent/missions/<file>.yaml  # then re-run without --mission";
 
 /**
  * Resolve mission for verify/scan/attest/runtime env.

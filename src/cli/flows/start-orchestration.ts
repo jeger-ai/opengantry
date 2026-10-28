@@ -60,7 +60,7 @@ function buildTaggedNextSteps(missionRel: string | null, msnId: string | null): 
     { audience: "executor", step: `eval "$(gantry runtime env --mission ${mission})"` },
     { audience: "executor", step: "Append gate evidence to EXECUTOR_LOG.md" },
     { audience: "verifier", step: `gantry verify --mission ${mission}` },
-    { audience: "platform", step: `gantry pin ${mission}` },
+    { audience: "platform", step: `gantry mission pin ${mission}` },
   ];
 }
 

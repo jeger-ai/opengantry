@@ -8,7 +8,7 @@ if [ -z "$ROOT" ]; then
 fi
 cd "$ROOT"
 
-# gantry resolves the pinned mission itself (gantry pin <file>, GANTRY_MISSION, the legacy ACTIVE_MISSION files).
+# gantry resolves the pinned mission itself (gantry mission pin <file>, GANTRY_MISSION, the legacy ACTIVE_MISSION files).
 RUNTIME_JSON=""
 if command -v gantry >/dev/null 2>&1; then
   RUNTIME_JSON="$(gantry runtime env --json 2>/dev/null)" || RUNTIME_JSON=""
@@ -17,7 +17,7 @@ elif [ -f "dist/cli/index.js" ]; then
 else
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "GXT: gantry not built — run npm ci && npm run build, then gantry pin <mission>",
+      additional_context: "GXT: gantry not built — run npm ci && npm run build, then gantry mission pin <mission>",
     }));
   '
   exit 0
@@ -26,7 +26,7 @@ fi
 if [ -z "$RUNTIME_JSON" ]; then
   node -e '
     process.stdout.write(JSON.stringify({
-      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gantry legislate, then gantry pin <mission>.",
+      additional_context: "No active mission pinned. Ask me to run the Mission Architect protocol (MCP: gxt_draft_legislation) or gantry legislate, then gantry mission pin <mission>.",
     }));
   '
   exit 0

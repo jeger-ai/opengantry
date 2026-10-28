@@ -2,7 +2,7 @@
 
 This directory holds the **GXT substrate**: Foreman routing map, Planner law, work-order schema, and commit receipt shape. Application code lives elsewhere; this is the **governance + audit contract** for agent loops.
 
-Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gantry` v1.1.1** CLI covers `init`, `check`, `doctor`, `triage`, `interrogate`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, `metrics`, and `verify` — see [README § gantry](../README.md#gantry-cli).
+Treat **0.5.0** as **pre-1.0**: contracts are real enough to run teams on, but naming stays honest until the protocol semver bumps. The repo root **`gantry` v1.1.1** CLI covers `init`, `doctor`, `interrogate`, `legislate` (YAML missions), `mission`, `runtime env`, `runtime exec`, `arch`, and `verify` — see [README § gantry](../README.md#gantry-cli).
 
 ## Forensic Truth (what v0.6.2 adds on v0.5.0)
 
@@ -75,4 +75,4 @@ Repo root [**`AGENTS.md`**](../AGENTS.md) and [`.cursor/rules/opengantry-gxt-sub
 
 **Developing this repository:** follow **[`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md)** — missions, hooks, `gantry verify`, and **`npm run validate`** (full local stack).
 
-Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `gantry check`, `gantry doctor`, and unit tests after `npm ci`/`npm run build`; **`manifest`** via [`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh) `manifest` (jq parity); **changed-code quality** on PRs; **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local superset: **`npm run validate`** or **`./scripts/dev-validate.sh`**. Executors can preload scope with **`gantry runtime env --mission … --json`**.
+Continuous validation: **[`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml)** — `gantry doctor` and unit tests after `npm ci`/`npm run build`; **`manifest`** via [`scripts/validate-gxt.sh`](../scripts/validate-gxt.sh) `manifest` (jq parity); **changed-code quality** on PRs; **path-scoped `[MSN-NNNN]`** commit-subject check on **pull_request** only (see workflow header comment). Local superset: **`npm run validate`** or **`./scripts/dev-validate.sh`**. Executors can preload scope with **`gantry runtime env --mission … --json`**.

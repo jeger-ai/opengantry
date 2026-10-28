@@ -1,15 +1,11 @@
 import { Option, type Command } from "commander";
-import { runCheck } from "./commands/check.js";
 import { runInit } from "./commands/init.js";
 import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
-import { runStatus } from "./commands/status.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
-import { runPin, runUnpin } from "./commands/pin.js";
 import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
 import type { PrincipalHmacOptions } from "./flows/principal-hmac.js";
 import type { InitOptions } from "./commands/init.js";
-import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/hooks.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import { TYPED_GATE_ADAPTER_IDS, type TypedGateAdapterId } from "#core/gate-adapter.js";
 import { currentReporter } from "./output/reporter.js";
@@ -33,47 +29,6 @@ function addInitOptions(cmd: Command): Command {
       "--tutorial",
       "After init, run guided first mission graph (Planner stamp + verify walkthrough)",
     );
-}
-
-function registerCheckCommand(program: Command): void {
-  program
-    .command("check")
-    .description("Validate the manifest (.gitagent/foreman/MANIFEST.yaml) + Rule 4.4 skills/ sync")
-    .action(() => {
-      runCheck();
-    });
-}
-
-function registerStatusCommand(program: Command): void {
-  program
-    .command("status")
-    .description("Manifest sync + GXT readiness dashboard")
-    .option("--json", "Emit structured report")
-    .option("--verbose", "Include all doctor check lines")
-    .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
-    .action((opts: { json?: boolean; verbose?: boolean; audience?: string }) => {
-      runStatus({
-        json: opts.json,
-        verbose: opts.verbose,
-        audience: currentReporter().audience,
-      });
-    });
-}
-
-function registerPinCommand(program: Command): void {
-  program
-    .command("pin")
-    .description("Pin active mission for verify/scan/runtime (no args = show current pin)")
-    .argument("[mission]", "Mission file (.md or .yaml)")
-    .action((mission: string | undefined) => {
-      runPin({ mission });
-    });
-}
-
-function registerUnpinCommand(program: Command): void {
-  program.command("unpin").description("Clear active mission pin").action(() => {
-    runUnpin();
-  });
 }
 
 function registerReceiptCommand(program: Command): void {
@@ -233,41 +188,11 @@ function registerPlannerCommand(program: Command): void {
     });
 }
 
-function registerHooksCommand(program: Command): void {
-  const hooks = program.command("hooks").description("Tracked git hook controls for the TMVC pre-commit gate");
-
-  hooks
-    .command("install")
-    .description("Arm pre-commit gantry tmvc guard --strict via local git config")
-    .action(() => {
-      runHooksInstall();
-    });
-
-  hooks
-    .command("uninstall")
-    .description("Clear local gantry.tmvcGuardStrict; leave core.hooksPath unchanged")
-    .action(() => {
-      runHooksUninstall();
-    });
-
-  hooks
-    .command("status")
-    .description("Show whether strict TMVC pre-commit is armed and which hooks path Git uses")
-    .action(() => {
-      runHooksStatus();
-    });
-}
-
 export function registerCoreCommands(program: Command): void {
-  registerCheckCommand(program);
-  registerStatusCommand(program);
-  registerPinCommand(program);
-  registerUnpinCommand(program);
   registerReceiptCommand(program);
   registerDoctorCommand(program);
   registerInitCommand(program);
   registerUpgradeCommand(program);
   registerOnboardingCommand(program);
   registerPlannerCommand(program);
-  registerHooksCommand(program);
 }

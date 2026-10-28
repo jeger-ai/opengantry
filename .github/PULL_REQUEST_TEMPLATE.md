@@ -1,7 +1,7 @@
 ## GXT dogfood (required for specimen PRs)
 
 - [ ] Mission file under `.gitagent/missions/` (legislated with `[MSN-NNNN]` Planner commit)
-- [ ] Pinned locally: `gantry pin .gitagent/missions/<file>.yaml`
+- [ ] Pinned locally: `gantry mission pin .gitagent/missions/<file>.yaml`
 - [ ] PASS quotes appended to `EXECUTOR_LOG.md` matching mission `trace_rows`
 - [ ] `gantry verify --mission .gitagent/missions/<file>.yaml` passes (full verify, not `--pre-push` only)
 - [ ] `npm run validate` passes locally

@@ -63,7 +63,7 @@ gantry tmvc guard --mission <pinned>
 
 - **Advisory default:** warnings on `stderr`, exit `0`.
 - **`--strict`** or **`GANTRY_TMVC_GUARD_STRICT=1`:** block commit on staged paths outside TMVC roots.
-- **`gantry hooks install`** sets local git config `gantry.tmvcGuardStrict=true` so this hook passes `--strict`. `gantry hooks uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
+- **`gantry hook install`** sets local git config `gantry.tmvcGuardStrict=true` so this hook passes `--strict`. `gantry hook uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
 - **No pinned mission:** warn and skip, even when strict is armed.
 - `EXECUTOR_LOG.md` and `.gitagent/missions/.active-mission` are governance transport — never TMVC drift violations.
 

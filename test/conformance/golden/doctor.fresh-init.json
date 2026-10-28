@@ -77,7 +77,7 @@
         "message": "substrate version: <SEMVER> (matches bundled gantry)"
       }
     ],
-    "next_step": "gantry check",
+    "next_step": "add skills/<key>.md for each MANIFEST skill (Rule 4.4), then rerun gantry doctor",
     "exit_code": 1
   },
   "stderr_codes": []

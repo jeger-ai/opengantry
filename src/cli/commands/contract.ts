@@ -55,7 +55,7 @@ export function runContractCheck(options: ContractCheckCliOptions): void {
       throw new GantryUserError(
         "MISSION_REQUIRED",
         "gantry contract check: pass --mission <path> or pin a mission first",
-        "gantry pin --mission .gitagent/missions/<file>.yaml",
+        "gantry mission pin .gitagent/missions/<file>.yaml",
         2,
       );
     }

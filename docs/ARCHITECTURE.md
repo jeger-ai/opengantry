@@ -68,7 +68,7 @@ Budgets ratchet: counts may go down freely; `--ratchet` records the lower counts
 
 OpenGantry contributors use the **full GXT stack** — see [`docs/DEVELOPMENT.md`](DEVELOPMENT.md).
 
-- `npm run validate` (build, `gantry check`, tests, doctor, changed-code, MSN subjects)
+- `npm run validate` (build, tests, doctor, changed-code, MSN subjects)
 - Mission + Planner `[MSN-…]` commit when GXT or CLI behavior changes
 - `gantry verify --mission …` with matching `EXECUTOR_LOG.md` trace
 - No new duplicate git spawn helpers (use `gitRun` from [`git/git.ts`](../packages/git/src/git.ts))

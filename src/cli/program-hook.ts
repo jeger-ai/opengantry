@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { hookStdin, runHookPostCheckout, runHookPreCommit, runHookPrePush } from "./commands/hook.js";
+import { runHooksInstall, runHooksStatus, runHooksUninstall } from "./commands/hooks.js";
 
 /** `gantry hook <name>`: what the tracked `.githooks/*` one-line shims call (ADR-0052 A8). */
 export function registerHookCommands(program: Command): void {
@@ -31,5 +32,26 @@ export function registerHookCommands(program: Command): void {
     .argument("[flag]", "1 for a branch checkout, 0 for a file checkout (passed by git)")
     .action((prev: string | undefined, next: string | undefined, flag: string | undefined) => {
       runHookPostCheckout({ prev, next, flag });
+    });
+
+  hook
+    .command("install")
+    .description("Arm the strict TMVC pre-commit guard via local git config")
+    .action(() => {
+      runHooksInstall();
+    });
+
+  hook
+    .command("uninstall")
+    .description("Clear local gantry.tmvcGuardStrict; leave core.hooksPath unchanged")
+    .action(() => {
+      runHooksUninstall();
+    });
+
+  hook
+    .command("status")
+    .description("Show whether strict TMVC pre-commit is armed and which hooks path Git uses")
+    .action(() => {
+      runHooksStatus();
     });
 }

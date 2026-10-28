@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "#core/constants.js";
-import { logInfo, logWarn, setExitCode } from "../output/cli-io.js";
+import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
 import { runUserCommandAsync } from "../output/command-boundary.js";
 import { getRepoRoot, gitRunOk } from "#git/git.js";
 import {
@@ -19,15 +19,14 @@ import {
 } from "#missions/git/git-hooks.js";
 import { resolvePinnedMission } from "#missions/mission/resolution.js";
 import { checkPerimeter } from "#missions/perimeter.js";
-import { loadWorkspace } from "#missions/workspace.js";
+import { loadWorkspace, loadWorkspaceWithSkillSync } from "#missions/workspace.js";
 import { runVerifyCore } from "../flows/verify-run.js";
-import { runCheck } from "./check.js";
 import { runContractCheck } from "./contract.js";
 import { runTmvcGuard } from "./tmvc-guard.js";
 
 const SOURCE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]);
-const GOVERNANCE_RE = /^\.gitagent\/foreman\/MANIFEST\.json$|^\.gitagent\/planner\/RULES\.md$|\.gxt-skill\.yaml$/;
-const MANIFEST_OR_SKILLS_RE = /^\.gitagent\/foreman\/MANIFEST\.json$|^skills\//;
+const GOVERNANCE_RE = /^\.gitagent\/foreman\/MANIFEST\.(json|ya?ml)$|^\.gitagent\/planner\/RULES\.md$|\.gxt-skill\.yaml$/;
+const MANIFEST_OR_SKILLS_RE = /^\.gitagent\/foreman\/MANIFEST\.(json|ya?ml)$|^skills\//;
 const CLI_SOURCE_RE = /^src\/cli\/.*\.ts$/;
 const MISSION_FILE_RE = /^\.gitagent\/missions\/.*\.(ya?ml|md)$/i;
 
@@ -129,9 +128,12 @@ function governanceAdvisory(root: string, range: PushRange, changed: readonly st
 
 function manifestCheck(changed: readonly string[]): boolean {
   if (!changed.some((p) => MANIFEST_OR_SKILLS_RE.test(p))) return true;
-  logInfo(`pre-push: ${CLI_NAME} check (manifest / skills changed)`);
-  runCheck();
-  return process.exitCode === undefined || process.exitCode === 0;
+  logInfo("pre-push: manifest + skills/ Rule 4.4 sync (manifest / skills changed)");
+  const { skillSync } = loadWorkspaceWithSkillSync();
+  for (const w of skillSync.warnings) logWarn(w);
+  for (const e of skillSync.errors) logError(e);
+  if (!skillSync.ok) setExitCode(EXIT_CODE.FAILURE);
+  return skillSync.ok;
 }
 
 /** Specimen-only until ADR-0052 step 5b folds it into the CLI: the changed-code gate, when the repo ships it. */

@@ -195,7 +195,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   } else {
     for (const err of skillSync.errors) lines.push({ level: "fail", message: err });
     hasFail = true;
-    nextStep = pickNextStep(nextStep, "gantry check");
+    nextStep = pickNextStep(nextStep, "add skills/<key>.md for each MANIFEST skill (Rule 4.4), then rerun gantry doctor");
   }
 
   const plannerResult = appendPlannerAllowlistChecks(root, lines, nextStep);
