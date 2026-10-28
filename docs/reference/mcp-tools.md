@@ -21,7 +21,6 @@ order: 1
 | `gxt_execute_legislation` | Writes the mission with a valid `draft_token`, after explicit human approval in chat |
 | `gxt_check_signature` | Checks that a Planner commit exists for a mission file |
 | `gxt_pin_mission` | Pins the active mission for runtime env and Cursor's session-start hook |
-| `gxt_start_orchestration` | Goal-first flow: triage, a legislated stub, optional pin and runtime env hints |
 
 ### Execution and verification
 

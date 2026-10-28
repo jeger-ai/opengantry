@@ -126,10 +126,6 @@ export function triageIntent(repoRoot: string, intent: string, manifest: Manifes
   );
 }
 
-export function formatTriageJson(result: TriageResult): string {
-  return JSON.stringify(result, null, 2);
-}
-
 export function formatTriageHuman(result: TriageResult): string {
   const lines = [
     `Action: ${result.action}`,

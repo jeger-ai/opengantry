@@ -11,12 +11,10 @@ For external autonomous agents, such as a Hermes-style runner, a CI bot or a cus
 
 ## The workflow
 
-1. **Discover.** `gantry init --discover [--domain code|content]` scans the repository and writes `.gitagent/discovery-proposal.json`. Nothing is written as a baseline until confirmed.
-2. **Blueprint.** `gantry blueprint [--domain code|content]` turns confirmed conventions into `ARCHITECTURE.md`, `TARGET_ARCHITECTURE.yaml` and `.gitagent/verification_plan.json` ([Perimeters](../concepts/perimeters.md)).
-3. **Prepare tooling.** The executor reads `required_skills` from the verification plan and creates missing tooling before coding.
-4. **Legislate.** The mission uses a gate from the plan's `gate_commands`, and a Planner approves it.
-5. **Verify.** `gantry verify --mission … --json`. On failure, read `findings[]` from that payload.
-6. **Retry.** Route each finding back to the executor as a repair hop until verify exits `0`. When the semantic digest of the findings repeats in the ring buffer, `GXT_FINDINGS_RECURRED` ends the loop.
+1. **Rules.** A human writes `TARGET_ARCHITECTURE.yaml` for the repository ([Perimeters](../concepts/perimeters.md)).
+2. **Legislate.** The mission names its scope and a `gate_command`, such as `gantry perimeter check && npm test`, and a Planner approves it.
+3. **Verify.** `gantry verify --mission … --json`. On failure, read `findings[]` from that payload.
+4. **Retry.** Route each finding back to the executor as a repair hop until verify exits `0`. When the semantic digest of the findings repeats in the ring buffer, `GXT_FINDINGS_RECURRED` ends the loop.
 
 ```json
 {

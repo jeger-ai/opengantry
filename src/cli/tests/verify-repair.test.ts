@@ -13,156 +13,6 @@ import {
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 
-function writeRepairFixtureRepo(
-  dest: string,
-  ogRoot: string,
-  options: { gateCommand: string; gateSubstring: string },
-): string {
-  copyMissionSchema(path.join(ogRoot, ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
-  writeManifest(dest, {
-    ui: { trust_threshold: "Tier-1", tmvc_roots: [], forbidden_zones: [] },
-  });
-  writeSkillsForManifest(dest, ["ui"]);
-
-  fs.mkdirSync(path.join(dest, "src"), { recursive: true });
-  fs.writeFileSync(
-    path.join(dest, "src", "bad.ts"),
-    `import axios from "axios";\nexport const x = 1;\n`,
-    "utf8",
-  );
-
-  const missionRel = ".gitagent/missions/repair-ban.yaml";
-  const traceQuote = "repair quarantine evidence line";
-  fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
-  fs.writeFileSync(
-    path.join(dest, missionRel),
-    `msn_id: MSN-0999
-skill_key: ui
-gate_command: ${options.gateCommand}
-gate_success_substring: "${options.gateSubstring}"
-trace_rows:
-  - dod_id: "1"
-    trace_quote: "${traceQuote}"
-    anchor: "1"
-    status: PASS
-`,
-    "utf8",
-  );
-  fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), `${traceQuote}\n`, "utf8");
-  return missionRel;
-}
-
-test("runVerify: --fix quarantines banned import, logs mutation, reruns verify", async () => {
-  const ogRoot = getRepoRoot();
-  const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-fix-"));
-  const missionRel = writeRepairFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${cli} check-imports src --ban axios`,
-    gateSubstring: "check-imports: OK",
-  });
-  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
-
-  const badPath = path.join(dest, "src/bad.ts");
-  const before = fs.readFileSync(badPath, "utf8");
-  const prevCwd = process.cwd();
-
-  await withPlannerEnvAsync(async () => {
-    process.chdir(dest);
-    try {
-      process.exitCode = undefined;
-      const { output } = await captureConsoleAsync(async () => {
-        await runVerify({
-          mission: missionRel,
-          executorLog: "EXECUTOR_LOG.md",
-          fix: true,
-          fixNonInteractive: true,
-        });
-      });
-      const combined = output.stdout + output.stderr;
-      const after = fs.readFileSync(badPath, "utf8");
-      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
-
-      assert.notEqual(after, before);
-      assert.match(after, /GXT-SURGEON-QUARANTINE-START/);
-      assert.match(executorLog, /\[SURGEON-MUTATION\] banned-import quarantined: src\/bad\.ts:1 -> RULE-BANNED-IMPORT/);
-      assert.match(combined, /\[Repair\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
-      assert.equal(process.exitCode ?? 0, 0);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = undefined;
-    }
-  });
-});
-
-test("runVerify: without --fix does not quarantine banned import", async () => {
-  const ogRoot = getRepoRoot();
-  const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-plain-"));
-  const missionRel = writeRepairFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${cli} check-imports src --ban axios`,
-    gateSubstring: "check-imports: OK",
-  });
-  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
-
-  const badPath = path.join(dest, "src/bad.ts");
-  const before = fs.readFileSync(badPath, "utf8");
-  const prevCwd = process.cwd();
-
-  await withPlannerEnvAsync(async () => {
-    process.chdir(dest);
-    try {
-      process.exitCode = undefined;
-      const { output } = await captureConsoleAsync(async () => {
-        await runVerify({ mission: missionRel, executorLog: "EXECUTOR_LOG.md" });
-      });
-      const combined = output.stdout + output.stderr;
-      const after = fs.readFileSync(badPath, "utf8");
-      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
-
-      assert.equal(after, before);
-      assert.doesNotMatch(executorLog, /\[SURGEON-MUTATION\]/);
-      assert.equal(process.exitCode, 1);
-      assert.match(combined, /GXT_BANNED_IMPORT_DETECTED|GXT_GATE_FAILED/);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = undefined;
-    }
-  });
-});
-
-test("runVerify: --fix writes only one SURGEON-MUTATION line on successful rerun", async () => {
-  const ogRoot = getRepoRoot();
-  const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-once-"));
-  const missionRel = writeRepairFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${cli} check-imports src --ban axios`,
-    gateSubstring: "check-imports: OK",
-  });
-  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
-
-  const prevCwd = process.cwd();
-  await withPlannerEnvAsync(async () => {
-    process.chdir(dest);
-    try {
-      process.exitCode = undefined;
-      await captureConsoleAsync(async () => {
-        await runVerify({
-          mission: missionRel,
-          executorLog: "EXECUTOR_LOG.md",
-          fix: true,
-          fixNonInteractive: true,
-        });
-      });
-      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
-      const matches = executorLog.match(/\[SURGEON-MUTATION\]/g);
-      assert.equal(matches?.length ?? 0, 1);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = undefined;
-    }
-  });
-});
-
 function writeImportLayerFixtureRepo(
   dest: string,
   ogRoot: string,
@@ -254,6 +104,73 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
       assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/flows\/bad\.ts/);
       assert.match(combined, /\[Repair\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
       assert.equal(process.exitCode ?? 0, 0);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
+});
+
+test("runVerify: without --fix does not quarantine an import-layer violation", async () => {
+  const ogRoot = getRepoRoot();
+  const cli = path.join(ogRoot, "dist/cli/index.js");
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-plain-"));
+  const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
+    gateCommand: `node ${cli} arch check --json src/cli/flows/bad.ts`,
+    gateSubstring: '"ok": true',
+  });
+  gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
+
+  const badPath = path.join(dest, "src/cli/flows/bad.ts");
+  const before = fs.readFileSync(badPath, "utf8");
+  const prevCwd = process.cwd();
+
+  await withPlannerEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      process.exitCode = undefined;
+      const { output } = await captureConsoleAsync(async () => {
+        await runVerify({ mission: missionRel, executorLog: "EXECUTOR_LOG.md" });
+      });
+      const combined = output.stdout + output.stderr;
+      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
+
+      assert.equal(fs.readFileSync(badPath, "utf8"), before);
+      assert.doesNotMatch(executorLog, /\[SURGEON-MUTATION\]/);
+      assert.equal(process.exitCode, 1);
+      assert.match(combined, /GXT_IMPORT_LAYER_VIOLATION/);
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
+    }
+  });
+});
+
+test("runVerify: --fix writes only one SURGEON-MUTATION line on successful rerun", async () => {
+  const ogRoot = getRepoRoot();
+  const cli = path.join(ogRoot, "dist/cli/index.js");
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-once-"));
+  const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
+    gateCommand: `node ${cli} arch check --json src/cli/flows/bad.ts`,
+    gateSubstring: '"ok": true',
+  });
+  gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
+
+  const prevCwd = process.cwd();
+  await withPlannerEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      process.exitCode = undefined;
+      await captureConsoleAsync(async () => {
+        await runVerify({
+          mission: missionRel,
+          executorLog: "EXECUTOR_LOG.md",
+          fix: true,
+          fixNonInteractive: true,
+        });
+      });
+      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
+      assert.equal(executorLog.match(/\[SURGEON-MUTATION\]/g)?.length ?? 0, 1);
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;

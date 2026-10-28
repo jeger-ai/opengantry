@@ -114,13 +114,13 @@ function startEscalationFailure(
 ): StartResult {
   if (!suppressStartOutput(options)) {
     logError(
-      `${CLI_NAME} start: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
+      `${CLI_NAME} legislate: triage escalation — ${triage.reason}. Pass --skill-key <key> (manifest: ${manifestKeys.join(", ")}).`,
     );
   }
   return createStartFailure(triage, null, triage.skill_key, [
     {
       audience: "planner",
-      step: `gantry start "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
+      step: `gantry legislate "${options.intent}" --msn ${msnId} --skill-key ${manifestKeys[0] ?? "<key>"}`,
     },
   ]);
 }
@@ -147,7 +147,7 @@ function startInterrogationHaltResult(
   });
   if (!quiet) {
     logError(
-      `${CLI_NAME} start: ${GXT_ERROR.INTERROGATION_REQUIRED} — ${interrogate.next_question.finding_id}`,
+      `${CLI_NAME} legislate: ${GXT_ERROR.INTERROGATION_REQUIRED} — ${interrogate.next_question.finding_id}`,
     );
   }
   return createStartFailure(triage, msnId, resolvedSkillKey, [
@@ -169,7 +169,7 @@ function scaffoldStartMission(
   const quiet = suppressStartOutput(options);
   if (options.writeMission === false) {
     if (!quiet) {
-      logWarn(`${CLI_NAME} start: --no-write — run legislate manually with --msn ${msnId}`);
+      logWarn(`${CLI_NAME} legislate: --no-write — run legislate manually with --msn ${msnId}`);
     }
     return { missionRel: `.gitagent/missions/${msnId}.<slug>.yaml` };
   }
@@ -220,7 +220,7 @@ function scaffoldStartMission(
 
   if (result.ok) {
     if (!quiet) {
-      logInfo(`${CLI_NAME} start: mission scaffold at ${result.missionRel}`);
+      logInfo(`${CLI_NAME} legislate: mission scaffold at ${result.missionRel}`);
     }
     return { missionRel: result.missionRel };
   }
@@ -229,7 +229,7 @@ function scaffoldStartMission(
   return createStartFailure(triage, msnId, resolvedSkillKey, [
     {
       audience: "planner",
-      step: `try a fresh MSN: gantry start "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
+      step: `try a fresh MSN: gantry legislate "${options.intent}" --msn ${freshMsn} --skill-key ${resolvedSkillKey}`,
     },
     {
       audience: "planner",
@@ -252,13 +252,13 @@ export function runStartOrchestration(options: StartOptions): StartResult {
     return startEscalationFailure(options, triage, msnId, manifestKeys);
   }
   if (escalated && skillOverride && !suppressStartOutput(options)) {
-    logWarn(`${CLI_NAME} start: triage escalated; using --skill-key ${skillOverride}`);
+    logWarn(`${CLI_NAME} legislate: triage escalated; using --skill-key ${skillOverride}`);
   }
 
   const resolvedSkillKey = skillOverride || triage.skill_key;
   if (!isValidMsnId(msnId)) {
     if (!suppressStartOutput(options)) {
-      logError(`${CLI_NAME} start: --msn must match MSN-0007`);
+      logError(`${CLI_NAME} legislate: --msn must match MSN-0007`);
     }
     return createStartFailure(triage, null, triage.skill_key, []);
   }

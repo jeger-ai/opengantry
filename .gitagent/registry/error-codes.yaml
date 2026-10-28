@@ -10,9 +10,6 @@ entries:
   - name: GXT_ARCH_BOUNDARY_VIOLATION
     since: MSN-0082
     defined_in: packages/core/src/error-codes.ts
-  - name: GXT_BANNED_IMPORT_DETECTED
-    since: MSN-0047
-    defined_in: packages/core/src/error-codes.ts
   - name: GXT_CAGE_CHECK_NOT_GIT
     since: MSN-0267
     defined_in: literal

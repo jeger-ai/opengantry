@@ -50,7 +50,7 @@ Removed from the CLI (code deleted; a few examples keep a standalone script wher
 | `scan` and the KPI gate (`llm_verifiers`, `kpi_gate`, `kpi-engine`, the verify KPI phase, `gxt_scan`) | LLM evidence is outside the deterministic core; the fields are ignored with a warning, like `virtual_capture` | `examples/performance-judge/` as a standalone script and a `checks:` command |
 | `blueprint`, `init --discover`, `register`, `check-imports` | Discovery ceremony; `arch check` already bans imports | `gantry init`, `TARGET_ARCHITECTURE.yaml` by hand, `gantry arch check` |
 | `triage`, `start`, `gxt_start_orchestration` | Wrappers around legislate | `gantry legislate --from-intent`, the Mission Architect handoff |
-| `domains` | A list printer | The two adapters stay; `init --domain` documents them |
+| `domains` | A list printer | The `domain: code\|content` key in `TARGET_ARCHITECTURE.yaml`; the adapter registry, the banned-import repair and the blueprint drift check go with discovery |
 | `status` | Duplicates `doctor` | `gantry doctor` |
 | `check` | Folded into `doctor` (manifest and skills sync) | `gantry doctor` |
 
@@ -58,7 +58,7 @@ Merged: `hooks install|status|uninstall` into `hook`; `pin`, `unpin` into `missi
 
 MCP keeps the legislation handoff, verify and the runtime (`gxt_propose_contract`, `gxt_interrogate`, `gxt_draft_legislation`, `gxt_execute_legislation`, `gxt_check_signature`, `gxt_pin_mission`, `gxt_resolve_mission`, `gxt_verify`, `gxt_last_error`, `gxt_runtime_env`, `gxt_runtime_exec`, `gxt_doctor`); `gxt_attest`, `gxt_deps_check`, `gxt_ledger_verify`, `gxt_policy_status`, `gxt_scan`, `gxt_start_orchestration`, `gxt_upgrade_plan` and `gxt_upgrade_apply` go (the CLI keeps those commands).
 
-Kept, because the product's promise depends on them: the cage in all forms and the read guard, verify (missions and contracts), `adapt`, missions (legislate, interrogate, contract, runtime, tmvc, perimeter, context-request, break-glass), domains as adapters, the org plane (policy, ledger, deps, attest, receipt, events), init, upgrade, migrate, hook, ci, mcp, planner, arch.
+Kept, because the product's promise depends on them: the cage in all forms and the read guard, verify (missions and contracts), `adapt`, missions (legislate, interrogate, contract, runtime, tmvc, perimeter, context-request, break-glass), the `code` and `content` domains, the org plane (policy, ledger, deps, attest, receipt, events), init, upgrade, migrate, hook, ci, mcp, planner, arch.
 
 ### Phase 1: one verify engine
 

@@ -1,4 +1,3 @@
-import { parseBannedImportGateOutput } from "../banned-import-violation.js";
 import { extractImportLayerGateReport } from "../repair.js";
 import { readEvidenceSnippet } from "./evidence-snippet.js";
 import { verifyFinding, type VerifyFinding } from "./finding.js";
@@ -24,16 +23,6 @@ export function projectGateFindings(
         ...(evidence !== undefined ? { evidence } : {}),
       });
     });
-  }
-
-  const banned = parseBannedImportGateOutput(combined);
-  if (banned.length > 0) {
-    return banned.map((v) =>
-      verifyFinding("gate", `banned import "${v.specifier}"`, {
-        offending_file: v.file,
-        rule_id: "banned-import",
-      }),
-    );
   }
 
   return null;

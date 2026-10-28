@@ -2,7 +2,7 @@
 
 Markdown files in this directory are **Architectural Decision Records (ADRs)** for decisions the team will not revisit without explicit governance.
 
-- **Foreman routing** stays manifest-only ([`.gitagent/foreman/SOUL.md`](../foreman/SOUL.md)). `gantry triage` may attach **non-binding `adr_hints`** when an ACTIVE ADR's optional `match_terms` overlap the intent string.
+- **Foreman routing** stays manifest-only ([`.gitagent/foreman/SOUL.md`](../foreman/SOUL.md)). Triage (inside `gantry legislate`) may attach **non-binding `adr_hints`** when an ACTIVE ADR's optional `match_terms` overlap the intent string.
 - **Planner** MUST review relevant ADRs when legislating missions so work stays aligned with prior decisions.
 
 Optional frontmatter (YAML between `---` lines at file start):

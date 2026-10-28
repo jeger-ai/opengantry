@@ -1,0 +1,536 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0356]. Executor must not run until the [MSN-0356] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 0, third batch: remove discovery, blueprint, domains, register,
+# check-imports, triage, start and gxt_start_orchestration, with the code only they fed.
+#
+# Operator request (2026-10-28, ADR-0061 cut list approved in full). No trace rows: the evidence is
+# .gitagent/runs/MSN-0356.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0356
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/concepts/missions.md, docs/concepts/perimeters.md,
+      docs/concepts/verify.md, docs/DEVELOPMENT.md, docs/FEATURES.md,
+      docs/guides/agent-graphs.md, docs/guides/content-domain.md,
+      docs/guides/cursor.md, docs/reference/mcp-tools.md,
+      docs/reference/release-notes.md, docs/start/first-mission.md,
+      docs/start/how-it-works.md, examples/content-governance/README.md,
+      EXECUTOR_LOG.md, .gitagent/foreman/SOUL.md,
+      .gitagent/missions/MSN-0356.remove-discovery.yaml,
+      .gitagent/out-of-scope/ADR-0030-discovery-scanner.md,
+      .gitagent/out-of-scope/ADR-0031-blueprint-agent-contract.md,
+      .gitagent/out-of-scope/ADR-0033-domain-adapters.md,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/out-of-scope/README.md, .gitagent/planner/MISSION-ARCHITECT.md,
+      .gitagent/planner/ORG-POLICY.schema.yaml, .gitagent/planner/RULES.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/registry/mcp-tools.yaml, .gitagent/runs/MSN-0356.json,
+      packages/core/src/error-codes.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/missions/src/arch/domains.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/ast-discovery.ts,
+      packages/missions/src/banned-import-violation.ts,
+      packages/missions/src/blueprint-engine.ts,
+      packages/missions/src/discovery-proposal.ts,
+      packages/missions/src/discovery-scanner.ts,
+      packages/missions/src/discovery-types.ts,
+      packages/missions/src/domains/domain-adapter.ts,
+      packages/missions/src/domains/domain-code.ts,
+      packages/missions/src/domains/domain-content.ts,
+      packages/missions/src/domains/index.ts,
+      packages/missions/src/mission-verify/finding-gate-projector.ts,
+      packages/missions/src/mission-verify/hints.ts,
+      packages/missions/src/register-proposals.ts,
+      packages/missions/src/triage-logic.ts,
+      packages/missions/src/verification-plan.ts, README.md,
+      scripts/assert-dogfood-sync.sh, src/cli/commands/blueprint.ts,
+      src/cli/commands/check-imports.ts, src/cli/commands/init.ts,
+      src/cli/commands/onboarding.ts, src/cli/commands/register.ts,
+      src/cli/commands/start.ts, src/cli/commands/triage.ts,
+      src/cli/doctor/architecture-drift-doctor.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/doctor/repairs/banned-import.ts,
+      src/cli/doctor/repairs/registry.ts, src/cli/flows/start-orchestration.ts,
+      src/cli/init/init-discover.ts, src/cli/init/init-tutorial.ts,
+      src/cli/init/onboarding-flow.ts, src/cli/mcp/mcp-start-orchestration.ts,
+      src/cli/mcp/mcp-tools-register.ts, src/cli/output/audience-output.ts,
+      src/cli/program-core.ts, src/cli/program.ts, src/cli/program-workflow.ts,
+      src/cli/report/status-report.ts, src/cli/tests/ast-discovery.test.ts,
+      src/cli/tests/banned-import-violation.test.ts,
+      src/cli/tests/blueprint.test.ts,
+      src/cli/tests/command-io-contract.test.ts,
+      src/cli/tests/discovery-scanner.test.ts,
+      src/cli/tests/domain-adapters.test.ts, src/cli/tests/domains.test.ts,
+      src/cli/tests/mcp-orchestration.test.ts,
+      src/cli/tests/mcp-tools-register.test.ts,
+      src/cli/tests/onboarding.test.ts,
+      src/cli/tests/repairs-banned-import.test.ts,
+      src/cli/tests/repairs-registry.test.ts, src/cli/tests/start.test.ts,
+      src/cli/tests/verify-finding-gate-projector.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/recipes/cursor.md, test/conformance/cases.yaml,
+      test/conformance/golden/blueprint.fresh-init.json,
+      test/conformance/golden/check-imports.fresh-init.json,
+      test/conformance/golden/domains.fresh-init.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/register.fresh-init.json,
+      test/conformance/golden/start.preview.mission-pass.json,
+      test/conformance/golden/triage.fresh-init.json,
+      test/conformance/run.test.mjs. Deleted: commands blueprint, register,
+      check-imports, triage, start; init-discover; MCP start orchestration;
+      missions blueprint-engine, discovery-proposal, discovery-scanner,
+      discovery-types, register-proposals, ast-discovery,
+      banned-import-violation, verification-plan and the domains/ adapter
+      registry; the doctor's architecture drift check and the banned-import
+      repair; their tests; six conformance cases and goldens. Added: missions
+      arch/domains.ts (the code and content domain table and the file walk).
+      Changed: CLI program registration (core, workflow, program), init, MCP
+      tool registration, doctor core, repair registry, start-orchestration and
+      onboarding hints, status and audience next steps, verify hints and gate
+      finding projector, target-architecture, triage logic, core error codes and
+      org policy schema text, registries (commands, MCP tools, error codes),
+      tests, docs (content domain, perimeters, how it works, agent graphs, first
+      mission, missions, verify, cursor, MCP tools, DEVELOPMENT, FEATURES,
+      README, release notes, CHANGELOG), planner docs (RULES, MISSION-ARCHITECT,
+      ORG-POLICY schema, AGENT-SETUP, cursor recipe; templates and copies),
+      .gitagent/foreman/SOUL.md and out-of-scope README wording, ADR-0030,
+      ADR-0031, ADR-0033 and ADR-0061 text, the content-governance example
+      README, ARCH_BASELINE.json lowered. Operator decisions (2026-10-28):
+      ADR-0061 cut list approved in full. Decisions: everything that only fed a
+      removed command goes with it (delete, don't move): the domain adapters
+      shrink to the code and content table the perimeter needs, the
+      banned-import repair goes because only check-imports produced its input,
+      and the blueprint drift doctor check goes with verification_plan.json;
+      banned imports stay enforced by the verify contract and the org floor;
+      ADR-0061's domains row is corrected to match. The mission has no trace
+      rows: its evidence is .gitagent/runs/MSN-0356.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml keeps its schema and
+      deterministic boundaries; the domain key still picks code or content files
+      and rules; it is now written by hand instead of by blueprint.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Deleted tests cover only deleted code (blueprint,
+      discovery, start, orchestration, the banned-import parser and repair); the
+      verify --fix tests that drove the removed check-imports gate are moved to
+      the import-layer repair with the same assertions (quarantine, single
+      SURGEON-MUTATION line, no mutation without --fix, receipts after repair);
+      no assertion on kept code is weakened.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes; arch fetch is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. gxt_start_orchestration leaves the MCP server; write
+      containment for the remaining tools is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission is phase 0, third batch, of ADR-0061; its
+      domains row is corrected to the domain key that stays.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: cd3d1f2cbd85
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/missions.md, docs/concepts/perimeters.md,
+      docs/concepts/verify.md, docs/DEVELOPMENT.md, docs/FEATURES.md,
+      docs/guides/agent-graphs.md, docs/guides/content-domain.md,
+      docs/guides/cursor.md, docs/reference/mcp-tools.md,
+      docs/reference/release-notes.md, docs/start/first-mission.md,
+      docs/start/how-it-works.md, examples/content-governance/README.md,
+      EXECUTOR_LOG.md, .gitagent/foreman/SOUL.md,
+      .gitagent/missions/MSN-0356.remove-discovery.yaml,
+      .gitagent/out-of-scope/ADR-0030-discovery-scanner.md,
+      .gitagent/out-of-scope/ADR-0031-blueprint-agent-contract.md,
+      .gitagent/out-of-scope/ADR-0033-domain-adapters.md,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/out-of-scope/README.md, .gitagent/planner/MISSION-ARCHITECT.md,
+      .gitagent/planner/ORG-POLICY.schema.yaml, .gitagent/planner/RULES.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/registry/mcp-tools.yaml, .gitagent/runs/MSN-0356.json,
+      packages/core/src/error-codes.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/missions/src/arch/domains.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/ast-discovery.ts,
+      packages/missions/src/banned-import-violation.ts,
+      packages/missions/src/blueprint-engine.ts,
+      packages/missions/src/discovery-proposal.ts,
+      packages/missions/src/discovery-scanner.ts,
+      packages/missions/src/discovery-types.ts,
+      packages/missions/src/domains/domain-adapter.ts,
+      packages/missions/src/domains/domain-code.ts,
+      packages/missions/src/domains/domain-content.ts,
+      packages/missions/src/domains/index.ts,
+      packages/missions/src/mission-verify/finding-gate-projector.ts,
+      packages/missions/src/mission-verify/hints.ts,
+      packages/missions/src/register-proposals.ts,
+      packages/missions/src/triage-logic.ts,
+      packages/missions/src/verification-plan.ts, README.md,
+      scripts/assert-dogfood-sync.sh, src/cli/commands/blueprint.ts,
+      src/cli/commands/check-imports.ts, src/cli/commands/init.ts,
+      src/cli/commands/onboarding.ts, src/cli/commands/register.ts,
+      src/cli/commands/start.ts, src/cli/commands/triage.ts,
+      src/cli/doctor/architecture-drift-doctor.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/doctor/repairs/banned-import.ts,
+      src/cli/doctor/repairs/registry.ts, src/cli/flows/start-orchestration.ts,
+      src/cli/init/init-discover.ts, src/cli/init/init-tutorial.ts,
+      src/cli/init/onboarding-flow.ts, src/cli/mcp/mcp-start-orchestration.ts,
+      src/cli/mcp/mcp-tools-register.ts, src/cli/output/audience-output.ts,
+      src/cli/program-core.ts, src/cli/program.ts, src/cli/program-workflow.ts,
+      src/cli/report/status-report.ts, src/cli/tests/ast-discovery.test.ts,
+      src/cli/tests/banned-import-violation.test.ts,
+      src/cli/tests/blueprint.test.ts,
+      src/cli/tests/command-io-contract.test.ts,
+      src/cli/tests/discovery-scanner.test.ts,
+      src/cli/tests/domain-adapters.test.ts, src/cli/tests/domains.test.ts,
+      src/cli/tests/mcp-orchestration.test.ts,
+      src/cli/tests/mcp-tools-register.test.ts,
+      src/cli/tests/onboarding.test.ts,
+      src/cli/tests/repairs-banned-import.test.ts,
+      src/cli/tests/repairs-registry.test.ts, src/cli/tests/start.test.ts,
+      src/cli/tests/verify-finding-gate-projector.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/MISSION-ARCHITECT.md,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/recipes/cursor.md, test/conformance/cases.yaml,
+      test/conformance/golden/blueprint.fresh-init.json,
+      test/conformance/golden/check-imports.fresh-init.json,
+      test/conformance/golden/domains.fresh-init.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/register.fresh-init.json,
+      test/conformance/golden/start.preview.mission-pass.json,
+      test/conformance/golden/triage.fresh-init.json,
+      test/conformance/run.test.mjs. Deleted: commands blueprint, register,
+      check-imports, triage, start; init-discover; MCP start orchestration;
+      missions blueprint-engine, discovery-proposal, discovery-scanner,
+      discovery-types, register-proposals, ast-discovery,
+      banned-import-violation, verification-plan and the domains/ adapter
+      registry; the doctor's architecture drift check and the banned-import
+      repair; their tests; six conformance cases and goldens. Added: missions
+      arch/domains.ts (the code and content domain table and the file walk).
+      Changed: CLI program registration (core, workflow, program), init, MCP
+      tool registration, doctor core, repair registry, start-orchestration and
+      onboarding hints, status and audience next steps, verify hints and gate
+      finding projector, target-architecture, triage logic, core error codes and
+      org policy schema text, registries (commands, MCP tools, error codes),
+      tests, docs (content domain, perimeters, how it works, agent graphs, first
+      mission, missions, verify, cursor, MCP tools, DEVELOPMENT, FEATURES,
+      README, release notes, CHANGELOG), planner docs (RULES, MISSION-ARCHITECT,
+      ORG-POLICY schema, AGENT-SETUP, cursor recipe; templates and copies),
+      .gitagent/foreman/SOUL.md and out-of-scope README wording, ADR-0030,
+      ADR-0031, ADR-0033 and ADR-0061 text, the content-governance example
+      README, ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. The flight levels compose as before; no level gains or
+      loses enforced law.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Accept. Plan adapters (gantry adapt) are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Accept. No config file format changes; humans still write
+      TARGET_ARCHITECTURE.yaml and MANIFEST.yaml as YAML.
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: c454e20e25e3ad423e60d5359914daa1bb651bd448320e5c29503b991d9026b5
+declared_paths:
+  - .gitagent/foreman/SOUL.md
+  - .gitagent/missions/MSN-0356.remove-discovery.yaml
+  - .gitagent/out-of-scope/ADR-0030-discovery-scanner.md
+  - .gitagent/out-of-scope/ADR-0031-blueprint-agent-contract.md
+  - .gitagent/out-of-scope/ADR-0033-domain-adapters.md
+  - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+  - .gitagent/out-of-scope/README.md
+  - .gitagent/planner/MISSION-ARCHITECT.md
+  - .gitagent/planner/ORG-POLICY.schema.yaml
+  - .gitagent/planner/RULES.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/registry/mcp-tools.yaml
+  - .gitagent/runs/MSN-0356.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/FEATURES.md
+  - docs/concepts/missions.md
+  - docs/concepts/perimeters.md
+  - docs/concepts/verify.md
+  - docs/guides/agent-graphs.md
+  - docs/guides/content-domain.md
+  - docs/guides/cursor.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/release-notes.md
+  - docs/start/first-mission.md
+  - docs/start/how-it-works.md
+  - examples/content-governance/README.md
+  - packages/core/src/error-codes.ts
+  - packages/core/src/schemas/org-policy-schema.ts
+  - packages/missions/src/arch/domains.ts
+  - packages/missions/src/arch/target-architecture.ts
+  - packages/missions/src/ast-discovery.ts
+  - packages/missions/src/banned-import-violation.ts
+  - packages/missions/src/blueprint-engine.ts
+  - packages/missions/src/discovery-proposal.ts
+  - packages/missions/src/discovery-scanner.ts
+  - packages/missions/src/discovery-types.ts
+  - packages/missions/src/domains/domain-adapter.ts
+  - packages/missions/src/domains/domain-code.ts
+  - packages/missions/src/domains/domain-content.ts
+  - packages/missions/src/domains/index.ts
+  - packages/missions/src/mission-verify/finding-gate-projector.ts
+  - packages/missions/src/mission-verify/hints.ts
+  - packages/missions/src/register-proposals.ts
+  - packages/missions/src/triage-logic.ts
+  - packages/missions/src/verification-plan.ts
+  - scripts/assert-dogfood-sync.sh
+  - src/cli/commands/blueprint.ts
+  - src/cli/commands/check-imports.ts
+  - src/cli/commands/init.ts
+  - src/cli/commands/onboarding.ts
+  - src/cli/commands/register.ts
+  - src/cli/commands/start.ts
+  - src/cli/commands/triage.ts
+  - src/cli/doctor/architecture-drift-doctor.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/doctor/repairs/banned-import.ts
+  - src/cli/doctor/repairs/registry.ts
+  - src/cli/flows/start-orchestration.ts
+  - src/cli/init/init-discover.ts
+  - src/cli/init/init-tutorial.ts
+  - src/cli/init/onboarding-flow.ts
+  - src/cli/mcp/mcp-start-orchestration.ts
+  - src/cli/mcp/mcp-tools-register.ts
+  - src/cli/output/audience-output.ts
+  - src/cli/program-core.ts
+  - src/cli/program-workflow.ts
+  - src/cli/program.ts
+  - src/cli/report/status-report.ts
+  - src/cli/tests/ast-discovery.test.ts
+  - src/cli/tests/banned-import-violation.test.ts
+  - src/cli/tests/blueprint.test.ts
+  - src/cli/tests/command-io-contract.test.ts
+  - src/cli/tests/discovery-scanner.test.ts
+  - src/cli/tests/domain-adapters.test.ts
+  - src/cli/tests/domains.test.ts
+  - src/cli/tests/mcp-orchestration.test.ts
+  - src/cli/tests/mcp-tools-register.test.ts
+  - src/cli/tests/onboarding.test.ts
+  - src/cli/tests/repairs-banned-import.test.ts
+  - src/cli/tests/repairs-registry.test.ts
+  - src/cli/tests/start.test.ts
+  - src/cli/tests/verify-finding-gate-projector.test.ts
+  - src/cli/tests/verify-repair.test.ts
+  - src/cli/tests/verify-run.test.ts
+  - templates/.gitagent/planner/AGENT-SETUP.md
+  - templates/.gitagent/planner/MISSION-ARCHITECT.md
+  - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+  - templates/.gitagent/planner/RULES.md
+  - templates/integrations/recipes/cursor.md
+  - test/conformance/cases.yaml
+  - test/conformance/golden/blueprint.fresh-init.json
+  - test/conformance/golden/check-imports.fresh-init.json
+  - test/conformance/golden/domains.fresh-init.json
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/init.dry-run.bare-git.json
+  - test/conformance/golden/register.fresh-init.json
+  - test/conformance/golden/start.preview.mission-pass.json
+  - test/conformance/golden/triage.fresh-init.json
+  - test/conformance/run.test.mjs
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SOUL.md
+    - .gitagent/missions/MSN-0356.remove-discovery.yaml
+    - .gitagent/out-of-scope/ADR-0030-discovery-scanner.md
+    - .gitagent/out-of-scope/ADR-0031-blueprint-agent-contract.md
+    - .gitagent/out-of-scope/ADR-0033-domain-adapters.md
+    - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+    - .gitagent/out-of-scope/README.md
+    - .gitagent/planner/MISSION-ARCHITECT.md
+    - .gitagent/planner/ORG-POLICY.schema.yaml
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/registry/mcp-tools.yaml
+    - .gitagent/runs/MSN-0356.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/FEATURES.md
+    - docs/concepts/missions.md
+    - docs/concepts/perimeters.md
+    - docs/concepts/verify.md
+    - docs/guides/agent-graphs.md
+    - docs/guides/content-domain.md
+    - docs/guides/cursor.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/release-notes.md
+    - docs/start/first-mission.md
+    - docs/start/how-it-works.md
+    - examples/content-governance/README.md
+    - packages/core/src/error-codes.ts
+    - packages/core/src/schemas/org-policy-schema.ts
+    - packages/missions/src/arch/domains.ts
+    - packages/missions/src/arch/target-architecture.ts
+    - packages/missions/src/ast-discovery.ts
+    - packages/missions/src/banned-import-violation.ts
+    - packages/missions/src/blueprint-engine.ts
+    - packages/missions/src/discovery-proposal.ts
+    - packages/missions/src/discovery-scanner.ts
+    - packages/missions/src/discovery-types.ts
+    - packages/missions/src/domains/domain-adapter.ts
+    - packages/missions/src/domains/domain-code.ts
+    - packages/missions/src/domains/domain-content.ts
+    - packages/missions/src/domains/index.ts
+    - packages/missions/src/mission-verify/finding-gate-projector.ts
+    - packages/missions/src/mission-verify/hints.ts
+    - packages/missions/src/register-proposals.ts
+    - packages/missions/src/triage-logic.ts
+    - packages/missions/src/verification-plan.ts
+    - scripts/assert-dogfood-sync.sh
+    - src/cli/commands/blueprint.ts
+    - src/cli/commands/check-imports.ts
+    - src/cli/commands/init.ts
+    - src/cli/commands/onboarding.ts
+    - src/cli/commands/register.ts
+    - src/cli/commands/start.ts
+    - src/cli/commands/triage.ts
+    - src/cli/doctor/architecture-drift-doctor.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/doctor/repairs/banned-import.ts
+    - src/cli/doctor/repairs/registry.ts
+    - src/cli/flows/start-orchestration.ts
+    - src/cli/init/init-discover.ts
+    - src/cli/init/init-tutorial.ts
+    - src/cli/init/onboarding-flow.ts
+    - src/cli/mcp/mcp-start-orchestration.ts
+    - src/cli/mcp/mcp-tools-register.ts
+    - src/cli/output/audience-output.ts
+    - src/cli/program-core.ts
+    - src/cli/program-workflow.ts
+    - src/cli/program.ts
+    - src/cli/report/status-report.ts
+    - src/cli/tests/ast-discovery.test.ts
+    - src/cli/tests/banned-import-violation.test.ts
+    - src/cli/tests/blueprint.test.ts
+    - src/cli/tests/command-io-contract.test.ts
+    - src/cli/tests/discovery-scanner.test.ts
+    - src/cli/tests/domain-adapters.test.ts
+    - src/cli/tests/domains.test.ts
+    - src/cli/tests/mcp-orchestration.test.ts
+    - src/cli/tests/mcp-tools-register.test.ts
+    - src/cli/tests/onboarding.test.ts
+    - src/cli/tests/repairs-banned-import.test.ts
+    - src/cli/tests/repairs-registry.test.ts
+    - src/cli/tests/start.test.ts
+    - src/cli/tests/verify-finding-gate-projector.test.ts
+    - src/cli/tests/verify-repair.test.ts
+    - src/cli/tests/verify-run.test.ts
+    - templates/.gitagent/planner/AGENT-SETUP.md
+    - templates/.gitagent/planner/MISSION-ARCHITECT.md
+    - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+    - templates/.gitagent/planner/RULES.md
+    - templates/integrations/recipes/cursor.md
+    - test/conformance/cases.yaml
+    - test/conformance/golden/blueprint.fresh-init.json
+    - test/conformance/golden/check-imports.fresh-init.json
+    - test/conformance/golden/domains.fresh-init.json
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/init.dry-run.bare-git.json
+    - test/conformance/golden/register.fresh-init.json
+    - test/conformance/golden/start.preview.mission-pass.json
+    - test/conformance/golden/triage.fresh-init.json
+    - test/conformance/run.test.mjs
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.yaml
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 3e73750bdabcf4160fb630c370252a08911de7fc0822fd70b58a3c6b3bb947b4

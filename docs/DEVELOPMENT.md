@@ -63,13 +63,12 @@ Numeric or transformed flags MUST coerce in `.option()` parsers or the command a
 
 ## Mission graph (required for substantive work)
 
-1. **Triage** — `gantry triage "<intent>"` (escalation → Planner legislates).
-2. **Legislate** — `gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry` (proposes a tighten-only `contract`, prompts `[a]/[e]/[q]` or take `--yes`; runs gap analysis; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file`). MCP: `gxt_propose_contract` → `gxt_draft_legislation` with `interrogation[]` + `contract`. Operator answers are quoted verbatim — never fabricated by agents.
-3. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
-4. **Pin** — `gantry pin .gitagent/missions/<file>.yaml`. When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
-5. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
-6. **Record** — commit the work, then `gantry verify --mission .gitagent/missions/<file>.yaml --record` on the clean tree and commit `.gitagent/runs/MSN-NNNN.json` (RULES §3). Missions that still carry `trace_rows` append PASS quotes to repo-root `EXECUTOR_LOG.md` instead (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
-7. **Verify** — `gantry verify` (pinned) or `gantry verify --mission .gitagent/missions/<file>.yaml`. Optional: `gantry verify --receipt` then `gantry receipt show`.
+1. **Legislate** — `gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry` (proposes a tighten-only `contract`, prompts `[a]/[e]/[q]` or take `--yes`; runs gap analysis; halts with one finding when operator answers are missing — use MCP `gxt_interrogate` or `--interrogation-file`). MCP: `gxt_propose_contract` → `gxt_draft_legislation` with `interrogation[]` + `contract`. Operator answers are quoted verbatim — never fabricated by agents.
+2. **Planner commit** — subject **`[MSN-NNNN] …`**, author email in repo Planner allowlist, mission file under `.gitagent/missions/` included in the commit.
+3. **Pin** — `gantry pin .gitagent/missions/<file>.yaml`. When pinned, `verify` / `scan` / `attest` / `runtime env` default to that mission and print `[gantry] Using pinned mission: …`. Run `gantry unpin` when switching MSNs.
+4. **Executor scope** — `source scripts/gxt-runtime-env.sh` (uses pin) or `eval "$(gantry runtime env)"` when pinned.
+5. **Record** — commit the work, then `gantry verify --mission .gitagent/missions/<file>.yaml --record` on the clean tree and commit `.gitagent/runs/MSN-NNNN.json` (RULES §3). Missions that still carry `trace_rows` append PASS quotes to repo-root `EXECUTOR_LOG.md` instead (see [example.verify.yaml](../.gitagent/missions/example.verify.yaml)).
+6. **Verify** — `gantry verify` (pinned) or `gantry verify --mission .gitagent/missions/<file>.yaml`. Optional: `gantry verify --receipt` then `gantry receipt show`.
 
 ## Cursor session (this repo)
 
@@ -102,7 +101,6 @@ Restart Cursor after first clone if hooks do not appear (**Output → Hooks**).
 **CLI fallback:**
 
 ```bash
-gantry triage "<intent>"
 gantry legislate --from-intent "<intent>" --msn MSN-NNNN --skill-key gantry   # or substrate
 # Planner: git commit -m "[MSN-NNNN] legislate …" including mission file
 
@@ -195,7 +193,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Compile / types | build / CI | `npm run build` (`tsc`) |
 | Manifest shape | CI / pre-push | `gantry check` |
 | Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
-| Banned imports | mission gate / repair | `gantry check-imports` |
+| Banned imports | verify `--contract` | `contract.banned_imports` and the org policy floor |
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
 | Run record | verify | `.gitagent/runs/<MSN>.json` written by `gantry verify --record`; missions with `trace_rows` use verbatim quotes from `EXECUTOR_LOG.md` instead |
 
@@ -279,8 +277,7 @@ gh workflow run npm-publish.yml -f tag=v<version>
 
 ## Other governance checks
 
-1. **`gantry register <dir>`** proposes skills from AST footprints; Planner still owns manifest edits (Rule 4.4).
-2. **`gantry perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
+1. **`gantry perimeter --ci`** in CI enforces verified signatures on protected paths (local mode is advisory).
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
@@ -288,9 +285,7 @@ See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
 Deterministic quarantine mutations for specific gate failures — an isolation layer, **not** a pass generator:
 
-1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes a registered **code repair** when gate output matches a known failure:
-   - **`GXT_BANNED_IMPORT_DETECTED`** — `gantry check-imports` stderr
-   - **`GXT_IMPORT_LAYER_VIOLATION`** — `gantry arch check --json` structured report
+1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes the **code repair** when gate output is a **`GXT_IMPORT_LAYER_VIOLATION`** (`gantry arch check --json` structured report).
 2. The repair **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
 3. On mutation, append **`[SURGEON-MUTATION] …`** to `EXECUTOR_LOG.md` (the marker keeps its historical name, like the `GXT-SURGEON-QUARANTINE` code markers, so existing logs and quarantined files stay recognizable), then **rerun the full verify pipeline with `--fix` disabled**.
 4. Plain `gantry verify` (no `--fix`) remains fail-closed and never mutates TMVC.

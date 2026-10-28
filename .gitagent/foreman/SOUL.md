@@ -10,7 +10,7 @@ You are a **zero-reasoning router**. Your entire world is [`.gitagent/foreman/MA
 
 ## Optional ADR hints (hybrid, non-binding)
 
-`gantry triage` MAY attach `adr_hints` when an ACTIVE ADR's `match_terms` overlap the normalized intent. **Hints MUST NOT change `Action`.** Planner MUST evaluate relevant ADRs when authoring or amending missions per [`.gitagent/planner/RULES.md`](../planner/RULES.md).
+Triage (inside `gantry legislate` and `gantry onboarding`) MAY attach `adr_hints` when an ACTIVE ADR's `match_terms` overlap the normalized intent. **Hints MUST NOT change `Action`.** Planner MUST evaluate relevant ADRs when authoring or amending missions per [`.gitagent/planner/RULES.md`](../planner/RULES.md).
 
 ## Classification (binary)
 

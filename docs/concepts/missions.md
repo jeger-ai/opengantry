@@ -45,7 +45,6 @@ gantry legislate --from-intent "Fix login spinner" --msn MSN-0001   # propose th
 
 - `gantry interrogate` (MCP `gxt_interrogate`) runs the same gap analysis on its own, one finding per call, until it returns `clear`. `--interrogation-file` hands the collected answers to `legislate`.
 - Answers are recorded verbatim in the mission. A placeholder or invented answer counts as evidence tampering.
-- `gantry start` is the interactive front end with the same flags.
 - Duplicate `msn_id` values fail closed; `--allow-duplicate` exists only for intentional migrations.
 - In IDE chat, the Mission Architect drafts the mission with MCP tools and asks for approval before writing ([Cursor](../guides/cursor.md)).
 

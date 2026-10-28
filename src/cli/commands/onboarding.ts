@@ -42,7 +42,7 @@ async function resolveOnboardingMissionPath(
     return { missionPath, useExample };
   }
 
-  p.log.step("Step 3 — Scaffold mission (gantry start)");
+  p.log.step("Step 3 — Scaffold mission (gantry legislate)");
   const result = runStartOrchestration({
     intent: intent.trim(),
     writeMission: true,
@@ -113,7 +113,7 @@ export async function runOnboarding(options: OnboardingOptions = {}): Promise<vo
   p.log.step("Step 1 — Planner allowlist");
   logInfo('  gantry planner set "$(git config user.email)"');
 
-  p.log.step("Step 2 — Declare intent (gantry start)");
+  p.log.step("Step 2 — Declare intent");
   const intent = await p.text({
     message: "What do you want to build?",
     placeholder: "Fix login spinner on checkout",

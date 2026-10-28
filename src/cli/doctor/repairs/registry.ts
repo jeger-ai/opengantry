@@ -1,10 +1,8 @@
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { gateOutputIndicatesBannedImport } from "#missions/banned-import-violation.js";
 import { gateOutputIndicatesImportLayer } from "#missions/repair.js";
 import type { GateFailure, VerifyPhaseFailure } from "#missions/mission-verify/failure.js";
 import type { Manifest } from "#core/manifest.js";
-import { bannedImportRepair } from "./banned-import.js";
 import { importLayerRepair } from "./import-layer.js";
 
 export interface RepairMutationResult {
@@ -26,7 +24,7 @@ export interface CodeRepair {
   applyMutation(context: RepairContext): Promise<RepairMutationResult>;
 }
 
-const REPAIRS: CodeRepair[] = [importLayerRepair, bannedImportRepair];
+const REPAIRS: CodeRepair[] = [importLayerRepair];
 
 export function getRepairForErrorCode(code: GxtErrorCode): CodeRepair | undefined {
   return REPAIRS.find((s) => s.errorCode === code);
@@ -38,9 +36,6 @@ export function resolveRepairErrorCode(failure: VerifyPhaseFailure): GxtErrorCod
 
   if (gateOutputIndicatesImportLayer(combined)) {
     return GXT_ERROR.IMPORT_LAYER_VIOLATION;
-  }
-  if (gateOutputIndicatesBannedImport(combined) || /: banned import "/.test(combined)) {
-    return GXT_ERROR.BANNED_IMPORT_DETECTED;
   }
   return null;
 }

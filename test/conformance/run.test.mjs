@@ -48,6 +48,8 @@ const GLOBAL_NORMALIZERS = [
   [/\b[0-9a-f]{64}\b/g, "<SHA256>"],
   [/\b[0-9a-f]{40}\b/g, "<SHA>"],
   [/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,12}\b/g, "<SHORT_SHA>"],
+  // A short sha can be all digits; where the context says it is a commit, normalize it anyway.
+  [/\b(record at |commit )\d{7,12}\b/g, "$1<SHORT_SHA>"],
   [/"(duration_ms|elapsed_ms|took_ms|wall_ms|pid|ppid|port)":\s*\d+/g, '"$1": "<N>"'],
   [/\bv\d+\.\d+\.\d+\b/g, "<SEMVER>"],
   [/(?<=[ (:])\d+\.\d+\.\d+(?=[ ),]|$)/gm, "<SEMVER>"],

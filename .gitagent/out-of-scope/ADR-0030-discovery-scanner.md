@@ -1,7 +1,7 @@
 ---
 id: ADR-0030
 title: Fast-path deterministic discovery scanner for gantry init --discover
-status: ACTIVE
+status: SUPERSEDED
 match_terms:
   - discovery
   - init --discover
@@ -56,3 +56,5 @@ Existing seeds: [import-scanner.ts](../../src/cli/lib/import-scanner.ts) (regex 
 - Blueprint (#63) reuses the same scanner core.
 - Full AST analysis deferred; regex may miss dynamic imports — documented limitation.
 - Proposal file is gitignored or ephemeral; adopters commit only after confirmation.
+
+Superseded by [ADR-0061](ADR-0061-simplify-before-4-0.md) (MSN-0356): `gantry init --discover`, the discovery scanner and `.gitagent/discovery-proposal.json` were removed in 4.0. `TARGET_ARCHITECTURE.yaml` is written by hand and enforced by `gantry perimeter check`.

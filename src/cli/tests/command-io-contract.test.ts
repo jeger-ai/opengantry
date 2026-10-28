@@ -8,22 +8,6 @@ import { captureConsole } from "./test-shared.js";
 import { getRepoRoot } from "#git/git.js";
 import { copyMissionSchema } from "./test-fixtures.js";
 import { runCheck } from "../commands/check.js";
-import { runRegister } from "../commands/register.js";
-
-function captureStdoutWrite<T>(fn: () => T): { result: T; stdout: string } {
-  const chunks: string[] = [];
-  const orig = process.stdout.write.bind(process.stdout);
-  process.stdout.write = ((chunk: string | Uint8Array) => {
-    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-    return true;
-  }) as typeof process.stdout.write;
-  try {
-    const result = fn();
-    return { result, stdout: chunks.join("") };
-  } finally {
-    process.stdout.write = orig;
-  }
-}
 
 function scaffoldMiniRepo(): string {
   const ogRoot = getRepoRoot();
@@ -80,19 +64,3 @@ test("command I/O contract: gantry check happy path", () => {
   }
 });
 
-test("command I/O contract: gantry register happy path json", () => {
-  const dest = scaffoldMiniRepo();
-  const prev = process.cwd();
-  process.chdir(dest);
-  try {
-    process.exitCode = undefined;
-    const { stdout } = captureStdoutWrite(() => runRegister({ dir: "src/cli/lib", json: true }));
-    assert.equal(process.exitCode, undefined);
-    const payload = JSON.parse(stdout.trim());
-    assert.equal(typeof payload.skill_key, "string");
-    assert.ok(Array.isArray(payload.tmvc_roots));
-  } finally {
-    process.chdir(prev);
-    process.exitCode = undefined;
-  }
-});

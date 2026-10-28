@@ -10,11 +10,8 @@ import { registerAdaptCommand } from "./commands/adapt.js";
 import type { VerifyOptions } from "./flows/verify-options.js";
 import type { VerifyExportFormat } from "#missions/mission-verify/export.js";
 import { runEventsPush } from "./commands/events-push.js";
-import { runRegister } from "./commands/register.js";
-import { runCheckImports } from "./commands/check-imports.js";
 import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
-import { listDomainKeys } from "#missions/domains/index.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";
@@ -319,30 +316,6 @@ function registerEventsCommand(program: Command): void {
     });
 }
 
-function registerRegisterCommand(program: Command): void {
-  program
-    .command("register")
-    .description("Import/export discovery (regex scan): propose skill scope from folder (does not mutate MANIFEST)")
-    .argument("<dir>", "Repo-relative directory to analyze")
-    .option("--skill-key <key>", "Override suggested skill_key")
-    .option("--json", "Emit proposal JSON")
-    .action((dir: string, opts: { skillKey?: string; json?: boolean }) => {
-      runRegister({ dir, skillKey: opts.skillKey, json: opts.json });
-    });
-}
-
-function registerCheckImportsCommand(program: Command): void {
-  program
-    .command("check-imports")
-    .description("Deterministic import ban check for a folder (usable as gate_command)")
-    .argument("<dir>", "Repo-relative directory to scan")
-    .requiredOption("--ban <specifier...>", "Banned import specifier (repeatable)")
-    .option("--json", "Emit structured JSON")
-    .action((dir: string, opts: { ban: string[]; json?: boolean }) => {
-      runCheckImports({ dir, ban: opts.ban, json: opts.json });
-    });
-}
-
 function registerPerimeterCommand(program: Command): void {
   const perimeterCmd = program
     .command("perimeter")
@@ -366,15 +339,6 @@ function registerPerimeterCommand(program: Command): void {
     });
 }
 
-function registerDomainsCommand(program: Command): void {
-  program
-    .command("domains")
-    .description("List built-in domain adapters (code, content)")
-    .action(() => {
-      process.stdout.write(`${listDomainKeys().join("\n")}\n`);
-    });
-}
-
 export function registerWorkflowCommands(program: Command): void {
   registerLegislateCommand(program);
   registerInterrogateCommand(program);
@@ -382,8 +346,5 @@ export function registerWorkflowCommands(program: Command): void {
   registerVerifyCommand(program);
   registerAdaptCommand(program);
   registerEventsCommand(program);
-  registerRegisterCommand(program);
-  registerCheckImportsCommand(program);
   registerPerimeterCommand(program);
-  registerDomainsCommand(program);
 }

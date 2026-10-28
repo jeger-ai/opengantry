@@ -33,7 +33,7 @@ Legislation is two steps, so it stays safe even when Cursor auto-runs every tool
 6. You make the Planner `git commit`.
 7. `gxt_check_signature`, then `gxt_pin_mission`.
 
-`gxt_start_orchestration` stops with `INTERROGATION_REQUIRED` until the interrogation is complete (details in `GANTRY_LAST_ERROR_FILE`). The draft and execute pair is the governance gate, not Cursor's per-tool approval setting. All MCP tools: [MCP tools](../reference/mcp-tools.md).
+`gxt_draft_legislation` refuses until the interrogation is complete (details in `GANTRY_LAST_ERROR_FILE`). The draft and execute pair is the governance gate, not Cursor's per-tool approval setting. All MCP tools: [MCP tools](../reference/mcp-tools.md).
 
 ## Session bootstrap
 

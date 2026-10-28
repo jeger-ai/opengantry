@@ -73,7 +73,7 @@ properties:
           minLength: 1
         scope:
           default: changed
-          description: changed = gantry check-imports on the mission diff; all = whole tree.
+          description: changed = files in the mission diff; all = whole tree.
           type: string
           enum:
             - changed

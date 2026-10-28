@@ -12,7 +12,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
 ## 4.0
 
 - **4.0.0** The major the rewrite record announced: the same commands, flags, exit codes and `GXT_*` error codes; the deprecated names gone; law files in YAML.
-  - **Fewer commands.** `report`, `metrics`, `audit-rigor`, `context-feed` and `scan` (with the KPI gate) are gone ([upgrade notes](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md) name the replacements).
+  - **Fewer commands.** `report`, `metrics`, `audit-rigor`, `context-feed`, `scan` (with the KPI gate), `blueprint`, `init --discover`, `domains`, `register`, `check-imports`, `triage` and `start` are gone ([upgrade notes](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md) name the replacements).
   - **One env prefix.** Every `GXT_*` session variable is `GANTRY_*` (`GXT_TMVC_ROOTS` is `GANTRY_TMVC_ROOTS_ABSOLUTE`); the legacy CLI alias bin, its env and git-config fallbacks and its skill alias are removed (`gantry`, `GANTRY_*`, `gantry.*` only); `verifyMissionAsync` is removed.
   - **YAML law files.** `gantry init` writes `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`; the 3.x JSON files are still read; `gantry migrate <file>` converts them and `gantry doctor` says when to.
   - **Machine-written evidence.** `gantry verify --record` writes a run record a rowless mission is verified by; trace rows are optional.

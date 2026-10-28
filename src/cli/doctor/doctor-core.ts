@@ -30,7 +30,6 @@ import {
   isGoodGitSignatureStatus,
 } from "#missions/planner-signature.js";
 import { runTargetArchitectureDoctorChecks } from "./target-architecture-doctor.js";
-import { runArchitectureDriftDoctorChecks } from "./architecture-drift-doctor.js";
 import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
 import { runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
 import { runOrgPolicyDoctorChecks } from "./policy-doctor.js";
@@ -242,7 +241,6 @@ export function collectDoctorReport(
   ];
   lines = [...lines, ...runArchitecturePointerDoctorChecks(root)];
   lines = [...lines, ...runTargetArchitectureDoctorChecks(root)];
-  lines = [...lines, ...runArchitectureDriftDoctorChecks(root)];
   lines = [...lines, ...runExecutorLogIntegrityDoctorChecks(root)];
   const preflight = runAdapterPreflightDoctorChecks(root, adapterPreflight ?? {});
   lines = [...lines, ...preflight.lines];

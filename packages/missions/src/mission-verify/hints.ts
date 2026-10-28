@@ -1,6 +1,5 @@
 import type { GxtErrorCode } from "#core/error-codes.js";
 import { GXT_ERROR, mapGitProofCodeToGxt } from "#core/error-codes.js";
-import { gateOutputIndicatesBannedImport } from "../banned-import-violation.js";
 import { gateOutputIndicatesImportLayer } from "../repair.js";
 import {
   hintForTraceKind,
@@ -87,9 +86,7 @@ function hintsForGatePhase(failure: GateFailure, meta: VerifyHintMeta): VerifyRe
   const combined = failure.gateOutput ?? "";
   const errorCode = gateOutputIndicatesImportLayer(combined)
     ? GXT_ERROR.IMPORT_LAYER_VIOLATION
-    : gateOutputIndicatesBannedImport(combined)
-      ? GXT_ERROR.BANNED_IMPORT_DETECTED
-      : GXT_ERROR.GATE_FAILED;
+    : GXT_ERROR.GATE_FAILED;
   return {
     error_code: errorCode,
     fix_hints: [hintGate(gate, mission)],
