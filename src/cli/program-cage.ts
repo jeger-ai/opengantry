@@ -3,6 +3,7 @@ import {
   runCageCheckCommand,
   runCageCommand,
   runCageGuardPrePush,
+  runCagePolicyCommand,
   runCageSuggestCommand,
   runReadGuardCommand,
   runCageWatchCommand,
@@ -19,20 +20,12 @@ function collect(value: string, previous: string[]): string[] {
  * `gantry cage <name>` was typed: `name` is the first operand and no `--` came before it.
  * Commander drops `--` from operands, so read the raw argv; `gantry cage -- <name>` runs a command.
  */
-export function isCageSubcommandInvocation(
-  name: string,
-  operands: readonly string[],
-  argv: readonly string[] = process.argv,
-): boolean {
+export function isCageSubcommandInvocation(name: string, operands: readonly string[], argv: readonly string[] = process.argv): boolean {
   if (operands[0] !== name) return false;
   const raw = argv.slice(2);
   const after = raw.slice(raw.indexOf("cage") + 1);
   const dashes = after.indexOf("--");
   return dashes === -1 || after.indexOf(name) < dashes;
-}
-
-export function isSuggestInvocation(operands: readonly string[], argv: readonly string[] = process.argv): boolean {
-  return isCageSubcommandInvocation("suggest", operands, argv);
 }
 
 async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Promise<void> {
@@ -43,6 +36,18 @@ async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Pr
     .option("--json", "Emit suggestions as JSON on stdout");
   sub.parse(args, { from: "user" });
   await runCageSuggestCommand({ json: inherited.json, ...sub.opts() });
+}
+
+async function runPolicyArgs(args: string[], inherited: { json?: boolean }): Promise<void> {
+  const sub = new Command("gantry cage policy")
+    .description("Print the agent's sandbox and permission settings built from the cage's rules, for review (setup step; refused inside a cage session)")
+    .option("--agent <agent>", "Agent whose settings to write: claude-code")
+    .option("--contract <file>", "Also deny writes to this verify contract's forbidden_paths")
+    .option("--out <file>", "Write the fragment to <file> instead of printing it")
+    .option("--force", "Replace an existing --out file")
+    .option("--json", "Emit { agent, written, settings } on stdout");
+  sub.parse(args, { from: "user" });
+  await runCagePolicyCommand({ json: inherited.json, ...sub.opts() });
 }
 
 /** Options given before the subcommand name (`gantry cage --json check …`) carry over to it. */
@@ -85,6 +90,9 @@ async function runWatchArgs(args: string[], inherited: InheritedCageOptions): Pr
   await runCageWatchCommand(withInherited(inherited, sub.opts<CageWatchCliOptions>()));
 }
 
+/** `gantry cage <verb>`: parsed here, not by Commander (registry `dispatch: cage`); suggest and policy see only --json. */
+const SUBCOMMANDS = { check: runCheckArgs, policy: runPolicyArgs, suggest: runSuggestArgs, watch: runWatchArgs };
+
 /** Shared by `gantry cage` and the standalone `gantry-cage` bin (alias `opengantry-cage`) so they never drift. */
 export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean } = {}): Command {
   if (opts.subcommands) {
@@ -92,7 +100,8 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
       "after",
       "\nCheck commits (pre-push, CI):\n  gantry cage check --base <ref> [--head <ref>] [--lock-deps] [--allow-only <glob>] [--json]  exit 3 when commits in base..head change protected paths\n" +
         "\nWatch files while you work (own terminal):\n  gantry cage watch [--decision-timeout <s>] [--no-notify] [--lock-deps] [--allow-only <glob>] [--json]  accept or reject every protected change\n" +
-        "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n",
+        "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n" +
+        "  gantry cage policy --agent claude-code [--contract <file>] [--out <file>] [--force] [--json]  print the agent's sandbox settings for review\n",
     );
   }
   return cmd
@@ -121,19 +130,9 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
     .argument("<command...>", "Command to run after --")
     .action(async (command: string[], cliOpts: Omit<CageCliOptions, "command">) => {
       const inherited: InheritedCageOptions = { json: cliOpts.json, lockDeps: cliOpts.lockDeps, allowOnly: cliOpts.allowOnly };
-      if (opts.subcommands && isSuggestInvocation(command)) {
-        await runSuggestArgs(command.slice(1), { json: cliOpts.json });
-        return;
-      }
-      if (opts.subcommands && isCageSubcommandInvocation("check", command)) {
-        await runCheckArgs(command.slice(1), inherited);
-        return;
-      }
-      if (opts.subcommands && isCageSubcommandInvocation("watch", command)) {
-        await runWatchArgs(command.slice(1), inherited);
-        return;
-      }
-      await runCageCommand({ command, ...cliOpts });
+      const sub = opts.subcommands ? Object.entries(SUBCOMMANDS).find(([name]) => isCageSubcommandInvocation(name, command)) : undefined;
+      if (sub) await sub[1](command.slice(1), inherited);
+      else await runCageCommand({ command, ...cliOpts });
     });
 }
 

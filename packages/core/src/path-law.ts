@@ -22,7 +22,7 @@ export interface PathLawRule {
 }
 
 /** An allowed area: a path no pattern covers is denied under the area's rule name. */
-export interface PathLawArea {
+interface PathLawArea {
   id: string;
   source: string;
   patterns: string[];

@@ -8,13 +8,9 @@ import { CAGE_SESSION_LOG_ENV, findPushViolations } from "#cage/cage-push-guard.
 import { cageStartSuffix, formatCageOverrideBanner, formatCageReport } from "#cage/cage-report.js";
 import { buildCagePlan, parseSerializedCagePlan } from "#cage/cage-rules.js";
 import { resolveCageRoot, runCage } from "#cage/cage-run.js";
-import {
-  assertOutsideCageSession,
-  formatCageSuggestionsYaml,
-  suggestCageRules,
-  writeCageSuggestions,
-} from "#cage/cage-suggest.js";
+import { CAGE_SUGGESTED_FILE, assertOutsideCageSession, cageAgentPolicy, formatCageSuggestionsYaml, suggestCageRules, writeCageSetupFile } from "#cage/cage-suggest.js";
 import { CAGE_CONFIG_FILE } from "#cage/cage-config.js";
+import { parseVerifyContract } from "#verify/contract.js";
 import { formatCageCheckReport, runCageCheck } from "#cage/cage-check.js";
 import { formatCageWatchReport, runCageWatch } from "#cage/cage-watch-run.js";
 import { readGuard } from "#cage/read-guard.js";
@@ -80,11 +76,8 @@ export async function runCageCommand(options: CageCliOptions): Promise<void> {
         if (banner) console.error(banner);
       },
     });
-    if (options.json) {
-      emitCliJson(report);
-    } else {
-      for (const line of formatCageReport(report)) console.error(line);
-    }
+    if (options.json) emitCliJson(report);
+    else for (const line of formatCageReport(report)) console.error(line);
     if (report.exit_code !== 0) setExitCode(report.exit_code);
   });
 }
@@ -107,14 +100,8 @@ export async function runCageGuardPrePush(options: { root: string; plan?: string
   setExitCode(EXIT_CODE.FAILURE);
 }
 
-export interface CageSuggestCliOptions {
-  write?: boolean;
-  force?: boolean;
-  json?: boolean;
-}
-
 /** `gantry cage suggest`: propose `.cage.yaml` entries; prints them, or writes `.cage.yaml.suggested`. */
-export async function runCageSuggestCommand(options: CageSuggestCliOptions): Promise<void> {
+export async function runCageSuggestCommand(options: { write?: boolean; force?: boolean; json?: boolean }): Promise<void> {
   await runUserCommandAsync({ json: options.json }, () => {
     assertOutsideCageSession();
     const root = resolveCageRoot(process.cwd());
@@ -122,15 +109,26 @@ export async function runCageSuggestCommand(options: CageSuggestCliOptions): Pro
     const yaml = formatCageSuggestionsYaml(result, fs.existsSync(path.join(root, CAGE_CONFIG_FILE)));
     const n = result.suggestions.length;
     let written: string | null = null;
-    if (options.write && n > 0) written = writeCageSuggestions(root, yaml, options.force === true);
-    if (options.json) {
-      emitCliJson({ ...result, written: written ? path.basename(written) : null });
-    } else if (!options.write) {
-      process.stdout.write(yaml);
-    }
+    if (options.write && n > 0) written = writeCageSetupFile(path.join(root, CAGE_SUGGESTED_FILE), yaml, options.force === true, "suggest");
+    if (options.json) emitCliJson({ ...result, written: written ? path.basename(written) : null });
+    else if (!options.write) process.stdout.write(yaml);
     const covered = `${String(result.already_covered)} already protected`;
     if (written) console.error(`cage suggest: wrote ${path.basename(written)} (${String(n)} entr${n === 1 ? "y" : "ies"}; ${covered}); review it, then move what you keep into ${CAGE_CONFIG_FILE}`);
     else console.error(`cage suggest: ${String(n)} new suggestion(s); ${covered}`);
+    return Promise.resolve();
+  });
+}
+
+/** `gantry cage policy --agent claude-code`: the agent's sandbox settings from the law (ADR-0060); prints them, or writes `--out`. */
+export async function runCagePolicyCommand(options: { agent?: string; contract?: string; out?: string; force?: boolean; json?: boolean }): Promise<void> {
+  await runUserCommandAsync({ json: options.json, exitCode: EXIT_CODE.USAGE }, () => {
+    assertOutsideCageSession(process.env, "policy");
+    const forbidden = options.contract ? parseVerifyContract(fs.readFileSync(options.contract, "utf8"), options.contract).forbiddenPaths : [];
+    const fragment = cageAgentPolicy(resolveCageRoot(process.cwd()), options.agent, forbidden);
+    if (options.out) writeCageSetupFile(options.out, fragment, options.force === true, "policy");
+    if (options.json) emitCliJson({ agent: options.agent, written: options.out ?? null, settings: JSON.parse(fragment) as unknown });
+    else if (!options.out) process.stdout.write(fragment);
+    console.error(`cage policy: ${options.out ? `wrote ${options.out}; ` : ""}review it, then merge it into .claude/settings.json or settings.local.json`);
     return Promise.resolve();
   });
 }

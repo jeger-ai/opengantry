@@ -16,7 +16,7 @@ import {
   suggestCageRules,
 } from "#cage/cage-suggest.js";
 import { registerGxtMcpTools } from "../mcp/mcp-tools-register.js";
-import { isSuggestInvocation } from "../program-cage.js";
+import { isCageSubcommandInvocation } from "../program-cage.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
 
@@ -83,11 +83,11 @@ const EXPECTED = [
 ];
 
 test("cage suggest: a gantry cage subcommand; cage -- suggest and the standalone bin still run a command (MSN-0240 DoD 1)", () => {
-  assert.equal(isSuggestInvocation(["suggest"], ["node", "gantry", "cage", "suggest"]), true);
-  assert.equal(isSuggestInvocation(["suggest"], ["node", "gantry", "cage", "--json", "suggest", "--write"]), true);
-  assert.equal(isSuggestInvocation(["suggest"], ["node", "gantry", "cage", "--", "suggest"]), false);
-  assert.equal(isSuggestInvocation(["suggest", "x"], ["node", "gantry", "cage", "--json", "--", "suggest", "x"]), false);
-  assert.equal(isSuggestInvocation(["ls"], ["node", "gantry", "cage", "ls"]), false);
+  assert.equal(isCageSubcommandInvocation("suggest", ["suggest"], ["node", "gantry", "cage", "suggest"]), true);
+  assert.equal(isCageSubcommandInvocation("suggest", ["suggest"], ["node", "gantry", "cage", "--json", "suggest", "--write"]), true);
+  assert.equal(isCageSubcommandInvocation("suggest", ["suggest"], ["node", "gantry", "cage", "--", "suggest"]), false);
+  assert.equal(isCageSubcommandInvocation("suggest", ["suggest", "x"], ["node", "gantry", "cage", "--json", "--", "suggest", "x"]), false);
+  assert.equal(isCageSubcommandInvocation("suggest", ["ls"], ["node", "gantry", "cage", "ls"]), false);
 
   const dest = makeAnchoredRepo("og-cage-suggest-cmd-");
   const sub = cli(dest, ["cage", "suggest"]);

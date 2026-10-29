@@ -70,7 +70,7 @@ export interface LawFileSource {
 }
 
 /** A repository-relative path's text, or null when the file is absent. */
-export type ReadRepoText = (rel: string) => string | null;
+type ReadRepoText = (rel: string) => string | null;
 
 /** The document as written: strict YAML or JSON. */
 export function parseLawFileDocument(source: LawFileSource): unknown {

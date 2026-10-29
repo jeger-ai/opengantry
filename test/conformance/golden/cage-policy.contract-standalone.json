@@ -1,0 +1,177 @@
+{
+  "id": "cage-policy.contract-standalone",
+  "fixture": "contract-standalone",
+  "args": [
+    "cage",
+    "policy",
+    "--agent",
+    "claude-code",
+    "--contract",
+    "verify.yaml",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "agent": "claude-code",
+    "written": null,
+    "settings": {
+      "permissions": {
+        "deny": [
+          "Edit(**/.env)",
+          "Edit(**/.env.*)",
+          "Edit(**/.env/**)",
+          "Edit(/.cage.yaml)",
+          "Edit(/.cage.yaml/**)",
+          "Edit(/.circleci)",
+          "Edit(/.circleci/**)",
+          "Edit(/.git/config)",
+          "Edit(/.git/config/**)",
+          "Edit(/.git/hooks)",
+          "Edit(/.git/hooks/**)",
+          "Edit(/.githooks)",
+          "Edit(/.githooks/**)",
+          "Edit(/.github)",
+          "Edit(/.github/**)",
+          "Edit(/.github/workflows)",
+          "Edit(/.github/workflows/**)",
+          "Edit(/.gitlab-ci.yml)",
+          "Edit(/.gitlab-ci.yml/**)",
+          "Edit(/azure-pipelines.yml)",
+          "Edit(/azure-pipelines.yml/**)",
+          "Read(**/.env)",
+          "Read(**/.env.*)",
+          "Read(**/.env/**)",
+          "Read(**/.git-credentials)",
+          "Read(**/.git-credentials/**)",
+          "Read(**/.git/config)",
+          "Read(**/.git/config/**)",
+          "Read(**/id_dsa)",
+          "Read(**/id_dsa/**)",
+          "Read(**/id_ecdsa)",
+          "Read(**/id_ecdsa/**)",
+          "Read(**/id_ed25519)",
+          "Read(**/id_ed25519/**)",
+          "Read(**/id_rsa)",
+          "Read(**/id_rsa/**)",
+          "Read(~/.aws)",
+          "Read(~/.aws/**)",
+          "Read(~/.azure)",
+          "Read(~/.azure/**)",
+          "Read(~/.config/gcloud)",
+          "Read(~/.config/gcloud/**)",
+          "Read(~/.config/gh/hosts.yml)",
+          "Read(~/.config/gh/hosts.yml/**)",
+          "Read(~/.docker/config.json)",
+          "Read(~/.docker/config.json/**)",
+          "Read(~/.git-credentials)",
+          "Read(~/.git-credentials/**)",
+          "Read(~/.gnupg)",
+          "Read(~/.gnupg/**)",
+          "Read(~/.kube/config)",
+          "Read(~/.kube/config/**)",
+          "Read(~/.netrc)",
+          "Read(~/.netrc/**)",
+          "Read(~/.npmrc)",
+          "Read(~/.npmrc/**)",
+          "Read(~/.pypirc)",
+          "Read(~/.pypirc/**)",
+          "Read(~/.ssh)",
+          "Read(~/.ssh/**)"
+        ]
+      },
+      "sandbox": {
+        "enabled": true,
+        "allowUnsandboxedCommands": false,
+        "filesystem": {
+          "denyWrite": [
+            "./**/.env",
+            "./**/.env.*",
+            "./.cage.yaml",
+            "./.circleci",
+            "./.git/config",
+            "./.git/hooks",
+            "./.githooks",
+            "./.github",
+            "./.github/workflows",
+            "./.gitlab-ci.yml",
+            "./azure-pipelines.yml"
+          ],
+          "denyRead": [
+            "./**/.env",
+            "./**/.env.*",
+            "./**/.git-credentials",
+            "./**/id_dsa",
+            "./**/id_ecdsa",
+            "./**/id_ed25519",
+            "./**/id_rsa",
+            "~/.aws",
+            "~/.azure",
+            "~/.config/gcloud",
+            "~/.config/gh/hosts.yml",
+            "~/.docker/config.json",
+            "~/.git-credentials",
+            "~/.gnupg",
+            "~/.kube/config",
+            "~/.netrc",
+            "~/.npmrc",
+            "~/.pypirc",
+            "~/.ssh"
+          ]
+        },
+        "credentials": {
+          "files": [
+            {
+              "path": "~/.aws",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.azure",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.config/gcloud",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.config/gh/hosts.yml",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.docker/config.json",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.git-credentials",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.gnupg",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.kube/config",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.netrc",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.npmrc",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.pypirc",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.ssh",
+              "mode": "deny"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "stderr_codes": []
+}

@@ -53,6 +53,15 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
+### Unreleased (4.1.0)
+
+Nothing to migrate. One new command, in the full package only:
+
+- **`gantry cage policy --agent claude-code`** prints a Claude Code settings fragment built from the cage's rules ([ADR-0060](../.gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md)): `permissions.deny` `Edit(...)` rules for the restore-rule paths and `Read(...)` rules for the read guard's secrets, and `sandbox` with `enabled: true`, `allowUnsandboxedCommands: false`, `filesystem.denyWrite`, `filesystem.denyRead` and `credentials.files` (`mode: deny`) for the home credential stores. `--contract <verify.yaml>` adds the contract's `forbidden_paths` to the write denies.
+  - It never edits `.claude/settings.json`; review the fragment and merge it yourself. `--out <file>` writes it and refuses to replace a file without `--force`. Inside a cage session it is refused.
+  - The fragment is stricter than the cage for `.env.example` (a deny rule cannot be narrowed by an allow rule), has no `sandbox.network` key and does not narrow writes to a task's allowed paths. Details: [Agent sandbox settings](cage/policy.md).
+  - New error codes: `GXT_CAGE_POLICY_INVALID` (unknown or missing `--agent`, or a contract path that is not root-relative), `GXT_CAGE_POLICY_EXISTS`, `GXT_CAGE_POLICY_IN_SESSION`.
+
 ### From v4.0.0 (adopter CI template — v4.0.1)
 
 ```bash
