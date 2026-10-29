@@ -55,7 +55,7 @@ An IDE agent with write access is an untrusted worker inside your management sys
 
 **Human oversight.** Work is staged in two phases: a draft mission, a human Planner commit, then execution and verify. Tier 2 and Tier 3 skills require a human audit of the evidence ([Missions](../concepts/missions.md#risk-tiers)). Emergency bypass is explicit, secret-gated and recorded ([Break-glass](../reference/break-glass.md)).
 
-**Monitoring and reversibility.** Mission and trace artifacts live in Git: versioned, branchable and revertible like any other change. The pull request workflow and validate checks run on every change, and `gantry status --json` reports the pinned mission and last errors.
+**Monitoring and reversibility.** Mission and trace artifacts live in Git: versioned, branchable and revertible like any other change. The pull request workflow and validate checks run on every change, `gantry mission pin` shows the pinned mission and `gantry doctor` checks the repository's setup.
 
 ## Mapping table
 

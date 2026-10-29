@@ -1,5 +1,5 @@
 ---
-title: "Perimeters and domain adapters"
+title: "Perimeters and domains"
 description: "TARGET_ARCHITECTURE.yaml rules for import layers and content patterns, and the built-in code and content domains."
 section: concepts
 order: 3

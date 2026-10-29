@@ -93,7 +93,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | Cage | `gantry cage check --base <ref>`, `gantry cage watch`, `gantry cage -- <cmd>`, `gantry cage suggest --write`, `gantry-cage read-guard` |
 | Legislate | `gantry legislate "<intent>" --msn MSN-NNNN --skill-key <key> --gate-command "<cmd>"`, `gantry legislate --from-intent "<intent>" --msn MSN-NNNN` |
 | Execute | `gantry mission pin <mission>`, `eval "$(gantry runtime env)"`, `gantry runtime exec --mission <file> -- <cmd>` |
-| Verify | `gantry verify --mission <file>`, `gantry verify --contract [file] --base <ref>`, `--json`, `--format sarif\|junit`, `gantry adapt --from lights-on <plan>`, `gantry context-feed --json` |
+| Verify | `gantry verify --mission <file>`, `gantry verify --contract [file] --base <ref>`, `--json`, `--format sarif\|junit`, `gantry adapt --from lights-on <plan>` |
 | Inspect | `gantry doctor`, `gantry mission pin` |
 | Perimeters | `gantry arch check`, `gantry perimeter --ci` |
 | Organization | `gantry policy pull`, `gantry ledger verify`, `gantry deps check`, `gantry ledger list` |

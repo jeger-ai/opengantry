@@ -65,7 +65,7 @@ gantry doctor
 ```
 
 - **Breaking: commands removed for simplicity ([ADR-0061](../.gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md)).** Each now fails with "unknown command"; use the replacement:
-  - `gantry report` (the localhost dashboard) and `gantry metrics`: `gantry status --json`, `gantry doctor`, SARIF and your CI logs.
+  - `gantry report` (the localhost dashboard) and `gantry metrics`: `gantry doctor --json`, SARIF and your CI logs.
   - `gantry audit-rigor`: no replacement.
   - `gantry scan`, MCP `gxt_scan`, the KPI gate and the rubric judges: run the producer as the mission's `gate_command` or a verify contract check that exits non-zero on failure (`examples/performance-judge/`). A mission that still declares `kpi_gate`, `llm_verifiers` or `aggregators`, or an org policy with `producers` or `kpi_thresholds`, is refused (`GXT_MISSION_SCHEMA_INVALID`, `GXT_POLICY_DRIFT`) rather than run without them. Verify has no `kpi` phase; `--ci` now covers the perimeter and interrogation only. The `GXT_KPI_*` codes, `.gitagent/kpi/`, `KPI-REPORT.schema.yaml` and the `ARCHITECTURE_RUBRIC`/`PERFORMANCE*` planner templates are gone; delete your copies.
   - `gantry context-feed`: read `findings[]` from `gantry verify --json`; the compact copy in `.gitagent/tmp/NEXT_REMEDIATION.json` is still written and cleared by a passing verify.

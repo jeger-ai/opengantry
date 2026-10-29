@@ -1,6 +1,6 @@
 ---
 title: "Domain adapters (moved)"
-description: "Moved. Perimeters and domain adapters, and the content governance guide."
+description: "Moved. Perimeters and domains, and the content governance guide."
 publish: false
 moved_to:
   - concepts/perimeters.md
