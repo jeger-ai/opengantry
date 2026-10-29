@@ -17,15 +17,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Install ripgrep
-        run: sudo apt-get update && sudo apt-get install -y ripgrep
-
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
-          cache: npm
+          node-version: "24"
+          # No npm cache: the job installs only the gantry CLI, and an adopter repository may have no lockfile.
+          package-manager-cache: false
 
-      - run: npm ci && npm run build
+      - name: Install gantry
+        run: npm install -g @jeger-ai/opengantry@^4
 
       - name: Resolve ingest configuration
         run: |
@@ -36,7 +35,7 @@ jobs:
       - name: Resolve changed mission
         id: mission
         run: |
-          json="$(node dist/cli/index.js mission changed --base-ref "${{ github.event.pull_request.base.sha }}" --json)" || {
+          json="$(gantry mission changed --base-ref "${{ github.event.pull_request.base.sha }}" --json)" || {
             echo "$json"
             exit 1
           }
@@ -57,12 +56,7 @@ jobs:
 
       - name: Fetch cross-repo mission dependencies
         if: steps.mission.outputs.path != ''
-        run: node dist/cli/index.js deps fetch --mission "${{ steps.mission.outputs.path }}"
-
-      # Same reason as mission_verify in gxt-validate.yml: iii-integration mission gates need the example's deps.
-      - name: Install iii integration example deps
-        if: steps.mission.outputs.path != '' && hashFiles('examples/iii-integration/package-lock.json') != ''
-        run: npm ci --prefix examples/iii-integration --no-audit --no-fund
+        run: gantry deps fetch --mission "${{ steps.mission.outputs.path }}"
 
       - name: Verify and export envelope
         id: verify
@@ -71,8 +65,8 @@ jobs:
         run: |
           extra=()
           # Only a mission judged by its committed run record (no trace rows) has an envelope; trace-row missions are
-          # verified without one, even when a record file exists.
-          judged_by_record="$(node -e '
+          # verified without one, even when a record file exists. yaml resolves from the installed gantry package.
+          judged_by_record="$(NODE_PATH="$(npm root -g)/@jeger-ai/opengantry/node_modules" node -e '
             const fs = require("node:fs");
             try {
               const d = require("yaml").parse(fs.readFileSync(process.argv[1], "utf8")) ?? {};
@@ -83,7 +77,7 @@ jobs:
           if [ "${HAS_PLANE_INGEST}" = "true" ] && [ "${judged_by_record}" = "yes" ]; then
             extra+=(--export envelope.json)
           fi
-          node dist/cli/index.js verify \
+          gantry verify \
             --mission "${{ steps.mission.outputs.path }}" \
             --audience verifier \
             --ci \
@@ -130,7 +124,7 @@ jobs:
         if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != ''
         continue-on-error: true
         run: |
-          node dist/cli/index.js ledger append --from-envelope envelope.json || true
+          gantry ledger append --from-envelope envelope.json || true
           git push origin refs/gxt/ledger || echo "ledger push skipped (ref absent or no permission)"
 
       - name: Propagate verify outcome

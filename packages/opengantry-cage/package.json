@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry-cage",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Zero-config cage for AI coding agents: run any command and restore CI configs, .env secrets, git hooks/config and protected paths while it runs. Slim standalone build of `gantry cage` from @jeger-ai/opengantry.",
   "type": "module",
   "bin": {

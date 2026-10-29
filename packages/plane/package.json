@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry-plane",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "private": true,
   "description": "OpenGantry org plane (ADR-0052 A1): policy floor, ledger, cross-repo dependencies, the export envelope. Depends on core and git.",
   "type": "module",

@@ -8,6 +8,8 @@ import { loadInitAssetCatalog, templatePathForAsset } from "#missions/init/init-
 
 const DOGFOOD_PARITY_EXEMPT = new Set([
   ".cursor/rules/opengantry-gxt-substrate.mdc",
+  // 4.0.1: the shipped workflow installs the CLI from npm; this repository's CI builds from source (ci-template-adopter.test.ts).
+  ".github/workflows/gxt-validate.yml",
 ]);
 
 test("template parity: managed_strict root assets match templates/", () => {

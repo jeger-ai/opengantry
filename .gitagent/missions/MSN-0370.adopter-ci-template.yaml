@@ -1,0 +1,204 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0370]. Executor must not run until the [MSN-0370] legislation commit + pin.
+#
+# Legislated intent: 4.0.1 patch: adopters get a generic CI workflow that installs the published CLI
+# (the shipped template was this repository's own CI); versions 4.0.1.
+#
+# Operator request (2026-10-29, fix the adopter CI template as 4.0.1). No trace rows: the evidence is
+# .gitagent/runs/MSN-0370.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0370
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 013171a799b3
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      docs/guides/ci.md, docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/foreman/SUBSTRATE.version.json,
+      .gitagent/missions/MSN-0370.adopter-ci-template.yaml,
+      .gitagent/runs/MSN-0370.json, package.json, package-lock.json,
+      packages/cage/package.json, packages/core/package.json,
+      packages/git/package.json, packages/missions/package.json,
+      packages/opengantry-cage/package.json,
+      packages/opengantry-verify/package.json, packages/plane/package.json,
+      packages/verify/package.json, scripts/assert-dogfood-sync.sh,
+      scripts/gen-dogfood.mjs, src/cli/tests/ci-iii-example-install.test.ts,
+      src/cli/tests/ci-template-adopter.test.ts,
+      src/cli/tests/template-parity.test.ts,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/.github/workflows/gxt-attest-ingest.yml,
+      templates/.github/workflows/gxt-validate.yml,
+      templates/integrations/compatibility.json,
+      test/conformance/golden/upgrade-plan.fresh-init.json,
+      test/conformance/golden/verify.sarif.mission-pass.json. Changed:
+      templates/.github/workflows/gxt-validate.yml and gxt-attest-ingest.yml
+      (generic adopter workflows), scripts/gen-dogfood.mjs and
+      scripts/assert-dogfood-sync.sh (the CI workflows leave the mirror), the
+      template parity and iii example install tests, a new adopter CI template
+      test, docs (DEVELOPMENT CI parity, CI guide, CHANGELOG 4.0.1, release
+      notes), versions 4.0.1 (root and package manifests, package-lock, both
+      SUBSTRATE.version.json files, compatibility.json), the upgrade-plan and
+      verify sarif goldens (version only). This repository's .github/workflows
+      are unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: the gxt-attest-ingest template adopters copy
+      now installs the published CLI; the ingest contract (envelope 2.0, ledger
+      append --from-envelope) is unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4f80fb918fd8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: docs/CHANGELOG.md, docs/DEVELOPMENT.md,
+      docs/guides/ci.md, docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/foreman/SUBSTRATE.version.json,
+      .gitagent/missions/MSN-0370.adopter-ci-template.yaml,
+      .gitagent/runs/MSN-0370.json, package.json, package-lock.json,
+      packages/cage/package.json, packages/core/package.json,
+      packages/git/package.json, packages/missions/package.json,
+      packages/opengantry-cage/package.json,
+      packages/opengantry-verify/package.json, packages/plane/package.json,
+      packages/verify/package.json, scripts/assert-dogfood-sync.sh,
+      scripts/gen-dogfood.mjs, src/cli/tests/ci-iii-example-install.test.ts,
+      src/cli/tests/ci-template-adopter.test.ts,
+      src/cli/tests/template-parity.test.ts,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/.github/workflows/gxt-attest-ingest.yml,
+      templates/.github/workflows/gxt-validate.yml,
+      templates/integrations/compatibility.json,
+      test/conformance/golden/upgrade-plan.fresh-init.json,
+      test/conformance/golden/verify.sarif.mission-pass.json. Changed:
+      templates/.github/workflows/gxt-validate.yml and gxt-attest-ingest.yml
+      (generic adopter workflows), scripts/gen-dogfood.mjs and
+      scripts/assert-dogfood-sync.sh (the CI workflows leave the mirror), the
+      template parity and iii example install tests, a new adopter CI template
+      test, docs (DEVELOPMENT CI parity, CI guide, CHANGELOG 4.0.1, release
+      notes), versions 4.0.1 (root and package manifests, package-lock, both
+      SUBSTRATE.version.json files, compatibility.json), the upgrade-plan and
+      verify sarif goldens (version only). This repository's .github/workflows
+      are unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. A new test pins that the shipped templates use only
+      published gantry commands and no repository-internal paths; the iii
+      install test now checks this repository's own workflows.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with named output changes: upgrade-plan.fresh-init and
+      verify.sarif.mission-pass change only their version from 4.0.0 to 4.0.1;
+      no golden records the workflow template."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept. The 4.0 command surface is unchanged; the shipped
+      workflow now uses only commands 4.0 ships.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+interrogation_sha256: 381707953fc44af46a717768c3bfcd40b688341d3134ae948ffb6322b80f2da0
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0370.adopter-ci-template.yaml
+  - .gitagent/runs/MSN-0370.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/guides/ci.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/cage/package.json
+  - packages/core/package.json
+  - packages/git/package.json
+  - packages/missions/package.json
+  - packages/opengantry-cage/package.json
+  - packages/opengantry-verify/package.json
+  - packages/plane/package.json
+  - packages/verify/package.json
+  - scripts/assert-dogfood-sync.sh
+  - scripts/gen-dogfood.mjs
+  - src/cli/tests/ci-iii-example-install.test.ts
+  - src/cli/tests/ci-template-adopter.test.ts
+  - src/cli/tests/template-parity.test.ts
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/.github/workflows/gxt-attest-ingest.yml
+  - templates/.github/workflows/gxt-validate.yml
+  - templates/integrations/compatibility.json
+  - test/conformance/golden/upgrade-plan.fresh-init.json
+  - test/conformance/golden/verify.sarif.mission-pass.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - .gitagent/missions/MSN-0370.adopter-ci-template.yaml
+    - .gitagent/runs/MSN-0370.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/guides/ci.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/cage/package.json
+    - packages/core/package.json
+    - packages/git/package.json
+    - packages/missions/package.json
+    - packages/opengantry-cage/package.json
+    - packages/opengantry-verify/package.json
+    - packages/plane/package.json
+    - packages/verify/package.json
+    - scripts/assert-dogfood-sync.sh
+    - scripts/gen-dogfood.mjs
+    - src/cli/tests/ci-iii-example-install.test.ts
+    - src/cli/tests/ci-template-adopter.test.ts
+    - src/cli/tests/template-parity.test.ts
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/.github/workflows/gxt-attest-ingest.yml
+    - templates/.github/workflows/gxt-validate.yml
+    - templates/integrations/compatibility.json
+    - test/conformance/golden/upgrade-plan.fresh-init.json
+    - test/conformance/golden/verify.sarif.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.yaml
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 60b5c4a41835e34af161ad5987f5210245f67755c139f52acec481b2b043c2a4

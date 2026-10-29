@@ -14,7 +14,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.0** (see `package.json`).
+- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.1** (see `package.json`).
 - **Law files are YAML:** `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`.
   - A 3.x JSON file is still read when the YAML form is absent.
   - If both forms exist and differ, the CLI fails closed (`GXT_LAW_FILE_AMBIGUOUS`).
@@ -52,6 +52,20 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ---
 
 ## Upgrade notes
+
+### From v4.0.0 (adopter CI template — v4.0.1)
+
+```bash
+npm install -g @jeger-ai/opengantry@4.0.1   # puts gantry on PATH for the next two commands
+gantry upgrade plan --stage   # stages the fixed workflow, writes .gitagent/missions/<MSN>.upgrade-v4.0.1.yaml; the Planner commits it
+gantry upgrade apply --mission .gitagent/missions/<MSN>.upgrade-v4.0.1.yaml   # replaces .github/workflows/gxt-validate.yml
+```
+
+- **Shipped CI workflow fixed:** the `.github/workflows/gxt-validate.yml` that `gantry init --ci` and `gantry upgrade` installed was a copy of this repository's own CI. It ran `npm ci`, `npm run build`, `dist/cli/...` and repository scripts that do not exist in your repository, so its jobs failed. The workflow now installs `@jeger-ai/opengantry@^4` from npm and runs only `gantry` commands.
+- **Same job names:** `pr_governance`, `manifest` (`gantry doctor`, plus `gantry perimeter --ci` on pull requests), `msn_commits` (`gantry ci msn-range`) and `mission_verify` (`gantry ci verify-missions`). Branch protection rules on those checks keep working. The repository-only jobs `code_quality` and `npm_pack` are gone; drop them from your required checks if you added them.
+- **If `gantry upgrade` already installed the broken workflow:** `gantry upgrade plan --stage` and `gantry upgrade apply` replace it with the fixed one.
+- **Mission gates** run with only Node and `gantry` installed. A gate that needs your project's dependencies installs them itself.
+- **`gxt-attest-ingest.yml`:** the template you copy from `templates/.github/workflows/` had the same problem and is fixed the same way. Copy it again if you use it.
 
 ### From v3.9.0 (packages, structural law, one name, YAML law files — v4.0.0)
 

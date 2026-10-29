@@ -10,8 +10,8 @@
   "stdout": {
     "schema_version": 1,
     "status": "already_current",
-    "from_version": "4.0.0",
-    "to_version": "4.0.0",
+    "from_version": "4.0.1",
+    "to_version": "4.0.1",
     "message": "Substrate is up to date (installed <SEMVER>, bundled <SEMVER>).\nTo upgrade to a newer OpenGantry release, first update the package manager dependency\n(e.g. npm install @jeger-ai/opengantry@latest) and re-run: gantry upgrade plan",
     "legacy_warning": null
   },

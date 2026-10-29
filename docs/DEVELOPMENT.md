@@ -310,6 +310,8 @@ Local `npm run validate` is the full superset (includes `gantry ci verify-missio
 
 `gantry init` ships the workflow when CI is enabled; it calls `gantry ci msn-range` and `gantry ci verify-missions` (ADR-0052 step 5b). Existing installs: run `gantry upgrade apply` or re-init managed CI assets.
 
+The shipped workflows are not copies of this repository's CI. [`templates/.github/workflows/gxt-validate.yml`](../templates/.github/workflows/gxt-validate.yml) is what adopters get: it installs `@jeger-ai/opengantry@^4` from npm and keeps the jobs `pr_governance`, `manifest` (`gantry doctor`, `gantry perimeter --ci`), `msn_commits` and `mission_verify`. [`.github/workflows/gxt-validate.yml`](../.github/workflows/gxt-validate.yml) builds the CLI from source and adds the unit tests, `code_quality`, `npm_pack` and the iii example steps. The same split holds for `gxt-attest-ingest.yml`. `npm run gen:dogfood` mirrors only `templates/scripts/` and the planner schemas, and `scripts/assert-dogfood-sync.sh` checks those; a change to the CI logic goes into both workflow files by hand. `src/cli/tests/ci-template-adopter.test.ts` fails a template that references this repository's build, scripts or examples, or calls a command missing from `.gitagent/registry/commands.yaml`.
+
 ## Troubleshooting verify / hooks
 
 - Run the CLI from the repo root: `npm run gantry -- verify --mission .gitagent/missions/<file>.yaml` (after `npm run build`). Policy failures print a one-line error plus **`Fix:`** remediation hints — not stack traces.
