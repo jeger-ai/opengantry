@@ -9,7 +9,7 @@ import type { VerifyEvaluation } from "./mission-verify/options.js";
 import { appendLedgerIfEnabled, ledgerFailureLine } from "./ledger/ledger-append.js";
 
 export const ENV_BYPASS_SECRET = "GANTRY_BYPASS_SECRET";
-export const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";
+const REL_BYPASS_SHA256 = ".gitagent/foreman/BYPASS.sha256";
 export const GXT_BYPASS_NOTES_REF = "refs/notes/gxt-bypass";
 
 const MIN_REASON_LENGTH = 10;

@@ -70,10 +70,6 @@ export function validateIntegrationCompat(manifest: IntegrationCompatManifest): 
   }
 }
 
-export function isBootstrapHookMode(entry: IntegrationCompatEntry): boolean {
-  return entry.bootstrap_mode === "hook";
-}
-
 export function integrationWizardLabel(entry: IntegrationCompatEntry): string {
   return `${entry.display_name} (verified ${entry.verified_date})`;
 }

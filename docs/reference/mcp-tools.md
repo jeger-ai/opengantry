@@ -31,7 +31,7 @@ order: 1
 | `gxt_runtime_exec` | Runs an executor command with the mission environment and forbidden-zone enforcement |
 | `gxt_last_error` | Reads the machine-oriented remediation from `GANTRY_LAST_ERROR_FILE` |
 | `gxt_verify` | Runs verify and returns the same payload as `gantry verify --json` ([Troubleshooting](../guides/troubleshooting.md#mcp-verify-payload)) |
-| `gxt_doctor` | Read-only readiness check, including typed gate adapters; never inspects `gate_command` to guess one |
+| `gxt_doctor` | Read-only readiness check: manifest and skills sync, Planner identity, hooks, substrate version, law-file form |
 
 The organization plane (`policy`, `ledger`, `deps`) and `upgrade` are CLI-only: they append ledger entries, fetch refs or rewrite managed files, which a human runs.
 

@@ -17,7 +17,7 @@ import {
 } from "#core/import-scanner.js";
 
 const TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION = "0.1.0" as const;
-export const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
+const TARGET_ARCHITECTURE_SCHEMA_VERSION = "0.2.0" as const;
 export const TARGET_ARCHITECTURE_V3_SCHEMA_VERSION = "0.3.0" as const;
 /** Structural rule kinds (ADR-0052 B2): budget, owner, registry, dependency, duplicate, cycles; `file_ceiling_lines`; `exclude`. */
 const TARGET_ARCHITECTURE_V4_SCHEMA_VERSION = "0.4.0" as const;
@@ -218,15 +218,6 @@ function parseStringArrayField(
     throw new Error(`TARGET_ARCHITECTURE.yaml: ${field} must be a string array`);
   }
   return raw.map(String);
-}
-
-function isLegacyTargetArchitectureSchema(version: string): boolean {
-  return version === TARGET_ARCHITECTURE_LEGACY_SCHEMA_VERSION;
-}
-
-export function targetArchitectureMigrationHint(version: string): string | null {
-  if (!isLegacyTargetArchitectureSchema(version)) return null;
-  return `TARGET_ARCHITECTURE.yaml schema ${version} is legacy — add scan_roots (schema ${TARGET_ARCHITECTURE_SCHEMA_VERSION}) for explicit adopter roots`;
 }
 
 export function resolveArchScanRoots(

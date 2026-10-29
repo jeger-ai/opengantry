@@ -5,12 +5,12 @@ import {
   legacyVersionWarning,
   readInstalledSubstrateVersion,
 } from "#missions/substrate-version.js";
-import type { DoctorLine, DoctorSection } from "#missions/doctor/doctor-types.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 
 export function runSubstrateDriftDoctorChecks(
   repoRoot: string,
   templatesRoot: string,
-): DoctorSection {
+): { lines: DoctorLine[]; nextStep: string | null } {
   const installed = readInstalledSubstrateVersion(repoRoot);
   const bundled = loadIntegrationCompat(templatesRoot).opengantry_version;
   const lines: DoctorLine[] = [];

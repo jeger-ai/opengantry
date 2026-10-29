@@ -15,7 +15,7 @@ import {
   handleVerify,
 } from "./mcp-runtime.js";
 import { handleDoctor } from "./mcp-doctor.js";
-import { GATE_ADAPTER_IDS, TYPED_GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
+import { GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
 
 const interrogationRowSchema = z.object({
   finding_id: z.string(),
@@ -41,14 +41,7 @@ const gateAdapterSchema = z
   .enum(GATE_ADAPTER_IDS)
   .optional()
   .describe(
-    "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc. Run gxt_doctor first for tsc|eslint.",
-  );
-
-const typedDoctorAdapterSchema = z
-  .enum(TYPED_GATE_ADAPTER_IDS)
-  .optional()
-  .describe(
-    "Force tsc or eslint adapter preflight even when no typed missions are declared (ADR-0041). Never sniffs gate_command.",
+    "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc.",
   );
 
 function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
@@ -208,16 +201,9 @@ function registerGxtResolveMissionTool(server: McpServer): void {
 function registerGxtDoctorTool(server: McpServer): void {
   server.tool(
     "gxt_doctor",
-    "Environment readiness for GXT + explicit gate adapters (ADR-0041). Run before legislating/pinning a `gate_adapter: tsc|eslint` mission. Selection uses declared gate_adapter or explicit override; never sniffs gate_command. Read-only.",
-    {
-      gate_adapter: typedDoctorAdapterSchema,
-      adapter_baseline: z
-        .boolean()
-        .optional()
-        .describe("Opt-in: spawn tsc/eslint for pre-existing debt warnings. Default off."),
-      policy_path: z.string().optional().describe("Optional expected policy digest JSON path (gantry doctor --policy)."),
-    },
-    async (args) => jsonText(handleDoctor(args)),
+    "Readiness check: manifest and skills sync, Planner identity, hooks, substrate version, law-file form. Read-only.",
+    {},
+    async () => jsonText(handleDoctor()),
   );
 }
 

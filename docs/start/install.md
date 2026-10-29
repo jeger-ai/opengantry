@@ -26,7 +26,6 @@ Or step by step:
 
 ```bash
 gantry init
-gantry onboarding                               # the same strict checks as production
 gantry planner set "$(git config user.email)"   # who may approve missions
 gantry doctor                                   # read-only readiness check
 ```

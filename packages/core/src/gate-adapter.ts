@@ -3,7 +3,7 @@ export const GATE_ADAPTER_IDS = ["generic", "eslint", "tsc"] as const;
 export type GateAdapterId = (typeof GATE_ADAPTER_IDS)[number];
 
 /** Adapters that parse structured compiler/linter output (not the generic spawn). */
-export const TYPED_GATE_ADAPTER_IDS = ["tsc", "eslint"] as const;
+const TYPED_GATE_ADAPTER_IDS = ["tsc", "eslint"] as const;
 export type TypedGateAdapterId = (typeof TYPED_GATE_ADAPTER_IDS)[number];
 
 export const DEFAULT_GATE_ADAPTER: GateAdapterId = "generic";

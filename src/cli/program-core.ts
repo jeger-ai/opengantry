@@ -1,11 +1,9 @@
-import { Option, type Command } from "commander";
+import type { Command } from "commander";
 import { runInit } from "./commands/init.js";
 import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
 import { runDoctor } from "./commands/doctor.js";
-import { runOnboarding } from "./commands/onboarding.js";
 import type { InitOptions } from "./commands/init.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
-import { TYPED_GATE_ADAPTER_IDS, type TypedGateAdapterId } from "#core/gate-adapter.js";
 import { currentReporter } from "./output/reporter.js";
 
 /** Shared `gantry init` Commander flags (used by init command registration). */
@@ -33,36 +31,11 @@ function registerDoctorCommand(program: Command): void {
   program
     .command("doctor")
     .description("Active GXT readiness check (warnings do not fail exit)")
-    .argument("[policy]", "Expected digests JSON; alias for --policy when npm run swallows flags")
     .option("--json", "Emit structured report")
-    .option("--policy <file>", "Compare working-tree digests to expected-digests JSON (offline)")
     .option("--audience <role>", "Tailor next steps: executor|planner|verifier|platform")
-    .addOption(
-      new Option("--gate-adapter <id>", "Force tsc|eslint adapter preflight").choices([
-        ...TYPED_GATE_ADAPTER_IDS,
-      ]),
-    )
-    .option("--adapter-baseline", "Run whole-project tsc/eslint baseline (slow, warn-only)")
-    .action(
-      (
-        policyPositional: string | undefined,
-        opts: {
-          json?: boolean;
-          audience?: string;
-          policy?: string;
-          gateAdapter?: TypedGateAdapterId;
-          adapterBaseline?: boolean;
-        },
-      ) => {
-        runDoctor({
-          json: opts.json,
-          audience: currentReporter().audience,
-          policy: opts.policy ?? policyPositional,
-          gateAdapter: opts.gateAdapter,
-          adapterBaseline: opts.adapterBaseline,
-        });
-      },
-    );
+    .action((opts: { json?: boolean }) => {
+      runDoctor({ json: opts.json, audience: currentReporter().audience });
+    });
 }
 
 function registerInitCommand(program: Command): void {
@@ -96,16 +69,6 @@ function registerUpgradeCommand(program: Command): void {
     });
 }
 
-function registerOnboardingCommand(program: Command): void {
-  program
-    .command("onboarding")
-    .description("Interactive walkthrough of the strict GXT mission graph")
-    .option("--force", "Continue despite integration health blockers on configured (broken) state")
-    .action(async (opts: { force?: boolean }) => {
-      await runOnboarding({ force: opts.force });
-    });
-}
-
 function registerPlannerCommand(program: Command): void {
   const planner = program.command("planner").description("Repo-local Planner identity (git-proof allowlist)");
 
@@ -130,6 +93,5 @@ export function registerCoreCommands(program: Command): void {
   registerDoctorCommand(program);
   registerInitCommand(program);
   registerUpgradeCommand(program);
-  registerOnboardingCommand(program);
   registerPlannerCommand(program);
 }

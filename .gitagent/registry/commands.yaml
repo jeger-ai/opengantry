@@ -143,8 +143,6 @@ entries:
     since: MSN-0357
   - name: mission validate
     since: MSN-0010
-  - name: onboarding
-    since: commit 26d06cf
   - name: perimeter
     since: MSN-0045
   - name: perimeter check

@@ -2,7 +2,7 @@
 
 **Harness-agnostic.** Any agent that can run shell commands can execute this flow when the user asks to set up, install, initialize, adopt, or onboard OpenGantry.
 
-Humans may prefer `gantry init --tutorial` or `gantry onboarding` instead of this headless path.
+Humans may prefer `gantry init --tutorial` instead of this headless path.
 
 ## Preflight
 
@@ -79,7 +79,6 @@ Harness-specific checks (after init):
 | Claude Code | `scripts/gxt-shell-agent.sh` exists; `claude --version` |
 | Codex CLI | `.codex/config.toml` present |
 | Aider | `.aider.conf.yml` lists `AGENTS.md` |
-| Others | `gantry doctor` lists detected wiring |
 
 Tell the user:
 

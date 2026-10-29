@@ -25,7 +25,7 @@ export interface McpRuntimeErrorBody {
   retryable: boolean;
 }
 
-export type RuntimeEnvMcpResult =
+type RuntimeEnvMcpResult =
   | { status: "ok"; env: Record<string, string> }
   | { status: "error"; error: McpRuntimeErrorBody };
 

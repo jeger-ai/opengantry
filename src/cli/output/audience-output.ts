@@ -75,7 +75,7 @@ export const INIT_TAGGED_NEXT_STEPS: AudienceNextStep[] = [
   { audience: "verifier", step: "gantry verify --mission .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "source scripts/gxt-runtime-env.sh .gitagent/missions/<file>.yaml" },
   { audience: "platform", step: "gantry mission pin .gitagent/missions/<file>.yaml" },
-  { audience: "platform", step: "gantry onboarding  # guided walkthrough (strict checks)" },
+  { audience: "platform", step: "gantry init --tutorial  # guided walkthrough (strict checks)" },
 ];
 
 export function filterTaggedStepsForAudience(

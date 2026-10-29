@@ -37,7 +37,7 @@ gantry deps check --since v3.2.6
 
 `.gitagent/foreman/POLICY.pointer.yaml` points at a signed org policy repository, and `gantry policy pull` caches the bundle under `.gitagent/history/policy/` (gitignored). The bundle is a **tighten-only floor**: sets are unioned, risk tiers take the maximum, and signature and telemetry tiers take the stricter value. It can never loosen local rules.
 
-- `gantry policy pull` is the only network path. `gantry doctor` and `gantry verify` read the pointer and the cache only.
+- `gantry policy pull` is the only network path. `gantry policy diff` and `gantry verify` read the pointer and the cache only.
 - A missing pointer means no org policy. A present pointer with a missing cache, a hash mismatch or an invalid signer fails closed (`GXT_POLICY_*`).
 - Do not commit a filled `POLICY.pointer.yaml` until `gantry policy pull` has populated the cache.
 
@@ -58,7 +58,7 @@ With `ledger.mode: local` in `.gitagent/config.yaml`, verify, break-glass and po
 | ISO 27001 A.8.15 | Logging and monitoring | `refs/gxt/ledger` entries and `EXECUTOR_LOG.md` quotes |
 | ISO 27001 A.8.28 | Secure development | Scope and the policy floor (`mandatory_gates`, `banned_imports`) |
 | ISO 42001 | AI boundaries and accountability | Mission `depends_on` and the interrogation record |
-| SOC 2 CC7 | System operations and monitoring | Ledger chain verify and doctor ledger health |
+| SOC 2 CC7 | System operations and monitoring | Ledger chain verify (`gantry ledger verify`) |
 | SOC 2 CC8 | Change management | Planner commit check, run records, and verify `receipt` or `verify_findings` entries |
 
 ## Cross-repository dependencies
@@ -73,7 +73,7 @@ Same-org proof is the ability to fetch the dependency's ledger ref; that shows r
 |------------|-------------------|-------|
 | Run record | `gantry verify --record`, then commit `.gitagent/runs/<MSN>.json` | The only receipt: the commit and tree the checks ran on, the gate's exit and output digest, the law digest. Inspect it in Git, and its ledger entries with `gantry ledger list` |
 | Hash-only telemetry | `flight_telemetry.body_mode` in `.gitagent/config.yaml` (default `hash_only`) | Gate stream events keep `chunk_sha256` and `bytes`; `chunk_b64` only with `full` |
-| Policy digest drift | `gantry doctor --policy <expected-digests.json>` | Offline comparison of manifest, architecture and config digests |
+| Policy digest drift | `expected_digests` in the org bundle, checked by `gantry policy diff` | Offline comparison of manifest, architecture and config digests; drift fails with `GXT_POLICY_DRIFT` |
 | Hub export | `gantry verify --export <file>` (with `--sign`: signed), as a CI artifact or ingest ([CI exporters and run record export](ci.md#run-record-export-to-a-control-plane)) | Envelope 2.0 over the canonical run record; a failed verify writes none |
 
 Source trees, gate output bodies, credentials, draft-token keys and bypass secrets are never exported ([Security policy](../SECURITY.md#hybrid-hub-and-spoke-boundary)).

@@ -16,7 +16,7 @@ About 15 minutes from an empty repository to a verified, scoped change. Every st
 | 1 | Install the CLI | `npm install -g @jeger-ai/opengantry` | `npx @jeger-ai/opengantry --version` |
 | 2 | Scaffold | `gantry init --tutorial` | `gantry init --yes --no-ci` |
 | 3 | Planner identity | `gantry planner set "$(git config user.email)"` | same (needs `git config user.email`) |
-| 4 | Health check | `gantry onboarding` | `gantry doctor --json`, exit 0 |
+| 4 | Health check | `gantry doctor` | `gantry doctor --json`, exit 0 |
 | 5 | Legislate | `gantry legislate "First change" --msn MSN-0001 --skill-key logic --gate-command "npm test"` | same, plus `--yes` |
 | 6 | Planner commit | Review the YAML, then `git commit -m "[MSN-0001] legislate mission"` | same |
 | 7 | Executor env | `eval "$(gantry runtime env --mission .gitagent/missions/MSN-0001.*.yaml)"` | `gantry runtime env --mission … --json` |
