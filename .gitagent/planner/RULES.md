@@ -87,5 +87,5 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 - Optional mission `depends_on[]` is resolved **offline** from fetched `refs/gxt/deps/<slug>` ([ADR-0044](../out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)).
 - **`gantry deps fetch`** is the only network path. Verify's `dependencies` phase, `gantry deps check`, and doctor MUST NOT fetch.
-- Same-org proof is fetch access to the dependency's ledger ref. `require.signed` means the receipt entry's commit carries a good signature from a key the consumer repository trusts (`%G?` is `G`); unsigned or unverifiable is `GXT_DEPENDENCY_UNSIGNED`.
+- Fetch access to the dependency's ledger ref shows read access to that ref, not organization membership or authorization; when the producer's identity matters, set `require.signed`. `require.signed` means the receipt entry's commit carries a good signature from a key the consumer repository trusts (`%G?` is `G`); unsigned or unverifiable is `GXT_DEPENDENCY_UNSIGNED`.
 - Unfetched, unsatisfied, unsigned (when required), or stale entries MUST fail closed (`GXT_DEPENDENCY_*`). Cross-repo *trigger* (workflow dispatch) is advisory glue, not enforcement.

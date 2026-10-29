@@ -70,10 +70,17 @@ jobs:
         continue-on-error: true
         run: |
           extra=()
-          mission="${{ steps.mission.outputs.path }}"
-          msn="$(sed -n 's/^msn_id: *["'"'"']*\([A-Z0-9-]*\).*/\1/p' "$mission" | head -1)"
-          # Only a mission judged by a committed run record has an envelope; legacy trace-row missions are verified without one.
-          if [ "${HAS_PLANE_INGEST}" = "true" ] && [ -f ".gitagent/runs/${msn}.json" ]; then
+          # Only a mission judged by its committed run record (no trace rows) has an envelope; trace-row missions are
+          # verified without one, even when a record file exists.
+          judged_by_record="$(node -e '
+            const fs = require("node:fs");
+            try {
+              const d = require("yaml").parse(fs.readFileSync(process.argv[1], "utf8")) ?? {};
+              const msn = d.msn_id ?? d.msnId;
+              if (msn && (d.trace_rows ?? []).length === 0 && fs.existsSync(`.gitagent/runs/${msn}.json`)) process.stdout.write("yes");
+            } catch {}
+          ' "${{ steps.mission.outputs.path }}")"
+          if [ "${HAS_PLANE_INGEST}" = "true" ] && [ "${judged_by_record}" = "yes" ]; then
             extra+=(--export envelope.json)
           fi
           node dist/cli/index.js verify \
