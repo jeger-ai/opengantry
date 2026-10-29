@@ -1,0 +1,99 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0371]. Executor must not run until the [MSN-0371] legislation commit + pin.
+#
+# Legislated intent: clear the open Dependabot alerts in the iii integration example's lockfile
+# (body-parser high; @hono/node-server and fast-uri moderate/low). Published packages are unaffected.
+#
+# Operator request (2026-10-29, "go" on the security alerts). No trace rows: the evidence is
+# .gitagent/runs/MSN-0371.json written by gantry verify --record (RULES §3).
+#
+# Resealed 2026-10-29 (CodeRabbit review on PR #335): both npm audits join the gate, so the run record's PASS covers them.
+msn_id: MSN-0371
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh && npm audit --package-lock-only &&
+  npm --prefix examples/iii-integration audit --package-lock-only
+trace_rows: []
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: "Accept. This is not a Dependabot bump: the operator refreshed
+      several packages in one lockfile with npm audit fix, which is more than a
+      bump, so it goes through a Planner mission as the ADR requires. The
+      trusted-automation path for single bumps is unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0057
+  - finding_id: c6b28db36628
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, iii-integration,
+      iii-architecture — escalate to Teacher. Which skill_key and TMVC scope
+      authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      examples/iii-integration/package-lock.json, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0371.iii-lockfile-advisories.yaml,
+      .gitagent/runs/MSN-0371.json. Changed:
+      examples/iii-integration/package-lock.json only (npm audit fix
+      --package-lock-only). No source, package manifest, workflow or published
+      package changes. Operator decision (2026-10-29): clear the open Dependabot
+      alerts (one high: body-parser; moderate and low: @hono/node-server,
+      fast-uri) in examples/iii-integration/package-lock.json. npm audit
+      --package-lock-only reports 0 vulnerabilities for the example and for the
+      root lockfile after the refresh. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0371.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: ce2f473d6f7f
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh && npm
+      audit --package-lock-only && npm --prefix examples/iii-integration audit
+      --package-lock-only" with documented success substring for verify.
+    operator_answer: "Authorized. gate_command ./scripts/dev-validate-core.sh && npm
+      audit --package-lock-only && npm --prefix examples/iii-integration audit
+      --package-lock-only: the substrate gate ./scripts/dev-validate-core.sh
+      plus npm audit --package-lock-only for the root lockfile and for
+      examples/iii-integration, so the recorded PASS proves both audits report
+      no vulnerabilities (CodeRabbit review on PR #335). Success is exit 0; npm
+      audit exits 1 on any advisory."
+    adr_refs:
+      - ADR-0052
+      - ADR-0039
+interrogation_sha256: b2c53eb881c25c1ccf502f8a20d1580f7e023d348c01f38201ea9b2ad5bb9a03
+declared_paths:
+  - .gitagent/missions/MSN-0371.iii-lockfile-advisories.yaml
+  - .gitagent/runs/MSN-0371.json
+  - EXECUTOR_LOG.md
+  - examples/iii-integration/package-lock.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0371.iii-lockfile-advisories.yaml
+    - .gitagent/runs/MSN-0371.json
+    - EXECUTOR_LOG.md
+    - examples/iii-integration/package-lock.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 8cc49937cd5205ff45a9efa919652fb1e7a276bd1d718250f42313bccfa5fcea
