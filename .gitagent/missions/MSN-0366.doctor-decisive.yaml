@@ -1,0 +1,509 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0366]. Executor must not run until the [MSN-0366] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 3, mission A: doctor keeps only the decisive checks and loses its
+# policy and adapter flags; onboarding goes; ADR-0061 records the phase 3 decisions.
+#
+# Operator request (2026-10-29, ADR-0061 phase 3 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0366.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0366
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Accept. The ledger is unchanged; gantry ledger verify checks
+      it, and the doctor ledger line is removed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/ADOPTION.md, docs/CHANGELOG.md, docs/concepts/verify.md,
+      docs/DEVELOPMENT.md, docs/guides/org-control-plane.md,
+      docs/guides/troubleshooting.md, docs/reference/break-glass.md,
+      docs/reference/mcp-tools.md, docs/SECURITY.md,
+      docs/start/first-mission.md, docs/start/install.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0366.doctor-decisive.yaml,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/planner/RULES.md, .gitagent/registry/commands.yaml,
+      .gitagent/runs/MSN-0366.json, packages/core/src/gate-adapter.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/break-glass.ts,
+      packages/missions/src/doctor/doctor-types.ts,
+      packages/missions/src/executor-log-integrity.ts,
+      packages/missions/src/integration-compat.ts,
+      packages/missions/src/planner-signature.ts, packages/plane/src/digests.ts,
+      packages/plane/src/ledger-chain.ts, README.md, src/cli/commands/doctor.ts,
+      src/cli/commands/onboarding.ts, src/cli/commands/policy.ts,
+      src/cli/doctor/adapter-preflight-checks.ts,
+      src/cli/doctor/doctor-adapter-preflight.ts, src/cli/doctor/doctor-core.ts,
+      src/cli/doctor/doctor-integration.ts, src/cli/doctor/doctor-substrate.ts,
+      src/cli/doctor/flight-telemetry-doctor.ts,
+      src/cli/doctor/policy-digest-doctor.ts, src/cli/doctor/policy-doctor.ts,
+      src/cli/doctor/preflight/eslint.ts, src/cli/doctor/preflight/tsc.ts,
+      src/cli/doctor/target-architecture-doctor.ts,
+      src/cli/init/init-tutorial.ts, src/cli/init/onboarding-flow.ts,
+      src/cli/mcp/mcp-doctor.ts, src/cli/mcp/mcp-governance-shared.ts,
+      src/cli/mcp/mcp-runtime.ts, src/cli/mcp/mcp-tools-register.ts,
+      src/cli/output/audience-output.ts, src/cli/program-core.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/doctor-adapter-preflight.test.ts,
+      src/cli/tests/doctor-executor-log.test.ts, src/cli/tests/doctor.test.ts,
+      src/cli/tests/init-profile.test.ts,
+      src/cli/tests/integration-onboarding-gates.test.ts,
+      src/cli/tests/law-files-dual-read.test.ts,
+      src/cli/tests/mcp-doctor.test.ts, src/cli/tests/onboarding.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/policy-digest-doctor.test.ts,
+      src/cli/tests/target-architecture.test.ts, src/cli/tests/test-fixtures.ts,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/recipes/_footer.md, test/conformance/cases.yaml,
+      test/conformance/golden/doctor.fresh-init.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/onboarding.fresh-init.json,
+      test/conformance/spawning-tests.yaml. Deleted: nine advisory
+      src/cli/doctor modules and preflight/, packages/missions
+      executor-log-integrity, commands/onboarding.ts and
+      init/onboarding-flow.ts, their tests, the onboarding golden. Changed:
+      doctor core and command, MCP doctor and tool registration, core program
+      registration, init tutorial, architecture pointer (doctor half removed),
+      ledger chain, plane digests and policy diff (expected_digests), test
+      fixtures, registries (commands: onboarding), conformance cases and the
+      doctor, init and init dry-run goldens, the spawning-tests inventory, the
+      integrations footer template, docs (SECURITY, org control plane, verify,
+      troubleshooting, DEVELOPMENT, MCP tools, break-glass, README, install,
+      first mission, ADOPTION, AGENT-SETUP template, RULES template and copy,
+      CHANGELOG), ADR-0061 and ADR-0052 notes, ARCH_BASELINE.json lowered.
+      Operator decisions (2026-10-29, ADR-0061 phase 3): doctor keeps only the
+      decisive checks and drops --policy, --gate-adapter and --adapter-baseline,
+      with the bundle's expected_digests checked by policy diff (exit 1,
+      GXT_POLICY_DRIFT, as doctor did); onboarding, mission snapshot, tmvc guard
+      and perimeter check are removed (this mission removes onboarding); verify
+      --fix stops rewriting source; the shells are flattened in TypeScript
+      rather than generated, because the registries plus the registry surface
+      test already keep a subcommand and its MCP tool from drifting. Production
+      code goes below the 30,000-line target in this mission. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0366.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 10b22997feed
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/ADOPTION.md,
+      docs/CHANGELOG.md, docs/concepts/verify.md, docs/DEVELOPMENT.md,
+      docs/guides/org-control-plane.md, docs/guides/troubleshooting.md,
+      docs/reference/break-glass.md, docs/reference/mcp-tools.md,
+      docs/SECURITY.md, docs/start/first-mission.md, docs/start/install.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0366.doctor-decisive.yaml,
+      .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md,
+      .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md,
+      .gitagent/planner/RULES.md, .gitagent/registry/commands.yaml,
+      .gitagent/runs/MSN-0366.json, packages/core/src/gate-adapter.ts,
+      packages/missions/src/arch/external/architecture-pointer.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/break-glass.ts,
+      packages/missions/src/doctor/doctor-types.ts,
+      packages/missions/src/executor-log-integrity.ts,
+      packages/missions/src/integration-compat.ts,
+      packages/missions/src/planner-signature.ts, packages/plane/src/digests.ts,
+      packages/plane/src/ledger-chain.ts, README.md, src/cli/commands/doctor.ts,
+      src/cli/commands/onboarding.ts, src/cli/commands/policy.ts,
+      src/cli/doctor/adapter-preflight-checks.ts,
+      src/cli/doctor/doctor-adapter-preflight.ts, src/cli/doctor/doctor-core.ts,
+      src/cli/doctor/doctor-integration.ts, src/cli/doctor/doctor-substrate.ts,
+      src/cli/doctor/flight-telemetry-doctor.ts,
+      src/cli/doctor/policy-digest-doctor.ts, src/cli/doctor/policy-doctor.ts,
+      src/cli/doctor/preflight/eslint.ts, src/cli/doctor/preflight/tsc.ts,
+      src/cli/doctor/target-architecture-doctor.ts,
+      src/cli/init/init-tutorial.ts, src/cli/init/onboarding-flow.ts,
+      src/cli/mcp/mcp-doctor.ts, src/cli/mcp/mcp-governance-shared.ts,
+      src/cli/mcp/mcp-runtime.ts, src/cli/mcp/mcp-tools-register.ts,
+      src/cli/output/audience-output.ts, src/cli/program-core.ts,
+      src/cli/tests/architecture-pointer.test.ts,
+      src/cli/tests/doctor-adapter-preflight.test.ts,
+      src/cli/tests/doctor-executor-log.test.ts, src/cli/tests/doctor.test.ts,
+      src/cli/tests/init-profile.test.ts,
+      src/cli/tests/integration-onboarding-gates.test.ts,
+      src/cli/tests/law-files-dual-read.test.ts,
+      src/cli/tests/mcp-doctor.test.ts, src/cli/tests/onboarding.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/policy-digest-doctor.test.ts,
+      src/cli/tests/target-architecture.test.ts, src/cli/tests/test-fixtures.ts,
+      templates/.gitagent/planner/AGENT-SETUP.md,
+      templates/.gitagent/planner/RULES.md,
+      templates/integrations/recipes/_footer.md, test/conformance/cases.yaml,
+      test/conformance/golden/doctor.fresh-init.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/init.bare-git.json,
+      test/conformance/golden/init.dry-run.bare-git.json,
+      test/conformance/golden/onboarding.fresh-init.json,
+      test/conformance/spawning-tests.yaml. Deleted: nine advisory
+      src/cli/doctor modules and preflight/, packages/missions
+      executor-log-integrity, commands/onboarding.ts and
+      init/onboarding-flow.ts, their tests, the onboarding golden. Changed:
+      doctor core and command, MCP doctor and tool registration, core program
+      registration, init tutorial, architecture pointer (doctor half removed),
+      ledger chain, plane digests and policy diff (expected_digests), test
+      fixtures, registries (commands: onboarding), conformance cases and the
+      doctor, init and init dry-run goldens, the spawning-tests inventory, the
+      integrations footer template, docs (SECURITY, org control plane, verify,
+      troubleshooting, DEVELOPMENT, MCP tools, break-glass, README, install,
+      first mission, ADOPTION, AGENT-SETUP template, RULES template and copy,
+      CHANGELOG), ADR-0061 and ADR-0052 notes, ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept. Keyless signing is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane CI ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml is still parsed and enforced
+      by gantry arch check; only doctor's advisory parse line is removed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: Accept. Break-glass verification is untouched; only doctor's
+      advisory BYPASS provisioning line is removed.
+    adr_refs:
+      - ADR-0052
+      - ADR-0021
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: the bundle's expected_digests is checked by
+      gantry policy diff instead of doctor --policy (exit 1, GXT_POLICY_DRIFT)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. Planner stamp signing is untouched; the informational
+      planner_signature line leaves doctor.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Deleted tests covered only deleted doctor checks and
+      onboarding; a new test covers expected_digests in policy diff; a fresh
+      init still passes doctor.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Accept. The metadata plane is unchanged; doctor no longer
+      reports the policy pointer, telemetry or ledger as advisory lines.
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: 9b42a6bc8d96
+    kind: adr_conflict
+    question: Intent may relate to ADR-0026. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0026 before
+      legislation proceeds.
+    operator_answer: Accept. No network path changes; doctor stays offline.
+    adr_refs:
+      - ADR-0052
+      - ADR-0026
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. gxt_doctor stays with fewer inputs (policy_path,
+      gate_adapter, adapter_baseline removed); write containment is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: b9b235d7d426
+    kind: adr_conflict
+    question: Intent may relate to ADR-0046. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0046 before
+      legislation proceeds.
+    operator_answer: Accept. The parked contract preflight is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0046
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: this mission starts phase 3, records the
+      operator's phase 3 decisions and corrects the phase 2 decision wording on
+      require.signed and fetch access."
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: cfeb8130520e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0049. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0049 before
+      legislation proceeds.
+    operator_answer: Accept. The flight levels compose as before.
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Accept. Plan adapters are untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. Standalone verify is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+interrogation_sha256: efea9ee902f4845f3090af6207b51500a484257b4b9b77a552c40b408c2892d0
+declared_paths:
+  - .gitagent/missions/MSN-0366.doctor-decisive.yaml
+  - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+  - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+  - .gitagent/planner/RULES.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0366.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/ADOPTION.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/SECURITY.md
+  - docs/concepts/verify.md
+  - docs/guides/org-control-plane.md
+  - docs/guides/troubleshooting.md
+  - docs/reference/break-glass.md
+  - docs/reference/mcp-tools.md
+  - docs/start/first-mission.md
+  - docs/start/install.md
+  - packages/core/src/gate-adapter.ts
+  - packages/missions/src/arch/external/architecture-pointer.ts
+  - packages/missions/src/arch/target-architecture.ts
+  - packages/missions/src/break-glass.ts
+  - packages/missions/src/doctor/doctor-types.ts
+  - packages/missions/src/executor-log-integrity.ts
+  - packages/missions/src/integration-compat.ts
+  - packages/missions/src/planner-signature.ts
+  - packages/plane/src/digests.ts
+  - packages/plane/src/ledger-chain.ts
+  - src/cli/commands/doctor.ts
+  - src/cli/commands/onboarding.ts
+  - src/cli/commands/policy.ts
+  - src/cli/doctor/adapter-preflight-checks.ts
+  - src/cli/doctor/doctor-adapter-preflight.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/doctor/doctor-integration.ts
+  - src/cli/doctor/doctor-substrate.ts
+  - src/cli/doctor/flight-telemetry-doctor.ts
+  - src/cli/doctor/policy-digest-doctor.ts
+  - src/cli/doctor/policy-doctor.ts
+  - src/cli/doctor/preflight/eslint.ts
+  - src/cli/doctor/preflight/tsc.ts
+  - src/cli/doctor/target-architecture-doctor.ts
+  - src/cli/init/init-tutorial.ts
+  - src/cli/init/onboarding-flow.ts
+  - src/cli/mcp/mcp-doctor.ts
+  - src/cli/mcp/mcp-governance-shared.ts
+  - src/cli/mcp/mcp-runtime.ts
+  - src/cli/mcp/mcp-tools-register.ts
+  - src/cli/output/audience-output.ts
+  - src/cli/program-core.ts
+  - src/cli/tests/architecture-pointer.test.ts
+  - src/cli/tests/doctor-adapter-preflight.test.ts
+  - src/cli/tests/doctor-executor-log.test.ts
+  - src/cli/tests/doctor.test.ts
+  - src/cli/tests/init-profile.test.ts
+  - src/cli/tests/integration-onboarding-gates.test.ts
+  - src/cli/tests/law-files-dual-read.test.ts
+  - src/cli/tests/mcp-doctor.test.ts
+  - src/cli/tests/onboarding.test.ts
+  - src/cli/tests/org-doctor-offline.test.ts
+  - src/cli/tests/policy-digest-doctor.test.ts
+  - src/cli/tests/target-architecture.test.ts
+  - src/cli/tests/test-fixtures.ts
+  - templates/.gitagent/planner/AGENT-SETUP.md
+  - templates/.gitagent/planner/RULES.md
+  - templates/integrations/recipes/_footer.md
+  - test/conformance/cases.yaml
+  - test/conformance/golden/doctor.fresh-init.json
+  - test/conformance/golden/doctor.mission-pass.json
+  - test/conformance/golden/init.bare-git.json
+  - test/conformance/golden/init.dry-run.bare-git.json
+  - test/conformance/golden/onboarding.fresh-init.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0366.doctor-decisive.yaml
+    - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+    - .gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0366.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/ADOPTION.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/SECURITY.md
+    - docs/concepts/verify.md
+    - docs/guides/org-control-plane.md
+    - docs/guides/troubleshooting.md
+    - docs/reference/break-glass.md
+    - docs/reference/mcp-tools.md
+    - docs/start/first-mission.md
+    - docs/start/install.md
+    - packages/core/src/gate-adapter.ts
+    - packages/missions/src/arch/external/architecture-pointer.ts
+    - packages/missions/src/arch/target-architecture.ts
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/doctor/doctor-types.ts
+    - packages/missions/src/executor-log-integrity.ts
+    - packages/missions/src/integration-compat.ts
+    - packages/missions/src/planner-signature.ts
+    - packages/plane/src/digests.ts
+    - packages/plane/src/ledger-chain.ts
+    - src/cli/commands/doctor.ts
+    - src/cli/commands/onboarding.ts
+    - src/cli/commands/policy.ts
+    - src/cli/doctor/adapter-preflight-checks.ts
+    - src/cli/doctor/doctor-adapter-preflight.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/doctor/doctor-integration.ts
+    - src/cli/doctor/doctor-substrate.ts
+    - src/cli/doctor/flight-telemetry-doctor.ts
+    - src/cli/doctor/policy-digest-doctor.ts
+    - src/cli/doctor/policy-doctor.ts
+    - src/cli/doctor/preflight/eslint.ts
+    - src/cli/doctor/preflight/tsc.ts
+    - src/cli/doctor/target-architecture-doctor.ts
+    - src/cli/init/init-tutorial.ts
+    - src/cli/init/onboarding-flow.ts
+    - src/cli/mcp/mcp-doctor.ts
+    - src/cli/mcp/mcp-governance-shared.ts
+    - src/cli/mcp/mcp-runtime.ts
+    - src/cli/mcp/mcp-tools-register.ts
+    - src/cli/output/audience-output.ts
+    - src/cli/program-core.ts
+    - src/cli/tests/architecture-pointer.test.ts
+    - src/cli/tests/doctor-adapter-preflight.test.ts
+    - src/cli/tests/doctor-executor-log.test.ts
+    - src/cli/tests/doctor.test.ts
+    - src/cli/tests/init-profile.test.ts
+    - src/cli/tests/integration-onboarding-gates.test.ts
+    - src/cli/tests/law-files-dual-read.test.ts
+    - src/cli/tests/mcp-doctor.test.ts
+    - src/cli/tests/onboarding.test.ts
+    - src/cli/tests/org-doctor-offline.test.ts
+    - src/cli/tests/policy-digest-doctor.test.ts
+    - src/cli/tests/target-architecture.test.ts
+    - src/cli/tests/test-fixtures.ts
+    - templates/.gitagent/planner/AGENT-SETUP.md
+    - templates/.gitagent/planner/RULES.md
+    - templates/integrations/recipes/_footer.md
+    - test/conformance/cases.yaml
+    - test/conformance/golden/doctor.fresh-init.json
+    - test/conformance/golden/doctor.mission-pass.json
+    - test/conformance/golden/init.bare-git.json
+    - test/conformance/golden/init.dry-run.bare-git.json
+    - test/conformance/golden/onboarding.fresh-init.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 9112b475053dfdedf7e3c3ec630d8d7d18e87157bd925a481f6a0f9d64b41c3a
