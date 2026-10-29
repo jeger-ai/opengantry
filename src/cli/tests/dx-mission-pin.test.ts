@@ -4,16 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-import { REL_RECEIPTS_DIR } from "#core/constants.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
-import {
-  listReceipts,
-  resolveReceiptPath,
-  summarizeReceipt,
-} from "#missions/receipt-inspect.js";
 import { pinMissionFile, readActiveMissionPin } from "#missions/mission/resolution.js";
 import { GantryUserError } from "#core/user-error.js";
-import type { AttestationReceipt } from "#plane/attestation-receipt.js";
 
 function setupRepo(): { root: string; missionRel: string } {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-dx-"));
@@ -61,54 +54,6 @@ test("pinMissionFile writes repo-relative path", () => {
   const { root, missionRel } = setupRepo();
   pinMissionFile(root, path.join(root, missionRel));
   assert.equal(readActiveMissionPin(root), missionRel);
-});
-
-test("receipt list/show latest by MSN", () => {
-  const { root } = setupRepo();
-  const receiptsDir = path.join(root, REL_RECEIPTS_DIR);
-  fs.mkdirSync(receiptsDir, { recursive: true });
-
-  const older: AttestationReceipt = {
-    schema_version: "0.2.0",
-    org_id: "org-test",
-    pepper_version: 1,
-    repository_hash: "d".repeat(64),
-    branch_hmac: "e".repeat(64),
-    branch_class: "default",
-    msn_id: "MSN-0999",
-    mission_sha256: "a".repeat(64),
-    manifest_sha256: null,
-    target_architecture_sha256: null,
-    config_sha256: null,
-    git_head: "abc",
-    git_tree_sha: "def",
-    agent: { name: "test", version: "0.0.0", harness_mode: "cli" },
-    planner_stamp: null,
-    signer_principal_hmac: null,
-    signer_principal_kind: null,
-    verify_status: "passed",
-    issued_at: "2026-01-01T00:00:00.000Z",
-    receipt_sha256: "b".repeat(64),
-  };
-  const newer: AttestationReceipt = { ...older, receipt_sha256: "c".repeat(64), issued_at: "2026-02-01T00:00:00.000Z" };
-
-  const olderPath = path.join(receiptsDir, "MSN-0999-oldhash.json");
-  const newerPath = path.join(receiptsDir, "MSN-0999-newhash.json");
-  fs.writeFileSync(olderPath, JSON.stringify(older));
-  fs.writeFileSync(newerPath, JSON.stringify(newer));
-  const olderMtime = Date.now() - 60_000;
-  const newerMtime = Date.now();
-  fs.utimesSync(olderPath, olderMtime / 1000, olderMtime / 1000);
-  fs.utimesSync(newerPath, newerMtime / 1000, newerMtime / 1000);
-
-  const listed = listReceipts(root, "MSN-0999");
-  assert.equal(listed.length, 2);
-  assert.ok(listed[0]!.path.includes("newhash"));
-
-  const { receipt, relPath } = resolveReceiptPath(root, "MSN-0999");
-  assert.equal(receipt.receipt_sha256, newer.receipt_sha256);
-  const summary = summarizeReceipt(relPath, receipt);
-  assert.equal(summary.verify_status, "passed");
 });
 
 test("emitPinnedMissionBanner only for pin source", () => {

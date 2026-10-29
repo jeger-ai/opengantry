@@ -6,7 +6,9 @@ import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
 import { runLedgerDoctorChecks } from "#plane/ledger-chain.js";
 import { runOrgPolicyDoctorChecks } from "../doctor/policy-doctor.js";
-import { gitInitCommit } from "./test-fixtures.js";
+import { runDoctorChecks } from "../doctor/doctor-core.js";
+import { loadManifest } from "#missions/manifest.js";
+import { gitInitCommit, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import { writeOrgPolicyRepo } from "./test-org-fixtures.js";
 
@@ -42,4 +44,14 @@ test("ledger doctor: offline empty and consistent chain", () => {
   gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   const empty = runLedgerDoctorChecks(dest);
   assert.ok(empty.some((l) => l.message.includes("absent")));
+});
+
+test("doctor: a local config that still sets receipt_signature warns that it was removed and is ignored (ADR-0061)", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-receipt-tier-"));
+  writeMiniGantryRepo(dest, getRepoRoot());
+  gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
+  const removed = (): boolean => runDoctorChecks(dest, loadManifest(dest)).lines.some((l) => l.level === "warn" && /receipt_signature was removed in 4\.0/.test(l.message));
+  assert.equal(removed(), false);
+  fs.writeFileSync(path.join(dest, ".gitagent", "config.yaml"), "receipt_signature: require\n", "utf8");
+  assert.equal(removed(), true);
 });

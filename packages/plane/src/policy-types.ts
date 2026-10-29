@@ -1,6 +1,6 @@
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { TrustThreshold } from "#core/manifest.js";
-import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
+import type { FlightTelemetryBodyMode, LedgerMode, SignatureTier } from "#core/config.js";
 
 export const ORG_POLICY_SCHEMA_VERSION = "1.0.0" as const;
 export const POLICY_POINTER_SCHEMA_VERSION = "1.0.0" as const;
@@ -23,9 +23,8 @@ export interface PolicyBannedImport {
 }
 
 export interface PolicyConfigFloor {
-  planner_signature?: ReceiptSignatureTier;
-  receipt_signature?: ReceiptSignatureTier;
-  ledger_signature?: ReceiptSignatureTier;
+  planner_signature?: SignatureTier;
+  ledger_signature?: SignatureTier;
   ledger_mode?: LedgerMode;
   flight_telemetry?: { body_mode?: FlightTelemetryBodyMode };
   break_glass?: { require_ledger_entry?: boolean };

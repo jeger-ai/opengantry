@@ -35,7 +35,6 @@ interface VerifyPassedPayload {
   msn_id?: string;
   mission_file_path?: string;
   mission_source?: "flag" | "pin";
-  receipt_path?: string;
   message?: string;
   audit_commit?: string;
   trace_warnings?: VerifyTraceWarningJson[];
@@ -57,7 +56,6 @@ export interface VerifyFailedPayload {
   findings_digest?: string;
   mission_file_path?: string;
   mission_source?: "flag" | "pin";
-  receipt_path?: string;
   /** The gate log this run wrote (repo-relative); the payload never carries the gate's output text. */
   gate_log_path?: string;
   failures?: string[];
@@ -139,7 +137,7 @@ export function verifyFailure(root: string, mission: ParsedMission, failure: Ver
   };
 }
 
-/** Init/pre-phase errors (mission load, receipt write) as a failed payload. */
+/** Init/pre-phase errors (mission load, envelope export) as a failed payload. */
 export function initFailurePayload(e: unknown): VerifyFailedPayload {
   const userError = isGantryUserError(e) ? e : null;
   const message = userError ? userError.message : errorMessage(e);

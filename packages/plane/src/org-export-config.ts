@@ -79,8 +79,8 @@ export function resolveOrgExportConfig(root: string): OrgExportConfig {
   if (!pepper) {
     throw new GantryUserError(
       "ORG_EXPORT_CONFIG_MISSING",
-      "attestation receipt v0.2.0 requires org export config (GANTRY_ORG_ID + GANTRY_ORG_PEPPER or ORG.export.local)",
-      `create ${REL_ORG_EXPORT_LOCAL} or set env vars (see ADR-0036)`,
+      "the ledger needs org export config (GANTRY_ORG_ID + GANTRY_ORG_PEPPER or ORG.export.local)",
+      `create ${REL_ORG_EXPORT_LOCAL} or set env vars (see ADR-0043)`,
       2,
     );
   }

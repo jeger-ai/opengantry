@@ -36,8 +36,6 @@ export interface VerifyPresentContext {
   options: VerifyOptions;
   /** The run's one reporter, built from the options at the entry point. */
   reporter: Reporter;
-  /** Set after writeReceiptIfRequested when --receipt was requested. */
-  receiptPath?: string;
 }
 
 export type VerifySink =
@@ -133,7 +131,7 @@ export function emitVerifyDocument(
   reporter.document(doc);
 }
 
-/** Attach resolved mission + receipt path from the loaded verify context. */
+/** Attach the resolved mission from the loaded verify context. */
 function withContextFields<T extends VerifyResultPayload>(
   payload: T,
   ctx: VerifyPresentContext,
@@ -142,7 +140,6 @@ function withContextFields<T extends VerifyResultPayload>(
     ...payload,
     mission_file_path: ctx.resolved.missionRel,
     mission_source: ctx.resolved.source,
-    ...(ctx.receiptPath ? { receipt_path: ctx.receiptPath } : {}),
   };
 }
 
@@ -192,10 +189,8 @@ export function presentHuman(ctx: VerifyPresentContext, run: VerifyRun): VerifyP
   if (run.ok) {
     clearRemediationSnapshot(ctx.root);
     presentVerifySuccess(reporter, run.result);
-    if (ctx.receiptPath) reporter.info(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
     return { ok: true, exitCode: 0 };
   }
-  if (ctx.receiptPath) reporter.info(`${CLI_NAME} verify: wrote ${ctx.receiptPath}`);
   const { failure, persisted } = run;
   reporter.error(`[${persisted.error_code}] ${failure.headline}`);
   for (const line of failure.detail_lines) {

@@ -1,5 +1,5 @@
 // The config shape and resolvers live in packages/core; this reads the file (ADR-0047 dual-read since MSN-0302).
-import { parseGxtConfigSource, resolveFlightTelemetryBodyMode, resolveLedgerMode, resolveLedgerSignatureTier, resolvePlannerSignatureTier, resolveReceiptSignatureTier, type GxtConfigShape } from "#core/config.js";
+import { parseGxtConfigSource, resolveFlightTelemetryBodyMode, resolveLedgerMode, resolveLedgerSignatureTier, resolvePlannerSignatureTier, type GxtConfigShape } from "#core/config.js";
 import type { PolicyConfigFloor } from "#plane/policy-types.js";
 import { readLawFileAt } from "#git/repo-text.js";
 
@@ -16,7 +16,6 @@ export function localConfigFloor(root: string): PolicyConfigFloor {
   const config = loadGxtConfig(root);
   return {
     planner_signature: resolvePlannerSignatureTier(config),
-    receipt_signature: resolveReceiptSignatureTier(config),
     ledger_signature: resolveLedgerSignatureTier(config),
     ledger_mode: resolveLedgerMode(config),
     flight_telemetry: { body_mode: resolveFlightTelemetryBodyMode(config) },

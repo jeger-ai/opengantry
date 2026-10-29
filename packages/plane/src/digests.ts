@@ -18,7 +18,7 @@ export function sha256FileOrNull(absPath: string): string | null {
   return sha256File(absPath);
 }
 
-/** Digests of the three law files a receipt or policy pin binds to. */
+/** Digests of the three law files a policy digest pin binds to. */
 export function computeWorkingDigests(root: string): {
   manifest_sha256: string | null;
   target_architecture_sha256: string | null;

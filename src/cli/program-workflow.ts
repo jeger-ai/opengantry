@@ -1,6 +1,5 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
-import { runAttest } from "./commands/attest.js";
 import { runLegislate, type LegislateOptions } from "./flows/legislate.js";
 import { runLegislateFromIntent } from "./flows/legislate-from-intent.js";
 import { isGantryUserError, errorMessage } from "#core/user-error.js";
@@ -99,8 +98,7 @@ interface VerifyCliOptions {
   format?: string;
   audience?: string;
   scanDepth?: string;
-  receipt?: string | boolean;
-  signReceipt?: boolean;
+  sign?: boolean | string;
   export?: string;
 }
 
@@ -139,8 +137,7 @@ export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
     breakGlassCommit: opts.commit,
     fixNonInteractive: opts.nonInteractive,
     audience: currentReporter().audience,
-    receipt: opts.receipt,
-    signReceipt: opts.signReceipt,
+    sign: opts.sign,
     exportPath: opts.export,
     requireInterrogation:
       opts.requireInterrogation === true ||
@@ -228,32 +225,6 @@ function registerInterrogateCommand(program: Command): void {
     });
 }
 
-function registerAttestCommand(program: Command): void {
-  program
-    .command("attest")
-    .description("Emit local attestation receipt (digests only; optional SSH/GPG signature)")
-    .argument("[mission]", "Mission file (.md or .yaml); alias for --mission when npm run swallows flags")
-    .option("--mission <path>", "Mission file (.md or .yaml)")
-    .option("--out <file>", "Receipt output path (default .gitagent/history/receipts/)")
-    .option("--export <file>", "Write hub export envelope (payload_b64 + signature)")
-    .option("--sign", "Detach-sign receipt with local SSH/GPG key")
-    .option("--json", "Emit structured JSON including receipt_path")
-    .action(
-      (
-        missionPositional: string | undefined,
-        opts: { mission?: string; out?: string; export?: string; sign?: boolean; json?: boolean },
-      ) => {
-        runAttest({
-          mission: opts.mission ?? missionPositional,
-          out: opts.out,
-          exportPath: opts.export,
-          sign: opts.sign,
-          json: opts.json,
-        });
-      },
-    );
-}
-
 function registerVerifyCommand(program: Command): void {
   const cmd = program
     .command("verify")
@@ -285,9 +256,7 @@ function registerVerifyCommand(program: Command): void {
       "--scan-depth <number>",
       "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GANTRY_MSN_SCAN_DEPTH)",
     )
-    .option("--receipt [file]", "Write attestation receipt JSON after verify (default history path)")
-    .option("--sign-receipt", "Detach-sign receipt with local SSH/GPG key")
-    .option("--export <file>", "Write hub export envelope after verify (payload_b64 + signature)")
+    .option("--export <file>", "After a pass with a run record, write the export envelope 2.0 over the record")
     .option("--audience <role>", "Tailor output: executor|planner|verifier|platform");
   registerVerifyContractOptions(cmd);
   cmd.action(async (opts: VerifyCliOptions & Omit<VerifyContractCliOptions, "contract" | "mission" | "json" | "format"> & { contract?: string | true }) => {
@@ -341,7 +310,6 @@ function registerPerimeterCommand(program: Command): void {
 export function registerWorkflowCommands(program: Command): void {
   registerLegislateCommand(program);
   registerInterrogateCommand(program);
-  registerAttestCommand(program);
   registerVerifyCommand(program);
   registerAdaptCommand(program);
   registerEventsCommand(program);

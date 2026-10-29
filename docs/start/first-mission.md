@@ -48,7 +48,7 @@ gantry doctor
 
 `gantry legislate --from-intent "<story>"` proposes the scope from the repository and asks you to approve it ([Missions](../concepts/missions.md)).
 
-Pinning is optional but saves typing: `gantry mission pin <file>` makes `verify`, `attest` and `runtime env` default to that mission, `gantry mission pin` with no argument shows the pin, and `gantry mission unpin` clears it.
+Pinning is optional but saves typing: `gantry mission pin <file>` makes `verify` and `runtime env` default to that mission, `gantry mission pin` with no argument shows the pin, and `gantry mission unpin` clears it.
 
 ## What success looks like
 

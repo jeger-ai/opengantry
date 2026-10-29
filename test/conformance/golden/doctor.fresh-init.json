@@ -29,10 +29,6 @@
         "message": "planner_signature tier: off"
       },
       {
-        "level": "ok",
-        "message": "receipt_signature tier: off"
-      },
-      {
         "level": "warn",
         "message": "BYPASS.sha256 has no hash line — break-glass not provisioned"
       },

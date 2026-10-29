@@ -33,7 +33,7 @@ order: 1
 | `gxt_verify` | Runs verify and returns the same payload as `gantry verify --json` ([Troubleshooting](../guides/troubleshooting.md#mcp-verify-payload)) |
 | `gxt_doctor` | Read-only readiness check, including typed gate adapters; never inspects `gate_command` to guess one |
 
-The organization plane (`policy`, `ledger`, `deps`, `attest`) and `upgrade` are CLI-only: they write receipts, fetch refs or rewrite managed files, which a human runs.
+The organization plane (`policy`, `ledger`, `deps`) and `upgrade` are CLI-only: they append ledger entries, fetch refs or rewrite managed files, which a human runs.
 
 The cage has no MCP tool: `gantry cage check`, `gantry cage watch`, `gantry cage suggest` and the session cage are not exposed to agents through MCP.
 

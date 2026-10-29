@@ -26,7 +26,6 @@ export function sampleOrgPolicyYaml(overrides?: Partial<OrgPolicyBundle>): strin
     banned_imports: overrides?.banned_imports ?? [{ specifier: "lodash", scope: "changed" }],
     config_floor: overrides?.config_floor ?? {
       planner_signature: "warn",
-      receipt_signature: "warn",
       ledger_signature: "warn",
       ledger_mode: "local",
       flight_telemetry: { body_mode: "hash_only" },
@@ -45,7 +44,6 @@ export function sampleOrgPolicyYaml(overrides?: Partial<OrgPolicyBundle>): strin
     "    scope: changed",
     "config_floor:",
     "  planner_signature: warn",
-    "  receipt_signature: warn",
     "  ledger_signature: warn",
     "  ledger_mode: local",
     "  flight_telemetry:",

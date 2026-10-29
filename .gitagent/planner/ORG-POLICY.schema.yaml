@@ -90,12 +90,6 @@ properties:
           - off
           - warn
           - require
-      receipt_signature:
-        type: string
-        enum:
-          - off
-          - warn
-          - require
       ledger_signature:
         type: string
         enum:

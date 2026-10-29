@@ -1,11 +1,11 @@
 ---
-title: "CI exporters and receipts"
-description: "Run gantry verify in CI: SARIF for GitHub Code Scanning, JUnit for GitLab, the pull request mission check, and receipt export to a control plane."
+title: "CI exporters and run record export"
+description: "Run gantry verify in CI: SARIF for GitHub Code Scanning, JUnit for GitLab, the pull request mission check, and run record export to a control plane."
 section: guides
 order: 6
 ---
 
-# CI exporters and receipts
+# CI exporters and run record export
 
 `gantry verify` can print a machine document for CI. Human logs stay off that stream.
 
@@ -81,9 +81,9 @@ gantry-verify:
 
 `gantry init` adds `.github/workflows/gxt-validate.yml` unless you pass `--no-ci`. On pull requests, commits that touch `.gitagent/`, `EXECUTOR_LOG.md`, the hooks or that workflow need an `[MSN-NNNN]` subject, unless the commit satisfies a [trusted automation](../concepts/enforcement-boundary.md#trusted-automation) rule or carries a valid break-glass note ([Break-glass](../reference/break-glass.md)). Without a trusted automation config the check fails closed.
 
-## Receipt export to a control plane
+## Run record export to a control plane
 
-Teams that run an OpenGantry control plane ingest a verify envelope from every pull request, pass or fail. The workflow ingests the envelope **before** failing the job, so failed gates still reach the ledger. Copy [`templates/.github/workflows/gxt-attest-ingest.yml`](https://github.com/jeger-ai/opengantry/blob/main/templates/.github/workflows/gxt-attest-ingest.yml) to `.github/workflows/` in your repository.
+Teams that run an OpenGantry control plane ingest an export envelope from every pull request whose verify passes. The envelope (`envelope_schema_version` `2.0.0`) carries the mission's committed run record: `payload_b64` is the base64 of the canonical record JSON, and `signature`, present with `--sign`, is an SSH or GPG signature over those bytes with the git signing key. `gantry verify --export` writes it only after a pass judged by a run record; a failed verify, or a mission without a record, exits with an error and writes no envelope. Copy [`templates/.github/workflows/gxt-attest-ingest.yml`](https://github.com/jeger-ai/opengantry/blob/main/templates/.github/workflows/gxt-attest-ingest.yml) to `.github/workflows/` in your repository.
 
 | Name | Type | Purpose |
 |------|------|---------|
@@ -98,20 +98,18 @@ Without `GANTRY_ORG_ID` or `GANTRY_ORG_PEPPER` the workflow still runs `gantry v
 **Order matters:**
 
 1. Check out the pull request head with `fetch-depth: 0`.
-2. Set a runner-verified identity, never the `git log` committer email: `GANTRY_SIGNER_PRINCIPAL=github:<user_id>:<login>` from `github.event.pull_request.user`, `GANTRY_SIGNER_PRINCIPAL_KIND=github_actor`, and `GANTRY_BRANCH_NAME` from `github.event.pull_request.head.ref`.
-3. Run `gantry verify --mission … --ci --export envelope.json` with `continue-on-error: true`.
-4. `POST $PLANE_INGEST_URL/api/v1/attestations/ingest` with the bearer token; expect `202` and a `request_id`.
-5. Poll `GET $PLANE_INGEST_URL/api/v1/ingest/requests/:request_id` until `status=chained`; fail on `rejected` or a timeout. A `202` alone is not cryptographic success.
+2. Run `gantry verify --mission … --ci --export envelope.json` with `continue-on-error: true`.
+3. `POST $PLANE_INGEST_URL/api/v1/attestations/ingest` with the bearer token; expect `202` and a `request_id`.
+4. Poll `GET $PLANE_INGEST_URL/api/v1/ingest/requests/:request_id` until `status=chained`; fail on `rejected` or a timeout. A `202` alone is not cryptographic success.
+5. Append the envelope to the compliance ledger with `gantry ledger append --from-envelope envelope.json`: a `receipt` entry with the record's `msn_id` and `run_record_sha256`.
 6. Fail the job if verify failed.
 
-To debug an export locally:
+To debug an export locally, on a mission whose run record is committed:
 
 ```bash
-export GANTRY_ORG_ID=org-example
-export GANTRY_ORG_PEPPER='<secret>'
 gantry verify --mission .gitagent/missions/MSN-NNNN.<slug>.yaml --export /tmp/envelope.json
 ```
 
-Plane provisioning is documented in [opengantry-plane](https://github.com/jeger-ai/opengantry-plane/blob/main/docs/DEPLOYMENT.md). SARIF and JUnit above are a separate path from the receipt envelope.
+Plane provisioning is documented in [opengantry-plane](https://github.com/jeger-ai/opengantry-plane/blob/main/docs/DEPLOYMENT.md). SARIF and JUnit above are a separate path from the export envelope.
 
-Design notes: [ADR-0027 verify export formats](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0027-verify-export-formats.md), [ADR-0037 CI ingestion contract](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0037-plane-deployment-and-ci-ingestion-contract.md).
+Design notes: [ADR-0027 verify export formats](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0027-verify-export-formats.md), [ADR-0037 CI ingestion contract](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0037-plane-deployment-and-ci-ingestion-contract.md), [ADR-0061 one record](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md).

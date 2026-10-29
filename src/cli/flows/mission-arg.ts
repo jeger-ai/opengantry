@@ -18,7 +18,7 @@ const MISSION_REQUIRED_HINT =
   "gantry mission pin .gitagent/missions/<file>.yaml  # then re-run without --mission";
 
 /**
- * Resolve mission for verify/scan/attest/runtime env.
+ * Resolve mission for verify/runtime env.
  * Order: explicit `--mission` flag, then pin/env/legacy active-mission paths.
  * No positional args (verify/scan keep flag→pin only).
  */

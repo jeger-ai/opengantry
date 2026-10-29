@@ -37,7 +37,7 @@ export function sha256Hex(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
-/** Digest of a record's bytes in canonical form (the ledger and receipts reference it). */
+/** Digest of a record in canonical form (the envelope payload bytes): the ledger receipt entry's run_record_sha256. */
 export function runRecordDigest(record: RunRecord): string {
   return sha256Hex(canonicalJson(record));
 }

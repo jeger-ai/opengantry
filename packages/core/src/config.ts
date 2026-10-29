@@ -3,12 +3,11 @@ import { parseLawFileDocument, type LawFileSource } from "./law-file.js";
  * `.gitagent/config.yaml` (ADR-0052 step 5c-i; the 3.x config.json is still read): the shape and the tier resolvers are pure. Reading the file and the
  * defensive-profile validation stay with the loader (`packages/missions/src/gxt-config.ts`).
  */
-export type PlannerSignatureTier = "off" | "warn" | "require";
-export type ReceiptSignatureTier = PlannerSignatureTier;
+/** A signing tier: `planner_signature` and `ledger.signature` (`receipt_signature` went in 4.0, ADR-0061). */
+export type SignatureTier = "off" | "warn" | "require";
 export type FlightTelemetryBodyMode = "hash_only" | "full";
 
-export const PLANNER_SIGNATURE_TIERS: readonly PlannerSignatureTier[] = ["off", "warn", "require"];
-export const RECEIPT_SIGNATURE_TIERS: readonly ReceiptSignatureTier[] = PLANNER_SIGNATURE_TIERS;
+export const SIGNATURE_TIERS: readonly SignatureTier[] = ["off", "warn", "require"];
 export const FLIGHT_TELEMETRY_BODY_MODES: readonly FlightTelemetryBodyMode[] = ["hash_only", "full"];
 
 export interface FlightTelemetryConfig {
@@ -20,14 +19,15 @@ export const LEDGER_MODES: readonly LedgerMode[] = ["off", "local"];
 
 export interface LedgerConfig {
   mode?: LedgerMode;
-  signature?: ReceiptSignatureTier;
+  signature?: SignatureTier;
   ref?: string;
 }
 
 /** The config file as parsed; `defensive_profile` is validated by the loader that knows the presets. */
 export interface GxtConfigShape {
-  planner_signature?: PlannerSignatureTier;
-  receipt_signature?: ReceiptSignatureTier;
+  planner_signature?: SignatureTier;
+  /** Removed in 4.0 (ADR-0061): ignored, doctor warns. */
+  receipt_signature?: unknown;
   flight_telemetry?: FlightTelemetryConfig;
   trusted_automation?: unknown;
   defensive_profile?: unknown;
@@ -48,14 +48,9 @@ export function parseGxtConfigSource(source: LawFileSource): GxtConfigShape {
   }
 }
 
-export function resolvePlannerSignatureTier(config: GxtConfigShape): PlannerSignatureTier {
+export function resolvePlannerSignatureTier(config: GxtConfigShape): SignatureTier {
   const tier = config.planner_signature ?? "off";
-  return PLANNER_SIGNATURE_TIERS.includes(tier) ? tier : "off";
-}
-
-export function resolveReceiptSignatureTier(config: GxtConfigShape): ReceiptSignatureTier {
-  const tier = config.receipt_signature ?? "off";
-  return RECEIPT_SIGNATURE_TIERS.includes(tier) ? tier : "off";
+  return SIGNATURE_TIERS.includes(tier) ? tier : "off";
 }
 
 export function resolveFlightTelemetryBodyMode(config: GxtConfigShape): FlightTelemetryBodyMode {
@@ -63,9 +58,9 @@ export function resolveFlightTelemetryBodyMode(config: GxtConfigShape): FlightTe
   return FLIGHT_TELEMETRY_BODY_MODES.includes(mode) ? mode : "hash_only";
 }
 
-export function resolveLedgerSignatureTier(config: GxtConfigShape): ReceiptSignatureTier {
+export function resolveLedgerSignatureTier(config: GxtConfigShape): SignatureTier {
   const tier = config.ledger?.signature ?? "off";
-  return RECEIPT_SIGNATURE_TIERS.includes(tier) ? tier : "off";
+  return SIGNATURE_TIERS.includes(tier) ? tier : "off";
 }
 
 /** The explicit ledger mode, or null when the file does not set one. */

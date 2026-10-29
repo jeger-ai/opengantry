@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-import { canonicalizeRepositoryIdentifier, hmacSha256Hex, pseudonymizeEmail } from "#plane/receipt-attribution.js";
+import { canonicalizeRepositoryIdentifier, hmacSha256Hex } from "#plane/receipt-attribution.js";
 import { getRepoRoot } from "#git/git.js";
 
 const ROOT = getRepoRoot();
@@ -43,8 +43,8 @@ test("attribution vectors: exact hex per field kind", () => {
     let actual: string;
     switch (row.field) {
       case "email":
-        actual = pseudonymizeEmail(row.input, { org_id: "", pepper, pepper_version: 1 });
         assert.equal(row.canonical_input, row.input.trim().toLowerCase());
+        actual = hmacSha256Hex(pepper, row.canonical_input);
         break;
       case "github_actor":
         actual = hmacSha256Hex(pepper, row.input.trim());

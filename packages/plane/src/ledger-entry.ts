@@ -15,14 +15,18 @@ export const LEDGER_ENTRY_KINDS = [
 
 export type LedgerEntryKind = (typeof LEDGER_ENTRY_KINDS)[number];
 
-/** Digest-only receipt fields already allowed on the export path (ADR-0043). */
+/**
+ * A passing verify (ADR-0043, ADR-0061): digest-only, pointing at the committed run record when the mission has one.
+ * Pre-4.0 entries carried other fields (receipt_sha256, envelope_sha, …); the chain hashes payloads as written, so they
+ * still verify.
+ */
 export interface ReceiptLedgerPayload {
   verify_status?: string;
+  run_record_sha256?: string;
+  /** Pre-4.0: a signed attestation receipt (read by `depends_on` `require.signed`). */
   signed?: boolean;
-  receipt_sha256?: string;
+  /** `gantry ledger append` without an envelope. */
   source?: string;
-  envelope_sha?: string;
-  has_payload?: boolean;
 }
 
 export interface VerifyFindingsLedgerPayload {

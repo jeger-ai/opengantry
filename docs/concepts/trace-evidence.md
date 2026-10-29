@@ -72,4 +72,4 @@ Executors may append optional `[SKILL-EXEC] skill_key=<provider::skill> tool=<to
 
 ## How strong is this?
 
-Trace mapping is process control, not cryptographic tamper-proofing. Evidence integrity rests on Git history, hooks and verify gates, and human review, not on proving a model could not lie. For digest receipts and an append-only chain, see [Org control plane](../guides/org-control-plane.md).
+Trace mapping is process control, not cryptographic tamper-proofing. Evidence integrity rests on Git history, hooks and verify gates, and human review, not on proving a model could not lie. For the run record's ledger entries and an append-only chain, see [Org control plane](../guides/org-control-plane.md).

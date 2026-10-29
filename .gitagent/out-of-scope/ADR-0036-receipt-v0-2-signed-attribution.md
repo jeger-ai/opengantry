@@ -1,7 +1,7 @@
 ---
 id: ADR-0036
 title: Attestation receipt v0.2.0 signed attribution and hub export
-status: ACTIVE
+status: SUPERSEDED
 match_terms:
   - receipt
   - attestation
@@ -34,3 +34,7 @@ Enterprise control-plane ingestion requires tamper-evident attribution inside th
 - Receipts are org-scoped (pepper + `org_id` required for v0.2.0).
 - Per-rule PASS/FAIL and AST node hashes remain deferred to schema `0.3.0` (M2 drift telemetry).
 - v0.1.0 receipts remain readable locally; new attestations emit v0.2.0 only.
+
+## Superseded
+
+Superseded by [ADR-0061](ADR-0061-simplify-before-4-0.md): the attestation receipt, `gantry attest`, `gantry receipt` and the `receipt_signature` tier were removed in 4.0. The committed run record is the only receipt, and `verify --export` writes envelope 2.0 over it.

@@ -21,8 +21,6 @@ export const REL_HISTORY_DIR = ".gitagent/history" as const;
 export const REL_RUNS_DIR = ".gitagent/runs" as const;
 /** Root-level architecture law (ADR-0024). */
 export const TARGET_ARCHITECTURE_FILENAME = "TARGET_ARCHITECTURE.yaml" as const;
-/** Git-ignored attestation receipts for optional hub ingestion. */
-export const REL_RECEIPTS_DIR = ".gitagent/history/receipts" as const;
 /** Planner SSH allowed signers for `git log --format=%G?` / perimeter --ci. */
 export const REL_PLANNER_SIGNING_PUB = ".gitagent/foreman/PLANNER.signing.pub" as const;
 /** git config key set by doctor and `gantry perimeter --ci`. */
