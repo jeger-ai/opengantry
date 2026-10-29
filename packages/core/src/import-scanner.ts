@@ -1,25 +1,5 @@
 /** Pure import-site extraction shared by discovery, architecture, and mission contracts. */
 
-const QUARANTINE_START = "// GXT-SURGEON-QUARANTINE-START";
-const QUARANTINE_END = "// GXT-SURGEON-QUARANTINE-END";
-
-/** Remove every START..END quarantine region and the whitespace after END; an unterminated START is left as is. Linear in the source. */
-export function stripRepairQuarantineRegions(source: string): string {
-  let out = "";
-  let pos = 0;
-  for (;;) {
-    const start = source.indexOf(QUARANTINE_START, pos);
-    if (start === -1) break;
-    const end = source.indexOf(QUARANTINE_END, start + QUARANTINE_START.length);
-    if (end === -1) break;
-    let after = end + QUARANTINE_END.length;
-    while (after < source.length && /\s/.test(source[after]!)) after += 1;
-    out += source.slice(pos, start);
-    pos = after;
-  }
-  return out + source.slice(pos);
-}
-
 export interface ImportMeta {
   spec: string;
   line: number;
@@ -177,10 +157,6 @@ export function blankComments(source: string): string {
   return s.out.join("");
 }
 
-function prepareSource(source: string, scrubQuarantine: boolean): string {
-  return blankComments(scrubQuarantine ? stripRepairQuarantineRegions(source) : source);
-}
-
 function positionOf(source: string, index: number): { line: number; column: number } {
   const before = source.slice(0, index);
   const line = before.split(/\r?\n/).length;
@@ -238,12 +214,12 @@ function extractImportSitesFromPrepared(scrubbed: string): ImportSite[] {
 }
 
 export function extractImportSites(source: string): ImportSite[] {
-  return extractImportSitesFromPrepared(prepareSource(source, true));
+  return extractImportSitesFromPrepared(blankComments(source));
 }
 
-export function extractImportsWithMeta(source: string, scrubQuarantine = true): ImportMeta[] {
+export function extractImportsWithMeta(source: string): ImportMeta[] {
   const out: ImportMeta[] = [];
-  for (const site of extractImportSitesFromPrepared(prepareSource(source, scrubQuarantine))) {
+  for (const site of extractImportSitesFromPrepared(blankComments(source))) {
     if (site.kind !== "static" || !site.spec) continue;
     out.push({ spec: site.spec, line: site.line, column: site.column, snippet: site.snippet });
   }
@@ -284,12 +260,4 @@ export function extractBindingsFromSnippet(snippet: string): string[] {
   const ns = /import\s+\*\s+as\s+(\w+)/.exec(snippet);
   if (ns) return [ns[1]!];
   return ["__gxtImportLayer"];
-}
-
-export function extractImportSpecifiers(source: string): string[] {
-  const specs = new Set<string>();
-  for (const site of extractImportSites(source)) {
-    if (site.spec) specs.add(site.spec);
-  }
-  return [...specs].sort();
 }

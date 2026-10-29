@@ -2,14 +2,14 @@ import { EXIT_CODE } from "#core/exit-codes.js";
 import type { Command } from "commander";
 import { runContextRequest } from "./commands/context-request.js";
 import { runContractCheck, runContractPropose, runContractShow } from "./commands/contract.js";
-import { runMissionChanged, runMissionSnapshot, runMissionValidate } from "./commands/mission.js";
+import { runMissionChanged, runMissionValidate } from "./commands/mission.js";
 import { runPin, runUnpin } from "./commands/pin.js";
 import { runRuntimeEnv, runRuntimeExecCommand } from "./commands/runtime.js";
 import { runTmvcGuard } from "./commands/tmvc-guard.js";
 import { parseOptionalTimeoutMs, logError, setExitCode } from "./output/cli-io.js";
 
 function registerMissionCommand(program: Command): void {
-  const mission = program.command("mission").description("Mission validation + integrity snapshot");
+  const mission = program.command("mission").description("Mission validation, pin and change discovery");
 
   mission
     .command("validate")
@@ -30,15 +30,6 @@ function registerMissionCommand(program: Command): void {
   mission.command("unpin").description("Clear the active mission pin").action(() => {
     runUnpin();
   });
-
-  mission
-    .command("snapshot")
-    .description("Record start-state snapshot under .gitagent/history/")
-    .requiredOption("--file <path>", "Path to mission .md or .yaml")
-    .option("--msn <id>", "Override MSN id from file")
-    .action((opts: { file: string; msn?: string }) => {
-      runMissionSnapshot(opts.file, opts.msn);
-    });
 
   mission
     .command("changed")

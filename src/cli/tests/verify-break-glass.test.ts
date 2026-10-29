@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { execSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
-import { ENV_BYPASS_SECRET, commitHasValidBypassNote } from "#missions/break-glass.js";
+import { ENV_BYPASS_SECRET } from "#missions/break-glass.js";
 import { runVerify } from "../commands/verify.js";
 import {
   writeMiniGantryRepo,
@@ -142,7 +142,8 @@ test("runVerify: break-glass with secret skips gates", async () => {
     });
     assert.equal(process.exitCode, undefined);
     const head = execSync("git rev-parse HEAD", { cwd: dest, encoding: "utf8" }).trim();
-    assert.equal(commitHasValidBypassNote(dest, head), true);
+    const note = JSON.parse(execSync(`git notes --ref=refs/notes/gxt-bypass show ${head}`, { cwd: dest, encoding: "utf8" })) as { reason: string };
+    assert.equal(note.reason, "production outage requires hotfix");
   } finally {
     process.chdir(prevCwd);
     process.exitCode = undefined;

@@ -421,7 +421,7 @@ export function checkArchBoundariesForFiles(
 
     if (!evaluateImports) continue;
 
-    for (const imp of extractImportsWithMeta(src, true)) {
+    for (const imp of extractImportsWithMeta(src)) {
       violations.push(
         ...evaluateLayerImport(arch, repoRel, {
           spec: imp.spec,

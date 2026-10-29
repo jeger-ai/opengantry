@@ -16,7 +16,6 @@ export const REL_ARCHITECTURE_DISCOVERY_SKILL = ".gitagent/planner/ARCHITECTURE-
 /** Git-ignored credential slots for architecture sources (see gantry arch cred). */
 export const REL_ARCHITECTURE_CREDENTIALS_DIR = ".gitagent/history/credentials" as const;
 export const REL_MISSION_SCHEMA = ".gitagent/planner/MISSION.schema.yaml" as const;
-export const REL_HISTORY_DIR = ".gitagent/history" as const;
 /** Committed, machine-written run records: one per mission (ADR-0052 A4, A5). */
 export const REL_RUNS_DIR = ".gitagent/runs" as const;
 /** Root-level architecture law (ADR-0024). */

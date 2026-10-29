@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { formatTriageHuman, triageIntent } from "#missions/triage-logic.js";
+import { triageIntent } from "#missions/triage-logic.js";
 import { loadManifest } from "#missions/manifest.js";
 import { writeManifest, writeFixtureAdr } from "./test-fixtures.js";
 
@@ -20,18 +20,6 @@ test("triage: risk_keyword triggers escalation", () => {
   const m = loadManifest(dest);
   const r = triageIntent(dest, "refactor ui", m);
   assert.equal(r.action, "LEGISLATIVE_ESCALATION");
-});
-
-
-test("formatTriageHuman includes action line", () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-triage-direct-"));
-  writeManifest(dest, {
-    "logic": { trust_threshold: "Tier-2", tmvc_roots: ["src/lib/"], forbidden_zones: [] },
-  });
-  const m = loadManifest(dest);
-  const r = triageIntent(dest, "logic only", m);
-  const text = formatTriageHuman(r);
-  assert.match(text, /^Action: DIRECT_EXECUTION/m);
 });
 
 

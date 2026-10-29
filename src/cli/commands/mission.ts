@@ -1,12 +1,9 @@
-import { EXIT_CODE } from "#core/exit-codes.js";
 import { CLI_NAME } from "#core/constants.js";
-import { formatRepoRelative } from "#core/posix-path.js";
-import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
+import { logInfo, logWarn } from "../output/cli-io.js";
 import { runUserCommand } from "../output/command-boundary.js";
 import { GantryUserError } from "#core/user-error.js";
 import { discoverChangedMissions } from "#missions/mission-changed.js";
-import { assertMissionGatePresent, isValidMsnId, parseMissionFile } from "#missions/mission/parser.js";
-import { captureStartState, writeSnapshot } from "#missions/start-snapshot.js";
+import { assertMissionGatePresent, parseMissionFile } from "#missions/mission/parser.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export function runMissionValidate(file: string): void {
@@ -15,21 +12,6 @@ export function runMissionValidate(file: string): void {
   assertMissionGatePresent(mission);
   logInfo(`${CLI_NAME} mission validate: OK (${mission.rawPath})`);
   if (mission.gate) logInfo(`  gate: ${mission.gate.command}`);
-}
-
-export function runMissionSnapshot(file: string, msnOverride?: string): void {
-  const { root, manifest } = loadWorkspace();
-  const mission = parseMissionFile(root, file);
-  assertMissionGatePresent(mission);
-  const msn = msnOverride ?? mission.msnId;
-  if (!msn || !isValidMsnId(msn)) {
-    logError("mission snapshot: need MSN-NNNN in mission or pass --msn");
-    setExitCode(EXIT_CODE.FAILURE);
-    return;
-  }
-  const snapshot = captureStartState(root, manifest, mission.skillKey);
-  const outputPath = writeSnapshot(root, snapshot, msn);
-  logInfo(`${CLI_NAME} mission snapshot: wrote ${formatRepoRelative(root, outputPath)}`);
 }
 
 export interface MissionChangedOptions {

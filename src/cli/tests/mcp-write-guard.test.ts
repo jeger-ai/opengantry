@@ -6,7 +6,6 @@ import os from "node:os";
 import { execSync } from "node:child_process";
 import {
   assertMcpMissionWritePath,
-  assertMcpSkillWritePath,
   assertMcpSubstrateUpgradeWritePaths,
   McpWriteDeniedError,
 } from "#missions/substrate-write-guard.js";
@@ -40,25 +39,6 @@ test("mcp-write-guard: rejects path traversal", () => {
   assert.throws(
     () => assertMcpMissionWritePath(".gitagent/missions/../foreman/MANIFEST.yaml"),
     /traversal/,
-  );
-});
-
-test("mcp-write-guard: skill write inside TMVC allowed, outside denied", () => {
-  const dest = scaffoldRepo();
-  const manifest = loadManifest(dest);
-  assert.doesNotThrow(() => assertMcpSkillWritePath(manifest, "gantry", "src/cli/lib/foo.ts"));
-  assert.throws(
-    () => assertMcpSkillWritePath(manifest, "gantry", "README.md"),
-    (err: unknown) => err instanceof McpWriteDeniedError,
-  );
-});
-
-test("mcp-write-guard: skill write forbidden zone denied", () => {
-  const dest = scaffoldRepo();
-  const manifest = loadManifest(dest);
-  assert.throws(
-    () => assertMcpSkillWritePath(manifest, "gantry", ".gitagent/foreman/MANIFEST.yaml"),
-    /forbidden zone/,
   );
 });
 

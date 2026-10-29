@@ -1,15 +1,5 @@
 import fs from "node:fs";
 
-const MUTATION_PREFIX = "[SURGEON-MUTATION]";
-
-/** Append immutable repair mutation line to EXECUTOR_LOG (fail-closed if missing). */
-export function appendRepairMutationLog(executorLogPath: string, summary: string): void {
-  ensureExecutorLogExists(executorLogPath);
-  const line = summary.startsWith(MUTATION_PREFIX) ? summary : `${MUTATION_PREFIX} ${summary}`;
-  const suffix = line.endsWith("\n") ? line : `${line}\n`;
-  fs.appendFileSync(executorLogPath, suffix, { encoding: "utf8" });
-}
-
 export function ensureExecutorLogExists(executorLogPath: string): void {
   if (!fs.existsSync(executorLogPath)) {
     fs.writeFileSync(executorLogPath, "", "utf8");
@@ -17,7 +7,7 @@ export function ensureExecutorLogExists(executorLogPath: string): void {
 }
 
 /** Structured import-layer gate report (`gantry arch check --json`). */
-export interface ImportLayerViolation {
+interface ImportLayerViolation {
   file: string;
   rule_id: string;
   module_specifier: string;

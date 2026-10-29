@@ -3,7 +3,6 @@ import { readLawFileAt } from "#git/repo-text.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
 import type { FlightTelemetryBodyMode, LedgerMode, SignatureTier } from "#core/config.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
-import type { TrustThreshold } from "#core/manifest.js";
 import { loadCachedBundle } from "./policy-bundle.js";
 import {
   POLICY_POINTER_SCHEMA_VERSION,
@@ -16,17 +15,6 @@ import type { OrgPolicyBundle } from "./policy-types.js";
 const SIGNATURE_RANK: Record<SignatureTier, number> = { off: 0, warn: 1, require: 2 };
 const LEDGER_MODE_RANK: Record<LedgerMode, number> = { off: 0, local: 1 };
 const BODY_MODE_RANK: Record<FlightTelemetryBodyMode, number> = { full: 0, hash_only: 1 };
-
-export const TIER_RANK: Record<"Tier-1" | "Tier-2" | "Tier-3", number> = {
-  "Tier-1": 1,
-  "Tier-2": 2,
-  "Tier-3": 3,
-};
-
-export function trustTierRank(tier: TrustThreshold): number {
-  if (tier === "Tier-1" || tier === "Tier-2" || tier === "Tier-3") return TIER_RANK[tier];
-  return 0;
-}
 
 export interface FloorRule {
   readonly label: string;

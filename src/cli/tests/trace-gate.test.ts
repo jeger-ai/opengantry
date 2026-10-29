@@ -4,7 +4,6 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { verifyTraceRows } from "#missions/trace-quote.js";
-import { gatePassed } from "#missions/gate.js";
 import { parseOptionalTimeoutMs } from "../output/cli-io.js";
 
 test("verifyTraceRows: anchor line must contain quote", () => {
@@ -23,17 +22,6 @@ test("verifyTraceRows: anchor line must contain quote", () => {
   );
   assert.ok(bad.failures.length > 0);
 });
-
-test("gatePassed: exit code and substring rules", () => {
-  assert.equal(
-    gatePassed({ exitCode: 1, stdout: "", stderr: "", combined: "" }, null),
-    false,
-  );
-  assert.equal(gatePassed({ exitCode: 0, stdout: "x", stderr: "", combined: "x" }, null), true);
-  assert.equal(gatePassed({ exitCode: 0, stdout: "x", stderr: "", combined: "x" }, "y"), false);
-  assert.equal(gatePassed({ exitCode: 0, stdout: "ok", stderr: "", combined: "ok" }, "ok"), true);
-});
-
 
 test("verifyTraceRows: missing EXECUTOR_LOG", () => {
   const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-trace-miss-")), "nope.md");

@@ -154,8 +154,3 @@ export function startCaged(
   });
   return result;
 }
-
-/** Run the caged command to completion (no halt). */
-export async function spawnCaged(argv: readonly string[], cwd: string, extraEnv: NodeJS.ProcessEnv = {}): Promise<CageProcessResult> {
-  return startCaged(argv, cwd, extraEnv).done;
-}

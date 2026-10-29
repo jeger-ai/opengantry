@@ -4,9 +4,6 @@ import {
   blankComments,
   extractBindingsFromSnippet,
   extractImportSites,
-  extractImportSpecifiers,
-  extractImportsWithMeta,
-  stripRepairQuarantineRegions,
 } from "#core/import-scanner.js";
 
 test("extractBindingsFromSnippet: mixed default + named", () => {
@@ -18,25 +15,6 @@ test("extractBindingsFromSnippet: mixed default + named", () => {
 
 test("extractBindingsFromSnippet: named only", () => {
   assert.deepEqual(extractBindingsFromSnippet('import { a, b } from "m"'), ["a", "b"]);
-});
-
-test("extractImportsWithMeta: ignores quarantine regions when scrubbing", () => {
-  const source = [
-    "// GXT-SURGEON-QUARANTINE-START [RULE]",
-    'import { bad } from "../commands/verify.js";',
-    "// GXT-SURGEON-QUARANTINE-END",
-    'import { ok } from "./constants.js";',
-  ].join("\n");
-  const scrubbed = stripRepairQuarantineRegions(source);
-  assert.doesNotMatch(scrubbed, /verify\.js/);
-  const imports = extractImportsWithMeta(source, true);
-  assert.equal(imports.length, 1);
-  assert.equal(imports[0]!.spec, "./constants.js");
-});
-
-test("extractImportSpecifiers: collects export-from specifiers", () => {
-  const specs = extractImportSpecifiers('export { x } from "./foo.js";\nimport "side";\n');
-  assert.deepEqual(specs, ["./foo.js", "side"]);
 });
 
 test("blankComments: preserves strings and templates; blanks real comments", () => {
@@ -53,6 +31,6 @@ test("blankComments: preserves strings and templates; blanks real comments", () 
   assert.match(blanked, /\/\*not a comment\*\//);
   assert.match(blanked, /\/\/ still string/);
   assert.equal(extractImportSites(src).some((s) => s.spec === "commented-out"), false);
-  assert.ok(extractImportSpecifiers(src).includes("zod"));
-  assert.ok(extractImportSpecifiers(src).includes("keep"));
+  assert.ok(extractImportSites(src).some((s) => s.spec === "zod"));
+  assert.ok(extractImportSites(src).some((s) => s.spec === "keep"));
 });
