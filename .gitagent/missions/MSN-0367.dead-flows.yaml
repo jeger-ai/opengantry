@@ -1,0 +1,342 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0367]. Executor must not run until the [MSN-0367] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 3, mission B: remove the start orchestration flow, mission snapshot
+# and the source-rewriting repair behind verify --fix; sweep test-only exports.
+#
+# Operator request (2026-10-29, ADR-0061 phase 3 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0367.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0367
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/concepts/verify.md, docs/DEVELOPMENT.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0367.dead-flows.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0367.json,
+      packages/cage/src/cage-process.ts, packages/core/src/constants.ts,
+      packages/core/src/error-codes.ts, packages/core/src/import-scanner.ts,
+      packages/core/src/posix-path.ts, packages/core/tests/law-imports.test.ts,
+      packages/git/src/git-staged.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/atomic-fs.ts, packages/missions/src/break-glass.ts,
+      packages/missions/src/error-payloads.ts, packages/missions/src/gate.ts,
+      packages/missions/src/repair.ts, packages/missions/src/start-snapshot.ts,
+      packages/missions/src/substrate-write-guard.ts,
+      packages/missions/src/triage-logic.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/plane/src/policy-resolve.ts, src/cli/commands/mission.ts,
+      src/cli/doctor/repairs/import-layer.ts,
+      src/cli/doctor/repairs/quarantine-import.ts,
+      src/cli/doctor/repairs/registry.ts,
+      src/cli/doctor/repairs/typescript-workspace.ts,
+      src/cli/flows/start-orchestration.ts, src/cli/flows/verify-run.ts,
+      src/cli/init/init-tutorial.ts, src/cli/program-mission.ts,
+      src/cli/tests/context-request.test.ts,
+      src/cli/tests/gxt-error-codes.test.ts,
+      src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/repair-mutation-log.test.ts,
+      src/cli/tests/repairs-import-layer.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/start-snapshot.test.ts,
+      src/cli/tests/template-parity.test.ts, src/cli/tests/trace-gate.test.ts,
+      src/cli/tests/triage.test.ts, src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      test/conformance/cases.yaml,
+      test/conformance/golden/mission-snapshot.mission-pass.json. Deleted:
+      src/cli/flows/start-orchestration.ts,
+      packages/missions/src/start-snapshot.ts, src/cli/doctor/repairs/*, their
+      tests, the mission snapshot golden. Changed: init tutorial (legislate
+      directly), mission command and registration, the CLI verify run (no repair
+      loop) and presenters, missions repair, interrogation and error payloads,
+      core import scanner (no quarantine stripping), constants, git and plane
+      helpers (test-only exports removed), triage logic, registries (commands:
+      mission snapshot), conformance cases, tests, docs (verify concept,
+      DEVELOPMENT, first mission, README, CHANGELOG), ARCH_BASELINE.json
+      lowered. Operator decisions (2026-10-29, ADR-0061 phase 3): mission
+      snapshot is removed; verify --fix stops rewriting source while keeping its
+      interactive prompts and fix hints. As built: the tutorial calls
+      runLegislate, which already runs the interrogation, so its behaviour and
+      prompts are unchanged; verify --fix --non-interactive now prints what
+      plain verify prints, and interactive --fix keeps the hint picker;
+      repositories that still carry quarantine blocks from the old repair have
+      those regions scanned again, and the upgrade notes say to remove them. The
+      mission has no trace rows: its evidence is .gitagent/runs/MSN-0367.json
+      written by gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Deleted tests covered only deleted repair, snapshot and
+      orchestration code; a kept test proves verify --fix --non-interactive
+      leaves source unchanged and still prints a fix hint.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with a named output change:
+      mission-snapshot.mission-pass is deleted with its command. There was no
+      verify --fix case; every other golden is unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: aab21d893f9c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/verify.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0367.dead-flows.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0367.json,
+      packages/cage/src/cage-process.ts, packages/core/src/constants.ts,
+      packages/core/src/error-codes.ts, packages/core/src/import-scanner.ts,
+      packages/core/src/posix-path.ts, packages/core/tests/law-imports.test.ts,
+      packages/git/src/git-staged.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/atomic-fs.ts, packages/missions/src/break-glass.ts,
+      packages/missions/src/error-payloads.ts, packages/missions/src/gate.ts,
+      packages/missions/src/repair.ts, packages/missions/src/start-snapshot.ts,
+      packages/missions/src/substrate-write-guard.ts,
+      packages/missions/src/triage-logic.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/plane/src/policy-resolve.ts, src/cli/commands/mission.ts,
+      src/cli/doctor/repairs/import-layer.ts,
+      src/cli/doctor/repairs/quarantine-import.ts,
+      src/cli/doctor/repairs/registry.ts,
+      src/cli/doctor/repairs/typescript-workspace.ts,
+      src/cli/flows/start-orchestration.ts, src/cli/flows/verify-run.ts,
+      src/cli/init/init-tutorial.ts, src/cli/program-mission.ts,
+      src/cli/tests/context-request.test.ts,
+      src/cli/tests/gxt-error-codes.test.ts,
+      src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/repair-mutation-log.test.ts,
+      src/cli/tests/repairs-import-layer.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/start-snapshot.test.ts,
+      src/cli/tests/template-parity.test.ts, src/cli/tests/trace-gate.test.ts,
+      src/cli/tests/triage.test.ts, src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      test/conformance/cases.yaml,
+      test/conformance/golden/mission-snapshot.mission-pass.json. Deleted:
+      src/cli/flows/start-orchestration.ts,
+      packages/missions/src/start-snapshot.ts, src/cli/doctor/repairs/*, their
+      tests, the mission snapshot golden. Changed: init tutorial (legislate
+      directly), mission command and registration, the CLI verify run (no repair
+      loop) and presenters, missions repair, interrogation and error payloads,
+      core import scanner (no quarantine stripping), constants, git and plane
+      helpers (test-only exports removed), triage logic, registries (commands:
+      mission snapshot), conformance cases, tests, docs (verify concept,
+      DEVELOPMENT, first mission, README, CHANGELOG), ARCH_BASELINE.json
+      lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: af1653188c8b
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/verify.md, docs/DEVELOPMENT.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0367.dead-flows.yaml,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0367.json,
+      packages/cage/src/cage-process.ts, packages/core/src/constants.ts,
+      packages/core/src/error-codes.ts, packages/core/src/import-scanner.ts,
+      packages/core/src/posix-path.ts, packages/core/tests/law-imports.test.ts,
+      packages/git/src/git-staged.ts,
+      packages/missions/src/arch/target-architecture.ts,
+      packages/missions/src/atomic-fs.ts, packages/missions/src/break-glass.ts,
+      packages/missions/src/error-payloads.ts, packages/missions/src/gate.ts,
+      packages/missions/src/repair.ts, packages/missions/src/start-snapshot.ts,
+      packages/missions/src/substrate-write-guard.ts,
+      packages/missions/src/triage-logic.ts,
+      packages/missions/src/upgrade/upgrade-plan-catalog.ts,
+      packages/plane/src/policy-resolve.ts, src/cli/commands/mission.ts,
+      src/cli/doctor/repairs/import-layer.ts,
+      src/cli/doctor/repairs/quarantine-import.ts,
+      src/cli/doctor/repairs/registry.ts,
+      src/cli/doctor/repairs/typescript-workspace.ts,
+      src/cli/flows/start-orchestration.ts, src/cli/flows/verify-run.ts,
+      src/cli/init/init-tutorial.ts, src/cli/program-mission.ts,
+      src/cli/tests/context-request.test.ts,
+      src/cli/tests/gxt-error-codes.test.ts,
+      src/cli/tests/import-scanner.test.ts,
+      src/cli/tests/mcp-write-guard.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/quarantine-import.test.ts,
+      src/cli/tests/repair-mutation-log.test.ts,
+      src/cli/tests/repairs-import-layer.test.ts,
+      src/cli/tests/repairs-registry.test.ts,
+      src/cli/tests/start-snapshot.test.ts,
+      src/cli/tests/template-parity.test.ts, src/cli/tests/trace-gate.test.ts,
+      src/cli/tests/triage.test.ts, src/cli/tests/verify-break-glass.test.ts,
+      src/cli/tests/verify-repair.test.ts, src/cli/tests/verify-run.test.ts,
+      test/conformance/cases.yaml,
+      test/conformance/golden/mission-snapshot.mission-pass.json. Deleted:
+      src/cli/flows/start-orchestration.ts,
+      packages/missions/src/start-snapshot.ts, src/cli/doctor/repairs/*, their
+      tests, the mission snapshot golden. Changed: init tutorial (legislate
+      directly), mission command and registration, the CLI verify run (no repair
+      loop) and presenters, missions repair, interrogation and error payloads,
+      core import scanner (no quarantine stripping), constants, git and plane
+      helpers (test-only exports removed), triage logic, registries (commands:
+      mission snapshot), conformance cases, tests, docs (verify concept,
+      DEVELOPMENT, first mission, README, CHANGELOG), ARCH_BASELINE.json
+      lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission is phase 3, mission B, of ADR-0061.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+interrogation_sha256: 64288aa7621706a31afe1e50d5f8946b1eccb5d0ba1674208366ac91c940e940
+declared_paths:
+  - .gitagent/missions/MSN-0367.dead-flows.yaml
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0367.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/concepts/verify.md
+  - packages/cage/src/cage-process.ts
+  - packages/core/src/constants.ts
+  - packages/core/src/error-codes.ts
+  - packages/core/src/import-scanner.ts
+  - packages/core/src/posix-path.ts
+  - packages/core/tests/law-imports.test.ts
+  - packages/git/src/git-staged.ts
+  - packages/missions/src/arch/target-architecture.ts
+  - packages/missions/src/atomic-fs.ts
+  - packages/missions/src/break-glass.ts
+  - packages/missions/src/error-payloads.ts
+  - packages/missions/src/gate.ts
+  - packages/missions/src/repair.ts
+  - packages/missions/src/start-snapshot.ts
+  - packages/missions/src/substrate-write-guard.ts
+  - packages/missions/src/triage-logic.ts
+  - packages/missions/src/upgrade/upgrade-plan-catalog.ts
+  - packages/plane/src/policy-resolve.ts
+  - src/cli/commands/mission.ts
+  - src/cli/doctor/repairs/import-layer.ts
+  - src/cli/doctor/repairs/quarantine-import.ts
+  - src/cli/doctor/repairs/registry.ts
+  - src/cli/doctor/repairs/typescript-workspace.ts
+  - src/cli/flows/start-orchestration.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/init/init-tutorial.ts
+  - src/cli/program-mission.ts
+  - src/cli/tests/context-request.test.ts
+  - src/cli/tests/gxt-error-codes.test.ts
+  - src/cli/tests/import-scanner.test.ts
+  - src/cli/tests/mcp-write-guard.test.ts
+  - src/cli/tests/policy-resolve.test.ts
+  - src/cli/tests/quarantine-import.test.ts
+  - src/cli/tests/repair-mutation-log.test.ts
+  - src/cli/tests/repairs-import-layer.test.ts
+  - src/cli/tests/repairs-registry.test.ts
+  - src/cli/tests/start-snapshot.test.ts
+  - src/cli/tests/template-parity.test.ts
+  - src/cli/tests/trace-gate.test.ts
+  - src/cli/tests/triage.test.ts
+  - src/cli/tests/verify-break-glass.test.ts
+  - src/cli/tests/verify-repair.test.ts
+  - src/cli/tests/verify-run.test.ts
+  - test/conformance/cases.yaml
+  - test/conformance/golden/mission-snapshot.mission-pass.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0367.dead-flows.yaml
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0367.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/concepts/verify.md
+    - packages/cage/src/cage-process.ts
+    - packages/core/src/constants.ts
+    - packages/core/src/error-codes.ts
+    - packages/core/src/import-scanner.ts
+    - packages/core/src/posix-path.ts
+    - packages/core/tests/law-imports.test.ts
+    - packages/git/src/git-staged.ts
+    - packages/missions/src/arch/target-architecture.ts
+    - packages/missions/src/atomic-fs.ts
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/error-payloads.ts
+    - packages/missions/src/gate.ts
+    - packages/missions/src/repair.ts
+    - packages/missions/src/start-snapshot.ts
+    - packages/missions/src/substrate-write-guard.ts
+    - packages/missions/src/triage-logic.ts
+    - packages/missions/src/upgrade/upgrade-plan-catalog.ts
+    - packages/plane/src/policy-resolve.ts
+    - src/cli/commands/mission.ts
+    - src/cli/doctor/repairs/import-layer.ts
+    - src/cli/doctor/repairs/quarantine-import.ts
+    - src/cli/doctor/repairs/registry.ts
+    - src/cli/doctor/repairs/typescript-workspace.ts
+    - src/cli/flows/start-orchestration.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/init/init-tutorial.ts
+    - src/cli/program-mission.ts
+    - src/cli/tests/context-request.test.ts
+    - src/cli/tests/gxt-error-codes.test.ts
+    - src/cli/tests/import-scanner.test.ts
+    - src/cli/tests/mcp-write-guard.test.ts
+    - src/cli/tests/policy-resolve.test.ts
+    - src/cli/tests/quarantine-import.test.ts
+    - src/cli/tests/repair-mutation-log.test.ts
+    - src/cli/tests/repairs-import-layer.test.ts
+    - src/cli/tests/repairs-registry.test.ts
+    - src/cli/tests/start-snapshot.test.ts
+    - src/cli/tests/template-parity.test.ts
+    - src/cli/tests/trace-gate.test.ts
+    - src/cli/tests/triage.test.ts
+    - src/cli/tests/verify-break-glass.test.ts
+    - src/cli/tests/verify-repair.test.ts
+    - src/cli/tests/verify-run.test.ts
+    - test/conformance/cases.yaml
+    - test/conformance/golden/mission-snapshot.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 298dc8f4a65246673f8e2912a59d293f06300927675fbe65051793f2a7555f0f
