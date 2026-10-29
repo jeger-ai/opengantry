@@ -77,3 +77,7 @@ CI template: after envelope export, `gantry ledger append --from-envelope` and `
 - CLI implementation is a follow-on `gantry`-skill mission.
 - Plane ledger import is out of scope (Hub consumes envelopes; this ref is spoke-distributable).
 - `gantry ledger push|fetch` are thin wrappers around `git push` / `git fetch` of `refs/gxt/ledger`.
+
+## Amendment (ADR-0061)
+
+Amended by [ADR-0061](ADR-0061-simplify-before-4-0.md): the org pepper is gone, so entries no longer carry `org_id` or `repository_hash` and append needs no org configuration (pre-4.0 entries that carry them still verify); dependency checks are no longer appended as `dependency_check` entries.

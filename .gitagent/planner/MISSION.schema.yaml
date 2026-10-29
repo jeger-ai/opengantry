@@ -200,9 +200,6 @@ properties:
               type: number
               exclusiveMinimum: 0
           additionalProperties: false
-        expected_repository_hash:
-          type: string
-          pattern: ^[0-9a-f]{64}$
       required:
         - repo
         - msn_id

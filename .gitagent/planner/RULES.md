@@ -77,7 +77,7 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 ## 9. Compliance ledger (v3.3.0)
 
-- When `.gitagent/config.yaml` `ledger.mode` is `local`, verify, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)). A passing verify appends a `receipt` entry `{verify_status: passed, run_record_sha256}`; the digest (sha256 of the canonical record) names the mission's run record when it has one. Pre-4.0 receipt payloads stay valid in the chain.
+- When `.gitagent/config.yaml` `ledger.mode` is `local`, verify, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)). A passing verify appends a `receipt` entry `{verify_status: passed, run_record_sha256}`; the digest (sha256 of the canonical record) names the mission's run record when it has one. Entries carry no org id or repository hash, so append needs no org configuration; dependency checks are reported by verify, not appended. Pre-4.0 entries, with their org fields and payloads, stay valid in the chain.
 - Append MUST use compare-and-swap `git update-ref` with bounded retries and jitter. Exhaustion MUST fail closed (`GXT_LEDGER_CAS_EXHAUSTED`) so parallel CI jobs never fork the chain.
 - Unsigned ledger entries are checksums, not proofs. `ledger.signature` `require` demands `git commit -S`.
 - A break-glass bypass with no `break_glass` ledger row is a failed control ([ADR-0021](../out-of-scope/ADR-0021-break-glass-protocol.md)).
@@ -87,5 +87,5 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 
 - Optional mission `depends_on[]` is resolved **offline** from fetched `refs/gxt/deps/<slug>` ([ADR-0044](../out-of-scope/ADR-0044-cross-repo-mission-dependencies.md)).
 - **`gantry deps fetch`** is the only network path. Verify's `dependencies` phase, `gantry deps check`, and doctor MUST NOT fetch.
-- Same-org proof: recompute `repository_hash` for `depends_on.repo` with the consumer's `GANTRY_ORG_PEPPER` and require equality with the entry. Mismatch → `GXT_DEPENDENCY_ORG_MISMATCH`.
+- Fetch access to the dependency's ledger ref shows read access to that ref, not organization membership or authorization; when the producer's identity matters, set `require.signed`. `require.signed` means the receipt entry's commit carries a good signature from a key the consumer repository trusts (`%G?` is `G`); unsigned or unverifiable is `GXT_DEPENDENCY_UNSIGNED`.
 - Unfetched, unsatisfied, unsigned (when required), or stale entries MUST fail closed (`GXT_DEPENDENCY_*`). Cross-repo *trigger* (workflow dispatch) is advisory glue, not enforcement.

@@ -39,7 +39,6 @@ Before 4.0 these were `GXT_*` names (`GXT_REPO_ROOT`, `GXT_MISSION_FILE`, …); 
 | `GANTRY_TMVC_GUARD_STRICT` | `1` makes the pre-commit scope check block instead of warn |
 | `GANTRY_MSN_SCAN_DEPTH` | How many commits verify scans for the Planner commit (default 200) |
 | `GANTRY_BYPASS_SECRET` | The break-glass secret, matched against `.gitagent/foreman/BYPASS.sha256` ([Break-glass](break-glass.md)) |
-| `GANTRY_ORG_ID`, `GANTRY_ORG_PEPPER`, `GANTRY_ORG_PEPPER_VERSION` | Organization identity and pepper for the ledger and same-org dependency proofs |
 
 ## Set by the cage
 

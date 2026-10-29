@@ -15,7 +15,7 @@ Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.git
 | **core** (package) | `packages/core/src/**` | pure domain: the path law (`PathLaw`, `judgePath`, `tightenPathLaw`), the import discipline (`Law`, `evaluateImportSite`, `ArchLaw`, `evaluateLayerImport`), the import scanner and specifier classifier, the run record and trusted-automation evaluators, the mission, contract and config types, the zod schemas, canonical JSON, exit and error codes | `zod`, `yaml` |
 | **git** (package) | `packages/git/src/**` | the single git adapter (`gitRun`, staged index); imports core only |
 | **cage** (package) | `packages/cage/src/**` | the cage runtime: check, watch, session, suggest, push guard; imports core and git only |
-| **plane** (package) | `packages/plane/src/**` | the org plane: policy pointer, bundle and floor, ledger chain and append, cross-repository dependency checks, the export envelope, attribution; imports core and git only; identity, config and logging come in as parameters |
+| **plane** (package) | `packages/plane/src/**` | the org plane: policy pointer, bundle and floor, ledger chain and append, cross-repository dependency checks, the export envelope; imports core and git only; identity, config and logging come in as parameters |
 | **CLI delivery** | `src/cli/index.ts`, `src/cli/program*.ts`, `src/cli/commands/**` | argv, stdin, exit codes, human output |
 | **Application** | `*orchestrator*.ts`, `commands/*` orchestration | compose domain steps into use-cases |
 | **Domain** | `mission-*.ts`, `trace.ts`, `triage-logic.ts`, `git-proof.ts`, `gate.ts`, `manifest.ts`, … | policy and pure rules |

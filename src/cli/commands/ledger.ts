@@ -20,7 +20,7 @@ export function runLedgerAppend(opts: {
   runUserCommand({ json: opts.json }, () => {
     const { root } = loadWorkspace();
     let msnId = msnIdOrDefault(undefined);
-    let payload: ReceiptLedgerPayload = { source: "manual", verify_status: "passed", signed: false };
+    let payload: ReceiptLedgerPayload = { source: "manual", verify_status: "passed" };
     if (opts.mission) {
       const resolved = resolveMissionArg(root, opts.mission);
       const mission = parseMissionFile(root, resolved.missionRel);

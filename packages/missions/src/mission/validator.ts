@@ -13,6 +13,12 @@ export function assertMissionSchemaValid(_root: string, data: unknown, filePath:
       `${GXT_ERROR.MISSION_SCHEMA_INVALID}: gantry mission: ${filePath}: ${removed.join(", ")} ${removed.length === 1 ? "was" : "were"} removed in 4.0 (ADR-0061); run the producer as the gate_command or a verify contract check instead`,
     );
   }
+  const deps = data !== null && typeof data === "object" && "depends_on" in data ? data.depends_on : undefined;
+  if (Array.isArray(deps) && deps.some((d: unknown) => d !== null && typeof d === "object" && "expected_repository_hash" in d)) {
+    throw new Error(
+      `${GXT_ERROR.MISSION_SCHEMA_INVALID}: gantry mission: ${filePath}: depends_on[].expected_repository_hash was removed in 4.0 (ADR-0061); fetch access to the dependency's ledger is the same-org proof`,
+    );
+  }
   const result = missionSchema.safeParse(data);
   if (result.success) return;
   throw new Error(

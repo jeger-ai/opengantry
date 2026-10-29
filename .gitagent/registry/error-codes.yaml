@@ -76,9 +76,6 @@ entries:
   - name: GXT_DEFENSIVE_GUARD_FAILED
     since: MSN-0097
     defined_in: packages/core/src/error-codes.ts
-  - name: GXT_DEPENDENCY_ORG_MISMATCH
-    since: MSN-0200
-    defined_in: packages/core/src/error-codes.ts
   - name: GXT_DEPENDENCY_STALE
     since: MSN-0200
     defined_in: packages/core/src/error-codes.ts

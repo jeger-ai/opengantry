@@ -5,9 +5,7 @@ import {
   resolveOrgPolicy,
   type OrgPolicyResolveResult,
 } from "#plane/policy-resolve.js";
-import { checkAndRecordMissionDependencies } from "../deps/deps-resolve.js";
-import { ledgerFailureLine } from "../ledger/ledger-append.js";
-import { type DependencyCheckResult } from "#plane/deps-resolve.js";
+import { checkMissionDependencies, type DependencyCheckResult } from "#plane/deps-resolve.js";
 import { localConfigFloor } from "../gxt-config.js";
 import type { CodedFailure } from "./failure.js";
 import { verifyFinding } from "./finding.js";
@@ -16,7 +14,7 @@ import type { PhaseContext } from "./phase-steps.js";
 type PolicyPhaseOutcome = { kind: "ok" } | { kind: "fail"; failure: CodedFailure<"policy"> };
 
 type DependenciesPhaseOutcome =
-  | { kind: "ok"; warnings: string[] }
+  | { kind: "ok" }
   | { kind: "fail"; failure: CodedFailure<"dependencies"> };
 
 function policyFailure(input: PhaseContext, code: GxtErrorCode, message: string): CodedFailure<"policy"> {
@@ -56,12 +54,11 @@ export function evaluatePolicyPhase(
 }
 
 export function evaluateDependenciesPhase(input: PhaseContext): DependenciesPhaseOutcome {
-  const { results, ledger } = checkAndRecordMissionDependencies(input.root, input.mission);
-  const failed = results.find(
+  const failed = checkMissionDependencies(input.root, input.mission).find(
     (r): r is Extract<DependencyCheckResult, { code: Exclude<DependencyCheckResult["code"], "ok"> }> =>
       r.code !== "ok",
   );
-  if (!failed) return { kind: "ok", warnings: ledger ? [ledgerFailureLine(ledger)].filter((w): w is string => w !== null) : [] };
+  if (!failed) return { kind: "ok" };
   return {
     kind: "fail",
     failure: {

@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { appendEventSpool } from "./event-spool.js";
 
 interface TelemetryContext {
   flight_id: string;
@@ -42,7 +41,6 @@ export function createTelemetryWriter(
   executorLogPath: string,
   context: TelemetryContext,
   append: boolean,
-  repoRoot?: string,
 ): TelemetryWriter {
   const dir = path.dirname(executorLogPath);
   fs.mkdirSync(dir, { recursive: true });
@@ -74,17 +72,6 @@ export function createTelemetryWriter(
         line_sha256: lineHash(lineBody),
       });
       writeLine(fd, envelope);
-      if (repoRoot && context.msn_id) {
-        try {
-          appendEventSpool(repoRoot, {
-            event_type: String(event.type ?? "telemetry"),
-            msn_id: context.msn_id,
-            payload: payload as unknown as Record<string, unknown>,
-          });
-        } catch {
-          // spool is best-effort
-        }
-      }
     },
     close() {
       writeLine(fd, "```");

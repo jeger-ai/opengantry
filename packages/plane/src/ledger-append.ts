@@ -2,8 +2,6 @@ import path from "node:path";
 import { GantryUserError } from "#core/user-error.js";
 import { gitRevParse } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { resolveOrgExportConfig } from "./org-export-config.js";
-import { resolveRepositoryHash } from "./receipt-attribution.js";
 import {
   buildLedgerEntry,
   entryHash,
@@ -33,7 +31,6 @@ export function appendLedgerEntry<K extends LedgerEntryKind>(
   },
 ): Extract<LedgerEntry, { entry_kind: K }> {
   const abs = path.resolve(root);
-  const org = resolveOrgExportConfig(abs);
   const sign = input.sign;
   for (let attempt = 0; attempt < LEDGER_CAS_MAX_ATTEMPTS; attempt++) {
     const tip = readLedgerTip(abs);
@@ -53,8 +50,6 @@ export function appendLedgerEntry<K extends LedgerEntryKind>(
     }
     const entry = buildLedgerEntry({
       kind: input.kind,
-      org_id: org.org_id,
-      repository_hash: resolveRepositoryHash(abs, org),
       msn_id: input.msn_id,
       git_head: gitRevParse(abs, "HEAD") ?? "no-head",
       payload: input.payload,

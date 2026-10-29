@@ -8,15 +8,22 @@
     ".gitagent/missions/m-MSN-0101.yaml",
     "--json"
   ],
-  "exit": 2,
+  "exit": 0,
   "stdout": {
-    "status": "failed",
-    "error_code": "GXT_VERIFY_FAILED",
-    "message": "org_id required (GANTRY_ORG_ID or ORG.export.local org_id)",
-    "fix_hints": [
-      "create .gitagent/foreman/ORG.export.local or set GANTRY_ORG_ID"
-    ],
-    "exit_code": 2
+    "status": "ok",
+    "entry": {
+      "schema_version": "1.0.0",
+      "entry_kind": "receipt",
+      "msn_id": "MSN-0101",
+      "git_head": "<SHA>",
+      "payload_sha256": "<SHA256>",
+      "payload": {
+        "source": "manual",
+        "verify_status": "passed"
+      },
+      "prev_entry_hash": "<SHA256>",
+      "issued_at": "<TS>"
+    }
   },
   "stderr_codes": []
 }

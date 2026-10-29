@@ -1,6 +1,5 @@
 import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { canonicalizeRepositoryIdentifier } from "./receipt-attribution.js";
 
 const SAFE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SAFE_DEPS_REF = /^refs\/gxt\/deps\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -8,6 +7,13 @@ const SAFE_SRC_REF = /^refs\/[A-Za-z0-9._/-]+$/;
 const SAFE_HTTPS_GIT = /^https:\/\/[a-z0-9.-]+(?:\/[a-z0-9._-]+)+\.git$/;
 const SAFE_SSH_GIT = /^git@[a-z0-9.-]+:[a-z0-9._/-]+(?:\.git)?$/;
 const SAFE_LOCAL_GIT = /^\/[A-Za-z0-9._/-]+$/;
+
+/** host/owner/repo, lowercased: the https:// or git@host: prefix and .git are stripped. */
+function canonicalRepo(raw: string): string {
+  const id = raw.trim().toLowerCase();
+  const hostPath = id.startsWith("git@") && id.includes(":") ? id.slice(4).replace(":", "/") : id.replace(/^https?:\/\//, "");
+  return hostPath.replace(/\.git$/, "");
+}
 
 function rejectRepo(repo: string, detail: string): never {
   throw new GantryUserError(
@@ -24,7 +30,7 @@ function allow(value: string, re: RegExp, repo: string, detail: string): string 
 }
 
 export function depsSlug(repo: string): string {
-  const slug = canonicalizeRepositoryIdentifier(repo)
+  const slug = canonicalRepo(repo)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   return allow(slug, SAFE_SLUG, repo, "slug");
@@ -40,7 +46,7 @@ export function gitUrlForRepo(repo: string): string {
   const url =
     raw.includes("://") || raw.startsWith("git@") || raw.startsWith("/")
       ? raw
-      : `https://${canonicalizeRepositoryIdentifier(raw)}.git`;
+      : `https://${canonicalRepo(raw)}.git`;
   if (SAFE_HTTPS_GIT.test(url) || SAFE_SSH_GIT.test(url) || SAFE_LOCAL_GIT.test(url)) {
     return url;
   }

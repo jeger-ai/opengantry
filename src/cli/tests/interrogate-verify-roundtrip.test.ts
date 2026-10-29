@@ -12,7 +12,7 @@ import { runInterrogate } from "#missions/interrogate/run.js";
 import { loadManifest } from "#missions/manifest.js";
 import { parseMissionFile } from "#missions/mission/parser.js";
 import { evaluateInterrogationPhase } from "#missions/mission-verify/interrogation.js";
-import { copyMissionSchema, writeOrgExportConfig } from "./test-fixtures.js";
+import { copyMissionSchema } from "./test-fixtures.js";
 
 function scaffoldGantryLegislateRepo(): string {
   const ogRoot = getRepoRoot();
@@ -30,7 +30,6 @@ function scaffoldGantryLegislateRepo(): string {
   execSync('git config user.name "Fixture"', { cwd: dest, stdio: "pipe" });
   execSync("git add -A", { cwd: dest, stdio: "pipe" });
   execSync('git commit -m "init"', { cwd: dest, stdio: "pipe" });
-  writeOrgExportConfig(dest);
   return dest;
 }
 

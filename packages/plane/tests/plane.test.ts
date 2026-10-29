@@ -7,12 +7,11 @@ import { RUN_RECORD_SCHEMA, type RunRecord } from "#core/run-record.js";
 import { readExportEnvelope, writeExportEnvelope } from "../src/ledger-export.js";
 import { buildLedgerEntry, entryHash, genesisPrevHash } from "../src/ledger-entry.js";
 import { depsRefForRepo, depsSlug, gitUrlForRepo } from "../src/deps-slug.js";
-import { canonicalizeRepositoryIdentifier, hmacSha256Hex } from "../src/receipt-attribution.js";
 import { configFloorViolations } from "../src/policy-resolve.js";
 
 test("ledger entries chain by canonical hash from the genesis prev hash", () => {
-  const first = buildLedgerEntry({ kind: "receipt", org_id: "o", repository_hash: "r", msn_id: "MSN-0001", git_head: "h", payload: { verify_status: "passed" }, prev_entry_hash: genesisPrevHash(), issued_at: "2026-01-01T00:00:00Z" });
-  const second = buildLedgerEntry({ kind: "break_glass", org_id: "o", repository_hash: "r", msn_id: "MSN-0001", git_head: "h", payload: { reason_sha256: "x", error_code: "E" }, prev_entry_hash: entryHash(first), issued_at: "2026-01-01T00:00:01Z" });
+  const first = buildLedgerEntry({ kind: "receipt", msn_id: "MSN-0001", git_head: "h", payload: { verify_status: "passed" }, prev_entry_hash: genesisPrevHash(), issued_at: "2026-01-01T00:00:00Z" });
+  const second = buildLedgerEntry({ kind: "break_glass", msn_id: "MSN-0001", git_head: "h", payload: { reason_sha256: "x", error_code: "E" }, prev_entry_hash: entryHash(first), issued_at: "2026-01-01T00:00:01Z" });
   assert.equal(second.prev_entry_hash, entryHash(first));
   assert.equal(first.payload_sha256.length, 64);
 });
@@ -22,11 +21,6 @@ test("dependency slugs and refs are canonical and safe", () => {
   assert.equal(depsRefForRepo("github.com/jeger-ai/opengantry"), "refs/gxt/deps/github-com-jeger-ai-opengantry");
   assert.equal(gitUrlForRepo("github.com/jeger-ai/opengantry"), "https://github.com/jeger-ai/opengantry.git");
   assert.throws(() => gitUrlForRepo("https://evil.example/x;rm -rf /"), /unsafe repository identifier/);
-});
-
-test("attribution: canonical repository ids and keyed digests", () => {
-  assert.equal(canonicalizeRepositoryIdentifier("https://GitHub.com/Org/Repo.git"), "github.com/org/repo");
-  assert.equal(hmacSha256Hex("pepper", "x"), hmacSha256Hex("pepper", "x"));
 });
 
 test("policy floor: the org floor may only tighten the local config", () => {
