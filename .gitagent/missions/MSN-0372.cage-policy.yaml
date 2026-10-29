@@ -1,0 +1,269 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0372]. Executor must not run until the [MSN-0372] legislation commit + pin.
+#
+# Legislated intent: 4.1 feature gantry cage policy --agent claude-code (ADR-0060): the cage's law as Claude Code
+# sandbox and permission settings, printed for review, never merged silently.
+#
+# Operator request (2026-10-29, continue with the next steps: 4.1). No trace rows: the evidence is
+# .gitagent/runs/MSN-0372.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0372
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: docs/cage/index.md,
+      docs/cage/policy.md, docs/CHANGELOG.md, docs/reference/release-notes.md,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0372.cage-policy.yaml,
+      .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0372.json, packages/cage/src/cage-suggest.ts,
+      packages/core/src/law-file.ts, packages/core/src/path-law.ts,
+      packages/core/src/secret-paths.ts, README.md, src/cli/commands/cage.ts,
+      src/cli/program-cage.ts, src/cli/tests/cage-policy.test.ts,
+      src/cli/tests/cage-suggest.test.ts, test/conformance/cases.yaml,
+      test/conformance/golden/cage-policy.contract-standalone.json,
+      test/conformance/spawning-tests.yaml. Changed:
+      packages/cage/src/cage-suggest.ts (cageAgentPolicy generator beside
+      suggest, shared setup-file writer and session refusal),
+      packages/core/src/secret-paths.ts (the secret lists exported, not copied),
+      packages/core/src/path-law.ts and law-file.ts (two unused exports made
+      private to keep the export budget), src/cli/commands/cage.ts
+      (runCagePolicyCommand; the contract is parsed in the CLI because cage may
+      not import verify), src/cli/program-cage.ts (one subcommand table),
+      registry entries (cage policy command, three GXT_CAGE_POLICY_* codes),
+      tests (cage-policy.test.ts new, cage-suggest.test.ts adjusted), the
+      conformance case cage-policy.contract-standalone with its golden and the
+      spawning-tests list, docs (cage/policy.md new, cage/index.md, README,
+      CHANGELOG, release notes), ADR-0060 decision 2 amended. No budget raised;
+      versions unchanged. Operator decision (2026-10-29): continue with 4.1
+      after the 4.0.1 release, starting with gantry cage policy as ADR-0060
+      decided. Verified against the current Claude Code settings, sandboxing and
+      permissions docs: Write(path) rules never match, so writes are denied with
+      Edit(...); file tools obey permission rules and Bash obeys the sandbox, so
+      every path is denied in both; credentials are sandbox.credentials.files
+      {path, mode: deny} (mask needs TLS termination); sandbox.network and
+      allowWrite scope narrowing are left out of the first version (ADR-0060
+      decision 3); .git/config stays readable in the sandbox because git reads
+      it, its Read rule keeps it from the model; the fragment is stricter than
+      the cage for .env.example because a deny cannot be carved out. Releasing
+      4.1.0 needs the operator. The mission has no trace rows: its evidence is
+      .gitagent/runs/MSN-0372.json written by gantry verify --record (RULES
+      §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 1fabdeffaa6e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0056. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0056 before
+      legislation proceeds.
+    operator_answer: Accept. The read guard's secret list is the source of the Read
+      denies and sandbox denyRead; the list is exported from core, not copied.
+    adr_refs:
+      - ADR-0052
+      - ADR-0056
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; this mission touches neither the plane nor ingestion,
+      the overlap is the word CI in the cage's protected paths.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept. The trust model stands: the cage still restores and
+      works with any agent; the generated policy only reduces what reaches it."
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 73819ea960c6
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: docs/cage/index.md, docs/cage/policy.md,
+      docs/CHANGELOG.md, docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0372.cage-policy.yaml,
+      .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/error-codes.yaml,
+      .gitagent/runs/MSN-0372.json, packages/cage/src/cage-suggest.ts,
+      packages/core/src/law-file.ts, packages/core/src/path-law.ts,
+      packages/core/src/secret-paths.ts, README.md, src/cli/commands/cage.ts,
+      src/cli/program-cage.ts, src/cli/tests/cage-policy.test.ts,
+      src/cli/tests/cage-suggest.test.ts, test/conformance/cases.yaml,
+      test/conformance/golden/cage-policy.contract-standalone.json,
+      test/conformance/spawning-tests.yaml. Changed:
+      packages/cage/src/cage-suggest.ts (cageAgentPolicy generator beside
+      suggest, shared setup-file writer and session refusal),
+      packages/core/src/secret-paths.ts (the secret lists exported, not copied),
+      packages/core/src/path-law.ts and law-file.ts (two unused exports made
+      private to keep the export budget), src/cli/commands/cage.ts
+      (runCagePolicyCommand; the contract is parsed in the CLI because cage may
+      not import verify), src/cli/program-cage.ts (one subcommand table),
+      registry entries (cage policy command, three GXT_CAGE_POLICY_* codes),
+      tests (cage-policy.test.ts new, cage-suggest.test.ts adjusted), the
+      conformance case cage-policy.contract-standalone with its golden and the
+      spawning-tests list, docs (cage/policy.md new, cage/index.md, README,
+      CHANGELOG, release notes), ADR-0060 decision 2 amended. No budget raised;
+      versions unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Test integrity rules are unchanged; this
+      mission adds tests for the new command and weakens none
+      (cage-suggest.test.ts only switches to the shared subcommand helper).
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with one named output change: the new conformance case
+      cage-policy.contract-standalone and its golden; no other golden changes."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: "Accept. Paths come from the one path law: the plan's deny
+      rules and core's secret patterns, translated to Claude Code syntax only at
+      the output."
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept. This mission implements decision 2 for Claude Code
+      (decisions 1, 5 and 6 hold: no OpenGantry sandbox, the cage stays on, the
+      fragment is printed for review and deterministic). Decision 2 is amended
+      in place to the verified settings schema: Edit(...) covers Write,
+      credentials as {path, mode: deny}, network omitted in the first version.
+      Decision 3 (scope narrowing) and 4 (Codex) are not part of this mission."
+    adr_refs:
+      - ADR-0052
+      - ADR-0060
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept. The standalone verify contract is read as written
+      (parseVerifyContract); only scope.forbidden_paths is used, and a path that
+      is not root-relative is refused (GXT_CAGE_POLICY_INVALID).
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. Planner-sealed contracts are unchanged; cage policy
+      only reads a verify contract's forbidden_paths as extra write denies and
+      never edits a mission or contract.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. Humans write YAML, machines write JSON: the generated
+      fragment is JSON because Claude Code's settings are JSON; the inputs
+      (.cage.yaml, verify.yaml, MANIFEST.yaml) stay YAML."
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 6aeeb1770dbab1f30d5fb02562cd03450b147f4ccf3522343d1f0546905f61b0
+declared_paths:
+  - .gitagent/missions/MSN-0372.cage-policy.yaml
+  - .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0372.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/cage/index.md
+  - docs/cage/policy.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/core/src/law-file.ts
+  - packages/core/src/path-law.ts
+  - packages/core/src/secret-paths.ts
+  - src/cli/commands/cage.ts
+  - src/cli/program-cage.ts
+  - src/cli/tests/cage-policy.test.ts
+  - src/cli/tests/cage-suggest.test.ts
+  - test/conformance/cases.yaml
+  - test/conformance/golden/cage-policy.contract-standalone.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0372.cage-policy.yaml
+    - .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0372.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/cage/index.md
+    - docs/cage/policy.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/core/src/law-file.ts
+    - packages/core/src/path-law.ts
+    - packages/core/src/secret-paths.ts
+    - src/cli/commands/cage.ts
+    - src/cli/program-cage.ts
+    - src/cli/tests/cage-policy.test.ts
+    - src/cli/tests/cage-suggest.test.ts
+    - test/conformance/cases.yaml
+    - test/conformance/golden/cage-policy.contract-standalone.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 7a660963f650376630956a70c838a4d4a3e598c7a2c37e18cd8f5ef55dd4fff2

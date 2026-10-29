@@ -91,6 +91,7 @@ cases:
   - { id: cage-check.tamper, fixture: cage-tamper, args: [cage, check, --base, HEAD~2, --json] }
   - { id: cage-check.clean.bare-git, fixture: bare-git, args: [cage, check, --base, HEAD, --json] }
   - { id: cage-suggest.tamper, fixture: cage-tamper, args: [cage, suggest, --json] }
+  - { id: cage-policy.contract-standalone, fixture: contract-standalone, args: [cage, policy, --agent, claude-code, --contract, verify.yaml, --json] }
   - { id: cage-watch.no-tty.tamper, fixture: cage-tamper, args: [cage, watch, --json] }
   - { id: cage-session.true.tamper, fixture: cage-tamper, args: [cage, --json, --no-watch, --, "true"], normalize: [{ pattern: "gantry-cage-\\d+-(?:[0-9a-f]+|<SHORT_SHA>)\\.log", replace: "gantry-cage-<PID>-<SHORT_SHA>.log" }] }
 

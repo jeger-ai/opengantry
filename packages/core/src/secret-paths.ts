@@ -8,10 +8,10 @@ export const SECRET_ENV_PATTERNS: readonly string[] = ["**/.env", "**/.env.*"];
 export const SECRET_ENV_EXCEPT: readonly string[] = ["**/.env.example"];
 
 /** Credentials anywhere on disk: env files, git remotes with tokens, private SSH keys. */
-const ANYWHERE = [...SECRET_ENV_PATTERNS, "**/.git/config", "**/.git-credentials", "**/id_rsa", "**/id_dsa", "**/id_ecdsa", "**/id_ed25519"];
+export const SECRET_ANYWHERE_PATTERNS: readonly string[] = [...SECRET_ENV_PATTERNS, "**/.git/config", "**/.git-credentials", "**/id_rsa", "**/id_dsa", "**/id_ecdsa", "**/id_ed25519"];
 
 /** Credential stores under the home directory; a directory pattern covers what is under it. */
-const HOME = [
+export const SECRET_HOME_PATTERNS: readonly string[] = [
   ".ssh",
   ".aws",
   ".azure",
@@ -27,9 +27,9 @@ const HOME = [
 ];
 
 const ANYWHERE_LAW = pathLaw({
-  rules: [{ id: "secret_file", source: "builtin", patterns: [...ANYWHERE], except: [...SECRET_ENV_EXCEPT], effect: "deny", overridable: false }],
+  rules: [{ id: "secret_file", source: "builtin", patterns: [...SECRET_ANYWHERE_PATTERNS], except: [...SECRET_ENV_EXCEPT], effect: "deny", overridable: false }],
 });
-const HOME_LAW = pathLaw({ rules: [{ id: "home_credentials", source: "builtin", patterns: HOME, effect: "deny", overridable: false }] });
+const HOME_LAW = pathLaw({ rules: [{ id: "home_credentials", source: "builtin", patterns: [...SECRET_HOME_PATTERNS], effect: "deny", overridable: false }] });
 
 /** The rule that makes an absolute path a secret (`secret_file` or `home_credentials`), or null. POSIX paths. */
 export function judgeSecretPath(absPath: string, home: string): PathJudgment | null {

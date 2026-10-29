@@ -41,6 +41,9 @@ entries:
   - name: cage check
     since: MSN-0267
     dispatch: cage
+  - name: cage policy
+    since: MSN-0372
+    dispatch: cage
   - name: cage suggest
     since: MSN-0240
     dispatch: cage

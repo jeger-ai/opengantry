@@ -9,6 +9,10 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version from this list. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
+## 4.1
+
+- **4.1.0 (unreleased)** `gantry cage policy --agent claude-code` prints Claude Code sandbox and permission settings built from the cage's rules and the read guard's secret list, for you to review and merge into `.claude/settings.json`; `--contract` adds a verify contract's forbidden paths. Full package only. Details: [Agent sandbox settings](../cage/policy.md).
+
 ## 4.0
 
 - **4.0.1** The CI workflow `gantry init --ci` and `gantry upgrade` install works in your repository: it installs `@jeger-ai/opengantry` from npm and runs only `gantry` commands, with the job names `pr_governance`, `manifest`, `msn_commits` and `mission_verify`. 4.0.0 shipped a copy of this repository's own CI, which built the CLI from source and failed elsewhere. If `gantry upgrade` already installed it, `gantry upgrade plan --stage` and `gantry upgrade apply` replace it. The `gxt-attest-ingest.yml` template is fixed the same way.

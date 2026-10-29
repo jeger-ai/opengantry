@@ -37,6 +37,15 @@ entries:
   - name: GXT_CAGE_SCOPE_GIT_FAILED
     since: MSN-0276
     defined_in: packages/cage/src/cage-scope.ts
+  - name: GXT_CAGE_POLICY_EXISTS
+    since: MSN-0372
+    defined_in: literal
+  - name: GXT_CAGE_POLICY_IN_SESSION
+    since: MSN-0372
+    defined_in: literal
+  - name: GXT_CAGE_POLICY_INVALID
+    since: MSN-0372
+    defined_in: literal
   - name: GXT_CAGE_SCOPE_INVALID
     since: MSN-0276
     defined_in: packages/cage/src/cage-scope.ts
