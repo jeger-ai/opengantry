@@ -65,7 +65,7 @@ OpenGantry separates **local execution** (CLI, cages, verify) from an optional f
 - **Default:** `flight_telemetry.body_mode` is `hash_only` — gate stream bodies are not written to `EXECUTOR_LOG.md` (`chunk_b64` omitted). Events keep `chunk_sha256` + `bytes` so you can prove what ran without storing raw stdout.
 - **Run record:** the committed `.gitagent/runs/<MSN>.json` (written by `gantry verify --record`) is the only receipt: digests of the gate output and the enforced law, bound to a commit and tree. The ledger's `receipt` entries name it by `run_record_sha256`.
 - **Export for Hub:** `gantry verify --export` writes envelope 2.0 over the canonical run record, after a pass only; `--sign` adds an SSH/GPG signature over those bytes.
-- **Policy drift:** `gantry doctor --policy <expected-digests.json>` compares working-tree digests offline — no network I/O in doctor.
+- **Policy drift:** `gantry policy diff` compares the org bundle's `expected_digests` with the working tree offline and fails with `GXT_POLICY_DRIFT` on a mismatch.
 - **Hub role:** consumer / aggregator / reporter (dashboards, hash→human resolve, advisory status checks, PDF). SaaS/webhook backends belong in a separate Hub repo, not this CLI.
 - **Never via GXT export:** source trees, gate stdout bodies, credentials, draft-token keys, or bypass secrets.
 
@@ -100,7 +100,7 @@ Oversight is structural, not a chat approval checkbox:
 | **SOD** | Planner ≠ Executor ≠ Verifier |
 | **TMVC + forbidden zones + hooks** | Agents cannot silently edit substrate or leave declared roots |
 | **`gantry verify`** | Deterministic fail-closed gate + trace mapping before merge |
-| **`gantry doctor --policy`** | Offline digest drift check against expected MANIFEST / architecture / config |
+| **`gantry policy diff`** | Offline digest drift check of the org bundle's `expected_digests` against MANIFEST / architecture / config |
 
 Start the mission graph now so the trail already exists when someone asks for evidence.
 

@@ -6,19 +6,14 @@ import { CLI_NAME } from "#core/constants.js";
 import { fromPosix } from "#core/posix-path.js";
 import { logError, logInfo, setExitCode, logWarn } from "../output/cli-io.js";
 import { plannerMissionStamped } from "#missions/git/git-proof.js";
-import {
-  ONBOARDING_ADOPTION_DOC,
-  onboardingRuntimeEnvHint,
-  onboardingStatusHint,
-  onboardingVerifyHint,
-  tutorialTeacherStampBlock,
-  TUTORIAL_INTENT,
-  TUTORIAL_MSN_ID,
-} from "./onboarding-flow.js";
 import { runStartOrchestration } from "../flows/start-orchestration.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { listMissionFiles } from "#missions/mission/resolution.js";
 import { runVerifyCore } from "../flows/verify-run.js";
+
+const ADOPTION_DOC = "docs/ADOPTION.md";
+/** Tutorial mission id (9000 band — distinct from production MSN sequence). */
+const TUTORIAL_MSN_ID = "MSN-9001";
 
 function findExistingTutorialMission(repoRoot: string): string | null {
   for (const abs of listMissionFiles(repoRoot)) {
@@ -48,7 +43,11 @@ async function confirmTeacherStamp(
   missionPath: string,
 ): Promise<boolean> {
   while (true) {
-    logInfo(tutorialTeacherStampBlock(missionPath, TUTORIAL_MSN_ID));
+    logInfo([
+      `git add ${missionPath}`,
+      `git commit -m "[${TUTORIAL_MSN_ID}] legislate mission"`,
+      "gantry planner set \"$(git config user.email)\"  # if not already configured",
+    ].join("\n  "));
     const ready = await p.confirm({
       message:
         "I've run the git commands above (gantry will check git history before continuing)",
@@ -87,7 +86,7 @@ async function scaffoldTutorialMission(
   }
 
   const start = runStartOrchestration({
-    intent: TUTORIAL_INTENT,
+    intent: "Tutorial: experience the OpenGantry mission graph (init --tutorial)",
     msn: TUTORIAL_MSN_ID,
     skillKey,
     gateCommand: "gantry doctor",
@@ -96,7 +95,7 @@ async function scaffoldTutorialMission(
     audience: "planner",
   });
   if (!start.ok || !start.mission_file_path) {
-    logError("Tutorial start failed — run gantry onboarding or pass --skill-key");
+    logError("Tutorial start failed — check the MANIFEST skills, then rerun gantry init --tutorial");
     setExitCode(start.exit_code);
     p.outro("Tutorial incomplete");
     return null;
@@ -109,7 +108,7 @@ async function runTutorialVerifyStep(
   missionPath: string,
 ): Promise<{ verifyOk: boolean; ranVerify: boolean; verifyExitCode?: number }> {
   p.log.step("Step 5 — Verify");
-  logInfo(`  ${onboardingVerifyHint(missionPath)}`);
+  logInfo(`  gantry verify --mission ${missionPath} --fix`);
   const runVerifyNow = await p.confirm({
     message: "Run gantry verify now (git-proof, gate, trace — expect errors until trace is complete)?",
     initialValue: true,
@@ -140,17 +139,17 @@ function emitTutorialOutro(
   if (!verifyOk) {
     setExitCode(verifyExitCode ?? 1);
     p.outro(
-      `Tutorial incomplete — finish stamp/trace, then: gantry verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
+      `Tutorial incomplete — finish stamp/trace, then: gantry verify --mission ${missionPath} — see ${ADOPTION_DOC}`,
     );
     return;
   }
   if (!ranVerify) {
     p.outro(
-      `Tutorial paused before verify — run: gantry verify --mission ${missionPath} — see ${ONBOARDING_ADOPTION_DOC}`,
+      `Tutorial paused before verify — run: gantry verify --mission ${missionPath} — see ${ADOPTION_DOC}`,
     );
     return;
   }
-  p.outro(`Tutorial complete — full loop: ${ONBOARDING_ADOPTION_DOC}`);
+  p.outro(`Tutorial complete — full loop: ${ADOPTION_DOC}`);
 }
 
 export async function runInitTutorial(): Promise<void> {
@@ -186,12 +185,12 @@ export async function runInitTutorial(): Promise<void> {
       "Verify will fail until git-proof passes. Re-run: gantry verify --mission " + missionPath,
       "Paused",
     );
-    p.outro(`Tutorial paused — see ${ONBOARDING_ADOPTION_DOC}`);
+    p.outro(`Tutorial paused — see ${ADOPTION_DOC}`);
     return;
   }
 
   p.log.step("Step 4 — Executor trace");
-  logInfo(`  ${onboardingRuntimeEnvHint(missionPath)}`);
+  logInfo(`  eval "$(gantry runtime env --mission ${missionPath})"`);
   logInfo(
     "  Append a unique gate evidence line to EXECUTOR_LOG.md, then set mission trace_row PASS + trace_quote",
   );
@@ -201,6 +200,6 @@ export async function runInitTutorial(): Promise<void> {
 
   const { verifyOk, ranVerify, verifyExitCode } = await runTutorialVerifyStep(missionPath);
   p.log.step("Step 6 — Status dashboard");
-  logInfo(`  ${onboardingStatusHint()}`);
+  logInfo("  gantry doctor --json");
   emitTutorialOutro(missionPath, verifyOk, ranVerify, verifyExitCode);
 }

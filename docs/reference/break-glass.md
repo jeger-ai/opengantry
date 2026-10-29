@@ -15,7 +15,7 @@ Production emergencies happen, and a silent policy bypass is worse than an expli
 printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/foreman/BYPASS.sha256
 ```
 
-Commit only the hash. Never commit the plaintext secret. `gantry doctor` checks whether `GANTRY_BYPASS_SECRET` matches the anchor when the variable is set.
+Commit only the hash. Never commit the plaintext secret.
 
 ## Use it
 

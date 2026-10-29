@@ -1,61 +1,17 @@
-import fs from "node:fs";
-import path from "node:path";
-import { runArchitecturePointerDoctorChecks } from "#missions/arch/external/architecture-pointer.js";
-import { ENV_BYPASS_SECRET, isBypassSecretAuthorized, REL_BYPASS_SHA256 } from "#missions/break-glass.js";
-import { REL_AGENT_ERROR_FILE, CLI_NAME, REL_MANIFEST_YAML } from "#core/constants.js";
+import { CLI_NAME, REL_MANIFEST_YAML } from "#core/constants.js";
 import { manifestExists } from "#missions/manifest.js";
 import { runLawFileFormDoctorChecks } from "./law-file-doctor.js";
 import { ENV_PLANNER_EMAILS } from "#missions/config-namespace.js";
-import { agentErrorAbsolutePath } from "#missions/error-payloads.js";
-import { gitConfigGet, gitRunOk } from "#git/git.js";
+import { gitConfigGet } from "#git/git.js";
 import { resolveTemplateRootFromModule } from "../init/templates-root.js";
 import { resolvePlannerEmails } from "#missions/planner-identity.js";
 import { checkSkillManifestSync } from "#missions/skill-sync.js";
 import type { Manifest } from "#core/manifest.js";
-import {
-  doctorLinesHasFail,
-  pickNextStep,
-  type DoctorCheckResult,
-  type DoctorLine,
-  type DoctorReport,
-} from "#missions/doctor/doctor-types.js";
-import { runIntegrationDoctorChecks } from "./doctor-integration.js";
+import { doctorLinesHasFail, pickNextStep, type DoctorLine, type DoctorReport } from "#missions/doctor/doctor-types.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
-import { runExecutorLogIntegrityDoctorChecks } from "#missions/executor-log-integrity.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
-import { resolvePlannerSignatureTier } from "#core/config.js";
-import {
-  ensurePlannerAllowedSignersFile,
-  gitCommitSignatureStatus,
-  isGoodGitSignatureStatus,
-} from "#missions/planner-signature.js";
-import { runTargetArchitectureDoctorChecks } from "./target-architecture-doctor.js";
-import { runFlightTelemetryDoctorChecks } from "./flight-telemetry-doctor.js";
-import { runPolicyDigestDoctorChecks } from "./policy-digest-doctor.js";
-import { runOrgPolicyDoctorChecks } from "./policy-doctor.js";
-import { runLedgerDoctorChecks } from "#plane/ledger-chain.js";
-import {
-  runAdapterPreflightDoctorChecks,
-  type AdapterPreflightOptions,
-} from "./doctor-adapter-preflight.js";
 
-function readBypassAnchorState(repoRoot: string): "configured" | "placeholder" | "missing" {
-  const p = path.join(repoRoot, REL_BYPASS_SHA256);
-  if (!fs.existsSync(p)) return "missing";
-  const raw = fs.readFileSync(p, "utf8");
-  if (/^[a-f0-9]{64}$/im.test(raw)) return "configured";
-  return "placeholder";
-}
-
-function readHooksPath(repoRoot: string): string | null {
-  return gitConfigGet(repoRoot, "core.hooksPath");
-}
-
-function appendPlannerAllowlistChecks(
-  root: string,
-  lines: DoctorLine[],
-  nextStep: string | null,
-): { nextStep: string | null; plannerAllowlistUnset: boolean } {
+function appendPlannerAllowlistChecks(root: string, lines: DoctorLine[], nextStep: string | null): string | null {
   const plannerIdentity = resolvePlannerEmails(root);
   if (plannerIdentity.emails.length > 0) {
     lines.push({
@@ -69,50 +25,10 @@ function appendPlannerAllowlistChecks(
           `Planner identity from ${ENV_PLANNER_EMAILS} env — prefer repo-local .gitagent/foreman/PLANNER.allowlist.local when working across projects`,
       });
     }
-    return { nextStep, plannerAllowlistUnset: false };
+    return nextStep;
   }
   lines.push({ level: "warn", message: "Planner allowlist unset — verify git-proof will fail" });
-  nextStep = pickNextStep(nextStep, `${CLI_NAME} planner set "$(git config user.email)"`);
-  return { nextStep, plannerAllowlistUnset: true };
-}
-
-function appendAllowedSignersChecks(root: string, lines: DoctorLine[]): void {
-  const signers = ensurePlannerAllowedSignersFile(root);
-  if (!signers.present) return;
-  if (signers.configured && signers.path) {
-    lines.push({
-      level: "ok",
-      message: `gpg.ssh.allowedSignersFile=${signers.path}`,
-    });
-    return;
-  }
-  lines.push({
-    level: "warn",
-    message: "PLANNER.signing.pub present but gpg.ssh.allowedSignersFile could not be set",
-  });
-}
-
-function appendPlannerSignatureChecks(root: string, lines: DoctorLine[]): void {
-  const tier = resolvePlannerSignatureTier(loadGxtConfig(root));
-  lines.push({ level: "ok", message: `planner_signature tier: ${tier}` });
-  if (tier === "off") return;
-
-  const plannerIdentity = resolvePlannerEmails(root);
-  if (plannerIdentity.emails.length === 0) return;
-
-  const headAuthor = gitRunOk(root, ["log", "-1", "--format=%ae"]);
-  if (!headAuthor.ok) return;
-  const authorEmail = headAuthor.stdout.trim().toLowerCase();
-  if (!plannerIdentity.emails.includes(authorEmail)) return;
-
-  const status = gitCommitSignatureStatus(root, "HEAD");
-  const signed = isGoodGitSignatureStatus(status);
-  lines.push({
-    level: signed ? "ok" : "warn",
-    message: signed
-      ? "HEAD Planner stamp: signed"
-      : `HEAD Planner stamp: unsigned (git %G?=${status})`,
-  });
+  return pickNextStep(nextStep, `${CLI_NAME} planner set "$(git config user.email)"`);
 }
 
 /** `receipt_signature` went with the receipt in 4.0 (ADR-0061): a config that still sets it is told, then ignored. */
@@ -121,35 +37,8 @@ function appendRemovedConfigChecks(root: string, lines: DoctorLine[]): void {
   lines.push({ level: "warn", message: "config receipt_signature was removed in 4.0 (ADR-0061) and is ignored; delete it (the committed run record is the receipt)" });
 }
 
-function appendBypassChecks(root: string, lines: DoctorLine[]): void {
-  const bypassState = readBypassAnchorState(root);
-  if (bypassState === "configured") {
-    lines.push({ level: "ok", message: "BYPASS.sha256 anchor present" });
-    const secret = process.env[ENV_BYPASS_SECRET];
-    if (secret?.length) {
-      const authorized = isBypassSecretAuthorized(root);
-      lines.push({
-        level: authorized ? "ok" : "warn",
-        message: authorized
-          ? "bypass: GANTRY_BYPASS_SECRET matches anchor"
-          : "bypass: GANTRY_BYPASS_SECRET does NOT match anchor",
-      });
-    } else {
-      lines.push({ level: "warn", message: "bypass: GANTRY_BYPASS_SECRET unset (expected unless in emergency)" });
-    }
-  } else if (bypassState === "placeholder") {
-    lines.push({ level: "warn", message: "BYPASS.sha256 has no hash line — break-glass not provisioned" });
-  } else {
-    lines.push({ level: "warn", message: `${REL_BYPASS_SHA256} missing` });
-  }
-}
-
-function appendHooksAndExampleMissionChecks(
-  root: string,
-  lines: DoctorLine[],
-  nextStep: string | null,
-): string | null {
-  const hooks = readHooksPath(root);
+function appendHooksCheck(root: string, lines: DoctorLine[]): void {
+  const hooks = gitConfigGet(root, "core.hooksPath");
   if (hooks === ".githooks") {
     lines.push({ level: "ok", message: "core.hooksPath=.githooks" });
   } else if (hooks) {
@@ -157,37 +46,11 @@ function appendHooksAndExampleMissionChecks(
   } else {
     lines.push({ level: "warn", message: "core.hooksPath unset — run: git config core.hooksPath .githooks" });
   }
-
-  const exampleMission = ".gitagent/missions/example.verify.yaml";
-  const plannerIdentity = resolvePlannerEmails(root);
-  if (fs.existsSync(path.join(root, exampleMission))) {
-    lines.push({ level: "ok", message: `example mission: ${exampleMission}` });
-    if (plannerIdentity.emails.length > 0) {
-      nextStep = pickNextStep(nextStep, `gantry verify --mission ${exampleMission}`);
-    }
-  } else {
-    lines.push({ level: "warn", message: "no example.verify.yaml — legislate a mission first" });
-    nextStep = pickNextStep(nextStep, 'gantry legislate "<intent>" --msn MSN-0001 --skill-key <key>');
-  }
-  return nextStep;
 }
 
-function appendAgentErrorCheck(root: string, lines: DoctorLine[]): void {
-  const errPath = agentErrorAbsolutePath(root);
-  if (!fs.existsSync(errPath)) return;
-  try {
-    const payload = JSON.parse(fs.readFileSync(errPath, "utf8")) as { summary?: string };
-    const summary = typeof payload.summary === "string" ? payload.summary : "(no summary)";
-    lines.push({ level: "warn", message: `last agent error: ${summary}` });
-    lines.push({ level: "warn", message: `  file: ${REL_AGENT_ERROR_FILE}` });
-  } catch {
-    lines.push({ level: "warn", message: `stale ${REL_AGENT_ERROR_FILE} (unreadable)` });
-  }
-}
-
-export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckResult {
+/** Only the checks that decide whether a repository works (ADR-0061 phase 3). */
+export function collectDoctorReport(root: string, manifest: Manifest, templatesRoot?: string): DoctorReport {
   const lines: DoctorLine[] = [{ level: "ok", message: `repo: ${root}` }];
-  let hasFail = false;
   let nextStep: string | null = null;
 
   const skillSync = checkSkillManifestSync(root, manifest);
@@ -195,89 +58,25 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
     lines.push({ level: "ok", message: "manifest + skills/ Rule 4.4 sync" });
   } else {
     for (const err of skillSync.errors) lines.push({ level: "fail", message: err });
-    hasFail = true;
-    nextStep = pickNextStep(nextStep, "add skills/<key>.md for each MANIFEST skill (Rule 4.4), then rerun gantry doctor");
+    nextStep = "add skills/<key>.md for each MANIFEST skill (Rule 4.4), then rerun gantry doctor";
   }
 
-  const plannerResult = appendPlannerAllowlistChecks(root, lines, nextStep);
-  nextStep = plannerResult.nextStep;
-  const plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
-  appendAllowedSignersChecks(root, lines);
-  appendPlannerSignatureChecks(root, lines);
+  nextStep = appendPlannerAllowlistChecks(root, lines, nextStep);
   appendRemovedConfigChecks(root, lines);
-  appendBypassChecks(root, lines);
-  nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
-  appendAgentErrorCheck(root, lines);
+  appendHooksCheck(root, lines);
 
   if (!manifestExists(root)) {
     lines.push({ level: "fail", message: `${REL_MANIFEST_YAML} missing` });
-    hasFail = true;
     nextStep = pickNextStep(nextStep, "gantry init");
   }
   lines.push(...runLawFileFormDoctorChecks(root));
 
-  return { lines, hasFail, nextStep, plannerAllowlistUnset };
-}
-
-export interface CollectDoctorReportOptions {
-  templatesRoot?: string;
-  policyPath?: string;
-  adapterPreflight?: AdapterPreflightOptions;
-}
-
-export function collectDoctorReport(
-  root: string,
-  manifest: Manifest,
-  options: CollectDoctorReportOptions = {},
-): DoctorReport {
-  const templatesRoot = options.templatesRoot;
-  const policyPath = options.policyPath;
-  const adapterPreflight = options.adapterPreflight;
-  const result = runDoctorChecks(root, manifest);
-  let lines = [
-    ...result.lines,
-    ...runFlightTelemetryDoctorChecks(root),
-    ...runOrgPolicyDoctorChecks(root),
-    ...runLedgerDoctorChecks(root),
-  ];
-  lines = [...lines, ...runArchitecturePointerDoctorChecks(root)];
-  lines = [...lines, ...runTargetArchitectureDoctorChecks(root)];
-  lines = [...lines, ...runExecutorLogIntegrityDoctorChecks(root)];
-  const preflight = runAdapterPreflightDoctorChecks(root, adapterPreflight ?? {});
-  lines = [...lines, ...preflight.lines];
-  if (policyPath?.trim()) {
-    try {
-      lines = [...lines, ...runPolicyDigestDoctorChecks(root, policyPath.trim())];
-    } catch (e) {
-      lines = [
-        ...lines,
-        {
-          level: "fail",
-          message: `policy digest check failed: ${e instanceof Error ? e.message : String(e)}`,
-        },
-      ];
-    }
-  }
-  let nextStep = result.nextStep;
-  if (preflight.nextStep) nextStep = pickNextStep(nextStep, preflight.nextStep);
   try {
-    const tpl = templatesRoot ?? resolveTemplateRootFromModule();
-    lines = [...lines, ...runIntegrationDoctorChecks(root, tpl)];
-    const drift = runSubstrateDriftDoctorChecks(root, tpl);
-    lines = [...lines, ...drift.lines];
-    if (drift.nextStep) {
-      nextStep = pickNextStep(nextStep, drift.nextStep);
-    }
+    const drift = runSubstrateDriftDoctorChecks(root, templatesRoot ?? resolveTemplateRootFromModule());
+    lines.push(...drift.lines);
+    if (drift.nextStep) nextStep = pickNextStep(nextStep, drift.nextStep);
   } catch {
-    lines = [
-      ...lines,
-      { level: "warn", message: "integration compat checks skipped (templates not found)" },
-    ];
+    lines.push({ level: "warn", message: "integration compat checks skipped (templates not found)" });
   }
-  return {
-    lines,
-    hasFail: doctorLinesHasFail(lines) || result.hasFail,
-    nextStep,
-    plannerAllowlistUnset: result.plannerAllowlistUnset,
-  };
+  return { lines, hasFail: doctorLinesHasFail(lines), nextStep };
 }

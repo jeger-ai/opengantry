@@ -1,20 +1,10 @@
 import type { AgentErrorPayload } from "#missions/error-payloads.js";
-import { userFacingErrorToJson } from "#missions/error-payloads.js";
-import type { RuntimeEnvMcpResult } from "./mcp-runtime.js";
 import type { GateAdapterId } from "#core/gate-adapter.js";
 import type { MissionContract } from "#core/contract-types.js";
-import type { TriageResult } from "#core/mission-types.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { assertMcpMissionWritePath, McpWriteDeniedError } from "#missions/substrate-write-guard.js";
 import { resolveMissionFilePath } from "#missions/mission/resolution.js";
 import type { InterrogationRow } from "#core/interrogation.js";
-
-export type McpToolStatus =
-  | "awaiting_human_approval"
-  | "pending_signature"
-  | "signature_valid"
-  | "signature_missing"
-  | "error";
 
 export interface McpErrorBody {
   code: string;
@@ -80,55 +70,8 @@ export type LastErrorResult =
   | { status: "found"; payload: AgentErrorPayload }
   | { status: "error"; message: string };
 
-export type StartOrchestrationMcpResult =
-  | {
-      status: "ok";
-      triage: TriageResult;
-      triage_action: string;
-      msn_id: string | null;
-      mission_file_path: string | null;
-      skill_key: string;
-      next_actions: string[];
-      exit_code: number;
-      pinned_mission?: string;
-      runtime_env?: RuntimeEnvMcpResult;
-      resolve: ResolveMissionResult;
-    }
-  | {
-      status: "failed";
-      triage: TriageResult;
-      triage_action: string;
-      skill_key: string;
-      msn_id: string | null;
-      mission_file_path: string | null;
-      next_actions: string[];
-      exit_code: number;
-    };
-
-export interface StartOrchestrationInput {
-  intent: string;
-  msn_id?: string;
-  skill_key?: string;
-  gate_command?: string;
-  gate_success_substring?: string;
-  gate_adapter?: GateAdapterId;
-  pin_if_needed?: boolean;
-  emit_runtime_env?: boolean;
-  write_mission?: boolean;
-}
-
 export function mcpError(code: string, message: string, retryable: boolean): { status: "error"; error: McpErrorBody } {
   return { status: "error", error: { code, message, retryable } };
-}
-
-/** Map unknown errors to the shared MCP failure envelope (aligned with CLI --json). */
-export function toMcpError(e: unknown): McpErrorBody {
-  const json = userFacingErrorToJson(e);
-  return {
-    code: json.error_code,
-    message: json.hint ? `${json.message} (${json.hint})` : json.message,
-    retryable: json.exit_code !== 2,
-  };
 }
 
 export function mcpWriteDenied(err: McpWriteDeniedError): { status: "error"; error: McpErrorBody } {

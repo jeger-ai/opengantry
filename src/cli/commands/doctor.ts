@@ -5,17 +5,12 @@ import { emitCliJson } from "../output/command-boundary.js";
 import { audienceSectionTitle, filterTaggedStepsForAudience } from "../output/audience-output.js";
 import type { OutputAudience } from "#missions/mission-verify/hints.js";
 import { collectDoctorReport } from "../doctor/doctor-core.js";
-import type { AdapterPreflightOptions } from "../doctor/doctor-adapter-preflight.js";
-import { doctorLinesHasFail, type DoctorLine } from "#missions/doctor/doctor-types.js";
-import type { TypedGateAdapterId } from "#core/gate-adapter.js";
+import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 import { loadWorkspace } from "#missions/workspace.js";
 
 export interface DoctorOptions {
   json?: boolean;
   audience?: OutputAudience;
-  policy?: string;
-  gateAdapter?: TypedGateAdapterId;
-  adapterBaseline?: boolean;
 }
 
 function emitDoctor(
@@ -49,22 +44,9 @@ function emitDoctor(
 
 export function runDoctor(options: DoctorOptions = {}): void {
   try {
-    const adapterPreflight: AdapterPreflightOptions = {
-      ...(options.gateAdapter !== undefined ? { forceAdapter: options.gateAdapter } : {}),
-      ...(options.adapterBaseline === true ? { baseline: true } : {}),
-    };
     const { root, manifest } = loadWorkspace();
-    const report = collectDoctorReport(root, manifest, {
-      policyPath: options.policy,
-      adapterPreflight,
-    });
-    emitDoctor(
-      report.lines,
-      report.nextStep,
-      doctorLinesHasFail(report.lines),
-      options.json,
-      options.audience,
-    );
+    const report = collectDoctorReport(root, manifest);
+    emitDoctor(report.lines, report.nextStep, report.hasFail, options.json, options.audience);
   } catch (e) {
     const msg = errorMessage(e);
     emitDoctor([{ level: "fail", message: msg }], null, true, options.json, options.audience);

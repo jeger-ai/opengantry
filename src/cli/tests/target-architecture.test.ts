@@ -9,7 +9,6 @@ import {
   layerForFile,
   loadTargetArchitecture,
   resolveArchScanRoots,
-  targetArchitectureMigrationHint,
   validateTargetArchitecture,
 } from "#missions/arch/target-architecture.js";
 
@@ -177,9 +176,4 @@ test("validateTargetArchitecture: applies_to alone is an empty rule", () => {
       }),
     /TARGET_ARCHITECTURE\.yaml: rules\[0\] "RULE-EMPTY" sets neither import fields \(forbid_import_layer, forbid_specifier_substring, forbid_resolved_path_substring\) nor pattern fields \(forbid_pattern, require_pattern\)\./,
   );
-});
-
-test("targetArchitectureMigrationHint: warns on legacy schema", () => {
-  assert.match(targetArchitectureMigrationHint("0.1.0") ?? "", /scan_roots/);
-  assert.equal(targetArchitectureMigrationHint("0.2.0"), null);
 });

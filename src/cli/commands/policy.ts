@@ -6,6 +6,9 @@ import { localConfigFloor } from "#missions/gxt-config.js";
 import { appendLedgerIfEnabled } from "#missions/ledger/ledger-append.js";
 import { msnIdOrDefault } from "#core/mission-types.js";
 import { runUserCommand } from "../output/command-boundary.js";
+import { expectedDigestDrift } from "#plane/digests.js";
+import { GantryUserError } from "#core/user-error.js";
+import { GXT_ERROR } from "#core/error-codes.js";
 
 export function runPolicyPull(opts: { json?: boolean }): void {
   runUserCommand({ json: opts.json }, () => {
@@ -42,6 +45,8 @@ export function runPolicyDiff(opts: { json?: boolean }): void {
     const { root } = loadWorkspace();
     const resolved = resolveOrgPolicyOrThrow(root);
     const effective = orgPolicySnapshot(resolved);
+    const drift = expectedDigestDrift(root, effective.bundle?.expected_digests);
+    if (drift.length > 0) throw new GantryUserError(GXT_ERROR.POLICY_DRIFT, drift.join("; "), undefined, 1);
     const violations = configFloorViolations(effective.bundle?.config_floor ?? {}, localConfigFloor(root));
     return {
       json: { status: "ok", violations, effective },

@@ -76,7 +76,6 @@ gate_command: "npm run lint:json"   # must emit eslint --format json
 
 - One adapter per mission. Do not concatenate `tsc` and `eslint` in one `gate_command`; routing is never inferred from the command string.
 - Typed adapters fail closed at legislate, mission validation and verify start when `gate_command` contains an unquoted `&&`, `||`, `;` or line break (`GXT_GATE_ADAPTER_MISCONFIG`). Wrap a sequence in a script, or use `generic`.
-- `gantry doctor` and the MCP tool `gxt_doctor` check a typed adapter before a gate runs: `npx`, local `typescript` or `eslint`, a parseable `tsconfig.json`, the ESLint config, and that `lint:json` emits `eslint --format json`. `gantry doctor --adapter-baseline` warns about existing `tsc` or `eslint` debt.
 
 ## Output formats
 

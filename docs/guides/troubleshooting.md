@@ -29,7 +29,6 @@ Run the failing command with `--json` to get the `GXT_*` error code and its `fix
 ## Gate adapters
 
 - **`GXT_GATE_ADAPTER_MISCONFIG`.** A `tsc` or `eslint` mission has an unquoted `&&`, `||`, `;` or line break in `gate_command`. Wrap the sequence in a script, or use `gate_adapter: generic`.
-- **Adapter preflight.** Run `gantry doctor` (or MCP `gxt_doctor`) before pinning a typed-adapter mission; `--adapter-baseline` shows existing `tsc` or `eslint` debt ([Verify](../concepts/verify.md#typed-gate-adapters)).
 
 ## Hooks
 

@@ -21,4 +21,4 @@ Optional third-party skill packs belong on the **local IDE edge** (gitignored), 
 | Pre-push OK, full verify fails trace | Fill `EXECUTOR_LOG.md`; align `trace_rows`; re-run full verify |
 | `PLANNER_IDENTITY_UNCONFIGURED` | `export GANTRY_PLANNER_EMAILS="$(git config user.email)"` |
 
-Integration compat verified by OpenGantry release — run `gantry doctor` for detected wiring and stale paths.
+Integration compat verified by OpenGantry release — run `gantry doctor` to check the repository's setup.

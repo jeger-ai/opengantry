@@ -32,3 +32,11 @@ export function computeWorkingDigests(root: string): {
       sha256FileOrNull(path.join(root, REL_GXT_CONFIG_YAML)) ?? sha256FileOrNull(path.join(root, REL_GXT_CONFIG_JSON)),
   };
 }
+
+/** One line per field where the org bundle's `expected_digests` disagrees with the working tree; empty when all match. */
+export function expectedDigestDrift(root: string, expected: Partial<Record<keyof ReturnType<typeof computeWorkingDigests>, string | null>> = {}): string[] {
+  const actual = computeWorkingDigests(root);
+  return (Object.keys(actual) as (keyof typeof actual)[])
+    .filter((k) => expected[k] !== undefined && expected[k] !== actual[k])
+    .map((k) => `policy digest ${k}: drift (expected ${expected[k] ?? "null"}, actual ${actual[k] ?? "null"})`);
+}

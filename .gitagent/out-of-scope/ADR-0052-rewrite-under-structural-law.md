@@ -70,7 +70,7 @@ The decision has two halves. The first rebuilds the CLI into a shape with one of
 | `verify` | The contract engine over a `ChangeSet`, with or without `.gitagent/` (ADR-0051). SARIF and JUnit projections. | core, git |
 | `missions` | The governed substrate: manifest, legislate, interrogate, planner stamp, pin, runtime env and exec, upgrade. Produces an effective `Law` and hands it to `verify`. | core, git, verify |
 | `plane` | Org policy floor, ledger, cross-repo deps, attest and receipts ([ADR-0042](ADR-0042-org-policy-bundle.md), [ADR-0043](ADR-0043-compliance-ledger-git-ref.md), [ADR-0044](ADR-0044-cross-repo-mission-dependencies.md)). | core, git, missions |
-| `mcp`, `cli` | Shells generated from one command specification, so a tool and a subcommand cannot drift. | all of the above |
+| `mcp`, `cli` | Shells generated from one command specification, so a tool and a subcommand cannot drift. (ADR-0061 phase 3: flattened in TypeScript instead; the registries and their surface test hold the drift.) | all of the above |
 
 Publishing: `@jeger-ai/opengantry`, `@jeger-ai/opengantry-cage` and (ADR-0051 follow-up C, MSN-0342) `@jeger-ai/opengantry-verify` are the published packages in 4.0. `core` and `git` are workspace packages inlined into each tarball at publish time, so the slim cage keeps commander plus Node built-ins as its only runtime dependencies and `npx @jeger-ai/opengantry-cage` never resolves an internal workspace package. If `core` or `git` is published on its own later, it ships with the same trusted-publisher provenance as the two packages today.
 

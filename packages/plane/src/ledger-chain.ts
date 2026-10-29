@@ -141,14 +141,3 @@ export function verifyLedgerChain(
   }
   return { ok: errors.length === 0, ref, tip, count: entries.length, errors, entries };
 }
-
-export function runLedgerDoctorChecks(root: string): { level: "ok" | "warn" | "fail"; message: string }[] {
-  const report = verifyLedgerChain(root);
-  if (!report.tip) {
-    return [{ level: "ok", message: `${LEDGER_REF}: absent` }];
-  }
-  if (!report.ok) {
-    return report.errors.map((message) => ({ level: "fail" as const, message }));
-  }
-  return [{ level: "ok", message: `${LEDGER_REF}: ${report.count} entries, chain consistent` }];
-}

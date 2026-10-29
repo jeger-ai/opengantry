@@ -78,7 +78,7 @@ The run record (ADR-0052 A4) is the only evidence. The attestation receipt, the 
 Operator decisions for phase 2 (2026-10-29):
 
 - The hub path stays as an export envelope 2.0 over the canonical run record (`verify --export`); the plane must adapt.
-- Cross-repo dependency proof drops the org pepper: same-org proof is fetch access, `require.signed` is `git verify-commit`, and `GXT_DEPENDENCY_ORG_MISMATCH` and the `GANTRY_ORG_*` configuration go.
+- Cross-repo dependency proof drops the org pepper: fetch access to the dependency's ledger ref shows read access to that ref, not organization membership or authorization; `require.signed` needs a good signature from a trusted key (`git log --format=%G?` is `G`; untrusted, expired, bad or missing signatures fail); and `GXT_DEPENDENCY_ORG_MISMATCH` and the `GANTRY_ORG_*` configuration go.
 - The verdict-token kernel exports are removed; consumers pin 3.x.
 - The ledger stops writing `dependency_check` entries.
 - Pre-4.0 ledger chains keep verifying, and local receipts become inert.
@@ -87,6 +87,13 @@ Operator decisions for phase 2 (2026-10-29):
 ### Phase 3: the shells and doctor
 
 Commander commands and MCP tools are generated from one command specification (ADR-0052 promised it), replacing the hand-written registration. `doctor` keeps the checks that decide whether a repository works (manifest and skills sync, hooks, Planner identity, substrate version, law files) and drops advisory ones. `missions` is split only if a real seam remains after phases 0 to 2.
+
+Operator decisions for phase 3 (2026-10-29):
+
+- `doctor` keeps only the decisive checks (manifest and skills sync, Planner identity, `core.hooksPath`, substrate version, law-file form, the `receipt_signature` notice); its `--policy`, `--gate-adapter` and `--adapter-baseline` flags and the matching `gxt_doctor` inputs go, and the org bundle's `expected_digests` is checked by `gantry policy diff`.
+- `gantry onboarding`, `gantry mission snapshot`, `gantry tmvc guard` and `gantry perimeter check` are removed; the pre-commit guard and `gantry perimeter --ci` stay.
+- `verify --fix` stops rewriting source; its prompts and hints stay.
+- The command shells are flattened in TypeScript rather than generated: the registries under `.gitagent/registry/` plus `src/cli/tests/registry-surface.test.ts` already keep a subcommand and its MCP tool from drifting, which is what the one specification promised.
 
 ### Targets
 

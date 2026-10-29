@@ -6,7 +6,7 @@ import { gitConfigGet, gitConfigSet, gitRunOk } from "#git/git.js";
 /** `git log --format=%G?` signature letter for a commit. */
 type GitSignatureStatus = "G" | "U" | "B" | "X" | "Y" | "R" | "E" | "N" | string;
 
-export function gitCommitSignatureStatus(repoRoot: string, commitRef: string): GitSignatureStatus {
+function gitCommitSignatureStatus(repoRoot: string, commitRef: string): GitSignatureStatus {
   const result = gitRunOk(repoRoot, ["log", "-1", `--format=%G?`, commitRef]);
   if (!result.ok) return "N";
   const status = result.stdout.trim();

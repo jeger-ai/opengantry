@@ -23,7 +23,7 @@ This page was split into the cage, start, guides, concepts and reference section
 | Former section | Now |
 |----------------|-----|
 | <a id="step-zero-check-your-agents-commits"></a><a id="step-zero-cage-an-agent-you-already-use"></a>Step zero (cage check; the session cage) | [cage/index.md](cage/index.md) |
-| <a id="adoption-runbook"></a><a id="first-run-onboarding"></a><a id="hooks-fast-scoped"></a>First run, onboarding | [start/install.md](start/install.md) |
+| <a id="adoption-runbook"></a><a id="first-run-onboarding"></a><a id="hooks-fast-scoped"></a>First run, tutorial | [start/install.md](start/install.md) |
 | <a id="standard-change-graph-review--run--audit"></a><a id="audit-evidence-cheatsheet"></a>Standard change graph, audit cheatsheet | [start/first-mission.md](start/first-mission.md) |
 | <a id="enterprise-control-plane-optional-v330"></a>Enterprise control plane | [guides/org-control-plane.md](guides/org-control-plane.md) |
 | <a id="regulated-teams-iso-27001--iso-42001"></a>Regulated teams | [guides/regulated-teams.md](guides/regulated-teams.md) |

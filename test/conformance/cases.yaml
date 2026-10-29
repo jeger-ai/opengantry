@@ -15,10 +15,9 @@ cases:
   - { id: planner-set.bare-git, fixture: bare-git, args: [planner, set, planner@fixture.test], record_tree: true }
   - { id: deps-check-since.fresh-init, fixture: fresh-init, args: [deps, check, --since, HEAD, --json] }
 
-  # --- init, onboarding, upgrade, blueprint ---
+  # --- init, upgrade, blueprint ---
   - { id: init.bare-git, fixture: bare-git, args: [init, --yes, --no-hooks, --no-ci, --skills, minimal, --ides, cursor], record_tree: true }
   - { id: init.dry-run.bare-git, fixture: bare-git, args: [init, --yes, --dry-run, --no-hooks, --no-ci, --skills, minimal, --ides, cursor], record_tree: true }
-  - { id: onboarding.fresh-init, fixture: fresh-init, args: [onboarding] }
   - { id: migrate-manifest.mission-pass, fixture: mission-pass, args: [migrate, manifest, --json], record_tree: true }
   - { id: migrate-manifest.dry-run.mission-pass, fixture: mission-pass, args: [migrate, manifest, --dry-run], record_tree: true }
   - { id: migrate-manifest.fresh-init, fixture: fresh-init, args: [migrate, manifest] }

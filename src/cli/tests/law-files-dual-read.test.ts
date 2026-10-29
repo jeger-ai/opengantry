@@ -10,7 +10,6 @@ import { loadManifest, manifestExists } from "#missions/manifest.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
 import { loadTrustedAutomationRules } from "#missions/trusted-automation.js";
 import { loadArchitecturePointer } from "#missions/arch/external/architecture-pointer.js";
-import { runOrgPolicyDoctorChecks } from "../doctor/policy-doctor.js";
 import { lawFileRelAt, writeLawFileYaml } from "#git/repo-text.js";
 import { runLawFileFormDoctorChecks } from "../doctor/law-file-doctor.js";
 import { migratedManifest } from "../commands/migrate.js";
@@ -56,7 +55,6 @@ test("every loader reads the 3.x JSON form and doctor names its migrate verb; th
   assert.equal(loadArchitecturePointer(legacy).kind, "file");
   assert.equal(lawFileRelAt(legacy, "architecture-pointer"), LAW_FILES["architecture-pointer"].json);
   assert.equal(loadPolicyPointer(legacy).kind, "scaffold");
-  assert.ok(runOrgPolicyDoctorChecks(legacy).some((l) => l.message === `${LAW_FILES["policy-pointer"].json}: scaffold (unpinned)`));
   const warned = runLawFileFormDoctorChecks(legacy).map((l) => l.message.split("run gantry migrate ")[1]?.split(" ")[0]);
   assert.deepEqual(warned, ["manifest", "config", "architecture-pointer", "policy-pointer"]);
 
@@ -70,7 +68,8 @@ test("every loader reads the 3.x JSON form and doctor names its migrate verb; th
   assert.deepEqual(loadGxtConfig(current), config);
   assert.equal(loadTrustedAutomationRules(current)[0]?.id, "bots");
   assert.deepEqual(loadArchitecturePointer(current), pointer);
-  assert.deepEqual(runOrgPolicyDoctorChecks(current), [{ level: "ok", message: `${LAW_FILES["policy-pointer"].yaml}: scaffold (unpinned)` }]);
+  assert.equal(loadPolicyPointer(current).kind, "scaffold");
+  assert.equal(lawFileRelAt(current, "policy-pointer"), LAW_FILES["policy-pointer"].yaml);
   assert.deepEqual(runLawFileFormDoctorChecks(current), []);
 });
 
@@ -81,7 +80,8 @@ test("absent files: the loaders name the YAML form; both forms present and diffe
   assert.throws(() => loadManifest(none), /missing \.gitagent\/foreman\/MANIFEST\.yaml/);
   assert.deepEqual(loadGxtConfig(none), {});
   assert.throws(() => loadArchitecturePointer(none), /ARCHITECTURE\.pointer\.yaml missing/);
-  assert.deepEqual(runOrgPolicyDoctorChecks(none), [{ level: "ok", message: `${LAW_FILES["policy-pointer"].yaml}: absent (opt-in)` }]);
+  assert.equal(loadPolicyPointer(none).kind, "absent");
+  assert.equal(lawFileRelAt(none, "policy-pointer"), LAW_FILES["policy-pointer"].yaml);
 
   const both = repo({
     [M.json]: JSON.stringify({ ...manifest, risk_keywords: ["delete"] }),

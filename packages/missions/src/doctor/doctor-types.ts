@@ -5,23 +5,10 @@ export interface DoctorLine {
   message: string;
 }
 
-export interface DoctorSection {
-  lines: DoctorLine[];
-  nextStep: string | null;
-}
-
-export interface DoctorCheckResult {
-  lines: DoctorLine[];
-  hasFail: boolean;
-  nextStep: string | null;
-  plannerAllowlistUnset: boolean;
-}
-
 export interface DoctorReport {
   lines: DoctorLine[];
   hasFail: boolean;
   nextStep: string | null;
-  plannerAllowlistUnset: boolean;
 }
 
 export function pickNextStep(current: string | null, candidate: string): string | null {

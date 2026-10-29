@@ -1,8 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
-import fs from "node:fs";
-import os from "node:os";
 import { getRepoRoot } from "#git/git.js";
 import {
   INTEGRATION_IDE_KEYS,
@@ -101,32 +99,4 @@ test("canPromptInitOverwrite: false when not TTY, --force, or --dry-run", () => 
     Object.defineProperty(process.stdout, "isTTY", { value: savedOut, configurable: true });
     Object.defineProperty(process.stdin, "isTTY", { value: savedIn, configurable: true });
   }
-});
-
-test("runIntegrationDoctorChecks: warns on deprecated .cursorrules", async () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-int-"));
-  fs.writeFileSync(path.join(dest, ".cursorrules"), "# legacy\n", "utf8");
-  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
-  fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
-  const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../doctor/doctor-integration.js");
-  const lines = runIntegrationDoctorChecks(dest, templatesRoot);
-  assert.ok(lines.some((l) => l.message.includes("deprecated path .cursorrules")));
-});
-
-test("runIntegrationDoctorChecks: AGENTS.md alone does not detect codex-cli", async () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-codex-"));
-  fs.writeFileSync(path.join(dest, "AGENTS.md"), "# agents\n", "utf8");
-  fs.mkdirSync(path.join(dest, ".cursor", "rules"), { recursive: true });
-  fs.writeFileSync(path.join(dest, ".cursor", "rules", "opengantry-gxt-substrate.mdc"), "---\n", "utf8");
-  fs.writeFileSync(path.join(dest, ".cursor", "hooks.json"), '{"version":1,"hooks":{}}\n', "utf8");
-  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
-  fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "MANIFEST.json"), '{"schema_version":"0.5.0","skills":{}}\n', "utf8");
-  const templatesRoot = path.join(getRepoRoot(), "templates");
-  const { runIntegrationDoctorChecks } = await import("../doctor/doctor-integration.js");
-  const lines = runIntegrationDoctorChecks(dest, templatesRoot);
-  const wiring = lines.find((l) => l.message.startsWith("detected agent wiring:"));
-  assert.ok(wiring);
-  assert.match(wiring!.message, /\bcursor\b/);
-  assert.doesNotMatch(wiring!.message, /\bcodex-cli\b/);
 });
