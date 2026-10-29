@@ -32,7 +32,7 @@ What OpenGantry has that those sandboxes lack is the law: which paths are protec
    - `permissions.deny` rules for `Edit`, `Write` (the same protected paths) and `Read` (the secrets), because Claude Code's file tools run outside the sandbox and follow permission rules instead;
    - `sandbox.network.allowedDomains`: empty unless the contract names hosts (a future contract key), so a test run cannot call home.
 
-   **Amended 2026-10-29** (shipped as `gantry cage policy` in 4.1, after checking Claude Code's settings, sandboxing and permissions documentation):
+   **Amended 2026-10-29** (shipped as `gantry cage policy` in the 4.0.2 patch, after checking Claude Code's settings, sandboxing and permissions documentation):
    - The permission deny rules are `Edit(...)` and `Read(...)` only. A `Write(path)` rule never matches in Claude Code; `Edit(path)` covers `Write`, `MultiEdit` and every other edit tool.
    - A protected path is written in both syntaxes: a permission rule anchored with `/` at the project root (`Edit(/.github/workflows)` plus `Edit(/.github/workflows/**)`, since the docs write a tree as `dir/**`), `**/name` patterns unanchored, home stores as `~/…`; a sandbox path with `./` (project root) or `~/`. The exception lists (`.env.example`, manifests under `vendor/`) cannot be allowed against a deny, so the fragment is stricter there.
    - `credentials` is `sandbox.credentials.files` with `{ path, mode: "deny" }` entries for the home credential stores (literal paths; `mask` needs TLS termination and is ignored in project settings). `**/.git/config` stays out of `sandbox.filesystem.denyRead`, because git reads it on every command; the `Read` rule keeps it out of the model's context.
@@ -47,4 +47,4 @@ What OpenGantry has that those sandboxes lack is the law: which paths are protec
 
 - Kernel-level blocking of protected writes, secret reads and network for agents that have a sandbox, without OpenGantry owning sandbox code on three platforms.
 - The policy follows the agent's settings schema, which changes; the generator is versioned per agent and tested against a pinned example of that schema.
-- 4.0 ships this decision only; the command lands in 4.1 unless its first version (Claude Code, protected paths and secrets) proves small enough to join a 4.0.x.
+- 4.0 ships this decision only; the command lands in 4.1 unless its first version (Claude Code, protected paths and secrets) proves small enough to join a 4.0.x. It did: the first version joined 4.0.2 (operator, 2026-10-29).

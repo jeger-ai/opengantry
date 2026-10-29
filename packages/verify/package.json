@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry-verify-runtime",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "private": true,
   "description": "OpenGantry verify (ADR-0051, ADR-0054): the contract engine over a change, with or without .gitagent/. Depends on core and git.",
   "type": "module",
