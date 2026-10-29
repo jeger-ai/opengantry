@@ -70,7 +70,10 @@ jobs:
         continue-on-error: true
         run: |
           extra=()
-          if [ "${HAS_PLANE_INGEST}" = "true" ]; then
+          mission="${{ steps.mission.outputs.path }}"
+          msn="$(sed -n 's/^msn_id: *["'"'"']*\([A-Z0-9-]*\).*/\1/p' "$mission" | head -1)"
+          # Only a mission judged by a committed run record has an envelope; legacy trace-row missions are verified without one.
+          if [ "${HAS_PLANE_INGEST}" = "true" ] && [ -f ".gitagent/runs/${msn}.json" ]; then
             extra+=(--export envelope.json)
           fi
           node dist/cli/index.js verify \

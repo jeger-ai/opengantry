@@ -131,7 +131,7 @@ test("deps-resolve: require.signed fails closed on an unsigned receipt entry com
   assert.equal(checkMissionDependency(consumer, dep()).code, "ok");
 });
 
-test("deps-resolve: require.signed passes when the receipt entry commit passes git verify-commit in the consumer", NEEDS_SSH, () => {
+test("deps-resolve: require.signed passes when the receipt entry commit has a good signature from a trusted key (%G? = G)", NEEDS_SSH, () => {
   const { producer, consumer } = initPair(fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-signed-")));
   const signers = sshSigning(producer);
   appendAsProducer(producer, { verify_status: "passed" }, { sign: true });

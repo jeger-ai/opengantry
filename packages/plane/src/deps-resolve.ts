@@ -32,7 +32,7 @@ function newestReceipt(root: string, chain: LedgerChainReport, msnId: string): {
 
 /**
  * Offline: walk fetched refs/gxt/deps/<slug> only. Fetch access to the dependency's ledger is the same-org proof;
- * `require.signed` is `git verify-commit` on the receipt entry's commit in this repository.
+ * `require.signed` needs a good signature from a trusted key (`%G?` = G) on the receipt entry's commit in this repository.
  */
 export function checkMissionDependency(root: string, dep: MissionDependencySpec): DependencyCheckResult {
   const ref = depsRefForRepo(dep.repo);
@@ -53,9 +53,9 @@ export function checkMissionDependency(root: string, dep: MissionDependencySpec)
   if ((dep.require?.verify_status ?? "passed") === "passed" && status !== "passed") {
     return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, `verify_status is ${String(status)}`);
   }
-  if (dep.require?.signed === true && !gitRun(root, ["verify-commit", commit]).ok) {
-    return fail(dep, GXT_ERROR.DEPENDENCY_UNSIGNED, `require.signed but receipt entry commit ${commit} fails git verify-commit`);
-  }
+  // %G? is G only for a good signature from a trusted key; U (untrusted), Y/X (expired), N, B, E all fail.
+  const sig = dep.require?.signed === true ? gitRun(root, ["log", "-1", "--format=%G?", commit]).stdout.trim() : "G";
+  if (sig !== "G") return fail(dep, GXT_ERROR.DEPENDENCY_UNSIGNED, `require.signed but receipt entry commit ${commit} has signature status ${sig || "none"}, not G: trust the producer's key (gpg.ssh.allowedSignersFile or GPG ownertrust)`);
   if (dep.require?.max_age_days !== undefined) {
     const issued = Date.parse(newest.issued_at);
     const maxMs = dep.require.max_age_days * 86_400_000;
