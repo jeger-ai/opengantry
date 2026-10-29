@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Assert templates/scripts dogfood copies match generated scripts/ (post gen-dogfood)
-# and that MIRRORED workflow/schema paths stay byte-identical to templates/.
+# and that MIRRORED schema paths stay byte-identical to templates/.
+# The CI workflows are not mirrored: templates/.github/workflows/ ships the adopter workflows (published CLI from npm),
+# .github/workflows/ is this repository's own CI (builds from source).
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
@@ -13,8 +15,6 @@ node scripts/gen-schemas.mjs
 node scripts/gen-dogfood.mjs
 
 MIRRORED=(
-  .github/workflows/gxt-validate.yml
-  .github/workflows/gxt-attest-ingest.yml
   .gitagent/planner/MISSION.schema.yaml
   .gitagent/planner/ORG-POLICY.schema.yaml
 )

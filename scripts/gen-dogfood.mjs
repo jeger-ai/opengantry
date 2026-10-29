@@ -2,7 +2,11 @@
 /**
  * Sync dogfood copies from templates/ to repo root (single source of truth: templates/).
  * - templates/scripts/* → scripts/ (managed template scripts only; repo-only scripts untouched)
- * - MIRRORED files listed below (workflows + planner schemas)
+ * - MIRRORED files listed below (planner schemas)
+ *
+ * The CI workflows are not mirrored: templates/.github/workflows/ ships the adopter workflows, which
+ * install @jeger-ai/opengantry from npm, while .github/workflows/ is this repository's own CI, which
+ * builds from source.
  *
  * Run via: npm run gen:dogfood (also wired into npm run build).
  */
@@ -14,8 +18,6 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 
 /** Repo-relative paths copied templates/<rel> → <rel>. */
 export const MIRRORED = [
-  ".github/workflows/gxt-validate.yml",
-  ".github/workflows/gxt-attest-ingest.yml",
   ".gitagent/planner/MISSION.schema.yaml",
   ".gitagent/planner/ORG-POLICY.schema.yaml",
 ];

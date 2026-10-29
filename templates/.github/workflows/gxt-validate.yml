@@ -1,14 +1,16 @@
 # Validates OpenGantry substrate: Foreman MANIFEST + path-scoped [MSN-NNNN] on PRs.
+# Shipped by gantry init / gantry upgrade (managed): every job installs the published CLI from npm.
 #
 # PR governance (pull_request only): mission PRs must target the repo default branch
 # (override: repository variable GXT_INTEGRATION_BRANCH when integration branch differs).
 # MSN policy (pull_request only): commits touching MSN-enforced paths must have
 # subject [MSN-NNNN] (four digits), a valid gxt-bypass git note, or satisfy
 # repository-declared trusted_automation policy (.gitagent/config.yaml, or the 3.x config.json).
-# Mission purity: scripts/verify-pr-missions.sh — one [MSN-NNNN] per PR commit range.
+# Mission verify (pull_request only): gantry ci verify-missions — full gantry verify on every
+# mission file the PR changes. Gates run with only Node and gantry installed: a gate that needs
+# the project's dependencies installs them itself (gantry upgrade apply replaces edits to this file).
 # Paths = fixed substrate (.gitagent/, EXECUTOR_LOG.md, .githooks/, gxt-validate.yml)
-#       + all MANIFEST skills[].tmvc_roots (Node via scripts/gxt-manifest-lib.mjs).
-# Logic: scripts/validate-gxt.sh — keep workflow header and script in sync.
+#       + all MANIFEST skills[].tmvc_roots.
 
 name: GXT validate
 
@@ -44,76 +46,18 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
-          cache: "npm"
 
-      - name: Install Node deps
-        run: npm ci
-
-      - name: Build gantry
-        run: npm run build
-
-      - name: iii integration offline validate
-        # Only in repositories that carry the iii integration example (this template is shipped by gantry init).
-        if: hashFiles('examples/iii-integration/package-lock.json') != ''
-        run: |
-          cd examples/iii-integration
-          npm ci
-          node scripts/validate-offline.mjs
-
-      - name: gantry unit tests
-        run: node --test "dist/cli/tests/**/*.test.js"
+      - name: Install gantry
+        run: npm install -g @jeger-ai/opengantry@^4
 
       - name: gantry doctor (readiness)
-        run: node dist/cli/index.js doctor
+        run: gantry doctor
 
       - name: gantry perimeter (CI signature enforcement)
         if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: node dist/cli/index.js perimeter --ci --base-ref "$BASE_SHA"
-
-  code_quality:
-    if: github.event_name == 'pull_request'
-    needs: pr_governance
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Install Node deps
-        run: npm ci
-
-      - name: Build gantry
-        run: npm run build
-
-      - name: Changed-code quality gates (complexity + import layers)
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: ./scripts/check-changed-code.sh "$BASE_SHA" "$HEAD_SHA"
-
-  npm_pack:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
-
-      - name: Install Node deps
-        run: npm ci
-
-      - name: npm pack check
-        run: ./scripts/npm-pack-check.sh
+        run: gantry perimeter --ci --base-ref "$BASE_SHA"
 
   msn_commits:
     if: github.event_name == 'pull_request'
@@ -130,20 +74,16 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
-          cache: npm
+          node-version: "24"
 
-      - name: Install Node deps
-        run: npm ci
-
-      - name: Build gantry
-        run: npm run build
+      - name: Install gantry
+        run: npm install -g @jeger-ai/opengantry@^4
 
       - name: Path-scoped MSN commit subjects
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node dist/cli/index.js ci msn-range --base "$BASE_SHA" --head "$HEAD_SHA"
+        run: gantry ci msn-range --base "$BASE_SHA" --head "$HEAD_SHA"
 
   mission_verify:
     if: github.event_name == 'pull_request'
@@ -155,26 +95,19 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Install ripgrep
-        run: sudo apt-get update && sudo apt-get install -y ripgrep
-
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
-          cache: npm
 
-      - name: Install Node deps
-        run: npm ci
-
-      - name: Build gantry
-        run: npm run build
+      - name: Install gantry
+        run: npm install -g @jeger-ai/opengantry@^4
 
       - name: Fetch cross-repo mission dependencies
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          json="$(node dist/cli/index.js mission changed --base-ref "$BASE_SHA" --head-ref "$HEAD_SHA" --json)" || {
+          json="$(gantry mission changed --base-ref "$BASE_SHA" --head-ref "$HEAD_SHA" --json)" || {
             echo "$json"
             exit 1
           }
@@ -199,17 +132,11 @@ jobs:
           fi
           for m in "${missions[@]}"; do
             [ -n "$m" ] || continue
-            node dist/cli/index.js deps fetch --mission "$m"
+            gantry deps fetch --mission "$m"
           done
-
-      # iii-integration mission gates run examples/iii-integration/scripts/validate-offline.mjs, which needs the
-      # example's own dependencies; without them it exits 2 (MSN-0263).
-      - name: Install iii integration example deps
-        if: hashFiles('examples/iii-integration/package-lock.json') != ''
-        run: npm ci --prefix examples/iii-integration --no-audit --no-fund
 
       - name: Full verify on PR-changed missions
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node dist/cli/index.js ci verify-missions --base "$BASE_SHA" --head "$HEAD_SHA"
+        run: gantry ci verify-missions --base "$BASE_SHA" --head "$HEAD_SHA"
