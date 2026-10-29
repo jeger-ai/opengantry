@@ -39,7 +39,7 @@ Requires `gantry init` first (or pass `--init`). Refuses to write into this Open
 
 1. Bind **offline validate** to worker-touching missions and CI: `npm run validate` (cold lint + self-test; exit 0 only).
 2. Wire the **governed listener** to `gantry::middleware` + OpenGantry RBAC hooks (see `config.yaml` port 49135).
-3. Run cold lint before hot promote; promote-class triggers require a passing `gantry::verify`.
+3. Run cold lint before hot promote; promote-class triggers require a verdict token.
 
 See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-tree baseline.
 
@@ -48,7 +48,7 @@ See [BEST-PRACTICES.md](./BEST-PRACTICES.md) for rule summary and upstream wild-
 | Function | Role |
 |----------|------|
 | `gantry::verify` | Kernel `verifyMission` (gates, trace) |
-| `gantry::middleware` | Hot path — promote-class gate, scope (when manifest bound) |
+| `gantry::middleware` | Hot path — verdict HMAC, promote-class gate, scope (when manifest bound) |
 | `gantry::on-function-registration` | Block `gantry::*` namespace squatting |
 | `gantry::on-trigger-registration` | Block triggers bound to `gantry::` |
 | `gantry::on-trigger-type-registration` | Deny trigger-type registration on governed port |
@@ -146,7 +146,7 @@ Typical production layout:
 
 ## Kernel
 
-Uses `@jeger-ai/opengantry/kernel` (v3.3.0+): `evaluateScope` and `await verifyMission(...)`. `verifyMission` returns a Promise. No deep `dist/cli/lib/*` imports.
+Uses `@jeger-ai/opengantry/kernel` 3.x (v3.3.0+): `evaluateScope`, `await verifyMission(...)`, `mintVerdictToken`, `verifyVerdictToken`. `verifyMission` returns a Promise. No deep `dist/cli/lib/*` imports. The worker pins `@jeger-ai/opengantry` `^3.2.5`: OpenGantry 4.0 no longer exports the verdict-token helpers, so the worker stays on the 3.x kernel until it reads run records instead.
 
 ## Out of scope (documented gaps)
 
