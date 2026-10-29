@@ -1,6 +1,6 @@
 ---
 title: "Autonomous agent graphs"
-description: "Use OpenGantry as the contract and verdict for external executors: discover, blueprint, legislate, verify, retry on findings, and hand off remotely."
+description: "Use OpenGantry as the contract and verdict for external executors: write the rules, legislate, verify, retry on findings, and hand off remotely."
 section: guides
 order: 7
 ---

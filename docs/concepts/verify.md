@@ -94,10 +94,10 @@ With `json`, `sarif` or `junit`, diagnostics go to stderr and the document is th
 
 ## Output by role
 
-`--audience executor|planner|verifier` (or `GANTRY_AUDIENCE`) tailors `verify` and `start` output:
+`--audience executor|planner|verifier|platform` (or `GANTRY_AUDIENCE`) tailors `verify` and `doctor` output:
 
 ```bash
-gantry --audience executor start "…"   # constraint-forward next steps
+gantry --audience executor verify …    # constraint-forward next steps
 gantry --audience planner verify …     # copyable git and mission hints
 gantry --audience verifier verify …    # silent unless a [GXT_*] error (CI)
 ```
