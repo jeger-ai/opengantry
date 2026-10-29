@@ -3,8 +3,7 @@ import { runInit } from "./commands/init.js";
 import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
-import { runReceiptList, runReceiptPrincipalHmac, runReceiptShow } from "./commands/receipt.js";
-import type { PrincipalHmacOptions } from "./flows/principal-hmac.js";
+import { runReceiptList, runReceiptShow } from "./commands/receipt.js";
 import type { InitOptions } from "./commands/init.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import { TYPED_GATE_ADAPTER_IDS, type TypedGateAdapterId } from "#core/gate-adapter.js";
@@ -51,43 +50,6 @@ function registerReceiptCommand(program: Command): void {
     .action((target: string | undefined, opts: { json?: boolean }) => {
       runReceiptShow({ target, json: opts.json });
     });
-
-  receipt
-    .command("principal-hmac")
-    .description("Compute attribution HMACs from the auditor pepper keyring (no git workspace required)")
-    .argument("[value]", "Principal value when using --kind")
-    .option("--org <id>", "Organization id (or GANTRY_ORG_ID)")
-    .option("--keyring <path>", "Pepper keyring path (or GANTRY_PEPPER_KEYRING)")
-    .option("--kind <kind>", "Principal kind: email|github_actor")
-    .option("--repo <url>", "Repository URL to hash")
-    .option("--branch <name>", "Branch name to hash")
-    .option("--epochs <spec>", "Pepper epochs: current|all|N,N", "current")
-    .option("--json", "Emit structured JSON")
-    .action(
-      (
-        value: string | undefined,
-        opts: {
-          org?: string;
-          keyring?: string;
-          kind?: string;
-          repo?: string;
-          branch?: string;
-          epochs?: string;
-          json?: boolean;
-        },
-      ) => {
-        runReceiptPrincipalHmac({
-          org: opts.org,
-          keyring: opts.keyring,
-          kind: opts.kind as PrincipalHmacOptions["kind"],
-          value,
-          repo: opts.repo,
-          branch: opts.branch,
-          epochs: opts.epochs,
-          json: opts.json,
-        });
-      },
-    );
 }
 
 function registerDoctorCommand(program: Command): void {

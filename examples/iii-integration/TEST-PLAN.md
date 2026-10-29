@@ -23,8 +23,8 @@ Worker hot-path tests (`npm test`, `npm run demo`, `npm run loadtest`) run from 
 
 | ID | Area | Check | Pass criteria |
 |----|------|-------|---------------|
-| T1-01 | Kernel | `@jeger-ai/opengantry/kernel` exports | `evaluateScope`, `mintVerdictToken`, `verifyVerdictToken` callable |
-| T1-02 | Verdict | HMAC round-trip | `mintVerdictToken` + `verifyVerdictToken` with keyring |
+| T1-01 | Kernel | `@jeger-ai/opengantry/kernel` 3.x exports | `evaluateScope`, `mintVerdictToken`, `verifyVerdictToken` callable |
+| T1-02 | Verdict | HMAC round-trip (3.x kernel) | `mintVerdictToken` + `verifyVerdictToken` with keyring |
 | T1-03 | Namespace | Reserved `gantry::*` | `isReservedGovernanceFunctionId("gantry::verify")` true; `demo::work` false |
 | T1-04 | Middleware | Fail-closed promote | `src::promote` without verdict → throws `GantryDenied` |
 | T1-05 | Middleware | Promote with verdict | Valid token + `worktree_path` → forward succeeds |

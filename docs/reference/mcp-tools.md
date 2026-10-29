@@ -42,18 +42,12 @@ The cage has no MCP tool: `gantry cage check`, `gantry cage watch`, `gantry cage
 External runtimes such as workers, daemons and custom middleware can call OpenGantry in process instead of through the CLI:
 
 ```javascript
-import {
-  evaluateScope,
-  verifyMission,
-  mintVerdictToken,
-  verifyVerdictToken,
-} from "@jeger-ai/opengantry/kernel";
+import { evaluateScope, verifyMission } from "@jeger-ai/opengantry/kernel";
 ```
 
 | Export | Does |
 |--------|------|
 | `evaluateScope` | Checks one repository-relative path against edit roots and forbidden zones |
 | `verifyMission` | Runs the verify phases and resolves to the structured JSON payload. It returns a `Promise`: always `await` it |
-| `mintVerdictToken`, `verifyVerdictToken` | HMAC verdict tokens, keyed by the pepper keyring, for hot-path promotion gates |
 
 Only two entry points resolve from the package: `.` (the CLI) and `./kernel`. Deep imports of `dist/` modules do not. A reference integration lives in [`examples/iii-integration/`](https://github.com/jeger-ai/opengantry/tree/main/examples/iii-integration).

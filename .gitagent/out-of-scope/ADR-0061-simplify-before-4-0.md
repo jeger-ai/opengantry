@@ -75,6 +75,15 @@ Operator decisions for phase 1 (2026-10-28), in three serial missions (the write
 
 The run record (ADR-0052 A4) is the only evidence. The attestation receipt, the hub export envelope and the ledger entry become projections of it. The verdict token, its expected-claims helper and the HMAC pepper keyring are removed with their kernel exports (`mintVerdictToken`, `verifyVerdictToken`, …); `verifyMission` and `evaluateScope` stay. The draft token of the MCP handoff stays, because it is what makes the two-step approval work.
 
+Operator decisions for phase 2 (2026-10-29):
+
+- The hub path stays as an export envelope 2.0 over the canonical run record (`verify --export`); the plane must adapt.
+- Cross-repo dependency proof drops the org pepper: same-org proof is fetch access, `require.signed` is `git verify-commit`, and `GXT_DEPENDENCY_ORG_MISMATCH` and the `GANTRY_ORG_*` configuration go.
+- The verdict-token kernel exports are removed; consumers pin 3.x.
+- The ledger stops writing `dependency_check` entries.
+- Pre-4.0 ledger chains keep verifying, and local receipts become inert.
+- `gantry attest` and `gantry receipt` are replaced by `verify --record`, the committed run record and `ledger list`.
+
 ### Phase 3: the shells and doctor
 
 Commander commands and MCP tools are generated from one command specification (ADR-0052 promised it), replacing the hand-written registration. `doctor` keeps the checks that decide whether a repository works (manifest and skills sync, hooks, Planner identity, substrate version, law files) and drops advisory ones. `missions` is split only if a real seam remains after phases 0 to 2.

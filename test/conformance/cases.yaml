@@ -69,7 +69,6 @@ cases:
   - { id: attest.no-org.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: receipt-list.mission-pass, fixture: mission-pass, args: [receipt, list, --json] }
   - { id: receipt-show.none.mission-pass, fixture: mission-pass, args: [receipt, show, MSN-0101, --json] }
-  - { id: receipt-principal-hmac.no-keyring.bare-git, fixture: bare-git, args: [receipt, principal-hmac, planner@fixture.test, --org, org-fixture, --json] }
   - { id: events-push.dry-run.mission-pass, fixture: mission-pass, args: [events, push, --dry-run, --json] }
 
   # --- architecture and perimeters ---

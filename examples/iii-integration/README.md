@@ -146,7 +146,7 @@ Typical production layout:
 
 ## Kernel
 
-Uses `@jeger-ai/opengantry/kernel` (v3.3.0+): `evaluateScope`, `await verifyMission(...)`, `mintVerdictToken`, `verifyVerdictToken`. `verifyMission` returns a Promise. No deep `dist/cli/lib/*` imports.
+Uses `@jeger-ai/opengantry/kernel` 3.x (v3.3.0+): `evaluateScope`, `await verifyMission(...)`, `mintVerdictToken`, `verifyVerdictToken`. `verifyMission` returns a Promise. No deep `dist/cli/lib/*` imports. The worker pins `@jeger-ai/opengantry` `^3.2.5`: OpenGantry 4.0 no longer exports the verdict-token helpers, so the worker stays on the 3.x kernel until it reads run records instead.
 
 ## Out of scope (documented gaps)
 

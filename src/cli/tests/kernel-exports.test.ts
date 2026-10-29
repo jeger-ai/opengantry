@@ -1,17 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 import { createRequire } from "node:module";
 
 import { evaluateScope, isPromoteClassFunctionId } from "#missions/kernel-evaluate-scope.js";
-import {
-  mintVerdictToken,
-  verifyVerdictToken,
-} from "#missions/verdict-token.js";
-import type { PepperKeyringEntry } from "#missions/pepper-keyring.js";
 import type { Manifest } from "#core/manifest.js";
 import type { ParsedMission } from "#core/mission-types.js";
 
@@ -23,19 +17,11 @@ test("kernel exports: package subpaths resolve after build", () => {
   const kernel = require(kernelPath) as {
     evaluateScope: typeof evaluateScope;
     verifyMission: (input: { repoRoot: string; missionRelPath: string }) => Promise<unknown>;
-    verifyVerdictToken: typeof verifyVerdictToken;
     loadGovernanceBundle: (repoRoot: string, missionRelPath: string) => unknown;
-    buildVerdictExpectedClaims: (repoRoot: string, missionRelPath: string) => unknown;
-    verdictClaimsFor: (repoRoot: string, missionRelPath: string) => unknown;
-    resolveOrgId: (repoRoot: string) => string;
   };
   assert.equal(typeof kernel.evaluateScope, "function");
   assert.equal(typeof kernel.verifyMission, "function");
-  assert.equal(typeof kernel.verifyVerdictToken, "function");
   assert.equal(typeof kernel.loadGovernanceBundle, "function");
-  assert.equal(typeof kernel.buildVerdictExpectedClaims, "function");
-  assert.equal(typeof kernel.verdictClaimsFor, "function");
-  assert.equal(typeof kernel.resolveOrgId, "function");
 });
 
 test("evaluateScope: inside tmvc allowed", () => {
@@ -75,34 +61,3 @@ test("isPromoteClassFunctionId detects promote patterns", () => {
   assert.equal(isPromoteClassFunctionId("git::push"), true);
   assert.equal(isPromoteClassFunctionId("math::add"), false);
 });
-
-test("verdict-token: mint and verify round-trip", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-vt-"));
-  const keyringFile = path.join(dir, "pepper-keyring.json");
-  const entries: PepperKeyringEntry[] = [
-    { org_id: "org-test", pepper_version: 1, pepper: "test-pepper-secret" },
-  ];
-  fs.writeFileSync(keyringFile, JSON.stringify(entries), { mode: 0o600 });
-  const expected = {
-    msn_id: "MSN-0154",
-    mission_sha256: "abc123",
-    findings_digest: "digest",
-    gate_command: "npm test",
-    org_id: "org-test",
-  };
-  const token = mintVerdictToken({
-    ...expected,
-    keyringPath: keyringFile,
-    ttlSeconds: 60,
-  });
-  assert.ok(verifyVerdictToken({ token, expected, keyringPath: keyringFile }));
-  assert.equal(
-    verifyVerdictToken({
-      token,
-      expected: { ...expected, findings_digest: "wrong" },
-      keyringPath: keyringFile,
-    }),
-    false,
-  );
-});
-

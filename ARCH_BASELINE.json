@@ -1,6 +1,6 @@
 {
   "schema": "opengantry.arch-baseline.v1",
-  "commit": "b53f80a77a1cfba4155341b52bc762690ffe1168",
+  "commit": "ee93108e3c0e704d8fdd87ade3ae8c0cb515d228",
   "file_ceiling_lines": 800,
   "layers": {
     "core": {
@@ -29,24 +29,24 @@
       "exports": 77
     },
     "missions": {
-      "files": 111,
-      "lines": 12713,
-      "exports": 444
+      "files": 108,
+      "lines": 12290,
+      "exports": 428
     },
     "command": {
       "files": 29,
-      "lines": 3134,
-      "exports": 105
+      "lines": 3127,
+      "exports": 104
     },
     "lib": {
-      "files": 48,
-      "lines": 5203,
-      "exports": 197
+      "files": 47,
+      "lines": 5065,
+      "exports": 193
     },
     "delivery": {
       "files": 15,
-      "lines": 1505,
-      "exports": 33
+      "lines": 1451,
+      "exports": 30
     }
   }
 }
