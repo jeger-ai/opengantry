@@ -1,6 +1,6 @@
 # Content governance example
 
-Brand/compliance fixture for the OpenGantry content domain. Demonstrates the same agent graph as code governance — a hand-written TARGET_ARCHITECTURE.yaml, arch check, verify — over marketing copy instead of TypeScript imports.
+Brand/compliance fixture for the OpenGantry content domain. Demonstrates the same agent graph as code governance — a hand-written TARGET_ARCHITECTURE.yaml checked by `gantry arch check` — over marketing copy instead of TypeScript imports.
 
 ## Fixture layout
 
