@@ -43,7 +43,7 @@ gantry deps check --since v3.2.6
 
 ## Compliance ledger
 
-With `ledger.mode: local` in `.gitagent/config.yaml`, verify, break-glass and policy pull append a digest-only entry to `refs/gxt/ledger`. Git parent links plus an embedded `prev_entry_hash` form the hash chain. A passing verify appends a `receipt` entry `{verify_status: passed, run_record_sha256}`; the digest is the sha256 of the canonical run record and is present when the mission has one. Entries written before 4.0 keep their older payloads and still verify.
+With `ledger.mode: local` in `.gitagent/config.yaml`, verify, break-glass and policy pull append a digest-only entry to `refs/gxt/ledger`. Git parent links plus an embedded `prev_entry_hash` form the hash chain. A passing verify appends a `receipt` entry `{verify_status: passed, run_record_sha256}`; the digest is the sha256 of the canonical run record and is present when the mission has one. Entries carry no org id or repository hash, so appending needs no org configuration. Dependency checks are not appended; their results are in the verify output. Entries written before 4.0 keep their org fields and older payloads and still verify.
 
 - Appends use compare-and-swap with bounded retries, so parallel CI jobs never fork the chain; running out of retries fails closed (`GXT_LEDGER_CAS_EXHAUSTED`).
 - Unsigned entries are checksums, not proofs. `ledger.signature: require` demands signed commits.
@@ -65,7 +65,7 @@ With `ledger.mode: local` in `.gitagent/config.yaml`, verify, break-glass and po
 
 A mission can declare `depends_on[]`: missions in other repositories of the same organization that must be verified first. `gantry deps fetch` is the only network path; verify's `dependencies` phase, `gantry deps check` and doctor read the fetched `refs/gxt/deps/<slug>` refs offline.
 
-Same-org proof recomputes `repository_hash` for the dependency with your `GANTRY_ORG_PEPPER` and requires it to match; a mismatch is `GXT_DEPENDENCY_ORG_MISMATCH`. Unfetched, unsatisfied, unsigned (when required) or stale entries fail closed (`GXT_DEPENDENCY_*`). `gantry deps check --since <tag>` holds a release until its dependencies are verified. Triggering other repositories' workflows is convenience glue, not enforcement. MCP: `gxt_deps_check`.
+Same-org proof is the ability to fetch the dependency's ledger ref. `require.signed: true` means the receipt entry's commit passes `git verify-commit` in your repository (configure `gpg.ssh.allowedSignersFile` or your GPG keyring for the producer's signers); unsigned or unverifiable is `GXT_DEPENDENCY_UNSIGNED`. Unfetched, unsatisfied, unsigned (when required) or stale entries fail closed (`GXT_DEPENDENCY_*`). `gantry deps check --since <tag>` holds a release until its dependencies are verified. Triggering other repositories' workflows is convenience glue, not enforcement. MCP: `gxt_deps_check`.
 
 ## Run records and telemetry
 

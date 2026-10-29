@@ -9,11 +9,6 @@ import { loadWorkspace } from "#missions/workspace.js";
 import { GantryUserError } from "#core/user-error.js";
 import { reportUserFacingError } from "../output/errors.js";
 import { runVerifyCore } from "../flows/verify-run.js";
-import { appendEventSpool } from "#missions/event-spool.js";
-import { resolveOrgExportConfig } from "#plane/org-export-config.js";
-import { resolveRepositoryHash } from "#plane/receipt-attribution.js";
-import { resolveMissionArg } from "../flows/mission-arg.js";
-import { parseMissionFile } from "#missions/mission/parser.js";
 
 function structuredVerifyOutput(options: VerifyOptions): boolean {
   return options.json === true || options.format !== undefined;
@@ -93,26 +88,6 @@ async function runVerifyChangedMissions(options: VerifyOptions, reporter: Report
   }
 }
 
-function recordVerifyAttempt(root: string, options: VerifyOptions, ok: boolean, exitCode: number): void {
-  try {
-    if (!options.mission) return;
-    const resolved = resolveMissionArg(root, options.mission);
-    const mission = parseMissionFile(root, resolved.missionRel);
-    const org = resolveOrgExportConfig(root);
-    appendEventSpool(root, {
-      event_type: "verify_attempt",
-      repository_hash: resolveRepositoryHash(root, org),
-      msn_id: mission.msnId ?? undefined,
-      payload: {
-        status: ok ? "passed" : "failed",
-        exit_code: exitCode,
-      },
-    });
-  } catch {
-    // best-effort spool
-  }
-}
-
 /**
  * The verify command. Its one reporter comes from its options (--json, --format, --audience); an in-process caller
  * that sets no audience inherits the command's.
@@ -137,8 +112,6 @@ export async function runVerify(options: VerifyOptions): Promise<void> {
 
   try {
     const result = await runVerifyCore(options, reporter);
-    const { root } = loadWorkspace();
-    recordVerifyAttempt(root, options, result.ok, result.exitCode);
     if (!result.ok) {
       setExitCode(result.exitCode);
     }

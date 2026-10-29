@@ -87,13 +87,10 @@ Teams that run an OpenGantry control plane ingest an export envelope from every 
 
 | Name | Type | Purpose |
 |------|------|---------|
-| `GANTRY_ORG_ID` | variable | Must match the plane's ingestion token org |
-| `GANTRY_ORG_PEPPER` | secret | Customer-held pepper, never sent to the plane |
-| `GANTRY_ORG_PEPPER_VERSION` | variable | Optional; default `1` |
 | `PLANE_INGEST_URL` | variable | Public HTTPS base of the control plane |
 | `PLANE_INGEST_TOKEN` | secret | From `planectl token-create` on the plane |
 
-Without `GANTRY_ORG_ID` or `GANTRY_ORG_PEPPER` the workflow still runs `gantry verify` but skips `--export`; without `PLANE_INGEST_URL` or `PLANE_INGEST_TOKEN` it skips ingest. Missing optional hub config never fails a pull request.
+Without `PLANE_INGEST_URL` or `PLANE_INGEST_TOKEN` the workflow still runs `gantry verify` but skips `--export`, ingest and the ledger append. Missing optional hub config never fails a pull request.
 
 **Order matters:**
 

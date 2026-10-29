@@ -51,7 +51,6 @@ export interface MissionDependencySpec {
     signed?: boolean;
     max_age_days?: number;
   };
-  expected_repository_hash?: string;
 }
 
 /** Fallback MSN when a mission has no id (CLI defaults, ledger rows). */

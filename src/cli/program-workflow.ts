@@ -7,7 +7,6 @@ import { runVerify } from "./commands/verify.js";
 import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
 import { registerAdaptCommand } from "./commands/adapt.js";
 import type { VerifyOptions } from "./flows/verify-options.js";
-import { runEventsPush } from "./commands/events-push.js";
 import { runPerimeter } from "./commands/perimeter.js";
 import { runArchCheckCommand } from "./commands/arch.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
@@ -268,22 +267,6 @@ function registerVerifyCommand(program: Command): void {
     });
 }
 
-function registerEventsCommand(program: Command): void {
-  const eventsCmd = program.command("events").description("Pre-commit agent event spool and plane push");
-
-  eventsCmd
-    .command("push")
-    .description("Push spooled pre-commit events to opengantry-plane")
-    .option("--url <url>", "Plane ingest base URL (default PLANE_INGEST_URL)")
-    .option("--token <token>", "Ingest bearer token (default PLANE_INGEST_TOKEN)")
-    .option("--dry-run", "Print batch envelope without sending")
-    .option("--json", "Emit structured JSON")
-    .option("--cwd <dir>", "Working directory")
-    .action(async (opts: { url?: string; token?: string; dryRun?: boolean; json?: boolean; cwd?: string }) => {
-      await runEventsPush(opts);
-    });
-}
-
 function registerPerimeterCommand(program: Command): void {
   const perimeterCmd = program
     .command("perimeter")
@@ -312,6 +295,5 @@ export function registerWorkflowCommands(program: Command): void {
   registerInterrogateCommand(program);
   registerVerifyCommand(program);
   registerAdaptCommand(program);
-  registerEventsCommand(program);
   registerPerimeterCommand(program);
 }

@@ -55,6 +55,27 @@ trace_rows: []
   assert.throws(() => validateYamlMission(root, file, body), /GXT_MISSION_SCHEMA_INVALID: .*kpi_gate, llm_verifiers, aggregators were removed in 4\.0 \(ADR-0061\)/);
 });
 
+test("mission schema: depends_on[].expected_repository_hash is refused as removed in 4.0 (ADR-0061)", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "og-schema-dep-hash-"));
+  fs.mkdirSync(path.join(root, ".gitagent", "planner"), { recursive: true });
+  fs.copyFileSync(
+    path.join(getRepoRoot(), ".gitagent", "planner", "MISSION.schema.yaml"),
+    path.join(root, ".gitagent", "planner", "MISSION.schema.yaml"),
+  );
+  const body = `msn_id: MSN-0992
+skill_key: gantry
+gate_command: echo OK
+trace_rows: []
+depends_on:
+  - repo: github.com/jeger-ai/producer
+    msn_id: MSN-0100
+    expected_repository_hash: "${"0".repeat(64)}"
+`;
+  const file = path.join(root, "dep-mission.yaml");
+  fs.writeFileSync(file, body, "utf8");
+  assert.throws(() => validateYamlMission(root, file, body), /GXT_MISSION_SCHEMA_INVALID: .*depends_on\[\]\.expected_repository_hash was removed in 4\.0 \(ADR-0061\)/);
+});
+
 test("mission schema: example.verify.yaml passes validateYamlMission", () => {
   const ogRoot = getRepoRoot();
   const rel = ".gitagent/missions/example.verify.yaml";

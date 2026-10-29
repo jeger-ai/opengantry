@@ -1,36 +1,39 @@
-import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "./receipt-attribution.js";
-import { resolveOrgExportConfig } from "./org-export-config.js";
+import { gitRun } from "#git/git.js";
 import { GXT_ERROR } from "#core/error-codes.js";
-import { readLedgerTip, verifyLedgerChain } from "./ledger-chain.js";
+import { readLedgerTip, verifyLedgerChain, type LedgerChainReport } from "./ledger-chain.js";
 import type { LedgerEntry } from "./ledger-entry.js";
-import { msnIdOrDefault, type MissionDependencySpec, type ParsedMission } from "#core/mission-types.js";
+import type { MissionDependencySpec, ParsedMission } from "#core/mission-types.js";
 import { depsRefForRepo } from "./deps-slug.js";
 
 export type DependencyFailureCode =
   | typeof GXT_ERROR.DEPENDENCY_UNFETCHED
   | typeof GXT_ERROR.DEPENDENCY_UNSATISFIED
   | typeof GXT_ERROR.DEPENDENCY_UNSIGNED
-  | typeof GXT_ERROR.DEPENDENCY_STALE
-  | typeof GXT_ERROR.DEPENDENCY_ORG_MISMATCH;
+  | typeof GXT_ERROR.DEPENDENCY_STALE;
 
 export type DependencyCheckResult =
   | { code: "ok"; repo: string; msn_id: string }
   | { code: DependencyFailureCode; repo: string; msn_id: string; message: string };
 
-function expectedRepoHash(root: string, repo: string): string {
-  const org = resolveOrgExportConfig(root);
-  return hmacSha256Hex(org.pepper, canonicalizeRepositoryIdentifier(repo));
-}
-
-function fail(
-  dep: MissionDependencySpec,
-  code: DependencyFailureCode,
-  message: string,
-): DependencyCheckResult {
+function fail(dep: MissionDependencySpec, code: DependencyFailureCode, message: string): DependencyCheckResult {
   return { repo: dep.repo, msn_id: dep.msn_id, code, message };
 }
 
-/** Offline: walk fetched refs/gxt/deps/<slug> only. */
+/** The newest receipt entry for the mission and its commit (a consistent chain has one entry per commit, oldest first). */
+function newestReceipt(root: string, chain: LedgerChainReport, msnId: string): { entry: Extract<LedgerEntry, { entry_kind: "receipt" }>; commit: string } | null {
+  const commits = gitRun(root, ["rev-list", "--reverse", chain.tip ?? ""]).stdout.split("\n").filter(Boolean);
+  if (commits.length !== chain.entries.length) return null; // never pair an entry with the wrong commit
+  for (let i = chain.entries.length - 1; i >= 0; i--) {
+    const entry = chain.entries[i];
+    if (entry?.entry_kind === "receipt" && entry.msn_id === msnId) return { entry, commit: commits[i] ?? "" };
+  }
+  return null;
+}
+
+/**
+ * Offline: walk fetched refs/gxt/deps/<slug> only. Fetch access to the dependency's ledger is the same-org proof;
+ * `require.signed` is `git verify-commit` on the receipt entry's commit in this repository.
+ */
 export function checkMissionDependency(root: string, dep: MissionDependencySpec): DependencyCheckResult {
   const ref = depsRefForRepo(dep.repo);
   const tip = readLedgerTip(root, ref);
@@ -41,26 +44,17 @@ export function checkMissionDependency(root: string, dep: MissionDependencySpec)
   if (!chain.ok) {
     return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, chain.errors[0] ?? "dependency ledger chain broken");
   }
-  const matches = [...chain.entries]
-    .reverse()
-    .filter(
-      (e): e is Extract<LedgerEntry, { entry_kind: "receipt" }> =>
-        e.msn_id === dep.msn_id && e.entry_kind === "receipt",
-    );
-  const newest = matches[0];
-  if (!newest) {
+  const found = newestReceipt(root, chain, dep.msn_id);
+  if (!found) {
     return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, `no receipt entry for ${dep.msn_id}`);
   }
-  const wantHash = dep.expected_repository_hash ?? expectedRepoHash(root, dep.repo);
-  if (newest.repository_hash !== wantHash) {
-    return fail(dep, GXT_ERROR.DEPENDENCY_ORG_MISMATCH, "repository_hash does not match consumer GANTRY_ORG_PEPPER");
-  }
+  const { entry: newest, commit } = found;
   const status = newest.payload.verify_status;
   if ((dep.require?.verify_status ?? "passed") === "passed" && status !== "passed") {
     return fail(dep, GXT_ERROR.DEPENDENCY_UNSATISFIED, `verify_status is ${String(status)}`);
   }
-  if (dep.require?.signed === true && newest.payload.signed !== true) {
-    return fail(dep, GXT_ERROR.DEPENDENCY_UNSIGNED, "require.signed but newest receipt entry is unsigned");
+  if (dep.require?.signed === true && !gitRun(root, ["verify-commit", commit]).ok) {
+    return fail(dep, GXT_ERROR.DEPENDENCY_UNSIGNED, `require.signed but receipt entry commit ${commit} fails git verify-commit`);
   }
   if (dep.require?.max_age_days !== undefined) {
     const issued = Date.parse(newest.issued_at);
@@ -72,14 +66,7 @@ export function checkMissionDependency(root: string, dep: MissionDependencySpec)
   return { repo: dep.repo, msn_id: dep.msn_id, code: "ok" };
 }
 
-/** Check every depends_on row; the caller records the aggregated ok entry when its ledger is on. */
+/** Check every depends_on row. */
 export function checkMissionDependencies(root: string, mission: ParsedMission): DependencyCheckResult[] {
   return mission.dependsOn.map((d) => checkMissionDependency(root, d));
-}
-
-/** The ledger payload for the passing rows, or null when none passed. */
-export function dependencyCheckLedgerPayload(mission: ParsedMission, results: readonly DependencyCheckResult[]): { repo: string; msn_id: string; result: string } | null {
-  const okResults = results.filter((r): r is Extract<DependencyCheckResult, { code: "ok" }> => r.code === "ok");
-  if (okResults.length === 0) return null;
-  return { repo: okResults.map((r) => r.repo).join(","), msn_id: msnIdOrDefault(mission), result: "ok" };
 }

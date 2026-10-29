@@ -38,3 +38,7 @@ Missions and docs MUST keep a sharp boundary: the CLI spoke is the only fail-clo
 - CISOs get meaning from Hub resolution against Git + org baselines, not from bloating the signed receipt.
 - Future missions that blur spoke enforcement with Hub ingestion violate this ADR and MUST be re-scoped.
 - Teams using `flight_telemetry.body_mode: full` accept local storage of gate stream bodies in `EXECUTOR_LOG.md`.
+
+## Amendment (ADR-0061)
+
+Amended by [ADR-0061](ADR-0061-simplify-before-4-0.md): the attestation receipt and the org-scoped export config (`GANTRY_ORG_*`, `ORG.export.local`, the HMAC pepper) are gone. The export vector is `verify --export`, envelope 2.0 over the committed run record; the spoke as sole enforcer, hash-only telemetry, the offline doctor and no Hub SaaS in this repository stand.

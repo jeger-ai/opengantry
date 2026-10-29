@@ -65,7 +65,6 @@ cases:
   - { id: verify.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: verify.pre-push.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --pre-push, --json] }
   - { id: verify.record.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --record, --json], record_tree: true }
-  - { id: events-push.dry-run.mission-pass, fixture: mission-pass, args: [events, push, --dry-run, --json] }
 
   # --- architecture and perimeters ---
   - { id: arch-pointer.fresh-init, fixture: fresh-init, args: [arch, pointer] }

@@ -2,16 +2,10 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { REL_POLICY_CACHE, REL_POLICY_POINTER_JSON } from "#core/constants.js";
-import { hmacSha256Hex, canonicalizeRepositoryIdentifier } from "#plane/receipt-attribution.js";
 import { appendLedgerEntry } from "#missions/ledger/ledger-append.js";
 import type { LedgerEntry, ReceiptLedgerPayload } from "#plane/ledger-entry.js";
-import { depsRefForRepo } from "#plane/deps-slug.js";
-import { gitRun } from "#git/git.js";
 import type { OrgPolicyBundle } from "#plane/policy-types.js";
-import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
-import { PLANNER_EMAIL } from "./test-shared.js";
 
-export const ORG_FIXTURE_PEPPER = "test-pepper-secret";
 export const ORG_FIXTURE_ORG_ID = "org-test-fixture";
 export const PRODUCER_REPO_ID = "github.com/jeger-ai/producer";
 
@@ -98,51 +92,15 @@ export function appendLedgerFixture(
     msn_id?: string;
     payload?: ReceiptLedgerPayload;
     issued_at?: string;
+    sign?: boolean;
   } = {},
 ): LedgerEntry {
   writeLedgerEnabledConfig(root);
-  writeOrgExportConfig(root, ORG_FIXTURE_ORG_ID, ORG_FIXTURE_PEPPER);
   return appendLedgerEntry(root, {
     kind: "receipt",
     msn_id: input.msn_id ?? "MSN-0100",
-    payload: input.payload ?? { verify_status: "passed", signed: true },
-    sign: false,
+    payload: input.payload ?? { verify_status: "passed" },
+    sign: input.sign === true,
     issued_at: input.issued_at,
   });
-}
-
-export function writeTwoRepoDependencyFixture(tmpBase: string): {
-  producer: string;
-  consumer: string;
-  repoId: string;
-  expectedHash: string;
-  depRef: string;
-} {
-  const producer = path.join(tmpBase, "producer");
-  const consumer = path.join(tmpBase, "consumer");
-  fs.mkdirSync(producer, { recursive: true });
-  fs.mkdirSync(consumer, { recursive: true });
-  fs.writeFileSync(path.join(producer, "README.md"), "producer\n", "utf8");
-  fs.writeFileSync(path.join(consumer, "README.md"), "consumer\n", "utf8");
-  gitInitCommit(producer, "chore: producer", PLANNER_EMAIL);
-  gitInitCommit(consumer, "chore: consumer", PLANNER_EMAIL);
-  writeLedgerEnabledConfig(producer);
-  writeOrgExportConfig(producer, ORG_FIXTURE_ORG_ID, ORG_FIXTURE_PEPPER);
-  writeOrgExportConfig(consumer, ORG_FIXTURE_ORG_ID, ORG_FIXTURE_PEPPER);
-  const prevRepo = process.env.GANTRY_REPO_ID;
-  process.env.GANTRY_REPO_ID = PRODUCER_REPO_ID;
-  try {
-    appendLedgerFixture(producer, {
-      msn_id: "MSN-0100",
-      payload: { verify_status: "passed", signed: true },
-    });
-  } finally {
-    if (prevRepo === undefined) delete process.env.GANTRY_REPO_ID;
-    else process.env.GANTRY_REPO_ID = prevRepo;
-  }
-  const expectedHash = hmacSha256Hex(ORG_FIXTURE_PEPPER, canonicalizeRepositoryIdentifier(PRODUCER_REPO_ID));
-  const depRef = depsRefForRepo(PRODUCER_REPO_ID);
-  const fetched = gitRun(consumer, ["fetch", producer, `refs/gxt/ledger:${depRef}`]);
-  if (!fetched.ok) throw new Error(fetched.stderr);
-  return { producer, consumer, repoId: PRODUCER_REPO_ID, expectedHash, depRef };
 }

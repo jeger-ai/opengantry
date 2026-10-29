@@ -61,7 +61,6 @@ export const missionDependencySchema = z
       })
       .strict()
       .optional(),
-    expected_repository_hash: sha256.optional(),
   })
   .strict();
 

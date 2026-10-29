@@ -10,7 +10,6 @@ jobs:
   attest_ingest:
     runs-on: ubuntu-latest
     env:
-      HAS_ORG_EXPORT: ${{ vars.GANTRY_ORG_ID != '' && secrets.GANTRY_ORG_PEPPER != '' }}
       HAS_PLANE_INGEST: ${{ vars.PLANE_INGEST_URL != '' && secrets.PLANE_INGEST_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
@@ -28,19 +27,10 @@ jobs:
 
       - run: npm ci && npm run build
 
-      - name: Resolve attribution identity
-        run: |
-          echo "GANTRY_SIGNER_PRINCIPAL=github:${{ github.event.pull_request.user.id }}:${{ github.event.pull_request.user.login }}" >> "$GITHUB_ENV"
-          echo "GANTRY_SIGNER_PRINCIPAL_KIND=github_actor" >> "$GITHUB_ENV"
-          echo "GANTRY_BRANCH_NAME=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_ENV"
-
       - name: Resolve ingest configuration
         run: |
-          if [ "${HAS_ORG_EXPORT}" != "true" ]; then
-            echo "Skipping envelope export: GANTRY_ORG_ID or GANTRY_ORG_PEPPER not configured"
-          fi
           if [ "${HAS_PLANE_INGEST}" != "true" ]; then
-            echo "Skipping plane ingest: PLANE_INGEST_URL or PLANE_INGEST_TOKEN not configured"
+            echo "Skipping envelope export and plane ingest: PLANE_INGEST_URL or PLANE_INGEST_TOKEN not configured"
           fi
 
       - name: Resolve changed mission
@@ -78,15 +68,9 @@ jobs:
         id: verify
         if: steps.mission.outputs.path != ''
         continue-on-error: true
-        env:
-          GANTRY_ORG_ID: ${{ vars.GANTRY_ORG_ID }}
-          GANTRY_ORG_PEPPER: ${{ secrets.GANTRY_ORG_PEPPER }}
-          GANTRY_ORG_PEPPER_VERSION: ${{ vars.GANTRY_ORG_PEPPER_VERSION || '1' }}
         run: |
           extra=()
-          if [ "${HAS_ORG_EXPORT}" != "true" ] || [ -z "${GANTRY_ORG_ID}" ] || [ -z "${GANTRY_ORG_PEPPER}" ]; then
-            echo "Skipping envelope export: GANTRY_ORG_ID or GANTRY_ORG_PEPPER not configured"
-          else
+          if [ "${HAS_PLANE_INGEST}" = "true" ]; then
             extra+=(--export envelope.json)
           fi
           node dist/cli/index.js verify \
@@ -133,20 +117,11 @@ jobs:
           exit 1
 
       - name: Append compliance ledger and push ref
-        if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != '' && env.HAS_ORG_EXPORT == 'true'
+        if: steps.mission.outputs.path != '' && hashFiles('envelope.json') != ''
         continue-on-error: true
         run: |
           node dist/cli/index.js ledger append --from-envelope envelope.json || true
           git push origin refs/gxt/ledger || echo "ledger push skipped (ref absent or no permission)"
-
-      - name: Push pre-commit agent events
-        if: steps.mission.outputs.path != ''
-        continue-on-error: true
-        env:
-          PLANE_INGEST_URL: ${{ vars.PLANE_INGEST_URL }}
-          PLANE_INGEST_TOKEN: ${{ secrets.PLANE_INGEST_TOKEN }}
-        run: |
-          node dist/cli/index.js events push --json || true
 
       - name: Propagate verify outcome
         if: steps.verify.outcome == 'failure'

@@ -252,7 +252,6 @@ function beginRuntimeFlight(
       worker_command: options.workerCommand,
     },
     options.append === true,
-    repoRoot,
   );
   writer.logEvent({
     type: "flight_start",

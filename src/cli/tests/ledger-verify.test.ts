@@ -22,7 +22,7 @@ import {
   verifyLedgerChain,
 } from "#plane/ledger-chain.js";
 import { appendLedgerEntry, appendLedgerIfEnabled, ledgerFailureLine } from "#missions/ledger/ledger-append.js";
-import { gitInitCommit, writeOrgExportConfig } from "./test-fixtures.js";
+import { gitInitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import { appendLedgerFixture, writeLedgerEnabledConfig } from "./test-org-fixtures.js";
 
@@ -31,7 +31,6 @@ function freshRepo(): string {
   fs.writeFileSync(path.join(dest, "README.md"), "ledger fixture\n", "utf8");
   gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
   writeLedgerEnabledConfig(dest);
-  writeOrgExportConfig(dest);
   return dest;
 }
 
@@ -84,8 +83,6 @@ test("ledger-verify: mismatched prev_entry_hash fails", () => {
   const tip = readLedgerTip(dest);
   const bad = buildLedgerEntry({
     kind: "receipt",
-    org_id: first.org_id,
-    repository_hash: first.repository_hash,
     msn_id: "MSN-0101",
     git_head: first.git_head,
     payload: { verify_status: "passed" },
@@ -122,8 +119,6 @@ test("ledger-verify: CAS rejects stale expected-old then retry succeeds", () => 
   const tip = readLedgerTip(dest);
   const a = buildLedgerEntry({
     kind: "receipt",
-    org_id: first.org_id,
-    repository_hash: first.repository_hash,
     msn_id: "MSN-0101",
     git_head: first.git_head,
     payload: { verify_status: "passed", source: "a" },
@@ -131,8 +126,6 @@ test("ledger-verify: CAS rejects stale expected-old then retry succeeds", () => 
   });
   const b = buildLedgerEntry({
     kind: "receipt",
-    org_id: first.org_id,
-    repository_hash: first.repository_hash,
     msn_id: "MSN-0102",
     git_head: first.git_head,
     payload: { verify_status: "passed", source: "b" },
@@ -211,15 +204,30 @@ exec ${JSON.stringify(realGit)} "$@"
   }
 });
 
-test("ledger-chain: a pre-4.0 receipt payload still verifies beside a run_record_sha256 one (ADR-0061)", () => {
+test("ledger-chain: a pre-4.0 entry with org_id, repository_hash and its old payload still verifies (ADR-0061)", () => {
   const dest = freshRepo();
   const legacyPayload = { verify_status: "attest_only", receipt_sha256: "a".repeat(64), signed: true } as ReceiptLedgerPayload;
-  const legacy = buildLedgerEntry({ kind: "receipt", org_id: "o", repository_hash: "r", msn_id: "MSN-0100", git_head: "h", payload: legacyPayload, prev_entry_hash: genesisPrevHash(), issued_at: "2026-01-01T00:00:00Z" });
+  const legacy = {
+    ...buildLedgerEntry({ kind: "receipt", msn_id: "MSN-0100", git_head: "h", payload: legacyPayload, prev_entry_hash: genesisPrevHash(), issued_at: "2026-01-01T00:00:00Z" }),
+    org_id: "org-a",
+    repository_hash: "c".repeat(64),
+  };
   assert.equal(casUpdateLedgerRef(dest, commitLedgerEntry(dest, legacy, null, false), null), true);
-  appendLedgerFixture(dest, { msn_id: "MSN-0101", payload: { verify_status: "passed", run_record_sha256: "b".repeat(64) } });
+  const next = appendLedgerFixture(dest, { msn_id: "MSN-0101", payload: { verify_status: "passed", run_record_sha256: "b".repeat(64) } });
+  assert.equal(next.prev_entry_hash, entryHash(legacy));
   const report = verifyLedgerChain(dest);
   assert.equal(report.ok, true, report.errors.join("; "));
   assert.deepEqual(report.entries.map((e) => e.payload), [legacyPayload, { verify_status: "passed", run_record_sha256: "b".repeat(64) }]);
+  assert.equal(report.entries[0]?.org_id, "org-a");
+});
+
+test("ledger-append: works without any org config and writes no org_id or repository_hash (ADR-0061)", () => {
+  const dest = freshRepo();
+  assert.equal(fs.existsSync(path.join(dest, ".gitagent/foreman/ORG.export.local")), false);
+  const entry = appendLedgerEntry(dest, { kind: "receipt", msn_id: "MSN-0100", payload: { verify_status: "passed" }, sign: false });
+  assert.equal("org_id" in entry, false);
+  assert.equal("repository_hash" in entry, false);
+  assert.equal(verifyLedgerChain(dest).ok, true);
 });
 
 test("ledger-append: failure under ledger.mode=local warns and verify still reports", () => {
@@ -241,7 +249,7 @@ test("ledger-append: stdin/mktree commit is byte-identical entry.json and prev c
   const dest = freshRepo();
   const first = appendLedgerFixture(dest, {
     msn_id: "MSN-0100",
-    payload: { verify_status: "passed", signed: true },
+    payload: { verify_status: "passed" },
   });
   const tip = readLedgerTip(dest);
   assert.ok(tip);

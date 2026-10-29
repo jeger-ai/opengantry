@@ -17,7 +17,6 @@ import {
   writeMiniGantryMission,
   writeMiniGantryRepo,
   writeSkillsForManifest,
-  writeOrgExportConfig,
 } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
 import { writeLedgerEnabledConfig } from "./test-org-fixtures.js";
@@ -76,7 +75,6 @@ trace_rows:
     "utf8",
   );
   fs.writeFileSync(path.join(dest, "EXECUTOR_LOG.md"), `${traceQuote}\n`, "utf8");
-  writeOrgExportConfig(dest);
   return missionRel;
 }
 
@@ -205,7 +203,6 @@ test("verify --export: envelope 2.0 over the run record round-trips into ledger 
   fs.writeFileSync(path.join(dest, missionRel), 'msn_id: MSN-0999\nskill_key: ui\ngate_command: echo DONE\ngate_success_substring: "DONE"\n', "utf8");
   fs.writeFileSync(path.join(dest, ".gitignore"), ".gitagent/history/\n.gitagent/tmp/\n", "utf8");
   writeLedgerEnabledConfig(dest);
-  writeOrgExportConfig(dest);
   gitInitCommit(dest, "[MSN-0999] legislate rowless mission", PLANNER_EMAIL);
   const envelopePath = path.join(dest, "envelope.json");
   const prevCwd = process.cwd();

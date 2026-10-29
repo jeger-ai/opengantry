@@ -62,3 +62,7 @@ Each satisfied check MAY append a `dependency_check` ledger entry ([ADR-0043](AD
 - CLI implementation is a follow-on `gantry`-skill mission.
 - Plane-side cross-repo status APIs are deferred.
 - A frontend repo can prove a backend mission passed, signed, and is same-org without a SaaS hub.
+
+## Amendment (ADR-0061)
+
+Amended by [ADR-0061](ADR-0061-simplify-before-4-0.md): the org pepper is gone. Same-org proof is fetch access to the dependency's ledger ref, `require.signed` is `git verify-commit` on the receipt entry's commit in the consumer repository, `expected_repository_hash` and `GXT_DEPENDENCY_ORG_MISMATCH` are removed, and checks append no `dependency_check` entry.

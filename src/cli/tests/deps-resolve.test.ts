@@ -1,35 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { getRepoRoot, gitRun } from "#git/git.js";
-import { checkAndRecordMissionDependencies } from "#missions/deps/deps-resolve.js";
 import { checkMissionDependency } from "#plane/deps-resolve.js";
 import { depsRefForRepo } from "#plane/deps-slug.js";
-import { buildLedgerEntry, genesisPrevHash } from "#plane/ledger-entry.js";
-import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip } from "#plane/ledger-chain.js";
+import { buildLedgerEntry, genesisPrevHash, type ReceiptLedgerPayload } from "#plane/ledger-entry.js";
+import { casUpdateLedgerRef, commitLedgerEntry, readLedgerTip, verifyLedgerChain } from "#plane/ledger-chain.js";
 import { evaluateDependenciesPhase } from "#missions/mission-verify/org-phases.js";
+import type { ParsedMission } from "#core/mission-types.js";
 import { runDepsCheck } from "../commands/deps.js";
-import {
-  copyMissionSchema,
-  gitCommit,
-  gitInitCommit,
-  isolateOrgAttributionEnv,
-  writeManifest,
-  writeOrgExportConfig,
-} from "./test-fixtures.js";
+import { copyMissionSchema, gitCommit, gitInitCommit, writeManifest } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
-import {
-  appendLedgerFixture,
-  ORG_FIXTURE_ORG_ID,
-  PRODUCER_REPO_ID,
-  writeLedgerEnabledConfig,
-  writeTwoRepoDependencyFixture,
-} from "./test-org-fixtures.js";
+import { appendLedgerFixture, PRODUCER_REPO_ID, writeLedgerEnabledConfig } from "./test-org-fixtures.js";
 
-function dep(extra: Partial<{ signed: boolean; max_age_days: number; expected_repository_hash: string }> = {}) {
+const HAS_SSH_KEYGEN = spawnSync("ssh-keygen", ["-?"], { encoding: "utf8" }).error === undefined;
+const NEEDS_SSH = { skip: HAS_SSH_KEYGEN ? false : "ssh-keygen not available" };
+
+function dep(extra: Partial<{ signed: boolean; max_age_days: number }> = {}) {
   return {
     repo: PRODUCER_REPO_ID,
     msn_id: "MSN-0100",
@@ -38,10 +29,27 @@ function dep(extra: Partial<{ signed: boolean; max_age_days: number; expected_re
       ...(extra.signed !== undefined ? { signed: extra.signed } : {}),
       ...(extra.max_age_days !== undefined ? { max_age_days: extra.max_age_days } : {}),
     },
-    ...(extra.expected_repository_hash ? { expected_repository_hash: extra.expected_repository_hash } : {}),
   };
 }
 
+function missionWith(dependsOn: ParsedMission["dependsOn"]): ParsedMission {
+  return {
+    msnId: "MSN-0204",
+    skillKey: "gantry",
+    gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
+    virtualCapture: false,
+    traceRows: [],
+    interrogation: [],
+    interrogationSha256: null,
+    declaredPaths: [],
+    contract: null,
+    contractSha256: null,
+    dependsOn,
+    rawPath: ".gitagent/missions/m.yaml",
+  };
+}
+
+/** Two repositories with no org configuration at all: fetch access is the only same-org proof. */
 function initPair(tmp: string): { producer: string; consumer: string } {
   const producer = path.join(tmp, "p");
   const consumer = path.join(tmp, "c");
@@ -52,24 +60,11 @@ function initPair(tmp: string): { producer: string; consumer: string } {
   gitInitCommit(producer, "chore: p", PLANNER_EMAIL);
   gitInitCommit(consumer, "chore: c", PLANNER_EMAIL);
   writeLedgerEnabledConfig(producer);
-  writeOrgExportConfig(producer, ORG_FIXTURE_ORG_ID);
-  writeOrgExportConfig(consumer, ORG_FIXTURE_ORG_ID);
   return { producer, consumer };
 }
 
-function appendAsProducer(producer: string, payload: { verify_status?: string; signed?: boolean }, issuedAt?: string): void {
-  const prev = process.env.GANTRY_REPO_ID;
-  process.env.GANTRY_REPO_ID = PRODUCER_REPO_ID;
-  try {
-    appendLedgerFixture(producer, {
-      msn_id: "MSN-0100",
-      payload,
-      issued_at: issuedAt,
-    });
-  } finally {
-    if (prev === undefined) delete process.env.GANTRY_REPO_ID;
-    else process.env.GANTRY_REPO_ID = prev;
-  }
+function appendAsProducer(producer: string, payload: ReceiptLedgerPayload, opts: { issuedAt?: string; sign?: boolean } = {}): void {
+  appendLedgerFixture(producer, { msn_id: "MSN-0100", payload, issued_at: opts.issuedAt, sign: opts.sign });
 }
 
 function fetchLedger(producer: string, consumer: string, force = false): string {
@@ -80,122 +75,128 @@ function fetchLedger(producer: string, consumer: string, force = false): string 
   return ref;
 }
 
-test("deps-resolve: satisfied fetched receipt", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-ok-"));
-    const fx = writeTwoRepoDependencyFixture(tmp);
-    const result = checkMissionDependency(fx.consumer, dep({ expected_repository_hash: fx.expectedHash }));
-    assert.equal(result.code, "ok");
-  });
+/** A passing receipt in the producer's ledger, fetched into the consumer. */
+function satisfiedPair(prefix: string): { producer: string; consumer: string } {
+  const pair = initPair(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
+  appendAsProducer(pair.producer, { verify_status: "passed" });
+  fetchLedger(pair.producer, pair.consumer);
+  return pair;
+}
+
+function gitConfig(root: string, key: string, value: string): void {
+  const r = gitRun(root, ["config", key, value]);
+  assert.equal(r.ok, true, r.stderr);
+}
+
+/** SSH-sign the producer's ledger commits; return an allowed-signers file naming the producer's key. */
+function sshSigning(producer: string): string {
+  const keys = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-keys-"));
+  const key = path.join(keys, "producer");
+  const r = spawnSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-C", "producer", "-f", key], { encoding: "utf8" });
+  if (r.status !== 0) throw new Error(r.stderr);
+  gitConfig(producer, "gpg.format", "ssh");
+  gitConfig(producer, "user.signingkey", key);
+  const signers = path.join(keys, "allowed_signers");
+  fs.writeFileSync(signers, `${PLANNER_EMAIL} ${fs.readFileSync(`${key}.pub`, "utf8").trim()}\n`, "utf8");
+  return signers;
+}
+
+test("deps-resolve: a fetched passing receipt satisfies the dependency without any org config", () => {
+  const { consumer } = satisfiedPair("og-deps-ok-");
+  assert.equal(fs.existsSync(path.join(consumer, ".gitagent/foreman/ORG.export.local")), false);
+  assert.equal(checkMissionDependency(consumer, dep()).code, "ok");
 });
 
 test("deps-resolve: unfetched ref", () => {
-  isolateOrgAttributionEnv(() => {
-    const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-unfetched-"));
-    fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
-    gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
-    const result = checkMissionDependency(dest, dep());
-    assert.equal(result.code, GXT_ERROR.DEPENDENCY_UNFETCHED);
-  });
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-unfetched-"));
+  fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
+  gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
+  assert.equal(checkMissionDependency(dest, dep()).code, GXT_ERROR.DEPENDENCY_UNFETCHED);
 });
 
 test("deps-resolve: failed verify_status is unsatisfied", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-fail-"));
-    const fx = writeTwoRepoDependencyFixture(tmp);
-    appendAsProducer(fx.producer, { verify_status: "failed", signed: true });
-    fetchLedger(fx.producer, fx.consumer, true);
-    const result = checkMissionDependency(fx.consumer, dep({ expected_repository_hash: fx.expectedHash }));
-    assert.equal(result.code, GXT_ERROR.DEPENDENCY_UNSATISFIED);
-  });
+  const { producer, consumer } = satisfiedPair("og-deps-fail-");
+  appendAsProducer(producer, { verify_status: "failed" });
+  fetchLedger(producer, consumer, true);
+  assert.equal(checkMissionDependency(consumer, dep()).code, GXT_ERROR.DEPENDENCY_UNSATISFIED);
 });
 
-test("deps-resolve: unsigned when require.signed", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-unsigned-"));
-    const { producer, consumer } = initPair(tmp);
-    appendAsProducer(producer, { verify_status: "passed", signed: false });
-    fetchLedger(producer, consumer);
-    const result = checkMissionDependency(consumer, dep({ signed: true }));
-    assert.equal(result.code, GXT_ERROR.DEPENDENCY_UNSIGNED);
-  });
+test("deps-resolve: require.signed fails closed on an unsigned receipt entry commit", NEEDS_SSH, () => {
+  const { producer, consumer } = initPair(fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-unsigned-")));
+  gitConfig(consumer, "gpg.ssh.allowedSignersFile", sshSigning(producer));
+  appendAsProducer(producer, { verify_status: "passed" }, { sign: false });
+  fetchLedger(producer, consumer);
+  const result = checkMissionDependency(consumer, dep({ signed: true }));
+  assert.equal(result.code, GXT_ERROR.DEPENDENCY_UNSIGNED);
+  assert.equal(checkMissionDependency(consumer, dep()).code, "ok");
+});
+
+test("deps-resolve: require.signed passes when the receipt entry commit passes git verify-commit in the consumer", NEEDS_SSH, () => {
+  const { producer, consumer } = initPair(fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-signed-")));
+  const signers = sshSigning(producer);
+  appendAsProducer(producer, { verify_status: "passed" }, { sign: true });
+  fetchLedger(producer, consumer);
+  // Unverifiable in the consumer (no allowed signers configured) is a failure too.
+  assert.equal(checkMissionDependency(consumer, dep({ signed: true })).code, GXT_ERROR.DEPENDENCY_UNSIGNED);
+  // So is an allowed-signers file that names another key.
+  gitConfig(consumer, "gpg.ssh.allowedSignersFile", sshSigning(consumer));
+  assert.equal(checkMissionDependency(consumer, dep({ signed: true })).code, GXT_ERROR.DEPENDENCY_UNSIGNED);
+  gitConfig(consumer, "gpg.ssh.allowedSignersFile", signers);
+  assert.equal(checkMissionDependency(consumer, dep({ signed: true })).code, "ok");
 });
 
 test("deps-resolve: stale max_age_days", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-stale-"));
-    const { producer, consumer } = initPair(tmp);
-    appendAsProducer(producer, { verify_status: "passed", signed: true }, "2020-01-01T00:00:00.000Z");
-    fetchLedger(producer, consumer);
-    const result = checkMissionDependency(consumer, dep({ signed: true, max_age_days: 1 }));
-    assert.equal(result.code, GXT_ERROR.DEPENDENCY_STALE);
-  });
-});
-
-test("deps-resolve: org pepper mismatch", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-org-"));
-    const fx = writeTwoRepoDependencyFixture(tmp);
-    const result = checkMissionDependency(fx.consumer, {
-      ...dep(),
-      expected_repository_hash: "0".repeat(64),
-    });
-    assert.equal(result.code, GXT_ERROR.DEPENDENCY_ORG_MISMATCH);
-  });
+  const { producer, consumer } = initPair(fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-stale-")));
+  appendAsProducer(producer, { verify_status: "passed" }, { issuedAt: "2020-01-01T00:00:00.000Z" });
+  fetchLedger(producer, consumer);
+  assert.equal(checkMissionDependency(consumer, dep({ max_age_days: 1 })).code, GXT_ERROR.DEPENDENCY_STALE);
 });
 
 test("deps-resolve: forked chain is unsatisfied", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-fork-"));
-    const fx = writeTwoRepoDependencyFixture(tmp);
-    const tip = readLedgerTip(fx.producer);
-    const bad = buildLedgerEntry({
-      kind: "receipt",
-      org_id: ORG_FIXTURE_ORG_ID,
-      repository_hash: fx.expectedHash,
-      msn_id: "MSN-0100",
-      git_head: "deadbeef",
-      payload: { verify_status: "passed", signed: true },
-      prev_entry_hash: genesisPrevHash(),
-    });
-    const commit = commitLedgerEntry(fx.producer, bad, tip, false);
-    casUpdateLedgerRef(fx.producer, commit, tip);
-    fetchLedger(fx.producer, fx.consumer, true);
-    const result = checkMissionDependency(fx.consumer, dep({ expected_repository_hash: fx.expectedHash }));
-    assert.equal(result.code, GXT_ERROR.DEPENDENCY_UNSATISFIED);
+  const { producer, consumer } = satisfiedPair("og-deps-fork-");
+  const tip = readLedgerTip(producer);
+  const bad = buildLedgerEntry({
+    kind: "receipt",
+    msn_id: "MSN-0100",
+    git_head: "deadbeef",
+    payload: { verify_status: "passed" },
+    prev_entry_hash: genesisPrevHash(),
   });
+  casUpdateLedgerRef(producer, commitLedgerEntry(producer, bad, tip, false), tip);
+  fetchLedger(producer, consumer, true);
+  assert.equal(checkMissionDependency(consumer, dep()).code, GXT_ERROR.DEPENDENCY_UNSATISFIED);
 });
 
 test("deps-resolve: verify phase emits v3 finding and mapped code", () => {
-  isolateOrgAttributionEnv(() => {
-    const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-phase-"));
-    fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
-    gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
-    const outcome = evaluateDependenciesPhase({
-      root: dest,
-      executorLogPath: path.join(dest, "EXECUTOR_LOG.md"),
-      manifest: { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] },
-      options: {},
-      mission: {
-        msnId: "MSN-0200",
-        skillKey: "gantry",
-        gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
-        virtualCapture: false,
-        traceRows: [],
-        interrogation: [],
-        interrogationSha256: null,
-        declaredPaths: [],
-        contract: null,
-        contractSha256: null,
-        dependsOn: [dep()],
-        rawPath: ".gitagent/missions/m.yaml",
-      },
-    });
-    assert.equal(outcome.kind, "fail");
-    if (outcome.kind !== "fail") return;
-    assert.equal(outcome.failure.code, GXT_ERROR.DEPENDENCY_UNFETCHED);
-    assert.equal(outcome.failure.findings?.[0]?.rule_id, GXT_ERROR.DEPENDENCY_UNFETCHED);
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-phase-"));
+  fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
+  gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
+  const outcome = evaluateDependenciesPhase({
+    root: dest,
+    executorLogPath: path.join(dest, "EXECUTOR_LOG.md"),
+    manifest: { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] },
+    options: {},
+    mission: { ...missionWith([dep()]), msnId: "MSN-0200" },
   });
+  assert.equal(outcome.kind, "fail");
+  if (outcome.kind !== "fail") return;
+  assert.equal(outcome.failure.code, GXT_ERROR.DEPENDENCY_UNFETCHED);
+  assert.equal(outcome.failure.findings?.[0]?.rule_id, GXT_ERROR.DEPENDENCY_UNFETCHED);
+});
+
+test("deps-resolve: a passing dependency check writes no ledger entry (ADR-0061)", () => {
+  const { consumer } = satisfiedPair("og-deps-noentry-");
+  writeLedgerEnabledConfig(consumer);
+  const outcome = evaluateDependenciesPhase({
+    root: consumer,
+    executorLogPath: path.join(consumer, "EXECUTOR_LOG.md"),
+    manifest: { schema_version: "0.5.0", skills: {}, path_risks: {}, risk_keywords: [] },
+    options: {},
+    mission: missionWith([dep()]),
+  });
+  assert.equal(outcome.kind, "ok");
+  assert.equal(readLedgerTip(consumer), null);
+  assert.equal(verifyLedgerChain(consumer).count, 0);
 });
 
 function captureStdout<T>(fn: () => T): { result: T; stdout: string } {
@@ -212,14 +213,13 @@ function captureStdout<T>(fn: () => T): { result: T; stdout: string } {
   }
 }
 
-function stageReleaseMission(root: string, expectedHash?: string): void {
+function stageReleaseMission(root: string): void {
   copyMissionSchema(path.join(getRepoRoot(), ".gitagent", "planner"), path.join(root, ".gitagent", "planner"));
   writeManifest(root, {
     gantry: { trust_threshold: "Tier-2", tmvc_roots: ["src/"], forbidden_zones: [] },
   });
   const rel = ".gitagent/missions/MSN-0204-dep.yaml";
   fs.mkdirSync(path.join(root, ".gitagent", "missions"), { recursive: true });
-  const hashLine = expectedHash ? `    expected_repository_hash: "${expectedHash}"\n` : "";
   fs.writeFileSync(
     path.join(root, rel),
     `msn_id: MSN-0204
@@ -230,80 +230,45 @@ trace_rows: []
 depends_on:
   - repo: ${PRODUCER_REPO_ID}
     msn_id: MSN-0100
-${hashLine}`,
+`,
     "utf8",
   );
   const added = gitRun(root, ["add", "--", rel]);
   assert.equal(added.ok, true, added.stderr);
 }
 
-test("deps-resolve: checkMissionDependencies aggregates ok results", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-deps-agg-"));
-    const fx = writeTwoRepoDependencyFixture(tmp);
-    const { results } = checkAndRecordMissionDependencies(fx.consumer, {
-      msnId: "MSN-0204",
-      skillKey: "gantry",
-      gate: { command: "echo OK", successSubstring: "OK", adapter: "generic" },
-      virtualCapture: false,
-      traceRows: [],
-      interrogation: [],
-      interrogationSha256: null,
-      declaredPaths: [],
-      contract: null,
-      contractSha256: null,
-      dependsOn: [dep({ expected_repository_hash: fx.expectedHash })],
-      rawPath: ".gitagent/missions/m.yaml",
-    });
-    assert.equal(results.length, 1);
-    assert.equal(results[0]?.code, "ok");
-  });
-});
+function depsCheckSince(root: string): { status: string; results: { code: string }[]; exitCode: number | string | undefined } {
+  const prevCwd = process.cwd();
+  const prevExit = process.exitCode;
+  process.exitCode = undefined;
+  process.chdir(root);
+  try {
+    const { stdout } = captureStdout(() => runDepsCheck({ since: "HEAD", json: true }));
+    return { ...(JSON.parse(stdout) as { status: string; results: { code: string }[] }), exitCode: process.exitCode };
+  } finally {
+    process.chdir(prevCwd);
+    process.exitCode = prevExit;
+  }
+}
 
 test("deps check --since: failed outcome exits non-zero", () => {
-  isolateOrgAttributionEnv(() => {
-    const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-fail-"));
-    fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
-    gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
-    writeOrgExportConfig(dest, ORG_FIXTURE_ORG_ID);
-    stageReleaseMission(dest);
-    gitCommit(dest, "[MSN-0204] mission");
-    const prevCwd = process.cwd();
-    const prevExit = process.exitCode;
-    process.exitCode = undefined;
-    process.chdir(dest);
-    try {
-      const { stdout } = captureStdout(() => runDepsCheck({ since: "HEAD", json: true }));
-      const body = JSON.parse(stdout) as { status: string; results: { code: string }[] };
-      assert.equal(body.status, "failed");
-      assert.ok(body.results.some((r) => r.code === GXT_ERROR.DEPENDENCY_UNFETCHED));
-      assert.equal(process.exitCode, 1);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = prevExit;
-    }
-  });
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-fail-"));
+  fs.writeFileSync(path.join(dest, "README.md"), "x\n", "utf8");
+  gitInitCommit(dest, "chore: init", PLANNER_EMAIL);
+  stageReleaseMission(dest);
+  gitCommit(dest, "[MSN-0204] mission");
+  const body = depsCheckSince(dest);
+  assert.equal(body.status, "failed");
+  assert.ok(body.results.some((r) => r.code === GXT_ERROR.DEPENDENCY_UNFETCHED));
+  assert.equal(body.exitCode, 1);
 });
 
 test("deps check --since: ok outcome", () => {
-  isolateOrgAttributionEnv(() => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-release-ok-"));
-    const fx = writeTwoRepoDependencyFixture(tmp);
-    stageReleaseMission(fx.consumer, fx.expectedHash);
-    gitCommit(fx.consumer, "[MSN-0204] mission");
-    const prevCwd = process.cwd();
-    const prevExit = process.exitCode;
-    process.exitCode = undefined;
-    process.chdir(fx.consumer);
-    try {
-      const { stdout } = captureStdout(() => runDepsCheck({ since: "HEAD", json: true }));
-      const body = JSON.parse(stdout) as { status: string; results: { code: string }[] };
-      assert.equal(body.status, "ok");
-      assert.ok(body.results.every((r) => r.code === "ok"));
-      assert.equal(process.exitCode, undefined);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = prevExit;
-    }
-  });
+  const { consumer } = satisfiedPair("og-release-ok-");
+  stageReleaseMission(consumer);
+  gitCommit(consumer, "[MSN-0204] mission");
+  const body = depsCheckSince(consumer);
+  assert.equal(body.status, "ok");
+  assert.ok(body.results.every((r) => r.code === "ok"));
+  assert.equal(body.exitCode, undefined);
 });
