@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0371",
   "mission_path": ".gitagent/missions/MSN-0371.iii-lockfile-advisories.yaml",
-  "head": "55e1554b5b7df3deed75f50ac505395294369ae9",
-  "tree": "0210e2b51ed2284fb622dd6c92d7c19eb5173505",
-  "law_sha256": "eab42868612fa4ab2b2e22099a10966f9d49704e34e095287e468eafa6d429f6",
+  "head": "ba92c1167a17c19bf5005cfef2afeb95f8a96bab",
+  "tree": "6e354b1e60bca41b522d226ea106979dd19139bf",
+  "law_sha256": "06242fc7953d99a14357221aa10e14f1c0bf56e934ae60cfcbe4a3374912a7e5",
   "checks": [
     {
       "name": "gate",
-      "command": "./scripts/dev-validate-core.sh",
+      "command": "./scripts/dev-validate-core.sh && npm audit --package-lock-only && npm --prefix examples/iii-integration audit --package-lock-only",
       "exit": 0,
-      "duration_ms": 107599,
-      "output_sha256": "c304585b239ee960fee6910284b011819457e71cada16e3f52d3b2eae87d035b"
+      "duration_ms": 110705,
+      "output_sha256": "a20eca874206099f41021931e39983ef9c70d9e41b822b6fa1485b7f20a9a8da"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-10-29T19:24:11.675Z"
+  "issued_at": "2026-10-29T19:39:29.461Z"
 }
