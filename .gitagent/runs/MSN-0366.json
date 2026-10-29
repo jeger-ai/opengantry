@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0366",
+  "mission_path": ".gitagent/missions/MSN-0366.doctor-decisive.yaml",
+  "head": "28731aff14933e7ff486b7b762fadcc17a78113c",
+  "tree": "3e565bf43d77646ab75d7666d5a2756e345e035b",
+  "law_sha256": "de69952e11788b2ec6b7cea4ecf907afca0ac22b7d151c1f1d48bc7da6e04206",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 367316,
+      "output_sha256": "03accfa68e619bc6ad82bdd3304a4e69cbf85efb85cd798f29065b52fcec9b9d"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-29T10:06:41.346Z"
+}
