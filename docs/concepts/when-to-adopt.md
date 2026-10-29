@@ -15,7 +15,7 @@ Adopt OpenGantry when agent speed is valuable but unreviewed scope creep, quiet 
 |-----------|--------------------|-----------------|
 | IDE agents edit anywhere | Implicit scope; governance files drift | Declared edit roots and forbidden zones in the mission and manifest |
 | "It passed locally" | Chat logs or ad-hoc JSON | Mission YAML, gate output and verbatim `EXECUTOR_LOG.md` quotes in Git |
-| Architecture or copy drift | Manual review only | `TARGET_ARCHITECTURE.yaml` with `gantry arch check` or `gantry perimeter check` |
+| Architecture or copy drift | Manual review only | `TARGET_ARCHITECTURE.yaml` with `gantry arch check` |
 | Autonomous retry loops | Parsing terminal stderr | A stable `findings[]` envelope with file, line and hint |
 | A new policy per repository | Reinventing orchestration each time | `gantry init` scaffolds the same substrate everywhere |
 | No org-wide floor or audit chain | Per-repository conventions | A tighten-only org policy, a digest-only ledger and cross-repository gates |

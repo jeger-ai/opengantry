@@ -10,32 +10,24 @@ import {
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
 
-function registerPolicyCommands(program: Command): void {
+export function registerOrgControlPlaneCommands(program: Command): void {
   const policy = program.command("policy").description("Org policy floor (ADR-0042)");
   policy
     .command("pull")
     .description("Fetch and pin org policy bundle")
     .option("--json", "JSON")
-    .action((o: { json?: boolean }) => {
-      runPolicyPull(o);
-    });
+    .action(runPolicyPull);
   policy
     .command("status")
     .description("Show effective org policy")
     .option("--json", "JSON")
-    .action((o: { json?: boolean }) => {
-      runPolicyStatus(o);
-    });
+    .action(runPolicyStatus);
   policy
     .command("diff")
     .description("Compare local config to org floor")
     .option("--json", "JSON")
-    .action((o: { json?: boolean }) => {
-      runPolicyDiff(o);
-    });
-}
+    .action(runPolicyDiff);
 
-function registerLedgerCommands(program: Command): void {
   const ledger = program.command("ledger").description("Compliance ledger on refs/gxt/ledger (ADR-0043)");
   ledger
     .command("append")
@@ -43,72 +35,48 @@ function registerLedgerCommands(program: Command): void {
     .option("--from-envelope <file>", "Hub export envelope")
     .option("--mission <path>", "Mission file")
     .option("--json", "JSON")
-    .action((o: { fromEnvelope?: string; mission?: string; json?: boolean }) => {
-      runLedgerAppend(o);
-    });
+    .action(runLedgerAppend);
   ledger
     .command("verify")
     .description("Verify the ledger hash chain")
     .option("--json", "JSON")
     .option("--require-signatures")
-    .action((o: { json?: boolean; requireSignatures?: boolean }) => {
-      runLedgerVerify(o);
-    });
+    .action(runLedgerVerify);
   ledger
     .command("list")
     .description("List ledger entries")
     .option("--json", "JSON")
-    .action((o: { json?: boolean }) => {
-      runLedgerList(o);
-    });
+    .action(runLedgerList);
   ledger
     .command("export")
     .description("Export ledger JSON or a SOC 2 pack")
     .option("--format <fmt>", "json|soc2-pack", "json")
     .option("--out <dir>", "Output directory")
     .option("--json", "JSON")
-    .action((o: { format?: string; out?: string; json?: boolean }) => {
-      runLedgerExport(o);
-    });
+    .action(runLedgerExport);
   ledger
     .command("push")
     .description("Push refs/gxt/ledger to origin")
     .option("--json", "JSON")
-    .action((o: { json?: boolean }) => {
-      runLedgerPush(o);
-    });
+    .action(runLedgerPush);
   ledger
     .command("fetch")
     .description("Fetch refs/gxt/ledger from origin")
     .option("--json", "JSON")
-    .action((o: { json?: boolean }) => {
-      runLedgerFetch(o);
-    });
-}
+    .action(runLedgerFetch);
 
-function registerDepsCommands(program: Command): void {
   const deps = program.command("deps").description("Cross-repo mission dependencies (ADR-0044)");
   deps
     .command("fetch")
     .description("Fetch depends_on ledger refs")
     .option("--mission <path>")
     .option("--json", "JSON")
-    .action((o: { mission?: string; json?: boolean }) => {
-      runDepsFetch(o);
-    });
+    .action(runDepsFetch);
   deps
     .command("check")
     .description("Evaluate depends_on against fetched refs (one mission, or every mission changed since a ref)")
     .option("--mission <path>")
     .option("--since <ref>", "Check every mission file changed since this ref, e.g. the previous release tag")
     .option("--json", "JSON")
-    .action((o: { mission?: string; since?: string; json?: boolean }) => {
-      runDepsCheck(o);
-    });
-}
-
-export function registerOrgControlPlaneCommands(program: Command): void {
-  registerPolicyCommands(program);
-  registerLedgerCommands(program);
-  registerDepsCommands(program);
+    .action(runDepsCheck);
 }

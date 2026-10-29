@@ -39,7 +39,7 @@ Declaring scope is not the same as enforcing it. How strongly a scope holds depe
 | How the executor runs | What holds the scope |
 |-----------------------|----------------------|
 | Under `gantry runtime exec` | A process-boundary check of edit roots and forbidden zones for the subprocess |
-| Committing through hooks | `gantry tmvc guard` on staged files: a warning by default, a rejection with `--strict` or `gantry hook install` |
+| Committing through hooks | `gantry hook pre-commit` on staged files: a warning by default, a rejection after `gantry hook install` or with `GANTRY_TMVC_GUARD_STRICT=1` |
 | In an IDE agent's own edit tool | Advisory only: rules and `AGENTS.md` guide the agent, the kernel does not trap the write |
 
 Every mission also passes `gantry verify` before merge. See [Enforcement boundary](enforcement-boundary.md) for the full picture.
@@ -60,7 +60,7 @@ A forbidden zone under `.gitagent/`, such as `.gitagent/foreman/`, still fails, 
 
 ```bash
 gantry runtime env --mission .gitagent/missions/MSN-0001.<slug>.yaml   # export GANTRY_TMVC_ROOTS_ABSOLUTE, forbidden zones and the log path
-gantry tmvc guard --strict                                             # check staged files against the pinned mission
+gantry hook pre-commit                                                 # check staged files against the pinned mission
 ```
 
 Libraries and workers can call `evaluateScope` from `@jeger-ai/opengantry/kernel` to check one repository-relative path in process ([MCP tools and kernel](../reference/mcp-tools.md#kernel-library)).

@@ -18,7 +18,7 @@ test("handleVerify: gate failure includes fix_hints and error_code", async () =>
   await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
-      const result = await handleVerify(".gitagent/missions/m.yaml");
+      const result = await handleVerify({ mission_file_path: ".gitagent/missions/m.yaml" });
       assert.equal(result.status, "failed");
       assert.equal(result.phase, "gate");
       assert.equal(result.error_code, "GXT_GATE_FAILED");

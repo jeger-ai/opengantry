@@ -14,7 +14,7 @@ An IDE agent's own edit tool is convenient but advisory. Compliance and security
 | Tier | Mechanism | What it actually traps |
 |------|-----------|------------------------|
 | **Process boundary** | `gantry runtime exec` | Edit roots and forbidden zones for subprocess executors, with a forbidden-zone scan |
-| **Deterministic hook** | Pre-commit `tmvc guard --strict`, pre-push verify, tool hooks (today: Cursor `beforeShellExecution` on governance paths) | Commits outside the pinned mission, unlegislated handoffs, shell writes to `.gitagent/foreman/` and `RULES.md` |
+| **Deterministic hook** | Pre-commit TMVC guard (`gantry hook pre-commit`, strict once `gantry hook install` armed it), pre-push verify, tool hooks (today: Cursor `beforeShellExecution` on governance paths) | Commits outside the pinned mission, unlegislated handoffs, shell writes to `.gitagent/foreman/` and `RULES.md` |
 | **Advisory** | IDE rules, `AGENTS.md`, session-start context, MCP context | Nothing: the model is guided, not trapped |
 
 **An IDE agent's file edits are not scope-trapped unless the tool runs inside `gantry runtime exec`.** Rules and `AGENTS.md` shape what the agent tries; hooks, `gantry verify` and `runtime exec` decide what lands. IDE suggestions alone never count as approval.

@@ -57,7 +57,6 @@ export interface ArchFetchOptions extends ArchOptions {
 export interface ArchCheckOptions extends ArchOptions {
   json?: boolean;
   files?: string[];
-  label?: "arch" | "perimeter";
   /** Write ARCH_BASELINE.json from the current counts (whole-tree runs only); lower-only unless allowRaise. */
   ratchet?: boolean;
   allowRaise?: boolean;
@@ -138,7 +137,6 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
   const repoRoot = resolveRepoRootAtBoundary(options.cwd);
   if (repoRoot === null) return;
 
-  const label = options.label ?? "arch";
   let files = options.files?.length ? options.files : [];
   const wholeTree = files.length === 0;
   if (wholeTree) {
@@ -150,7 +148,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
       return;
     }
     if (files.length === 0) {
-      logError(`gantry ${label} check: no files under scan_roots`);
+      logError(`gantry arch check: no files under scan_roots`);
       setExitCode(EXIT_CODE.USAGE);
       return;
     }
@@ -164,7 +162,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     let ratchet: RatchetResult | null = null;
     if (options.ratchet) {
       if (!wholeTree) {
-        logError(`gantry ${label} check: --ratchet needs a whole-tree run (no file arguments)`);
+        logError(`gantry arch check: --ratchet needs a whole-tree run (no file arguments)`);
         setExitCode(EXIT_CODE.USAGE);
         return;
       }
@@ -173,7 +171,7 @@ export function runArchCheckCommand(options: ArchCheckOptions = {}): void {
     if (options.json) {
       emitCliJson({ schema_version: 1, ok: result.ok, violations: result.violations, ...(ratchet ? { ratchet: { written: ratchet.written, raised: ratchet.raised, layers: ratchet.layers } } : {}) });
     } else {
-      logInfo(formatArchCheckHuman(result, label));
+      logInfo(formatArchCheckHuman(result));
       if (ratchet) logInfo(formatRatchetHuman(ratchet));
     }
     if (!result.ok || (ratchet && !ratchet.written)) setExitCode(EXIT_CODE.FAILURE);

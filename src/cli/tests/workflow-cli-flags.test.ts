@@ -4,12 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
-import {
-  mapInterrogateCommanderOptions,
-  mapLegislateCommanderOptions,
-  verifyOptionsFromCli,
-  type InterrogateCommanderOptions,
-} from "../program-workflow.js";
+import { mapLegislateCommanderOptions, verifyOptionsFromCli } from "../program-workflow.js";
 
 test("commander maps interrogate --path and --answers to path/answers keys", () => {
   const cmd = new Command("interrogate");
@@ -21,15 +16,10 @@ test("commander maps interrogate --path and --answers to path/answers keys", () 
     ["fix", "cli", "--path", "src/a.ts", "src/b.ts", "--answers", "/tmp/ans.json", "--msn", "MSN-0100"],
     { from: "user" },
   );
-  const opts = cmd.opts() as InterrogateCommanderOptions;
+  const opts = cmd.opts() as { path?: string[]; answers?: string; msn?: string };
   assert.deepEqual(opts.path, ["src/a.ts", "src/b.ts"]);
   assert.equal(opts.answers, "/tmp/ans.json");
   assert.equal(opts.msn, "MSN-0100");
-
-  const mapped = mapInterrogateCommanderOptions(opts, "fix cli");
-  assert.deepEqual(mapped.paths, ["src/a.ts", "src/b.ts"]);
-  assert.equal(mapped.answersFile, "/tmp/ans.json");
-  assert.equal(mapped.intent, "fix cli");
 });
 
 test("commander maps legislate --path to path key and mapLegislateCommanderOptions forwards paths", () => {

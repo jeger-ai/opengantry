@@ -19,16 +19,18 @@ The repository ships a fixture in [`examples/content-governance/`](https://githu
 | `content/ad-incomplete.md` | The required FDA disclaimer is missing | `require_pattern` |
 | An ad using `#FF0000` | Wrong brand colour instead of the approved `#1A2B3C` | `forbid_pattern` |
 
-The fixture ships its `TARGET_ARCHITECTURE.yaml`. From a clone of the repository, after `npm run build`:
+The fixture ships its `TARGET_ARCHITECTURE.yaml`. `gantry` judges the repository it runs in, so copy the fixture into its own repository first:
 
 ```bash
-node dist/cli/index.js perimeter check --cwd examples/content-governance
-# expect the three violations; fix the files and rerun until it passes
+cp -r examples/content-governance /tmp/content-governance && cd /tmp/content-governance
+git init -q && gantry init --yes --no-hooks --no-ci   # keeps the fixture's TARGET_ARCHITECTURE.yaml
+gantry arch check
+# expect the seeded violations; fix the files and rerun until it passes
 ```
 
 ## Do it in your repository
 
-Write `TARGET_ARCHITECTURE.yaml` at the repository root with `domain: content` and one rule per claim or required block, then run `gantry perimeter check`. Each rule is a plain regular expression, so a rule matches or it does not, and reruns on an unchanged tree are byte-identical:
+Write `TARGET_ARCHITECTURE.yaml` at the repository root with `domain: content` and one rule per claim or required block, then run `gantry arch check`. Each rule is a plain regular expression, so a rule matches or it does not, and reruns on an unchanged tree are byte-identical:
 
 ```yaml
 schema_version: "0.3.0"
@@ -52,7 +54,7 @@ rules:
 
 ## In a mission
 
-Use `gantry perimeter check` as the mission gate, or as one step of it. A violation comes back as a finding with `offending_file` and `line`, so a writing agent can fix the exact sentence:
+Use `gantry arch check` as the mission gate, or as one step of it. A violation comes back as a finding with `offending_file` and `line`, so a writing agent can fix the exact sentence:
 
 ```json
 {

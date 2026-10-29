@@ -10,7 +10,7 @@ mandatory_gates:
   - id: audit-high
     command: npm audit --omit=dev --audit-level=high
   - id: perimeter-ci
-    command: gantry perimeter check --ci
+    command: gantry perimeter --ci
 banned_imports:
   - specifier: request
     scope: changed

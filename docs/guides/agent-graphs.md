@@ -12,7 +12,7 @@ For external autonomous agents, such as a Hermes-style runner, a CI bot or a cus
 ## The workflow
 
 1. **Rules.** A human writes `TARGET_ARCHITECTURE.yaml` for the repository ([Perimeters](../concepts/perimeters.md)).
-2. **Legislate.** The mission names its scope and a `gate_command`, such as `gantry perimeter check && npm test`, and a Planner approves it.
+2. **Legislate.** The mission names its scope and a `gate_command`, such as `gantry arch check && npm test`, and a Planner approves it.
 3. **Verify.** `gantry verify --mission … --json`. On failure, read `findings[]` from that payload.
 4. **Retry.** Route each finding back to the executor as a repair hop until verify exits `0`. When the semantic digest of the findings repeats in the ring buffer, `GXT_FINDINGS_RECURRED` ends the loop.
 

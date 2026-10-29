@@ -1,6 +1,6 @@
 # Content governance example
 
-Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates the same agent graph as code governance — discovery, blueprint, perimeter check, verify — over marketing copy instead of TypeScript imports.
+Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates the same agent graph as code governance — discovery, blueprint, arch check, verify — over marketing copy instead of TypeScript imports.
 
 ## Fixture layout
 
@@ -19,8 +19,10 @@ Brand/compliance fixture for OpenGantry content domain adapters. Demonstrates th
 ## Walkthrough
 
 ```bash
-# From repository root (after npm run build)
-node dist/cli/index.js perimeter check --cwd examples/content-governance
+# gantry judges the repository it runs in, so copy the fixture into its own repository first
+cp -r examples/content-governance /tmp/content-governance && cd /tmp/content-governance
+git init -q && gantry init --yes --no-hooks --no-ci   # keeps the fixture's TARGET_ARCHITECTURE.yaml
+gantry arch check
 # Expect violations — fix files, rerun until OK
 ```
 

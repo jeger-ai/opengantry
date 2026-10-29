@@ -32,7 +32,7 @@ path_risks:
   src/db/schema/: Tier-3
 # Words in an intent that escalate triage.
 risk_keywords: [refactor, migrate, delete, security, schema]
-# Globs only a Planner [MSN-…] commit may change (gantry perimeter check).
+# Globs only a Planner [MSN-…] commit may change (gantry perimeter).
 perimeter_protected:
   - "**/.gxt-skill.yaml"
   - .gitagent/foreman/MANIFEST.yaml

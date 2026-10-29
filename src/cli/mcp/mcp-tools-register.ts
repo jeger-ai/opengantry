@@ -1,10 +1,10 @@
-import { z } from "zod";
+import { z, type ZodRawShape } from "zod";
 import { INTERROGATION_FINDING_KINDS } from "#core/interrogation.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { handleCheckSignature } from "./mcp-check-signature.js";
 import { handleDraftLegislation } from "./mcp-draft-legislation.js";
 import { handleProposeContract } from "./mcp-propose-contract.js";
-import { handleInterrogate, type InterrogateMcpInput } from "./mcp-interrogate.js";
+import { handleInterrogate } from "./mcp-interrogate.js";
 import { handleExecuteLegislation } from "./mcp-execute-legislation.js";
 import {
   handleLastError,
@@ -44,17 +44,14 @@ const gateAdapterSchema = z
     "Explicit gate output parser (ADR-0041): generic (default) | eslint (gate must run eslint --format json) | tsc.",
   );
 
-function jsonText(payload: unknown): { content: Array<{ type: "text"; text: string }> } {
-  return {
-    content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
-  };
-}
-
-function registerGxtInterrogateTool(server: McpServer): void {
-  server.tool(
-    "gxt_interrogate",
-    "Deterministic gap analysis before legislation. Returns one next_question (halt) or clear with interrogation_sha256. Do not fabricate operator_answer — quote operator chat verbatim.",
-    {
+/** The GXT tools; row() checks each handler against its schema's parsed input, and results return as JSON text. */
+const row = <S extends ZodRawShape>(t: { name: string; description: string; schema: S; handler: (args: z.infer<z.ZodObject<S>>) => unknown }): { name: string; description: string; schema: ZodRawShape; handler: (args: never) => unknown } => t;
+const GXT_TOOLS = [
+  row({
+    name: "gxt_interrogate",
+    description:
+      "Deterministic gap analysis before legislation. Returns one next_question (halt) or clear with interrogation_sha256. Do not fabricate operator_answer — quote operator chat verbatim.",
+    schema: {
       intent: z.string().describe("Planner intent summary"),
       msn_id: z.string().describe("Mission id advisory label, e.g. MSN-0149"),
       skill_key: z.string().optional().describe("Manifest skill key (default gantry)"),
@@ -63,15 +60,24 @@ function registerGxtInterrogateTool(server: McpServer): void {
       paths: z.array(z.string()).optional().describe("Declared paths for boundary analysis"),
       interrogation: z.array(interrogationRowSchema).optional().describe("Accumulated operator answers"),
     },
-    async (args) => jsonText(handleInterrogate(args as InterrogateMcpInput)),
-  );
-}
-
-function registerGxtDraftLegislationTool(server: McpServer): void {
-  server.tool(
-    "gxt_draft_legislation",
-    "Preview proposed mission law without writing files. Requires complete interrogation (server recomputes). Returns draft_token for gxt_execute_legislation after human chat approval. Never fabricate operator_answer.",
-    {
+    handler: handleInterrogate,
+  }),
+  row({
+    name: "gxt_propose_contract",
+    description:
+      "Deterministically propose a mission contract from intent + repo (read-only). No LLM. Present the block to the operator, then pass the (possibly edited) contract to gxt_draft_legislation.",
+    schema: {
+      intent: z.string().describe("Planner intent / story"),
+      skill_key: z.string().describe("Manifest skill key"),
+      paths: z.array(z.string()).optional().describe("Declared path hints"),
+    },
+    handler: handleProposeContract,
+  }),
+  row({
+    name: "gxt_draft_legislation",
+    description:
+      "Preview proposed mission law without writing files. Requires complete interrogation (server recomputes). Returns draft_token for gxt_execute_legislation after human chat approval. Never fabricate operator_answer.",
+    schema: {
       title: z.string().describe("Concise summary of the proposed law"),
       msn_id: z.string().describe('Mission id, e.g. "MSN-0010"'),
       skill_key: z.string().describe("Manifest skill key (e.g. gantry, ui, logic)"),
@@ -82,152 +88,79 @@ function registerGxtDraftLegislationTool(server: McpServer): void {
       interrogation: z.array(interrogationRowSchema).describe("Complete interrogation answers for all findings"),
       contract: missionContractSchema.describe("Optional Planner-sealed mission cage (ADR-0045)"),
     },
-    async (args) => jsonText(handleDraftLegislation(args)),
-  );
-}
-
-function registerGxtProposeContractTool(server: McpServer): void {
-  server.tool(
-    "gxt_propose_contract",
-    "Deterministically propose a mission contract from intent + repo (read-only). No LLM. Present the block to the operator, then pass the (possibly edited) contract to gxt_draft_legislation.",
-    {
-      intent: z.string().describe("Planner intent / story"),
-      skill_key: z.string().describe("Manifest skill key"),
-      paths: z.array(z.string()).optional().describe("Declared path hints"),
-    },
-    async (args) => jsonText(handleProposeContract(args)),
-  );
-}
-
-function registerGxtExecuteLegislationTool(server: McpServer): void {
-  server.tool(
-    "gxt_execute_legislation",
-    "Execute gantry legislate using a valid draft_token after explicit human chat approval.",
-    {
-      draft_token: z.string().describe("Token from gxt_draft_legislation"),
-    },
-    async (args) => jsonText(handleExecuteLegislation(args.draft_token)),
-  );
-}
-
-function registerGxtCheckSignatureTool(server: McpServer): void {
-  server.tool(
-    "gxt_check_signature",
-    "Check whether Planner git signature exists for a mission file.",
-    {
-      mission_file_path: z.string().describe("Repo-relative mission YAML path"),
-    },
-    async (args) => jsonText(handleCheckSignature(args.mission_file_path)),
-  );
-}
-
-function registerGxtPinMissionTool(server: McpServer): void {
-  server.tool(
-    "gxt_pin_mission",
-    "Pin active mission for runtime env and Cursor sessionStart hooks.",
-    {
-      mission_file_path: z.string().describe("Repo-relative mission YAML path"),
-    },
-    async (args) => jsonText(handlePinMission(args.mission_file_path)),
-  );
-}
-
-function registerGxtRuntimeEnvTool(server: McpServer): void {
-  server.tool(
-    "gxt_runtime_env",
-    "Return GXT runtime env payload for a mission (GXT_* variables).",
-    {
-      mission_file_path: z.string().describe("Repo-relative mission path"),
-    },
-    async (args) => jsonText(handleRuntimeEnv(args.mission_file_path)),
-  );
-}
-
-function registerGxtVerifyTool(server: McpServer): void {
-  server.tool(
-    "gxt_verify",
-    "Run gantry verify phases for a mission and return structured result.",
-    {
+    handler: handleDraftLegislation,
+  }),
+  row({
+    name: "gxt_execute_legislation",
+    description: "Execute gantry legislate using a valid draft_token after explicit human chat approval.",
+    schema: { draft_token: z.string().describe("Token from gxt_draft_legislation") },
+    handler: (a: { draft_token: string }) => handleExecuteLegislation(a.draft_token),
+  }),
+  row({
+    name: "gxt_check_signature",
+    description: "Check whether Planner git signature exists for a mission file.",
+    schema: { mission_file_path: z.string().describe("Repo-relative mission YAML path") },
+    handler: (a: { mission_file_path: string }) => handleCheckSignature(a.mission_file_path),
+  }),
+  row({
+    name: "gxt_pin_mission",
+    description: "Pin active mission for runtime env and Cursor sessionStart hooks.",
+    schema: { mission_file_path: z.string().describe("Repo-relative mission YAML path") },
+    handler: (a: { mission_file_path: string }) => handlePinMission(a.mission_file_path),
+  }),
+  row({
+    name: "gxt_runtime_env",
+    description: "Return GXT runtime env payload for a mission (GXT_* variables).",
+    schema: { mission_file_path: z.string().describe("Repo-relative mission path") },
+    handler: (a: { mission_file_path: string }) => handleRuntimeEnv(a.mission_file_path),
+  }),
+  row({
+    name: "gxt_verify",
+    description: "Run gantry verify phases for a mission and return structured result.",
+    schema: {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       pre_push: z.boolean().optional().describe("Use pre-push legislative stub semantics"),
       skip_stale_evidence: z.boolean().optional().describe("Skip TMVC stale-evidence binding"),
       ci: z.boolean().optional().describe("Authoritative CI mode (perimeter and interrogation fail closed)"),
     },
-    async (args) =>
-      jsonText(
-        await handleVerify(
-          args.mission_file_path,
-          args.pre_push === true,
-          args.skip_stale_evidence === true,
-          args.ci === true,
-        ),
-      ),
-  );
-}
-
-function registerGxtRuntimeExecTool(server: McpServer): void {
-  server.tool(
-    "gxt_runtime_exec",
-    "Run executor command with mission env + forbidden-zone enforcement.",
-    {
+    handler: handleVerify,
+  }),
+  row({
+    name: "gxt_runtime_exec",
+    description: "Run executor command with mission env + forbidden-zone enforcement.",
+    schema: {
       mission_file_path: z.string().describe("Repo-relative mission path"),
       command: z.array(z.string()).describe("Executor argv (after --)"),
       cwd: z.string().optional(),
       timeout_ms: z.number().int().positive().optional(),
     },
-    async (args) =>
-      jsonText(
-        await handleRuntimeExec({
-          mission: args.mission_file_path,
-          command: args.command,
-          cwd: args.cwd,
-          timeout_ms: args.timeout_ms,
-        }),
-      ),
-  );
-}
-
-function registerGxtResolveMissionTool(server: McpServer): void {
-  server.tool(
-    "gxt_resolve_mission",
-    "Resolve the active mission: an explicit path, GANTRY_MISSION, GANTRY_MISSION_FILE, the gantry mission pin file, then the legacy ACTIVE_MISSION files.",
-    {
-      mission_file_path: z.string().optional().describe("Optional explicit mission path override"),
-    },
-    async (args) => jsonText(handleResolveMission(args.mission_file_path)),
-  );
-}
-
-function registerGxtDoctorTool(server: McpServer): void {
-  server.tool(
-    "gxt_doctor",
-    "Readiness check: manifest and skills sync, Planner identity, hooks, substrate version, law-file form. Read-only.",
-    {},
-    async () => jsonText(handleDoctor()),
-  );
-}
-
-function registerGxtLastErrorTool(server: McpServer): void {
-  server.tool(
-    "gxt_last_error",
-    "Read machine-oriented remediation from GANTRY_LAST_ERROR_FILE.",
-    {},
-    async () => jsonText(handleLastError()),
-  );
-}
+    handler: handleRuntimeExec,
+  }),
+  row({
+    name: "gxt_resolve_mission",
+    description:
+      "Resolve the active mission: an explicit path, GANTRY_MISSION, GANTRY_MISSION_FILE, the gantry mission pin file, then the legacy ACTIVE_MISSION files.",
+    schema: { mission_file_path: z.string().optional().describe("Optional explicit mission path override") },
+    handler: (a: { mission_file_path?: string }) => handleResolveMission(a.mission_file_path),
+  }),
+  row({
+    name: "gxt_doctor",
+    description: "Readiness check: manifest and skills sync, Planner identity, hooks, substrate version, law-file form. Read-only.",
+    schema: {},
+    handler: handleDoctor,
+  }),
+  row({
+    name: "gxt_last_error",
+    description: "Read machine-oriented remediation from GANTRY_LAST_ERROR_FILE.",
+    schema: {},
+    handler: handleLastError,
+  }),
+];
 
 /** Register all OpenGantry GXT MCP tools on the given server instance. */
 export function registerGxtMcpTools(server: McpServer): void {
-  registerGxtInterrogateTool(server);
-  registerGxtProposeContractTool(server);
-  registerGxtDraftLegislationTool(server);
-  registerGxtExecuteLegislationTool(server);
-  registerGxtCheckSignatureTool(server);
-  registerGxtPinMissionTool(server);
-  registerGxtRuntimeEnvTool(server);
-  registerGxtVerifyTool(server);
-  registerGxtRuntimeExecTool(server);
-  registerGxtResolveMissionTool(server);
-  registerGxtDoctorTool(server);
-  registerGxtLastErrorTool(server);
+  for (const t of GXT_TOOLS) {
+    const text = async (args: unknown) => JSON.stringify(await t.handler(args as never), null, 2);
+    server.tool(t.name, t.description, t.schema, async (args) => ({ content: [{ type: "text", text: await text(args) }] }));
+  }
 }

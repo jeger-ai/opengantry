@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { Command } from "commander";
 import { LAW_FILES, type LawFileId } from "#core/law-file.js";
-import { runMigrate } from "./commands/migrate.js";
+import { runMigrate, type MigrateOptions } from "./commands/migrate.js";
 
 /** `gantry migrate <file>`: one verb per law file, the deterministic ADR-0047 format migration. */
 export function registerMigrateCommands(program: Command): void {
@@ -13,8 +13,8 @@ export function registerMigrateCommands(program: Command): void {
       .description(`${file.json} (3.x) becomes ${path.posix.basename(file.yaml)}; the JSON form is removed`)
       .option("--dry-run", "Report what would change; write nothing")
       .option("--json", "Machine-readable result on stdout")
-      .action((opts: { dryRun?: boolean; json?: boolean }) => {
-        runMigrate(id, { dryRun: opts.dryRun, json: opts.json });
+      .action((opts: MigrateOptions) => {
+        runMigrate(id, opts);
       });
   }
 }

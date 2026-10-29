@@ -67,8 +67,8 @@ export async function runHookPreCommit(): Promise<void> {
     const strict = strictGuardArmed(root);
     logInfo(
       strict
-        ? `pre-commit: ${CLI_NAME} tmvc guard --strict (commit blocked on TMVC drift; bypass: git commit --no-verify)`
-        : `pre-commit: ${CLI_NAME} tmvc guard --mission ${mission} (advisory default)`,
+        ? "pre-commit: TMVC guard, strict (commit blocked on TMVC drift; bypass: git commit --no-verify)"
+        : `pre-commit: TMVC guard for ${mission} (advisory default)`,
     );
     runTmvcGuard({ mission, strict });
     const blocked = process.exitCode !== undefined && process.exitCode !== 0;

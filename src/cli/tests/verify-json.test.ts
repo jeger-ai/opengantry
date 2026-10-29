@@ -156,7 +156,7 @@ test("runVerify --json gate failure matches handleVerify field subset", async ()
   await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
-      const mcp = (await handleVerify(".gitagent/missions/m.yaml")) as VerifyFailedPayload;
+      const mcp = (await handleVerify({ mission_file_path: ".gitagent/missions/m.yaml" })) as VerifyFailedPayload;
       clearRemediationSnapshot(dest);
       process.exitCode = undefined;
       const { output } = await captureConsoleAsync(async () => {
@@ -220,7 +220,7 @@ test("handleVerify: missing mission uses flat init failure envelope", async () =
   await withPlannerEnvAsync(async () => {
     process.chdir(dest);
     try {
-      const result = (await handleVerify(".gitagent/missions/missing.yaml")) as VerifyFailedPayload;
+      const result = (await handleVerify({ mission_file_path: ".gitagent/missions/missing.yaml" })) as VerifyFailedPayload;
       assert.equal(result.status, "failed");
       assert.equal(result.phase, "init");
       assert.equal(result.error_code, GXT_ERROR.PARSE_ERROR);

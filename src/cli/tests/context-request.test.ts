@@ -182,32 +182,6 @@ test("runTmvcGuard: strict mode blocks", () => {
   }
 });
 
-test("runTmvcGuard: no mission skips with warning", () => {
-  const ogRoot = process.cwd();
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-guard-skip-"));
-  initGitRepo(dest);
-  writeWave3Repo(dest, ogRoot);
-  fs.unlinkSync(path.join(dest, ".gitagent", "missions", ".active-mission"));
-
-  const prevCwd = process.cwd();
-  const chunks: string[] = [];
-  const origErr = console.error;
-  console.error = (...args: unknown[]) => {
-    chunks.push(args.map(String).join(" "));
-  };
-  process.chdir(dest);
-  process.exitCode = undefined;
-  try {
-    runTmvcGuard({});
-    assert.equal(process.exitCode, undefined);
-    assert.match(chunks.join("\n"), /skipping/);
-  } finally {
-    console.error = origErr;
-    process.chdir(prevCwd);
-    process.exitCode = undefined;
-  }
-});
-
 test("runContextRequest: requires reason and mission", () => {
   const ogRoot = process.cwd();
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-ctx-cli-"));

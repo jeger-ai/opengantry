@@ -1,0 +1,292 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0368]. Executor must not run until the [MSN-0368] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 3, mission C: flatten the command shells and the MCP registration;
+# remove tmvc guard and perimeter check; every other command, flag and tool unchanged.
+#
+# Operator request (2026-10-29, ADR-0061 phase 3 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0368.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0368
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/CHANGELOG.md, docs/concepts/enforcement-boundary.md,
+      docs/concepts/perimeters.md, docs/concepts/scope.md,
+      docs/concepts/when-to-adopt.md, docs/DEVELOPMENT.md,
+      docs/guides/agent-graphs.md, docs/guides/content-domain.md,
+      docs/guides/other-agents.md, docs/start/how-it-works.md,
+      docs/start/install.md, examples/content-governance/README.md,
+      examples/org-policy/ORG-POLICY.yaml, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0368.flat-shells.yaml,
+      .gitagent/planner/RUNTIME.md, .gitagent/registry/commands.yaml,
+      .gitagent/runs/MSN-0368.json,
+      packages/missions/src/arch/target-architecture.ts, README.md,
+      src/cli/commands/arch.ts, src/cli/commands/contract.ts,
+      src/cli/commands/hooks.ts, src/cli/commands/hook.ts,
+      src/cli/commands/runtime.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/mcp/mcp-runtime.ts, src/cli/mcp/mcp-tools-register.ts,
+      src/cli/program-arch.ts, src/cli/program-cage.ts, src/cli/program-ci.ts,
+      src/cli/program-core.ts, src/cli/program-hook.ts, src/cli/program-mcp.ts,
+      src/cli/program-migrate.ts, src/cli/program-mission.ts,
+      src/cli/program-org.ts, src/cli/program-workflow.ts,
+      src/cli/tests/content-governance-loop.test.ts,
+      src/cli/tests/context-request.test.ts, src/cli/tests/mcp-runtime.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/workflow-cli-flags.test.ts,
+      templates/.gitagent/foreman/MANIFEST.yaml,
+      templates/integrations/recipes/aider.md, test/conformance/cases.yaml,
+      test/conformance/golden/perimeter-check.mission-pass.json,
+      test/conformance/golden/tmvc-guard.mission-pass.json. Deleted: the
+      tmvc-guard and perimeter-check conformance goldens. Changed: every
+      src/cli/program-*.ts shell, the MCP tool registration (typed table) and
+      handlers taking one object, tmvc-guard (hook path only), hook messages,
+      runtime exec and contract commands (argument handling moved in), the arch
+      check command and missions formatter (no perimeter label), verify options
+      mapper, tests, registries (commands: tmvc, tmvc guard, perimeter check),
+      conformance cases, templates (MANIFEST comment, RUNTIME and integration
+      docs), examples/org-policy and the content-governance README, docs
+      (content domain guide with a working walkthrough, perimeters, how it
+      works, DEVELOPMENT, CHANGELOG), ARCH_BASELINE.json lowered. Operator
+      decisions (2026-10-29, ADR-0061 phase 3): tmvc guard and perimeter check
+      are removed (the pre-commit guard and perimeter --ci stay); the shells are
+      flattened in TypeScript rather than generated, because the registries plus
+      the registry surface test already keep a subcommand and its MCP tool from
+      drifting. As built: a full dump of the Commander tree and MCP schemas
+      before and after differs only by the removed commands and the perimeter
+      description (which no longer claims architecture checks); the MCP table
+      keeps compile-time checking of each handler against its schema through a
+      typed row helper; the content-governance walkthrough now copies the
+      fixture into its own repository, because gantry judges the repository it
+      runs in and arch check has no --cwd. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0368.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept. Keyless signing is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Accept. The plane CI ingestion contract is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. TARGET_ARCHITECTURE.yaml is enforced by gantry arch
+      check; the perimeter check alias goes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. Planner stamp signing is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept. The 12 MCP tools keep their names, descriptions and
+      input schemas; registration is one typed table, and write containment is
+      unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c1d77fe28cc8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/concepts/enforcement-boundary.md, docs/concepts/perimeters.md,
+      docs/concepts/scope.md, docs/concepts/when-to-adopt.md,
+      docs/DEVELOPMENT.md, docs/guides/agent-graphs.md,
+      docs/guides/content-domain.md, docs/guides/other-agents.md,
+      docs/start/how-it-works.md, docs/start/install.md,
+      examples/content-governance/README.md,
+      examples/org-policy/ORG-POLICY.yaml, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0368.flat-shells.yaml,
+      .gitagent/planner/RUNTIME.md, .gitagent/registry/commands.yaml,
+      .gitagent/runs/MSN-0368.json,
+      packages/missions/src/arch/target-architecture.ts, README.md,
+      src/cli/commands/arch.ts, src/cli/commands/contract.ts,
+      src/cli/commands/hooks.ts, src/cli/commands/hook.ts,
+      src/cli/commands/runtime.ts, src/cli/commands/tmvc-guard.ts,
+      src/cli/mcp/mcp-runtime.ts, src/cli/mcp/mcp-tools-register.ts,
+      src/cli/program-arch.ts, src/cli/program-cage.ts, src/cli/program-ci.ts,
+      src/cli/program-core.ts, src/cli/program-hook.ts, src/cli/program-mcp.ts,
+      src/cli/program-migrate.ts, src/cli/program-mission.ts,
+      src/cli/program-org.ts, src/cli/program-workflow.ts,
+      src/cli/tests/content-governance-loop.test.ts,
+      src/cli/tests/context-request.test.ts, src/cli/tests/mcp-runtime.test.ts,
+      src/cli/tests/verify-json.test.ts,
+      src/cli/tests/workflow-cli-flags.test.ts,
+      templates/.gitagent/foreman/MANIFEST.yaml,
+      templates/integrations/recipes/aider.md, test/conformance/cases.yaml,
+      test/conformance/golden/perimeter-check.mission-pass.json,
+      test/conformance/golden/tmvc-guard.mission-pass.json. Deleted: the
+      tmvc-guard and perimeter-check conformance goldens. Changed: every
+      src/cli/program-*.ts shell, the MCP tool registration (typed table) and
+      handlers taking one object, tmvc-guard (hook path only), hook messages,
+      runtime exec and contract commands (argument handling moved in), the arch
+      check command and missions formatter (no perimeter label), verify options
+      mapper, tests, registries (commands: tmvc, tmvc guard, perimeter check),
+      conformance cases, templates (MANIFEST comment, RUNTIME and integration
+      docs), examples/org-policy and the content-governance README, docs
+      (content domain guide with a working walkthrough, perimeters, how it
+      works, DEVELOPMENT, CHANGELOG), ARCH_BASELINE.json lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission completes phase 3 and the simplification of ADR-0061.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+interrogation_sha256: 97c43660bc7d56e924869efdfb95c5a756c37f8ea5018d35ce56149929ac4482
+declared_paths:
+  - .gitagent/missions/MSN-0368.flat-shells.yaml
+  - .gitagent/planner/RUNTIME.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0368.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/concepts/enforcement-boundary.md
+  - docs/concepts/perimeters.md
+  - docs/concepts/scope.md
+  - docs/concepts/when-to-adopt.md
+  - docs/guides/agent-graphs.md
+  - docs/guides/content-domain.md
+  - docs/guides/other-agents.md
+  - docs/start/how-it-works.md
+  - docs/start/install.md
+  - examples/content-governance/README.md
+  - examples/org-policy/ORG-POLICY.yaml
+  - packages/missions/src/arch/target-architecture.ts
+  - src/cli/commands/arch.ts
+  - src/cli/commands/contract.ts
+  - src/cli/commands/hook.ts
+  - src/cli/commands/hooks.ts
+  - src/cli/commands/runtime.ts
+  - src/cli/commands/tmvc-guard.ts
+  - src/cli/mcp/mcp-runtime.ts
+  - src/cli/mcp/mcp-tools-register.ts
+  - src/cli/program-arch.ts
+  - src/cli/program-cage.ts
+  - src/cli/program-ci.ts
+  - src/cli/program-core.ts
+  - src/cli/program-hook.ts
+  - src/cli/program-mcp.ts
+  - src/cli/program-migrate.ts
+  - src/cli/program-mission.ts
+  - src/cli/program-org.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/content-governance-loop.test.ts
+  - src/cli/tests/context-request.test.ts
+  - src/cli/tests/mcp-runtime.test.ts
+  - src/cli/tests/verify-json.test.ts
+  - src/cli/tests/workflow-cli-flags.test.ts
+  - templates/.gitagent/foreman/MANIFEST.yaml
+  - templates/integrations/recipes/aider.md
+  - test/conformance/cases.yaml
+  - test/conformance/golden/perimeter-check.mission-pass.json
+  - test/conformance/golden/tmvc-guard.mission-pass.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0368.flat-shells.yaml
+    - .gitagent/planner/RUNTIME.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0368.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/concepts/enforcement-boundary.md
+    - docs/concepts/perimeters.md
+    - docs/concepts/scope.md
+    - docs/concepts/when-to-adopt.md
+    - docs/guides/agent-graphs.md
+    - docs/guides/content-domain.md
+    - docs/guides/other-agents.md
+    - docs/start/how-it-works.md
+    - docs/start/install.md
+    - examples/content-governance/README.md
+    - examples/org-policy/ORG-POLICY.yaml
+    - packages/missions/src/arch/target-architecture.ts
+    - src/cli/commands/arch.ts
+    - src/cli/commands/contract.ts
+    - src/cli/commands/hook.ts
+    - src/cli/commands/hooks.ts
+    - src/cli/commands/runtime.ts
+    - src/cli/commands/tmvc-guard.ts
+    - src/cli/mcp/mcp-runtime.ts
+    - src/cli/mcp/mcp-tools-register.ts
+    - src/cli/program-arch.ts
+    - src/cli/program-cage.ts
+    - src/cli/program-ci.ts
+    - src/cli/program-core.ts
+    - src/cli/program-hook.ts
+    - src/cli/program-mcp.ts
+    - src/cli/program-migrate.ts
+    - src/cli/program-mission.ts
+    - src/cli/program-org.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/content-governance-loop.test.ts
+    - src/cli/tests/context-request.test.ts
+    - src/cli/tests/mcp-runtime.test.ts
+    - src/cli/tests/verify-json.test.ts
+    - src/cli/tests/workflow-cli-flags.test.ts
+    - templates/.gitagent/foreman/MANIFEST.yaml
+    - templates/integrations/recipes/aider.md
+    - test/conformance/cases.yaml
+    - test/conformance/golden/perimeter-check.mission-pass.json
+    - test/conformance/golden/tmvc-guard.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 7c53d1f562998a01e8b5d4adcd3b462d3b5ac7a20cd51016c4bee488133c86da
