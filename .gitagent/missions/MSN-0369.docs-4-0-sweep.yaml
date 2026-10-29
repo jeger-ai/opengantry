@@ -1,0 +1,162 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0369]. Executor must not run until the [MSN-0369] legislation commit + pin.
+#
+# Legislated intent: before the 4.0.0 tag, remove the last references to removed 4.0 features from the
+# published docs and examples (opengantry.ai publishes them at the tag). Docs only.
+#
+# Operator request (2026-10-29, opengantry.ai 4.0 update). No trace rows: the evidence is
+# .gitagent/runs/MSN-0369.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0369
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: docs/CHANGELOG.md,
+      docs/concepts/perimeters.md, docs/concepts/verify.md, docs/DEVELOPMENT.md,
+      docs/DOMAINS.md, docs/guides/agent-graphs.md,
+      docs/guides/org-control-plane.md, docs/guides/regulated-teams.md,
+      examples/content-governance/README.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0369.docs-4-0-sweep.yaml,
+      .gitagent/runs/MSN-0369.json, README.md. Changed (docs only): README.md,
+      docs/guides/regulated-teams.md, docs/guides/org-control-plane.md,
+      docs/concepts/verify.md, docs/guides/agent-graphs.md,
+      docs/concepts/perimeters.md, docs/DOMAINS.md, docs/DEVELOPMENT.md,
+      docs/CHANGELOG.md, examples/content-governance/README.md. Operator request
+      (2026-10-29): prepare opengantry.ai for 4.0.0. The site's 4.0 rewrite
+      found docs here that still describe removed features; because the site
+      publishes this repository's docs at the v4.0.0 tag, they are fixed before
+      the tag. Docs only; no code, output or golden changes. The mission has no
+      trace rows: its evidence is .gitagent/runs/MSN-0369.json written by gantry
+      verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the placeholder example
+      decision shipped with the substrate; its match terms overlap this intent
+      by wording only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Accept. Docs only: this mission corrects published wording and
+      changes no behaviour this decision governs."
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. No test changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. Docs only; no conformance golden changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept. Docs only: this mission corrects published wording and
+      changes no behaviour this decision governs."
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission removes the last references to features
+      ADR-0061 removed from the published docs, before the 4.0.0 tag.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: "Accept. Docs only: this mission corrects published wording and
+      changes no behaviour this decision governs."
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. Docs only: this mission corrects published wording and
+      changes no behaviour this decision governs."
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 3fec04534479d1f9e46f4c92c27f878f86eaf7bd6ab5d3810127909fcab1d190
+declared_paths:
+  - .gitagent/missions/MSN-0369.docs-4-0-sweep.yaml
+  - .gitagent/runs/MSN-0369.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/DOMAINS.md
+  - docs/concepts/perimeters.md
+  - docs/concepts/verify.md
+  - docs/guides/agent-graphs.md
+  - docs/guides/org-control-plane.md
+  - docs/guides/regulated-teams.md
+  - examples/content-governance/README.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0369.docs-4-0-sweep.yaml
+    - .gitagent/runs/MSN-0369.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/DOMAINS.md
+    - docs/concepts/perimeters.md
+    - docs/concepts/verify.md
+    - docs/guides/agent-graphs.md
+    - docs/guides/org-control-plane.md
+    - docs/guides/regulated-teams.md
+    - examples/content-governance/README.md
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 2bc24225a1417aa6db4467f4957c6787be1fa67d2a8e9ec9e1218a529b5ac799
