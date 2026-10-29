@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0365",
+  "mission_path": ".gitagent/missions/MSN-0365.pepper-free-ledger.yaml",
+  "head": "a4b5626e8375276d1b6ea1e597b069dbb602aeda",
+  "tree": "aaf62952469213d414dcae883475cef488135d1f",
+  "law_sha256": "70edad44938debeaf722eabf7a08fdb95d046fee2580a32127c3b33fde5feaf7",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 132811,
+      "output_sha256": "b471fb4f4f144c0ccae4b763fad664cfdc574718bf2f88aa3b1060d275a7e048"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-29T00:55:54.069Z"
+}
