@@ -6,9 +6,12 @@
 #
 # Operator request (2026-10-29, "go" on the security alerts). No trace rows: the evidence is
 # .gitagent/runs/MSN-0371.json written by gantry verify --record (RULES §3).
+#
+# Resealed 2026-10-29 (CodeRabbit review on PR #335): both npm audits join the gate, so the run record's PASS covers them.
 msn_id: MSN-0371
 skill_key: substrate
-gate_command: ./scripts/dev-validate-core.sh
+gate_command: ./scripts/dev-validate-core.sh && npm audit --package-lock-only &&
+  npm --prefix examples/iii-integration audit --package-lock-only
 trace_rows: []
 interrogation:
   - finding_id: 1a4b88b71538
@@ -59,7 +62,24 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0049
-interrogation_sha256: 86f7ea7e8550a63ec7521050142460801ee918a7c642c00453cdf9109e38023a
+  - finding_id: ce2f473d6f7f
+    kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and
+      its success criteria on the record.
+    hypothesis: Planner accepts gate_command "./scripts/dev-validate-core.sh && npm
+      audit --package-lock-only && npm --prefix examples/iii-integration audit
+      --package-lock-only" with documented success substring for verify.
+    operator_answer: "Authorized. gate_command ./scripts/dev-validate-core.sh && npm
+      audit --package-lock-only && npm --prefix examples/iii-integration audit
+      --package-lock-only: the substrate gate ./scripts/dev-validate-core.sh
+      plus npm audit --package-lock-only for the root lockfile and for
+      examples/iii-integration, so the recorded PASS proves both audits report
+      no vulnerabilities (CodeRabbit review on PR #335). Success is exit 0; npm
+      audit exits 1 on any advisory."
+    adr_refs:
+      - ADR-0052
+      - ADR-0039
+interrogation_sha256: b2c53eb881c25c1ccf502f8a20d1580f7e023d348c01f38201ea9b2ad5bb9a03
 declared_paths:
   - .gitagent/missions/MSN-0371.iii-lockfile-advisories.yaml
   - .gitagent/runs/MSN-0371.json
