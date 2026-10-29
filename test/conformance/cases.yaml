@@ -65,10 +65,6 @@ cases:
   - { id: verify.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: verify.pre-push.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --pre-push, --json] }
   - { id: verify.record.mission-norows, fixture: mission-norows, args: [verify, --mission, .gitagent/missions/m-MSN-0101.yaml, --record, --json], record_tree: true }
-  - { id: attest.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json], env: { GANTRY_ORG_ID: org-fixture, GANTRY_ORG_PEPPER: fixture-pepper-0000 } }
-  - { id: attest.no-org.mission-pass, fixture: mission-pass, args: [attest, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
-  - { id: receipt-list.mission-pass, fixture: mission-pass, args: [receipt, list, --json] }
-  - { id: receipt-show.none.mission-pass, fixture: mission-pass, args: [receipt, show, MSN-0101, --json] }
   - { id: events-push.dry-run.mission-pass, fixture: mission-pass, args: [events, push, --dry-run, --json] }
 
   # --- architecture and perimeters ---

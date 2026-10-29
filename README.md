@@ -96,7 +96,7 @@ Then [your first mission](docs/start/first-mission.md) and [wire your agent](doc
 | Verify | `gantry verify --mission <file>`, `gantry verify --contract [file] --base <ref>`, `--json`, `--format sarif\|junit`, `gantry adapt --from lights-on <plan>`, `gantry context-feed --json` |
 | Inspect | `gantry doctor`, `gantry mission pin` |
 | Perimeters | `gantry arch check`, `gantry perimeter check` |
-| Organization | `gantry policy pull`, `gantry ledger verify`, `gantry deps check`, `gantry attest` |
+| Organization | `gantry policy pull`, `gantry ledger verify`, `gantry deps check`, `gantry ledger list` |
 
 `GANTRY_PLANNER_EMAILS` (comma-separated Git author emails) lists who may approve missions; `gantry planner set` records yours. `gantry mcp serve` exposes the same workflow to MCP clients. Every command takes `--help`.
 

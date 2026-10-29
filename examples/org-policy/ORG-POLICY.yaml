@@ -30,7 +30,6 @@ banned_imports:
     scope: changed
 config_floor:
   planner_signature: warn
-  receipt_signature: warn
   ledger_signature: warn
   ledger_mode: local
   flight_telemetry:

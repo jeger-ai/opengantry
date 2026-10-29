@@ -5,7 +5,6 @@ import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { runLegislate } from "../flows/legislate.js";
-import { buildAttestationReceipt } from "../flows/attestation-receipt.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { getRepoRoot } from "#git/git.js";
 import { stableFindingId } from "#core/interrogation.js";
@@ -13,7 +12,7 @@ import { runInterrogate } from "#missions/interrogate/run.js";
 import { loadManifest } from "#missions/manifest.js";
 import { parseMissionFile } from "#missions/mission/parser.js";
 import { evaluateInterrogationPhase } from "#missions/mission-verify/interrogation.js";
-import { copyMissionSchema, writeOrgExportConfig, isolateOrgAttributionEnv } from "./test-fixtures.js";
+import { copyMissionSchema, writeOrgExportConfig } from "./test-fixtures.js";
 
 function scaffoldGantryLegislateRepo(): string {
   const ogRoot = getRepoRoot();
@@ -122,45 +121,4 @@ test("interrogation tamper: verify fails GXT_INTERROGATION_MISMATCH when answer 
   } finally {
     process.chdir(prevCwd);
   }
-});
-
-test("interrogation attestation: mission_sha256 changes when operator_answer changes", () => {
-  isolateOrgAttributionEnv(() => {
-    const dest = scaffoldGantryLegislateRepo();
-    const prevCwd = process.cwd();
-    process.chdir(dest);
-    try {
-      const missionRel = legislateWithEchoOkAnswer(dest, "MSN-0912");
-      const missionArg = missionRel;
-      const mission1 = parseMissionFile(dest, missionArg);
-      const receipt1 = buildAttestationReceipt({
-        root: dest,
-        mission: mission1,
-        missionArg,
-        verifyStatus: "attest_only",
-      });
-
-      const missionAbs = path.join(dest, missionRel);
-      const body = fs.readFileSync(missionAbs, "utf8");
-      fs.writeFileSync(
-        missionAbs,
-        body.replace(
-          "Operator approved echo OK for roundtrip test.",
-          "Operator approved echo OK for roundtrip test — different answer.",
-        ),
-        "utf8",
-      );
-
-      const mission2 = parseMissionFile(dest, missionArg);
-      const receipt2 = buildAttestationReceipt({
-        root: dest,
-        mission: mission2,
-        missionArg,
-        verifyStatus: "attest_only",
-      });
-      assert.notEqual(receipt1.mission_sha256, receipt2.mission_sha256);
-    } finally {
-      process.chdir(prevCwd);
-    }
-  });
 });

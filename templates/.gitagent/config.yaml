@@ -1,5 +1,5 @@
 # OpenGantry config: Planner-owned switches. Humans write YAML (ADR-0047); gantry init copies this file.
-# planner_signature / receipt_signature: off | warn | require (signed Planner commits and receipts).
+# planner_signature: off | warn | require (signed Planner commits).
 # flight_telemetry.body_mode: hash_only (default) keeps gate output out of telemetry; full stores it.
 flight_telemetry:
   body_mode: hash_only

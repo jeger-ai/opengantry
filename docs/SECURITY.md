@@ -63,8 +63,8 @@ OpenGantry separates **local execution** (CLI, cages, verify) from an optional f
 
 - **Sole enforcer:** `gantry verify` on the spoke is fail-closed. Hub never overrides local outcomes.
 - **Default:** `flight_telemetry.body_mode` is `hash_only` — gate stream bodies are not written to `EXECUTOR_LOG.md` (`chunk_b64` omitted). Events keep `chunk_sha256` + `bytes` so you can prove what ran without storing raw stdout.
-- **Receipts:** `gantry attest` / `gantry verify --receipt` write digest-only JSON under `.gitagent/history/receipts/` (git-ignored). Unsigned `receipt_sha256` is a checksum; SSH/GPG signatures (`receipt_signature` tier) make a receipt an attestation proof. Do not treat tracked-tree receipt paths as the default.
-- **Export for Hub:** CI artifacts, PR attachments, or an optional future git-note export — not committed receipt trees in every clone.
+- **Run record:** the committed `.gitagent/runs/<MSN>.json` (written by `gantry verify --record`) is the only receipt: digests of the gate output and the enforced law, bound to a commit and tree. The ledger's `receipt` entries name it by `run_record_sha256`.
+- **Export for Hub:** `gantry verify --export` writes envelope 2.0 over the canonical run record, after a pass only; `--sign` adds an SSH/GPG signature over those bytes.
 - **Policy drift:** `gantry doctor --policy <expected-digests.json>` compares working-tree digests offline — no network I/O in doctor.
 - **Hub role:** consumer / aggregator / reporter (dashboards, hash→human resolve, advisory status checks, PDF). SaaS/webhook backends belong in a separate Hub repo, not this CLI.
 - **Never via GXT export:** source trees, gate stdout bodies, credentials, draft-token keys, or bypass secrets.
@@ -81,14 +81,14 @@ OpenGantry does **not** certify legal compliance. It produces Git-native artifac
 | Mission YAML + `[MSN-XXXX]` commits | Declared scope, gate command, Planner legislation | Application secrets; free-form chat transcripts |
 | `EXECUTOR_LOG.md` quotes | Verbatim gate/trace evidence verifiers must cite | By default, full gate stream bodies (`hash_only`) |
 | Hash-only flight telemetry | `chunk_sha256` + byte counts for gate streams | Raw prompt corpora, file bodies, `chunk_b64` stdout |
-| Attestation receipts | Mission identity, policy digests, verify outcome | Source trees |
+| Run records | Mission identity, head and tree, gate exit and output digest, law digest | Source trees, gate output |
 
 ### Cryptographic attestation
 
 | Mode | Meaning |
 |------|---------|
-| **Unsigned receipt** | Local checksum envelope over digests + outcome — useful, not a signature proof |
-| **Signed receipt** (`gantry attest --sign`, or `receipt_signature` warn/require) | SSH/GPG detach-sign over `receipt_sha256` — verified proof of that receipt hash on this machine |
+| **Run record** | Committed digests of what ran on which tree; its integrity rests on Git history and review, not a signature |
+| **Signed export envelope** (`gantry verify --export … --sign`) | SSH/GPG detach-sign over the canonical run record — proof that this key exported that record |
 
 ### Human oversight cages
 
@@ -110,7 +110,7 @@ Keep the roles distinct — defense in depth, not product overlap:
 
 | Layer | Owns | Does not own |
 |-------|------|--------------|
-| **OpenGantry (this project)** | Deterministic routing of work (missions, TMVC, forbidden zones), architecture cage (`TARGET_ARCHITECTURE.yaml` / perimeter), shell gates, forensic verify, attestation receipts | Runtime sandboxing of MCP tool binaries, skill-pack hash quarantine at invoke time, network egress firewalls for tool calls |
+| **OpenGantry (this project)** | Deterministic routing of work (missions, TMVC, forbidden zones), architecture cage (`TARGET_ARCHITECTURE.yaml` / perimeter), shell gates, forensic verify, run records | Runtime sandboxing of MCP tool binaries, skill-pack hash quarantine at invoke time, network egress firewalls for tool calls |
 | **Execution firewall / skill sandbox (complement)** | Process isolation for untrusted tools, hash-pinning of MCP/skill payloads, tool-poisoning defenses | Mission legislation, Git-native architectural logging, Planner git-proof |
 
 Use OpenGantry when you need **declared edit blast radius and citeable verify evidence**. Pair it with a standalone sandbox/hash-check proxy when the threat model is **tool poisoning or untrusted MCP execution**. They compose; neither replaces the other.
@@ -131,4 +131,4 @@ When a production hotfix cannot wait for full git-proof + trace mapping:
 
 We credit reporters who agree to be named when we publish advisories.
 
-Design notes: [ADR-0021 break-glass protocol](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0021-break-glass-protocol.md), [ADR-0034 hub and spoke](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md).
+Design notes: [ADR-0021 break-glass protocol](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0021-break-glass-protocol.md), [ADR-0034 hub and spoke](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0034-hybrid-hub-spoke-metadata-plane.md), [ADR-0061 one record](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0061-simplify-before-4-0.md).

@@ -1,6 +1,6 @@
 ---
 title: "Agent integrations (moved)"
-description: "Moved. Wire any agent, per-tool guides, MCP tools and CI receipt ingestion."
+description: "Moved. Wire any agent, per-tool guides, MCP tools and CI run record export."
 publish: false
 moved_to:
   - guides/agents.md
@@ -31,7 +31,7 @@ This page was split by tool and topic into the guides and reference sections.
 | <a id="mcp-tools-cursor-and-other-mcp-clients"></a><a id="kernel-library-v322"></a>MCP tools, kernel library | [reference/mcp-tools.md](reference/mcp-tools.md) |
 | <a id="enforcement-boundary-where-the-cage-is-ironclad"></a><a id="external-ide-skills-edge-quarantine"></a>Enforcement boundary, external IDE skills | [concepts/enforcement-boundary.md](concepts/enforcement-boundary.md) |
 | <a id="remote-handoff-planner-push--remote-agent"></a>Remote handoff | [guides/agent-graphs.md](guides/agent-graphs.md) |
-| <a id="ci-receipt-ingestion-github-actions"></a><a id="repository-settings"></a><a id="execution-order-critical"></a><a id="local-export-debug"></a>CI receipt ingestion | [guides/ci.md](guides/ci.md) |
+| <a id="ci-receipt-ingestion-github-actions"></a><a id="repository-settings"></a><a id="execution-order-critical"></a><a id="local-export-debug"></a>CI run record export | [guides/ci.md](guides/ci.md) |
 | <a id="shared-session-variables"></a>Shared session variables | [reference/session-variables.md](reference/session-variables.md) |
 | <a id="diagnostic-context-feed-verify-repair-hops"></a>Diagnostic context feed | [concepts/verify.md](concepts/verify.md) |
 | <a id="troubleshooting"></a>Troubleshooting | [guides/troubleshooting.md](guides/troubleshooting.md) |

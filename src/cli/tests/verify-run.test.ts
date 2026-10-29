@@ -3,11 +3,15 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { REL_RECEIPTS_DIR } from "#core/constants.js";
+import { canonicalJson } from "#core/canonical-json.js";
+import { runRecordDigest, type RunRecord } from "#core/run-record.js";
+import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { getRepoRoot } from "#git/git.js";
 import { runVerifyCore } from "../flows/verify-run.js";
+import { runLedgerAppend } from "../commands/ledger.js";
 import {
   copyMissionSchema,
+  gitCommit,
   gitInitCommit,
   writeManifest,
   writeMiniGantryMission,
@@ -16,8 +20,9 @@ import {
   writeOrgExportConfig,
 } from "./test-fixtures.js";
 import { PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
+import { writeLedgerEnabledConfig } from "./test-org-fixtures.js";
 
-function writeRepairReceiptFixture(
+function writeRepairFixture(
   dest: string,
   ogRoot: string,
   gateCommand: string,
@@ -75,10 +80,8 @@ trace_rows:
   return missionRel;
 }
 
-function listReceiptFiles(dest: string): string[] {
-  const dir = path.join(dest, REL_RECEIPTS_DIR);
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter((name) => name.endsWith(".json"));
+function ledgerKinds(dest: string): string[] {
+  return verifyLedgerChain(dest).entries.map((e) => e.entry_kind);
 }
 
 test("runVerifyCore: returns typed result without setting process.exitCode on success", async () => {
@@ -130,17 +133,18 @@ test("runVerifyCore: returns failure exit code for gate failure", async () => {
   });
 });
 
-test("runVerifyCore: --fix + --receipt writes one passed receipt after repair re-eval", async () => {
+test("runVerifyCore: --fix with the ledger on appends one passed receipt entry after repair re-eval", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-receipt-pass-"));
-  const missionRel = writeRepairReceiptFixture(
+  const missionRel = writeRepairFixture(
     dest,
     ogRoot,
     `node ${cli} arch check --json src/cli/flows/bad.ts`,
     '"ok": true',
   );
-  gitInitCommit(dest, "[MSN-0999] legislate repair receipt mission", PLANNER_EMAIL);
+  writeLedgerEnabledConfig(dest);
+  gitInitCommit(dest, "[MSN-0999] legislate repair mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
 
   await withPlannerEnvAsync(async () => {
@@ -151,33 +155,29 @@ test("runVerifyCore: --fix + --receipt writes one passed receipt after repair re
         executorLog: "EXECUTOR_LOG.md",
         fix: true,
         fixNonInteractive: true,
-        receipt: true,
       });
       assert.equal(result.ok, true);
       assert.equal(result.exitCode, 0);
-      const receipts = listReceiptFiles(dest);
-      assert.equal(receipts.length, 1);
-      const receipt = JSON.parse(
-        fs.readFileSync(path.join(dest, REL_RECEIPTS_DIR, receipts[0]!), "utf8"),
-      ) as { verify_status: string };
-      assert.equal(receipt.verify_status, "passed");
+      assert.deepEqual(ledgerKinds(dest), ["receipt"]);
+      assert.deepEqual(verifyLedgerChain(dest).entries[0]?.payload, { verify_status: "passed" });
     } finally {
       process.chdir(prevCwd);
     }
   });
 });
 
-test("runVerifyCore: --fix + --receipt writes one failed receipt when repair fix still fails gate", async () => {
+test("runVerifyCore: --fix with the ledger on appends one verify_findings entry when the repair still fails the gate", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-receipt-fail-"));
-  const missionRel = writeRepairReceiptFixture(
+  const missionRel = writeRepairFixture(
     dest,
     ogRoot,
     `node ${cli} arch check --json src/cli/flows/bad.ts; exit 1`,
     "NEVER_MATCHES",
   );
-  gitInitCommit(dest, "[MSN-0999] legislate repair receipt fail mission", PLANNER_EMAIL);
+  writeLedgerEnabledConfig(dest);
+  gitInitCommit(dest, "[MSN-0999] legislate repair fail mission", PLANNER_EMAIL);
   const prevCwd = process.cwd();
 
   await withPlannerEnvAsync(async () => {
@@ -188,19 +188,56 @@ test("runVerifyCore: --fix + --receipt writes one failed receipt when repair fix
         executorLog: "EXECUTOR_LOG.md",
         fix: true,
         fixNonInteractive: true,
-        receipt: true,
       });
       assert.equal(result.ok, false);
       assert.equal(result.exitCode, 1);
-      const receipts = listReceiptFiles(dest);
-      assert.equal(receipts.length, 1);
-      const receipt = JSON.parse(
-        fs.readFileSync(path.join(dest, REL_RECEIPTS_DIR, receipts[0]!), "utf8"),
-      ) as { verify_status: string; error_code?: string };
-      assert.equal(receipt.verify_status, "failed");
-      assert.ok(receipt.error_code);
+      assert.deepEqual(ledgerKinds(dest), ["verify_findings"]);
     } finally {
       process.chdir(prevCwd);
+    }
+  });
+});
+
+test("verify --export: envelope 2.0 over the run record round-trips into ledger append --from-envelope (ADR-0061)", async () => {
+  const ogRoot = getRepoRoot();
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-run-export-"));
+  const missionRel = writeMiniGantryRepo(dest, ogRoot);
+  fs.writeFileSync(path.join(dest, missionRel), 'msn_id: MSN-0999\nskill_key: ui\ngate_command: echo DONE\ngate_success_substring: "DONE"\n', "utf8");
+  fs.writeFileSync(path.join(dest, ".gitignore"), ".gitagent/history/\n.gitagent/tmp/\n", "utf8");
+  writeLedgerEnabledConfig(dest);
+  writeOrgExportConfig(dest);
+  gitInitCommit(dest, "[MSN-0999] legislate rowless mission", PLANNER_EMAIL);
+  const envelopePath = path.join(dest, "envelope.json");
+  const prevCwd = process.cwd();
+
+  await withPlannerEnvAsync(async () => {
+    process.chdir(dest);
+    try {
+      const noRecord = await runVerifyCore({ mission: missionRel, exportPath: "envelope.json" });
+      assert.equal(noRecord.ok, false, "a failed verify (no run record yet) writes no envelope");
+      assert.equal(fs.existsSync(envelopePath), false);
+
+      assert.equal((await runVerifyCore({ mission: missionRel, record: true })).ok, true);
+      gitCommit(dest, "[MSN-0999] Run record");
+      assert.equal((await runVerifyCore({ mission: missionRel, exportPath: "envelope.json" })).ok, true);
+
+      const record = JSON.parse(fs.readFileSync(path.join(dest, ".gitagent/runs/MSN-0999.json"), "utf8")) as RunRecord;
+      const envelope = JSON.parse(fs.readFileSync(envelopePath, "utf8")) as { envelope_schema_version: string; payload_b64: string; signature?: unknown };
+      assert.equal(envelope.envelope_schema_version, "2.0.0");
+      assert.equal(Buffer.from(envelope.payload_b64, "base64").toString("utf8"), canonicalJson(record));
+      assert.equal(envelope.signature, undefined);
+
+      runLedgerAppend({ fromEnvelope: envelopePath });
+      const entries = verifyLedgerChain(dest).entries;
+      const passed = { verify_status: "passed", run_record_sha256: runRecordDigest(record) };
+      assert.deepEqual(entries.map((e) => e.entry_kind), ["verify_findings", "receipt", "receipt", "receipt"]);
+      for (const e of entries.slice(1)) {
+        assert.equal(e.msn_id, "MSN-0999");
+        assert.deepEqual(e.payload, passed);
+      }
+    } finally {
+      process.chdir(prevCwd);
+      process.exitCode = undefined;
     }
   });
 });

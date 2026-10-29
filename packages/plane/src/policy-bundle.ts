@@ -16,15 +16,26 @@ export function cachedBundlePath(root: string, pointer: PolicyPointer): string {
   return path.join(policyCacheDir(root, pointer.pinned_commit), pointer.bundle_path);
 }
 
+const REMOVED_IN_4_0 = ["producers", "kpi_thresholds", "config_floor.receipt_signature"];
+
+function hasKeyPath(data: unknown, dotted: string): boolean {
+  let cur = data;
+  for (const k of dotted.split(".")) {
+    if (cur === null || typeof cur !== "object" || !(k in cur)) return false;
+    cur = (cur as Record<string, unknown>)[k];
+  }
+  return true;
+}
+
 export function parseOrgPolicyBundle(_root: string, raw: string): OrgPolicyBundle {
   const data = YAML.parse(raw) as unknown;
-  // ADR-0061: a floor that still names KPI thresholds must not pass with them silently dropped.
-  const removed = ["producers", "kpi_thresholds"].filter((k) => data !== null && typeof data === "object" && k in data);
+  // ADR-0061: a bundle that still names a removed key must not pass with it silently dropped.
+  const removed = REMOVED_IN_4_0.filter((dotted) => hasKeyPath(data, dotted));
   if (removed.length > 0) {
     throw new GantryUserError(
       GXT_ERROR.POLICY_DRIFT,
       `org policy bundle: ${removed.join(" and ")} ${removed.length === 1 ? "was" : "were"} removed in 4.0 (ADR-0061)`,
-      "remove them from the bundle; a KPI producer belongs in a gate command or a verify contract check",
+      "remove them from the bundle; a KPI producer belongs in a gate command or a verify contract check, and the committed run record replaced the signed receipt",
       1,
     );
   }

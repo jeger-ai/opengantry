@@ -1,7 +1,7 @@
 import { parseLawFileDocument, type LawFileSource } from "#core/law-file.js";
 import { readLawFileAt } from "#git/repo-text.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
-import type { FlightTelemetryBodyMode, LedgerMode, ReceiptSignatureTier } from "#core/config.js";
+import type { FlightTelemetryBodyMode, LedgerMode, SignatureTier } from "#core/config.js";
 import { GXT_ERROR, type GxtErrorCode } from "#core/error-codes.js";
 import type { TrustThreshold } from "#core/manifest.js";
 import { loadCachedBundle } from "./policy-bundle.js";
@@ -13,7 +13,7 @@ import {
 } from "./policy-types.js";
 import type { OrgPolicyBundle } from "./policy-types.js";
 
-const SIGNATURE_RANK: Record<ReceiptSignatureTier, number> = { off: 0, warn: 1, require: 2 };
+const SIGNATURE_RANK: Record<SignatureTier, number> = { off: 0, warn: 1, require: 2 };
 const LEDGER_MODE_RANK: Record<LedgerMode, number> = { off: 0, local: 1 };
 const BODY_MODE_RANK: Record<FlightTelemetryBodyMode, number> = { full: 0, hash_only: 1 };
 
@@ -73,14 +73,6 @@ export const FLOOR_RULES: readonly FloorRule[] = [
     skipIfUnset: true,
     pick: (c) => c.planner_signature,
     message: (need, have) => `planner_signature floor ${need} > local ${have}`,
-  }),
-  rankRule({
-    label: "receipt_signature",
-    rank: SIGNATURE_RANK,
-    fallback: "off",
-    skipIfUnset: true,
-    pick: (c) => c.receipt_signature,
-    message: (need, have) => `receipt_signature floor ${need} > local ${have}`,
   }),
   rankRule({
     label: "ledger_signature",

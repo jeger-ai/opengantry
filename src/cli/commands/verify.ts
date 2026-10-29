@@ -53,6 +53,12 @@ function assertVerifyOptionsCompatible(options: VerifyOptions): void {
       2,
     );
   }
+  if (options.breakGlass === true && options.exportPath?.trim()) {
+    throw new GantryUserError("INVALID_ARGUMENT", "gantry verify --export needs a passing verify; --break-glass skips it.", undefined, 2);
+  }
+  if (options.sign !== undefined && (options.sign !== true || !options.exportPath?.trim())) {
+    throw new GantryUserError("INVALID_ARGUMENT", "gantry verify --mission: --sign takes no value and signs the --export envelope (keyless is --contract only).", undefined, 2);
+  }
   if (options.changedMissions === true && !options.mission) {
     return;
   }

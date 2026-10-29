@@ -1,0 +1,574 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0364]. Executor must not run until the [MSN-0364] legislation commit + pin.
+#
+# Legislated intent: ADR-0061 phase 2, second mission: the run record is the only receipt; attest and
+# receipt go; verify --export writes envelope 2.0 over the run record.
+#
+# Operator request (2026-10-29, ADR-0061 phase 2 decisions). No trace rows: the evidence is
+# .gitagent/runs/MSN-0364.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0364
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: ledger receipt entries carry
+      run_record_sha256; the hash chain and signature checks are unchanged and
+      pre-4.0 entries keep verifying."
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 09266262993a
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: delete. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: ARCH_BASELINE.json,
+      docs/ARCHITECTURE.md, docs/CHANGELOG.md, docs/CI.md,
+      docs/concepts/enforcement-boundary.md, docs/concepts/missions.md,
+      docs/concepts/trace-evidence.md, docs/concepts/when-to-adopt.md,
+      docs/DEVELOPMENT.md, docs/guides/ci.md, docs/guides/org-control-plane.md,
+      docs/INTEGRATIONS.md, docs/reference/mcp-tools.md,
+      docs/reference/session-variables.md, docs/SECURITY.md,
+      docs/start/first-mission.md, examples/org-policy/ORG-POLICY.yaml,
+      EXECUTOR_LOG.md, .gitagent/missions/MSN-0364.run-record-receipt.yaml,
+      .gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md,
+      .gitagent/planner/ORG-POLICY.schema.yaml, .gitagent/planner/RULES.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/env.yaml,
+      .gitagent/runs/MSN-0364.json, packages/core/src/config.ts,
+      packages/core/src/constants.ts, packages/core/src/error-codes.ts,
+      packages/core/src/run-record.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/git/src/receipt-signing.ts, packages/missions/src/gxt-config.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/receipt-inspect.ts, packages/plane/package.json,
+      packages/plane/src/attestation-export.ts,
+      packages/plane/src/attestation-receipt.ts, packages/plane/src/digests.ts,
+      packages/plane/src/ledger-entry.ts, packages/plane/src/ledger-export.ts,
+      packages/plane/src/org-export-config.ts,
+      packages/plane/src/policy-bundle.ts, packages/plane/src/policy-resolve.ts,
+      packages/plane/src/policy-types.ts,
+      packages/plane/src/receipt-attribution.ts,
+      packages/plane/tests/plane.test.ts, README.md,
+      scripts/gen-hub-receipt-fixtures.mjs, src/cli/commands/attest.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/receipt.ts,
+      src/cli/commands/verify-contract.ts, src/cli/commands/verify.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/flows/attestation-receipt.ts,
+      src/cli/flows/attest-mission.ts, src/cli/flows/mission-arg.ts,
+      src/cli/flows/verify-options.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/program-core.ts,
+      src/cli/program-workflow.ts, src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/dx-mission-pin.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/receipt-attribution.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/test-org-fixtures.ts, src/cli/tests/verify-run.test.ts,
+      TARGET_ARCHITECTURE.yaml, templates/.gitagent/config.yaml,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml,
+      templates/.gitagent/planner/RULES.md, test/conformance/cases.yaml,
+      test/conformance/golden/attest.mission-pass.json,
+      test/conformance/golden/attest.no-org.mission-pass.json,
+      test/conformance/golden/doctor.fresh-init.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/receipt-list.mission-pass.json,
+      test/conformance/golden/receipt-show.none.mission-pass.json,
+      test/fixtures/hub-receipts-v0.2.0/ed25519.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/ed25519.pub,
+      test/fixtures/hub-receipts-v0.2.0/gpg.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/gpg.pub.asc,
+      test/fixtures/hub-receipts-v0.2.0/README.md,
+      test/fixtures/hub-receipts-v0.2.0/rsa4096.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/rsa4096.pub,
+      test/fixtures/hub-receipts-v0.2.0/tampered.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/unsigned.envelope.json. Deleted:
+      commands attest and receipt, flows attest-mission and attestation-receipt,
+      plane attestation-receipt and attestation-export, missions
+      receipt-inspect, the attestation receipt test, the hub receipt fixtures
+      and their generator, four conformance cases and goldens. Changed: core,
+      git (receipt signing trimmed), plane (ledger entry and export envelope
+      2.0, attribution trimmed, policy refusal of receipt_signature), missions
+      (config, ledger append, doctor), the CLI verify run (export after a pass,
+      ledger payload), ledger and program registration, MCP runtime, registries
+      (commands, env), TARGET_ARCHITECTURE.yaml (rules no longer list the
+      deleted command files), schemas and generated ORG-POLICY schema copies,
+      examples/org-policy, tests, two doctor goldens, RULES sections 8 and 9
+      (template and copy), docs (SECURITY, CI and org control plane guides,
+      reference pages, CHANGELOG), ADR-0036 superseded, ARCH_BASELINE.json
+      lowered. Operator decisions (2026-10-29, ADR-0061 phase 2): the hub path
+      stays as an export envelope 2.0 over the canonical run record; gantry
+      attest and gantry receipt are replaced by verify --record, the committed
+      run record and ledger list; pre-4.0 ledger chains keep verifying and local
+      receipts become inert. As built: run_record_sha256 is the canonical record
+      digest (runRecordDigest), the same value an ingester computes from the
+      envelope; --sign signs the export envelope; a failed verify with --export
+      reports its own failure and writes no envelope; an org policy that still
+      sets receipt_signature is refused (fail closed) while a local config
+      setting is warned and ignored; missions with trace rows have no run
+      record, so they cannot be exported. The mission has no trace rows: its
+      evidence is .gitagent/runs/MSN-0364.json written by gantry verify --record
+      (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept. Keyless signing stays on contract verify (--sign
+      keyless); for the mission export envelope, --sign uses the git signing key
+      and --sign keyless is refused, so the opt-in network path is unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 22480c115bb0
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/CI.md, docs/concepts/enforcement-boundary.md,
+      docs/concepts/missions.md, docs/concepts/trace-evidence.md,
+      docs/concepts/when-to-adopt.md, docs/DEVELOPMENT.md, docs/guides/ci.md,
+      docs/guides/org-control-plane.md, docs/INTEGRATIONS.md,
+      docs/reference/mcp-tools.md, docs/reference/session-variables.md,
+      docs/SECURITY.md, docs/start/first-mission.md,
+      examples/org-policy/ORG-POLICY.yaml, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0364.run-record-receipt.yaml,
+      .gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md,
+      .gitagent/planner/ORG-POLICY.schema.yaml, .gitagent/planner/RULES.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/env.yaml,
+      .gitagent/runs/MSN-0364.json, packages/core/src/config.ts,
+      packages/core/src/constants.ts, packages/core/src/error-codes.ts,
+      packages/core/src/run-record.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/git/src/receipt-signing.ts, packages/missions/src/gxt-config.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/receipt-inspect.ts, packages/plane/package.json,
+      packages/plane/src/attestation-export.ts,
+      packages/plane/src/attestation-receipt.ts, packages/plane/src/digests.ts,
+      packages/plane/src/ledger-entry.ts, packages/plane/src/ledger-export.ts,
+      packages/plane/src/org-export-config.ts,
+      packages/plane/src/policy-bundle.ts, packages/plane/src/policy-resolve.ts,
+      packages/plane/src/policy-types.ts,
+      packages/plane/src/receipt-attribution.ts,
+      packages/plane/tests/plane.test.ts, README.md,
+      scripts/gen-hub-receipt-fixtures.mjs, src/cli/commands/attest.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/receipt.ts,
+      src/cli/commands/verify-contract.ts, src/cli/commands/verify.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/flows/attestation-receipt.ts,
+      src/cli/flows/attest-mission.ts, src/cli/flows/mission-arg.ts,
+      src/cli/flows/verify-options.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/program-core.ts,
+      src/cli/program-workflow.ts, src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/dx-mission-pin.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/receipt-attribution.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/test-org-fixtures.ts, src/cli/tests/verify-run.test.ts,
+      TARGET_ARCHITECTURE.yaml, templates/.gitagent/config.yaml,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml,
+      templates/.gitagent/planner/RULES.md, test/conformance/cases.yaml,
+      test/conformance/golden/attest.mission-pass.json,
+      test/conformance/golden/attest.no-org.mission-pass.json,
+      test/conformance/golden/doctor.fresh-init.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/receipt-list.mission-pass.json,
+      test/conformance/golden/receipt-show.none.mission-pass.json,
+      test/fixtures/hub-receipts-v0.2.0/ed25519.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/ed25519.pub,
+      test/fixtures/hub-receipts-v0.2.0/gpg.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/gpg.pub.asc,
+      test/fixtures/hub-receipts-v0.2.0/README.md,
+      test/fixtures/hub-receipts-v0.2.0/rsa4096.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/rsa4096.pub,
+      test/fixtures/hub-receipts-v0.2.0/tampered.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/unsigned.envelope.json. Deleted:
+      commands attest and receipt, flows attest-mission and attestation-receipt,
+      plane attestation-receipt and attestation-export, missions
+      receipt-inspect, the attestation receipt test, the hub receipt fixtures
+      and their generator, four conformance cases and goldens. Changed: core,
+      git (receipt signing trimmed), plane (ledger entry and export envelope
+      2.0, attribution trimmed, policy refusal of receipt_signature), missions
+      (config, ledger append, doctor), the CLI verify run (export after a pass,
+      ledger payload), ledger and program registration, MCP runtime, registries
+      (commands, env), TARGET_ARCHITECTURE.yaml (rules no longer list the
+      deleted command files), schemas and generated ORG-POLICY schema copies,
+      examples/org-policy, tests, two doctor goldens, RULES sections 8 and 9
+      (template and copy), docs (SECURITY, CI and org control plane guides,
+      reference pages, CHANGELOG), ADR-0036 superseded, ARCH_BASELINE.json
+      lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: the org policy floor loses receipt_signature;
+      a bundle that still sets it is refused (GXT_POLICY_DRIFT) rather than read
+      as a weaker floor."
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Accept. Planner stamp signing is untouched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 5d6295ae8f69
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/ARCHITECTURE.md,
+      docs/CHANGELOG.md, docs/CI.md, docs/concepts/enforcement-boundary.md,
+      docs/concepts/missions.md, docs/concepts/trace-evidence.md,
+      docs/concepts/when-to-adopt.md, docs/DEVELOPMENT.md, docs/guides/ci.md,
+      docs/guides/org-control-plane.md, docs/INTEGRATIONS.md,
+      docs/reference/mcp-tools.md, docs/reference/session-variables.md,
+      docs/SECURITY.md, docs/start/first-mission.md,
+      examples/org-policy/ORG-POLICY.yaml, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0364.run-record-receipt.yaml,
+      .gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md,
+      .gitagent/planner/ORG-POLICY.schema.yaml, .gitagent/planner/RULES.md,
+      .gitagent/registry/commands.yaml, .gitagent/registry/env.yaml,
+      .gitagent/runs/MSN-0364.json, packages/core/src/config.ts,
+      packages/core/src/constants.ts, packages/core/src/error-codes.ts,
+      packages/core/src/run-record.ts,
+      packages/core/src/schemas/org-policy-schema.ts,
+      packages/git/src/receipt-signing.ts, packages/missions/src/gxt-config.ts,
+      packages/missions/src/mission-verify/payload.ts,
+      packages/missions/src/receipt-inspect.ts, packages/plane/package.json,
+      packages/plane/src/attestation-export.ts,
+      packages/plane/src/attestation-receipt.ts, packages/plane/src/digests.ts,
+      packages/plane/src/ledger-entry.ts, packages/plane/src/ledger-export.ts,
+      packages/plane/src/org-export-config.ts,
+      packages/plane/src/policy-bundle.ts, packages/plane/src/policy-resolve.ts,
+      packages/plane/src/policy-types.ts,
+      packages/plane/src/receipt-attribution.ts,
+      packages/plane/tests/plane.test.ts, README.md,
+      scripts/gen-hub-receipt-fixtures.mjs, src/cli/commands/attest.ts,
+      src/cli/commands/ledger.ts, src/cli/commands/receipt.ts,
+      src/cli/commands/verify-contract.ts, src/cli/commands/verify.ts,
+      src/cli/doctor/doctor-core.ts, src/cli/flows/attestation-receipt.ts,
+      src/cli/flows/attest-mission.ts, src/cli/flows/mission-arg.ts,
+      src/cli/flows/verify-options.ts, src/cli/flows/verify-presenters.ts,
+      src/cli/flows/verify-run.ts, src/cli/program-core.ts,
+      src/cli/program-workflow.ts, src/cli/tests/attestation-receipt.test.ts,
+      src/cli/tests/dx-mission-pin.test.ts,
+      src/cli/tests/interrogate-verify-roundtrip.test.ts,
+      src/cli/tests/ledger-verify.test.ts,
+      src/cli/tests/org-doctor-offline.test.ts,
+      src/cli/tests/policy-resolve.test.ts,
+      src/cli/tests/receipt-attribution.test.ts, src/cli/tests/test-fixtures.ts,
+      src/cli/tests/test-org-fixtures.ts, src/cli/tests/verify-run.test.ts,
+      TARGET_ARCHITECTURE.yaml, templates/.gitagent/config.yaml,
+      templates/.gitagent/planner/ORG-POLICY.schema.yaml,
+      templates/.gitagent/planner/RULES.md, test/conformance/cases.yaml,
+      test/conformance/golden/attest.mission-pass.json,
+      test/conformance/golden/attest.no-org.mission-pass.json,
+      test/conformance/golden/doctor.fresh-init.json,
+      test/conformance/golden/doctor.mission-pass.json,
+      test/conformance/golden/receipt-list.mission-pass.json,
+      test/conformance/golden/receipt-show.none.mission-pass.json,
+      test/fixtures/hub-receipts-v0.2.0/ed25519.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/ed25519.pub,
+      test/fixtures/hub-receipts-v0.2.0/gpg.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/gpg.pub.asc,
+      test/fixtures/hub-receipts-v0.2.0/README.md,
+      test/fixtures/hub-receipts-v0.2.0/rsa4096.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/rsa4096.pub,
+      test/fixtures/hub-receipts-v0.2.0/tampered.envelope.json,
+      test/fixtures/hub-receipts-v0.2.0/unsigned.envelope.json. Deleted:
+      commands attest and receipt, flows attest-mission and attestation-receipt,
+      plane attestation-receipt and attestation-export, missions
+      receipt-inspect, the attestation receipt test, the hub receipt fixtures
+      and their generator, four conformance cases and goldens. Changed: core,
+      git (receipt signing trimmed), plane (ledger entry and export envelope
+      2.0, attribution trimmed, policy refusal of receipt_signature), missions
+      (config, ledger append, doctor), the CLI verify run (export after a pass,
+      ledger payload), ledger and program registration, MCP runtime, registries
+      (commands, env), TARGET_ARCHITECTURE.yaml (rules no longer list the
+      deleted command files), schemas and generated ORG-POLICY schema copies,
+      examples/org-policy, tests, two doctor goldens, RULES sections 8 and 9
+      (template and copy), docs (SECURITY, CI and org control plane guides,
+      reference pages, CHANGELOG), ADR-0036 superseded, ARCH_BASELINE.json
+      lowered."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: Accept. The run record (A4) becomes the only receipt;
+      structural law budgets only go down (ARCH_BASELINE.json lowered with
+      --ratchet).
+    adr_refs:
+      - ADR-0052
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Deleted tests covered only deleted receipt code; new
+      tests cover the envelope round trip, no envelope on a failed verify,
+      refusal of a 1.x envelope, the policy refusal, the doctor warning and a
+      pre-4.0 receipt payload in the chain.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Accept, amended: the hub reads envelope 2.0 over the canonical
+      run record instead of receipt 0.2.0; the plane must adapt."
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with named output changes: attest.mission-pass,
+      attest.no-org.mission-pass, receipt-list.mission-pass and
+      receipt-show.none.mission-pass are deleted with their commands;
+      doctor.fresh-init and doctor.mission-pass lose only the receipt_signature
+      tier line. Every other golden is unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept; this mission is phase 2, second mission, of ADR-0061.
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+interrogation_sha256: 626cbcf1db9722853461995bc9508607913fbfd33b039570764c340090660959
+declared_paths:
+  - .gitagent/missions/MSN-0364.run-record-receipt.yaml
+  - .gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md
+  - .gitagent/planner/ORG-POLICY.schema.yaml
+  - .gitagent/planner/RULES.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/env.yaml
+  - .gitagent/runs/MSN-0364.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - README.md
+  - TARGET_ARCHITECTURE.yaml
+  - docs/ARCHITECTURE.md
+  - docs/CHANGELOG.md
+  - docs/CI.md
+  - docs/DEVELOPMENT.md
+  - docs/INTEGRATIONS.md
+  - docs/SECURITY.md
+  - docs/concepts/enforcement-boundary.md
+  - docs/concepts/missions.md
+  - docs/concepts/trace-evidence.md
+  - docs/concepts/when-to-adopt.md
+  - docs/guides/ci.md
+  - docs/guides/org-control-plane.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/session-variables.md
+  - docs/start/first-mission.md
+  - examples/org-policy/ORG-POLICY.yaml
+  - packages/core/src/config.ts
+  - packages/core/src/constants.ts
+  - packages/core/src/error-codes.ts
+  - packages/core/src/run-record.ts
+  - packages/core/src/schemas/org-policy-schema.ts
+  - packages/git/src/receipt-signing.ts
+  - packages/missions/src/gxt-config.ts
+  - packages/missions/src/mission-verify/payload.ts
+  - packages/missions/src/receipt-inspect.ts
+  - packages/plane/package.json
+  - packages/plane/src/attestation-export.ts
+  - packages/plane/src/attestation-receipt.ts
+  - packages/plane/src/digests.ts
+  - packages/plane/src/ledger-entry.ts
+  - packages/plane/src/ledger-export.ts
+  - packages/plane/src/org-export-config.ts
+  - packages/plane/src/policy-bundle.ts
+  - packages/plane/src/policy-resolve.ts
+  - packages/plane/src/policy-types.ts
+  - packages/plane/src/receipt-attribution.ts
+  - packages/plane/tests/plane.test.ts
+  - scripts/gen-hub-receipt-fixtures.mjs
+  - src/cli/commands/attest.ts
+  - src/cli/commands/ledger.ts
+  - src/cli/commands/receipt.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/commands/verify.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/flows/attest-mission.ts
+  - src/cli/flows/attestation-receipt.ts
+  - src/cli/flows/mission-arg.ts
+  - src/cli/flows/verify-options.ts
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/flows/verify-run.ts
+  - src/cli/program-core.ts
+  - src/cli/program-workflow.ts
+  - src/cli/tests/attestation-receipt.test.ts
+  - src/cli/tests/dx-mission-pin.test.ts
+  - src/cli/tests/interrogate-verify-roundtrip.test.ts
+  - src/cli/tests/ledger-verify.test.ts
+  - src/cli/tests/org-doctor-offline.test.ts
+  - src/cli/tests/policy-resolve.test.ts
+  - src/cli/tests/receipt-attribution.test.ts
+  - src/cli/tests/test-fixtures.ts
+  - src/cli/tests/test-org-fixtures.ts
+  - src/cli/tests/verify-run.test.ts
+  - templates/.gitagent/config.yaml
+  - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+  - templates/.gitagent/planner/RULES.md
+  - test/conformance/cases.yaml
+  - test/conformance/golden/attest.mission-pass.json
+  - test/conformance/golden/attest.no-org.mission-pass.json
+  - test/conformance/golden/doctor.fresh-init.json
+  - test/conformance/golden/doctor.mission-pass.json
+  - test/conformance/golden/receipt-list.mission-pass.json
+  - test/conformance/golden/receipt-show.none.mission-pass.json
+  - test/fixtures/hub-receipts-v0.2.0/README.md
+  - test/fixtures/hub-receipts-v0.2.0/ed25519.envelope.json
+  - test/fixtures/hub-receipts-v0.2.0/ed25519.pub
+  - test/fixtures/hub-receipts-v0.2.0/gpg.envelope.json
+  - test/fixtures/hub-receipts-v0.2.0/gpg.pub.asc
+  - test/fixtures/hub-receipts-v0.2.0/rsa4096.envelope.json
+  - test/fixtures/hub-receipts-v0.2.0/rsa4096.pub
+  - test/fixtures/hub-receipts-v0.2.0/tampered.envelope.json
+  - test/fixtures/hub-receipts-v0.2.0/unsigned.envelope.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0364.run-record-receipt.yaml
+    - .gitagent/out-of-scope/ADR-0036-receipt-v0-2-signed-attribution.md
+    - .gitagent/planner/ORG-POLICY.schema.yaml
+    - .gitagent/planner/RULES.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/env.yaml
+    - .gitagent/runs/MSN-0364.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - README.md
+    - TARGET_ARCHITECTURE.yaml
+    - docs/ARCHITECTURE.md
+    - docs/CHANGELOG.md
+    - docs/CI.md
+    - docs/DEVELOPMENT.md
+    - docs/INTEGRATIONS.md
+    - docs/SECURITY.md
+    - docs/concepts/enforcement-boundary.md
+    - docs/concepts/missions.md
+    - docs/concepts/trace-evidence.md
+    - docs/concepts/when-to-adopt.md
+    - docs/guides/ci.md
+    - docs/guides/org-control-plane.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/session-variables.md
+    - docs/start/first-mission.md
+    - examples/org-policy/ORG-POLICY.yaml
+    - packages/core/src/config.ts
+    - packages/core/src/constants.ts
+    - packages/core/src/error-codes.ts
+    - packages/core/src/run-record.ts
+    - packages/core/src/schemas/org-policy-schema.ts
+    - packages/git/src/receipt-signing.ts
+    - packages/missions/src/gxt-config.ts
+    - packages/missions/src/mission-verify/payload.ts
+    - packages/missions/src/receipt-inspect.ts
+    - packages/plane/package.json
+    - packages/plane/src/attestation-export.ts
+    - packages/plane/src/attestation-receipt.ts
+    - packages/plane/src/digests.ts
+    - packages/plane/src/ledger-entry.ts
+    - packages/plane/src/ledger-export.ts
+    - packages/plane/src/org-export-config.ts
+    - packages/plane/src/policy-bundle.ts
+    - packages/plane/src/policy-resolve.ts
+    - packages/plane/src/policy-types.ts
+    - packages/plane/src/receipt-attribution.ts
+    - packages/plane/tests/plane.test.ts
+    - scripts/gen-hub-receipt-fixtures.mjs
+    - src/cli/commands/attest.ts
+    - src/cli/commands/ledger.ts
+    - src/cli/commands/receipt.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/commands/verify.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/flows/attest-mission.ts
+    - src/cli/flows/attestation-receipt.ts
+    - src/cli/flows/mission-arg.ts
+    - src/cli/flows/verify-options.ts
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/flows/verify-run.ts
+    - src/cli/program-core.ts
+    - src/cli/program-workflow.ts
+    - src/cli/tests/attestation-receipt.test.ts
+    - src/cli/tests/dx-mission-pin.test.ts
+    - src/cli/tests/interrogate-verify-roundtrip.test.ts
+    - src/cli/tests/ledger-verify.test.ts
+    - src/cli/tests/org-doctor-offline.test.ts
+    - src/cli/tests/policy-resolve.test.ts
+    - src/cli/tests/receipt-attribution.test.ts
+    - src/cli/tests/test-fixtures.ts
+    - src/cli/tests/test-org-fixtures.ts
+    - src/cli/tests/verify-run.test.ts
+    - templates/.gitagent/config.yaml
+    - templates/.gitagent/planner/ORG-POLICY.schema.yaml
+    - templates/.gitagent/planner/RULES.md
+    - test/conformance/cases.yaml
+    - test/conformance/golden/attest.mission-pass.json
+    - test/conformance/golden/attest.no-org.mission-pass.json
+    - test/conformance/golden/doctor.fresh-init.json
+    - test/conformance/golden/doctor.mission-pass.json
+    - test/conformance/golden/receipt-list.mission-pass.json
+    - test/conformance/golden/receipt-show.none.mission-pass.json
+    - test/fixtures/hub-receipts-v0.2.0/README.md
+    - test/fixtures/hub-receipts-v0.2.0/ed25519.envelope.json
+    - test/fixtures/hub-receipts-v0.2.0/ed25519.pub
+    - test/fixtures/hub-receipts-v0.2.0/gpg.envelope.json
+    - test/fixtures/hub-receipts-v0.2.0/gpg.pub.asc
+    - test/fixtures/hub-receipts-v0.2.0/rsa4096.envelope.json
+    - test/fixtures/hub-receipts-v0.2.0/rsa4096.pub
+    - test/fixtures/hub-receipts-v0.2.0/tampered.envelope.json
+    - test/fixtures/hub-receipts-v0.2.0/unsigned.envelope.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+  allow_dynamic_specifiers: true
+contract_sha256: a4c5a18bc82a47737e3f3376c32c183735404b04dfe1b692ab2ce83680e9648f

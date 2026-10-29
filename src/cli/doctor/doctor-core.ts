@@ -23,7 +23,7 @@ import { runIntegrationDoctorChecks } from "./doctor-integration.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
 import { runExecutorLogIntegrityDoctorChecks } from "#missions/executor-log-integrity.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
-import { resolvePlannerSignatureTier, resolveReceiptSignatureTier } from "#core/config.js";
+import { resolvePlannerSignatureTier } from "#core/config.js";
 import {
   ensurePlannerAllowedSignersFile,
   gitCommitSignatureStatus,
@@ -115,9 +115,10 @@ function appendPlannerSignatureChecks(root: string, lines: DoctorLine[]): void {
   });
 }
 
-function appendReceiptSignatureChecks(root: string, lines: DoctorLine[]): void {
-  const tier = resolveReceiptSignatureTier(loadGxtConfig(root));
-  lines.push({ level: "ok", message: `receipt_signature tier: ${tier}` });
+/** `receipt_signature` went with the receipt in 4.0 (ADR-0061): a config that still sets it is told, then ignored. */
+function appendRemovedConfigChecks(root: string, lines: DoctorLine[]): void {
+  if (loadGxtConfig(root).receipt_signature === undefined) return;
+  lines.push({ level: "warn", message: "config receipt_signature was removed in 4.0 (ADR-0061) and is ignored; delete it (the committed run record is the receipt)" });
 }
 
 function appendBypassChecks(root: string, lines: DoctorLine[]): void {
@@ -203,7 +204,7 @@ export function runDoctorChecks(root: string, manifest: Manifest): DoctorCheckRe
   const plannerAllowlistUnset = plannerResult.plannerAllowlistUnset;
   appendAllowedSignersChecks(root, lines);
   appendPlannerSignatureChecks(root, lines);
-  appendReceiptSignatureChecks(root, lines);
+  appendRemovedConfigChecks(root, lines);
   appendBypassChecks(root, lines);
   nextStep = appendHooksAndExampleMissionChecks(root, lines, nextStep);
   appendAgentErrorCheck(root, lines);

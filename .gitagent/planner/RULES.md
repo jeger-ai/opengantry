@@ -73,11 +73,11 @@ Normative keywords **MUST**, **MUST NOT**, and **SHOULD** follow RFC 2119.
 - When `.gitagent/foreman/POLICY.pointer.yaml` is present, Executors and Verifiers MUST treat the cached org policy bundle as a **tighten-only floor** ([ADR-0042](../out-of-scope/ADR-0042-org-policy-bundle.md)): sets are unioned, risk tiers take the maximum, signature and telemetry tiers take the stricter value. Policy MUST NOT loosen local law.
 - **`gantry policy pull`** is the only network path for policy. **`gantry doctor`** and **`gantry verify`** MUST read the pointer plus `.gitagent/history/policy/` cache only — no sockets.
 - A present pointer with missing cache, sha mismatch, or invalid signer is fail-closed (`GXT_POLICY_*`). A missing pointer is opt-in (no failure).
-- Receipt schema stays **0.2.0**; policy digests belong in ledger entries ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)), not receipts.
+- The committed run record is the only receipt ([ADR-0061](../out-of-scope/ADR-0061-simplify-before-4-0.md)); policy digests belong in ledger entries ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)). A bundle that still sets `config_floor.receipt_signature` is refused (`GXT_POLICY_DRIFT`).
 
 ## 9. Compliance ledger (v3.3.0)
 
-- When `.gitagent/config.yaml` `ledger.mode` is `local`, verify, attest, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)).
+- When `.gitagent/config.yaml` `ledger.mode` is `local`, verify, break-glass, and policy-pull MUST append a digest-only entry to **`refs/gxt/ledger`** ([ADR-0043](../out-of-scope/ADR-0043-compliance-ledger-git-ref.md)). A passing verify appends a `receipt` entry `{verify_status: passed, run_record_sha256}`; the digest (sha256 of the canonical record) names the mission's run record when it has one. Pre-4.0 receipt payloads stay valid in the chain.
 - Append MUST use compare-and-swap `git update-ref` with bounded retries and jitter. Exhaustion MUST fail closed (`GXT_LEDGER_CAS_EXHAUSTED`) so parallel CI jobs never fork the chain.
 - Unsigned ledger entries are checksums, not proofs. `ledger.signature` `require` demands `git commit -S`.
 - A break-glass bypass with no `break_glass` ledger row is a failed control ([ADR-0021](../out-of-scope/ADR-0021-break-glass-protocol.md)).

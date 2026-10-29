@@ -46,7 +46,6 @@ export const orgPolicySchema = z
     config_floor: z
       .object({
         planner_signature: tier.optional(),
-        receipt_signature: tier.optional(),
         ledger_signature: tier.optional(),
         ledger_mode: z.enum(["off", "local"]).optional(),
         flight_telemetry: z.object({ body_mode: z.enum(["hash_only", "full"]).optional() }).strict().optional(),

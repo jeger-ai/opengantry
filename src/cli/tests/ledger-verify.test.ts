@@ -13,6 +13,7 @@ import {
   buildLedgerEntry,
   entryHash,
   genesisPrevHash,
+  type ReceiptLedgerPayload,
 } from "#plane/ledger-entry.js";
 import {
   casUpdateLedgerRef,
@@ -208,6 +209,17 @@ exec ${JSON.stringify(realGit)} "$@"
   } finally {
     process.env.PATH = prevPath;
   }
+});
+
+test("ledger-chain: a pre-4.0 receipt payload still verifies beside a run_record_sha256 one (ADR-0061)", () => {
+  const dest = freshRepo();
+  const legacyPayload = { verify_status: "attest_only", receipt_sha256: "a".repeat(64), signed: true } as ReceiptLedgerPayload;
+  const legacy = buildLedgerEntry({ kind: "receipt", org_id: "o", repository_hash: "r", msn_id: "MSN-0100", git_head: "h", payload: legacyPayload, prev_entry_hash: genesisPrevHash(), issued_at: "2026-01-01T00:00:00Z" });
+  assert.equal(casUpdateLedgerRef(dest, commitLedgerEntry(dest, legacy, null, false), null), true);
+  appendLedgerFixture(dest, { msn_id: "MSN-0101", payload: { verify_status: "passed", run_record_sha256: "b".repeat(64) } });
+  const report = verifyLedgerChain(dest);
+  assert.equal(report.ok, true, report.errors.join("; "));
+  assert.deepEqual(report.entries.map((e) => e.payload), [legacyPayload, { verify_status: "passed", run_record_sha256: "b".repeat(64) }]);
 });
 
 test("ledger-append: failure under ledger.mode=local warns and verify still reports", () => {

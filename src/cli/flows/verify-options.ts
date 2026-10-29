@@ -17,10 +17,8 @@ export interface VerifyOptions extends VerifyEvaluation {
   format?: "json" | "sarif" | "junit";
   /** Verify every mission file changed vs base ref on current branch. */
   changedMissions?: boolean;
-  /** Write attestation receipt after verify (optional path; default .gitagent/history/receipts/). */
-  receipt?: boolean | string;
-  /** Detach-sign receipt with local SSH/GPG key (also when receipt_signature tier is warn/require). */
-  signReceipt?: boolean;
-  /** Write hub export envelope after verify (payload_b64 + signature). */
+  /** After a pass with a run record, write the export envelope 2.0 over it (ADR-0061). */
   exportPath?: string;
+  /** `--sign` with `--export`: sign the envelope with the git signing key (keyless is `--contract` only). */
+  sign?: boolean | string;
 }

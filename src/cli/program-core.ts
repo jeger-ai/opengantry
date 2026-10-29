@@ -3,7 +3,6 @@ import { runInit } from "./commands/init.js";
 import { runUpgrade, type UpgradeOptions } from "./commands/upgrade.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runOnboarding } from "./commands/onboarding.js";
-import { runReceiptList, runReceiptShow } from "./commands/receipt.js";
 import type { InitOptions } from "./commands/init.js";
 import { runPlannerSet, runPlannerShow } from "./commands/planner.js";
 import { TYPED_GATE_ADAPTER_IDS, type TypedGateAdapterId } from "#core/gate-adapter.js";
@@ -28,28 +27,6 @@ function addInitOptions(cmd: Command): Command {
       "--tutorial",
       "After init, run guided first mission graph (Planner stamp + verify walkthrough)",
     );
-}
-
-function registerReceiptCommand(program: Command): void {
-  const receipt = program.command("receipt").description("Inspect local attestation receipts (gitignored history)");
-
-  receipt
-    .command("list")
-    .description("List receipts under .gitagent/history/receipts/")
-    .option("--msn <id>", "Filter by MSN id prefix")
-    .option("--json", "Emit structured JSON")
-    .action((opts: { msn?: string; json?: boolean }) => {
-      runReceiptList(opts);
-    });
-
-  receipt
-    .command("show")
-    .description("Show receipt by path, MSN id (latest), or most recent when omitted")
-    .argument("[target]", "Receipt path or MSN-NNNN")
-    .option("--json", "Emit structured JSON")
-    .action((target: string | undefined, opts: { json?: boolean }) => {
-      runReceiptShow({ target, json: opts.json });
-    });
 }
 
 function registerDoctorCommand(program: Command): void {
@@ -150,7 +127,6 @@ function registerPlannerCommand(program: Command): void {
 }
 
 export function registerCoreCommands(program: Command): void {
-  registerReceiptCommand(program);
   registerDoctorCommand(program);
   registerInitCommand(program);
   registerUpgradeCommand(program);

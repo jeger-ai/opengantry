@@ -5,6 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { configFloorViolations, FLOOR_RULES, TIER_RANK, trustTierRank } from "#plane/policy-resolve.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
+import { parseOrgPolicyBundle } from "#plane/policy-bundle.js";
+import { GXT_ERROR } from "#core/error-codes.js";
+import { isGantryUserError } from "#core/user-error.js";
 import type { PolicyConfigFloor } from "#plane/policy-types.js";
 import { REL_POLICY_POINTER_JSON } from "#core/constants.js";
 import { getRepoRoot } from "#git/git.js";
@@ -17,7 +20,6 @@ test("FLOOR_RULES: table covers signature, ledger, telemetry, and break-glass", 
     FLOOR_RULES.map((r) => r.label),
     [
       "planner_signature",
-      "receipt_signature",
       "ledger_signature",
       "ledger.mode",
       "flight_telemetry.body_mode",
@@ -27,6 +29,15 @@ test("FLOOR_RULES: table covers signature, ledger, telemetry, and break-glass", 
   assert.equal(TIER_RANK["Tier-2"], 2);
   assert.equal(trustTierRank("Tier-3"), 3);
   assert.equal(trustTierRank("custom"), 0);
+});
+
+test("org policy: a bundle that still sets config_floor.receipt_signature is refused as removed in 4.0 (ADR-0061)", () => {
+  const yaml = sampleOrgPolicyYaml().replace("  planner_signature: warn\n", "  planner_signature: warn\n  receipt_signature: warn\n");
+  assert.throws(
+    () => parseOrgPolicyBundle("", yaml),
+    (e: unknown) => isGantryUserError(e) && e.gxtCode === GXT_ERROR.POLICY_DRIFT && /config_floor\.receipt_signature was removed in 4\.0 \(ADR-0061\)/.test(e.message),
+  );
+  assert.equal(parseOrgPolicyBundle("", sampleOrgPolicyYaml()).config_floor?.planner_signature, "warn");
 });
 
 test("configFloorViolations: reports only when local is weaker than floor", () => {

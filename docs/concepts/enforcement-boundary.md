@@ -80,4 +80,4 @@ trusted_automation:
 
 ## OpenGantry and an execution firewall
 
-Unmonitored tool calls and tool poisoning are real, but they are a different problem from scope and verify evidence. OpenGantry routes work (missions, scope, perimeters, verify, receipts). A standalone security proxy sandboxes MCP tools and checks skill hashes at invoke time. Pair them when you need both citeable Git evidence and runtime isolation; neither replaces the other ([Security policy](../SECURITY.md#opengantry-vs-a-standalone-security-proxy)).
+Unmonitored tool calls and tool poisoning are real, but they are a different problem from scope and verify evidence. OpenGantry routes work (missions, scope, perimeters, verify, run records). A standalone security proxy sandboxes MCP tools and checks skill hashes at invoke time. Pair them when you need both citeable Git evidence and runtime isolation; neither replaces the other ([Security policy](../SECURITY.md#opengantry-vs-a-standalone-security-proxy)).

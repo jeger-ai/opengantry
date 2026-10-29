@@ -1,6 +1,6 @@
 ---
 title: "CI exporters (SARIF and JUnit) (moved)"
-description: "Moved. The CI exporters and receipts guide."
+description: "Moved. The CI exporters and run record export guide."
 publish: false
 moved_to:
   - guides/ci.md

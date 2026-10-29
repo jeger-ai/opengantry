@@ -3,8 +3,9 @@ import { loadWorkspace } from "#missions/workspace.js";
 import { LEDGER_REF } from "#core/constants.js";
 import { gitRun } from "#git/git.js";
 import { appendLedgerEntry } from "#missions/ledger/ledger-append.js";
-import { sha256Utf8, type ReceiptLedgerPayload } from "#plane/ledger-entry.js";
-import { exportLedgerJson, exportSoc2Pack } from "#plane/ledger-export.js";
+import type { ReceiptLedgerPayload } from "#plane/ledger-entry.js";
+import { exportLedgerJson, exportSoc2Pack, readExportEnvelope } from "#plane/ledger-export.js";
+import { runRecordDigest } from "#core/run-record.js";
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { parseMissionFile } from "#missions/mission/parser.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
@@ -26,9 +27,9 @@ export function runLedgerAppend(opts: {
       msnId = msnIdOrDefault(mission);
     }
     if (opts.fromEnvelope) {
-      const text = fs.readFileSync(opts.fromEnvelope, "utf8");
-      const raw = JSON.parse(text) as { payload_b64?: string };
-      payload = { envelope_sha: sha256Utf8(text), has_payload: Boolean(raw.payload_b64) };
+      const record = readExportEnvelope(fs.readFileSync(opts.fromEnvelope, "utf8"));
+      msnId = record.msn_id;
+      payload = { verify_status: "passed", run_record_sha256: runRecordDigest(record) };
     }
     const entry = appendLedgerEntry(root, { kind: "receipt", msn_id: msnId, payload });
     return {

@@ -53,7 +53,7 @@ export function registerVerifyContractOptions(cmd: Command, { standalone = false
     .option("--baseline-file <file>", w("baseline file (default verify-baseline.json beside the contract)"))
     .option("--check-result <file>", w("pass only if that result passed in a full run for this HEAD, base and contract"))
     .option("--out <file>", w("write the opengantry.verify-result.v1 result to <file>"))
-    .option("--sign [method]", `${standalone ? "With --out" : "With --contract and --out"}: sign the result with the git signing key, or \`keyless\` with Sigstore through the CI's OIDC identity (network)`)
+    .option("--sign [method]", `${standalone ? "With --out" : "With --contract and --out, or with --export"}: sign the result with the git signing key, or \`keyless\` with Sigstore through the CI's OIDC identity (network)`)
     .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file")
     .option("--certificate-identity <regexp>", "With --check-result: also require a keyless signature whose certificate identity (workflow URI or email) matches")
     .option("--certificate-oidc-issuer <url>", `With --certificate-identity: the identity's OIDC issuer (default ${GITHUB_ACTIONS_ISSUER})`);
