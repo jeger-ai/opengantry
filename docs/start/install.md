@@ -61,7 +61,7 @@ git config core.hooksPath .githooks
 | Hook | Does |
 |------|------|
 | `post-checkout` | Creates `EXECUTOR_LOG.md` on feature branches when it is missing |
-| `pre-commit` | `gantry tmvc guard`: warns about staged files outside the pinned mission's scope (advisory; set `GANTRY_TMVC_GUARD_STRICT=1` or pass `--strict` to block). Skipped when no mission is pinned |
+| `pre-commit` | `gantry hook pre-commit`: warns about staged files outside the pinned mission's scope (advisory; set `GANTRY_TMVC_GUARD_STRICT=1` or run `gantry hook install` to block). Skipped when no mission is pinned |
 | `pre-push` | `gantry verify --pre-push` for mission files changed on the branch, so a mission is Planner-approved before it is handed off |
 
 `gantry hook install` arms the tracked pre-commit hook in strict mode, so a commit with staged paths outside the pinned mission is rejected. `gantry hook uninstall` reverses it. The bypass is `git commit --no-verify`.

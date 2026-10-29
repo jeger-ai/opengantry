@@ -15,7 +15,7 @@ const fixtureRoot = path.resolve(
   "../../../examples/content-governance",
 );
 
-test("content-governance fixture: perimeter check fails with seeded violations", () => {
+test("content-governance fixture: arch check fails with seeded violations", () => {
   const spec = loadTargetArchitecture(fixtureRoot);
   const files = walkPerimeterFiles(fixtureRoot, spec);
   const result = checkArchBoundariesForFiles(spec, fixtureRoot, files);
@@ -25,7 +25,7 @@ test("content-governance fixture: perimeter check fails with seeded violations",
   assert.ok(result.violations.some((v) => v.rule_id === "forbid-wrong-brand-hex"));
 });
 
-test("content-governance fixture: clean copy passes perimeter check", () => {
+test("content-governance fixture: clean copy passes arch check", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gxt-content-clean-"));
   const contentDir = path.join(tmp, "content");
   fs.mkdirSync(contentDir, { recursive: true });

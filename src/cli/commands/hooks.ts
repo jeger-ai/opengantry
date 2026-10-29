@@ -17,7 +17,7 @@ export function runHooksInstall(): void {
       logInfo(`hook install: already armed (core.hooksPath=${result.hooksPath})`);
       return;
     }
-    logInfo(`hook install: armed tmvc guard --strict (core.hooksPath=${result.hooksPath})`);
+    logInfo(`hook install: armed the strict pre-commit TMVC guard (core.hooksPath=${result.hooksPath})`);
     logInfo("bypass: git commit --no-verify");
   });
 }

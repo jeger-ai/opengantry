@@ -651,12 +651,12 @@ export function runArchCheck(
   return { ok: violations.length === 0, violations };
 }
 
-export function formatArchCheckHuman(result: ArchCheckResult, label: "arch" | "perimeter" = "arch"): string {
-  if (result.ok) return `${CLI_NAME} ${label} check: OK`;
+export function formatArchCheckHuman(result: ArchCheckResult): string {
+  if (result.ok) return `${CLI_NAME} arch check: OK`;
   const lines = result.violations.map(
     (v) => `${v.file}:${String(v.line)}:${String(v.column)} ${v.rule_id} ${v.module_specifier}`,
   );
-  return [`${CLI_NAME} ${label} check: ${String(result.violations.length)} violation(s)`, ...lines].join("\n");
+  return [`${CLI_NAME} arch check: ${String(result.violations.length)} violation(s)`, ...lines].join("\n");
 }
 
 export function walkPerimeterFiles(repoRoot: string, spec: TargetArchitectureSpec): string[] {

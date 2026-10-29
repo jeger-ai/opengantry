@@ -6,6 +6,9 @@ import {
   runCageSuggestCommand,
   runReadGuardCommand,
   runCageWatchCommand,
+  type CageCheckCliOptions,
+  type CageCliOptions,
+  type CageWatchCliOptions,
 } from "./commands/cage.js";
 
 function collect(value: string, previous: string[]): string[] {
@@ -43,11 +46,7 @@ async function runSuggestArgs(args: string[], inherited: { json?: boolean }): Pr
 }
 
 /** Options given before the subcommand name (`gantry cage --json check …`) carry over to it. */
-interface InheritedCageOptions {
-  json?: boolean;
-  lockDeps?: boolean;
-  allowOnly?: string[];
-}
+type InheritedCageOptions = Pick<CageCliOptions, "json" | "lockDeps" | "allowOnly">;
 
 const ALLOW_ONLY_HELP =
   "Scope: protect every file git would track outside <glob> (repeatable; a glob matching a directory covers it; intersected with .cage.yaml allow_only)";
@@ -69,9 +68,7 @@ async function runCheckArgs(args: string[], inherited: InheritedCageOptions): Pr
     .option("--allow-only <glob>", `${ALLOW_ONLY_HELP} (narrows the base commit's scope)`, collect, [])
     .option("--json", "Emit the digest-only gantry.cage-check.v1 report on stdout");
   sub.parse(args, { from: "user" });
-  await runCageCheckCommand(
-    withInherited(inherited, sub.opts<{ base: string; head?: string; json?: boolean; lockDeps?: boolean; allowOnly?: string[] }>()),
-  );
+  await runCageCheckCommand(withInherited(inherited, sub.opts<CageCheckCliOptions>()));
 }
 
 async function runWatchArgs(args: string[], inherited: InheritedCageOptions): Promise<void> {
@@ -85,20 +82,7 @@ async function runWatchArgs(args: string[], inherited: InheritedCageOptions): Pr
     .option("--allow-only <glob>", ALLOW_ONLY_HELP, collect, [])
     .option("--json", "Emit the digest-only gantry.cage-watch.v1 report on stdout when the watch stops");
   sub.parse(args, { from: "user" });
-  await runCageWatchCommand(
-    withInherited(
-      inherited,
-      sub.opts<{
-        decisionTimeout?: string;
-        watchIntervalMs?: string;
-        maxFileBytes?: string;
-        notify?: boolean;
-        json?: boolean;
-        lockDeps?: boolean;
-        allowOnly?: string[];
-      }>(),
-    ),
-  );
+  await runCageWatchCommand(withInherited(inherited, sub.opts<CageWatchCliOptions>()));
 }
 
 /** Shared by `gantry cage` and the standalone `gantry-cage` bin (alias `opengantry-cage`) so they never drift. */
@@ -135,37 +119,22 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
     .allowUnknownOption(true)
     .passThroughOptions()
     .argument("<command...>", "Command to run after --")
-    .action(
-      async (
-        command: string[],
-        cliOpts: {
-          json?: boolean;
-          reportOnly?: boolean;
-          maxFileBytes?: string;
-          watch?: boolean;
-          watchIntervalMs?: string;
-          allowOverride?: string[];
-          contestLimit?: string;
-          lockDeps?: boolean;
-          allowOnly?: string[];
-        },
-      ) => {
-        const inherited: InheritedCageOptions = { json: cliOpts.json, lockDeps: cliOpts.lockDeps, allowOnly: cliOpts.allowOnly };
-        if (opts.subcommands && isSuggestInvocation(command)) {
-          await runSuggestArgs(command.slice(1), { json: cliOpts.json });
-          return;
-        }
-        if (opts.subcommands && isCageSubcommandInvocation("check", command)) {
-          await runCheckArgs(command.slice(1), inherited);
-          return;
-        }
-        if (opts.subcommands && isCageSubcommandInvocation("watch", command)) {
-          await runWatchArgs(command.slice(1), inherited);
-          return;
-        }
-        await runCageCommand({ command, ...cliOpts });
-      },
-    );
+    .action(async (command: string[], cliOpts: Omit<CageCliOptions, "command">) => {
+      const inherited: InheritedCageOptions = { json: cliOpts.json, lockDeps: cliOpts.lockDeps, allowOnly: cliOpts.allowOnly };
+      if (opts.subcommands && isSuggestInvocation(command)) {
+        await runSuggestArgs(command.slice(1), { json: cliOpts.json });
+        return;
+      }
+      if (opts.subcommands && isCageSubcommandInvocation("check", command)) {
+        await runCheckArgs(command.slice(1), inherited);
+        return;
+      }
+      if (opts.subcommands && isCageSubcommandInvocation("watch", command)) {
+        await runWatchArgs(command.slice(1), inherited);
+        return;
+      }
+      await runCageCommand({ command, ...cliOpts });
+    });
 }
 
 export function registerCageCommands(program: Command): void {
@@ -181,7 +150,7 @@ export function registerCageGuardCommand(program: Command): void {
     .command("pre-push")
     .requiredOption("--root <dir>", "Cage root (git work tree)")
     .option("--plan <file>", "Session plan written by gantry cage")
-    .action((opts: { root: string; plan?: string }) => runCageGuardPrePush(opts));
+    .action(runCageGuardPrePush);
 }
 
 /** `gantry-cage read-guard`: the agent hook that keeps secret files out of the model's context (ADR-0056). */
@@ -189,7 +158,5 @@ export function registerReadGuardCommand(program: Command): void {
   program
     .command("read-guard")
     .description("Agent hook (Claude Code PreToolUse, Cursor beforeReadFile/beforeShellExecution): refuse tool calls that would read secret files")
-    .action(async () => {
-      await runReadGuardCommand();
-    });
+    .action(runReadGuardCommand);
 }

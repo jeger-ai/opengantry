@@ -143,8 +143,6 @@ entries:
     since: MSN-0010
   - name: perimeter
     since: MSN-0045
-  - name: perimeter check
-    since: MSN-0010
   - name: planner
     since: MSN-0075
   - name: planner set
@@ -168,10 +166,6 @@ entries:
     since: commit 274f923
   - name: runtime exec
     since: commit 10c0b2e
-  - name: tmvc
-    since: commit 3062fcc
-  - name: tmvc guard
-    since: commit 3062fcc
   - name: upgrade
     since: MSN-9000
   - name: upgrade apply

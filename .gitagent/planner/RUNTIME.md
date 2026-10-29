@@ -53,17 +53,19 @@ gantry context-request --path docs/FOO.md --reason "doc sync for adoption"
 
 The Verifier accepts or rejects the request in `EXECUTOR_LOG.md` before out-of-scope edits proceed ([`RULES.md`](RULES.md) §4).
 
-## Pre-commit TMVC guard (`gantry tmvc guard`)
+## Pre-commit TMVC guard (`gantry hook pre-commit`)
 
 Optional `.githooks/pre-commit` (installed via `gantry init --hooks`) shells to:
 
 ```bash
-gantry tmvc guard --mission <pinned>
+gantry hook pre-commit
 ```
 
+It checks the staged index against the pinned mission's TMVC scope.
+
 - **Advisory default:** warnings on `stderr`, exit `0`.
-- **`--strict`** or **`GANTRY_TMVC_GUARD_STRICT=1`:** block commit on staged paths outside TMVC roots.
-- **`gantry hook install`** sets local git config `gantry.tmvcGuardStrict=true` so this hook passes `--strict`. `gantry hook uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
+- **Strict** (armed, or **`GANTRY_TMVC_GUARD_STRICT=1`**): block commit on staged paths outside TMVC roots.
+- **`gantry hook install`** sets local git config `gantry.tmvcGuardStrict=true` so this hook blocks. `gantry hook uninstall` clears that key and leaves `core.hooksPath` unchanged. Humans bypass with `git commit --no-verify` only.
 - **No pinned mission:** warn and skip, even when strict is armed.
 - `EXECUTOR_LOG.md` and `.gitagent/missions/.active-mission` are governance transport — never TMVC drift violations.
 

@@ -7,13 +7,13 @@ order: 3
 
 # Perimeters and domains
 
-A mission authorizes scope. It should not authorize architecture violations or unbounded churn. A **perimeter** is the machine-checkable rule set in `TARGET_ARCHITECTURE.yaml` that `gantry arch check` and `gantry perimeter check` enforce.
+A mission authorizes scope. It should not authorize architecture violations or unbounded churn. A **perimeter** is the machine-checkable rule set in `TARGET_ARCHITECTURE.yaml` that `gantry arch check` enforces.
 
 OpenGantry enforces architectural boundaries such as import layers and content patterns. It is not a general full-repository AST scanner.
 
 ## The same graph, any domain
 
-The mission and verify graph, trace mapping, the failure envelope and `gate_command` are domain-neutral. The `domain` key in `TARGET_ARCHITECTURE.yaml` picks which files the perimeter check reads and which rules apply:
+The mission and verify graph, trace mapping, the failure envelope and `gate_command` are domain-neutral. The `domain` key in `TARGET_ARCHITECTURE.yaml` picks which files `gantry arch check` reads and which rules apply:
 
 | Key | Corpus | Rules |
 |-----|--------|-------|
@@ -54,7 +54,6 @@ Schemas `0.1.0` and `0.2.0` remain supported for code-only repositories. Violati
 
 ```bash
 gantry arch check <files…>   # code: import and layer rules
-gantry perimeter check       # domain-neutral alias, same engine
 gantry arch fetch            # resolve an external architecture pointer (kind: external) for offline checks
 ```
 

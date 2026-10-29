@@ -59,22 +59,17 @@ export function handleRuntimeEnv(missionFilePath: string): RuntimeEnvMcpResult {
   }
 }
 
-export async function handleVerify(
-  missionFilePath: string,
-  prePush = false,
-  skipStaleEvidence = false,
-  ci = false,
-): Promise<VerifyResultPayload> {
+export async function handleVerify(input: { mission_file_path: string; pre_push?: boolean; skip_stale_evidence?: boolean; ci?: boolean }): Promise<VerifyResultPayload> {
   return buildVerifyResultPayloadFromOptions({
-    mission: missionFilePath,
-    prePush,
-    skipStaleEvidence,
-    ci,
+    mission: input.mission_file_path,
+    prePush: input.pre_push === true,
+    skipStaleEvidence: input.skip_stale_evidence === true,
+    ci: input.ci === true,
   });
 }
 
 export type RuntimeExecMcpInput = {
-  mission: string;
+  mission_file_path: string;
   command: string[];
   cwd?: string;
   timeout_ms?: number;
@@ -83,9 +78,9 @@ export type RuntimeExecMcpInput = {
 export async function handleRuntimeExec(input: RuntimeExecMcpInput): Promise<RuntimeExecMcpResult> {
   try {
     const workspace = loadWorkspace();
-    const resolved = resolveRuntimeEnv(workspace, input.mission);
+    const resolved = resolveRuntimeEnv(workspace, input.mission_file_path);
     const result = await runRuntimeExec(workspace, {
-      mission: input.mission,
+      mission: input.mission_file_path,
       workerCommand: input.command,
       cwd: input.cwd,
       timeoutMs: input.timeout_ms,

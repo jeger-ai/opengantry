@@ -3,7 +3,7 @@ import fs from "node:fs";
 import type { AgentErrorPayload } from "#missions/error-payloads.js";
 import { agentErrorAbsolutePath, serializeAgentErrorPayload } from "#missions/error-payloads.js";
 import { hintForbiddenZone, hintRuntimeHumanSummary } from "#missions/fix-hints.js";
-import { logFixHint, logError, logInfo, setExitCode } from "../output/cli-io.js";
+import { logFixHint, logError, logInfo, parseOptionalTimeoutMs, setExitCode } from "../output/cli-io.js";
 import { writeAiderTmvcScope } from "#missions/aider-scope.js";
 import { emitPinnedMissionBanner, resolveMissionArg } from "../flows/mission-arg.js";
 import { resolveRuntimeEnv, resolvedRuntimeEnvToJsonPayload } from "#missions/runtime-env.js";
@@ -20,14 +20,15 @@ export interface RuntimeEnvCliOptions {
   aider?: boolean;
 }
 
+/** `gantry runtime exec` as Commander parses it: the argv after `--`, --timeout-ms as text, `stream: false` for --no-stream. */
 export interface RuntimeExecCliOptions {
   mission: string;
   workerCommand: string[];
   cwd?: string;
   executorLog?: string;
   append?: boolean;
-  timeoutMs?: number;
-  streamOutput?: boolean;
+  timeoutMs?: string;
+  stream?: boolean;
   json?: boolean;
 }
 
@@ -73,7 +74,14 @@ export function runRuntimeEnv(options: RuntimeEnvCliOptions): void {
 }
 
 export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Promise<void> {
-  if (options.workerCommand.length === 0) {
+  const timeout = parseOptionalTimeoutMs(options.timeoutMs);
+  if (!timeout.ok) {
+    logError(timeout.message);
+    setExitCode(EXIT_CODE.USAGE);
+    return;
+  }
+  const workerCommand = options.workerCommand[0] === "--" ? options.workerCommand.slice(1) : options.workerCommand;
+  if (workerCommand.length === 0) {
     logError("runtime exec: missing executor command. Use -- <worker-command...>");
     setExitCode(EXIT_CODE.USAGE);
     return;
@@ -84,12 +92,12 @@ export async function runRuntimeExecCommand(options: RuntimeExecCliOptions): Pro
     const resolved = resolveRuntimeEnv(workspace, options.mission);
     const result = await runRuntimeExec(workspace, {
       mission: options.mission,
-      workerCommand: options.workerCommand,
+      workerCommand,
       cwd: options.cwd,
       executorLog: options.executorLog,
       append: options.append,
-      timeoutMs: options.timeoutMs,
-      streamOutput: options.streamOutput,
+      timeoutMs: timeout.ms,
+      streamOutput: options.stream,
     });
 
     let agentError: AgentErrorPayload | null = null;

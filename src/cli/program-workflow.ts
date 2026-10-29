@@ -1,105 +1,38 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import { Option, type Command } from "commander";
-import { runLegislate, type LegislateOptions } from "./flows/legislate.js";
-import { runLegislateFromIntent } from "./flows/legislate-from-intent.js";
+import { runLegislate } from "./flows/legislate.js";
+import { runLegislateFromIntent, type FromIntentOptions } from "./flows/legislate-from-intent.js";
 import { isGantryUserError, errorMessage } from "#core/user-error.js";
 import { runVerify } from "./commands/verify.js";
 import { registerVerifyContractOptions, runVerifyContractCommand, type VerifyContractCliOptions } from "./commands/verify-contract.js";
 import { registerAdaptCommand } from "./commands/adapt.js";
 import type { VerifyOptions } from "./flows/verify-options.js";
 import { runPerimeter } from "./commands/perimeter.js";
-import { runArchCheckCommand } from "./commands/arch.js";
 import { runInterrogateCommand, type InterrogateCliOptions } from "./commands/interrogate.js";
 import type { InterrogationRow } from "#core/interrogation.js";
 import fs from "node:fs";
 import { logError, readStdinIfEmpty, setExitCode } from "./output/cli-io.js";
-import { GATE_ADAPTER_IDS, type GateAdapterId } from "#core/gate-adapter.js";
+import { GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
 import { currentReporter } from "./output/reporter.js";
 
-/** Commander-parsed legislate flags (intent text is a positional arg). */
-type LegislateCliOptions = Omit<LegislateOptions, "intent" | "silent" | "interrogation" | "paths" | "contract"> & {
-  path?: string[];
-  interrogationFile?: string;
-  fromIntent?: boolean;
-  yes?: boolean;
-  contractFile?: string;
-};
+/** Commander-parsed legislate flags: --path is `path`; the intent text is a positional argument. */
+type LegislateCliOptions = Omit<FromIntentOptions, "intent"> & { path?: string[]; interrogationFile?: string };
 
-/** Commander maps --path to `path` and --answers to `answers`. */
-export type InterrogateCommanderOptions = Omit<
-  InterrogateCliOptions,
-  "intent" | "paths" | "answersFile"
-> & {
-  path?: string[];
-  answers?: string;
-};
-
-export function mapInterrogateCommanderOptions(
-  options: InterrogateCommanderOptions,
-  intent: string,
-): InterrogateCliOptions {
-  return {
-    intent,
-    msn: options.msn,
-    skillKey: options.skillKey,
-    gateCommand: options.gateCommand,
-    gateSuccessSubstring: options.gateSuccessSubstring,
-    paths: options.path ?? [],
-    answersFile: options.answers,
-    json: options.json,
-  };
+export function mapLegislateCommanderOptions(options: LegislateCliOptions, intent: string): FromIntentOptions {
+  const file = options.interrogationFile?.trim();
+  const interrogation = file ? { source: "operator_file" as const, rows: JSON.parse(fs.readFileSync(file, "utf8")) as InterrogationRow[] } : undefined;
+  return { ...options, intent, paths: options.path ?? [], interrogation };
 }
 
-export function mapLegislateCommanderOptions(
-  options: LegislateCliOptions,
-  intent: string,
-): LegislateOptions {
-  let interrogation: LegislateOptions["interrogation"] | undefined;
-  if (options.interrogationFile?.trim()) {
-    const raw = fs.readFileSync(options.interrogationFile.trim(), "utf8");
-    const rows = JSON.parse(raw) as InterrogationRow[];
-    interrogation = {
-      source: "operator_file",
-      rows,
-    };
-  }
-  return {
-    ...options,
-    intent,
-    paths: options.path ?? [],
-    interrogation,
-    gateAdapter: options.gateAdapter as GateAdapterId | undefined,
-  };
-}
-
-/** Commander-parsed verify flags (before name/coercion adapter). */
-interface VerifyCliOptions {
-  mission?: string;
-  changedMissions?: boolean;
-  baseRef?: string;
-  executorLog?: string;
-  cwd?: string;
-  fuzzyTrace?: boolean;
-  strictTrace?: boolean;
-  skipStaleEvidence?: boolean;
-  record?: boolean;
-  ci?: boolean;
-  requireInterrogation?: boolean;
-  prePush?: boolean;
-  breakGlass?: boolean;
+/** Commander-parsed verify flags; the renamed and coerced ones are mapped by verifyOptionsFromCli. */
+type VerifyCliOptions = Omit<VerifyOptions, "format" | "scanDepth" | "audience"> & {
+  format?: string;
+  scanDepth?: string;
   reason?: string;
   commit?: string;
-  auditCommit?: boolean;
-  fix?: boolean;
   nonInteractive?: boolean;
-  json?: boolean;
-  jsonOut?: string;
-  format?: string;
-  audience?: string;
-  scanDepth?: string;
-  sign?: boolean | string;
   export?: string;
-}
+};
 
 function parseVerifyExportFormat(raw?: string): VerifyOptions["format"] {
   if (!raw?.trim()) return undefined;
@@ -110,42 +43,43 @@ function parseVerifyExportFormat(raw?: string): VerifyOptions["format"] {
 }
 
 export function verifyOptionsFromCli(opts: VerifyCliOptions): VerifyOptions {
-  const scanDepth =
-    opts.scanDepth !== undefined ? Number.parseInt(opts.scanDepth, 10) : undefined;
-  const format = opts.format ? parseVerifyExportFormat(opts.format) : undefined;
+  const scanDepth = Number.parseInt(opts.scanDepth ?? "", 10);
   return {
-    mission: opts.mission,
-    changedMissions: opts.changedMissions,
-    baseRef: opts.baseRef,
-    executorLog: opts.executorLog,
-    cwd: opts.cwd,
-    fuzzyTrace: opts.fuzzyTrace,
-    strictTrace: opts.strictTrace,
-    skipStaleEvidence: opts.skipStaleEvidence,
-    record: opts.record,
-    ci: opts.ci,
-    prePush: opts.prePush,
-    breakGlass: opts.breakGlass,
-    auditCommit: opts.auditCommit,
-    fix: opts.fix,
-    json: opts.json,
-    jsonOut: opts.jsonOut,
-    format,
-    scanDepth: Number.isFinite(scanDepth) && scanDepth! > 0 ? scanDepth : undefined,
+    ...opts,
+    format: parseVerifyExportFormat(opts.format),
+    scanDepth: scanDepth > 0 ? scanDepth : undefined,
     breakGlassReason: opts.reason,
     breakGlassCommit: opts.commit,
     fixNonInteractive: opts.nonInteractive,
     audience: currentReporter().audience,
-    sign: opts.sign,
     exportPath: opts.export,
-    requireInterrogation:
-      opts.requireInterrogation === true ||
-      opts.ci === true ||
-      process.env.GANTRY_REQUIRE_INTERROGATION === "1",
+    requireInterrogation: opts.requireInterrogation === true || opts.ci === true || process.env.GANTRY_REQUIRE_INTERROGATION === "1",
   };
 }
 
-function registerLegislateCommand(program: Command): void {
+/** The intent words, else stdin; a usage error when both are empty. */
+async function intentText(parts: string[], verb: string): Promise<string | undefined> {
+  const text = await readStdinIfEmpty(parts.join(" ").trim());
+  if (text) return text;
+  logError(`${verb}: provide intent text or pipe stdin`);
+  setExitCode(EXIT_CODE.USAGE);
+  return undefined;
+}
+
+async function legislate(intentParts: string[], options: LegislateCliOptions): Promise<void> {
+  const text = await intentText(intentParts, "legislate");
+  if (!text) return;
+  const mapped = mapLegislateCommanderOptions(options, text);
+  try {
+    const result = options.fromIntent === true || options.contractFile?.trim() ? await runLegislateFromIntent(mapped) : runLegislate(mapped);
+    if (!result.ok) setExitCode(result.exitCode);
+  } catch (e) {
+    logError(isGantryUserError(e) ? e.message : errorMessage(e));
+    setExitCode(isGantryUserError(e) ? e.exitCode : 2);
+  }
+}
+
+export function registerWorkflowCommands(program: Command): void {
   program
     .command("legislate")
     .description("Scaffold YAML mission under .gitagent/missions/ using explicit MSN (Planner still commits)")
@@ -154,53 +88,20 @@ function registerLegislateCommand(program: Command): void {
     .option("--skill-key <key>", "Override the manifest-derived skill_key when triage escalates")
     .option("--allow-duplicate", "Allow duplicate msn_id only for intentional branch migrations")
     .option("--out <file>", "Output path (.gitagent/missions/…); defaults to MSN.slug.yaml")
-    .option(
-      "--gate-command <cmd>",
-      "Deterministic gate command (quote the full shell string if it contains spaces)",
-    )
-    .option(
-      "--gate-success-substring <text>",
-      "Optional substring required in combined gate stdout/stderr",
-    )
+    .option("--gate-command <cmd>", "Deterministic gate command (quote the full shell string if it contains spaces)")
+    .option("--gate-success-substring <text>", "Optional substring required in combined gate stdout/stderr")
     .addOption(
-      new Option(
-        "--gate-adapter <id>",
-        "Explicit gate output parser: generic (default) | eslint (gate must emit --format json) | tsc",
-      ).choices([...GATE_ADAPTER_IDS]),
+      new Option("--gate-adapter <id>", "Explicit gate output parser: generic (default) | eslint (gate must emit --format json) | tsc").choices([
+        ...GATE_ADAPTER_IDS,
+      ]),
     )
     .option("--path <paths...>", "Declared paths for gap analysis (repeatable)")
     .option("--interrogation-file <file>", "JSON file with interrogation answers (token-less path)")
     .option("--from-intent", "Propose a mission contract from intent + repo, then prompt for approval")
     .option("--yes", "Approve the proposed contract without a TTY prompt (required for non-TTY --from-intent)")
     .option("--contract-file <file>", "YAML file with a contract: block (skips propose prompt)")
-    .action(async (intentParts: string[], options: LegislateCliOptions, _cmd: Command) => {
-      let text = intentParts.join(" ").trim();
-      text = await readStdinIfEmpty(text);
-      if (!text) {
-        logError("legislate: provide intent text or pipe stdin");
-        setExitCode(EXIT_CODE.USAGE);
-        return;
-      }
-      const mapped = mapLegislateCommanderOptions(options, text);
-      const fromIntent = options.fromIntent === true || Boolean(options.contractFile?.trim());
-      try {
-        const result = fromIntent
-          ? await runLegislateFromIntent({
-              ...mapped,
-              fromIntent: options.fromIntent === true,
-              yes: options.yes === true,
-              contractFile: options.contractFile,
-            })
-          : runLegislate(mapped);
-        if (!result.ok) setExitCode(result.exitCode);
-      } catch (e) {
-        logError(isGantryUserError(e) ? e.message : errorMessage(e));
-        setExitCode(isGantryUserError(e) ? e.exitCode : 2);
-      }
-    });
-}
+    .action(legislate);
 
-function registerInterrogateCommand(program: Command): void {
   program
     .command("interrogate")
     .description("Deterministic gap analysis before legislation (one question at a time)")
@@ -212,24 +113,14 @@ function registerInterrogateCommand(program: Command): void {
     .option("--path <paths...>", "Declared paths for boundary analysis")
     .option("--answers <file>", "JSON file with accumulated interrogation answers")
     .option("--json", "Structured JSON output")
-    .action(async (intentParts: string[], options: InterrogateCommanderOptions) => {
-      let text = intentParts.join(" ").trim();
-      text = await readStdinIfEmpty(text);
-      if (!text) {
-        logError("interrogate: provide intent text or pipe stdin");
-        setExitCode(EXIT_CODE.USAGE);
-        return;
-      }
-      runInterrogateCommand(mapInterrogateCommanderOptions(options, text));
+    .action(async (intentParts: string[], options: Omit<InterrogateCliOptions, "intent"> & { path?: string[]; answers?: string }) => {
+      const intent = await intentText(intentParts, "interrogate");
+      if (intent) runInterrogateCommand({ ...options, intent, paths: options.path ?? [], answersFile: options.answers });
     });
-}
 
-function registerVerifyCommand(program: Command): void {
-  const cmd = program
+  const verify = program
     .command("verify")
-    .description(
-      "Git-proof (Planner + MSN) + deterministic gate + hard-stop trace mapping vs EXECUTOR_LOG.md",
-    )
+    .description("Git-proof (Planner + MSN) + deterministic gate + hard-stop trace mapping vs EXECUTOR_LOG.md")
     .option("--mission <path>", "Mission file (.md or .yaml)")
     .option("--changed-missions", "Verify all mission files changed vs base ref on current branch")
     .option("--base-ref <ref>", "Base ref for --changed-missions (default: origin/main or main)")
@@ -251,49 +142,20 @@ function registerVerifyCommand(program: Command): void {
     .option("--json", "Emit structured JSON (alias for --format json). Incompatible with --fix.")
     .option("--json-out <path>", "Write structured JSON payload to file (pipe-safe; no stdout JSON)")
     .option("--format <fmt>", "Export format: text (default) | json | sarif | junit")
-    .option(
-      "--scan-depth <number>",
-      "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GANTRY_MSN_SCAN_DEPTH)",
-    )
+    .option("--scan-depth <number>", "Max commits to scan for Planner [MSN-XXXX] stamp (default: 200, env: GANTRY_MSN_SCAN_DEPTH)")
     .option("--export <file>", "After a pass with a run record, write the export envelope 2.0 over the record")
     .option("--audience <role>", "Tailor output: executor|planner|verifier|platform");
-  registerVerifyContractOptions(cmd);
-  cmd.action(async (opts: VerifyCliOptions & Omit<VerifyContractCliOptions, "contract" | "mission" | "json" | "format"> & { contract?: string | true }) => {
-      if (opts.contract !== undefined) {
-        await runVerifyContractCommand({ ...opts, contract: opts.contract });
-        return;
-      }
-      await runVerify(verifyOptionsFromCli(opts));
-    });
-}
+  registerVerifyContractOptions(verify).action(async (opts: VerifyCliOptions & Partial<VerifyContractCliOptions>) => {
+    await (opts.contract !== undefined ? runVerifyContractCommand({ ...opts, contract: opts.contract }) : runVerify(verifyOptionsFromCli(opts)));
+  });
 
-function registerPerimeterCommand(program: Command): void {
-  const perimeterCmd = program
+  registerAdaptCommand(program);
+
+  program
     .command("perimeter")
-    .description("Governance perimeter: protected-file guard (default) and TARGET_ARCHITECTURE checks");
-
-  perimeterCmd
-    .command("check")
-    .description("Evaluate TARGET_ARCHITECTURE.yaml rules (domain-neutral alias of arch check)")
-    .argument("[files...]", "Repo-relative or absolute paths (default: all files under scan_roots)")
-    .option("--json", "Emit structured violation JSON")
-    .action((files: string[], opts: { json?: boolean }) => {
-      runArchCheckCommand({ files, json: opts.json === true, label: "perimeter" });
-    });
-
-  perimeterCmd
+    .description("Governance perimeter: protected-file guard")
     .option("--base-ref <ref>", "Base ref for change detection (default: origin/main or main)")
     .option("--ci", "Authoritative CI mode: fail on unsigned protected-file commits")
     .option("--json", "Emit structured JSON")
-    .action((opts: { baseRef?: string; ci?: boolean; json?: boolean }) => {
-      runPerimeter(opts);
-    });
-}
-
-export function registerWorkflowCommands(program: Command): void {
-  registerLegislateCommand(program);
-  registerInterrogateCommand(program);
-  registerVerifyCommand(program);
-  registerAdaptCommand(program);
-  registerPerimeterCommand(program);
+    .action(runPerimeter);
 }

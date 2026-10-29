@@ -10,26 +10,17 @@ import {
   runArchCheckCommand,
   runArchFetch,
   runArchPointer,
+  type ArchCheckOptions,
 } from "./commands/arch.js";
 
 export function registerArchCommands(program: Command): void {
   const arch = program.command("arch").description("Architecture pointer and secure local credentials");
-
-  arch
-    .command("pointer")
-    .description("Print architecture pointer summary for agents")
-    .action(() => {
-      runArchPointer();
-    });
-
+  arch.command("pointer").description("Print architecture pointer summary for agents").action(runArchPointer);
   arch
     .command("fetch")
     .description("Fetch kind=external architecture docs (convenience; doctor stays offline)")
     .option("--json", "Emit structured fetch result JSON")
-    .action(async (opts: { json?: boolean }) => {
-      await runArchFetch({ json: opts.json === true });
-    });
-
+    .action(runArchFetch);
   arch
     .command("check")
     .description("Evaluate TARGET_ARCHITECTURE.yaml import/layer rules for TypeScript paths")
@@ -37,20 +28,14 @@ export function registerArchCommands(program: Command): void {
     .option("--json", "Emit structured violation JSON")
     .option("--ratchet", "Whole-tree run: write ARCH_BASELINE.json from the current counts (lower-only)")
     .option("--allow-raise", "With --ratchet: write even where a layer grew (Planner missions only)")
-    .action((files: string[], opts: { json?: boolean; ratchet?: boolean; allowRaise?: boolean }) => {
-      runArchCheckCommand({ files, json: opts.json === true, ratchet: opts.ratchet === true, allowRaise: opts.allowRaise === true });
-    });
+    .action((files: string[], opts: ArchCheckOptions) => runArchCheckCommand({ ...opts, files }));
 
   const cred = arch.command("cred").description("Git-ignored credential slots for authenticated architecture sources");
-
   cred
     .command("status")
     .description("List stored credential slots (never prints secrets)")
     .option("--slot <name>", "Credential slot (e.g. architecture/confluence)")
-    .action((opts: { slot?: string }) => {
-      runArchCredStatus({ slot: opts.slot });
-    });
-
+    .action(runArchCredStatus);
   cred
     .command("set")
     .description("Store credentials from stdin (pipe secrets; never use argv)")
@@ -67,12 +52,5 @@ export function registerArchCommands(program: Command): void {
       }
       await runArchCredSet({ slot: opts.slot, kind });
     });
-
-  cred
-    .command("unset")
-    .description("Remove a stored credential slot")
-    .requiredOption("--slot <name>", "Credential slot")
-    .action((opts: { slot: string }) => {
-      runArchCredUnset({ slot: opts.slot });
-    });
+  cred.command("unset").description("Remove a stored credential slot").requiredOption("--slot <name>", "Credential slot").action(runArchCredUnset);
 }

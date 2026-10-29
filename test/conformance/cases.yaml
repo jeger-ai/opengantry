@@ -46,7 +46,6 @@ cases:
   - { id: runtime-env.json.mission-pass, fixture: mission-pass, args: [runtime, env, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: runtime-env.text.mission-pass, fixture: mission-pass, args: [runtime, env, --mission, .gitagent/missions/m-MSN-0101.yaml, --format, text] }
   - { id: runtime-exec.mission-pass, fixture: mission-pass, args: [runtime, exec, --mission, .gitagent/missions/m-MSN-0101.yaml, --json, --no-stream, --, echo, executor-ran] }
-  - { id: tmvc-guard.mission-pass, fixture: mission-pass, args: [tmvc, guard, --mission, .gitagent/missions/m-MSN-0101.yaml, --json] }
   - { id: context-request.mission-pass, fixture: mission-pass, args: [context-request, --mission, .gitagent/missions/m-MSN-0101.yaml, --reason, need the docs folder, --path, docs/, --json], record_tree: true }
 
   # --- verify and evidence ---
@@ -74,7 +73,6 @@ cases:
   - { id: arch-cred-status.fresh-init, fixture: fresh-init, args: [arch, cred, status] }
   - { id: arch-cred-set.no-stdin.fresh-init, fixture: fresh-init, args: [arch, cred, set, --slot, docs, --kind, bearer] }
   - { id: arch-cred-unset.fresh-init, fixture: fresh-init, args: [arch, cred, unset, --slot, docs] }
-  - { id: perimeter-check.mission-pass, fixture: mission-pass, args: [perimeter, check, src/components/Button.ts, --json] }
 
   # --- organization plane ---
   - { id: policy-pull.no-pointer.fresh-init, fixture: fresh-init, args: [policy, pull, --json] }

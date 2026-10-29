@@ -1,5 +1,5 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { setExitCode } from "../output/cli-io.js";
+import { logError, setExitCode } from "../output/cli-io.js";
 import { runUserCommand, runUserCommandAsync, type CommandPresentation } from "../output/command-boundary.js";
 import { contractViolationCode, formatContractViolation, scanContractImports } from "#missions/contract/contract-scan.js";
 import type { ContractImportViolation, EffectiveScope } from "#core/contract-types.js";
@@ -89,6 +89,11 @@ export interface ContractProposeCliOptions {
 }
 
 export async function runContractPropose(options: ContractProposeCliOptions): Promise<void> {
+  if (!options.intent) {
+    logError("contract propose: provide intent text");
+    setExitCode(EXIT_CODE.USAGE);
+    return;
+  }
   await runUserCommandAsync({ json: options.json }, async (): Promise<CommandPresentation> => {
     const workspace = loadWorkspace();
     const resolved = resolveSkillKeyForLegislation({

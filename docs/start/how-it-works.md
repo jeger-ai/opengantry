@@ -80,7 +80,7 @@ The graph is the same for TypeScript imports and for marketing copy. The `domain
 | Step | Command | Output |
 |------|---------|--------|
 | Rules | Write `TARGET_ARCHITECTURE.yaml` with `domain: code\|content` | Import-layer or pattern rules, reviewed like code |
-| Audit | `gantry perimeter check`, or `gantry verify --json` | Pass, or the `findings[]` envelope |
+| Audit | `gantry arch check`, or `gantry verify --json` | Pass, or the `findings[]` envelope |
 
 Details: [Perimeters and domains](../concepts/perimeters.md).
 
