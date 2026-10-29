@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
+          # No npm cache: the job installs only the gantry CLI, and an adopter repository may have no lockfile.
+          package-manager-cache: false
 
       - name: Install gantry
         run: npm install -g @jeger-ai/opengantry@^4

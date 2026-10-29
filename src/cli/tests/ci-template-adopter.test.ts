@@ -69,6 +69,7 @@ test("ci template: every job that runs gantry installs @jeger-ai/opengantry from
       const first = def.steps.findIndex((s) => invocations(s.run ?? "").length > 0);
       for (const step of def.steps.filter((s) => s.uses?.startsWith("actions/setup-node@"))) {
         assert.equal(step.with?.cache, undefined, `${file} ${job}: setup-node cache needs a lockfile`);
+        assert.equal(step.with?.["package-manager-cache"], false, `${file} ${job}: setup-node must not turn on npm caching (packageManager: npm without a lockfile fails)`);
       }
       if (first < 0) continue;
       jobsWithGantry += 1;

@@ -56,7 +56,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ### From v4.0.0 (adopter CI template — v4.0.1)
 
 ```bash
-npm install @jeger-ai/opengantry@4.0.1          # or: npm install -g @jeger-ai/opengantry@4.0.1
+npm install -g @jeger-ai/opengantry@4.0.1   # puts gantry on PATH for the next two commands
 gantry upgrade plan --stage   # stages the fixed workflow, writes .gitagent/missions/<MSN>.upgrade-v4.0.1.yaml; the Planner commits it
 gantry upgrade apply --mission .gitagent/missions/<MSN>.upgrade-v4.0.1.yaml   # replaces .github/workflows/gxt-validate.yml
 ```
