@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry-cage-runtime",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "private": true,
   "description": "OpenGantry cage runtime (ADR-0052 A1): check, watch, session and suggest. Depends on core; git for check and the push guard.",
   "type": "module",

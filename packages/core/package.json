@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry-core",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "private": true,
   "description": "OpenGantry core: pure domain (ADR-0052 A1). Types, error codes, canonical JSON, path matching, manifest shape. No fs, git or child_process.",
   "type": "module",

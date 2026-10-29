@@ -1,6 +1,6 @@
 {
   "name": "@jeger-ai/opengantry-git",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "private": true,
   "description": "OpenGantry git adapter: the single way the CLI runs git (ADR-0052 A1).",
   "type": "module",

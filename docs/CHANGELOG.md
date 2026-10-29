@@ -14,7 +14,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.1** (see `package.json`).
+- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.2** (see `package.json`).
 - **Law files are YAML:** `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`.
   - A 3.x JSON file is still read when the YAML form is absent.
   - If both forms exist and differ, the CLI fails closed (`GXT_LAW_FILE_AMBIGUOUS`).
@@ -53,7 +53,11 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### Unreleased (4.1.0)
+### From v4.0.1 (agent sandbox settings — v4.0.2)
+
+```bash
+npm install -g @jeger-ai/opengantry@4.0.2
+```
 
 Nothing to migrate. One new command, in the full package only:
 

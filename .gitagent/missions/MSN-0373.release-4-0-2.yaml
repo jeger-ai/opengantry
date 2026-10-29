@@ -1,0 +1,208 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0373]. Executor must not run until the [MSN-0373] legislation commit + pin.
+#
+# Legislated intent: 4.0.2 release prep: versions 4.0.2; gantry cage policy (MSN-0372) ships in the 4.0.2 patch, so the
+# release notes, changelog and ADR-0060 say 4.0.2.
+#
+# Operator request (2026-10-29, "4.0.2 it is", "finish up everything"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0373.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0373
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; this mission changes versions and release
+      documentation only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept. The cage trust model is unchanged; only the release
+      that carries gantry cage policy is named (4.0.2).
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 4f80fb918fd8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: docs/CHANGELOG.md, docs/reference/release-notes.md,
+      EXECUTOR_LOG.md, .gitagent/foreman/SUBSTRATE.version.json,
+      .gitagent/missions/MSN-0373.release-4-0-2.yaml,
+      .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md,
+      .gitagent/runs/MSN-0373.json, package.json, package-lock.json,
+      packages/cage/package.json, packages/core/package.json,
+      packages/git/package.json, packages/missions/package.json,
+      packages/opengantry-cage/package.json,
+      packages/opengantry-verify/package.json, packages/plane/package.json,
+      packages/verify/package.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json,
+      test/conformance/golden/upgrade-plan.fresh-init.json,
+      test/conformance/golden/verify.sarif.mission-pass.json. Changed: versions
+      4.0.2 in package.json,
+      packages/{cage,core,git,missions,opengantry-cage,opengantry-verify,plane,\
+      verify}/package.json, package-lock.json (root and the two published
+      workspace entries), .gitagent/foreman/SUBSTRATE.version.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json; the goldens
+      upgrade-plan.fresh-init and verify.sarif.mission-pass (version fields
+      only); docs/reference/release-notes.md (4.0.2 under 4.0),
+      docs/CHANGELOG.md (substrate notes CLI version, upgrade notes From
+      v4.0.1), ADR-0060 amendment wording (4.0.2). No code changes."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Reject applicability. No test changes besides two conformance
+      goldens re-recorded for their version field; no test is weakened.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with named output changes: upgrade-plan.fresh-init and
+      verify.sarif.mission-pass change only their version from 4.0.1 to 4.0.2."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: 9f551c7bd116
+    kind: risk_escalation
+    question: "Triage escalated: Multiple skill matches: gantry, substrate —
+      escalate to Teacher. Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots: docs/CHANGELOG.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
+      .gitagent/foreman/SUBSTRATE.version.json,
+      .gitagent/missions/MSN-0373.release-4-0-2.yaml,
+      .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md,
+      .gitagent/runs/MSN-0373.json, package.json, package-lock.json,
+      packages/cage/package.json, packages/core/package.json,
+      packages/git/package.json, packages/missions/package.json,
+      packages/opengantry-cage/package.json,
+      packages/opengantry-verify/package.json, packages/plane/package.json,
+      packages/verify/package.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json,
+      test/conformance/golden/upgrade-plan.fresh-init.json,
+      test/conformance/golden/verify.sarif.mission-pass.json. Changed: versions
+      4.0.2 in package.json,
+      packages/{cage,core,git,missions,opengantry-cage,opengantry-verify,plane,\
+      verify}/package.json, package-lock.json (root and the two published
+      workspace entries), .gitagent/foreman/SUBSTRATE.version.json,
+      templates/.gitagent/foreman/SUBSTRATE.version.json,
+      templates/integrations/compatibility.json; the goldens
+      upgrade-plan.fresh-init and verify.sarif.mission-pass (version fields
+      only); docs/reference/release-notes.md (4.0.2 under 4.0),
+      docs/CHANGELOG.md (substrate notes CLI version, upgrade notes From
+      v4.0.1), ADR-0060 amendment wording (4.0.2). No code changes. Operator
+      decisions (2026-10-29): ship gantry cage policy as the 4.0.2 patch instead
+      of 4.1.0 (\"4.0.2 it is\"; ADR-0060's consequences allow a small first
+      version in 4.0.x), and finish the release. MSN-0372 merged before its
+      relabel commits were pushed, so the relabel lands here with the version
+      bump. Tagging v4.0.2 starts the npm publish of the three packages. The
+      mission has no trace rows: its evidence is .gitagent/runs/MSN-0373.json
+      written by gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0049
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Plan adapters are unchanged; the overlap
+      is release wording.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. Humans write YAML, machines write JSON: the version
+      files touched here (package manifests, SUBSTRATE.version.json,
+      compatibility.json) are machine-read JSON and stay JSON."
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 5e5635ec1d9b600db6a888848e974c4f0060dff21a2fa036e6b07028af63f09d
+declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/missions/MSN-0373.release-4-0-2.yaml
+  - .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md
+  - .gitagent/runs/MSN-0373.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/cage/package.json
+  - packages/core/package.json
+  - packages/git/package.json
+  - packages/missions/package.json
+  - packages/opengantry-cage/package.json
+  - packages/opengantry-verify/package.json
+  - packages/plane/package.json
+  - packages/verify/package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+  - test/conformance/golden/upgrade-plan.fresh-init.json
+  - test/conformance/golden/verify.sarif.mission-pass.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - .gitagent/missions/MSN-0373.release-4-0-2.yaml
+    - .gitagent/out-of-scope/ADR-0060-agent-sandbox-policy.md
+    - .gitagent/runs/MSN-0373.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/cage/package.json
+    - packages/core/package.json
+    - packages/git/package.json
+    - packages/missions/package.json
+    - packages/opengantry-cage/package.json
+    - packages/opengantry-verify/package.json
+    - packages/plane/package.json
+    - packages/verify/package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+    - test/conformance/golden/upgrade-plan.fresh-init.json
+    - test/conformance/golden/verify.sarif.mission-pass.json
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.yaml
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 9e6769e04aa0ac763b3dfafa37a8321d953a8c499e45eed8d8824b3d6c079469
