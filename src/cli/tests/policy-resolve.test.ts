@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { configFloorViolations, FLOOR_RULES, TIER_RANK, trustTierRank } from "#plane/policy-resolve.js";
+import { configFloorViolations, FLOOR_RULES } from "#plane/policy-resolve.js";
 import { pullOrgPolicy } from "#plane/policy-fetch.js";
 import { parseOrgPolicyBundle } from "#plane/policy-bundle.js";
 import { GXT_ERROR } from "#core/error-codes.js";
@@ -26,9 +26,6 @@ test("FLOOR_RULES: table covers signature, ledger, telemetry, and break-glass", 
       "break_glass.require_ledger_entry",
     ],
   );
-  assert.equal(TIER_RANK["Tier-2"], 2);
-  assert.equal(trustTierRank("Tier-3"), 3);
-  assert.equal(trustTierRank("custom"), 0);
 });
 
 test("org policy: a bundle that still sets config_floor.receipt_signature is refused as removed in 4.0 (ADR-0061)", () => {

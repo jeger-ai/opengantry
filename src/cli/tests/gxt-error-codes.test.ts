@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   GXT_ERROR,
   gxtCodeFromGantryUserError,
-  isKnownGantryUserErrorCode,
   mapGitProofCodeToGxt,
 } from "#core/error-codes.js";
 
@@ -21,7 +20,6 @@ test("gxtCodeFromGantryUserError: upgrade codes map to their registered GXT_UPGR
 
 test("gxtCodeFromGantryUserError: unknown codes fall back to VERIFY_FAILED", () => {
   assert.equal(gxtCodeFromGantryUserError("TOTALLY_UNKNOWN"), GXT_ERROR.VERIFY_FAILED);
-  assert.equal(isKnownGantryUserErrorCode("TOTALLY_UNKNOWN"), false);
 });
 
 test("gxtCodeFromGantryUserError: passthrough GXT_* codes", () => {
@@ -30,7 +28,6 @@ test("gxtCodeFromGantryUserError: passthrough GXT_* codes", () => {
 
 test("gxtCodeFromGantryUserError: INVALID_ARGUMENT maps to GXT_INVALID_ARGUMENT", () => {
   assert.equal(gxtCodeFromGantryUserError("INVALID_ARGUMENT"), GXT_ERROR.INVALID_ARGUMENT);
-  assert.equal(isKnownGantryUserErrorCode("INVALID_ARGUMENT"), true);
 });
 
 test("gxtCodeFromGantryUserError: runtime and forbidden codes", () => {
@@ -41,7 +38,6 @@ test("gxtCodeFromGantryUserError: runtime and forbidden codes", () => {
 
 test("gxtCodeFromGantryUserError: GATE_ADAPTER_COMPOUND_COMMAND maps to GXT_GATE_ADAPTER_MISCONFIG", () => {
   assert.equal(gxtCodeFromGantryUserError("GATE_ADAPTER_COMPOUND_COMMAND"), GXT_ERROR.GATE_ADAPTER_MISCONFIG);
-  assert.equal(isKnownGantryUserErrorCode("GATE_ADAPTER_COMPOUND_COMMAND"), true);
 });
 
 test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
@@ -56,7 +52,7 @@ test("mapGitProofCodeToGxt: all git-proof codes are known", () => {
     "PLANNER_STAMP_UNSIGNED",
   ];
   for (const code of codes) {
-    assert.equal(isKnownGantryUserErrorCode(code), true);
+    assert.notEqual(gxtCodeFromGantryUserError(code), GXT_ERROR.VERIFY_FAILED);
     if (code === "PLANNER_STAMP_UNSIGNED") {
       assert.equal(mapGitProofCodeToGxt(code), GXT_ERROR.PLANNER_STAMP_UNSIGNED);
     } else {

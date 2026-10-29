@@ -6,7 +6,7 @@ import {
   loadIntegrationCompat,
   type IntegrationCompatManifest,
 } from "../integration-compat.js";
-import { loadInitAssetCatalog, type InitAssetSpec } from "../init/init-asset-catalog.js";
+import type { InitAssetSpec } from "../init/init-asset-catalog.js";
 import { defaultInitProfile, type InitProfile } from "../init/init-profile.js";
 import { toPosixRel } from "#core/posix-path.js";
 import type { PlannedWrite } from "../init/init-plan.js";
@@ -15,10 +15,6 @@ import type { UpgradeFileChange } from "./upgrade-plan-types.js";
 /** managed_strict substrate assets eligible for gantry upgrade (excludes user law / missions). */
 export function upgradeEligibleAssets(assets: InitAssetSpec[]): InitAssetSpec[] {
   return assets.filter((a) => a.mode === "managed_strict");
-}
-
-export function allUpgradeEligibleFromCatalog(templatesRoot: string): InitAssetSpec[] {
-  return upgradeEligibleAssets([...loadInitAssetCatalog(templatesRoot)]);
 }
 
 function pathExists(repoRoot: string, rel: string): boolean {

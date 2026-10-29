@@ -11,7 +11,7 @@ import {
   formatContextRequestLine,
   stageExecutorLogIfRequested,
 } from "#missions/context-request.js";
-import { gitReadStagedBlob, gitStagedNameOnly } from "#git/git-staged.js";
+import { gitStagedNameOnly } from "#git/git-staged.js";
 import {
   evaluateStagedTmvcGuard,
   formatStagedTmvcAdvisory,
@@ -98,24 +98,6 @@ test("context-request: format and append scaffold", () => {
   });
   const body = fs.readFileSync(logPath, "utf8");
   assert.match(body, /Context Request PENDING/);
-});
-
-test("git-staged: index-fidelity under working-tree divergence", () => {
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-git-staged-"));
-  initGitRepo(dest);
-  const fileRel = "src/cli/foo.ts";
-  fs.mkdirSync(path.join(dest, "src", "cli"), { recursive: true });
-  const fileAbs = path.join(dest, fileRel);
-  fs.writeFileSync(fileAbs, "export const clean = true;\n", "utf8");
-  execSync("git add .", { cwd: dest, stdio: "pipe" });
-  fs.writeFileSync(fileAbs, "import banned from '../core/evil';\n", "utf8");
-
-  const staged = gitReadStagedBlob(dest, fileRel);
-  assert.equal(staged.ok, true);
-  if (staged.ok) {
-    assert.match(staged.content.toString("utf8"), /clean = true/);
-    assert.doesNotMatch(staged.content.toString("utf8"), /evil/);
-  }
 });
 
 test("staged-tmvc-guard: governance files never violate", () => {

@@ -43,9 +43,3 @@ export function runGate(workingDirectory: string, spec: GateSpec): GateRunResult
     combined: `${stdout}\n${stderr}`,
   };
 }
-
-export function gatePassed(result: GateRunResult, successSubstring: string | null): boolean {
-  if (result.exitCode !== 0) return false;
-  if (successSubstring && !result.combined.includes(successSubstring)) return false;
-  return true;
-}

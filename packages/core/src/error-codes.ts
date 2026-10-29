@@ -98,8 +98,3 @@ export function gxtCodeFromGantryUserError(code: string): GxtErrorCode {
   if (mapped) return mapped;
   return GXT_ERROR.VERIFY_FAILED;
 }
-
-/** @internal Test helper — returns undefined when code would fall through to VERIFY_FAILED unexpectedly. */
-export function isKnownGantryUserErrorCode(code: string): boolean {
-  return code.startsWith("GXT_") || code in GIT_PROOF_TO_GXT || code in GANTRY_USER_ERROR_TO_GXT;
-}

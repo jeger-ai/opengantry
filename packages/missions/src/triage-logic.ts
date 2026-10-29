@@ -125,29 +125,3 @@ export function triageIntent(repoRoot: string, intent: string, manifest: Manifes
     ),
   );
 }
-
-export function formatTriageHuman(result: TriageResult): string {
-  const lines = [
-    `Action: ${result.action}`,
-    `Skill_key: ${result.skill_key}`,
-    `Risk_tier: ${result.risk_tier}`,
-    `Confidence: ${result.confidence.toFixed(2)}`,
-    `tmvc_roots: ${JSON.stringify(result.tmvc_roots)}`,
-    `forbidden_zones: ${JSON.stringify(result.forbidden_zones)}`,
-    `Reason: ${result.reason}`,
-  ];
-  if (result.match_reasons.length) {
-    lines.push("Match_reasons:");
-    for (const r of result.match_reasons) {
-      lines.push(`  - ${r}`);
-    }
-  }
-  if (result.adr_hints?.length) {
-    lines.push("ADR_hints (non-binding; Planner confirms):");
-    for (const h of result.adr_hints) {
-      const title = h.title ? ` — ${h.title}` : "";
-      lines.push(`  - ${h.id}${title}: ${h.note}`);
-    }
-  }
-  return lines.join("\n");
-}

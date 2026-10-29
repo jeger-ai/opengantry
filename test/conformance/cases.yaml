@@ -40,7 +40,6 @@ cases:
 
   # --- mission lifecycle ---
   - { id: mission-validate.mission-pass, fixture: mission-pass, args: [mission, validate, --file, .gitagent/missions/m-MSN-0101.yaml] }
-  - { id: mission-snapshot.mission-pass, fixture: mission-pass, args: [mission, snapshot, --file, .gitagent/missions/m-MSN-0101.yaml] }
   - { id: mission-changed.mission-pass, fixture: mission-pass, args: [mission, changed, --base-ref, HEAD~1, --json] }
   - { id: mission-pin.mission-pass, fixture: mission-pass, args: [mission, pin, .gitagent/missions/m-MSN-0101.yaml], record_tree: true }
   - { id: mission-unpin.mission-pass, fixture: mission-pass, args: [mission, unpin] }

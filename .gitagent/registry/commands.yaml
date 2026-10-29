@@ -137,8 +137,6 @@ entries:
     since: MSN-0207
   - name: mission pin
     since: MSN-0357
-  - name: mission snapshot
-    since: MSN-0010
   - name: mission unpin
     since: MSN-0357
   - name: mission validate

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
-import { allUpgradeEligibleFromCatalog } from "#missions/upgrade/upgrade-plan-catalog.js";
-import { templatePathForAsset } from "#missions/init/init-asset-catalog.js";
+import { upgradeEligibleAssets } from "#missions/upgrade/upgrade-plan-catalog.js";
+import { loadInitAssetCatalog, templatePathForAsset } from "#missions/init/init-asset-catalog.js";
 
 const DOGFOOD_PARITY_EXEMPT = new Set([
   ".cursor/rules/opengantry-gxt-substrate.mdc",
@@ -15,7 +15,7 @@ test("template parity: managed_strict root assets match templates/", () => {
   const templatesRoot = path.join(repoRoot, "templates");
   const mismatches: string[] = [];
 
-  for (const asset of allUpgradeEligibleFromCatalog(templatesRoot)) {
+  for (const asset of upgradeEligibleAssets([...loadInitAssetCatalog(templatesRoot)])) {
     if (DOGFOOD_PARITY_EXEMPT.has(asset.targetPath)) continue;
     const targetAbs = path.join(repoRoot, asset.targetPath.split("/").join(path.sep));
     const templateRel = templatePathForAsset(asset);

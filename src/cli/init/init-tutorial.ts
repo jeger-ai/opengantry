@@ -6,7 +6,7 @@ import { CLI_NAME } from "#core/constants.js";
 import { fromPosix } from "#core/posix-path.js";
 import { logError, logInfo, setExitCode, logWarn } from "../output/cli-io.js";
 import { plannerMissionStamped } from "#missions/git/git-proof.js";
-import { runStartOrchestration } from "../flows/start-orchestration.js";
+import { runLegislate } from "../flows/legislate.js";
 import { loadWorkspace } from "#missions/workspace.js";
 import { listMissionFiles } from "#missions/mission/resolution.js";
 import { runVerifyCore } from "../flows/verify-run.js";
@@ -85,23 +85,21 @@ async function scaffoldTutorialMission(
     return existing;
   }
 
-  const start = runStartOrchestration({
+  const result = runLegislate({
     intent: "Tutorial: experience the OpenGantry mission graph (init --tutorial)",
     msn: TUTORIAL_MSN_ID,
     skillKey,
     gateCommand: "gantry doctor",
-    writeMission: true,
     silent: true,
-    audience: "planner",
   });
-  if (!start.ok || !start.mission_file_path) {
+  if (!result.ok) {
     logError("Tutorial start failed — check the MANIFEST skills, then rerun gantry init --tutorial");
-    setExitCode(start.exit_code);
+    setExitCode(result.exitCode);
     p.outro("Tutorial incomplete");
     return null;
   }
-  p.log.success(`Mission scaffold: ${start.mission_file_path}`);
-  return start.mission_file_path;
+  p.log.success(`Mission scaffold: ${result.missionRel}`);
+  return result.missionRel;
 }
 
 async function runTutorialVerifyStep(

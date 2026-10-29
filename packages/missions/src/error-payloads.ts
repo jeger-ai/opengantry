@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { EXIT_CODE } from "#core/exit-codes.js";
-import { GXT_ERROR } from "#core/error-codes.js";
 import { REL_AGENT_ERROR_FILE } from "#core/constants.js";
 import { errorMessage, isGantryUserError } from "#core/user-error.js";
 import type { ContractImportViolation } from "#core/contract-types.js";
@@ -33,7 +32,7 @@ export function userFacingErrorToJson(e: unknown): UserFacingErrorJson {
 export interface AgentErrorPayload {
   v: 1;
   ts: string;
-  status: RuntimeExecResult["status"] | "interrogation_required";
+  status: RuntimeExecResult["status"];
   exit_code: number;
   flight_id: string;
   msn_id: string;
@@ -134,28 +133,5 @@ export function writeAgentErrorPayload(
     ...(result.contractViolations.length > 0 ? { contract_violations: result.contractViolations } : {}),
     summary: buildSummary(result),
     remediation: buildRemediation(result, resolved),
-  });
-}
-
-export function writeInterrogationRequiredError(
-  repoRoot: string,
-  input: {
-    msn_id: string;
-    skill_key: string;
-    finding_id: string;
-    question: string;
-    remediation: string[];
-  },
-): AgentErrorPayload {
-  return writeAgentErrorFile(repoRoot, {
-    status: "interrogation_required",
-    exit_code: EXIT_CODE.USAGE,
-    flight_id: "",
-    msn_id: input.msn_id,
-    mission_file: "",
-    skill_key: input.skill_key,
-    violations: [],
-    summary: `${GXT_ERROR.INTERROGATION_REQUIRED}: ${input.finding_id} — ${input.question}`,
-    remediation: input.remediation,
   });
 }

@@ -89,17 +89,3 @@ export function writeJsonAtomicSync(targetAbs: string, value: unknown): void {
     throw e;
   }
 }
-
-export function readJsonOrNull<T>(
-  absPath: string,
-  validate?: (parsed: unknown) => parsed is T,
-): T | null {
-  if (!fs.existsSync(absPath)) return null;
-  try {
-    const parsed = JSON.parse(fs.readFileSync(absPath, "utf8")) as unknown;
-    if (validate && !validate(parsed)) return null;
-    return parsed as T;
-  } catch {
-    return null;
-  }
-}

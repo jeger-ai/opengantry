@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0367",
+  "mission_path": ".gitagent/missions/MSN-0367.dead-flows.yaml",
+  "head": "b6c0277b292fefdf3d915c02082e8ad4140ab67d",
+  "tree": "74126c3f0539cc61cf092ae05aec4538db10950d",
+  "law_sha256": "76664e1c0ba406bc95326efeff52d2f5cae029a4b3db851c8164c751d537b0cd",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 113112,
+      "output_sha256": "b957a19c34b031f7ff44d347582afc9f3627eb03c7f1c03abb9fa277c76e51b9"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-10-29T10:37:31.748Z"
+}

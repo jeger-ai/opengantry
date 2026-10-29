@@ -197,7 +197,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 
 ### Feature-mission adapter gates (ADR-0041)
 
-After MSN-0193, whole-tree `src/cli` ESLint is green. Standard **gantry** feature missions MAY use a **single** explicit adapter for autonomous repair via `gantry context-feed --json`:
+After MSN-0193, whole-tree `src/cli` ESLint is green. Standard **gantry** feature missions MAY use a **single** explicit adapter, so `gantry verify --json` findings carry file and line:
 
 | Work | `gate_adapter` | `gate_command` |
 |------|----------------|----------------|
@@ -277,20 +277,9 @@ gh workflow run npm-publish.yml -f tag=v<version>
 
 See [ADR-0020](../.gitagent/out-of-scope/ADR-0020-kpi-llm-evidence-gate.md).
 
-## Code repair (`verify --fix`, MSN-0047+)
+## Import-layer gate report
 
-Deterministic quarantine mutations for specific gate failures — an isolation layer, **not** a pass generator:
-
-1. **`gantry verify --fix`** (interactive or `--non-interactive`) invokes the **code repair** when gate output is a **`GXT_IMPORT_LAYER_VIOLATION`** (`gantry arch check --json` structured report).
-2. The repair **quarantines** the offending import via TypeScript AST: removes the live `import` declaration, injects `GXT-SURGEON-QUARANTINE` markers and lazy Proxy roadblocks (no silent deletion).
-3. On mutation, append **`[SURGEON-MUTATION] …`** to `EXECUTOR_LOG.md` (the marker keeps its historical name, like the `GXT-SURGEON-QUARANTINE` code markers, so existing logs and quarantined files stay recognizable), then **rerun the full verify pipeline with `--fix` disabled**.
-4. Plain `gantry verify` (no `--fix`) remains fail-closed and never mutates TMVC.
-
-**Language boundary:** verify core phases (`git_proof`, `gate`, `kpi`, `trace`) are language-agnostic. Native repairs require TypeScript in the adopter workspace (or gantry package root); unresolved `typescript` disables the repair paths only — core verify still runs.
-
-**Import-layer JSON contract:** `gantry arch check --json <files…>` emits `{ schema_version, ok, violations[] }` with the rule ids of `TARGET_ARCHITECTURE.yaml`. Repairs parse JSON only — not human stderr.
-
-Implementation: [`src/cli/doctor/repairs/`](../src/cli/doctor/repairs/) registry, [`packages/missions/src/repair.ts`](../packages/missions/src/repair.ts) log and gate-report helpers, orchestration in `src/cli/flows/verify-presenters.ts`.
+`gantry arch check --json <files…>` emits `{ schema_version, ok, violations[] }` with the rule ids of `TARGET_ARCHITECTURE.yaml`. Verify reads that JSON, not human stderr, to report a gate failure as `GXT_IMPORT_LAYER_VIOLATION`. `gantry verify --fix` only prints fix hints; it never edits source.
 
 **Release:** see [`CHANGELOG.md`](CHANGELOG.md) § Maintainers for npm publish and release-squash policy.
 

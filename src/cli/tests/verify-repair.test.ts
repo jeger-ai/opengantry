@@ -48,8 +48,8 @@ rules:
     "utf8",
   );
 
-  const missionRel = ".gitagent/missions/repair-layer.yaml";
-  const traceQuote = "import layer repair quarantine evidence";
+  const missionRel = ".gitagent/missions/fix-layer.yaml";
+  const traceQuote = "import layer fix evidence";
   fs.mkdirSync(path.join(dest, ".gitagent", "missions"), { recursive: true });
   fs.writeFileSync(
     path.join(dest, missionRel),
@@ -69,15 +69,15 @@ trace_rows:
   return missionRel;
 }
 
-test("runVerify: --fix quarantines import-layer violation from JSON gate", async () => {
+test("runVerify: --fix --non-interactive leaves source files unchanged and prints fix hints", async () => {
   const ogRoot = getRepoRoot();
   const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-layer-"));
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-fix-"));
   const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
     gateCommand: `node ${cli} arch check --json src/cli/flows/bad.ts`,
     gateSubstring: '"ok": true',
   });
-  gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
+  gitInitCommit(dest, "[MSN-0998] legislate import-layer fix mission", PLANNER_EMAIL);
 
   const badPath = path.join(dest, "src/cli/flows/bad.ts");
   const before = fs.readFileSync(badPath, "utf8");
@@ -96,81 +96,11 @@ test("runVerify: --fix quarantines import-layer violation from JSON gate", async
         });
       });
       const combined = output.stdout + output.stderr;
-      const after = fs.readFileSync(badPath, "utf8");
-      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
-
-      assert.notEqual(after, before);
-      assert.match(after, /GXT-SURGEON-QUARANTINE-START \[RULE-IMPORT-LAYER\]/);
-      assert.match(executorLog, /\[SURGEON-MUTATION\] import-layer quarantined: src\/cli\/flows\/bad\.ts/);
-      assert.match(combined, /\[Repair\] mutation logged; re-evaluating verify phases \(fix disabled\)/);
-      assert.equal(process.exitCode ?? 0, 0);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = undefined;
-    }
-  });
-});
-
-test("runVerify: without --fix does not quarantine an import-layer violation", async () => {
-  const ogRoot = getRepoRoot();
-  const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-plain-"));
-  const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${cli} arch check --json src/cli/flows/bad.ts`,
-    gateSubstring: '"ok": true',
-  });
-  gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
-
-  const badPath = path.join(dest, "src/cli/flows/bad.ts");
-  const before = fs.readFileSync(badPath, "utf8");
-  const prevCwd = process.cwd();
-
-  await withPlannerEnvAsync(async () => {
-    process.chdir(dest);
-    try {
-      process.exitCode = undefined;
-      const { output } = await captureConsoleAsync(async () => {
-        await runVerify({ mission: missionRel, executorLog: "EXECUTOR_LOG.md" });
-      });
-      const combined = output.stdout + output.stderr;
-      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
 
       assert.equal(fs.readFileSync(badPath, "utf8"), before);
-      assert.doesNotMatch(executorLog, /\[SURGEON-MUTATION\]/);
       assert.equal(process.exitCode, 1);
       assert.match(combined, /GXT_IMPORT_LAYER_VIOLATION/);
-    } finally {
-      process.chdir(prevCwd);
-      process.exitCode = undefined;
-    }
-  });
-});
-
-test("runVerify: --fix writes only one SURGEON-MUTATION line on successful rerun", async () => {
-  const ogRoot = getRepoRoot();
-  const cli = path.join(ogRoot, "dist/cli/index.js");
-  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-repair-once-"));
-  const missionRel = writeImportLayerFixtureRepo(dest, ogRoot, {
-    gateCommand: `node ${cli} arch check --json src/cli/flows/bad.ts`,
-    gateSubstring: '"ok": true',
-  });
-  gitInitCommit(dest, "[MSN-0998] legislate import-layer repair mission", PLANNER_EMAIL);
-
-  const prevCwd = process.cwd();
-  await withPlannerEnvAsync(async () => {
-    process.chdir(dest);
-    try {
-      process.exitCode = undefined;
-      await captureConsoleAsync(async () => {
-        await runVerify({
-          mission: missionRel,
-          executorLog: "EXECUTOR_LOG.md",
-          fix: true,
-          fixNonInteractive: true,
-        });
-      });
-      const executorLog = fs.readFileSync(path.join(dest, "EXECUTOR_LOG.md"), "utf8");
-      assert.equal(executorLog.match(/\[SURGEON-MUTATION\]/g)?.length ?? 0, 1);
+      assert.match(combined, /^Fix: /m);
     } finally {
       process.chdir(prevCwd);
       process.exitCode = undefined;

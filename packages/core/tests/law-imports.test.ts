@@ -71,13 +71,8 @@ test("the import scanner lists static, re-export, dynamic and require sites", ()
   assert.deepEqual(sites.map((s) => [s.kind, s.spec]), [["static", "x"], ["export_from", "./y.js"], ["dynamic_import_expr", null], ["require", "./r.js"]]);
 });
 
-test("quarantine regions are stripped linearly and bindings after `as` are the alias", async () => {
-  const { stripRepairQuarantineRegions, extractBindingsFromSnippet } = await import("../src/import-scanner.js");
-  const start = "// GXT-SURGEON-QUARANTINE-START";
-  const end = "// GXT-SURGEON-QUARANTINE-END";
-  assert.equal(stripRepairQuarantineRegions(`a\n${start}\nx\n${end}\n\nb`), "a\nb");
-  assert.equal(stripRepairQuarantineRegions(`a\n${start}\nx`), `a\n${start}\nx`);
-  assert.equal(stripRepairQuarantineRegions(start.repeat(5000)).length, start.length * 5000);
+test("bindings after `as` are the alias", async () => {
+  const { extractBindingsFromSnippet } = await import("../src/import-scanner.js");
   assert.deepEqual(extractBindingsFromSnippet('import { a as b, type T, c } from "x"'), ["b", "c"]);
   assert.deepEqual(extractBindingsFromSnippet('import d, { e as f } from "x"'), ["d", "f"]);
   // No binding form matches, so the scanner falls back to its placeholder binding; the point is that it returns at all.

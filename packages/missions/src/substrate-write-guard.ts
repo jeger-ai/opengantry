@@ -1,7 +1,7 @@
 import { normalizeRepoRelativePath } from "#core/posix-path.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
 import { REL_MISSIONS_PREFIX } from "./git/git-proof.js";
-import { classifyScopePath, forbiddenZoneRules, skillScopeLaw } from "./scope-law.js";
+import { forbiddenZoneRules } from "./scope-law.js";
 import { GantryUserError } from "#core/user-error.js";
 import type { Manifest } from "#core/manifest.js";
 
@@ -44,28 +44,6 @@ function allManifestForbiddenZones(manifest: Manifest): string[] {
     }
   }
   return [...zones];
-}
-
-/**
- * Validate a repo-relative write target for a skill-scoped MCP mutation against the skill's law: governance
- * transport is always allowed, a forbidden zone names its pattern, anything outside the roots is denied.
- */
-export function assertMcpSkillWritePath(
-  manifest: Manifest,
-  skillKey: string,
-  repoRelPath: string,
-): void {
-  assertNoPathTraversal(repoRelPath);
-  const norm = normalizeRepoRelativePath(repoRelPath);
-  const law = skillScopeLaw(manifest, skillKey);
-  switch (classifyScopePath(law, norm)) {
-    case "forbidden_zone":
-      throw new McpWriteDeniedError(norm, `path in forbidden zone ${judgePath(law, norm)?.pattern ?? ""}`);
-    case "outside_tmvc":
-      throw new McpWriteDeniedError(norm, `path outside TMVC roots for skill ${skillKey}`);
-    default:
-      return;
-  }
 }
 
 /**

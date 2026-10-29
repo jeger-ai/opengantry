@@ -81,33 +81,6 @@ function validateBreakGlassReason(reason: string | undefined): string {
   return trimmed;
 }
 
-function parseBypassNoteBody(noteBody: string): BypassAuditPayload | null {
-  const trimmed = noteBody.trim();
-  if (!trimmed) return null;
-  try {
-    const parsed = JSON.parse(trimmed) as Partial<BypassAuditPayload>;
-    if (parsed.v !== 1) return null;
-    if (typeof parsed.reason !== "string" || parsed.reason.trim().length < MIN_REASON_LENGTH) {
-      return null;
-    }
-    return {
-      v: 1,
-      reason: parsed.reason.trim(),
-      ts: typeof parsed.ts === "string" ? parsed.ts : "",
-      msn_id: typeof parsed.msn_id === "string" ? parsed.msn_id : undefined,
-      mission_file: typeof parsed.mission_file === "string" ? parsed.mission_file : undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
-export function commitHasValidBypassNote(root: string, commit: string): boolean {
-  const r = gitRun(root, ["notes", `--ref=${GXT_BYPASS_NOTES_REF}`, "show", commit]);
-  if (!r.ok) return false;
-  return parseBypassNoteBody(r.stdout) !== null;
-}
-
 export function writeBypassGitNote(
   root: string,
   commit: string,
