@@ -9,7 +9,7 @@ order: 12
 
 `gantry verify --contract` decides, without a model and without `.gitagent/`, whether a change may land. You describe what a change must satisfy in one file, `verify.yaml`, and verify judges the commits since a base against it: which paths changed, how much was added, whether an added line breaks one of your rules, and whether your check commands pass.
 
-It is in the full package, `@jeger-ai/opengantry`. A slim standalone package is planned.
+It ships in `@jeger-ai/opengantry` and the slim `@jeger-ai/opengantry-verify`.
 
 ## The contract
 
@@ -86,7 +86,7 @@ The run fails when, over all changed test files together:
 - trivially true assertions are added (`expect(true)`, `assert.ok(true)`; `assert True`);
 - empty catch blocks are added (`catch {}`, `.catch(() => {})`; `except …: pass`).
 
-Totals are compared, so splitting, moving or renaming a test file passes. Comments are ignored. The result lists each changed test file's counts at the base and at the head; SARIF reports `verify/test-assertions`, `verify/test-markers`, `verify/test-tautologies` and `verify/test-empty-catches` on the file. JS/TS and Python files are read; other test files are listed as skipped. Custom assertion helpers (`assertThat`, `should`) are not counted, so the check raises the bar rather than replacing review. Coverage is not part of it: run your coverage tool as a check.
+Totals are compared, so splitting, moving or renaming a test file passes. Comments are ignored. The result lists each changed test file's counts at the base and at the head; SARIF reports `verify/test-assertions`, `verify/test-markers`, `verify/test-tautologies` and `verify/test-empty-catches` on the file. JS/TS and Python files are read; other test files are listed as skipped. Custom assertion helpers (`assertThat`, `should`) are not counted: it raises the bar, it does not replace review. For coverage, run your coverage tool as a check.
 
 ## From another framework's plan
 
@@ -162,7 +162,7 @@ When a check already fails at the base, run `--baseline` once there and commit `
 
 ## The result
 
-`--json` and `--out` give `opengantry.verify-result.v1`: status, mode, head and base, the contract's path, sha256 and source, the changed, outside and forbidden paths, the size against the budget, rule violations as `file:line`, each check's exit code, seconds, verdict and failure names, and `criticality`. It never holds file contents or command output; the tail of a failing check's output is printed on stderr only. Keep `--out` files outside the tree or gitignored, because a later `--check-result` needs a clean tree.
+`--json` and `--out` give `opengantry.verify-result.v1`: status, mode, head and base, the contract's path, sha256 and source, the changed, outside and forbidden paths, the size against the budget, rule violations as `file:line`, each check's exit code, seconds, verdict and failure names, and `criticality`. It never holds file contents or command output; a failing check's output tail goes to stderr only. Keep `--out` files outside the tree or gitignored, because a later `--check-result` needs a clean tree.
 
 ## Signed results
 
@@ -175,7 +175,7 @@ gantry verify --contract --base origin/main --check-result out/verify.json --all
 
 ### Keyless signatures
 
-In CI there is usually no signing key. `--sign keyless` signs with Sigstore instead: the job's OIDC identity gets a short-lived certificate, and the signature is recorded in the public Rekor transparency log. It needs `permissions: id-token: write` in GitHub Actions, or an OIDC token in `SIGSTORE_ID_TOKEN`; without one, verify stops with `GXT_VERIFY_SIGN_NO_IDENTITY` (exit 2). This is the only part of verify that uses the network, and only when you ask for it.
+In CI there is usually no signing key. `--sign keyless` signs with Sigstore instead: the job's OIDC identity gets a short-lived certificate, and the signature is recorded in the public Rekor transparency log. It needs `permissions: id-token: write` in GitHub Actions, or an OIDC token in `SIGSTORE_ID_TOKEN`; without one, verify stops with `GXT_VERIFY_SIGN_NO_IDENTITY` (exit 2). It is the only part of verify that uses the network.
 
 ```yaml
 permissions: { contents: read, id-token: write }
