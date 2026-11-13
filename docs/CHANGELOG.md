@@ -14,7 +14,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.2** (see `package.json`).
+- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.3** (see `package.json`).
 - **Law files are YAML:** `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`.
   - A 3.x JSON file is still read when the YAML form is absent.
   - If both forms exist and differ, the CLI fails closed (`GXT_LAW_FILE_AMBIGUOUS`).
@@ -53,18 +53,17 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### Unreleased (criticality verdict)
+### From v4.0.2 (criticality verdict, neutral gate schema — v4.0.3)
 
-Nothing to migrate.
+```bash
+npm install -g @jeger-ai/opengantry@4.0.3
+```
+
+Nothing to migrate: existing contracts keep verifying.
 
 - **`criticality` in the verify contract** ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decisions 13-16): path classes with `never_auto`, a `default_level`, and an optional classifier command. Every `opengantry.verify-result.v1` result now carries `criticality` (`unknown`, source `none`, when the contract has no section). The verdict is covered by `--sign`, and never fails a run.
   - `gantry verify --contract --criticality-record <dir>` (and `gantry-verify --criticality-record`) writes the classifier's input, including the diff, and the verdict, for training.
   - The library exports the `CriticalityLevel` and `CriticalityVerdict` types.
-
-### Unreleased (neutral gate contract schema)
-
-Nothing to migrate: existing contracts keep verifying.
-
 - **The JSON gate contract's schema is `opengantry.gate.v1`.** `gantry verify --contract gate.json` and `@jeger-ai/opengantry-verify` read it. The old name `commitly.gate.v1` is still read as an alias ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decision 2), so tools that write it need no change now; switch them to the new name before the next major version.
   - The contract result's `contract.format` for a JSON gate contract is `gate` (was `commitly_gate`) for either schema name.
   - The library exports `GATE_SCHEMA`. `COMMITLY_GATE_SCHEMA` and `parseCommitlyGate` are deprecated aliases and go in the next major version.
