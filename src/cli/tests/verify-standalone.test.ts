@@ -5,7 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { gitChildEnv } from "#git/git.js";
-import { parseCommitlyGate, parseVerifyYaml } from "#verify/contract.js";
+import { COMMITLY_GATE_SCHEMA, GATE_SCHEMA, parseCommitlyGate, parseVerifyContract, parseVerifyYaml } from "#verify/contract.js";
+
+const parseGate = (text: string) => parseVerifyContract(text, "gate.json");
 import { patternCoversPath } from "#core/path-glob.js";
 import { checkVerifyResult, runVerifyContract, writeVerifyBaseline } from "#verify/run.js";
 
@@ -90,10 +92,10 @@ test("verify contract: verify.yaml is strict; invalid input fails closed with GX
   assert.equal(c.rules[0]!.why, "layers");
 });
 
-test("verify contract: COMMITLY gate.json (commitly.gate.v1) maps field for field; cage_protect and part are ignored (MSN-0277 DoD 1)", () => {
-  const gate = parseCommitlyGate(
+test("verify contract: the JSON gate contract (opengantry.gate.v1) maps field for field; cage_protect and part are ignored (MSN-0277 DoD 1)", () => {
+  const gate = parseGate(
     JSON.stringify({
-      schema: "commitly.gate.v1",
+      schema: "opengantry.gate.v1",
       base: "abc123",
       allowed_paths: ["server/ai"],
       forbidden_paths: [],
@@ -104,14 +106,27 @@ test("verify contract: COMMITLY gate.json (commitly.gate.v1) maps field for fiel
       checks: [{ name: "C2", part: "backend", heavy: true, cmd: "make test", self_check: null, failures: "^FAIL: (.+)$", expect: "exit0" }],
     }),
   );
-  assert.equal(gate.format, "commitly_gate");
+  assert.equal(gate.format, "gate");
   assert.equal(gate.base, "abc123");
   assert.deepEqual(gate.allowedPaths, ["server/ai"]);
   assert.equal(gate.maxAddedLines, 400);
   assert.deepEqual(gate.rules[0], { name: "no http", files: ["client/**/*.ts"], forbid: "\\bHttpClient\\b", why: "web layers" });
   assert.deepEqual(gate.checks[0], { name: "C2", run: "make test", expect: "exit0", heavy: true, quickRun: null, failures: "^FAIL: (.+)$" });
   assert.deepEqual(gate.ignored, ["cage_protect", "checks[].part"]);
-  assert.throws(() => parseCommitlyGate('{"schema":"commitly.gate.v1","extra":1}'), /unknown key "extra"/);
+  assert.throws(() => parseGate('{"schema":"opengantry.gate.v1","extra":1}'), /unknown key "extra"/);
+});
+
+test("verify contract: the old gate schema name is read as an alias; other names are refused; the old exports are deprecated aliases (MSN-0374)", () => {
+  const body = { base: "abc123", allowed_paths: ["app"], forbidden_paths: [], checks: [{ name: "C1", cmd: "true", expect: "exit0" }] };
+  const neutral = parseGate(JSON.stringify({ schema: GATE_SCHEMA, ...body }));
+  assert.equal(GATE_SCHEMA, "opengantry.gate.v1");
+  assert.equal(COMMITLY_GATE_SCHEMA, "commitly.gate.v1");
+  assert.deepEqual(parseGate(JSON.stringify({ schema: COMMITLY_GATE_SCHEMA, ...body })), neutral);
+  assert.deepEqual(parseCommitlyGate(JSON.stringify({ schema: COMMITLY_GATE_SCHEMA, ...body })), neutral);
+  for (const schema of ["opengantry.gate.v2", "opengantry.verify.v1", 1, null]) {
+    assert.throws(() => parseGate(JSON.stringify({ schema, ...body })), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_CONTRACT_INVALID" && /schema must be opengantry\.gate\.v1/.test(e.message));
+  }
+  assert.throws(() => parseGate(JSON.stringify(body)), /schema must be opengantry\.gate\.v1/);
 });
 
 test("verify paths: no wildcard is the path or a folder above it; *, ** and ? are globs (MSN-0277 DoD 3)", () => {
@@ -166,10 +181,10 @@ test("verify trust: a tracked contract is read from the base commit, so a change
   assert.throws(() => runVerifyContract({ cwd: fresh.dest, base: freshBase }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_CONTRACT_NOT_AT_BASE");
 
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-handover-"));
-  write(outside, "gate.json", JSON.stringify({ schema: "commitly.gate.v1", base, allowed_paths: ["."], forbidden_paths: [], checks: [] }));
+  write(outside, "gate.json", JSON.stringify({ schema: "opengantry.gate.v1", base, allowed_paths: ["."], forbidden_paths: [], checks: [] }));
   const h = runVerifyContract({ cwd: dest, contract: path.join(outside, "gate.json") });
   assert.equal(h.contract.source, "disk");
-  assert.equal(h.contract.format, "commitly_gate");
+  assert.equal(h.contract.format, "gate");
   assert.equal(h.status, "pass", h.problems.join("\n"));
 
   assert.throws(() => runVerifyContract({ cwd: dest }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_REQUIRED");
@@ -183,7 +198,7 @@ test("verify trust: a tracked contract is read from the base commit, so a change
   assert.throws(() => runVerifyContract({ cwd: link, contract: "verify.yaml" }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_REQUIRED");
   assert.equal(runVerifyContract({ cwd: link, contract: path.join(link, "verify.yaml"), base, mode: "quick" }).contract.source, "base");
   const noBase = path.join(outside, "nobase.json");
-  write(outside, "nobase.json", JSON.stringify({ schema: "commitly.gate.v1", allowed_paths: ["."], forbidden_paths: [], checks: [] }));
+  write(outside, "nobase.json", JSON.stringify({ schema: "opengantry.gate.v1", allowed_paths: ["."], forbidden_paths: [], checks: [] }));
   assert.throws(() => runVerifyContract({ cwd: dest, contract: noBase }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_MISSING");
   assert.throws(() => runVerifyContract({ cwd: dest, base: "no-such-ref" }), (e: Error & { code?: string }) => e.code === "GXT_VERIFY_BASE_INVALID");
 });

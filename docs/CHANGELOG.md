@@ -53,6 +53,14 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
+### Unreleased (neutral gate contract schema)
+
+Nothing to migrate: existing contracts keep verifying.
+
+- **The JSON gate contract's schema is `opengantry.gate.v1`.** `gantry verify --contract gate.json` and `@jeger-ai/opengantry-verify` read it. The old name `commitly.gate.v1` is still read as an alias ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decision 2), so tools that write it need no change now; switch them to the new name before the next major version.
+  - The contract result's `contract.format` for a JSON gate contract is `gate` (was `commitly_gate`) for either schema name.
+  - The library exports `GATE_SCHEMA`. `COMMITLY_GATE_SCHEMA` and `parseCommitlyGate` are deprecated aliases and go in the next major version.
+
 ### From v4.0.1 (agent sandbox settings — v4.0.2)
 
 ```bash

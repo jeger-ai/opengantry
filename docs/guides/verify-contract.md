@@ -44,7 +44,7 @@ checks:
 
 - **Paths.** A pattern without wildcards is the path or a folder above it (`.` is everything). `*` matches within one path segment, `**` across any depth, `?` one character.
 - **Strict.** Unknown keys, wrong types, duplicate check names, invalid regular expressions and YAML aliases stop verify with exit `2` (`GXT_VERIFY_CONTRACT_INVALID`).
-- **COMMITLY hangar.** Pass a handover's `gate.json` (`commitly.gate.v1`) as the contract and it is read as it is. `cage_protect` and `part` are noted and ignored.
+- **JSON gate contract.** A `.json` contract is a `gate.json` (`schema: opengantry.gate.v1`), the form a tool that generates contracts writes. It is read as it is and maps field for field (`cmd` to `run`, `self_check` to `quick_run`, `approach` to `why`). `cage_protect` and `part` are noted and ignored. The older schema name `commitly.gate.v1` is still read.
 
 ## Imports and layers
 

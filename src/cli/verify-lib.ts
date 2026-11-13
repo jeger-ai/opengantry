@@ -17,6 +17,7 @@ export {
 export {
   parseVerifyContract,
   VERIFY_CONTRACT_SCHEMA,
+  GATE_SCHEMA,
   COMMITLY_GATE_SCHEMA,
   type VerifyContract,
   type LoadedVerifyContract,

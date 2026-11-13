@@ -44,7 +44,7 @@ export interface VerifyContractCliOptions {
  */
 export function registerVerifyContractOptions(cmd: Command, { standalone = false } = {}): Command {
   const w = (text: string): string => (standalone ? text : `With --contract: ${text}`);
-  if (!standalone) cmd.option("--contract [file]", "Standalone verify contract instead of a mission: verify.yaml (default) or a COMMITLY gate.json");
+  if (!standalone) cmd.option("--contract [file]", "Standalone verify contract instead of a mission: verify.yaml (default) or a JSON gate contract (gate.json)");
   return cmd
     .option("--base <ref>", w("base commit (required for a committed contract)"))
     .option("--worktree", w("include uncommitted and untracked work (check before committing)"))

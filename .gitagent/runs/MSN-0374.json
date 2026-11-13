@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0374",
+  "mission_path": ".gitagent/missions/MSN-0374.neutral-gate-schema.yaml",
+  "head": "bc7a781a26ba63a19a4894cff000efef09d58776",
+  "tree": "d8f427d768e42b6f63ba6cf46ba83b7bf8c19e3d",
+  "law_sha256": "5711c9fb5243f2e0e04c9cab91d949c492d9c22eacbb8ab1599c38549d4c332a",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 31025,
+      "output_sha256": "409bf0c14f870907deaed59e3daab0e26cb11bdfaca23b6dd0f2fa8459bc7aef"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-13T02:49:02.465Z"
+}

@@ -11,8 +11,8 @@ import { resetReporter } from "./output/reporter.js";
  */
 resetReporter();
 const program = registerVerifyContractOptions(new Command("gantry-verify"), { standalone: true })
-  .description("Decide whether a change may land, from one contract (verify.yaml or a COMMITLY gate.json), without .gitagent/")
-  .argument("[contract]", "verify.yaml (default) or a COMMITLY gate.json")
+  .description("Decide whether a change may land, from one contract (verify.yaml or a JSON gate contract), without .gitagent/")
+  .argument("[contract]", "verify.yaml (default) or a JSON gate contract (gate.json)")
   .option("--json", "Print the result (or the baseline, or the check) as JSON on stdout")
   .option("--format <fmt>", "text (default) | json | sarif | junit")
   .version(CLI_VERSION)

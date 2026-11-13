@@ -193,7 +193,7 @@ test("verify imports: a gate.json inherits the base verify.yaml's imports and la
   commit(dest, "work");
   const handover = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-gate-"));
   write(handover, "gate.json", JSON.stringify({
-    schema: "commitly.gate.v1",
+    schema: "opengantry.gate.v1",
     base,
     allowed_paths: ["src/shop/services"],
     forbidden_paths: [],

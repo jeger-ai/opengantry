@@ -254,7 +254,7 @@ checks:
     "gate.json",
     `${JSON.stringify(
       {
-        schema: "commitly.gate.v1",
+        schema: "opengantry.gate.v1",
         allowed_paths: ["src/", "README.md"],
         forbidden_paths: [".github/"],
         max_added_lines: 200,
