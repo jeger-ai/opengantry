@@ -62,7 +62,7 @@ npm install -g @jeger-ai/opengantry@4.0.3
 Nothing to migrate: existing contracts keep verifying.
 
 - **`criticality` in the verify contract** ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decisions 13-16): path classes with `never_auto`, a `default_level`, and an optional classifier command. Every `opengantry.verify-result.v1` result now carries `criticality` (`unknown`, source `none`, when the contract has no section). The verdict is covered by `--sign`, and never fails a run.
-  - `gantry verify --contract --criticality-record <dir>` (and `gantry-verify --criticality-record`) writes the classifier's input, including the diff, and the verdict, for training.
+  - `gantry verify --contract --criticality-record <dir>` (and `gantry-verify --criticality-record`) writes the classifier's input, including the diff, and the verdict, for training. It writes nothing when the contract has no `criticality` section, and the record's `input` is `null` when no classifier ran (none configured, or a `never_auto` class decided).
   - The library exports the `CriticalityLevel` and `CriticalityVerdict` types.
 - **The JSON gate contract's schema is `opengantry.gate.v1`.** `gantry verify --contract gate.json` and `@jeger-ai/opengantry-verify` read it. The old name `commitly.gate.v1` is still read as an alias ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decision 2), so tools that write it need no change now; switch them to the new name before the next major version.
   - The contract result's `contract.format` for a JSON gate contract is `gate` (was `commitly_gate`) for either schema name.
