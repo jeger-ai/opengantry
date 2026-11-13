@@ -59,13 +59,13 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 npm install -g @jeger-ai/opengantry@4.0.3
 ```
 
-Nothing to migrate: existing contracts keep verifying.
+Existing contracts keep verifying. One result value changes: a tool that reads `contract.format` from a JSON gate contract's result and matches `commitly_gate` must also accept `gate` (below).
 
 - **`criticality` in the verify contract** ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decisions 13-16): path classes with `never_auto`, a `default_level`, and an optional classifier command. Every `opengantry.verify-result.v1` result now carries `criticality` (`unknown`, source `none`, when the contract has no section). The verdict is covered by `--sign`, and never fails a run.
   - `gantry verify --contract --criticality-record <dir>` (and `gantry-verify --criticality-record`) writes the classifier's input, including the diff, and the verdict, for training. It writes nothing when the contract has no `criticality` section, and the record's `input` is `null` when no classifier ran (none configured, or a `never_auto` class decided).
   - The library exports the `CriticalityLevel` and `CriticalityVerdict` types.
 - **The JSON gate contract's schema is `opengantry.gate.v1`.** `gantry verify --contract gate.json` and `@jeger-ai/opengantry-verify` read it. The old name `commitly.gate.v1` is still read as an alias ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decision 2), so tools that write it need no change now; switch them to the new name before the next major version.
-  - The contract result's `contract.format` for a JSON gate contract is `gate` (was `commitly_gate`) for either schema name.
+  - **Behaviour change:** the contract result's `contract.format` for a JSON gate contract is `gate` (was `commitly_gate`) for either schema name, including contracts that still say `commitly.gate.v1`. `commitly_gate` is no longer produced; shipped in the 4.0.3 patch by operator decision.
   - The library exports `GATE_SCHEMA`. `COMMITLY_GATE_SCHEMA` and `parseCommitlyGate` are deprecated aliases and go in the next major version.
 
 ### From v4.0.1 (agent sandbox settings — v4.0.2)
