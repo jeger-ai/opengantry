@@ -50,7 +50,7 @@ function message(err: unknown): string {
 }
 
 /** Whether sigstore can get an OIDC token without a browser: `SIGSTORE_ID_TOKEN`, or a GitHub Actions job with `id-token: write`. */
-export function hasAmbientIdentity(env: NodeJS.ProcessEnv = process.env): boolean {
+function hasAmbientIdentity(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(env.SIGSTORE_ID_TOKEN) || Boolean(env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
 }
 

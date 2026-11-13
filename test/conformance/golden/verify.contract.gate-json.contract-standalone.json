@@ -66,6 +66,14 @@
         "reason": "exit 0"
       }
     ],
+    "criticality": {
+      "level": "unknown",
+      "source": "none",
+      "paths_level": null,
+      "classes": [],
+      "unclassified": [],
+      "classifier": null
+    },
     "problems": []
   },
   "stderr_codes": []

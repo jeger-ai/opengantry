@@ -28,6 +28,8 @@ export interface VerifyContractCliOptions {
   baselineFile?: string;
   checkResult?: string;
   out?: string;
+  /** `--criticality-record <dir>`: the criticality classifier's input and output, for training. */
+  criticalityRecord?: string;
   /** true: the git signing key; "keyless": Sigstore through the CI's OIDC identity. */
   sign?: boolean | string;
   allowedSigners?: string;
@@ -53,6 +55,7 @@ export function registerVerifyContractOptions(cmd: Command, { standalone = false
     .option("--baseline-file <file>", w("baseline file (default verify-baseline.json beside the contract)"))
     .option("--check-result <file>", w("pass only if that result passed in a full run for this HEAD, base and contract"))
     .option("--out <file>", w("write the opengantry.verify-result.v1 result to <file>"))
+    .option("--criticality-record <dir>", w("write the criticality classifier's input (it holds the diff) and verdict to <dir>"))
     .option("--sign [method]", `${standalone ? "With --out" : "With --contract and --out, or with --export"}: sign the result with the git signing key, or \`keyless\` with Sigstore through the CI's OIDC identity (network)`)
     .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file")
     .option("--certificate-identity <regexp>", "With --check-result: also require a keyless signature whose certificate identity (workflow URI or email) matches")
@@ -69,6 +72,7 @@ function assertCompatible(o: VerifyContractCliOptions): void {
   if (exportFormat(o) && (o.baseline || o.checkResult)) throw usage(`--format ${String(o.format)} projects a run's result; --baseline and --check-result report as text or json`);
   const modes = [o.worktree && "--worktree", o.quick && "--quick", o.baseline && "--baseline", o.checkResult && "--check-result"].filter(Boolean);
   if (modes.length > 1) throw usage(`choose one of ${modes.join(", ")}`);
+  if (o.criticalityRecord && (o.baseline || o.checkResult)) throw usage("--criticality-record goes with a run, not --baseline or --check-result");
   assertSigning(o);
 }
 
@@ -114,6 +118,8 @@ function summary(result: VerifyContractResult): string[] {
     `verify: ${result.mode} run of ${result.contract.path} (${result.contract.source}) on ${result.base.slice(0, 12)}...${result.head.slice(0, 12)}: ${String(result.paths.changed.length)} changed file(s), ${String(result.size.added)} line(s) added`,
   ];
   if (result.inherited) lines.push(`verify: repository law from ${result.inherited.path} at the base applies too`);
+  const c = result.criticality;
+  if (c.source !== "none") lines.push(`verify: criticality ${c.level} (${c.source}${c.classes.length > 0 ? `; classes ${c.classes.map((x) => x.name).join(", ")}` : ""}${c.classifier?.error ? `; classifier ${c.classifier.error}` : ""})`);
   if (result.skipped.length > 0) lines.push(`verify: note: imports not read (language not supported): ${result.skipped.join(", ")}`);
   const sig = result.signature;
   if (sig?.kind === "sigstore") lines.push(`verify: signed keyless (sigstore, transparency log index ${keylessLogIndex(sig) ?? "none"})`);
@@ -168,7 +174,7 @@ export async function runVerifyContractCommand(o: VerifyContractCliOptions): Pro
       await runCheckResult(o, o.checkResult, base, json);
       return;
     }
-    const run = runVerifyContract({ ...base, mode: modeOf(o), onCheck, sign: o.sign === true });
+    const run = runVerifyContract({ ...base, mode: modeOf(o), onCheck, sign: o.sign === true, recordDir: o.criticalityRecord });
     const result = o.sign === "keyless" ? await signVerifyResultKeyless(run) : run;
     if (o.out) writeResult(o.out, result);
     if (json) emitCliJson(result);

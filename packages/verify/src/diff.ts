@@ -32,7 +32,7 @@ function range(base: string, worktree: boolean): string {
   return worktree ? base : `${base}...HEAD`;
 }
 
-export function untrackedFiles(root: string): string[] {
+function untrackedFiles(root: string): string[] {
   return zlines(git(root, ["ls-files", "-z", "--others", "--exclude-standard"]));
 }
 

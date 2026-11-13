@@ -48,6 +48,15 @@ Regex rules over added lines cannot tell an import from a string, and they canno
 
 Limits of the amendment: the shared JS/TS scanner also reports an `import … from` written inside a string literal; Python imports on the same line as a compound statement (`if x: import y`) are not read; aliases are explicit (`tsconfig.json` `paths` are not read); `--allowed-signers` verifies SSH signatures only.
 
+## Amendment: the criticality verdict (MSN-0375)
+
+A tool that merges without a person (issue #346) needs a verdict on how much a change needs one, bound to the same head and contract as the gate result. ADR-0061 keeps model evidence out of the deterministic core, so the verdict is paths first and a command second.
+
+13. **`criticality` in the contract.** `verify.yaml` and the JSON gate contract take `criticality`: `classes` (`name`, `paths`, `level` low|medium|high, `never_auto`), `default_level` for files no class covers (default `high`), and an optional `classifier` (`run`, `timeout_seconds`, default 60). Strict like the rest of the contract (`GXT_VERIFY_CONTRACT_INVALID`). Repository law (decision 11) joins classes by name, tighten-only: paths unioned, the higher level, `never_auto` if either; the repository's classifier wins.
+14. **The verdict is part of the result.** `criticality` holds `level` (low|medium|high|critical|unknown), `source` (none|paths|classifier), `paths_level`, the touched classes with their files, the unclassified files, and the classifier's level, confidence, rationale (500 characters at most) and error. It is never a problem and never changes `status`. Because it is in the result, `--sign` and `--sign keyless` cover it, and `--check-result` binds it to head, base and contract like the rest. A contract without the section gives `unknown` (source `none`).
+15. **Paths decide first; a classifier is a command.** A touched `never_auto` class makes the verdict `critical` and the classifier is not run. Otherwise the classifier, when there is one, gets `opengantry.criticality-input.v1` on stdin (the path verdict, the changed files, lines added and the diff) and its `level` is the verdict. It runs with `sh -c` at the repository root like a check, so the diff leaves the machine only if the contract names a command that sends it. Every failure (diff unreadable, non-zero exit, not JSON, unknown level, timeout) is `unknown` with the reason; consumers treat `unknown` like `critical`.
+16. **Training records are opt-in.** `--criticality-record <dir>` writes one `opengantry.criticality-record.v1` file per run with the classifier's input and the verdict. Unlike the result, it holds the diff; it is written only where the caller asks. Training a classifier and merging on the verdict belong to the consumer.
+
 ## Consequences
 
 - A repository can make a pull request's merge depend on `gantry verify --contract` in CI without adopting `.gitagent/`.
