@@ -45,14 +45,16 @@ interrogation:
     hypothesis: Operator authorizes work within declared TMVC and documents boundary
       decision on the record.
     operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
-      contract.tmvc_roots: .gitagent/missions/MSN-0375.criticality-verdict.yaml,
+      contract.tmvc_roots: ARCH_BASELINE.json, docs/CHANGELOG.md,
+      docs/guides/verify-contract.md, EXECUTOR_LOG.md,
+      .gitagent/missions/MSN-0375.criticality-verdict.yaml,
       .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
-      .gitagent/runs/MSN-0375.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
-      docs/CHANGELOG.md, docs/guides/verify-contract.md,
-      packages/opengantry-verify/README.md,
+      .gitagent/runs/MSN-0375.json, packages/opengantry-verify/README.md,
       packages/opengantry-verify/tests/verify-package.test.mjs,
       packages/verify/src/contract.ts, packages/verify/src/criticality.ts,
-      packages/verify/src/run.ts, src/cli/commands/verify-contract.ts,
+      packages/verify/src/diff.ts, packages/verify/src/keyless.ts,
+      packages/verify/src/plan-adapters.ts, packages/verify/src/run.ts,
+      src/cli/commands/verify-contract.ts,
       src/cli/tests/verify-criticality.test.ts, src/cli/verify-lib.ts,
       test/conformance/golden/verify.contract.contract-standalone.json,
       test/conformance/golden/verify.contract.gate-json.contract-standalone.jso\
@@ -144,7 +146,7 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0045
-interrogation_sha256: ec1432ef124599085c25be427e0eda4007bcba859cc9ed0b989cc92993213f05
+interrogation_sha256: 12dccd1a62a7d45371ac3ae4b54532e04c0e327d14171f5dbbffd79439360dc3
 declared_paths:
   - .gitagent/missions/MSN-0375.criticality-verdict.yaml
   - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
@@ -157,6 +159,9 @@ declared_paths:
   - packages/opengantry-verify/tests/verify-package.test.mjs
   - packages/verify/src/contract.ts
   - packages/verify/src/criticality.ts
+  - packages/verify/src/diff.ts
+  - packages/verify/src/keyless.ts
+  - packages/verify/src/plan-adapters.ts
   - packages/verify/src/run.ts
   - src/cli/commands/verify-contract.ts
   - src/cli/tests/verify-criticality.test.ts
@@ -177,6 +182,9 @@ contract:
     - packages/opengantry-verify/tests/verify-package.test.mjs
     - packages/verify/src/contract.ts
     - packages/verify/src/criticality.ts
+    - packages/verify/src/diff.ts
+    - packages/verify/src/keyless.ts
+    - packages/verify/src/plan-adapters.ts
     - packages/verify/src/run.ts
     - src/cli/commands/verify-contract.ts
     - src/cli/tests/verify-criticality.test.ts
@@ -189,4 +197,4 @@ contract:
     - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
   allow_dynamic_specifiers: true
-contract_sha256: 12e604239767988a3d6523eb45bc4f4d1afab691a063653128c56b569b834f03
+contract_sha256: b943152b274e087f6974092737231bc00385824c8c9f8e2fdf33bbf3e0930e85
