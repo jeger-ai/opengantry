@@ -1,0 +1,162 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0374]. Executor must not run until the [MSN-0374] legislation commit + pin.
+#
+# Legislated intent: issue #345: the JSON gate contract gets a neutral schema name (opengantry.gate.v1, GATE_SCHEMA,
+# format gate); the old schema name stays accepted as an alias and the old exports stay deprecated for one major version.
+#
+# Operator request (2026-11-12, "Work on the open opengantry issues"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0374.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0374
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). contract.tmvc_roots:
+      .gitagent/missions/MSN-0374.neutral-gate-schema.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/runs/MSN-0374.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/guides/verify-contract.md, packages/opengantry-verify/README.md,
+      packages/opengantry-verify/package.json,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/src/checks.ts, packages/verify/src/contract.ts,
+      src/cli/commands/verify-contract.ts,
+      src/cli/tests/verify-standalone-cli.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone.test.ts, src/cli/verify-bin.ts,
+      src/cli/verify-lib.ts, test/conformance/build-fixtures.mjs,
+      test/conformance/golden/verify.contract.gate-json.contract-standalone.jso\
+      n. Changed: the JSON gate contract's schema opengantry.gate.v1
+      (GATE_SCHEMA), read by parseGate with format gate; commitly.gate.v1 stays
+      accepted for reading (GATE_SCHEMA_ALIASES); COMMITLY_GATE_SCHEMA and
+      parseCommitlyGate stay exported, deprecated, until the next major version;
+      fixtures and tests write the neutral name, one test keeps the alias; help
+      text, package description and docs say 'JSON gate contract'; ADR-0051
+      decision 2 amended in place. No budget raised; versions unchanged.
+      Operator request (2026-11-12, chat): 'Work on the open opengantry issues',
+      issue #345."
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: 24872f28ef67
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0374.neutral-gate-schema.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/runs/MSN-0374.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/guides/verify-contract.md, packages/opengantry-verify/README.md,
+      packages/opengantry-verify/package.json,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/src/checks.ts, packages/verify/src/contract.ts,
+      src/cli/commands/verify-contract.ts,
+      src/cli/tests/verify-standalone-cli.test.ts,
+      src/cli/tests/verify-standalone-imports.test.ts,
+      src/cli/tests/verify-standalone.test.ts, src/cli/verify-bin.ts,
+      src/cli/verify-lib.ts, test/conformance/build-fixtures.mjs,
+      test/conformance/golden/verify.contract.gate-json.contract-standalone.jso\
+      n. Changed: the JSON gate contract's schema opengantry.gate.v1
+      (GATE_SCHEMA), read by parseGate with format gate; commitly.gate.v1 stays
+      accepted for reading (GATE_SCHEMA_ALIASES); COMMITLY_GATE_SCHEMA and
+      parseCommitlyGate stay exported, deprecated, until the next major version;
+      fixtures and tests write the neutral name, one test keeps the alias; help
+      text, package description and docs say 'JSON gate contract'; ADR-0051
+      decision 2 amended in place. No budget raised; versions unchanged.
+      Operator request (2026-11-12, chat): 'Work on the open opengantry issues',
+      issue #345."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with one named output change: the contract result's
+      format for a JSON gate contract is gate instead of commitly_gate, in the
+      golden verify.contract.gate-json.contract-standalone; no other golden
+      changes."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Planner-sealed mission contracts are
+      unchanged; this mission renames the standalone verify contract's JSON
+      schema, which has no Planner seal (ADR-0051 decision 8).
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. The JSON gate contract stays JSON because machines
+      write it (decision 3: third-party formats stay native); only its schema
+      name changes, and the old name stays readable."
+    adr_refs:
+      - ADR-0052
+      - ADR-0047
+interrogation_sha256: 5c584e4ac751a419c804d3f812ef9910625fac00ff3efc536ed8fdb123d28b87
+declared_paths:
+  - .gitagent/missions/MSN-0374.neutral-gate-schema.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/runs/MSN-0374.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-contract.md
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/package.json
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - packages/verify/src/checks.ts
+  - packages/verify/src/contract.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/verify-standalone-cli.test.ts
+  - src/cli/tests/verify-standalone-imports.test.ts
+  - src/cli/tests/verify-standalone.test.ts
+  - src/cli/verify-bin.ts
+  - src/cli/verify-lib.ts
+  - test/conformance/build-fixtures.mjs
+  - test/conformance/golden/verify.contract.gate-json.contract-standalone.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0374.neutral-gate-schema.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/runs/MSN-0374.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-contract.md
+    - packages/opengantry-verify/README.md
+    - packages/opengantry-verify/package.json
+    - packages/opengantry-verify/tests/verify-package.test.mjs
+    - packages/verify/src/checks.ts
+    - packages/verify/src/contract.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/verify-standalone-cli.test.ts
+    - src/cli/tests/verify-standalone-imports.test.ts
+    - src/cli/tests/verify-standalone.test.ts
+    - src/cli/verify-bin.ts
+    - src/cli/verify-lib.ts
+    - test/conformance/build-fixtures.mjs
+    - test/conformance/golden/verify.contract.gate-json.contract-standalone.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 42ad285af13a2465be43eb1cc1ad586c6d464dfe254aba917dc640e6c5d8c9b1
