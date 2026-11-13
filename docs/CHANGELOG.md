@@ -53,6 +53,14 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
+### Unreleased (criticality verdict)
+
+Nothing to migrate.
+
+- **`criticality` in the verify contract** ([ADR-0051](../.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) decisions 13-16): path classes with `never_auto`, a `default_level`, and an optional classifier command. Every `opengantry.verify-result.v1` result now carries `criticality` (`unknown`, source `none`, when the contract has no section). The verdict is covered by `--sign`, and never fails a run.
+  - `gantry verify --contract --criticality-record <dir>` (and `gantry-verify --criticality-record`) writes the classifier's input, including the diff, and the verdict, for training.
+  - The library exports the `CriticalityLevel` and `CriticalityVerdict` types.
+
 ### Unreleased (neutral gate contract schema)
 
 Nothing to migrate: existing contracts keep verifying.

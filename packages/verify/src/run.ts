@@ -30,6 +30,7 @@ import { patternCoversPath } from "#core/path-glob.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
 import { diskSourceTree, evaluateImports, gitSourceTree, type ImportFindings } from "./imports.js";
 import type { KeylessSignature } from "./keyless.js";
+import { judgeCriticality, type CriticalityVerdict } from "./criticality.js";
 import { evaluateTestIntegrity, type TestFileCounts, type TestMetric } from "./test-integrity.js";
 
 export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
@@ -67,6 +68,8 @@ export interface VerifyContractResult {
   /** `tests` (ADR-0058): the changed test files' counts at base and head; null when the contract has no `tests`. */
   tests: { allow_reduction: string[]; files: TestFileCounts[]; skipped: string[]; worse: TestMetric[] } | null;
   checks: VerifyCheckResult[];
+  /** ADR-0051 decision 14: how much the change needs a person; inside the signed payload. Never a problem by itself. */
+  criticality: CriticalityVerdict;
   problems: string[];
   /** `--sign`: the receipt-signing envelope over the canonical result without this field; `--sign keyless`: a Sigstore bundle. */
   signature?: ReceiptSignature | KeylessSignature;
@@ -83,6 +86,8 @@ export interface VerifyContractOptions {
   onCheck?: (run: CheckRun) => void;
   /** Sign the result with the git signing key (receipt-signing.ts). */
   sign?: boolean;
+  /** `--criticality-record <dir>`: write the criticality classifier's input and output there (it may hold the diff). */
+  recordDir?: string;
 }
 
 interface Prepared {
@@ -228,6 +233,8 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
     if (!run.result.ok) problems.push(`check "${check.name}": ${run.result.reason}`);
     return run.result;
   });
+  const recordDir = opts.recordDir ? path.resolve(opts.cwd ?? process.cwd(), opts.recordDir) : undefined;
+  const criticality = judgeCriticality(p.loaded.contract.criticality, { root: p.root, base: p.base, head: p.head, worktree, changed, added: size.added, recordDir });
   const { contract, ...loaded } = p.loaded;
   const result: VerifyContractResult = {
     schema: VERIFY_RESULT_SCHEMA,
@@ -246,6 +253,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
     skipped: found.skipped,
     tests,
     checks,
+    criticality,
     problems,
   };
   if (!opts.sign) return result;
