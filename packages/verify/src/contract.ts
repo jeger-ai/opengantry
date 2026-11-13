@@ -8,11 +8,12 @@ import type { VerifyTestsRule } from "./test-integrity.js";
 
 /**
  * The standalone verify contract (ADR-0051): what a change must satisfy, without `.gitagent/`. Humans write
- * `verify.yaml` (`opengantry.verify.v1`, ADR-0047); COMMITLY hangar's `gate.json` (`commitly.gate.v1`) is read
- * natively and mapped field for field.
+ * `verify.yaml` (`opengantry.verify.v1`, ADR-0047); machines write the JSON gate contract (`opengantry.gate.v1`,
+ * `gate.json`), which is read natively and mapped field for field.
  */
 export const VERIFY_CONTRACT_SCHEMA = "opengantry.verify.v1" as const;
-export const COMMITLY_GATE_SCHEMA = "commitly.gate.v1" as const;
+export const GATE_SCHEMA = "opengantry.gate.v1" as const;
+/** @deprecated The old name, still read (MSN-0374); goes in the next major. */ export const COMMITLY_GATE_SCHEMA = "commitly.gate.v1" as const;
 
 export type VerifyCheckExpect = "exit0" | "empty";
 
@@ -22,7 +23,7 @@ export interface VerifyRule {
   files: string[];
   /** Regex source: no added line may match it. */
   forbid: string;
-  /** Why the rule exists (hangar: `approach`). */
+  /** Why the rule exists (gate.json: `approach`). */
   why: string | null;
 }
 
@@ -31,7 +32,7 @@ export interface VerifyCheck {
   run: string;
   expect: VerifyCheckExpect;
   heavy: boolean;
-  /** The shorter command `--worktree` runs for a heavy check (hangar: `self_check`); null skips it. */
+  /** The shorter command `--worktree` runs for a heavy check (gate.json: `self_check`); null skips it. */
   quickRun: string | null;
   /** Regex source whose matches (group 1, else the match) name failing tests, for the baseline. */
   failures: string | null;
@@ -53,7 +54,7 @@ export interface VerifyLayer {
 }
 
 export interface VerifyContract {
-  format: "verify_yaml" | "commitly_gate";
+  format: "verify_yaml" | "gate" | "commitly_gate"; // commitly_gate: no longer produced (MSN-0374)
   base: string | null;
   allowedPaths: string[] | null;
   forbiddenPaths: string[];
@@ -335,8 +336,7 @@ function parseGateCheck(raw: unknown, i: number, ignored: Set<string>): VerifyCh
   };
 }
 
-/** COMMITLY hangar `gate.json` (`commitly.gate.v1`). */
-export function parseCommitlyGate(text: string): VerifyContract {
+/** `gate.json` (`opengantry.gate.v1`, or its old name). */ function parseGate(text: string): VerifyContract {
   let data: unknown;
   try {
     data = JSON.parse(text);
@@ -345,12 +345,12 @@ export function parseCommitlyGate(text: string): VerifyContract {
   }
   if (!isObj(data)) throw contractError("expected a JSON object");
   only(data, GATE_KEYS, "top level");
-  if (data.schema !== COMMITLY_GATE_SCHEMA) throw contractError(`schema must be ${COMMITLY_GATE_SCHEMA}`);
+  if (data.schema !== GATE_SCHEMA && data.schema !== COMMITLY_GATE_SCHEMA) throw contractError(`schema must be ${GATE_SCHEMA}`);
   const ignored = new Set<string>();
   if (data.cage_protect !== undefined) ignored.add("cage_protect");
   const checks = list(data.checks, "checks").map((c, i) => parseGateCheck(c, i, ignored));
   return {
-    format: "commitly_gate",
+    format: "gate",
     base: str(data.base, "base", { optional: true }),
     allowedPaths: strList(data.allowed_paths, "allowed_paths"),
     forbiddenPaths: strList(data.forbidden_paths, "forbidden_paths") ?? [],
@@ -367,9 +367,10 @@ export function parseCommitlyGate(text: string): VerifyContract {
   };
 }
 
-/** By extension: `.json` is a hangar gate, anything else `verify.yaml`. */
+/** @deprecated Use {@link parseVerifyContract}; goes in the next major. */ export const parseCommitlyGate = parseGate;
+/** By extension: `.json` is a JSON gate contract, anything else `verify.yaml`. */
 export function parseVerifyContract(text: string, file: string): VerifyContract {
-  return file.toLowerCase().endsWith(".json") ? parseCommitlyGate(text) : parseVerifyYaml(text);
+  return file.toLowerCase().endsWith(".json") ? parseGate(text) : parseVerifyYaml(text);
 }
 
 function sha256(text: string): string {

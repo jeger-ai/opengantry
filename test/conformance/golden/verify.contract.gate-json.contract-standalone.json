@@ -20,7 +20,7 @@
       "path": "gate.json",
       "sha256": "<SHA256>",
       "source": "base",
-      "format": "commitly_gate",
+      "format": "gate",
       "ignored": []
     },
     "written": "<TS>",

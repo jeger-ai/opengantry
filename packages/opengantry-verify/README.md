@@ -1,6 +1,6 @@
 # @jeger-ai/opengantry-verify
 
-Decide whether a change may land, from one contract, in any git repository. No `.gitagent/` directory, no missions: a `verify.yaml` (or a COMMITLY `gate.json`) says where the change may write, how large it may be, which added lines, imports and layer edges are forbidden, that the tests may not be weakened, and which commands must pass.
+Decide whether a change may land, from one contract, in any git repository. No `.gitagent/` directory, no missions: a `verify.yaml` (or a JSON gate contract, `gate.json`) says where the change may write, how large it may be, which added lines, imports and layer edges are forbidden, that the tests may not be weakened, and which commands must pass.
 
 ```bash
 npx @jeger-ai/opengantry-verify --base origin/main

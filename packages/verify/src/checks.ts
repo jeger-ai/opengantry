@@ -37,7 +37,7 @@ function commandFor(check: VerifyCheck, mode: VerifyMode): { command: string } |
 }
 
 /** Names of failing tests in `output`: group 1 of each `failures` match, else the match; sorted and unique. */
-export function failuresIn(pattern: string | null, output: string): string[] {
+function failuresIn(pattern: string | null, output: string): string[] {
   if (!pattern) return [];
   const re = new RegExp(pattern, "gm");
   return [...new Set([...output.matchAll(re)].map((m) => (m[1] ?? m[0]).trim()).filter(Boolean))].sort();
@@ -80,9 +80,8 @@ function baselineError(code: string, message: string): GantryUserError {
 }
 
 /**
- * A baseline: ours (`opengantry.verify-baseline.v1`, `contract_sha256`) or hangar's (`commitly.gate-baseline.v1`,
- * `gate_sha256`). It must name the sha256 of the contract in force; a baseline for another contract is refused.
- */
+ * A baseline (`opengantry.verify-baseline.v1` with `contract_sha256`, or `gate_sha256` for a JSON gate contract) must
+ * name the sha256 of the contract in force; a baseline for another contract is refused. */
 export function parseVerifyBaseline(text: string, file: string, contractSha256: string): VerifyBaselineFailures {
   let raw: { checks?: Record<string, { failures?: unknown }>; contract_sha256?: unknown; gate_sha256?: unknown };
   try {

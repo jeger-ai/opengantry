@@ -120,7 +120,7 @@ test("gantry verify --contract: usage and setup errors exit 2; gate.json ignored
   assert.match(nogit.stderr, /GXT_VERIFY_NOT_GIT/);
 
   const handover = fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-cli-handover-"));
-  write(handover, "gate.json", JSON.stringify({ schema: "commitly.gate.v1", base, allowed_paths: ["."], forbidden_paths: [], cage_protect: [], checks: [] }));
+  write(handover, "gate.json", JSON.stringify({ schema: "opengantry.gate.v1", base, allowed_paths: ["."], forbidden_paths: [], cage_protect: [], checks: [] }));
   const g = verify(dest, "--contract", path.join(handover, "gate.json"));
   assert.equal(g.status, 0, g.stderr);
   assert.match(g.stderr, /^verify: note: cage_protect in .*gate\.json are for the cage and hangar, not verify; ignored$/m);
