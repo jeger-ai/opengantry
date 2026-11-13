@@ -94,7 +94,22 @@ To get the contract and the cage scope for one step of another framework's plan,
 
 ## A task contract answers to the repository
 
-A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules`, `forbidden_paths` and `tests` are added to the task's (a task's `allow_reduction` is the task approver's decision and shows in the result). Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).
+A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules`, `forbidden_paths`, `tests` and `criticality` are added to the task's (a task's `allow_reduction` is the task approver's decision and shows in the result). Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).
+
+## Criticality
+
+`criticality` adds a verdict for tools that merge alone: `low` to `critical`, or `unknown` (treat as `critical`). It never fails the run.
+
+```yaml
+criticality:
+  default_level: high                # files no class covers
+  classes:
+    - { name: auth, paths: [server/auth], never_auto: true }   # always critical
+    - { name: docs, paths: [docs], level: low }
+  classifier: { run: ./tools/classify-change, timeout_seconds: 60 }   # optional
+```
+
+Classes decide first; `never_auto` is final. Otherwise the classifier reads the diff on stdin and prints `{"level", "confidence", "rationale"}`; failures are `unknown`. `--criticality-record <dir>` keeps its inputs for training.
 
 ## Who gets to change the contract
 
@@ -147,7 +162,7 @@ When a check already fails at the base, run `--baseline` once there and commit `
 
 ## The result
 
-`--json` and `--out` give `opengantry.verify-result.v1`: status, mode, head and base, the contract's path, sha256 and source, the changed, outside and forbidden paths, the size against the budget, rule violations as `file:line`, and each check's exit code, seconds, verdict and failure names. It never holds file contents or command output; the tail of a failing check's output is printed on stderr only. Keep `--out` files outside the tree or gitignored, because a later `--check-result` needs a clean tree.
+`--json` and `--out` give `opengantry.verify-result.v1`: status, mode, head and base, the contract's path, sha256 and source, the changed, outside and forbidden paths, the size against the budget, rule violations as `file:line`, each check's exit code, seconds, verdict and failure names, and `criticality`. It never holds file contents or command output; the tail of a failing check's output is printed on stderr only. Keep `--out` files outside the tree or gitignored, because a later `--check-result` needs a clean tree.
 
 ## Signed results
 

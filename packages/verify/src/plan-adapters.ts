@@ -60,7 +60,7 @@ function lightsOnSteps(text: string): { step: string; lines: string[] }[] {
 }
 
 /** gojko/lights-on-software-factory: `plans/<plan>.md`, each step with three file-list headings. */
-export const LIGHTS_ON: PlanAdapter = {
+const LIGHTS_ON: PlanAdapter = {
   id: "lights-on",
   describe: "lights-on-software-factory plans/<plan>.md: Files to create / modify / delete per step",
   read(text, step) {

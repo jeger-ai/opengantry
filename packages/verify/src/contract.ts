@@ -4,6 +4,7 @@ import path from "node:path";
 import { parseDocument } from "yaml";
 import { GantryUserError } from "#core/user-error.js";
 import { gitRun } from "#git/git.js";
+import { mergeCriticality, parseCriticality, type CriticalityRule } from "./criticality.js";
 import type { VerifyTestsRule } from "./test-integrity.js";
 
 /**
@@ -70,6 +71,8 @@ export interface VerifyContract {
   pythonPaths: string[];
   /** `tests`: test integrity over these test files (ADR-0058); null when the contract has none. */
   tests: VerifyTestsRule | null;
+  /** `criticality` (ADR-0051 decision 13): path classes and an optional classifier; null when the contract has none. */
+  criticality: CriticalityRule | null;
   /** Keys read but not applied (gate.json `cage_protect`, `part`); reported once on stderr. */
   ignored: string[];
 }
@@ -254,7 +257,7 @@ export function parseVerifyYaml(text: string): VerifyContract {
     throw contractError(`invalid YAML: ${err instanceof Error ? err.message : String(err)}`);
   }
   if (!isObj(data)) throw contractError("expected a mapping");
-  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths", "tests"], "top level");
+  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths", "tests", "criticality"], "top level");
   if (data.schema !== VERIFY_CONTRACT_SCHEMA) throw contractError(`schema must be ${VERIFY_CONTRACT_SCHEMA}`);
   const scope = section(data.scope, "scope", ["allowed_paths", "forbidden_paths"]);
   const size = section(data.size, "size", ["max_added_lines", "exclude"]);
@@ -272,6 +275,7 @@ export function parseVerifyYaml(text: string): VerifyContract {
     pathAliases: parseAliases(data.path_aliases),
     pythonPaths: (strList(data.python_paths, "python_paths") ?? ["."]).map((p, i) => relPath(p, `python_paths[${String(i)}]`)),
     tests: parseTests(data.tests),
+    criticality: parseCriticality(data.criticality),
     ignored: [],
   };
 }
@@ -298,6 +302,7 @@ export function mergeRepositoryLaw(task: VerifyContract, repo: VerifyContract): 
     pathAliases: { ...task.pathAliases, ...repo.pathAliases },
     pythonPaths: [...new Set([...repo.pythonPaths, ...task.pythonPaths])],
     tests: mergeTests(repo.tests, task.tests),
+    criticality: mergeCriticality(repo.criticality, task.criticality),
   };
 }
 
@@ -310,7 +315,7 @@ function mergeTests(repo: VerifyTestsRule | null, task: VerifyTestsRule | null):
   return { files: [...new Set([...repo.files, ...task.files])], allowReduction: [...new Set([...repo.allowReduction, ...task.allowReduction])] };
 }
 
-const GATE_KEYS = ["schema", "base", "allowed_paths", "forbidden_paths", "max_added_lines", "size_exclude", "rules", "checks", "cage_protect"];
+const GATE_KEYS = ["schema", "base", "allowed_paths", "forbidden_paths", "max_added_lines", "size_exclude", "rules", "checks", "cage_protect", "criticality"];
 
 function parseGateRule(raw: unknown, i: number): VerifyRule {
   const where = `rules[${String(i)}]`;
@@ -363,6 +368,7 @@ function parseGateCheck(raw: unknown, i: number, ignored: Set<string>): VerifyCh
     pathAliases: {},
     pythonPaths: ["."],
     tests: null,
+    criticality: parseCriticality(data.criticality),
     ignored: [...ignored].sort(),
   };
 }
