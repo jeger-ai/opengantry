@@ -1,0 +1,192 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0375]. Executor must not run until the [MSN-0375] legislation commit + pin.
+#
+# Legislated intent: issue #346: gantry verify --contract writes a criticality verdict next to the gate result (path
+# classes with never_auto, an optional classifier command, --record for training data, unknown on any failure), covered
+# by the result's signature; the verify layer budget is raised with arch check --ratchet --allow-raise.
+#
+# Operator request (2026-11-12, "Work on the open opengantry issues"). No trace rows: the evidence is
+# .gitagent/runs/MSN-0375.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0375
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: "Accept. The verdict is a field of the result, so the payload
+      --sign and --sign keyless sign (the canonical result without signature)
+      covers it, bound to head, base and the contract's sha256; --check-result
+      is unchanged. No new network path: the classifier is a command the
+      contract names, like a check."
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. The verify layer grows by one module; gantry arch check
+      stays in the gate, and the budget is raised in this Planner mission with
+      --ratchet --allow-raise, as the intent says.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2d78d96d5563
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots: .gitagent/missions/MSN-0375.criticality-verdict.yaml,
+      .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md,
+      .gitagent/runs/MSN-0375.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, docs/guides/verify-contract.md,
+      packages/opengantry-verify/README.md,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/src/contract.ts, packages/verify/src/criticality.ts,
+      packages/verify/src/run.ts, src/cli/commands/verify-contract.ts,
+      src/cli/tests/verify-criticality.test.ts, src/cli/verify-lib.ts,
+      test/conformance/golden/verify.contract.contract-standalone.json,
+      test/conformance/golden/verify.contract.gate-json.contract-standalone.jso\
+      n, test/conformance/spawning-tests.yaml. Changed:
+      packages/verify/src/criticality.ts (new: the criticality section's parser,
+      the verdict and the classifier command), packages/verify/src/contract.ts
+      (criticality in verify.yaml and the JSON gate contract; repository law
+      merges it tighten-only), packages/verify/src/run.ts (criticality in
+      opengantry.verify-result.v1, so --sign and --sign keyless cover it;
+      recordDir), src/cli/commands/verify-contract.ts (--record <dir>, one
+      summary line), src/cli/verify-lib.ts (the verdict types), tests
+      (verify-criticality.test.ts new), the two verify-result goldens gain the
+      criticality field, docs (verify-contract guide, CHANGELOG), ADR-0051
+      amended (decisions 13-16), ARCH_BASELINE.json raised for the verify layer
+      with arch check --ratchet --allow-raise. Versions unchanged. Operator
+      request (2026-11-12, chat): 'Work on the open opengantry issues', issue
+      #346."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0023 is the optional signing of the
+      Planner stamp commit; this mission signs nothing new, the verdict rides in
+      the verify result that --sign already signs.
+    adr_refs:
+      - ADR-0052
+      - ADR-0023
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: Accept. The new module is pure verify-layer code in
+      packages/verify (core and git only); no new error code, env name,
+      subcommand, MCP tool or dependency, so no registry entry. A malformed
+      section is GXT_VERIFY_CONTRACT_INVALID; a failing classifier is a verdict
+      (unknown), never an error.
+    adr_refs:
+      - ADR-0052
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: "Accept, with one named output change: the
+      opengantry.verify-result.v1 result gains a criticality field, in the
+      goldens verify.contract.contract-standalone and
+      verify.contract.gate-json.contract-standalone; SARIF and JUnit projections
+      are unchanged; no other golden changes."
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept. One model: the verdict is part of the one verify
+      result, not a new record. LLM evidence stays outside the deterministic
+      core: the classifier is a shell command the contract names, exactly like
+      checks:, and Hangar or Jev-style classifiers live outside this package
+      (examples/jev-preflight stays an example). Path classes and never_auto are
+      deterministic and decide first. Budgets: the raise is for this named
+      feature; the matching deletion is three exports used only inside their own
+      module (untrackedFiles, hasAmbientIdentity, LIGHTS_ON) made private. The
+      line raise of the new module is not fully offset by deleted lines; the PR
+      states the net change for the operator."
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Planner-sealed mission contracts are
+      unchanged; the criticality section belongs to the standalone verify
+      contract, which has no Planner seal (ADR-0051 decision 8), and gantry
+      verify --mission does not read it.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: ec1432ef124599085c25be427e0eda4007bcba859cc9ed0b989cc92993213f05
+declared_paths:
+  - .gitagent/missions/MSN-0375.criticality-verdict.yaml
+  - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+  - .gitagent/runs/MSN-0375.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-contract.md
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - packages/verify/src/contract.ts
+  - packages/verify/src/criticality.ts
+  - packages/verify/src/run.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/verify-criticality.test.ts
+  - src/cli/verify-lib.ts
+  - test/conformance/golden/verify.contract.contract-standalone.json
+  - test/conformance/golden/verify.contract.gate-json.contract-standalone.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0375.criticality-verdict.yaml
+    - .gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md
+    - .gitagent/runs/MSN-0375.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-contract.md
+    - packages/opengantry-verify/README.md
+    - packages/opengantry-verify/tests/verify-package.test.mjs
+    - packages/verify/src/contract.ts
+    - packages/verify/src/criticality.ts
+    - packages/verify/src/run.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/verify-criticality.test.ts
+    - src/cli/verify-lib.ts
+    - test/conformance/golden/verify.contract.contract-standalone.json
+    - test/conformance/golden/verify.contract.gate-json.contract-standalone.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: 12e604239767988a3d6523eb45bc4f4d1afab691a063653128c56b569b834f03
