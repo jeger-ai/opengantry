@@ -1,0 +1,44 @@
+{
+  "schema": "opengantry.admission-policy.v1",
+  "requirements": {},
+  "rules": [
+    {
+      "id": "allow-write",
+      "kind": "workspace.write",
+      "effect": "allow",
+      "requireApproval": false
+    },
+    {
+      "id": "allow-read",
+      "kind": "artifact.read",
+      "effect": "allow",
+      "requireApproval": false
+    },
+    {
+      "id": "allow-publish",
+      "kind": "git.publish",
+      "effect": "allow",
+      "requireApproval": true
+    }
+  ],
+  "advisoryRules": [
+    {
+      "id": "risk-hold",
+      "signal": "risk",
+      "atLeast": 0.7,
+      "effect": "held"
+    },
+    {
+      "id": "risk-deny",
+      "signal": "risk",
+      "atLeast": 0.95,
+      "effect": "deny"
+    },
+    {
+      "id": "complexity-approval",
+      "signal": "complexity",
+      "atLeast": 0.5,
+      "effect": "require-approval"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opengantry.local/schemas/opengantry.admission-policy.v1.json",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "opengantry.admission-policy.v1"
+    },
+    "requirements": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "artifact.read",
+          "workspace.write",
+          "process.spawn",
+          "dependency.materialize",
+          "network.connect",
+          "git.publish",
+          "delivery.mutate"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "prevention",
+          "detection",
+          "audit-only"
+        ]
+      }
+    },
+    "rules": {
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "artifact.read",
+              "workspace.write",
+              "process.spawn",
+              "dependency.materialize",
+              "network.connect",
+              "git.publish",
+              "delivery.mutate"
+            ]
+          },
+          "harness": {
+            "type": "string",
+            "enum": [
+              "claude-code",
+              "cursor",
+              "codex-cli",
+              "headless",
+              "repository"
+            ]
+          },
+          "effect": {
+            "type": "string",
+            "enum": [
+              "allow",
+              "deny"
+            ]
+          },
+          "requireApproval": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "effect",
+          "requireApproval"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "advisoryRules": {
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "signal": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "atLeast": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "effect": {
+            "type": "string",
+            "enum": [
+              "held",
+              "deny",
+              "require-approval"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "signal",
+          "atLeast",
+          "effect"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "requirements",
+    "rules",
+    "advisoryRules"
+  ],
+  "additionalProperties": false,
+  "description": "OpenGantryAdmissionPolicy"
+}

@@ -14,6 +14,7 @@ cases:
   - { id: planner-show.fresh-init, fixture: fresh-init, args: [planner, show, --json] }
   - { id: planner-set.bare-git, fixture: bare-git, args: [planner, set, planner@fixture.test], record_tree: true }
   - { id: deps-check-since.fresh-init, fixture: fresh-init, args: [deps, check, --since, HEAD, --json] }
+  - { id: admission-capabilities.fresh-init, fixture: fresh-init, args: [admission, capabilities, --json] }
 
   # --- init, upgrade, blueprint ---
   - { id: init.bare-git, fixture: bare-git, args: [init, --yes, --no-hooks, --no-ci, --skills, minimal, --ides, cursor], record_tree: true }

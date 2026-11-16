@@ -1,0 +1,16 @@
+{
+  "schema": "opengantry.admission-decision.v1",
+  "decision": "allow",
+  "requestDigest": "6390576b2f1ea68425f52e2d8a51ba89f5df61289e4eed0fd27e269f613656f1",
+  "operationId": "op-1",
+  "attemptId": "att-1",
+  "policyRuleIds": [
+    "allow-write"
+  ],
+  "reasonCodes": [],
+  "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
+  "capabilityId": "ubuntu-26.04-x64/claude-code/workspace.write",
+  "advisoryDigest": null,
+  "decidedAt": "2026-11-16T12:00:00.000Z",
+  "decisionDigest": "d7441e3e5f7e79aabd54790e6c16ce56c2fc1eff83d9fe72a6d55981ee6c3883"
+}

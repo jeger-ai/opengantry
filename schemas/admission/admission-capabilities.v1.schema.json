@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opengantry.local/schemas/opengantry.admission-capabilities.v1.json",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "opengantry.admission-capabilities.v1"
+    },
+    "inventoryCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "rows": {
+      "maxItems": 1024,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "capabilityId": {
+            "type": "string",
+            "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ubuntu-26.04-x64",
+              "macos-26.2-arm64",
+              "windows-11-x64"
+            ]
+          },
+          "harness": {
+            "type": "string",
+            "enum": [
+              "claude-code",
+              "cursor",
+              "codex-cli",
+              "headless",
+              "repository"
+            ]
+          },
+          "family": {
+            "type": "string",
+            "enum": [
+              "artifact.read",
+              "workspace.write",
+              "process.spawn",
+              "dependency.materialize",
+              "network.connect",
+              "git.publish",
+              "delivery.mutate"
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "prevention",
+              "unproven",
+              "detection",
+              "audit-only",
+              "unsupported"
+            ]
+          },
+          "evidence": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "inventory"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._/-]{1,200}$"
+                  },
+                  "inventoryLevel": {
+                    "type": "string",
+                    "pattern": "^[a-z/ -]{1,64}$"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 400
+                  }
+                },
+                "required": [
+                  "kind",
+                  "ref",
+                  "inventoryLevel"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "canary"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._/-]{1,200}$"
+                  },
+                  "probeDigest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "harnessVersion": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._+-]{1,64}$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "ref",
+                  "probeDigest",
+                  "harnessVersion"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "capabilityId",
+          "platform",
+          "harness",
+          "family",
+          "level",
+          "evidence"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "inventoryCommit",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "description": "OpenGantryAdmissionCapabilityReport"
+}

@@ -17,7 +17,7 @@ match_terms:
 
 # ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
-**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-2; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review. It ships no code and no schema, and it changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices; nothing is implemented yet. Where an owner decision differs from a proposal below, the decision wins.
+**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-2; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Where an owner decision differs from a proposal below, the decision wins.
 
 ## Context
 
@@ -207,6 +207,61 @@ The owner answered the ten open questions in chat, one at a time (MSN-0380).
 8. **Q8 — Windows and macOS rows.** *Decision:* investigate the harnesses' own sandboxes first (Seatbelt on macOS; Codex's Windows sandbox). Native mechanisms (job objects plus AppContainer or restricted tokens; Endpoint Security) are fallbacks. Both rows stay `unsupported` or `unproven` until a canary proves a cell.
 9. **Q9 — Schema delivery.** *Decision:* zod schemas in `packages/core` with registry entries and conformance goldens, plus generated JSON Schema for downstream consumers.
 10. **Q10 — Authority surfaces.** *Decision:* fix all three before slice 3, as a separate mission: move the draft-token key out of the candidate's reach, read the break-glass anchor from the base commit, and make the hooks run a pinned installed `gantry` instead of the working tree's `dist/`.
+
+## Implementation status
+
+### Slice 2 in code (MSN-0384, 2026-11-16)
+
+Owner decision Q9, implemented as contract and pure logic. Nothing here dispatches, confines or enforces anything, and no adopter-facing guarantee changes.
+
+- **Schemas.** `packages/core/src/schemas/admission-schema.ts` holds closed zod schemas:
+  - `opengantry.admission-request.v1`, with one branch per `kind` and a closed `resourceIdentity` per family;
+  - `-decision.v1`, `-permit.v1`, `-receipt.v1` and `-journal-record.v1`;
+  - `-policy.v1` (the resolved policy the evaluator reads), `-advisory.v1` (AI output) and `-capabilities.v1`.
+
+  Unknown fields, kinds, levels and states are rejected.
+- **JSON Schema.** `npm run gen:admission-schemas` writes the JSON Schema to `schemas/admission/`, and a core test fails when the committed files drift.
+  - The files are in the repository, not in the npm tarball.
+  - The cross-field rules that JSON Schema cannot express stay in zod: permit lifetime, capability id composition, and prevention needs a canary.
+- **Pure functions** in `packages/core/src/admission.ts`:
+  - canonical digests for request, decision and permit (`canonicalJson` plus sha256);
+  - the 64 KiB request bound, on received bytes and on the canonical value;
+  - `decide`, which follows the fixed order of decision 4 and is deny by default (`default-deny`);
+  - `issuePermit`, `checkPermit` and `consumePermit`, which refuse forged, reused, expired and changed permits: request, args, resource, authority, clock, policy or capability;
+  - the lifecycle table and transition function;
+  - crash recovery, where `dispatch-intent` becomes `unknown`;
+  - `mayStartAdmissionAttempt`, under which an `unknown` blocks a new attempt until it is reconciled.
+- **Journal.** `packages/core/src/admission-journal.ts` provides the hash-chained journal: append, canonical line encoding, and a verifier.
+  - The verifier detects edits, reordering, a missing head and a partial last line.
+  - It also detects a cut at a record boundary, measured against an anchor (count and head digest) that a later slice binds into the run record.
+- **Capability matrix.** `packages/core/src/admission-capabilities.ts` holds the capability matrix: 3 platforms × 5 harnesses × 7 families = 105 cells, every one present. No cell is `prevention`.
+- **Registry and goldens (Q9).**
+  - The hidden, read-only `gantry admission capabilities [--json]` prints the matrix, and is registered in `.gitagent/registry/commands.yaml`.
+  - Its output is a conformance golden.
+  - `test/conformance/admission/` holds example records and their digests for consumers in other languages.
+
+**Choices this ADR did not settle, made conservatively:**
+
+1. **A cell with two inventory levels** carries the first, pre-effect one. For example, "unproven / detection" is `unproven`, which meets no requirement.
+2. **macOS and Windows cells are capped.** The inventory lists some as `detection` or `audit-only`; they are `unproven` under Q8, and the inventory level stays in the row's evidence.
+3. **Cells follow the inventory.** Ubuntu 26.04 cells, Claude Code included, keep the coverage page's level, so a family the page marks `unsupported` stays `unsupported`. It is not raised to `unproven`.
+4. **Policy rules match by family and optional harness only.** Resource matchers come with the broker. No family has a required level by default (Q4).
+5. **Advisory signals are numeric (0 to 1),** and only trusted policy's `advisoryRules` read them, to hold, deny or require approval. A malformed advisory holds, and a missing one changes nothing. A test checks over every family that no advisory input loosens a decision (Q5).
+6. **Approvals are passed in by the caller,** bound to the request digest. Verifying them against existing authority is the broker's job.
+7. **Permit time is in milliseconds on a named monotonic clock (`clockId`).** A reading from another clock, or one before issue, counts as expired.
+8. **A crash before decision or dispatch maps to `expired`.** An `authorized` or `received` attempt lapses to `expired`; this edge exists only in crash recovery.
+9. **Reason codes are a closed list,** extended only under `dependency.` for #355.
+
+**Later slices, not here:**
+
+- the broker process and its state machine, and IPC authentication (slice 3, after the Q10 authority fixes);
+- held handles and the check-equals-use dispatch;
+- the journal file under the git dir, its fsync, and the binding of its anchor into the run record;
+- receipt signing;
+- OS and harness adapters (slice 4, with Claude Code bubblewrap on Ubuntu 26.04 first);
+- canaries, and the `doctor` AppArmor check;
+- host brokers for push and PR create (Q7);
+- the published capability report and the adversarial suite (slice 5).
 
 ## Consequences
 

@@ -1,0 +1,18 @@
+{
+  "schema": "opengantry.admission-decision.v1",
+  "decision": "held",
+  "requestDigest": "0fd10d6b0f8240ecb6faed53cff1f27eb9b3f918513feb1bd2ea2929e6cc72ca",
+  "operationId": "op-1",
+  "attemptId": "att-1",
+  "policyRuleIds": [
+    "allow-publish"
+  ],
+  "reasonCodes": [
+    "approval_missing"
+  ],
+  "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
+  "capabilityId": "ubuntu-26.04-x64/claude-code/git.publish",
+  "advisoryDigest": null,
+  "decidedAt": "2026-11-16T12:00:00.000Z",
+  "decisionDigest": "9b0fc5befebbffb273e2956c0d9763a94bd7ad14419b92592b342a25139bc585"
+}

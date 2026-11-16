@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opengantry.local/schemas/opengantry.admission-permit.v1.json",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "opengantry.admission-permit.v1"
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "decisionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "resolvedPolicyDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+    },
+    "capabilityLevel": {
+      "type": "string",
+      "enum": [
+        "prevention",
+        "unproven",
+        "detection",
+        "audit-only",
+        "unsupported"
+      ]
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "authority": {
+      "type": "object",
+      "properties": {
+        "brokerId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "brokerId",
+        "epoch"
+      ],
+      "additionalProperties": false
+    },
+    "clock": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "monotonic"
+        },
+        "clockId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        }
+      },
+      "required": [
+        "kind",
+        "clockId"
+      ],
+      "additionalProperties": false
+    },
+    "issuedAtMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "expiresAtMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "schema",
+    "requestDigest",
+    "decisionDigest",
+    "resolvedPolicyDigest",
+    "capabilityId",
+    "capabilityLevel",
+    "operationId",
+    "attemptId",
+    "authority",
+    "clock",
+    "issuedAtMs",
+    "expiresAtMs"
+  ],
+  "additionalProperties": false,
+  "description": "OpenGantryAdmissionPermit"
+}

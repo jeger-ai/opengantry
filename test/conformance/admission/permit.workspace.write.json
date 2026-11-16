@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.admission-permit.v1",
+  "requestDigest": "6390576b2f1ea68425f52e2d8a51ba89f5df61289e4eed0fd27e269f613656f1",
+  "decisionDigest": "d7441e3e5f7e79aabd54790e6c16ce56c2fc1eff83d9fe72a6d55981ee6c3883",
+  "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
+  "capabilityId": "ubuntu-26.04-x64/claude-code/workspace.write",
+  "capabilityLevel": "unproven",
+  "operationId": "op-1",
+  "attemptId": "att-1",
+  "authority": {
+    "brokerId": "broker-1",
+    "epoch": 1
+  },
+  "clock": {
+    "kind": "monotonic",
+    "clockId": "boot-1"
+  },
+  "issuedAtMs": 1000,
+  "expiresAtMs": 31000
+}
