@@ -1,0 +1,299 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0384]. Executor must not run until the [MSN-0384] legislation commit + pin.
+#
+# Legislated intent: issue #356 slice 2 in code (owner decision Q9): closed versioned zod schemas in packages/core
+# for the admission request, decision, permit, receipt, journal record, policy, advisory and capability report; pure
+# deterministic digests, decide (deny by default, unsupported when a required capability is unproven, advisory
+# signals only tighten), permit checks, lifecycle transitions with crash to unknown, and a hash-chained journal
+# encoder and verifier; generated JSON Schema with a drift test; the initial capability matrix with no prevention
+# cell; a hidden read-only gantry admission capabilities --json with a registry entry and a conformance golden;
+# ADR-0063 updated; no broker, IPC, OS adapter or enforcement; the core layer budget is raised with arch check
+# --ratchet --allow-raise.
+#
+# Operator brief (2026-11-16, orchestrator brief for issue #356; interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0384.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0384
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). No manifest skill owns packages/core
+      (gantry is src/cli/ only), and the work edits an ADR under
+      .gitagent/out-of-scope/ and a registry under .gitagent/registry/, so it
+      runs under substrate as MSN-0382 did. The word schema refers to the closed
+      opengantry.admission-*.v1 zod schemas (request, decision, permit, receipt,
+      journal record, policy, advisory, capability report) this slice adds, and
+      the JSON Schema generated from them. contract.tmvc_roots is narrowed to
+      exactly: .gitagent/missions/MSN-0384.admission-contract.yaml,
+      .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0384.json,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/concepts/operation-admission-coverage.md, package.json,
+      packages/core/src/admission-capabilities.ts,
+      packages/core/src/admission-journal.ts, packages/core/src/admission.ts,
+      packages/core/src/schemas/admission-schema.ts,
+      packages/core/src/schemas/index.ts,
+      packages/core/tests/admission-capabilities.test.ts,
+      packages/core/tests/admission-decide.test.ts,
+      packages/core/tests/admission-fixtures.ts,
+      packages/core/tests/admission-golden.test.ts,
+      packages/core/tests/admission-journal.test.ts,
+      packages/core/tests/admission-permit.test.ts,
+      packages/core/tests/admission-schema.test.ts, schemas/admission/,
+      scripts/gen-admission-schemas.mjs, src/cli/commands/admission.ts,
+      src/cli/program-org.ts, src/cli/tests/admission-command.test.ts,
+      test/conformance/admission/, test/conformance/cases.yaml,
+      test/conformance/golden/admission-capabilities.fresh-init.json. Operator
+      request (2026-11-16, orchestrator brief for issue #356): 'Mission MSN-0384
+      ... implement the closed request/decision/receipt/capability contract as
+      code. This is work slice 2 in code form, following owner decision Q9 ...
+      contract and pure logic only, no broker process and no OS enforcement.'
+      The agent wrote these answers from that brief."
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Reject applicability for this slice. Nothing is signed.
+      ADR-0063 section 8 reuses the existing signing paths (git signatures,
+      keyless Sigstore) for receipt protection in a later slice; this slice only
+      adds the hash-chained encoding and its verifier.
+    adr_refs:
+      - ADR-0063
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion wire contract; this mission adds no ingestion, no network path
+      and no plane code.
+    adr_refs:
+      - ADR-0063
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. The core layer grows by pure modules (admission.ts,
+      admission-journal.ts, admission-capabilities.ts,
+      schemas/admission-schema.ts) importing only core, zod and node:crypto,
+      which core already uses; the CLI grows by one small command module. gantry
+      arch check stays in the gate; the core (and, if needed, CLI) budget is
+      raised in this Planner mission with arch check --ratchet --allow-raise, as
+      the intent says. No layer rule changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 5d368359745e
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. packages/core/tests/ is excluded from the layer
+      budgets (ADR-0052 B4); the new test files, the shared
+      admission-fixtures.ts and the golden test admission-golden.test.ts belong
+      to the core package. The other unmapped paths are the ADR, the coverage
+      page, the commands registry, the mission, its run record,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, the generated JSON Schema under
+      schemas/admission/, the generator script, the conformance fixtures, case
+      list and golden: documentation, governance or test files of this mission.
+      packages/core/src/ is the core layer."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. The new core modules are pure (no fs, child_process,
+      os, net, http). One registry entry is added in the legislation commit
+      (B3): the hidden subcommand admission capabilities (and its group
+      admission) in .gitagent/registry/commands.yaml, which owner decision Q9
+      asks for together with a conformance golden. No new error code (refusals
+      are returned as reason codes, never thrown), no env name, MCP tool or
+      package dependency."
+    adr_refs:
+      - ADR-0052
+      - ADR-0063
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. Only new test files are added, plus one conformance
+      case with its golden and new admission example goldens under
+      test/conformance/admission/; no existing test is deleted, skipped or
+      weakened, and no existing golden is re-recorded.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Accept. Receipts and journal records are digest-only: request,
+      decision, policy and contract digests, rule ids, reason codes, levels and
+      redacted provenance digests; raw arguments, secrets and source bodies
+      never enter them (ADR-0063 sections 3 and 8). The local engine stays the
+      only enforcer; nothing is sent anywhere."
+    adr_refs:
+      - ADR-0063
+      - ADR-0034
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept. This is ADR-0063 slice 2 in code: field names,
+      families, levels, decisions and lifecycle states as the ADR fixes them,
+      owner decisions Q4 (no default prevention requirement), Q5 (advisory only
+      tightens), Q6 (journal under the git dir, file I/O later), Q8 (macOS and
+      Windows rows unsupported or unproven) and Q9 (zod, registry, goldens, JSON
+      Schema). The broker process, IPC authentication, held handles, OS
+      adapters, canaries and host brokers stay later slices."
+    adr_refs:
+      - ADR-0063
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: Accept with a named raise. ADR-0063 owner decision Q9 names the
+      feature (zod schemas with registry entries and conformance goldens); Q6
+      keeps admission receipts in a local journal whose digest is bound into the
+      run record, so the run record stays the only committed record. One hidden
+      command is added because the conformance suite only records CLI output. No
+      honest matching deletion is in scope; the budget raise is recorded with
+      --ratchet --allow-raise and explained in the PR.
+    adr_refs:
+      - ADR-0061
+      - ADR-0063
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0059 is plan adapters for gantry
+      adapt; this mission does not read plans or write verify contracts.
+    adr_refs:
+      - ADR-0063
+      - ADR-0059
+  - finding_id: eb96aebded0c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: Confirmed. src/cli/tests/admission-command.test.ts tests the
+      new hidden gantry admission capabilities command; it belongs to the CLI
+      test suite. src/cli/commands/admission.ts and src/cli/program-org.ts are
+      CLI delivery and only print the core capability report.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. Every admission record is machine-written and hashed,
+      so it is JSON and digests come from canonicalJson (ADR-0063 section 3).
+      The generated JSON Schema files are JSON. No human-written config file is
+      added: the capability matrix is code data in packages/core, and the
+      admission policy is the resolved, machine-produced policy."
+    adr_refs:
+      - ADR-0063
+      - ADR-0047
+interrogation_sha256: 0efc82c7179b4cd685b50e5b1b189b288321a2a5d84c361fcdc891cd9e37c6af
+declared_paths:
+  - .gitagent/missions/MSN-0384.admission-contract.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0384.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/concepts/operation-admission-coverage.md
+  - package.json
+  - packages/core/src/admission-capabilities.ts
+  - packages/core/src/admission-journal.ts
+  - packages/core/src/admission.ts
+  - packages/core/src/schemas/admission-schema.ts
+  - packages/core/src/schemas/index.ts
+  - packages/core/tests/admission-capabilities.test.ts
+  - packages/core/tests/admission-decide.test.ts
+  - packages/core/tests/admission-fixtures.ts
+  - packages/core/tests/admission-golden.test.ts
+  - packages/core/tests/admission-journal.test.ts
+  - packages/core/tests/admission-permit.test.ts
+  - packages/core/tests/admission-schema.test.ts
+  - schemas/admission/
+  - scripts/gen-admission-schemas.mjs
+  - src/cli/commands/admission.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission-command.test.ts
+  - test/conformance/admission/
+  - test/conformance/cases.yaml
+  - test/conformance/golden/admission-capabilities.fresh-init.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0384.admission-contract.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0384.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/concepts/operation-admission-coverage.md
+    - package.json
+    - packages/core/src/admission-capabilities.ts
+    - packages/core/src/admission-journal.ts
+    - packages/core/src/admission.ts
+    - packages/core/src/schemas/admission-schema.ts
+    - packages/core/src/schemas/index.ts
+    - packages/core/tests/admission-capabilities.test.ts
+    - packages/core/tests/admission-decide.test.ts
+    - packages/core/tests/admission-fixtures.ts
+    - packages/core/tests/admission-golden.test.ts
+    - packages/core/tests/admission-journal.test.ts
+    - packages/core/tests/admission-permit.test.ts
+    - packages/core/tests/admission-schema.test.ts
+    - schemas/admission/
+    - scripts/gen-admission-schemas.mjs
+    - src/cli/commands/admission.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission-command.test.ts
+    - test/conformance/admission/
+    - test/conformance/cases.yaml
+    - test/conformance/golden/admission-capabilities.fresh-init.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: 7df45b0f91566a7233ccb503bc9b304928c6505b2d85ee4c520f782bf9c6329a

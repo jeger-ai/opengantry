@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opengantry.local/schemas/opengantry.admission-decision.v1.json",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules this JSON Schema cannot express: decisionDigest is the sha256 of the canonical decision without decisionDigest (decisionDigest); capabilityId and capabilityLevel are both null or both set. Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "opengantry.admission-decision.v1"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny",
+        "unsupported",
+        "held"
+      ]
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "operationId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "attemptId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "policyRuleIds": {
+      "maxItems": 320,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+      }
+    },
+    "reasonCodes": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "request_malformed",
+              "policy_invalid",
+              "policy_changed",
+              "policy_denied",
+              "capability_absent",
+              "capability_mismatch",
+              "evidence_missing",
+              "approval_missing",
+              "advisory_denied",
+              "advisory_held",
+              "permit_malformed",
+              "permit_expired",
+              "permit_reused",
+              "request_changed",
+              "authority_changed",
+              "capability_changed",
+              "permit_unknown",
+              "context_invalid"
+            ]
+          },
+          {
+            "type": "string",
+            "pattern": "^dependency\\.[a-z0-9_]{1,64}$"
+          }
+        ]
+      }
+    },
+    "resolvedPolicyDigest": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilityId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilityLevel": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "prevention",
+            "unproven",
+            "detection",
+            "audit-only",
+            "unsupported"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "advisoryDigest": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decidedAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decisionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "decision",
+    "requestDigest",
+    "operationId",
+    "attemptId",
+    "policyRuleIds",
+    "reasonCodes",
+    "resolvedPolicyDigest",
+    "capabilityId",
+    "capabilityLevel",
+    "advisoryDigest",
+    "decidedAt",
+    "decisionDigest"
+  ],
+  "additionalProperties": false,
+  "description": "OpenGantryAdmissionDecision"
+}

@@ -54,7 +54,8 @@
     "test:packages": "node --test \"dist/packages/*/tests/*.test.js\"",
     "examples:benchmark": "node examples/benchmark-agent/run-benchmark.mjs",
     "gantry": "node dist/cli/index.js",
-    "gen:schemas": "node scripts/gen-schemas.mjs"
+    "gen:schemas": "node scripts/gen-schemas.mjs",
+    "gen:admission-schemas": "node scripts/gen-admission-schemas.mjs"
   },
   "publishConfig": {
     "access": "public"

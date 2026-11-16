@@ -1,0 +1,1291 @@
+{
+  "id": "admission-capabilities.fresh-init",
+  "fixture": "fresh-init",
+  "args": [
+    "admission",
+    "capabilities",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "schema": "opengantry.admission-capabilities.v1",
+    "inventoryCommit": "<SHORT_SHA>",
+    "rows": [
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/artifact.read",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "artifact.read",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/workspace.write",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/process.spawn",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/dependency.materialize",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/network.connect",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/git.publish",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/claude-code/delivery.mutate",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "claude-code",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/artifact.read",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/workspace.write",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/process.spawn",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / audit-only"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/dependency.materialize",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/network.connect",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/git.publish",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "git.publish",
+        "level": "audit-only",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/cursor/delivery.mutate",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "cursor",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/artifact.read",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/workspace.write",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "workspace.write",
+        "level": "detection",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/process.spawn",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/dependency.materialize",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/network.connect",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/git.publish",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "git.publish",
+        "level": "audit-only",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/codex-cli/delivery.mutate",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "codex-cli",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/artifact.read",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/workspace.write",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "workspace.write",
+        "level": "detection",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/process.spawn",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "process.spawn",
+        "level": "audit-only",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only / detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/dependency.materialize",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "dependency.materialize",
+        "level": "detection",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/network.connect",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/git.publish",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/headless/delivery.mutate",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "headless",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/artifact.read",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/workspace.write",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "workspace.write",
+        "level": "detection",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/process.spawn",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/dependency.materialize",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "dependency.materialize",
+        "level": "detection",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/network.connect",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/git.publish",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "git.publish",
+        "level": "detection",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection"
+        }
+      },
+      {
+        "capabilityId": "ubuntu-26.04-x64/repository/delivery.mutate",
+        "platform": "ubuntu-26.04-x64",
+        "harness": "repository",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/artifact.read",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "artifact.read",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/workspace.write",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / detection"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/process.spawn",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/dependency.materialize",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/network.connect",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/git.publish",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/claude-code/delivery.mutate",
+        "platform": "macos-26.2-arm64",
+        "harness": "claude-code",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/artifact.read",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/workspace.write",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / detection"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/process.spawn",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / audit-only"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/dependency.materialize",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/network.connect",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/git.publish",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/cursor/delivery.mutate",
+        "platform": "macos-26.2-arm64",
+        "harness": "cursor",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/artifact.read",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/workspace.write",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/process.spawn",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/dependency.materialize",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/network.connect",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/git.publish",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/codex-cli/delivery.mutate",
+        "platform": "macos-26.2-arm64",
+        "harness": "codex-cli",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/artifact.read",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/workspace.write",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/process.spawn",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only / detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/dependency.materialize",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "dependency.materialize",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/network.connect",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/git.publish",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/headless/delivery.mutate",
+        "platform": "macos-26.2-arm64",
+        "harness": "headless",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/artifact.read",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/workspace.write",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/process.spawn",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/dependency.materialize",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "dependency.materialize",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/network.connect",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/git.publish",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "macos-26.2-arm64/repository/delivery.mutate",
+        "platform": "macos-26.2-arm64",
+        "harness": "repository",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/artifact.read",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "artifact.read",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/workspace.write",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/process.spawn",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/dependency.materialize",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/network.connect",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/git.publish",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "git.publish",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/claude-code/delivery.mutate",
+        "platform": "windows-11-x64",
+        "harness": "claude-code",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/artifact.read",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/workspace.write",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / detection"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/process.spawn",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven / audit-only"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/dependency.materialize",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/network.connect",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/git.publish",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/cursor/delivery.mutate",
+        "platform": "windows-11-x64",
+        "harness": "cursor",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/artifact.read",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/workspace.write",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/process.spawn",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/dependency.materialize",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/network.connect",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/git.publish",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/codex-cli/delivery.mutate",
+        "platform": "windows-11-x64",
+        "harness": "codex-cli",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/artifact.read",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/workspace.write",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "workspace.write",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported / unproven"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/process.spawn",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "process.spawn",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "audit-only",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/dependency.materialize",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "dependency.materialize",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/network.connect",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/git.publish",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "git.publish",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/headless/delivery.mutate",
+        "platform": "windows-11-x64",
+        "harness": "headless",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/artifact.read",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "artifact.read",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/workspace.write",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "workspace.write",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/process.spawn",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "process.spawn",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/dependency.materialize",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "dependency.materialize",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unproven"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/network.connect",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "network.connect",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/git.publish",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "git.publish",
+        "level": "unproven",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "detection",
+          "note": "capped to unproven by ADR-0063 owner decision Q8 until a canary proves the cell"
+        }
+      },
+      {
+        "capabilityId": "windows-11-x64/repository/delivery.mutate",
+        "platform": "windows-11-x64",
+        "harness": "repository",
+        "family": "delivery.mutate",
+        "level": "unsupported",
+        "evidence": {
+          "kind": "inventory",
+          "ref": "docs/concepts/operation-admission-coverage.md",
+          "inventoryLevel": "unsupported"
+        }
+      }
+    ]
+  },
+  "stderr_codes": []
+}

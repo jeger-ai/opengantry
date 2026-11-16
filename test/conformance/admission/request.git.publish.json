@@ -1,0 +1,26 @@
+{
+  "schema": "opengantry.admission-request.v1",
+  "operationId": "op-1",
+  "attemptId": "att-1",
+  "acceptedContractDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
+  "actorIdentity": {
+    "harness": "claude-code",
+    "sessionId": "sess-1",
+    "taskId": "task-1"
+  },
+  "kind": "git.publish",
+  "resourceIdentity": {
+    "remoteUrl": "https://github.com/acme/repo.git",
+    "ref": "refs/heads/feature/x",
+    "expectedOldHead": null,
+    "newHead": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "argsDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "capabilityEvidence": {
+    "capabilityId": "ubuntu-26.04-x64/claude-code/git.publish",
+    "level": "unproven",
+    "probeDigest": null
+  },
+  "nonce": "0123456789abcdef0123456789abcdef"
+}

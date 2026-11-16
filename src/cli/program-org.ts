@@ -9,6 +9,7 @@ import {
   runLedgerVerify,
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
+import { runAdmissionCapabilities } from "./commands/admission.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
   const policy = program.command("policy").description("Org policy floor (ADR-0042)");
@@ -79,4 +80,11 @@ export function registerOrgControlPlaneCommands(program: Command): void {
     .option("--since <ref>", "Check every mission file changed since this ref, e.g. the previous release tag")
     .option("--json", "JSON")
     .action(runDepsCheck);
+
+  const admission = program.command("admission", { hidden: true }).description("Operation admission contract (ADR-0063; read-only)");
+  admission
+    .command("capabilities")
+    .description("Print the capability matrix: every platform x harness x family cell and its level")
+    .option("--json", "JSON")
+    .action(runAdmissionCapabilities);
 }

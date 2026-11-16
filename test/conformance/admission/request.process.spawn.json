@@ -1,0 +1,36 @@
+{
+  "schema": "opengantry.admission-request.v1",
+  "operationId": "op-1",
+  "attemptId": "att-1",
+  "acceptedContractDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
+  "actorIdentity": {
+    "harness": "claude-code",
+    "sessionId": "sess-1",
+    "taskId": "task-1"
+  },
+  "kind": "process.spawn",
+  "resourceIdentity": {
+    "executable": {
+      "path": "/usr/bin/node",
+      "identity": {
+        "scheme": "posix",
+        "device": "2049",
+        "inode": "131074"
+      }
+    },
+    "executableDigest": "2222222222222222222222222222222222222222222222222222222222222222",
+    "cwd": {
+      "path": "/work/repo",
+      "identity": null
+    },
+    "environmentAllowlistDigest": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "argsDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "capabilityEvidence": {
+    "capabilityId": "ubuntu-26.04-x64/claude-code/process.spawn",
+    "level": "unproven",
+    "probeDigest": null
+  },
+  "nonce": "0123456789abcdef0123456789abcdef"
+}

@@ -1,0 +1,1364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opengantry.local/schemas/opengantry.admission-request.v1.json",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules this JSON Schema cannot express: the canonical JSON of the request is at most 65536 bytes (parseAdmissionRequest). Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "artifact.read"
+        },
+        "resourceIdentity": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "const": "file"
+                },
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096,
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
+                },
+                "identity": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "posix"
+                            },
+                            "device": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            },
+                            "inode": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "device",
+                            "inode"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "windows"
+                            },
+                            "volumeSerial": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{8,16}$"
+                            },
+                            "fileId": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{16,32}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "volumeSerial",
+                            "fileId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "target",
+                "path",
+                "identity"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "const": "secret"
+                },
+                "secretRef": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9._/-]{0,127}$"
+                }
+              },
+              "required": [
+                "target",
+                "secretRef"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "workspace.write"
+        },
+        "resourceIdentity": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "maxLength": 4096,
+              "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
+            },
+            "parent": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096,
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
+                },
+                "identity": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "posix"
+                            },
+                            "device": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            },
+                            "inode": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "device",
+                            "inode"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "windows"
+                            },
+                            "volumeSerial": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{8,16}$"
+                            },
+                            "fileId": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{16,32}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "volumeSerial",
+                            "fileId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "path",
+                "identity"
+              ],
+              "additionalProperties": false
+            },
+            "priorContentDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "string",
+                  "const": "absent"
+                }
+              ]
+            }
+          },
+          "required": [
+            "path",
+            "parent",
+            "priorContentDigest"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "process.spawn"
+        },
+        "resourceIdentity": {
+          "type": "object",
+          "properties": {
+            "executable": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096,
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
+                },
+                "identity": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "posix"
+                            },
+                            "device": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            },
+                            "inode": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "device",
+                            "inode"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "windows"
+                            },
+                            "volumeSerial": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{8,16}$"
+                            },
+                            "fileId": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{16,32}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "volumeSerial",
+                            "fileId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "path",
+                "identity"
+              ],
+              "additionalProperties": false
+            },
+            "executableDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cwd": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096,
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
+                },
+                "identity": {
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "posix"
+                            },
+                            "device": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            },
+                            "inode": {
+                              "type": "string",
+                              "pattern": "^\\d{1,20}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "device",
+                            "inode"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "const": "windows"
+                            },
+                            "volumeSerial": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{8,16}$"
+                            },
+                            "fileId": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{16,32}$"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "volumeSerial",
+                            "fileId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "path",
+                "identity"
+              ],
+              "additionalProperties": false
+            },
+            "environmentAllowlistDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "executable",
+            "executableDigest",
+            "cwd",
+            "environmentAllowlistDigest"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "dependency.materialize"
+        },
+        "resourceIdentity": {
+          "type": "object",
+          "properties": {
+            "ecosystem": {
+              "type": "string",
+              "const": "npm"
+            },
+            "graphDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "artifactSetDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "permittedScriptsDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "ecosystem",
+            "graphDigest",
+            "artifactSetDigest",
+            "permittedScriptsDigest"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "network.connect"
+        },
+        "resourceIdentity": {
+          "type": "object",
+          "properties": {
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "https",
+                "http",
+                "ssh",
+                "git",
+                "tcp"
+              ]
+            },
+            "host": {
+              "type": "string",
+              "pattern": "^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$|^\\[[0-9a-f:.]+\\]$"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "scheme",
+            "host",
+            "port"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "git.publish"
+        },
+        "resourceIdentity": {
+          "type": "object",
+          "properties": {
+            "remoteUrl": {
+              "type": "string",
+              "maxLength": 2048,
+              "pattern": "^(?:(?:https|ssh):\\/\\/(?:[A-Za-z0-9._-]+@)?[a-z0-9.-]+(?::\\d{1,5})?\\/[^\\s@:]+|[A-Za-z0-9._-]+@[a-z0-9.-]+:[^\\s@:]+)$"
+            },
+            "ref": {
+              "type": "string",
+              "pattern": "^refs\\/(?:heads|tags|notes)\\/[A-Za-z0-9._/-]{1,200}$"
+            },
+            "expectedOldHead": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "newHead": {
+              "type": "string",
+              "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+            }
+          },
+          "required": [
+            "remoteUrl",
+            "ref",
+            "expectedOldHead",
+            "newHead"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "opengantry.admission-request.v1"
+        },
+        "operationId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "attemptId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "acceptedContractDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolvedPolicyDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actorIdentity": {
+          "type": "object",
+          "properties": {
+            "harness": {
+              "type": "string",
+              "enum": [
+                "claude-code",
+                "cursor",
+                "codex-cli",
+                "headless",
+                "repository"
+              ]
+            },
+            "sessionId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "taskId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            }
+          },
+          "required": [
+            "harness",
+            "sessionId",
+            "taskId"
+          ],
+          "additionalProperties": false
+        },
+        "argsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capabilityEvidence": {
+          "type": "object",
+          "properties": {
+            "capabilityId": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\/[a-z-]+\\/[a-z.]+$"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "prevention",
+                "unproven",
+                "detection",
+                "audit-only",
+                "unsupported"
+              ]
+            },
+            "probeDigest": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "capabilityId",
+            "level",
+            "probeDigest"
+          ],
+          "additionalProperties": false
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "kind": {
+          "type": "string",
+          "const": "delivery.mutate"
+        },
+        "resourceIdentity": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "pattern": "^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$|^\\[[0-9a-f:.]+\\]$"
+            },
+            "project": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$"
+            },
+            "objectType": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+            },
+            "objectId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+            },
+            "mutation": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+            },
+            "precondition": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "head-sha"
+                    },
+                    "value": {
+                      "type": "string",
+                      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "etag"
+                    },
+                    "value": {
+                      "type": "string",
+                      "pattern": "^[\\x21-\\x7e]{1,256}$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "absent"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "host",
+            "project",
+            "objectType",
+            "objectId",
+            "mutation",
+            "precondition"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "operationId",
+        "attemptId",
+        "acceptedContractDigest",
+        "resolvedPolicyDigest",
+        "actorIdentity",
+        "argsDigest",
+        "capabilityEvidence",
+        "nonce",
+        "kind",
+        "resourceIdentity"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "description": "OpenGantryAdmissionRequest"
+}

@@ -1,0 +1,12 @@
+{
+  "capabilityId": "ubuntu-26.04-x64/claude-code/workspace.write",
+  "platform": "ubuntu-26.04-x64",
+  "harness": "claude-code",
+  "family": "workspace.write",
+  "level": "prevention",
+  "evidence": {
+    "kind": "inventory",
+    "ref": "docs/concepts/operation-admission-coverage.md",
+    "inventoryLevel": "unproven / detection"
+  }
+}
