@@ -238,6 +238,6 @@ test("bypass note: this repository's msn_commits job judges the range with a gan
   assert.ok(steps.some((s) => s["working-directory"] === dir && /npm ci/.test(s.run ?? "") && /npm run build/.test(s.run ?? "")), "built there");
   const runs = steps.map((s) => s.run ?? "").filter((r) => /ci msn-range/.test(r));
   assert.equal(runs.length, 1);
-  assert.match(runs[0]!, new RegExp(`^node ${dir.replace(/[.]/g, "\\.")}/dist/cli/index\\.js ci msn-range `));
+  assert.match(runs[0]!, new RegExp(`^node ${dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/dist/cli/index\\.js ci msn-range `));
   assert.equal(steps.some((s) => !s["working-directory"] && /npm (ci|run build)/.test(s.run ?? "")), false, "the PR head is never built in this job");
 });
