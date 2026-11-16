@@ -13,7 +13,7 @@ match_terms:
 
 # ADR-0062: Dependency admission — an exact, approved npm graph before install, an audit-only label until prevention is proven
 
-**Design status.** Issue #355 authorizes refining requirements, not activating anything in production. This ADR records the design for DEP01–DEP07 (issue #355, "Detailed requirements R1", 2026-11-14). Of the work slices, only slice 1 is implemented (MSN-0378): the graph parser and the graph diff. Everything else marked *proposed* is a contract the owner reviews before any slice implements it. The owner answered the open questions on 2026-11-16 (MSN-0380); the answers are recorded under "Owner decisions" at the end and take precedence over the proposals above where they differ.
+**Design status.** Issue #355 authorizes refining requirements, not activating anything in production. This ADR records the design for DEP01–DEP07 (issue #355, "Detailed requirements R1", 2026-11-14). Of the work slices, slice 1 (MSN-0378: the graph parser and the graph diff) and slice 2 (MSN-0382: the closed policy section, signed approvals and the pure admission evaluator, not yet wired into `gantry verify`) are implemented. Everything else marked *proposed* is a contract the owner reviews before any slice implements it. The owner answered the open questions on 2026-11-16 (MSN-0380); the answers are recorded under "Owner decisions" at the end and take precedence over the proposals above where they differ.
 
 ## Context
 
