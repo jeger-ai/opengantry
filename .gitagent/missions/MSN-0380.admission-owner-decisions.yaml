@@ -1,0 +1,114 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0380]. Executor must not run until the [MSN-0380] legislation commit + pin.
+#
+# Legislated intent: Record the owner's answers to the open questions of ADR-0062 (dependency admission, issue #355) and ADR-0063 (operation admission, issue #356); Ubuntu 26.04 replaces 24.04 as the Linux target row. Documentation only: no code, schema or CLI output changes.
+msn_id: MSN-0380
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+#
+# Owner decisions given in chat on 2026-11-16, one question at a time. No trace rows: the evidence is
+# .gitagent/runs/MSN-0380.json written by gantry verify --record (RULES §3).
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3), because the work edits ADRs under
+      .gitagent/out-of-scope/. contract.tmvc_roots:
+      .gitagent/missions/MSN-0380.admission-owner-decisions.yaml,
+      .gitagent/out-of-scope/ADR-0062-dependency-admission.md,
+      .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md,
+      .gitagent/runs/MSN-0380.json, EXECUTOR_LOG.md,
+      docs/concepts/operation-admission-coverage.md. Forbidden: packages/, src/,
+      .github/workflows/, .gitagent/foreman/MANIFEST.yaml,
+      TARGET_ARCHITECTURE.yaml. Owner decisions given in chat on 2026-11-16, one
+      question at a time, for the six open questions of ADR-0062 and the ten of
+      ADR-0063. The word schema refers to the owner's decision that later slices
+      ship zod schemas (ADR-0063 Q9); this mission ships no code, zod schema,
+      JSON Schema file or CLI output change."
+    adr_refs:
+      - ADR-0052
+      - ADR-0062
+      - ADR-0063
+  - finding_id: 46c905443f11
+    kind: adr_conflict
+    question: Intent may relate to ADR-0062. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0062 before
+      legislation proceeds.
+    operator_answer: "Accept as the subject of this mission. ADR-0062 (PROPOSED)
+      asks six open questions; the owner answered them in chat on 2026-11-16,
+      and this mission records those answers in the ADR. Owner change: the first
+      preventive platform is Ubuntu 26.04, not the proposed 24.04. No code
+      changes; dependency-update.ts is untouched."
+    adr_refs:
+      - ADR-0052
+      - ADR-0062
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Reject applicability. No tests are added, removed or weakened.
+      The ADRs describe future canary and conformance tests (DEP-T01..T05,
+      ADM-T01..T06) as later work slices, not as changes in this mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0044 covers cross-repository mission
+      dependencies through fetched ledger refs; this mission records owner
+      decisions in two ADRs and adds no mission dependency. The owner chose a
+      local journal bound into the run record over ledger entries for admission
+      receipts (ADR-0063 Q6), which does not touch ADR-0044.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: Accept as the subject of this mission. ADR-0063 (PROPOSED) asks
+      ten open questions; the owner answered all ten in chat on 2026-11-16, and
+      this mission records them. The answers keep ADR-0060 decision 1
+      (confinement is the harness sandbox, proven by canaries), so no
+      superseding amendment is needed. The Linux target row becomes Ubuntu 26.04
+      in the ADR and the coverage page.
+    adr_refs:
+      - ADR-0052
+      - ADR-0063
+      - ADR-0060
+interrogation_sha256: f0cbd1861642067abbb53f3558adf6a46a415de06d5ffc6f84dad619bd22c073
+declared_paths:
+  - .gitagent/missions/MSN-0380.admission-owner-decisions.yaml
+  - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/runs/MSN-0380.json
+  - EXECUTOR_LOG.md
+  - docs/concepts/operation-admission-coverage.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0380.admission-owner-decisions.yaml
+    - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/runs/MSN-0380.json
+    - EXECUTOR_LOG.md
+    - docs/concepts/operation-admission-coverage.md
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.yaml
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/
+    - src/
+contract_sha256: eaa9f9406bb9e4b8d5f9a16456612a8145ae896917a5050313956e0b84662d09
