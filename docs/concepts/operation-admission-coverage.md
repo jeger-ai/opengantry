@@ -6,7 +6,7 @@ publish: false
 
 # Operation admission: coverage of existing boundaries
 
-Status: **discovery, not a support claim.** This page inventories what exists at commit `be464fe9` (2026-11-16) for issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slice 1. It is the input to the proposed contract in [ADR-0062](../../.gitagent/out-of-scope/ADR-0062-operation-admission-contract.md). Nothing here changes behaviour, and nothing here is a guarantee to adopters. The published enforcement page, [Enforcement boundary](enforcement-boundary.md), stays the adopter-facing description until the contract is accepted.
+Status: **discovery, not a support claim.** This page inventories what exists at commit `be464fe9` (2026-11-16) for issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slice 1. It is the input to the proposed contract in [ADR-0063](../../.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md). Nothing here changes behaviour, and nothing here is a guarantee to adopters. The published enforcement page, [Enforcement boundary](enforcement-boundary.md), stays the adopter-facing description until the contract is accepted.
 
 **Headline: no cell in the matrix is `prevention`.** OpenGantry has no operating-system-enforced boundary of its own (ADR-0060 decision 1). The mechanisms that act before an effect are agent tool-call guards that judge strings, plus an agent sandbox configuration that `gantry cage policy` prints for a human to merge. OpenGantry has never tested that configuration at the OS level. Everything else detects after the effect (cage restore, `runtime exec` forbidden-zone scan, `cage check`, verify) or only records it.
 
@@ -82,7 +82,7 @@ Evidence: `packages/cage/src/cage-run.ts:231-291`, `cage-watch.ts`, `cage-rules.
 
 Evidence: `packages/missions/src/runtime-exec-process.ts:36-40,71`, `packages/cage/src/cage-process.ts:49-69`, `src/cli/mcp/mcp-tools-register.ts:129-138` (`gxt_runtime_exec`). Tests: `src/cli/tests/cage.test.ts:630` (SIGTERM tree, POSIX only), `cage-watch.test.ts:89,116`.
 
-### `dependency.materialize` (owned by #355; the boundary is shared)
+### `dependency.materialize` (owned by #355 and its ADR-0062, PR #362; the boundary is shared)
 
 | | U | M | W |
 |---|---|---|---|

@@ -1,5 +1,5 @@
 ---
-id: ADR-0062
+id: ADR-0063
 title: Operation admission — a closed request/decision contract, and no prevention claim without proof
 status: PROPOSED
 match_terms:
@@ -15,7 +15,7 @@ match_terms:
   - delivery.mutate
 ---
 
-# ADR-0062: Operation admission — a closed request/decision contract, and no prevention claim without proof
+# ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
 **Status: PROPOSED** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-2). This records a design for owner review. It ships no code and no schema, and it changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are proposed contracts, not accepted configuration. Everything marked **Open** needs an owner decision before slice 3 starts.
 
@@ -174,6 +174,7 @@ received ─► authorized ─► dispatch-intent ─► confirmed
 ### 9. How #355 plugs in
 
 - `dependency.materialize` is one family of this contract, not a separate permit mechanism.
+- #355's own design is ADR-0062 (PR #362, `ADR-0062-dependency-admission.md`, open while this ADR is written). This section states the interface between the two. It does not restate or decide anything ADR-0062 owns.
 - **#355 supplies:**
   - the dependency policy (DEP01)
   - the normalized graph and diff (DEP02), which become `resourceIdentity`: ecosystem, graph digest, admitted artifact set, permitted scripts
@@ -184,7 +185,7 @@ received ─► authorized ─► dispatch-intent ─► confirmed
   - #355 can ship its graph, diff and policy checks (verify-time `detection`) before any broker exists.
   - The broker can ship other families before #355's acquisition adapter (DEP05).
   - #355's pre-execution claim (DEP-T02) is a `prevention` cell under section 1, with its own canary.
-- **No parallel structures.** Dependency admission must not define a second permit, receipt or approval format. If #355's first slice lands names that differ from this ADR, the later of the two PRs aligns them.
+- **No parallel structures.** Dependency admission must not define a second permit, receipt or approval format. Where ADR-0062 (PR #362) and this ADR name the same thing differently, the PR that merges second aligns the names.
 
 ### 10. Relationship to existing decisions
 
