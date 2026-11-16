@@ -10,6 +10,8 @@
 # Amended: the shim sets GANTRY_HOOK_REQUIRE_PIN=1 on the installed path, and only then does gantry hook check the
 # SUBSTRATE.version.json pin, so direct gantry hook calls (and the existing hook tests) behave as before.
 # Amended: test roots narrowed to the touched files (the contract import scan judges whole roots).
+# Amended (review round, PR #365): src/cli/tests/git-hooks.test.ts declared; its stub gantry answers --version and its
+# fixture has a pin, because the shim now checks the found gantry's version against the pin before running it.
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0381.json written by
 # gantry verify --record (RULES §3).
@@ -42,21 +44,7 @@ interrogation:
     adr_refs:
       - ADR-0037
       - ADR-0052
-  - finding_id: 2f5df6819b7b
-    kind: adr_conflict
-    question: Intent may relate to ADR-0021. Accept ADR decision, reject
-      applicability, or cite superseding rationale?
-    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
-      legislation proceeds.
-    operator_answer: "Accept ADR-0021 and amend it with a note: the bypass secret
-      still comes from GANTRY_BYPASS_SECRET and the forensic git note is
-      unchanged, but the SHA-256 anchor is now read from the trusted base commit
-      (merge-base of HEAD with the default branch), not from the working tree;
-      no base or no anchor at the base fails closed."
-    adr_refs:
-      - ADR-0021
-      - ADR-0063
-  - finding_id: 36bafeaa6570
+  - finding_id: 284c5e332d0d
     kind: undefined_boundary
     question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
       Confirm boundary for all listed paths.
@@ -72,10 +60,29 @@ interrogation:
       generated fragment, which gains the ~/.opengantry entries;
       break-glass.test.ts is the one existing test whose working-tree anchor is
       the attack being closed, so it now commits its anchor (disclosed in the
-      PR). Boundary confirmed: tests only."
+      PR). Review round (PR #365): git-hooks.test.ts places the tracked
+      pre-commit shim with a stub gantry; the shim now checks the found gantry's
+      --version against the SUBSTRATE.version.json pin before running it, so the
+      fixture gains a pin file and the stub answers --version. Its assertions
+      (delegation, exit code blocks the commit, --no-verify bypasses) are
+      unchanged. Boundary confirmed: tests only."
     adr_refs:
       - ADR-0058
       - ADR-0052
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0021 and amend it with a note: the bypass secret
+      still comes from GANTRY_BYPASS_SECRET and the forensic git note is
+      unchanged, but the SHA-256 anchor is now read from the trusted base commit
+      (merge-base of HEAD with the default branch), not from the working tree;
+      no base or no anchor at the base fails closed."
+    adr_refs:
+      - ADR-0021
+      - ADR-0063
   - finding_id: 3e483990523c
     kind: risk_escalation
     question: "Triage escalated: Intent contains risk_keyword: security. Which
@@ -177,7 +184,7 @@ interrogation:
     adr_refs:
       - ADR-0060
       - ADR-0063
-interrogation_sha256: 2e68ee34b501bc8b6d2af9e10b748e7b5e5e0a85a6c853ac198919a9e9a1c25d
+interrogation_sha256: 94879ade872a9804ac71cb4ccae367123079dfdd2c386521d6ec188a1cc343eb
 declared_paths:
   - .gitagent/missions/MSN-0381.authority-surfaces.yaml
   - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
@@ -210,6 +217,7 @@ declared_paths:
   - src/cli/tests/authority-hook-shim.test.ts
   - src/cli/tests/break-glass.test.ts
   - src/cli/tests/cage-policy.test.ts
+  - src/cli/tests/git-hooks.test.ts
   - src/cli/tests/test-tmpdir-setup.ts
   - templates/.githooks/
   - test/conformance/golden/
@@ -246,6 +254,7 @@ contract:
     - src/cli/tests/authority-hook-shim.test.ts
     - src/cli/tests/break-glass.test.ts
     - src/cli/tests/cage-policy.test.ts
+    - src/cli/tests/git-hooks.test.ts
     - src/cli/tests/test-tmpdir-setup.ts
     - templates/.githooks
     - test/conformance/golden/
@@ -254,4 +263,4 @@ contract:
     - .gitagent/planner/RULES.md
     - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
-contract_sha256: 3ee8290fccb534bdb2dab254c1eee1b2f1e2c09b616d017fb8e3b2c72809fef6
+contract_sha256: 8dfce76b4704a6f956ff37aeb7bf10a3bdd4868f9a198fc557c00fc3af3a9c1c
