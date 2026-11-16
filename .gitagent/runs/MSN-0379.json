@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0379",
+  "mission_path": ".gitagent/missions/MSN-0379.operation-admission-discovery.yaml",
+  "head": "ea38ad9175cc49eaffc81ac67a1286584e3afa8a",
+  "tree": "77fe75d9dc4b28478671054a69c66c7bff88fa05",
+  "law_sha256": "5d22d938aeedb7494d27998c338cc6c6bce209d609c4ea9d1f6fff01ff1b8471",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 32408,
+      "output_sha256": "b8803bcfada7a56711958fdd22cc8da979a5280afefb8b0234bf1233969ada1c"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-16T18:30:48.298Z"
+}
