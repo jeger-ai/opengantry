@@ -4,7 +4,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { generateKeyPairSync, sign, type KeyObject } from "node:crypto";
+import { createHash, generateKeyPairSync, sign, type KeyObject } from "node:crypto";
+import { pathToFileURL } from "node:url";
+import { gunzipSync } from "node:zlib";
 import { APPROVAL_SIGNATURE_NAMESPACE, approvalSignedMessage, sshSignatureSignedData } from "#core/dependency-approval.js";
 import { parseNpmLockfile, type NpmGraph } from "#core/dependency-graph.js";
 import { dependencyPolicyRevision } from "#core/dependency-policy.js";
@@ -405,7 +407,130 @@ test("verify --contract: a file: folder is admitted by its content digest at bas
   assert.deepEqual(codes(run(dest, base)), ["source_file"]);
 });
 
-test("verify --check-result: a v2 result binds its dependency section; a v1 reader refuses it; malformed and stripped sections are refused (MSN-0383, DEP06)", () => {
+test("verify --contract: approvals are checked against the base allowed signers, not a head swap (MSN-0383 review)", () => {
+  const forged = approvalText({ head: ADDED_GRAPH, identities: [ident(ADDED_GRAPH, "node_modules/b")], key: ATTACKER });
+  const { dest, base } = repo("enforce", { ".gitagent/dependency-approvals/b.json": forged });
+  commit(dest, { ...ADD_B, ".gitagent/foreman/PLANNER.signing.pub": signersFor(ATTACKER) }, "add b and swap the signers to the key that signed the approval");
+  const r = run(dest, base);
+  assert.equal(r.status, "fail");
+  assert.equal(r.dependencies!.outcome, "fail");
+  assert.deepEqual(codes(r).sort(), ["approval_signature_invalid", "unapproved_identity"]);
+  assert.deepEqual(r.dependencies!.approvals_used, []);
+});
+
+test("verify --contract: case variants of dependency file names hold, under enforce and labelled under audit (MSN-0383 review)", () => {
+  for (const mode of ["enforce", "audit"] as const) {
+    const { dest, base } = repo(mode);
+    commit(dest, { "sub/PACKAGE-LOCK.JSON": lock(ADDED_DEPS, ADDED_PKGS), "tools/Package.json": manifest({ y: "^1.0.0" }), "Node_Modules/a/index.js": "evil()\n", "Yarn.lock": "#\n" }, "case variants");
+    const r = run(dest, base);
+    assert.deepEqual(r.dependencies!.files, ["Node_Modules/a/index.js", "Yarn.lock", "sub/PACKAGE-LOCK.JSON", "tools/Package.json"]);
+    assert.deepEqual(r.dependencies!.reasons.map((x) => [x.code, x.file]), [
+      ["node_modules_changed", "Node_Modules/a/index.js"],
+      ["unsupported_dependency_file", "Yarn.lock"],
+      ["unsupported_dependency_file", "sub/PACKAGE-LOCK.JSON"],
+      ["unsupported_dependency_file", "tools/Package.json"],
+    ]);
+    assert.match(r.dependencies!.reasons[2]!.detail, /case variant of package-lock\.json/);
+    assert.equal(r.status, mode === "enforce" ? "fail" : "pass");
+    if (mode === "audit") assert.match(verifyResultJUnit(r), /name="dependencies \(audit\)"><skipped\/>/);
+  }
+});
+
+test("verify --contract: an added, changed or removed .npmrc holds at any depth (MSN-0383 review)", () => {
+  for (const mode of ["enforce", "audit"] as const) {
+    const { dest, base } = repo(mode, { ".npmrc": "registry=https://registry.npmjs.org/\n", "tools/.npmrc": "ignore-scripts=true\n" });
+    commit(dest, { ".npmrc": "registry=https://evil.example/\n", "tools/.npmrc": null, "pkgs/x/.npmrc": "//evil.example/:_authToken=x\n", "docs/.NPMRC": "x\n" }, "npm config");
+    const r = run(dest, base);
+    assert.deepEqual(r.dependencies!.reasons.map((x) => [x.code, x.file]), [
+      ["npm_config_changed", ".npmrc"],
+      ["unsupported_dependency_file", "docs/.NPMRC"],
+      ["npm_config_changed", "pkgs/x/.npmrc"],
+      ["npm_config_changed", "tools/.npmrc"],
+    ]);
+    assert.deepEqual(r.dependencies!.reasons.filter((x) => x.code === "npm_config_changed").map((x) => /was (\w+)/.exec(x.detail)![1]), ["changed", "added", "removed"]);
+    assert.ok(!JSON.stringify(r.dependencies).includes("evil.example"), "no npm config content in the section");
+    assert.equal(r.status, mode === "enforce" ? "fail" : "pass");
+  }
+});
+
+test("verify --contract: editing an approved file: folder holds although the lockfile did not change; an approval of the new content admits it (MSN-0383 review)", () => {
+  const folderDeps = { a: "^1.0.0", x: "file:vendor/x" };
+  const folderPkgs: Packages = { ...BASE_PKGS, "node_modules/x": { resolved: "vendor/x", link: true }, "vendor/x": { name: "x", version: "1.0.0" } };
+  const files = { "package.json": manifest(folderDeps), "package-lock.json": lock(folderDeps, folderPkgs) };
+  const head = graph(files["package-lock.json"], files["package.json"]);
+  const vendored = { "vendor/x/package.json": '{"name":"x","version":"1.0.0"}\n', "vendor/x/index.js": "module.exports = 1;\n" };
+  const edited = { "vendor/x/index.js": "module.exports = evil();\n" };
+  const scripted = { "vendor/x/package.json": '{"name":"x","version":"1.0.0","scripts":{"install":"node evil.js"}}\n' };
+
+  /** Base: the folder, the lockfile depending on it and an approval for the folder's digests in `approve`. */
+  const setup = (approve: (dest: string, first: string) => string[]) => {
+    const dest = tmp("og-verify-depadm-folder-");
+    git(dest, "init", "-q", "-b", "main");
+    const first = commit(
+      dest,
+      { ...vendored, "verify.yaml": policyYaml("enforce"), "package.json": manifest(BASE_DEPS), "package-lock.json": lock(BASE_DEPS, BASE_PKGS), ".gitagent/foreman/PLANNER.signing.pub": signersFor(PLANNER) },
+      "the baseline",
+    );
+    const digests = approve(dest, first);
+    git(dest, "reset", "-q", "--hard", first);
+    const base = commit(dest, { ...files, ".gitagent/dependency-approvals/x.json": approvalText({ head, files: digests.map((d) => ({ path: "vendor/x", content_digest: d })) }) }, "depend on vendor/x");
+    return { dest, base };
+  };
+  const digestAfter = (dest: string, change: Record<string, string>) => contentDigestAt(dest, commit(dest, change, "scratch"), "vendor/x")!;
+
+  const { dest, base } = setup((d, first) => [contentDigestAt(d, first, "vendor/x")!]);
+  commit(dest, { "src/app.ts": "x\n" }, "unrelated");
+  assert.equal(run(dest, base).dependencies!.outcome, "pass", "the folder at base is approved");
+  assert.deepEqual(run(dest, base).dependencies!.lockfiles, [], "and an unrelated change judges no lockfile");
+
+  commit(dest, edited, "edit only the folder's code");
+  const r = run(dest, base);
+  assert.equal(r.status, "fail");
+  assert.deepEqual(r.dependencies!.files, [], "no dependency file changed");
+  assert.deepEqual(r.dependencies!.lockfiles.map((l) => [l.path, l.outcome]), [["package-lock.json", "hold"]]);
+  assert.deepEqual(r.dependencies!.reasons.map((x) => [x.code, x.severity, x.location]), [
+    ["local_folder_changed", "info", "vendor/x"],
+    ["source_file", "hold", "vendor/x"],
+  ]);
+
+  const s = setup((d, first) => [contentDigestAt(d, first, "vendor/x")!]);
+  commit(s.dest, scripted, "give the folder an install script");
+  assert.deepEqual(codes(run(s.dest, s.base)).sort(), ["local_folder_changed", "manifest_without_lock_change", "source_file"]);
+
+  const approved = setup((d) => [digestAfter(d, edited)]);
+  commit(approved.dest, edited, "the edit the Planner approved at base");
+  const ok = run(approved.dest, approved.base);
+  assert.equal(ok.status, "pass", ok.problems.join("\n"));
+  assert.deepEqual(codes(ok), ["local_folder_changed"]);
+  assert.equal(ok.dependencies!.approvals_used.length, 1);
+
+  const loose = setup((d) => [digestAfter(d, edited)]);
+  write(loose.dest, edited);
+  assert.deepEqual(codes(run(loose.dest, loose.base, { mode: "worktree" })), ["local_folder_changed", "source_file"], "worktree mode never digests an edited folder");
+});
+
+test("verify --contract: editing a workspace a base glob covers judges nothing (workspaces need no approval) (MSN-0383 review)", () => {
+  const wsManifest = `${JSON.stringify({ name: "app", version: "1.0.0", workspaces: ["packages/*"], dependencies: BASE_DEPS }, null, 2)}\n`;
+  const wsLock = `${JSON.stringify(
+    {
+      name: "app",
+      version: "1.0.0",
+      lockfileVersion: 3,
+      requires: true,
+      packages: { "": { name: "app", version: "1.0.0", workspaces: ["packages/*"], dependencies: BASE_DEPS }, ...BASE_PKGS, "node_modules/w": { resolved: "packages/w", link: true }, "packages/w": { name: "w", version: "1.0.0" } },
+    },
+    null,
+    2,
+  )}\n`;
+  assert.ok(graph(wsLock, wsManifest).nodes.some((n) => n.location === "packages/w" && n.source.kind === "workspace"));
+  const { dest, base } = repo("enforce", { "package.json": wsManifest, "package-lock.json": wsLock, "packages/w/package.json": '{"name":"w","version":"1.0.0"}\n', "packages/w/index.js": "1\n" });
+  commit(dest, { "packages/w/index.js": "2\n" }, "edit the workspace");
+  const r = run(dest, base);
+  assert.equal(r.status, "pass", r.problems.join("\n"));
+  assert.deepEqual([r.dependencies!.files, r.dependencies!.lockfiles, r.dependencies!.reasons], [[], [], []]);
+});
+
+test("verify --check-result: a v2 result binds its dependency section; malformed and stripped sections are refused (MSN-0383, DEP06)", () => {
   const { dest, base } = repo("audit");
   commit(dest, ADD_B, "add b");
   const r = run(dest, base);
@@ -416,10 +541,7 @@ test("verify --check-result: a v2 result binds its dependency section; a v1 read
   save(r);
   assert.deepEqual(check().problems, []);
 
-  // The released 4.0.x reader (checkVerifyResult before MSN-0383) accepted exactly one schema and ignored unknown
-  // keys; this is its schema test, verbatim. A v2 result fails it, so an old reader refuses instead of ignoring.
-  const v1Reader = (result: { schema?: unknown }) => [result.schema !== "opengantry.verify-result.v1" && "not a opengantry.verify-result.v1 result"].filter(Boolean);
-  assert.deepEqual(v1Reader(r), ["not a opengantry.verify-result.v1 result"]);
+  // The released 4.0.3 reader refusing this shape is proven against the published package in its own test below.
 
   const { dependencies, ...stripped } = r;
   save({ ...stripped, schema: "opengantry.verify-result.v1" });
@@ -438,6 +560,68 @@ test("verify --check-result: a v2 result binds its dependency section; a v1 read
   assert.deepEqual(check().problems, ["the dependencies section names another base or head than the result"]);
   save({ ...r, schema: "opengantry.verify-result.v3" });
   assert.match(check().problems.join(), /not a opengantry\.verify-result\.v1 or opengantry\.verify-result\.v2 result/);
+});
+
+/** The files of an npm tarball (ustar, as `npm pack` writes it), written under `dest`; refuses links and `..`. */
+function untar(tgz: Buffer, dest: string): void {
+  const tar = gunzipSync(tgz);
+  for (let at = 0; at + 512 <= tar.length; ) {
+    const header = tar.subarray(at, at + 512);
+    if (header.every((b) => b === 0)) break;
+    const field = (from: number, len: number) => header.subarray(from, from + len).toString("utf8").replace(/\0.*$/s, "");
+    const name = [field(345, 155), field(0, 100)].filter(Boolean).join("/");
+    const size = parseInt(field(124, 12).trim() || "0", 8);
+    const type = field(156, 1) || "0";
+    assert.ok(!name.split("/").includes("..") && !name.startsWith("/"), `tar entry ${name}`);
+    if (type === "0") {
+      fs.mkdirSync(path.dirname(path.join(dest, name)), { recursive: true });
+      fs.writeFileSync(path.join(dest, name), tar.subarray(at + 512, at + 512 + size));
+    } else assert.ok(type === "5" || type === "x" || type === "g", `tar entry ${name} has type ${type}`);
+    at += 512 + Math.ceil(size / 512) * 512;
+  }
+}
+
+const RELEASED_VERIFY_TGZ = path.join(getRepoRoot(), "src", "cli", "tests", "fixtures", "opengantry-verify-4.0.3.tgz");
+/** `npm view @jeger-ai/opengantry-verify@4.0.3 dist.integrity`: the fixture is the published tarball, byte for byte. */
+const RELEASED_VERIFY_INTEGRITY = "sha512-ioMl0VIqUHIUAgOLkc3dd9B8PHPsD9jX6nI0JOO0BGODApeFrdDTNPIezCiBgunr3IXD/adt6WpmVv5MnK3xHg==";
+
+test("the released 4.0.3 reader (the published @jeger-ai/opengantry-verify tarball) refuses a v2 result instead of ignoring the section (MSN-0383, DEP06)", async () => {
+  const tgz = fs.readFileSync(RELEASED_VERIFY_TGZ);
+  assert.equal(`sha512-${createHash("sha512").update(tgz).digest("base64")}`, RELEASED_VERIFY_INTEGRITY, "the fixture is the published 4.0.3 package");
+  const pkgDir = tmp("og-verify-depadm-released-");
+  untar(tgz, pkgDir);
+  assert.equal((JSON.parse(fs.readFileSync(path.join(pkgDir, "package", "package.json"), "utf8")) as { version: string }).version, "4.0.3");
+  const released = (await import(pathToFileURL(path.join(pkgDir, "package", "dist", "index.js")).href)) as {
+    VERIFY_RESULT_SCHEMA: string;
+    checkVerifyResult: (file: string, opts: { cwd: string; base: string; contract?: string }) => { ok: boolean; problems: string[] };
+  };
+  assert.equal(released.VERIFY_RESULT_SCHEMA, "opengantry.verify-result.v1");
+
+  const { dest, base } = repo("audit");
+  commit(dest, ADD_B, "add b");
+  const r = run(dest, base);
+  assert.equal(r.status, "pass");
+  assert.equal(r.schema, "opengantry.verify-result.v2");
+  const out = path.join(tmp("og-verify-depadm-released-out-"), "result.json");
+  fs.writeFileSync(out, `${JSON.stringify(r, null, 2)}\n`);
+
+  // With the repository contract the released reader already refuses the dependencies section of verify.yaml.
+  assert.throws(() => released.checkVerifyResult(out, { cwd: dest, base }), /unknown key "dependencies"/);
+
+  // Without a policy, the released reader accepts the v1 result of today's verify, and refuses the same result
+  // turned into v2 with the section: its schema check rejects it, so the verdict is never silently ignored.
+  const plain = tmp("og-verify-depadm-released-plain-");
+  git(plain, "init", "-q", "-b", "main");
+  const plainBase = commit(plain, { "verify.yaml": "schema: opengantry.verify.v1\n" }, "base");
+  commit(plain, ADD_B, "add b");
+  const v1 = run(plain, plainBase);
+  assert.equal(v1.schema, "opengantry.verify-result.v1");
+  fs.writeFileSync(out, `${JSON.stringify(v1, null, 2)}\n`);
+  assert.deepEqual(released.checkVerifyResult(out, { cwd: plain, base: plainBase }).problems, [], "the released reader accepts what it knows");
+  fs.writeFileSync(out, `${JSON.stringify({ ...v1, schema: r.schema, dependencies: { ...r.dependencies!, base: v1.base, head: v1.head } }, null, 2)}\n`);
+  const checked = released.checkVerifyResult(out, { cwd: plain, base: plainBase });
+  assert.equal(checked.ok, false);
+  assert.deepEqual(checked.problems, ["not a opengantry.verify-result.v1 result"]);
 });
 
 function keypair(dir: string, name: string): { key: string; pub: string } {

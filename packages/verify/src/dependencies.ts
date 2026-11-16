@@ -4,6 +4,7 @@ import { canonicalJson } from "#core/canonical-json.js";
 import { evaluateDependencyAdmission } from "#core/dependency-admission.js";
 import { diffNpmGraphs, parseNpmLockfile, type NpmGraph, type NpmGraphLimits, type NpmGraphResult } from "#core/dependency-graph.js";
 import { dependencyPolicyRevision, type DependencyPolicy } from "#core/dependency-policy.js";
+import { globToRegExp } from "#core/path-glob.js";
 import { verifyDependenciesProblem as schemaProblem, type VerifyDependencies as SchemaDependencies } from "#core/schemas/verify-dependencies-schema.js";
 import { gitChildEnv, gitRun } from "#git/git.js";
 import { diskSourceTree, gitSourceTree, type SourceTree } from "./imports.js";
@@ -13,7 +14,8 @@ import { diskSourceTree, gitSourceTree, type SourceTree } from "./imports.js";
  * input is a git object at the base commit: the approvals under `approval_refs`, the allowed signers, the base graph,
  * the baseline graph and the content digests of `file:` folders. Only the head lockfiles and manifests come from the
  * change. The verdict is the pure slice-2 evaluator's, per changed lockfile, plus the checks around it: unsupported
- * lockfiles, `node_modules` and a manifest that changed without its lockfile hold. It runs after the change was made,
+ * lockfiles, `node_modules`, a changed `.npmrc` and a manifest that changed without its lockfile hold, and a lockfile
+ * whose `file:` folder the change edited is judged although the lockfile did not change. It runs after the change was made,
  * so it is labelled `enforcement: audit` whatever the mode: it can fail a merge, not prevent code that already ran.
  */
 
@@ -74,6 +76,10 @@ export function verifyDependenciesProblem(value: unknown): string | null {
 const ALLOWED_SIGNERS = ".gitagent/foreman/PLANNER.signing.pub";
 const LOCKFILES = ["npm-shrinkwrap.json", "package-lock.json"];
 const UNSUPPORTED = ["yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb"];
+/** npm configuration: the candidate's is data, never authority (registry, scripts and auth settings), so any change holds. */
+const NPM_CONFIG = ".npmrc";
+/** Every name judged, compared case-insensitively: npm reads `PACKAGE-LOCK.JSON` on a case-insensitive checkout. */
+const DEPENDENCY_NAMES = ["package.json", ...LOCKFILES, ...UNSUPPORTED, NPM_CONFIG];
 const EDGE_KINDS = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"];
 /** How far back the base history is searched for the graph `approved_baseline_digest` names. */
 const BASELINE_HISTORY = 50;
@@ -112,8 +118,10 @@ function reason(code: string, severity: Severity, file: string, location: string
   return { code, severity, file, location, detail: detail.length > DETAIL_MAX ? `${detail.slice(0, DETAIL_MAX)}…` : detail };
 }
 
+const inNodeModules = (p: string): boolean => p.split("/").some((seg) => seg.toLowerCase() === "node_modules");
+
 function isDependencyFile(p: string): boolean {
-  return p.split("/").includes("node_modules") || ["package.json", ...LOCKFILES, ...UNSUPPORTED].includes(nameOf(p));
+  return inNodeModules(p) || DEPENDENCY_NAMES.includes(nameOf(p).toLowerCase());
 }
 
 /** A lockfile-relative path inside the repository, normalized as the evaluator does; null when it leaves the repository. */
@@ -204,17 +212,66 @@ function baselineGraph(ctx: Ctx, lock: string, base: NpmGraphResult | null): Npm
   return null;
 }
 
+/** The repository path of a `file:` source or a local or workspace folder node; null for other nodes or outside. */
+function folderPath(lock: string, n: NpmGraph["nodes"][number]): string | null {
+  const { kind, ref } = n.source;
+  const rel = kind === "file" ? (ref ?? "").replace(/^file:/, "") : kind === "local" || kind === "workspace" ? n.location : null;
+  return rel === null ? null : repoPath(lock, rel);
+}
+
+const edits = (changed: readonly string[], path: string): boolean => path === "." || changed.some((c) => c === path || c.startsWith(`${path}/`));
+
+/**
+ * The content digest of each folder, as npm would install it: at base when the change leaves it alone, at the head
+ * commit when the change edits it (so only an approval at base for exactly that new content admits it). Without a
+ * digest no approval matches: a folder edited in worktree mode, and the repository root (`.`), whose content includes
+ * the approval naming it, once anything changed.
+ */
 function contentDigests(ctx: Ctx, lock: string, head: NpmGraphResult): Record<string, string> {
   const out: Record<string, string> = {};
   if (head.status !== "ok") return out;
+  const { root, base, head: rev, worktree, changed } = ctx.input;
   for (const n of head.graph.nodes) {
-    const rel = n.source.kind === "file" ? (n.source.ref ?? "").replace(/^file:/, "") : n.source.kind === "local" || n.source.kind === "workspace" ? n.location : null;
-    const path = rel === null ? null : repoPath(lock, rel);
+    const path = folderPath(lock, n);
     if (path === null || path in out) continue;
-    // The digest describes the folder at base; when the change edits the folder, npm installs other content: no digest.
-    if (ctx.input.changed.some((c) => path === "." || c === path || c.startsWith(`${path}/`))) continue;
-    const digest = contentDigestAt(ctx.input.root, ctx.input.base, path);
+    const edited = edits(changed, path);
+    if (edited && (worktree || path === ".")) continue;
+    const digest = contentDigestAt(root, edited ? rev : base, path);
     if (digest !== null) out[path] = digest;
+  }
+  return out;
+}
+
+/**
+ * Lockfiles at head the change did not touch but whose `file:` source or local folder it edited (owner decision 4: a
+ * change to the folder needs a new approval). A workspace matching a base glob of that lockfile needs no approval
+ * (ADR-0062 decision 3), so editing it judges nothing; a workspace no base glob covers is judged like a local folder.
+ */
+function lockfilesWithEditedFolders(ctx: Ctx, skip: readonly string[]): string[] {
+  const { root, head, worktree, changed, policy } = ctx.input;
+  if (changed.length === 0) return [];
+  const listed = worktree ? gitRun(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]) : gitRun(root, ["ls-tree", "-r", "-z", "--name-only", "--full-tree", head]);
+  const out: string[] = [];
+  for (const lock of listed.ok ? listed.stdout.split("\0").filter(Boolean) : []) {
+    if (!LOCKFILES.includes(nameOf(lock)) || inNodeModules(lock) || skip.includes(lock)) continue;
+    const g = graphOf(ctx.headTree.read(lock), ctx.headTree.read(join(dirOf(lock), "package.json")), policy.limits);
+    if (g?.status !== "ok") continue;
+    let globs: RegExp[] | null = null;
+    const baseGlobs = (): RegExp[] => {
+      const b = graphOf(ctx.baseTree.read(lock), ctx.baseTree.read(join(dirOf(lock), "package.json")), policy.limits);
+      return (b?.status === "ok" ? b.graph.root.workspaces : []).map((x) => globToRegExp(x));
+    };
+    const folders = g.graph.nodes.filter((n) => {
+      const path = folderPath(lock, n);
+      if (path === null || !edits(changed, path)) return false;
+      return n.source.kind !== "workspace" || !(globs ??= baseGlobs()).some((re) => re.test(n.location));
+    });
+    if (folders.length === 0) continue;
+    out.push(lock);
+    for (const n of folders) {
+      const path = folderPath(lock, n)!;
+      ctx.reasons.push(reason("local_folder_changed", "info", lock, n.location, `${path} changed while ${lock} did not: judged by the folder's content digest at head`));
+    }
   }
   return out;
 }
@@ -318,14 +375,21 @@ export function judgeDependencies(input: DependencyJudgeInput): VerifyDependenci
   const files = input.changed.filter(isDependencyFile);
   const locks: string[] = [];
   for (const f of files) {
-    if (f.split("/").includes("node_modules")) {
+    const name = nameOf(f);
+    if (inNodeModules(f)) {
       ctx.reasons.push(reason("node_modules_changed", "hold", f, null, "committed node_modules content bypasses the lockfile"));
-    } else if (UNSUPPORTED.includes(nameOf(f))) {
-      ctx.reasons.push(reason("unsupported_dependency_file", "hold", f, null, `${nameOf(f)} is not supported (npm package-lock.json or npm-shrinkwrap.json, lockfileVersion 2 or 3)`));
-    } else if (LOCKFILES.includes(nameOf(f))) locks.push(f);
+    } else if (!DEPENDENCY_NAMES.includes(name)) {
+      const canonical = name.toLowerCase();
+      ctx.reasons.push(reason("unsupported_dependency_file", "hold", f, null, `${name} is a case variant of ${canonical}: npm reads it on a case-insensitive checkout, and only the exact name is judged`));
+    } else if (UNSUPPORTED.includes(name)) {
+      ctx.reasons.push(reason("unsupported_dependency_file", "hold", f, null, `${name} is not supported (npm package-lock.json or npm-shrinkwrap.json, lockfileVersion 2 or 3)`));
+    } else if (name === NPM_CONFIG) {
+      const how = !ctx.headTree.has(f) ? "removed" : ctx.baseTree.has(f) ? "changed" : "added";
+      ctx.reasons.push(reason("npm_config_changed", "hold", f, null, `${f} was ${how}: npm configuration in a change is data, never authority; change it in a Planner change of its own`));
+    } else if (LOCKFILES.includes(name)) locks.push(f);
     else judgeManifest(ctx, f);
   }
-  const lockfiles = locks.map((l) => judgeLockfile(ctx, l));
+  const lockfiles = [...locks, ...lockfilesWithEditedFolders(ctx, locks)].map((l) => judgeLockfile(ctx, l));
   const key = (r: Reason) => `${r.file}\u0000${r.location ?? ""}\u0000${r.code}\u0000${r.detail}`;
   const reasons = ctx.reasons.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
   return {

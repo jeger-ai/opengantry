@@ -183,3 +183,18 @@ test("types: the declarations index.d.ts reaches import no package the slim pack
   assert.ok(seen.size > 5, "the walk follows the #core, #git and #verify imports");
   assert.deepEqual([...bare].filter((d) => !["commander", "sigstore"].includes(d)), [], `bare imports reachable from index.d.ts: ${[...bare].join(", ")}`);
 });
+
+test("types: no published declaration imports a package the slim package does not depend on, reachable or not (MSN-0383 review)", () => {
+  const dry = JSON.parse(execFileSync(npm, ["pack", "--dry-run", "--json"], { cwd: pkgDir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }))[0];
+  const declarations = dry.files.map((f) => f.path).filter((f) => f.endsWith(".d.ts"));
+  assert.ok(declarations.includes("dist/types/core/dependency-policy.d.ts"), "core declarations are still published");
+  for (const gone of ["dist/types/core/schemas/verify-dependencies-schema.d.ts", "dist/types/core/schemas/mission-schema.d.ts"]) {
+    assert.ok(!declarations.includes(gone), `${gone} imports zod and is not published`);
+  }
+  const offenders = declarations.filter((f) =>
+    [...fs.readFileSync(path.join(pkgDir, f), "utf8").matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)].some(
+      ([, spec]) => !/^(\.|#|node:)/.test(spec) && !["commander", "sigstore"].includes(spec.split("/")[0]),
+    ),
+  );
+  assert.deepEqual(offenders, []);
+});
