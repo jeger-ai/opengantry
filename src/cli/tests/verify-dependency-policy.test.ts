@@ -104,8 +104,8 @@ test("verify contract: a candidate change to its own dependencies section is jud
 
 test("verify contract: the guide's dependencies example is a valid, closed section (MSN-0382)", () => {
   const guide = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../docs/guides/verify-contract.md"), "utf8");
-  const block = /```yaml\n(# NOT ENFORCED YET[\s\S]*?)```/.exec(guide);
-  assert.ok(block, "the guide has the dependencies example, labelled as not enforced");
+  const block = /```yaml\n(# A POST-CHANGE CHECK, NOT PREVENTION[\s\S]*?)```/.exec(guide);
+  assert.ok(block, "the guide has the dependencies example, labelled as a post-change check, not prevention (MSN-0383)");
   const c = parseVerifyYaml(`schema: opengantry.verify.v1\n${block[1]!}`);
   assert.equal(c.dependencies?.mode, "audit");
   assert.equal(c.dependencies?.lifecycle, "deny");

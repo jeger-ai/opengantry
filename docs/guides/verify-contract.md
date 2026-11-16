@@ -114,8 +114,9 @@ Classes decide first; `never_auto` is final. Otherwise the classifier reads the 
 ## `dependencies`
 
 ```yaml
-# NOT ENFORCED YET: verify checks this section strictly and a task contract inherits it tighten-only, but
-# gantry verify does not judge dependencies with it yet (design and approval format: ADR-0062).
+# A POST-CHANGE CHECK, NOT PREVENTION: verify judges the npm lockfiles the change touched after the change was
+# made; it can fail the run (mode: enforce), never stop install scripts that already ran. Every result says
+# enforcement: audit. What it judges and what holds: guides/verify-dependencies.md (ADR-0062).
 dependencies:
   schema: opengantry.dependency-policy.v1
   mode: audit                        # audit | enforce
@@ -181,7 +182,7 @@ When a check already fails at the base, run `--baseline` once there and commit `
 
 ## The result
 
-`--json` and `--out` give `opengantry.verify-result.v1`: status, mode, head and base, the contract's path, sha256 and source, the changed, outside and forbidden paths, the size against the budget, rule violations as `file:line`, each check's exit code, seconds, verdict and failure names, and `criticality`. It never holds file contents or command output; a failing check's output tail goes to stderr only. Keep `--out` files outside the tree or gitignored, because a later `--check-result` needs a clean tree.
+`--json` and `--out` give `opengantry.verify-result.v1` ([`opengantry.verify-result.v2`](verify-dependencies.md#the-dependencies-section) with `dependencies`): status, mode, head and base, the contract's path, sha256 and source, the changed, outside and forbidden paths, the size against the budget, rule violations as `file:line`, each check's exit code, seconds, verdict and failure names, and `criticality`. It never holds file contents or command output; a failing check's output tail goes to stderr only. Keep `--out` files outside the tree or gitignored: a later `--check-result` needs a clean tree.
 
 ## Signed results
 

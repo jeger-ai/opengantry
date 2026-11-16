@@ -47,7 +47,7 @@ const result = runVerifyContract({ cwd: repo, base: "origin/main" });
 if (result.status === "fail") console.error(result.problems.join("\n"));
 ```
 
-The API: `runVerifyContract`, `checkVerifyResult`, `writeVerifyBaseline`, `parseVerifyContract`, `adaptPlan` (another framework's plan to a `verify.yaml`), `verifyResultSarif`, `verifyResultJUnit`, `signVerifyResultKeyless`, `checkKeylessSignature`, the schema constants and the result types. Errors are `GantryUserError` with a `GXT_VERIFY_*` code.
+The API: `runVerifyContract`, `checkVerifyResult`, `writeVerifyBaseline`, `parseVerifyContract`, `adaptPlan` (another framework's plan to a `verify.yaml`), `verifyResultSarif`, `verifyResultJUnit`, `signVerifyResultKeyless`, `checkKeylessSignature`, `verifyDependenciesProblem` (checks the dependency section of an `opengantry.verify-result.v2` result against its strict schema), `contentDigestAt` (the content digest a `file:` dependency approval names), the schema constants and the result types. A contract with a `dependencies` section produces `opengantry.verify-result.v2`; a reader that only knows v1 must refuse it. See [the dependency verdict downstream](https://github.com/jeger-ai/opengantry/blob/main/docs/guides/verify-dependencies.md#using-the-verdict-downstream). Errors are `GantryUserError` with a `GXT_VERIFY_*` code.
 
 Results never hold file contents or command output. The only network use is keyless signing and its check, and only when you ask for it.
 

@@ -112,7 +112,15 @@ export function verifyResultSarif(result: VerifyContractResult, cliVersion: stri
   for (const { metric, file } of worseningFiles(result)) {
     out.push(error(`verify/test-${metric.replace("_", "-")}`, `${TEST_LABEL[metric]}: ${String(file.base[metric])} -> ${String(file.head[metric])}`, file.file));
   }
+  // Dependency admission: an error under enforce, a warning under audit (reported, does not fail the run).
+  for (const r of dependencyFindings(result)) {
+    out.push({ ruleId: `verify/dependency-${r.code.replace(/_/g, "-")}`, level: result.dependencies?.mode === "enforce" ? "error" : "warning", text: `${r.severity} ${r.code}${r.location ? ` at ${r.location}` : ""}: ${r.detail}`, uri: r.file });
+  }
   return sarifLog(cliVersion, out);
+}
+
+function dependencyFindings(result: VerifyContractResult): NonNullable<VerifyContractResult["dependencies"]>["reasons"] {
+  return (result.dependencies?.reasons ?? []).filter((r) => r.severity !== "info");
 }
 
 const TEST_LABEL: Record<TestMetric, string> = {
@@ -158,5 +166,8 @@ export function verifyResultJUnit(result: VerifyContractResult): string {
     cases.push({ name: "tests", failure: failing(worse, ({ metric, file }) => `${file.file}: ${TEST_LABEL[metric]} (${String(file.base[metric])} -> ${String(file.head[metric])})`) });
   }
   for (const c of result.checks) cases.push({ name: `check: ${c.name}`, failure: c.ok ? undefined : c.reason, skipped: c.skipped !== undefined });
+  if (result.dependencies && result.dependencies.mode === "enforce") {
+    cases.push({ name: "dependencies", failure: failing(dependencyFindings(result), (r) => `${r.file}: ${r.severity} ${r.code}: ${r.detail}`) });
+  } else if (result.dependencies) cases.push({ name: "dependencies (audit)", skipped: dependencyFindings(result).length > 0 });
   return junitXml("gantry-verify-contract", "gantry.verify.contract", cases);
 }

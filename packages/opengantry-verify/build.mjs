@@ -36,8 +36,14 @@ await build({
   minifyIdentifiers: false,
   legalComments: "eof",
   logLevel: "warning",
-  // yaml (ISC) carries no legal comment of its own, so its license travels in a footer.
-  footer: { js: `/*! Inlined: yaml, ISC license.\n${readFileSync(join(repoRoot, "node_modules", "yaml", "LICENSE"), "utf8").trim()}\n*/` },
+  // yaml (ISC) and zod (MIT, zod/mini for the dependency result schema) carry no legal comment of their own, so their
+  // licenses travel in a footer.
+  footer: {
+    js: [
+      `/*! Inlined: yaml, ISC license.\n${readFileSync(join(repoRoot, "node_modules", "yaml", "LICENSE"), "utf8").trim()}\n*/`,
+      `/*! Inlined: zod, MIT license.\n${readFileSync(join(repoRoot, "node_modules", "zod", "LICENSE"), "utf8").trim()}\n*/`,
+    ].join("\n"),
+  },
   banner: {
     js: [
       "// @jeger-ai/opengantry-verify — bundled from github.com/jeger-ai/opengantry src/cli and packages/ (Apache-2.0).",

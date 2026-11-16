@@ -18,6 +18,7 @@ export const FIXTURE_NAMES = [
   "mission-norows",
   "cage-tamper",
   "contract-standalone",
+  "contract-dependencies",
 ];
 
 const FIXED_DATE = "2026-01-01T00:00:00Z";
@@ -270,6 +271,49 @@ checks:
   commitAll(root, "change under scope", "agent@fixture.test");
 }
 
+/** An audit-mode dependency policy in verify.yaml, then a change that adds one unapproved npm package (MSN-0383). */
+export function buildContractDependencies(root) {
+  gitInit(root);
+  const pkg = (deps) => `${JSON.stringify({ name: "app", version: "1.0.0", ...(deps ? { dependencies: deps } : {}) }, null, 2)}\n`;
+  const lock = (deps, extra = {}) =>
+    `${JSON.stringify({ name: "app", version: "1.0.0", lockfileVersion: 3, requires: true, packages: { "": { name: "app", version: "1.0.0", ...(deps ? { dependencies: deps } : {}) }, ...extra } }, null, 2)}\n`;
+  write(
+    root,
+    "verify.yaml",
+    `schema: opengantry.verify.v1
+dependencies:
+  schema: opengantry.dependency-policy.v1
+  mode: audit
+  ecosystems:
+    npm:
+      lockfile_versions: [3]
+      npm_version: "11.6.2"
+  registries:
+    - https://registry.npmjs.org/
+`,
+  );
+  write(root, "package.json", pkg(null));
+  write(root, "package-lock.json", lock(null));
+  commitAll(root, "initial");
+  write(root, "package.json", pkg({ "is-number": "^7.0.0" }));
+  write(
+    root,
+    "package-lock.json",
+    lock(
+      { "is-number": "^7.0.0" },
+      {
+        "node_modules/is-number": {
+          version: "7.0.0",
+          resolved: "https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz",
+          integrity: "sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==",
+          license: "MIT",
+        },
+      },
+    ),
+  );
+  commitAll(root, "add is-number", "agent@fixture.test");
+}
+
 export function buildFixture(name, root, cli) {
   switch (name) {
     case "bare-git":
@@ -292,6 +336,8 @@ export function buildFixture(name, root, cli) {
       return buildCageTamper(root);
     case "contract-standalone":
       return buildContractStandalone(root);
+    case "contract-dependencies":
+      return buildContractDependencies(root);
     default:
       throw new Error(`unknown fixture ${name}`);
   }

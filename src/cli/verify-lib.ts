@@ -7,6 +7,7 @@ export {
   checkVerifyResult,
   writeVerifyBaseline,
   VERIFY_RESULT_SCHEMA,
+  VERIFY_RESULT_SCHEMA_V2,
   VERIFY_BASELINE_SCHEMA,
   DEFAULT_VERIFY_CONTRACT,
   DEFAULT_VERIFY_BASELINE,
@@ -30,6 +31,7 @@ export type { VerifyMode, VerifyCheckResult, CheckRun } from "#verify/checks.js"
 export type { CriticalityLevel, CriticalityVerdict } from "#verify/criticality.js";
 export type { VerifyTestsRule, TestFileCounts, TestMetric } from "#verify/test-integrity.js";
 export { verifyResultSarif, verifyResultJUnit } from "#verify/export.js";
+export { contentDigestAt, VERIFY_DEPENDENCIES_SCHEMA, verifyDependenciesProblem, type VerifyDependencies } from "#verify/dependencies.js";
 export { adaptPlan, type AdaptOptions, type PlanScope } from "#verify/plan-adapters.js";
 export {
   signVerifyResultKeyless,

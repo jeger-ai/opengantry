@@ -120,6 +120,8 @@ function summary(result: VerifyContractResult): string[] {
   if (result.inherited) lines.push(`verify: repository law from ${result.inherited.path} at the base applies too`);
   const c = result.criticality;
   if (c.source !== "none") lines.push(`verify: criticality ${c.level} (${c.source}${c.classes.length > 0 ? `; classes ${c.classes.map((x) => x.name).join(", ")}` : ""}${c.classifier?.error ? `; classifier ${c.classifier.error}` : ""})`);
+  const d = result.dependencies; // ADR-0062: labelled by mode, never a prevention claim
+  if (d) lines.push(`verify: dependencies ${d.outcome.toUpperCase()} (mode ${d.mode === "enforce" ? "enforce" : "audit: reported, does not fail the run"}; ${String(d.files.length)} changed dependency file(s); a post-change check, not prevention)`, ...d.reasons.filter((x) => x.severity !== "info").map((r) => `verify: dependencies ${r.severity} ${r.code} ${r.file}${r.location ? ` ${r.location}` : ""}: ${r.detail}`));
   if (result.skipped.length > 0) lines.push(`verify: note: imports not read (language not supported): ${result.skipped.join(", ")}`);
   const sig = result.signature;
   if (sig?.kind === "sigstore") lines.push(`verify: signed keyless (sigstore, transparency log index ${keylessLogIndex(sig) ?? "none"})`);

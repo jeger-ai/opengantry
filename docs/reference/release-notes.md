@@ -14,6 +14,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
 - **Breaking: Node.js `^24.15.0 || >=26`** (was `>=24`) for all three packages.
   - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4.
 - **Breaking (#356):** draft-token key in `~/.opengantry`, committed break-glass anchor, hooks run an installed `gantry`; same-user processes still reach the key without a proven sandbox.
+- **[Dependency admission](../guides/verify-dependencies.md)** in `gantry verify --contract`.
 
 ## 4.0
 
