@@ -10,6 +10,9 @@ import path from "node:path";
 import { GIT_REPO_LOCATION_ENV } from "#git/git.js";
 
 for (const key of GIT_REPO_LOCATION_ENV) delete process.env[key];
+// A developer's GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md) must not steer the hook shims fixtures run (MSN-0381).
+delete process.env.GANTRY_HOOK_LOCAL_BUILD;
+delete process.env.GANTRY_HOOK_REQUIRE_PIN;
 
 const runRoot = fs.mkdtempSync(path.join(os.tmpdir(), "og-test-run-"));
 
