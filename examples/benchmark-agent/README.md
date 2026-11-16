@@ -6,7 +6,7 @@ The raw-script phase runs [`raw-script.mjs`](raw-script.mjs) (vendored from [`..
 
 ## Prerequisites
 
-- **Node.js 24+**
+- **Node.js 24.15+ (24.x) or 26+**
 - Built `gantry` from this repository:
 
 ```bash

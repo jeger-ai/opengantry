@@ -53,6 +53,14 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
+### From v4.x (Node floor — next major, unreleased)
+
+Not released yet; it ships in the next major version.
+
+- **Breaking: Node.js `^24.15.0 || >=26`.** `engines.node` in `@jeger-ai/opengantry`, `@jeger-ai/opengantry-verify` and `@jeger-ai/opengantry-cage` was `>=24`. Node 24.0 to 24.14 and Node 25 are no longer supported. Check with `node -v` and move to the latest 24.x or to 26 before you upgrade. Under `engine-strict` an install on an older Node fails; otherwise npm prints `EBADENGINE`.
+- **sigstore 5.** sigstore 5 and cacache 21 need that floor, which is why 4.x stayed on sigstore 4 (MSN-0352). sigstore 5 brings glob 14 through cacache 21 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4. These advisories could not be reached in 4.x: cacache calls glob only in `rm.all` and `verify`, and sigstore calls neither. Keyless signing keeps the same interface ([ADR-0055](../.gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md)).
+- `@types/node` stays on 24, the lowest supported major.
+
 ### From v4.0.2 (criticality verdict, neutral gate schema — v4.0.3)
 
 ```bash

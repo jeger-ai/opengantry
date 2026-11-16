@@ -13,7 +13,7 @@ The session cage wraps one command, typically an agent that a script or CI job s
 npx @jeger-ai/opengantry-cage -- claude -p "…"
 ```
 
-Anything after `--` is the command the cage runs. It needs Node.js 24 or newer and runs on Linux and macOS.
+Anything after `--` is the command the cage runs. It needs Node.js 24.15 or a later 24.x, or Node.js 26 or newer, and runs on Linux and macOS.
 
 When the task should not add or change packages, add `--lock-deps`: lockfiles and dependency manifests such as `package.json` are then restored like any protected file ([Freeze dependencies](protected-paths.md#freeze-dependencies)), and the start line says `(dependencies frozen)`. `.cage.yaml` `dependencies: revert` does the same for every run.
 

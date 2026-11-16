@@ -18,7 +18,7 @@ test("package.json publishes only the gantry-cage bin, with commander as the onl
   for (const hook of ["preinstall", "install", "postinstall", "prepare"]) {
     assert.equal(pkg.scripts[hook], undefined, `no ${hook} script`);
   }
-  assert.equal(pkg.engines.node, ">=24");
+  assert.equal(pkg.engines.node, "^24.15.0 || >=26");
   for (const name of HEAVY) assert.ok(!(name in pkg.dependencies), `${name} must not be a dependency`);
 });
 
