@@ -31,29 +31,29 @@ interrogation:
       to the additive opengantry.verify-result.v2 result with its dependencies
       section (opengantry.verify-dependencies.v1) and its zod schema in
       packages/core/src/schemas. contract.tmvc_roots is narrowed to exactly:
+      ARCH_BASELINE.json, docs/CHANGELOG.md, docs/guides/verify-contract.md,
+      docs/guides/verify-dependencies.md, docs/index.md,
+      docs/reference/release-notes.md, EXECUTOR_LOG.md,
       .gitagent/missions/MSN-0383.dependency-verify-integration.yaml,
       .gitagent/out-of-scope/ADR-0062-dependency-admission.md,
-      .gitagent/runs/MSN-0383.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
-      docs/CHANGELOG.md, docs/guides/verify-contract.md,
-      docs/reference/release-notes.md, packages/core/src/schemas/index.ts,
+      .gitagent/runs/MSN-0383.json, packages/core/src/schemas/index.ts,
       packages/core/src/schemas/verify-dependencies-schema.ts,
-      packages/opengantry-verify/README.md,
       packages/opengantry-verify/build.mjs,
+      packages/opengantry-verify/README.md,
       packages/opengantry-verify/tests/verify-package.test.mjs,
       packages/verify/src/contract.ts, packages/verify/src/dependencies.ts,
       packages/verify/src/export.ts, packages/verify/src/run.ts,
       src/cli/commands/verify-contract.ts,
       src/cli/tests/verify-dependency-admission.test.ts,
       src/cli/tests/verify-dependency-policy.test.ts, src/cli/verify-lib.ts,
-      test/conformance/README.md, test/conformance/build-fixtures.mjs,
-      test/conformance/cases.yaml,
-      test/conformance/golden/verify.contract.contract-dependencies.json.
-      Operator request: "Mission MSN-0383 for issue #355 (dependency admission):
-      work slice 3, verifier result and signing integration (DEP06/DEP07,
-      DEP-T04 and the result part of DEP-T05) ... Not in this slice: trusted
-      acquisition, materialization, running install scripts (slice 4), and
-      canaries (slice 5)." The agent wrote these answers from the orchestrator
-      brief (2026-11-16, issue #355 slice 3, MSN-0383).'
+      test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
+      test/conformance/golden/verify.contract.contract-dependencies.json,
+      test/conformance/README.md. Operator request: "Mission MSN-0383 for issue
+      #355 (dependency admission): work slice 3, verifier result and signing
+      integration (DEP06/DEP07, DEP-T04 and the result part of DEP-T05) ... Not
+      in this slice: trusted acquisition, materialization, running install
+      scripts (slice 4), and canaries (slice 5)." The agent wrote these answers
+      from the orchestrator brief (2026-11-16, issue #355 slice 3, MSN-0383).'
     adr_refs:
       - ADR-0052
       - ADR-0062
@@ -131,10 +131,12 @@ interrogation:
       label change). test/conformance/ files are the conformance suite (a new
       fixture and golden; existing goldens unchanged),
       packages/opengantry-verify/ files are the slim package build, README and
-      package test. Docs and governance files are the ADR, guide, release notes,
-      changelog, mission, run record, ARCH_BASELINE.json and EXECUTOR_LOG.md.
-      The agent wrote these answers from the orchestrator brief (2026-11-16,
-      issue #355 slice 3, MSN-0383)."
+      package test. Docs and governance files are the ADR, the verify-contract
+      guide, a new guide page docs/guides/verify-dependencies.md (the dependency
+      material did not fit the 1,500-word page budget) linked from
+      docs/index.md, release notes, changelog, mission, run record,
+      ARCH_BASELINE.json and EXECUTOR_LOG.md. The agent wrote these answers from
+      the orchestrator brief (2026-11-16, issue #355 slice 3, MSN-0383)."
     adr_refs:
       - ADR-0052
       - ADR-0051
@@ -293,7 +295,7 @@ interrogation:
     adr_refs:
       - ADR-0062
       - ADR-0047
-interrogation_sha256: bf9658ffeb1c3df0680c950539428760f01565009ace990df37e6339c88f7a4a
+interrogation_sha256: 7c6951f14c5ab5d1ee1fd94c28cd9a2cbe655e687e7c5511b79548a7baa832be
 declared_paths:
   - .gitagent/missions/MSN-0383.dependency-verify-integration.yaml
   - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
@@ -302,6 +304,8 @@ declared_paths:
   - EXECUTOR_LOG.md
   - docs/CHANGELOG.md
   - docs/guides/verify-contract.md
+  - docs/guides/verify-dependencies.md
+  - docs/index.md
   - docs/reference/release-notes.md
   - packages/core/src/schemas/index.ts
   - packages/core/src/schemas/verify-dependencies-schema.ts
@@ -329,6 +333,8 @@ contract:
     - EXECUTOR_LOG.md
     - docs/CHANGELOG.md
     - docs/guides/verify-contract.md
+    - docs/guides/verify-dependencies.md
+    - docs/index.md
     - docs/reference/release-notes.md
     - packages/core/src/schemas/index.ts
     - packages/core/src/schemas/verify-dependencies-schema.ts
@@ -353,4 +359,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/core/src/dependency-update.ts
     - packages/missions/src/trusted-automation.ts
-contract_sha256: 360ccb3ca2a98d0d6f56dbd3cd1c79751516465a8635fc6abce36f9d49cd8fcc
+contract_sha256: 1ed15e53ab8b2c640f9b95b9e1f5826df20e86603d2fd25b42d135a4bd6f6c22
