@@ -7,6 +7,8 @@
 # break-glass anchor is read from the trusted base commit, failing closed; the tracked git hook shims run a pinned
 # installed gantry instead of working-tree dist/, with an explicit human opt-in for the local build. No prevention
 # claim without a proven harness sandbox.
+# Amended: the shim sets GANTRY_HOOK_REQUIRE_PIN=1 on the installed path, and only then does gantry hook check the
+# SUBSTRATE.version.json pin, so direct gantry hook calls (and the existing hook tests) behave as before.
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0381.json written by
 # gantry verify --record (RULES §3).
