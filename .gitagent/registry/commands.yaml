@@ -26,6 +26,12 @@ entries:
   - name: admission capabilities
     since: MSN-0384
     hidden: true
+  - name: admission serve
+    since: MSN-0386
+    hidden: true
+  - name: admission stop
+    since: MSN-0386
+    hidden: true
   - name: arch
     since: commit 12461b8
   - name: arch check
