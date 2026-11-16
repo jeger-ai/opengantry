@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://opengantry.local/schemas/opengantry.admission-policy.v1.json",
-  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. No cross-field rules beyond this structure. Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.",
   "type": "object",
   "properties": {
     "schema": {

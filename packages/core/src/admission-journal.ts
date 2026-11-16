@@ -71,7 +71,21 @@ function judgeRecord(rec: AdmissionJournalRecord, line: string, index: number, p
   return null;
 }
 
-function judgeAnchor(records: readonly AdmissionJournalRecord[], anchor: AdmissionJournalAnchor): AdmissionJournalVerdict | null {
+/** An anchor names a non-negative integer count and a sha256 head; anything else is refused, never indexed with. */
+function anchorWellFormed(anchor: unknown): anchor is AdmissionJournalAnchor {
+  const a = anchor as Partial<AdmissionJournalAnchor> | null;
+  return (
+    typeof a === "object" &&
+    a !== null &&
+    Number.isSafeInteger(a.count) &&
+    (a.count as number) >= 0 &&
+    typeof a.headDigest === "string" &&
+    /^[0-9a-f]{64}$/.test(a.headDigest)
+  );
+}
+
+function judgeAnchor(records: readonly AdmissionJournalRecord[], anchor: unknown): AdmissionJournalVerdict | null {
+  if (!anchorWellFormed(anchor)) return fail("anchor_mismatch", 0, "the anchor is not a non-negative integer count with a sha256 head digest");
   if (records.length < anchor.count) return fail("truncated", records.length, `${records.length} records, anchor names ${anchor.count}`);
   const at = anchor.count === 0 ? ADMISSION_JOURNAL_GENESIS : records[anchor.count - 1].recordDigest;
   return at === anchor.headDigest ? null : fail("anchor_mismatch", Math.max(0, anchor.count - 1), "the record at the anchor is not the one bound");

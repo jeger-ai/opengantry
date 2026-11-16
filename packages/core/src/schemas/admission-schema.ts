@@ -69,6 +69,8 @@ const ADMISSION_REASON_CODES = [
   "request_changed",
   "authority_changed",
   "capability_changed",
+  "permit_unknown",
+  "context_invalid",
 ] as const;
 export type AdmissionReasonCode = (typeof ADMISSION_REASON_CODES)[number] | `dependency.${string}`;
 
@@ -100,12 +102,16 @@ const hostName = z.string().regex(/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a
 
 /**
  * A canonical absolute path: POSIX (`/a/b`) or a Windows drive path (`C:\a\b`). No `.` or `..` segment, no empty
- * segment, no trailing separator except the root, no NUL. Symlinks are resolved by the broker, never by the candidate.
+ * segment, no trailing separator except the root, and no control character or line terminator (C0, DEL, C1, U+2028,
+ * U+2029), NUL included. The `..` lookahead scans with `[\s\S]` so a newline cannot hide a later segment. Symlinks
+ * are resolved by the broker, never by the candidate.
  */
 const canonicalPath = z
   .string()
   .max(4096)
-  .regex(/^(?!.*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\0]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\0]+)+)$/);
+  .regex(
+    /^(?![\s\S]*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\x00-\x1f\x7f-\x9f\u2028\u2029]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\x00-\x1f\x7f-\x9f\u2028\u2029]+)+)$/,
+  );
 
 /** Stable file identity: device+inode on POSIX, volume serial plus file id on Windows (decimal or hex strings). */
 const fileIdentity = z.discriminatedUnion("scheme", [
@@ -195,6 +201,11 @@ export const admissionRequestSchema = z
   .describe("OpenGantryAdmissionRequest");
 export type AdmissionRequest = z.infer<typeof admissionRequestSchema>;
 
+/** Policy limits, and the longest legal `policyRuleIds`: every rule plus every advisory rule. Never truncated. */
+const ADMISSION_MAX_RULES = 256;
+const ADMISSION_MAX_ADVISORY_RULES = 64;
+const ADMISSION_MAX_RULE_IDS = ADMISSION_MAX_RULES + ADMISSION_MAX_ADVISORY_RULES;
+
 const reasonCode = z.union([z.enum(ADMISSION_REASON_CODES), z.string().regex(/^dependency\.[a-z0-9_]{1,64}$/)]);
 
 /** ADM03. `decisionDigest` is the sha256 of the canonical decision without that field. */
@@ -205,15 +216,19 @@ export const admissionDecisionSchema = z
     requestDigest: sha256,
     operationId: id.nullable(),
     attemptId: id.nullable(),
-    policyRuleIds: z.array(ruleId).max(64),
+    policyRuleIds: z.array(ruleId).max(ADMISSION_MAX_RULE_IDS),
     reasonCodes: z.array(reasonCode).max(32),
     resolvedPolicyDigest: sha256.nullable(),
     capabilityId: capabilityId.nullable(),
+    /** The matched cell's level from the capability report, never from the request; null when no cell matched. */
+    capabilityLevel: z.enum(ADMISSION_LEVELS).nullable(),
     advisoryDigest: sha256.nullable(),
-    decidedAt: isoUtc,
+    /** Null only on a `context_invalid` deny, when the broker's own clock reading was not an ISO UTC time. */
+    decidedAt: isoUtc.nullable(),
     decisionDigest: sha256,
   })
   .strict()
+  .refine((d) => (d.capabilityId === null) === (d.capabilityLevel === null), { message: "capabilityId and capabilityLevel are both null or both set" })
   .describe("OpenGantryAdmissionDecision");
 export type AdmissionDecision = z.infer<typeof admissionDecisionSchema>;
 
@@ -264,7 +279,7 @@ export const admissionReceiptSchema = z
         receiptKind: z.literal("decision"),
         decision: z.enum(ADMISSION_DECISIONS),
         decisionDigest: sha256,
-        policyRuleIds: z.array(ruleId).max(64),
+        policyRuleIds: z.array(ruleId).max(ADMISSION_MAX_RULE_IDS),
         reasonCodes: z.array(reasonCode).max(32),
         resolvedPolicyDigest: sha256.nullable(),
         acceptedContractDigest: sha256,
@@ -319,7 +334,7 @@ export const admissionPolicySchema = z
           })
           .strict(),
       )
-      .max(256),
+      .max(ADMISSION_MAX_RULES),
     advisoryRules: z
       .array(
         z
@@ -331,7 +346,7 @@ export const admissionPolicySchema = z
           })
           .strict(),
       )
-      .max(64),
+      .max(ADMISSION_MAX_ADVISORY_RULES),
   })
   .strict()
   .describe("OpenGantryAdmissionPolicy");
@@ -391,31 +406,55 @@ export const admissionCapabilityReportSchema = z
   .describe("OpenGantryAdmissionCapabilityReport");
 export type AdmissionCapabilityReport = z.infer<typeof admissionCapabilityReportSchema>;
 
-/** The schemas published as JSON Schema, keyed by output file name. */
-const ADMISSION_JSON_SCHEMA_SOURCES: readonly (readonly [string, string, z.ZodType])[] = [
-  ["admission-request.v1.schema.json", ADMISSION_SCHEMA_IDS.request, admissionRequestSchema],
-  ["admission-decision.v1.schema.json", ADMISSION_SCHEMA_IDS.decision, admissionDecisionSchema],
-  ["admission-permit.v1.schema.json", ADMISSION_SCHEMA_IDS.permit, admissionPermitSchema],
-  ["admission-receipt.v1.schema.json", ADMISSION_SCHEMA_IDS.receipt, admissionReceiptSchema],
-  ["admission-journal-record.v1.schema.json", ADMISSION_SCHEMA_IDS.journalRecord, admissionJournalRecordSchema],
-  ["admission-policy.v1.schema.json", ADMISSION_SCHEMA_IDS.policy, admissionPolicySchema],
-  ["admission-advisory.v1.schema.json", ADMISSION_SCHEMA_IDS.advisory, admissionAdvisorySchema],
-  ["admission-capabilities.v1.schema.json", ADMISSION_SCHEMA_IDS.capabilities, admissionCapabilityReportSchema],
+/**
+ * The schemas published as JSON Schema, keyed by output file name, with the cross-field rules JSON Schema cannot express.
+ * A consumer that validates only against the JSON Schema accepts records that break these rules; it must also run the
+ * zod schema or the reference validator in packages/core/src/admission*.ts.
+ */
+const ADMISSION_JSON_SCHEMA_SOURCES: readonly (readonly [string, string, z.ZodType, readonly string[]])[] = [
+  ["admission-request.v1.schema.json", ADMISSION_SCHEMA_IDS.request, admissionRequestSchema, ["the canonical JSON of the request is at most 65536 bytes (parseAdmissionRequest)"]],
+  [
+    "admission-decision.v1.schema.json",
+    ADMISSION_SCHEMA_IDS.decision,
+    admissionDecisionSchema,
+    ["decisionDigest is the sha256 of the canonical decision without decisionDigest (decisionDigest)", "capabilityId and capabilityLevel are both null or both set"],
+  ],
+  [
+    "admission-permit.v1.schema.json",
+    ADMISSION_SCHEMA_IDS.permit,
+    admissionPermitSchema,
+    [`expiresAtMs > issuedAtMs and the lifetime is at most ${ADMISSION_PERMIT_MAX_LIFETIME_MS} ms`, "a permit authorizes only if its digest is in the issuing broker's state (checkPermit)"],
+  ],
+  ["admission-receipt.v1.schema.json", ADMISSION_SCHEMA_IDS.receipt, admissionReceiptSchema, []],
+  [
+    "admission-journal-record.v1.schema.json",
+    ADMISSION_SCHEMA_IDS.journalRecord,
+    admissionJournalRecordSchema,
+    ["recordDigest is the sha256 of the canonical record without recordDigest", "seq counts from 0 and prevDigest chains to the record before, 64 zeros first (verifyAdmissionJournal)"],
+  ],
+  ["admission-policy.v1.schema.json", ADMISSION_SCHEMA_IDS.policy, admissionPolicySchema, []],
+  ["admission-advisory.v1.schema.json", ADMISSION_SCHEMA_IDS.advisory, admissionAdvisorySchema, []],
+  [
+    "admission-capabilities.v1.schema.json",
+    ADMISSION_SCHEMA_IDS.capabilities,
+    admissionCapabilityReportSchema,
+    ["each row's capabilityId is platform/harness/family", "a prevention row needs canary evidence", "every platform x harness x family cell appears exactly once (checkCapabilityReport)"],
+  ],
 ];
 
 /**
  * JSON Schema (draft 2020-12) for every admission record, keyed by file name, as `scripts/gen-admission-schemas.mjs`
- * writes them. Refinements that JSON Schema cannot state (permit lifetime, capability id composition, prevention
- * needs a canary) are enforced by the zod schemas and named in `$comment`.
+ * writes them. JSON Schema checks structure only; the cross-field rules it cannot state are listed in each `$comment`.
  */
 export function admissionJsonSchemas(): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [file, schemaId, schema] of ADMISSION_JSON_SCHEMA_SOURCES) {
+  for (const [file, schemaId, schema, rules] of ADMISSION_JSON_SCHEMA_SOURCES) {
     const json = z.toJSONSchema(schema, { target: "draft-2020-12", io: "input", unrepresentable: "any" }) as Record<string, unknown>;
+    const crossField = rules.length === 0 ? "No cross-field rules beyond this structure." : `Cross-field rules this JSON Schema cannot express: ${rules.join("; ")}.`;
     out[file] = {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       $id: `https://opengantry.local/schemas/${schemaId}.json`,
-      $comment: "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+      $comment: `Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. ${crossField} Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.`,
       ...Object.fromEntries(Object.entries(json).filter(([k]) => k !== "$schema")),
     };
   }

@@ -67,3 +67,20 @@ test("journal: a cut at a record boundary or a rewritten history fails against t
   assert.equal(v.ok, true);
   problem(text(recs), "anchor_mismatch", { count: 3, headDigest: D("0") });
 });
+
+test("journal: an out-of-range or malformed anchor is anchor_mismatch, never a throw", () => {
+  const t = text(chain());
+  const head = chain()[2].recordDigest;
+  for (const anchor of [
+    { count: -1, headDigest: head },
+    { count: 1.5, headDigest: head },
+    { count: Number.NaN, headDigest: head },
+    { count: Number.POSITIVE_INFINITY, headDigest: head },
+    { count: 3, headDigest: "not-a-digest" },
+    { count: "3", headDigest: head },
+    null,
+  ]) {
+    assert.doesNotThrow(() => verifyAdmissionJournal(t, anchor as { count: number; headDigest: string }), JSON.stringify(anchor));
+    problem(t, "anchor_mismatch", anchor as { count: number; headDigest: string });
+  }
+});

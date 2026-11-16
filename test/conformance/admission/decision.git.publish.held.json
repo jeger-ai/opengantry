@@ -12,7 +12,8 @@
   ],
   "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
   "capabilityId": "ubuntu-26.04-x64/claude-code/git.publish",
+  "capabilityLevel": "unproven",
   "advisoryDigest": null,
   "decidedAt": "2026-11-16T12:00:00.000Z",
-  "decisionDigest": "9b0fc5befebbffb273e2956c0d9763a94bd7ad14419b92592b342a25139bc585"
+  "decisionDigest": "9020c6c9da81c01a1940b51f7f6f5e287ac1e0ef38d7584f0f325ed0863af675"
 }

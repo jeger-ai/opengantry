@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://opengantry.local/schemas/opengantry.admission-capabilities.v1.json",
-  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules this JSON Schema cannot express: each row's capabilityId is platform/harness/family; a prevention row needs canary evidence; every platform x harness x family cell appears exactly once (checkCapabilityReport). Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.",
   "type": "object",
   "properties": {
     "schema": {

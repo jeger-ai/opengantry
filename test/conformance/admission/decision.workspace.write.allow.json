@@ -10,7 +10,8 @@
   "reasonCodes": [],
   "resolvedPolicyDigest": "5df3b3c769bd1471ab04658d1dd9374c6e259249af7e67adcfff6ce80e9f4124",
   "capabilityId": "ubuntu-26.04-x64/claude-code/workspace.write",
+  "capabilityLevel": "unproven",
   "advisoryDigest": null,
   "decidedAt": "2026-11-16T12:00:00.000Z",
-  "decisionDigest": "d7441e3e5f7e79aabd54790e6c16ce56c2fc1eff83d9fe72a6d55981ee6c3883"
+  "decisionDigest": "b94bf4f2bfe76d397da0714fe1e842e4660ea9b473c80354610f3542c0581bef"
 }

@@ -1,8 +1,11 @@
 import { createHash } from "node:crypto";
 import { canonicalJson } from "./canonical-json.js";
 import { checkCapabilityReport } from "./admission-capabilities.js";
+import { z } from "zod";
 import {
+  ADMISSION_HARNESSES,
   ADMISSION_PERMIT_MAX_LIFETIME_MS,
+  ADMISSION_PLATFORMS,
   ADMISSION_REQUEST_MAX_BYTES,
   ADMISSION_SCHEMA_IDS,
   admissionAdvisorySchema,
@@ -13,8 +16,10 @@ import {
   type AdmissionCapabilityRow,
   type AdmissionDecision,
   type AdmissionDecisionValue,
+  type AdmissionHarness,
   type AdmissionLevel,
   type AdmissionPermit,
+  type AdmissionPlatform,
   type AdmissionPolicy,
   type AdmissionReasonCode,
   type AdmissionRequest,
@@ -103,11 +108,28 @@ export interface AdmissionApproval {
   requestDigest: string;
 }
 
+/**
+ * What the broker itself resolved, never what the request claims. `host` is the platform the broker runs on and the
+ * harness it launched; the request must name exactly that cell, so a request cannot borrow a stronger cell from
+ * another platform or harness.
+ */
 export interface DecideContext {
   /** Wall-clock time for audit only (ADR-0063 decision 4); it never changes the outcome. */
   decidedAt: string;
+  host: { platform: AdmissionPlatform; harness: AdmissionHarness };
   approvals?: readonly AdmissionApproval[];
 }
+
+const decideContextSchema = z
+  .object({
+    decidedAt: z.iso.datetime(),
+    host: z.object({ platform: z.enum(ADMISSION_PLATFORMS), harness: z.enum(ADMISSION_HARNESSES) }).strict(),
+    approvals: z.array(z.object({ requestDigest: z.string().regex(/^[0-9a-f]{64}$/) }).strict()).optional(),
+  })
+  .strict();
+
+/** The cell id a request must name on this host: `platform/harness/family`. */
+const hostCapabilityId = (host: DecideContext["host"], kind: AdmissionRequest["kind"]): string => `${host.platform}/${host.harness}/${kind}`;
 
 interface Outcome {
   decision: AdmissionDecisionValue;
@@ -130,16 +152,32 @@ const out = (decision: AdmissionDecisionValue, reason: AdmissionReasonCode, poli
   policyRuleIds,
 });
 
-function finish(o: Outcome, fields: Omit<AdmissionDecision, "schema" | "decision" | "reasonCodes" | "policyRuleIds" | "decisionDigest">): AdmissionDecision {
-  const body = { schema: ADMISSION_SCHEMA_IDS.decision, decision: o.decision, reasonCodes: o.reasonCodes, policyRuleIds: o.policyRuleIds, ...fields };
+type DecisionFields = Omit<AdmissionDecision, "schema" | "decision" | "reasonCodes" | "policyRuleIds" | "decisionDigest" | "capabilityId" | "capabilityLevel">;
+
+function finish(o: Outcome, fields: DecisionFields, row: AdmissionCapabilityRow | null = null): AdmissionDecision {
+  const body = {
+    schema: ADMISSION_SCHEMA_IDS.decision,
+    decision: o.decision,
+    reasonCodes: o.reasonCodes,
+    policyRuleIds: o.policyRuleIds,
+    ...fields,
+    capabilityId: row?.capabilityId ?? null,
+    capabilityLevel: row?.level ?? null,
+  };
   return admissionDecisionSchema.parse({ ...body, decisionDigest: decisionDigest(body) });
 }
 
-/** Step 2: the cell the request names must be in a complete report, match the request, and meet any requirement. */
-function judgeCapability(e: Evaluation, capabilities: unknown): Outcome | AdmissionCapabilityRow {
+/**
+ * Step 2: the cell the request names must be the host's own cell (the broker's platform and harness), be in a complete
+ * report, match the request, and meet any requirement.
+ */
+function judgeCapability(e: Evaluation, capabilities: unknown, host: DecideContext["host"]): Outcome | AdmissionCapabilityRow {
+  const ev = e.request.capabilityEvidence;
+  if (ev.capabilityId !== hostCapabilityId(host, e.request.kind) || e.request.actorIdentity.harness !== host.harness) {
+    return out("unsupported", "capability_mismatch");
+  }
   const report = checkCapabilityReport(capabilities);
   if (!report.ok) return out("unsupported", "capability_absent");
-  const ev = e.request.capabilityEvidence;
   const row = report.report.rows.find((r) => r.capabilityId === ev.capabilityId);
   if (row === undefined) return out("unsupported", "capability_absent");
   const probe = row.evidence.kind === "canary" ? row.evidence.probeDigest : null;
@@ -152,7 +190,7 @@ function judgeCapability(e: Evaluation, capabilities: unknown): Outcome | Admiss
 }
 
 /** Steps 3 to 5: deny rules, default deny, advisory tightening, approvals. */
-function judgeRules(e: Evaluation, advisory: unknown, ctx: DecideContext): Outcome {
+function judgeRules(e: Evaluation, advisory: unknown, approvals: readonly AdmissionApproval[]): Outcome {
   const { request, policy } = e;
   const matching = policy.rules.filter((r) => r.kind === request.kind && (r.harness === undefined || r.harness === request.actorIdentity.harness));
   const denies = matching.filter((r) => r.effect === "deny");
@@ -173,7 +211,7 @@ function judgeRules(e: Evaluation, advisory: unknown, ctx: DecideContext): Outco
   if (firedHeld.length > 0) return out("held", "advisory_held", [...ids, ...firedHeld.map((a) => a.id)]);
   const firedApproval = fired.filter((a) => a.effect === "require-approval").map((a) => a.id);
   const needsApproval = allows.some((r) => r.requireApproval) || firedApproval.length > 0;
-  const approved = (ctx.approvals ?? []).some((a) => a.requestDigest === e.digest);
+  const approved = approvals.some((a) => a.requestDigest === e.digest);
   if (needsApproval && !approved) return out("held", "approval_missing", [...ids, ...firedApproval]);
   return { decision: "allow", reasonCodes: [], policyRuleIds: [...ids, ...firedApproval] };
 }
@@ -181,26 +219,30 @@ function judgeRules(e: Evaluation, advisory: unknown, ctx: DecideContext): Outco
 /**
  * Decide one request (ADR-0063 decision 4, fixed order): malformed → deny; required capability not proven →
  * unsupported; a deny rule or no allow rule → deny (deny by default); missing evidence or approval → held; else allow.
- * `advisory` (AI output) is read only by advisory rules of trusted policy and can only move toward held or deny.
+ * `advisory` (AI output) is read only by advisory rules of trusted policy and can only move toward held or deny; an
+ * advisory of `null` is malformed and holds, `undefined` means none. A malformed context (a `decidedAt` that is not ISO
+ * UTC, an unknown host) is a deny with `context_invalid`, never a throw.
  */
 export function decide(request: unknown, policy: unknown, capabilities: unknown, advisory: unknown, ctx: DecideContext): AdmissionDecision {
   const advisoryDigest = advisory === undefined ? null : digestOrNull(advisory);
+  const context = decideContextSchema.safeParse(ctx);
+  const decidedAt = context.success ? context.data.decidedAt : null;
   const req = parseAdmissionRequest(request);
-  if (!req.ok) {
-    const fields = { requestDigest: digestOrNull(request), operationId: null, attemptId: null, resolvedPolicyDigest: null, capabilityId: null };
-    return finish(out("deny", "request_malformed"), { ...fields, advisoryDigest, decidedAt: ctx.decidedAt });
+  if (!req.ok || !context.success) {
+    const fields = { requestDigest: req.ok ? requestDigest(req.request) : digestOrNull(request), operationId: null, attemptId: null, resolvedPolicyDigest: null };
+    return finish(out("deny", req.ok ? "context_invalid" : "request_malformed"), { ...fields, advisoryDigest, decidedAt });
   }
   const r = req.request;
-  const base = { requestDigest: requestDigest(r), operationId: r.operationId, attemptId: r.attemptId, advisoryDigest, decidedAt: ctx.decidedAt };
+  const base = { requestDigest: requestDigest(r), operationId: r.operationId, attemptId: r.attemptId, advisoryDigest, decidedAt };
   const pol = admissionPolicySchema.safeParse(policy);
-  if (!pol.success) return finish(out("deny", "policy_invalid"), { ...base, resolvedPolicyDigest: null, capabilityId: null });
+  if (!pol.success) return finish(out("deny", "policy_invalid"), { ...base, resolvedPolicyDigest: null });
   const policyDigest = admissionDigest(pol.data);
   const withPolicy = { ...base, resolvedPolicyDigest: policyDigest };
-  if (policyDigest !== r.resolvedPolicyDigest) return finish(out("deny", "policy_changed"), { ...withPolicy, capabilityId: null });
+  if (policyDigest !== r.resolvedPolicyDigest) return finish(out("deny", "policy_changed"), withPolicy);
   const e: Evaluation = { request: r, digest: base.requestDigest, policy: pol.data, policyDigest, row: null, advisoryDigest };
-  const cap = judgeCapability(e, capabilities);
-  if ("decision" in cap) return finish(cap, { ...withPolicy, capabilityId: null });
-  return finish(judgeRules({ ...e, row: cap }, advisory, ctx), { ...withPolicy, capabilityId: cap.capabilityId });
+  const cap = judgeCapability(e, capabilities, context.data.host);
+  if ("decision" in cap) return finish(cap, withPolicy);
+  return finish(judgeRules({ ...e, row: cap }, advisory, context.data.approvals ?? []), withPolicy, cap);
 }
 
 // --- permits ---------------------------------------------------------------------------------------------------
@@ -210,37 +252,75 @@ export interface PermitAuthority {
   epoch: number;
 }
 
+/**
+ * The broker-held permit state (ADR-0063 decision 4: authority is broker-held state, never a presented record). The
+ * pure layer is stateless, so the broker passes this in and keeps the returned next state. It is required, never
+ * optional: without it no permit is issued and none is accepted.
+ */
+export interface PermitLedger {
+  /** Digests of the permits this broker issued. `checkPermit` refuses any other permit, however well-formed. */
+  issued: ReadonlySet<string>;
+  /** Request digests and attempt keys that already got a permit: one permit per request and per attempt. */
+  claimed: ReadonlySet<string>;
+  /** Request digests and attempt keys whose permit was consumed: one dispatch per request and per attempt. */
+  consumed: ReadonlySet<string>;
+}
+
+export const emptyPermitLedger = (): PermitLedger => ({ issued: new Set(), claimed: new Set(), consumed: new Set() });
+
+const isSetLike = (s: unknown): s is ReadonlySet<string> => typeof (s as { has?: unknown } | null)?.has === "function";
+const isLedger = (l: unknown): l is PermitLedger => {
+  const v = l as Partial<PermitLedger> | null | undefined;
+  return isSetLike(v?.issued) && isSetLike(v?.claimed) && isSetLike(v?.consumed);
+};
+
+/**
+ * The keys that make a permit single use per operation, not per permit: the request digest (which covers the nonce,
+ * operation and attempt) and the operation/attempt pair (ids cannot contain `/`), so neither a second permit for the
+ * same request nor a re-nonced request for the same attempt dispatches twice.
+ */
+function operationKeys(p: { requestDigest: string; operationId: string; attemptId: string }): string[] {
+  return [`request:${p.requestDigest}`, `attempt:${p.operationId}/${p.attemptId}`];
+}
+
 export interface IssuePermitInput {
   request: AdmissionRequest;
+  /** The `allow` from `decide`; the permit's cell and level come from it, never from the caller. */
   decision: AdmissionDecision;
-  capabilityLevel: AdmissionLevel;
   authority: PermitAuthority;
   clockId: string;
   /** The broker's monotonic clock reading, in milliseconds. */
   nowMs: number;
   lifetimeMs?: number;
+  ledger: PermitLedger;
 }
 
-type PermitResult = { ok: true; permit: AdmissionPermit } | { ok: false; reason: AdmissionReasonCode };
+type PermitResult = { ok: true; permit: AdmissionPermit; ledger: PermitLedger } | { ok: false; reason: AdmissionReasonCode };
 
-/** An `allow` decision for exactly this request becomes a broker-held permit; anything else refuses. */
+/**
+ * An `allow` decision for exactly this request becomes a broker-held permit; anything else refuses. A request or
+ * attempt that already holds a permit, consumed or not, gets no second one (`permit_reused`).
+ */
 export function issuePermit(input: IssuePermitInput): PermitResult {
-  const { request, decision } = input;
+  const { request, decision, ledger } = input;
   const lifetime = input.lifetimeMs ?? ADMISSION_PERMIT_MAX_LIFETIME_MS;
+  if (!isLedger(ledger)) return { ok: false, reason: "evidence_missing" };
   if (!admissionDecisionSchema.safeParse(decision).success || decisionDigest(decision) !== decision.decisionDigest) return { ok: false, reason: "evidence_missing" };
   if (decision.decision !== "allow") return { ok: false, reason: "policy_denied" };
   if (decision.requestDigest !== requestDigest(request) || decision.operationId !== request.operationId || decision.attemptId !== request.attemptId) {
     return { ok: false, reason: "request_changed" };
   }
   if (decision.resolvedPolicyDigest !== request.resolvedPolicyDigest || decision.resolvedPolicyDigest === null) return { ok: false, reason: "policy_changed" };
-  if (decision.capabilityId === null) return { ok: false, reason: "capability_absent" };
+  if (decision.capabilityId === null || decision.capabilityLevel === null) return { ok: false, reason: "capability_absent" };
+  const keys = operationKeys({ requestDigest: decision.requestDigest, operationId: request.operationId, attemptId: request.attemptId });
+  if (keys.some((k) => ledger.claimed.has(k) || ledger.consumed.has(k))) return { ok: false, reason: "permit_reused" };
   const parsed = admissionPermitSchema.safeParse({
     schema: ADMISSION_SCHEMA_IDS.permit,
     requestDigest: decision.requestDigest,
     decisionDigest: decision.decisionDigest,
     resolvedPolicyDigest: decision.resolvedPolicyDigest,
     capabilityId: decision.capabilityId,
-    capabilityLevel: input.capabilityLevel,
+    capabilityLevel: decision.capabilityLevel,
     operationId: request.operationId,
     attemptId: request.attemptId,
     authority: input.authority,
@@ -248,10 +328,16 @@ export function issuePermit(input: IssuePermitInput): PermitResult {
     issuedAtMs: input.nowMs,
     expiresAtMs: input.nowMs + lifetime,
   });
-  return parsed.success ? { ok: true, permit: parsed.data } : { ok: false, reason: "permit_malformed" };
+  if (!parsed.success) return { ok: false, reason: "permit_malformed" };
+  const next: PermitLedger = {
+    issued: new Set([...ledger.issued, permitDigest(parsed.data)]),
+    claimed: new Set([...ledger.claimed, ...keys]),
+    consumed: ledger.consumed,
+  };
+  return { ok: true, permit: parsed.data, ledger: next };
 }
 
-/** What the broker holds at dispatch: the request it is about to perform, its current authority, clock and policy. */
+/** What the broker holds at dispatch: the request it is about to perform, its current authority, clock, policy and permit state. */
 export interface PermitCheckContext {
   request: unknown;
   authority: PermitAuthority;
@@ -259,8 +345,8 @@ export interface PermitCheckContext {
   nowMs: number;
   resolvedPolicyDigest: string;
   capability: { capabilityId: string; level: AdmissionLevel };
-  /** Digests of permits already consumed by this broker. */
-  consumed: ReadonlySet<string>;
+  /** The broker's permit state. Required: a permit not in `issued` refuses (`permit_unknown`). */
+  ledger: PermitLedger;
 }
 
 type PermitCheck = { ok: true; permitDigest: string } | { ok: false; reason: AdmissionReasonCode };
@@ -271,15 +357,20 @@ function permitTimeValid(p: AdmissionPermit, ctx: PermitCheckContext): boolean {
 }
 
 /**
- * Revalidate a permit at dispatch (ADM03, ADM-T02): forged or malformed, reused, a changed request (args, resource or
- * any field), changed authority, expired, changed policy or changed capability all refuse.
+ * Revalidate a permit at dispatch (ADM03, ADM-T02): malformed, not issued by this broker (fabricated), reused for the
+ * same request or attempt, a changed request (args, resource or any field), changed authority, expired, changed policy
+ * or changed capability all refuse.
  */
 export function checkPermit(permit: unknown, ctx: PermitCheckContext): PermitCheck {
   const parsed = admissionPermitSchema.safeParse(permit);
   if (!parsed.success) return { ok: false, reason: "permit_malformed" };
   const p = parsed.data;
   const digest = permitDigest(p);
-  if (ctx.consumed.has(digest)) return { ok: false, reason: "permit_reused" };
+  if (!isLedger(ctx.ledger)) return { ok: false, reason: "permit_unknown" };
+  // Reuse first, keyed on the request and attempt, not the permit digest: a copy of a consumed permit with any field
+  // changed (decisionDigest, issuedAtMs) is still a reuse of that operation.
+  if (operationKeys(p).some((k) => ctx.ledger.consumed.has(k))) return { ok: false, reason: "permit_reused" };
+  if (!ctx.ledger.issued.has(digest)) return { ok: false, reason: "permit_unknown" };
   const req = parseAdmissionRequest(ctx.request);
   if (!req.ok) return { ok: false, reason: "request_malformed" };
   const r = req.request;
@@ -291,11 +382,13 @@ export function checkPermit(permit: unknown, ctx: PermitCheckContext): PermitChe
   return { ok: true, permitDigest: digest };
 }
 
-/** Check and consume in one step: the returned set is the broker's next consumed set. A second use refuses. */
-export function consumePermit(permit: unknown, ctx: PermitCheckContext): (PermitCheck & { ok: false }) | { ok: true; permitDigest: string; consumed: ReadonlySet<string> } {
+/** Check and consume in one step: the returned ledger is the broker's next state. A second use for the request or attempt refuses. */
+export function consumePermit(permit: unknown, ctx: PermitCheckContext): (PermitCheck & { ok: false }) | { ok: true; permitDigest: string; ledger: PermitLedger } {
   const check = checkPermit(permit, ctx);
   if (!check.ok) return check;
-  return { ok: true, permitDigest: check.permitDigest, consumed: new Set([...ctx.consumed, check.permitDigest]) };
+  const p = permit as AdmissionPermit;
+  const ledger: PermitLedger = { ...ctx.ledger, consumed: new Set([...ctx.ledger.consumed, ...operationKeys(p)]) };
+  return { ok: true, permitDigest: check.permitDigest, ledger };
 }
 
 // --- lifecycle -------------------------------------------------------------------------------------------------

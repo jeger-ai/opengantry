@@ -7,6 +7,6 @@
   "request.network.connect.json": "c42dc9118b1dfe607f03ad456a524639333ea43b55a39fcc9a5a24861d41f5fb",
   "request.git.publish.json": "0fd10d6b0f8240ecb6faed53cff1f27eb9b3f918513feb1bd2ea2929e6cc72ca",
   "request.delivery.mutate.json": "ea223b31527cbd2d2e157d3ee414b6f1b8915e63c8797c20686c8a0fa16fc1af",
-  "permit.workspace.write.json": "fb9ee8b8e7e4d467db5da59a0111ef782fb8b91af89856a6ca2e9530f7aa6be2",
+  "permit.workspace.write.json": "becf855cae76a68250791e52b23e56e0e7f1f9ba975f83406472f2d3699d0908",
   "journal.jsonl": "13e8d93374afcf8b9802f9085e760a9bac3a78da0bc838e7da4863a141714ada"
 }

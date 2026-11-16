@@ -5,6 +5,9 @@ import type { AdmissionFamily, AdmissionPolicy, AdmissionReceipt, AdmissionReque
 
 export const D = (c: string): string => c.repeat(64);
 export const DECIDED_AT = "2026-11-16T12:00:00.000Z";
+/** The broker's resolved host in every fixture: Ubuntu 26.04 under Claude Code, the cell `request()` names. */
+export const HOST = { platform: "ubuntu-26.04-x64", harness: "claude-code" } as const;
+export const CTX = { decidedAt: DECIDED_AT, host: HOST };
 
 export function policy(extra: Partial<AdmissionPolicy> = {}): AdmissionPolicy {
   return {

@@ -222,23 +222,43 @@ Owner decision Q9, implemented as contract and pure logic. Nothing here dispatch
   Unknown fields, kinds, levels and states are rejected.
 - **JSON Schema.** `npm run gen:admission-schemas` writes the JSON Schema to `schemas/admission/`, and a core test fails when the committed files drift.
   - The files are in the repository, not in the npm tarball.
-  - The cross-field rules that JSON Schema cannot express stay in zod: permit lifetime, capability id composition, and prevention needs a canary.
+  - JSON Schema checks structure only. Each file's `$comment` lists the cross-field rules it cannot express, so **a consumer must also run the zod schema or the reference validator** (`packages/core/src/admission*.ts`); JSON Schema alone accepts records that break them:
+    - request: the canonical JSON is at most 64 KiB;
+    - decision: `decisionDigest` is the digest of the rest, and `capabilityId` and `capabilityLevel` are both null or both set;
+    - permit: `expiresAtMs > issuedAtMs` and the lifetime is at most 30 s; a permit authorizes only if the issuing broker holds its digest;
+    - journal record: `recordDigest`, `seq` from 0, and the `prevDigest` chain;
+    - capability report: each `capabilityId` is `platform/harness/family`, `prevention` needs canary evidence, and every cell appears exactly once.
+  - `test/conformance/admission/invalid.*.json` are negative examples (a permit with a 1 h lifetime or an expiry before issue, a row whose id does not match its family, a `prevention` row without a canary). Each is well-formed structure that zod rejects.
 - **Pure functions** in `packages/core/src/admission.ts`:
   - canonical digests for request, decision and permit (`canonicalJson` plus sha256);
   - the 64 KiB request bound, on received bytes and on the canonical value;
-  - `decide`, which follows the fixed order of decision 4 and is deny by default (`default-deny`);
-  - `issuePermit`, `checkPermit` and `consumePermit`, which refuse forged, reused, expired and changed permits: request, args, resource, authority, clock, policy or capability;
+  - `decide`, which follows the fixed order of decision 4 and is deny by default (`default-deny`):
+    - the broker passes its own resolved host (platform and launched harness) in the context, and a request whose `capabilityEvidence` names any other cell is `unsupported` with `capability_mismatch`, so a request cannot borrow a stronger cell from another platform or harness;
+    - the decision records the matched cell's `capabilityLevel` from the report, never the request's claim;
+    - a malformed context (a `decidedAt` that is not ISO UTC, an unknown host, a malformed approval) is `deny` with `context_invalid` and `decidedAt: null`, never a throw;
+  - `issuePermit`, `checkPermit` and `consumePermit` over a broker-held `PermitLedger` (issued permit digests, claimed and consumed keys), which is a required argument:
+    - the permit's cell and level come from the decision, not from the caller;
+    - single use is per operation, not per permit: the request digest (which covers the nonce) and the `operationId`/`attemptId` pair are claimed at issue and consumed at dispatch, so a second permit for the same request or attempt is not issued, and if one exists anyway only one dispatches (`permit_reused`);
+    - a well-formed permit whose digest the broker did not issue (a fabricated decision digest, a changed level) refuses with `permit_unknown`;
+    - reused, expired and changed permits refuse: request, args, resource, authority, clock, policy or capability;
   - the lifecycle table and transition function;
   - crash recovery, where `dispatch-intent` becomes `unknown`;
   - `mayStartAdmissionAttempt`, under which an `unknown` blocks a new attempt until it is reconciled.
 - **Journal.** `packages/core/src/admission-journal.ts` provides the hash-chained journal: append, canonical line encoding, and a verifier.
   - The verifier detects edits, reordering, a missing head and a partial last line.
   - It also detects a cut at a record boundary, measured against an anchor (count and head digest) that a later slice binds into the run record.
+  - An anchor that is not a non-negative integer count with a sha256 head is refused as `anchor_mismatch`, never indexed with.
 - **Capability matrix.** `packages/core/src/admission-capabilities.ts` holds the capability matrix: 3 platforms × 5 harnesses × 7 families = 105 cells, every one present. No cell is `prevention`.
 - **Registry and goldens (Q9).**
   - The hidden, read-only `gantry admission capabilities [--json]` prints the matrix, and is registered in `.gitagent/registry/commands.yaml`.
   - Its output is a conformance golden.
   - `test/conformance/admission/` holds example records and their digests for consumers in other languages.
+
+**Limits of the journal in this slice (do not rely on the verifier yet):**
+
+- **An unanchored journal can be truncated at a record boundary, or rewritten from genesis, and still verify.** Only an anchor kept outside the journal catches either.
+- **The anchor binding to the run record (Q6) must land before anything relies on the verifier.** Until then no caller holds a trusted anchor, so the verifier proves internal consistency only.
+- **The verifier checks the hash chain only, not lifecycle order across receipts.** For example, an `effect` receipt with no prior `allow` decision for its attempt, or `confirmed` after `unknown`, verifies. Checking the receipts against the lifecycle table is a later slice.
 
 **Choices this ADR did not settle, made conservatively:**
 
@@ -250,7 +270,11 @@ Owner decision Q9, implemented as contract and pure logic. Nothing here dispatch
 6. **Approvals are passed in by the caller,** bound to the request digest. Verifying them against existing authority is the broker's job.
 7. **Permit time is in milliseconds on a named monotonic clock (`clockId`).** A reading from another clock, or one before issue, counts as expired.
 8. **A crash before decision or dispatch maps to `expired`.** An `authorized` or `received` attempt lapses to `expired`; this edge exists only in crash recovery.
-9. **Reason codes are a closed list,** extended only under `dependency.` for #355.
+9. **Reason codes are a closed list,** extended only under `dependency.` for #355. This slice adds `permit_unknown` (a permit the broker did not issue) and `context_invalid` (the broker's own context is malformed).
+10. **A host mismatch is `unsupported`, not `deny`.** The request names a cell that is not the one it runs in, so no proven cell holds the boundary for it; this is the capability step of decision 4. Both values are equally strict.
+12. **`policyRuleIds` holds up to 320 ids** (256 rules plus 64 advisory rules, the policy maxima), in decisions and decision receipts. The list is never truncated.
+13. **A canonical path has no control character or line terminator** (C0, DEL, C1, U+2028, U+2029), and its `..` check scans across line terminators.
+11. **`issuePermit` trusts a self-consistent `allow` from `decide` in the same broker.** It re-checks the decision digest and the binding to the request, but not the report; the broker must not pass it decisions from elsewhere.
 
 **Later slices, not here:**
 

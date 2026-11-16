@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://opengantry.local/schemas/opengantry.admission-receipt.v1.json",
-  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. No cross-field rules beyond this structure. Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.",
   "oneOf": [
     {
       "type": "object",
@@ -90,7 +90,7 @@
           "pattern": "^[0-9a-f]{64}$"
         },
         "policyRuleIds": {
-          "maxItems": 64,
+          "maxItems": 320,
           "type": "array",
           "items": {
             "type": "string",
@@ -120,7 +120,9 @@
                   "permit_reused",
                   "request_changed",
                   "authority_changed",
-                  "capability_changed"
+                  "capability_changed",
+                  "permit_unknown",
+                  "context_invalid"
                 ]
               },
               {

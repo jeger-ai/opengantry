@@ -60,6 +60,10 @@ test("admission request: canonical paths only, no credentials in remotes, closed
     malformed({ ...w, resourceIdentity: { ...res, path: p } }, /path/);
   }
   assert.equal(parseAdmissionRequest({ ...w, resourceIdentity: { ...res, path: "C:\\work\\a.ts" } }).ok, true);
+  // A line terminator must not hide a later `..` segment from the lookahead, and no control character is canonical.
+  for (const p of ["/safe\n/../target", "/safe\r/../target", "/safe\u2028/../target", "C:\\safe\n\\..\\x", "/work/a\nb", "/work/a\tb", "/work/a\u007fb", "/work/a\u0085b", "/work/a\u2029b", "C:\\work\\a\nb"]) {
+    malformed({ ...w, resourceIdentity: { ...res, path: p } }, /path/);
+  }
   const g = request("git.publish");
   const gres = g.resourceIdentity as Record<string, unknown>;
   malformed({ ...g, resourceIdentity: { ...gres, remoteUrl: "https://user:token@github.com/acme/repo.git" } });

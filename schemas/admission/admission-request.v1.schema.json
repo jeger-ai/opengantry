@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://opengantry.local/schemas/opengantry.admission-request.v1.json",
-  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules are enforced by the zod schemas.",
+  "$comment": "Generated from packages/core/src/schemas/admission-schema.ts (ADR-0063, owner decision Q9). Do not edit. Cross-field rules this JSON Schema cannot express: the canonical JSON of the request is at most 65536 bytes (parseAdmissionRequest). Validate with the zod schema or the reference validator in packages/core/src/admission*.ts as well; JSON Schema alone accepts records that break these rules.",
   "oneOf": [
     {
       "type": "object",
@@ -115,7 +115,7 @@
                 "path": {
                   "type": "string",
                   "maxLength": 4096,
-                  "pattern": "^(?!.*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\0]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\0]+)+)$"
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
                 },
                 "identity": {
                   "anyOf": [
@@ -324,7 +324,7 @@
             "path": {
               "type": "string",
               "maxLength": 4096,
-              "pattern": "^(?!.*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\0]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\0]+)+)$"
+              "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
             },
             "parent": {
               "type": "object",
@@ -332,7 +332,7 @@
                 "path": {
                   "type": "string",
                   "maxLength": 4096,
-                  "pattern": "^(?!.*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\0]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\0]+)+)$"
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
                 },
                 "identity": {
                   "anyOf": [
@@ -543,7 +543,7 @@
                 "path": {
                   "type": "string",
                   "maxLength": 4096,
-                  "pattern": "^(?!.*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\0]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\0]+)+)$"
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
                 },
                 "identity": {
                   "anyOf": [
@@ -619,7 +619,7 @@
                 "path": {
                   "type": "string",
                   "maxLength": 4096,
-                  "pattern": "^(?!.*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\0]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\0]+)+)$"
+                  "pattern": "^(?![\\s\\S]*(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))(?:\\/|(?:\\/[^/\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+|[A-Z]:\\\\|[A-Z]:(?:\\\\[^\\\\/:*?\"<>|\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+)+)$"
                 },
                 "identity": {
                   "anyOf": [
