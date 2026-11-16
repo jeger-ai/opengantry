@@ -52,12 +52,18 @@ interrogation:
       because a file in scope already uses one:
       packages/opengantry-verify/tests/verify-package.test.mjs loads the built
       library with import(pathToFileURL(...)) (MSN-0342); this mission adds no
-      dynamic import. Operator request: "Mission MSN-0383 for issue #355
-      (dependency admission): work slice 3, verifier result and signing
-      integration (DEP06/DEP07, DEP-T04 and the result part of DEP-T05) ... Not
-      in this slice: trusted acquisition, materialization, running install
-      scripts (slice 4), and canaries (slice 5)." The agent wrote these answers
-      from the orchestrator brief (2026-11-16, issue #355 slice 3, MSN-0383).'
+      dynamic import. Review round (PR #368):
+      src/cli/tests/fixtures/opengantry-verify-4.0.3.tgz is added, the published
+      @jeger-ai/opengantry-verify 4.0.3 tarball byte for byte (pinned by its
+      registry sha512 integrity), so a test runs the released reader offline;
+      orchestrator brief: "install the published 4.0.3 package tarball from npm
+      pack in a temp dir, if feasible offline. Assert that it refuses v2."
+      Operator request: "Mission MSN-0383 for issue #355 (dependency admission):
+      work slice 3, verifier result and signing integration (DEP06/DEP07,
+      DEP-T04 and the result part of DEP-T05) ... Not in this slice: trusted
+      acquisition, materialization, running install scripts (slice 4), and
+      canaries (slice 5)." The agent wrote these answers from the orchestrator
+      brief (2026-11-16, issue #355 slice 3, MSN-0383).'
     adr_refs:
       - ADR-0052
       - ADR-0062
@@ -121,29 +127,6 @@ interrogation:
       conservative assumptions."
     adr_refs:
       - ADR-0062
-  - finding_id: 5824fbdfa8ba
-    kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: "Confirmed. The Tier-2 paths are
-      src/cli/commands/verify-contract.ts (summary lines for the new result
-      section), src/cli/verify-lib.ts (library exports of the slim package) and
-      the CLI tests src/cli/tests/verify-dependency-admission.test.ts (new) and
-      verify-dependency-policy.test.ts (the guide example test follows the guide
-      label change). test/conformance/ files are the conformance suite (a new
-      fixture and golden; existing goldens unchanged),
-      packages/opengantry-verify/ files are the slim package build, README and
-      package test. Docs and governance files are the ADR, the verify-contract
-      guide, a new guide page docs/guides/verify-dependencies.md (the dependency
-      material did not fit the 1,500-word page budget) linked from
-      docs/index.md, release notes, changelog, mission, run record,
-      ARCH_BASELINE.json and EXECUTOR_LOG.md. The agent wrote these answers from
-      the orchestrator brief (2026-11-16, issue #355 slice 3, MSN-0383)."
-    adr_refs:
-      - ADR-0052
-      - ADR-0051
   - finding_id: 6390c6b59d47
     kind: adr_conflict
     question: Intent may relate to ADR-0052. Accept ADR decision, reject
@@ -299,7 +282,33 @@ interrogation:
     adr_refs:
       - ADR-0062
       - ADR-0047
-interrogation_sha256: cf67d1195286cbe85235a6185ef02c68cece1f08d9dc604a4405d6a84f194d27
+  - finding_id: f724a08e67a0
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. The Tier-2 paths are
+      src/cli/commands/verify-contract.ts (summary lines for the new result
+      section), src/cli/verify-lib.ts (library exports of the slim package) and
+      the CLI tests src/cli/tests/verify-dependency-admission.test.ts (new) and
+      verify-dependency-policy.test.ts (the guide example test follows the guide
+      label change), and the fixture
+      src/cli/tests/fixtures/opengantry-verify-4.0.3.tgz (the published 4.0.3
+      package byte for byte, added in the PR #368 review round so a test runs
+      the released reader). test/conformance/ files are the conformance suite (a
+      new fixture and golden; existing goldens unchanged),
+      packages/opengantry-verify/ files are the slim package build, README and
+      package test. Docs and governance files are the ADR, the verify-contract
+      guide, a new guide page docs/guides/verify-dependencies.md (the dependency
+      material did not fit the 1,500-word page budget) linked from
+      docs/index.md, release notes, changelog, mission, run record,
+      ARCH_BASELINE.json and EXECUTOR_LOG.md. The agent wrote these answers from
+      the orchestrator brief (2026-11-16, issue #355 slice 3, MSN-0383)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+interrogation_sha256: f666847660c284aae062b134aeff809cdfffe601ecdfd350ee5377d3e7384069
 declared_paths:
   - .gitagent/missions/MSN-0383.dependency-verify-integration.yaml
   - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
@@ -321,6 +330,7 @@ declared_paths:
   - packages/verify/src/export.ts
   - packages/verify/src/run.ts
   - src/cli/commands/verify-contract.ts
+  - src/cli/tests/fixtures/opengantry-verify-4.0.3.tgz
   - src/cli/tests/verify-dependency-admission.test.ts
   - src/cli/tests/verify-dependency-policy.test.ts
   - src/cli/verify-lib.ts
@@ -350,6 +360,7 @@ contract:
     - packages/verify/src/export.ts
     - packages/verify/src/run.ts
     - src/cli/commands/verify-contract.ts
+    - src/cli/tests/fixtures/opengantry-verify-4.0.3.tgz
     - src/cli/tests/verify-dependency-admission.test.ts
     - src/cli/tests/verify-dependency-policy.test.ts
     - src/cli/verify-lib.ts
@@ -364,4 +375,4 @@ contract:
     - packages/core/src/dependency-update.ts
     - packages/missions/src/trusted-automation.ts
   allow_dynamic_specifiers: true
-contract_sha256: 85ddb3272e53481e5a05ce6e0f3db025d0b92afdad229e34e00575157d6db60e
+contract_sha256: e17784a6cbe420c6f22cc11c83cf50103fd23269653f20575d4c44c63434132e
