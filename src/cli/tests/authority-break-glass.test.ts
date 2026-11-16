@@ -108,3 +108,44 @@ test("break-glass: no base commit or no anchor at the base fails closed", () => 
   assert.equal(verdictCode(unanchored, MINE), "BYPASS_NOT_CONFIGURED", "an uncommitted anchor is not an anchor");
   assert.equal(verdictCode(repo("og-auth-bg-nosecret-"), undefined), "BYPASS_SECRET_MISSING");
 });
+
+/** A clone whose origin/HEAD names main (team anchor), with a branch `master` the candidate pushed to origin. */
+function cloneWithPushedMaster(): string {
+  const origin = repo("og-auth-bg-two-origin-");
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-bg-two-"));
+  git(path.dirname(dest), "clone", "-q", origin, dest);
+  git(dest, "config", "user.email", "t@example.com");
+  git(dest, "config", "user.name", "T");
+  writeAnchor(dest, MINE);
+  git(dest, "commit", "-qam", "candidate anchor");
+  git(dest, "push", "-q", "origin", "HEAD:refs/heads/master");
+  git(dest, "fetch", "-q", "origin");
+  return dest;
+}
+
+test("break-glass: origin/HEAD decides; a pushed origin/master closer to HEAD does not win", () => {
+  const dest = cloneWithPushedMaster();
+  assert.equal(git(dest, "symbolic-ref", "refs/remotes/origin/HEAD"), "refs/remotes/origin/main");
+  assert.equal(verdictCode(dest, MINE), "BYPASS_SECRET_INVALID", "the candidate's anchor on origin/master is ignored");
+  assert.equal(verdictCode(dest, TEAM), "ok");
+  // Without origin/HEAD, two remote default names are ambiguous: refuse rather than guess.
+  git(dest, "remote", "set-head", "origin", "--delete");
+  assert.equal(verdictCode(dest, MINE), "BYPASS_BASE_UNKNOWN");
+  assert.equal(verdictCode(dest, TEAM), "BYPASS_BASE_UNKNOWN");
+});
+
+test("break-glass: a remote default without shared history refuses; local main is never the fallback", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-bg-unrelated-"));
+  git(dest, "init", "-q", "-b", "main");
+  git(dest, "config", "user.email", "t@example.com");
+  git(dest, "config", "user.name", "T");
+  writeAnchor(dest, MINE);
+  git(dest, "add", "-A");
+  git(dest, "commit", "-qm", "candidate anchor on local main, equal to HEAD");
+  const unrelated = repo("og-auth-bg-unrelated-origin-");
+  git(dest, "remote", "add", "origin", unrelated);
+  git(dest, "fetch", "-q", "origin");
+  assert.equal(verdictCode(dest, MINE), "BYPASS_BASE_UNKNOWN", "origin/main exists without a merge-base");
+  git(dest, "remote", "set-head", "origin", "main");
+  assert.equal(verdictCode(dest, MINE), "BYPASS_BASE_UNKNOWN", "origin/HEAD exists without a merge-base");
+});

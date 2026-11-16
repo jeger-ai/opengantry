@@ -124,19 +124,34 @@ export function legacyVersionWarning(source: SubstrateVersionSource): string | n
 
 type HookPinVerdict = { ok: true } | { ok: false; message: string };
 
+const PIN_SEMVER = /^(\d{1,9})\.(\d{1,9})\.(\d{1,9})(-[0-9A-Za-z.-]+)?$/;
+
 /**
- * The tracked hooks run an installed gantry, never the working tree's `dist/` (MSN-0381); this pins which one: its
- * version must equal the repository's SUBSTRATE.version.json. A missing or unreadable pin refuses.
+ * One installed gantry serves every repository pinning its major (MSN-0381): the same major and at least the pin; a
+ * prerelease only when it is the pin itself. Another major, an older version or an unparseable one is refused. The hook
+ * shims apply the same rule in bash before they run the binary.
+ */
+function satisfiesPin(installed: string, pin: string): boolean {
+  const a = PIN_SEMVER.exec(installed.trim());
+  const b = PIN_SEMVER.exec(pin.trim());
+  if (!a || !b || Number(a[1]) !== Number(b[1])) return false;
+  for (const i of [2, 3]) if (Number(a[i]) !== Number(b[i])) return Number(a[i]) > Number(b[i]);
+  return installed.trim() === pin.trim() || (a[4] === undefined && b[4] !== undefined);
+}
+
+/**
+ * The tracked hooks run an installed gantry, never the working tree's `dist/` (MSN-0381); this pins which one: the
+ * repository's SUBSTRATE.version.json under {@link satisfiesPin}. A missing or unreadable pin refuses.
  */
 export function hookPinVerdict(repoRoot: string, cliVersion: string): HookPinVerdict {
   const pinned = readInstalledSubstrateVersion(repoRoot);
   if (pinned.source !== "substrate_file") {
     return { ok: false, message: `${REL_SUBSTRATE_VERSION} is missing or unreadable, so no gantry version is pinned for the hooks` };
   }
-  if (pinned.version.trim() !== cliVersion.trim()) {
+  if (!satisfiesPin(cliVersion, pinned.version)) {
     return {
       ok: false,
-      message: `installed gantry ${cliVersion} is not the version ${pinned.version} pinned in ${REL_SUBSTRATE_VERSION}; install @jeger-ai/opengantry@${pinned.version}, or run gantry upgrade`,
+      message: `installed gantry ${cliVersion} does not satisfy the version ${pinned.version} pinned in ${REL_SUBSTRATE_VERSION} (same major, at least the pin); install @jeger-ai/opengantry@${pinned.version}, or run gantry upgrade`,
     };
   }
   return { ok: true };

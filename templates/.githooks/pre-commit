@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # OpenGantry tracked hook (ADR-0052 A8): the CLI does the work. See: gantry hook pre-commit --help
-# MSN-0381: run an installed gantry, never this checkout's dist/. A gantry inside the checkout (dist/, node_modules/.bin,
-# or a link into either) is skipped: the agent can write it. GANTRY_HOOK_REQUIRE_PIN=1 makes it refuse unless its
-# version is the one .gitagent/foreman/SUBSTRATE.version.json pins. GANTRY_HOOK_LOCAL_BUILD=1, set by a human, runs dist/ instead.
+# MSN-0381: run an installed gantry, never this checkout's code. A gantry whose link, or any link it passes through, or
+# its target lives in the checkout (dist/, node_modules/.bin) is skipped: the agent can write those. The gantry found
+# must report the major .gitagent/foreman/SUBSTRATE.version.json pins and at least that version, checked here before it
+# runs, or the hook refuses. GANTRY_HOOK_LOCAL_BUILD=1, set by a human, runs dist/ instead. Bash 3.2 compatible (macOS).
 hook=pre-commit
 top="$(git rev-parse --show-toplevel)" && cd "$top" && top="$(pwd -P)" || exit 1
 if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 ]]; then
@@ -10,20 +11,46 @@ if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 ]]; then
   echo "$hook: GANTRY_HOOK_LOCAL_BUILD=1 but dist/cli/index.js is missing; run: npm run build" >&2
   exit 1
 fi
+semver='^([0-9]{1,9})\.([0-9]{1,9})\.([0-9]{1,9})(-[0-9A-Za-z.-]+)?$'
+# The rule of satisfiesPin (substrate-version.ts): same major, at least the pin, a prerelease only when it is the pin.
+satisfies() {
+  [[ "$1" =~ $semver ]] || return 1
+  local a1=$((10#${BASH_REMATCH[1]})) a2=$((10#${BASH_REMATCH[2]})) a3=$((10#${BASH_REMATCH[3]})) ap="${BASH_REMATCH[4]}"
+  [[ "$2" =~ $semver ]] || return 1
+  local b1=$((10#${BASH_REMATCH[1]})) b2=$((10#${BASH_REMATCH[2]})) b3=$((10#${BASH_REMATCH[3]})) bp="${BASH_REMATCH[4]}"
+  ((a1 == b1)) || return 1
+  ((a2 == b2)) || { ((a2 > b2)); return; }
+  ((a3 == b3)) || { ((a3 > b3)); return; }
+  [[ "$1" == "$2" || (-z "$ap" && -n "$bp") ]]
+}
+inside() { case "$1/" in "$top"/*) return 0 ;; esac; return 1; }
+pinfile=.gitagent/foreman/SUBSTRATE.version.json
+pin="$(sed -n 's/.*"opengantry_version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$pinfile" 2>/dev/null | head -n 1)"
+if [[ -z "$pin" ]]; then
+  echo "$hook: refused: no opengantry_version in $pinfile, so no gantry version is pinned for the hooks" >&2
+  exit 1
+fi
 IFS=: read -r -a dirs <<< "$PATH"
 for dir in "${dirs[@]}"; do
   [[ "$dir" == /* && -f "$dir/gantry" && -x "$dir/gantry" ]] || continue
-  bin="$dir/gantry"
-  for _ in 1 2 3 4 5 6 7 8; do
+  bin="$dir/gantry" ok=1
+  for _ in 1 2 3 4 5 6 7 8 9; do
+    parent="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd -P)" || { ok=0; break; }
+    if inside "$parent"; then ok=0; break; fi
     [[ -L "$bin" ]] || break
     link="$(readlink "$bin")"
-    [[ "$link" == /* ]] || link="$(dirname "$bin")/$link"
+    [[ "$link" == /* ]] || link="$parent/$link"
     bin="$link"
   done
-  [[ -L "$bin" || ! -f "$bin" ]] && continue
-  real="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd -P)" || continue
-  case "$real/" in "$top"/*) continue ;; esac
-  GANTRY_HOOK_REQUIRE_PIN=1 exec "$real/$(basename "$bin")" hook "$hook" "$@"
+  [[ "$ok" == 1 && ! -L "$bin" && -f "$bin" ]] || continue
+  ver="$("$dir/gantry" --version 2>/dev/null | head -n 1)"
+  ver="${ver//[[:space:]]/}"
+  if ! satisfies "$ver" "$pin"; then
+    echo "$hook: refused: $dir/gantry reports version '$ver', which does not satisfy $pin pinned in $pinfile (same major, at least the pin); install: npm install -g @jeger-ai/opengantry@$pin" >&2
+    exit 1
+  fi
+  # The path found, not the resolved file: version managers dispatch on argv[0].
+  GANTRY_HOOK_REQUIRE_PIN=1 exec "$dir/gantry" hook "$hook" "$@"
 done
-echo "$hook: no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@<opengantry_version in .gitagent/foreman/SUBSTRATE.version.json>. Developing OpenGantry itself: GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md)" >&2
+echo "$hook: no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@$pin. Developing OpenGantry itself: GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md)" >&2
 exit 1

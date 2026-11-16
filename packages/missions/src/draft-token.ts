@@ -89,14 +89,24 @@ interface DraftTokenState {
 
 const stateError = (message: string, retryable = false): DraftTokenError =>
   new DraftTokenError("TOKEN_STATE_INVALID", `${CLI_NAME} draft token state: ${message}`, retryable);
-const realOrResolved = (p: string): string => (fs.existsSync(p) ? fs.realpathSync(p) : path.resolve(p));
+/** The physical path, also for a dir that does not exist yet: the nearest existing ancestor resolved, the rest appended. */
+function physicalPath(p: string): string {
+  const missing: string[] = [];
+  for (let cur = path.resolve(p); ; cur = path.dirname(cur)) {
+    if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...missing);
+    if (path.dirname(cur) === cur) return path.resolve(p);
+    missing.unshift(path.basename(cur));
+  }
+}
 
 /** `~/.opengantry/draft-token.json` (dir: `GANTRY_STATE_DIR`), which `gantry cage policy` denies; never inside the repository. */
 function statePath(root: string): string {
-  const dir = process.env.GANTRY_STATE_DIR?.trim() || path.join(os.homedir(), GANTRY_STATE_HOME_REL);
-  if (!path.isAbsolute(dir)) throw stateError("the state dir must be an absolute path");
-  const rel = path.relative(realOrResolved(root), realOrResolved(dir));
-  if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) throw stateError("the state dir is inside the repository, where the agent can read the key");
+  const configured = process.env.GANTRY_STATE_DIR?.trim() || path.join(os.homedir(), GANTRY_STATE_HOME_REL);
+  if (!path.isAbsolute(configured)) throw stateError("the state dir must be an absolute path");
+  const dir = physicalPath(configured);
+  const rel = path.relative(physicalPath(root), dir);
+  const outside = rel === ".." || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel);
+  if (!outside) throw stateError("the state dir is inside the repository, where the agent can read the key");
   return path.join(dir, DRAFT_TOKEN_STATE_FILE);
 }
 
@@ -124,30 +134,84 @@ function readState(file: string): DraftTokenState | null {
   return raw as DraftTokenState;
 }
 
-/** Read-modify-write under a lock directory, then an atomic rename: no lost consume, no second key. */
+const readOwner = (file: string): string | null => {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
+  }
+};
+const sleep = (ms: number): void => void Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const lockUnclear = (): DraftTokenError => stateError("lock ownership is unclear (another process took it over); retry", true);
+
+/**
+ * Move `lock` aside if it still holds `owner`, by an atomic rename to a name only this call uses. A different owner found
+ * there (someone took it over in between) is put back and the call refuses: no live lock is ever removed.
+ */
+function removeLockIfOwned(lock: string, owner: string, token: string): boolean {
+  const aside = `${lock}.${token}.aside`;
+  try {
+    fs.renameSync(lock, aside);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw err;
+  }
+  if (readOwner(aside) === owner) {
+    fs.rmSync(aside, { force: true });
+    return true;
+  }
+  try {
+    fs.linkSync(aside, lock);
+  } catch {
+    /* a third process holds the lock now; its owner check refuses the one we moved */
+  } finally {
+    fs.rmSync(aside, { force: true });
+  }
+  throw lockUnclear();
+}
+
+/** A lock file with a unique owner token: created exclusively, taken over only when stale and still the same owner. */
+function acquireLock(lock: string, owner: string, token: string): void {
+  for (const deadline = Date.now() + LOCK_WAIT_MS; ; ) {
+    try {
+      fs.writeFileSync(lock, owner, { flag: "wx", mode: 0o600 });
+      return;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+    }
+    const held = readOwner(lock);
+    const age = Date.now() - (fs.statSync(lock, { throwIfNoEntry: false })?.mtimeMs ?? Date.now());
+    if (held !== null && age > LOCK_STALE_MS) removeLockIfOwned(lock, held, token);
+    else if (Date.now() > deadline) throw stateError("locked by another process", true);
+    else sleep(25);
+  }
+}
+
+/** Read-modify-write under an owned lock file, then an atomic rename: no lost consume, no second key, no stale writer. */
 function withState<T>(root: string, fn: (state: DraftTokenState | null, write: (next: DraftTokenState) => void) => T): T {
   assertNoLegacyKey(root);
   const file = statePath(root);
   fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   const lock = `${file}.lock`;
-  for (const deadline = Date.now() + LOCK_WAIT_MS; ; ) {
-    try {
-      fs.mkdirSync(lock);
-      break;
-    } catch {
-      if (Date.now() - (fs.statSync(lock, { throwIfNoEntry: false })?.mtimeMs ?? Date.now()) > LOCK_STALE_MS) fs.rmSync(lock, { recursive: true, force: true });
-      else if (Date.now() > deadline) throw stateError("locked by another process", true);
-      else Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
-    }
-  }
+  const token = crypto.randomUUID();
+  const owner = `${JSON.stringify({ token, pid: process.pid })}\n`;
+  acquireLock(lock, owner, token);
+  let owned = true;
   try {
     return fn(readState(file), (next) => {
-      const tmp = `${file}.${String(process.pid)}.tmp`;
+      const tmp = `${file}.${token}.tmp`;
       fs.writeFileSync(tmp, `${JSON.stringify(next)}\n`, { mode: 0o600 });
+      // A writer paused past the stale age may have lost the lock: it must not overwrite what the new owner wrote.
+      if (readOwner(lock) !== owner) {
+        owned = false;
+        fs.rmSync(tmp, { force: true });
+        throw lockUnclear();
+      }
       fs.renameSync(tmp, file);
     });
   } finally {
-    fs.rmSync(lock, { recursive: true, force: true });
+    if (owned) removeLockIfOwned(lock, owner, token);
   }
 }
 

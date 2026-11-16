@@ -12,6 +12,8 @@ import { CAGE_SESSION_ENV, assertOutsideCageSession, cageAgentPolicy } from "#ca
 import { writeManifest } from "./test-fixtures.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
+// The pinned fragment is the one without a GANTRY_STATE_DIR override; test-tmpdir-setup sets one for the draft token.
+delete process.env.GANTRY_STATE_DIR;
 
 function makeRepo(prefix: string): string {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -23,6 +25,7 @@ function makeRepo(prefix: string): string {
 function cli(dest: string, args: string[], extra: NodeJS.ProcessEnv = {}): { status: number | null; stdout: string; stderr: string } {
   const env = gitChildEnv({ ...extra });
   if (!(CAGE_SESSION_ENV in extra)) delete env[CAGE_SESSION_ENV];
+  if (!("GANTRY_STATE_DIR" in extra)) delete env.GANTRY_STATE_DIR;
   const r = spawnSync(process.execPath, [CLI, "cage", "policy", ...args], { cwd: dest, encoding: "utf8", env });
   return { status: r.status, stdout: r.stdout, stderr: r.stderr };
 }
@@ -208,4 +211,32 @@ test("cage policy: refused inside a cage session", () => {
   assert.equal(inside.status, 2);
   assert.match(inside.stderr, /\[GXT_CAGE_POLICY_IN_SESSION\]/);
   assert.equal(fs.existsSync(path.join(dest, "policy.json")), false);
+});
+
+test("cage policy: a GANTRY_STATE_DIR set when it runs is denied too (absolute as //path in rules, /path in the sandbox)", () => {
+  const dest = makeRepo("og-cage-policy-statedir-");
+  const extraOf = (env: NodeJS.ProcessEnv) => {
+    const f = JSON.parse(cageAgentPolicy(dest, "claude-code", [], env)) as Fragment & { sandbox: { credentials: { files: { path: string }[] } } };
+    return {
+      deny: f.permissions.deny.filter((r) => !BUILTIN.permissions.deny.includes(r)),
+      denyWrite: f.sandbox.filesystem.denyWrite.filter((p) => !BUILTIN.sandbox.filesystem.denyWrite.includes(p)),
+      denyRead: f.sandbox.filesystem.denyRead.filter((p) => !BUILTIN.sandbox.filesystem.denyRead.includes(p)),
+      credentials: f.sandbox.credentials.files.map((c) => c.path).filter((p) => !BUILTIN.sandbox.credentials.files.some((c) => c.path === p)),
+    };
+  };
+  const none = { deny: [], denyWrite: [], denyRead: [], credentials: [] };
+  assert.deepEqual(extraOf({}), none, "unset: the pinned fragment");
+  assert.deepEqual(extraOf({ GANTRY_STATE_DIR: "relative/state" }), none, "relative: the draft token refuses it");
+  assert.deepEqual(extraOf({ GANTRY_STATE_DIR: "/srv/og-state" }), {
+    deny: ["Edit(//srv/og-state)", "Edit(//srv/og-state/**)", "Read(//srv/og-state)", "Read(//srv/og-state/**)"],
+    denyWrite: ["/srv/og-state"],
+    denyRead: ["/srv/og-state"],
+    credentials: ["/srv/og-state"],
+  });
+  assert.deepEqual(extraOf({ GANTRY_STATE_DIR: path.join(os.homedir(), "state", "og") }), {
+    deny: ["Edit(~/state/og)", "Edit(~/state/og/**)", "Read(~/state/og)", "Read(~/state/og/**)"],
+    denyWrite: ["~/state/og"],
+    denyRead: ["~/state/og"],
+    credentials: ["~/state/og"],
+  });
 });

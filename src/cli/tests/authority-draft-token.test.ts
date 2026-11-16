@@ -2,7 +2,7 @@
  * MSN-0381 (issue #356, ADR-0063 Q10): the draft-token HMAC key lives in the per-user state dir, outside the repository.
  * The old attack read `.gitagent/foreman/DRAFT_TOKEN.key` and signed its own draft; that key is now refused.
  */
-import test from "node:test";
+import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -96,4 +96,97 @@ test("draft token: a state dir inside the repository or a relative one is refuse
     if (prev === undefined) delete process.env.GANTRY_STATE_DIR;
     else process.env.GANTRY_STATE_DIR = prev;
   }
+});
+
+function withStateDir<T>(dir: string, fn: () => T): T {
+  const prev = process.env.GANTRY_STATE_DIR;
+  process.env.GANTRY_STATE_DIR = dir;
+  try {
+    return fn();
+  } finally {
+    if (prev === undefined) delete process.env.GANTRY_STATE_DIR;
+    else process.env.GANTRY_STATE_DIR = prev;
+  }
+}
+
+test("draft token: a state dir reached through a link into the repository, or named ..x inside it, is refused", () => {
+  const dest = repo("og-auth-statelink-");
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-statelink-out-"));
+  fs.symlinkSync(dest, path.join(outside, "link"));
+  withStateDir(path.join(outside, "link", "state"), () => assert.throws(() => draft(dest), code("TOKEN_STATE_INVALID"), "the missing state dir resolves through the link"));
+  assert.equal(fs.existsSync(path.join(dest, "state")), false, "no key written into the repository");
+  withStateDir(path.join(dest, "..cache"), () => assert.throws(() => draft(dest), code("TOKEN_STATE_INVALID"), "..cache is a child of the repository"));
+  assert.equal(fs.existsSync(path.join(dest, "..cache")), false);
+  const sibling = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-statelink-ok-"));
+  withStateDir(path.join(sibling, "nested", "state"), () => assert.ok(draft(dest), "a missing dir outside the repository is fine"));
+});
+
+const stateFileIn = (dir: string): string => path.join(dir, "draft-token.json");
+const owner = (token: string): string => `${JSON.stringify({ token, pid: 1 })}\n`;
+
+test("draft token lock: a stale lock is taken over; the lock is gone afterwards", () => {
+  const dest = repo("og-auth-lock-stale-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-lock-stale-state-"));
+  withStateDir(dir, () => {
+    const lock = `${stateFileIn(dir)}.lock`;
+    fs.writeFileSync(lock, owner("crashed"));
+    const old = new Date(Date.now() - 60_000);
+    fs.utimesSync(lock, old, old);
+    assert.ok(draft(dest));
+    assert.equal(fs.existsSync(lock), false);
+    assert.deepEqual(fs.readdirSync(dir).sort(), ["draft-token.json"], "no aside or temporary file left");
+  });
+});
+
+test("draft token lock: a writer that lost its lock while paused refuses and leaves the new owner's lock in place", () => {
+  const dest = repo("og-auth-lock-paused-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-lock-paused-state-"));
+  withStateDir(dir, () => {
+    const token = draft(dest);
+    const lock = `${stateFileIn(dir)}.lock`;
+    const before = fs.readFileSync(stateFileIn(dir), "utf8");
+    // While this writer is paused past the stale age, another process takes the lock over.
+    const real = fs.writeFileSync.bind(fs);
+    const spy = mock.method(fs, "writeFileSync", (file: fs.PathOrFileDescriptor, data: string | NodeJS.ArrayBufferView, opts?: fs.WriteFileOptions) => {
+      if (typeof file === "string" && file.endsWith(".tmp")) real(lock, owner("the-new-owner"));
+      real(file, data, opts);
+    });
+    try {
+      assert.throws(() => verifyDraftToken(dest, token, { consume: true }), (e: unknown) => code("TOKEN_STATE_INVALID")(e) && /ownership/.test((e as Error).message));
+    } finally {
+      spy.mock.restore();
+    }
+    assert.equal(fs.readFileSync(stateFileIn(dir), "utf8"), before, "the stale writer wrote nothing");
+    assert.equal(fs.readFileSync(lock, "utf8"), owner("the-new-owner"), "the new owner's lock is not removed");
+    fs.rmSync(lock);
+    assert.equal(verifyDraftToken(dest, token, { consume: true }).msn_id, "MSN-0101", "the token was not consumed by the refused writer");
+  });
+});
+
+test("draft token lock: an error other than an existing lock is reported, not taken for a lock", { skip: process.platform === "win32" || process.getuid?.() === 0 }, () => {
+  const dest = repo("og-auth-lock-eacces-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-lock-eacces-state-"));
+  withStateDir(dir, () => {
+    draft(dest);
+    fs.chmodSync(dir, 0o500);
+    try {
+      const started = Date.now();
+      assert.throws(() => draft(dest), (e: unknown) => (e as NodeJS.ErrnoException).code === "EACCES");
+      assert.ok(Date.now() - started < 4000, "no wait for a lock that does not exist");
+    } finally {
+      fs.chmodSync(dir, 0o700);
+    }
+  });
+});
+
+test("draft token lock: a live lock held by another owner refuses after the bounded wait", () => {
+  const dest = repo("og-auth-lock-live-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-lock-live-state-"));
+  withStateDir(dir, () => {
+    draft(dest);
+    const lock = `${stateFileIn(dir)}.lock`;
+    fs.writeFileSync(lock, owner("alive"));
+    assert.throws(() => draft(dest), (e: unknown) => code("TOKEN_STATE_INVALID")(e) && /locked by another process/.test((e as Error).message));
+    assert.equal(fs.readFileSync(lock, "utf8"), owner("alive"), "a live lock is never removed");
+  });
 });

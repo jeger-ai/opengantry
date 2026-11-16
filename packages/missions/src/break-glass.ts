@@ -31,29 +31,32 @@ function timingSafeEqualHex(a: string, b: string): boolean {
   return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
-/** Remote default branches first; local ones only when the repository has no remote default branch. */
-const REMOTE_DEFAULT_REFS = ["refs/remotes/origin/HEAD", "refs/remotes/origin/main", "refs/remotes/origin/master"];
-const LOCAL_DEFAULT_REFS = ["refs/heads/main", "refs/heads/master"];
+/** origin/HEAD when it resolves; origin/main or origin/master only without it; local main or master only without any. */
+const DEFAULT_REF_TIERS = [["refs/remotes/origin/HEAD"], ["refs/remotes/origin/main", "refs/remotes/origin/master"], ["refs/heads/main", "refs/heads/master"]];
+
+type AnchorBase = { ok: true; base: string } | { ok: false; why: string };
 
 /**
- * The trusted base for the anchor (MSN-0381): the merge-base of HEAD with the default branch, the newest of them. A
- * commit the change under review adds is never its own base, so neither a working-tree edit nor a commit on the branch
- * moves the anchor. Null when no default branch shares history with HEAD.
+ * The trusted base for the anchor (MSN-0381): the merge-base of HEAD with the one default branch. The first tier with a
+ * ref that resolves decides, so a closer branch (a pushed origin/master, a local main) never outranks it; two refs in a
+ * tier are ambiguous, and a default branch without shared history refuses rather than falling through. A commit the
+ * change under review adds is never its own base, so neither a working-tree edit nor a branch commit moves the anchor.
  */
-function breakGlassAnchorBase(repoRoot: string): string | null {
-  for (const refs of [REMOTE_DEFAULT_REFS, LOCAL_DEFAULT_REFS]) {
-    const bases = refs
-      .map((ref) => gitRun(repoRoot, ["merge-base", "HEAD", ref]))
-      .filter((r) => r.ok && r.stdout.trim().length > 0)
-      .map((r) => r.stdout.trim());
-    const scored = bases.map((base) => {
-      const count = gitRun(repoRoot, ["rev-list", "--count", `${base}..HEAD`]);
-      return { base, n: count.ok && count.stdout.trim() !== "" ? Number(count.stdout.trim()) : Number.NaN };
-    });
-    const best = scored.filter((x) => Number.isInteger(x.n)).sort((a, b) => a.n - b.n)[0];
-    if (best) return best.base;
+function breakGlassAnchorBase(repoRoot: string): AnchorBase {
+  const resolves = (ref: string): boolean => gitRun(repoRoot, ["rev-parse", "--verify", "-q", `${ref}^{commit}`]).ok;
+  for (const tier of DEFAULT_REF_TIERS) {
+    const found = tier.filter(resolves);
+    if (found.length === 0) continue;
+    const short = found.map((r) => r.replace(/^refs\/(remotes|heads)\//, ""));
+    if (found.length > 1) {
+      const hint = found[0]!.startsWith("refs/remotes/") ? " (name it: git remote set-head origin --auto)" : "";
+      return { ok: false, why: `${short.join(" and ")} both exist, so the default branch is ambiguous${hint}` };
+    }
+    const mb = gitRun(repoRoot, ["merge-base", "HEAD", found[0]!]);
+    const base = mb.ok ? mb.stdout.trim() : "";
+    return base ? { ok: true, base } : { ok: false, why: `HEAD shares no history with the default branch ${short[0]!}` };
   }
-  return null;
+  return { ok: false, why: "no default branch (origin/HEAD, origin/main, origin/master, else main or master)" };
 }
 
 function parseAnchor(text: string): string | null {
@@ -69,14 +72,11 @@ type BypassVerdict = { ok: true } | { ok: false; code: string; message: string }
 
 /** Authorization against the anchor committed at the trusted base, never the working tree. Fails closed. */
 export function bypassAuthorization(repoRoot: string): BypassVerdict {
-  const base = breakGlassAnchorBase(repoRoot);
-  if (!base) {
-    return {
-      ok: false,
-      code: "BYPASS_BASE_UNKNOWN",
-      message: `no trusted base commit (merge-base of HEAD with origin/HEAD, origin/main, origin/master, else main or master); the ${REL_BYPASS_SHA256} anchor is read only from there.`,
-    };
+  const found = breakGlassAnchorBase(repoRoot);
+  if (!found.ok) {
+    return { ok: false, code: "BYPASS_BASE_UNKNOWN", message: `no trusted base commit: ${found.why}; the ${REL_BYPASS_SHA256} anchor is read only from there.` };
   }
+  const base = found.base;
   const blob = gitRun(repoRoot, ["cat-file", "blob", `${base}:${REL_BYPASS_SHA256}`]);
   const anchor = blob.ok ? parseAnchor(blob.stdout) : null;
   if (!anchor) {

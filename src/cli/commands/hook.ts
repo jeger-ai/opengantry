@@ -5,7 +5,6 @@
 import { EXIT_CODE } from "#core/exit-codes.js";
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { CLI_NAME } from "#core/constants.js";
 import { logError, logInfo, logWarn, setExitCode } from "../output/cli-io.js";
 import { runUserCommandAsync } from "../output/command-boundary.js";
@@ -29,7 +28,6 @@ import { CLI_VERSION } from "../version.gen.js";
 const SOURCE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]);
 const GOVERNANCE_RE = /^\.gitagent\/foreman\/MANIFEST\.(json|ya?ml)$|^\.gitagent\/planner\/RULES\.md$|\.gxt-skill\.yaml$/;
 const MANIFEST_OR_SKILLS_RE = /^\.gitagent\/foreman\/MANIFEST\.(json|ya?ml)$|^skills\//;
-const CLI_SOURCE_RE = /^src\/cli\/.*\.ts$/;
 const MISSION_FILE_RE = /^\.gitagent\/missions\/.*\.(ya?ml|md)$/i;
 
 function strictGuardArmed(root: string): boolean {
@@ -150,23 +148,10 @@ function manifestCheck(changed: readonly string[]): boolean {
   return skillSync.ok;
 }
 
-/** Specimen-only until ADR-0052 step 5b folds it into the CLI: the changed-code gate, when the repo ships it. */
-function changedCodeGate(root: string, range: PushRange, changed: readonly string[]): boolean {
-  if (!changed.some((p) => CLI_SOURCE_RE.test(p))) return true;
-  const script = path.join(root, "scripts", "check-changed-code.sh");
-  try {
-    fs.accessSync(script, fs.constants.X_OK);
-  } catch {
-    return true;
-  }
-  logInfo("pre-push: changed-code quality (src/cli)");
-  const r = spawnSync(script, [range.base, range.head], { cwd: root, stdio: "inherit" });
-  if (r.status === 0) return true;
-  setExitCode(r.status ?? 1);
-  return false;
-}
-
-/** pre-push: for every pushed range, verify changed missions, advise on governance edits, check the manifest. */
+/**
+ * pre-push: for every pushed range, verify changed missions, advise on governance edits, check the manifest. Verify runs
+ * each changed mission's gate_command, which is checkout code by design (B14): the hook is not a boundary, CI is.
+ */
 export async function runHookPrePush(stdinText: string, target: { remote?: string; url?: string } = {}): Promise<void> {
   await runUserCommandAsync({}, async () => {
     const root = getRepoRoot();
@@ -180,8 +165,8 @@ export async function runHookPrePush(stdinText: string, target: { remote?: strin
       if (!(await verifyRangeMissions(root, range))) return;
       const changed = changedPaths(root, range);
       governanceAdvisory(root, range, changed);
+      // No changed-code gate here: scripts/check-changed-code.sh is checkout code the candidate can write (MSN-0381); CI runs it.
       if (!manifestCheck(changed)) return;
-      if (!changedCodeGate(root, range, changed)) return;
     }
   });
 }
