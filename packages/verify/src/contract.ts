@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { parseDocument } from "yaml";
+import { DependencyPolicyError, mergeDependencyPolicy, parseDependencyPolicy, type DependencyPolicy } from "#core/dependency-policy.js";
 import { GantryUserError } from "#core/user-error.js";
 import { gitRun } from "#git/git.js";
 import { mergeCriticality, parseCriticality, type CriticalityRule } from "./criticality.js";
@@ -73,6 +74,11 @@ export interface VerifyContract {
   tests: VerifyTestsRule | null;
   /** `criticality` (ADR-0051 decision 13): path classes and an optional classifier; null when the contract has none. */
   criticality: CriticalityRule | null;
+  /**
+   * `dependencies` (ADR-0062, `opengantry.dependency-policy.v1`): verify.yaml only, inherited tighten-only by a task
+   * contract; null when the contract has none. Parsed and merged here; not judged by verify yet (issue #355 slice 3).
+   */
+  dependencies: DependencyPolicy | null;
   /** Keys read but not applied (gate.json `cage_protect`, `part`); reported once on stderr. */
   ignored: string[];
 }
@@ -239,6 +245,19 @@ function parseAliases(raw: unknown): Record<string, string> {
   return out;
 }
 
+function dependencyPolicy<T>(fn: () => T): T {
+  try {
+    return fn();
+  } catch (err) {
+    if (err instanceof DependencyPolicyError) throw contractError(err.message.startsWith("dependencies") ? err.message : `dependencies.${err.message}`);
+    throw err;
+  }
+}
+
+function parseDependencies(raw: unknown): DependencyPolicy | null {
+  return raw === undefined || raw === null ? null : dependencyPolicy(() => parseDependencyPolicy(raw));
+}
+
 function section(raw: unknown, where: string, keys: readonly string[]): Obj {
   if (raw === undefined || raw === null) return {};
   if (!isObj(raw)) throw contractError(`${where} must be a mapping`);
@@ -257,7 +276,7 @@ export function parseVerifyYaml(text: string): VerifyContract {
     throw contractError(`invalid YAML: ${err instanceof Error ? err.message : String(err)}`);
   }
   if (!isObj(data)) throw contractError("expected a mapping");
-  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths", "tests", "criticality"], "top level");
+  only(data, ["schema", "base", "scope", "size", "rules", "checks", "imports", "layers", "path_aliases", "python_paths", "tests", "criticality", "dependencies"], "top level");
   if (data.schema !== VERIFY_CONTRACT_SCHEMA) throw contractError(`schema must be ${VERIFY_CONTRACT_SCHEMA}`);
   const scope = section(data.scope, "scope", ["allowed_paths", "forbidden_paths"]);
   const size = section(data.size, "size", ["max_added_lines", "exclude"]);
@@ -276,13 +295,14 @@ export function parseVerifyYaml(text: string): VerifyContract {
     pythonPaths: (strList(data.python_paths, "python_paths") ?? ["."]).map((p, i) => relPath(p, `python_paths[${String(i)}]`)),
     tests: parseTests(data.tests),
     criticality: parseCriticality(data.criticality),
+    dependencies: parseDependencies(data.dependencies),
     ignored: [],
   };
 }
 
 /**
  * Repository law for a contract that is not the repository's own `verify.yaml` (a task's gate.json, a handover
- * contract): the base `verify.yaml`'s imports, layers, aliases, Python roots, rules and forbidden paths join the
+ * contract): the base `verify.yaml`'s imports, layers, aliases, Python roots, rules, forbidden paths and `dependencies` join the
  * task's, tighten-only. Checks, size and allowed paths stay the task's (ADR-0051, MSN-0279).
  */
 export function mergeRepositoryLaw(task: VerifyContract, repo: VerifyContract): VerifyContract {
@@ -303,6 +323,7 @@ export function mergeRepositoryLaw(task: VerifyContract, repo: VerifyContract): 
     pythonPaths: [...new Set([...repo.pythonPaths, ...task.pythonPaths])],
     tests: mergeTests(repo.tests, task.tests),
     criticality: mergeCriticality(repo.criticality, task.criticality),
+    dependencies: dependencyPolicy(() => mergeDependencyPolicy(repo.dependencies, task.dependencies)),
   };
 }
 
@@ -369,6 +390,7 @@ function parseGateCheck(raw: unknown, i: number, ignored: Set<string>): VerifyCh
     pythonPaths: ["."],
     tests: null,
     criticality: parseCriticality(data.criticality),
+    dependencies: null,
     ignored: [...ignored].sort(),
   };
 }
