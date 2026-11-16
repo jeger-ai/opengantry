@@ -92,8 +92,11 @@ interrogation:
       from ADR-0062 to ADR-0063 because PR #362 (issue #355) takes ADR-0062 for
       dependency admission; and the mission file, the run record
       .gitagent/runs/MSN-0379.json and EXECUTOR_LOG.md are now declared paths
-      (verify reported GXT_INTERROGATION_PATH_DRIFT on the run record). Scope
-      otherwise unchanged."
+      (verify reported GXT_INTERROGATION_PATH_DRIFT on the run record). The old
+      path .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md is
+      declared because this branch added it and renamed it away (it does not
+      exist at the head; PR #362 uses a different file,
+      ADR-0062-dependency-admission.md). Scope otherwise unchanged."
     adr_refs:
       - ADR-0052
       - ADR-0063
@@ -113,9 +116,10 @@ interrogation:
       - ADR-0052
       - ADR-0045
       - ADR-0042
-interrogation_sha256: 9ea5c77ff4d221ca2e7a60a1bfe41c078ccb4bf4fe716607466819b8d0311ee7
+interrogation_sha256: d22aabb15c58401a621d0bac67dd5d24e822f0671ec8f6cb228e3e8aa9d05b47
 declared_paths:
   - .gitagent/missions/MSN-0379.operation-admission-discovery.yaml
+  - .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
   - .gitagent/out-of-scope/README.md
   - .gitagent/runs/MSN-0379.json
