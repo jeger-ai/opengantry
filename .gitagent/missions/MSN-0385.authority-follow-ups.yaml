@@ -9,6 +9,7 @@
 # lists for its signer; old unsigned notes stop counting, fail closed; (3) gantry cage policy also denies the
 # physical path of every home-directory secret when a link makes it differ; (4) ADR-0063 consequences note;
 # (5) changelog and release notes. No prevention claim without a proven harness sandbox.
+# Amended: docs/guides/cursor.md declared; it described the launcher running dist/ when present.
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0385.json written by
 # gantry verify --record (RULES §3).
@@ -213,6 +214,7 @@ declared_paths:
   - docs/SECURITY.md
   - docs/cage/policy.md
   - docs/concepts/operation-admission-coverage.md
+  - docs/guides/cursor.md
   - docs/reference/break-glass.md
   - docs/reference/release-notes.md
   - docs/start/install.md
@@ -251,6 +253,7 @@ contract:
     - docs/SECURITY.md
     - docs/cage/policy.md
     - docs/concepts/operation-admission-coverage.md
+    - docs/guides/cursor.md
     - docs/reference/break-glass.md
     - docs/reference/release-notes.md
     - docs/start/install.md
@@ -278,4 +281,4 @@ contract:
     - .gitagent/planner/RULES.md
     - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
-contract_sha256: 3691e2cf5e07518ca4188955aa6071e4ec44c747eb6d41cc55e229343abf84af
+contract_sha256: 83e776d95499b0c5549c8766d26b44e6cbb2a89673c5644ee92d9aac588eef0d
