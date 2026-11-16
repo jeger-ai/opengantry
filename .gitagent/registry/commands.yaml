@@ -150,6 +150,10 @@ entries:
     since: MSN-0357
   - name: mission validate
     since: MSN-0010
+  - name: npm
+    since: MSN-0387
+  - name: npm ci
+    since: MSN-0387
   - name: perimeter
     since: MSN-0045
   - name: planner
