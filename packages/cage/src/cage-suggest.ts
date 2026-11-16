@@ -187,20 +187,24 @@ function physicalPath(p: string): string {
 }
 
 /**
- * The state dirs to deny as [permission path, sandbox path]: `~/.opengantry`, a `GANTRY_STATE_DIR` set now (the draft
- * token refuses a relative one), and the physical path of each when a link (stow, a linked home) makes it differ: the
- * key is written there. Under home is `~/rel`; elsewhere `//abs` in a permission rule and `/abs` in the sandbox.
+ * Paths to deny as [permission path, sandbox path]: each path given and, when a link (stow, a linked home) makes it
+ * differ, its physical path, which is where the file really is (MSN-0381 for the state dir, MSN-0385 for every home
+ * secret). Under home is `~/rel`; elsewhere `//abs` in a permission rule and `/abs` in the sandbox.
  */
-function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
-  const override = env.GANTRY_STATE_DIR?.trim();
-  const configured = [path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])];
-  const dirs = new Set(configured.flatMap((d) => [d, physicalPath(d)]));
+function denyPaths(paths: readonly string[]): [string, string][] {
+  const dirs = new Set(paths.flatMap((d) => [d, physicalPath(d)]));
   return [...dirs].map((dir) => {
     const rel = path.relative(os.homedir(), dir);
     if (rel !== "" && rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) return [`~/${rel.split(path.sep).join("/")}`, `~/${rel.split(path.sep).join("/")}`];
     const abs = dir.split(path.sep).join("/");
     return [`/${abs}`, abs];
   });
+}
+
+/** The state dirs: `~/.opengantry` and a `GANTRY_STATE_DIR` set now (the draft token refuses a relative one). */
+function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
+  const override = env.GANTRY_STATE_DIR?.trim();
+  return denyPaths([path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])]);
 }
 
 /**
@@ -220,9 +224,9 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const sorted = (xs: string[]): string[] => [...new Set(xs)].sort(byCodePoint);
   // The per-user state dir holds the draft-token key and replay ledger (MSN-0381): no read, no write from the sandbox.
   const states = stateDirs(env);
-  const home = SECRET_HOME_PATTERNS.map((h) => `~/${h}`);
-  const homeRules = [...home, ...states.map(([rule]) => rule)];
-  const homeSandbox = [...home, ...states.map(([, box]) => box)];
+  const home = [...denyPaths(SECRET_HOME_PATTERNS.map((h) => path.join(os.homedir(), h))), ...states];
+  const homeRules = home.map(([rule]) => rule);
+  const homeSandbox = home.map(([, box]) => box);
   const edit = [...write.map(permissionPath), ...states.map(([rule]) => rule)].flatMap(covering).map((p) => `Edit(${p})`);
   const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), ...homeRules].flatMap(covering).map((p) => `Read(${p})`)];
   // git reads .git/config on every command: the Read rule keeps it out of the model's context, the sandbox lets git run.

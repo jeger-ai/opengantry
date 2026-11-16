@@ -279,3 +279,40 @@ test("cage policy: a symlinked home adds the physical ~/.opengantry; nothing is 
   const plain = policyWithHome(realHome);
   assert.equal(JSON.stringify(plain).includes(realHome), false, "an unlinked home adds no absolute entries");
 });
+
+test("cage policy: every home secret is denied at its physical path too when HOME or the entry is a link (MSN-0385)", () => {
+  const dest = makeRepo("og-cage-policy-homesecrets-");
+  const realHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-realhome2-")));
+  const linkHome = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-linkhome2-"))), "home");
+  fs.symlinkSync(realHome, linkHome);
+  const policy = (home: string): Fragment => {
+    const r = cli(dest, ["--agent", "claude-code"], { HOME: home });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(r.stdout) as Fragment;
+  };
+  // A linked HOME: each home secret also at /<real home>/<entry>, in Read, denyRead and credentials.
+  const linked = policy(linkHome);
+  for (const h of HOME) {
+    const phys = `${realHome}/${h.slice(2)}`;
+    assert.ok(linked.permissions.deny.includes(`Read(/${phys})`), `Read ${phys}`);
+    assert.ok(linked.sandbox.filesystem.denyRead.includes(phys), `denyRead ${phys}`);
+    assert.ok(linked.sandbox.credentials.files.some((c) => c.path === phys), `credentials ${phys}`);
+    assert.ok(linked.permissions.deny.includes(`Read(${h})`), `the configured ${h} stays`);
+  }
+  // A home that is not a link, but ~/.ssh and ~/.kube are (stow, a dotfiles checkout): their physical targets are denied.
+  const dotfiles = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-dotfiles-")));
+  fs.mkdirSync(path.join(dotfiles, "ssh"));
+  fs.mkdirSync(path.join(dotfiles, "kube"));
+  fs.symlinkSync(path.join(dotfiles, "ssh"), path.join(realHome, ".ssh"));
+  fs.symlinkSync(path.join(dotfiles, "kube"), path.join(realHome, ".kube"));
+  const stowed = policy(realHome);
+  for (const phys of [`${dotfiles}/ssh`, `${dotfiles}/kube/config`]) {
+    assert.ok(stowed.permissions.deny.includes(`Read(/${phys})`), `Read ${phys}`);
+    assert.ok(stowed.sandbox.filesystem.denyRead.includes(phys), `denyRead ${phys}`);
+    assert.ok(stowed.sandbox.credentials.files.some((c) => c.path === phys), `credentials ${phys}`);
+  }
+  assert.equal(JSON.stringify(stowed).includes(`${dotfiles}/aws`), false, "an entry that is not linked adds nothing");
+  // Nothing linked: the pinned fragment, no absolute entries.
+  const plainHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-plainhome-")));
+  assert.equal(JSON.stringify(policy(plainHome)).includes(plainHome), false);
+});
