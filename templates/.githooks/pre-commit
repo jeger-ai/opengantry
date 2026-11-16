@@ -1,7 +1,29 @@
 #!/usr/bin/env bash
 # OpenGantry tracked hook (ADR-0052 A8): the CLI does the work. See: gantry hook pre-commit --help
-cd "$(git rev-parse --show-toplevel)" || exit 1
-if [[ -f dist/cli/index.js ]]; then exec node dist/cli/index.js hook pre-commit "$@"; fi
-if command -v gantry >/dev/null 2>&1; then exec gantry hook pre-commit "$@"; fi
-echo "pre-commit: gantry not found — run: npm run build (this repo) or npm install -g @jeger-ai/opengantry" >&2
+# MSN-0381: run an installed gantry, never this checkout's dist/. A gantry inside the checkout (dist/, node_modules/.bin,
+# or a link into either) is skipped: the agent can write it. GANTRY_HOOK_REQUIRE_PIN=1 makes it refuse unless its
+# version is the one .gitagent/foreman/SUBSTRATE.version.json pins. GANTRY_HOOK_LOCAL_BUILD=1, set by a human, runs dist/ instead.
+hook=pre-commit
+top="$(git rev-parse --show-toplevel)" && cd "$top" && top="$(pwd -P)" || exit 1
+if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 ]]; then
+  if [[ -f dist/cli/index.js ]]; then exec node dist/cli/index.js hook "$hook" "$@"; fi
+  echo "$hook: GANTRY_HOOK_LOCAL_BUILD=1 but dist/cli/index.js is missing; run: npm run build" >&2
+  exit 1
+fi
+IFS=: read -r -a dirs <<< "$PATH"
+for dir in "${dirs[@]}"; do
+  [[ "$dir" == /* && -f "$dir/gantry" && -x "$dir/gantry" ]] || continue
+  bin="$dir/gantry"
+  for _ in 1 2 3 4 5 6 7 8; do
+    [[ -L "$bin" ]] || break
+    link="$(readlink "$bin")"
+    [[ "$link" == /* ]] || link="$(dirname "$bin")/$link"
+    bin="$link"
+  done
+  [[ -L "$bin" || ! -f "$bin" ]] && continue
+  real="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd -P)" || continue
+  case "$real/" in "$top"/*) continue ;; esac
+  GANTRY_HOOK_REQUIRE_PIN=1 exec "$real/$(basename "$bin")" hook "$hook" "$@"
+done
+echo "$hook: no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@<opengantry_version in .gitagent/foreman/SUBSTRATE.version.json>. Developing OpenGantry itself: GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md)" >&2
 exit 1

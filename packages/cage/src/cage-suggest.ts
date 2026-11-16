@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
-import { SECRET_ANYWHERE_PATTERNS, SECRET_HOME_PATTERNS } from "#core/secret-paths.js";
+import { GANTRY_STATE_HOME_REL, SECRET_ANYWHERE_PATTERNS, SECRET_HOME_PATTERNS } from "#core/secret-paths.js";
 import { GantryUserError } from "#core/user-error.js";
 import { CAGE_CONFIG_FILE, normalizeCageRelPath, type CageProtectEntry } from "./cage-config.js";
 import { CAGE_SCAN_SKIP_DIRS, buildCagePlan, classifyCagePath, type CagePlan } from "./cage-rules.js";
@@ -191,11 +191,13 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const write = [...rules, ...forbiddenPaths.map((p) => normalizeCageRelPath(p)!), ".git/config", ".git/hooks"];
   const home = SECRET_HOME_PATTERNS.map((h) => `~/${h}`);
   const sorted = (xs: string[]): string[] => [...new Set(xs)].sort(byCodePoint);
-  const edit = write.map(permissionPath).flatMap(covering).map((p) => `Edit(${p})`);
+  // The per-user state dir holds the draft-token key and replay ledger (MSN-0381): no read, no write from the sandbox.
+  const state = `~/${GANTRY_STATE_HOME_REL}`;
+  const edit = [...write.map(permissionPath), state].flatMap(covering).map((p) => `Edit(${p})`);
   const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), ...home].flatMap(covering).map((p) => `Read(${p})`)];
   // git reads .git/config on every command: the Read rule keeps it out of the model's context, the sandbox lets git run.
   const read = SECRET_ANYWHERE_PATTERNS.filter((p) => p !== "**/.git/config").map((p) => `./${p}`);
-  const filesystem = { denyWrite: sorted(write.map((p) => `./${p}`)), denyRead: sorted([...read, ...home]) };
+  const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), state]), denyRead: sorted([...read, ...home]) };
   const credentials = { files: sorted(home).map((p) => ({ path: p, mode: "deny" })) };
   const fragment = { permissions: { deny: sorted(deny) }, sandbox: { enabled: true, allowUnsandboxedCommands: false, filesystem, credentials } };
   return `${JSON.stringify(fragment, null, 2)}\n`;

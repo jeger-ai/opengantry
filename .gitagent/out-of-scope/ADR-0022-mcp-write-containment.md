@@ -27,3 +27,11 @@ Issue #14 proposed a filesystem write proxy for MCP tools. `gxt_runtime_exec` al
 - Upgrade apply cannot promote staged files into manifest forbidden zones unless the signed upgrade mission lists them in `planned_writes`.
 - `gxt_runtime_exec` forbidden-zone enforcement remains unchanged and complementary.
 - Reads: [ADR-0056](ADR-0056-agent-read-guard.md) keeps secret files out of the model's context at the agent's own tool boundary (Claude Code and Cursor hooks), still without a global proxy.
+
+## Amendment: the draft-token key leaves the repository (MSN-0381)
+
+Issue #356 (ADR-0063 owner decision Q10) found that the HMAC key behind `gxt_draft_legislation` / `gxt_execute_legislation` lived at `.gitagent/foreman/DRAFT_TOKEN.key`, readable by the agent's own user, so one agent could sign its own draft and skip the human approval step. The key and the replay ledger now live in one per-user file, `~/.opengantry/draft-token.json` (directory overridable with `GANTRY_STATE_DIR`, refused when relative or inside the repository), written under a lock with an atomic rename. `gantry cage policy` denies the directory to the sandbox (`Read`, `Edit`, `denyRead`, `denyWrite`, credentials).
+
+- A legacy in-repo `DRAFT_TOKEN.key` is never trusted: while it exists, draft and execute refuse with `TOKEN_LEGACY_KEY` and tell the operator to delete it. Drafts it signed stay refused afterwards.
+- A malformed state file refuses (`TOKEN_STATE_INVALID`) instead of reading as an empty ledger. Deleting it deletes the key, so an old draft cannot be replayed under a fresh one.
+- Residual: the broker and gantry run as the same OS user (owner decision Q3). Without a proven harness sandbox the agent can read `~/.opengantry` and forge a draft, so this cell stays `unproven`; restoring an older copy of the file with the same key re-enables the drafts consumed since. Both need read or write access that the sandbox denies.

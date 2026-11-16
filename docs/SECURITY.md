@@ -119,7 +119,7 @@ Use OpenGantry when you need **declared edit blast radius and citeable verify ev
 
 When a production hotfix cannot wait for full git-proof + trace mapping:
 
-1. Provision `.gitagent/foreman/BYPASS.sha256` (SHA-256 of team secret; never commit plaintext).
+1. Provision `.gitagent/foreman/BYPASS.sha256` (SHA-256 of team secret; never commit plaintext) on the default branch. Verify reads it from the base commit, never from the working tree.
 2. Set `GANTRY_BYPASS_SECRET` in the execution environment.
 3. Run `gantry verify --break-glass --reason "<incident description>" --mission <path>` (optional `--audit-commit` if git notes cannot be pushed).
 4. Push notes with the branch: `git push origin refs/notes/gxt-bypass`.

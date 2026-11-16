@@ -14,8 +14,11 @@ This repository **is** the GXT specimen. Contributors and agents MUST follow the
 npm ci
 npm run build
 git config core.hooksPath .githooks
+export GANTRY_HOOK_LOCAL_BUILD=1   # in your shell profile: the hooks run this checkout's build (see below)
 gantry planner set "$(git config user.email)"
 ```
+
+**Hooks and the local build (MSN-0381).** The tracked hooks run an installed `gantry` from `PATH` outside the checkout, at the version `.gitagent/foreman/SUBSTRATE.version.json` pins, never `dist/`: an agent that writes `dist/cli/index.js` would otherwise own every hook. Developing OpenGantry, you want the build you just made, so you opt in yourself with `GANTRY_HOOK_LOCAL_BUILD=1` in your own shell. The trade-off is explicit: with the opt-in, the hooks run whatever `dist/` holds, including a build an agent wrote, so set it in the human's terminal, not in an agent's environment. A `gantry` on `PATH` that links into this checkout (`npm link`) counts as the local build and is skipped without the opt-in. Hooks were never the boundary (`--no-verify` skips them); CI is.
 
 Confirm readiness:
 
@@ -230,7 +233,7 @@ Runs **`dev-validate-core.sh`** (build, `gantry ci upgrade-tmp`, tests, doctor, 
 
 Adopters receive the runtime helpers from the init catalog, not the specimen-only gates above; the CI checks are `gantry ci` subcommands (ADR-0052 step 5b), so no validation script ships.
 
-**Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a one-line shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell.
+**Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell. The shim only picks the binary: an installed `gantry` on `PATH` outside the checkout, run with `GANTRY_HOOK_REQUIRE_PIN=1` so it refuses unless its version equals `SUBSTRATE.version.json`, or `dist/cli/index.js` when you set `GANTRY_HOOK_LOCAL_BUILD=1` (MSN-0381, see One-time setup). Without either, the hook refuses.
 
 - **pre-commit** — `gantry hook pre-commit`: the TMVC guard on the staged index for the pinned mission (blocks when `gantry hook install` armed strict mode or `GANTRY_TMVC_GUARD_STRICT=1`), then an advisory `contract check` over staged sources.
 - **pre-push** — `gantry hook pre-push` reads the ref lines git passes on stdin: a ref deletion verifies nothing, a new branch compares with the newest merge-base among its upstream, the pushed remote's `HEAD`, `main` and `master` remote-tracking branches and local `main`, `master` (else the parent), so a local `main` behind its remote does not pull already-merged missions into the range; an update compares `remote..local`, or, when the branch merged the remote's `main` since, the newest of those merge-bases, so the missions `main` brought are not verified again. Per range: `gantry verify --pre-push` for changed missions (legislative stubs pass after git-proof; a rowless mission with a run record is verified in full); advisory `gantry perimeter` when governance files change; the manifest + skills sync if manifest/skills changed; the changed-code gate for touched `src/cli/**/*.ts` (specimen only, until step 5b folds it into the CLI).

@@ -162,3 +162,4 @@ Each step is a Tier-3 Planner mission or a short chain of them, with `[MSN-…]`
 ## Amendments
 
 - [ADR-0054](ADR-0054-finish-the-package-graph.md) (2026-10-20): `core`'s only runtime dependencies are `zod` and `yaml` (B7); `plane` depends on `core` and `git`, and `missions` on `core`, `git`, `verify` and `plane` (A1).
+- MSN-0381 (2026-11-16, issue #356, ADR-0063 Q10), A8: a hook shim is no longer one line. It runs an installed `gantry` found on `PATH` outside the checkout (a path inside it, or a link into `dist/` or `node_modules/`, is skipped), never the working tree's `dist/`, with `GANTRY_HOOK_REQUIRE_PIN=1`, which makes `gantry hook <name>` refuse unless its version is the one `.gitagent/foreman/SUBSTRATE.version.json` pins (a direct `gantry hook` call is unchanged). A human-set `GANTRY_HOOK_LOCAL_BUILD=1` runs `dist/` unpinned, for developing OpenGantry itself. The logic still lives in the CLI; the shim only picks the binary.

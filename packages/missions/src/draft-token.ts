@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
 import { fromPosix } from "#core/posix-path.js";
 import { CLI_NAME } from "#core/constants.js";
 import { canonicalJson } from "#core/canonical-json.js";
@@ -12,8 +14,11 @@ import { contractSha256, normalizeContract } from "./contract/contract-hash.js";
 const DRAFT_TOKEN_TTL_SECONDS_DEFAULT = 600;
 const DRAFT_TOKEN_TTL_SECONDS_MIN = 120;
 const DRAFT_TOKEN_TTL_SECONDS_MAX = 1800;
-const DRAFT_TOKEN_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
-const DRAFT_TOKEN_REPLAY_REL = ".gitagent/history/.draft-token-replay.json";
+/** Where the key lived before MSN-0381: readable by the agent's own user, so its presence refuses. */
+const DRAFT_TOKEN_LEGACY_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
+const DRAFT_TOKEN_STATE_FILE = "draft-token.json";
+const LOCK_WAIT_MS = 5000;
+const LOCK_STALE_MS = 30_000;
 
 import type { InterrogationRow } from "#core/interrogation.js";
 
@@ -44,7 +49,9 @@ type DraftTokenErrorCode =
   | "TOKEN_EXPIRED"
   | "TOKEN_REPO_MISMATCH"
   | "TOKEN_REPLAYED"
-  | "TOKEN_KEY_MISSING";
+  | "TOKEN_KEY_MISSING"
+  | "TOKEN_LEGACY_KEY"
+  | "TOKEN_STATE_INVALID";
 
 export class DraftTokenError extends Error {
   readonly code: DraftTokenErrorCode;
@@ -73,54 +80,89 @@ function computeRepoFingerprint(root: string): string {
   return crypto.createHash("sha256").update(`${top}\0${headHash}`).digest("hex");
 }
 
-function draftTokenKeyPath(root: string): string {
-  return path.join(root, fromPosix(DRAFT_TOKEN_KEY_REL));
+/** Per-user state: the HMAC key and the consumed draft ids, in one file outside every repository (MSN-0381). */
+interface DraftTokenState {
+  v: 1;
+  key: string;
+  used: { id: string; exp: number }[];
+}
+
+const stateError = (message: string, retryable = false): DraftTokenError =>
+  new DraftTokenError("TOKEN_STATE_INVALID", `${CLI_NAME} draft token state: ${message}`, retryable);
+const realOrResolved = (p: string): string => (fs.existsSync(p) ? fs.realpathSync(p) : path.resolve(p));
+
+/** `~/.opengantry/draft-token.json` (dir: `GANTRY_STATE_DIR`), which `gantry cage policy` denies; never inside the repository. */
+function statePath(root: string): string {
+  const dir = process.env.GANTRY_STATE_DIR?.trim() || path.join(os.homedir(), GANTRY_STATE_HOME_REL);
+  if (!path.isAbsolute(dir)) throw stateError("the state dir must be an absolute path");
+  const rel = path.relative(realOrResolved(root), realOrResolved(dir));
+  if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) throw stateError("the state dir is inside the repository, where the agent can read the key");
+  return path.join(dir, DRAFT_TOKEN_STATE_FILE);
+}
+
+/** An agent-readable key in the repository is never trusted: refuse until the operator deletes it. */
+function assertNoLegacyKey(root: string): void {
+  if (!fs.existsSync(path.join(root, fromPosix(DRAFT_TOKEN_LEGACY_KEY_REL)))) return;
+  const message = `${CLI_NAME} draft token: ${DRAFT_TOKEN_LEGACY_KEY_REL} is readable by the agent and no longer trusted; delete it. The key now lives in ~/${GANTRY_STATE_HOME_REL}; drafts signed with the old key are refused.`;
+  throw new DraftTokenError("TOKEN_LEGACY_KEY", message, false);
+}
+
+/** Missing is null (draft mints a key); unreadable or malformed refuses, so a damaged ledger never reads as empty. */
+function readState(file: string): DraftTokenState | null {
+  if (!fs.existsSync(file)) return null;
+  let raw: Partial<DraftTokenState> = {};
+  try {
+    const parsed: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (parsed && typeof parsed === "object") raw = parsed as Partial<DraftTokenState>;
+  } catch {
+    /* malformed: refused below */
+  }
+  const usedOk = Array.isArray(raw.used) && raw.used.every((u) => typeof u?.id === "string" && Number.isInteger(u.exp));
+  if (raw.v !== 1 || typeof raw.key !== "string" || base64UrlDecode(raw.key).length < 32 || !usedOk) {
+    throw stateError("malformed; delete it to rotate the key (outstanding drafts are then refused)");
+  }
+  return raw as DraftTokenState;
+}
+
+/** Read-modify-write under a lock directory, then an atomic rename: no lost consume, no second key. */
+function withState<T>(root: string, fn: (state: DraftTokenState | null, write: (next: DraftTokenState) => void) => T): T {
+  assertNoLegacyKey(root);
+  const file = statePath(root);
+  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+  const lock = `${file}.lock`;
+  for (const deadline = Date.now() + LOCK_WAIT_MS; ; ) {
+    try {
+      fs.mkdirSync(lock);
+      break;
+    } catch {
+      if (Date.now() - (fs.statSync(lock, { throwIfNoEntry: false })?.mtimeMs ?? Date.now()) > LOCK_STALE_MS) fs.rmSync(lock, { recursive: true, force: true });
+      else if (Date.now() > deadline) throw stateError("locked by another process", true);
+      else Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+    }
+  }
+  try {
+    return fn(readState(file), (next) => {
+      const tmp = `${file}.${String(process.pid)}.tmp`;
+      fs.writeFileSync(tmp, `${JSON.stringify(next)}\n`, { mode: 0o600 });
+      fs.renameSync(tmp, file);
+    });
+  } finally {
+    fs.rmSync(lock, { recursive: true, force: true });
+  }
 }
 
 function ensureDraftTokenKey(root: string): Buffer {
-  const keyPath = draftTokenKeyPath(root);
-  if (fs.existsSync(keyPath)) {
-    const raw = fs.readFileSync(keyPath);
-    if (raw.length >= 32) return raw;
-  }
-  fs.mkdirSync(path.dirname(keyPath), { recursive: true, mode: 0o700 });
-  const key = crypto.randomBytes(32);
-  fs.writeFileSync(keyPath, key, { mode: 0o600 });
-  try {
-    fs.chmodSync(keyPath, 0o600);
-  } catch {
-    /* best effort */
-  }
-  return key;
+  return withState(root, (state, write) => {
+    if (state) return base64UrlDecode(state.key);
+    const key = crypto.randomBytes(32);
+    write({ v: 1, key: base64UrlEncode(key), used: [] });
+    return key;
+  });
 }
 
 function signPayload(payload: DraftLegislationPayload, key: Buffer): string {
   const body = canonicalJson(payload);
   return base64UrlEncode(crypto.createHmac("sha256", key).update(body, "utf8").digest());
-}
-
-function replayLedgerPath(root: string): string {
-  return path.join(root, fromPosix(DRAFT_TOKEN_REPLAY_REL));
-}
-
-function readReplaySet(root: string): Set<string> {
-  const abs = replayLedgerPath(root);
-  if (!fs.existsSync(abs)) return new Set();
-  try {
-    const parsed = JSON.parse(fs.readFileSync(abs, "utf8")) as { used?: string[] };
-    return new Set(Array.isArray(parsed.used) ? parsed.used : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function markDraftUsed(root: string, draftId: string): void {
-  const abs = replayLedgerPath(root);
-  fs.mkdirSync(path.dirname(abs), { recursive: true });
-  const used = readReplaySet(root);
-  used.add(draftId);
-  const trimmed = [...used].slice(-500);
-  fs.writeFileSync(abs, JSON.stringify({ used: trimmed }, null, 2), "utf8");
 }
 
 export function createDraftToken(
@@ -235,44 +277,40 @@ export function verifyDraftToken(root: string, draftToken: string, options?: { c
 
   assertDraftPayloadShape(payload);
 
-  const keyPath = draftTokenKeyPath(root);
-  if (!fs.existsSync(keyPath)) {
-    throw new DraftTokenError(
-      "TOKEN_KEY_MISSING",
-      `${CLI_NAME} draft token key missing at ${DRAFT_TOKEN_KEY_REL}`,
-      false,
-    );
-  }
-  const key = fs.readFileSync(keyPath);
-  const expectedSig = signPayload(payload, key);
-  const providedSig = parts[1];
-  const expectedBuf = Buffer.from(expectedSig, "utf8");
-  const providedBuf = Buffer.from(providedSig, "utf8");
-  if (expectedBuf.length !== providedBuf.length || !crypto.timingSafeEqual(expectedBuf, providedBuf)) {
-    throw new DraftTokenError("TOKEN_SIGNATURE_INVALID", `${CLI_NAME} draft token signature invalid`, true);
-  }
+  return withState(root, (state, write) => {
+    if (!state) {
+      throw new DraftTokenError("TOKEN_KEY_MISSING", `${CLI_NAME} draft token key missing in ~/${GANTRY_STATE_HOME_REL}; re-run gxt_draft_legislation`, false);
+    }
+    const expectedSig = signPayload(payload, base64UrlDecode(state.key));
+    const expectedBuf = Buffer.from(expectedSig, "utf8");
+    const providedBuf = Buffer.from(parts[1]!, "utf8");
+    if (expectedBuf.length !== providedBuf.length || !crypto.timingSafeEqual(expectedBuf, providedBuf)) {
+      throw new DraftTokenError("TOKEN_SIGNATURE_INVALID", `${CLI_NAME} draft token signature invalid`, true);
+    }
 
-  const now = Math.floor(Date.now() / 1000);
-  if (payload.exp < now) {
-    throw new DraftTokenError("TOKEN_EXPIRED", `${CLI_NAME} draft token expired; re-run gxt_draft_legislation`, true);
-  }
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp < now) {
+      throw new DraftTokenError("TOKEN_EXPIRED", `${CLI_NAME} draft token expired; re-run gxt_draft_legislation`, true);
+    }
 
-  const fingerprint = computeRepoFingerprint(root);
-  if (payload.repo_fingerprint !== fingerprint) {
-    throw new DraftTokenError(
-      "TOKEN_REPO_MISMATCH",
-      `${CLI_NAME} draft token was issued for a different repository state`,
-      true,
-    );
-  }
+    const fingerprint = computeRepoFingerprint(root);
+    if (payload.repo_fingerprint !== fingerprint) {
+      throw new DraftTokenError(
+        "TOKEN_REPO_MISMATCH",
+        `${CLI_NAME} draft token was issued for a different repository state`,
+        true,
+      );
+    }
 
-  if (readReplaySet(root).has(payload.draft_id)) {
-    throw new DraftTokenError("TOKEN_REPLAYED", `${CLI_NAME} draft token already executed`, true);
-  }
+    if (state.used.some((u) => u.id === payload.draft_id)) {
+      throw new DraftTokenError("TOKEN_REPLAYED", `${CLI_NAME} draft token already executed`, true);
+    }
 
-  if (options?.consume !== false) {
-    markDraftUsed(root, payload.draft_id);
-  }
-
-  return payload;
+    if (options?.consume !== false) {
+      // An expired id can never verify again, so only expired entries are dropped.
+      const used = [...state.used.filter((u) => u.exp >= now), { id: payload.draft_id, exp: payload.exp }];
+      write({ ...state, used });
+    }
+    return payload;
+  });
 }

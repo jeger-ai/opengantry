@@ -64,6 +64,8 @@ git config core.hooksPath .githooks
 | `pre-commit` | `gantry hook pre-commit`: warns about staged files outside the pinned mission's scope (advisory; set `GANTRY_TMVC_GUARD_STRICT=1` or run `gantry hook install` to block). Skipped when no mission is pinned |
 | `pre-push` | `gantry verify --pre-push` for mission files changed on the branch, so a mission is Planner-approved before it is handed off |
 
+The hooks run the `gantry` installed on your `PATH` outside the repository, never a build or package inside it (`dist/`, `node_modules/.bin`), because an agent can write those. That `gantry` must be the version `.gitagent/foreman/SUBSTRATE.version.json` pins, which `gantry init` and `gantry upgrade apply` write; otherwise the hook refuses and names the version to install.
+
 `gantry hook install` arms the tracked pre-commit hook in strict mode, so a commit with staged paths outside the pinned mission is rejected. `gantry hook uninstall` reverses it. The bypass is `git commit --no-verify`.
 
 ## Upgrade the substrate

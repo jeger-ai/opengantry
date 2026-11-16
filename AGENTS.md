@@ -29,7 +29,7 @@ OpenGantry development **MUST** use the full GXT stack — same as adopters. See
 
 | Step | Command |
 |------|---------|
-| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · `gantry planner set "$(git config user.email)"` |
+| Setup | `npm ci && npm run build` · `git config core.hooksPath .githooks` · human shell: `export GANTRY_HOOK_LOCAL_BUILD=1` (hooks run the local build, see DEVELOPMENT) · `gantry planner set "$(git config user.email)"` |
 | Readiness | `gantry doctor` |
 | Scope work | Mission Architect / MCP tools or `gantry legislate … --msn MSN-NNNN --skill-key gantry` |
 | Executor env | `eval "$(gantry runtime env --mission .gitagent/missions/<file>.yaml)"` |
@@ -79,6 +79,8 @@ git config core.hooksPath .githooks
 git config commit.gpgsign false   # SSH/GPG signing agent is unavailable in Cloud VMs; required for git-based tests
 gantry planner set "$(git config user.email)"
 ```
+
+The tracked hooks run an installed `gantry` at the pinned version, never `dist/` (MSN-0381). To commit with the local build, the human sets `GANTRY_HOOK_LOCAL_BUILD=1` for that shell; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Run / test / lint
 

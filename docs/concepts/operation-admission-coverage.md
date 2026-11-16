@@ -140,7 +140,7 @@ No code mediates `gh`, the GitHub API or any host API. Candidate-reachable crede
 | B11 | **Descendants:** the cage enumerates the tree through `ps`, so a process reparented between passes can survive. Background processes that outlive the command write after the final check. `runtime exec`'s timeout signals only the direct child. | `cage-process.ts:49-69`, `runtime-exec-process.ts:71`, ADR-0048 decision 7 |
 | B12 | **`runtime exec` zone scan:** zones are `path.resolve`d against the process working directory, so glob zones match nothing. Symlinks and non-regular files inside a zone are skipped. Writes outside TMVC roots are not checked, only forbidden zones and contract imports. | `forbidden-scan.ts:66,85`, `runtime-exec.ts:327-334` |
 | B13 | **Outside the protected set:** writes outside the repository, gitignored files outside a scope, and files hidden by `.git/info/exclude` are not seen. | ADR-0048 decision 10, `docs/cage/limits.md` |
-| B14 | **Local hooks are candidate-reachable:** `--no-verify`. The tracked shims `exec node dist/cli/index.js` when it exists, so a candidate that writes `dist/` controls the hook. The pre-commit guard is advisory without strict mode and skipped without a pinned mission. CI is the boundary the candidate cannot edit. | `.githooks/pre-commit`, `hook.ts:59-82` |
+| B14 | **Local hooks are candidate-reachable:** `--no-verify`. Before MSN-0381 the tracked shims ran `node dist/cli/index.js` when it existed, so a candidate that wrote `dist/` controlled the hook; they now run an installed `gantry` outside the checkout at the pinned version, unless a human sets `GANTRY_HOOK_LOCAL_BUILD=1`. The pre-commit guard is advisory without strict mode and skipped without a pinned mission. CI is the boundary the candidate cannot edit. | `.githooks/pre-commit`, `hook.ts` |
 | B15 | **MCP spawn path:** `gxt_runtime_exec` spawns any argv from an MCP client, which never passes through Cursor's shell hook. | `mcp-tools-register.ts:129-138` |
 | B16 | **Environment switches:** `GANTRY_CAGE_SESSION` (the only marker that refuses `cage policy`/`suggest` in a session) and the `GIT_CONFIG_*` variables that install the push guard can be unset by the caged process. | `cage-suggest.ts:17,168-171`, `cage-push-guard.ts:74-82` |
 | B17 | **Install-time execution:** lifecycle scripts, alternate package managers, `npx`, restored caches and direct downloads all run before any check. The freeze restores files afterwards. | ADR-0048 decision 9, #355 |
@@ -148,13 +148,13 @@ No code mediates `gh`, the GitHub API or any host API. Candidate-reachable crede
 
 ## Authority surfaces a candidate can reach
 
-R1 requires that decision and signing authority be protected from candidate processes (ADM03, last sentence). Today these authority inputs live where a process of the same user can read or change them:
+R1 requires that decision and signing authority be protected from candidate processes (ADM03, last sentence). At the inventory these authority inputs lived where a process of the same user can read or change them. MSN-0381 (owner decision Q10) moved the first three; their cells stay `unproven` until a canary proves the harness sandbox that denies the new locations:
 
 | Surface | Where | Note |
 |---------|-------|------|
-| MCP draft-token HMAC key | `.gitagent/foreman/DRAFT_TOKEN.key` (`packages/missions/src/draft-token.ts:15`) | The draft/execute "human approval" step uses a key the agent's own user can read. Nothing stops one agent from calling draft and then execute. |
-| Break-glass anchor | `.gitagent/foreman/BYPASS.sha256`, read from the working tree (`packages/missions/src/break-glass.ts`) | The plaintext secret comes from the environment; the anchor is a tracked file. |
-| Hook implementation | `dist/cli/index.js`, run by the tracked shims | See B14. |
+| MCP draft-token HMAC key | was `.gitagent/foreman/DRAFT_TOKEN.key`; since MSN-0381 `~/.opengantry/draft-token.json` with the replay ledger (`packages/missions/src/draft-token.ts`) | `gantry cage policy` denies the directory to the sandbox, and a legacy in-repo key refuses draft and execute. Without a proven sandbox the same user can still read the key and sign its own draft: `unproven`. |
+| Break-glass anchor | `.gitagent/foreman/BYPASS.sha256`, read since MSN-0381 from the base commit (merge-base of `HEAD` with the default branch, `packages/missions/src/break-glass.ts`) | A working-tree edit or a commit on the branch no longer moves it. A same-user process can still move local refs (a commit on local `main` without a remote, or a rewritten remote-tracking ref). |
+| Hook implementation | an installed `gantry` outside the checkout at the version `SUBSTRATE.version.json` pins (MSN-0381); `dist/` only with a human's `GANTRY_HOOK_LOCAL_BUILD=1` | See B14. The installed binary lives in the user's home or a system prefix; the sandbox must deny writes there. |
 | Trusted-automation actor | commit author email (`trusted-automation.ts:53-56`) | Forgeable; config is read from the tree under check. |
 | Perimeter signature check | `%G?` accepted as `G` or `U` (`perimeter.ts:127`) | No signer identity binding; `U` (validity unknown) passes. |
 | Session cage plan | in-memory plan plus journal under the git dir (`cage-journal.ts`) | Tamper-checked by hash (`cage.test.ts:673`); good precedent for broker-held state. |

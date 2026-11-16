@@ -23,6 +23,8 @@ import { loadWorkspace, loadWorkspaceWithSkillSync } from "#missions/workspace.j
 import { runVerifyCore } from "../flows/verify-run.js";
 import { runContractCheck } from "./contract.js";
 import { runTmvcGuard } from "./tmvc-guard.js";
+import { hookPinVerdict } from "#missions/substrate-version.js";
+import { CLI_VERSION } from "../version.gen.js";
 
 const SOURCE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]);
 const GOVERNANCE_RE = /^\.gitagent\/foreman\/MANIFEST\.(json|ya?ml)$|^\.gitagent\/planner\/RULES\.md$|\.gxt-skill\.yaml$/;
@@ -53,6 +55,18 @@ function advisory(fn: () => void): void {
   } finally {
     process.exitCode = before;
   }
+}
+
+/** The shim sets GANTRY_HOOK_REQUIRE_PIN=1 when it runs an installed gantry: then only the pinned version runs (MSN-0381). */
+export function pinnedHook<A extends unknown[]>(name: string, run: (...args: A) => unknown): (...args: A) => Promise<void> {
+  return async (...args: A) => {
+    const verdict = process.env.GANTRY_HOOK_REQUIRE_PIN === "1" ? hookPinVerdict(getRepoRoot(), CLI_VERSION) : { ok: true as const };
+    if (verdict.ok) await run(...args);
+    else {
+      logError(`${name}: refused: ${verdict.message}`);
+      setExitCode(EXIT_CODE.FAILURE);
+    }
+  };
 }
 
 /** pre-commit: TMVC guard on the staged index (strict blocks), then an advisory contract import scan. */
