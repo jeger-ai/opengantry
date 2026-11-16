@@ -6,6 +6,7 @@ import os from "node:os";
 import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
 import { writeBypassGitNote } from "#missions/break-glass.js";
+import { canonicalJson } from "#core/canonical-json.js";
 import { gitInitCommit, gitCommit } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 import { loadManifest } from "#missions/manifest.js";
@@ -48,14 +49,28 @@ test("ci msn-range: fails on a .gitagent touch without an [MSN] subject, passes 
   assert.match(good.out, /MSN commit subjects OK/);
 });
 
-test("ci msn-range: accepts a gxt-bypass git note without an [MSN] subject", () => {
+test("ci msn-range: accepts a Planner-signed gxt-bypass git note without an [MSN] subject; an unsigned v1 note no longer counts (MSN-0385)", { skip: spawnSync("ssh-keygen", ["-?"]).error ? "ssh-keygen not available" : false }, () => {
   const dest = repoWithManifest("og-ci-bypass-");
+  // MSN-0385: the note is checked against the base commit's Planner keys.
+  const key = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-ci-bypass-key-")), "planner");
+  assert.equal(spawnSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-f", key]).status, 0);
+  fs.writeFileSync(path.join(dest, ".gitagent/foreman/PLANNER.signing.pub"), `${PLANNER_EMAIL} ${fs.readFileSync(`${key}.pub`, "utf8").split(" ").slice(0, 2).join(" ")}\n`);
+  gitCommit(dest, "[MSN-0999] planner key", PLANNER_EMAIL);
   const baseSha = head(dest);
   fs.writeFileSync(path.join(dest, ".gitagent", "touch.txt"), "x\n", "utf8");
   gitCommit(dest, "no msn subject on gxt touch", PLANNER_EMAIL);
   const badSha = head(dest);
   assert.notEqual(cli(dest, ["ci", "msn-range", "--base", baseSha, "--head", badSha]).status, 0);
+  // Before MSN-0385 this note passed: it proves nothing about the secret.
   writeBypassGitNote(dest, badSha, { v: 1, reason: "emergency hotfix documented in note", ts: new Date().toISOString(), msn_id: "MSN-0999" });
+  const unsigned = cli(dest, ["ci", "msn-range", "--base", baseSha, "--head", badSha]);
+  assert.notEqual(unsigned.status, 0, unsigned.out);
+  assert.match(unsigned.out, /version 1, unsigned, which no longer counts/);
+  const body = { v: 2, reason: "emergency hotfix documented in note", ts: new Date().toISOString(), msn_id: "MSN-0999", commit: badSha, signer: PLANNER_EMAIL };
+  const msg = `${key}.msg`;
+  fs.writeFileSync(msg, canonicalJson(body));
+  assert.equal(spawnSync("ssh-keygen", ["-Y", "sign", "-f", key, "-n", "opengantry-break-glass", msg]).status, 0);
+  writeBypassGitNote(dest, badSha, { ...body, signature: fs.readFileSync(`${msg}.sig`, "utf8") });
   const good = cli(dest, ["ci", "msn-range", "--base", baseSha, "--head", badSha]);
   assert.equal(good.status, 0, good.out);
 });

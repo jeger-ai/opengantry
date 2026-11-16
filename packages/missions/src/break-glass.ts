@@ -1,7 +1,10 @@
 import crypto from "node:crypto";
-import { CLI_NAME } from "#core/constants.js";
+import { canonicalJson } from "#core/canonical-json.js";
+import { CLI_NAME, REL_PLANNER_SIGNING_PUB } from "#core/constants.js";
 import { toPosixRel } from "#core/posix-path.js";
-import { gitHead, gitRevParse, gitRun } from "#git/git.js";
+import { BYPASS_NOTE_NAMESPACE, bypassNoteVerdict } from "#core/trusted-automation.js";
+import { gitConfigGet, gitHead, gitRevParse, gitRun } from "#git/git.js";
+import { sshSignWithGitKey } from "#git/receipt-signing.js";
 import { msnIdOrDefault, type ParsedMission } from "#core/mission-types.js";
 import type { VerifyEvaluation } from "./mission-verify/options.js";
 import { appendLedgerIfEnabled, ledgerFailureLine } from "./ledger/ledger-append.js";
@@ -124,7 +127,7 @@ function validateBreakGlassReason(reason: string | undefined): string {
 export function writeBypassGitNote(
   root: string,
   commit: string,
-  payload: BypassAuditPayload,
+  payload: object,
 ): void {
   const message = JSON.stringify(payload);
   const r = gitRun(root, ["notes", `--ref=${GXT_BYPASS_NOTES_REF}`, "add", "-f", "-m", message, commit]);
@@ -148,6 +151,30 @@ function resolveAuditCommit(root: string, commit?: string): string {
   return sha;
 }
 
+/**
+ * The version 2 note (MSN-0385): the audit payload bound to the commit and the signer, SSH-signed with the git signing
+ * key over its canonical JSON. CI counts it only when the base commit's PLANNER.signing.pub lists that key for the
+ * signer (bypassNoteVerdict). No signing key refuses: an unsigned note would never count.
+ */
+function signedBypassNote(root: string, commit: string, payload: BypassAuditPayload): Record<string, unknown> {
+  const unavailable = (why: string): Error =>
+    new Error(`${CLI_NAME}: break-glass: BYPASS_SIGNING_UNAVAILABLE — ${why}. CI counts a gxt-bypass note only when it is SSH-signed by a Planner key listed in ${REL_PLANNER_SIGNING_PUB}; or use --audit-commit.`);
+  const signer = gitConfigGet(root, "user.email")?.trim();
+  if (!signer) throw unavailable("git user.email is not set, and the note names its signer");
+  const body = { ...payload, v: 2, commit, signer };
+  const signature = sshSignWithGitKey(root, canonicalJson(body), BYPASS_NOTE_NAMESPACE);
+  if (!signature) throw unavailable("no SSH signature: set gpg.format=ssh and user.signingkey to an ed25519 key");
+  return { ...body, signature };
+}
+
+/** A warning when CI would refuse the note just written: its key is not a Planner key at the trusted base. */
+function noteCheckWarning(root: string, commit: string, note: Record<string, unknown>): string | null {
+  const found = breakGlassAnchorBase(root);
+  const signers = found.ok ? gitRun(root, ["cat-file", "blob", `${found.base}:${REL_PLANNER_SIGNING_PUB}`]) : null;
+  const verdict = bypassNoteVerdict(JSON.stringify(note), commit, signers?.ok ? signers.stdout : null);
+  return verdict.ok ? null : `break-glass: CI will refuse this note: ${verdict.why}`;
+}
+
 function runBreakGlassAudit(
   root: string,
   options: {
@@ -157,7 +184,7 @@ function runBreakGlassAudit(
     commit?: string;
     auditCommit?: boolean;
   },
-): string {
+): { commitSha: string; warning: string | null } {
   const commitSha = resolveAuditCommit(root, options.commit);
   const payload: BypassAuditPayload = {
     v: 1,
@@ -176,11 +203,12 @@ function runBreakGlassAudit(
     if (!r.ok) {
       throw new Error(`${CLI_NAME}: break-glass: audit commit failed: ${r.stderr.trim() || "unknown"}`);
     }
-    return gitHead(root) ?? commitSha;
+    return { commitSha: gitHead(root) ?? commitSha, warning: null };
   }
 
-  writeBypassGitNote(root, commitSha, payload);
-  return commitSha;
+  const note = signedBypassNote(root, commitSha, payload);
+  writeBypassGitNote(root, commitSha, note);
+  return { commitSha, warning: noteCheckWarning(root, commitSha, note) };
 }
 
 interface BreakGlassAuditOk {
@@ -211,7 +239,7 @@ export function runBreakGlassAuditFlow(
     const reason = validateBreakGlassReason(options.breakGlassReason);
     assertBypassSecretAuthorized(root);
     const missionRel = toPosixRel(root, mission.rawPath);
-    const commitSha = runBreakGlassAudit(root, {
+    const { commitSha, warning: noteWarning } = runBreakGlassAudit(root, {
       reason,
       msnId: mission.msnId,
       missionFile: missionRel,
@@ -222,10 +250,10 @@ export function runBreakGlassAuditFlow(
       reason_sha256: crypto.createHash("sha256").update(reason).digest("hex"),
       error_code: "BREAK_GLASS",
     });
-    const warning = ledgerFailureLine(ledger);
+    const warnings = [noteWarning, ledgerFailureLine(ledger)].filter((w): w is string => w !== null);
     return {
       kind: "ok",
-      warnings: warning === null ? [] : [warning],
+      warnings,
       missionRel,
       commitSha,
       reason,

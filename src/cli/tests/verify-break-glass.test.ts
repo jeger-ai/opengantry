@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { getRepoRoot } from "#git/git.js";
 import { ENV_BYPASS_SECRET } from "#missions/break-glass.js";
 import { runVerify } from "../commands/verify.js";
@@ -13,6 +13,13 @@ import {
   gitInitCommit,
 } from "./test-fixtures.js";
 import { captureConsoleAsync, PLANNER_EMAIL, withPlannerEnvAsync } from "./test-shared.js";
+
+/** MSN-0385: the gxt-bypass note is SSH-signed with the git signing key, so the fixture repository gets one. */
+function configureSshSigning(dest: string): void {
+  const key = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-bypass-key-")), "k");
+  assert.equal(spawnSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-f", key]).status, 0);
+  execSync(`git config gpg.format ssh && git config user.signingkey "${key}"`, { cwd: dest, stdio: "pipe" });
+}
 
 test("runVerify: break-glass without secret exits 2", async () => {
   const ogRoot = getRepoRoot();
@@ -60,6 +67,7 @@ test("runVerify: break-glass skips gate requirement on gate-less mission", async
     "utf8",
   );
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
+  configureSshSigning(dest);
   const prevCwd = process.cwd();
   const prevSecret = process.env[ENV_BYPASS_SECRET];
   process.env[ENV_BYPASS_SECRET] = secret;
@@ -128,6 +136,7 @@ test("runVerify: break-glass with secret skips gates", async () => {
   const secret = "emergency-bypass-secret-ok";
   writeBypassAnchor(dest, secret);
   gitInitCommit(dest, "[MSN-0999] legislate mission", PLANNER_EMAIL);
+  configureSshSigning(dest);
   const prevCwd = process.cwd();
   const prevSecret = process.env[ENV_BYPASS_SECRET];
   process.env[ENV_BYPASS_SECRET] = secret;
