@@ -36,7 +36,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
   - **Plan adapters.** `gantry adapt --from lights-on` turns a plan's file lists into a `verify.yaml` and the cage scope for that step.
   - **Test integrity.** A `tests` section in `verify.yaml` fails a change that deletes tests, lowers the assertion count, adds `.skip`/`.only`, asserts `true` or swallows errors in an empty catch.
   - **Standalone verify in CI.** `gantry verify --contract --format sarif|junit` prints the result for code scanning and test dashboards; `--sign keyless` signs it with Sigstore through the CI job's OIDC identity, and `--check-result --certificate-identity` checks who signed it. The new package `@jeger-ai/opengantry-verify` ships it on its own: `npx @jeger-ai/opengantry-verify --base origin/main`, and a typed library API.
-  - **Dependency bumps without a mission.** Dependabot's npm bumps pass the mission checks under the new trusted-automation kind `dependency_update`, which refuses anything that is more than a bump.
+  - **Dependency bumps without a mission.** Dependabot's npm bumps pass the mission checks under the new trusted-automation kind `dependency_update`, which refuses anything beyond a bump.
   - **Read guard.** `gantry-cage read-guard` is a Claude Code and Cursor hook that refuses tool calls reading `.env` files, git credentials, SSH keys and cloud credentials, so they never reach the model.
   - **Dependencies:** `@modelcontextprotocol/sdk` 1.32.1 at least (earlier versions have published advisories), `@clack/prompts` 1.8 and zod 4.6.7; hono 4.13.13 in the lockfile.
 
