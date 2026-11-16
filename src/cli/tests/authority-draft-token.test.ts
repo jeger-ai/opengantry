@@ -31,7 +31,9 @@ function forge(token: string, key: Buffer, change: Record<string, unknown>): str
   return `${Buffer.from(canonicalJson(payload), "utf8").toString("base64url")}.${sig}`;
 }
 
-/** test-tmpdir-setup points GANTRY_STATE_DIR at the run's temporary directory. */
+// test-tmpdir-setup points GANTRY_STATE_DIR at the run's temporary directory. CI's plain `node --test` run has no
+// preload, so set one here too: these tests must never touch the real ~/.opengantry.
+process.env.GANTRY_STATE_DIR ||= fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-state-"));
 const stateDir = (): string => process.env.GANTRY_STATE_DIR!;
 const code = (c: string) => (e: unknown) => e instanceof DraftTokenError && e.code === c;
 
