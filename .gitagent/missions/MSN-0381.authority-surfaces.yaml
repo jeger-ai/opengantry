@@ -9,6 +9,7 @@
 # claim without a proven harness sandbox.
 # Amended: the shim sets GANTRY_HOOK_REQUIRE_PIN=1 on the installed path, and only then does gantry hook check the
 # SUBSTRATE.version.json pin, so direct gantry hook calls (and the existing hook tests) behave as before.
+# Amended: test roots narrowed to the touched files (the contract import scan judges whole roots).
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0381.json written by
 # gantry verify --record (RULES §3).
@@ -29,18 +30,6 @@ interrogation:
     adr_refs:
       - ADR-0043
       - ADR-0021
-  - finding_id: 209851d5d37d
-    kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: "packages/core/tests/secret-paths.test.ts is the package test
-      of packages/core/src/secret-paths.ts (package tests live in
-      packages/<name>/tests/, ADR-0054); it gains the case for the per-user
-      state dir. Boundary confirmed: test code only, no layer import."
-    adr_refs:
-      - ADR-0052
   - finding_id: 2121e0ae69d9
     kind: adr_conflict
     question: Intent may relate to ADR-0037. Accept ADR decision, reject
@@ -67,6 +56,26 @@ interrogation:
     adr_refs:
       - ADR-0021
       - ADR-0063
+  - finding_id: 36bafeaa6570
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "These are CLI unit tests only, named one by one (the mission
+      contract's import scan judges every file under a root, and the whole
+      src/cli/tests/ root holds tests that exercise dynamic imports on purpose).
+      Three new regression tests, one per surface (authority-break-glass,
+      authority-draft-token, authority-hook-shim); test-tmpdir-setup.ts points
+      the per-process GANTRY_STATE_DIR at the run's temporary directory so tests
+      never write the real home directory; cage-policy.test.ts pins the
+      generated fragment, which gains the ~/.opengantry entries;
+      break-glass.test.ts is the one existing test whose working-tree anchor is
+      the attack being closed, so it now commits its anchor (disclosed in the
+      PR). Boundary confirmed: tests only."
+    adr_refs:
+      - ADR-0058
+      - ADR-0052
   - finding_id: 3e483990523c
     kind: risk_escalation
     question: "Triage escalated: Intent contains risk_keyword: security. Which
@@ -142,22 +151,6 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0060
-  - finding_id: c2f468809c0c
-    kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: "src/cli/tests/ holds the CLI unit tests; this mission adds
-      regression tests for the three surfaces (draft token, break-glass, hook
-      shims and hook pin), points the per-process test setup at a temporary
-      state dir so tests never write the real home directory, and updates the
-      one existing break-glass test whose working-tree anchor is exactly the
-      attack being closed (disclosed in the PR). Boundary confirmed: tests
-      only."
-    adr_refs:
-      - ADR-0058
-      - ADR-0052
   - finding_id: c6584ce44c48
     kind: adr_conflict
     question: Intent may relate to ADR-0061. Accept ADR decision, reject
@@ -184,7 +177,7 @@ interrogation:
     adr_refs:
       - ADR-0060
       - ADR-0063
-interrogation_sha256: 69d6945f0bab3e012a14c0e942c4dd4262fbedfa2da7572aeb72a710af952a04
+interrogation_sha256: 2e68ee34b501bc8b6d2af9e10b748e7b5e5e0a85a6c853ac198919a9e9a1c25d
 declared_paths:
   - .gitagent/missions/MSN-0381.authority-surfaces.yaml
   - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
@@ -199,7 +192,6 @@ declared_paths:
   - docs/CHANGELOG.md
   - docs/DEVELOPMENT.md
   - docs/SECURITY.md
-  - docs/cage/limits.md
   - docs/concepts/operation-admission-coverage.md
   - docs/reference/break-glass.md
   - docs/reference/release-notes.md
@@ -207,15 +199,18 @@ declared_paths:
   - docs/start/install.md
   - packages/cage/src/cage-suggest.ts
   - packages/core/src/secret-paths.ts
-  - packages/core/tests/secret-paths.test.ts
   - packages/missions/src/break-glass.ts
   - packages/missions/src/draft-token.ts
-  - packages/missions/src/git/git-hooks.ts
   - packages/missions/src/substrate-version.ts
   - src/cli/commands/hook.ts
   - src/cli/mcp/mcp-draft-legislation.ts
   - src/cli/program-hook.ts
-  - src/cli/tests/
+  - src/cli/tests/authority-break-glass.test.ts
+  - src/cli/tests/authority-draft-token.test.ts
+  - src/cli/tests/authority-hook-shim.test.ts
+  - src/cli/tests/break-glass.test.ts
+  - src/cli/tests/cage-policy.test.ts
+  - src/cli/tests/test-tmpdir-setup.ts
   - templates/.githooks/
   - test/conformance/golden/
 contract:
@@ -233,7 +228,6 @@ contract:
     - docs/CHANGELOG.md
     - docs/DEVELOPMENT.md
     - docs/SECURITY.md
-    - docs/cage/limits.md
     - docs/concepts/operation-admission-coverage.md
     - docs/reference/break-glass.md
     - docs/reference/release-notes.md
@@ -241,15 +235,18 @@ contract:
     - docs/start/install.md
     - packages/cage/src/cage-suggest.ts
     - packages/core/src/secret-paths.ts
-    - packages/core/tests/secret-paths.test.ts
     - packages/missions/src/break-glass.ts
     - packages/missions/src/draft-token.ts
-    - packages/missions/src/git/git-hooks.ts
     - packages/missions/src/substrate-version.ts
     - src/cli/commands/hook.ts
     - src/cli/mcp/mcp-draft-legislation.ts
     - src/cli/program-hook.ts
-    - src/cli/tests/
+    - src/cli/tests/authority-break-glass.test.ts
+    - src/cli/tests/authority-draft-token.test.ts
+    - src/cli/tests/authority-hook-shim.test.ts
+    - src/cli/tests/break-glass.test.ts
+    - src/cli/tests/cage-policy.test.ts
+    - src/cli/tests/test-tmpdir-setup.ts
     - templates/.githooks
     - test/conformance/golden/
   forbidden_zones:
@@ -257,4 +254,4 @@ contract:
     - .gitagent/planner/RULES.md
     - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
-contract_sha256: 126abe9f714e1ec5ac7f749c5e6df0384d7867de72f1516fe1544fc84a72bef4
+contract_sha256: 3ee8290fccb534bdb2dab254c1eee1b2f1e2c09b616d017fb8e3b2c72809fef6
