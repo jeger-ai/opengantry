@@ -36,7 +36,7 @@ A cell holds the strongest level that is honestly available. When a cell lists t
 
 | Key | Target | What exists today |
 |-----|--------|-------------------|
-| **U** | Ubuntu 24.04 x64 | All CI runs on `ubuntu-latest`. The version is not pinned, so no evidence is tied to 24.04 specifically. Claude Code's sandbox uses bubblewrap, which needs unprivileged user namespaces; Ubuntu 24.04 restricts them through AppArmor (ADR-0060 context). Whether the sandbox works on a stock 24.04 host is unverified. |
+| **U** | Ubuntu 26.04 x64 | The owner moved the Linux target row from 24.04 to 26.04 on 2026-11-16 (ADR-0063 owner decision Q2). All CI runs on `ubuntu-latest`. The version is not pinned, so no evidence is tied to 26.04 specifically. Claude Code's sandbox uses bubblewrap, which needs unprivileged user namespaces; Ubuntu restricts them through AppArmor since 24.04 (ADR-0060 context), which 26.04 is expected to keep until a probe shows otherwise. Whether the sandbox works on a 26.04 host, with or without the AppArmor profile the owner accepted as a prerequisite, is unverified. |
 | **M** | macOS 26.2+ Apple Silicon | `cage-macos.yml` runs the cage suites on `macos-latest`. The version is not pinned, so no evidence is tied to 26.2. Claude Code's sandbox uses Seatbelt. |
 | **W** | Windows 11 x64 (native, not WSL) | No CI job. The session cage is documented as unsupported (`docs/cage/limits.md`, Platforms): `listDescendantPids` returns `[]` on `win32` (`packages/cage/src/cage-process.ts:50`). Tracked hooks are bash shims. Claude Code's sandbox documents macOS, Linux and WSL2 only, so on native Windows the fragment's `sandbox` keys have no effect. Treat as unverified. |
 
