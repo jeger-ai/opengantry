@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0378",
   "mission_path": ".gitagent/missions/MSN-0378.dependency-admission-graph.yaml",
-  "head": "2a94a1c97341e4eb812be056e66db7d52c78581c",
-  "tree": "dd83622d2544a1137aeb4d31e3d0330f6c2f75ca",
+  "head": "a4eea53d2c1abe78ece4c417458f5a83ee4ec8e8",
+  "tree": "4dc8220f035c39332b9cc719b5fbaed0dbf7e74e",
   "law_sha256": "a79078a8a0bffe3256e72d0d3062ea6c5e7634318c875176f07be9ce0b30744a",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 46963,
-      "output_sha256": "1828f0c7131f77b6fb9a5634bd23c621142f6d2359713c30badc07361cbfeb9d"
+      "duration_ms": 38408,
+      "output_sha256": "9da4b84a9ba3b1dee80ae31fdfb2280193f8ab7aa7609d5bba966dd0e0af01ce"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-16T18:40:40.127Z"
+  "issued_at": "2026-11-16T19:19:06.904Z"
 }
