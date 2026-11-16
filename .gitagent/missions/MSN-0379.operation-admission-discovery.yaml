@@ -3,7 +3,7 @@
 #
 # Legislated intent: discovery and contract refinement for operation admission (issue #356, work slices 1-2):
 # the coverage matrix of existing boundaries and escape paths per operation family, platform and harness, and a
-# proposed ADR-0062 for the closed request/decision/provenance contract, lifecycle, AI-vs-policy rule and audit.
+# proposed ADR-0063 for the closed request/decision/provenance contract, lifecycle, AI-vs-policy rule and audit.
 # Documentation only: no enforcement claims, no code, schema or CLI output changes.
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0379.json written by
@@ -22,7 +22,7 @@ interrogation:
     operator_answer: "substrate (Tier-3), because the work adds an ADR under
       .gitagent/out-of-scope/. contract.tmvc_roots:
       .gitagent/missions/MSN-0379.operation-admission-discovery.yaml,
-      .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md,
+      .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md,
       .gitagent/out-of-scope/README.md (one line documenting status PROPOSED),
       .gitagent/runs/MSN-0379.json, EXECUTOR_LOG.md,
       docs/concepts/operation-admission-coverage.md. Forbidden: packages/, src/,
@@ -79,6 +79,24 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0058
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept as the subject of this mission. ADR-0063 is the
+      proposed ADR this mission authors (status PROPOSED, a design for owner
+      review per the operator brief of 2026-11-16); this mission records it and
+      decides nothing beyond it. Amended 2026-11-16 by the operator: renumbered
+      from ADR-0062 to ADR-0063 because PR #362 (issue #355) takes ADR-0062 for
+      dependency admission; and the mission file, the run record
+      .gitagent/runs/MSN-0379.json and EXECUTOR_LOG.md are now declared paths
+      (verify reported GXT_INTERROGATION_PATH_DRIFT on the run record). Scope
+      otherwise unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0063
   - finding_id: e98547caadb1
     kind: adr_conflict
     question: Intent may relate to ADR-0045. Accept ADR decision, reject
@@ -86,7 +104,7 @@ interrogation:
     hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
       legislation proceeds.
     operator_answer: Accept. This mission has its own Planner-sealed contract as
-      usual. The proposed operation-admission contract in ADR-0062 is a
+      usual. The proposed operation-admission contract in ADR-0063 is a
       different contract (a per-operation request/decision record) and the ADR
       states that it does not change mission contracts; it reuses the existing
       policy floors (ADR-0042, ADR-0045 tighten-only) as the authority it binds
@@ -95,15 +113,18 @@ interrogation:
       - ADR-0052
       - ADR-0045
       - ADR-0042
-interrogation_sha256: 7765aea6c1bf642a52a272b4c53f540946649ad5ded01d4f04b5ad8b42a3e525
+interrogation_sha256: 9ea5c77ff4d221ca2e7a60a1bfe41c078ccb4bf4fe716607466819b8d0311ee7
 declared_paths:
-  - .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md
+  - .gitagent/missions/MSN-0379.operation-admission-discovery.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
   - .gitagent/out-of-scope/README.md
+  - .gitagent/runs/MSN-0379.json
+  - EXECUTOR_LOG.md
   - docs/concepts/operation-admission-coverage.md
 contract:
   tmvc_roots:
     - .gitagent/missions/MSN-0379.operation-admission-discovery.yaml
-    - .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
     - .gitagent/out-of-scope/README.md
     - .gitagent/runs/MSN-0379.json
     - EXECUTOR_LOG.md
@@ -114,4 +135,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/
     - src/
-contract_sha256: 701aefc412fba3f8440e2b57e41d6d24e532aec415d6b963353df6865b51ade8
+contract_sha256: 230837f2386aaa0cfcf341ee0c0a2f7c3ee73c64c9b3979e48eb2f1e5ee50c22
