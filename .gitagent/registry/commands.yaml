@@ -20,6 +20,12 @@ bins:
 entries:
   - name: adapt
     since: MSN-0349
+  - name: admission
+    since: MSN-0384
+    hidden: true
+  - name: admission capabilities
+    since: MSN-0384
+    hidden: true
   - name: arch
     since: commit 12461b8
   - name: arch check
