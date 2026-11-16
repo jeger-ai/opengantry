@@ -316,3 +316,27 @@ test("cage policy: every home secret is denied at its physical path too when HOM
   const plainHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-plainhome-")));
   assert.equal(JSON.stringify(policy(plainHome)).includes(plainHome), false);
 });
+
+test("cage policy: a dangling home-secret link is denied at its target too, where a write through it lands (PR #369 review round)", () => {
+  const dest = makeRepo("og-cage-policy-dangling-");
+  const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-danglinghome-")));
+  const dotfiles = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-danglingdots-")));
+  // ~/.ssh points at a directory that does not exist yet (an unmounted volume, a dotfiles checkout not cloned yet), and
+  // ~/.aws is a relative link to a missing sibling of home.
+  fs.symlinkSync(path.join(dotfiles, "ssh-not-yet"), path.join(home, ".ssh"));
+  fs.symlinkSync("../aws-missing", path.join(home, ".aws"));
+  const r = cli(dest, ["--agent", "claude-code"], { HOME: home });
+  assert.equal(r.status, 0, r.stderr);
+  const f = JSON.parse(r.stdout) as Fragment;
+  for (const phys of [`${dotfiles}/ssh-not-yet`, `${path.dirname(home)}/aws-missing`]) {
+    assert.ok(f.permissions.deny.includes(`Read(/${phys})`), `Read ${phys}`);
+    assert.ok(f.sandbox.filesystem.denyRead.includes(phys), `denyRead ${phys}`);
+    assert.ok(f.sandbox.credentials.files.some((c) => c.path === phys), `credentials ${phys}`);
+  }
+  assert.ok(f.permissions.deny.includes("Read(~/.ssh)"), "the configured ~/.ssh stays");
+  // A dangling link loop never hangs the policy and adds no entry.
+  const loop = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-loophome-")));
+  fs.symlinkSync(path.join(loop, ".kube"), path.join(loop, ".kube"));
+  const l = cli(dest, ["--agent", "claude-code"], { HOME: loop });
+  assert.equal(l.status, 0, l.stderr);
+});

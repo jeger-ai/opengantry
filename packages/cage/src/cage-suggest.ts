@@ -176,11 +176,25 @@ const covering = (p: string): string[] => (p.slice(p.lastIndexOf("/") + 1).inclu
 /** A root-relative law pattern as a permission path: `/` anchors it at the project root, `**` patterns match at any depth. */
 const permissionPath = (p: string): string => (p.startsWith("**/") ? p : `/${p}`);
 
-/** The physical path, also for a dir that does not exist yet; the draft token writes its key there (draft-token.ts). */
-function physicalPath(p: string): string {
+/** The target of a link whose target does not exist (lstat sees the link, stat does not), or null. */
+function danglingTarget(p: string): string | null {
+  try {
+    return fs.lstatSync(p).isSymbolicLink() ? path.resolve(path.dirname(p), fs.readlinkSync(p)) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The physical path, also for a path that does not exist yet; the draft token writes its key there (draft-token.ts). A
+ * dangling link is followed to its target, where a write through it would land (PR #369 review round); 40 hops at most.
+ */
+function physicalPath(p: string, hops = 0): string {
   const missing: string[] = [];
   for (let cur = path.resolve(p); ; cur = path.dirname(cur)) {
     if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...missing);
+    const target = hops < 40 ? danglingTarget(cur) : null;
+    if (target) return physicalPath(path.join(target, ...missing), hops + 1);
     if (path.dirname(cur) === cur) return path.resolve(p);
     missing.unshift(path.basename(cur));
   }
