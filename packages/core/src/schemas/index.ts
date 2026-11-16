@@ -3,3 +3,4 @@ export * from "./mission-schema.js";
 export * from "./org-policy-schema.js";
 export * from "./admission-schema.js";
 export * from "./verify-dependencies-schema.js";
+export * from "./dependency-install-schema.js";
