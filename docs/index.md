@@ -32,6 +32,7 @@ Declare scope before an agent starts, approve it in Git, and let `gantry verify`
 - For teams: [CI](guides/ci.md), [regulated teams](guides/regulated-teams.md), [org control plane](guides/org-control-plane.md)
 - [Verify a change without missions](guides/verify-contract.md): one `verify.yaml` with allowed paths, a size budget, rules and your checks
 - [Dependency admission in verify](guides/verify-dependencies.md): judge the npm lockfiles a change touched against a signed, base-commit policy
+- [Admitted installs](guides/npm-ci.md): `gantry npm ci` installs a lockfile only after that policy admits it, from verified tarballs, with scripts off
 - [Plans from other frameworks](guides/plan-adapters.md): `gantry adapt` turns a plan step into the contract and the cage scope
 
 ## Look something up
