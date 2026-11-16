@@ -212,7 +212,7 @@ function canonicalUrl(raw: string): { url: URL; credentials: boolean } | null {
 function registryBase(url: URL, name: string): string | null {
   if (url.protocol !== "https:" && url.protocol !== "http:") return null;
   if (url.search !== "" || url.hash !== "") return null;
-  for (const spelled of [name, name.replace("/", "%2f"), name.replace("/", "%2F")]) {
+  for (const spelled of [name, name.replaceAll("/", "%2f"), name.replaceAll("/", "%2F")]) {
     const marker = `/${spelled}/-/`;
     const at = url.pathname.lastIndexOf(marker);
     const file = url.pathname.slice(at + marker.length);
