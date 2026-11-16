@@ -94,7 +94,7 @@ To get the contract and the cage scope for one step of another framework's plan,
 
 ## A task contract answers to the repository
 
-A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules`, `forbidden_paths`, `tests` and `criticality` are added to the task's (a task's `allow_reduction` is the task approver's decision and shows in the result). Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).
+A task's contract (a hangar `gate.json`, a handover `verify.yaml` outside the repository) also gets the repository's law: when the base commit has a `verify.yaml`, its `imports`, `layers`, `path_aliases`, `python_paths`, `rules`, `forbidden_paths`, `tests`, `criticality` and `dependencies` are added to the task's (a task's `allow_reduction` is the task approver's decision and shows in the result). Nothing is removed; the task keeps its own checks, size budget and allowed paths. The result names the inherited file (`inherited`).
 
 ## Criticality
 
@@ -110,6 +110,25 @@ criticality:
 ```
 
 Classes decide first; `never_auto` is final. Otherwise the classifier reads the diff on stdin and prints `{"level", "confidence", "rationale"}`; failures are `unknown`. `--criticality-record <dir>` keeps its inputs for training.
+
+## `dependencies`
+
+```yaml
+# NOT ENFORCED YET: verify checks this section strictly and a task contract inherits it tighten-only, but
+# gantry verify does not judge dependencies with it yet (design and approval format: ADR-0062).
+dependencies:
+  schema: opengantry.dependency-policy.v1
+  mode: audit                        # audit | enforce
+  ecosystems:
+    npm: { lockfile_versions: [3], npm_version: "11.6.2" }   # an exact npm 11.x
+  registries: [https://registry.npmjs.org/]                   # compared exactly, never as a prefix
+  # approved_baseline_digest: <sha256 of the graph imported as approved>   (optional)
+  approval_refs: [.gitagent/dependency-approvals/]            # the default; approvals are read from the base
+  # commit and signed with ssh-keygen -Y sign -n opengantry-dependency-approval by a key in
+  # .gitagent/foreman/PLANNER.signing.pub
+  lifecycle: { default: deny }       # deny (the default) | allow-approved
+  limits: { max_nodes: 5000 }        # lower bounds only
+```
 
 ## Who gets to change the contract
 

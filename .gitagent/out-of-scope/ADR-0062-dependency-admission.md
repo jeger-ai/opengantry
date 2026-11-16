@@ -59,56 +59,102 @@ The first supported ecosystem is npm `package.json` plus `package-lock.json` / `
 
 Neither function decides anything. Slice 1 is not wired into `gantry verify`, the CLI or any result.
 
-### 2. Policy contract (DEP01, proposed)
+### 2. Policy contract (DEP01, slice 2: implemented)
 
-A closed, versioned `dependencies` section in the standalone verify contract (`verify.yaml`, `opengantry.verify.v1`, [ADR-0051](ADR-0051-standalone-verify-contract.md)). It is strict YAML ([ADR-0047](ADR-0047-config-file-format.md)): unknown keys, wrong types and aliases are refused (`GXT_VERIFY_CONTRACT_INVALID`). Proposed shape:
+A closed, versioned `dependencies` section in the standalone verify contract (`verify.yaml`, `opengantry.verify.v1`, [ADR-0051](ADR-0051-standalone-verify-contract.md)). It is strict YAML ([ADR-0047](ADR-0047-config-file-format.md)): unknown keys, wrong types, duplicate keys and aliases are refused (`GXT_VERIFY_CONTRACT_INVALID`). The shape:
 
 ```yaml
 dependencies:
   schema: opengantry.dependency-policy.v1
-  mode: enforce                 # audit | enforce
+  mode: enforce                 # audit | enforce (required)
   ecosystems:
     npm:
-      lockfile_versions: [2, 3]
-      npm_version: "<pinned>"   # the npm acquisition runs (decision 5; owner decision 3: exact npm 11.x)
-  registries:                   # explicit; no inferred trust (DEP03)
+      lockfile_versions: [2, 3] # 2, 3 or both
+      npm_version: "11.6.2"     # an exact 11.x version (required)
+  registries:                   # explicit; no inferred trust (DEP03); https, no credentials
     - https://registry.npmjs.org/
-  approved_baseline_digest: "<sha256 of an imported graph>"   # DEP04
-  approval_refs:                # where approvals live (owner decision 1)
+  approved_baseline_digest: "<sha256 of an imported graph>"   # optional (DEP04)
+  approval_refs:                # optional; this is the default
     - .gitagent/dependency-approvals/
   lifecycle:
-    default: deny               # deny | allow-approved
-  sources:                      # what holds by default
+    default: deny               # deny (default) | allow-approved
+  sources:                      # v1 accepts only hold; omitted keys hold
     git: hold
     url: hold
     file_outside_workspaces: hold
     bundled: hold
-  limits:
+  limits:                       # optional; at most the parser bounds, lower only
     max_lockfile_bytes: 20971520
     max_nodes: 10000
     max_depth: 32
 ```
 
-- **Tighten-only inheritance.** As with ADR-0051 decision 11 and the org policy floor (RULES §8), repository and org policy are a floor. Registries are intersected; holds, `mode: enforce` and lower limits win. A task contract (`gate.json`, a handover contract) inherits and cannot loosen it.
-- **The base decides authority.** The section is read from the base commit, as a tracked contract already is (ADR-0051 decision 3). A change that edits its own `dependencies` section, its approvals or the baseline is judged by the base version.
-- **No exemption.** The `dependency_update` exemption skips the *mission* checks for bumps. It cannot waive admission: under `mode: enforce`, a bot's bump needs the same approval as anyone's.
-- **Old readers.** A reader that does not know the section refuses a contract that carries it (see decision 6). It never ignores it.
+`packages/core/src/dependency-policy.ts` holds the model: `parseDependencyPolicy` (closed, fail-closed defaults), `canonicalRegistry`, `mergeDependencyPolicy` and `dependencyPolicyRevision`. `packages/verify/src/contract.ts` reads the section into `VerifyContract.dependencies` and turns every problem into `GXT_VERIFY_CONTRACT_INVALID`.
 
-### 3. Sources (DEP03, proposed)
+- **Tighten-only inheritance.** As with ADR-0051 decision 11 and the org policy floor (RULES §8), repository and org policy are a floor. `mergeDependencyPolicy(floor, local)`:
+  - intersects registries, lockfile versions and approval locations;
+  - `enforce` beats `audit`, `deny` beats `allow-approved`, the lower of each limit wins, and sources stay held;
+  - a local section may drop the floor's baseline (tighter) but not name a different one, and may not change the npm pin: both refuse.
 
-The registry allowlist is explicit and compared by canonical base, as in decision 1. A registry tarball needs `integrity`. `git`, `url`, `file` outside declared workspaces, `bundled` and `hasShrinkwrap` contents hold by default. A later policy version may admit them with an equally exact identity: a full commit sha for git, an integrity hash for a URL. Credentials in a URL refuse. Approving a registry never approves every package from it.
+  A task contract inherits the repository's section through `mergeRepositoryLaw`. A `gate.json` cannot carry the key at all, and missions carry none (owner decision 2). The org policy bundle does not carry a section yet.
+- **The base decides authority.** The section is read from the base commit, as a tracked contract already is (ADR-0051 decision 3). A change that edits its own `dependencies` section, its approvals or the baseline is judged by the base version. A test shows that a candidate that loosens its own section is still judged by the stricter base section.
+- **No exemption.** The `dependency_update` exemption skips the *mission* checks for bumps. It cannot waive admission: the evaluator (decision 7) has no exemption input. A test shows a bump that ADR-0057's check accepts still holds without approval.
+- **Old readers.** Every released `opengantry.verify.v1` reader refuses unknown top-level keys, so a reader that predates the section refuses a contract that carries it instead of ignoring it (DEP06). The nested `schema: opengantry.dependency-policy.v1` makes this reader refuse a later policy version the same way. The verify schema name stays `opengantry.verify.v1`, because the addition is optional and every older reader already fails closed on it.
+- **Policy revision.** The sha256 of the canonical JSON of the normalized effective section. Spelling does not change it: a missing trailing slash, an omitted default. Any change of meaning does, including a new baseline digest.
 
-### 4. Authority (DEP04, proposed)
+### 3. Sources (DEP03, slice 2: implemented in the evaluator)
 
-An approval binds:
+The registry allowlist is explicit and compared by canonical base, as in decision 1: equality, never a prefix, so `https://registry.npmjs.org.evil.example/` and `https://registry.npmjs.org/evil/` are other registries. A policy registry must be https, without credentials, query or fragment. A registry tarball needs `integrity`. `git`, `url`, `file` (a tarball or a folder outside declared workspaces), `bundled`, `hasShrinkwrap` contents and entries without `resolved` hold by default. Credentials in any source fail. Approving a registry never approves every package from it.
 
-- the graph delta (or the full graph digest it applies to);
-- the policy revision (the sha256 of the effective `dependencies` section);
-- each admitted identity's name, version, source and integrity;
-- the lifecycle scripts it permits, by node identity and script name;
-- the approver and an expiry or revocation reference.
+A `file:` dependency is admitted only by an approval that names its repository-relative path and the sha256 content digest of that path at the base commit (owner decision 4). The caller computes the digests; the evaluator compares them. A path that resolves outside the repository holds. npm's description of a local folder's own `node_modules` (`external` in the graph) follows the folder: it is admitted when the folder is, and held otherwise. Workspaces and links into the lockfile's own folders need no approval. A link whose target is not in the lockfile holds.
 
-A package name alone never approves anything. The existing graph is admitted by an **explicit baseline import** (`approved_baseline_digest`), not inferred. That import admits exactly those identities, not their future updates. The candidate's `package.json` settings (`allowScripts`, `.npmrc`, `overrides`) are data. Only trusted policy supplies authority. An AI evaluator may explain a hold or recommend; it cannot approve or waive one.
+A later policy version may admit git or URL sources with an equally exact identity: a full commit sha for git, an integrity hash for a URL. v1 accepts only `hold` for them.
+
+### 4. Authority (DEP04, slice 2: implemented)
+
+**Approval format.** An approval is a committed JSON file under one of the policy's `approval_refs` (default `.gitagent/dependency-approvals/`), read from the base commit (owner decision 1). It is machine-written, closed and versioned (`packages/core/src/dependency-approval.ts`):
+
+```json
+{
+  "schema": "opengantry.dependency-approval.v1",
+  "lockfile": "package-lock.json",
+  "graph_digest": "<sha256: the head graph this approval was made for>",
+  "policy_revision": "<sha256 of the effective dependencies section>",
+  "identities": [{ "name": "x", "version": "1.0.0", "source": { "kind": "registry", "ref": "https://registry.npmjs.org/" }, "integrity": "sha512-…" }],
+  "lifecycle": [{ "name": "x", "version": "1.0.0", "source": { "kind": "registry", "ref": "https://registry.npmjs.org/" }, "integrity": "sha512-…", "scripts": ["install", "postinstall", "preinstall"] }],
+  "root_scripts": [{ "script": "postinstall", "command_sha256": "<sha256 of the command string>" }],
+  "files": [{ "path": "vendor/x", "content_digest": "<sha256 of the folder or tarball at base>" }],
+  "approver": "planner@example.com",
+  "issued_at": "2026-11-16T00:00:00Z",
+  "expires_at": "2026-12-16T00:00:00Z",
+  "signature": "-----BEGIN SSH SIGNATURE-----\n…\n-----END SSH SIGNATURE-----\n"
+}
+```
+
+The format is bounded: at most 4 MiB per file, 10,000 entries per list and 1,000 files. Unknown keys, other schemas, wrong types, relative paths with `..`, non-UTC times, an expiry not after the issue time and a missing signature are all refused.
+
+- `identities` admit registry packages by exact name, version, canonical registry and integrity. A name alone never approves anything.
+- `lifecycle` permits install-time scripts by node identity (registry, workspace or local). The lockfile only says that one of `preinstall`, `install` and `postinstall` runs (`hasInstallScript`), not which, so a permission must name all three. Slice 4 can narrow this to exact names from the tarball's manifest; approvals that name all three stay valid.
+- `root_scripts` permit root `package.json` lifecycle scripts by name and the sha256 of the command, so a changed command needs a new permission. Workspace manifests' own scripts are not read by the graph yet (decision 1), so only their `hasInstallScript` is judged, through `lifecycle`.
+- `files` admit `file:` sources (decision 3).
+
+**Signature.** The approver signs the canonical JSON of the file without `signature`, using `ssh-keygen -Y sign -n opengantry-dependency-approval`. An approval counts only when the SSHSIG verifies against the base commit's allowed-signers file and that file lists the signing key for the approval's `approver`. The allowlist is the Planner allowlist, `.gitagent/foreman/PLANNER.signing.pub` (ssh-keygen ALLOWED SIGNERS format, the file `gantry perimeter` already points `gpg.ssh.allowedSignersFile` at).
+
+Why this mechanism:
+
+- A candidate cannot forge it without an allowlisted private key. The allowlist, the approvals and the policy are all read from the base, so a candidate's own edits to any of them do not count.
+- A git commit signature (`%G?`) would only prove who committed the file, not what they approved, and it depends on local git configuration. Sigstore keyless signatures (ADR-0055) need network access and a trust root.
+- The dedicated namespace keeps a signed verify receipt (namespace `gxt`) from being replayed as an approval.
+
+Verification is pure `node:crypto` in core: ed25519 SSHSIG with sha256 or sha512, the same wire format `ssh-keygen` writes, and a test checks real `ssh-keygen` output. The allowed-signers reader fails closed. It accepts only `ssh-ed25519` keys and only the `namespaces=` option. A line with any other option (`cert-authority`, `valid-before`, …) is untrusted, and wildcard principals are ignored.
+
+**Revocation.** A revocation is a file `opengantry.dependency-revocation.v1` under `approval_refs` with `revokes` (approval ids: the sha256 of the signed message), `reason`, `revoked_by` and `issued_at`. It needs no signature, because it can only remove authority. A revoked approval never admits again while the revocation is at base. Deleting the approval file alone is not enough, because the signed file could be committed again. Removing a key from the allowed-signers file disables every approval it signed.
+
+**Usable and fresh.** An approval is usable when it is for this lockfile, signed by an allowlisted key for its approver, unrevoked, inside `issued_at`…`expires_at` at the caller's `now`, and made for the current policy revision. It admits something that is new against the base graph (a new identity, a new install script, a new root script or `file:` source) only when its `graph_digest` is exactly the head graph. Things already in the base graph keep needing a usable approval or the baseline, but not one for this head graph. So a policy change makes earlier approvals stale; the Planner re-imports a baseline in the same policy change. An expired approval stops admitting what it admitted.
+
+**Baseline.** The existing graph is admitted by an **explicit baseline import** (`approved_baseline_digest`), not inferred. The caller supplies the baseline graph. Its digest must equal the policy's: if it differs, the result fails, and if it is missing, the result holds. The import admits exactly those identities, install scripts and root scripts, not their future updates. Without a baseline, nothing in the base graph is admitted by default.
+
+The candidate's `package.json` settings (`allowScripts`, `.npmrc`, `overrides`) are data. Only trusted policy supplies authority. An AI evaluator may explain a hold or recommend; it cannot approve or waive one, and no AI output is an input to the evaluator.
 
 ### 5. Two boundaries: pre-execution admission and final diff verification (DEP05, proposed)
 
@@ -136,17 +182,33 @@ The verify result gains an additive, versioned `dependencies` field with:
 
 It is covered by the existing `--sign` and keyless signatures ([ADR-0055](ADR-0055-keyless-verify-signatures.md)), so it is bound to head, base and contract. A mandatory policy section that a reader does not know is a refusal, not a pass.
 
-### 7. Outcomes (DEP07, proposed)
+### 7. Outcomes (DEP07, slice 2: implemented as a library verdict)
 
 `pass` means the configured admission requirements are met for exactly these inputs. It does not certify that the packages are free of malware: a registry or integrity match says nothing about whether a package is harmless.
 
-A hold or fail comes from any of these: an unapproved addition, a disallowed source, missing integrity, a stale or revoked approval, an unauthorized lifecycle script, any graph hold from decision 1, an unknown required enforcement capability, or a signature or identity mismatch.
+`evaluateDependencyAdmission` (`packages/core/src/dependency-admission.ts`) judges one lockfile's head graph. Its inputs are the effective policy, the base, head and baseline graphs, the approval files, the allowed signers and the content digests (all read from the base by the caller), and `now`. It returns `opengantry.dependency-admission.v1`, which carries:
+
+- `verdict`: `pass`, `hold` or `fail`;
+- `mode`;
+- the policy revision and the base and head graph digests;
+- the approvals used;
+- sorted reasons, each with a stable code, a severity and a location.
+
+The reason codes:
+
+| Severity | Codes |
+|----------|-------|
+| `fail` | `source_credentials`, `baseline_mismatch`, `approval_signature_invalid` (a forged, tampered or unlisted approval at base) |
+| `hold` | `invalid_input`, `graph_hold`, `unsupported_lockfile`, `too_many_nodes`, `baseline_unavailable`, `approvals_too_large`, `approval_invalid`, `approval_outside_refs`, `registry_not_allowed`, `integrity_missing`, `source_git`, `source_url`, `source_file`, `source_external`, `source_bundled`, `source_shrinkwrap`, `source_unresolved`, `local_outside_repository`, `link_target_missing`, `unapproved_identity`, `approval_stale`, `approval_expired`, `approval_revoked`, `lifecycle_denied`, `lifecycle_unapproved`, `root_manifest_missing` |
+| `info` | `approval_inactive` (an unusable approval nothing needed) |
+
+Malformed input holds or fails; it never passes. Under `lifecycle.default: deny`, no approval or baseline permits a lifecycle script. Dev and optional packages are judged like production ones (owner decision 5): each platform package the lockfile lists needs its own approval. `mode: audit` yields the same verdict, labelled `audit`. The result is not wired into `gantry verify` yet, and not signed (slice 3). An unknown required enforcement capability belongs to slice 4.
 
 Revocation stops new execution and future reuse. Effects that already happened need remediation; nothing claims a rollback.
 
 ### 8. `dependency-update.ts` is not weakened
 
-ADR-0057's checks and their tests stay as they are, and `dependency-update.ts` is unchanged in slice 1. The graph module duplicates two small ideas from it (lockfileVersion 2/3 gating, local-folder detection) rather than refactoring a security check in the same change that introduces its replacement's parser. The slice that wires admission into verify factors the shared helpers. At that point ADR-0057's existing tests are the regression net, and the factoring may only tighten. For example, registry matching moves from URL prefix to canonical base, which refuses strictly more.
+ADR-0057's checks and their tests stay as they are, and `dependency-update.ts` is unchanged in slices 1 and 2. Slice 2 does not import from it either: the policy module has its own canonical registry comparison. The slice that wires admission into verify factors the shared helpers. At that point ADR-0057's existing tests are the regression net, and the factoring may only tighten. For example, registry matching moves from URL prefix to canonical base, which refuses strictly more.
 
 ## Rollout and migration (proposed)
 
@@ -154,8 +216,8 @@ The sequence is: audit-only diagnosis (the result shows the diff and what would 
 
 Work slices after slice 1:
 
-2. The closed policy and authority contract (the parser for decision 2, approvals, revocation).
-3. Verifier result and signing integration (decision 6).
+2. The closed policy and authority contract (the parser for decision 2, approvals, revocation). *Implemented (MSN-0382)*: the policy section, the approval and revocation formats, SSHSIG verification and the pure evaluator. Nothing calls the evaluator outside tests.
+3. Verifier result and signing integration (decision 6): reading the lockfiles, approvals, allowed signers and content digests at base, choosing the baseline graph, and adding the verdict to the signed result.
 4. The trusted acquisition and admission adapter (decision 5, on #356's boundary).
 5. Malicious install-script canaries (direct install, nested commands, alternate entrypoints, restored caches, lockfile/policy substitution between approval and use) and downstream compatibility.
 
@@ -163,6 +225,7 @@ Work slices after slice 1:
 
 - Graph evidence exists as a deterministic, bounded library value with fixture tests. Nothing enforces with it yet, and nothing claims prevention.
 - The core layer grows by one module (budget raised in MSN-0378). There is no matching deletion in core: every core export is used outside its module.
+- Slice 2 (MSN-0382) adds three core modules (policy, approval, admission; about 960 lines and 24 exports) and the section parser in the verify layer. Both budgets are raised for this named feature; no deletion inside the mission's scope offsets it. Approvals add a second signature format beside the verify receipt's (same SSH key family, separate namespace). Verification is pure, so admission needs no `ssh-keygen` at verify time.
 - A lockfile npm accepts may still hold here: an unknown field written by a future npm version, or a v2 legacy tree that disagrees with `packages`. The fix is a reviewed parser update, not a looser parser.
 - Limits of slice 1:
   - Duplicate JSON keys resolve last-wins, as in npm's own `JSON.parse`, so this parser and npm see the same entry.
