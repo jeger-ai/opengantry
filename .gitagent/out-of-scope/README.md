@@ -9,7 +9,7 @@ Optional frontmatter (YAML between `---` lines at file start):
 
 - `id`: stable id (e.g. `ADR-0001`)
 - `title`: short title
-- `status`: `ACTIVE` | `SUPERSEDED`
+- `status`: `ACTIVE` | `SUPERSEDED` | `PROPOSED` (a design recorded for owner review, not yet a decision; triage may still hint it)
 - `match_terms`: list of lowercase-ish substrings; if any appear in the user intent, triage may surface an `adr_hint` (Planner still decides).
 
 Body: context, decision, and consequences in plain prose.

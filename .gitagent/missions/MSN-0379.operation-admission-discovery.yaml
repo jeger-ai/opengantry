@@ -1,0 +1,142 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0379]. Executor must not run until the [MSN-0379] legislation commit + pin.
+#
+# Legislated intent: discovery and contract refinement for operation admission (issue #356, work slices 1-2):
+# the coverage matrix of existing boundaries and escape paths per operation family, platform and harness, and a
+# proposed ADR-0063 for the closed request/decision/provenance contract, lifecycle, AI-vs-policy rule and audit.
+# Documentation only: no enforcement claims, no code, schema or CLI output changes.
+#
+# Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0379.json written by
+# gantry verify --record (RULES §3).
+msn_id: MSN-0379
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3), because the work adds an ADR under
+      .gitagent/out-of-scope/. contract.tmvc_roots:
+      .gitagent/missions/MSN-0379.operation-admission-discovery.yaml,
+      .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md,
+      .gitagent/out-of-scope/README.md (one line documenting status PROPOSED),
+      .gitagent/runs/MSN-0379.json, EXECUTOR_LOG.md,
+      docs/concepts/operation-admission-coverage.md. Forbidden: packages/, src/,
+      .github/workflows/, .gitagent/foreman/MANIFEST.yaml,
+      TARGET_ARCHITECTURE.yaml. Operator brief (2026-11-16, issue #356): scope
+      this PR to work slices 1-2 only, as documentation and contract with no
+      enforcement claims: (1) inventory of existing boundaries and escape paths
+      with the ADM01 operation-family x platform x harness coverage matrix, (2)
+      a design ADR for the closed request/decision/provenance contract
+      (ADM02/ADM03), lifecycle (ADM06), AI-vs-policy rule (ADM07), audit
+      (ADM08), how #355 plugs in, and open questions. The word schema refers to
+      the proposed request/decision contract described in prose and examples; no
+      code, zod schema, JSON Schema file or CLI output changes. No attacks or
+      canaries are run."
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+      - ADR-0060
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; the proposed admission contract defines no plane
+      deployment or CI ingestion. Downstream consumption of outcomes is
+      described as an open integration point only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0024 is the TARGET_ARCHITECTURE.yaml
+      layer contract; this mission adds documentation and a proposed ADR only
+      and changes no layer, budget or TARGET_ARCHITECTURE.yaml (which is a
+      forbidden zone of this mission).
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Reject applicability. No tests are added, removed or weakened.
+      The ADR describes future canary/conformance tests (ADM-T01..T06) as later
+      work slices, not as changes in this mission.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept as the subject of this mission. ADR-0063 is the
+      proposed ADR this mission authors (status PROPOSED, a design for owner
+      review per the operator brief of 2026-11-16); this mission records it and
+      decides nothing beyond it. Amended 2026-11-16 by the operator: renumbered
+      from ADR-0062 to ADR-0063 because PR #362 (issue #355) takes ADR-0062 for
+      dependency admission; and the mission file, the run record
+      .gitagent/runs/MSN-0379.json and EXECUTOR_LOG.md are now declared paths
+      (verify reported GXT_INTERROGATION_PATH_DRIFT on the run record). The old
+      path .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md is
+      declared because this branch added it and renamed it away (it does not
+      exist at the head; PR #362 uses a different file,
+      ADR-0062-dependency-admission.md). Scope otherwise unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0063
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. This mission has its own Planner-sealed contract as
+      usual. The proposed operation-admission contract in ADR-0063 is a
+      different contract (a per-operation request/decision record) and the ADR
+      states that it does not change mission contracts; it reuses the existing
+      policy floors (ADR-0042, ADR-0045 tighten-only) as the authority it binds
+      to.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+      - ADR-0042
+interrogation_sha256: d22aabb15c58401a621d0bac67dd5d24e822f0671ec8f6cb228e3e8aa9d05b47
+declared_paths:
+  - .gitagent/missions/MSN-0379.operation-admission-discovery.yaml
+  - .gitagent/out-of-scope/ADR-0062-operation-admission-contract.md
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/out-of-scope/README.md
+  - .gitagent/runs/MSN-0379.json
+  - EXECUTOR_LOG.md
+  - docs/concepts/operation-admission-coverage.md
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0379.operation-admission-discovery.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/out-of-scope/README.md
+    - .gitagent/runs/MSN-0379.json
+    - EXECUTOR_LOG.md
+    - docs/concepts/operation-admission-coverage.md
+  forbidden_zones:
+    - .gitagent/foreman/MANIFEST.yaml
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/
+    - src/
+contract_sha256: 230837f2386aaa0cfcf341ee0c0a2f7c3ee73c64c9b3979e48eb2f1e5ee50c22
