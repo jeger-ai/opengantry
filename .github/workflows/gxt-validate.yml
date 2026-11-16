@@ -128,22 +128,31 @@ jobs:
       - name: Fetch gxt-bypass git notes
         run: git fetch origin 'refs/notes/*:refs/notes/*' || true
 
+      # The gantry that judges this range, gxt-bypass notes included, is built from the base commit, never the PR head:
+      # a pull request must not change the code that decides whether its own break-glass notes count (MSN-0385). The
+      # range, its notes and the manifest still come from the PR checkout above.
+      - name: Check out the base commit (the verifier)
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .gxt-base
+          persist-credentials: false
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: .gxt-base/package-lock.json
 
-      - name: Install Node deps
-        run: npm ci
+      - name: Install and build gantry from the base commit
+        working-directory: .gxt-base
+        run: npm ci && npm run build
 
-      - name: Build gantry
-        run: npm run build
-
-      - name: Path-scoped MSN commit subjects
+      - name: Path-scoped MSN commit subjects (gantry built from the base commit)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node dist/cli/index.js ci msn-range --base "$BASE_SHA" --head "$HEAD_SHA"
+        run: node .gxt-base/dist/cli/index.js ci msn-range --base "$BASE_SHA" --head "$HEAD_SHA"
 
   mission_verify:
     if: github.event_name == 'pull_request'

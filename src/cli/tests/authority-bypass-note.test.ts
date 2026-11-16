@@ -10,9 +10,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import YAML from "yaml";
 import { canonicalJson } from "#core/canonical-json.js";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { writeBypassGitNote } from "#missions/break-glass.js";
+import { sshSignWithGitKey } from "#git/receipt-signing.js";
 import { writeBypassAnchor, writeMiniGantryRepo } from "./test-fixtures.js";
 import { PLANNER_EMAIL } from "./test-shared.js";
 
@@ -105,14 +107,18 @@ test("bypass note: forged v2 notes are refused (own key, own key added on the br
     assert.notEqual(r.status, 0, what);
     assert.match(r.out, why, what);
   }
-  // The candidate lists its own key on the branch: the keys come from the base, so the note still does not count.
+  // The candidate lists its own key on the branch and signs only the commit that adds it; the earlier commit carries a
+  // valid Planner note. Keys read from each commit's own tree would pass both; the keys come from the base, so the
+  // commit that adds the key fails and it is the one CI names.
   fs.appendFileSync(path.join(dest, ".gitagent", "foreman", "PLANNER.signing.pub"), `${PLANNER_EMAIL} ${attacker.pub}\n`);
   git(dest, "commit", "-qam", "add my key");
   const head2 = git(dest, "rev-parse", "HEAD");
-  writeBypassGitNote(dest, head, note(attacker.priv, head));
+  writeBypassGitNote(dest, head, note(planner.priv, head));
   writeBypassGitNote(dest, head2, note(attacker.priv, head2));
+  assert.equal(msnRange(dest, base, head).status, 0, "the Planner-signed commit alone passes");
   const r = msnRange(dest, base, head2);
   assert.notEqual(r.status, 0);
+  assert.match(r.out, new RegExp(`commit ${head2} touches MSN-enforced paths`));
   assert.match(r.out, /not in the allowed signers/);
 });
 
@@ -137,6 +143,30 @@ test("bypass note: gantry verify --break-glass with the Planner's SSH key writes
   assert.match(ok.out, /MSN commit subjects OK/);
 });
 
+test("bypass note: the local warning reads the Planner keys at the default branch tip, which CI's base is, not the merge-base", { skip: noSshKeygen }, () => {
+  const { dest, head, keys, planner } = fixture();
+  // A key the Planner listed on main after the feature branch forked: CI (base = main's tip) accepts a note it signs.
+  const late = newKey(keys, "late-planner");
+  git(dest, "checkout", "-q", "main");
+  fs.appendFileSync(path.join(dest, ".gitagent", "foreman", "PLANNER.signing.pub"), `${PLANNER_EMAIL} ${late.pub}\n`);
+  git(dest, "commit", "-qam", "[MSN-0999] list a second Planner key");
+  const tip = git(dest, "rev-parse", "HEAD");
+  git(dest, "checkout", "-q", "feature");
+  const r = breakGlass(dest, [["gpg.format", "ssh"], ["user.signingkey", late.priv]]);
+  assert.equal(r.status, 0, r.out);
+  assert.doesNotMatch(r.out, /CI will refuse/, "the key is a Planner key at main's tip");
+  const ci = msnRange(dest, tip, head);
+  assert.equal(ci.status, 0, ci.out);
+  // The other way round: a key main dropped after the fork is warned, although the merge-base still lists it.
+  git(dest, "checkout", "-q", "main");
+  fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "PLANNER.signing.pub"), `${PLANNER_EMAIL} ${late.pub}\n`);
+  git(dest, "commit", "-qam", "[MSN-0999] retire the first Planner key");
+  git(dest, "checkout", "-q", "feature");
+  const warned = breakGlass(dest, [["user.signingkey", planner.priv]]);
+  assert.equal(warned.status, 0, warned.out);
+  assert.match(warned.out, /CI will refuse this note/);
+});
+
 test("bypass note: break-glass without an SSH signing key refuses and writes no note; a non-Planner key is warned", { skip: noSshKeygen }, () => {
   const { dest, head, keys } = fixture();
   const none = breakGlass(dest, []);
@@ -147,4 +177,67 @@ test("bypass note: break-glass without an SSH signing key refuses and writes no 
   const warned = breakGlass(dest, [["gpg.format", "ssh"], ["user.signingkey", other.priv]]);
   assert.equal(warned.status, 0, warned.out);
   assert.match(warned.out, /CI will refuse this note: .*not in the allowed signers/);
+});
+
+const noAgent = noSshKeygen || (spawnSync("ssh-agent", ["-h"]).error ? "ssh-agent not available" : false);
+
+/** A temporary ssh-agent holding `priv`; the caller kills it. */
+function agentWith(priv: string): { sock: string; pid: string } {
+  const out = spawnSync("ssh-agent", ["-s", "-a", path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-agent-")), "s")], { encoding: "utf8" }).stdout;
+  const sock = /SSH_AUTH_SOCK=([^;]+);/.exec(out)?.[1];
+  const pid = /SSH_AGENT_PID=(\d+);/.exec(out)?.[1];
+  assert.ok(sock && pid, out);
+  assert.equal(spawnSync("ssh-add", ["-q", priv], { env: { ...process.env, SSH_AUTH_SOCK: sock }, encoding: "utf8" }).status, 0);
+  return { sock, pid };
+}
+
+function verifies(pub: string, message: string, signature: string): boolean {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-agent-verify-"));
+  fs.writeFileSync(path.join(dir, "allowed"), `${PLANNER_EMAIL} ${pub}\n`);
+  fs.writeFileSync(path.join(dir, "sig"), signature);
+  return spawnSync("ssh-keygen", ["-Y", "verify", "-f", path.join(dir, "allowed"), "-I", PLANNER_EMAIL, "-n", NAMESPACE, "-s", path.join(dir, "sig")], { input: message }).status === 0;
+}
+
+test("bypass note: the git signing key signs as a .pub through ssh-agent and as a key:: literal, as git accepts", { skip: noAgent }, () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-agent-repo-"));
+  git(dest, "init", "-q");
+  git(dest, "config", "gpg.format", "ssh");
+  const k = newKey(fs.mkdtempSync(path.join(os.tmpdir(), "og-agent-keys-")), "agent-planner");
+  // Only the public half is on disk where git looks; the private key lives in the agent.
+  const pubOnly = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-agent-pub-")), "id.pub");
+  fs.writeFileSync(pubOnly, `${k.pub}\n`);
+  const { sock, pid } = agentWith(k.priv);
+  const saved = process.env.SSH_AUTH_SOCK;
+  try {
+    process.env.SSH_AUTH_SOCK = sock;
+    for (const signingKey of [pubOnly, `key::${k.pub}`]) {
+      git(dest, "config", "user.signingkey", signingKey);
+      const sig = sshSignWithGitKey(dest, "message for the note", NAMESPACE);
+      assert.ok(sig, `${signingKey}: signed through the agent`);
+      assert.ok(verifies(k.pub, "message for the note", sig), `${signingKey}: verifies`);
+      assert.equal(verifies(k.pub, "another message", sig), false, `${signingKey}: bound to the message`);
+    }
+    // Without the agent neither form can sign: null, and break-glass refuses (BYPASS_SIGNING_UNAVAILABLE).
+    delete process.env.SSH_AUTH_SOCK;
+    assert.equal(sshSignWithGitKey(dest, "m", NAMESPACE), null);
+  } finally {
+    if (saved === undefined) delete process.env.SSH_AUTH_SOCK;
+    else process.env.SSH_AUTH_SOCK = saved;
+    spawnSync("kill", [pid]);
+  }
+});
+
+test("bypass note: this repository's msn_commits job judges the range with a gantry built from the PR base, not the head", () => {
+  type Step = { uses?: string; with?: Record<string, unknown>; run?: string; "working-directory"?: string };
+  const wf = YAML.parse(fs.readFileSync(path.join(OG, ".github", "workflows", "gxt-validate.yml"), "utf8")) as { jobs: Record<string, { steps: Step[] }> };
+  const steps = wf.jobs.msn_commits!.steps;
+  const base = steps.find((s) => s.uses?.startsWith("actions/checkout@") && s.with?.ref === "${{ github.event.pull_request.base.sha }}");
+  assert.ok(base, "a checkout of base.sha");
+  const dir = String(base.with!.path);
+  assert.ok(dir && dir !== "." && !dir.includes(".."), "into its own directory");
+  assert.ok(steps.some((s) => s["working-directory"] === dir && /npm ci/.test(s.run ?? "") && /npm run build/.test(s.run ?? "")), "built there");
+  const runs = steps.map((s) => s.run ?? "").filter((r) => /ci msn-range/.test(r));
+  assert.equal(runs.length, 1);
+  assert.match(runs[0]!, new RegExp(`^node ${dir.replace(/[.]/g, "\\.")}/dist/cli/index\\.js ci msn-range `));
+  assert.equal(steps.some((s) => !s["working-directory"] && /npm (ci|run build)/.test(s.run ?? "")), false, "the PR head is never built in this job");
 });

@@ -38,7 +38,8 @@ function timingSafeEqualHex(a: string, b: string): boolean {
 const LOCAL_DEFAULT_REFS = ["refs/heads/main", "refs/heads/master"];
 const SET_HEAD_HINT = "run: git fetch && git remote set-head origin --auto";
 
-type AnchorBase = { ok: true; base: string } | { ok: false; why: string };
+/** `tip` is the default branch commit itself: what CI's `base.sha` is when a pull request targets it. */
+type AnchorBase = { ok: true; base: string; tip: string } | { ok: false; why: string };
 
 /**
  * The trusted base for the anchor (MSN-0381): the merge-base of HEAD with the one default branch. With any remote, that
@@ -64,7 +65,8 @@ function breakGlassAnchorBase(repoRoot: string): AnchorBase {
   const short = ref.replace(/^refs\/(remotes|heads)\//, "");
   const mb = gitRun(repoRoot, ["merge-base", "HEAD", ref]);
   const base = mb.ok ? mb.stdout.trim() : "";
-  return base ? { ok: true, base } : { ok: false, why: `HEAD shares no history with the default branch ${short}` };
+  const tip = gitRun(repoRoot, ["rev-parse", "--verify", "-q", `${ref}^{commit}`]).stdout.trim();
+  return base ? { ok: true, base, tip } : { ok: false, why: `HEAD shares no history with the default branch ${short}` };
 }
 
 function parseAnchor(text: string): string | null {
@@ -167,10 +169,13 @@ function signedBypassNote(root: string, commit: string, payload: BypassAuditPayl
   return { ...body, signature };
 }
 
-/** A warning when CI would refuse the note just written: its key is not a Planner key at the trusted base. */
+/**
+ * A warning when CI would refuse the note just written: its key is not a Planner key at the default branch tip
+ * (origin/HEAD itself, which a pull request's base.sha is), not the merge-base the anchor is read from.
+ */
 function noteCheckWarning(root: string, commit: string, note: Record<string, unknown>): string | null {
   const found = breakGlassAnchorBase(root);
-  const signers = found.ok ? gitRun(root, ["cat-file", "blob", `${found.base}:${REL_PLANNER_SIGNING_PUB}`]) : null;
+  const signers = found.ok ? gitRun(root, ["cat-file", "blob", `${found.tip}:${REL_PLANNER_SIGNING_PUB}`]) : null;
   const verdict = bypassNoteVerdict(JSON.stringify(note), commit, signers?.ok ? signers.stdout : null);
   return verdict.ok ? null : `break-glass: CI will refuse this note: ${verdict.why}`;
 }
