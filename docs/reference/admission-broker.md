@@ -23,7 +23,7 @@ gantry admission stop
 - **Linux only.** The dispatchers need `/proc/self/fd`, and on macOS, Windows or a Linux host without `/proc`, `serve` refuses with `GXT_ADMISSION_BROKER_UNSUPPORTED`.
 - `serve` prints one `listening on <socket>` line (one JSON line with `--json`) and runs until SIGTERM or SIGINT. A clean stop removes the socket and the instance lock.
 - **SIGHUP revokes:** the broker starts a new epoch, permits issued before it refuse at dispatch, and requests prepared before it are void. Editing the policy file has the same effect at the next request.
-- `gantry admission stop` sends SIGTERM to the pid recorded in `broker.json`.
+- `gantry admission stop` sends SIGTERM to the pid recorded in `broker.json`, after checking that this pid still runs `gantry admission serve`. A recycled pid is never signalled.
 
 ## Where state lives
 

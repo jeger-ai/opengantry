@@ -204,14 +204,17 @@ function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: Brok
   let answered = false;
   // Set before the broker is called: a message is handled once, whether its newline or the end arrives first.
   let started = false;
-  const answer = (response: BrokerResponse): void => {
+  /** Answer once; `close` drops the connection after the answer is flushed (input past the bound is never read). */
+  const answer = (response: BrokerResponse, close = false): void => {
     if (answered) return;
     answered = true;
-    socket.end(`${JSON.stringify(response)}\n`);
+    socket.end(`${JSON.stringify(response)}\n`, () => {
+      if (close) socket.destroy();
+    });
   };
   socket.setTimeout(CONNECTION_TIMEOUT_MS, () => {
-    answer(malformed("timed out waiting for a complete message", host));
-    socket.destroy();
+    if (answered) socket.destroy();
+    else answer(malformed("timed out waiting for a complete message", host), true);
   });
   socket.on("error", () => socket.destroy());
   const finish = (): void => {
@@ -225,8 +228,8 @@ function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: Brok
     if (answered) return;
     size += chunk.length;
     if (size > BROKER_MAX_MESSAGE_BYTES) {
-      answer(malformed(`the message exceeds ${BROKER_MAX_MESSAGE_BYTES} bytes`, host));
-      socket.destroy();
+      chunks.length = 0;
+      answer(malformed(`the message exceeds ${BROKER_MAX_MESSAGE_BYTES} bytes`, host), true);
       return;
     }
     chunks.push(chunk);
@@ -300,6 +303,16 @@ export function stopBroker(root: string, env: NodeJS.ProcessEnv = process.env): 
     throw new BrokerSetupError("not_running", "no admission broker is recorded for this repository");
   }
   if (!Number.isSafeInteger(info.pid) || (info.pid as number) <= 1) throw new BrokerSetupError("not_running", "broker.json names no valid pid");
+  // A recycled pid must not be signalled: the process must still be an admission broker.
+  let cmdline = "";
+  try {
+    cmdline = fs.readFileSync(`/proc/${String(info.pid)}/cmdline`, "utf8");
+  } catch {
+    /* gone */
+  }
+  if (!cmdline.includes("\0admission\0serve\0")) {
+    throw new BrokerSetupError("not_running", `the recorded broker (pid ${String(info.pid)}) is not running; remove broker.lock, broker.json and its socket if no broker runs`);
+  }
   try {
     process.kill(info.pid as number, "SIGTERM");
   } catch {

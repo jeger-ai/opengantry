@@ -216,3 +216,22 @@ test("stop sends SIGTERM to the recorded broker, which removes its socket and lo
   assert.equal(again.status, 1);
   assert.match(again.stderr, /no admission broker/);
 });
+
+test("stop never signals a process that is not an admission broker (a recycled pid in broker.json)", async () => {
+  const f = fixture();
+  const child = await serve(f);
+  await stop(child);
+  const bystander = spawn("sleep", ["30"], { stdio: "ignore" });
+  try {
+    const stateDir = fs.readdirSync(path.join(f.stateDir, "admission")).map((d) => path.join(f.stateDir, "admission", d))[0]!;
+    fs.writeFileSync(path.join(stateDir, "broker.json"), `${JSON.stringify({ pid: bystander.pid, socket: f.socket })}\n`);
+    const r = spawnSync(process.execPath, [CLI, "admission", "stop"], { cwd: f.root, env: f.env, encoding: "utf8" });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /not running/);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(bystander.exitCode, null);
+    assert.equal(bystander.signalCode, null, "the bystander was not signalled");
+  } finally {
+    bystander.kill("SIGKILL");
+  }
+});
