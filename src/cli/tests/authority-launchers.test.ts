@@ -1,7 +1,9 @@
 /**
  * MSN-0385 (issue #356, follow-up of MSN-0381): the MCP launcher, the Cursor sessionStart hook and the runtime-env
  * script run an installed gantry outside the checkout that satisfies the pin, never the working tree's dist/, unless a
- * human sets GANTRY_HOOK_LOCAL_BUILD=1. They share the hook shims' resolver block, byte for byte.
+ * human sets GANTRY_MCP_LOCAL_BUILD=1. They share the hook shims' resolver block, byte for byte; each copy passes its
+ * own opt-in name in (PR #369 review round), so the variable a Cursor session inherits for the MCP server never switches
+ * the git hooks to dist/, and the hooks' GANTRY_HOOK_LOCAL_BUILD never switches the launchers.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -88,6 +90,7 @@ function stub(dir: string, log: string, version = PIN): void {
 function run(dest: string, rel: string, PATH: string, extra: NodeJS.ProcessEnv = {}): { status: number | null; stdout: string; stderr: string } {
   const env = gitChildEnv({ PATH });
   delete env.GANTRY_HOOK_LOCAL_BUILD;
+  delete env.GANTRY_MCP_LOCAL_BUILD;
   delete env.CURSOR_PROJECT_DIR;
   delete env.CLAUDE_PROJECT_DIR;
   Object.assign(env, extra);
@@ -150,11 +153,84 @@ test("launchers: an installed gantry that does not satisfy the pin never runs", 
   }
 });
 
-test("launchers: GANTRY_HOOK_LOCAL_BUILD=1 is the explicit opt-in that runs dist/", () => {
+test("launchers: GANTRY_MCP_LOCAL_BUILD=1 is the explicit opt-in that runs dist/", () => {
   for (const { rel, call } of LAUNCHERS) {
     const { dest, marker } = repo();
-    const r = run(dest, rel, toolsPath(), { GANTRY_HOOK_LOCAL_BUILD: "1" });
+    const r = run(dest, rel, toolsPath(), { GANTRY_MCP_LOCAL_BUILD: "1" });
     assert.equal(r.status, 0, `${rel}: ${r.stderr}`);
     assert.equal(fs.readFileSync(marker, "utf8"), call, rel);
   }
+});
+
+test("launchers: the hooks' GANTRY_HOOK_LOCAL_BUILD=1 alone does not make a launcher run dist/", () => {
+  for (const { rel } of LAUNCHERS) {
+    const { dest, marker } = repo();
+    const r = run(dest, rel, toolsPath(), { GANTRY_HOOK_LOCAL_BUILD: "1" });
+    assert.equal(fs.existsSync(marker), false, `${rel}: the working tree's dist/ never ran`);
+    assert.match(r.stdout + r.stderr, /no installed gantry outside this checkout.*GANTRY_MCP_LOCAL_BUILD=1/, rel);
+    if (!rel.endsWith("gxt-session-start.sh")) assert.equal(r.status, 1, rel);
+  }
+});
+
+test("hook shims: the launchers' GANTRY_MCP_LOCAL_BUILD=1 alone (inherited from a Cursor session) does not make a hook run dist/", () => {
+  for (const hook of ["pre-commit", "pre-push", "post-checkout"]) {
+    const { dest, marker } = repo();
+    const rel = `.githooks/${hook}`;
+    fs.mkdirSync(path.join(dest, ".githooks"), { recursive: true });
+    fs.copyFileSync(path.join(OG, rel), path.join(dest, rel));
+    const r = run(dest, rel, toolsPath(), { GANTRY_MCP_LOCAL_BUILD: "1" });
+    assert.equal(r.status, 1, `${hook}: ${r.stderr}`);
+    assert.equal(fs.existsSync(marker), false, `${hook}: the working tree's dist/ never ran`);
+    assert.match(r.stderr, /no installed gantry outside this checkout.*GANTRY_HOOK_LOCAL_BUILD=1/, hook);
+    // Its own opt-in still works.
+    const own = run(dest, rel, toolsPath(), { GANTRY_HOOK_LOCAL_BUILD: "1" });
+    assert.equal(own.status, 0, `${hook}: ${own.stderr}`);
+    assert.ok(fs.readFileSync(marker, "utf8").startsWith(`hook ${hook}`), hook);
+  }
+});
+
+/** `source scripts/gxt-runtime-env.sh` in a bash that prints its options before and after, then keeps going. */
+function sourced(dest: string, PATH: string, callerOpts: string): { status: number | null; stdout: string; stderr: string } {
+  const script = `${callerOpts}\nbefore="$-"\nsource scripts/gxt-runtime-env.sh\nrc=$?\necho "still-alive rc=$rc before=$before after=$- mission=\${GANTRY_MISSION_FILE:-}"`;
+  const env = gitChildEnv({ PATH });
+  delete env.GANTRY_HOOK_LOCAL_BUILD;
+  delete env.GANTRY_MCP_LOCAL_BUILD;
+  const r = spawnSync("bash", ["-c", script], { cwd: dest, env, encoding: "utf8", input: "" });
+  return { status: r.status, stdout: r.stdout, stderr: r.stderr };
+}
+
+test("runtime-env sourced: a refusal returns 1 and leaves the caller's shell alive with its own options", () => {
+  for (const callerOpts of ["", "set -u", "set -o pipefail"]) {
+    const { dest, marker } = repo();
+    const r = sourced(dest, toolsPath(), callerOpts);
+    assert.equal(r.status, 0, `caller ${JSON.stringify(callerOpts)}: ${r.stderr}`);
+    const m = /still-alive rc=(\d+) before=(\S*) after=(\S*) mission=(.*)/.exec(r.stdout);
+    assert.ok(m, `caller ${JSON.stringify(callerOpts)} survived: ${r.stdout}${r.stderr}`);
+    assert.equal(m[1], "1", "the refusal is the source's status");
+    assert.equal(m[3], m[2], "the caller's shell options are unchanged");
+    assert.match(r.stderr, /no installed gantry outside this checkout/);
+    assert.equal(fs.existsSync(marker), false);
+  }
+});
+
+test("runtime-env sourced: success exports the runtime into the caller and leaves its options unchanged", () => {
+  const { dest } = repo();
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-sourced-"));
+  stub(path.join(outside, "bin"), path.join(outside, "calls.log"));
+  const r = sourced(dest, `${path.join(outside, "bin")}${path.delimiter}${toolsPath()}`, "");
+  const m = /still-alive rc=(\d+) before=(\S*) after=(\S*) mission=(.*)/.exec(r.stdout);
+  assert.ok(m, r.stdout + r.stderr);
+  assert.equal(m[1], "0", r.stderr);
+  assert.equal(m[3], m[2], "the caller's shell options are unchanged");
+  assert.equal(m[4], "installed", "the runtime is loaded into the caller's shell");
+});
+
+test("runtime-env: a shell that is not bash is refused with the reason, before any bash-only code runs", { skip: fs.existsSync("/bin/sh") ? false : "no /bin/sh" }, () => {
+  const { dest, marker } = repo();
+  const env = gitChildEnv({ PATH: toolsPath() });
+  const r = spawnSync("/bin/sh", ["-c", ". scripts/gxt-runtime-env.sh; echo still-alive rc=$?"], { cwd: dest, env, encoding: "utf8" });
+  if (/bash/.test(fs.realpathSync("/bin/sh"))) return; // /bin/sh is bash here: nothing to refuse
+  assert.match(r.stdout, /still-alive rc=1/, r.stdout + r.stderr);
+  assert.match(r.stderr, /requires bash/);
+  assert.equal(fs.existsSync(marker), false);
 });

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Load GXT Executor Runtime Contract into the current shell (any IDE terminal / manual runs).
-set -euo pipefail
+# Load GXT Executor Runtime Contract into the current shell (any IDE terminal / manual runs). Bash only: source it from
+# bash or run it with bash; zsh and sh are refused (the resolver block below uses bash arrays and BASH_REMATCH).
+if [ -z "${BASH_VERSION:-}" ]; then
+  echo "gxt-runtime-env: requires bash (source it from bash, or run: bash scripts/gxt-runtime-env.sh)" >&2
+  return 1 2>/dev/null || exit 1
+fi
 
 # Print the message; the caller returns (when sourced) or exits (when run) right after.
 _gxt_runtime_die() {
@@ -9,14 +13,21 @@ _gxt_runtime_die() {
 _gxt_runtime_sourced() {
   [[ "${BASH_SOURCE[0]}" != "${0}" ]]
 }
+# Strict mode only when run as a script. Sourced, the caller's shell options stay as they were: set -e leaking into an
+# interactive shell would close it on the first refusal below (PR #369 review round). Every failure is handled here.
+_gxt_runtime_sourced || set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [ -z "$ROOT" ]; then
   _gxt_runtime_die "gxt-runtime-env: not inside a git repository"
   _gxt_runtime_sourced && return 1 || exit 1
 fi
-cd "$ROOT"
+if ! cd "$ROOT"; then
+  _gxt_runtime_die "gxt-runtime-env: cannot cd to $ROOT"
+  _gxt_runtime_sourced && return 1 || exit 1
+fi
 top="$(pwd -P)"
+_gxt_local_build_var=GANTRY_MCP_LOCAL_BUILD
 # >>> gantry-pinned-resolver (MSN-0381, MSN-0385): byte-identical in the hook shims, the launchers and their templates
 # (src/cli/tests/authority-launchers.test.ts). Run an installed gantry, never this checkout's code. _gxt_pinned_gantry
 # takes the first gantry on PATH outside the checkout $top (physical) that reports the major
@@ -24,6 +35,9 @@ top="$(pwd -P)"
 # pin). A gantry whose link, any link it passes through, or its target lives in the checkout (dist/, node_modules/.bin)
 # is skipped: the agent can write those. Sets _gxt_gantry to the path found, not the resolved file (version managers
 # dispatch on argv[0]); otherwise sets _gxt_refusal and returns 1. Bash 3.2 compatible (macOS), safe under set -eu.
+# The caller sets _gxt_local_build_var just before this block to its own human opt-in for this checkout's dist/:
+# GANTRY_HOOK_LOCAL_BUILD in the hook shims, GANTRY_MCP_LOCAL_BUILD in the launchers. _gxt_local_build reads only that
+# one, so an opt-in a Cursor session inherits for the MCP server never switches the git hooks (PR #369 review round).
 # The rule of satisfiesPin (substrate-version.ts): same major, at least the pin, a prerelease only when it is exactly the pin.
 _gxt_satisfies() {
   local semver='^([0-9]{1,9})\.([0-9]{1,9})\.([0-9]{1,9})(-[0-9A-Za-z.-]+)?$'
@@ -38,6 +52,7 @@ _gxt_satisfies() {
   [[ "$1" == "$2" || (-z "$ap" && -n "$bp") ]]
 }
 _gxt_inside() { case "$1/" in "$top"/*) return 0 ;; esac; return 1; }
+_gxt_local_build() { [[ "${!_gxt_local_build_var:-}" == 1 ]]; }
 _gxt_pinned_gantry() {
   local pinfile=.gitagent/foreman/SUBSTRATE.version.json pin dir bin ok hop parent link ver
   local -a dirs=()
@@ -71,17 +86,17 @@ _gxt_pinned_gantry() {
     _gxt_gantry="$dir/gantry"
     return 0
   done
-  _gxt_refusal="no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@$pin. Developing OpenGantry itself: GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md)"
+  _gxt_refusal="no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@$pin. Developing OpenGantry itself: $_gxt_local_build_var=1 (docs/DEVELOPMENT.md)"
   return 1
 }
 # <<< gantry-pinned-resolver
 
 MISSION="${1:-}"
-# An installed gantry that satisfies the pin, never this checkout's dist/ unless a human set GANTRY_HOOK_LOCAL_BUILD=1
+# An installed gantry that satisfies the pin, never this checkout's dist/ unless a human set GANTRY_MCP_LOCAL_BUILD=1
 # (MSN-0385).
-if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 ]]; then
+if _gxt_local_build; then
   if [ ! -f "dist/cli/index.js" ]; then
-    _gxt_runtime_die "gxt-runtime-env: GANTRY_HOOK_LOCAL_BUILD=1 but dist/cli/index.js is missing; run: npm run build"
+    _gxt_runtime_die "gxt-runtime-env: $_gxt_local_build_var=1 but dist/cli/index.js is missing; run: npm run build"
     _gxt_runtime_sourced && return 1 || exit 1
   fi
   GANTRY=(node dist/cli/index.js)

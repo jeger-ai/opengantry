@@ -8,6 +8,7 @@ if [ -z "$ROOT" ]; then
 fi
 cd "$ROOT"
 top="$(pwd -P)"
+_gxt_local_build_var=GANTRY_MCP_LOCAL_BUILD
 # >>> gantry-pinned-resolver (MSN-0381, MSN-0385): byte-identical in the hook shims, the launchers and their templates
 # (src/cli/tests/authority-launchers.test.ts). Run an installed gantry, never this checkout's code. _gxt_pinned_gantry
 # takes the first gantry on PATH outside the checkout $top (physical) that reports the major
@@ -15,6 +16,9 @@ top="$(pwd -P)"
 # pin). A gantry whose link, any link it passes through, or its target lives in the checkout (dist/, node_modules/.bin)
 # is skipped: the agent can write those. Sets _gxt_gantry to the path found, not the resolved file (version managers
 # dispatch on argv[0]); otherwise sets _gxt_refusal and returns 1. Bash 3.2 compatible (macOS), safe under set -eu.
+# The caller sets _gxt_local_build_var just before this block to its own human opt-in for this checkout's dist/:
+# GANTRY_HOOK_LOCAL_BUILD in the hook shims, GANTRY_MCP_LOCAL_BUILD in the launchers. _gxt_local_build reads only that
+# one, so an opt-in a Cursor session inherits for the MCP server never switches the git hooks (PR #369 review round).
 # The rule of satisfiesPin (substrate-version.ts): same major, at least the pin, a prerelease only when it is exactly the pin.
 _gxt_satisfies() {
   local semver='^([0-9]{1,9})\.([0-9]{1,9})\.([0-9]{1,9})(-[0-9A-Za-z.-]+)?$'
@@ -29,6 +33,7 @@ _gxt_satisfies() {
   [[ "$1" == "$2" || (-z "$ap" && -n "$bp") ]]
 }
 _gxt_inside() { case "$1/" in "$top"/*) return 0 ;; esac; return 1; }
+_gxt_local_build() { [[ "${!_gxt_local_build_var:-}" == 1 ]]; }
 _gxt_pinned_gantry() {
   local pinfile=.gitagent/foreman/SUBSTRATE.version.json pin dir bin ok hop parent link ver
   local -a dirs=()
@@ -62,21 +67,21 @@ _gxt_pinned_gantry() {
     _gxt_gantry="$dir/gantry"
     return 0
   done
-  _gxt_refusal="no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@$pin. Developing OpenGantry itself: GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md)"
+  _gxt_refusal="no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@$pin. Developing OpenGantry itself: $_gxt_local_build_var=1 (docs/DEVELOPMENT.md)"
   return 1
 }
 # <<< gantry-pinned-resolver
 
 # gantry resolves the pinned mission itself (gantry mission pin <file>, GANTRY_MISSION, the legacy ACTIVE_MISSION files).
 # An installed gantry that satisfies the pin runs, never this checkout's dist/ unless a human set
-# GANTRY_HOOK_LOCAL_BUILD=1 (MSN-0385). Without one, the session gets the reason instead of mission context.
+# GANTRY_MCP_LOCAL_BUILD=1 (MSN-0385). Without one, the session gets the reason instead of mission context.
 RUNTIME_JSON=""
-if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 && -f dist/cli/index.js ]]; then
+if _gxt_local_build && [[ -f dist/cli/index.js ]]; then
   RUNTIME_JSON="$(node dist/cli/index.js runtime env --json 2>/dev/null)" || RUNTIME_JSON=""
-elif [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" != 1 ]] && _gxt_pinned_gantry; then
+elif ! _gxt_local_build && _gxt_pinned_gantry; then
   RUNTIME_JSON="$("$_gxt_gantry" runtime env --json 2>/dev/null)" || RUNTIME_JSON=""
 else
-  reason="${_gxt_refusal:-GANTRY_HOOK_LOCAL_BUILD=1 but dist/cli/index.js is missing; run: npm run build}"
+  reason="${_gxt_refusal:-$_gxt_local_build_var=1 but dist/cli/index.js is missing; run: npm run build}"
   node -e '
     process.stdout.write(JSON.stringify({ additional_context: "GXT: " + process.argv[1] }));
   ' "$reason"
