@@ -10,6 +10,8 @@
 # physical path of every home-directory secret when a link makes it differ; (4) ADR-0063 consequences note;
 # (5) changelog and release notes. No prevention claim without a proven harness sandbox.
 # Amended: docs/guides/cursor.md declared; it described the launcher running dist/ when present.
+# Amended: test/conformance/golden/init.dry-run.bare-git.json declared and re-recorded (CONFORMANCE_RECORD=1): it
+# records the byte size of the docs/INTEGRATIONS.md that init composes from the Cursor recipe, whose launcher line changed.
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0385.json written by
 # gantry verify --record (RULES §3).
@@ -237,6 +239,7 @@ declared_paths:
   - templates/integrations/recipes/cursor.md
   - templates/scripts/gxt-runtime-env.sh
   - templates/scripts/mcp-launcher.sh
+  - test/conformance/golden/init.dry-run.bare-git.json
 contract:
   tmvc_roots:
     - .cursor/hooks/gxt-session-start.sh
@@ -276,9 +279,10 @@ contract:
     - templates/integrations/recipes/cursor.md
     - templates/scripts/gxt-runtime-env.sh
     - templates/scripts/mcp-launcher.sh
+    - test/conformance/golden/init.dry-run.bare-git.json
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
     - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
-contract_sha256: 83e776d95499b0c5549c8766d26b44e6cbb2a89673c5644ee92d9aac588eef0d
+contract_sha256: 6d17c9f682e1131b42bc87435986483a6532a933b2eb2211d1c28423b9546dcb
