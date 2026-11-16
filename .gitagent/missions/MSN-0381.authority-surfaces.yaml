@@ -1,0 +1,252 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0381]. Executor must not run until the [MSN-0381] legislation commit + pin.
+#
+# Legislated intent: fix three candidate-reachable authority surfaces before the operation-admission broker
+# (issue #356, ADR-0063 owner decision Q10): the MCP draft-token HMAC key and replay ledger move out of the
+# repository into a per-user state dir that gantry cage policy denies, and a legacy in-repo key is refused; the
+# break-glass anchor is read from the trusted base commit, failing closed; the tracked git hook shims run a pinned
+# installed gantry instead of working-tree dist/, with an explicit human opt-in for the local build. No prevention
+# claim without a proven harness sandbox.
+#
+# Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0381.json written by
+# gantry verify --record (RULES §3).
+msn_id: MSN-0381
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The compliance ledger (refs/gxt/ledger)
+      and the break_glass ledger row are unchanged; only where the break-glass
+      anchor is read from changes.
+    adr_refs:
+      - ADR-0043
+      - ADR-0021
+  - finding_id: 209851d5d37d
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "packages/core/tests/secret-paths.test.ts is the package test
+      of packages/core/src/secret-paths.ts (package tests live in
+      packages/<name>/tests/, ADR-0054); it gains the case for the per-user
+      state dir. Boundary confirmed: test code only, no layer import."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; this mission changes no plane deployment, ingestion or
+      CI workflow.
+    adr_refs:
+      - ADR-0037
+      - ADR-0052
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0021 and amend it with a note: the bypass secret
+      still comes from GANTRY_BYPASS_SECRET and the forensic git note is
+      unchanged, but the SHA-256 anchor is now read from the trusted base commit
+      (merge-base of HEAD with the default branch), not from the working tree;
+      no base or no anchor at the base fails closed."
+    adr_refs:
+      - ADR-0021
+      - ADR-0063
+  - finding_id: 3e483990523c
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: security. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3): the work changes packages/, .githooks/,
+      templates/.githooks/ and governance docs. contract.tmvc_roots are the
+      declared paths of this mission (the three surfaces' modules, the cage
+      policy secret list, the hook registrar, their tests, the conformance
+      golden of cage policy, the env registry, docs and the mission's own file,
+      run record and EXECUTOR_LOG.md). Forbidden: .gitagent/foreman/,
+      .gitagent/planner/RULES.md, .github/workflows/, TARGET_ARCHITECTURE.yaml.
+      Operator brief (2026-11-16, issue #356, ADR-0063 owner decision Q10): fix
+      the three candidate-reachable authority surfaces in a separate mission
+      before slice 3. The word security refers to these authority fixes; they
+      claim no prevention without a proven harness sandbox."
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
+      - ADR-0060
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0048: the cage still detects and restores, it does
+      not block. The cage policy fragment (ADR-0060) gains deny rules for the
+      per-user state dir; no cage rule or trust-model change."
+    adr_refs:
+      - ADR-0048
+      - ADR-0060
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0058. Existing draft/execute, hook and break-glass
+      tests run unchanged except one: the break-glass unit test that authorized
+      a working-tree anchor in a non-git directory now commits the anchor,
+      because the working-tree anchor is the attack this mission closes. That
+      guarantee change is stated in the PR body. Every surface gets a regression
+      test showing the old attack now refuses."
+    adr_refs:
+      - ADR-0058
+      - ADR-0063
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Accept ADR-0022 (MCP write containment) unchanged in substance;
+      add a note that the draft/execute HMAC key and replay ledger now live in a
+      per-user state dir outside the repository (~/.opengantry/), which gantry
+      cage policy denies to the sandbox, and that a legacy in-repo
+      DRAFT_TOKEN.key is refused, never trusted.
+    adr_refs:
+      - ADR-0022
+      - ADR-0063
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0063 owner decisions Q1, Q3 and Q10 (PR #364): this
+      is the separate pre-slice-3 mission that fixes the three authority
+      surfaces. ADR-0063 itself is not edited here (its owner-decisions section
+      is in PR #364); the follow-up note goes in the PR body."
+    adr_refs:
+      - ADR-0063
+      - ADR-0060
+  - finding_id: c2f468809c0c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "src/cli/tests/ holds the CLI unit tests; this mission adds
+      regression tests for the three surfaces (draft token, break-glass, hook
+      shims and hook pin), points the per-process test setup at a temporary
+      state dir so tests never write the real home directory, and updates the
+      one existing break-glass test whose working-tree anchor is exactly the
+      attack being closed (disclosed in the PR). Boundary confirmed: tests
+      only."
+    adr_refs:
+      - ADR-0058
+      - ADR-0052
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0061: architecture budgets respected with gantry
+      arch check; a raise only with --ratchet --allow-raise and an explanation
+      in the PR body. No new command or record type."
+    adr_refs:
+      - ADR-0061
+      - ADR-0052
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0060 and owner decision Q1: confinement is the
+      harness sandbox configured by gantry cage policy. The generated fragment
+      adds Read and Edit denies, denyRead, denyWrite and a credentials entry for
+      ~/.opengantry. No sandbox is built; without a proven sandbox the
+      draft-token cell stays unproven."
+    adr_refs:
+      - ADR-0060
+      - ADR-0063
+interrogation_sha256: 69d6945f0bab3e012a14c0e942c4dd4262fbedfa2da7572aeb72a710af952a04
+declared_paths:
+  - .gitagent/missions/MSN-0381.authority-surfaces.yaml
+  - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
+  - .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md
+  - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+  - .gitagent/registry/env.yaml
+  - .gitagent/runs/MSN-0381.json
+  - .githooks/
+  - AGENTS.md
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/cage/limits.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/reference/release-notes.md
+  - docs/reference/session-variables.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/core/src/secret-paths.ts
+  - packages/core/tests/secret-paths.test.ts
+  - packages/missions/src/break-glass.ts
+  - packages/missions/src/draft-token.ts
+  - packages/missions/src/git/git-hooks.ts
+  - packages/missions/src/substrate-version.ts
+  - src/cli/commands/hook.ts
+  - src/cli/mcp/mcp-draft-legislation.ts
+  - src/cli/program-hook.ts
+  - src/cli/tests/
+  - templates/.githooks/
+  - test/conformance/golden/
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0381.authority-surfaces.yaml
+    - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
+    - .gitagent/out-of-scope/ADR-0022-mcp-write-containment.md
+    - .gitagent/out-of-scope/ADR-0052-rewrite-under-structural-law.md
+    - .gitagent/registry/env.yaml
+    - .gitagent/runs/MSN-0381.json
+    - .githooks
+    - AGENTS.md
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/cage/limits.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/reference/release-notes.md
+    - docs/reference/session-variables.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/core/src/secret-paths.ts
+    - packages/core/tests/secret-paths.test.ts
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+    - packages/missions/src/git/git-hooks.ts
+    - packages/missions/src/substrate-version.ts
+    - src/cli/commands/hook.ts
+    - src/cli/mcp/mcp-draft-legislation.ts
+    - src/cli/program-hook.ts
+    - src/cli/tests/
+    - templates/.githooks
+    - test/conformance/golden/
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+contract_sha256: 2fd23460516fb3357f8cd385778693f5260afdc8edf4ba4508afa80418b9a5f8
