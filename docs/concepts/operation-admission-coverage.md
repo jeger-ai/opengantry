@@ -1,6 +1,6 @@
 ---
 title: "Operation admission: coverage of existing boundaries"
-description: "Discovery inventory for issue #356: which agent operations OpenGantry prevents, detects or only audits today, per platform and harness, with evidence and bypasses."
+description: "Discovery inventory for issue #356: which agent operations OpenGantry prevents, detects or only audits, per platform and harness, with evidence and bypasses."
 publish: false
 ---
 
