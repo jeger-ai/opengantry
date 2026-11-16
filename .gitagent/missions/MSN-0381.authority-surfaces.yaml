@@ -196,10 +196,13 @@ declared_paths:
   - EXECUTOR_LOG.md
   - docs/CHANGELOG.md
   - docs/DEVELOPMENT.md
+  - docs/SECURITY.md
   - docs/cage/limits.md
   - docs/concepts/operation-admission-coverage.md
+  - docs/reference/break-glass.md
   - docs/reference/release-notes.md
   - docs/reference/session-variables.md
+  - docs/start/install.md
   - packages/cage/src/cage-suggest.ts
   - packages/core/src/secret-paths.ts
   - packages/core/tests/secret-paths.test.ts
@@ -227,10 +230,13 @@ contract:
     - EXECUTOR_LOG.md
     - docs/CHANGELOG.md
     - docs/DEVELOPMENT.md
+    - docs/SECURITY.md
     - docs/cage/limits.md
     - docs/concepts/operation-admission-coverage.md
+    - docs/reference/break-glass.md
     - docs/reference/release-notes.md
     - docs/reference/session-variables.md
+    - docs/start/install.md
     - packages/cage/src/cage-suggest.ts
     - packages/core/src/secret-paths.ts
     - packages/core/tests/secret-paths.test.ts
@@ -249,4 +255,4 @@ contract:
     - .gitagent/planner/RULES.md
     - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
-contract_sha256: 2fd23460516fb3357f8cd385778693f5260afdc8edf4ba4508afa80418b9a5f8
+contract_sha256: 126abe9f714e1ec5ac7f749c5e6df0384d7867de72f1516fe1544fc84a72bef4
