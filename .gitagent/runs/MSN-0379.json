@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0379",
   "mission_path": ".gitagent/missions/MSN-0379.operation-admission-discovery.yaml",
-  "head": "ea38ad9175cc49eaffc81ac67a1286584e3afa8a",
-  "tree": "77fe75d9dc4b28478671054a69c66c7bff88fa05",
-  "law_sha256": "5d22d938aeedb7494d27998c338cc6c6bce209d609c4ea9d1f6fff01ff1b8471",
+  "head": "21a0bf70ae90c5812e4c86cc8850bc168a637a47",
+  "tree": "239a98fef0ad9254b71c3797e409aec818883522",
+  "law_sha256": "96b0217a16c26a909ff18e30e258e11720aafa56c0051b41dd111c2af650ce0d",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 32408,
-      "output_sha256": "b8803bcfada7a56711958fdd22cc8da979a5280afefb8b0234bf1233969ada1c"
+      "duration_ms": 44932,
+      "output_sha256": "25d8ce4b277e6646b5aa96754a44fa0956a66e272cc60410d19b340e7e2df59d"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-16T18:30:48.298Z"
+  "issued_at": "2026-11-16T18:34:39.253Z"
 }
