@@ -48,8 +48,12 @@ interrogation:
       src/cli/tests/verify-dependency-policy.test.ts, src/cli/verify-lib.ts,
       test/conformance/build-fixtures.mjs, test/conformance/cases.yaml,
       test/conformance/golden/verify.contract.contract-dependencies.json,
-      test/conformance/README.md. Operator request: "Mission MSN-0383 for issue
-      #355 (dependency admission): work slice 3, verifier result and signing
+      test/conformance/README.md. contract.allow_dynamic_specifiers is true
+      because a file in scope already uses one:
+      packages/opengantry-verify/tests/verify-package.test.mjs loads the built
+      library with import(pathToFileURL(...)) (MSN-0342); this mission adds no
+      dynamic import. Operator request: "Mission MSN-0383 for issue #355
+      (dependency admission): work slice 3, verifier result and signing
       integration (DEP06/DEP07, DEP-T04 and the result part of DEP-T05) ... Not
       in this slice: trusted acquisition, materialization, running install
       scripts (slice 4), and canaries (slice 5)." The agent wrote these answers
@@ -295,7 +299,7 @@ interrogation:
     adr_refs:
       - ADR-0062
       - ADR-0047
-interrogation_sha256: 7c6951f14c5ab5d1ee1fd94c28cd9a2cbe655e687e7c5511b79548a7baa832be
+interrogation_sha256: cf67d1195286cbe85235a6185ef02c68cece1f08d9dc604a4405d6a84f194d27
 declared_paths:
   - .gitagent/missions/MSN-0383.dependency-verify-integration.yaml
   - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
@@ -359,4 +363,5 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/core/src/dependency-update.ts
     - packages/missions/src/trusted-automation.ts
-contract_sha256: 1ed15e53ab8b2c640f9b95b9e1f5826df20e86603d2fd25b42d135a4bd6f6c22
+  allow_dynamic_specifiers: true
+contract_sha256: 85ddb3272e53481e5a05ce6e0f3db025d0b92afdad229e34e00575157d6db60e
