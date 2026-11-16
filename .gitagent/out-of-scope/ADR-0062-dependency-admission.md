@@ -13,7 +13,7 @@ match_terms:
 
 # ADR-0062: Dependency admission — an exact, approved npm graph before install, an audit-only label until prevention is proven
 
-**Design status.** Issue #355 authorizes refining requirements, not activating anything in production. This ADR records the design for DEP01–DEP07 (issue #355, "Detailed requirements R1", 2026-11-14). Of the work slices, only slice 1 is implemented (MSN-0378): the graph parser and the graph diff. Everything else marked *proposed* is a contract the owner reviews before any slice implements it. The open questions at the end need an owner decision first.
+**Design status.** Issue #355 authorizes refining requirements, not activating anything in production. This ADR records the design for DEP01–DEP07 (issue #355, "Detailed requirements R1", 2026-11-14). Of the work slices, only slice 1 is implemented (MSN-0378): the graph parser and the graph diff. Everything else marked *proposed* is a contract the owner reviews before any slice implements it. The owner answered the open questions on 2026-11-16 (MSN-0380); the answers are recorded under "Owner decisions" at the end and take precedence over the proposals above where they differ.
 
 ## Context
 
@@ -70,11 +70,11 @@ dependencies:
   ecosystems:
     npm:
       lockfile_versions: [2, 3]
-      npm_version: "<pinned>"   # the npm acquisition runs (decision 5; open question 3)
+      npm_version: "<pinned>"   # the npm acquisition runs (decision 5; owner decision 3: exact npm 11.x)
   registries:                   # explicit; no inferred trust (DEP03)
     - https://registry.npmjs.org/
   approved_baseline_digest: "<sha256 of an imported graph>"   # DEP04
-  approval_refs:                # where approvals live (open question 1)
+  approval_refs:                # where approvals live (owner decision 1)
     - .gitagent/dependency-approvals/
   lifecycle:
     default: deny               # deny | allow-approved
@@ -170,11 +170,13 @@ Work slices after slice 1:
   - `overrides` are not in the lockfile and are not compared yet; manifest-vs-lock consistency is a later slice.
   - node-gyp builds count as install scripts only where npm sets `hasInstallScript`.
 
-## Open questions for the owner
+## Owner decisions (2026-11-16)
 
-1. **Where approvals live and who signs them.** Proposed: committed files under a Planner-protected path, judged from the base like the contract, signed by an allowlisted key. The alternatives are a ledger entry ([ADR-0043](ADR-0043-compliance-ledger-git-ref.md)) or a consumer-supplied approval reference bound to the accepted execution contract (#355 coordination).
-2. **Field names.** Are `mode`, `approved_baseline_digest`, `approval_refs`, `lifecycle` and `sources` acceptable, and does the section belong in `verify.yaml` only, or also in mission contracts ([ADR-0045](ADR-0045-mission-contracts.md))?
-3. **Pinned npm version.** Which npm version does acquisition pin, and does the parser reject lockfiles it has not been tested against, or only unknown fields?
-4. **Default sources.** Should `file:` dependencies inside the repository but outside `workspaces` (such as the iii example's `file:../../`) hold by default, or be admitted by path identity?
-5. **`devDependencies` and `optional` platform packages.** Should these be judged identically to production dependencies (proposed: yes, since they install and run scripts the same way)?
-6. **First preventive platform.** Which #356 capability-matrix cell is the first preventive target (proposed: Ubuntu 24.04 x64, Linux mechanisms only, others reported unproven)?
+The owner answered the six open questions in chat, one at a time (MSN-0380). Each question is kept with its answer.
+
+1. **Where approvals live and who signs them.** *Decision:* committed files under a Planner-protected path (`.gitagent/dependency-approvals/`, the `approval_refs` default). They are read from the base commit, as the contract is, and each must be signed by an allowlisted key. Not ledger entries ([ADR-0043](ADR-0043-compliance-ledger-git-ref.md)), and not a consumer-supplied reference.
+2. **Field names and placement.** *Decision:* the proposed names stand (`schema`, `mode`, `ecosystems.npm`, `registries`, `approved_baseline_digest`, `approval_refs`, `lifecycle`, `sources`, `limits`). The section lives in `verify.yaml` only. Missions and task contracts ([ADR-0045](ADR-0045-mission-contracts.md)) inherit it as a tighten-only floor and cannot carry their own `dependencies` block.
+3. **Pinned npm version.** *Decision:* the policy pins an exact npm 11.x version, by default the version CI tests. The parser keeps rejecting unknown fields and shapes (decision 1) but does not gate on npm version, because a lockfile does not record which npm wrote it. Bumping the pin is a policy change.
+4. **Default sources.** *Decision:* a `file:` dependency inside the repository but outside `workspaces` holds by default. An approval may admit one by its repository-relative path plus the folder's content digest at the base commit, so a change to that folder needs a new approval. The iii example's `file:../../` gets an explicit approval.
+5. **`devDependencies` and `optional` platform packages.** *Decision:* judged identically to production dependencies. Optional platform packages are approved by identity for every platform the lockfile lists, not only the platform that installs.
+6. **First preventive platform.** *Decision:* **Ubuntu 26.04 x64** (the owner changed this from the proposed 24.04), Linux mechanisms only. macOS and Windows rows are reported `unsupported` or `unproven`, and an enforced launch there refuses. The mechanism follows ADR-0063's owner decisions: the harness sandbox (Claude Code's bubblewrap first), proven by canaries.

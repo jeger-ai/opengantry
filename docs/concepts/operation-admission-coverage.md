@@ -6,7 +6,7 @@ publish: false
 
 # Operation admission: coverage of existing boundaries
 
-Status: **discovery, not a support claim.** This page inventories what exists at commit `be464fe9` (2026-11-16) for issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slice 1. It is the input to the proposed contract in [ADR-0063](../../.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md). Nothing here changes behaviour, and nothing here is a guarantee to adopters. The published enforcement page, [Enforcement boundary](enforcement-boundary.md), stays the adopter-facing description until the contract is accepted.
+Status: **discovery, not a support claim.** This page inventories what exists at commit `be464fe9` (2026-11-16) for issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slice 1. It is the input to the contract in [ADR-0063](../../.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md) (ACTIVE since 2026-11-16; nothing implemented yet). Nothing here changes behaviour, and nothing here is a guarantee to adopters. The published enforcement page, [Enforcement boundary](enforcement-boundary.md), stays the adopter-facing description until a cell is proven by a canary.
 
 **Headline: no cell in the matrix is `prevention`.** OpenGantry has no operating-system-enforced boundary of its own (ADR-0060 decision 1). The mechanisms that act before an effect are agent tool-call guards that judge strings, plus an agent sandbox configuration that `gantry cage policy` prints for a human to merge. OpenGantry has never tested that configuration at the OS level. Everything else detects after the effect (cage restore, `runtime exec` forbidden-zone scan, `cage check`, verify) or only records it.
 
@@ -36,7 +36,7 @@ A cell holds the strongest level that is honestly available. When a cell lists t
 
 | Key | Target | What exists today |
 |-----|--------|-------------------|
-| **U** | Ubuntu 24.04 x64 | All CI runs on `ubuntu-latest`. The version is not pinned, so no evidence is tied to 24.04 specifically. Claude Code's sandbox uses bubblewrap, which needs unprivileged user namespaces; Ubuntu 24.04 restricts them through AppArmor (ADR-0060 context). Whether the sandbox works on a stock 24.04 host is unverified. |
+| **U** | Ubuntu 26.04 x64 | The owner moved the Linux target row from 24.04 to 26.04 on 2026-11-16 (ADR-0063 owner decision Q2). All CI runs on `ubuntu-latest`. The version is not pinned, so no evidence is tied to 26.04 specifically. Claude Code's sandbox uses bubblewrap, which needs unprivileged user namespaces; Ubuntu restricts them through AppArmor since 24.04 (ADR-0060 context), which 26.04 is expected to keep until a probe shows otherwise. Whether the sandbox works on a 26.04 host, with or without the AppArmor profile the owner accepted as a prerequisite, is unverified. |
 | **M** | macOS 26.2+ Apple Silicon | `cage-macos.yml` runs the cage suites on `macos-latest`. The version is not pinned, so no evidence is tied to 26.2. Claude Code's sandbox uses Seatbelt. |
 | **W** | Windows 11 x64 (native, not WSL) | No CI job. The session cage is documented as unsupported (`docs/cage/limits.md`, Platforms): `listDescendantPids` returns `[]` on `win32` (`packages/cage/src/cage-process.ts:50`). Tracked hooks are bash shims. Claude Code's sandbox documents macOS, Linux and WSL2 only, so on native Windows the fragment's `sandbox` keys have no effect. Treat as unverified. |
 

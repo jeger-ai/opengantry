@@ -1,7 +1,7 @@
 ---
 id: ADR-0063
 title: Operation admission — a closed request/decision contract, and no prevention claim without proof
-status: PROPOSED
+status: ACTIVE
 match_terms:
   - operation admission
   - admission
@@ -17,7 +17,7 @@ match_terms:
 
 # ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
-**Status: PROPOSED** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-2). This records a design for owner review. It ships no code and no schema, and it changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are proposed contracts, not accepted configuration. Everything marked **Open** needs an owner decision before slice 3 starts.
+**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-2; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review. It ships no code and no schema, and it changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices; nothing is implemented yet. Where an owner decision differs from a proposal below, the decision wins.
 
 ## Context
 
@@ -33,9 +33,9 @@ The inventory ([`docs/concepts/operation-admission-coverage.md`](../../docs/conc
 - **Several authority inputs are readable or writable by a same-user candidate:** the MCP draft-token key, the break-glass anchor in the working tree, and hook code in `dist/`.
 - **Windows has no evidence at all.**
 
-ADR-0048 and ADR-0060 settle two points this design must respect. The cage detects and restores; it does not block. OpenGantry does not build its own sandbox; it configures the agent's. R1's "OS-enforced confinement" is compatible with ADR-0060 only if the confinement comes from the harness and is proven per harness and platform. Otherwise ADR-0060 decision 1 must be superseded. That is open question Q1.
+ADR-0048 and ADR-0060 settle two points this design must respect. The cage detects and restores; it does not block. OpenGantry does not build its own sandbox; it configures the agent's. R1's "OS-enforced confinement" is compatible with ADR-0060 only if the confinement comes from the harness and is proven per harness and platform. Otherwise ADR-0060 decision 1 would have to be superseded. Owner decision Q1 keeps ADR-0060 decision 1: the confinement is the harness sandbox, proven by canaries.
 
-## Decision (proposed)
+## Decision
 
 ### 1. Support levels and the no-claim rule
 
@@ -121,7 +121,7 @@ The schema id is `opengantry.admission-decision.v1`.
 - **Check and use are the same step.** The broker opens and holds the handle it checked: `openat` with `O_NOFOLLOW` against a held directory fd on POSIX, or an equivalent Windows handle. It does not re-resolve a path string after checking it.
 - **Remote mutations** use the host's conditional operations: an expected old ref for `git push --force-with-lease`, an expected head SHA for merges, an ETag or `If-Match` for API writes. The remaining race is documented per operation.
 - **No interception claim for arbitrary protocols.** `network.connect` is mediated only through a broker-held egress path, or it is `unsupported`.
-- **First adapter (slice 4):** a Linux mechanism that the slice probes and proves. Landlock is defense in depth, not a portable network policy. The selection is open question Q2.
+- **First adapter (slice 4):** a Linux mechanism that the slice probes and proves. Landlock is defense in depth, not a portable network policy. The owner chose Claude Code's bubblewrap sandbox on Ubuntu 26.04 (Q2).
 
 ### 6. Lifecycle (ADM06)
 
@@ -156,7 +156,7 @@ received ─► authorized ─► dispatch-intent ─► confirmed
 
 - AI output (risk scores, complexity, confidence, explanations, triage of a denial) is recorded as an `advisory` attachment. The decision evaluator never reads it to reach `allow`.
 - Trusted policy may name an advisory signal only to make a decision stricter: route to `held`, require human approval, or deny.
-  - Whether policy may also use advisory signals to choose among already-allowed paths is open question Q5.
+  - Whether policy may also use advisory signals to choose among already-allowed paths is answered by owner decision Q5: no, advisory signals only tighten.
 - Candidate text, generated templates, high confidence, executable helper code and candidate-side config (for example a manifest's `allowScripts`) are data, never authority. They cannot grant permission, rewrite policy, waive capability proof or create a retry.
 - Unknown or missing evidence holds.
 - Amendments to approvals and policy go through existing authority only: a Planner mission and its stamp (RULES §6.1, ADR-0045), the org floor (ADR-0042), and announced runtime relaxations where ADR-0048 already allows them. There is no AI-owned policy channel and no MCP tool that writes admission policy, as ADR-0048 decision 4 already holds for cage rules.
@@ -168,7 +168,7 @@ received ─► authorized ─► dispatch-intent ─► confirmed
   - The effect receipt carries the observed enforcement, the outcome (`confirmed`, `failed`, `unknown`, `reconciled-*`) and redacted provenance.
 - **Receipts are bound to type and version** (`opengantry.admission-receipt.v1`). Readers refuse unknown mandatory fields; they do not ignore them.
 - **Journal before dispatch.** If the receipt for `dispatch-intent` cannot be persisted, the dispatch does not happen. A privileged mutation that cannot be journaled is not performed.
-- **Protection.** Receipts are signed or otherwise protected, reusing the existing signing paths (git ssh/gpg signatures, `packages/git/src/receipt-signing.ts`; keyless Sigstore, ADR-0055). The signing key is never reachable by candidate processes. Where receipts live and how a run's receipts bind into the run record is open question Q6.
+- **Protection.** Receipts are signed or otherwise protected, reusing the existing signing paths (git ssh/gpg signatures, `packages/git/src/receipt-signing.ts`; keyless Sigstore, ADR-0055). The signing key is never reachable by candidate processes. Receipts live in a local append-only journal under the git dir, whose digest is bound into the run record (owner decision Q6).
 - **Downstream use.** Machine-readable outcomes support a downstream inbox or escalation without making the inbox or any evaluator the enforcement authority.
 
 ### 9. How #355 plugs in
@@ -190,25 +190,28 @@ received ─► authorized ─► dispatch-intent ─► confirmed
 ### 10. Relationship to existing decisions
 
 - **Not superseded:** ADR-0048, ADR-0050, ADR-0056, ADR-0057, ADR-0060. The cage keeps detecting and restoring, and cage cells stay `detection`.
-- **ADR-0060 decision 1 vs R1's broker and confinement:** open question Q1.
+- **ADR-0060 decision 1 vs R1's broker and confinement:** resolved by owner decision Q1; ADR-0060 decision 1 stands.
 - **Inventory findings that need their own missions** are listed under "Observations for follow-up" in the inventory. None is fixed here, and none changes a decision above.
 
-## Open questions for the owner
+## Owner decisions (2026-11-16)
 
-1. **Q1 — Who owns confinement.** Should OpenGantry ship its own Linux confinement adapter for candidate processes, superseding ADR-0060 decision 1 for that adapter? Or should "OS-enforced confinement" mean the harness's sandbox (Claude Code bubblewrap/Seatbelt, Codex Landlock/Seatbelt), configured by `gantry cage policy` and proven by OpenGantry canaries per harness version? The broker itself (typed operations, held handles, scoped credentials) is new under either answer.
-2. **Q2 — First Linux mechanism.** Which mechanism should slice 4 prove on Ubuntu 24.04 first? Candidates: a separate-uid broker plus Landlock for the candidate; bubblewrap with user namespaces (AppArmor-restricted on 24.04); or a cgroup v2 + seccomp-notify supervisor. Should privileged host setup be an accepted deployment prerequisite?
-3. **Q3 — Broker process model and IPC authentication.** Same-user processes can read each other's files and, without hardening, `ptrace` each other. Is a separate OS user (or a service account) required for the broker, which a `gantry` CLI alone cannot provide? If not, what counts as "candidate cannot forge a permit" for a same-user deployment, and is that cell then `unproven` by definition?
-4. **Q4 — Required levels by default.** Which families require `prevention` by default, so that a missing capability refuses launch, and which may run `detection` or `audit-only` with a label? The proposed default is: none required until a cell is proven, with the requirement declared per accepted contract.
-5. **Q5 — Advisory signals.** May trusted policy use AI advisory signals to select among allowed paths (for example the cheaper of two allowed strategies), or only to tighten (`held`, `deny`, require approval)? This ADR proposes tighten-only.
-6. **Q6 — Receipt storage.** Should admission receipts be stored in a local journal under the git dir, bound into the run record by digest (RULES §3), as ledger entries (RULES §9: digest-only, compare-and-swap appends), or in both? Ledger appends per operation may be too frequent.
-7. **Q7 — Host mutations.** Which `git.publish` and `delivery.mutate` operations get typed brokers first (push to a non-default branch, PR create, PR comment)? Where do the scoped credentials live (GitHub App installation token, OIDC in CI)? Today the agent's own token reaches every host API (inventory B18).
-8. **Q8 — Windows and macOS rows.** Which native mechanisms (job objects plus AppContainer or restricted tokens on Windows; Endpoint Security or `sandbox-exec` on macOS, the latter deprecated) are acceptable to investigate? Until one is proven, every row stays `unsupported` or `unproven` and is published as such.
-9. **Q9 — Schema delivery.** Should the request, decision and receipt shapes ship as zod schemas in `packages/core` (the repository's convention, with registry entries and conformance goldens) plus generated JSON Schema for downstream consumers, or as JSON Schema first? This ADR ships neither.
-10. **Q10 — Authority surfaces found in the inventory.** Should the draft-token key, break-glass anchor and hook-in-`dist/` findings be fixed before slice 3, since a broker that trusts any of them inherits the weakness?
+The owner answered the ten open questions in chat, one at a time (MSN-0380).
+
+1. **Q1 — Who owns confinement.** *Decision:* the harness's sandbox (Claude Code bubblewrap/Seatbelt, Codex Landlock/Seatbelt), configured by `gantry cage policy` and proven by OpenGantry canaries per harness version. ADR-0060 decision 1 stands: OpenGantry ships no sandbox. An unproven harness makes an enforced launch refuse. The broker (typed operations, held handles, scoped credentials) is new.
+2. **Q2 — First Linux mechanism.** *Decision:* Claude Code's bubblewrap sandbox on **Ubuntu 26.04 x64**, which replaces 24.04 as the Linux target row (owner change). A one-time privileged host step, the AppArmor profile that lets bwrap create user namespaces, is an accepted and documented deployment prerequisite. A later slice adds a `gantry doctor` check that reports when it is missing; an enforced launch then refuses.
+3. **Q3 — Broker process model.** *Decision:* the broker runs as the same OS user, outside the harness sandbox. "The candidate cannot forge a permit" rests on the proven sandbox boundary: the candidate cannot reach the broker's state, its socket credentials, or `ptrace` it. Without a proven sandbox the cell is `unproven` and an enforced launch refuses. A separate-user deployment may be added later as a stronger row.
+4. **Q4 — Required levels by default.** *Decision:* no family requires `prevention` by default until a cell is proven. Each accepted contract declares its own requirement.
+5. **Q5 — Advisory signals.** *Decision:* tighten-only. AI signals may only produce `held`, `deny` or require approval. They never select among, or widen, allowed paths.
+6. **Q6 — Receipt storage.** *Decision:* a local append-only journal under the git dir, with its digest bound into the run record (RULES §3). No ledger append per operation.
+7. **Q7 — Host mutations.** *Decision:* the first typed brokers are push to a non-default branch and PR create. Credentials are a short-lived GitHub App installation token held by the broker (OIDC in CI), and no host token is reachable inside the sandbox. PR comment comes later.
+8. **Q8 — Windows and macOS rows.** *Decision:* investigate the harnesses' own sandboxes first (Seatbelt on macOS; Codex's Windows sandbox). Native mechanisms (job objects plus AppContainer or restricted tokens; Endpoint Security) are fallbacks. Both rows stay `unsupported` or `unproven` until a canary proves a cell.
+9. **Q9 — Schema delivery.** *Decision:* zod schemas in `packages/core` with registry entries and conformance goldens, plus generated JSON Schema for downstream consumers.
+10. **Q10 — Authority surfaces.** *Decision:* fix all three before slice 3, as a separate mission: move the draft-token key out of the candidate's reach, read the break-glass anchor from the base commit, and make the hooks run a pinned installed `gantry` instead of the working tree's `dist/`.
 
 ## Consequences
 
-- No adopter-facing guarantee changes. The published [Enforcement boundary](../../docs/concepts/enforcement-boundary.md) page stays the description of today's behaviour, and the inventory is unpublished until the owner accepts a contract.
+- No adopter-facing guarantee changes. The published [Enforcement boundary](../../docs/concepts/enforcement-boundary.md) page stays the description of today's behaviour, and the inventory stays unpublished until a cell is proven by a canary.
 - The vocabulary (five levels, seven families, four decisions, the lifecycle states) is fixed for the following slices, so tests, capability reports and #355 can use the same names.
 - Prevention claims become expensive by design. Each one needs a canary per platform and harness, and the matrix publishes the cells that have none.
-- Accepting this ADR (status `ACTIVE`) requires answers to Q1 to Q4 at least. Q1 may require a superseding amendment to ADR-0060.
+- Accepting this ADR (status `ACTIVE`) required answers to Q1 to Q4 at least. The owner answered all ten on 2026-11-16. Q1 keeps ADR-0060 decision 1, so no superseding amendment is needed.
+- Before slice 3 (the broker), a separate mission fixes the three authority surfaces of Q10.
