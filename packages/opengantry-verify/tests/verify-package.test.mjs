@@ -29,13 +29,17 @@ const API = [
   "GantryUserError",
   "VERIFY_BASELINE_SCHEMA",
   "VERIFY_CONTRACT_SCHEMA",
+  "VERIFY_DEPENDENCIES_SCHEMA",
   "VERIFY_RESULT_SCHEMA",
+  "VERIFY_RESULT_SCHEMA_V2",
   "adaptPlan",
   "checkKeylessSignature",
   "checkVerifyResult",
+  "contentDigestAt",
   "parseVerifyContract",
   "runVerifyContract",
   "signVerifyResultKeyless",
+  "verifyDependenciesProblem",
   "verifyResultJUnit",
   "verifyResultSarif",
   "writeVerifyBaseline",
@@ -156,4 +160,41 @@ test("types: a consumer type-checks against dist/index.d.ts through the package 
   );
   const tsc = spawnSync(path.join(repoRoot, "node_modules", ".bin", "tsc"), ["-p", consumer], { encoding: "utf8" });
   assert.equal(tsc.status, 0, `${tsc.stdout}${tsc.stderr}`);
+});
+
+test("types: the declarations index.d.ts reaches import no package the slim package does not depend on (MSN-0383)", () => {
+  // The consumer check above resolves through a symlink into this repository, where every dev dependency is
+  // installed; this walk catches a declaration that needs one (zod, which the bundle inlines but does not declare).
+  const map = { "#core/": "types/core/", "#git/": "types/git/", "#verify/": "types/verify/" };
+  const seen = new Set();
+  const bare = new Set();
+  const visit = (rel) => {
+    if (seen.has(rel)) return;
+    seen.add(rel);
+    const text = fs.readFileSync(path.join(pkgDir, "dist", rel), "utf8");
+    for (const [, spec] of text.matchAll(/(?:from|import)\s*\(?\s*"([^"]+)"/g)) {
+      const alias = Object.keys(map).find((k) => spec.startsWith(k));
+      if (alias) visit(`${map[alias]}${spec.slice(alias.length).replace(/\.js$/, ".d.ts")}`);
+      else if (spec.startsWith(".")) visit(path.posix.join(path.posix.dirname(rel), spec.replace(/\.js$/, ".d.ts")));
+      else if (!spec.startsWith("node:")) bare.add(spec.split("/")[0]);
+    }
+  };
+  visit("index.d.ts");
+  assert.ok(seen.size > 5, "the walk follows the #core, #git and #verify imports");
+  assert.deepEqual([...bare].filter((d) => !["commander", "sigstore"].includes(d)), [], `bare imports reachable from index.d.ts: ${[...bare].join(", ")}`);
+});
+
+test("types: no published declaration imports a package the slim package does not depend on, reachable or not (MSN-0383 review)", () => {
+  const dry = JSON.parse(execFileSync(npm, ["pack", "--dry-run", "--json"], { cwd: pkgDir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }))[0];
+  const declarations = dry.files.map((f) => f.path).filter((f) => f.endsWith(".d.ts"));
+  assert.ok(declarations.includes("dist/types/core/dependency-policy.d.ts"), "core declarations are still published");
+  for (const gone of ["dist/types/core/schemas/verify-dependencies-schema.d.ts", "dist/types/core/schemas/mission-schema.d.ts"]) {
+    assert.ok(!declarations.includes(gone), `${gone} imports zod and is not published`);
+  }
+  const offenders = declarations.filter((f) =>
+    [...fs.readFileSync(path.join(pkgDir, f), "utf8").matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)].some(
+      ([, spec]) => !/^(\.|#|node:)/.test(spec) && !["commander", "sigstore"].includes(spec.split("/")[0]),
+    ),
+  );
+  assert.deepEqual(offenders, []);
 });

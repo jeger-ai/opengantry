@@ -31,6 +31,7 @@ Normalizers replace what legitimately differs between runs: the fixture path (`<
 | `mission-record-stale` | `mission-record` plus a later commit under the skill's TMVC root |
 | `cage-tamper` | commits that change `.env`, a workflow, a lockfile and a source file |
 | `contract-standalone` | `verify.yaml` and `gate.json` without `.gitagent/`; its cases are skipped until MSN-0277 lands |
+| `contract-dependencies` | `verify.yaml` with an audit-mode `dependencies` policy, then a change that adds one unapproved npm package (MSN-0383: the `opengantry.verify-result.v2` shape) |
 
 ## Running
 

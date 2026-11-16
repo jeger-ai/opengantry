@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { dependencyPolicyRevision } from "#core/dependency-policy.js";
 import { GantryUserError } from "#core/user-error.js";
 import { gitRevParse, gitRun } from "#git/git.js";
 import {
@@ -25,6 +26,7 @@ import {
   type LoadedVerifyContract,
   type VerifyContract,
 } from "./contract.js";
+import { judgeDependencies, verifyDependenciesProblem, type VerifyDependencies } from "./dependencies.js";
 import { addedLinesOf, changedFiles, countAddedLines } from "./diff.js";
 import { patternCoversPath } from "#core/path-glob.js";
 import { judgePath, pathLaw } from "#core/path-law.js";
@@ -34,6 +36,11 @@ import { judgeCriticality, type CriticalityVerdict } from "./criticality.js";
 import { evaluateTestIntegrity, type TestFileCounts, type TestMetric } from "./test-integrity.js";
 
 export const VERIFY_RESULT_SCHEMA = "opengantry.verify-result.v1" as const;
+/**
+ * A result with a `dependencies` section (issue #355 slice 3). A reader that only knows v1 refuses it by its schema
+ * check instead of ignoring the section (ADR-0062 DEP06); a result without the section stays v1.
+ */
+export const VERIFY_RESULT_SCHEMA_V2 = "opengantry.verify-result.v2" as const;
 export const VERIFY_BASELINE_SCHEMA = "opengantry.verify-baseline.v1" as const;
 export const DEFAULT_VERIFY_CONTRACT = "verify.yaml";
 export const DEFAULT_VERIFY_BASELINE = "verify-baseline.json";
@@ -42,7 +49,7 @@ export const UNCOMMITTED_PROBLEM = "the tree has uncommitted changes: commit fir
 
 /** Digest-only verify result (ADR-0051): paths, counts and verdicts, never file contents or command output. */
 export interface VerifyContractResult {
-  schema: typeof VERIFY_RESULT_SCHEMA;
+  schema: typeof VERIFY_RESULT_SCHEMA | typeof VERIFY_RESULT_SCHEMA_V2;
   status: "pass" | "fail";
   mode: VerifyMode;
   head: string;
@@ -70,6 +77,12 @@ export interface VerifyContractResult {
   checks: VerifyCheckResult[];
   /** ADR-0051 decision 14: how much the change needs a person; inside the signed payload. Never a problem by itself. */
   criticality: CriticalityVerdict;
+  /**
+   * Dependency admission (ADR-0062, `opengantry.verify-dependencies.v1`): present, and the schema v2, exactly when the
+   * effective contract has a `dependencies` policy. Inside the signed payload. Under `mode: enforce` a hold or fail is
+   * a problem; under `audit` it is reported only.
+   */
+  dependencies?: VerifyDependencies;
   problems: string[];
   /** `--sign`: the receipt-signing envelope over the canonical result without this field; `--sign keyless`: a Sigstore bundle. */
   signature?: ReceiptSignature | KeylessSignature;
@@ -88,6 +101,8 @@ export interface VerifyContractOptions {
   sign?: boolean;
   /** `--criticality-record <dir>`: write the criticality classifier's input and output there (it may hold the diff). */
   recordDir?: string;
+  /** UTC timestamp (`2026-11-16T00:00:00Z`) dependency approvals are judged at; default the current time. */
+  now?: string;
 }
 
 interface Prepared {
@@ -139,7 +154,12 @@ function prepare(opts: VerifyContractOptions): Prepared {
 function withRepositoryLaw(root: string, base: string, loaded: LoadedVerifyContract): { contract: VerifyContract; inherited: VerifyContractResult["inherited"] } {
   if (loaded.source === "base" && loaded.path === DEFAULT_VERIFY_CONTRACT) return { contract: loaded.contract, inherited: null };
   const at = gitRun(root, ["cat-file", "blob", `${base}:${DEFAULT_VERIFY_CONTRACT}`]);
-  if (!at.ok) return { contract: loaded.contract, inherited: null };
+  if (!at.ok) {
+    // Dependency authority comes from the base verify.yaml only (ADR-0062 owner decision 2): with no floor to tighten,
+    // a task contract's own section would supply it.
+    if (loaded.contract.dependencies) throw contractError(`dependencies: ${loaded.path} cannot supply a dependencies policy; the base commit has no ${DEFAULT_VERIFY_CONTRACT} to inherit one from`);
+    return { contract: loaded.contract, inherited: null };
+  }
   let repo: VerifyContract;
   try {
     repo = parseVerifyYaml(at.stdout);
@@ -235,9 +255,10 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   });
   const recordDir = opts.recordDir ? path.resolve(opts.cwd ?? process.cwd(), opts.recordDir) : undefined;
   const criticality = judgeCriticality(p.loaded.contract.criticality, { root: p.root, base: p.base, head: p.head, worktree, changed, added: size.added, recordDir });
+  const dependencies = judgeDependencySection(p, changed, worktree, problems, opts.now);
   const { contract, ...loaded } = p.loaded;
   const result: VerifyContractResult = {
-    schema: VERIFY_RESULT_SCHEMA,
+    schema: dependencies ? VERIFY_RESULT_SCHEMA_V2 : VERIFY_RESULT_SCHEMA,
     status: problems.length > 0 ? "fail" : "pass",
     mode,
     head: p.head,
@@ -254,6 +275,7 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
     tests,
     checks,
     criticality,
+    ...(dependencies ? { dependencies } : {}),
     problems,
   };
   if (!opts.sign) return result;
@@ -261,6 +283,19 @@ export function runVerifyContract(opts: VerifyContractOptions = {}): VerifyContr
   const signature = signReceiptMessage(p.root, canonicalReceiptUtf8(JSON.parse(JSON.stringify(result)) as VerifyContractResult), "canonical_json_utf8");
   if (!signature) throw prep("GXT_VERIFY_SIGN_NO_KEY", "--sign needs a git signing key (git config user.signingkey, gpg.format ssh or gpg)");
   return { ...result, signature };
+}
+
+/** The dependency section when the effective contract has a policy; under enforce a hold or fail is a problem. */
+function judgeDependencySection(p: Prepared, changed: string[], worktree: boolean, problems: string[], now?: string): VerifyDependencies | undefined {
+  const policy = p.loaded.contract.dependencies;
+  if (!policy) return undefined;
+  const at = now ?? new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  const found = judgeDependencies({ root: p.root, base: p.base, head: p.head, worktree, changed, policy, now: at });
+  if (policy.mode === "enforce" && found.outcome !== "pass") {
+    const codes = [...new Set(found.reasons.filter((r) => r.severity !== "info").map((r) => r.code))];
+    problems.push(`dependencies: ${found.outcome} under mode enforce (${codes.join(", ")})`);
+  }
+  return found;
 }
 
 function judgeTests(p: Prepared, changed: string[], worktree: boolean, problems: string[]): VerifyContractResult["tests"] {
@@ -328,13 +363,14 @@ export function checkVerifyResult(
     throw prep("GXT_VERIFY_RESULT_UNREADABLE", `cannot read result ${resultFile}: ${err instanceof Error ? err.message : String(err)}`);
   }
   const problems = [
-    result.schema !== VERIFY_RESULT_SCHEMA && `not a ${VERIFY_RESULT_SCHEMA} result`,
+    result.schema !== VERIFY_RESULT_SCHEMA && result.schema !== VERIFY_RESULT_SCHEMA_V2 && `not a ${VERIFY_RESULT_SCHEMA} or ${VERIFY_RESULT_SCHEMA_V2} result`,
     result.status !== "pass" && `the result says ${String(result.status)}`,
     result.mode !== "full" && `the result is a ${String(result.mode)} run, not a full run`,
     result.head !== p.head && `the result is for ${String(result.head).slice(0, 12)}, HEAD is ${p.head.slice(0, 12)}`,
     result.base !== p.base && `the result was measured from ${String(result.base).slice(0, 12)}, the base is ${p.base.slice(0, 12)}`,
     result.contract?.sha256 !== p.loaded.sha256 && "the contract changed after the result was written",
     p.dirty && "the tree has uncommitted changes",
+    ...dependencyResultProblems(result, p),
   ].filter((x): x is string => typeof x === "string");
   let signer: string | null = null;
   if (opts.allowedSigners) {
@@ -348,6 +384,29 @@ export function checkVerifyResult(
     }
   }
   return { ok: problems.length === 0, problems, signer, result };
+}
+
+/**
+ * The dependency section of a stored result against the effective contract: a v2 result must carry a valid section
+ * for this base, head and policy revision, a v1 result none, and a contract with a policy needs the section.
+ */
+function dependencyResultProblems(result: Partial<VerifyContractResult>, p: Prepared): string[] {
+  const has = Object.hasOwn(result, "dependencies");
+  const policy = p.loaded.contract.dependencies;
+  if (result.schema !== VERIFY_RESULT_SCHEMA_V2) {
+    if (has) return [`a ${VERIFY_RESULT_SCHEMA} result cannot carry a dependencies section`];
+    return policy ? ["the contract has a dependencies policy and the result has no dependencies section"] : [];
+  }
+  if (!has) return [`a ${VERIFY_RESULT_SCHEMA_V2} result must carry a dependencies section`];
+  const invalid = verifyDependenciesProblem(result.dependencies);
+  if (invalid) return [`the dependencies section is malformed (${invalid})`];
+  const d = result.dependencies!;
+  return [
+    (d.base !== result.base || d.head !== result.head) && "the dependencies section names another base or head than the result",
+    !policy && "the result has a dependencies section the contract does not ask for",
+    policy && d.policy_revision !== dependencyPolicyRevision(policy) && "the dependencies section was judged under another policy revision",
+    policy?.mode === "enforce" && d.outcome !== "pass" && `dependencies ${d.outcome} under mode enforce`,
+  ].filter((x): x is string => typeof x === "string");
 }
 
 export type { VerifyBaselineFailures };

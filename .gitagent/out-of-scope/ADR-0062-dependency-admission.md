@@ -13,7 +13,7 @@ match_terms:
 
 # ADR-0062: Dependency admission — an exact, approved npm graph before install, an audit-only label until prevention is proven
 
-**Design status.** Issue #355 authorizes refining requirements, not activating anything in production. This ADR records the design for DEP01–DEP07 (issue #355, "Detailed requirements R1", 2026-11-14). Of the work slices, slice 1 (MSN-0378: the graph parser and the graph diff) and slice 2 (MSN-0382: the closed policy section, signed approvals and the pure admission evaluator, not yet wired into `gantry verify`) are implemented. Everything else marked *proposed* is a contract the owner reviews before any slice implements it. The owner answered the open questions on 2026-11-16 (MSN-0380); the answers are recorded under "Owner decisions" at the end and take precedence over the proposals above where they differ.
+**Design status.** Issue #355 authorizes refining requirements, not activating anything in production. This ADR records the design for DEP01–DEP07 (issue #355, "Detailed requirements R1", 2026-11-14). Of the work slices, slice 1 (MSN-0378: the graph parser and the graph diff), slice 2 (MSN-0382: the closed policy section, signed approvals and the pure admission evaluator) and slice 3 (MSN-0383: the evaluator wired into `gantry verify --contract`, the signed `dependencies` result section) are implemented. Everything else marked *proposed* is a contract the owner reviews before any slice implements it. The owner answered the open questions on 2026-11-16 (MSN-0380); the answers are recorded under "Owner decisions" at the end and take precedence over the proposals above where they differ.
 
 ## Context
 
@@ -163,7 +163,7 @@ Verification is pure `node:crypto` in core: ed25519 SSHSIG with sha256 or sha512
 
 The candidate's `package.json` settings (`allowScripts`, `.npmrc`, `overrides`) are data. Only trusted policy supplies authority. An AI evaluator may explain a hold or recommend; it cannot approve or waive one, and no AI output is an input to the evaluator.
 
-### 5. Two boundaries: pre-execution admission and final diff verification (DEP05, proposed)
+### 5. Two boundaries: pre-execution admission and final diff verification (DEP05; final diff verification implemented in slice 3, pre-execution admission proposed)
 
 These are two separate checks, and the result names which one ran:
 
@@ -178,7 +178,7 @@ These are two separate checks, and the result names which one ran:
 
   OpenGantry runs no sandbox of its own (ADR-0060). So preventive enforcement exists only where #356's capability matrix proves a host mechanism for the operation (`dependency.materialize`, `process.spawn`, `network.connect`). Where it does not, an enforced launch **refuses** rather than claim confinement. The cage freeze (ADR-0048) remains detection and restore.
 
-### 6. Receipt (DEP06, proposed)
+### 6. Receipt (DEP06, slice 3: implemented for final diff verification)
 
 The verify result gains an additive, versioned `dependencies` field with:
 
@@ -188,6 +188,26 @@ The verify result gains an additive, versioned `dependencies` field with:
 - `enforcement` (`audit` | `prevent`) together with the preventive capability identity from #356.
 
 It is covered by the existing `--sign` and keyless signatures ([ADR-0055](ADR-0055-keyless-verify-signatures.md)), so it is bound to head, base and contract. A mandatory policy section that a reader does not know is a refusal, not a pass.
+
+**As implemented (slice 3, MSN-0383).** `packages/verify/src/dependencies.ts` reads the inputs and calls the evaluator; `packages/verify/src/run.ts` adds the section; `packages/core/src/schemas/verify-dependencies-schema.ts` is its zod schema (`zod/mini`, so the slim package stays small).
+
+- **When.** Exactly when the effective contract has a `dependencies` policy. The result is then `opengantry.verify-result.v2`; without a policy it stays `opengantry.verify-result.v1`, unchanged. Every released reader (`checkVerifyResult` before slice 3) accepts only the v1 schema name, so it refuses a v2 result instead of ignoring the section. The new reader accepts both, refuses a v1 result that carries a section, a v2 result without one, a malformed section (strict zod schema), a section for another base, head or policy revision, and a v1 result for a contract that has a policy.
+- **Trusted inputs.** All from the base commit with git object reads (`git cat-file`, `git ls-tree`), never the working tree: the policy (the base `verify.yaml`, merged tighten-only); the files under `approval_refs`; the allowed signers (`.gitagent/foreman/PLANNER.signing.pub`); the base graph (base lockfile plus its sibling `package.json`); the baseline graph; and the content digests of `file:` folders. Only the head lockfile and manifest come from the change (from the working tree with `--worktree`). Lockfiles are parsed with the effective `limits`, and the head lockfile's byte length is passed. The time approvals are judged at is the run's clock.
+- **Task contracts.** A task contract never supplies the policy (owner decision 2). When the base has no `verify.yaml`, or its `verify.yaml` has no `dependencies` section, a task contract that carries one is refused (`GXT_VERIFY_CONTRACT_INVALID`). This closes the gap slice 2 disclosed in `run.ts`.
+- **Changed files.** Of the paths the run already judges (base...head), these are dependency files: any `package.json`, `package-lock.json`, `npm-shrinkwrap.json` and `.npmrc` at any depth, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, and anything under a `node_modules/` segment. Names and the `node_modules` segment are matched case-insensitively, because npm reads `PACKAGE-LOCK.JSON` on a case-insensitive checkout. Each changed npm lockfile that exists at head is judged by the evaluator. Around it, verify holds:
+  - `unsupported_dependency_file`: the four unsupported lockfile names, and a case variant of any judged name that is not the exact name. A lockfileVersion 1 lockfile holds through the evaluator (`graph_hold`).
+  - `npm_config_changed`: an added, changed or removed `.npmrc` at any depth. The candidate's npm configuration (registry, auth, script settings) is data, never authority. The approval format has no entry for it, and reusing `files` (which admits `file:` sources of one lockfile's graph) would not fit, so it always holds under enforce; a `.npmrc` change goes through the Planner in a change of its own (review round, PR #368).
+  - `node_modules_changed`: committed `node_modules` content bypasses the lockfile.
+  - `manifest_without_lock_change`: a changed `package.json` whose governing lockfile did not change. The governing lockfile is npm's: the nearest directory at or above it with `npm-shrinkwrap.json`, else `package-lock.json` (at head, or at base for a removed manifest).
+  - `manifest_without_lockfile`: a `package.json` with no lockfile at or above it.
+  - `manifest_lock_mismatch`: the head `package.json` root edges (`dependencies`, `devDependencies`, `optionalDependencies`, `peerDependencies`) or `workspaces` differ from the lockfile root. That is as far as slice 1 reads a manifest; `overrides` are not compared.
+  - `lockfile_missing`: a lockfile removed while its `package.json` stays (`lockfile_removed` is info when both go).
+- **Baseline graph.** The base graph when its digest is `approved_baseline_digest`; otherwise the newest of the last 50 revisions of that lockfile behind the base whose graph has that digest; otherwise none, so the evaluator holds `baseline_unavailable`. The digest is that of the graph parsed with the sibling `package.json`, which the result reports as `base_graph` for import.
+- **Content digests.** `opengantry.content-digest.v1` of a repository path: sha256 of the canonical JSON of every blob under it (path relative to the given path, git mode, sha256 of the bytes), sorted. A path that is absent, holds a submodule, or exceeds 10,000 files or 64 MiB has none, so an approval cannot match. A folder the change leaves alone is digested at the base; a folder the change edits is digested at the head commit, the content npm would install, so it is admitted only by an approval at the base for exactly that new content (owner decision 4). An edited folder has no digest in worktree mode, nor does the repository root (`.`) once anything changed, since its content includes the approval that would name it.
+- **Edited folders of an unchanged lockfile.** Every npm lockfile at head that the change did not touch is judged as well when the change edits one of its `file:` sources or local folders, or a `workspace` folder no base glob of that lockfile covers (`local_folder_changed`, info, names the folder; the evaluator then holds `source_file` unless the new digest is approved). A workspace a base glob covers needs no approval (decision 3), so editing it judges nothing. Without this, a change to `vendor/x` behind an unchanged `x: file:vendor/x` passed with no dependency file judged (review round, PR #368).
+- **Section.** `opengantry.verify-dependencies.v1`: `outcome` (the worst reason), `mode`, `enforcement` (always `audit`, decision 5), `base`, `head`, `policy_revision`, `ecosystems` (`["npm"]`), the changed dependency `files`, per judged lockfile its `outcome`, `base_graph`, `head_graph`, `graph_diff` (sha256 of the canonical diff) and `approvals_used`, the union of `approvals_used`, and the sorted `reasons` (code, severity, file, location, a detail of at most 300 characters). No lockfile or manifest contents and no secrets: graph sources are credential-free (decision 1). The full diff stays out; its digest binds it.
+- **Outcome.** Under `mode: enforce` a hold or fail is a verify problem, so the run fails closed. Under `audit` it is reported, labelled in the summary, SARIF (warning) and JUnit (skipped), and does not fail the run. No preventive capability identity is recorded: slice 3 claims no prevention.
+- **No exemption.** `gantry verify --contract` never consults the `dependency_update` trusted automation. A test shows a bot bump that `manifestUpdateProblem` and `lockfileUpdateProblem` accept still holds under enforce without approval, and passes with a matching approval (DEP-T04).
 
 ### 7. Outcomes (DEP07, slice 2: implemented as a library verdict)
 
@@ -209,7 +229,7 @@ The reason codes:
 | `hold` | `invalid_input`, `graph_hold`, `unsupported_lockfile`, `too_many_nodes`, `lockfile_too_large`, `too_deep`, `baseline_unavailable`, `approvals_too_large`, `approval_invalid`, `approval_outside_refs`, `registry_not_allowed`, `integrity_missing`, `source_git`, `source_url`, `source_file`, `source_external`, `source_bundled`, `source_shrinkwrap`, `source_unresolved`, `local_outside_repository`, `link_target_missing`, `root_workspaces_changed`, `unapproved_identity`, `approval_stale`, `approval_expired`, `approval_revoked`, `lifecycle_denied`, `lifecycle_unapproved`, `root_manifest_missing` |
 | `info` | `approval_inactive` (an unusable approval nothing needed) |
 
-Malformed input holds or fails; it never passes. Under `lifecycle.default: deny`, no approval or baseline permits a lifecycle script. Dev and optional packages are judged like production ones (owner decision 5): each platform package the lockfile lists needs its own approval. `mode: audit` yields the same verdict, labelled `audit`. The result is not wired into `gantry verify` yet, and not signed (slice 3). An unknown required enforcement capability belongs to slice 4.
+Malformed input holds or fails; it never passes. Under `lifecycle.default: deny`, no approval or baseline permits a lifecycle script. Dev and optional packages are judged like production ones (owner decision 5): each platform package the lockfile lists needs its own approval. `mode: audit` yields the same verdict, labelled `audit`. Slice 3 wires the result into `gantry verify --contract` and its signed result (decision 6). An unknown required enforcement capability belongs to slice 4.
 
 Revocation stops new execution and future reuse. Effects that already happened need remediation; nothing claims a rollback.
 
@@ -224,7 +244,7 @@ The sequence is: audit-only diagnosis (the result shows the diff and what would 
 Work slices after slice 1:
 
 2. The closed policy and authority contract (the parser for decision 2, approvals, revocation). *Implemented (MSN-0382)*: the policy section, the approval and revocation formats, SSHSIG verification and the pure evaluator. Nothing calls the evaluator outside tests.
-3. Verifier result and signing integration (decision 6): reading the lockfiles, approvals, allowed signers and content digests at base, choosing the baseline graph, and adding the verdict to the signed result. The policy must come from the base `verify.yaml`: today a task contract loaded when the base has no `verify.yaml` is used without any merge (`packages/verify/src/run.ts`), so its own `dependencies` section, baseline included, would not pass through `mergeDependencyPolicy`.
+3. Verifier result and signing integration (decision 6): reading the lockfiles, approvals, allowed signers and content digests at base, choosing the baseline graph, and adding the verdict to the signed result. *Implemented (MSN-0383)*, including the fix for a task contract loaded when the base has no `verify.yaml`: its own `dependencies` section is now refused instead of used unmerged.
 4. The trusted acquisition and admission adapter (decision 5, on #356's boundary).
 5. Malicious install-script canaries (direct install, nested commands, alternate entrypoints, restored caches, lockfile/policy substitution between approval and use) and downstream compatibility.
 
@@ -234,6 +254,10 @@ Work slices after slice 1:
 - The core layer grows by one module (budget raised in MSN-0378). There is no matching deletion in core: every core export is used outside its module.
 - Slice 2 (MSN-0382) adds three core modules (policy, approval, admission; about 960 lines and 24 exports) and the section parser in the verify layer. Both budgets are raised for this named feature; no deletion inside the mission's scope offsets it. Approvals add a second signature format beside the verify receipt's (same SSH key family, separate namespace). Verification is pure, so admission needs no `ssh-keygen` at verify time.
 - A lockfile npm accepts may still hold here: an unknown field written by a future npm version, or a v2 legacy tree that disagrees with `packages`. The fix is a reviewed parser update, not a looser parser.
+- Slice 3 (MSN-0383) adds one verify module and one core schema module, and the slim verify package inlines `zod/mini`. Limits of slice 3:
+  - The baseline applies to whichever lockfile's graph it names; another changed lockfile in the same repository holds `baseline_unavailable` when the policy names a baseline.
+  - A `file:` folder approval over the repository root (`file:../../` from a nested lockfile) cannot be made practical: the digest covers the whole repository and changes with every commit.
+  - "Base" is the commit the run is given; the changed files are measured from the merge base, as for the rest of verify.
 - Limits of slice 1:
   - Duplicate JSON keys resolve last-wins, as in npm's own `JSON.parse`, so this parser and npm see the same entry.
   - Workspace `package.json` lifecycle scripts are not read; only the lock's `hasInstallScript` and the root manifest are.

@@ -76,7 +76,7 @@ export interface VerifyContract {
   criticality: CriticalityRule | null;
   /**
    * `dependencies` (ADR-0062, `opengantry.dependency-policy.v1`): verify.yaml only, inherited tighten-only by a task
-   * contract; null when the contract has none. Parsed and merged here; not judged by verify yet (issue #355 slice 3).
+   * contract (never supplied by one); null when the contract has none. Judged by verify (dependencies.ts, issue #355 slice 3).
    */
   dependencies: DependencyPolicy | null;
   /** Keys read but not applied (gate.json `cage_protect`, `part`); reported once on stderr. */
@@ -306,6 +306,8 @@ export function parseVerifyYaml(text: string): VerifyContract {
  * task's, tighten-only. Checks, size and allowed paths stay the task's (ADR-0051, MSN-0279).
  */
 export function mergeRepositoryLaw(task: VerifyContract, repo: VerifyContract): VerifyContract {
+  // Only the repository section supplies dependency authority (ADR-0062 owner decision 2); a task may only tighten it.
+  if (task.dependencies && !repo.dependencies) throw contractError("dependencies: a task contract cannot supply a dependencies policy; the repository verify.yaml has none to tighten");
   const layers = new Map<string, VerifyLayer>();
   for (const l of [...repo.layers, ...task.layers]) {
     const seen = layers.get(l.name);

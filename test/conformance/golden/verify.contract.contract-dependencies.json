@@ -1,0 +1,94 @@
+{
+  "id": "verify.contract.contract-dependencies",
+  "fixture": "contract-dependencies",
+  "args": [
+    "verify",
+    "--contract",
+    "verify.yaml",
+    "--base",
+    "HEAD~1",
+    "--json"
+  ],
+  "exit": 0,
+  "stdout": {
+    "schema": "opengantry.verify-result.v2",
+    "status": "pass",
+    "mode": "full",
+    "head": "<SHA>",
+    "base": "<SHA>",
+    "contract": {
+      "path": "verify.yaml",
+      "sha256": "<SHA256>",
+      "source": "base",
+      "format": "verify_yaml",
+      "ignored": []
+    },
+    "written": "<TS>",
+    "paths": {
+      "changed": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "outside": [],
+      "forbidden": []
+    },
+    "size": {
+      "added": 14,
+      "max": null,
+      "files": 2
+    },
+    "rules": [],
+    "inherited": null,
+    "imports": [],
+    "layers": [],
+    "skipped": [],
+    "tests": null,
+    "checks": [],
+    "criticality": {
+      "level": "unknown",
+      "source": "none",
+      "paths_level": null,
+      "classes": [],
+      "unclassified": [],
+      "classifier": null
+    },
+    "dependencies": {
+      "schema": "opengantry.verify-dependencies.v1",
+      "outcome": "hold",
+      "mode": "audit",
+      "enforcement": "audit",
+      "base": "<SHA>",
+      "head": "<SHA>",
+      "policy_revision": "<SHA256>",
+      "ecosystems": [
+        "npm"
+      ],
+      "files": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "lockfiles": [
+        {
+          "path": "package-lock.json",
+          "outcome": "hold",
+          "base_graph": "<SHA256>",
+          "head_graph": "<SHA256>",
+          "graph_diff": "<SHA256>",
+          "approvals_used": []
+        }
+      ],
+      "approvals_used": [],
+      "reasons": [
+        {
+          "code": "unapproved_identity",
+          "severity": "hold",
+          "file": "package-lock.json",
+          "location": "node_modules/is-number",
+          "detail": "is-number@7.0.0 registry:https://registry.npmjs.org/ sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng== is not in the baseline or any approval"
+        }
+      ]
+    },
+    "problems": []
+  },
+  "stderr_codes": []
+}
