@@ -140,6 +140,7 @@ function admit(head: NpmGraph, input: Partial<AdmissionInput> = {}): DependencyA
     allowedSigners: SIGNERS,
     contentDigests: {},
     now: NOW,
+    headLockfileBytes: 1000,
     ...input,
   });
 }
@@ -309,7 +310,60 @@ test("dependency admission: workspaces and links into them need no approval (MSN
     "packages/w": { name: "w", version: "1.0.0" },
   });
   const baseline = graphOf({ ...BASE, "": { name: "app", version: "1.0.0", workspaces: ["packages/*"], dependencies: { a: "^1.0.0" } } });
-  passes(admit(head, { baseline: ok(baseline), policy: policyOf({ approved_baseline_digest: baseline.digest }) }));
+  // The glob must exist at base: the base graph is the authority for workspaces, not the head lockfile.
+  passes(admit(head, { base: ok(baseline), baseline: ok(baseline), policy: policyOf({ approved_baseline_digest: baseline.digest }) }));
+});
+
+// Review round (PR #366, finding 1): a workspace glob written into the head lockfile is not authority.
+const wsRoot = (workspaces: string[]) => ({ name: "app", version: "1.0.0", workspaces, dependencies: { a: "^1.0.0" } });
+const folderAt = (location: string, workspaces: string[]): NpmGraph => {
+  const name = location.slice(location.lastIndexOf("/") + 1);
+  return graphOf({ ...BASE, "": { ...wsRoot(workspaces), dependencies: { a: "^1.0.0", [name]: `file:${location}` } }, [`node_modules/${name}`]: { resolved: location, link: true }, [location]: { name, version: "1.0.0" } });
+};
+
+test("dependency admission: a workspace glob that exists only in the head lockfile admits nothing (MSN-0382)", () => {
+  const head = folderAt("vendor/evil", ["vendor/*"]);
+  assert.equal(head.nodes.find((n) => n.location === "vendor/evil")!.source.kind, "workspace", "slice 1 calls it a workspace by the head glob");
+  const r = admit(head);
+  holds(r, "source_file", "vendor/evil");
+  holds(r, "root_workspaces_changed", "");
+});
+
+test("dependency admission: head globs `../*` and `**` do not admit a folder outside the repository (MSN-0382)", () => {
+  for (const glob of ["../*", "**"]) {
+    const head = folderAt("../outside", [glob]);
+    assert.equal(head.nodes.find((n) => n.location === "../outside")!.source.kind, "workspace", glob);
+    const r = admit(head);
+    holds(r, "local_outside_repository", "../outside");
+    holds(r, "root_workspaces_changed", "");
+  }
+  // Even a base glob does not make a folder outside the repository a workspace.
+  const base = graphOf({ ...BASE, "": wsRoot(["../*"]) });
+  holds(admit(folderAt("../outside", ["../*"]), { base: ok(base), baseline: ok(base), policy: policyOf({ approved_baseline_digest: base.digest }) }), "local_outside_repository", "../outside");
+});
+
+test("dependency admission: an unchanged base workspace still passes; a dropped glob is a root change (MSN-0382)", () => {
+  const base = graphOf({ ...BASE, "": wsRoot(["packages/*"]) });
+  const at = { base: ok(base), baseline: ok(base), policy: policyOf({ approved_baseline_digest: base.digest }) };
+  passes(admit(folderAt("packages/w", ["packages/*"]), at));
+  const dropped = folderAt("packages/w", []);
+  holds(admit(dropped, at), "root_workspaces_changed", "");
+  holds(admit(dropped, at), "source_file", "packages/w");
+});
+
+test("dependency admission: a root workspaces change needs an approval naming the globs, and new folders still need path plus digest (MSN-0382)", () => {
+  const head = folderAt("packages/w", ["packages/*"]);
+  const digest = "9".repeat(64);
+  const files = [{ path: "packages/w", content_digest: digest }];
+  const onlyGlobs = admit(head, { approvals: [approval({ head, extra: { root_workspaces: ["packages/*"] } })], contentDigests: { "packages/w": digest } });
+  holds(onlyGlobs, "source_file", "packages/w");
+  assert.ok(!onlyGlobs.reasons.some((x) => x.code === "root_workspaces_changed"), JSON.stringify(onlyGlobs.reasons));
+  holds(admit(head, { approvals: [approval({ head, files })], contentDigests: { "packages/w": digest } }), "root_workspaces_changed", "");
+  holds(admit(head, { approvals: [approval({ head, files, extra: { root_workspaces: ["vendor/*"] } })], contentDigests: { "packages/w": digest } }), "root_workspaces_changed", "");
+  passes(admit(head, { approvals: [approval({ head, files, extra: { root_workspaces: ["packages/*"] } })], contentDigests: { "packages/w": digest } }));
+  const stale = graphOf({ ...BASE, "": wsRoot(["packages/*"]) });
+  holds(admit(head, { approvals: [approval({ head: stale, files, extra: { root_workspaces: ["packages/*"] } })], contentDigests: { "packages/w": digest } }), "root_workspaces_changed", "");
+  holds(admit(head, { approvals: [approval({ head, extra: { root_workspaces: ["packages/*", "packages/*"] } })] }), "approval_invalid");
 });
 
 test("dependency admission: dev and optional platform packages are judged like production ones (MSN-0382)", () => {
@@ -411,13 +465,16 @@ test("dependency admission: malformed approval files and graph holds hold; nothi
   holds(admit(head, { approvals: [{ path: ".gitagent/dependency-approvals/x.json", text: JSON.stringify({ schema: "other" }) }] }), "approval_invalid");
   const lossy = parseNpmLockfile(lockText({ ...BASE, "node_modules/t": { ...reg("t", "2.0.0"), surprise: 1 } }));
   assert.equal(lossy.status, "hold");
-  const r = evaluateDependencyAdmission({ policy: policyOf(), lockfile: "package-lock.json", base: ok(head), head: lossy, baseline: ok(head), approvals: [], allowedSigners: SIGNERS, contentDigests: {}, now: NOW });
+  const r = evaluateDependencyAdmission({ policy: policyOf(), lockfile: "package-lock.json", base: ok(head), head: lossy, baseline: ok(head), approvals: [], allowedSigners: SIGNERS, contentDigests: {}, now: NOW, headLockfileBytes: 1000 });
   holds(r, "graph_hold");
   assert.equal(r.headGraph, null);
   const v2only = policyOf({ ecosystems: { npm: { lockfile_versions: [2], npm_version: "11.6.2" } } });
   holds(admit(head, { policy: v2only }), "unsupported_lockfile");
   holds(admit(head, { policy: policyOf({ limits: { max_nodes: 1 } }) }), "too_many_nodes");
   holds(admit(head, { now: "yesterday" }), "invalid_input");
+  holds(admit(head, { now: "2026-02-31T00:00:00Z" }), "invalid_input");
+  holds(admit(head, { now: "2026-11-16T24:00:00Z" }), "invalid_input");
+  holds(admit(head, { headLockfileBytes: -1 }), "invalid_input");
   holds(admit(head, { approvals: Array.from({ length: 1001 }, (_, i) => ({ path: `.gitagent/dependency-approvals/${String(i)}.json`, text: "{}" })) }), "approvals_too_large");
 });
 
@@ -450,4 +507,15 @@ test("dependency admission: the result is deterministic and sorted (MSN-0382)", 
   assert.deepEqual(a, b);
   assert.deepEqual(codes(a), ["unapproved_identity"]);
   assert.deepEqual(a.reasons.filter((x) => x.severity !== "info").map((x) => x.location), ["node_modules/x", "node_modules/y"]);
+});
+
+// Review round (PR #366, finding 3): the policy's depth and size limits are enforced by the evaluator itself.
+test("dependency admission: limits.max_depth and limits.max_lockfile_bytes are enforced (MSN-0382)", () => {
+  const nested = graphOf({ ...BASE, "node_modules/a/node_modules/t": reg("t", "2.0.0") });
+  const shallow = policyOf({ limits: { max_depth: 1 } });
+  holds(admit(nested, { policy: shallow }), "too_deep", "node_modules/a/node_modules/t");
+  assert.ok(!admit(nested).reasons.some((x) => x.code === "too_deep"), "the default depth admits two levels");
+  const small = policyOf({ limits: { max_lockfile_bytes: 1000 } });
+  holds(admit(graphOf(BASE), { policy: small, headLockfileBytes: 1001 }), "lockfile_too_large");
+  passes(admit(graphOf(BASE), { policy: small, headLockfileBytes: 1000 }));
 });

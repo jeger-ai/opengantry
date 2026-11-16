@@ -174,19 +174,26 @@ export function dependencyPolicyRevision(policy: DependencyPolicy): string {
   return createHash("sha256").update(canonicalJson(policy)).digest("hex");
 }
 
-function sameOrFail<T>(floor: T | null, local: T | null, field: string): T | null {
-  if (floor === null) return local;
-  if (local !== null && local !== floor) fail(`${field} differs from the floor`);
+/** The merged baseline: the floor's or none. A local baseline the floor does not name admits a graph unsigned: refused. */
+function mergedBaseline(floor: string | null, local: string | null): string | null {
+  if (local !== null && local !== floor) {
+    fail(floor === null ? "approved_baseline_digest: the floor names no baseline; a local section cannot add one" : "approved_baseline_digest differs from the floor");
+  }
   return local;
 }
 
 /**
  * Tighten-only (ADR-0062 decision 2, as RULES §8): registries, lockfile versions and approval locations are
  * intersected; enforce beats audit, deny beats allow-approved, lower limits win, sources stay held. A local section
- * may drop the floor's baseline (tighter) but not name another one, and may not change the npm pin.
+ * may drop the floor's baseline (tighter), but naming any other baseline is refused, also when the floor names none
+ * or there is no floor; it may not change the npm pin.
  */
 export function mergeDependencyPolicy(floor: DependencyPolicy | null, local: DependencyPolicy | null): DependencyPolicy | null {
-  if (!floor || !local) return floor ?? local;
+  if (!local) return floor;
+  if (!floor) {
+    mergedBaseline(null, local.approvedBaselineDigest);
+    return local;
+  }
   if (floor.npm.npmVersion !== local.npm.npmVersion) fail("ecosystems.npm.npm_version differs from the floor");
   const both = <T>(a: readonly T[], b: readonly T[]): T[] => sorted(a.filter((x) => b.includes(x)));
   return {
@@ -194,7 +201,7 @@ export function mergeDependencyPolicy(floor: DependencyPolicy | null, local: Dep
     mode: floor.mode === "enforce" || local.mode === "enforce" ? "enforce" : "audit",
     npm: { lockfileVersions: both(floor.npm.lockfileVersions, local.npm.lockfileVersions), npmVersion: floor.npm.npmVersion },
     registries: both(floor.registries, local.registries),
-    approvedBaselineDigest: sameOrFail(floor.approvedBaselineDigest, local.approvedBaselineDigest, "approved_baseline_digest"),
+    approvedBaselineDigest: mergedBaseline(floor.approvedBaselineDigest, local.approvedBaselineDigest),
     approvalRefs: both(floor.approvalRefs, local.approvalRefs),
     lifecycle: floor.lifecycle === "deny" || local.lifecycle === "deny" ? "deny" : "allow-approved",
     sources: { git: "hold", url: "hold", fileOutsideWorkspaces: "hold", bundled: "hold" },

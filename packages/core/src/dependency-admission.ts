@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   DEPENDENCY_REVOCATION_SCHEMA,
   INSTALL_SCRIPTS,
+  isUtcTimestamp,
   parseAllowedSigners,
   parseDependencyApproval,
   parseDependencyRevocation,
@@ -10,6 +11,7 @@ import {
 } from "./dependency-approval.js";
 import type { NpmGraph, NpmGraphNode, NpmGraphResult } from "./dependency-graph.js";
 import { dependencyPolicyRevision, type DependencyMode, type DependencyPolicy } from "./dependency-policy.js";
+import { globToRegExp } from "./path-glob.js";
 
 /**
  * Dependency admission (issue #355 slice 2, ADR-0062 decisions 3, 4 and 7): judge the head graph of one npm lockfile
@@ -17,7 +19,8 @@ import { dependencyPolicyRevision, type DependencyMode, type DependencyPolicy } 
  * clock or network; the caller passes `now`, the base commit's allowed-signers text and the content digests of
  * `file:` paths at base. No AI output is an input. Every package in the head graph must be admitted, by the explicit
  * baseline import or by a usable signed approval; an approval admits a package that is new against the base graph
- * only when it was made for exactly this head graph. Not wired into `gantry verify` yet (slice 3).
+ * only when it was made for exactly this head graph. Workspace globs come from the base graph, never from the head
+ * lockfile the candidate wrote. Not wired into `gantry verify` yet (slice 3).
  */
 
 const DEPENDENCY_ADMISSION_SCHEMA = "opengantry.dependency-admission.v1";
@@ -31,6 +34,8 @@ const SEVERITY = {
   graph_hold: "hold",
   unsupported_lockfile: "hold",
   too_many_nodes: "hold",
+  lockfile_too_large: "hold",
+  too_deep: "hold",
   baseline_unavailable: "hold",
   baseline_mismatch: "fail",
   approvals_too_large: "hold",
@@ -50,6 +55,7 @@ const SEVERITY = {
   source_unresolved: "hold",
   local_outside_repository: "hold",
   link_target_missing: "hold",
+  root_workspaces_changed: "hold",
   unapproved_identity: "hold",
   approval_stale: "hold",
   approval_expired: "hold",
@@ -77,6 +83,8 @@ export interface AdmissionInput {
   /** The base commit's graph; null when the base has no such lockfile. */
   base: NpmGraphResult | null;
   head: NpmGraphResult;
+  /** Byte length (UTF-8) of the head lockfile text, judged against `policy.limits.max_lockfile_bytes`. */
+  headLockfileBytes: number;
   /** The graph whose digest is `approved_baseline_digest`; ignored when the policy names none. */
   baseline: NpmGraphResult | null;
   /** Files under `approval_refs`, as read from the base commit. */
@@ -118,6 +126,8 @@ interface State {
   authorities: Authority[];
   baseline: { ids: Set<string>; scripted: Set<string>; root: Set<string> };
   base: { ids: Set<string>; scripted: Set<string>; root: Set<string> };
+  /** The authoritative workspace globs: the base graph's (none when the base has no lockfile). */
+  workspaces: string[];
 }
 
 interface Identified {
@@ -132,10 +142,6 @@ const sha256 = (s: string): string => createHash("sha256").update(s).digest("hex
 
 function add(reasons: AdmissionReason[], code: AdmissionCode, location: string | null, detail: string): void {
   reasons.push({ code, severity: SEVERITY[code], location, detail });
-}
-
-function isUtc(s: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(s) && !Number.isNaN(Date.parse(s));
 }
 
 function isLockfilePath(p: string): boolean {
@@ -295,6 +301,16 @@ const HOLD_KIND: Partial<Record<NpmGraphNode["source"]["kind"], AdmissionCode>> 
   unresolved: "source_unresolved",
 };
 
+/**
+ * A head `workspace` node is a workspace only when it is inside the repository and matches a base glob; slice 1 calls
+ * it a workspace by the head lockfile's own globs, which the candidate writes. Otherwise it is judged as a local folder.
+ */
+function judgeLocalFolder(s: State, n: NpmGraphNode, admittedLocal: Set<string>): void {
+  const inside = repoPath(s.input.lockfile, n.location) !== null;
+  const workspace = n.source.kind === "workspace" && inside && s.workspaces.some((g) => globToRegExp(g).test(n.location));
+  if (workspace || judgeFile(s, n, n.location)) admittedLocal.add(n.location);
+}
+
 /** Source and identity of one node; returns the admitted local folders as it goes. */
 function judgeSource(s: State, n: NpmGraphNode, admittedLocal: Set<string>): void {
   const { kind, ref } = n.source;
@@ -303,9 +319,8 @@ function judgeSource(s: State, n: NpmGraphNode, admittedLocal: Set<string>): voi
   else if (hold) add(s.reasons, hold, n.location, `${kind} sources hold by default`);
   else if (n.flags.includes("hasShrinkwrap")) add(s.reasons, "source_shrinkwrap", n.location, "a package with its own shrinkwrap holds by default");
   else if (kind === "registry") judgeRegistry(s, n);
-  else if (kind === "local") {
-    if (judgeFile(s, n, n.location)) admittedLocal.add(n.location);
-  } else if (kind === "file") judgeFile(s, n, (ref ?? "").replace(/^file:/, ""));
+  else if (kind === "local" || kind === "workspace") judgeLocalFolder(s, n, admittedLocal);
+  else if (kind === "file") judgeFile(s, n, (ref ?? "").replace(/^file:/, ""));
   else if (kind === "link" && !s.head.nodes.some((x) => x.location === ref)) add(s.reasons, "link_target_missing", n.location, `link target ${ref ?? "?"} is not in the lockfile`);
 }
 
@@ -326,6 +341,14 @@ function judgeNodeScript(s: State, n: NpmGraphNode): void {
   const all = [...INSTALL_SCRIPTS].sort().join(",");
   const r = authorize(s, !s.base.scripted.has(id), (a) => a.lifecycle.some((l) => sameNode(l, n) && l.scripts.join(",") === all));
   if (!r.ok) add(s.reasons, "lifecycle_unapproved", n.location, `${id} has an install script that no usable approval permits (${all})${r.code ? `; ${r.why}` : ""}`);
+}
+
+/** A change to the root `workspaces` globs is a root change: it holds unless an approval for this head graph names them. */
+function judgeRootWorkspaces(s: State): void {
+  const head = [...s.head.root.workspaces].sort();
+  if (head.join("\u0000") === [...s.workspaces].sort().join("\u0000")) return;
+  const r = authorize(s, true, (a) => a.rootWorkspaces !== null && a.rootWorkspaces.join("\u0000") === head.join("\u0000"));
+  if (!r.ok) add(s.reasons, "root_workspaces_changed", "", `the root workspaces ${JSON.stringify(head)} differ from the base ${JSON.stringify(s.workspaces)}${r.code ? `; ${r.why}` : ""}`);
 }
 
 function judgeRootScripts(s: State): void {
@@ -373,15 +396,24 @@ function shapeHolds(input: AdmissionInput, head: NpmGraph, reasons: AdmissionRea
   if (!input.policy.npm.lockfileVersions.includes(head.lockfileVersion)) {
     add(reasons, "unsupported_lockfile", null, `lockfileVersion ${String(head.lockfileVersion)} is not in the policy's lockfile_versions`);
   }
-  if (head.nodes.length > input.policy.limits.maxNodes) add(reasons, "too_many_nodes", null, `more than ${String(input.policy.limits.maxNodes)} nodes`);
+  const { maxNodes, maxDepth, maxLockfileBytes } = input.policy.limits;
+  if (head.nodes.length > maxNodes) add(reasons, "too_many_nodes", null, `more than ${String(maxNodes)} nodes`);
+  if (input.headLockfileBytes > maxLockfileBytes) add(reasons, "lockfile_too_large", null, `the lockfile is larger than ${String(maxLockfileBytes)} bytes`);
+  const deep = head.nodes.find((n) => n.location.split("/").filter((seg) => seg === "node_modules").length > maxDepth);
+  if (deep) add(reasons, "too_deep", deep.location, `more than ${String(maxDepth)} nested node_modules levels`);
+}
+
+function validInput(input: AdmissionInput): boolean {
+  const bytes = input.headLockfileBytes;
+  return isUtcTimestamp(input.now) && isLockfilePath(input.lockfile) && Number.isSafeInteger(bytes) && bytes >= 0;
 }
 
 /** Judge one lockfile's head graph: pass, hold or fail, with stable reason codes. */
 export function evaluateDependencyAdmission(input: AdmissionInput): DependencyAdmission {
   const reasons: AdmissionReason[] = [];
   const used = new Set<string>();
-  if (!isUtc(input.now) || !isLockfilePath(input.lockfile)) {
-    add(reasons, "invalid_input", null, "now must be a UTC timestamp and lockfile a repository-relative package-lock.json or npm-shrinkwrap.json");
+  if (!validInput(input)) {
+    add(reasons, "invalid_input", null, "now must be a UTC timestamp, lockfile a repository-relative package-lock.json or npm-shrinkwrap.json, and headLockfileBytes a byte count");
     return finish(input, reasons, used, null, null);
   }
   const baseGraph = graphOrHold(input.base, "base", reasons);
@@ -396,12 +428,14 @@ export function evaluateDependencyAdmission(input: AdmissionInput): DependencyAd
     authorities: readAuthority(input, reasons),
     baseline: graphSets(baselineOf(input, reasons)),
     base: graphSets(baseGraph),
+    workspaces: baseGraph?.root.workspaces ?? [],
   };
   const admittedLocal = new Set<string>();
   const external = head.nodes.filter((n) => n.source.kind === "external");
   for (const n of head.nodes) if (n.source.kind !== "external") judgeSource(s, n, admittedLocal);
   for (const n of external) judgeExternal(s, n, admittedLocal);
   for (const n of head.nodes) judgeNodeScript(s, n);
+  judgeRootWorkspaces(s);
   judgeRootScripts(s);
   for (const a of s.authorities) {
     if (!used.has(a.approval.id) && a.unusable) add(reasons, "approval_inactive", null, a.why);

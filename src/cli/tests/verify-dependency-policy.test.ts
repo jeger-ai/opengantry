@@ -76,6 +76,13 @@ function git(dest: string, ...args: string[]): string {
   return r.stdout.trim();
 }
 
+test("verify contract: a task contract cannot add a baseline the repository section does not name (MSN-0382)", () => {
+  const repo = parseVerifyYaml(yaml(SECTION));
+  const task = parseVerifyYaml(yaml(SECTION.replace("  mode: enforce\n", `  mode: enforce\n  approved_baseline_digest: ${"a".repeat(64)}\n`)));
+  assert.equal(task.dependencies?.approvedBaselineDigest, "a".repeat(64));
+  assert.throws(() => mergeRepositoryLaw(task, repo), (e: unknown) => (e as { code?: string }).code === "GXT_VERIFY_CONTRACT_INVALID" && /cannot add one/.test((e as Error).message));
+});
+
 test("verify contract: a candidate change to its own dependencies section is judged by the base version (MSN-0382)", () => {
   const dest = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-verify-deps-")));
   try {

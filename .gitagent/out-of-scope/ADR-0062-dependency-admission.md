@@ -94,7 +94,8 @@ dependencies:
 - **Tighten-only inheritance.** As with ADR-0051 decision 11 and the org policy floor (RULES §8), repository and org policy are a floor. `mergeDependencyPolicy(floor, local)`:
   - intersects registries, lockfile versions and approval locations;
   - `enforce` beats `audit`, `deny` beats `allow-approved`, the lower of each limit wins, and sources stay held;
-  - a local section may drop the floor's baseline (tighter) but not name a different one, and may not change the npm pin: both refuse.
+  - a local section may drop the floor's baseline (tighter), but naming any baseline the floor does not name refuses, also when the floor names none or there is no floor: a baseline admits a whole graph without a signature, so only the repository section can set it;
+  - a local section may not change the npm pin: that refuses too.
 
   A task contract inherits the repository's section through `mergeRepositoryLaw`. A `gate.json` cannot carry the key at all, and missions carry none (owner decision 2). The org policy bundle does not carry a section yet.
 - **The base decides authority.** The section is read from the base commit, as a tracked contract already is (ADR-0051 decision 3). A change that edits its own `dependencies` section, its approvals or the baseline is judged by the base version. A test shows that a candidate that loosens its own section is still judged by the stricter base section.
@@ -106,7 +107,11 @@ dependencies:
 
 The registry allowlist is explicit and compared by canonical base, as in decision 1: equality, never a prefix, so `https://registry.npmjs.org.evil.example/` and `https://registry.npmjs.org/evil/` are other registries. A policy registry must be https, without credentials, query or fragment. A registry tarball needs `integrity`. `git`, `url`, `file` (a tarball or a folder outside declared workspaces), `bundled`, `hasShrinkwrap` contents and entries without `resolved` hold by default. Credentials in any source fail. Approving a registry never approves every package from it.
 
-A `file:` dependency is admitted only by an approval that names its repository-relative path and the sha256 content digest of that path at the base commit (owner decision 4). The caller computes the digests; the evaluator compares them. A path that resolves outside the repository holds. npm's description of a local folder's own `node_modules` (`external` in the graph) follows the folder: it is admitted when the folder is, and held otherwise. Workspaces and links into the lockfile's own folders need no approval. A link whose target is not in the lockfile holds.
+A `file:` dependency is admitted only by an approval that names its repository-relative path and the sha256 content digest of that path at the base commit (owner decision 4). The caller computes the digests; the evaluator compares them. A path that resolves outside the repository holds. npm's description of a local folder's own `node_modules` (`external` in the graph) follows the folder: it is admitted when the folder is, and held otherwise. A link whose target is not in the lockfile holds.
+
+**Workspaces come from the base.** Slice 1 calls a folder a `workspace` when it matches the `workspaces` globs of the lockfile it parses, and the candidate writes the head lockfile. So the evaluator takes the authoritative globs from the base graph's root (none when the base has no lockfile). A head `workspace` node is a workspace, needing no approval, only when it is inside the repository and matches a base glob. Otherwise it is judged exactly like a `local` folder: path plus content digest, or `local_outside_repository`. A change to the root `workspaces` globs is a root change: it holds (`root_workspaces_changed`) unless an approval made for this head graph names exactly the head globs in `root_workspaces`. Even then the new globs admit nothing until they are at base; a new workspace folder needs its own `files` approval.
+
+**`external` entries are not installed (evidence, npm 11.19.1).** A lockfile for `app` with `lib: file:../lib` and a hand-written entry `../lib/node_modules/is-number` (version 6.0.0, `resolved` on an unreachable host `https://evil.example/x.tgz`, a bogus `integrity`) was run with `npm ci --ignore-scripts` and with `npm install --ignore-scripts`. Both exited 0, fetched nothing (the host does not resolve) and created no `../lib/node_modules`; only the link was installed. `npm install --package-lock-only` in this setup writes no `external` entries at all. So admitting `external` entries on the folder's approval, without judging their own `resolved` or integrity, admits nothing this lockfile installs. What the folder itself needs at run time comes from its own `node_modules`, outside this lockfile; slice 4 (acquisition) must confirm this for the pinned npm version and judge that folder's own lockfile if it installs one.
 
 A later policy version may admit git or URL sources with an equally exact identity: a full commit sha for git, an integrity hash for a URL. v1 accepts only `hold` for them.
 
@@ -124,6 +129,7 @@ A later policy version may admit git or URL sources with an equally exact identi
   "lifecycle": [{ "name": "x", "version": "1.0.0", "source": { "kind": "registry", "ref": "https://registry.npmjs.org/" }, "integrity": "sha512-…", "scripts": ["install", "postinstall", "preinstall"] }],
   "root_scripts": [{ "script": "postinstall", "command_sha256": "<sha256 of the command string>" }],
   "files": [{ "path": "vendor/x", "content_digest": "<sha256 of the folder or tarball at base>" }],
+  "root_workspaces": ["packages/*"],
   "approver": "planner@example.com",
   "issued_at": "2026-11-16T00:00:00Z",
   "expires_at": "2026-12-16T00:00:00Z",
@@ -136,7 +142,8 @@ The format is bounded: at most 4 MiB per file, 10,000 entries per list and 1,000
 - `identities` admit registry packages by exact name, version, canonical registry and integrity. A name alone never approves anything.
 - `lifecycle` permits install-time scripts by node identity (registry, workspace or local). The lockfile only says that one of `preinstall`, `install` and `postinstall` runs (`hasInstallScript`), not which, so a permission must name all three. Slice 4 can narrow this to exact names from the tarball's manifest; approvals that name all three stay valid.
 - `root_scripts` permit root `package.json` lifecycle scripts by name and the sha256 of the command, so a changed command needs a new permission. Workspace manifests' own scripts are not read by the graph yet (decision 1), so only their `hasInstallScript` is judged, through `lifecycle`.
-- `files` admit `file:` sources (decision 3).
+- `files` admit `file:` sources and local folders, including a head `workspace` that no base glob covers (decision 3).
+- `root_workspaces` (optional) accepts a change of the root `workspaces` globs to exactly this sorted list, each glob once; it is only usable for this head graph. Without the key no root workspace change is approved.
 
 **Signature.** The approver signs the canonical JSON of the file without `signature`, using `ssh-keygen -Y sign -n opengantry-dependency-approval`. An approval counts only when the SSHSIG verifies against the base commit's allowed-signers file and that file lists the signing key for the approval's `approver`. The allowlist is the Planner allowlist, `.gitagent/foreman/PLANNER.signing.pub` (ssh-keygen ALLOWED SIGNERS format, the file `gantry perimeter` already points `gpg.ssh.allowedSignersFile` at).
 
@@ -186,7 +193,7 @@ It is covered by the existing `--sign` and keyless signatures ([ADR-0055](ADR-00
 
 `pass` means the configured admission requirements are met for exactly these inputs. It does not certify that the packages are free of malware: a registry or integrity match says nothing about whether a package is harmless.
 
-`evaluateDependencyAdmission` (`packages/core/src/dependency-admission.ts`) judges one lockfile's head graph. Its inputs are the effective policy, the base, head and baseline graphs, the approval files, the allowed signers and the content digests (all read from the base by the caller), and `now`. It returns `opengantry.dependency-admission.v1`, which carries:
+`evaluateDependencyAdmission` (`packages/core/src/dependency-admission.ts`) judges one lockfile's head graph. Its inputs are the effective policy, the base, head and baseline graphs, the head lockfile's byte length, the approval files, the allowed signers and the content digests (all read from the base by the caller), and `now` (a UTC timestamp that must round-trip, so `2026-02-31T00:00:00Z` and `T24:00:00Z` are invalid input). It enforces all three policy limits itself: `max_nodes`, `max_depth` (nested `node_modules` per location) and `max_lockfile_bytes`, so a caller that parsed with looser limits still holds. It returns `opengantry.dependency-admission.v1`, which carries:
 
 - `verdict`: `pass`, `hold` or `fail`;
 - `mode`;
@@ -199,7 +206,7 @@ The reason codes:
 | Severity | Codes |
 |----------|-------|
 | `fail` | `source_credentials`, `baseline_mismatch`, `approval_signature_invalid` (a forged, tampered or unlisted approval at base) |
-| `hold` | `invalid_input`, `graph_hold`, `unsupported_lockfile`, `too_many_nodes`, `baseline_unavailable`, `approvals_too_large`, `approval_invalid`, `approval_outside_refs`, `registry_not_allowed`, `integrity_missing`, `source_git`, `source_url`, `source_file`, `source_external`, `source_bundled`, `source_shrinkwrap`, `source_unresolved`, `local_outside_repository`, `link_target_missing`, `unapproved_identity`, `approval_stale`, `approval_expired`, `approval_revoked`, `lifecycle_denied`, `lifecycle_unapproved`, `root_manifest_missing` |
+| `hold` | `invalid_input`, `graph_hold`, `unsupported_lockfile`, `too_many_nodes`, `lockfile_too_large`, `too_deep`, `baseline_unavailable`, `approvals_too_large`, `approval_invalid`, `approval_outside_refs`, `registry_not_allowed`, `integrity_missing`, `source_git`, `source_url`, `source_file`, `source_external`, `source_bundled`, `source_shrinkwrap`, `source_unresolved`, `local_outside_repository`, `link_target_missing`, `root_workspaces_changed`, `unapproved_identity`, `approval_stale`, `approval_expired`, `approval_revoked`, `lifecycle_denied`, `lifecycle_unapproved`, `root_manifest_missing` |
 | `info` | `approval_inactive` (an unusable approval nothing needed) |
 
 Malformed input holds or fails; it never passes. Under `lifecycle.default: deny`, no approval or baseline permits a lifecycle script. Dev and optional packages are judged like production ones (owner decision 5): each platform package the lockfile lists needs its own approval. `mode: audit` yields the same verdict, labelled `audit`. The result is not wired into `gantry verify` yet, and not signed (slice 3). An unknown required enforcement capability belongs to slice 4.
@@ -217,7 +224,7 @@ The sequence is: audit-only diagnosis (the result shows the diff and what would 
 Work slices after slice 1:
 
 2. The closed policy and authority contract (the parser for decision 2, approvals, revocation). *Implemented (MSN-0382)*: the policy section, the approval and revocation formats, SSHSIG verification and the pure evaluator. Nothing calls the evaluator outside tests.
-3. Verifier result and signing integration (decision 6): reading the lockfiles, approvals, allowed signers and content digests at base, choosing the baseline graph, and adding the verdict to the signed result.
+3. Verifier result and signing integration (decision 6): reading the lockfiles, approvals, allowed signers and content digests at base, choosing the baseline graph, and adding the verdict to the signed result. The policy must come from the base `verify.yaml`: today a task contract loaded when the base has no `verify.yaml` is used without any merge (`packages/verify/src/run.ts`), so its own `dependencies` section, baseline included, would not pass through `mergeDependencyPolicy`.
 4. The trusted acquisition and admission adapter (decision 5, on #356's boundary).
 5. Malicious install-script canaries (direct install, nested commands, alternate entrypoints, restored caches, lockfile/policy substitution between approval and use) and downstream compatibility.
 

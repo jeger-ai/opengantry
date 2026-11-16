@@ -161,7 +161,11 @@ test("dependency policy: a merge cannot add a registry, a baseline or an approva
   const other = parseDependencyPolicy(minimal({ approved_baseline_digest: "b".repeat(64) }));
   assert.throws(() => mergeDependencyPolicy(withBaseline, other), /approved_baseline_digest differs from the floor/);
   assert.equal(mergeDependencyPolicy(withBaseline, parseDependencyPolicy(minimal()))!.approvedBaselineDigest, null, "dropping the baseline is tighter");
-  assert.equal(mergeDependencyPolicy(floor(), parseDependencyPolicy(minimal({ approved_baseline_digest: DIGEST })))!.approvedBaselineDigest, DIGEST);
+  // Review round (PR #366, finding 2): this line used to assert that the merge returned the added digest, the bug
+  // the title forbids. A local baseline the floor does not name is refused, also when there is no floor at all.
+  const added = parseDependencyPolicy(minimal({ approved_baseline_digest: DIGEST }));
+  assert.throws(() => mergeDependencyPolicy(floor(), added), /the floor names no baseline; a local section cannot add one/);
+  assert.throws(() => mergeDependencyPolicy(null, added), /the floor names no baseline; a local section cannot add one/);
   const refs = mergeDependencyPolicy(floor({ approval_refs: ["a/", "b/"] }), parseDependencyPolicy(minimal({ approval_refs: ["b/", "c/"] })))!;
   assert.deepEqual(refs.approvalRefs, ["b/"], "approval locations are intersected");
   const pin = parseDependencyPolicy(minimal({ ecosystems: { npm: { lockfile_versions: [3], npm_version: "11.7.0" } } }));

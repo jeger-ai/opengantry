@@ -44,6 +44,8 @@ export interface DependencyApproval {
   lifecycle: (ApprovedNode & { scripts: string[] })[];
   rootScripts: { script: string; commandSha256: string }[];
   files: { path: string; contentDigest: string }[];
+  /** The exact head `workspaces` globs (sorted) this approval accepts as a root change; null when it names none. */
+  rootWorkspaces: string[] | null;
   approver: string;
   issuedAt: string;
   expiresAt: string;
@@ -85,10 +87,14 @@ function sha(v: unknown, where: string): string {
   return v;
 }
 
+/** `2026-11-16T00:00:00Z` exactly, and a real instant (no `02-31`, no `T24:00:00`): it must round-trip. */
+export function isUtcTimestamp(v: unknown): v is string {
+  return typeof v === "string" && UTC.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString() === v.replace("Z", ".000Z");
+}
+
 function time(v: unknown, where: string): string {
-  const ok = typeof v === "string" && UTC.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString() === v.replace("Z", ".000Z");
-  if (!ok) fail(`${where} must be a UTC timestamp (2026-11-16T00:00:00Z)`);
-  return v as string;
+  if (!isUtcTimestamp(v)) fail(`${where} must be a UTC timestamp (2026-11-16T00:00:00Z)`);
+  return v;
 }
 
 function entries(v: unknown, where: string): unknown[] {
@@ -153,7 +159,15 @@ export function approvalSignedMessage(approval: object): string {
   return canonicalJson(body);
 }
 
-const APPROVAL_KEYS = ["schema", "lockfile", "graph_digest", "policy_revision", "identities", "lifecycle", "root_scripts", "files", "approver", "issued_at", "expires_at", "signature"];
+const APPROVAL_KEYS = ["schema", "lockfile", "graph_digest", "policy_revision", "identities", "lifecycle", "root_scripts", "files", "root_workspaces", "approver", "issued_at", "expires_at", "signature"];
+
+/** Optional `root_workspaces`: the head lockfile's workspace globs, each once; absent means no root change is approved. */
+function rootWorkspaces(v: unknown): string[] | null {
+  if (v === undefined) return null;
+  const xs = entries(v, "root_workspaces").map((g, i) => text(g, `root_workspaces[${String(i)}]`));
+  if (new Set(xs).size !== xs.length) fail("root_workspaces must list each glob once");
+  return [...xs].sort();
+}
 
 /** Parse an approval file: closed, bounded, every field checked; a {@link DependencyApprovalError} otherwise. */
 export function parseDependencyApproval(raw: string): DependencyApproval {
@@ -184,6 +198,7 @@ export function parseDependencyApproval(raw: string): DependencyApproval {
       const f = closed(e, `files[${String(i)}]`, ["path", "content_digest"]);
       return { path: repoPath(f.path, `files[${String(i)}].path`), contentDigest: sha(f.content_digest, `files[${String(i)}].content_digest`) };
     }),
+    rootWorkspaces: rootWorkspaces(a.root_workspaces),
     approver: text(a.approver, "approver"),
     issuedAt,
     expiresAt,
