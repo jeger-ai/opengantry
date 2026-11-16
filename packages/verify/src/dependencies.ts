@@ -114,6 +114,11 @@ interface DependencyJudgeInput {
   now: string;
   /** Test seam: the buffer for whole-tree listings (default 512 MiB). */
   listMaxBytes?: number;
+  /**
+   * Lockfiles judged even when the change did not touch them (`gantry npm ci`, issue #355 slice 4): an install needs
+   * the whole graph admitted, not only a changed one. Every other check stays as for the changed files.
+   */
+  judge?: readonly string[];
 }
 
 const sha256 = (data: string | Buffer): string => createHash("sha256").update(data).digest("hex");
@@ -491,6 +496,7 @@ export function judgeDependencies(input: DependencyJudgeInput): VerifyDependenci
     } else if (LOCKFILES.includes(name)) locks.push(f);
     else judgeManifest(ctx, f);
   }
+  for (const l of input.judge ?? []) if (!locks.includes(l)) locks.push(l);
   const lockfiles = [...locks, ...lockfilesWithEditedFolders(ctx, locks)].map((l) => judgeLockfile(ctx, l));
   const key = (r: Reason) => `${r.file}\u0000${r.location ?? ""}\u0000${r.code}\u0000${r.detail}`;
   const reasons = ctx.reasons.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));

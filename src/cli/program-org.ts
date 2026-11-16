@@ -10,6 +10,7 @@ import {
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
 import { runAdmissionCapabilities } from "./commands/admission.js";
+import { runNpmCiCommand } from "./commands/npm-ci.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
   const policy = program.command("policy").description("Org policy floor (ADR-0042)");
@@ -81,10 +82,25 @@ export function registerOrgControlPlaneCommands(program: Command): void {
     .option("--json", "JSON")
     .action(runDepsCheck);
 
+  registerNpmCommands(program);
+
   const admission = program.command("admission", { hidden: true }).description("Operation admission contract (ADR-0063; read-only)");
   admission
     .command("capabilities")
     .description("Print the capability matrix: every platform x harness x family cell and its level")
     .option("--json", "JSON")
     .action(runAdmissionCapabilities);
+}
+
+/** `gantry npm ci`: an admitted install (issue #355 slice 4, ADR-0062 decision 5). */
+function registerNpmCommands(program: Command): void {
+  const npm = program.command("npm").description("npm installs gated by the base-commit dependency policy (ADR-0062)");
+  npm
+    .command("ci")
+    .description("Install the admitted lockfile: base-commit policy, verified tarballs, npm ci --offline --ignore-scripts")
+    .requiredOption("--base <ref>", "Base commit whose verify.yaml dependencies policy and approvals decide")
+    .option("--dir <path>", "Project directory holding the lockfile (default: .)")
+    .option("--audit-unconfined-scripts", "Run approved install scripts without confinement and label the receipt audit")
+    .option("--json", "Print the opengantry.dependency-install.v1 receipt")
+    .action(runNpmCiCommand);
 }

@@ -101,3 +101,4 @@ cases:
   - { id: verify.contract.contract-standalone, fixture: contract-standalone, args: [verify, --contract, verify.yaml, --base, HEAD~1, --json] }
   - { id: verify.contract.gate-json.contract-standalone, fixture: contract-standalone, args: [verify, --contract, gate.json, --base, HEAD~1, --json] }
   - { id: verify.contract.contract-dependencies, fixture: contract-dependencies, args: [verify, --contract, verify.yaml, --base, HEAD~1, --json] }
+  - { id: npm-ci.contract-dependencies, fixture: contract-dependencies, args: [npm, ci, --base, HEAD~1, --json] }
