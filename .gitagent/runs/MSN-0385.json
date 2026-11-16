@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0385",
   "mission_path": ".gitagent/missions/MSN-0385.authority-follow-ups.yaml",
-  "head": "23724878c42fff2342c52b5a525a352055469544",
-  "tree": "1e2596c63334d9013cbc52d7b56f15bee0cae633",
+  "head": "545b53bb3de8cb5d88e83c0027b8dbd3dd86d3e5",
+  "tree": "a215b133c9074c974c7813b07d06ed72a59fba4a",
   "law_sha256": "ecee5a9cf1250148f7c4a23ded5f72daa9a3fa7fd567fd73a57d9a58720b57fe",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 33006,
-      "output_sha256": "99f9ed9e73b1d25bad3108e85c09a5c6009c4f7be775e3663056ca877aa8e478"
+      "duration_ms": 35049,
+      "output_sha256": "218995dda7db962b08a0bf697dcdd36527b6aa76f3c7cb48dc3ab7c1ec4fdee2"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-16T23:20:03.163Z"
+  "issued_at": "2026-11-16T23:24:59.933Z"
 }
