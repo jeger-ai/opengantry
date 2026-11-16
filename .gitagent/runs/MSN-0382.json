@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0382",
   "mission_path": ".gitagent/missions/MSN-0382.dependency-policy-contract.yaml",
-  "head": "1cf77a3810248e3b0779cf0bdc5a426d980da2ce",
-  "tree": "defc4bbf3ff913560126967c274ce1f1080b963a",
+  "head": "462fa97edc1821d363bcc6d0e71979332f9701f7",
+  "tree": "2fa94624ab29812bd795c01fa3c18ee009cc74a1",
   "law_sha256": "b4e0379c20090e643d7ead763ccde12b990c9cb85c24d9ae5008f11fcd937593",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 33239,
-      "output_sha256": "ef2870a77a6c8f07e4ffea08fd9f012b11a9ecc31433df731347fe43a189d3c4"
+      "duration_ms": 46029,
+      "output_sha256": "0c6c33a99acb667638a52f705aaf2049c0df340db6a43974796bcf0f143960f4"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-16T21:44:21.457Z"
+  "issued_at": "2026-11-16T21:48:21.236Z"
 }
