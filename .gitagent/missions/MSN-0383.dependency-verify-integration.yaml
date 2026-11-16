@@ -1,0 +1,356 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0383]. Executor must not run until the [MSN-0383] legislation commit + pin.
+#
+# Legislated intent: issue #355 slice 3: gantry verify --contract evaluates dependency admission when the effective
+# contract has a dependencies section. Policy only from the base verify.yaml (a task contract cannot supply one
+# without a base floor); approvals, allowed signers, base graph, baseline and file: content digests are read from the
+# base commit with git object reads. Changed npm manifest and lock files are detected; unsupported lockfiles and a
+# manifest change without its lock hold. Additive opengantry.verify-result.v2 with a dependencies section (outcome,
+# reason codes, mode, enforcement audit, base/head, policy revision, graph and diff digests, approvals used,
+# ecosystems) inside the signed payload; enforce fails closed, audit labels; old v1 readers refuse it;
+# dependency_update bumps get no exemption; zod schema in core, conformance golden, docs; verify and core budgets
+# raised with arch check --ratchet --allow-raise.
+#
+# Operator brief (2026-11-16, orchestrator brief for issue #355; interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0383.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0383
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). No manifest skill owns packages/verify,
+      packages/core or test/conformance (gantry is src/cli/ only), and the work
+      edits an ADR under .gitagent/out-of-scope/ and ARCH_BASELINE.json, so it
+      runs under substrate as MSN-0378 and MSN-0382 did. The word schema refers
+      to the additive opengantry.verify-result.v2 result with its dependencies
+      section (opengantry.verify-dependencies.v1) and its zod schema in
+      packages/core/src/schemas. contract.tmvc_roots is narrowed to exactly:
+      .gitagent/missions/MSN-0383.dependency-verify-integration.yaml,
+      .gitagent/out-of-scope/ADR-0062-dependency-admission.md,
+      .gitagent/runs/MSN-0383.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, docs/guides/verify-contract.md,
+      docs/reference/release-notes.md, packages/core/src/schemas/index.ts,
+      packages/core/src/schemas/verify-dependencies-schema.ts,
+      packages/opengantry-verify/README.md,
+      packages/opengantry-verify/build.mjs,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      packages/verify/src/contract.ts, packages/verify/src/dependencies.ts,
+      packages/verify/src/export.ts, packages/verify/src/run.ts,
+      src/cli/commands/verify-contract.ts,
+      src/cli/tests/verify-dependency-admission.test.ts,
+      src/cli/tests/verify-dependency-policy.test.ts, src/cli/verify-lib.ts,
+      test/conformance/README.md, test/conformance/build-fixtures.mjs,
+      test/conformance/cases.yaml,
+      test/conformance/golden/verify.contract.contract-dependencies.json.
+      Operator request: "Mission MSN-0383 for issue #355 (dependency admission):
+      work slice 3, verifier result and signing integration (DEP06/DEP07,
+      DEP-T04 and the result part of DEP-T05) ... Not in this slice: trusted
+      acquisition, materialization, running install scripts (slice 4), and
+      canaries (slice 5)." The agent wrote these answers from the orchestrator
+      brief (2026-11-16, issue #355 slice 3, MSN-0383).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0062
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept. The dependencies section is part of the canonical
+      result that --sign (receipt-signing, namespace gxt) and --sign keyless
+      (Sigstore, ADR-0055) sign, so the verdict binds to base, head, policy
+      revision and graph digests; tests show a tampered section fails both
+      signature checks. No change to the signing mechanisms themselves.
+    adr_refs:
+      - ADR-0062
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; this mission does not change the plane, the ledger or
+      any ingestion endpoint. The only reader of verify results in this
+      repository is checkVerifyResult (--check-result), which is updated to
+      refuse what it cannot judge.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: "Accept. The verify layer grows by one module
+      (packages/verify/src/dependencies.ts: git object reads at base and head,
+      changed dependency files, the call to the core evaluator) and core by one
+      zod schema module. No layer rule changes: verify imports only core and
+      git, as it already does; the core schema imports zod (zod/mini), which
+      core already depends on. gantry arch check stays in the gate; the verify
+      and core budgets are raised in this Planner mission with arch check
+      --ratchet --allow-raise, disclosed in the PR."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 46c905443f11
+    kind: adr_conflict
+    question: Intent may relate to ADR-0062. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0062 before
+      legislation proceeds.
+    operator_answer: "Accept and implement slice 3 of ADR-0062 within decisions 5-7
+      and the owner decisions of 2026-11-16: the final diff check is labelled
+      enforcement audit (decision 5, it cannot prevent code that already ran);
+      the verify result gains the versioned dependencies section (decision 6);
+      outcomes are the evaluator verdicts (decision 7). The ADR is updated to
+      mark slice 3 implemented and to record the choices the ADR left open as
+      conservative assumptions."
+    adr_refs:
+      - ADR-0062
+  - finding_id: 5824fbdfa8ba
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. The Tier-2 paths are
+      src/cli/commands/verify-contract.ts (summary lines for the new result
+      section), src/cli/verify-lib.ts (library exports of the slim package) and
+      the CLI tests src/cli/tests/verify-dependency-admission.test.ts (new) and
+      verify-dependency-policy.test.ts (the guide example test follows the guide
+      label change). test/conformance/ files are the conformance suite (a new
+      fixture and golden; existing goldens unchanged),
+      packages/opengantry-verify/ files are the slim package build, README and
+      package test. Docs and governance files are the ADR, guide, release notes,
+      changelog, mission, run record, ARCH_BASELINE.json and EXECUTOR_LOG.md.
+      The agent wrote these answers from the orchestrator brief (2026-11-16,
+      issue #355 slice 3, MSN-0383)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. No new error code (a task contract supplying its own
+      policy is GXT_VERIFY_CONTRACT_INVALID), no env name, subcommand, MCP tool
+      or package dependency (zod is already a runtime dependency; the slim
+      package inlines zod/mini and carries its MIT license in the bundle
+      footer), so no registry entry. One schema library: the result section
+      schema is zod in packages/core (ADR-0052 A6)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept. New tests only, plus one disclosed edit: the guide
+      example test in verify-dependency-policy.test.ts matches the guide label
+      that replaces NOT ENFORCED YET; its assertions are unchanged. No test is
+      deleted, skipped or weakened; dependency-update tests are not edited."
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0044 is cross-repository mission
+      dependencies (depends_on, refs/gxt/deps); this mission is about npm
+      package dependency admission and touches neither.
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. The SARIF and JUnit projections of a contract run gain
+      dependency findings (one SARIF result per hold or fail reason, one JUnit
+      case for dependencies) only when the result carries the dependencies
+      section; contract runs without a dependencies section project exactly as
+      before, and existing goldens do not change.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged. dependency-update.ts and
+      trusted-automation.ts are forbidden zones in this mission. The
+      dependency_update exemption skips mission checks only; gantry verify
+      --contract never consults it, and a regression test shows a bump that
+      lockfileUpdateProblem and manifestUpdateProblem accept still holds under
+      enforce without approval and passes with a matching approval (DEP-T04).
+      Factoring shared helpers out of dependency-update.ts is not done here.
+    adr_refs:
+      - ADR-0062
+      - ADR-0057
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept the boundary. ADR-0063 owns operation admission and
+      prevention; this slice adds no permit and no prevention claim: the result
+      says enforcement audit, never prevent, and records no preventive
+      capability identity (slice 4 on #356 boundary)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0063
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept. One deterministic model, no LLM evidence: verify reads
+      git objects and calls the pure slice-2 evaluator; AI output has no input.
+      Budgets: the verify and core raises are for this named feature (issue #355
+      slice 3); deletions are taken where honest, and the PR states the net
+      raise."
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Reject applicability. Plan adapters (ADR-0059) produce verify
+      contracts from another framework plan; they are not edited and produce no
+      dependencies section.
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: "Accept. The contract and every authority input (policy,
+      approvals, revocations, allowed signers, base graph, baseline, file:
+      content digests) are read from the base commit with git object reads
+      (decision 3). A result that carries a dependencies section is
+      opengantry.verify-result.v2 so released v1 readers refuse it (their schema
+      check) instead of ignoring it (DEP06); results without the section stay
+      v1, byte-compatible. --sign and keyless signatures already cover the whole
+      canonical result, so the section is signed (decision 12)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept owner decision 2 of ADR-0062: the dependencies section
+      lives in the base verify.yaml only. Missions and mission contracts
+      (ADR-0045) are unchanged. A task contract (gate.json, another verify.yaml)
+      inherits the base section tighten-only and, with no base section to
+      tighten, its own dependencies section is refused
+      (GXT_VERIFY_CONTRACT_INVALID), closing the gap PR #366 disclosed in
+      run.ts."
+    adr_refs:
+      - ADR-0062
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. No human-written format changes: the dependencies
+      section of verify.yaml is read as in slice 2. The new result section is
+      machine-written JSON, versioned and closed
+      (opengantry.verify-dependencies.v1 inside opengantry.verify-result.v2),
+      validated by a strict zod schema when read back."
+    adr_refs:
+      - ADR-0062
+      - ADR-0047
+interrogation_sha256: bf9658ffeb1c3df0680c950539428760f01565009ace990df37e6339c88f7a4a
+declared_paths:
+  - .gitagent/missions/MSN-0383.dependency-verify-integration.yaml
+  - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+  - .gitagent/runs/MSN-0383.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-contract.md
+  - docs/reference/release-notes.md
+  - packages/core/src/schemas/index.ts
+  - packages/core/src/schemas/verify-dependencies-schema.ts
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/build.mjs
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - packages/verify/src/contract.ts
+  - packages/verify/src/dependencies.ts
+  - packages/verify/src/export.ts
+  - packages/verify/src/run.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/verify-dependency-admission.test.ts
+  - src/cli/tests/verify-dependency-policy.test.ts
+  - src/cli/verify-lib.ts
+  - test/conformance/README.md
+  - test/conformance/build-fixtures.mjs
+  - test/conformance/cases.yaml
+  - test/conformance/golden/verify.contract.contract-dependencies.json
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0383.dependency-verify-integration.yaml
+    - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+    - .gitagent/runs/MSN-0383.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-contract.md
+    - docs/reference/release-notes.md
+    - packages/core/src/schemas/index.ts
+    - packages/core/src/schemas/verify-dependencies-schema.ts
+    - packages/opengantry-verify/README.md
+    - packages/opengantry-verify/build.mjs
+    - packages/opengantry-verify/tests/verify-package.test.mjs
+    - packages/verify/src/contract.ts
+    - packages/verify/src/dependencies.ts
+    - packages/verify/src/export.ts
+    - packages/verify/src/run.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/verify-dependency-admission.test.ts
+    - src/cli/tests/verify-dependency-policy.test.ts
+    - src/cli/verify-lib.ts
+    - test/conformance/README.md
+    - test/conformance/build-fixtures.mjs
+    - test/conformance/cases.yaml
+    - test/conformance/golden/verify.contract.contract-dependencies.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/core/src/dependency-update.ts
+    - packages/missions/src/trusted-automation.ts
+contract_sha256: 360ccb3ca2a98d0d6f56dbd3cd1c79751516465a8635fc6abce36f9d49cd8fcc
