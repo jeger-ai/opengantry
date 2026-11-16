@@ -1,6 +1,4 @@
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { CLI_NAME } from "#core/constants.js";
 import { toPosixRel } from "#core/posix-path.js";
 import { gitHead, gitRevParse, gitRun } from "#git/git.js";
@@ -33,10 +31,41 @@ function timingSafeEqualHex(a: string, b: string): boolean {
   return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
-function readAnchorHash(repoRoot: string): string | null {
-  const anchorPath = path.join(repoRoot, REL_BYPASS_SHA256);
-  if (!fs.existsSync(anchorPath)) return null;
-  for (const line of fs.readFileSync(anchorPath, "utf8").split(/\r?\n/)) {
+/** Local default branches; used only in a repository with no remote at all. */
+const LOCAL_DEFAULT_REFS = ["refs/heads/main", "refs/heads/master"];
+const SET_HEAD_HINT = "run: git fetch && git remote set-head origin --auto";
+
+type AnchorBase = { ok: true; base: string } | { ok: false; why: string };
+
+/**
+ * The trusted base for the anchor (MSN-0381): the merge-base of HEAD with the one default branch. With any remote, that
+ * is refs/remotes/origin/HEAD and nothing else: a deleted or moved origin/main and a local main the agent committed to
+ * never stand in for it. Only a repository without any remote uses local main or master (exactly one must exist). A
+ * default branch without shared history refuses. Rewriting origin/HEAD itself is the disclosed local limit; CI decides.
+ */
+function breakGlassAnchorBase(repoRoot: string): AnchorBase {
+  const remotes = gitRun(repoRoot, ["remote"]);
+  if (!remotes.ok) return { ok: false, why: "not a git repository" };
+  const resolves = (ref: string): boolean => gitRun(repoRoot, ["rev-parse", "--verify", "-q", `${ref}^{commit}`]).ok;
+  let ref: string;
+  if (remotes.stdout.trim()) {
+    ref = "refs/remotes/origin/HEAD";
+    if (!resolves(ref)) return { ok: false, why: `a remote is configured but origin/HEAD does not resolve (${SET_HEAD_HINT})` };
+  } else {
+    const found = LOCAL_DEFAULT_REFS.filter(resolves);
+    if (found.length !== 1) {
+      return { ok: false, why: found.length ? "main and master both exist, so the default branch is ambiguous" : "no remote and no local main or master" };
+    }
+    ref = found[0]!;
+  }
+  const short = ref.replace(/^refs\/(remotes|heads)\//, "");
+  const mb = gitRun(repoRoot, ["merge-base", "HEAD", ref]);
+  const base = mb.ok ? mb.stdout.trim() : "";
+  return base ? { ok: true, base } : { ok: false, why: `HEAD shares no history with the default branch ${short}` };
+}
+
+function parseAnchor(text: string): string | null {
+  for (const line of text.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
     if (/^[a-f0-9]{64}$/i.test(trimmed)) return trimmed.toLowerCase();
@@ -44,31 +73,42 @@ function readAnchorHash(repoRoot: string): string | null {
   return null;
 }
 
-/** True when GANTRY_BYPASS_SECRET matches committed BYPASS.sha256 anchor. */
-export function isBypassSecretAuthorized(repoRoot: string): boolean {
+type BypassVerdict = { ok: true } | { ok: false; code: string; message: string };
+
+/** Authorization against the anchor committed at the trusted base, never the working tree. Fails closed. */
+export function bypassAuthorization(repoRoot: string): BypassVerdict {
+  const found = breakGlassAnchorBase(repoRoot);
+  if (!found.ok) {
+    return { ok: false, code: "BYPASS_BASE_UNKNOWN", message: `no trusted base commit: ${found.why}; the ${REL_BYPASS_SHA256} anchor is read only from there.` };
+  }
+  const base = found.base;
+  const blob = gitRun(repoRoot, ["cat-file", "blob", `${base}:${REL_BYPASS_SHA256}`]);
+  const anchor = blob.ok ? parseAnchor(blob.stdout) : null;
+  if (!anchor) {
+    return {
+      ok: false,
+      code: "BYPASS_NOT_CONFIGURED",
+      message: `${REL_BYPASS_SHA256} has no SHA-256 anchor at the base commit ${base.slice(0, 12)}. Planner must commit an anchor of the team secret to the default branch.`,
+    };
+  }
   const secret = process.env[ENV_BYPASS_SECRET];
-  if (!secret?.length) return false;
-  const anchor = readAnchorHash(repoRoot);
-  if (!anchor) return false;
-  return timingSafeEqualHex(sha256Hex(secret), anchor);
+  if (!secret?.length) {
+    return { ok: false, code: "BYPASS_SECRET_MISSING", message: `Set ${ENV_BYPASS_SECRET} in the execution environment.` };
+  }
+  if (!timingSafeEqualHex(sha256Hex(secret), anchor)) {
+    return { ok: false, code: "BYPASS_SECRET_INVALID", message: `${ENV_BYPASS_SECRET} does not match ${REL_BYPASS_SHA256} at the base commit ${base.slice(0, 12)}.` };
+  }
+  return { ok: true };
+}
+
+/** True when GANTRY_BYPASS_SECRET matches the BYPASS.sha256 anchor committed at the trusted base. */
+export function isBypassSecretAuthorized(repoRoot: string): boolean {
+  return bypassAuthorization(repoRoot).ok;
 }
 
 function assertBypassSecretAuthorized(repoRoot: string): void {
-  if (isBypassSecretAuthorized(repoRoot)) return;
-  const anchorPath = path.join(repoRoot, REL_BYPASS_SHA256);
-  if (!fs.existsSync(anchorPath)) {
-    throw new Error(
-      `${CLI_NAME}: break-glass: BYPASS_NOT_CONFIGURED — ${REL_BYPASS_SHA256} is missing. Planner must install a SHA-256 anchor of the team secret.`,
-    );
-  }
-  if (!process.env[ENV_BYPASS_SECRET]?.length) {
-    throw new Error(
-      `${CLI_NAME}: break-glass: BYPASS_SECRET_MISSING — Set ${ENV_BYPASS_SECRET} in the execution environment.`,
-    );
-  }
-  throw new Error(
-    `${CLI_NAME}: break-glass: BYPASS_SECRET_INVALID — ${ENV_BYPASS_SECRET} does not match ${REL_BYPASS_SHA256}.`,
-  );
+  const verdict = bypassAuthorization(repoRoot);
+  if (!verdict.ok) throw new Error(`${CLI_NAME}: break-glass: ${verdict.code} — ${verdict.message}`);
 }
 
 function validateBreakGlassReason(reason: string | undefined): string {

@@ -17,6 +17,8 @@ git config core.hooksPath .githooks
 gantry planner set "$(git config user.email)"
 ```
 
+**Hooks and the local build (MSN-0381).** The tracked hooks run an installed `gantry` from `PATH` outside the checkout, with the major `.gitagent/foreman/SUBSTRATE.version.json` pins and at least that version, never `dist/`: an agent that writes `dist/cli/index.js` would otherwise own every hook. Developing OpenGantry, you want the build you just made, so you opt in per command: `GANTRY_HOOK_LOCAL_BUILD=1 git commit …` (likewise `git push`, `git checkout`), or a human-only alias such as `alias gcl='GANTRY_HOOK_LOCAL_BUILD=1 git commit'`. Do not export it in your shell profile: an agent launched from that shell (or an IDE started from it) inherits the variable, and its hooks then run whatever `dist/` holds, including a build the agent wrote. With the opt-in, the hooks run `dist/` as it is, so use it only for commands you type yourself. A `gantry` on `PATH` that links into this checkout (`npm link`) counts as the local build and is skipped without the opt-in. Hooks were never the boundary (`--no-verify` skips them); CI is.
+
 Confirm readiness:
 
 ```bash
@@ -190,7 +192,7 @@ All code changes are **untrusted** — human-typed or IDE-generated. OpenGantry 
 | Unit tests | gate / CI | `npm test` (`node:test`) |
 | Compile / types | build / CI | `npm run build` (`tsc`) |
 | Manifest shape | CI / pre-push | `gantry doctor` (manifest + skills sync) |
-| Changed-code quality | PR / pre-push | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
+| Changed-code quality | PR (and by hand; not the pre-push hook) | `scripts/check-changed-code.sh` — complexity, import layers, line budgets on touched `src/cli/**/*.ts` |
 | Banned imports | verify `--contract` | `contract.banned_imports` and the org policy floor |
 | Perimeter (CI) | PR | `gantry perimeter --ci` on protected governance paths |
 | Run record | verify | `.gitagent/runs/<MSN>.json` written by `gantry verify --record`; missions with `trace_rows` use verbatim quotes from `EXECUTOR_LOG.md` instead |
@@ -230,10 +232,10 @@ Runs **`dev-validate-core.sh`** (build, `gantry ci upgrade-tmp`, tests, doctor, 
 
 Adopters receive the runtime helpers from the init catalog, not the specimen-only gates above; the CI checks are `gantry ci` subcommands (ADR-0052 step 5b), so no validation script ships.
 
-**Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a one-line shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell.
+**Hooks (automatic when `core.hooksPath=.githooks`):** every tracked hook is a shim that calls `gantry hook <name>` (ADR-0052 A8), so the logic is CLI code with tests, not shell. The shim only picks the binary: an installed `gantry` on `PATH` outside the checkout, run with `GANTRY_HOOK_REQUIRE_PIN=1` so it refuses unless its version has the major `SUBSTRATE.version.json` pins and is at least the pin (a prerelease only when it is exactly the pin), or `dist/cli/index.js` when you set `GANTRY_HOOK_LOCAL_BUILD=1` (MSN-0381, see One-time setup). Without either, the hook refuses.
 
 - **pre-commit** — `gantry hook pre-commit`: the TMVC guard on the staged index for the pinned mission (blocks when `gantry hook install` armed strict mode or `GANTRY_TMVC_GUARD_STRICT=1`), then an advisory `contract check` over staged sources.
-- **pre-push** — `gantry hook pre-push` reads the ref lines git passes on stdin: a ref deletion verifies nothing, a new branch compares with the newest merge-base among its upstream, the pushed remote's `HEAD`, `main` and `master` remote-tracking branches and local `main`, `master` (else the parent), so a local `main` behind its remote does not pull already-merged missions into the range; an update compares `remote..local`, or, when the branch merged the remote's `main` since, the newest of those merge-bases, so the missions `main` brought are not verified again. Per range: `gantry verify --pre-push` for changed missions (legislative stubs pass after git-proof; a rowless mission with a run record is verified in full); advisory `gantry perimeter` when governance files change; the manifest + skills sync if manifest/skills changed; the changed-code gate for touched `src/cli/**/*.ts` (specimen only, until step 5b folds it into the CLI).
+- **pre-push** — `gantry hook pre-push` reads the ref lines git passes on stdin: a ref deletion verifies nothing, a new branch compares with the newest merge-base among its upstream, the pushed remote's `HEAD`, `main` and `master` remote-tracking branches and local `main`, `master` (else the parent), so a local `main` behind its remote does not pull already-merged missions into the range; an update compares `remote..local`, or, when the branch merged the remote's `main` since, the newest of those merge-bases, so the missions `main` brought are not verified again. Per range: `gantry verify --pre-push` for changed missions (legislative stubs pass after git-proof; a rowless mission with a run record is verified in full); advisory `gantry perimeter` when governance files change; the manifest + skills sync if manifest/skills changed. The hook no longer runs `scripts/check-changed-code.sh`: it is checkout code an agent can write (MSN-0381), so CI runs it, and you can run it by hand. Verify still runs each changed mission's `gate_command`, which is checkout code by design; the hook is not a boundary.
 - **post-checkout** — `gantry hook post-checkout`: `EXECUTOR_LOG.md` from the template on the first checkout of a feature branch.
 
 ## Releasing

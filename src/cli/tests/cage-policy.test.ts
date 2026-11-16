@@ -12,6 +12,8 @@ import { CAGE_SESSION_ENV, assertOutsideCageSession, cageAgentPolicy } from "#ca
 import { writeManifest } from "./test-fixtures.js";
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
+// The pinned fragment is the one without a GANTRY_STATE_DIR override; test-tmpdir-setup sets one for the draft token.
+delete process.env.GANTRY_STATE_DIR;
 
 function makeRepo(prefix: string): string {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -23,6 +25,7 @@ function makeRepo(prefix: string): string {
 function cli(dest: string, args: string[], extra: NodeJS.ProcessEnv = {}): { status: number | null; stdout: string; stderr: string } {
   const env = gitChildEnv({ ...extra });
   if (!(CAGE_SESSION_ENV in extra)) delete env[CAGE_SESSION_ENV];
+  if (!("GANTRY_STATE_DIR" in extra)) delete env.GANTRY_STATE_DIR;
   const r = spawnSync(process.execPath, [CLI, "cage", "policy", ...args], { cwd: dest, encoding: "utf8", env });
   return { status: r.status, stdout: r.stdout, stderr: r.stderr };
 }
@@ -48,6 +51,7 @@ const HOME = [
   "~/.kube/config",
   "~/.netrc",
   "~/.npmrc",
+  "~/.opengantry",
   "~/.pypirc",
   "~/.ssh",
 ];
@@ -73,6 +77,8 @@ const BUILTIN: Fragment = {
       "Edit(/.gitlab-ci.yml/**)",
       "Edit(/azure-pipelines.yml)",
       "Edit(/azure-pipelines.yml/**)",
+      "Edit(~/.opengantry)",
+      "Edit(~/.opengantry/**)",
       "Read(**/.env)",
       "Read(**/.env.*)",
       "Read(**/.env/**)",
@@ -105,6 +111,7 @@ const BUILTIN: Fragment = {
         "./.github/workflows",
         "./.gitlab-ci.yml",
         "./azure-pipelines.yml",
+        "~/.opengantry",
       ],
       denyRead: ["./**/.env", "./**/.env.*", "./**/.git-credentials", "./**/id_dsa", "./**/id_ecdsa", "./**/id_ed25519", "./**/id_rsa", ...HOME],
     },
@@ -204,4 +211,71 @@ test("cage policy: refused inside a cage session", () => {
   assert.equal(inside.status, 2);
   assert.match(inside.stderr, /\[GXT_CAGE_POLICY_IN_SESSION\]/);
   assert.equal(fs.existsSync(path.join(dest, "policy.json")), false);
+});
+
+test("cage policy: a GANTRY_STATE_DIR set when it runs is denied too (absolute as //path in rules, /path in the sandbox)", () => {
+  const dest = makeRepo("og-cage-policy-statedir-");
+  const extraOf = (env: NodeJS.ProcessEnv) => {
+    const f = JSON.parse(cageAgentPolicy(dest, "claude-code", [], env)) as Fragment & { sandbox: { credentials: { files: { path: string }[] } } };
+    return {
+      deny: f.permissions.deny.filter((r) => !BUILTIN.permissions.deny.includes(r)),
+      denyWrite: f.sandbox.filesystem.denyWrite.filter((p) => !BUILTIN.sandbox.filesystem.denyWrite.includes(p)),
+      denyRead: f.sandbox.filesystem.denyRead.filter((p) => !BUILTIN.sandbox.filesystem.denyRead.includes(p)),
+      credentials: f.sandbox.credentials.files.map((c) => c.path).filter((p) => !BUILTIN.sandbox.credentials.files.some((c) => c.path === p)),
+    };
+  };
+  const none = { deny: [], denyWrite: [], denyRead: [], credentials: [] };
+  assert.deepEqual(extraOf({}), none, "unset: the pinned fragment");
+  assert.deepEqual(extraOf({ GANTRY_STATE_DIR: "relative/state" }), none, "relative: the draft token refuses it");
+  assert.deepEqual(extraOf({ GANTRY_STATE_DIR: "/srv/og-state" }), {
+    deny: ["Edit(//srv/og-state)", "Edit(//srv/og-state/**)", "Read(//srv/og-state)", "Read(//srv/og-state/**)"],
+    denyWrite: ["/srv/og-state"],
+    denyRead: ["/srv/og-state"],
+    credentials: ["/srv/og-state"],
+  });
+  assert.deepEqual(extraOf({ GANTRY_STATE_DIR: path.join(os.homedir(), "state", "og") }), {
+    deny: ["Edit(~/state/og)", "Edit(~/state/og/**)", "Read(~/state/og)", "Read(~/state/og/**)"],
+    denyWrite: ["~/state/og"],
+    denyRead: ["~/state/og"],
+    credentials: ["~/state/og"],
+  });
+});
+
+test("cage policy: a symlinked state dir is denied at the physical path too, where the draft token writes its key (review round 2)", () => {
+  const dest = makeRepo("og-cage-policy-statelink-");
+  const real = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-real-")));
+  const linkParent = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-link-")));
+  const link = path.join(linkParent, "state");
+  fs.symlinkSync(real, link);
+  const f = JSON.parse(cageAgentPolicy(dest, "claude-code", [], { GANTRY_STATE_DIR: link })) as Fragment;
+  for (const dir of [link, real]) {
+    for (const rule of [`Edit(/${dir})`, `Edit(/${dir}/**)`, `Read(/${dir})`, `Read(/${dir}/**)`]) assert.ok(f.permissions.deny.includes(rule), rule);
+    assert.ok(f.sandbox.filesystem.denyWrite.includes(dir), `denyWrite ${dir}`);
+    assert.ok(f.sandbox.filesystem.denyRead.includes(dir), `denyRead ${dir}`);
+    assert.ok(f.sandbox.credentials.files.some((c) => c.path === dir), `credentials ${dir}`);
+  }
+  // The key really lands under the physical path the fragment now denies.
+  const r = spawnSync(process.execPath, ["--input-type=module", "-e", `import { createDraftToken } from ${JSON.stringify(new URL("../../packages/missions/src/draft-token.js", import.meta.url).href)};
+createDraftToken(process.argv[1], { title: "t", msn_id: "MSN-0101", skill_key: "gantry", gate_command: "npm test", interrogation: [], interrogation_sha256: "${"0".repeat(64)}", declared_paths: [] });`, dest], { cwd: getRepoRoot(), encoding: "utf8", env: { ...gitChildEnv(), GANTRY_STATE_DIR: link } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(fs.existsSync(path.join(real, "draft-token.json")), "the key is under the physical dir");
+});
+
+test("cage policy: a symlinked home adds the physical ~/.opengantry; nothing is added when nothing is linked", () => {
+  const dest = makeRepo("og-cage-policy-homelink-");
+  const realHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-realhome-")));
+  const linkHome = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-linkhome-"))), "home");
+  fs.symlinkSync(realHome, linkHome);
+  const policyWithHome = (home: string): Fragment => {
+    const r = cli(dest, ["--agent", "claude-code"], { HOME: home });
+    assert.equal(r.status, 0, r.stderr);
+    return JSON.parse(r.stdout) as Fragment;
+  };
+  const linked = policyWithHome(linkHome);
+  const phys = `${realHome}/.opengantry`;
+  assert.ok(linked.permissions.deny.includes(`Read(/${phys}/**)`) && linked.permissions.deny.includes(`Edit(/${phys})`));
+  assert.ok(linked.sandbox.filesystem.denyRead.includes(phys) && linked.sandbox.filesystem.denyWrite.includes(phys));
+  assert.ok(linked.sandbox.credentials.files.some((c) => c.path === phys));
+  const plain = policyWithHome(realHome);
+  assert.equal(JSON.stringify(plain).includes(realHome), false, "an unlinked home adds no absolute entries");
 });

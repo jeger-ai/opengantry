@@ -15,7 +15,7 @@ Production emergencies happen, and a silent policy bypass is worse than an expli
 printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/foreman/BYPASS.sha256
 ```
 
-Commit only the hash. Never commit the plaintext secret.
+Commit only the hash, to the default branch. Never commit the plaintext secret.
 
 ## Use it
 
@@ -26,7 +26,8 @@ gantry verify --break-glass --reason "Production auth down: hotfix session cooki
 git push origin refs/notes/gxt-bypass
 ```
 
-- Authorization requires `GANTRY_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256`. A commit subject alone can never authorize a bypass.
+- Authorization requires `GANTRY_BYPASS_SECRET` to match `.gitagent/foreman/BYPASS.sha256` as committed at the base commit: the merge-base of `HEAD` with `origin/HEAD`. With any remote configured, `origin/HEAD` is required: when it is missing, verify refuses with `BYPASS_BASE_UNKNOWN` (run `git fetch && git remote set-head origin --auto`) and never falls back to `origin/main` or a local branch. Only a repository with no remote at all uses local `main` or `master`. A default branch that shares no history with `HEAD` refuses. The working tree's copy and commits on your branch are ignored. No base or no anchor there refuses. A commit subject alone can never authorize a bypass.
+- **Limit:** locally this is not a boundary against a process running as your user. Such a process can rewrite the remote-tracking refs (`origin/HEAD` and the branch it names), or in a repository without a remote commit to `main`, and so choose the anchor. CI, which fetches the real default branch, is the boundary (see the design notes below).
 - Verify writes a forensic record as a git note on `refs/notes/gxt-bypass`. Pass `--audit-commit` when notes cannot be pushed. Push the notes with the branch.
 - Pull request CI (`gxt-validate.yml`) fetches `refs/notes/*` and accepts a commit that touches mission-enforced paths without an `[MSN-NNNN]` subject only when that commit carries a valid bypass note, the record `gantry verify --break-glass` writes.
 - With the compliance ledger enabled, a bypass without a `break_glass` ledger row is a failed control ([Org control plane](../guides/org-control-plane.md#compliance-ledger)).

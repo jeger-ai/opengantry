@@ -1,5 +1,5 @@
 import { MSN_ID_PATTERN } from "#core/constants.js";
-import { createDraftToken } from "#missions/draft-token.js";
+import { createDraftToken, DraftTokenError } from "#missions/draft-token.js";
 import {
   mcpError,
   type DraftLegislationInput,
@@ -142,18 +142,16 @@ export function handleDraftLegislation(
     );
   }
 
-  const token = createDraftToken(root, {
-    title: input.title,
-    msn_id: input.msn_id.trim(),
-    skill_key: skillKey,
-    gate_command: gate.command,
-    gate_success_substring: gate.successSubstring ?? undefined,
-    gate_adapter: gate.adapter,
-    interrogation: interrogate.interrogation,
-    interrogation_sha256: interrogate.interrogation_sha256,
-    declared_paths: interrogate.declared_paths,
-    contract: sealed,
-  });
+  let token: ReturnType<typeof createDraftToken>;
+  try {
+    const gateFields = { gate_command: gate.command, gate_success_substring: gate.successSubstring ?? undefined, gate_adapter: gate.adapter };
+    const { interrogation, interrogation_sha256, declared_paths } = interrogate;
+    token = createDraftToken(root, { title: input.title, msn_id: input.msn_id.trim(), skill_key: skillKey, ...gateFields, interrogation, interrogation_sha256, declared_paths, contract: sealed });
+  } catch (err) {
+    // A legacy in-repo key or a bad state dir refuses the draft (MSN-0381); the message tells the operator what to fix.
+    if (err instanceof DraftTokenError) return mcpError(err.code, err.message, err.retryable);
+    throw err;
+  }
 
   const draftInput: DraftLegislationInput = {
     ...input,

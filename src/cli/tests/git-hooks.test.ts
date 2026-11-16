@@ -31,6 +31,9 @@ function placeTrackedHook(dest: string): void {
   const hook = path.join(hookDir, "pre-commit");
   fs.copyFileSync(path.join(getRepoRoot(), ".githooks", "pre-commit"), hook);
   fs.chmodSync(hook, 0o755);
+  // MSN-0381: the shim runs only a gantry whose --version satisfies this pin.
+  fs.mkdirSync(path.join(dest, ".gitagent", "foreman"), { recursive: true });
+  fs.writeFileSync(path.join(dest, ".gitagent", "foreman", "SUBSTRATE.version.json"), `${JSON.stringify({ opengantry_version: "4.2.0" })}\n`);
 }
 
 function placeStubGantry(binDir: string): void {
@@ -39,6 +42,7 @@ function placeStubGantry(binDir: string): void {
     path.join(binDir, "gantry"),
     [
       "#!/bin/sh",
+      'if [ "$1" = --version ]; then echo 4.2.0; exit 0; fi',
       'printf "%s\\n" "$*" >> "$GANTRY_STUB_LOG"',
       'exit "${GANTRY_STUB_EXIT:-0}"',
       "",

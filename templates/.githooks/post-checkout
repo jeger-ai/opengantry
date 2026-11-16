@@ -1,7 +1,59 @@
 #!/usr/bin/env bash
 # OpenGantry tracked hook (ADR-0052 A8): the CLI does the work. See: gantry hook post-checkout --help
-cd "$(git rev-parse --show-toplevel)" || exit 1
-if [[ -f dist/cli/index.js ]]; then exec node dist/cli/index.js hook post-checkout "$@"; fi
-if command -v gantry >/dev/null 2>&1; then exec gantry hook post-checkout "$@"; fi
-echo "post-checkout: gantry not found — run: npm run build (this repo) or npm install -g @jeger-ai/opengantry" >&2
+# MSN-0381: run an installed gantry, never this checkout's code. A gantry whose link, or any link it passes through, or
+# its target lives in the checkout (dist/, node_modules/.bin) is skipped: the agent can write those. The gantry found
+# must report the major .gitagent/foreman/SUBSTRATE.version.json pins and at least that version, checked here before it
+# runs, or the hook refuses. GANTRY_HOOK_LOCAL_BUILD=1, set by a human, runs dist/ instead. Bash 3.2 compatible (macOS).
+hook=post-checkout
+top="$(git rev-parse --show-toplevel)" && cd "$top" && top="$(pwd -P)" || exit 1
+if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 ]]; then
+  if [[ -f dist/cli/index.js ]]; then exec node dist/cli/index.js hook "$hook" "$@"; fi
+  echo "$hook: GANTRY_HOOK_LOCAL_BUILD=1 but dist/cli/index.js is missing; run: npm run build" >&2
+  exit 1
+fi
+semver='^([0-9]{1,9})\.([0-9]{1,9})\.([0-9]{1,9})(-[0-9A-Za-z.-]+)?$'
+# The rule of satisfiesPin (substrate-version.ts): same major, at least the pin, a prerelease only when it is exactly the pin.
+satisfies() {
+  [[ "$1" =~ $semver ]] || return 1
+  local a1=$((10#${BASH_REMATCH[1]})) a2=$((10#${BASH_REMATCH[2]})) a3=$((10#${BASH_REMATCH[3]})) ap="${BASH_REMATCH[4]}"
+  [[ "$2" =~ $semver ]] || return 1
+  local b1=$((10#${BASH_REMATCH[1]})) b2=$((10#${BASH_REMATCH[2]})) b3=$((10#${BASH_REMATCH[3]})) bp="${BASH_REMATCH[4]}"
+  ((a1 == b1)) || return 1
+  [[ -z "$ap" || "$1" == "$2" ]] || return 1
+  ((a2 == b2)) || { ((a2 > b2)); return; }
+  ((a3 == b3)) || { ((a3 > b3)); return; }
+  [[ "$1" == "$2" || (-z "$ap" && -n "$bp") ]]
+}
+inside() { case "$1/" in "$top"/*) return 0 ;; esac; return 1; }
+pinfile=.gitagent/foreman/SUBSTRATE.version.json
+pin="$(sed -n 's/.*"opengantry_version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$pinfile" 2>/dev/null | head -n 1)"
+if [[ -z "$pin" ]]; then
+  echo "$hook: refused: no opengantry_version in $pinfile, so no gantry version is pinned for the hooks" >&2
+  exit 1
+fi
+IFS=: read -r -a dirs <<< "$PATH"
+for dir in "${dirs[@]}"; do
+  [[ "$dir" == /* && -f "$dir/gantry" && -x "$dir/gantry" ]] || continue
+  # Accepted only when a non-link is reached within 16 hops and every hop's physical directory, the final file's
+  # included, lies outside the checkout. A chain that exhausts the hops is skipped.
+  bin="$dir/gantry" ok=0
+  for ((hop = 0; hop < 16; hop++)); do
+    parent="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd -P)" || break
+    if inside "$parent"; then break; fi
+    if [[ ! -L "$bin" ]]; then ok=1; break; fi
+    link="$(readlink "$bin")"
+    [[ "$link" == /* ]] || link="$parent/$link"
+    bin="$link"
+  done
+  [[ "$ok" == 1 && -f "$bin" ]] || continue
+  ver="$("$dir/gantry" --version 2>/dev/null | head -n 1)"
+  ver="${ver//[[:space:]]/}"
+  if ! satisfies "$ver" "$pin"; then
+    echo "$hook: refused: $dir/gantry reports version '$ver', which does not satisfy $pin pinned in $pinfile (same major, at least the pin); install: npm install -g @jeger-ai/opengantry@$pin" >&2
+    exit 1
+  fi
+  # The path found, not the resolved file: version managers dispatch on argv[0].
+  GANTRY_HOOK_REQUIRE_PIN=1 exec "$dir/gantry" hook "$hook" "$@"
+done
+echo "$hook: no installed gantry outside this checkout on PATH; install the pinned version: npm install -g @jeger-ai/opengantry@$pin. Developing OpenGantry itself: GANTRY_HOOK_LOCAL_BUILD=1 (docs/DEVELOPMENT.md)" >&2
 exit 1

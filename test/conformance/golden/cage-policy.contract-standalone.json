@@ -38,6 +38,8 @@
           "Edit(/.gitlab-ci.yml/**)",
           "Edit(/azure-pipelines.yml)",
           "Edit(/azure-pipelines.yml/**)",
+          "Edit(~/.opengantry)",
+          "Edit(~/.opengantry/**)",
           "Read(**/.env)",
           "Read(**/.env.*)",
           "Read(**/.env/**)",
@@ -73,6 +75,8 @@
           "Read(~/.netrc/**)",
           "Read(~/.npmrc)",
           "Read(~/.npmrc/**)",
+          "Read(~/.opengantry)",
+          "Read(~/.opengantry/**)",
           "Read(~/.pypirc)",
           "Read(~/.pypirc/**)",
           "Read(~/.ssh)",
@@ -94,7 +98,8 @@
             "./.github",
             "./.github/workflows",
             "./.gitlab-ci.yml",
-            "./azure-pipelines.yml"
+            "./azure-pipelines.yml",
+            "~/.opengantry"
           ],
           "denyRead": [
             "./**/.env",
@@ -114,6 +119,7 @@
             "~/.kube/config",
             "~/.netrc",
             "~/.npmrc",
+            "~/.opengantry",
             "~/.pypirc",
             "~/.ssh"
           ]
@@ -158,6 +164,10 @@
             },
             {
               "path": "~/.npmrc",
+              "mode": "deny"
+            },
+            {
+              "path": "~/.opengantry",
               "mode": "deny"
             },
             {

@@ -1,7 +1,8 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
-import { SECRET_ANYWHERE_PATTERNS, SECRET_HOME_PATTERNS } from "#core/secret-paths.js";
+import { GANTRY_STATE_HOME_REL, SECRET_ANYWHERE_PATTERNS, SECRET_HOME_PATTERNS } from "#core/secret-paths.js";
 import { GantryUserError } from "#core/user-error.js";
 import { CAGE_CONFIG_FILE, normalizeCageRelPath, type CageProtectEntry } from "./cage-config.js";
 import { CAGE_SCAN_SKIP_DIRS, buildCagePlan, classifyCagePath, type CagePlan } from "./cage-rules.js";
@@ -175,13 +176,40 @@ const covering = (p: string): string[] => (p.slice(p.lastIndexOf("/") + 1).inclu
 /** A root-relative law pattern as a permission path: `/` anchors it at the project root, `**` patterns match at any depth. */
 const permissionPath = (p: string): string => (p.startsWith("**/") ? p : `/${p}`);
 
+/** The physical path, also for a dir that does not exist yet; the draft token writes its key there (draft-token.ts). */
+function physicalPath(p: string): string {
+  const missing: string[] = [];
+  for (let cur = path.resolve(p); ; cur = path.dirname(cur)) {
+    if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...missing);
+    if (path.dirname(cur) === cur) return path.resolve(p);
+    missing.unshift(path.basename(cur));
+  }
+}
+
+/**
+ * The state dirs to deny as [permission path, sandbox path]: `~/.opengantry`, a `GANTRY_STATE_DIR` set now (the draft
+ * token refuses a relative one), and the physical path of each when a link (stow, a linked home) makes it differ: the
+ * key is written there. Under home is `~/rel`; elsewhere `//abs` in a permission rule and `/abs` in the sandbox.
+ */
+function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
+  const override = env.GANTRY_STATE_DIR?.trim();
+  const configured = [path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])];
+  const dirs = new Set(configured.flatMap((d) => [d, physicalPath(d)]));
+  return [...dirs].map((dir) => {
+    const rel = path.relative(os.homedir(), dir);
+    if (rel !== "" && rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) return [`~/${rel.split(path.sep).join("/")}`, `~/${rel.split(path.sep).join("/")}`];
+    const abs = dir.split(path.sep).join("/");
+    return [`/${abs}`, abs];
+  });
+}
+
 /**
  * `gantry cage policy --agent claude-code` (ADR-0060): the cage's revert rules, a contract's `forbidden_paths` and the read
  * guard's secrets as Claude Code settings. `Edit(...)` covers every edit tool (a `Write(...)` rule never matches); the file
  * tools obey `permissions`, Bash and its children the sandbox, so each path is denied in both. A carve-out (`.env.example`,
  * manifests under `vendor/`) cannot be allowed against a deny: the fragment is stricter there. Same law, same bytes.
  */
-export function cageAgentPolicy(givenRoot: string, agent: string | undefined, forbiddenPaths: readonly string[] = []): string {
+export function cageAgentPolicy(givenRoot: string, agent: string | undefined, forbiddenPaths: readonly string[] = [], env: NodeJS.ProcessEnv = process.env): string {
   const invalid = (what: string, hint?: string): GantryUserError => new GantryUserError("GXT_CAGE_POLICY_INVALID", `cage policy: ${what}`, hint, 2);
   if (agent !== "claude-code") throw invalid(agent ? `unknown agent ${agent}` : "--agent is required", "Supported agents: claude-code.");
   const bad = forbiddenPaths.find((p) => normalizeCageRelPath(p) === null);
@@ -189,14 +217,18 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const rules = buildCagePlan(givenRoot).law.rules.filter((r) => r.effect === "deny").flatMap((r) => r.patterns);
   // Git control as a main checkout lays it out; a linked worktree's git dir is outside the project, where the sandbox denies writes.
   const write = [...rules, ...forbiddenPaths.map((p) => normalizeCageRelPath(p)!), ".git/config", ".git/hooks"];
-  const home = SECRET_HOME_PATTERNS.map((h) => `~/${h}`);
   const sorted = (xs: string[]): string[] => [...new Set(xs)].sort(byCodePoint);
-  const edit = write.map(permissionPath).flatMap(covering).map((p) => `Edit(${p})`);
-  const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), ...home].flatMap(covering).map((p) => `Read(${p})`)];
+  // The per-user state dir holds the draft-token key and replay ledger (MSN-0381): no read, no write from the sandbox.
+  const states = stateDirs(env);
+  const home = SECRET_HOME_PATTERNS.map((h) => `~/${h}`);
+  const homeRules = [...home, ...states.map(([rule]) => rule)];
+  const homeSandbox = [...home, ...states.map(([, box]) => box)];
+  const edit = [...write.map(permissionPath), ...states.map(([rule]) => rule)].flatMap(covering).map((p) => `Edit(${p})`);
+  const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), ...homeRules].flatMap(covering).map((p) => `Read(${p})`)];
   // git reads .git/config on every command: the Read rule keeps it out of the model's context, the sandbox lets git run.
   const read = SECRET_ANYWHERE_PATTERNS.filter((p) => p !== "**/.git/config").map((p) => `./${p}`);
-  const filesystem = { denyWrite: sorted(write.map((p) => `./${p}`)), denyRead: sorted([...read, ...home]) };
-  const credentials = { files: sorted(home).map((p) => ({ path: p, mode: "deny" })) };
+  const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), ...states.map(([, box]) => box)]), denyRead: sorted([...read, ...homeSandbox]) };
+  const credentials = { files: sorted(homeSandbox).map((p) => ({ path: p, mode: "deny" })) };
   const fragment = { permissions: { deny: sorted(deny) }, sandbox: { enabled: true, allowUnsandboxedCommands: false, filesystem, credentials } };
   return `${JSON.stringify(fragment, null, 2)}\n`;
 }

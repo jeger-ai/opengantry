@@ -10,8 +10,12 @@ export const SECRET_ENV_EXCEPT: readonly string[] = ["**/.env.example"];
 /** Credentials anywhere on disk: env files, git remotes with tokens, private SSH keys. */
 export const SECRET_ANYWHERE_PATTERNS: readonly string[] = [...SECRET_ENV_PATTERNS, "**/.git/config", "**/.git-credentials", "**/id_rsa", "**/id_dsa", "**/id_ecdsa", "**/id_ed25519"];
 
+/** Per-user state under home (MSN-0381): the draft-token key and replay ledger, denied to the sandbox by `cage policy`. */
+export const GANTRY_STATE_HOME_REL = ".opengantry";
+
 /** Credential stores under the home directory; a directory pattern covers what is under it. */
 export const SECRET_HOME_PATTERNS: readonly string[] = [
+  GANTRY_STATE_HOME_REL,
   ".ssh",
   ".aws",
   ".azure",

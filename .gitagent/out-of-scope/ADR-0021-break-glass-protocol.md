@@ -25,3 +25,9 @@ Issue #17 proposed `gantry bypass --break-glass <TICKET>` with an `AUDIT_LEDGER.
 - Doctor warns when `BYPASS.sha256` is unprovisioned.
 - SECURITY.md documents the runbook; adopters provision the anchor and push notes with the branch.
 - Planner MUST review bypass usage post-incident per RULES.md §6.2.
+
+## Amendment: the anchor comes from the base commit (MSN-0381)
+
+Issue #356 (ADR-0063 owner decision Q10) found that the anchor was read from the working tree, so a candidate could write `BYPASS.sha256` next to a secret it chose. `gantry verify --break-glass` now reads the anchor from the trusted base commit: the merge-base of `HEAD` with `origin/HEAD`. With any remote configured, `origin/HEAD` is required (missing: `BYPASS_BASE_UNKNOWN`, run `git fetch && git remote set-head origin --auto`); `origin/main` and local branches never stand in for it. Only a repository with no remote at all uses local `main` or `master`. A default branch that shares no history with `HEAD` refuses. Neither a working-tree edit nor a commit on the branch under review moves it. No base (`BYPASS_BASE_UNKNOWN`) or no anchor at the base (`BYPASS_NOT_CONFIGURED`) refuses. The secret, the note and the ledger row are unchanged.
+
+Limits: without a remote, the base is the local default branch, which a same-user process can move with a commit there; with a remote, it can still rewrite `origin/HEAD` or the remote-tracking branch it names locally (PR #365 review round 2 removed the fallbacks that also let it delete those refs and use local `main`). Local break-glass is not a boundary against a same-user process without a proven sandbox. CI, judging the pull request's base, is. CI still accepts any well-formed `gxt-bypass` note; that check does not prove the secret was known (follow-up).
