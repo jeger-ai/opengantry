@@ -72,7 +72,7 @@ test("package.json: the gantry-verify bin, the library export with types, comman
   assert.equal(pkg.dependencies.sigstore, root.dependencies.sigstore);
   assert.equal(pkg.dependencies.commander, root.dependencies.commander);
   for (const hook of ["preinstall", "install", "postinstall", "prepare"]) assert.equal(pkg.scripts[hook], undefined, `no ${hook} script`);
-  assert.equal(pkg.engines.node, ">=24");
+  assert.equal(pkg.engines.node, "^24.15.0 || >=26");
 });
 
 test("bundle: only commander, sigstore (lazily) and Node built-ins are imported at runtime", () => {

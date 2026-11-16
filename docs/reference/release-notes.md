@@ -9,6 +9,11 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version from this list. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
+## Next major (unreleased)
+
+- **Breaking: Node.js `^24.15.0 || >=26`** (was `>=24`) for all three packages. Node 24.0 to 24.14 and Node 25 are no longer supported.
+  - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4. Keyless signing works as before.
+
 ## 4.0
 
 - **4.0.3** Every `gantry verify --contract` result carries a criticality verdict: a `criticality` section in `verify.yaml` sorts the changed paths into classes, marks some `never_auto`, and can ask a classifier command; the verdict is signed with the result and never fails a run, and `--criticality-record <dir>` keeps the verdict, with the classifier's input when a classifier ran, for contracts that have the section. The JSON gate contract's schema is now `opengantry.gate.v1`; `commitly.gate.v1` is still read, but the result's `contract.format` is now `gate` for both names (was `commitly_gate`), so a tool that matches the old value must accept the new one. Both work in `@jeger-ai/opengantry-verify` too.

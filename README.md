@@ -74,7 +74,7 @@ How it fits together: [How OpenGantry works](docs/start/how-it-works.md).
 
 ## Install
 
-Node.js 24 or newer:
+Node.js 24.15 or a later 24.x, or Node.js 26 or newer:
 
 ```bash
 npm install -g @jeger-ai/opengantry

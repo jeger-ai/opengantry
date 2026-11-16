@@ -7,7 +7,7 @@ order: 2
 
 # Install
 
-OpenGantry needs Node.js 24 or newer and a Git repository.
+OpenGantry needs Node.js 24.15 or a later 24.x, or Node.js 26 or newer, and a Git repository.
 
 ```bash
 npm install -g @jeger-ai/opengantry

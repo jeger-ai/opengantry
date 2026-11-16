@@ -1,0 +1,177 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0377]. Executor must not run until the [MSN-0377] legislation commit + pin.
+#
+# Legislated intent: issue #352, for the next major: the Node floor (engines.node) becomes ^24.15.0 || >=26 in the
+# root package, opengantry-verify and opengantry-cage and wherever the docs state it; sigstore ^5 (glob 14 through
+# cacache 21 clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4); @types/node stays on the lowest supported major;
+# release notes and changelog name the new floor as the breaking change. No version bump, no tag.
+#
+# Operator request (2026-11-16, delegated task for issue #352). No trace rows: the evidence is
+# .gitagent/runs/MSN-0377.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0377
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0055 unchanged. Keyless signing keeps the same
+      sigstore sign and verify interface (checked by the keyless tests) and
+      stays lazily loaded; sigstore 5 needs Node ^24.15.0 || >=26, so the floor
+      rises in the next major.
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0048 unchanged. The cage's trust model and the
+      dependency freeze (decision 9) are untouched; this is a Planner dependency
+      change in a mission, and the cage package changes only its engines field.
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 4ebd9f67f396
+    kind: adr_conflict
+    question: Intent may relate to ADR-0050. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0050 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The cage commit check and file watch are
+      not changed; only packages/opengantry-cage/package.json engines.node and
+      its package-shape test move.
+    adr_refs:
+      - ADR-0052
+      - ADR-0050
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept. No output changes; SARIF and JUnit exports and the
+      conformance goldens are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: Accept; ADR-0051 unchanged. The standalone verify contract and
+      @jeger-ai/opengantry-verify keep their behaviour; the slim package raises
+      its engines floor and sigstore range only.
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: f9106a08bbfb
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Boundary for all listed paths: substrate (Tier-3).
+      contract.tmvc_roots:
+      .gitagent/missions/MSN-0377.node-floor-sigstore-5.yaml,
+      .gitagent/registry/dependencies.yaml, .gitagent/runs/MSN-0377.json,
+      AGENTS.md, EXECUTOR_LOG.md, README.md, docs/CHANGELOG.md,
+      docs/SECURITY.md, docs/cage/session.md, docs/reference/release-notes.md,
+      docs/start/install.md, examples/benchmark-agent/README.md,
+      examples/iii-integration/TEST-PLAN.md, package-lock.json, package.json,
+      packages/opengantry-cage/package.json,
+      packages/opengantry-cage/tests/package-shape.test.mjs,
+      packages/opengantry-verify/README.md,
+      packages/opengantry-verify/package.json,
+      packages/opengantry-verify/tests/verify-package.test.mjs,
+      src/cli/tests/engines.test.ts. package.json,
+      packages/opengantry-verify/package.json and
+      packages/opengantry-cage/package.json (engines.node ^24.15.0 || >=26;
+      sigstore ^5.0.1 in the CLI and the slim verify package), package-lock.json
+      (sigstore 5 and its dependencies, glob 14 through cacache 21; the
+      workspace engines), .gitagent/registry/dependencies.yaml (sigstore range),
+      src/cli/tests/engines.test.ts (every runtime dependency accepts the lowest
+      Node of each range in the floor), the two package tests (the new engines
+      string), AGENTS.md, README.md, docs/SECURITY.md, docs/start/install.md,
+      docs/cage/session.md, packages/opengantry-verify/README.md and the two
+      example docs (the stated floor), docs/CHANGELOG.md and
+      docs/reference/release-notes.md (an unreleased next-major entry naming the
+      floor as the breaking change). Operator request (2026-11-16, delegated
+      task for issue #352): \"sets engines.node to ^24.15.0 || >=26 in the root
+      package.json, packages/opengantry-verify and packages/opengantry-cage, and
+      the same floor in docs/SECURITY.md and anywhere else the floor is
+      stated\"; \"upgrades sigstore to ^5 (brings glob 14 via cacache 21,
+      clearing GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4); keep @types/node on
+      the lowest supported major\"; \"Do not bump the package version or tag a
+      release; leave versioning to the maintainer\". Mission id MSN-0377 by
+      operator decision (MSN-0374 to MSN-0376 are already merged). Decisions:
+      this reverses MSN-0352's choice to stay on sigstore 4 for every Node 24.x;
+      the package version stays 4.0.3 and the entry is marked for the next
+      major; @types/node stays ^24 (already the lowest supported major); CI
+      workflows keep node-version 24, which resolves to the latest 24.x. The
+      mission has no trace rows: its evidence is .gitagent/runs/MSN-0377.json
+      written by gantry verify --record (RULES §3)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+interrogation_sha256: 36fb10282c967c9d24b2c6ee5fb43a025bb5373ac7259ac4581b05525f09ed21
+declared_paths:
+  - .gitagent/missions/MSN-0377.node-floor-sigstore-5.yaml
+  - .gitagent/registry/dependencies.yaml
+  - .gitagent/runs/MSN-0377.json
+  - AGENTS.md
+  - EXECUTOR_LOG.md
+  - README.md
+  - docs/CHANGELOG.md
+  - docs/SECURITY.md
+  - docs/cage/session.md
+  - docs/reference/release-notes.md
+  - docs/start/install.md
+  - examples/benchmark-agent/README.md
+  - examples/iii-integration/TEST-PLAN.md
+  - package-lock.json
+  - package.json
+  - packages/opengantry-cage/package.json
+  - packages/opengantry-cage/tests/package-shape.test.mjs
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/package.json
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - src/cli/tests/engines.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0377.node-floor-sigstore-5.yaml
+    - .gitagent/registry/dependencies.yaml
+    - .gitagent/runs/MSN-0377.json
+    - AGENTS.md
+    - EXECUTOR_LOG.md
+    - README.md
+    - docs/CHANGELOG.md
+    - docs/SECURITY.md
+    - docs/cage/session.md
+    - docs/reference/release-notes.md
+    - docs/start/install.md
+    - examples/benchmark-agent/README.md
+    - examples/iii-integration/TEST-PLAN.md
+    - package-lock.json
+    - package.json
+    - packages/opengantry-cage/package.json
+    - packages/opengantry-cage/tests/package-shape.test.mjs
+    - packages/opengantry-verify/README.md
+    - packages/opengantry-verify/package.json
+    - packages/opengantry-verify/tests/verify-package.test.mjs
+    - src/cli/tests/engines.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+  allow_dynamic_specifiers: true
+contract_sha256: d2326b02551de6e023d285f0898330ccfd24010f84b9133f36a4128aafa26b77

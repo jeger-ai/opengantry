@@ -56,7 +56,7 @@ GANTRY_III_ARCH_FORCE_FATAL=1 node scripts/run-iii-architecture.mjs  # exit 2 + 
 
 ## Tier 2 — Worker install (manual, pre-publish)
 
-Prerequisites: `iii` CLI, Node 24+, built `@jeger-ai/opengantry` at repo root (`npm run build`).
+Prerequisites: `iii` CLI, Node 24.15+ (24.x) or 26+, built `@jeger-ai/opengantry` at repo root (`npm run build`).
 
 | ID | Step | Pass criteria |
 |----|------|---------------|

@@ -61,9 +61,9 @@ See [`.gitagent/planner/RUNTIME.md`](.gitagent/planner/RUNTIME.md) and [`docs/DE
 
 This repo is a **CLI-only** product (`gantry`); there is no dev server, database, or HTTP port to start.
 
-### Node.js 24+
+### Node.js 24.15+ or 26+
 
-`package.json` requires **Node ≥ 24**. Cloud VMs may ship `/exec-daemon/node` at v22 — prepend nvm’s Node 24 to `PATH` before any `npm`/`gantry` command:
+`package.json` requires **Node `^24.15.0 || >=26`** (24.15 or a later 24.x, or 26 and newer). Cloud VMs may ship `/exec-daemon/node` at v22 — prepend nvm’s Node 24 to `PATH` before any `npm`/`gantry` command:
 
 ```bash
 export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 24

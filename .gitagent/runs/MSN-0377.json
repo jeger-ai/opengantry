@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0377",
+  "mission_path": ".gitagent/missions/MSN-0377.node-floor-sigstore-5.yaml",
+  "head": "f7464149c95bcddbc4d1c15ca3580563627d2107",
+  "tree": "46f00192c8039b542f171b0273dbaab9c5e98d0d",
+  "law_sha256": "48c05faf6f8b0f600b8f1d4109ec7402e80ed3bdcf27c3ad089fa635d6f85623",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 31250,
+      "output_sha256": "099af16c24d42680738c7cd18c9605084a49d650e9d7ad84bd1adcab2749e058"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-16T20:12:03.330Z"
+}
