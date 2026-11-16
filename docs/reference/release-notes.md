@@ -11,9 +11,9 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
 
 ## Next major (unreleased)
 
-- **Breaking: Node.js `^24.15.0 || >=26`** (was `>=24`) for all three packages. Node 24.0 to 24.14 and Node 25 are no longer supported.
-  - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4. Keyless signing works as before.
-- **Breaking:** three authority inputs moved (#356): the MCP draft-token key and replay ledger to `~/.opengantry`, the break-glass anchor to the base commit, and the git hooks to an installed `gantry` that matches the repository's pinned major. A process running as your user can still read `~/.opengantry` unless a proven sandbox denies it; `gantry cage policy` generates the deny rules, which take effect only once you merge them.
+- **Breaking: Node.js `^24.15.0 || >=26`** (was `>=24`) for all three packages.
+  - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4.
+- **Breaking (#356):** draft-token key in `~/.opengantry`, committed break-glass anchor, hooks run an installed `gantry`; same-user processes still reach the key without a proven sandbox.
 
 ## 4.0
 
