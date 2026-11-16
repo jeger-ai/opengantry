@@ -6,7 +6,7 @@ publish: false
 
 # Operation admission: coverage of existing boundaries
 
-Status: **discovery, not a support claim.** This page inventories what exists at commit `be464fe9` (2026-11-16) for issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slice 1. It is the input to the proposed contract in [ADR-0063](../../.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md). Nothing here changes behaviour, and nothing here is a guarantee to adopters. The published enforcement page, [Enforcement boundary](enforcement-boundary.md), stays the adopter-facing description until the contract is accepted.
+Status: **discovery, not a support claim.** This page inventories what exists at commit `be464fe9` (2026-11-16) for issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slice 1. It is the input to the contract in [ADR-0063](../../.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md) (ACTIVE since 2026-11-16; nothing implemented yet). Nothing here changes behaviour, and nothing here is a guarantee to adopters. The published enforcement page, [Enforcement boundary](enforcement-boundary.md), stays the adopter-facing description until a cell is proven by a canary.
 
 **Headline: no cell in the matrix is `prevention`.** OpenGantry has no operating-system-enforced boundary of its own (ADR-0060 decision 1). The mechanisms that act before an effect are agent tool-call guards that judge strings, plus an agent sandbox configuration that `gantry cage policy` prints for a human to merge. OpenGantry has never tested that configuration at the OS level. Everything else detects after the effect (cage restore, `runtime exec` forbidden-zone scan, `cage check`, verify) or only records it.
 

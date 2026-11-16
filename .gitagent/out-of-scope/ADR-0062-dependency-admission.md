@@ -70,11 +70,11 @@ dependencies:
   ecosystems:
     npm:
       lockfile_versions: [2, 3]
-      npm_version: "<pinned>"   # the npm acquisition runs (decision 5; open question 3)
+      npm_version: "<pinned>"   # the npm acquisition runs (decision 5; owner decision 3: exact npm 11.x)
   registries:                   # explicit; no inferred trust (DEP03)
     - https://registry.npmjs.org/
   approved_baseline_digest: "<sha256 of an imported graph>"   # DEP04
-  approval_refs:                # where approvals live (open question 1)
+  approval_refs:                # where approvals live (owner decision 1)
     - .gitagent/dependency-approvals/
   lifecycle:
     default: deny               # deny | allow-approved
@@ -179,4 +179,4 @@ The owner answered the six open questions in chat, one at a time (MSN-0380). Eac
 3. **Pinned npm version.** *Decision:* the policy pins an exact npm 11.x version, by default the version CI tests. The parser keeps rejecting unknown fields and shapes (decision 1) but does not gate on npm version, because a lockfile does not record which npm wrote it. Bumping the pin is a policy change.
 4. **Default sources.** *Decision:* a `file:` dependency inside the repository but outside `workspaces` holds by default. An approval may admit one by its repository-relative path plus the folder's content digest at the base commit, so a change to that folder needs a new approval. The iii example's `file:../../` gets an explicit approval.
 5. **`devDependencies` and `optional` platform packages.** *Decision:* judged identically to production dependencies. Optional platform packages are approved by identity for every platform the lockfile lists, not only the platform that installs.
-6. **First preventive platform.** *Decision:* **Ubuntu 26.04 x64** (the owner changed this from the proposed 24.04), Linux mechanisms only. macOS and Windows rows are reported unproven, and an enforced launch there refuses. The mechanism follows ADR-0063's owner decisions: the harness sandbox (Claude Code's bubblewrap first), proven by canaries.
+6. **First preventive platform.** *Decision:* **Ubuntu 26.04 x64** (the owner changed this from the proposed 24.04), Linux mechanisms only. macOS and Windows rows are reported `unsupported` or `unproven`, and an enforced launch there refuses. The mechanism follows ADR-0063's owner decisions: the harness sandbox (Claude Code's bubblewrap first), proven by canaries.
