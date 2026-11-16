@@ -17,7 +17,7 @@ match_terms:
 
 # ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
-**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-2; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Where an owner decision differs from a proposal below, the decision wins.
+**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-3; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Where an owner decision differs from a proposal below, the decision wins.
 
 ## Context
 
@@ -276,11 +276,68 @@ Owner decision Q9, implemented as contract and pure logic. Nothing here dispatch
 13. **A canonical path has no control character or line terminator** (C0, DEL, C1, U+2028, U+2029), and its `..` check scans across line terminators.
 11. **`issuePermit` trusts a self-consistent `allow` from `decide` in the same broker.** It re-checks the decision digest and the binding to the request, but not the report; the broker must not pass it decisions from elsewhere.
 
+### Slice 3 in code (MSN-0386, 2026-11-17)
+
+The broker state machine and its local process, in `packages/missions/src/admission/`. Operator notes: [`docs/reference/admission-broker.md`](../../docs/reference/admission-broker.md). Nothing here confines the candidate. Every cell keeps its reported level, and none is `prevention`.
+
+- **Broker** (`broker.ts`). It wraps the pure functions and holds:
+  - the `PermitLedger`;
+  - its authority, a random `brokerId` and an epoch;
+  - the resolved policy, re-read at every decision and dispatch;
+  - the capability report.
+
+  It decides against the host cell it resolved itself, from os-release and the operator's `--harness`. The lifecycle is `received → authorized/denied/unsupported/held → dispatch-intent → confirmed/failed/unknown`, plus `expired` for an authorization that never dispatched.
+  - **Broker-assigned fields.** `prepare` hands out the ids, the nonce, the contract and policy digests, the actor identity and the capability evidence. A request whose nonce the broker did not hand out is refused (`permit_unknown`); a reused nonce is `permit_reused`; one older than 30 s is `permit_expired`. A changed attempt, actor or contract is `request_changed`, and so are arguments that `argsDigest` does not bind.
+  - **Permits never leave the broker.** Decide, permit and dispatch happen in one call; the client gets the decision, the state and receipt digests.
+  - **Journal before effect.** Consuming the permit (which revalidates policy, authority, clock and capability), checking the handles and journaling `dispatch-intent` with fsync happen in one synchronous step before the effect. A journal failure refuses the dispatch.
+  - **Recovery.** A restart records every open intent as `unknown` (ambiguity `crash`) and every undispatched authorization as `expired`. An `unknown` operation gets no new attempt. A refused replay never changes the state of the attempt it names.
+  - **Revocation.** A policy change, an unreadable policy, SIGHUP or `revoke()` bumps the epoch. Pending permits refuse with `authority_changed`, and prepared requests are void.
+- **Journal file** (`journal-file.ts`) at `<git dir>/opengantry/admission/journal.jsonl`:
+  - one exclusive lock file, with no stale takeover;
+  - fsynced appends, and a failed write is cut back;
+  - a journal changed outside the broker breaks it;
+  - a 32 MiB cap that refuses new dispatches, with a 1 MiB reserve for outcomes and no rotation.
+
+  `gantry verify --record` adds an additive `admission_journal` anchor (path, count and head digest) to the run record when a journal exists. `gantry verify` reports a missing, cut or rewritten journal as `GXT_RUN_RECORD_MISMATCH`. That closes the slice-2 limit "no caller holds a trusted anchor" for repositories that run the broker.
+- **Process** (`serve.ts`, hidden `gantry admission serve` and `stop`). It is Linux only and refuses elsewhere (`GXT_ADMISSION_BROKER_UNSUPPORTED`).
+  - **Locations.** The instance lock and `broker.json` are in the per-user state dir. The socket defaults to `$XDG_RUNTIME_DIR/opengantry/` (directory 0700, socket 0600); a socket inside the work tree, the git dir or the state dir is refused, and so is a policy inside the work tree.
+  - **Messages.** There is one message per connection, at most 1 MiB plus 64 KiB, with the 64 KiB request bound. Anything else gets a deny and no crash.
+  - **Socket authentication.** None beyond filesystem permissions: Node has no `SO_PEERCRED`, and a connection only lets a client send a request.
+  - **Cage policy.** `gantry cage policy` now also denies `.git/opengantry`, and a linked worktree's journal dir by its absolute path.
+- **Dispatchers** (`dispatch.ts`). Node has no `openat` or `fexecve`, so the dispatchers use `/proc/self/fd/<n>` as the held object.
+  - **`workspace.write`** holds the parent directory (`O_NOFOLLOW`, device and inode, path read back). It refuses a symlink in the final component, checks the prior digest or absence, then creates exclusively or renames over the target inside the held directory.
+  - **`process.spawn`** takes an argv array, never a shell, and exactly the bound names from an environment allowlist. It runs the held, hashed executable as the child's fd 3 in the held cwd. A timeout records `unknown`.
+  - **Every other family** is `unsupported`.
+- **Tests** (`src/cli/tests/admission/`). The ADM-T02 and ADM-T04 cases, and the ADM-T03 parts that need no confinement:
+  - forged, replayed and expired requests;
+  - changed arguments, resource, cell and policy epoch;
+  - revocation while a dispatch is pending;
+  - a journal write failure, a full journal and a journal changed outside the broker;
+  - a symlink or swapped parent on `workspace.write`;
+  - a truncated, rewritten or deleted journal caught through the run-record anchor;
+  - malformed and oversized socket input;
+  - concurrent dispatch of one attempt by eight client processes, which produces one effect;
+  - `kill -9` of the broker between intent and outcome, which gives `unknown` with no re-dispatch.
+
+**Residual races and limits of slice 3:**
+
+- **Replacing a file:** between the final re-check of the target and the rename, the target can be swapped. The rename stays in the held directory and never follows a link.
+- **Inherited handles:** a spawned process inherits its held executable and cwd handles.
+- **Nested executables:** interpreters and nested programs are opened by path.
+- **Revocation after the intent:** a revocation after `dispatch-intent` does not stop that effect.
+- **CI clones:** a run record with an anchor verifies only where its journal lives, and a CI clone fails closed.
+- **Choices this slice made conservatively:**
+  - A broker-side refusal reuses existing reason codes: `permit_unknown`, `permit_reused`, `permit_expired`, `request_changed`, `policy_denied` and `evidence_missing`. No code is added.
+  - Malformed requests carry no ids, so they are not journaled.
+  - Refused requests are journaled, so a flood can fill the journal. The cap then refuses dispatch, which fails closed.
+  - Recovery's `expired` is journaled as an effect receipt.
+
 **Later slices, not here:**
 
-- the broker process and its state machine, and IPC authentication (slice 3, after the Q10 authority fixes);
-- held handles and the check-equals-use dispatch;
-- the journal file under the git dir, its fsync, and the binding of its anchor into the run record;
+- reconciliation of an `unknown` (an authoritative read that settles it), and checking receipts against the lifecycle table;
+- the descendant stop contract (`stop-confirmed` / `stop-unknown`, ADM-T05);
+- proving that a harness sandbox lets the candidate reach the socket and nothing else (with the slice-4 canaries);
+- how CI verifies a run record whose journal stays on the developer's machine;
 - receipt signing;
 - OS and harness adapters (slice 4, with Claude Code bubblewrap on Ubuntu 26.04 first);
 - canaries, and the `doctor` AppArmor check;

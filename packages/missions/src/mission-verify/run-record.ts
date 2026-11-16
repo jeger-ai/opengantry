@@ -7,7 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { canonicalJson } from "#core/canonical-json.js";
 import { REL_RUNS_DIR } from "#core/constants.js";
-import { evaluateRunRecord, RUN_RECORD_SCHEMA, sha256Hex, type RunRecord } from "#core/run-record.js";
+import { evaluateRunRecord, RUN_RECORD_SCHEMA, sha256Hex, type RunRecord, type RunRecordAdmissionJournal } from "#core/run-record.js";
+import { ADMISSION_JOURNAL_REL, admissionJournalPath, readAdmissionJournalFile } from "../admission/journal-file.js";
 import { gitDiffNameOnlySinceCommit, gitRevParse, gitRunOk } from "#git/git.js";
 import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
@@ -63,6 +64,39 @@ function changedSinceHead(ctx: PhaseContext, head: string, recordRel: string): s
   return diff.paths.filter((p) => p !== recordRel);
 }
 
+/**
+ * The admission journal's anchor for a new run record (ADR-0063 owner decision Q6), or undefined when the repository has
+ * no journal. A journal that does not verify refuses the record: an anchor is never bound to a damaged journal.
+ */
+export function admissionJournalAnchorForRecord(root: string): RunRecordAdmissionJournal | undefined {
+  const file = admissionJournalPath(root);
+  if (file === null) return undefined;
+  const read = readAdmissionJournalFile(file);
+  if (!read.exists) return undefined;
+  if (!read.verdict.ok) {
+    const v = read.verdict;
+    throw new GantryUserError("GXT_ADMISSION_JOURNAL_INVALID", `gantry verify --record: the admission journal ${file} does not verify (${v.problem} at record ${v.index}: ${v.detail})`, "Keep the journal for the investigation; a run record is not written over a damaged journal.", 1);
+  }
+  return { path: ADMISSION_JOURNAL_REL, count: read.verdict.count, head_digest: read.verdict.headDigest };
+}
+
+/**
+ * Why the repository's admission journal does not match a record's anchor, or null when it matches (records appended
+ * after the anchor are fine). A missing journal, a cut at or before the anchor, or a rewrite all fail. Fail closed: a
+ * record that carries an anchor verifies only where its journal lives.
+ */
+export function admissionJournalProblem(root: string, field: unknown): string | null {
+  const f = field as Partial<RunRecordAdmissionJournal> | null;
+  if (typeof f !== "object" || f === null || f.path !== ADMISSION_JOURNAL_REL || !Number.isSafeInteger(f.count) || (f.count as number) < 0 || !/^[0-9a-f]{64}$/.test(String(f.head_digest))) {
+    return "the record's admission_journal field is malformed";
+  }
+  const file = admissionJournalPath(root);
+  if (file === null) return "not a git repository";
+  const read = readAdmissionJournalFile(file, { count: f.count as number, headDigest: f.head_digest as string });
+  if (!read.exists) return f.count === 0 ? null : `the journal is missing (${file}); the record names ${String(f.count)} records`;
+  return read.verdict.ok ? null : `${read.verdict.problem} at record ${read.verdict.index} (${read.verdict.detail})`;
+}
+
 export function evaluateRunRecordPhase(ctx: PhaseContext, msnId: string): RunRecordPhaseOutcome {
   const recordRel = runRecordRelPath(msnId);
   const record = readRunRecord(ctx.root, recordRel);
@@ -74,6 +108,7 @@ export function evaluateRunRecordPhase(ctx: PhaseContext, msnId: string): RunRec
     lawSha256: missionLawSha256(ctx),
     headIsAncestor: headKnown && headIsAncestor(ctx.root, record!.head),
     changedSinceHead: headKnown ? changedSinceHead(ctx, record!.head, recordRel) : [],
+    admissionJournalProblem: record !== null && record.admission_journal !== undefined ? admissionJournalProblem(ctx.root, record.admission_journal) : null,
   });
   if (!finding) return { kind: "ok", recordPath: recordRel };
   return {
@@ -131,6 +166,8 @@ export function writeRunRecord(ctx: PhaseContext, msnId: string, gate: RunRecord
     status: "PASS",
     issued_at: new Date().toISOString(),
   };
+  const anchor = admissionJournalAnchorForRecord(ctx.root);
+  if (anchor !== undefined) record.admission_journal = anchor;
   const rel = runRecordRelPath(msnId);
   const abs = path.join(ctx.root, rel);
   fs.mkdirSync(path.dirname(abs), { recursive: true });

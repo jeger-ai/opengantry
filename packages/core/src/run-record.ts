@@ -17,6 +17,17 @@ export interface RunRecordCheck {
   output_sha256: string;
 }
 
+/**
+ * Where the repository's admission journal stood when the record was written (ADR-0063 owner decision Q6): its path
+ * under the git dir, record count and head digest. Present only when a journal existed. Additive and optional: a
+ * reader that predates it ignores it, so the check runs only in a gantry that knows the field.
+ */
+export interface RunRecordAdmissionJournal {
+  path: string;
+  count: number;
+  head_digest: string;
+}
+
 export interface RunRecord {
   schema: typeof RUN_RECORD_SCHEMA;
   kind: "verify";
@@ -31,6 +42,7 @@ export interface RunRecord {
   checks: RunRecordCheck[];
   status: "PASS";
   issued_at: string;
+  admission_journal?: RunRecordAdmissionJournal;
 }
 
 export function sha256Hex(text: string): string {
@@ -58,6 +70,8 @@ export interface RunRecordExpectation {
   headIsAncestor: boolean;
   /** Paths under the skill roots changed since the record's head (committed or working tree). */
   changedSinceHead: string[];
+  /** Why the admission journal does not match the record's anchor (truncated, rewritten, missing), or null. */
+  admissionJournalProblem?: string | null;
 }
 
 /** Judge a record against what the current verify expects. One finding at most, the first that applies. */
@@ -69,6 +83,7 @@ export function evaluateRunRecord(record: RunRecord | null, expect: RunRecordExp
   if (record.mission_path !== expect.missionPath) return { kind: "mismatch", reason: `run record names mission ${record.mission_path}, not ${expect.missionPath}` };
   if (record.law_sha256 !== expect.lawSha256) return { kind: "mismatch", reason: "the mission law changed since the record (roots, forbidden zones, gate or contract)" };
   if (!expect.headIsAncestor) return { kind: "mismatch", reason: `run record head ${record.head.slice(0, 12)} is not an ancestor of HEAD` };
+  if (expect.admissionJournalProblem) return { kind: "mismatch", reason: `the admission journal does not match the record's anchor: ${expect.admissionJournalProblem}` };
   if (expect.changedSinceHead.length > 0) {
     const shown = expect.changedSinceHead.slice(0, 5);
     const suffix = expect.changedSinceHead.length > 5 ? ` (+${String(expect.changedSinceHead.length - 5)} more)` : "";

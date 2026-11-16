@@ -9,7 +9,7 @@ import {
   runLedgerVerify,
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
-import { runAdmissionCapabilities } from "./commands/admission.js";
+import { runAdmissionCapabilities, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
 import { runNpmCiCommand } from "./commands/npm-ci.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
@@ -83,13 +83,32 @@ export function registerOrgControlPlaneCommands(program: Command): void {
     .action(runDepsCheck);
 
   registerNpmCommands(program);
+  registerAdmissionCommands(program);
+}
 
-  const admission = program.command("admission", { hidden: true }).description("Operation admission contract (ADR-0063; read-only)");
+/** The hidden operation admission group (ADR-0063): the capability matrix and the slice-3 broker process. */
+function registerAdmissionCommands(program: Command): void {
+  const admission = program.command("admission", { hidden: true }).description("Operation admission (ADR-0063): the capability matrix and the local broker");
   admission
     .command("capabilities")
     .description("Print the capability matrix: every platform x harness x family cell and its level")
     .option("--json", "JSON")
     .action(runAdmissionCapabilities);
+  admission
+    .command("serve")
+    .description("Run the admission broker on a Unix domain socket (Linux; no confinement, no prevention claim)")
+    .requiredOption("--harness <id>", "Harness the broker serves: claude-code, cursor, codex-cli, headless or repository")
+    .requiredOption("--contract-digest <sha256>", "sha256 of the accepted contract every request must bind")
+    .option("--policy <file>", "Resolved admission policy (opengantry.admission-policy.v1), outside the work tree")
+    .option("--socket <path>", "Socket path (default $XDG_RUNTIME_DIR/opengantry/admission-<repo>.sock)")
+    .option("--assume-platform <row>", "Select the Linux capability row on a host os-release does not name (selects a row, never raises a level)")
+    .option("--json", "JSON")
+    .action(runAdmissionServe);
+  admission
+    .command("stop")
+    .description("Send SIGTERM to the admission broker recorded for this repository")
+    .option("--json", "JSON")
+    .action(runAdmissionStop);
 }
 
 /** `gantry npm ci`: an admitted install (issue #355 slice 4, ADR-0062 decision 5). */
