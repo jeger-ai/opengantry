@@ -12,6 +12,10 @@
 # Amended: docs/guides/cursor.md declared; it described the launcher running dist/ when present.
 # Amended: test/conformance/golden/init.dry-run.bare-git.json declared and re-recorded (CONFORMANCE_RECORD=1): it
 # records the byte size of the docs/INTEGRATIONS.md that init composes from the Cursor recipe, whose launcher line changed.
+# Amended (PR #369 review round): .github/workflows/gxt-validate.yml declared and .github/workflows/ dropped from the
+# contract forbidden zones, so the msn_commits job judges gxt-bypass notes with a gantry built from the PR base, not the
+# head; .gitagent/registry/env.yaml and docs/reference/session-variables.md declared for GANTRY_MCP_LOCAL_BUILD, the
+# launchers' own opt-in (the hook shims ignore it, the launchers ignore GANTRY_HOOK_LOCAL_BUILD).
 #
 # Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0385.json written by
 # gantry verify --record (RULES §3).
@@ -71,10 +75,18 @@ interrogation:
       applicability, or cite superseding rationale?
     hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
       legislation proceeds.
-    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
-      ingestion contract; this mission changes no plane deployment, ingestion or
-      workflow file. The msn-range check gantry ci runs changes, the workflows
-      do not.
+    operator_answer: "Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; this mission changes no plane deployment or ingestion.
+      Review round (PR #369): one workflow file changes,
+      .github/workflows/gxt-validate.yml, and only its msn_commits job: it
+      checks out and builds the PR base in a subdirectory and runs gantry ci
+      msn-range from that build over the PR range, so a pull request cannot
+      change the code that judges its own gxt-bypass notes. Brief: \"In this
+      repo's msn_commits job, run the note verification with a gantry built
+      from base.sha, not the PR head.\" The adopter template workflow is
+      unchanged; the docs say it runs from the PR head and that branch
+      protection and required review of workflow paths are the operator's
+      boundary."
     adr_refs:
       - ADR-0037
       - ADR-0052
@@ -91,7 +103,14 @@ interrogation:
       opengantry-break-glass) by a key that the base commit's
       PLANNER.signing.pub lists for the note's signer. CI does not hold the
       secret (a PR workflow can read repository secrets), so a Planner signature
-      is the proof a candidate cannot forge. Old v1 notes stop counting."
+      is the proof a candidate cannot forge. Old v1 notes stop counting.
+      Review round (PR #369): the signature is attribution and an audit trail,
+      not a boundary. CI passes any commit whose subject starts with
+      [MSN-NNNN] without a note, and a pull request can change the verifier or
+      the workflow that runs it; the boundary is branch protection plus human
+      review of workflow and verifier changes. The amendment and
+      docs/reference/break-glass.md say so; this repository's msn_commits job
+      runs the note check from a base build."
     adr_refs:
       - ADR-0021
       - ADR-0063
@@ -119,8 +138,9 @@ interrogation:
       check (packages/missions, packages/core), the git hook shims and their
       templates, the Cursor and MCP launchers and an ADR; that is substrate
       under RULES §1 and the MANIFEST path_risks. contract.tmvc_roots names the
-      exact files; .gitagent/foreman/, RULES.md, .github/workflows/ and
-      TARGET_ARCHITECTURE.yaml are forbidden zones. Owner decision Q10 of
+      exact files; .gitagent/foreman/, RULES.md and TARGET_ARCHITECTURE.yaml
+      are forbidden zones (.github/workflows/ was one until the PR #369 review
+      round declared .github/workflows/gxt-validate.yml). Owner decision Q10 of
       ADR-0063 asked for these surfaces to be fixed; this mission closes the
       follow-ups PR #365 (MSN-0381) listed."
     adr_refs:
@@ -200,14 +220,16 @@ interrogation:
       verify contract or cage scope generation from plans changes.
     adr_refs:
       - ADR-0059
-interrogation_sha256: d2a38816978610d9034747b3b4ccb020e7b87c2bc300765400a5a19c3da6264a
+interrogation_sha256: ab16f4e92efaa94688b5f64578b4dadcc2b0d18e7e929c05ac86ddba5fea645a
 declared_paths:
   - .cursor/hooks/gxt-session-start.sh
   - .gitagent/missions/MSN-0385.authority-follow-ups.yaml
   - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/env.yaml
   - .gitagent/runs/MSN-0385.json
   - .githooks
+  - .github/workflows/gxt-validate.yml
   - AGENTS.md
   - ARCH_BASELINE.json
   - EXECUTOR_LOG.md
@@ -219,6 +241,7 @@ declared_paths:
   - docs/guides/cursor.md
   - docs/reference/break-glass.md
   - docs/reference/release-notes.md
+  - docs/reference/session-variables.md
   - docs/start/install.md
   - packages/cage/src/cage-suggest.ts
   - packages/core/src/trusted-automation.ts
@@ -246,8 +269,10 @@ contract:
     - .gitagent/missions/MSN-0385.authority-follow-ups.yaml
     - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
     - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/env.yaml
     - .gitagent/runs/MSN-0385.json
     - .githooks
+    - .github/workflows/gxt-validate.yml
     - AGENTS.md
     - ARCH_BASELINE.json
     - EXECUTOR_LOG.md
@@ -259,6 +284,7 @@ contract:
     - docs/guides/cursor.md
     - docs/reference/break-glass.md
     - docs/reference/release-notes.md
+    - docs/reference/session-variables.md
     - docs/start/install.md
     - packages/cage/src/cage-suggest.ts
     - packages/core/src/trusted-automation.ts
@@ -283,6 +309,5 @@ contract:
   forbidden_zones:
     - .gitagent/foreman/
     - .gitagent/planner/RULES.md
-    - .github/workflows/
     - TARGET_ARCHITECTURE.yaml
-contract_sha256: 6d17c9f682e1131b42bc87435986483a6532a933b2eb2211d1c28423b9546dcb
+contract_sha256: 867fbcd7db7eb514f26833a99eda435a20ff7abb621234ec664f779bde4196d5
