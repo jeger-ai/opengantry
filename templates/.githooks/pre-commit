@@ -12,13 +12,14 @@ if [[ "${GANTRY_HOOK_LOCAL_BUILD:-}" == 1 ]]; then
   exit 1
 fi
 semver='^([0-9]{1,9})\.([0-9]{1,9})\.([0-9]{1,9})(-[0-9A-Za-z.-]+)?$'
-# The rule of satisfiesPin (substrate-version.ts): same major, at least the pin, a prerelease only when it is the pin.
+# The rule of satisfiesPin (substrate-version.ts): same major, at least the pin, a prerelease only when it is exactly the pin.
 satisfies() {
   [[ "$1" =~ $semver ]] || return 1
   local a1=$((10#${BASH_REMATCH[1]})) a2=$((10#${BASH_REMATCH[2]})) a3=$((10#${BASH_REMATCH[3]})) ap="${BASH_REMATCH[4]}"
   [[ "$2" =~ $semver ]] || return 1
   local b1=$((10#${BASH_REMATCH[1]})) b2=$((10#${BASH_REMATCH[2]})) b3=$((10#${BASH_REMATCH[3]})) bp="${BASH_REMATCH[4]}"
   ((a1 == b1)) || return 1
+  [[ -z "$ap" || "$1" == "$2" ]] || return 1
   ((a2 == b2)) || { ((a2 > b2)); return; }
   ((a3 == b3)) || { ((a3 > b3)); return; }
   [[ "$1" == "$2" || (-z "$ap" && -n "$bp") ]]
@@ -33,16 +34,18 @@ fi
 IFS=: read -r -a dirs <<< "$PATH"
 for dir in "${dirs[@]}"; do
   [[ "$dir" == /* && -f "$dir/gantry" && -x "$dir/gantry" ]] || continue
-  bin="$dir/gantry" ok=1
-  for _ in 1 2 3 4 5 6 7 8 9; do
-    parent="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd -P)" || { ok=0; break; }
-    if inside "$parent"; then ok=0; break; fi
-    [[ -L "$bin" ]] || break
+  # Accepted only when a non-link is reached within 16 hops and every hop's physical directory, the final file's
+  # included, lies outside the checkout. A chain that exhausts the hops is skipped.
+  bin="$dir/gantry" ok=0
+  for ((hop = 0; hop < 16; hop++)); do
+    parent="$(cd -P "$(dirname "$bin")" 2>/dev/null && pwd -P)" || break
+    if inside "$parent"; then break; fi
+    if [[ ! -L "$bin" ]]; then ok=1; break; fi
     link="$(readlink "$bin")"
     [[ "$link" == /* ]] || link="$parent/$link"
     bin="$link"
   done
-  [[ "$ok" == 1 && ! -L "$bin" && -f "$bin" ]] || continue
+  [[ "$ok" == 1 && -f "$bin" ]] || continue
   ver="$("$dir/gantry" --version 2>/dev/null | head -n 1)"
   ver="${ver//[[:space:]]/}"
   if ! satisfies "$ver" "$pin"; then

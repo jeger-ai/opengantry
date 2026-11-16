@@ -31,32 +31,37 @@ function timingSafeEqualHex(a: string, b: string): boolean {
   return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
-/** origin/HEAD when it resolves; origin/main or origin/master only without it; local main or master only without any. */
-const DEFAULT_REF_TIERS = [["refs/remotes/origin/HEAD"], ["refs/remotes/origin/main", "refs/remotes/origin/master"], ["refs/heads/main", "refs/heads/master"]];
+/** Local default branches; used only in a repository with no remote at all. */
+const LOCAL_DEFAULT_REFS = ["refs/heads/main", "refs/heads/master"];
+const SET_HEAD_HINT = "run: git fetch && git remote set-head origin --auto";
 
 type AnchorBase = { ok: true; base: string } | { ok: false; why: string };
 
 /**
- * The trusted base for the anchor (MSN-0381): the merge-base of HEAD with the one default branch. The first tier with a
- * ref that resolves decides, so a closer branch (a pushed origin/master, a local main) never outranks it; two refs in a
- * tier are ambiguous, and a default branch without shared history refuses rather than falling through. A commit the
- * change under review adds is never its own base, so neither a working-tree edit nor a branch commit moves the anchor.
+ * The trusted base for the anchor (MSN-0381): the merge-base of HEAD with the one default branch. With any remote, that
+ * is refs/remotes/origin/HEAD and nothing else: a deleted or moved origin/main and a local main the agent committed to
+ * never stand in for it. Only a repository without any remote uses local main or master (exactly one must exist). A
+ * default branch without shared history refuses. Rewriting origin/HEAD itself is the disclosed local limit; CI decides.
  */
 function breakGlassAnchorBase(repoRoot: string): AnchorBase {
+  const remotes = gitRun(repoRoot, ["remote"]);
+  if (!remotes.ok) return { ok: false, why: "not a git repository" };
   const resolves = (ref: string): boolean => gitRun(repoRoot, ["rev-parse", "--verify", "-q", `${ref}^{commit}`]).ok;
-  for (const tier of DEFAULT_REF_TIERS) {
-    const found = tier.filter(resolves);
-    if (found.length === 0) continue;
-    const short = found.map((r) => r.replace(/^refs\/(remotes|heads)\//, ""));
-    if (found.length > 1) {
-      const hint = found[0]!.startsWith("refs/remotes/") ? " (name it: git remote set-head origin --auto)" : "";
-      return { ok: false, why: `${short.join(" and ")} both exist, so the default branch is ambiguous${hint}` };
+  let ref: string;
+  if (remotes.stdout.trim()) {
+    ref = "refs/remotes/origin/HEAD";
+    if (!resolves(ref)) return { ok: false, why: `a remote is configured but origin/HEAD does not resolve (${SET_HEAD_HINT})` };
+  } else {
+    const found = LOCAL_DEFAULT_REFS.filter(resolves);
+    if (found.length !== 1) {
+      return { ok: false, why: found.length ? "main and master both exist, so the default branch is ambiguous" : "no remote and no local main or master" };
     }
-    const mb = gitRun(repoRoot, ["merge-base", "HEAD", found[0]!]);
-    const base = mb.ok ? mb.stdout.trim() : "";
-    return base ? { ok: true, base } : { ok: false, why: `HEAD shares no history with the default branch ${short[0]!}` };
+    ref = found[0]!;
   }
-  return { ok: false, why: "no default branch (origin/HEAD, origin/main, origin/master, else main or master)" };
+  const short = ref.replace(/^refs\/(remotes|heads)\//, "");
+  const mb = gitRun(repoRoot, ["merge-base", "HEAD", ref]);
+  const base = mb.ok ? mb.stdout.trim() : "";
+  return base ? { ok: true, base } : { ok: false, why: `HEAD shares no history with the default branch ${short}` };
 }
 
 function parseAnchor(text: string): string | null {

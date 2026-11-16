@@ -17,8 +17,7 @@ const DRAFT_TOKEN_TTL_SECONDS_MAX = 1800;
 /** Where the key lived before MSN-0381: readable by the agent's own user, so its presence refuses. */
 const DRAFT_TOKEN_LEGACY_KEY_REL = ".gitagent/foreman/DRAFT_TOKEN.key";
 const DRAFT_TOKEN_STATE_FILE = "draft-token.json";
-const LOCK_WAIT_MS = 5000;
-const LOCK_STALE_MS = 30_000;
+const LOCK_WAIT_MS = 2000;
 
 import type { InterrogationRow } from "#core/interrogation.js";
 
@@ -51,7 +50,8 @@ type DraftTokenErrorCode =
   | "TOKEN_REPLAYED"
   | "TOKEN_KEY_MISSING"
   | "TOKEN_LEGACY_KEY"
-  | "TOKEN_STATE_INVALID";
+  | "TOKEN_STATE_INVALID"
+  | "TOKEN_STATE_LOCKED";
 
 export class DraftTokenError extends Error {
   readonly code: DraftTokenErrorCode;
@@ -143,52 +143,54 @@ const readOwner = (file: string): string | null => {
   }
 };
 const sleep = (ms: number): void => void Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-const lockUnclear = (): DraftTokenError => stateError("lock ownership is unclear (another process took it over); retry", true);
+const lockUnclear = (): DraftTokenError => stateError("lock ownership is unclear (the lock file was removed or replaced while held); retry", true);
 
 /**
- * Move `lock` aside if it still holds `owner`, by an atomic rename to a name only this call uses. A different owner found
- * there (someone took it over in between) is put back and the call refuses: no live lock is ever removed.
+ * A lock file with a unique owner token, created exclusively. There is no stale-lock takeover (review round 2): Node has
+ * no portable OS file lock, so any takeover lets a paused holder resume and write over its successor. The consumer is
+ * human-paced, so an existing lock waits briefly and then refuses; a crashed process's lock is removed by the operator.
  */
-function removeLockIfOwned(lock: string, owner: string, token: string): boolean {
-  const aside = `${lock}.${token}.aside`;
-  try {
-    fs.renameSync(lock, aside);
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return false;
-    throw err;
-  }
-  if (readOwner(aside) === owner) {
-    fs.rmSync(aside, { force: true });
-    return true;
-  }
-  try {
-    fs.linkSync(aside, lock);
-  } catch {
-    /* a third process holds the lock now; its owner check refuses the one we moved */
-  } finally {
-    fs.rmSync(aside, { force: true });
-  }
-  throw lockUnclear();
-}
-
-/** A lock file with a unique owner token: created exclusively, taken over only when stale and still the same owner. */
-function acquireLock(lock: string, owner: string, token: string): void {
-  for (const deadline = Date.now() + LOCK_WAIT_MS; ; ) {
+function acquireLock(lock: string, owner: string): void {
+  for (const deadline = Date.now() + LOCK_WAIT_MS; ; sleep(25)) {
     try {
       fs.writeFileSync(lock, owner, { flag: "wx", mode: 0o600 });
       return;
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
     }
-    const held = readOwner(lock);
-    const age = Date.now() - (fs.statSync(lock, { throwIfNoEntry: false })?.mtimeMs ?? Date.now());
-    if (held !== null && age > LOCK_STALE_MS) removeLockIfOwned(lock, held, token);
-    else if (Date.now() > deadline) throw stateError("locked by another process", true);
-    else sleep(25);
+    if (Date.now() > deadline) {
+      const message = `${CLI_NAME} draft token state: locked: ${lock} exists. Another gantry process holds it, or one crashed holding it; delete it only if no gantry process is running.`;
+      throw new DraftTokenError("TOKEN_STATE_LOCKED", message, true);
+    }
   }
 }
 
-/** Read-modify-write under an owned lock file, then an atomic rename: no lost consume, no second key, no stale writer. */
+/** Remove the lock only while it still holds this owner; a lock someone else holds is left in place. */
+function releaseLock(lock: string, owner: string): void {
+  if (readOwner(lock) !== owner) throw lockUnclear();
+  fs.rmSync(lock);
+}
+
+/** Write to a temporary file, fsync it, then rename it over the state. */
+function writeDurably(file: string, tmp: string, text: string): void {
+  try {
+    const fd = fs.openSync(tmp, "w", 0o600);
+    try {
+      fs.writeFileSync(fd, text);
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tmp, file);
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+}
+
+/**
+ * Read-modify-write under an owned lock file, then an atomic rename. While the lock exists nobody else gets past
+ * acquireLock and only its owner removes it, so no two calls ever hold it at once: no lost consume, no second key.
+ */
 function withState<T>(root: string, fn: (state: DraftTokenState | null, write: (next: DraftTokenState) => void) => T): T {
   assertNoLegacyKey(root);
   const file = statePath(root);
@@ -196,23 +198,26 @@ function withState<T>(root: string, fn: (state: DraftTokenState | null, write: (
   const lock = `${file}.lock`;
   const token = crypto.randomUUID();
   const owner = `${JSON.stringify({ token, pid: process.pid })}\n`;
-  acquireLock(lock, owner, token);
-  let owned = true;
+  acquireLock(lock, owner);
+  let result: T;
   try {
-    return fn(readState(file), (next) => {
-      const tmp = `${file}.${token}.tmp`;
-      fs.writeFileSync(tmp, `${JSON.stringify(next)}\n`, { mode: 0o600 });
-      // A writer paused past the stale age may have lost the lock: it must not overwrite what the new owner wrote.
-      if (readOwner(lock) !== owner) {
-        owned = false;
-        fs.rmSync(tmp, { force: true });
-        throw lockUnclear();
-      }
-      fs.renameSync(tmp, file);
+    result = fn(readState(file), (next) => {
+      // Defence in depth: a lock removed by hand while held means another call may be in; write nothing.
+      if (readOwner(lock) !== owner) throw lockUnclear();
+      writeDurably(file, `${file}.${token}.tmp`, `${JSON.stringify(next)}\n`);
     });
-  } finally {
-    if (owned) removeLockIfOwned(lock, owner, token);
+  } catch (err) {
+    try {
+      releaseLock(lock, owner);
+    } catch (releaseErr) {
+      // Never mask the original error: attach the release failure and report it.
+      if (err instanceof Error) Object.assign(err, { lockReleaseError: releaseErr });
+      process.stderr.write(`${CLI_NAME} draft token state: lock release failed: ${String(releaseErr)}\n`);
+    }
+    throw err;
   }
+  releaseLock(lock, owner);
+  return result;
 }
 
 function ensureDraftTokenKey(root: string): Buffer {

@@ -112,6 +112,8 @@ npm install -g @jeger-ai/opengantry@5             # before the next commit: the 
 gantry doctor
 ```
 
+The global install serves every repository on your machine. Once it is 5.x, the hooks of any other repository still pinned to 4.x refuse (another major) until that repository is upgraded too. Upgrade those repositories in the same sitting, or give the ones you cannot upgrade yet their own install that comes first on `PATH` in that repository (for example a per-repository directory added by direnv), outside the checkout so the hooks accept it.
+
 `gantry doctor` compares `.gitagent/foreman/SUBSTRATE.version.json` with the version bundled in your installed CLI and warns (exit 0) when the substrate is behind. Security fixes ship only for the latest 3.x release ([Security policy](../SECURITY.md)).
 
 Next: [Your first mission](first-mission.md).

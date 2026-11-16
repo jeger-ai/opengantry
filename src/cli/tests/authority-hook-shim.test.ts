@@ -156,6 +156,11 @@ const PIN_CASES: [string, string, boolean][] = [
   ["garbage", "4.2.0", false],
   ["", "4.2.0", false],
   ["4.2.0", "4.2", false],
+  // Review round 2: a prerelease passes only when it is exactly the pin, even when it is newer.
+  ["4.1.0-rc.1", "4.0.3", false],
+  ["4.3.0-rc.1", "4.2.0", false],
+  ["4.2.1-rc.1", "4.2.0", false],
+  ["4.3.0", "4.2.0-rc.1", true],
 ];
 
 test("hook pin: the CLI's rule (satisfiesPin), same major and at least the pin", () => {
@@ -265,4 +270,45 @@ test("pre-push: the checkout's scripts/check-changed-code.sh is not run (the can
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.doesNotMatch(r.stdout + r.stderr, /nothing to verify/, "the range is checked");
   assert.equal(fs.existsSync(marker), false, "checkout code never runs from the hook");
+});
+
+/** A chain of `n` links, all outside the checkout, ending at `target`. Returns the directory holding the first link. */
+function linkChain(n: number, target: string): string {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "og-hook-chain-"));
+  let next = target;
+  for (let i = n; i >= 1; i--) {
+    const d = path.join(base, `l${String(i)}`);
+    fs.mkdirSync(d);
+    fs.symlinkSync(next, path.join(d, "gantry"));
+    next = path.join(d, "gantry");
+  }
+  return path.join(base, "l1");
+}
+
+test("hook shims: a 9-link chain outside the checkout that ends in it is skipped (the final hop is checked; review round 2)", () => {
+  const { dest } = repo();
+  const evilLog = path.join(dest, "evil.log");
+  stub(path.join(dest, "evil"), evilLog);
+  const first = linkChain(9, path.join(dest, "evil", "gantry"));
+  for (const h of HOOKS) {
+    const r = runShim(dest, h, `${first}${path.delimiter}${toolsPath()}`);
+    assert.equal(r.status, 1, `${h}: ${r.stderr}`);
+    assert.match(r.stderr, /no installed gantry outside this checkout/);
+  }
+  assert.equal(fs.existsSync(evilLog), false, "the binary in the checkout never ran");
+});
+
+test("hook shims: a chain that exhausts the hop limit is skipped, even when it ends outside the checkout", () => {
+  const { dest } = repo();
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-hook-long-"));
+  const log = path.join(outside, "calls.log");
+  stub(path.join(outside, "bin"), log);
+  const near = linkChain(15, path.join(outside, "bin", "gantry"));
+  assert.equal(runShim(dest, "pre-commit", `${near}${path.delimiter}${toolsPath()}`).status, 0, "15 links and the file fit in 16 hops");
+  fs.rmSync(log);
+  const far = linkChain(16, path.join(outside, "bin", "gantry"));
+  const r = runShim(dest, "pre-commit", `${far}${path.delimiter}${toolsPath()}`);
+  assert.equal(r.status, 1, r.stderr);
+  assert.match(r.stderr, /no installed gantry outside this checkout/);
+  assert.equal(fs.existsSync(log), false);
 });

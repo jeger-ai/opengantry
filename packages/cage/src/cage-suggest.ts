@@ -176,19 +176,31 @@ const covering = (p: string): string[] => (p.slice(p.lastIndexOf("/") + 1).inclu
 /** A root-relative law pattern as a permission path: `/` anchors it at the project root, `**` patterns match at any depth. */
 const permissionPath = (p: string): string => (p.startsWith("**/") ? p : `/${p}`);
 
+/** The physical path, also for a dir that does not exist yet; the draft token writes its key there (draft-token.ts). */
+function physicalPath(p: string): string {
+  const missing: string[] = [];
+  for (let cur = path.resolve(p); ; cur = path.dirname(cur)) {
+    if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...missing);
+    if (path.dirname(cur) === cur) return path.resolve(p);
+    missing.unshift(path.basename(cur));
+  }
+}
+
 /**
- * The state dirs to deny as [permission path, sandbox path]: `~/.opengantry`, and a `GANTRY_STATE_DIR` set now (the draft
- * token refuses a relative one). Absolute is `//abs` in a permission rule and `/abs` in the sandbox.
+ * The state dirs to deny as [permission path, sandbox path]: `~/.opengantry`, a `GANTRY_STATE_DIR` set now (the draft
+ * token refuses a relative one), and the physical path of each when a link (stow, a linked home) makes it differ: the
+ * key is written there. Under home is `~/rel`; elsewhere `//abs` in a permission rule and `/abs` in the sandbox.
  */
 function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
-  const dirs: [string, string][] = [[`~/${GANTRY_STATE_HOME_REL}`, `~/${GANTRY_STATE_HOME_REL}`]];
   const override = env.GANTRY_STATE_DIR?.trim();
-  if (!override || !path.isAbsolute(override)) return dirs;
-  const abs = path.resolve(override).split(path.sep).join("/");
-  const rel = path.relative(os.homedir(), path.resolve(override));
-  if (rel !== "" && rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) dirs.push([`~/${rel.split(path.sep).join("/")}`, `~/${rel.split(path.sep).join("/")}`]);
-  else dirs.push([`/${abs}`, abs]);
-  return dirs;
+  const configured = [path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])];
+  const dirs = new Set(configured.flatMap((d) => [d, physicalPath(d)]));
+  return [...dirs].map((dir) => {
+    const rel = path.relative(os.homedir(), dir);
+    if (rel !== "" && rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) return [`~/${rel.split(path.sep).join("/")}`, `~/${rel.split(path.sep).join("/")}`];
+    const abs = dir.split(path.sep).join("/");
+    return [`/${abs}`, abs];
+  });
 }
 
 /**

@@ -127,16 +127,18 @@ type HookPinVerdict = { ok: true } | { ok: false; message: string };
 const PIN_SEMVER = /^(\d{1,9})\.(\d{1,9})\.(\d{1,9})(-[0-9A-Za-z.-]+)?$/;
 
 /**
- * One installed gantry serves every repository pinning its major (MSN-0381): the same major and at least the pin; a
- * prerelease only when it is the pin itself. Another major, an older version or an unparseable one is refused. The hook
- * shims apply the same rule in bash before they run the binary.
+ * One installed gantry serves every repository pinning its major (MSN-0381): the same major and at least the pin. A
+ * prerelease passes only when it is exactly the pin, checked first, so 4.1.0-rc.1 never passes for 4.0.3. Another
+ * major, an older version or an unparseable one is refused. The hook shims apply the same rule in bash before they run
+ * the binary.
  */
 function satisfiesPin(installed: string, pin: string): boolean {
   const a = PIN_SEMVER.exec(installed.trim());
   const b = PIN_SEMVER.exec(pin.trim());
   if (!a || !b || Number(a[1]) !== Number(b[1])) return false;
+  if (a[4] !== undefined) return installed.trim() === pin.trim();
   for (const i of [2, 3]) if (Number(a[i]) !== Number(b[i])) return Number(a[i]) > Number(b[i]);
-  return installed.trim() === pin.trim() || (a[4] === undefined && b[4] !== undefined);
+  return true; // a release of the pin's numbers satisfies the pin and any prerelease of it
 }
 
 /**

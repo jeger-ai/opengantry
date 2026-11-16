@@ -149,3 +149,47 @@ test("break-glass: a remote default without shared history refuses; local main i
   git(dest, "remote", "set-head", "origin", "main");
   assert.equal(verdictCode(dest, MINE), "BYPASS_BASE_UNKNOWN", "origin/HEAD exists without a merge-base");
 });
+
+/** A clone of a repository whose main committed the team anchor, plus a local commit on main with the candidate's anchor. */
+function cloneWithCandidateOnMain(): { dest: string; candidate: string } {
+  const origin = repo("og-auth-bg-tier-origin-");
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-auth-bg-tier-"));
+  git(path.dirname(dest), "clone", "-q", origin, dest);
+  git(dest, "config", "user.email", "t@example.com");
+  git(dest, "config", "user.name", "T");
+  writeAnchor(dest, MINE);
+  git(dest, "commit", "-qam", "candidate anchor");
+  return { dest, candidate: git(dest, "rev-parse", "HEAD") };
+}
+
+test("break-glass: with a remote, deleting the remote-tracking refs never falls back to local main (review round 2)", () => {
+  const { dest, candidate } = cloneWithCandidateOnMain();
+  git(dest, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD");
+  git(dest, "update-ref", "-d", "refs/remotes/origin/main");
+  git(dest, "update-ref", "refs/heads/main", candidate);
+  const v = withSecret(MINE, () => bypassAuthorization(dest));
+  assert.equal(v.ok, false);
+  assert.equal(v.ok ? "ok" : v.code, "BYPASS_BASE_UNKNOWN");
+  assert.match(v.ok ? "" : v.message, /git fetch && git remote set-head origin --auto/);
+  assert.equal(verdictCode(dest, TEAM), "BYPASS_BASE_UNKNOWN", "no base at all until origin/HEAD is restored");
+});
+
+test("break-glass: with a remote and no origin/HEAD, an origin/main moved to HEAD is not a base (review round 2)", () => {
+  const { dest, candidate } = cloneWithCandidateOnMain();
+  git(dest, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD");
+  git(dest, "update-ref", "refs/remotes/origin/main", candidate);
+  assert.equal(verdictCode(dest, MINE), "BYPASS_BASE_UNKNOWN");
+  // Restoring origin/HEAD the way the hint says brings back the base (origin/main itself is the disclosed local limit).
+  git(dest, "update-ref", "refs/remotes/origin/main", `${candidate}~1`);
+  git(dest, "remote", "set-head", "origin", "main");
+  assert.equal(verdictCode(dest, MINE), "BYPASS_SECRET_INVALID");
+  assert.equal(verdictCode(dest, TEAM), "ok");
+});
+
+test("break-glass: a remote other than origin also disables the local tier", () => {
+  const dest = repo("og-auth-bg-upstream-");
+  git(dest, "remote", "add", "upstream", repo("og-auth-bg-upstream-src-"));
+  assert.equal(verdictCode(dest, TEAM), "BYPASS_BASE_UNKNOWN", "local main is used only without any remote");
+  git(dest, "remote", "remove", "upstream");
+  assert.equal(verdictCode(dest, TEAM), "ok", "no remote: local main is the base");
+});
