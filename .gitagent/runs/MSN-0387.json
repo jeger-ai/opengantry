@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0387",
+  "mission_path": ".gitagent/missions/MSN-0387.trusted-dependency-acquisition.yaml",
+  "head": "17d57bb84cb26f3f056cebb2dcd7671fa2f88dbf",
+  "tree": "be2011002a74865123055526bbafc1153bd4df99",
+  "law_sha256": "cad5facf7ffb5a491fc106b01186e32faa60ee41c17ba4e001a000de7609650f",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 33875,
+      "output_sha256": "02d1890944da08b71766003f576602eb701c420ffd34779f60c1582b7ec75696"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-16T23:30:27.015Z"
+}
