@@ -33,7 +33,7 @@ const LOCK_WAIT_MS = 2000;
 type JournalFileErrorCode = "invalid" | "locked" | "full" | "denial_full" | "io" | "changed" | "broken";
 
 /** A refusal receipt (counted against the denial budget): a decision that is not `allow`. */
-export const isDenialReceipt = (r: AdmissionReceipt): boolean => r.receiptKind === "decision" && r.decision !== "allow";
+const isDenialReceipt = (r: AdmissionReceipt): boolean => r.receiptKind === "decision" && r.decision !== "allow";
 
 export class AdmissionJournalFileError extends Error {
   constructor(

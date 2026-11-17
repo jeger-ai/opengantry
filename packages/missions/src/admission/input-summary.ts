@@ -10,7 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const ADMISSION_INPUT_SUMMARY_SCHEMA = "opengantry.admission-input-summary.v1";
+const ADMISSION_INPUT_SUMMARY_SCHEMA = "opengantry.admission-input-summary.v1";
 const SUMMARY_FILE = "input-summary.jsonl";
 const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_MAX_BYTES = 1024 * 1024;
