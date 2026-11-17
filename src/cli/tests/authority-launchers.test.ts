@@ -49,12 +49,23 @@ test("launchers: the resolver block is byte-identical in the hook shims, the lau
   }
 });
 
-/** A PATH with node, git and the shell tools, and no gantry from the machine running the tests. */
-function toolsPath(): string {
+/** The commands the launchers, the hook shims and the test stubs run by name (the resolver block, git, the stubs). */
+const TOOLS = ["bash", "sh", "git", "sed", "head", "readlink", "dirname", "cat"] as const;
+
+/**
+ * A PATH of one temporary directory holding links to node and exactly the tools above, so no gantry from the machine
+ * running the tests is on it. Whole system directories are not used: on a merged-/usr system the directory that holds
+ * an installed gantry also holds bash (PR #369 review round 3). `withNode: false` leaves node out.
+ */
+function toolsPath({ withNode = true }: { withNode?: boolean } = {}): string {
   const tools = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-tools-"));
-  fs.symlinkSync(process.execPath, path.join(tools, "node"));
-  const system = ["/usr/local/bin", "/usr/bin", "/bin"].filter((d) => fs.existsSync(d) && !fs.existsSync(path.join(d, "gantry")));
-  return [tools, ...system].join(path.delimiter);
+  if (withNode) fs.symlinkSync(process.execPath, path.join(tools, "node"));
+  for (const tool of TOOLS) {
+    const found = ["/usr/local/bin", "/usr/bin", "/bin"].map((d) => path.join(d, tool)).find((f) => fs.existsSync(f) && fs.statSync(f).isFile());
+    assert.ok(found, `${tool} is needed by the launcher tests`);
+    fs.symlinkSync(found, path.join(tools, tool));
+  }
+  return tools;
 }
 
 /** A checkout with the three launchers, a pin, and a candidate-written dist/cli/index.js that leaves a marker. */
@@ -233,4 +244,154 @@ test("runtime-env: a shell that is not bash is refused with the reason, before a
   assert.match(r.stdout, /still-alive rc=1/, r.stdout + r.stderr);
   assert.match(r.stderr, /requires bash/);
   assert.equal(fs.existsSync(marker), false);
+});
+
+/** A hook shim copied into the fixture checkout, ready to run. */
+function withShim(dest: string, hook: string): string {
+  const rel = `.githooks/${hook}`;
+  fs.mkdirSync(path.join(dest, ".githooks"), { recursive: true });
+  fs.copyFileSync(path.join(OG, rel), path.join(dest, rel));
+  return rel;
+}
+
+/** Every launcher, and the pre-commit hook shim: the callers of the shared resolver block. */
+const CALLERS = [...LAUNCHERS.map((l) => l.rel), ".githooks/pre-commit"] as const;
+
+function prepare(dest: string, rel: string): void {
+  if (rel.startsWith(".githooks/")) withShim(dest, path.basename(rel));
+}
+
+function refused(rel: string, r: { status: number | null; stdout: string; stderr: string }, why: RegExp): void {
+  assert.match(r.stdout + r.stderr, why, `${rel}: ${r.stdout}${r.stderr}`);
+  assert.equal(r.status, rel.endsWith("gxt-session-start.sh") ? 0 : 1, rel);
+}
+
+test("PR #369 round 3: a PATH directory reached through a link in the checkout is inside, wherever the link points", () => {
+  for (const rel of CALLERS) {
+    for (const layout of ["toolbin", "node_modules/.bin", "vendor/bin"] as const) {
+      const { dest, marker } = repo();
+      prepare(dest, rel);
+      // The agent's gantry, outside the checkout, reporting the pin: only a link inside the checkout leads to it.
+      const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-elsewhere-"));
+      const log = path.join(elsewhere, "calls.log");
+      stub(path.join(elsewhere, "bin"), log);
+      const linked = layout === "vendor/bin" ? path.join(dest, "vendor") : path.join(dest, layout);
+      fs.mkdirSync(path.dirname(linked), { recursive: true });
+      fs.symlinkSync(layout === "vendor/bin" ? elsewhere : path.join(elsewhere, "bin"), linked);
+      const r = run(dest, rel, [path.join(dest, layout), toolsPath()].join(path.delimiter));
+      assert.equal(fs.existsSync(log), false, `${rel} ${layout}: the gantry behind the checkout's link never ran`);
+      assert.equal(fs.existsSync(marker), false, rel);
+      refused(rel, r, /no installed gantry outside this checkout/);
+    }
+  }
+});
+
+test("PR #369 round 3: a link hop through a directory link in the checkout is inside, although it resolves outside", () => {
+  for (const rel of CALLERS) {
+    const { dest, marker } = repo();
+    prepare(dest, rel);
+    const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-hop-"));
+    const log = path.join(elsewhere, "calls.log");
+    stub(path.join(elsewhere, "bin"), log);
+    fs.symlinkSync(path.join(elsewhere, "bin"), path.join(dest, "linkdir"));
+    // An outside PATH entry whose gantry links to $top/linkdir/gantry: the hop's own path is in the checkout.
+    const entry = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-entry-"));
+    fs.symlinkSync(path.join(dest, "linkdir", "gantry"), path.join(entry, "gantry"));
+    const r = run(dest, rel, [entry, toolsPath()].join(path.delimiter));
+    assert.equal(fs.existsSync(log), false, `${rel}: the gantry reached through the checkout's link never ran`);
+    assert.equal(fs.existsSync(marker), false, rel);
+    refused(rel, r, /no installed gantry outside this checkout/);
+  }
+});
+
+/** An installed gantry as npm installs it: `#!/usr/bin/env node`, so the node it runs on is looked up through PATH. */
+function nodeStub(dir: string, log: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "gantry"),
+    `#!/usr/bin/env node\nconst a = process.argv.slice(2);\nif (a[0] === "--version") { console.log(${JSON.stringify(PIN)}); process.exit(0); }\nrequire("fs").appendFileSync(${JSON.stringify(log)}, a.join(" ") + "\\n");\nif (a.join(" ") === "runtime env --json") process.stdout.write(JSON.stringify({ GANTRY_MSN_ID: "MSN-0001" }));\nelse if (a[0] === "runtime") process.stdout.write("export GANTRY_MISSION_FILE=installed\\n");\n`,
+    { mode: 0o755 },
+  );
+}
+
+/** A node and a git the agent plants in the checkout: they leave a marker, then do the real thing. */
+function plant(dir: string, planted: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  const git = ["/usr/local/bin/git", "/usr/bin/git", "/bin/git"].find((f) => fs.existsSync(f))!;
+  fs.writeFileSync(path.join(dir, "node"), `#!/bin/sh\necho "node $*" >> '${planted}'\nexec '${process.execPath}' "$@"\n`, { mode: 0o755 });
+  fs.writeFileSync(path.join(dir, "git"), `#!/bin/sh\necho "git $*" >> '${planted}'\nexec '${git}' "$@"\n`, { mode: 0o755 });
+}
+
+test("PR #369 round 3: a node or git planted in the checkout never runs, under npm run's PATH or a checkout bin directory", () => {
+  for (const rel of CALLERS) {
+    for (const layout of ["node_modules/.bin", "bin"] as const) {
+      const { dest, marker } = repo();
+      prepare(dest, rel);
+      const planted = path.join(os.tmpdir(), `og-planted-${path.basename(dest)}`);
+      plant(path.join(dest, layout), planted);
+      const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-envnode-"));
+      const log = path.join(outside, "calls.log");
+      nodeStub(path.join(outside, "bin"), log);
+      // npm run puts <checkout>/node_modules/.bin first; profiles add relative entries.
+      const PATH = [path.join(dest, layout), layout, path.join(outside, "bin"), toolsPath()].join(path.delimiter);
+      const r = run(dest, rel, PATH);
+      assert.equal(fs.existsSync(planted), false, `${rel} ${layout}: the planted tool ran: ${fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : ""}`);
+      assert.equal(fs.existsSync(marker), false, rel);
+      assert.equal(r.status, 0, `${rel} ${layout}: ${r.stderr}`);
+      assert.ok(fs.readFileSync(log, "utf8").length > 0, `${rel}: the installed gantry ran on the system node`);
+    }
+  }
+});
+
+test("PR #369 round 3: with no node outside the checkout, the resolver refuses instead of running the checkout's node", () => {
+  for (const rel of CALLERS) {
+    const { dest, marker } = repo();
+    prepare(dest, rel);
+    const planted = path.join(os.tmpdir(), `og-planted-${path.basename(dest)}`);
+    plant(path.join(dest, "node_modules", ".bin"), planted);
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-nonode-"));
+    const log = path.join(outside, "calls.log");
+    nodeStub(path.join(outside, "bin"), log);
+    const r = run(dest, rel, [path.join(dest, "node_modules", ".bin"), path.join(outside, "bin"), toolsPath({ withNode: false })].join(path.delimiter));
+    assert.equal(fs.existsSync(planted) && /^node/m.test(fs.readFileSync(planted, "utf8")), false, `${rel}: the planted node ran`);
+    assert.equal(fs.existsSync(log), false, rel);
+    assert.equal(fs.existsSync(marker), false, rel);
+    refused(rel, r, /no node on PATH outside this checkout/);
+  }
+});
+
+test("PR #369 round 3: sourcing gxt-runtime-env.sh leaves no _gxt_* function, no top, and the caller's directory, PATH and OLDPWD", () => {
+  for (const installed of [true, false]) {
+    const { dest } = repo();
+    fs.mkdirSync(path.join(dest, "sub"));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-leak-"));
+    stub(path.join(outside, "bin"), path.join(outside, "calls.log"));
+    const PATH = installed ? `${path.join(outside, "bin")}${path.delimiter}${toolsPath()}` : toolsPath();
+    const script = [
+      "cd /",
+      `cd ${JSON.stringify(path.join(dest, "sub"))}`,
+      'before_pwd="$PWD" before_old="$OLDPWD" before_path="$PATH"',
+      "source ../scripts/gxt-runtime-env.sh",
+      "rc=$?",
+      'echo "rc=$rc"',
+      "echo \"functions=[$(compgen -A function _gxt_ | while read -r f; do printf '%s ' \"$f\"; done)]\"",
+      'echo "top=${top-unset}"',
+      '[[ "$PWD" == "$before_pwd" && "$(pwd -P)" == "$(cd "$before_pwd" && pwd -P)" ]] && echo cwd=same',
+      '[[ "$OLDPWD" == "$before_old" ]] && echo oldpwd=same',
+      '[[ "$PATH" == "$before_path" ]] && echo path=same',
+      'echo "mission=${GANTRY_MISSION_FILE:-}"',
+    ].join("\n");
+    const env = gitChildEnv({ PATH });
+    delete env.GANTRY_HOOK_LOCAL_BUILD;
+    delete env.GANTRY_MCP_LOCAL_BUILD;
+    const r = spawnSync("bash", ["-c", script], { cwd: dest, env, encoding: "utf8", input: "" });
+    const out = r.stdout;
+    assert.match(out, installed ? /rc=0/ : /rc=1/, `${out}${r.stderr}`);
+    assert.match(out, /functions=\[\]/, out);
+    assert.match(out, /top=unset/, out);
+    assert.match(out, /cwd=same/, out);
+    assert.match(out, /oldpwd=same/, out);
+    assert.match(out, /path=same/, out);
+    assert.match(out, installed ? /mission=installed/ : /mission=$/m, out);
+  }
 });
