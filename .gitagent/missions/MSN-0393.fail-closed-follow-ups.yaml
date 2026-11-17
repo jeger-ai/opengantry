@@ -8,6 +8,12 @@
 # a failed listing (every hold kept); the npm ci tests get short timeouts (test-level timeout, a bounded CLI child,
 # tighten-only fetch and npm limits in ExecuteOptions) and the npm hang is investigated; a CHANGELOG line for the
 # shallow-clone errors of verify --changed-missions, mission changed and ci msn-range. Tests first, each failing on main.
+# Amended (PR #377 review round): packages/missions/src/ci-checks.ts declared. The review found that checkMsnRange and
+# the trusted-automation range actor loop list a commit's files with git diff-tree without --root, so a root commit in
+# the range (an orphan branch merged with --allow-unrelated-histories) lists nothing and skips the [MSN] subject and
+# actor checks; both now pass --root. Also: deps check --since on a root-commit tag diffs from the empty tree (a shallow
+# boundary asks for more history), a shallow boundary is no longer called a root commit, and the npm ci time limits
+# accept only positive integers.
 #
 # Operator brief (2026-11-17, orchestrator brief for issues #355/#356; interrogation answers written by the agent from it).
 # No trace rows: the evidence is .gitagent/runs/MSN-0393.json written by gantry verify --record (RULES §3).
@@ -54,12 +60,18 @@ interrogation:
       packages/verify/src/dependencies.ts, src/cli/commands/deps.ts,
       src/cli/tests/fail-closed-follow-ups.test.ts,
       src/cli/tests/npm-ci-fixtures.ts, src/cli/tests/npm-ci.test.ts,
-      test/conformance/spawning-tests.yaml. Forbidden zones: .gitagent/foreman/,
+      test/conformance/spawning-tests.yaml, and (review round, PR #377)
+      packages/missions/src/ci-checks.ts. Forbidden zones: .gitagent/foreman/,
       .gitagent/registry/, .github/workflows/, TARGET_ARCHITECTURE.yaml,
       docs/reference/release-notes.md (at its 1500-word cap; the brief puts the
       note in the CHANGELOG only) and packages/core/src/dependency-update.ts.
       The agent wrote these answers from the orchestrator brief (2026-11-17,
-      issues #355/#356, MSN-0393)."
+      issues #355/#356, MSN-0393). Review round (PR #377):
+      packages/missions/src/ci-checks.ts is declared because checkMsnRange runs
+      git diff-tree without --root, so a root commit merged from an unrelated
+      history lists no files and skips the [MSN] subject check; it gains
+      --root, with a test that such a merge fails. Brief: \"Add --root (or the
+      equivalent) so a root commit's files are listed and checked.\""
   - finding_id: 42db162a9794
     kind: adr_conflict
     question: Intent may relate to ADR-0032. Accept ADR decision, reject
@@ -170,13 +182,14 @@ interrogation:
     adr_refs:
       - ADR-0052
       - ADR-0045
-interrogation_sha256: 4abdc47660a5d22f549bb816ff50f2e320bb6be9a5ef07e236eb35647187a65f
+interrogation_sha256: ab32e762177559d01e2689e03d8fea0822c87badc023ba5cae46a724c0342acc
 declared_paths:
   - .gitagent/missions/MSN-0393.fail-closed-follow-ups.yaml
   - .gitagent/runs/MSN-0393.json
   - ARCH_BASELINE.json
   - EXECUTOR_LOG.md
   - docs/CHANGELOG.md
+  - packages/missions/src/ci-checks.ts
   - packages/missions/src/contract/contract-scan.ts
   - packages/missions/src/npm-ci/execute.ts
   - packages/missions/src/npm-ci/fetch.ts
@@ -195,6 +208,7 @@ contract:
     - ARCH_BASELINE.json
     - EXECUTOR_LOG.md
     - docs/CHANGELOG.md
+    - packages/missions/src/ci-checks.ts
     - packages/missions/src/contract/contract-scan.ts
     - packages/missions/src/npm-ci/execute.ts
     - packages/missions/src/npm-ci/fetch.ts
@@ -213,4 +227,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - docs/reference/release-notes.md
     - packages/core/src/dependency-update.ts
-contract_sha256: 8d7abad4f9a9953faad564bd90ebe485154d0dd57e3c289b477dc550ade015d4
+contract_sha256: 35b9f2cd3014aa10fa6c58247970850e19074a6bf17762040ce907c210335b21
