@@ -30,6 +30,9 @@ const RESOLVER_COPIES = [
   "templates/scripts/gxt-runtime-env.sh",
   ".cursor/hooks/gxt-session-start.sh",
   "templates/.cursor/hooks/gxt-session-start.sh",
+  // MSN-0390: the beforeShellExecution hook runs no gantry; it carries the block for the PATH sanitizing.
+  ".cursor/hooks/gxt-before-shell.sh",
+  "templates/.cursor/hooks/gxt-before-shell.sh",
 ];
 
 function resolverBlock(rel: string): string {
@@ -40,11 +43,11 @@ function resolverBlock(rel: string): string {
   return text.slice(start, end);
 }
 
-test("launchers: the resolver block is byte-identical in the hook shims, the launchers and their templates", () => {
+test("launchers: the resolver block is byte-identical in the hook shims, the launchers, the Cursor hooks and their templates", () => {
   const first = resolverBlock(RESOLVER_COPIES[0]!);
   assert.match(first, /_gxt_pinned_gantry\(\)/);
   for (const rel of RESOLVER_COPIES) assert.equal(resolverBlock(rel), first, rel);
-  for (const rel of ["scripts/mcp-launcher.sh", "scripts/gxt-runtime-env.sh", ".cursor/hooks/gxt-session-start.sh"]) {
+  for (const rel of ["scripts/mcp-launcher.sh", "scripts/gxt-runtime-env.sh", ".cursor/hooks/gxt-session-start.sh", ".cursor/hooks/gxt-before-shell.sh"]) {
     assert.equal(fs.readFileSync(path.join(OG, rel), "utf8"), fs.readFileSync(path.join(OG, "templates", rel), "utf8"), `${rel} equals its template`);
   }
 });

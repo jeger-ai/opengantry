@@ -75,7 +75,7 @@ Evidence: `packages/cage/src/cage-run.ts:231-291`, `cage-watch.ts`, `cage-rules.
 | | U | M | W |
 |---|---|---|---|
 | CC | `unproven`: `sandbox.enabled`, `allowUnsandboxedCommands: false`. The harness puts shell commands and their descendants under the filesystem limits above; spawning itself is not admitted or denied. No `Bash(...)` rules are emitted. | same as U | `unsupported`: no sandbox |
-| CU | `unproven` / `audit-only`: an `ask` regex on `.gitagent/foreman/`, `RULES.md` and `gantry legislate` (`.cursor/hooks/gxt-before-shell.sh:47,55`) (B9, B15) | same as U | same as U |
+| CU | `unproven` / `audit-only`: an `ask` regex on `.gitagent/foreman/`, `RULES.md` and `gantry legislate` (`.cursor/hooks/gxt-before-shell.sh:199,207`) (B9, B15) | same as U | same as U |
 | CX | `unsupported` | `unsupported` | `unsupported` |
 | HL | `audit-only` / `detection`: `runtime exec` logs stream hashes to `EXECUTOR_LOG.md`; the cage halt signals descendants it enumerates through `ps` (B11, B16) | same as U | `audit-only`: no descendant enumeration (`taskkill /T` at the end of grace) |
 | RB | `unsupported` | `unsupported` | `unsupported` |
