@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0392",
   "mission_path": ".gitagent/missions/MSN-0392.host-brokers.yaml",
-  "head": "d9e6baa9d72eb3eff467aa0865e4196f47c40678",
-  "tree": "5a46b6c7fb18133fee8d7e2336e777819256bf51",
+  "head": "d73dea9b6ee798db574442918931e7e03ccbaabd",
+  "tree": "c73c1412fef113706e2e57be2170de3447b05902",
   "law_sha256": "f2025634154000d410700a2c3130b77b58b4f234b92f2f8301b21a9f77ff206f",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 39594,
-      "output_sha256": "c675d512c12d6a7fd4a6e65e03d34dee6646c001b9beec49ebb1fe65fd6a5a45"
+      "duration_ms": 73792,
+      "output_sha256": "45fa163b5a7d84a9e76cb4f09b82d8df39c7a872c1d1556891c31e55f5731f5d"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-17T07:32:25.107Z"
+  "issued_at": "2026-11-17T07:52:35.277Z"
 }
