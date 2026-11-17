@@ -101,20 +101,16 @@ const gitObject = z.string().regex(/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/);
 const hostName = z.string().regex(/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$|^\[[0-9a-f:.]+\]$/);
 
 /**
- * A canonical absolute path: POSIX (`/a/b`) or a Windows drive path (`C:\a\b`). No `.` or `..` segment, no empty
- * segment, no trailing separator except the root, and no control character or line terminator (C0, DEL, C1, U+2028,
- * U+2029), NUL included. The `..` lookahead scans with `[\s\S]` so a newline cannot hide a later segment. Symlinks
- * are resolved by the broker, never by the candidate.
+ * A canonical absolute path: POSIX (`/a/b`) or a Windows drive path (`C:\a\b`). No `.`, `..` or empty segment, no
+ * trailing separator except the root, no control character or line terminator (C0 with NUL, DEL, C1, U+2028/9): these
+ * ranges stay in the regex, not a refine, as schemas/admission/ publishes it to JSON Schema users (MSN-0390). The `..`
+ * lookahead scans with `[\s\S]` so a newline cannot hide a later segment. The broker resolves symlinks, not the candidate.
  */
 const canonicalPath = z
   .string()
   .max(4096)
   .regex(
-    // The control-character ranges are the point of this pattern, not a typo (MSN-0390). They stay in the regex, not
-    // in a .refine() loop, because admissionJsonSchemas() publishes this pattern to schemas/admission/ and a JSON Schema
-    // consumer validates with the pattern alone; a refine would drop the check there.
-    // eslint-disable-next-line no-control-regex
-    /^(?![\s\S]*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\x00-\x1f\x7f-\x9f\u2028\u2029]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\x00-\x1f\x7f-\x9f\u2028\u2029]+)+)$/,
+    /^(?![\s\S]*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\x00-\x1f\x7f-\x9f\u2028\u2029]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\x00-\x1f\x7f-\x9f\u2028\u2029]+)+)$/, // eslint-disable-line no-control-regex -- intended, see above
   );
 
 /** Stable file identity: device+inode on POSIX, volume serial plus file id on Windows (decimal or hex strings). */
