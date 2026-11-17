@@ -76,16 +76,6 @@ export const node = (code: string): string => `node -e ${q(code)}`;
 /** The fd the inherited-fd canary is handed, past the gap 3..19. */
 export const INHERITED_FD = 20;
 
-/**
- * bash that closes every fd above 2 except `keep`, then execs its arguments. Used for every sandbox launch, so the
- * runtime sees exactly stdio plus the planted fd, whatever the probe itself inherited.
- */
-export function closeFdsExec(keep: readonly number[]): string {
-  for (const k of keep) if (!Number.isInteger(k) || k <= 2 || k > 1023) throw new Error(`canary: invalid fd ${String(k)}`);
-  const pattern = ["0", "1", "2", ...keep.map(String)].join("|");
-  return `for f in /proc/$$/fd/*; do n=\${f##*/}; case $n in ${pattern}) ;; *) eval "exec $n>&-" 2>/dev/null;; esac; done; exec "$@"`;
-}
-
 const tryRead = (id: string, file: string): string => `cat ${q(file)} > out/${id}.txt 2>/dev/null`;
 
 function readSpec(id: string, script: (fx: Fixture) => string): CanarySpec {

@@ -12,6 +12,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { admissionJournalPath } from "#missions/admission/journal-file.js";
+import { closeFdsExec } from "#core/close-fds.js";
 import { CONTRACT_DIGEST, brokerRepo, writePolicy } from "./fixtures.js";
 
 const OG = getRepoRoot();
@@ -220,4 +221,61 @@ console.log(JSON.stringify({ dispatched: r.response?.capabilities?.dispatched ??
   const { dispatched } = JSON.parse(line) as { dispatched: string[] };
   assert.ok(dispatched.includes("git.publish") && dispatched.includes("delivery.mutate"), JSON.stringify(dispatched));
   assert.deepEqual(stateLeft(f), []);
+});
+/** The fd planted past the gap, as in the probe (PR #379 review): Node's own close-on-exec sweep stops at the first closed fd above 15. */
+const PLANTED_FD = 20;
+
+/**
+ * Run `argv` from a parent that holds fd 20 (open for append on `target`) with fds 3..19 closed: a bash that closes
+ * every other fd above 2 (so fds the test runner leaked, such as 142 and 145 on CI, are gone), then execs `argv`.
+ */
+function fromParentWithFdPastGap(f: ReturnType<typeof fixture>, target: string, argv: string[]): Promise<{ code: number | null; out: string; err: string }> {
+  const fd = fs.openSync(target, "a");
+  const stdio: ("ignore" | "pipe" | number)[] = ["ignore", "pipe", "pipe"];
+  while (stdio.length < PLANTED_FD) stdio.push("ignore");
+  stdio.push(fd);
+  return new Promise((resolve) => {
+    const child = spawn("/bin/bash", ["-c", closeFdsExec([PLANTED_FD]), "og-test-parent", ...argv], { cwd: f.root, env: f.env, stdio });
+    let out = "";
+    let err = "";
+    child.stdout!.on("data", (b: Buffer) => (out += b.toString()));
+    child.stderr!.on("data", (b: Buffer) => (err += b.toString()));
+    child.on("close", (code) => {
+      fs.closeSync(fd);
+      resolve({ code, out, err });
+    });
+  });
+}
+
+/** A harness stand-in that lists its own fds: `ls -l /proc/$$/fd` runs as a child of the shell, so the shell's fds are listed. */
+const LIST_FDS = ["/bin/bash", "-c", "ls -l /proc/$$/fd; exit 0"];
+const fdsIn = (text: string): number[] => [...text.matchAll(/ (\d+) -> /g)].map((m) => Number(m[1])).sort((a, b) => a - b);
+
+test("launch closes every inherited fd above 2: a parent's fd 20 past the gap 3..19 does not reach the harness (MSN-0396)", { skip: process.platform !== "linux" ? "needs /proc/self/fd (Linux)" : false }, async () => {
+  const f = fixture();
+  const target = path.join(f.outside, "inherited-target.txt");
+  fs.writeFileSync(target, "");
+  // Without launch the same parent hands fd 20 to the harness: the test can fail.
+  const direct = await fromParentWithFdPastGap(f, target, LIST_FDS);
+  assert.deepEqual(fdsIn(direct.out), [0, 1, 2, PLANTED_FD], `the planted fd reaches a harness started directly: ${direct.out}${direct.err}`);
+  // Through launch (itself Node, which inherits fd 20 past the gap): the harness sees stdio only.
+  const launched = await fromParentWithFdPastGap(f, target, [process.execPath, ...launchArgs(f, LIST_FDS)]);
+  assert.equal(launched.code, 0, `${launched.out}\n${launched.err}`);
+  assert.deepEqual(fdsIn(launched.out), [0, 1, 2], `only stdio reaches the harness started by launch: ${launched.out}`);
+  assert.equal(fs.readFileSync(target, "utf8"), "", "nothing wrote through the planted fd");
+  assert.equal(fs.existsSync(f.socket), false);
+  assert.deepEqual(stateLeft(f), []);
+});
+
+test("launch keeps the harness's argv and environment unchanged through the fd-closing trampoline (MSN-0396)", async () => {
+  const f = fixture();
+  const script = path.join(f.outside, "argv.mjs");
+  fs.writeFileSync(script, "console.log(JSON.stringify({ argv: process.argv.slice(2), socket: process.env.GANTRY_BROKER_SOCKET, marker: process.env.OG_LAUNCH_MARKER ?? null }));\n");
+  const env = f.env;
+  env.OG_LAUNCH_MARKER = "kept $HOME `x` 'q'";
+  const r = await run(f, [process.execPath, script, "a b", "", "$HOME", "--", "*"]);
+  assert.equal(r.code, 0, r.err);
+  const line = r.out.split("\n").find((l) => l.startsWith('{"argv"'));
+  assert.ok(line, r.out);
+  assert.deepEqual(JSON.parse(line), { argv: ["a b", "", "$HOME", "--", "*"], socket: f.socket, marker: "kept $HOME `x` 'q'" });
 });

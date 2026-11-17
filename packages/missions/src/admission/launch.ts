@@ -13,9 +13,18 @@
  * The harness's MCP server reads the variable and relays (`relay.ts`). Sandboxed shell commands see the variable too,
  * but with srt's Unix-socket filter they cannot create a socket to connect with (owner decision 2026-11-17: every Unix
  * socket stays blocked in the sandbox).
+ *
+ * Inherited fds (MSN-0396). The harness inherits no fd above 2: it is started through `/bin/bash --posix` that closes
+ * every fd listed in `/proc/self/fd` above 2 and then execs it, argv, environment and stdio unchanged (`close-fds.ts`).
+ * Node marks fds close-on-exec only up to the first closed fd above 15, so without this an fd the launcher inherited
+ * past such a gap would reach the harness and, through it, srt's sandbox (PR #379 review). The broker runs inside this
+ * process, so no other child needs it. The trampoline execs, so the harness keeps its pid and the signal rules above.
  */
 import { spawn, type ChildProcess } from "node:child_process";
+import fs from "node:fs";
 import os from "node:os";
+import path from "node:path";
+import { fdClosingSpawn } from "#core/close-fds.js";
 import { BrokerSetupError, startBroker, type ServeOptions } from "./serve.js";
 
 type RunningBroker = Awaited<ReturnType<typeof startBroker>>;
@@ -34,6 +43,24 @@ interface LaunchResult {
   brokerId: string;
   /** Set when a signal arrived during broker startup: no harness ran. */
   interrupted?: NodeJS.Signals;
+}
+
+const executable = (file: string): boolean => {
+  try {
+    fs.accessSync(file, fs.constants.X_OK);
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Refuse a harness that cannot start before the trampoline runs, with the error a direct spawn would give: execvp's
+ * search, a name with a slash relative to `cwd`, a bare name on the child's PATH.
+ */
+function assertStartable(file: string, cwd: string, env: NodeJS.ProcessEnv): void {
+  const found = file.includes("/") ? executable(path.resolve(cwd, file)) : (env.PATH ?? "").split(path.delimiter).some((d) => d !== "" && executable(path.join(path.resolve(cwd, d), file)));
+  if (!found) throw new BrokerSetupError("config", `the harness command ${file} could not start: not found or not executable`);
 }
 
 /** Start the broker, run `command` under it, stop the broker; resolves with the harness's exit status. */
@@ -55,10 +82,12 @@ export async function launchWithBroker(opts: ServeOptions & { command: string[];
       if (early !== null) return { exitCode: signalExitCode(early), socket: plan.socket, brokerId: broker.brokerId, interrupted: early };
       opts.onReady?.(running);
       const env = { ...(opts.env ?? process.env), GANTRY_BROKER_SOCKET: plan.socket };
+      assertStartable(file, plan.root, env);
+      const trampoline = fdClosingSpawn([file, ...args], [], "gantry-admission-launch");
       const exitCode = await new Promise<number>((resolve, reject) => {
-        const proc = spawn(file, args, { cwd: plan.root, env, stdio: "inherit" });
+        const proc = spawn(trampoline.command, trampoline.args, { cwd: plan.root, env, stdio: "inherit" });
         child = proc;
-        proc.once("error", (err) => reject(new BrokerSetupError("config", `the harness command ${file} could not start: ${err.message}`)));
+        proc.once("error", (err) => reject(new BrokerSetupError("config", `the harness command ${file} could not start: ${trampoline.command}, which closes inherited fds before it, failed: ${err.message}`)));
         proc.once("exit", (code, signal) => resolve(code ?? (signal ? signalExitCode(signal) : 1)));
       });
       return { exitCode, socket: plan.socket, brokerId: broker.brokerId };
