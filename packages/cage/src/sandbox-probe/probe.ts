@@ -5,8 +5,8 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { canonicalJson } from "#core/canonical-json.js";
 import { CANARY_TECHNIQUES, PROBE_SCHEMA, type CanaryOutcome, type ProbeHost, type ProbeRecord } from "#core/admission-canary.js";
-import { CANARY_SPECS, assertSpecsComplete, canaryScript, judgeCanary, snapshotTargets, type CanaryContext, type CanarySpec } from "./canaries.js";
-import { makeFixture, removeFixture, type Fixture } from "./fixture.js";
+import { CANARY_SPECS, assertSpecsComplete, brokerSnapshot, canaryScript, judgeCanary, snapshotTargets, type BrokerHandle, type CanaryContext, type CanarySpec } from "./canaries.js";
+import { fileState, makeFixture, removeFixture, type Fixture } from "./fixture.js";
 import { claudeSettingsToSrtConfig, type SrtConfig } from "./srt-config.js";
 import type { SandboxRuntime } from "./runtime.js";
 
@@ -22,6 +22,11 @@ export interface ProbeOptions {
   host: ProbeHost;
   diagnostic: boolean;
   generatePolicy: (repo: string, env: NodeJS.ProcessEnv) => string;
+  /**
+   * Start an admission broker for a fixture, outside the sandbox, listening on `socket` (the caller runs `gantry
+   * admission serve`). Without it the broker canaries are inconclusive.
+   */
+  startBroker?: (fx: Fixture, socket: string) => Promise<{ handle: BrokerHandle; stop: () => Promise<void> }>;
   /** Called before each canary runs, for progress output. */
   onCanary?: (id: string) => void;
 }
@@ -51,7 +56,7 @@ async function openListeners(dir: string): Promise<Listeners> {
   const tcpPort = (tcp.address() as net.AddressInfo).port;
   const runtimeDir = process.env.XDG_RUNTIME_DIR;
   const hasUserBus = !!runtimeDir && fs.existsSync(path.join(runtimeDir, "bus")) && onPath("systemd-run");
-  const ctx: CanaryContext = { connections, tcpPort, unixSocket, hasPython: onPath("python3"), hasUserBus };
+  const ctx: CanaryContext = { connections, tcpPort, unixSocket, hasPython: onPath("python3"), hasUserBus, broker: null };
   const close = async (): Promise<void> => {
     await Promise.all([tcp, unix].map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
   };
@@ -76,8 +81,8 @@ interface Prepared {
   configPath: string;
 }
 
-function prepare(opts: ProbeOptions, npm: boolean): Prepared {
-  const fx = makeFixture({ npm });
+function prepare(opts: ProbeOptions, npm: boolean, broker = false): Prepared {
+  const fx = makeFixture({ npm, broker });
   try {
     const policy = opts.generatePolicy(fx.repo, { HOME: fx.home, GANTRY_STATE_DIR: fx.stateEnv });
     const config = claudeSettingsToSrtConfig(JSON.parse(policy) as unknown, { tmpDir: fx.tmp, diagnostic: opts.diagnostic });
@@ -149,15 +154,28 @@ async function runControl(opts: ProbeOptions): Promise<{ ok: boolean; detail: st
 async function runCanary(opts: ProbeOptions, spec: CanarySpec, l: Listeners): Promise<CanaryOutcome> {
   const scope = CANARY_TECHNIQUES.find((t) => t.id === spec.id)!.scope;
   if (spec.applicable && !spec.applicable(l.ctx)) return { id: spec.id, scope, result: "not-applicable", detail: "this host lacks what the canary needs" };
-  const p = prepare(opts, spec.npm === true);
+  if (spec.broker && !opts.startBroker) return { id: spec.id, scope, result: "inconclusive", detail: "no broker launcher" };
+  const p = prepare(opts, spec.npm === true, spec.broker === true);
+  let stop: (() => Promise<void>) | null = null;
   try {
+    if (spec.broker && opts.startBroker) {
+      const started = await opts.startBroker(p.fx, path.join(path.dirname(l.ctx.unixSocket), `broker-${spec.id}.sock`));
+      stop = started.stop;
+      l.ctx.broker = started.handle;
+      brokerSnapshot.clear();
+      for (const f of started.handle.stateFiles) brokerSnapshot.set(f, fileState(f));
+    }
     const before = snapshotTargets(spec, p.fx);
     l.current.id = spec.id;
     await runInSandbox(opts, p, canaryScript(spec, p.fx, l.ctx), spec.inheritFd?.(p.fx));
     await new Promise((resolve) => setTimeout(resolve, 50));
     l.current.id = "";
     return { id: spec.id, scope, ...judgeCanary(spec, p.fx, l.ctx, before) };
+  } catch (err) {
+    return { id: spec.id, scope, result: "inconclusive", detail: `could not run: ${(err as Error).message.slice(0, 200)}` };
   } finally {
+    l.ctx.broker = null;
+    if (stop) await stop();
     removeFixture(p.fx);
   }
 }

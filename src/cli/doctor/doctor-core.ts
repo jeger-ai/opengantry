@@ -9,6 +9,7 @@ import { checkSkillManifestSync } from "#missions/skill-sync.js";
 import type { Manifest } from "#core/manifest.js";
 import { doctorLinesHasFail, pickNextStep, type DoctorLine, type DoctorReport } from "#missions/doctor/doctor-types.js";
 import { runSubstrateDriftDoctorChecks } from "./doctor-substrate.js";
+import { runSandboxDoctorCheck } from "./sandbox-doctor.js";
 import { loadGxtConfig } from "#missions/gxt-config.js";
 
 function appendPlannerAllowlistChecks(root: string, lines: DoctorLine[], nextStep: string | null): string | null {
@@ -70,6 +71,7 @@ export function collectDoctorReport(root: string, manifest: Manifest, templatesR
     nextStep = pickNextStep(nextStep, "gantry init");
   }
   lines.push(...runLawFileFormDoctorChecks(root));
+  lines.push(...runSandboxDoctorCheck(root));
 
   try {
     const drift = runSubstrateDriftDoctorChecks(root, templatesRoot ?? resolveTemplateRootFromModule());

@@ -10,6 +10,15 @@ import { fileState, leakedSecrets, type Fixture } from "./fixture.js";
  * target is byte-identical or still absent, a connect canary when the outside listener saw no connection.
  */
 
+/** A broker started for one fixture, outside the sandbox (`gantry admission serve`). */
+export interface BrokerHandle {
+  socket: string;
+  /** Files the candidate must neither read nor change: journal, broker.json, the policy. */
+  stateFiles: string[];
+  /** The private executable dir; nothing may appear in it. */
+  execDir: string;
+}
+
 export interface CanaryContext {
   /** Connections the outside listeners saw, by canary id (TCP and unix). */
   connections: Map<string, number>;
@@ -18,6 +27,8 @@ export interface CanaryContext {
   hasPython: boolean;
   /** The user's session bus and systemd-run are there, so the bus transport can be tried. */
   hasUserBus: boolean;
+  /** Set while a broker canary runs. */
+  broker: BrokerHandle | null;
 }
 
 export interface CanarySpec {
@@ -28,6 +39,8 @@ export interface CanarySpec {
   /** Open this file for append before the sandbox and hand it in as fd 3. */
   inheritFd?: (fx: Fixture) => string;
   npm?: boolean;
+  /** Run with a broker for the fixture; targets and checks see it in ctx.broker. */
+  broker?: boolean;
   applicable?: (ctx: CanaryContext) => boolean;
   check?: (fx: Fixture, ctx: CanaryContext) => { result: CanaryResult; detail: string };
 }
@@ -61,7 +74,7 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
   readSpec("read-home-secret", (fx) => tryRead("read-home-secret", fx.paths.ssh)),
   readSpec("read-state-dir", (fx) => tryRead("read-state-dir", fx.paths.state)),
   readSpec("read-state-dir-env", (fx) => tryRead("read-state-dir-env", fx.paths.stateEnvFile)),
-  readSpec("read-journal", () => tryRead("read-journal", ".git/opengantry/admission-journal.jsonl")),
+  readSpec("read-journal", () => tryRead("read-journal", ".git/opengantry/admission/journal.jsonl")),
   readSpec("read-workspace-env", () => tryRead("read-workspace-env", ".env")),
   readSpec("read-symlink", (fx) => `ln -s ${q(fx.paths.ssh)} link-ssh; cat link-ssh > out/read-symlink.txt 2>/dev/null`),
   readSpec("read-hardlink", (fx) => `ln ${q(fx.paths.ssh)} hard-ssh 2>/dev/null; cat hard-ssh > out/read-hardlink.txt 2>/dev/null`),
@@ -75,7 +88,7 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
   },
   writeSpec("write-git-config", (fx) => [fx.paths.gitConfig], () => "echo '[canary]' >> .git/config"),
   writeSpec("write-git-hooks", (fx) => [path.join(fx.paths.hooks, "pre-commit")], () => "printf '#!/bin/sh\\n' > .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit"),
-  writeSpec("write-journal", (fx) => [fx.paths.journal, path.join(path.dirname(fx.paths.journal), "forged")], () => "echo forged >> .git/opengantry/admission-journal.jsonl; echo x > .git/opengantry/forged"),
+  writeSpec("write-journal", (fx) => [fx.paths.journal, path.join(path.dirname(fx.paths.journal), "forged")], () => "echo forged >> .git/opengantry/admission/journal.jsonl; echo x > .git/opengantry/admission/forged"),
   writeSpec(
     "write-forbidden-path",
     (fx) => [fx.paths.forbidden, fx.paths.workflow, path.join(fx.repo, "secret-zone", "new.txt")],
@@ -143,7 +156,59 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
     targets: (fx) => [path.join(fx.outside, "escape-bus")],
     script: (fx) => `systemd-run --user --wait --quiet --collect touch ${q(path.join(fx.outside, "escape-bus"))} >/dev/null 2>&1`,
   },
+  {
+    id: "broker-socket-reach",
+    broker: true,
+    script: (_fx, ctx) =>
+      node(
+        `const s=require("net").connect(${js(ctx.broker?.socket ?? "")});let b="";s.on("connect",()=>s.write(JSON.stringify({type:"capabilities"})+"\\n"));s.on("data",(d)=>{b+=d});s.on("end",()=>{require("fs").writeFileSync("out/broker-reply.txt",b);process.exit(0)});s.on("error",(e)=>{require("fs").writeFileSync("out/broker-reply.txt","error "+e.code);process.exit(0)});setTimeout(()=>process.exit(0),8000)`,
+      ),
+    // The wanted outcome: the candidate reaches the broker. `effect` here means reached, `blocked` that it could not.
+    check: (fx) => {
+      const reply = readOut(fx, "broker-reply.txt");
+      if (reply === null) return { result: "inconclusive", detail: "the candidate wrote no reply" };
+      return /"capabilityId"/.test(reply) ? { result: "effect", detail: "the candidate reached the broker and got its capability cells" } : { result: "blocked", detail: `no answer from the broker (${reply.slice(0, 60)})` };
+    },
+  },
+  {
+    id: "broker-state",
+    broker: true,
+    targets: (_fx) => [],
+    script: (fx, ctx) => {
+      const files = ctx.broker?.stateFiles ?? [];
+      const reads = files.map((f, i) => `cat ${q(f)} > out/broker-state-${i}.txt 2>/dev/null`);
+      const writes = files.map((f) => `echo forged >> ${q(f)} 2>/dev/null`);
+      return [...reads, ...writes, `echo x > ${q(path.join(ctx.broker?.execDir ?? fx.outside, "planted"))} 2>/dev/null`, "true"].join("; ");
+    },
+    check: (fx, ctx) => brokerStateCheck(fx, ctx),
+  },
 ];
+
+function readOut(fx: Fixture, name: string): string | null {
+  try {
+    return fs.readFileSync(path.join(fx.out, name), "utf8");
+  } catch {
+    return null;
+  }
+}
+
+/** Broker state the candidate read (its bytes reached out/) or changed (compared with the snapshot taken at start). */
+function brokerStateCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } {
+  const b = ctx.broker;
+  if (!b) return { result: "inconclusive", detail: "no broker ran" };
+  const out = fs.readdirSync(fx.out).map((n) => readOut(fx, n) ?? "").join("\n");
+  const read = b.stateFiles.filter((f) => {
+    const text = fs.existsSync(f) ? fs.readFileSync(f, "utf8").trim() : "";
+    return text.length > 0 && out.includes(text);
+  });
+  const changed = b.stateFiles.filter((f) => fileState(f) !== brokerSnapshot.get(f));
+  const planted = fs.existsSync(path.join(b.execDir, "planted"));
+  const hits = [...read.map((f) => `read ${path.basename(f)}`), ...changed.map((f) => `changed ${path.basename(f)}`), ...(planted ? ["wrote exec/"] : [])];
+  return hits.length === 0 ? { result: "blocked", detail: "journal, broker.json, policy and exec/ unread and unchanged" } : { result: "effect", detail: hits.join(", ") };
+}
+
+/** The broker's state files as they were when it started, per run (one broker canary runs at a time). */
+export const brokerSnapshot = new Map<string, string>();
 
 function npmCheck(fx: Fixture, effect: () => string | null): { result: CanaryResult; detail: string } {
   if (!fs.existsSync(path.join(fx.out, "npm-ran.txt"))) return { result: "inconclusive", detail: "the postinstall script did not run" };

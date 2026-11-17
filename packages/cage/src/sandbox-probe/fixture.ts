@@ -24,6 +24,8 @@ export interface Fixture {
   paths: { ssh: string; state: string; stateEnvFile: string; journal: string; env: string; gitConfig: string; hooks: string; forbidden: string; workflow: string };
   /** The packed postinstall canary package, when one was made for this fixture. */
   npmTarball: string | null;
+  /** The admission policy a broker for this fixture reads (outside the work tree, under the state dir). */
+  brokerPolicy: string;
 }
 
 const token = (name: string): string => `OGCANARY-${name}-${crypto.randomBytes(12).toString("hex")}`;
@@ -39,7 +41,7 @@ function git(cwd: string, args: string[]): void {
 }
 
 /** The postinstall canary: reads the home secret into out/, writes .git/hooks and ~/.opengantry, marks that it ran. */
-function packNpmCanary(fx: Omit<Fixture, "npmTarball">): string {
+function packNpmCanary(fx: Omit<Fixture, "npmTarball" | "brokerPolicy">): string {
   const pkg = path.join(fx.base, "npm-canary-src");
   write(path.join(pkg, "package.json"), JSON.stringify({ name: "og-npm-canary", version: "1.0.0", scripts: { postinstall: "node postinstall.js" } }));
   const script = [
@@ -57,7 +59,7 @@ function packNpmCanary(fx: Omit<Fixture, "npmTarball">): string {
   return tgz;
 }
 
-export function makeFixture(opts: { npm: boolean }): Fixture {
+export function makeFixture(opts: { npm: boolean; broker?: boolean }): Fixture {
   const base = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-canary-")));
   const home = path.join(base, "home");
   const repo = path.join(base, "repo");
@@ -67,7 +69,7 @@ export function makeFixture(opts: { npm: boolean }): Fixture {
     ssh: path.join(home, ".ssh", "id_ed25519"),
     state: path.join(home, ".opengantry", "draft-token.key"),
     stateEnvFile: path.join(stateEnv, "draft-token.key"),
-    journal: path.join(repo, ".git", "opengantry", "admission-journal.jsonl"),
+    journal: path.join(repo, ".git", "opengantry", "admission", "journal.jsonl"),
     env: path.join(repo, ".env"),
     gitConfig: path.join(repo, ".git", "config"),
     hooks: path.join(repo, ".git", "hooks"),
@@ -81,7 +83,8 @@ export function makeFixture(opts: { npm: boolean }): Fixture {
   write(paths.ssh, `${secrets.ssh}\n`);
   write(paths.state, `${secrets.state}\n`);
   write(paths.stateEnvFile, `${secrets.stateEnv}\n`);
-  write(paths.journal, `${secrets.journal}\n`);
+  // A broker refuses a journal someone else wrote, so a broker fixture leaves the journal to the broker.
+  if (!opts.broker) write(paths.journal, `${secrets.journal}\n`);
   write(paths.env, `TOKEN=${secrets.env}\n`);
   write(paths.forbidden, "law\n");
   write(paths.workflow, "on: push\n");
@@ -89,7 +92,13 @@ export function makeFixture(opts: { npm: boolean }): Fixture {
   write(path.join(repo, "verify.yaml"), 'schema: opengantry.verify.v1\nscope:\n  forbidden_paths: ["secret-zone/"]\n');
   const fx = { base, home, repo, out: path.join(repo, "out"), tmp: path.join(base, "tmp"), outside: path.join(base, "outside"), stateEnv, secrets, paths };
   for (const d of [fx.out, fx.tmp, fx.outside]) fs.mkdirSync(d, { recursive: true });
-  return { ...fx, npmTarball: opts.npm ? packNpmCanary(fx) : null };
+  const brokerPolicy = path.join(home, ".opengantry", "admission", "policy.json");
+  if (opts.broker) {
+    write(brokerPolicy, `${JSON.stringify({ schema: "opengantry.admission-policy.v1", requirements: {}, rules: [], advisoryRules: [] })}\n`);
+    for (const d of [path.join(home, ".opengantry"), path.dirname(brokerPolicy)]) fs.chmodSync(d, 0o700);
+    fs.chmodSync(brokerPolicy, 0o600);
+  }
+  return { ...fx, npmTarball: opts.npm ? packNpmCanary(fx) : null, brokerPolicy };
 }
 
 export function removeFixture(fx: Fixture): void {

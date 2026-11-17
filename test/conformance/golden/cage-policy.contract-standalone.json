@@ -90,6 +90,7 @@
       "sandbox": {
         "enabled": true,
         "allowUnsandboxedCommands": false,
+        "failIfUnavailable": true,
         "filesystem": {
           "denyWrite": [
             "./**/.env",

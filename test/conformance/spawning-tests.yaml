@@ -3,7 +3,7 @@
 # class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
 # class none: spawns git only (in-process CLI calls); listed for completeness.
 schema: opengantry.spawning-tests.v1
-count: 45
+count: 46
 entries:
   - file: admission/broker-process.test.ts
     class: cli
@@ -15,6 +15,10 @@ entries:
   - file: admission/journal-file.test.ts
     class: none
     spawns: [git]
+  # admission-probe-host.test.ts drives gantry admission probe, which runs srt, bwrap, npm and gantry admission serve on canary fixtures; skipped with a reason where they are missing.
+  - file: admission-probe-host.test.ts
+    class: cli
+    spawns: [cli, git]
   - file: asset-catalog-generator.test.ts
     class: script
     spawns: [script]

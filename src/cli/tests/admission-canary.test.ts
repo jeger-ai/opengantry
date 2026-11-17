@@ -5,8 +5,12 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
   CANARY_TECHNIQUES,
+  judgeBroker,
   judgeProbe,
   probeDigest,
   probedCapabilityReport,
@@ -15,9 +19,12 @@ import {
 } from "#core/admission-canary.js";
 import { admissionCapabilityReport, checkCapabilityReport } from "#core/admission-capabilities.js";
 import { claudeSettingsToSrtConfig } from "#cage/sandbox-probe/srt-config.js";
+import { CANARY_SPECS, assertSpecsComplete } from "#cage/sandbox-probe/canaries.js";
+import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
 
+/** Every canary as wanted: blocked, and the broker socket reached. */
 function allBlocked(): CanaryOutcome[] {
-  return CANARY_TECHNIQUES.map((t) => ({ id: t.id, scope: t.scope, result: "blocked", detail: "effect absent" }));
+  return CANARY_TECHNIQUES.map((t) => ({ id: t.id, scope: t.scope, result: t.id === "broker-socket-reach" ? "effect" : "blocked", detail: "as wanted" }));
 }
 
 function record(over: Partial<ProbeRecord> = {}, canaries: CanaryOutcome[] = allBlocked()): ProbeRecord {
@@ -154,10 +161,12 @@ test("probeDigest is stable and binds every field", () => {
   assert.match(probeDigest(record()), /^[0-9a-f]{64}$/);
 });
 
-test("every canary technique names a probed family or the cross-family transport scope, once", () => {
+test("every canary technique names a probed family, the transport scope or the broker scope, once; each has a spec", () => {
   const ids = CANARY_TECHNIQUES.map((t) => t.id);
   assert.equal(new Set(ids).size, ids.length);
-  for (const t of CANARY_TECHNIQUES) assert.ok([...PROBED, "transport"].includes(t.scope), t.id);
+  for (const t of CANARY_TECHNIQUES) assert.ok([...PROBED, "transport", "broker"].includes(t.scope), t.id);
+  assert.doesNotThrow(() => assertSpecsComplete());
+  assert.deepEqual(CANARY_SPECS.map((s) => s.id), ids, "specs run in technique order");
   for (const f of PROBED) assert.ok(CANARY_TECHNIQUES.some((t) => t.scope === f && !t.optional), `${f} has a required canary`);
 });
 
@@ -181,4 +190,52 @@ test("srt config: Claude Code's merge of sandbox paths and Read/Edit deny rules,
   const diag = claudeSettingsToSrtConfig(settings, { tmpDir: "/t/tmp", diagnostic: true });
   assert.equal(diag.network.allowAllUnixSockets, true, "diagnostic: no seccomp helper, as Claude Code runs without a global srt");
   assert.throws(() => claudeSettingsToSrtConfig({ sandbox: { enabled: false } }, { tmpDir: "/t", diagnostic: false }), /sandbox\.enabled/);
+});
+
+test("broker verdict: proven only when the socket is reached and its state is not, on the full mechanism", () => {
+  assert.deepEqual(judgeBroker(record()), { reachable: true, stateProtected: true, proven: true, reasons: [] });
+  const unreachable = allBlocked().map((c) => (c.id === "broker-socket-reach" ? { ...c, result: "blocked" as const, detail: "error EPERM" } : c));
+  const v = judgeBroker(record({}, unreachable));
+  assert.equal(v.reachable, false);
+  assert.equal(v.proven, false);
+  assert.ok(v.reasons.some((x) => /broker-socket-reach: blocked/.test(x)));
+  const leaked = allBlocked().map((c) => (c.id === "broker-state" ? { ...c, result: "effect" as const, detail: "read journal.jsonl" } : c));
+  assert.equal(judgeBroker(record({}, leaked)).stateProtected, false);
+  const diag = judgeBroker(record({ mechanism: { ...record().mechanism, mode: "diagnostic", seccompHelper: false } }));
+  assert.equal(diag.reachable, true);
+  assert.equal(diag.proven, false, "a diagnostic run never proves the broker either");
+  assert.ok(judgeProbe(record({}, unreachable)).every((f) => f.level === "prevention"), "the broker question does not change a family cell");
+});
+
+test("resolveSandboxRuntime: only @anthropic-ai/sandbox-runtime is accepted; its version, digest and seccomp helper are read", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-srt-"));
+  const make = (name: string, helper: boolean): string => {
+    const root = path.join(dir, name.replace(/\W/g, "_"));
+    fs.mkdirSync(path.join(root, "dist"), { recursive: true });
+    fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ name, version: "0.0.83" }));
+    fs.writeFileSync(path.join(root, "dist", "cli.js"), "#!/usr/bin/env node\n");
+    if (helper) {
+      fs.mkdirSync(path.join(root, "vendor", "seccomp", os.arch()), { recursive: true });
+      fs.writeFileSync(path.join(root, "vendor", "seccomp", os.arch(), "apply-seccomp"), "elf");
+    }
+    return path.join(root, "dist", "cli.js");
+  };
+  const good = resolveSandboxRuntime(make("@anthropic-ai/sandbox-runtime", true), "");
+  assert.equal(good.version, "0.0.83");
+  assert.match(good.digest, /^[0-9a-f]{64}$/);
+  assert.ok(good.seccompHelper?.endsWith("apply-seccomp"));
+  const link = path.join(dir, "srt");
+  fs.symlinkSync(good.cli, link);
+  assert.equal(resolveSandboxRuntime(undefined, dir).digest, good.digest, "srt on PATH is followed to its package");
+  const code = (fn: () => unknown): string | undefined => {
+    try {
+      fn();
+    } catch (e) {
+      return (e as { code?: string }).code;
+    }
+    return undefined;
+  };
+  assert.equal(code(() => resolveSandboxRuntime(make("evil-srt", true), "")), "GXT_ADMISSION_PROBE_RUNTIME");
+  assert.equal(code(() => resolveSandboxRuntime(undefined, path.join(dir, "empty"))), "GXT_ADMISSION_PROBE_RUNTIME");
+  assert.equal(code(() => resolveSandboxRuntime(path.join(dir, "missing"), "")), "GXT_ADMISSION_PROBE_RUNTIME");
 });

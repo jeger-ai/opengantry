@@ -23,8 +23,12 @@ export const PROBE_REF = "docs/guides/admission-probe.md";
 /** Families the sandbox probe judges. git.publish and delivery.mutate are not sandbox questions; they keep their cells. */
 export const PROBED_FAMILIES = ["artifact.read", "workspace.write", "process.spawn", "dependency.materialize", "network.connect"] as const satisfies readonly AdmissionFamily[];
 export type ProbedFamily = (typeof PROBED_FAMILIES)[number];
-/** `transport`: an alternative path out of the sandbox (a same-user daemon reached over a socket) that defeats every family. */
-export type CanaryScope = ProbedFamily | "transport";
+/**
+ * `transport`: an alternative path out of the sandbox (a same-user daemon reached over a socket) that defeats every
+ * family. `broker`: the admission broker's socket must be reachable and its state must not be; judged by judgeBroker,
+ * not as a matrix cell.
+ */
+export type CanaryScope = ProbedFamily | "transport" | "broker";
 
 export interface CanaryTechnique {
   id: string;
@@ -68,6 +72,8 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "connect-proxy", scope: "network.connect", attempt: "HTTP CONNECT through the sandbox proxy to the same listener" },
   { id: "transport-unix-socket", scope: "transport", attempt: "connect to a unix socket a same-user process listens on outside" },
   { id: "transport-user-bus", scope: "transport", attempt: "systemd-run --user over the session bus writes outside the sandbox", optional: true },
+  { id: "broker-socket-reach", scope: "broker", attempt: "connect to the admission broker's socket and ask for its capability cells (wanted: reached)" },
+  { id: "broker-state", scope: "broker", attempt: "read and append to the broker's journal, broker.json and policy, and write into its exec/ dir" },
 ];
 
 export const CANARY_RESULTS = ["blocked", "effect", "inconclusive", "not-applicable"] as const;
@@ -168,6 +174,29 @@ export function judgeProbe(r: ProbeRecord): FamilyVerdict[] {
     }
     return { family, level: reasons.length === 0 ? "prevention" : "not-proven", reasons };
   });
+}
+
+export interface BrokerVerdict {
+  /** The candidate reached the broker's socket and got an answer; null when the canary did not run. */
+  reachable: boolean | null;
+  /** The candidate neither read nor changed the broker's journal, broker.json, policy or exec dir. */
+  stateProtected: boolean | null;
+  /** Both, on the full mechanism of the target host. */
+  proven: boolean;
+  reasons: string[];
+}
+
+/** The broker question of slice 4: reachable socket, unreachable state. Not a matrix cell. */
+export function judgeBroker(r: ProbeRecord): BrokerVerdict {
+  const one = (id: string): CanaryOutcome | undefined => r.canaries.find((c) => c.id === id && c.scope === "broker");
+  const reach = one("broker-socket-reach");
+  const state = one("broker-state");
+  const reachable = reach?.result === "effect" ? true : reach?.result === "blocked" ? false : null;
+  const stateProtected = state?.result === "blocked" ? true : state?.result === "effect" ? false : null;
+  const reasons = globalReasons(r);
+  if (reachable !== true) reasons.push(`broker-socket-reach: ${reach ? `${reach.result} (${reach.detail})` : "missing"}`);
+  if (stateProtected !== true) reasons.push(`broker-state: ${state ? `${state.result} (${state.detail})` : "missing"}`);
+  return { reachable, stateProtected, proven: reasons.length === 0, reasons };
 }
 
 const NOTE_MAX = 400;
