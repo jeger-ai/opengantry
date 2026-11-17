@@ -140,11 +140,11 @@ const dependencyMaterializeResource = z
 const networkConnectResource = z
   .object({ scheme: z.enum(["https", "http", "ssh", "git", "tcp"]), host: hostName, port: z.number().int().min(1).max(65535) })
   .strict();
-/** `remoteUrl` carries no credentials: https/ssh URL without a password, or `user@host:path`. */
+/** `remoteUrl` carries no credentials: https/ssh URL without a password, or `user@host:path`; no control character. */
 const remoteUrl = z
   .string()
   .max(2048)
-  .regex(/^(?:(?:https|ssh):\/\/(?:[A-Za-z0-9._-]+@)?[a-z0-9.-]+(?::\d{1,5})?\/[^\s@:]+|[A-Za-z0-9._-]+@[a-z0-9.-]+:[^\s@:]+)$/);
+  .regex(/^(?:(?:https|ssh):\/\/(?:[A-Za-z0-9._-]+@)?[a-z0-9.-]+(?::\d{1,5})?\/[^\s@:\x00-\x1f\x7f-\x9f]+|[A-Za-z0-9._-]+@[a-z0-9.-]+:[^\s@:\x00-\x1f\x7f-\x9f]+)$/); // eslint-disable-line no-control-regex -- intended, as canonicalPath
 const gitPublishResource = z
   .object({
     remoteUrl,
